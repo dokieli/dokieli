@@ -11,6 +11,10 @@
 
   <body about="" prefix="rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns# rdfs: http://www.w3.org/2000/01/rdf-schema# owl: http://www.w3.org/2002/07/owl# xsd: http://www.w3.org/2001/XMLSchema# rdfa: http://www.w3.org/ns/rdfa# dcterms: http://purl.org/dc/terms/ dctypes: http://purl.org/dc/dcmitype/ foaf: http://xmlns.com/foaf/0.1/ pimspace: http://www.w3.org/ns/pim/space# skos: http://www.w3.org/2004/02/skos/core# prov: http://www.w3.org/ns/prov# mem: http://mementoweb.org/ns# qb: http://purl.org/linked-data/cube# schema: http://schema.org/ void: http://rdfs.org/ns/void# rsa: http://www.w3.org/ns/auth/rsa# cert: http://www.w3.org/ns/auth/cert# wgs: http://www.w3.org/2003/01/geo/wgs84_pos# bibo: http://purl.org/ontology/bibo/ sioc: http://rdfs.org/sioc/ns# doap: http://usefulinc.com/ns/doap# dbr: http://dbpedia.org/resource/ dbp: http://dbpedia.org/property/ sio: http://semanticscience.org/resource/ opmw: http://www.opmw.org/ontology/ deo: http://purl.org/spar/deo/ doco: http://purl.org/spar/doco/ cito: http://purl.org/spar/cito/ fabio: http://purl.org/spar/fabio/ oa: http://www.w3.org/ns/oa# as: https://www.w3.org/ns/activitystreams# ldp: http://www.w3.org/ns/ldp# solid: http://www.w3.org/ns/solid/terms# acl: http://www.w3.org/ns/auth/acl# earl: http://www.w3.org/ns/earl# spec: http://www.w3.org/ns/spec# odrl: http://www.w3.org/ns/odrl/2/ dio: https://w3id.org/dio# rel: https://www.w3.org/ns/iana/link-relations/relation#" typeof="schema:CreativeWork prov:Entity">
     <header>
+      <address>
+        <a href="/"><img width="50" alt="dokieli logo" src="media/images/logo.png" /> dokieli</a>
+      </address>
+
       <nav>
         <ul>
           <li><a href="/docs">Documentation</a></li>
@@ -21,116 +25,177 @@
 
     <main>
       <article about="" typeof="schema:Article doap:Project">
-        <h1 property="schema:name doap:name">dokieli</h1>
+        <h1 property="schema:name doap:name">Create, connect and share your ideas</h1>
 
         <div datatype="rdf:HTML" property="schema:description">
-          <p id="introduction" property="schema:description doap:shortdesc">dokieli is a clientside editor for decentralised article publishing, annotations, and social interactions.</p>
+          <p id="summary" property="schema:summary doap:shortdesc">dokieli is a clientside editor for decentralised article publishing, annotations, and social interactions.</p>
 
-          <section id="dokieli-introduction" inlist="" rel="schema:hasPart" resource="#dokieli-introduction">
-            <h2 property="schema:name">Introduction</h2>
+          <section id="dokieli-highlight" inlist="" rel="schema:hasPart" resource="#dokieli-highlight">
+            <h2>Highlight</h2>
             <div datatype="rdf:HTML" property="schema:description">
-              <img alt="" height="" src="" width="" />
+              <img alt="placeholder" src="media/images/artifacts-artificial-intelligence.png" />
 
-              <p>...</p>
+              <p>Dokieli promotes self-publishing by enabling users to publish and annotate articles using their preferred identities and personal storage, supporting both personal and social activities. Built as an open-source project using open web standards, any content created with dokieli can be used in other standards-conforming applications.</p>
 
               <p about="" rel="schema:potentialAction"><a href="#document-menu" typeof="schema:ActivateAction"><i class="fas fa-bars fa-2x"></i><span>Try it now!</span><span>This webpage is a dokieli article.</span></a></p>
             </div>
           </section>
 
-
           <section id="dokieli-features" inlist="" rel="schema:hasPart" resource="#dokieli-features">
-            <h2 property="schema:name">Features</h2>
+            <h2>Features</h2>
             <div datatype="rdf:HTML" property="schema:description">
               <ul>
                 <li>
+                  <h3>Share</h3>
+
                   <figure id="figure-dokieli-share" rel="schema:video" resource="#figure-dokieli-share">
                     <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-share.jpg" preload="none" resource="#figure-dokieli-share" typeof="schema:VideoObject" width="800">
                       <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-share.webm" type="video/webm" />
                     </video>
-                    <figcaption property="schema:name"><a href="https://dokie.li/media/video/dokieli-share.webm">Video</a> of dokieli Share [<time datatype="xsd:duration" datetime="PT36S" property="schema:duration">36s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
-
-                    <h3>Share</h3>
-
-                    <p></p>
+                    <figcaption><a href="https://dokie.li/media/video/dokieli-share.webm">Video</a> of dokieli Share [<time datatype="xsd:duration" datetime="PT36S" property="schema:duration">36s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
                   </figure>
-                </li>
 
+                  <p>Share articles or specific parts with your contacts or groups.</p>
+
+                  <a href="https://dokie.li/docs#resource-share">Read more</a>
+                </li>
+              
                 <li>
+                  <h3>Annotation</h3>
+
                   <figure id="figure-dokieli-annotation" rel="schema:video" resource="#figure-dokieli-annotation">
                     <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-annotation.jpg" preload="none" resource="#figure-dokieli-annotation" typeof="schema:VideoObject" width="800">
                       <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-annotation.webm" type="video/webm" />
                     </video>
-                    <figcaption property="schema:name"><a href="https://dokie.li/media/video/dokieli-annotation.webm">Video</a> of dokieli Web Annotation [<time datatype="xsd:duration" datetime="PT31S" property="schema:duration">31s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                    <figcaption><a href="https://dokie.li/media/video/dokieli-annotation.webm">Video</a> of dokieli Web Annotation [<time datatype="xsd:duration" datetime="PT31S" property="schema:duration">31s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
                   </figure>
 
-                  <h3>Annotation</h3>
+                  <p>Annotate articles with comments, bookmarks, highlights, and more.</p>
 
-                  <p></p>
+                  <a href="https://dokie.li/docs#resource-annotations">Read more</a>
                 </li>
 
                 <li>
+                  <h3>Citations</h3>
+
                   <figure id="figure-dokieli-citation" rel="schema:hasPart" resource="#figure-dokieli-citation">
                     <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-citation.jpg" preload="none" resource="#figure-dokieli-citation" typeof="schema:VideoObject" width="800">
                       <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-citation.webm" type="video/webm" />
                     </video>
-                    <figcaption property="schema:name"><a href="https://dokie.li/media/video/dokieli-citation.webm">Video</a> of semantic inline citations and notification in dokieli [<time datatype="xsd:duration" datetime="PT43S" property="schema:duration">43s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                    <figcaption><a href="https://dokie.li/media/video/dokieli-citation.webm">Video</a> of semantic inline citations and notification in dokieli [<time datatype="xsd:duration" datetime="PT43S" property="schema:duration">43s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
                   </figure>
 
-                  <h3>Citations</h3>
+                  <p>Add robust, contextual citations and notify cited entities.</p>
 
-                  <p></p>
+                  <a href="https://dokie.li/docs#resource-footnotes-citations">Read more</a>
                 </li>
 
                 <li>
-                  <figure id="figure-dokieli-sparqlines" rel="schema:video" resource="#figure-dokieli-sparqlines">
-                    <video controls="controls" crossorigin="anonymous" id="video-dokieli-sparqlines" poster="https://dokie.li/media/images/GDP-per-capita-growth--annual---.svg" preload="none" resource="#figure-dokieli-sparqlines" typeof="schema:VideoObject" width="800">
-                      <source rel="schema:contentUrl" resource="https://dokie.li/media/video/dokieli-sparqlines.webm" src="https://dokie.li/media/video/dokieli-sparqlines.webm" type="video/webm" />
-                    </video>
-                    <figcaption property="schema:name"><a href="https://dokie.li/media/video/dokieli-sparqlines.webm">Video</a> of Sparqlines interaction in dokieli [<time datatype="xsd:duration" datetime="PT26S" property="schema:duration">26s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
-                  </figure>
-
                   <h3>Sparqlines</h3>
 
-                  <p></p>
+                  <figure id="figure-dokieli-sparqlines" rel="schema:video" resource="#figure-dokieli-sparqlines">
+                    <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/GDP-per-capita-growth--annual---.svg" preload="none" resource="#figure-dokieli-sparqlines" typeof="schema:VideoObject" width="800">
+                      <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-sparqlines.webm" type="video/webm" />
+                    </video>
+                    <figcaption><a href="https://dokie.li/media/video/dokieli-sparqlines.webm">Video</a> of Sparqlines interaction in dokieli [<time datatype="xsd:duration" datetime="PT26S" property="schema:duration">26s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                  </figure>
+
+                  <p>Search for statistical data and display inline-charts to support sound argumentation and verifiable data journalism.</p>
+
+                  <a href="https://dokie.li/docs#resource-interactive-embeddable-objects">Read more</a>
+                </li>
+
+                <li>
+                  <h3>Access Request</h3>
+
+                  <figure id="figure-dokieli-access-request" rel="schema:video" resource="#figure-dokieli-access-request">
+                    <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-access-request.jpg" preload="none" resource="#figure-dokieli-access-request" typeof="schema:VideoObject" width="800">
+                      <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-access-request.webm" type="video/webm" />
+                    </video>
+                    <figcaption><a href="https://dokie.li/media/video/dokieli-access-request.webm">Video</a> of Access Request in dokieli [<time datatype="xsd:duration" datetime="PT30S" property="schema:duration">30s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                  </figure>
+
+                  <p>Request access to documents and data.</p>
+                </li>
+
+                <li>
+                  <h3>Generate and Publish Web Feed</h3>
+
+                  <figure id="figure-dokieli-generate-feed" rel="schema:video" resource="#figure-dokieli-generate-feed">
+                    <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-generate-feed.jpg" preload="none" resource="#figure-dokieli-generate-feed" typeof="schema:VideoObject" width="800">
+                      <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-generate-feed.webm" type="video/webm" />
+                    </video>
+                    <figcaption><a href="https://dokie.li/media/video/dokieli-generate-feed.webm">Video</a> of generating and publishing web feed in dokieli [<time datatype="xsd:duration" datetime="PT45S" property="schema:duration">45s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                  </figure>
+
+                  <p>Generate and publish web feeds of your articles.</p>
+
+                  <a href="https://dokie.li/docs#generate-feeds">Read more</a>
+                </li>
+
+                <li>
+                  <h3>Archiving and Robustify Links</h3>
+
+                  <figure id="figure-dokieli-robustify-links" rel="schema:video" resource="#figure-dokieli-robustify-links">
+                    <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-robustify-links.jpg" preload="none" resource="#figure-dokieli-robustify-links" typeof="schema:VideoObject" width="800">
+                      <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-robustify-links.webm" type="video/webm" />
+                    </video>
+                    <figcaption><a href="https://dokie.li/media/video/dokieli-robustify-links.webm">Video</a> of robustifying links in dokieli [<time datatype="xsd:duration" datetime="PT38S" property="schema:duration">38s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                  </figure>
+
+                  <p>Make links more resilient to changes and disappearances.</p>
+
+                  <a href="https://dokie.li/docs#resource-robustify-links">Read more</a>
                 </li>
               </ul>
             </div>
           </section>
 
           <section id="audience" inlist="" rel="schema:hasPart" resource="#audience">
-            <h2 property="schema:name">Audience</h2>
+            <h2>Audience</h2>
             <div datatype="rdf:HTML" property="schema:description">
-              <dl>
-                <dt>Content creators</dt>
-                <dd></dd>
+              <p>Creating and reading content are among the most common activities on the web:</p>
 
-                <dt>Readers</dt>
-                <dd></dd>
+              <dl rel="schema:audience">
+                <dt id="readers"><span resource="http://www.wikidata.org/entity/Q26899865">Readers</span></dt>
+                <dd>Enhance your reading experience on the web with tools like annotations, bookmarks, social interactions, comments, and more.</dd>
 
-                <dt>Researchers</dt>
-                <dd></dd>
+                <dt id="researchers"><span resource="http://www.wikidata.org/entity/Q1650915">Researchers</span></dt>
+                <dd>Use tools for annotation and citation to support research communication, scientific data, and review processes.</dd>
 
-                <dt>Journalists</dt>
-                <dd></dd>
+                <dt id="journalists"><span resource="http://www.wikidata.org/entity/Q1930187">Journalists</span></dt>
+                <dd>Fact-check, cite sources, and archive snapshots for accurate and reliable reporting and referencing.</dd>
+
+                <dt id="educators-speakers"><span resource="http://www.wikidata.org/entity/Q37226">Educators</span> and <span><span resource="https://www.wikidata.org/entity/Q12859263">Speakers</span></dt>
+                <dd>Create interactive learning materials and share resources for effective teaching.</dd>
+              
+                <dt id="content-creators"><span resource="http://www.wikidata.org/entity/Q8246794">Bloggers</span> and <span resource="http://www.wikidata.org/entity/Q109459317">Content Creators</span></dt>
+                <dd>Enhance your blog posts with reliable citations and engaging content, such as maps, expert insights for your reviews, nutritional information for your recipes, generate web feeds, and more.</dd>
+              
+                <dt id="technical-authors"><span resource="http://www.wikidata.org/entity/Q1568338">Technical Authors</span></dt>
+                <dd>Write technical specifications, view conformance requirements and test coverage.</dd>
+
+                <dt id="developers"><span resource="http://www.wikidata.org/entity/Q183888">Developers</span> and <span resource="http://www.wikidata.org/entity/Q12376667">Technologists</span></dt>
+                <dd>Write technical documentation, tutorials, and workflows.</dd>
               </dl>
             </div>
           </section>
 
-          <section id="lets-make-it-so" inlist="" rel="schema:hasPart" resource="#lets-make-it-so">
-            <h2 property="schema:name">Let's make it so!</h2>
+          <p id="dokieli-read-write-web">dokieli enables the <em>Write</em> dimension of the Read-Write Web.</p>
+
+          <section id="get-involved" inlist="" rel="schema:hasPart" resource="#get-involved">
+            <h2>Get involved</h2>
             <div datatype="rdf:HTML" property="schema:description">
               <dl>
-                <dt>Developer community</dt>
+                <dt id="community">Community</dt>
                 <dd><a href="https://matrix.to/#/#linkeddata_dokieli:gitter.im">Chat</a></dd>
                 <dd><a about="" href="https://github.com/dokieli/dokieli" rel="doap:repository">Code</a></dd>
 
-                <dt>Support the project</dt>
+                <dt id="support">Support the project</dt>
                 <dd><a href="https://opencollective.com/dokieli">Open Collective</a></dd>
-              </ul>
+              </dl>
             </div>
           </section>
-
-          <p id="dokieli-read-write-web">dokieli enables the <em>Write</em> dimension of the Read-Write Web</p>
         </div>
       </article>
     </main>
