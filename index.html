@@ -12,23 +12,23 @@
   <body about="" prefix="rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns# rdfs: http://www.w3.org/2000/01/rdf-schema# owl: http://www.w3.org/2002/07/owl# xsd: http://www.w3.org/2001/XMLSchema# rdfa: http://www.w3.org/ns/rdfa# dcterms: http://purl.org/dc/terms/ dctypes: http://purl.org/dc/dcmitype/ foaf: http://xmlns.com/foaf/0.1/ pimspace: http://www.w3.org/ns/pim/space# skos: http://www.w3.org/2004/02/skos/core# prov: http://www.w3.org/ns/prov# mem: http://mementoweb.org/ns# qb: http://purl.org/linked-data/cube# schema: http://schema.org/ void: http://rdfs.org/ns/void# rsa: http://www.w3.org/ns/auth/rsa# cert: http://www.w3.org/ns/auth/cert# wgs: http://www.w3.org/2003/01/geo/wgs84_pos# bibo: http://purl.org/ontology/bibo/ sioc: http://rdfs.org/sioc/ns# doap: http://usefulinc.com/ns/doap# dbr: http://dbpedia.org/resource/ dbp: http://dbpedia.org/property/ sio: http://semanticscience.org/resource/ opmw: http://www.opmw.org/ontology/ deo: http://purl.org/spar/deo/ doco: http://purl.org/spar/doco/ cito: http://purl.org/spar/cito/ fabio: http://purl.org/spar/fabio/ oa: http://www.w3.org/ns/oa# as: https://www.w3.org/ns/activitystreams# ldp: http://www.w3.org/ns/ldp# solid: http://www.w3.org/ns/solid/terms# acl: http://www.w3.org/ns/auth/acl# earl: http://www.w3.org/ns/earl# spec: http://www.w3.org/ns/spec# odrl: http://www.w3.org/ns/odrl/2/ dio: https://w3id.org/dio# rel: https://www.w3.org/ns/iana/link-relations/relation#" typeof="schema:CreativeWork prov:Entity">
     <header>
       <address>
-        <a href="/"><img width="50" alt="dokieli logo" src="media/images/logo.png" /> dokieli</a>
+        <a href="/"><img alt="dokieli logo" rel="foaf:img" src="media/images/logo.png" width="50" /> <span property="foaf:name">dokieli</span></a>
       </address>
 
       <nav>
         <ul>
-          <li><a href="/docs">Documentation</a></li>
+          <li><a href="/docs" rel="rdfs:seeAlso">Documentation</a></li>
           <li><a href="https://git.dokie.li/">Source</a></li>
         </ul>
       </nav>
     </header>
 
     <main>
-      <article about="" typeof="schema:Article doap:Project">
-        <h1 property="schema:name doap:name">Create, connect and share your ideas</h1>
+      <article about="" typeof="schema:Article">
+        <h1 property="schema:name">Create, connect and share your ideas</h1>
 
         <div datatype="rdf:HTML" property="schema:description">
-          <p id="summary" property="schema:summary doap:shortdesc">dokieli is a clientside editor for decentralised article publishing, annotations, and social interactions.</p>
+          <p id="summary" property="schema:summary">dokieli is a clientside editor for decentralised article publishing, annotations, and social interactions.</p>
 
           <section id="dokieli-highlight" inlist="" rel="schema:hasPart" resource="#dokieli-highlight">
             <h2>Highlight</h2>
@@ -157,25 +157,25 @@
               <p>Creating and reading content are among the most common activities on the web:</p>
 
               <dl rel="schema:audience">
-                <dt id="readers"><span resource="http://www.wikidata.org/entity/Q26899865">Readers</span></dt>
+                <dt id="readers">Readers</dt>
                 <dd>Enhance your reading experience on the web with tools like annotations, bookmarks, social interactions, comments, and more.</dd>
 
-                <dt id="researchers"><span resource="http://www.wikidata.org/entity/Q1650915">Researchers</span></dt>
+                <dt id="researchers">Researchers</dt>
                 <dd>Use tools for annotation and citation to support research communication, scientific data, and review processes.</dd>
 
-                <dt id="journalists"><span resource="http://www.wikidata.org/entity/Q1930187">Journalists</span></dt>
+                <dt id="journalists">Journalists</dt>
                 <dd>Fact-check, cite sources, and archive snapshots for accurate and reliable reporting and referencing.</dd>
 
-                <dt id="educators-speakers"><span resource="http://www.wikidata.org/entity/Q37226">Educators</span> and <span><span resource="https://www.wikidata.org/entity/Q12859263">Speakers</span></dt>
+                <dt id="educators-speakers">Educators and Speakers</dt>
                 <dd>Create interactive learning materials and share resources for effective teaching.</dd>
               
-                <dt id="content-creators"><span resource="http://www.wikidata.org/entity/Q8246794">Bloggers</span> and <span resource="http://www.wikidata.org/entity/Q109459317">Content Creators</span></dt>
+                <dt id="content-creators">Bloggers and Content Creators</dt>
                 <dd>Enhance your blog posts with reliable citations and engaging content, such as maps, expert insights for your reviews, nutritional information for your recipes, generate web feeds, and more.</dd>
-              
-                <dt id="technical-authors"><span resource="http://www.wikidata.org/entity/Q1568338">Technical Authors</span></dt>
+
+                <dt id="technical-authors">Technical Authors</dt>
                 <dd>Write technical specifications, view conformance requirements and test coverage.</dd>
 
-                <dt id="developers"><span resource="http://www.wikidata.org/entity/Q183888">Developers</span> and <span resource="http://www.wikidata.org/entity/Q12376667">Technologists</span></dt>
+                <dt id="developers">Developers Technologists</dt>
                 <dd>Write technical documentation, tutorials, and workflows.</dd>
               </dl>
             </div>
@@ -189,7 +189,7 @@
               <dl>
                 <dt id="community">Community</dt>
                 <dd><a href="https://matrix.to/#/#linkeddata_dokieli:gitter.im">Chat</a></dd>
-                <dd><a about="" href="https://github.com/dokieli/dokieli" rel="doap:repository">Code</a></dd>
+                <dd><a about="" href="https://git.dokie.li/">Code</a></dd>
 
                 <dt id="support">Support the project</dt>
                 <dd><a href="https://opencollective.com/dokieli">Open Collective</a></dd>
@@ -199,5 +199,124 @@
         </div>
       </article>
     </main>
+
+    <footer>
+      <details>
+        <summary>More details about dokieli</summary>
+        <dl about="/#i" id="i" typeof="doap:Project">
+          <dt>Project</dt>
+          <dd>
+            <dl>
+              <dt>Name</dt>
+              <dd lang="" property="doap:name" xml:lang="">dokieli</dd>
+              <dt>Short description</dt>
+              <dd property="doap:shortdesc">dokieli is a clientside editor for decentralised article publishing, annotations, and social interactions.</dd>
+              <dt>Homepage</dt>
+              <dd><a href="https://dokie.li/" rel="doap:homepage">dokieli</a></dd>
+            </dl>
+          </dd>
+
+          <dt>Categories</dt>
+          <dd>
+            <ul rel="doap:category">
+              <li><a href="http://www.wikidata.org/entity/Q2463207">Authoring system</a></li>
+              <li><a href="http://www.wikidata.org/entity/Q188961">Decentralisation</a></li>
+              <li><a href="http://www.wikidata.org/entity/Q515701">Linked Data</a></li>
+              <li><a href="http://www.wikidata.org/entity/Q3962191">Notification system</a></li>
+              <li><a href="http://www.wikidata.org/entity/Q2724244">Social Web</a></li>
+              <li><a href="http://www.wikidata.org/entity/Q7978558">Web annotation</a></li>
+              <li><a href="http://www.wikidata.org/entity/Q1153289">Web standards</a></li>
+            </ul>
+          </dd>
+
+          <dt>Audience</dt>
+          <dd>
+            <ul rel="schema:audience">
+              <li><a href="http://www.wikidata.org/entity/Q8246794">Bloggers</a></li>
+              <li><a href="http://www.wikidata.org/entity/Q109459317">Content Creators</a></li>
+              <li><a href="http://www.wikidata.org/entity/Q183888">Developers</a></li>
+              <li><a href="http://www.wikidata.org/entity/Q37226">Educators</a></li>
+              <li><a href="http://www.wikidata.org/entity/Q1930187">Journalists</a></li>
+              <li><a href="http://www.wikidata.org/entity/Q26899865">Readers</a></li>
+              <li><a href="http://www.wikidata.org/entity/Q1650915">Researchers</a></li>
+              <li><a href="http://www.wikidata.org/entity/Q12859263">Speakers</a></li>
+              <li><a href="http://www.wikidata.org/entity/Q1568338">Technical Authors</a></li>
+              <li><a href="http://www.wikidata.org/entity/Q12376667">Technologists</a></li>
+            </ul>
+          </dd>
+
+          <dt id="platform">Platform</dt>
+          <dd><a href="http://www.wikidata.org/entity/Q6368" rel="doap:platform">Web browser</a></dd>
+
+          <dt id="licenses">Licenses</dt>
+          <dd>
+            <dl rel="doap:license">
+              <dt>Code</dt>
+              <dd><a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a></dd>
+              <dt>Content</dt>
+              <dd><a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 Unported</a></dd>
+            </dl>
+          </dd>
+
+          <dt id="repository">Repository</dt>
+          <dd>
+            <dl rel="doap:repository" resource="#repository">
+              <dt>Type</dt>
+              <dd typeof="doap:GitRepository">Git</dd>
+              <dt>Location</dt>
+              <dd><a href="https://github.com/dokieli/dokieli.git" rel="doap:location">https://github.com/dokieli/dokieli.git</a></dd>
+              <dt>Web browser interface</dt>
+              <dd><a href="https://git.dokie.li/" rel="doap:browse">https://git.dokie.li/</a></dd>
+              <dt>Issues</dt>
+              <dd><a href="https://github.com/dokieli/dokieli/issues" rel="doap:bug-database">https://github.com/dokieli/dokieli/issues</a></dd>
+            </dl>
+          </dd>
+
+          <dt id="programming-languages">Programming Languages</dt>
+          <dd>
+            <ul>
+              <li lang="" property="doap:programming-language" xml:lang="">HTML</li>
+              <li lang="" property="doap:programming-language" xml:lang="">CSS</li>
+              <li lang="" property="doap:programming-language" xml:lang="">JavaScript</li>
+              <li lang="" property="doap:programming-language" xml:lang="">RDF</li>
+              <li lang="" property="doap:programming-language" xml:lang="">SPARQL</li>
+            </ul>
+          </dd>
+
+          <dt id="implements">Implements</dt>
+          <dd>
+            <ul rel="doap:implements">
+              <li><a href="https://www.w3.org/TR/activitystreams-vocabulary/" typeof="doap:Specification">Activity Vocabulary</a></li>
+              <li><a href="https://www.w3.org/TR/activitypub/" typeof="doap:Specification">ActivityPub</a></li>
+              <li><a href="https://creativecommons.org/" typeof="doap:Specification">Creative Commons</a></li>
+              <li><a href="https://www.w3.org/TR/annotation-html" typeof="doap:Specification">Embedding Web Annotations in HTML</a></li>
+              <li><a href="https://www.w3.org/TR/html/" typeof="doap:Specification">HTML</a></li>
+              <li><a href="https://www.w3.org/TR/json-ld/" typeof="doap:Specification">JSON-LD</a></li>
+              <li><a href="https://www.w3.org/TR/ldn/" typeof="doap:Specification">Linked Data Notifications</a></li>
+              <li><a href="https://www.w3.org/TR/ldp/" typeof="doap:Specification">Linked Data Platform</a></li>
+              <li><a href="https://tools.ietf.org/html/rfc7089" typeof="doap:Specification">Memento</a></li>
+              <li><a href="https://www.w3.org/TR/odrl-model/" typeof="doap:Specification">ODRL Information Model</a></li>
+              <li><a href="https://www.w3.org/TR/odrl-vocab/" typeof="doap:Specification">ODRL Vocabularies &amp; Expression</a></li>
+              <li><a href="https://www.w3.org/TR/prov-o/" typeof="doap:Specification">PROV-O</a></li>
+              <li><a href="https://www.w3.org/TR/rdfa-core/" typeof="doap:Specification">RDFa</a></li>
+              <li><a href="https://robustlinks.mementoweb.org/spec/" typeof="doap:Specification">Robustifying Links</a></li>
+              <li><a href="http://www.sparontologies.net/" typeof="doap:Specification">SPAR Ontologies</a></li>
+              <li><a href="https://www.w3.org/TR/sparql11-query/" typeof="doap:Specification">SPARQL Query</a></li>
+              <li><a href="https://www.w3.org/TR/sparql11-update/" typeof="doap:Specification">SPARQL Update</a></li>
+              <li><a href="https://schema.org/" typeof="doap:Specification">schema.org</a></li>
+              <li><a href="https://www.w3.org/TR/selectors-states/" typeof="doap:Specification">Selectors and States</a></li>
+              <li><a href="https://solidproject.org/TR/notifications-protocol" typeof="doap:Specification">Solid Notifications Protocol</a></li>
+              <li><a href="https://solidproject.org/TR/protocol" typeof="doap:Specification">Solid Protocol</a></li>
+              <li><a href="https://www.w3.org/TR/trig/" typeof="doap:Specification">TriG</a></li>
+              <li><a href="https://www.w3.org/TR/turtle/" typeof="doap:Specification">Turtle</a></li>
+              <li><a href="https://solidproject.org/TR/wac" typeof="doap:Specification">Web Access Control</a></li>
+              <li><a href="https://www.w3.org/TR/annotation-model/" typeof="doap:Specification">Web Annotation Data Model</a></li>
+              <li><a href="https://www.w3.org/TR/annotation-vocab/" typeof="doap:Specification">Web Annotation Vocabulary</a></li>
+              <li><a href="https://www.w3.org/2005/Incubator/webid/spec/identity/" typeof="doap:Specification">WebID</a></li>
+            </ul>
+          </dd>
+        </dl>
+      </details>
+    </footer>
   </body>
 </html>
