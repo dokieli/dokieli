@@ -873,91 +873,94 @@ font-size: 1.4em;
 }
 
 #dokieli-features,
-#dokieli-read-write-web,
-#figure-dokieli-overview,
-body > footer {
+#dokieli-read-write-web
+,
+/*#figure-dokieli-overview,*/
+body > footer
+{
 max-width:99vw;
 margin-left: calc(-50vw + 50%);
 margin-right: calc(-50vw + 50%);
 }
 
-#dokieli-features,
-#dokieli-read-write-web,
-#figure-dokieli-overview {
+/* #dokieli-feature, */
+#dokieli-read-write-web
+/* ,
+#figure-dokieli-overview */
+{
 text-align: center;
 }
 
 #dokieli-features {
+/*
 overflow: hidden;
 padding-top: 1em;
-padding-bottom: 1em;
-background-color: #eee;
+padding-bottom: 1em;*/
+/*background-color: #eee;*/
 }
 #dokieli-features a {
-background-color:inherit;
-border:0;
+/* background-color:inherit;
+border:0; */
 }
 #dokieli-features ul {
 list-style-type: none;
 margin: 0;
 padding: 0;
-font-size: 0.6em;
+/*font-size: 0.6em;
 text-align: center;
-}
+*/}
 
 #dokieli-features ul li {
 overflow: hidden;
 }
 #dokieli-features ul span {
-display: block;
+/* display: block;
 font-size: 2em;
-margin: 0;
+margin: 0; */
 }
 #dokieli-features li span:first-child {
-display: inline-block;
+/* display: inline-block; */
 }
 #dokieli-features ul li span:first-of-type {
-font-weight:bold;
+/* font-weight:bold; */
 }
 
 #dokieli-features li span:last-child {
-display: inline-block;
-color: #333;
+/* display: inline-block;
+color: #333; */
 }
 #dokieli-features ul li a {
-display: inline-block;
+/* display: inline-block;
 color: inherit;
 text-decoration: none;
-width: 100%;
+width: 100%; */
 }
 
 #dokieli-features ul li:hover,
 #dokieli-features ul li:hover span {
-background-color: #ddd;
+/* background-color: #ddd; */
 }
 #dokieli-features ul i,
 #dokieli-features ul svg {
-/*
-width: 1em;
-height: 1em;
-*/
-margin: 1em;
-/*padding: 0.3em;*/
-text-align: center;
-/*border-radius: 50%;*/
+/* margin: 1em;
+text-align: center; */
 }
 
 #dokieli-features i img {
-width: 100%; display: block;
+/* width: 100%; display: block; */
 }
 
-#dokieli-read-write-web,
-#figure-dokieli-overview {
+#dokieli-read-write-web
+/* ,
+#figure-dokieli-overview */
+{
 background-color: #ddd;
 }
-#dokieli-features h2,
-#figure-dokieli-overview h2 {
-display:none;
+#dokieli-features h2
+/* ,
+#figure-dokieli-overview h2 */
+{
+/* display:none; */
 }
 #dokieli-read-write-web {
 text-align:center;
@@ -1003,13 +1006,6 @@ h1 {
 font-size: 2em;
 }
 
-#dokieli-features,
-#dokieli-read-write-web,
-#figure-dokieli-overview,
-body > footer {
-max-width:99.5vw;
-}
-
 *[id^=table-of-] + div,
 *[id^=list-of-] + div {
 margin-top:4em;
@@ -1019,38 +1015,82 @@ dd {
 margin-left: 1em
 }
 
+
+#dokieli-features,
+#dokieli-read-write-web
+,
+/*#figure-dokieli-overview,*/
+body > footer
+{
+max-width:99.5vw;
+}
+
+#dokieli-features h2 {
+margin-left:4%;
+/*display:none;*/
+}
+
 #dokieli-features ul {
-font-size: 1.2em;
-float: left;
+/* font-size: 1.2em;
+float: left;*/
 width: 100%;
 }
 #dokieli-features ul li {
-float: left;
-width: 50%;
-padding: 0.5em 0;
+float:left;
+display:inline-block;
+margin:2em 0 1em 3%;
+width:28%;
+height:30em;
+padding: 1em;
+border: 1px solid #ccc;
+border-radius: 0.5em;
+box-shadow: 0.25em 0.25em 0.25em rgba(0,0,0,0.1);
 }
-#dokieli-features ul li:nth-child(odd) {
-text-align:right;
-clear:left;
+#dokieli-features ul li:hover {
+background-color:#eee;
 }
-#dokieli-features ul li:nth-child(even) {
-text-align:left;
+
+#dokieli-features ul li h3 {
+margin-top:0;
 }
-#dokieli-features ul li span {
-font-size: 1em;
+
+#dokieli-features ul li:nth-child(3n+1) {
+/*clear: both;*/
 }
-#dokieli-features ul li span:first-of-type {
-margin-top: 0.5em;
+
+#dokieli-features video {
+height:16em;
 }
-#dokieli-features ul li:nth-child(odd) i,
-#dokieli-features ul li:nth-child(odd) p,
-#dokieli-features ul li:nth-child(even) svg {
+#dokieli-features ul li p + a {
 float:right;
+border:1px solid #ddd;
+border-radius: 0.5em;
+padding:0.25em;
 }
-#dokieli-features ul li:nth-child(even) i,
-#dokieli-features ul li:nth-child(even) p,
-#dokieli-features ul li:nth-child(even) svg {
-float: left;
+
+#audience,
+#dokieli-read-write-web {
+clear:both;
 }
+
+#audience li {
+float:left;
+width:50%;
+padding:1em;
+}
+
+footer dl dl {
+margin-left:0;
+}
+footer dl li {
+display:inline;
+}
+footer dl li:after {
+content: ", ";
+}
+footer dl li:last-child:after {
+content:"";
+}
+
 }
 /* </dokieli homepage styles> */
