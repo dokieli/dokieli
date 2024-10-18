@@ -1314,13 +1314,6 @@ text-align: center; */
   background-color: #ddd;
 }
 
-#dokieli-features h2
-
-/* ,
-#figure-dokieli-overview h2 */
-  {
-  /* display:none; */
-}
 
 #dokieli-header {
   display: flex;
@@ -1371,7 +1364,6 @@ text-align: center; */
   text-align: center;
   font-size: 2em;
   padding: 1em 0;
-  margin-top: 1em;
 }
 
 #dokieli-read-write-web:before {
@@ -1456,13 +1448,12 @@ ul#program-committee {
 
   #dokieli-features {
     background-color: #eee;
-    margin-top: 1em;
-    padding: 2em
+    padding: 2em;
   }
 
   #dokieli-features h2 {
-    margin-top: 1em;
-    margin-left: 2%;
+    margin-top: 0;
+    margin-left:0;
     margin-bottom: 0.5em;
     /*display:none;*/
   }
@@ -1508,28 +1499,30 @@ ul#program-committee {
 
   #get-involved {
     background-color:#efe;
-    padding: 4em 30%;
+    padding-top: 5em;
+    padding-bottom: 5em;
   }
   #get-involved h2 {
-    margin-top:0;
     display: none;
   }
 
-
-  #dokieli-for-everyone,
-  #dokieli-highlight,
-  #dokieli-read-write-web {
-    clear: both;
-  }
-
   #dokieli-for-everyone {
-    margin-top: 1em;
+    margin:2em 0;
   }
 
-  #dokieli-for-everyone h2,
-  #get-involved h2 {
+  #dokieli-for-everyone h2 {
     text-align: center;
+    margin-top:0;
     margin-bottom: 2em;
+  }
+
+  #get-involved div {
+    display: grid;
+  }
+
+  #get-involved ul {
+    max-width: 66%;
+    justify-self: center;
   }
 
   #dokieli-for-everyone ul,
@@ -1541,6 +1534,7 @@ ul#program-committee {
     grid-template-columns: 1fr 1fr;
     grid-column-gap: 4em;
     grid-row-gap: 3.5em;
+    margin-bottom: 0;
   }
 
   #dokieli-for-everyone ul li,
