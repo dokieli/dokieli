@@ -1430,15 +1430,22 @@ ul#program-committee {
   }
 
   #dokieli-highlight img {
-    min-width: 50%;
-    margin-left: 4em;
+    grid-area: b;
+    width: 80%;
   }
 
   #dokieli-highlight>div {
-    display: flex;
-    flex-direction: row-reverse;
+    display: grid;
+    grid-gap: 2em;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-areas:
+      "a b"
+      "c b";
   }
 
+  #dokieli-highlight>div>p {
+    width: 80%;
+  }
 
   #dokieli-features,
   #dokieli-read-write-web,
@@ -1458,7 +1465,6 @@ ul#program-committee {
     margin-top: 0;
     margin-left:0;
     margin-bottom: 0.5em;
-    /*display:none;*/
   }
 
   #dokieli-features ul {
