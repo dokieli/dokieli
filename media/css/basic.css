@@ -607,7 +607,7 @@ dl+hr:before {
   content: "\2042";
 }
 
-
+#dokieli-header,
 body>footer {
   overflow: hidden;
   padding-top: 1em;
@@ -622,12 +622,14 @@ body>footer>* {
   margin: 0 auto;
 }
 
+#dokieli-header a,
 body>footer a,
 body>footer a:hover {
   color: inherit;
   border-bottom-color: #080;
 }
 
+#dokieli-header a:hover,
 body>footer a:hover {
   background-color: transparent;
 }
@@ -1319,27 +1321,34 @@ text-align: center; */
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: white;
-  padding: 10px 20px;
-  box-shadow: 0.25em 0.25em 0.25em rgba(0, 0, 0, 0.1);
-  margin-top: 0 !important;
+  padding: 0.5em;
+  /* box-shadow: 0.25em 0.25em 0.25em rgba(0, 0, 0, 0.1); */
 }
 
-#dokieli-header a {
-  font-size: 24px;
+#dokieli-header address a {
+  display: block;
+  font-size: 2em;
   font-weight: bold;
-  color: #333;
   text-decoration: none;
   border: none;
+}
+#dokieli-header address a img {
+vertical-align: top;
+}
+#dokieli-header address a span {
+vertical-align: middle;
+}
+#dokieli-header address a span {
+margin-left:0.25em
 }
 
 #dokieli-header ul {
   list-style: none;
   margin: 0;
-  margin-right: 2.5em;
+  margin-right: 6em;
   padding: 0;
   display: flex;
-  gap: 20px;
+  gap: 2em;
 }
 
 #dokieli-header li:before {
@@ -1351,13 +1360,7 @@ text-align: center; */
 }
 
 #dokieli-header li a {
-  color: #333;
   text-decoration: none;
-  padding: 8px 16px;
-}
-
-#dokieli-header li a:hover {
-  border-bottom: 2px solid #333;
 }
 
 #dokieli-read-write-web {
