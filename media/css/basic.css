@@ -445,7 +445,7 @@ h1+#document-identifier {
 }
 
 a {
-  /*color: #080;*/
+  color: #080;
   text-decoration: none;
   border-bottom: 2px solid #333;
 }
@@ -1222,10 +1222,9 @@ table[typeof~="qb:DataSet"] tbody tr:not([typeof~="earl:Assertion"]) td {
 #dokieli-features,
 #dokieli-read-write-web,
 #dokieli-header,
-#dokieli-highlight,
 #get-involved,
 body>footer {
-  max-width: 99vw;
+  max-width: 99.5vw;
   margin-top:0;
   margin-bottom:0;
   margin-left: calc(-50vw + 50%);
@@ -1333,10 +1332,10 @@ text-align: center; */
   border: none;
 }
 #dokieli-header address a img {
-vertical-align: top;
+vertical-align: middle;
 }
 #dokieli-header address a span {
-vertical-align: middle;
+display: none;
 }
 #dokieli-header address a span {
 margin-left:0.25em
@@ -1421,8 +1420,15 @@ ul#program-committee {
     margin-left: 1em
   }
 
+  #summary {
+    font-size: 1.5em;
+    font-style: italic;
+    text-align: center;
+  }
+
   #dokieli-highlight {
-    padding: 2em;
+    /* padding: 2em; */
+    font-size: 1.25em;
   }
 
   #dokieli-highlight h2 {
@@ -1430,41 +1436,56 @@ ul#program-committee {
   }
 
   #dokieli-highlight img {
-    grid-area: b;
-    width: 80%;
+    grid-area: img;
+    width: 100%;
+    height: auto;
   }
 
   #dokieli-highlight>div {
-    display: grid;
+    /* display: grid;
     grid-gap: 2em;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr 1fr; 
+    grid-template-rows: 1fr 1fr; 
     grid-template-areas:
-      "a b"
-      "c b";
+      "p img"
+      "p2 img";
+    margin-top: 4em; */
   }
-
-  #dokieli-highlight>div>p {
-    width: 80%;
+  
+  #dokieli-highlight>div>:nth-child(1) {
+    /* grid-area: p; 
+    margin: 0; 
+    padding-left: 2em; */
   }
-
+  
+  #dokieli-highlight>div>:nth-child(3) {
+    /* grid-area: p2;
+    margin: 0;   
+    padding-left: 2em; */
+  }
+  
+/* 
   #dokieli-features,
   #dokieli-read-write-web,
   #get-involved,
-  #dokieli-highlight,
-  /*#figure-dokieli-overview,*/
   body>footer {
     max-width: 99.5vw;
   }
-
+ */
   #dokieli-features {
     background-color: #eee;
-    padding: 2em;
+    padding:2em 0;
+    /* padding: 2em 16em; */
+    
+  }
+
+  #dokieli-features div {
+    max-width:70em;
+    margin:0 auto;
   }
 
   #dokieli-features h2 {
-    margin-top: 0;
-    margin-left:0;
-    margin-bottom: 0.5em;
+    display:none;
   }
 
   #dokieli-features ul {
@@ -1477,7 +1498,7 @@ ul#program-committee {
     position: relative;
     display: flex;
     flex-direction: column;
-    margin: 1em 0 1em 2%;
+    margin: 1em 0;
     padding: 1em;
     border: 1px solid #ccc;
     border-radius: 0.5em;
@@ -1527,10 +1548,12 @@ ul#program-committee {
 
   #get-involved div {
     display: grid;
+    max-width: 50em;
+    margin: 0 auto;
   }
 
   #get-involved ul {
-    max-width: 66%;
+    /* max-width: 66%; */
     justify-self: center;
   }
 
@@ -1580,8 +1603,6 @@ ul#program-committee {
   #get-involved ul li p {
     grid-area: c;
   }
-
-
 
 
   footer dl dl {
