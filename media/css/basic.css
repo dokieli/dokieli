@@ -1394,7 +1394,13 @@ body>header li a {
 }
 
 #home #features h3 {
-  margin-top: 0.5em;
+  margin-top: 0;
+  margin-bottom:0;
+}
+#home #features figure,
+#home #features figure + p {
+  margin-top:1em;
+  margin-bottom:0;
 }
 
 #home #features ul {
@@ -1482,12 +1488,8 @@ body>header li a {
     grid-gap: 2em;
   }
 
-  #home #features h3 {
-    margin-top: 0;
-  }
-
   #home #features video {
-    max-height: 16em;
+    /* max-height: 16em; */
   }
 
   #home #features ul li {
