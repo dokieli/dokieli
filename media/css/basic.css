@@ -1224,7 +1224,7 @@ table[typeof~="qb:DataSet"] tbody tr:not([typeof~="earl:Assertion"]) td {
 #dokieli-header,
 #get-involved,
 body>footer {
-  max-width: 99.5vw;
+/*  max-width: 99.5vw;*/
   margin-top:0;
   margin-bottom:0;
   margin-left: calc(-50vw + 50%);
@@ -1330,6 +1330,7 @@ text-align: center; */
   font-weight: bold;
   text-decoration: none;
   border: none;
+  line-height: 1;
 }
 #dokieli-header address a img {
 vertical-align: middle;
@@ -1339,10 +1340,13 @@ display: none;
 margin-left:0.25em
 }
 
+#dokieli-header nav {
+margin-right:4.5em;
+}
+
 #dokieli-header ul {
   list-style: none;
   margin: 0;
-  margin-right: 4.5em;
   padding: 0;
   display: flex;
   gap: 2em;
