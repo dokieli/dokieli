@@ -1220,7 +1220,7 @@ table[typeof~="qb:DataSet"] tbody tr:not([typeof~="earl:Assertion"]) td {
 }
 
 #dokieli-features,
-#dokieli-read-write-web,
+.dokieli-callout,
 #dokieli-header,
 #get-involved,
 body>footer {
@@ -1232,7 +1232,7 @@ body>footer {
 }
 
 /* #dokieli-feature, */
-#dokieli-read-write-web
+.dokieli-callout
 
 /* ,
 #figure-dokieli-overview */
@@ -1307,7 +1307,7 @@ text-align: center; */
   /* width: 100%; display: block; */
 }
 
-#dokieli-read-write-web
+.dokieli-callout
 
 /* ,
 #figure-dokieli-overview */
@@ -1336,15 +1336,13 @@ vertical-align: middle;
 }
 #dokieli-header address a span {
 display: none;
-}
-#dokieli-header address a span {
 margin-left:0.25em
 }
 
 #dokieli-header ul {
   list-style: none;
   margin: 0;
-  margin-right: 6em;
+  margin-right: 4.5em;
   padding: 0;
   display: flex;
   gap: 2em;
@@ -1362,13 +1360,13 @@ margin-left:0.25em
   text-decoration: none;
 }
 
-#dokieli-read-write-web {
+.dokieli-callout {
   text-align: center;
   font-size: 2em;
   padding: 1em 0;
 }
 
-#dokieli-read-write-web:before {
+.dokieli-callout:before {
   content: "";
 }
 
@@ -1420,8 +1418,12 @@ ul#program-committee {
     margin-left: 1em
   }
 
+
+  h1 {
+    font-size:3em;
+  }
   #summary {
-    font-size: 1.5em;
+    font-size: 2em;
     font-style: italic;
     text-align: center;
   }
@@ -1466,7 +1468,7 @@ ul#program-committee {
   
 /* 
   #dokieli-features,
-  #dokieli-read-write-web,
+  .dokieli-callout,
   #get-involved,
   body>footer {
     max-width: 99.5vw;
