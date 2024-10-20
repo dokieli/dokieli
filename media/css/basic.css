@@ -618,7 +618,7 @@ body>footer {
 }
 
 body>footer>* {
-  max-width: 48em;
+  max-width: 50em;
   margin: 0 auto;
 }
 
@@ -1466,6 +1466,7 @@ ul#program-committee {
 #dokieli-highlight {
   /* padding: 2em; */
   font-size: 1.25em;
+  margin-bottom: 2em;
 }
 
 #dokieli-features ul {
