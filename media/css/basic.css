@@ -1376,10 +1376,104 @@ ul#program-committee {
   -webkit-column-count: 2;
 }
 
+#get-involved h2,
+#dokieli-highlight h2,
+#dokieli-features h2 {
+  display: none;
+}
+
+#get-involved {
+  background-color:#efe;
+  padding-top: 5em;
+  padding-bottom: 5em;
+}
+
+
+#dokieli-for-everyone {
+  margin:2em 0;
+}
+
+#dokieli-for-everyone h2 {
+  text-align: center;
+  margin-top:0;
+  margin-bottom: 2em;
+}
+
+
+#dokieli-for-everyone ul,
+#get-involved ul {
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0;
+}
+
+#dokieli-for-everyone ul li,
+#get-involved ul li {
+  text-align: left;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  grid-template-areas:
+    "b a"
+    "b c";
+  grid-column-gap: 1em;
+}
+
+
+#dokieli-for-everyone svg,
+#get-involved svg {
+  grid-area: b;
+  fill: #080;
+  width: 2em;
+  margin: 0 auto;
+}
+
+
+#dokieli-for-everyone h3,
+#get-involved h3 {
+  grid-area: a;
+  display: flex;
+  align-items: baseline;
+  margin-top: 0;
+  margin-bottom: 0;
+  line-height: 1.2;
+}
+
+#dokieli-for-everyone svg,
+#get-involved svg {
+  grid-area: b;
+  fill: #080;
+  width: 2em;
+  margin: 0 auto;
+}
+
+#dokieli-for-everyone ul li p,
+#get-involved ul li p {
+  grid-area: c;
+}
+
+#summary {
+  font-size: 2em;
+  font-style: italic;
+  text-align: center;
+}
+
+#dokieli-highlight {
+  /* padding: 2em; */
+  font-size: 1.25em;
+}
+
+#dokieli-features ul {
+  display: flex;
+  flex-direction: column;
+}
+
 /*
 1600px = 1000px = 1200px = 800px
 100em  = 62.5em = 75em   = 50em
 */
+
 @media screen and (min-width: 100em) {
   body {
     max-width: 50em;
@@ -1422,7 +1516,7 @@ ul#program-committee {
   h1 {
     font-size:3em;
   }
-  #summary {
+  /* #summary {
     font-size: 2em;
     font-style: italic;
     text-align: center;
@@ -1430,42 +1524,16 @@ ul#program-committee {
 
   #dokieli-highlight {
     /* padding: 2em; */
-    font-size: 1.25em;
-  }
+    /* font-size: 1.25em; */
+  /* } */
 
-  #dokieli-highlight h2 {
-    display: none;
-  }
 
-  #dokieli-highlight img {
+  /* #dokieli-highlight img {
     grid-area: img;
     width: 100%;
     height: auto;
-  }
+  } */
 
-  #dokieli-highlight>div {
-    /* display: grid;
-    grid-gap: 2em;
-    grid-template-columns: 1fr 1fr; 
-    grid-template-rows: 1fr 1fr; 
-    grid-template-areas:
-      "p img"
-      "p2 img";
-    margin-top: 4em; */
-  }
-  
-  #dokieli-highlight>div>:nth-child(1) {
-    /* grid-area: p; 
-    margin: 0; 
-    padding-left: 2em; */
-  }
-  
-  #dokieli-highlight>div>:nth-child(3) {
-    /* grid-area: p2;
-    margin: 0;   
-    padding-left: 2em; */
-  }
-  
 /* 
   #dokieli-features,
   .dokieli-callout,
@@ -1529,14 +1597,12 @@ ul#program-committee {
     max-height: 16em;
   }
 
-  #get-involved {
+  /* #get-involved {
     background-color:#efe;
     padding-top: 5em;
     padding-bottom: 5em;
   }
-  #get-involved h2 {
-    display: none;
-  }
+
 
   #dokieli-for-everyone {
     margin:2em 0;
@@ -1546,7 +1612,7 @@ ul#program-committee {
     text-align: center;
     margin-top:0;
     margin-bottom: 2em;
-  }
+  } */
 
   #get-involved div {
     display: grid;
@@ -1561,17 +1627,14 @@ ul#program-committee {
 
   #dokieli-for-everyone ul,
   #get-involved ul {
-    padding: 0;
-    list-style: none;
     display: grid;
     align-items: start;
     grid-template-columns: 1fr 1fr;
     grid-column-gap: 4em;
     grid-row-gap: 3.5em;
-    margin-bottom: 0;
   }
 
-  #dokieli-for-everyone ul li,
+  /* #dokieli-for-everyone ul li,
   #get-involved ul li {
     text-align: left;
     display: grid;
@@ -1580,9 +1643,9 @@ ul#program-committee {
       "b a"
       "b c";
     grid-column-gap: 1em;
-  }
+  } */
 
-
+/* 
   #dokieli-for-everyone h3,
   #get-involved h3 {
     grid-area: a;
@@ -1604,7 +1667,7 @@ ul#program-committee {
   #dokieli-for-everyone ul li p,
   #get-involved ul li p {
     grid-area: c;
-  }
+  } */
 
 
   footer dl dl {
