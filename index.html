@@ -9,8 +9,8 @@
     <script src="scripts/dokieli.js"></script>
   </head>
 
-  <body about="" prefix="rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns# rdfs: http://www.w3.org/2000/01/rdf-schema# owl: http://www.w3.org/2002/07/owl# xsd: http://www.w3.org/2001/XMLSchema# rdfa: http://www.w3.org/ns/rdfa# dcterms: http://purl.org/dc/terms/ dctypes: http://purl.org/dc/dcmitype/ foaf: http://xmlns.com/foaf/0.1/ pimspace: http://www.w3.org/ns/pim/space# skos: http://www.w3.org/2004/02/skos/core# prov: http://www.w3.org/ns/prov# mem: http://mementoweb.org/ns# qb: http://purl.org/linked-data/cube# schema: http://schema.org/ void: http://rdfs.org/ns/void# rsa: http://www.w3.org/ns/auth/rsa# cert: http://www.w3.org/ns/auth/cert# wgs: http://www.w3.org/2003/01/geo/wgs84_pos# bibo: http://purl.org/ontology/bibo/ sioc: http://rdfs.org/sioc/ns# doap: http://usefulinc.com/ns/doap# dbr: http://dbpedia.org/resource/ dbp: http://dbpedia.org/property/ sio: http://semanticscience.org/resource/ opmw: http://www.opmw.org/ontology/ deo: http://purl.org/spar/deo/ doco: http://purl.org/spar/doco/ cito: http://purl.org/spar/cito/ fabio: http://purl.org/spar/fabio/ oa: http://www.w3.org/ns/oa# as: https://www.w3.org/ns/activitystreams# ldp: http://www.w3.org/ns/ldp# solid: http://www.w3.org/ns/solid/terms# acl: http://www.w3.org/ns/auth/acl# earl: http://www.w3.org/ns/earl# spec: http://www.w3.org/ns/spec# odrl: http://www.w3.org/ns/odrl/2/ dio: https://w3id.org/dio# rel: https://www.w3.org/ns/iana/link-relations/relation#" typeof="schema:CreativeWork prov:Entity">
-    <header id="dokieli-header">
+  <body about="" class="do-site" id="home" prefix="rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns# rdfs: http://www.w3.org/2000/01/rdf-schema# owl: http://www.w3.org/2002/07/owl# xsd: http://www.w3.org/2001/XMLSchema# rdfa: http://www.w3.org/ns/rdfa# dcterms: http://purl.org/dc/terms/ dctypes: http://purl.org/dc/dcmitype/ foaf: http://xmlns.com/foaf/0.1/ pimspace: http://www.w3.org/ns/pim/space# skos: http://www.w3.org/2004/02/skos/core# prov: http://www.w3.org/ns/prov# mem: http://mementoweb.org/ns# qb: http://purl.org/linked-data/cube# schema: http://schema.org/ void: http://rdfs.org/ns/void# rsa: http://www.w3.org/ns/auth/rsa# cert: http://www.w3.org/ns/auth/cert# wgs: http://www.w3.org/2003/01/geo/wgs84_pos# bibo: http://purl.org/ontology/bibo/ sioc: http://rdfs.org/sioc/ns# doap: http://usefulinc.com/ns/doap# dbr: http://dbpedia.org/resource/ dbp: http://dbpedia.org/property/ sio: http://semanticscience.org/resource/ opmw: http://www.opmw.org/ontology/ deo: http://purl.org/spar/deo/ doco: http://purl.org/spar/doco/ cito: http://purl.org/spar/cito/ fabio: http://purl.org/spar/fabio/ oa: http://www.w3.org/ns/oa# as: https://www.w3.org/ns/activitystreams# ldp: http://www.w3.org/ns/ldp# solid: http://www.w3.org/ns/solid/terms# acl: http://www.w3.org/ns/auth/acl# earl: http://www.w3.org/ns/earl# spec: http://www.w3.org/ns/spec# odrl: http://www.w3.org/ns/odrl/2/ dio: https://w3id.org/dio# rel: https://www.w3.org/ns/iana/link-relations/relation#" typeof="schema:CreativeWork prov:Entity">
+    <header>
       <address>
         <a href="/"><img alt="dokieli logo" height="64" src="media/images/logo.png" width="64" /><span>dokieli</span></a>
       </address>
@@ -30,8 +30,8 @@
         <div datatype="rdf:HTML" property="schema:description">
           <p id="summary" property="schema:summary">dokieli is a clientside editor for decentralised article publishing, annotations, and social interactions.</p>
 
-          <section id="dokieli-highlight" inlist="" rel="schema:hasPart" resource="#dokieli-highlight">
-            <h2 property="schema:name">Highlight</h2>
+          <section id="introduction" inlist="" rel="schema:hasPart" resource="#introduction">
+            <h2 property="schema:name">Introduction</h2>
             <div datatype="rdf:HTML" property="schema:description">
               <p>dokieli enables individuals and communities, to share, publish, and annotate articles using their preferred identities and storage, all under their control. All content produced by dokieli can be used with other standard-compliant applications, so you are always free to switch to another application and take your content with you.</p>
 
@@ -39,9 +39,9 @@
             </div>
           </section>
 
-          <p class="dokieli-callout">dokieli enables the <em>Write</em> dimension of the Read-Write Web.</p>
+          <p class="do-callout">dokieli enables the <em>Write</em> dimension of the Read-Write Web.</p>
 
-          <section id="dokieli-features" inlist="" rel="schema:hasPart" resource="#dokieli-features">
+          <section id="features" inlist="" rel="schema:hasPart" resource="#features">
             <h2 property="schema:name">Features</h2>
             <div datatype="rdf:HTML" property="schema:description">
               <ul>
@@ -88,7 +88,7 @@
                   <h3>Inline Charts</h3>
 
                   <figure id="figure-dokieli-sparqlines" rel="schema:video" resource="#figure-dokieli-sparqlines">
-                    <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/GDP-per-capita-growth--annual---.svg" preload="none" resource="#figure-dokieli-sparqlines" typeof="schema:VideoObject" width="800">
+                    <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-sparqlines.jpg" preload="none" resource="#figure-dokieli-sparqlines" typeof="schema:VideoObject" width="800">
                       <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-sparqlines.webm" type="video/webm" />
                     </video>
                     <figcaption><a href="https://dokie.li/media/video/dokieli-sparqlines.webm">Video</a> of Sparqlines interaction in dokieli [<time datatype="xsd:duration" datetime="PT26S" property="schema:duration">26s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
@@ -101,7 +101,7 @@
                   <h3>Geo and Statistical Data</h3>
 
                   <figure id="figure-dokieli-geo-stats" rel="schema:video" resource="#figure-dokieli-geo-stats">
-                    <video controls="controls" crossorigin="anonymous" poster="" preload="none" resource="#figure-dokieli-geo-stats" typeof="schema:VideoObject" width="800">
+                    <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-geo-stats.jpg" preload="none" resource="#figure-dokieli-geo-stats" typeof="schema:VideoObject" width="800">
                       <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-geo-stats.webm" type="video/webm" />
                     </video>
                     <figcaption><a href="https://dokie.li/media/video/dokieli-geo-stats.webm">Video</a> of Geo and statistical data importing and viewing in dokieli [<time datatype="xsd:duration" datetime="PT26S" property="schema:duration">26s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
@@ -114,7 +114,7 @@
                   <h3>Web Feeds</h3>
 
                   <figure id="figure-dokieli-generate-feed" rel="schema:video" resource="#figure-dokieli-generate-feed">
-                    <video controls="controls" crossorigin="anonymous" poster="" preload="none" resource="#figure-dokieli-generate-feed" typeof="schema:VideoObject" width="800">
+                    <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-generate-feed.jpg" preload="none" resource="#figure-dokieli-generate-feed" typeof="schema:VideoObject" width="800">
                       <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-generate-feed.webm" type="video/webm" />
                     </video>
                     <figcaption><a href="https://dokie.li/media/video/dokieli-generate-feed.webm">Video</a> of generating and publishing web feed in dokieli [<time datatype="xsd:duration" datetime="PT45S" property="schema:duration">45s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
@@ -127,7 +127,7 @@
                   <h3>Archive and Robustify Links</h3>
 
                   <figure id="figure-dokieli-robustify-links" rel="schema:video" resource="#figure-dokieli-robustify-links">
-                    <video controls="controls" crossorigin="anonymous" poster="" preload="none" resource="#figure-dokieli-robustify-links" typeof="schema:VideoObject" width="800">
+                    <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-robustify-links.jpg" preload="none" resource="#figure-dokieli-robustify-links" typeof="schema:VideoObject" width="800">
                       <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-robustify-links.webm" type="video/webm" />
                     </video>
                     <figcaption><a href="https://dokie.li/media/video/dokieli-robustify-links.webm">Video</a> of robustifying links in dokieli [<time datatype="xsd:duration" datetime="PT38S" property="schema:duration">38s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
@@ -140,7 +140,7 @@
                   <h3>Access Request</h3>
 
                   <figure id="figure-dokieli-access-request" rel="schema:video" resource="#figure-dokieli-access-request">
-                    <video controls="controls" crossorigin="anonymous" poster="" preload="none" resource="#figure-dokieli-access-request" typeof="schema:VideoObject" width="800">
+                    <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-access-request.jpg" preload="none" resource="#figure-dokieli-access-request" typeof="schema:VideoObject" width="800">
                       <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-access-request.webm" type="video/webm" />
                     </video>
                     <figcaption><a href="https://dokie.li/media/video/dokieli-access-request.webm">Video</a> of Access Request in dokieli [<time datatype="xsd:duration" datetime="PT30S" property="schema:duration">30s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
@@ -153,7 +153,7 @@
                   <h3>Open Digital Rights</h3>
 
                   <figure id="figure-dokieli-odrl-storage-description" rel="schema:video" resource="#figure-dokieli-odrl-storage-description">
-                    <video controls="controls" crossorigin="anonymous" poster="" preload="none" resource="#figure-dokieli-odrl-storage-description" typeof="schema:VideoObject" width="800">
+                    <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-odrl-storage-description.jpg" preload="none" resource="#figure-dokieli-odrl-storage-description" typeof="schema:VideoObject" width="800">
                       <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-odrl-storage-description.webm" type="video/webm" />
                     </video>
                     <figcaption><a href="https://dokie.li/media/video/dokieli-odrl-storage-description.webm">Video</a> of ODRL in dokieli [<time datatype="xsd:duration" datetime="PT30S" property="schema:duration">30s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
@@ -166,7 +166,7 @@
                   <h3>Technical Specification Authoring</h3>
 
                   <figure id="figure-dokieli-odrl-spec-conformance" rel="schema:video" resource="#figure-dokieli-spec-conformance">
-                    <video controls="controls" crossorigin="anonymous" poster="" preload="none" resource="#figure-dokieli-spec-conformance" typeof="schema:VideoObject" width="800">
+                    <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-spec-conformance.jpg" preload="none" resource="#figure-dokieli-spec-conformance" typeof="schema:VideoObject" width="800">
                       <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-spec-conformance.webm" type="video/webm" />
                     </video>
                     <figcaption><a href="https://dokie.li/media/video/dokieli-spec-conformance.webm">Video</a> of in dokieli [<time datatype="xsd:duration" datetime="PT30S" property="schema:duration">30s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
@@ -178,9 +178,9 @@
             </div>
           </section>
 
-          <p class="dokieli-callout">Create, connect and share your ideas.</p>
+          <p class="do-callout">Create, connect and share your ideas.</p>
 
-          <section id="dokieli-for-everyone" inlist="" rel="schema:hasPart" resource="#dokieli-for-everyone">
+          <section id="for-everyone" inlist="" rel="schema:hasPart" resource="#for-everyone">
             <h2 property="schema:name">For everyone</h2>
             <div datatype="rdf:HTML" property="schema:description">
               <ul rel="schema:audience">
@@ -223,7 +223,7 @@
             </div>
           </section>
 
-          <p class="dokieli-callout">dokieli is as an open source project using open web standards.</p>
+          <p class="do-callout">dokieli is an open source project using open web standards.</p>
 
           <section id="get-involved" inlist="" rel="schema:hasPart" resource="#get-involved">
             <h2 property="schema:name">Get involved</h2>
