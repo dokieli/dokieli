@@ -43,17 +43,25 @@ function fragmentFromString(strHTML) {
   return document.createRange().createContextualFragment(strHTML);
 }
 
-function generateUUID() {
+function generateUUID(inputString) {
   var lut = [];
   for (var i = 0; i < 256; i++) {
     lut[i] = (i < 16 ? "0" : "") + i.toString(16);
   }
-  var s = function () {
-    var d0 = (Math.random() * 0xffffffff) | 0;
-    var d1 = (Math.random() * 0xffffffff) | 0;
-    var d2 = (Math.random() * 0xffffffff) | 0;
-    var d3 = (Math.random() * 0xffffffff) | 0;
-    return (
+
+  // Simple FNV-1a hash function to generate a deterministic 32-bit integer hash for each part
+  function fnv1aHash(str, seed = 2166136261) {
+    let hash = seed;
+    for (let i = 0; i < str.length; i++) {
+      hash ^= str.charCodeAt(i);
+      hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+    }
+    return hash >>> 0; // Ensure unsigned 32-bit integer
+  }
+
+  // Generate a UUID from four 32-bit numbers
+  function formatUUID(d0, d1, d2, d3) {
+    let uuid = (
       lut[d0 & 0xff] +
       lut[(d0 >> 8) & 0xff] +
       lut[(d0 >> 16) & 0xff] +
@@ -75,8 +83,30 @@ function generateUUID() {
       lut[(d3 >> 16) & 0xff] +
       lut[(d3 >> 24) & 0xff]
     );
-  };
-  return s();
+
+    // Ensure the UUID starts with a letter (a-f) if it's deterministic
+    if (inputString && /^[0-9]/.test(uuid[0])) {
+      uuid = 'a' + uuid.slice(1);
+    }
+
+    return uuid;
+  }
+
+  // Generate deterministic UUID if inputString is provided
+  if (inputString) {
+    const d0 = fnv1aHash(inputString, 2166136261);
+    const d1 = fnv1aHash(inputString, 2166136261 ^ 0xdeadbeef);
+    const d2 = fnv1aHash(inputString, 2166136261 ^ 0xcafebabe);
+    const d3 = fnv1aHash(inputString, 2166136261 ^ 0x8badf00d);
+    return formatUUID(d0, d1, d2, d3);
+  }
+
+  // Otherwise, generate random UUID
+  const d0 = (Math.random() * 0xffffffff) | 0;
+  const d1 = (Math.random() * 0xffffffff) | 0;
+  const d2 = (Math.random() * 0xffffffff) | 0;
+  const d3 = (Math.random() * 0xffffffff) | 0;
+  return formatUUID(d0, d1, d2, d3);
 }
 
 function generateId(prefix, string, suffix) {
