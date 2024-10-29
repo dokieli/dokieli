@@ -1124,6 +1124,16 @@ function buttonClose() {
   });
 }
 
+function buttonToggle() {
+  document.addEventListener('click', function(e) {
+    var button = e.target.closest('button.toggle');
+    if (button) {
+      var aside = button.closest('aside');
+      aside.classList.toggle("on");
+    }
+  });
+}
+
 function getButtonDisabledHTML(id) {
   var html = '';
 
@@ -2708,7 +2718,7 @@ function toggleAnnotation() {
       var hash = new URL(ref.querySelector('a')?.href).hash;
       var refId = hash.substring(1);
 
-      var aside = document.querySelector('#document-interactions[class~="do"]:has(article[id="' + refId + '"])');
+      var aside = document.querySelector('#document-notifications[class~="do"]:has(article[id="' + refId + '"])');
 
       if (!hash.length || !aside) return;
 
@@ -2756,6 +2766,7 @@ export {
   getDocumentStatusHTML,
   buttonRemoveAside,
   buttonClose,
+  buttonToggle,
   getButtonDisabledHTML,
   showTimeMap,
   getGraphContributorsRole,
