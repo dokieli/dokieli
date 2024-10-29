@@ -2522,7 +2522,7 @@ function getAccessModeOptionsHTML(options) {
   //Contextual access control modes and human-readable labels
   //UC-sharing-article: See Config.AccessContext.Share
   options['context'] = options['context'] || 'Share';
-	var accessContext = Config.AccessContext[options.context] || 'Share';
+  var accessContext = Config.AccessContext[options.context] || 'Share';
 
   var s  = '<option value="">No access</option>';
 
@@ -2699,6 +2699,31 @@ function serializeTableSectionToText(section) {
   return data.map(row => '"' + row + '"').join('\n');
 }
 
+
+function toggleAnnotation() {
+  document.addEventListener('click', function(e) {
+    var ref = e.target.closest('span.ref.do');
+
+    if (ref) {
+      var hash = new URL(ref.querySelector('a')?.href).hash;
+      var refId = hash.substring(1);
+
+      var aside = document.querySelector('#document-interactions[class~="do"]:has(article[id="' + refId + '"])');
+
+      if (!hash.length || !aside) return;
+
+      if (aside.classList.contains('on')) {
+        aside.classList.remove('on');
+        window.history.replaceState({}, null, DO.C.DocumentURL);
+      }
+      else {
+        aside.classList.add('on');
+        window.history.replaceState({}, null, hash);
+      }
+    }
+  });
+}
+
 export {
   escapeCharacters,
   cleanEscapeCharacters,
@@ -2773,5 +2798,6 @@ export {
   showResourceAudienceAgentOccupations,
   setCopyToClipboard,
   serializeTableToText,
-  serializeTableSectionToText
+  serializeTableSectionToText,
+  toggleAnnotation
 }
