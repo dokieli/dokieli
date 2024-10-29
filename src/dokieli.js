@@ -1023,7 +1023,7 @@ DO = {
             .on('click', function(e, d) {
               e.preventDefault();
               e.stopPropagation();
-  
+
               var iri = d.id;
               if ('type' in group[d.group] && group[d.group].type !== 'rdf:Literal' && !(d.id in DO.C.Graphs)) {
                 options = options || {};
@@ -1325,7 +1325,7 @@ DO = {
       graphNodes = undefined;
       return Promise.resolve(graphData);
     },
- 
+
     showGraph: function(resources, selector, options){
       if (!DO.C.GraphViewerAvailable) { return; }
 
@@ -1581,7 +1581,7 @@ DO = {
 
       if (style) {
         var title = style.lastIndexOf('/');
-        title = (title > -1) ? style.substr(title + 1) : style; 
+        title = (title > -1) ? style.substr(title + 1) : style;
 
         if (style.startsWith('http')) {
           var pIRI = getProxyableIRI(style);
@@ -1725,7 +1725,7 @@ DO = {
         }
       });
     },
-    
+
     processPotentialAction: function(resourceInfo) {
       var g = resourceInfo.graph;
       var triples = g._graph;
@@ -2442,7 +2442,7 @@ DO = {
         }
         else {
           var db = DO.C.Resource[documentURL].headers.linkHeaders.rel('describedby');
- 
+
           var missingResource = db.filter(function(relationItem) { return !DO.C.Resource[relationItem.uri]; });
 
           if (missingResource == undefined) {
@@ -2708,7 +2708,7 @@ DO = {
             }
             else if (id == 'table-of-advisements') {
 //TODO: Sort by advisementSubject then advisementLevel? or offer controls on the table.
-              
+
               s += '<caption>Non-normative Advisements</caption>'
               s += '<thead><tr><th colspan="2">Advisement</th></tr><tr><th>Level</th><th>Statement</th></tr></thead>';
               s += '<tbody>';
@@ -3318,7 +3318,7 @@ console.log(reason);
                 }
               });
             }
-            
+
             if (!robustLinkFound) {
               DO.U.createRobustLink(i.value, node, options).then(
                 function(rl){
@@ -4172,7 +4172,7 @@ console.log(reason);
                   getDocumentContentNode(document).innerHTML = '<main><article about="" typeof="schema:Article"></article></main>';
                   DO.U.Editor.enableEditor('author');
 
-                  
+
                   // or better: createHTML() and update spawnDocument()
                   //XXX Experimental:
 //                   var html = getDocument()
@@ -4494,7 +4494,7 @@ console.log(reason);
       var hasAccessModeControl = accessModeAllowed(documentURL, 'control');
       if (hasAccessModeControl) {
         var h2 = document.querySelector('#share-resource h2');
-        
+
         var shareResourcePermissions = `
           <div id="share-resource-permissions">
             <h3>Permissions</h3>
@@ -4550,7 +4550,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
                 showSuggestions(getFilteredContacts());
               }
             });
-            
+
             input.addEventListener('input', function(e) {
               const query = e.target.value.trim().toLowerCase();
               showSuggestions(getFilteredContacts(query));
@@ -4559,16 +4559,16 @@ console.log('XXX: Cannot access effectiveACLResource', e);
             var getFilteredContacts = function(query = '') {
               const contacts = Object.keys(DO.C.User.Contacts);
               const subjectsWithAccessKeys = new Set(Object.keys(subjectsWithAccess));
-            
+
               return contacts.filter(contact => {
                 const matchesQuery = (
-                  !query.length || 
+                  !query.length ||
                   contact.toLowerCase().includes(query) ||
                   DO.C.User.Contacts[contact].Name?.toLowerCase().includes(query) ||
                   DO.C.User.Contacts[contact].IRI?.toLowerCase().includes(query) ||
                   DO.C.User.Contacts[contact].URL?.toLowerCase().includes(query)
                 );
-            
+
                 return !subjectsWithAccessKeys.has(contact) && matchesQuery;
               });
             }
@@ -4654,8 +4654,8 @@ console.log('XXX: Cannot access effectiveACLResource', e);
                   }
                 })
 // console.log(verifiedAccessModes)
-          
-                const selectedAccessMode = 
+
+                const selectedAccessMode =
                   (verifiedAccessModes.includes(DO.C.Vocab['aclControl']['@id']) && DO.C.Vocab['aclControl']['@id']) ||
                   (verifiedAccessModes.includes(DO.C.Vocab['aclWrite']['@id']) && DO.C.Vocab['aclWrite']['@id']) ||
                   (verifiedAccessModes.includes(DO.C.Vocab['aclRead']['@id']) && DO.C.Vocab['aclRead']['@id']) ||
@@ -4842,10 +4842,10 @@ console.log(e);
           if (authorizations[authorization][subjectType].includes(accessSubject)) {
             var multipleAccessSubjects = (authorizations[authorization][subjectType].length > 1) ? true : false;
             var deleteAccessObjectProperty = (hasOwnACLResource) ? 'accessTo' : 'default';
-  
+
             var deleteAccessSubjectProperty = subjectType;
             var deleteAccessSubject = accessSubject;
-  
+
             var accessModes = authorizations[authorization].mode;
             var deleteAccessModes = '<' + accessModes.join('>, <') + '>';
 
@@ -4885,7 +4885,7 @@ console.log(e);
       }
       else {
         // eslint-disable-next-line no-undef
-        var updatedAuthorizations = structuredClone(authorizations); 
+        var updatedAuthorizations = structuredClone(authorizations);
         var authorizationsToDelete = [];
 
         Object.keys(updatedAuthorizations).forEach(authorization => {
@@ -5261,7 +5261,7 @@ console.log(e);
                       DO.U.buttonSubscribeNotificationChannel(nodes, topicResource);
                     }
                     else {
-                      // TODO: var status = (g.status) ? g.status 
+                      // TODO: var status = (g.status) ? g.status
                       sD.insertAdjacentHTML('beforeend', '<div id="' + id + '-storage-description">Unavailable</div>');
                     }
                   });
@@ -6208,7 +6208,7 @@ console.log(response)
               'timer': 5000
             }
             addMessageToLog(message, Config.MessageLog);;
-            message.content = '<span class="progress">' + Icon[".fas.fa-times-circle.fa-fw"] + message.content + '</span>'; 
+            message.content = '<span class="progress">' + Icon[".fas.fa-times-circle.fa-fw"] + message.content + '</span>';
             showActionMessage(document.documentElement, message);
 
             throw error
@@ -6465,7 +6465,7 @@ console.log(response)
           case 'application/gpx+xml':
 // console.log(data)
             tmpl = await generateGeoView(data)
-            // FIXME: Tested with generateGeoView returning a Promise but somehow 
+            // FIXME: Tested with generateGeoView returning a Promise but somehow
             .then(function(i){
               var id = 'geo';
               var metadataBounds = document.querySelector('#' + id + ' figcaption a');
@@ -6576,7 +6576,7 @@ console.log(response)
             e.classList.remove('do');
             if (e.classList.length == 0) { e.removeAttribute('class'); }
           });
-  
+
 // console.log(document.location.protocol);
           if (!iri.startsWith('file:')){
             var iriHost = iri.split('//')[1].split('/')[0];
@@ -7946,7 +7946,7 @@ WHERE {\n\
 
       var datetime = note.schemadatePublished || note.dctermscreated || note.aspublished;
 // console.log(datetime);
-      var annotatedBy = (note.schemacreator && note.schemacreator.at(0) !== undefined) ? note.schemacreator : 
+      var annotatedBy = (note.schemacreator && note.schemacreator.at(0) !== undefined) ? note.schemacreator :
       (note.dctermscreator && note.dctermscreator.at(0) !== undefined) ? note.dctermscreator :
       (note.asactor && note.asactor.at(0) !== undefined) ? note.asactor :
       undefined;
@@ -8277,7 +8277,7 @@ WHERE {\n\
 
       var cEURL = stripFragmentFromString(citation.citingEntity);
 // console.log(DO.C.Activity[cEURL]);
-   
+
       if (DO.C.Activity[cEURL]) {
         if (DO.C.Activity[cEURL]['Graph']) {
           DO.U.addCitation(citation, DO.C.Activity[cEURL]['Graph']);
