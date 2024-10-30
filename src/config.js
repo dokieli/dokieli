@@ -89,7 +89,9 @@ export default {
   },
   Button: {
     Close: '<button class="close" title="Close">' + Icon[".fas.fa-times.fa-2x"] + '</button>',
-    Delete: '<button class="delete" title="Delete">' + Icon[".fas.fa-trash-alt"] + '</button>'
+    Delete: '<button class="delete" title="Delete">' + Icon[".fas.fa-trash-alt"] + '</button>',
+    Toggle: '<button class="toggle" title="Show/Hide">' + Icon[".fas.fa-angle-right"] + '</button>',
+    More: '<button class="more" title="Show more">' + Icon[".fas.fa-rotate"] + '</button>'
   },
   ButtonStates: {
     'resource-share': true,
