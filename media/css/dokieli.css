@@ -366,7 +366,7 @@ border-bottom:1px solid #ccc;
 border-bottom-left-radius:0.5em;
 box-shadow:0.25em 0.25em 0.25em rgba(0,0,0,0.1);
 }
-aside.do.on:not([id="document-items"]) {
+aside.do.on:not([id="document-items"]):not([id="document-notifications"]) {
 left:50%;
 transform:translate(-50%, 0);
 }
@@ -448,6 +448,11 @@ content:",";
 aside.do.on details li:last-child:after {
 margin-right: 0;
 content:"";
+}
+aside.do blockquote {
+padding-left: 1em;
+border-left: 0.25em solid #ccc;
+margin: 0 0 1em 0;
 }
 
 .do input[type="text"][contenteditable="false"] {
@@ -545,40 +550,65 @@ width:auto;
 position:static;
 }
 
-#document-interactions {
-margin-top:4em;
+#document-notifications:not([class~="on"]) {
+display:none;
 }
-#document-interactions h2 {
-margin-top:0;
+
+#document-notifications {
+position: fixed;
+top: 0;
+right: 0;
+z-index:2147483646;
+width:25em;
+height:100%;
+max-height:100%;
+overflow: hidden;
+padding-left:3em;
+}
+#document-notifications h2 {
+margin-top:1.5em;
 margin-bottom:0.5em;
 }
-#document-interactions .count {
+#document-notifications button.toggle {
+position: absolute;
+top: 0;
+left: 0;
+width:2em;
+height:100%;
+}
+
+#document-notifications .count {
 margin-bottom:0;
 font-weight:normal;
 font-size:1em;
 }
-#document-interactions .count:after {
+#document-notifications .count:after {
 content:':';
 }
-#document-interactions article {
+#document-notifications > div {
+overflow-y: auto;
+padding-right:1em;
+}
+
+#document-notifications article {
 margin:0 0 2em 0;
 }
-#document-interactions article article {
+#document-notifications article article {
 padding-left:2.25em;
 padding-top:1em;
 margin-bottom:0;
 border-left:2px solid #ccc;
 }
-#document-interactions article h1,
-#document-interactions article h3 {
+#document-notifications article h1,
+#document-notifications article h3 {
 margin-bottom:0;
 font-size:1em;
 }
-#document-interactions article img {
+#document-notifications article img {
 vertical-align:middle;
 margin-right:0.5em;
 }
-#document-interactions article p:last-child {
+#document-notifications article p:last-child {
 margin-bottom:0;
 }
 
@@ -607,20 +637,20 @@ font-size: initial;
 width:100%;
 }
 
-#document-interactions article.do {
+#document-notifications article.do {
 position:relative;
 }
 
-#document-interactions article.do h2,
-#document-interactions article.do h3,
-#document-interactions article.do h4,
-#document-interactions article.do dt,
-#document-interactions article.do .inbox,
-#document-interactions article.do .target,
-#document-interactions article.do .renderedvia,
-#document-interactions article.do .language,
-#document-interactions article.do .rights,
-#document-interactions article.do .canonical,
+#document-notifications article.do h2,
+#document-notifications article.do h3,
+#document-notifications article.do h4,
+#document-notifications article.do dt,
+#document-notifications article.do .inbox,
+#document-notifications article.do .target,
+#document-notifications article.do .renderedvia,
+#document-notifications article.do .language,
+#document-notifications article.do .rights,
+#document-notifications article.do .canonical,
 aside.note h2,
 aside.note h3,
 aside.note h4,
@@ -634,9 +664,9 @@ aside.note .canonical {
 display:none;
 }
 
-#document-interactions section,
-#document-interactions article.do dl,
-#document-interactions article.do dl *,
+#document-notifications section,
+#document-notifications article.do dl,
+#document-notifications article.do dl *,
 .do div,
 aside.note dl,
 aside.note dl * {
@@ -825,7 +855,7 @@ button[class|="resource"],
 button[class~="editor-enable"],
 button[class|="review"],
 button[class~="embed-data-meta"],
-aside.note button.delete,
+aside.do button.delete,
 button[class~="robustlinks-reuse"] {
 display:inline-block;
 border:0;
@@ -1263,7 +1293,7 @@ padding:0;
 aside.do button {
 font-weight:bold;
 }
-aside.note button.delete {
+aside.do button.delete {
 position:absolute;
 top:0;
 right:0;

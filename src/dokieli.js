@@ -7,7 +7,7 @@
  */
 
 import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceGraph, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource } from './fetcher.js'
-import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, buttonClose, buttonRemoveAside, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, getButtonDisabledHTML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getClosestSectionNode, getAgentHTML, setEditSelections, getNodeLanguage, createActivityHTML, createLicenseHTML, createLanguageHTML, getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getResourceTypeOptionsHTML, getPublicationStatusOptionsHTML, getLanguageOptionsHTML, getLicenseOptionsHTML, getCitationOptionsHTML, getDocumentNodeFromString, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, accessModeAllowed, getAccessModeOptionsHTML } from './doc.js'
+import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, buttonClose, notificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, getButtonDisabledHTML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getClosestSectionNode, getAgentHTML, setEditSelections, getNodeLanguage, createActivityHTML, createLicenseHTML, createLanguageHTML, getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getResourceTypeOptionsHTML, getPublicationStatusOptionsHTML, getLanguageOptionsHTML, getLicenseOptionsHTML, getCitationOptionsHTML, getDocumentNodeFromString, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote } from './doc.js'
 import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, getAbsoluteIRI, generateDataURI } from './uri.js'
 import { getResourceGraph, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, serializeGraph, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentOutbox, getAgentStorage, getAgentInbox, getLinkRelationFromHead, sortGraphTriples, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching } from './graph.js'
 import { notifyInbox, sendNotifications, postActivity } from './inbox.js'
@@ -51,6 +51,13 @@ DO = {
       DO.C['CollectionItems'] = DO.C['CollectionItems'] || {};
       DO.C['CollectionPages'] = ('CollectionPages' in DO.C && DO.C.CollectionPages.length > 0) ? DO.C.CollectionPages : [];
       DO.C['Collections'] = ('Collections' in DO.C && DO.C.Collections.length > 0) ? DO.C.Collections : [];
+
+      if (DO.C.Notification[url]) {
+        return;
+      }
+
+      DO.C.Notification[url] = {};
+      DO.C.Notification[url]['Activities'] = [];
 
       return getResourceGraph(url, options.headers, options)
         .then(
@@ -186,25 +193,30 @@ DO = {
       );
     },
 
-    showContactsActivities: function(e) {
-      e = e.target.closest('.resource-activities');
+    showContactsActivities: function() {
+      var aside = document.querySelector('#document-notifications');
 
-      var showProgress = function(node){
-        var i = node.querySelector('.fa-bolt')
-        node.disabled = true;
-        var icon = fragmentFromString(Icon[".fas.fa-circle-notch.fa-spin.fa-fw"].replace(/ fa\-fw/, ' fa-fw fa-2x'));
-        i.parentNode.replaceChild(icon, i);
+      var showProgress = function(){
+        var icon = aside.querySelector('.fa-spin');
+        if (icon) return;
+
+        icon = fragmentFromString(Icon[".fas.fa-circle-notch.fa-spin.fa-fw"].replace(/ fa\-fw/, ' fa-fw fa-2x'));
+
+        var buttonMore = aside.querySelector('button.more');
+        if (buttonMore) {
+          buttonMore.parentNode.removeChild(buttonMore);
+        }
+
+        aside.appendChild(icon);
       }
 
-      var removeProgress = function(node) {
-        var i = node.querySelector('.fa-spin')
-        var icon = fragmentFromString(Icon[".fas.fa-circle.fa-2x"]);
-        i.parentNode.replaceChild(icon, i);
+      var removeProgress = function() {
+        var icon = aside.querySelector('.fa-spin');
+        icon.parentNode.removeChild(icon);
+        aside.querySelector('div').insertAdjacentHTML('beforeend', DO.C.Button.More);
       }
 
-      if (e) {
-        showProgress(e)
-      }
+      showProgress();
 
       var promises = [];
 
@@ -216,10 +228,10 @@ DO = {
           promises = promises.concat(DO.U.processAgentActivities(contact));
         });
       }
-      else {
+      else if (DO.C.User.IRI) {
         getUserContacts(DO.C.User.IRI)
           .catch(() => {
-            removeProgress(e)
+            removeProgress()
           })
           .then(contacts => {
             if (contacts.length > 0) {
@@ -237,7 +249,7 @@ DO = {
           })
       }
 
-      Promise.allSettled(promises).then(r => removeProgress(e))
+      Promise.allSettled(promises).then(r => removeProgress())
     },
 
     processAgentActivities: function(agent) {
@@ -333,11 +345,10 @@ DO = {
 
           return Promise.allSettled(promises);
         },
-        function(reason) {
+      ).catch((error) => {
           console.log(url + ' has no activities.');
-          return reason;
-        }
-      );
+          return error;
+      });
     },
 
     getActivities: function(url, options) {
@@ -356,6 +367,11 @@ DO = {
     showActivities: function(url, options = {}) {
       options['headers'] = options.headers || {};
 
+      if (DO.C.Notification[url] || DO.C.Activity[url]) {
+        return;
+      }
+
+      //XXX: Revisit this which may be adding things that will also appear in DO.C.Activity
       DO.C.Notification[url] = {};
       DO.C.Notification[url]['Activities'] = [];
 
@@ -389,6 +405,7 @@ DO = {
 
             if (types.length > 0) {
               var resourceTypes = types;
+              //XXX: May need to be handled in a similar way to to as:Anounce/Create?
               if(resourceTypes.indexOf('https://www.w3.org/ns/activitystreams#Like') > -1 ||
                  resourceTypes.indexOf('https://www.w3.org/ns/activitystreams#Dislike') > -1){
                 if(s.asobject && s.asobject.at(0) && getPathURL(s.asobject.at(0)) == currentPathURL ) {
@@ -403,7 +420,7 @@ DO = {
                     var iri = s.iri().toString();
                     var targetIRI = s.asobject.at(0);
                     var motivatedBy = 'oa:assessing';
-                    var id = String(Math.abs(hashCode(iri)));
+                    var id = generateUUID(iri);
                     var refId = 'r-' + id;
                     var refLabel = id;
 
@@ -453,7 +470,7 @@ DO = {
                       noteData.license["name"] = DO.C.License[noteData.license["iri"]].name;
                     }
 
-                    DO.U.addInteraction(noteData);
+                    DO.U.addNoteToNotifications(noteData);
                   }
                 }
               }
@@ -558,7 +575,7 @@ DO = {
                 var iri = s.iri().toString();
                 var targetIRI = s.bookmarkrecalls;
                 var motivatedBy = 'bookmark:Bookmark';
-                var id = String(Math.abs(hashCode(iri)));
+                var id = generateUUID(iri);
                 var refId = 'r-' + id;
                 var refLabel = id;
 
@@ -613,7 +630,7 @@ DO = {
                   noteData.license["name"] = DO.C.License[noteData.license["iri"]].name;
                 }
 
-                DO.U.addInteraction(noteData);
+                DO.U.addNoteToNotifications(noteData);
               }
               else {
                 // console.log(i + ' has unrecognised types: ' + resourceTypes);
@@ -1459,7 +1476,6 @@ DO = {
       if (selector && selector.exact && selector.exact.length > 0) {
         //XXX: TODO: Copied from showAnnotation
 
-        // refId = String(Math.abs(hashCode(document.location.href)));
         var refId = document.location.hash.substring(1);
         var refLabel = DO.U.getReferenceLabel(motivatedBy);
 
@@ -1682,8 +1698,9 @@ DO = {
 
     initDocumentActions: function() {
       buttonClose();
-      buttonRemoveAside();
+      notificationsToggle();
       showRobustLinksDecoration();
+      focusNote();
 
       var documentURL = DO.C.DocumentURL;
 
@@ -3901,17 +3918,11 @@ console.log(reason);
       s += '<li><button class="resource-share" title="Share resource">' + Icon[".fas.fa-bullhorn.fa-2x"] + 'Share</button></li>';
       s += '<li><button class="resource-reply" title="Reply">' + Icon[".fas.fa-reply.fa-2x"] + 'Reply</button></li>';
 
-      buttonDisabled = (DO.C.User.IRI) ? '' : ' disabled="disabled"';
-
       var activitiesIcon = Icon[".fas.fa-bolt.fa-2x"];
 
-      if (DO.C.User['ContactsOutboxChecked']) {
-        activitiesIcon = Icon[".fas.fa-circle.fa-2x"];
-        buttonDisabled = ' disabled="disabled"';
-      }
 
-      s += '<li><button class="resource-activities"' + buttonDisabled +
-        ' title="Show activities">' + activitiesIcon + 'Activities</button></li>';
+      s += '<li><button class="resource-notifications"' + buttonDisabled +
+        ' title="Show notifications">' + activitiesIcon + 'Notifications</button></li>';
 
       s += '<li><button class="resource-new" title="Create new article">' + Icon[".far.fa-lightbulb.fa-2x"] + 'New</button></li>';
 
@@ -3991,8 +4002,8 @@ console.log(reason);
           }
         }
 
-        if (e.target.closest('.resource-activities')) {
-          DO.U.showContactsActivities(e);
+        if (e.target.closest('.resource-notifications')) {
+          DO.U.showNotifications(e);
         }
 
         if (e.target.closest('.resource-new')) {
@@ -7360,7 +7371,7 @@ console.log(response)
                   data = JSON.parse(data);
 // console.log(data)
 
-                  var authorURL = 'http://example.com/.well-known/genid/' + generateUUID;
+                  var authorURL = 'http://example.com/.well-known/genid/' + generateUUID();
                   if (data.links && Array.isArray(data.links) && data.links.length > 0) {
 // console.log(data.links[0].url)
                     authorURL = data.links[0].url;
@@ -7892,8 +7903,13 @@ WHERE {\n\
     positionInteraction: function(noteIRI, containerNode, options) {
       containerNode = containerNode || getDocumentContentNode(document);
 
+      if (DO.C.Activity[noteIRI]) return;
+
+      DO.C.Activity[noteIRI] = {};
+
       return getResourceGraph(noteIRI).then(
         function(g){
+          DO.C.Activity[noteIRI]['Graph'] = g;
           DO.U.showAnnotation(noteIRI, g, containerNode, options);
         });
     },
@@ -7912,7 +7928,7 @@ WHERE {\n\
 // console.log(note.toString())
 // console.log(note)
 
-      var id = String(Math.abs(hashCode(noteIRI)));
+      var id = generateUUID(noteIRI);
       var refId = 'r-' + id;
       var refLabel = id;
 
@@ -8125,39 +8141,24 @@ WHERE {\n\
             noteData.inbox = inboxIRI;
           }
 // console.log(noteData);
-          note = DO.U.createNoteDataHTML(noteData);
-          var nES = selectedParentNode.nextElementSibling;
-          var asideNote = '\n\
-<aside class="note do">\n\
-<blockquote cite="' + noteIRI + '">'+ note + '</blockquote>\n\
-</aside>\n\
-';
-          var asideNode = fragmentFromString(asideNote);
-          var parentSection = getClosestSectionNode(selectedParentNode);
-          parentSection.appendChild(asideNode);
+
+          DO.U.addNoteToNotifications(noteData);
+
+//           var asideNode = fragmentFromString(asideNote);
+//           var parentSection = getClosestSectionNode(selectedParentNode);
+//           parentSection.appendChild(asideNode);
           //XXX: Keeping this comment around for emergency
 //                selectedParentNode.parentNode.insertBefore(asideNode, selectedParentNode.nextSibling);
 
 
           if(DO.C.User.IRI) {
-            var noteDelete = document.querySelector('aside.do blockquote[cite="' + noteIRI + '"] article button.delete');
-            if (noteDelete) {
-              noteDelete.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-
-                deleteResource(noteIRI)
-                  .then(() => {
-                    var aside = noteDelete.closest('aside.do')
-                    aside.parentNode.removeChild(aside)
-                    var span = document.querySelector('span[resource="#' + refId + '"]')
-                    span.outerHTML = span.querySelector('mark').textContent
-                    // TODO: Delete notification or send delete activity
-                  })
+            var buttonDelete = document.querySelector('aside.do blockquote[cite="' + noteIRI + '"] article button.delete');
+            if (buttonDelete) {
+              buttonDelete.addEventListener('click', function(e) {
+                handleDeleteNote(e);
               });
             }
           }
-          DO.U.positionNote(refId, id);
 
           DO.C.Activity[noteIRI] = {};
           DO.C.Activity[noteIRI]['Graph'] = g;
@@ -8206,7 +8207,7 @@ WHERE {\n\
             noteData.datetime = datetime;
           }
 // console.log(noteData)
-          DO.U.addInteraction(noteData);
+          DO.U.addNoteToNotifications(noteData);
 
           DO.C.Activity[noteIRI] = {};
           DO.C.Activity[noteIRI]['Graph'] = g;
@@ -8260,7 +8261,7 @@ WHERE {\n\
           if (datetime) {
             noteData.datetime = datetime;
           }
-          DO.U.addInteraction(noteData);
+          DO.U.addNoteToNotifications(noteData);
 
           DO.C.Activity[noteIRI] = {};
           DO.C.Activity[noteIRI]['Graph'] = g;
@@ -8327,7 +8328,7 @@ WHERE {\n\
 // console.log("  " + citationCharacterization + "  " + citedEntity);
     var citationCharacterizationLabel = DO.C.Citation[citationCharacterization] || citationCharacterization;
 
-    var id = String(Math.abs(hashCode(citingEntity)));
+    var id = generateUUID(citingEntity);
     var refId;
 
     var cEURL = stripFragmentFromString(citingEntity);
@@ -8402,20 +8403,47 @@ WHERE {\n\
     }
     },
 
-    addInteraction: function(noteData) {
-      var interaction = DO.U.createNoteDataHTML(noteData);
-      var interactions = document.getElementById('document-interactions');
+    initializeNotifications: function(options = {}) {
+      var contextNode = selectArticleNode(document);
+      // interactionsSection += '<p class="count"><data about="" datatype="xsd:nonNegativeInteger" property="sioc:num_replies" value="' + interactionsCount + '">' + interactionsCount + '</data> interactions</p>';
+      var aside = `<aside class="do" id="document-notifications">${DO.C.Button.Toggle}<h2>Notifications</h2><div>${DO.C.Button.More}</div></aside>`;
+      contextNode.insertAdjacentHTML('beforeend', aside);
+      aside = document.getElementById('document-notifications');
 
-      if(!interactions) {
-        interactions = selectArticleNode(document);
-        var interactionsSection = '<section id="document-interactions"><h2>Interactions</h2><div>';
-// interactionsSection += '<p class="count"><data about="" datatype="xsd:nonNegativeInteger" property="sioc:num_replies" value="' + interactionsCount + '">' + interactionsCount + '</data> interactions</p>';
-        interactionsSection += '</div></section>';
-        interactions.insertAdjacentHTML('beforeend', interactionsSection);
+      var buttonMore = aside.querySelector('button.more');
+      buttonMore.addEventListener('click', () => {
+        var button = buttonMore.closest('button.more');
+        button.parentNode.removeChild(button);
+        DO.U.showContactsActivities();
+      });
+
+      return aside;
+    },
+
+    addNoteToNotifications: function (noteData) {
+      var note = DO.U.createNoteDataHTML(noteData);
+      var blockquote = '<blockquote cite="' + noteData.iri + '">'+ note + '</blockquote>';
+      var aside = document.getElementById('document-notifications');
+
+      if(!aside) {
+        DO.U.initializeNotifications();
       }
 
-      interactions = document.querySelector('#document-interactions > div');
-      interactions.insertAdjacentHTML('beforeend', interaction);
+      var notifications = document.querySelector('#document-notifications > div');
+      notifications.insertAdjacentHTML('afterbegin', blockquote);
+    },
+
+    showNotifications: function() {
+      DO.U.hideDocumentMenu();
+
+      var aside = document.getElementById('document-notifications');
+
+      if(!aside) {
+        aside = DO.U.initializeNotifications({omitButton: true});
+      }
+      aside.classList.add('on');
+
+      DO.U.showContactsActivities();
     },
 
     createNoteDataHTML: function(n) {
@@ -10871,7 +10899,7 @@ WHERE {\n\
                         }
                       })
 
-                      .catch(() => {  // catch-all
+                      .catch(e => {  // catch-all
                         // suppress the error, it was already logged to the console above
                         // nothing else needs to be done, the loop will proceed
                         // to the next annotation

@@ -3,7 +3,7 @@
 import Config from './config.js'
 import { getDateTimeISO, fragmentFromString, generateAttributeId, uniqueArray, generateUUID, matchAllIndex } from './util.js'
 import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath } from './uri.js'
-import { getResource, getResourceHead, processSave, patchResourceWithAcceptPatch } from './fetcher.js'
+import { getResource, getResourceHead, deleteResource, processSave, patchResourceWithAcceptPatch } from './fetcher.js'
 import * as ld from './simplerdf.cjs'
 const SimpleRDF = ld.SimpleRDF
 import { getResourceGraph, sortGraphTriples, getGraphContributors, getGraphAuthors, getGraphEditors, getGraphPerformers, getGraphPublishers, getGraphLabel, getGraphEmail, getGraphTitle, getGraphConceptLabel, getGraphPublished, getGraphUpdated, getGraphDescription, getGraphLicense, getGraphRights, getGraphFromData, getGraphAudience, getGraphTypes } from './graph.js'
@@ -1090,28 +1090,26 @@ function getDocumentStatusHTML(rootNode, options) {
   return s;
 }
 
-function buttonRemoveAside() {
-  var ids = document.querySelectorAll('aside.note article[id]');
-  for(var i = 0; i < ids.length; i++){
-    if(!ids[i].querySelector('button.delete')) {
-      var buttonDelete = '<button class="delete do" title="Delete item">' + Icon[".fas.fa-trash-alt"] + '</button>';
-      ids[i].insertAdjacentHTML('afterbegin', buttonDelete);
-    }
-  }
+function handleDeleteNote(e) {
+  var button = e.target.closest('button.delete');
 
-  document.addEventListener('click', function(e) {
-    var button = e.target.closest('button.delete')
-    if (button) {
-      var noteArticle = button.closest('article[id]');
-      if (noteArticle) {
-        var refId = 'r-' + noteArticle.id;
-        var aside = noteArticle.closest('aside.note');
-        aside.parentNode.removeChild(aside);
+  var article = button.closest('article');
+  var refId = 'r-' + article.id;
+  var blockquote = article.closest('blockquote[cite]');
+  var cite = blockquote.getAttribute('cite');
+
+  var url = new URL(cite);
+  url = url.href.replace(url.hash, '');
+
+  if (url) {
+    deleteResource(url)
+      .then(() => {
+        blockquote.parentNode.removeChild(blockquote);
         var span = document.querySelector('span[resource="#' + refId + '"]');
         span.outerHTML = span.querySelector('mark').textContent;
-      }
-    }
-  });
+        // TODO: Delete notification or send delete activity
+      })
+  }
 }
 
 function buttonClose() {
@@ -1124,12 +1122,14 @@ function buttonClose() {
   });
 }
 
-function buttonToggle() {
+function notificationsToggle() {
   document.addEventListener('click', function(e) {
     var button = e.target.closest('button.toggle');
     if (button) {
       var aside = button.closest('aside');
       aside.classList.toggle("on");
+
+      window.history.replaceState({}, null, Config.DocumentURL);
     }
   });
 }
@@ -1780,16 +1780,15 @@ function updateFeatureStatesOfResourceInfo(info) {
     writeRequiredFeatures.forEach(feature => {
       Config.ButtonStates[feature] = false;
     })
-    Config.ButtonStates['resource-activities'] = false;
   }
-  else {
-    if ((Config.User.Storage && DO.C.User.Storage.length > 0) ||
-        (Config.User.Outbox && DO.C.User.Outbox.length > 0) ||
-        (Config.User.Knows && DO.C.User.Knows.length > 0) ||
-        (Config.User.Contacts && Object.keys(DO.C.User.Contacts).length > 0)) {
-          Config.ButtonStates['resource-activities'] = true;
-    }
-  }
+  // else {
+  //   if ((Config.User.Storage && DO.C.User.Storage.length > 0) ||
+  //       (Config.User.Outbox && DO.C.User.Outbox.length > 0) ||
+  //       (Config.User.Knows && DO.C.User.Knows.length > 0) ||
+  //       (Config.User.Contacts && Object.keys(DO.C.User.Contacts).length > 0)) {
+  //         Config.ButtonStates['resource-notifications'] = true;
+  //   }
+  // }
 
   //XXX: This relies on `wac-allow` HTTP header. What to do if no `wac-allow`?
   var writeAccessMode = accessModeAllowed(DO.C.DocumentURL, 'write');
@@ -2710,23 +2709,18 @@ function serializeTableSectionToText(section) {
 }
 
 
-function toggleAnnotation() {
+function focusNote() {
   document.addEventListener('click', function(e) {
-    var ref = e.target.closest('span.ref.do');
+    var ref = e.target.closest('span.ref.do sup a');
 
     if (ref) {
-      var hash = new URL(ref.querySelector('a')?.href).hash;
+      var hash = new URL(ref.href).hash;
       var refId = hash.substring(1);
-
       var aside = document.querySelector('#document-notifications[class~="do"]:has(article[id="' + refId + '"])');
 
       if (!hash.length || !aside) return;
 
-      if (aside.classList.contains('on')) {
-        aside.classList.remove('on');
-        window.history.replaceState({}, null, DO.C.DocumentURL);
-      }
-      else {
+      if (!aside.classList.contains("on")) {
         aside.classList.add('on');
         window.history.replaceState({}, null, hash);
       }
@@ -2764,9 +2758,8 @@ export {
   setDocumentRelation,
   setDocumentStatus,
   getDocumentStatusHTML,
-  buttonRemoveAside,
   buttonClose,
-  buttonToggle,
+  notificationsToggle,
   getButtonDisabledHTML,
   showTimeMap,
   getGraphContributorsRole,
@@ -2780,6 +2773,7 @@ export {
   getResourceInfoSpecChanges,
   getResourceInfoSKOS,
   getResourceInfoCitations,
+  handleDeleteNote,
   updateDocumentDoButtonStates,
   updateFeatureStatesOfResourceInfo,
   accessModeAllowed,
@@ -2810,5 +2804,5 @@ export {
   setCopyToClipboard,
   serializeTableToText,
   serializeTableSectionToText,
-  toggleAnnotation
+  focusNote
 }

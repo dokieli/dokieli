@@ -96,7 +96,7 @@ export default {
   ButtonStates: {
     'resource-share': true,
     'resource-reply': true,
-    'resource-activities': false,
+    'resource-notifications': true,
     'resource-new': true,
     'resource-open': true,
     'resource-save': false,

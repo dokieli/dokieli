@@ -3,7 +3,7 @@
 import Config from './config.js'
 import { deleteResource } from './fetcher.js'
 import { removeChildren, fragmentFromString } from './util.js'
-import { getAgentHTML, showActionMessage, showGeneralMessages, getResourceSupplementalInfo, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo } from './doc.js'
+import { getAgentHTML, showActionMessage, showGeneralMessages, getResourceSupplementalInfo, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, handleDeleteNote } from './doc.js'
 import { Icon } from './template.js'
 import { constructGraph, getResourceGraph, getAgentName, getGraphImage, getAgentURL, getAgentPreferredProxy, getAgentPreferredPolicy, getAgentPreferredPolicyRule, setPreferredPolicyInfo, getAgentDelegates, getAgentKnows, getAgentFollowing, getAgentStorage, getAgentOutbox, getAgentInbox, getAgentPreferencesFile, getAgentPublicTypeIndex, getAgentPrivateTypeIndex, getAgentTypeIndex, getAgentSupplementalInfo, getAgentSeeAlso, getAgentPreferencesInfo, getAgentLiked, getAgentOccupations, getAgentPublications, getAgentMade } from './graph.js'
 import { removeLocalStorageProfile, updateLocalStorageProfile } from './storage.js'
@@ -36,6 +36,11 @@ async function showUserSigninSignout (node) {
       Role: 'social',
       UI: {}
     }
+
+    var buttonDeletes = document.querySelectorAll('aside.do blockquote[cite] article button.delete');
+    buttonDeletes.forEach(button => {
+      button.parentNode.removeChild(button);
+    })
 
     removeChildren(node);
   }
@@ -82,9 +87,9 @@ async function showUserSigninSignout (node) {
           updateDocumentDoButtonStates();
         });
 
-        var ra = documentMenu.querySelector('.resource-activities');
-        ra.disabled = true;
-        ra.innerHTML = Icon[".fas.fa-bolt.fa-2x"] + 'Activities';
+        // var ra = documentMenu.querySelector('.resource-notifications');
+        // ra.disabled = true;
+        // ra.innerHTML = Icon[".fas.fa-bolt.fa-2x"] + 'Notifications';
       }
     });
 
@@ -93,8 +98,8 @@ async function showUserSigninSignout (node) {
       su.addEventListener('click', showUserIdentityInput)
     }
 
-    var rA = document.querySelector('#document-menu .resource-activities')
-    if(rA) { rA.setAttribute('disabled', 'disabled') }
+    // var rA = document.querySelector('#document-menu .resource-notifications')
+    // if(rA) { rA.setAttribute('disabled', 'disabled') }
   }
 }
 
@@ -376,10 +381,11 @@ function afterSignIn () {
       return Promise.resolve();
     });
 
-  var rA = document.querySelector('#document-menu .resource-activities')
-  if(rA) { rA.removeAttribute('disabled') }
+  // var rA = document.querySelector('#document-menu .resource-notifications')
+  // if(rA) { rA.removeAttribute('disabled') }
 
-  var user = document.querySelectorAll('aside.do article *[rel~="schema:creator"] > *[about="' + Config.User.IRI + '"]')
+  var user = document.querySelectorAll('aside.do article *[rel~="dcterms:creator"] > *[about="' + Config.User.IRI + '"]');
+
   for (let i = 0; i < user.length; i++) {
     var article = user[i].closest('article')
     article.insertAdjacentHTML('afterbegin', '<button class="delete">' + Icon[".fas.fa-trash-alt"] + '</button>')
@@ -389,21 +395,7 @@ function afterSignIn () {
 
   for (let i = 0; i < buttonDelete.length; i++) {
     buttonDelete[i].addEventListener('click', function (e) {
-      e.preventDefault()
-      e.stopPropagation()
-      var article = e.target.closest('article')
-      var refId = 'r-' + article.id
-      var noteIRI = article.closest('blockquote[cite]')
-      noteIRI = noteIRI.getAttribute('cite')
-
-      deleteResource(noteIRI)
-        .then(() => {
-          var aside = e.target.closest('aside.do')
-          aside.parentNode.removeChild(aside)
-          var span = document.querySelector('span[resource="#' + refId + '"]')
-          span.outerHTML = span.querySelector('mark').textContent
-          // TODO: Delete notification or send delete activity
-        })
+      handleDeleteNote(e);
     })
   }
 }
