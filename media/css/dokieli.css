@@ -588,15 +588,26 @@ content:':';
 #document-notifications > div {
 overflow-y: auto;
 padding-right:1em;
+display:flex;
+flex-direction: column;
+}
+#document-notifications > div button {
+width:max-content;
+}
+#document-notifications > div .fa-spin {
+align-self: center;
+}
+
+#document-notifications blockquote {
+margin-bottom:2em;
 }
 
 #document-notifications article {
-margin:0 0 2em 0;
+margin:0;
 }
 #document-notifications article article {
 padding-left:2.25em;
 padding-top:1em;
-margin-bottom:0;
 border-left:2px solid #ccc;
 }
 #document-notifications article h1,

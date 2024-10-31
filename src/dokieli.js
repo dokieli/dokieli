@@ -202,23 +202,20 @@ DO = {
         var icon = aside.querySelector('.fa-spin');
         if (icon) return;
 
-        icon = fragmentFromString(Icon[".fas.fa-circle-notch.fa-spin.fa-fw"].replace(/ fa\-fw/, ' fa-fw fa-2x'));
+        icon = fragmentFromString(Icon[".fas.fa-circle-notch.fa-spin.fa-fw"].replace(/ fa\-fw/, ' fa-2x'));
 
-        var buttonMore = aside.querySelector('button.more');
-        if (buttonMore) {
-          buttonMore.parentNode.removeChild(buttonMore);
+        var infoBox = aside.querySelector('p.info');
+        if (infoBox) {
+          infoBox.parentNode.removeChild(infoBox);
         }
 
-        aside.appendChild(icon);
+        aside.querySelector('div').appendChild(icon);
       }
 
       var removeProgress = function() {
-        var icon = aside.querySelector('.fa-spin');
+        var icon = aside.querySelector('div .fa-spin');
         icon.parentNode.removeChild(icon);
-        aside.querySelector('div').insertAdjacentHTML('beforeend', DO.C.Button.More);
       }
-
-      showProgress();
 
       var promises = [];
 
@@ -8407,16 +8404,22 @@ WHERE {\n\
     initializeNotifications: function(options = {}) {
       var contextNode = selectArticleNode(document);
       // interactionsSection += '<p class="count"><data about="" datatype="xsd:nonNegativeInteger" property="sioc:num_replies" value="' + interactionsCount + '">' + interactionsCount + '</data> interactions</p>';
-      var aside = `<aside class="do" id="document-notifications">${DO.C.Button.Toggle}<h2>Notifications</h2><div>${DO.C.Button.More}</div></aside>`;
+      var aside = `<aside class="do" id="document-notifications">${DO.C.Button.Toggle}<h2>Notifications</h2><div></div></aside>`;
       contextNode.insertAdjacentHTML('beforeend', aside);
       aside = document.getElementById('document-notifications');
 
-      var buttonMore = aside.querySelector('button.more');
-      buttonMore.addEventListener('click', () => {
-        var button = buttonMore.closest('button.more');
-        button.parentNode.removeChild(button);
-        DO.U.showContactsActivities();
-      });
+      if (options.includeButtonMore) {
+        aside.querySelector('div').insertAdjacentHTML('beforeend', '<p class="info">' + DO.C.Button.More + ' Discover more activities from your social circles!</p>');
+
+        aside = document.getElementById('document-notifications');
+
+        var buttonMore = aside.querySelector('div button.more');
+        buttonMore.addEventListener('click', () => {
+          var button = buttonMore.closest('button.more');
+          button.parentNode.removeChild(button);
+          DO.U.showContactsActivities();
+        });
+      }
 
       return aside;
     },
@@ -8427,7 +8430,7 @@ WHERE {\n\
       var aside = document.getElementById('document-notifications');
 
       if(!aside) {
-        DO.U.initializeNotifications();
+        DO.U.initializeNotifications({includeButtonMore: true});
       }
 
       var notifications = document.querySelector('#document-notifications > div');
@@ -8440,7 +8443,7 @@ WHERE {\n\
       var aside = document.getElementById('document-notifications');
 
       if(!aside) {
-        aside = DO.U.initializeNotifications({omitButton: true});
+        aside = DO.U.initializeNotifications();
       }
       aside.classList.add('on');
 
