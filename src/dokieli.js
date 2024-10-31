@@ -8,7 +8,7 @@
 
 import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceGraph, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource } from './fetcher.js'
 import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, buttonClose, notificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, getButtonDisabledHTML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getClosestSectionNode, getAgentHTML, setEditSelections, getNodeLanguage, createActivityHTML, createLicenseHTML, createLanguageHTML, getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getResourceTypeOptionsHTML, getPublicationStatusOptionsHTML, getLanguageOptionsHTML, getLicenseOptionsHTML, getCitationOptionsHTML, getDocumentNodeFromString, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote } from './doc.js'
-import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, getAbsoluteIRI, generateDataURI } from './uri.js'
+import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, getAbsoluteIRI, generateDataURI, getMediaTypeURIs } from './uri.js'
 import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, serializeGraph, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentOutbox, getAgentStorage, getAgentInbox, getLinkRelationFromHead, sortGraphTriples, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching } from './graph.js'
 import { notifyInbox, sendNotifications, postActivity } from './inbox.js'
 import { uniqueArray, fragmentFromString, hashCode, generateAttributeId, escapeRegExp, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, matchAllIndex, isValidISBN } from './util.js'
@@ -52,7 +52,8 @@ DO = {
       DO.C['CollectionPages'] = ('CollectionPages' in DO.C && DO.C.CollectionPages.length > 0) ? DO.C.CollectionPages : [];
       DO.C['Collections'] = ('Collections' in DO.C && DO.C.Collections.length > 0) ? DO.C.Collections : [];
 
-      //TODO: if subject is not one of type http://www.w3.org/ns/iana/media-types/{DO.C.MediaTypes.RDF} skip
+      const mediaTypeURIPrefix = "http://www.w3.org/ns/iana/media-types/";
+      var mediaTypeURIs = getMediaTypeURIs(DO.C.MediaTypes.RDF);
 
       if (DO.C.Notification[url]) {
         return Promise.resolve([]);
@@ -94,7 +95,7 @@ DO = {
                 }
                 else {
                   //FIXME: This may need to be processed outside of items? See also comment above about processing Collection and CollectionPages.
-                  var types = r.rdftype;
+                  var types = r.rdftype._array || [];
                   //Include only non-container/collection and items that's not from an RDFList
                   if (types.indexOf(DO.C.Vocab['ldpContainer']["@id"]) < 0 &&
                      types.indexOf(DO.C.Vocab['asCollection']["@id"]) < 0 &&
@@ -103,7 +104,13 @@ DO = {
                      types.indexOf(DO.C.Vocab['asOrderedCollectionPage']["@id"]) < 0) {
                     //XXX: The following is not used at the moment:
                     // DO.C.CollectionItems[resource] = s;
-                    options.resourceItems.push(resource);
+
+                    const hasPrefix = types.some(url => url.startsWith(mediaTypeURIPrefix));
+                    const mediaTypeFound = hasPrefix && types.some(item => mediaTypeURIs.includes(item));
+                    
+                    if (mediaTypeFound || !hasPrefix) {
+                      options.resourceItems.push(resource);
+                    }
                   }
                 }
               });
