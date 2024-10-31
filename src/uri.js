@@ -160,6 +160,24 @@ function generateDataURI(mediaType, encoding, data) {
   return `data:${mediaTypeEncoding},${encodedData}`;
 }
 
+
+function getPrefixedNameFromIRI(iri) {
+  var match = motivatedBy.match(/(.*[#/])(.+)$/);
+
+  if (match) {
+    var ns = match[1];
+    var localPart = match[2];
+
+    var prefix = Object.keys(Prefixes).find(function(key) {
+      return Config.Prefixes[key] === ns;
+    });
+
+    if (prefix) {
+      return prefix + ":" + localPart;
+    }
+  }
+}
+
 export {
   encodeString,
   decodeString,
@@ -175,5 +193,6 @@ export {
   forceTrailingSlash,
   getFragmentOrLastPath,
   getLastPathSegment,
-  generateDataURI
+  generateDataURI,
+  getPrefixedNameFromIRI
 };
