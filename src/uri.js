@@ -1,5 +1,6 @@
 'use strict';
 
+import { isArray } from 'simplerdf';
 import Config from './config.js';
 
 function encodeString(string) {
@@ -178,6 +179,12 @@ function getPrefixedNameFromIRI(iri) {
   }
 }
 
+function getMediaTypeURIs(mediaTypes) {
+  mediaTypes = Array.isArray(mediaTypes) ? mediaTypes : [mediaTypes];
+
+  return mediaTypes.map(mediaType => { return `http://www.w3.org/ns/iana/media-types/${mediaType}#Resource` });
+}
+
 export {
   encodeString,
   decodeString,
@@ -194,5 +201,6 @@ export {
   getFragmentOrLastPath,
   getLastPathSegment,
   generateDataURI,
-  getPrefixedNameFromIRI
+  getPrefixedNameFromIRI,
+  getMediaTypeURIs
 };
