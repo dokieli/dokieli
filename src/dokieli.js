@@ -61,8 +61,10 @@ DO = {
 
       return getResourceGraph(url, options.headers, options)
         .then(
-          function(i) {
-            var s = i.child(url);
+          function(g) {
+            if (!g || g.resource) return;
+
+            var s = g.child(url);
 // console.log(s.toString());
 
             var types = s.rdftype;
