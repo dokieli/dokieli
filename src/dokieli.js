@@ -1573,7 +1573,6 @@ DO = {
       getLocalStorageProfile().then(user => {
         if (user && 'object' in user) {
           user.object.describes.Role = (DO.C.User.IRI && user.object.describes.Role) ? user.object.describes.Role : 'social';
-          user.object.describes.ContactsOutboxChecked = (DO.C.User.IRI && user.object.describes.ContactsOutboxChecked);
 
           DO.C['User'] = user.object.describes;
         }
