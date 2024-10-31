@@ -496,11 +496,7 @@ function getResourceGraph (iri, headers, options = {}) {
 
     })
     .catch(e => {
-      if ('resource' in e || e.status?.toString().startsWith('5')) {
-        return e;
-      }
-
-      if ('cause' in e) {
+      if ('resource' in e || 'cause' in e || e.status?.toString().startsWith('5')) {
         return e;
       }
 
