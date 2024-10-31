@@ -9,7 +9,7 @@
 import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceGraph, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource } from './fetcher.js'
 import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, buttonClose, notificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, getButtonDisabledHTML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getClosestSectionNode, getAgentHTML, setEditSelections, getNodeLanguage, createActivityHTML, createLicenseHTML, createLanguageHTML, getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getResourceTypeOptionsHTML, getPublicationStatusOptionsHTML, getLanguageOptionsHTML, getLicenseOptionsHTML, getCitationOptionsHTML, getDocumentNodeFromString, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote } from './doc.js'
 import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, getAbsoluteIRI, generateDataURI } from './uri.js'
-import { getResourceGraph, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, serializeGraph, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentOutbox, getAgentStorage, getAgentInbox, getLinkRelationFromHead, sortGraphTriples, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching } from './graph.js'
+import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, serializeGraph, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentOutbox, getAgentStorage, getAgentInbox, getLinkRelationFromHead, sortGraphTriples, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching } from './graph.js'
 import { notifyInbox, sendNotifications, postActivity } from './inbox.js'
 import { uniqueArray, fragmentFromString, hashCode, generateAttributeId, escapeRegExp, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, matchAllIndex, isValidISBN } from './util.js'
 import { generateGeoView } from './geo.js'
@@ -52,8 +52,10 @@ DO = {
       DO.C['CollectionPages'] = ('CollectionPages' in DO.C && DO.C.CollectionPages.length > 0) ? DO.C.CollectionPages : [];
       DO.C['Collections'] = ('Collections' in DO.C && DO.C.Collections.length > 0) ? DO.C.Collections : [];
 
+      //TODO: if subject is not one of type http://www.w3.org/ns/iana/media-types/{DO.C.MediaTypes.RDF} skip
+
       if (DO.C.Notification[url]) {
-        return;
+        return Promise.resolve([]);
       }
 
       DO.C.Notification[url] = {};
@@ -116,12 +118,11 @@ DO = {
             else {
               return uniqueArray(options.resourceItems);
             }
-          },
-          function(reason) {
-            console.log(reason);
-            return reason;
-          }
-        );
+          })
+        .catch (e => {
+          console.log(e)
+          return [];
+        })
     },
 
 
@@ -219,40 +220,82 @@ DO = {
 
       var promises = [];
 
-      promises = promises.concat(DO.U.processAgentActivities(DO.C.User));
+// console.log(DO.C.User)
+
+      promises.push(...DO.U.processAgentActivities(DO.C.User));
+
+// console.log(promises)
 
       if (DO.C.User.Contacts && Object.keys(DO.C.User.Contacts).length > 0){
+// console.log('user has contacts')
+        showProgress();
+
         Object.keys(DO.C.User.Contacts).forEach(function(iri){
           var contact = DO.C.User.Contacts[iri];
-          promises = promises.concat(DO.U.processAgentActivities(contact));
+          promises.push(...DO.U.processAgentActivities(contact));
         });
+
+        Promise.allSettled(promises).then(() => removeProgress())
       }
       else if (DO.C.User.IRI) {
+// console.log('else.....')
+        showProgress();
         getUserContacts(DO.C.User.IRI)
-          .catch(() => {
-            removeProgress()
-          })
           .then(contacts => {
             if (contacts.length > 0) {
-              contacts.forEach(function(url) {
-                getSubjectInfo(url).then(subject => {
+              var contactsPromises = contacts.map(function(url) {
+                return getSubjectInfo(url).then(subject => {
                   DO.C.User.Contacts[url] = subject;
 
-                  if (!subject.Graph) return;
+                  if (!subject.Graph) {
+// console.log('----- !subject.Graph', url, subject)
+                    // return;
+                    return Promise.resolve();
+                  }
 
-                  promises = promises.concat(DO.U.processAgentActivities(DO.C.User.Contacts[url]));
-                  DO.C.User['ContactsOutboxChecked'] = true;
+                  return DO.U.processAgentActivities(DO.C.User.Contacts[url]);
                 })
               });
+// console.log( { contactsPromises })
+
+              promises.push(...contactsPromises);
+
+              // Promise.allSettled(contactsPromises => {
+              //   promises = promises.concat();
+              // });
+            }
+            else {
+// console.log('----------- no contacts')
+              return Promise.resolve();
             }
           })
-      }
+          .catch((e) => {
+// console.log(e)
+            // removeProgress()
+          })
+          .finally(() => {
+// console.log("finally", promises)
+            Promise.allSettled(promises)
+              .then(r => {
+// console.log("done with contacts");
 
-      Promise.allSettled(promises).then(r => removeProgress())
+                removeProgress()
+              })
+              .catch(e => console.log(e))
+          })
+
+      }
+//       Promise.allSettled(promises)
+//         .then(r => {
+// console.log("should be done with promises")
+//           // removeProgress()
+//         })
     },
 
     processAgentActivities: function(agent) {
+      // console.log("processAgentActivities", agent.TypeIndex)
       if (agent.TypeIndex && Object.keys(agent.TypeIndex).length) {
+        // console.log(DO.U.processAgentTypeIndex(agent))
         return DO.U.processAgentTypeIndex(agent)
       }
       //TODO: Need proper filtering of storage/outbox matching an object of interest
@@ -300,6 +343,7 @@ DO = {
 //         promises.push(DO.U.processAgentStorageOutbox(agent));
 //       }
 
+// console.log(promises)
       return promises;
     },
 
@@ -327,39 +371,38 @@ DO = {
     },
 
     showActivitiesSources: function(url, options = {}) {
-      return DO.U.getActivities(url, options).then(
+      return DO.U.getItemsList(url).then(
         function(items) {
           var promises = [];
 
           for (var i = 0; i < items.length && i < DO.C.CollectionItemsLimit; i++) {
             var pI = function(iri) {
-              return DO.U.showActivities(iri, options)
-                .catch(() => {
-                  return Promise.resolve()
-                })
+              return DO.U.showActivities(iri, options);
             }
 
             promises.push(pI(items[i]));
           }
-
+// console.log(promises)
           return Promise.allSettled(promises);
         },
       ).catch((error) => {
+          console.log(error)
           console.log(url + ' has no activities.');
-          return error;
+          // return error;
       });
     },
 
     getActivities: function(url, options) {
-      url = url || window.location.origin + window.location.pathname;
-      var pIRI = getProxyableIRI(url);
+      url = url || currentLocation();
+      url = stripFragmentFromString(url);
 
       switch (options['activityType']) {
         default:
         case 'instanceContainer':
-          return DO.U.getItemsList(pIRI);
+          // console.log(DO.U.getItemsList(url))
+          return DO.U.getItemsList(url);
         case 'instance':
-          return DO.U.showActivities(pIRI);
+          return DO.U.showActivities(url);
       }
     },
 
@@ -367,7 +410,7 @@ DO = {
       options['headers'] = options.headers || {};
 
       if (DO.C.Notification[url] || DO.C.Activity[url]) {
-        return;
+        return [];
       }
 
       //XXX: Revisit this which may be adding things that will also appear in DO.C.Activity
@@ -378,13 +421,13 @@ DO = {
 
       var documentTypes = DO.C.ActivitiesObjectTypes.concat(Object.keys(DO.C.ResourceType));
 
-      return getResourceGraph(url, options.headers, options)
+      return getResourceOnlyRDF(url)
         //TODO: Needs throws handled from functions calling showActivities
-        // .catch((e) => {
-        //   throw e;
+        // .catch(e => {
+        //   return [];
         // })
         .then(g => {
-          if (!g) return;
+          if (!g || g.resource) return;
 
           DO.C.Notification[url]['Graph'] = g;
 

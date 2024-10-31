@@ -851,10 +851,9 @@ function getUserContacts(iri) {
           }
 
           return processSameAs(s, getUserContacts);
-        },
-        function(reason){
-          return Promise.resolve([]);
-        });
+        }).catch(e => {
+           return Promise.resolve([]);
+          });
     }
   }
 
