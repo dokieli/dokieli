@@ -504,6 +504,20 @@ function getResourceGraph (iri, headers, options = {}) {
     })
 }
 
+function getResourceOnlyRDF(url) {
+  return getResourceHead(url)
+    .then(function (response) {
+      var cT = response.headers.get('Content-Type');
+      var options = {};
+      options['contentType'] = (cT) ? cT.split(';')[0].toLowerCase().trim() : '';
+
+      if (DO.C.MediaTypes.RDF.includes(options['contentType'])) {
+        var headers = { 'Accept': setAcceptRDFTypes() };
+        return getResourceGraph(url, headers);
+      }
+    });
+}
+
 function getLinkRelation (property, url, data) {
   if (url) {
     return getLinkRelationFromHead(property, url)
@@ -1434,6 +1448,7 @@ export {
   setDocumentBase,
   traverseRDFList,
   getResourceGraph,
+  getResourceOnlyRDF,
   getLinkRelation,
   getLinkRelationFromHead,
   getLinkRelationFromRDF,
