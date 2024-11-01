@@ -227,11 +227,11 @@ DO = {
 
       var promises = [];
 
-// console.log(DO.C.User)
+var loggedInUserPromises = DO.C.User && Object.keys(DO.C.User) && DO.C.User.IRI && Array.isArray(DO.U.processAgentActivities(DO.C.User)) ? DO.U.processAgentActivities(DO.C.User) : [];
+promises.push(...loggedInUserPromises);
+      // promises.push(...DO.U.processAgentActivities(DO.C.User));
 
-      promises.push(...DO.U.processAgentActivities(DO.C.User));
-
-// console.log(promises)
+      console.log("promises after own are pushed", promises.length)
 
       if (DO.C.User.Contacts && Object.keys(DO.C.User.Contacts).length > 0){
 // console.log('user has contacts')
@@ -239,10 +239,12 @@ DO = {
 
         Object.keys(DO.C.User.Contacts).forEach(function(iri){
           var contact = DO.C.User.Contacts[iri];
-          promises.push(...DO.U.processAgentActivities(contact));
+          if (!contact.IRI) return;
+          var agentActivitiesPromises = contact.IRI && Array.isArray(DO.U.processAgentActivities(contact)) ? DO.U.processAgentActivities(contact) : [];
+          promises.push(...agentActivitiesPromises);
+// promises.push(...DO.U.processAgentActivities(contact));
         });
-
-        Promise.allSettled(promises).then(() => removeProgress())
+       Promise.allSettled(promises).then(() => removeProgress())
       }
       else if (DO.C.User.IRI) {
 // console.log('else.....')
@@ -266,44 +268,42 @@ DO = {
 // console.log( { contactsPromises })
 
               promises.push(...contactsPromises);
-
-              // Promise.allSettled(contactsPromises => {
-              //   promises = promises.concat();
-              // });
+              console.log("promises after contacts are pushe", promises.length)
+             return Promise.allSettled(contactsPromises).then(() => removeProgress())
             }
             else {
 // console.log('----------- no contacts')
+//  Promise.allSettled(promises).then(() => removeProgress())
               return Promise.resolve();
+            
             }
           })
           .catch((e) => {
 // console.log(e)
-            // removeProgress()
+            removeProgress()
           })
           .finally(() => {
-// console.log("finally", promises)
             Promise.allSettled(promises)
               .then(r => {
-// console.log("done with contacts");
-
                 removeProgress()
               })
               .catch(e => console.log(e))
           })
 
+      } else {
+         Promise.allSettled(promises).then(() => removeProgress())
       }
-//       Promise.allSettled(promises)
-//         .then(r => {
-// console.log("should be done with promises")
-//           // removeProgress()
-//         })
+      // Promise.allSettled(promises)
+      //   .then(r => {
+      //     removeProgress()
+      //   })
     },
 
     processAgentActivities: function(agent) {
       // console.log("processAgentActivities", agent.TypeIndex)
       if (agent.TypeIndex && Object.keys(agent.TypeIndex).length) {
         // console.log(DO.U.processAgentTypeIndex(agent))
-        return DO.U.processAgentTypeIndex(agent)
+        return DO.U.processAgentTypeIndex(agent);
       }
       //TODO: Need proper filtering of storage/outbox matching an object of interest
       // else {
@@ -320,9 +320,9 @@ DO = {
       //XXX: Perhaps these shouldn't be merged and kept apart or have the UI clarify what's public/private, and additional engagements keep that context
       var typeIndexes = Object.assign({}, publicTypeIndexes);
 
-      if (agent.IRI == DO.C.User.IRI) {
+      // if (agent.IRI == DO.C.User.IRI) {
         typeIndexes = Object.assign(typeIndexes, privateTypeIndexes);
-      }
+      // }
 
       var recognisedTypes = [];
 
@@ -335,11 +335,11 @@ DO = {
           recognisedTypes.push(forClass);
 
           if (instance) {
-            promises.push(DO.U.showActivities(instance, { excludeMarkup: true, agent: agent.IRI }));
+            promises.push(new Promise(() => DO.U.showActivities(instance, { excludeMarkup: true, agent: agent.IRI })));
           }
 
           if (instanceContainer) {
-            promises.push(DO.U.showActivitiesSources(instanceContainer, { activityType: 'instanceContainer', agent: agent.IRI }));
+            promises.push(new Promise(() => DO.U.showActivitiesSources(instanceContainer, { activityType: 'instanceContainer', agent: agent.IRI })));
           }
         }
       });
@@ -414,8 +414,6 @@ DO = {
     },
 
     showActivities: function(url, options = {}) {
-      options['headers'] = options.headers || {};
-
       if (DO.C.Notification[url] || DO.C.Activity[url]) {
         return [];
       }
