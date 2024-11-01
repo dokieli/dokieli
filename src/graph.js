@@ -763,7 +763,7 @@ function getAgentSeeAlso(g, baseURI, subjectURI) {
 
     return Promise.allSettled(promises)
       .then(function(results) {
-        var promisesGetAngentSeeAlso = [];
+        var promisesGetAgentSeeAlso = [];
 
         results.forEach(result => {
 // console.log(result)
@@ -810,11 +810,11 @@ function getAgentSeeAlso(g, baseURI, subjectURI) {
                 : made;
             }
 
-            promisesGetAngentSeeAlso.push(getAgentSeeAlso(g, iri, subjectURI))
+            promisesGetAgentSeeAlso.push(getAgentSeeAlso(g, iri, subjectURI))
           }
         })
 
-        return Promise.allSettled(promisesGetAngentSeeAlso)
+        return Promise.allSettled(promisesGetAgentSeeAlso)
           .then(function(results) {
             return Promise.resolve([]);
           })
