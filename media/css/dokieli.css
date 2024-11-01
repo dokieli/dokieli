@@ -586,19 +586,21 @@ font-size:1em;
 content:':';
 }
 #document-notifications > div {
-overflow-y: auto;
 padding-right:1em;
 display:flex;
 flex-direction: column;
 }
-#document-notifications > div button {
+#document-notifications > div > ul {
+overflow-y: auto;
+}
+#document-notifications > div > button.more {
 width:max-content;
 }
-#document-notifications > div .fa-spin {
+#document-notifications > div > .fa-spin {
 align-self: center;
 }
 
-#document-notifications blockquote {
+#document-notifications li {
 margin-bottom:2em;
 }
 
