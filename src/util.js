@@ -196,6 +196,16 @@ function isValidISBN (str) {
   return pattern.test(str);
 }
 
+function findPreviousDateTime(times, checkTime) {
+  let previousDateTime = null;
+  times.forEach(time => {
+    if (checkTime > time) {
+      previousDateTime = time;
+    }
+  })
+  return previousDateTime;
+}
+
 export {
   uniqueArray,
   getDateTimeISO,
@@ -212,5 +222,6 @@ export {
   hashCode,
   sortToLower,
   matchAllIndex,
-  isValidISBN
+  isValidISBN,
+  findPreviousDateTime
 };
