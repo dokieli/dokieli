@@ -1095,8 +1095,8 @@ function handleDeleteNote(e) {
 
   var article = button.closest('article');
   var refId = 'r-' + article.id;
-  var blockquote = article.closest('blockquote[cite]');
-  var cite = blockquote.getAttribute('cite');
+  var li = article.closest('li:has(blockquote[cite])');
+  var cite = li.querySelector('blockquote[cite]').getAttribute('cite');
 
   var url = new URL(cite);
   url = url.href.replace(url.hash, '');
@@ -1104,7 +1104,7 @@ function handleDeleteNote(e) {
   if (url) {
     deleteResource(url)
       .then(() => {
-        blockquote.parentNode.removeChild(blockquote);
+        li.parentNode.removeChild(li);
         var span = document.querySelector('span[resource="#' + refId + '"]');
         span.outerHTML = span.querySelector('mark').textContent;
         // TODO: Delete notification or send delete activity

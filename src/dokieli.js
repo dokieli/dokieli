@@ -11,7 +11,7 @@ import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessag
 import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, getAbsoluteIRI, generateDataURI, getMediaTypeURIs } from './uri.js'
 import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, serializeGraph, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentOutbox, getAgentStorage, getAgentInbox, getLinkRelationFromHead, sortGraphTriples, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching } from './graph.js'
 import { notifyInbox, sendNotifications, postActivity } from './inbox.js'
-import { uniqueArray, fragmentFromString, hashCode, generateAttributeId, escapeRegExp, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, matchAllIndex, isValidISBN } from './util.js'
+import { uniqueArray, fragmentFromString, hashCode, generateAttributeId, escapeRegExp, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, matchAllIndex, isValidISBN, findPreviousDateTime } from './util.js'
 import { generateGeoView } from './geo.js'
 import MediumEditor from "medium-editor/dist/js/medium-editor.js";
 // window.MediumEditor = MediumEditor;
@@ -8454,7 +8454,7 @@ WHERE {\n\
     initializeNotifications: function(options = {}) {
       var contextNode = selectArticleNode(document);
       // interactionsSection += '<p class="count"><data about="" datatype="xsd:nonNegativeInteger" property="sioc:num_replies" value="' + interactionsCount + '">' + interactionsCount + '</data> interactions</p>';
-      var aside = `<aside class="do" id="document-notifications">${DO.C.Button.Toggle}<h2>Notifications</h2><div></div></aside>`;
+      var aside = `<aside class="do" id="document-notifications">${DO.C.Button.Toggle}<h2>Notifications</h2><div><ul></ul></div></aside>`;
       contextNode.insertAdjacentHTML('beforeend', aside);
       aside = document.getElementById('document-notifications');
 
@@ -8475,16 +8475,34 @@ WHERE {\n\
     },
 
     addNoteToNotifications: function (noteData) {
+      var id = document.getElementById(noteData.id);
+      if (id) return;
+
       var note = DO.U.createNoteDataHTML(noteData);
-      var blockquote = '<blockquote cite="' + noteData.iri + '">'+ note + '</blockquote>';
+
+      var li = '<li data-datetime="' + noteData.datetime + '"><blockquote cite="' + noteData.iri + '">'+ note + '</blockquote></li>';
+
       var aside = document.getElementById('document-notifications');
 
       if(!aside) {
-        DO.U.initializeNotifications({includeButtonMore: true});
+        aside = DO.U.initializeNotifications({includeButtonMore: true});
       }
 
-      var notifications = document.querySelector('#document-notifications > div');
-      notifications.insertAdjacentHTML('afterbegin', blockquote);
+      var notifications = document.querySelector('#document-notifications > div > ul');
+      var timesNodes = aside.querySelectorAll('div > ul > li[data-datetime]');
+      var previousElement = null;
+      if (timesNodes.length) {
+        var times = Array.from(timesNodes).map(element => element.getAttribute("data-datetime"));
+        var previousDateTime = findPreviousDateTime(times, noteData.datetime);
+        previousElement = Array.from(timesNodes).find((element) => previousDateTime && previousDateTime === element.datetime ? element : null);
+      }
+
+      if (previousElement) {
+        previousElement.insertAdjacentHTML('afterend', li);
+      }
+      else {
+        notifications.insertAdjacentHTML('afterbegin', li);
+      }
     },
 
     showNotifications: function() {
