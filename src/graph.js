@@ -1187,11 +1187,11 @@ function getGraphLanguage(s) {
 }
 
 function getGraphLicense(s) {
-  return s.schemalicense || s.cclicense || s.dctermslicense || s.xhvlicense || undefined;
+  return s.dctermslicense || s.schemalicense || s.cclicense || s.xhvlicense || undefined;
 }
 
 function getGraphRights(s) {
-  return s.dctermsrights || s.schemalicense || s.cclicense || undefined;
+  return s.dctermsrights || getGraphLicense(s) || undefined;
 }
 
 function getGraphLabel(s) {
