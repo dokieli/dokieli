@@ -8782,6 +8782,26 @@ WHERE {\n\
       return note;
     },
 
+    tagsToBodyObjects: function(string) {
+      var bodyObjects = [];
+
+      let tagsArray = string
+        .split(',')
+        .map(tag => escapeCharacters(tag.trim()))
+        .filter(tag => tag.length > 0);
+
+      tagsArray = uniqueArray(tagsArray.sort());
+
+      tagsArray.forEach(tag => {
+        bodyObjects.push({
+          "purpose": "tagging",
+          "value": tag
+        })
+      })
+
+      return bodyObjects;
+    },
+
     initMath: function(config) {
       if (!DO.C.MathAvailable) { return; }
 
