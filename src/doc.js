@@ -2339,44 +2339,54 @@ function getResourceImageHTML(resource, options = {}) {
   return '<img alt="" height="' + avatarSize + '" rel="schema:image" src="' + resource + '" width="' + avatarSize + '" />';
 }
 
-function createLicenseHTML(n, options) {
-  var license = '';
-  var rel = (options && options.rel) ? options.rel : 'schema:license';
-  var label = (options && options.label) ? options.label : 'License';
-
-  if (typeof n.iri !== 'undefined') {
-    license = '<dl class="' + label.toLowerCase() + '"><dt>' + label + '</dt><dd>';
-    if('name' in n) {
-      var title = ('description' in n) ? ' title="' + n.description + '"' : '';
-      license += '<a href="' + n.iri + '" rel="' + rel + '"' + title + '>' + n.name + '</a>';
-    }
-    else {
-      var licenseName = n.iri, licenseDescription = n.iri;
-      if (n.iri in Config.License) {
-        licenseName = Config.License[n.iri].name;
-        licenseDescription = Config.License[n.iri].description;
-      }
-      license += '<a href="' + n.iri + '" rel="' + rel + '" title="' + licenseDescription + '">' + licenseName + '</a>';
-    }
-    license += '</dd></dl>';
-  }
-
-  return license;
+function createLicenseHTML(iri, options = {}) {
+  options['rel'] = options.rel ? options.rel : 'schema:license';
+  options['label'] = options.label ? options.label : 'License';
+  return createLicenseRightsHTML(iri, options);
 }
 
-function createLanguageHTML(n, options) {
-  var language = '';
+function createRightsHTML(iri, options = {}) {
+  options['rel'] = options.rel ? options.rel : 'dcterms:rights';
+  options['label'] = options.label ? options.label : 'Rights';
+  return createLicenseRightsHTML(iri, options);
+}
+
+function createLicenseRightsHTML(iri, options = {}) {
+  if (!iri) return '';
+
+  var html = '';
+  var title = '';
+  var name = iri;
+
+  html = '<dl class="' + options.label.toLowerCase() + '"><dt>' + options.label + '</dt><dd>';
+  if ('name' in options) {
+    name = options.name;
+    title = ('description' in options) ? ' title="' + options.description + '"' : '';
+  }
+  else if (Config.License[iri]) {
+    name = Config.License[iri].name;
+    title = ' title="' + Config.License[iri].description + '"';
+  }
+
+  html += '<a href="' + iri + '" rel="' + options.rel + '"' + title + '>' + name + '</a>';
+  html += '</dd></dl>';
+
+  return html;
+}
+
+function createLanguageHTML(language, options = {}) {
+  if (!language) return '';
+  
+  var html = '';
   var property = (options && options.language) ? options.language : 'dcterms:language';
   var label = (options && options.label) ? options.label : 'Language';
 
-  if (typeof n.code !== 'undefined') {
-    n['name'] = n.name || Config.Languages[n.code] || n.code;
-    language = '<dl class="' + label.toLowerCase() + '"><dt>' + label + '</dt><dd>';
-    language += '<span content="' + n.code + '" lang="" property="' + property + '" xml:lang="">' + n.name + '</span>';
-    language += '</dd></dl>';
-  }
+  var name = Config.Languages[language] || language;
+  html = '<dl class="' + label.toLowerCase() + '"><dt>' + label + '</dt><dd>';
+  html += '<span content="' + language + '" lang="" property="' + property + '" xml:lang="">' + name + '</span>';
+  html += '</dd></dl>';
 
-  return language;
+  return html;
 }
 
 function getAnnotationInboxLocationHTML() {
@@ -2793,8 +2803,9 @@ export {
   getTestDescriptionReviewStatusHTML,
   getAgentHTML,
   getResourceImageHTML,
-  createLicenseHTML,
   createLanguageHTML,
+  createLicenseHTML,
+  createRightsHTML,
   getAnnotationInboxLocationHTML,
   getAnnotationLocationHTML,
   getResourceTypeOptionsHTML,
