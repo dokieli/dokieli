@@ -641,7 +641,7 @@ export default {
     "solidstorageDescription": { "@id": "http://www.w3.org/ns/solid/terms#storageDescription", "@type": "@id", "@array": true },
 
     "oaAnnotation": { "@id": "http://www.w3.org/ns/oa#Annotation", "@type": "@id" },
-    "oahasBody": { "@id": "http://www.w3.org/ns/oa#hasBody", "@type": "@id" },
+    "oabodyValue": "http://www.w3.org/ns/oa#bodyValue",
     "oahasTarget": { "@id": "http://www.w3.org/ns/oa#hasTarget", "@type": "@id" },
     "oahasSource": { "@id": "http://www.w3.org/ns/oa#hasSource", "@type": "@id" },
     "oahasSelector": { "@id": "http://www.w3.org/ns/oa#hasSelector", "@type": "@id" },
