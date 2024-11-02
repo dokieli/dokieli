@@ -1182,6 +1182,10 @@ function getGraphCreated(s) {
   return d === undefined ? undefined : DOMPurify.sanitize(d)
 }
 
+function getGraphLanguage(s) {
+  return s.dctermslanguage || s.dclanguage || s.schemainLanguage || undefined;
+}
+
 function getGraphLicense(s) {
   return s.schemalicense || s.cclicense || s.dctermslicense || s.xhvlicense || undefined;
 }
@@ -1488,6 +1492,7 @@ export {
   getGraphPublished,
   getGraphUpdated,
   getGraphCreated,
+  getGraphLanguage,
   getGraphLicense,
   getGraphRights,
   getGraphLabel,
