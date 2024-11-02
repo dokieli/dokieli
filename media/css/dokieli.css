@@ -663,6 +663,7 @@ position:relative;
 #document-notifications article.do .renderedvia,
 #document-notifications article.do .language,
 #document-notifications article.do .rights,
+#document-notifications article.do .license,
 #document-notifications article.do .canonical,
 aside.note h2,
 aside.note h3,
@@ -673,6 +674,7 @@ aside.note .target,
 aside.note .language,
 aside.note .renderedvia,
 aside.note .rights,
+aside.note .license,
 aside.note .canonical {
 display:none;
 }
@@ -698,14 +700,16 @@ left:3.75em;
 aside.note dl.published a,
 aside.note dl.license a,
 aside.note dl.language a,
-aside.note dl.rights a {
+aside.note dl.rights a,
+aside.note dl.license a {
 color:#333;
 /*text-decoration:none;*/
 }
 aside.note dl.published a:hover,
 aside.note dl.license a:hover,
 aside.note dl.language a:hover,
-aside.note dl.rights a:hover {
+aside.note dl.rights a:hover,
+aside.note dl.license a:hover {
 color:#000;
 text-decoration:underline;
 }
@@ -714,6 +718,26 @@ aside.note article > section {
 position:relative;
 top:-1.5em;
 }*/
+
+#document-notifications dl.tags:before {
+content:"";
+white-space: initial;
+}
+#document-notifications dl.tags ul {
+display: inline;
+}
+#document-notifications dl.tags li {
+display: inline !important;
+margin-left:1em;
+}
+#document-notifications dl.tags li:before {
+content: "#";
+font-weight: bold;
+}
+#document-notifications dl.tags li:first-child {
+margin-left:0;
+}
+
 aside.note section {
 border:0 !important;
 }
