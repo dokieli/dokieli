@@ -8771,10 +8771,8 @@ console.log('XXX: REVISIT positionInteraction when DO.C.Activity[noteIRI] alread
             if (typeof n.body !== 'undefined') {
               var tagsArray = [];
 
-              // n.body = Array.isArray(n.body) ? n.body : [n.body];
+              n.body = Array.isArray(n.body) ? n.body : [n.body];
               n.body.forEach(bodyItem => {
-
-
                 var bodyLanguage = createLanguageHTML(bodyItem.language, {property:'dcterms:language', label:'Language'}) || language;
                 var bodyLicense = createLicenseHTML(bodyItem.license, {rel:'schema:license', label:'License'}) || license;
                 var bodyRights = createRightsHTML(bodyItem.rights, {rel:'dcterms:rights', label:'Rights'}) || rights;
