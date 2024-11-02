@@ -642,6 +642,7 @@ export default {
 
     "oaAnnotation": { "@id": "http://www.w3.org/ns/oa#Annotation", "@type": "@id" },
     "oabodyValue": "http://www.w3.org/ns/oa#bodyValue",
+    "oahasBody": { "@id": "http://www.w3.org/ns/oa#hasBody", "@type": "@id", "@array": true },
     "oahasTarget": { "@id": "http://www.w3.org/ns/oa#hasTarget", "@type": "@id" },
     "oahasSource": { "@id": "http://www.w3.org/ns/oa#hasSource", "@type": "@id" },
     "oahasSelector": { "@id": "http://www.w3.org/ns/oa#hasSelector", "@type": "@id" },

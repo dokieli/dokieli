@@ -7,9 +7,9 @@
  */
 
 import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceGraph, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource } from './fetcher.js'
-import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, buttonClose, notificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, getButtonDisabledHTML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getClosestSectionNode, getAgentHTML, setEditSelections, getNodeLanguage, createActivityHTML, createLicenseHTML, createLanguageHTML, getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getResourceTypeOptionsHTML, getPublicationStatusOptionsHTML, getLanguageOptionsHTML, getLicenseOptionsHTML, getCitationOptionsHTML, getDocumentNodeFromString, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote } from './doc.js'
+import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, buttonClose, notificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, getButtonDisabledHTML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getClosestSectionNode, getAgentHTML, setEditSelections, getNodeLanguage, createActivityHTML, createLanguageHTML, createLicenseHTML, createRightsHTML, getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getResourceTypeOptionsHTML, getPublicationStatusOptionsHTML, getLanguageOptionsHTML, getLicenseOptionsHTML, getCitationOptionsHTML, getDocumentNodeFromString, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote } from './doc.js'
 import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, getAbsoluteIRI, generateDataURI, getMediaTypeURIs } from './uri.js'
-import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, serializeGraph, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentOutbox, getAgentStorage, getAgentInbox, getLinkRelationFromHead, sortGraphTriples, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching } from './graph.js'
+import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, serializeGraph, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentOutbox, getAgentStorage, getAgentInbox, getLinkRelationFromHead, sortGraphTriples, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraph } from './graph.js'
 import { notifyInbox, sendNotifications, postActivity } from './inbox.js'
 import { uniqueArray, fragmentFromString, hashCode, generateAttributeId, escapeRegExp, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, matchAllIndex, isValidISBN, findPreviousDateTime } from './util.js'
 import { generateGeoView } from './geo.js'
@@ -452,6 +452,11 @@ promises.push(...loggedInUserPromises);
 
             if (types.length > 0) {
               var resourceTypes = types;
+
+              var language = getGraphLanguage(s);
+              var license = getGraphLicense(s);
+              var rights = getGraphRights(s);
+
               //XXX: May need to be handled in a similar way to to as:Anounce/Create?
               if(resourceTypes.indexOf('https://www.w3.org/ns/activitystreams#Like') > -1 ||
                  resourceTypes.indexOf('https://www.w3.org/ns/activitystreams#Dislike') > -1){
@@ -471,7 +476,7 @@ promises.push(...loggedInUserPromises);
                     var refId = 'r-' + id;
                     var refLabel = id;
 
-                    var bodyText = (resourceTypes.indexOf('https://www.w3.org/ns/activitystreams#Like') > -1) ? 'Liked' : 'Disliked';
+                    var bodyValue = (resourceTypes.indexOf('https://www.w3.org/ns/activitystreams#Like') > -1) ? 'Liked' : 'Disliked';
 
                     var noteData = {
                       "type": 'article',
@@ -484,10 +489,23 @@ promises.push(...loggedInUserPromises);
                       "creator": {},
                       "target": {
                         "iri": targetIRI
-                      },
-                      "body": bodyText,
-                      "license": {}
+                      }
                     };
+
+                    var bodyObject = {
+                      "value": bodyValue
+                    }
+
+                    if (language) {
+                      noteData["language"] = language;
+                      bodyObject["language"] = language;
+                    }
+                    if (license) {
+                      noteData["rights"] = noteData["license"] = license;
+                      bodyObject["rights"] = bodyObject["license"] = license;
+                    }
+
+                    noteData["body"] = [bodyObject];
 
                     if (s.asactor && s.asactor.at(0)){
                       noteData['creator'] = {
@@ -511,10 +529,6 @@ promises.push(...loggedInUserPromises);
                     }
                     if (s.asupdated){
                       noteData['datetime'] = s.asupdated;
-                    }
-                    if (s.schemalicense){
-                      noteData.license["iri"] = s.schemalicense;
-                      noteData.license["name"] = DO.C.License[noteData.license["iri"]].name;
                     }
 
                     DO.U.addNoteToNotifications(noteData);
@@ -626,7 +640,7 @@ promises.push(...loggedInUserPromises);
                 var refId = 'r-' + id;
                 var refLabel = id;
 
-                var bodyText = 'Bookmarked';
+                var bodyValue = 'Bookmarked';
 
                 var noteData = {
                   "type": 'article',
@@ -640,8 +654,7 @@ promises.push(...loggedInUserPromises);
                   "target": {
                     "iri": targetIRI
                   },
-                  "body": bodyText,
-                  "license": {}
+                  "body": [{ "value": bodyValue }]
                 };
 
                 var creator = options.agent;
@@ -672,9 +685,12 @@ promises.push(...loggedInUserPromises);
                 if (s.dctermsmodified || s.dctermscreated ){
                   noteData['datetime'] = s.dctermsmodified || s.dctermscreated;
                 }
-                if (s.schemalicense){
-                  noteData.license["iri"] = s.schemalicense;
-                  noteData.license["name"] = DO.C.License[noteData.license["iri"]].name;
+
+                if (license){
+                  noteData['license'] = license;
+                }
+                if (rights){
+                  noteData['rights'] = rights;
                 }
 
                 DO.U.addNoteToNotifications(noteData);
@@ -4333,9 +4349,7 @@ console.log(reason);
           "target": {
             "iri": iri
           },
-          "body": note, // content
-          "language": {},
-          "license": {}
+          "body": [{ "value": note }],
         }
         if (DO.C.User.IRI) {
           noteData.creator["iri"] = DO.C.User.IRI
@@ -4352,13 +4366,14 @@ console.log(reason);
 
         var language = document.querySelector('#reply-to-resource-language')
         if (language && language.length > 0) {
-          noteData.language["code"] = language.value.trim()
+          noteData["language"] = language.value.trim()
+          noteData["body"]["language"] = noteData["language"];
         }
 
         var license = document.querySelector('#reply-to-resource-license')
         if (license && license.length > 0) {
-          noteData.license["iri"] = license.value.trim()
-          noteData.license["name"] = DO.C.License[license.value.trim()].name
+          noteData["license"] = license.value.trim()
+          noteData["body"]["rights"] = noteData["body"]["license"] = noteData["rights"] = noteData["license"];
         }
 
         note = DO.U.createNoteDataHTML(noteData)
@@ -4436,7 +4451,7 @@ console.log(reason);
               "inbox": inboxURL,
               "object": noteIRI,
               "target": iri,
-              "license": noteData.license["iri"],
+              "license": noteData.license,
               "statements": notificationStatements
             }
 
@@ -7949,12 +7964,18 @@ WHERE {\n\
     positionInteraction: function(noteIRI, containerNode, options) {
       containerNode = containerNode || getDocumentContentNode(document);
 
-      if (DO.C.Activity[noteIRI]) return;
+      if (DO.C.Activity[noteIRI]) {
+console.log('XXX: REVISIT positionInteraction when DO.C.Activity[noteIRI] already exists');
+        return Promise.reject();
+      }
 
       DO.C.Activity[noteIRI] = {};
 
       return getResourceGraph(noteIRI).then(
         function(g){
+          //XXX: REVISIT
+          if (!g || g.resource) return;
+
           DO.C.Activity[noteIRI]['Graph'] = g;
           DO.U.showAnnotation(noteIRI, g, containerNode, options);
         });
@@ -8027,17 +8048,15 @@ WHERE {\n\
       var annotatedByURL = annotatedBy.schemaurl || '';
       annotatedByURL = (annotatedByURL) ? annotatedByURL : undefined;
 
-      var lang = note.dctermslanguage || undefined;
-      var licenseIRI = note.schemalicense || note.dctermsrights || undefined;
-// console.log(licenseIRI);
-
       var motivatedBy = 'oa:replying';
 
-      var bodyText = note.schemadescription;
-      if(!bodyText) {
-        bodyText = note.dctermsdescription;
-        if(!bodyText)  {
-          bodyText = note.ascontent;
+
+      //XXX: Is this used? Probably. Fix bodyValue
+      var bodyValue = note.schemadescription;
+      if(!bodyValue) {
+        bodyValue = note.dctermsdescription;
+        if(!bodyValue)  {
+          bodyValue = note.ascontent;
         }
       }
 
@@ -8049,14 +8068,72 @@ WHERE {\n\
 // console.log(type);
       });
 
-      if(resourceTypes.indexOf('http://www.w3.org/ns/oa#Annotation') > -1) {
-        var body = g.child(note.oahasBody);
-// console.log(body);
-        var bodyLanguage = body.schemainLanguage || body.dctermslanguage || undefined;
-        var bodyLicenseIRI = body.schemalicense || body.dctermsrights || undefined;
-// console.log(bodyLicenseIRI);
-        bodyText = body.rdfvalue;
-// console.log(bodyText);
+      if (resourceTypes.indexOf('http://www.w3.org/ns/oa#Annotation') > -1) {
+        if (note.oabodyValue) {
+          var bodyValue = note.oabodyValue;
+// console.log(bodyValue);
+        }
+        else if (note.oahasBody && note.oahasBody._array.length > 0) {
+          var noteLanguage = getGraphLanguage(note);
+          var noteLicense = getGraphLicense(note);
+          var noteRights = getGraphRights(note);
+
+          var bodyObjects = [];
+// console.log(note.oahasBody)
+// console.log(note.oahasBody._array)
+          note.oahasBody._array.forEach(bodyIRI => {
+// console.log(bodyIRI);
+            var bodyObject = {
+              "id": bodyIRI
+            };
+
+            var body = g.child(bodyIRI);
+
+            if (body) {
+// console.log(body.toString());
+
+              if (body.rdftype && body.rdftype._array.length > 0) {
+                bodyObject['type'] = body.rdftype._array;
+              }
+  
+              if (body.rdfvalue) {
+                bodyObject['value'] = body.rdfvalue;
+              }
+  
+              if (body.oahasPurpose) {
+// console.log(body.oahasPurpose)
+                bodyObject['purpose'] = body.oahasPurpose;
+              }
+
+              //TODO: Revisit format and language when there is a hasPurpose (e.g., describing, tagging)
+
+              var bodyFormat = body.dcformat || body.dctermsformat;
+              if (bodyFormat) {
+                bodyObject['format'] = bodyFormat;
+              }
+
+              var bodyLanguage = getGraphLanguage(body) || noteLanguage;
+              if (bodyLanguage) {
+// console.log(bodyLanguage)
+                bodyObject['language'] = bodyLanguage;
+              }
+
+              var bodyLicense = getGraphLicense(body) || noteLicense;
+              if (bodyLicense) {
+// console.log(bodyLicense)
+                bodyObject['license'] = bodyLicense;
+              }
+
+              var bodyRights = getGraphRights(body) || noteRights;
+              if (bodyRights) {
+// console.log(bodyRights)
+                bodyObject['rights'] = bodyRights;
+              }
+            }
+            bodyObjects.push(bodyObject);
+          })
+// console.log(bodyObjects)
+        }
 
 // console.log(documentURL)
         if (note.oahasTarget && !(note.oahasTarget.startsWith(documentURL) || 'targetInMemento' in options || 'targetInSameAs' in options)){
@@ -8159,10 +8236,13 @@ WHERE {\n\
                 "suffix": suffix
               }
               //TODO: state
-            },
-            "body": bodyText,
-            "language": {},
-            "license": {}
+            }
+          }
+          if (bodyValue) {
+            noteData["bodyValue"] = bodyValue;
+          }
+          if (bodyObjects) {
+            noteData["body"] = bodyObjects;
           }
           if (annotatedByIRI) {
             noteData.creator["iri"] = annotatedByIRI;
@@ -8176,15 +8256,17 @@ WHERE {\n\
           if (annotatedByURL) {
             noteData.creator["url"] = annotatedByURL;
           }
-          if (bodyLanguage) {
-            noteData.language["code"] = bodyLanguage;
+          if (noteLanguage) {
+            noteData["language"] = noteLanguage;
           }
-          if (licenseIRI) {
-            noteData.license["iri"] = licenseIRI;
+          if (noteLicense) {
+            noteData["license"] = noteLicense;
           }
-
+          if (noteRights) {
+            noteData["rights"] = noteRights;
+          }
           if (inboxIRI) {
-            noteData.inbox = inboxIRI;
+            noteData["inbox"] = inboxIRI;
           }
 // console.log(noteData);
 
@@ -8196,12 +8278,12 @@ WHERE {\n\
           //XXX: Keeping this comment around for emergency
 //                selectedParentNode.parentNode.insertBefore(asideNode, selectedParentNode.nextSibling);
 
-
           if(DO.C.User.IRI) {
             var buttonDelete = document.querySelector('aside.do blockquote[cite="' + noteIRI + '"] article button.delete');
             if (buttonDelete) {
               buttonDelete.addEventListener('click', function(e) {
-                handleDeleteNote(e);
+                var button = e.target.closest('button.delete');
+                handleDeleteNote(button);
               });
             }
           }
@@ -8227,12 +8309,14 @@ WHERE {\n\
             "datetime": datetime,
             "target": {
               "iri": targetIRI
-            },
-            "body": bodyText,
-            "language": {},
-            "license": {}
+            }
           };
-
+          if (bodyValue) {
+            noteData["bodyValue"] = bodyValue;
+          }
+          if (bodyObjects) {
+            noteData["body"] = bodyObjects;
+          }
           if (annotatedByIRI) {
             noteData.creator["iri"] = annotatedByIRI;
           }
@@ -8242,12 +8326,17 @@ WHERE {\n\
           if (annotatedByImage) {
             noteData.creator["image"] = annotatedByImage;
           }
-          if (bodyLanguage) {
-            noteData.language["code"] = bodyLanguage;
+          if (noteLanguage) {
+            noteData["language"] = noteLanguage;
           }
-          if (licenseIRI) {
-            noteData.license["iri"] = licenseIRI;
-            noteData.license["name"] = DO.C.License[noteData.license["iri"]].name;
+          if (noteLicense) {
+            noteData["license"] = noteLicense;
+          }
+          if (noteRights) {
+            noteData["rights"] = noteRights;
+          }
+          if (inboxIRI) {
+            noteData["inbox"] = inboxIRI;
           }
           if (datetime) {
             noteData.datetime = datetime;
@@ -8284,11 +8373,14 @@ WHERE {\n\
             "inReplyTo": {
               'iri': inReplyTo,
               'rel': inReplyToRel
-            },
-            "body": bodyText,
-            "language": {},
-            "license": {}
+            }
           };
+          if (bodyValue) {
+            noteData["bodyValue"] = bodyValue;
+          }
+          if (bodyObjects) {
+            noteData["body"] = bodyObjects;
+          }
           if (annotatedByIRI) {
             noteData.creator["iri"] = annotatedByIRI;
           }
@@ -8298,11 +8390,17 @@ WHERE {\n\
           if (annotatedByImage) {
             noteData.creator["image"] = annotatedByImage;
           }
-          if (bodyLanguage) {
-            noteData.language["code"] = bodyLanguage;
+          if (noteLanguage) {
+            noteData["language"] = noteLanguage;
           }
-          if (licenseIRI) {
-            noteData.license["iri"] = licenseIRI;
+          if (noteLicense) {
+            noteData["license"] = noteLicense;
+          }
+          if (noteRights) {
+            noteData["rights"] = noteRights;
+          }
+          if (inboxIRI) {
+            noteData["inbox"] = inboxIRI;
           }
           if (datetime) {
             noteData.datetime = datetime;
@@ -8521,6 +8619,7 @@ WHERE {\n\
       var created = '';
       var lang = '', xmlLang = '', language = '';
       var license = '';
+      var rights = '';
       var creator = '', authors = '', creatorImage = '', creatorNameIRI = '', creatorURLNameIRI = '';
       var hasTarget = '', annotationTextSelector = '', target = '';
       var inbox = '';
@@ -8649,50 +8748,58 @@ WHERE {\n\
         created = '<dl class="created"><dt>Created</dt><dd>' + timeLinked + '</dd></dl>';
       }
 
-      if (n.language && 'code' in n.language) {
+      if (n.language) {
         language = createLanguageHTML(n.language, {property:'dcterms:language', label:'Language'});
-        lang = ' lang="' +  n.language.code + '"';
-        xmlLang = ' xml:lang="' +  n.language.code + '"';
+        lang = ' lang="' +  n.language + '"';
+        xmlLang = ' xml:lang="' +  n.language + '"';
       }
-      if (n.license && 'iri' in n.license) {
-        license = createLicenseHTML(n.license, {rel:'dcterms:rights', label:'Rights'});
+      if (n.license) {
+        license = createLicenseHTML(n.license, {rel:'schema:license', label:'License'});
       }
+      if (n.rights) {
+        rights = createRightsHTML(n.rights, {rel:'dcterms:rights', label:'Rights'});
+      }
+
+      //TODO: Differentiate language, license, rights on Annotation from Body
 
       switch(n.type) {
         case 'article': case 'note': case 'bookmark': case 'approve': case 'disapprove': case 'specificity':
           if (typeof n.target !== 'undefined' || typeof n.inReplyTo !== 'undefined') { //note, annotation, reply
             //FIXME: Could resourceIRI be a fragment URI or *make sure* it is the document URL without the fragment?
             //TODO: Use n.target.iri?
-
+// console.log(n)
             if (typeof n.body !== 'undefined') {
-              if(typeof n.body === 'object' && 'purpose' in n.body) {
-                if ('describing' in n.body.purpose && 'text' in n.body.purpose.describing) {
-                  body += '<section id="note-' + n.id + '" rel="oa:hasBody" resource="#note-' + n.id + '"><h' + (hX+1) + ' property="schema:name" rel="oa:hasPurpose" resource="oa:describing">Note</h' + (hX+1) + '>' + language + '<div datatype="rdf:HTML"' + lang + ' property="rdf:value schema:description" resource="#note-' + n.id + '" typeof="oa:TextualBody"' + xmlLang + '>' + n.body.purpose.describing.text + '</div></section>';
-                }
-                if ('tagging' in n.body.purpose && 'text' in n.body.purpose.tagging) {
-                  var tagsArray = [];
-                  n.body.purpose.tagging.text.split(',').forEach(function(i){
-                    var tag = escapeCharacters(i.trim());
-                    if(tag.length > 0) {
-                      tagsArray.push(tag);
-                    }
-                  });
-                  if (tagsArray.length > 0){
-                    tagsArray = uniqueArray(tagsArray);
+              var tagsArray = [];
 
-                    body += '<dl id="tags" class="tags"><dt>Tags</dt><dd><ul rel="oa:hasBody">';
-                    tagsArray.forEach(function(i){
-                      body += '<li about="#tag-' + generateAttributeId(null, i) + '" typeof="oa:TextualBody" property="rdf:value" rel="oa:hasPurpose" resource="oa:tagging" datatype="rdf:HTML">' + i + '</li>';
-                    })
-                    body += '</ul></dd></dl>';
+              // n.body = Array.isArray(n.body) ? n.body : [n.body];
+              n.body.forEach(bodyItem => {
+
+
+                var bodyLanguage = createLanguageHTML(bodyItem.language, {property:'dcterms:language', label:'Language'}) || language;
+                var bodyLicense = createLicenseHTML(bodyItem.license, {rel:'schema:license', label:'License'}) || license;
+                var bodyRights = createRightsHTML(bodyItem.rights, {rel:'dcterms:rights', label:'Rights'}) || rights;
+
+                if (bodyItem.purpose && bodyItem.value) {
+                  if (bodyItem.purpose == "describing" || bodyItem.purpose == DO.C.Vocab["oadescribing"]["@id"]) {
+                    body += '<section id="note-' + n.id + '" rel="oa:hasBody" resource="#note-' + n.id + '"><h' + (hX+1) + ' property="schema:name" rel="oa:hasPurpose" resource="oa:describing">Note</h' + (hX+1) + '>' + bodyLanguage + bodyLicense + bodyRights + '<div datatype="rdf:HTML"' + lang + ' property="rdf:value schema:description" resource="#note-' + n.id + '" typeof="oa:TextualBody"' + xmlLang + '>' + bodyItem.value + '</div></section>';
+                  }
+                  if (bodyItem.purpose == "tagging" || bodyItem.purpose == DO.C.Vocab["oatagging"]["@id"]) {
+                    tagsArray.push('<li about="#tag-' + n.id + '-' + generateAttributeId(null, bodyItem.value) + '" typeof="oa:TextualBody" property="rdf:value" rel="oa:hasPurpose" resource="oa:tagging">' + bodyItem.value + '</li>');
                   }
                 }
-              }
-              else if (n.body.length > 0) {
-                body += '<section id="note-' + n.id + '" rel="oa:hasBody" resource="#note-' + n.id + '"><h' + (hX+1) + ' property="schema:name">Note</h' + (hX+1) + '>' + language + license + '<div datatype="rdf:HTML"' + lang + ' property="rdf:value schema:description" resource="#note-' + n.id + '" typeof="oa:TextualBody"' + xmlLang + '>' + n.body + '</div></section>';
+                else {
+                  body += '<section id="note-' + n.id + '" rel="oa:hasBody" resource="#note-' + n.id + '"><h' + (hX+1) + ' property="schema:name">Note</h' + (hX+1) + '>' + bodyLanguage + bodyLicense + bodyRights + '<div datatype="rdf:HTML"' + lang + ' property="rdf:value schema:description" resource="#note-' + n.id + '" typeof="oa:TextualBody"' + xmlLang + '>' + bodyItem.value + '</div></section>';
+                }
+              });
+
+              if (tagsArray.length) {
+                body += '<dl id="tags-' + n.id + '" class="tags"><dt>Tags</dt><dd><ul rel="oa:hasBody">' + tagsArray.join('') + '</ul></dd></dl>';
               }
             }
-
+            else if (n.bodyValue !== 'undefined') {
+              body += '<p property="oa:bodyValue">' + n.bodyValue + '</p>';
+            }
+// console.log(body)
             var targetIRI = '';
             var targetRelation = 'oa:hasTarget';
             if (typeof n.target !== 'undefined' && 'iri' in n.target) {
@@ -8733,7 +8840,9 @@ WHERE {\n\
   ' + heading + '\n\
   ' + authors + '\n\
   ' + created + '\n\
+  ' + language + '\n\
   ' + license + '\n\
+  ' + rights + '\n\
   ' + inbox + '\n\
   ' + canonical + '\n\
   ' + target + '\n\
@@ -10546,8 +10655,9 @@ WHERE {\n\
 
               var noteData = {};
               var note = '';
-              var language = '';
-              var licenseIRI = '';
+              var language = opts.language;
+              var license = opts.license;
+              var rights = '';
               var motivatedBy = 'oa:replying';
 
               var createNoteData = function(annotation) {
@@ -10583,8 +10693,6 @@ WHERE {\n\
                     }
 
                     ref = _this.base.selection;
-                    language = opts.language;
-                    licenseIRI = opts.license;
 
                     noteData = {
                       "type": _this.action,
@@ -10608,11 +10716,24 @@ WHERE {\n\
                         },
                         "language": targetLanguage
                         //TODO: state
-                      },
-                      "body": opts.content,
-                      "language": {},
-                      "license": {}
+                      }
                     };
+
+                    var bodyObject = {
+                      "value": opts.content
+                    };
+
+                    if (language) {
+                      noteData["language"] = language;
+                      bodyObject["language"] = language;
+                    }
+                    if (license) {
+                      noteData["rights"] = noteData["license"] = license;
+                      bodyObject["rights"] = bodyObject["license"] = license;
+                    }
+
+                    noteData["body"] = [bodyObject];
+
                     if (DO.C.User.IRI) {
                       noteData.creator["iri"] = DO.C.User.IRI;
                     }
@@ -10622,12 +10743,6 @@ WHERE {\n\
                     noteData.creator["image"] = DO.C.User.Image || generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
                     if (DO.C.User.URL) {
                       noteData.creator["url"] = DO.C.User.URL;
-                    }
-                    if (opts.language.length > 0) {
-                      noteData.language["code"] = opts.language;
-                    }
-                    if (opts.license.length > 0) {
-                      noteData.license["iri"] = opts.license;
                     }
                     if (opts.annotationInboxLocation && DO.C.User.TypeIndex && DO.C.User.TypeIndex[DO.C.Vocab['asAnnounce']['@id']]) {
                       noteData.inbox = DO.C.User.TypeIndex[DO.C.Vocab['asAnnounce']['@id']];
@@ -10663,20 +10778,25 @@ WHERE {\n\
                         },
                         "language": targetLanguage
                         //TODO: state
-                      },
-                      "body": {
-                        "purpose": {
-                          "describing": {
-                            "text": opts.content
-                          },
-                          "tagging": {
-                            "text": opts.tagging
-                          }
-                        }
-                      },
-                      "language": {},
-                      "license": {}
+                      }
                     };
+
+                    var bodyObject = {
+                      "purpose": "describing",
+                      "value": opts.content
+                    };
+
+                    if (language) {
+                      noteData["language"] = language;
+                      bodyObject["language"] = language;
+                    }
+                    if (license) {
+                      noteData["rights"] = noteData["license"] = license;
+                      bodyObject["rights"] = bodyObject["license"] = license;
+                    }
+
+                    noteData["body"] = [bodyObject].concat(DO.U.tagsToBodyObjects(opts.tagging));
+
                     if (DO.C.User.IRI) {
                       noteData.creator["iri"] = DO.C.User.IRI;
                     }
@@ -10686,12 +10806,6 @@ WHERE {\n\
                     noteData.creator["image"] = DO.C.User.Image || generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
                     if (DO.C.User.URL) {
                       noteData.creator["url"] = DO.C.User.URL;
-                    }
-                    if (opts.language.length > 0) {
-                      noteData.language["code"] = opts.language;
-                    }
-                    if (opts.license.length > 0) {
-                      noteData.license["iri"] = opts.license;
                     }
 
                     // note = DO.U.createNoteDataHTML(noteData);
@@ -10714,14 +10828,23 @@ WHERE {\n\
                           "refLabel": refLabel,
                           // "iri": noteIRI,
                           "datetime": datetime,
-                          "body": opts.content,
-                          "citationURL": opts.url,
-                          "language": {}
+                          "citationURL": opts.url
                         };
 
-                        if (opts.language.length > 0) {
-                          noteData.language["code"] = opts.language;
+                        var bodyObject = {
+                          "value": opts.content
+                        };
+
+                        if (language) {
+                          noteData["language"] = language;
+                          bodyObject["language"] = language;
                         }
+                        if (license) {
+                          noteData["rights"] = noteData["license"] = license;
+                          bodyObject["rights"] = bodyObject["license"] = license;
+                        }
+
+                        noteData["body"] = [bodyObject];
 
                         // note = DO.U.createNoteDataHTML(noteData);
                         break;
@@ -10784,20 +10907,25 @@ WHERE {\n\
                         },
                         "language": targetLanguage
                         //TODO: state
-                      },
-                      "body": {
-                        "purpose": {
-                          "describing": {
-                            "text": opts.content
-                          },
-                          "tagging": {
-                            "text": opts.tagging
-                          }
-                        }
-                      },
-                      "language": {},
-                      "license": {}
+                      }
                     };
+
+                    var bodyObject = {
+                      "purpose": "describing",
+                      "value": opts.content
+                    };
+
+                    if (language) {
+                      noteData["language"] = language;
+                      bodyObject["language"] = language;
+                    }
+                    if (license) {
+                      noteData["rights"] = noteData["license"] = license;
+                      bodyObject["rights"] = bodyObject["license"] = license;
+                    }
+
+                    noteData["body"] = [bodyObject].concat(DO.U.tagsToBodyObjects(opts.tagging));
+
                     if (DO.C.User.IRI) {
                       noteData.creator["iri"] = DO.C.User.IRI;
                     }
@@ -10808,12 +10936,7 @@ WHERE {\n\
                     if (DO.C.User.URL) {
                       noteData.creator["url"] = DO.C.User.URL;
                     }
-                    if (opts.language.length > 0) {
-                      noteData.language["code"] = opts.language;
-                    }
-                    if (opts.license.length > 0) {
-                      noteData.license["iri"] = opts.license;
-                    }
+
                     // note = DO.U.createNoteDataHTML(noteData);
                     ref = DO.U.getTextQuoteHTML(refId, motivatedBy, exact, docRefType, { 'do': true });
                     break;
