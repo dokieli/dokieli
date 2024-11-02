@@ -8095,11 +8095,11 @@ console.log('XXX: REVISIT positionInteraction when DO.C.Activity[noteIRI] alread
               if (body.rdftype && body.rdftype._array.length > 0) {
                 bodyObject['type'] = body.rdftype._array;
               }
-  
+
               if (body.rdfvalue) {
                 bodyObject['value'] = body.rdfvalue;
               }
-  
+
               if (body.oahasPurpose) {
 // console.log(body.oahasPurpose)
                 bodyObject['purpose'] = body.oahasPurpose;
@@ -8784,7 +8784,7 @@ console.log('XXX: REVISIT positionInteraction when DO.C.Activity[noteIRI] alread
                     body += '<section id="note-' + n.id + '" rel="oa:hasBody" resource="#note-' + n.id + '"><h' + (hX+1) + ' property="schema:name" rel="oa:hasPurpose" resource="oa:describing">Note</h' + (hX+1) + '>' + bodyLanguage + bodyLicense + bodyRights + '<div datatype="rdf:HTML"' + lang + ' property="rdf:value schema:description" resource="#note-' + n.id + '" typeof="oa:TextualBody"' + xmlLang + '>' + bodyItem.value + '</div></section>';
                   }
                   if (bodyItem.purpose == "tagging" || bodyItem.purpose == DO.C.Vocab["oatagging"]["@id"]) {
-                    tagsArray.push('<li about="#tag-' + n.id + '-' + generateAttributeId(null, bodyItem.value) + '" typeof="oa:TextualBody" property="rdf:value" rel="oa:hasPurpose" resource="oa:tagging">' + bodyItem.value + '</li>');
+                    tagsArray.push(bodyItem.value);
                   }
                 }
                 else {
@@ -8793,7 +8793,14 @@ console.log('XXX: REVISIT positionInteraction when DO.C.Activity[noteIRI] alread
               });
 
               if (tagsArray.length) {
-                body += '<dl id="tags-' + n.id + '" class="tags"><dt>Tags</dt><dd><ul rel="oa:hasBody">' + tagsArray.join('') + '</ul></dd></dl>';
+                tagsArray = tagsArray
+                  .map(tag => escapeCharacters(tag.trim()))
+                  .filter(tag => tag.length > 0);
+                  tagsArray = uniqueArray(tagsArray.sort());
+
+                var tags = tagsArray.map(tag => '<li about="#tag-' + n.id + '-' + generateAttributeId(null, tag) + '" typeof="oa:TextualBody" property="rdf:value" rel="oa:hasPurpose" resource="oa:tagging">' + tag + '</li>').join('');
+
+                body += '<dl id="tags-' + n.id + '" class="tags"><dt>Tags</dt><dd><ul rel="oa:hasBody">' + tags + '</ul></dd></dl>';
               }
             }
             else if (n.bodyValue !== 'undefined') {
