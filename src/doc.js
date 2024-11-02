@@ -1090,9 +1090,8 @@ function getDocumentStatusHTML(rootNode, options) {
   return s;
 }
 
-function handleDeleteNote(e) {
-  var button = e.target.closest('button.delete');
-
+function handleDeleteNote(button) {
+  button.setAttribute("disabled", "disabled");
   var article = button.closest('article');
   var refId = 'r-' + article.id;
   var li = article.closest('li:has(blockquote[cite])');
@@ -1103,6 +1102,11 @@ function handleDeleteNote(e) {
 
   if (url) {
     deleteResource(url)
+      .catch(error => {
+        console.log(error);
+        //TODO: Alert user.. try again later or..?
+        li.classList.add('error');
+      })
       .then(() => {
         li.parentNode.removeChild(li);
         var span = document.querySelector('span[resource="#' + refId + '"]');
