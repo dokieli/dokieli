@@ -557,6 +557,7 @@ export default {
     "dctermsissued": "http://purl.org/dc/terms/issued",
     "dctermscreated": "http://purl.org/dc/terms/created",
     "dctermsmodified": "http://purl.org/dc/terms/modified",
+    "dctermsformat": "http://purl.org/dc/terms/format",
     "dctermslanguage": "http://purl.org/dc/terms/language",
     "dctermslicense": { "@id": "http://purl.org/dc/terms/license", "@type": "@id" },
     "dctermsrights": { "@id": "http://purl.org/dc/terms/rights", "@type": "@id" },
@@ -564,6 +565,9 @@ export default {
     "dctermshasPart": { "@id": "http://purl.org/dc/terms/hasPart", "@type": "@id", "@array": true },
     "dctermsisPartOf": { "@id": "http://purl.org/dc/terms/isPartOf", "@type": "@id", "@array": true },
     "dctermsreferences": { "@id": "http://purl.org/dc/terms/references", "@type": "@id", "@array": true },
+
+    "dcformat": "http://purl.org/dc/elements/1.1/format",
+    "dclanguage": "http://purl.org/dc/elements/1.1/language",
 
     "cclicense": { "@id": "http://creativecommons.org/ns#license", "@type": "@id" },
     "xhvlicense": { "@id": "http://www.w3.org/1999/xhtml/vocab#license", "@type": "@id" },
