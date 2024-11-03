@@ -343,13 +343,15 @@ function afterSignIn () {
     updateDocumentDoButtonStates();
   });
 
-  getAgentTypeIndex(Config.User.Graph).then(typeIndexes => {
+  var promises = [];
+
+  promises.push(getAgentTypeIndex(Config.User.Graph).then(typeIndexes => {
     Object.keys(typeIndexes).forEach(typeIndexType => {
       Config.User.TypeIndex[typeIndexType] = typeIndexes[typeIndexType];
     });
-  });
+  }));
 
-  getAgentPreferencesInfo(Config.User.Graph)
+  promises.push(getAgentPreferencesInfo(Config.User.Graph)
     .then(preferencesInfo => {
       Config.User['Preferences'] = { graph: preferencesInfo };
       return preferencesInfo.child(Config.User.IRI);
@@ -360,9 +362,8 @@ function afterSignIn () {
     .catch(error => {
       var g = Config.User.Graph.child(Config.User.IRI);
       setPreferredPolicyInfo(g);
-    })
+    }))
 
-  var promises = [];
   promises.push(getAgentSupplementalInfo(Config.User.IRI))
   promises.push(getAgentSeeAlso(Config.User.Graph))
 
