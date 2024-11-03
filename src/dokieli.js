@@ -8000,6 +8000,8 @@ console.log('XXX: REVISIT positionInteraction when DO.C.Activity[noteIRI] alread
       var refLabel = id;
 
       var inboxIRI = (note.ldpinbox && note.ldpinbox.at(0)) ? note.ldpinbox.at(0) : undefined;
+      var asInboxIRI = (note.asinbox && note.asinbox.at(0)) ? note.asinbox.at(0) : undefined;
+      inboxIRI = inboxIRI || asInboxIRI;
       if (inboxIRI) {
         // console.log('inboxIRI:')
         // console.log(inboxIRI)
