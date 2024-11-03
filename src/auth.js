@@ -324,7 +324,7 @@ function getSubjectInfo (subjectIRI, options = {}) {
       }
     })
     .then(agent => {
-      if (!agent.Graph || agent.IRI != Config.User.IRI) return agent;
+      if (!agent.Graph || options.oidc) return agent;
 
       return getAgentTypeIndex(agent.Graph)
         .then(typeIndexes => {
