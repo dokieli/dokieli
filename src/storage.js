@@ -200,8 +200,8 @@ function updateLocalStorageProfile(User) {
   if (U.Graph) {
     delete U.Graph
   }
-  if (U.Preferences && U.Preferences.Graph) {
-    delete U.Preferences.Graph
+  if (U.Preferences && U.Preferences.graph) {
+    delete U.Preferences.graph
   }
 
   if (U.Contacts) {

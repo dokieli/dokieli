@@ -353,7 +353,7 @@ function afterSignIn () {
 
   promises.push(getAgentPreferencesInfo(Config.User.Graph)
     .then(preferencesInfo => {
-      Config.User['Preferences'] = { Graph: preferencesInfo };
+      Config.User['Preferences'] = { graph: preferencesInfo };
       return preferencesInfo.child(Config.User.IRI);
     })
     .then(g => {
