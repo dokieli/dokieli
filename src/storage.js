@@ -196,9 +196,12 @@ function updateLocalStorageProfile(User) {
   var id = generateUUID();
   var datetime = getDateTimeISO();
 
-  //because.. cyclic
+  //Need to remove SimpleRDF graphs because they're cyclic.
   if (U.Graph) {
     delete U.Graph
+  }
+  if (U.Preferences && U.Preferences.Graph) {
+    delete U.Preferences.Graph
   }
 
   if (U.Contacts) {
