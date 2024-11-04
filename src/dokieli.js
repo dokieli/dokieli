@@ -53,14 +53,12 @@ DO = {
       DO.C['Collections'] = ('Collections' in DO.C && DO.C.Collections.length > 0) ? DO.C.Collections : [];
 
       const mediaTypeURIPrefix = "http://www.w3.org/ns/iana/media-types/";
+      //TODO: Move this elsewhere (call from DO.C.init()?) where it runs once and stores it in e.g, DO.C.MediaTypeURIs
       var mediaTypeURIs = getMediaTypeURIs(DO.C.MediaTypes.RDF);
 
-      if (DO.C.Notification[url]) {
-        return Promise.resolve([]);
-      }
-
-      DO.C.Notification[url] = {};
-      DO.C.Notification[url]['Activities'] = [];
+      // if (DO.C.Notification[url]) {
+      //   return Promise.resolve([]);
+      // }
 
       return getResourceGraph(url, options.headers, options)
         .then(
@@ -189,12 +187,10 @@ DO = {
 
     showNotificationSources: function(url) {
       DO.U.getNotifications(url).then(
-        function(i) {
-          i.forEach(function(notification) {
-            if (!DO.C.Notification[notification]) {
-              DO.U.showActivities(notification);
-            }
-          });
+        function(notifications) {
+          notifications.forEach(function(notification) {
+            DO.U.showActivities(notification, { notification: true });
+           });
         },
         function(reason) {
           console.log('No notifications');
@@ -225,13 +221,13 @@ DO = {
         icon.parentNode.removeChild(icon);
       }
 
-      var promises = [];
+      // var promises = [];
 
-var loggedInUserPromises = DO.C.User && Object.keys(DO.C.User) && DO.C.User.IRI && Array.isArray(DO.U.processAgentActivities(DO.C.User)) ? DO.U.processAgentActivities(DO.C.User) : [];
-promises.push(...loggedInUserPromises);
-      // promises.push(...DO.U.processAgentActivities(DO.C.User));
+      // console.log(DO.C.User);
 
-      console.log("promises after own are pushed", promises.length)
+      var promises = DO.U.processAgentActivities(DO.C.User);
+
+      console.log(promises)
 
       if (DO.C.User.Contacts && Object.keys(DO.C.User.Contacts).length > 0){
 // console.log('user has contacts')
@@ -240,11 +236,11 @@ promises.push(...loggedInUserPromises);
         Object.keys(DO.C.User.Contacts).forEach(function(iri){
           var contact = DO.C.User.Contacts[iri];
           if (!contact.IRI) return;
-          var agentActivitiesPromises = contact.IRI && Array.isArray(DO.U.processAgentActivities(contact)) ? DO.U.processAgentActivities(contact) : [];
-          promises.push(...agentActivitiesPromises);
-// promises.push(...DO.U.processAgentActivities(contact));
+
+          promises.push(...DO.U.processAgentActivities(contact));
         });
-       Promise.allSettled(promises).then(() => removeProgress())
+
+        return Promise.allSettled(promises).then(() => removeProgress())
       }
       else if (DO.C.User.IRI) {
 // console.log('else.....')
@@ -268,8 +264,10 @@ promises.push(...loggedInUserPromises);
 // console.log( { contactsPromises })
 
               promises.push(...contactsPromises);
-              console.log("promises after contacts are pushe", promises.length)
-             return Promise.allSettled(contactsPromises).then(() => removeProgress())
+              return Promise.allSettled(promises).then(() => {
+                console.log('removeProgress')
+                removeProgress()
+              })
             }
             else {
 // console.log('----------- no contacts')
@@ -279,19 +277,19 @@ promises.push(...loggedInUserPromises);
             }
           })
           .catch((e) => {
-// console.log(e)
+console.log(e)
             removeProgress()
           })
-          .finally(() => {
-            Promise.allSettled(promises)
-              .then(r => {
-                removeProgress()
-              })
-              .catch(e => console.log(e))
-          })
+          // .finally(() => {
+          //   Promise.allSettled(promises)
+          //     .then(r => {
+          //       removeProgress()
+          //     })
+          //     .catch(e => console.log(e))
+          // })
 
       } else {
-         Promise.allSettled(promises).then(() => removeProgress())
+        Promise.allSettled(promises).then(() => removeProgress())
       }
       // Promise.allSettled(promises)
       //   .then(r => {
@@ -302,9 +300,13 @@ promises.push(...loggedInUserPromises);
     processAgentActivities: function(agent) {
       // console.log("processAgentActivities", agent.TypeIndex)
       if (agent.TypeIndex && Object.keys(agent.TypeIndex).length) {
+        // console.log(agent.IRI, agent.TypeIndex)
         // console.log(DO.U.processAgentTypeIndex(agent))
         return DO.U.processAgentTypeIndex(agent);
       }
+
+      return [Promise.resolve()];
+
       //TODO: Need proper filtering of storage/outbox matching an object of interest
       // else {
       //   return DO.U.processAgentStorageOutbox(agent)
@@ -318,11 +320,7 @@ promises.push(...loggedInUserPromises);
       var publicTypeIndexes = agent.TypeIndex[DO.C.Vocab['solidpublicTypeIndex']['@id']] || {};
       var privateTypeIndexes = agent.TypeIndex[DO.C.Vocab['solidprivateTypeIndex']['@id']] || {};
       //XXX: Perhaps these shouldn't be merged and kept apart or have the UI clarify what's public/private, and additional engagements keep that context
-      var typeIndexes = Object.assign({}, publicTypeIndexes);
-
-      // if (agent.IRI == DO.C.User.IRI) {
-        typeIndexes = Object.assign(typeIndexes, privateTypeIndexes);
-      // }
+      var typeIndexes = Object.assign({}, publicTypeIndexes, privateTypeIndexes);
 
       var recognisedTypes = [];
 
@@ -335,11 +333,11 @@ promises.push(...loggedInUserPromises);
           recognisedTypes.push(forClass);
 
           if (instance) {
-            promises.push(new Promise(() => DO.U.showActivities(instance, { excludeMarkup: true, agent: agent.IRI })));
+            promises.push(DO.U.showActivities(instance, { excludeMarkup: true, agent: agent.IRI }));
           }
 
           if (instanceContainer) {
-            promises.push(new Promise(() => DO.U.showActivitiesSources(instanceContainer, { activityType: 'instanceContainer', agent: agent.IRI })));
+            promises.push(DO.U.showActivitiesSources(instanceContainer, { activityType: 'instanceContainer', agent: agent.IRI }));
           }
         }
       });
@@ -414,13 +412,9 @@ promises.push(...loggedInUserPromises);
     },
 
     showActivities: function(url, options = {}) {
-      if (DO.C.Notification[url] || DO.C.Activity[url]) {
+      if (DO.C.Activity[url] || DO.C.Notification[url]) {
         return [];
       }
-
-      //XXX: Revisit this which may be adding things that will also appear in DO.C.Activity
-      DO.C.Notification[url] = {};
-      DO.C.Notification[url]['Activities'] = [];
 
       var documentURL = DO.C.DocumentURL;
 
@@ -434,7 +428,15 @@ promises.push(...loggedInUserPromises);
         .then(g => {
           if (!g || g.resource) return;
 
-          DO.C.Notification[url]['Graph'] = g;
+          if (options.notification) {
+            DO.C.Notification[url] = {};
+            DO.C.Notification[url]['Activities'] = [];
+            DO.C.Notification[url]['Graph'] = g;
+          }
+          else {
+            DO.C.Activity[url] = {};
+            DO.C.Activity[url]['Graph'] = g;
+          }
 
           var currentPathURL = window.location.origin + window.location.pathname;
 
@@ -464,7 +466,7 @@ promises.push(...loggedInUserPromises);
                   if(s.ascontext && s.ascontext.at(0)){
                     var context = s.ascontext.at(0);
                     subjectsReferences.push(context);
-                    return DO.U.positionInteraction(context)
+                    return DO.U.showActivities(context)
                       .then(iri => iri)
                       .catch(e => console.log(context + ': context is unreachable', e));
                   }
@@ -539,7 +541,7 @@ promises.push(...loggedInUserPromises);
                 if(s.assubject && s.assubject.at(0) && s.asrelationship && s.asrelationship.at(0) && s.asobject && s.asobject.at(0) && getPathURL(s.asobject.at(0)) == currentPathURL) {
                   var subject = s.assubject.at(0);
                   subjectsReferences.push(subject);
-                  return DO.U.positionInteraction(subject)
+                  return DO.U.showActivities(subject)
                     .then(iri => iri)
                     .catch(e => console.log(subject + ': subject is unreachable', e));
                 }
@@ -565,12 +567,10 @@ promises.push(...loggedInUserPromises);
                     var target = s.astarget.at(0);
                     subjectsReferences.push(object);
 
-                    DO.C.Notification[url]['Activities'].push(i);
-                    DO.C.Activity[object] = {};
-                    DO.C.Activity[object]['Graph'] = s;
+                    DO.C.Notification[url]['Activities'].push(object);
 
                     if (object.startsWith(url)) {
-                      return DO.U.showAnnotation(object, s);
+                      return DO.U.showAnnotation(object, s, o);
                     }
                     else {
                       s = s.child(object);
@@ -598,7 +598,7 @@ promises.push(...loggedInUserPromises);
                         return DO.U.showCitations(citation, s);
                       }
                       else {
-                        return DO.U.positionInteraction(object, getDocumentContentNode(document), o)
+                        return DO.U.showActivities(object, o)
                           .then(iri => iri)
                           .catch(e => console.log(object + ': object is unreachable', e));
                       }
@@ -619,7 +619,7 @@ promises.push(...loggedInUserPromises);
                     return DO.U.showAnnotation(object, s);
                   }
                   else {
-                    return DO.U.positionInteraction(object)
+                    return DO.U.showActivities(object)
                       .then(iri => iri)
                       .catch(e => console.log(object + ': object is unreachable', e));
                   }
@@ -7961,11 +7961,11 @@ WHERE {\n\
       note.setAttribute('style', style);
     },
 
+    //XXX: To be deprecated
     positionInteraction: function(noteIRI, containerNode, options) {
       containerNode = containerNode || getDocumentContentNode(document);
 
       if (DO.C.Activity[noteIRI]) {
-console.log('XXX: REVISIT positionInteraction when DO.C.Activity[noteIRI] already exists');
         return Promise.reject();
       }
 
@@ -7976,13 +7976,13 @@ console.log('XXX: REVISIT positionInteraction when DO.C.Activity[noteIRI] alread
           //XXX: REVISIT
           if (!g || g.resource) return;
 
-          DO.C.Activity[noteIRI]['Graph'] = g;
           DO.U.showAnnotation(noteIRI, g, containerNode, options);
         });
     },
 
-    showAnnotation: function(noteIRI, g, containerNode, options) {
-      containerNode = containerNode || getDocumentContentNode(document);
+    showAnnotation: function(noteIRI, g, options) {
+      // containerNode = containerNode || getDocumentContentNode(document);
+      var containerNode = getDocumentContentNode(document);
       options = options || {};
 
       var documentURL = DO.C.DocumentURL;
@@ -8014,13 +8014,18 @@ console.log('XXX: REVISIT positionInteraction when DO.C.Activity[noteIRI] alread
         if (DO.C.Inbox[inboxIRI]) {
           DO.C.Inbox[inboxIRI]['Notifications'].forEach(function(notification) {
 // console.log(notification)
-            if (DO.C.Notification[notification] && DO.C.Notification[notification]['Activities']) {
-              DO.C.Notification[notification]['Activities'].forEach(function(activity){
-// console.log('   ' + activity)
-                if (!document.querySelector('[about="' + activity + '"]') && DO.C.Activity[activity] && DO.C.Activity[activity]['Graph']) {
-                  DO.U.showAnnotation(activity, DO.C.Activity[activity]['Graph']);
-                }
-              })
+            if (DO.C.Notification[notification]) {
+              if (DO.C.Notification[notification]['Activities']) {
+                DO.C.Notification[notification]['Activities'].forEach(function(activity){
+  // console.log('   ' + activity)
+                  if (!document.querySelector('[about="' + activity + '"]') && DO.C.Activity[activity] && DO.C.Activity[activity]['Graph']) {
+                    DO.U.showAnnotation(activity, DO.C.Activity[activity]['Graph']);
+                  }
+                })
+              }
+            }
+            else {
+              DO.U.showActivities(notification, { notification: true });
             }
           });
         }
@@ -8290,9 +8295,6 @@ console.log('XXX: REVISIT positionInteraction when DO.C.Activity[noteIRI] alread
             }
           }
 
-          DO.C.Activity[noteIRI] = {};
-          DO.C.Activity[noteIRI]['Graph'] = g;
-
           //Perhaps return something more useful?
           return noteIRI;
         }
@@ -8345,9 +8347,6 @@ console.log('XXX: REVISIT positionInteraction when DO.C.Activity[noteIRI] alread
           }
 // console.log(noteData)
           DO.U.addNoteToNotifications(noteData);
-
-          DO.C.Activity[noteIRI] = {};
-          DO.C.Activity[noteIRI]['Graph'] = g;
         }
       }
       //TODO: Refactor
@@ -8408,9 +8407,6 @@ console.log('XXX: REVISIT positionInteraction when DO.C.Activity[noteIRI] alread
             noteData.datetime = datetime;
           }
           DO.U.addNoteToNotifications(noteData);
-
-          DO.C.Activity[noteIRI] = {};
-          DO.C.Activity[noteIRI]['Graph'] = g;
         }
         else {
           console.log(noteIRI + ' is not an oa:Annotation, as:inReplyTo, sioc:reply_of');
@@ -8435,8 +8431,6 @@ console.log('XXX: REVISIT positionInteraction when DO.C.Activity[noteIRI] alread
         }
       }
       else {
-        DO.C.Activity[cEURL] = {};
-
         DO.U.processCitationClaim(citation);
       }
     },
@@ -8447,6 +8441,7 @@ console.log('XXX: REVISIT positionInteraction when DO.C.Activity[noteIRI] alread
       return getResourceGraph(pIRI).then(
         function(i) {
           var cEURL = stripFragmentFromString(citation.citingEntity);
+          DO.C.Activity[cEURL] = {};
           DO.C.Activity[cEURL]['Graph'] = i;
           var s = i.child(citation.citingEntity);
           DO.U.addCitation(citation, s);
@@ -11022,7 +11017,8 @@ console.log('XXX: REVISIT positionInteraction when DO.C.Activity[noteIRI] alread
                     })
                 }
                 else {
-                  return DO.U.positionInteraction(annotation[ 'noteIRI' ], getDocumentContentNode(document), options)
+// console.log(options)
+                  return DO.U.showActivities(annotation[ 'noteIRI' ], options)
                     .catch(() => {
                       return Promise.resolve()
                     })
