@@ -1167,6 +1167,10 @@ function getGraphPublishers(s) {
   )
 }
 
+function getGraphDate(s) {
+  return getGraphUpdated(s) || getGraphPublished(s) || getGraphCreated(s);
+}
+
 function getGraphPublished(s) {
   var d = s.schemadatePublished || s.aspublished || s.dctermsissued || s.dctermsdate || s.provgeneratedAtTime || undefined;
   return d === undefined ? undefined : DOMPurify.sanitize(d)
@@ -1489,6 +1493,7 @@ export {
   getGraphAuthors,
   getGraphPerformers,
   getGraphPublishers,
+  getGraphDate,
   getGraphPublished,
   getGraphUpdated,
   getGraphCreated,
