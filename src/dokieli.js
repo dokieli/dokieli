@@ -203,34 +203,36 @@ DO = {
       var aside = document.querySelector('#document-notifications');
 
       var showProgress = function(){
-        var icon = aside.querySelector('.fa-spin');
-        if (icon) return;
+        // var icon = aside.querySelector('.fa-spin');
+        // if (icon) return;
 
-        icon = fragmentFromString(Icon[".fas.fa-circle-notch.fa-spin.fa-fw"].replace(/ fa\-fw/, ' fa-2x'));
+        var info = aside.querySelector('div.info');
+        info.replaceChildren();
 
-        var infoBox = aside.querySelector('p.info');
-        if (infoBox) {
-          infoBox.parentNode.removeChild(infoBox);
-        }
+        var progress =  fragmentFromString(`<span class="progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]} Checking activities</span>`);
 
-        aside.querySelector('div').appendChild(icon);
+        info.appendChild(progress);
       }
 
       var removeProgress = function() {
-        var icon = aside.querySelector('div .fa-spin');
-        icon.parentNode.removeChild(icon);
+        // var icon = aside.querySelector('div .fa-spin');
+        // icon.parentNode.removeChild(icon);
+        var info = aside.querySelector('div.info');
+        info.replaceChildren();
+        DO.U.initializeButtonMore(aside);
       }
 
       // var promises = [];
 
       // console.log(DO.C.User);
 
-      var promises = DO.U.processAgentActivities(DO.C.User);
-
-      console.log(promises)
+      var promises = [];
+      promises.push(...DO.U.processAgentActivities(DO.C.User));
+Promise.allSettled(promises).then((r) => console.log(r))
+console.log(promises)
 
       if (DO.C.User.Contacts && Object.keys(DO.C.User.Contacts).length > 0){
-// console.log('user has contacts')
+console.log('user has contacts')
         showProgress();
 
         Object.keys(DO.C.User.Contacts).forEach(function(iri){
@@ -240,56 +242,46 @@ DO = {
           promises.push(...DO.U.processAgentActivities(contact));
         });
 
-        return Promise.allSettled(promises).then(() => removeProgress())
+       Promise.allSettled(promises).then(() => removeProgress())
       }
       else if (DO.C.User.IRI) {
-// console.log('else.....')
+console.log('---------else if.....')
         showProgress();
+
         getUserContacts(DO.C.User.IRI)
           .then(contacts => {
             if (contacts.length > 0) {
-              var contactsPromises = contacts.map(function(url) {
-                return getSubjectInfo(url).then(subject => {
-                  DO.C.User.Contacts[url] = subject;
+console.log(contacts)
+              contacts.forEach(function(url) {
+                getSubjectInfo(url).then(subject => {
+                  if (subject.Graph) {
+                    DO.C.User.Contacts[url] = subject;
 
-                  if (!subject.Graph) {
-// console.log('----- !subject.Graph', url, subject)
-                    // return;
-                    return Promise.resolve();
+                    promises.push(...DO.U.processAgentActivities(DO.C.User.Contacts[url]));
                   }
-
-                  return DO.U.processAgentActivities(DO.C.User.Contacts[url]);
+                  // return DO.U.processAgentActivities(DO.C.User.Contacts[url]);
                 })
               });
 // console.log( { contactsPromises })
 
-              promises.push(...contactsPromises);
-              return Promise.allSettled(promises).then(() => {
-                console.log('removeProgress')
-                removeProgress()
-              })
             }
-            else {
-// console.log('----------- no contacts')
-//  Promise.allSettled(promises).then(() => removeProgress())
-              return Promise.resolve();
-            
-            }
+          })
+          .then(() => {
+
+            console.log(promises)
+            Promise.allSettled(promises).then(() => {
+              console.log('removeProgress')
+              removeProgress()
+            })
           })
           .catch((e) => {
 console.log(e)
-            removeProgress()
+            // removeProgress()
           })
-          // .finally(() => {
-          //   Promise.allSettled(promises)
-          //     .then(r => {
-          //       removeProgress()
-          //     })
-          //     .catch(e => console.log(e))
-          // })
 
-      } else {
-        Promise.allSettled(promises).then(() => removeProgress())
+      }
+      else {
+        // Promise.allSettled(promises).then(() => removeProgress())
       }
       // Promise.allSettled(promises)
       //   .then(r => {
@@ -298,7 +290,7 @@ console.log(e)
     },
 
     processAgentActivities: function(agent) {
-      // console.log("processAgentActivities", agent.TypeIndex)
+      console.log("processAgentActivities", agent.TypeIndex)
       if (agent.TypeIndex && Object.keys(agent.TypeIndex).length) {
         // console.log(agent.IRI, agent.TypeIndex)
         // console.log(DO.U.processAgentTypeIndex(agent))
@@ -8564,24 +8556,35 @@ WHERE {\n\
     }
     },
 
+    initializeButtonMore: function(node) {
+      var progress = fragmentFromString('<span class="progress">' + DO.C.Button.More + ' Discover activities from your social circles!</span>');
+      node.querySelector('div.info').replaceChildren(progress);
+
+      node = document.getElementById('document-notifications');
+
+      var buttonMore = node.querySelector('div.info button.more');
+      buttonMore.addEventListener('click', () => {
+        if (!DO.C.User.IRI) {
+          showUserIdentityInput();
+        }
+        else {
+          DO.U.showContactsActivities();
+        }
+      });
+    },
+
     initializeNotifications: function(options = {}) {
       var contextNode = selectArticleNode(document);
-      // interactionsSection += '<p class="count"><data about="" datatype="xsd:nonNegativeInteger" property="sioc:num_replies" value="' + interactionsCount + '">' + interactionsCount + '</data> interactions</p>';
-      var aside = `<aside class="do" id="document-notifications">${DO.C.Button.Toggle}<h2>Notifications</h2><div><ul></ul></div></aside>`;
+      // <p class="count"><data about="" datatype="xsd:nonNegativeInteger" property="sioc:num_replies" value="' + interactionsCount + '">' + interactionsCount + '</data> interactions</p>
+      //<progress min="0" max="100" value="0"></progress>
+      //<div class="actions"><a href="/docs#resource-activities" target="_blank">${Icon[".fas.fa-circle-info"]}</a></div>
+
+      var aside = `<aside class="do" id="document-notifications">${DO.C.Button.Toggle}<h2>Notifications</h2><div><div class="info"></div><ul></ul></div></aside>`;
       contextNode.insertAdjacentHTML('beforeend', aside);
       aside = document.getElementById('document-notifications');
 
       if (options.includeButtonMore) {
-        aside.querySelector('div').insertAdjacentHTML('beforeend', '<p class="info">' + DO.C.Button.More + ' Discover more activities from your social circles!</p>');
-
-        aside = document.getElementById('document-notifications');
-
-        var buttonMore = aside.querySelector('div button.more');
-        buttonMore.addEventListener('click', () => {
-          var button = buttonMore.closest('button.more');
-          button.parentNode.removeChild(button);
-          DO.U.showContactsActivities();
-        });
+        DO.U.initializeButtonMore(aside);
       }
 
       return aside;
