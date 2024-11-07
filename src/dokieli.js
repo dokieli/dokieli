@@ -5057,8 +5057,9 @@ console.log(e);
             contacts.forEach(function(url) {
               getSubjectInfo(url).then(subject => {
                 DO.C.User.Contacts[url] = subject;
-
-                DO.U.addShareResourceContactInput(node, subject.Graph);
+                if (subject.Graph) {
+                  DO.U.addShareResourceContactInput(node, subject.Graph);
+                }
               });
             });
 
@@ -5073,7 +5074,7 @@ console.log(e);
     },
 
     addShareResourceContactInput: function(node, s) {
-      var iri = s.iri().toString();
+      var iri = s?.iri().toString();
 // console.log(iri.toString());
       var inbox = DO.C.User.Contacts[iri]['Inbox'];
 
