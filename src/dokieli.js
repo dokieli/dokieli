@@ -63,7 +63,7 @@ DO = {
       return getResourceGraph(url, options.headers, options)
         .then(
           function(g) {
-            if (!g || g.resource) return;
+            if (!g || g.resource) return [];
 
             var s = g.child(url);
 // console.log(s.toString());
