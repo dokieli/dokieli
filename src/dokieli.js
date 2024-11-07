@@ -616,16 +616,28 @@ console.log(e)
                 // return DO.U.showCitations(iri, s)
               // }
               else if(resourceTypes.indexOf('https://www.w3.org/ns/activitystreams#Add') > -1) {
-                if(s.asobject && s.asobject.at(0)) {
-                  object = s.asobject.at(0);
-                  subjectsReferences.push(object);
-                  if (object.startsWith(url)) {
-                    return DO.U.showAnnotation(object, s);
-                  }
-                  else {
-                    return DO.U.showActivities(object)
-                      .then(iri => iri)
-                      .catch(e => console.log(object + ': object is unreachable', e));
+                var object = s.asobject ? s.asobject.at(0) : undefined;
+                var target = s.astarget ? s.astarget.at(0) : undefined;
+                var origin = s.asorigin ? s.asorigin.at(0) : undefined;
+
+                if (object && (target || origin)) {
+                  var targetPathURL = getPathURL(target);
+                  var originPathURL = getPathURL(origin);
+// console.log('pathURLs: ', targetPathURL, originPathURL);
+                  if (targetPathURL == currentPathURL || originPathURL == currentPathURL) {
+                    subjectsReferences.push(object);
+// console.log('object:', object);
+// console.log('target:', target);
+// console.log('origin:', origin);
+
+                    if (object.startsWith(url)) {
+                      return DO.U.showAnnotation(object, s);
+                    }
+                    else {
+                      return DO.U.showActivities(object)
+                        .then(iri => iri)
+                        .catch(e => console.log(object + ': object is unreachable', e));
+                    }
                   }
                 }
               }
