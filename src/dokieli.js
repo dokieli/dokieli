@@ -9,7 +9,7 @@
 import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceGraph, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource } from './fetcher.js'
 import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, buttonClose, notificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, getButtonDisabledHTML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getClosestSectionNode, getAgentHTML, setEditSelections, getNodeLanguage, createActivityHTML, createLanguageHTML, createLicenseHTML, createRightsHTML, getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getResourceTypeOptionsHTML, getPublicationStatusOptionsHTML, getLanguageOptionsHTML, getLicenseOptionsHTML, getCitationOptionsHTML, getDocumentNodeFromString, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote } from './doc.js'
 import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, getAbsoluteIRI, generateDataURI, getMediaTypeURIs } from './uri.js'
-import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, serializeGraph, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentOutbox, getAgentStorage, getAgentInbox, getLinkRelationFromHead, sortGraphTriples, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraph } from './graph.js'
+import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, serializeGraph, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentOutbox, getAgentStorage, getAgentInbox, getLinkRelationFromHead, sortGraphTriples, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraph, getGraphDate } from './graph.js'
 import { notifyInbox, sendNotifications, postActivity } from './inbox.js'
 import { uniqueArray, fragmentFromString, hashCode, generateAttributeId, escapeRegExp, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, matchAllIndex, isValidISBN, findPreviousDateTime } from './util.js'
 import { generateGeoView } from './geo.js'
@@ -529,8 +529,10 @@ console.log(e)
                         'name': 'Anonymous Coward'
                       }
                     }
-                    if (s.asupdated){
-                      noteData['datetime'] = s.asupdated;
+
+                    var datetime = getGraphDate(s);
+                    if (datetime){
+                      noteData['datetime'] = datetime;
                     }
 
                     DO.U.addNoteToNotifications(noteData);
@@ -682,8 +684,9 @@ console.log(e)
                   }
                 }
 
-                if (s.dctermsmodified || s.dctermscreated ){
-                  noteData['datetime'] = s.dctermsmodified || s.dctermscreated;
+                var datetime = getGraphDate(s);
+                if (datetime){
+                  noteData['datetime'] = datetime;
                 }
 
                 if (license){
@@ -8034,7 +8037,9 @@ WHERE {\n\
         }
       }
 
-      var datetime = note.schemadatePublished || note.dctermscreated || note.aspublished;
+      // var datetime = note.schemadatePublished || note.dctermscreated || note.aspublished;
+      var datetime = getGraphDate(note);
+
 // console.log(datetime);
       var annotatedBy = (note.schemacreator && note.schemacreator.at(0) !== undefined) ? note.schemacreator :
       (note.dctermscreator && note.dctermscreator.at(0) !== undefined) ? note.dctermscreator :
@@ -8233,7 +8238,6 @@ WHERE {\n\
             "refId": refId,
             "iri": noteIRI, //e.g., https://example.org/path/to/article
             "creator": {},
-            "datetime": datetime,
             "target": {
               "iri": targetIRI,
               "source": source,
@@ -8275,7 +8279,9 @@ WHERE {\n\
           if (inboxIRI) {
             noteData["inbox"] = inboxIRI;
           }
-// console.log(noteData);
+          if (datetime){
+            noteData["datetime"] = datetime;
+          }
 
           DO.U.addNoteToNotifications(noteData);
 
@@ -8310,7 +8316,6 @@ WHERE {\n\
             "refLabel": refLabel,
             "iri": noteIRI,
             "creator": {},
-            "datetime": datetime,
             "target": {
               "iri": targetIRI
             }
@@ -8342,8 +8347,8 @@ WHERE {\n\
           if (inboxIRI) {
             noteData["inbox"] = inboxIRI;
           }
-          if (datetime) {
-            noteData.datetime = datetime;
+          if (datetime){
+            noteData["datetime"] = datetime;
           }
 // console.log(noteData)
           DO.U.addNoteToNotifications(noteData);
@@ -8403,8 +8408,8 @@ WHERE {\n\
           if (inboxIRI) {
             noteData["inbox"] = inboxIRI;
           }
-          if (datetime) {
-            noteData.datetime = datetime;
+          if (datetime){
+            noteData["datetime"] = datetime;
           }
           DO.U.addNoteToNotifications(noteData);
         }
@@ -8573,7 +8578,7 @@ WHERE {\n\
 
       var note = DO.U.createNoteDataHTML(noteData);
 
-      var li = '<li data-datetime="' + noteData.datetime + '"><blockquote cite="' + noteData.iri + '">'+ note + '</blockquote></li>';
+      var datetime = noteData.datetime ? noteData.datetime : '1900-01-01T00:00:00.000Z';
 
       var aside = document.getElementById('document-notifications');
 
