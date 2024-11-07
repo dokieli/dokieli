@@ -488,7 +488,7 @@ console.log(e)
                       "id": id,
                       "refId": refId,
                       "refLabel": refLabel,
-                      // "iri": iri,
+                      "iri": iri, //but don't pass this to createNoteDataHTML?
                       "creator": {},
                       "target": {
                         "iri": targetIRI
@@ -666,7 +666,7 @@ console.log(e)
                   "id": id,
                   "refId": refId,
                   "refLabel": refLabel,
-                  // "iri": iri,
+                  "iri": iri, //but don't pass this to createNoteDataHTML?
                   "creator": {},
                   "target": {
                     "iri": targetIRI
@@ -8591,10 +8591,16 @@ WHERE {\n\
       var id = document.getElementById(noteData.id);
       if (id) return;
 
+      var noteDataIRI = noteData.iri;
+      // delete noteData.iri;
+// console.log(noteData)
       var note = DO.U.createNoteDataHTML(noteData);
 
       var datetime = noteData.datetime ? noteData.datetime : '1900-01-01T00:00:00.000Z';
 
+      // var li = '<li data-datetime="' + noteData.datetime + '"><blockquote cite="' + noteData.iri + '">'+ note + '</blockquote></li>';
+      var li = '<li data-datetime="' + datetime + '"><blockquote cite="' + noteDataIRI + '">'+ note + '</blockquote></li>';
+// console.log(li);
       var aside = document.getElementById('document-notifications');
 
       if(!aside) {
