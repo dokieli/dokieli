@@ -8579,7 +8579,7 @@ WHERE {\n\
       //<progress min="0" max="100" value="0"></progress>
       //<div class="actions"><a href="/docs#resource-activities" target="_blank">${Icon[".fas.fa-circle-info"]}</a></div>
 
-      var aside = `<aside class="do" id="document-notifications">${DO.C.Button.Toggle}<h2>Notifications</h2><div><div class="info"></div><ul></ul></div></aside>`;
+      var aside = `<aside class="do" id="document-notifications">${DO.C.Button.Toggle}<h2>Notifications</h2><div><div class="info"></div><ul class="activities"></ul></div></aside>`;
       contextNode.insertAdjacentHTML('beforeend', aside);
       aside = document.getElementById('document-notifications');
 

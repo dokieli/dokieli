@@ -590,7 +590,7 @@ padding-right:1em;
 display:flex;
 flex-direction: column;
 }
-#document-notifications > div > ul {
+#document-notifications > div > ul.activities {
 overflow-y: auto;
 }
 #document-notifications > div > button.more {
@@ -600,8 +600,9 @@ width:max-content;
 align-self: center;
 }
 
-#document-notifications li {
+#document-notifications ul.activities > li {
 margin-bottom:2em;
+padding:0;
 }
 
 #document-notifications article {
