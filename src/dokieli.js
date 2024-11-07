@@ -134,7 +134,6 @@ DO = {
     getNotifications: function(url) {
       url = url || window.location.origin + window.location.pathname;
       var notifications = [];
-      var pIRI = getProxyableIRI(url);
 
       DO.C.Inbox[url] = {};
       DO.C.Inbox[url]['Notifications'] = [];
