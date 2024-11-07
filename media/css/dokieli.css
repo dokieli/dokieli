@@ -562,8 +562,8 @@ z-index:2147483646;
 width:25em;
 height:100%;
 max-height:100%;
-overflow: auto;
 padding-left:3em;
+overflow: unset;
 }
 #document-notifications h2 {
 margin-top:1.5em;
@@ -586,15 +586,29 @@ font-size:1em;
 content:':';
 }
 #document-notifications > div {
-padding-right:1em;
 display:flex;
 flex-direction: column;
+max-height: 90%;
+}
+#document-notifications .info {
+padding-bottom:1em;
+margin-bottom:1em;
+font-weight:normal;
+vertical-align: middle;
+border-bottom:1px solid #eee;
+}
+#document-notifications .progress {
+margin:0;
 }
 #document-notifications > div > ul.activities {
 overflow-y: auto;
+height: 100%;
 }
 #document-notifications > div > button.more {
 width:max-content;
+}
+#document-notifications article button.delete {
+right:1em;
 }
 #document-notifications > div > .fa-spin {
 align-self: center;
@@ -604,7 +618,9 @@ align-self: center;
 margin-bottom:2em;
 padding:0;
 }
-
+#document-notifications blockquote {
+margin-bottom: 0;
+}
 #document-notifications article {
 margin:0;
 }
