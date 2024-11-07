@@ -473,12 +473,13 @@ console.log(e)
                   else {
                     var iri = s.iri().toString();
                     var targetIRI = s.asobject.at(0);
-                    var motivatedBy = 'oa:assessing';
+                    // var motivatedBy = 'oa:assessing';
                     var id = generateUUID(iri);
                     var refId = 'r-' + id;
                     var refLabel = id;
 
                     var bodyValue = (resourceTypes.indexOf('https://www.w3.org/ns/activitystreams#Like') > -1) ? 'Liked' : 'Disliked';
+                    var motivatedBy = bodyValue.slice(0, -1);
 
                     var noteData = {
                       "type": 'article',
@@ -8689,7 +8690,19 @@ WHERE {\n\
           aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
           aPrefix = prefixes;
           break;
-      }
+        case 'as:Like':
+          motivatedByLabel = 'Liked';
+          targetLabel = 'Like of';
+          aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
+          aPrefix = prefixes;
+          break;
+        case 'as:Dislike':
+          motivatedByLabel = 'Disliked';
+          targetLabel = 'Dislike of';
+          aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
+          aPrefix = prefixes;
+          break;
+        }
 
       switch(n.mode) {
         default: case 'read':
