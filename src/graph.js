@@ -916,7 +916,7 @@ function getAgentTypeIndex(s) {
   if (publicTypeIndex) {
     promises.push(fetchTypeRegistration(publicTypeIndex, Config.Vocab['solidpublicTypeIndex']['@id']))
   }
-  if (privateTypeIndex) {
+  if (privateTypeIndex && Config.User.OIDC) {
     promises.push(fetchTypeRegistration(privateTypeIndex, Config.Vocab['solidprivateTypeIndex']['@id']))
   }
 

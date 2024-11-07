@@ -324,7 +324,8 @@ function getSubjectInfo (subjectIRI, options = {}) {
       }
     })
     .then(agent => {
-      if (!agent.Graph || options.oidc) return agent;
+      //XXX: Revisit what the retun should be, whether to be undefined, {}, or someting else. Is it useful to retain an agent object that doesn't have a Graph? (Probably better not.)
+      if (!agent.Graph) return agent;
 
       return getAgentTypeIndex(agent.Graph)
         .then(typeIndexes => {
