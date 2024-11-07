@@ -569,7 +569,9 @@ console.log(e)
                     var target = s.astarget.at(0);
                     subjectsReferences.push(object);
 
-                    DO.C.Notification[url]['Activities'].push(object);
+                    if (options.notification) {
+                      DO.C.Notification[url]['Activities'].push(object);
+                    }
 
                     if (object.startsWith(url)) {
                       return DO.U.showAnnotation(object, s, o);
