@@ -138,7 +138,7 @@ DO = {
       DO.C.Inbox[url] = {};
       DO.C.Inbox[url]['Notifications'] = [];
 
-      return getResourceGraph(pIRI)
+      return getResourceGraph(url)
         .then(
           function(i) {
             DO.C.Inbox[url]['Graph'] = i;
