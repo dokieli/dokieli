@@ -429,6 +429,14 @@ export default {
     'http://www.w3.org/2002/01/bookmark#Bookmark'
   ],
 
+  ActionActivityIndex: {
+    'article': [ 'http://www.w3.org/ns/oa#Annotation', 'https://www.w3.org/ns/activitystreams#Note', 'https://www.w3.org/ns/activitystreams#Article', 'https://www.w3.org/ns/activitystreams#Document', 'http://schema.org/CreativeWork' ],
+    'approve': [ 'http://www.w3.org/ns/oa#Annotation', 'https://www.w3.org/ns/activitystreams#Like', 'https://www.w3.org/ns/activitystreams#Activity', 'http://schema.org/CreativeWork' ],
+    'disapprove': [ 'http://www.w3.org/ns/oa#Annotation', 'https://www.w3.org/ns/activitystreams#Dislike', 'https://www.w3.org/ns/activitystreams#Activity', 'http://schema.org/CreativeWork' ],
+    'specificity': [ 'http://www.w3.org/ns/oa#Annotation','https://www.w3.org/ns/activitystreams#Note', 'https://www.w3.org/ns/activitystreams#Article', 'https://www.w3.org/ns/activitystreams#Document', 'http://schema.org/CreativeWork' ],
+    'bookmark': [ 'http://www.w3.org/ns/oa#Annotation', 'http://www.w3.org/2002/01/bookmark#Bookmark', 'https://www.w3.org/ns/activitystreams#Activity', 'http://schema.org/CreativeWork' ]
+  },
+
   CollectionTypes: [
     'https://www.w3.org/ns/activitystreams#Collection',
     'https://www.w3.org/ns/activitystreams#OrderedCollection',
