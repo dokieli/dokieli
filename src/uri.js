@@ -163,13 +163,13 @@ function generateDataURI(mediaType, encoding, data) {
 
 
 function getPrefixedNameFromIRI(iri) {
-  var match = motivatedBy.match(/(.*[#/])(.+)$/);
+  var match = iri.match(/(.*[#/])(.+)$/);
 
   if (match) {
     var ns = match[1];
     var localPart = match[2];
 
-    var prefix = Object.keys(Prefixes).find(function(key) {
+    var prefix = Object.keys(Config.Prefixes).find(key => {
       return Config.Prefixes[key] === ns;
     });
 
@@ -177,6 +177,8 @@ function getPrefixedNameFromIRI(iri) {
       return prefix + ":" + localPart;
     }
   }
+
+  return iri;
 }
 
 function getMediaTypeURIs(mediaTypes) {
