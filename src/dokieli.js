@@ -10613,8 +10613,57 @@ WHERE {\n\
                 annotationDistribution.push(aLS);
               }
 
-              //XXX: Use this as the canonical if available. Note how noteIRI is treated later
-              if((opts.annotationLocationPersonalStorage && DO.C.User.Storage) || (!opts.annotationLocationPersonalStorage && !opts.annotationLocationService && DO.C.User.Storage)) {
+              var activityTypeMatched = false;
+              var activityIndex = DO.C.ActionActivityIndex[_this.action];
+
+              //XXX: Use TypeIndex location as canonical if available, otherwise storage. Note how noteIRI is treated later
+              if((opts.annotationLocationPersonalStorage && DO.C.User.TypeIndex) || (!opts.annotationLocationPersonalStorage && !opts.annotationLocationService && DO.C.User.TypeIndex)) {
+
+                //TODO: Preferring publicTypeIndex for now. Refactor this when the UI allows user to decide whether to have it public or private.
+
+                var publicTypeIndexes = DO.C.User.TypeIndex[DO.C.Vocab['solidpublicTypeIndex']['@id']];
+                var privateTypeIndexes = DO.C.User.TypeIndex[DO.C.Vocab['solidprivateTypeIndex']['@id']];
+
+                if (publicTypeIndexes) {
+                  var publicTIValues = Object.values(publicTypeIndexes);
+// console.log(publicTIValues)
+                  publicTIValues.forEach(ti => {
+                    //XXX: For now, we are only sending the annotation to one location that's already matched
+                    if (activityTypeMatched) return;
+
+                    var forClass = ti[DO.C.Vocab['solidforClass']['@id']];
+                    var instanceContainer = ti[DO.C.Vocab['solidinstanceContainer']['@id']];
+                    var instance = ti[DO.C.Vocab['solidinstance']['@id']];
+
+                    if (activityIndex.includes(forClass)) {
+                      if (instanceContainer) {
+                        activityTypeMatched = true;
+
+                        containerIRI = instanceContainer;
+
+                        fromContentType = 'text/html';
+                        // contentType = 'text/html';
+                        contentType = fromContentType;
+        
+                        noteURL = noteIRI = containerIRI + id;
+                        contextProfile = {
+                          // 'subjectURI': noteIRI,
+                        };
+                        aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true, 'annotationInbox': annotationInbox };
+
+                        annotationDistribution.push(aLS);
+                      }
+                      //TODO: Not handling instance yet.
+                    }
+                  })
+
+                }
+                else if (privateTypeIndexes) {
+
+                }
+              }
+
+              if (!activityTypeMatched && (opts.annotationLocationPersonalStorage && DO.C.User.Storage) || (!opts.annotationLocationPersonalStorage && !opts.annotationLocationService && DO.C.User.Storage)) {
                 containerIRI = DO.C.User.Storage[0];
 
                 fromContentType = 'text/html';
