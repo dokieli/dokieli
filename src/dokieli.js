@@ -8,7 +8,7 @@
 
 import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceGraph, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource } from './fetcher.js'
 import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, buttonClose, notificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, getButtonDisabledHTML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getClosestSectionNode, getAgentHTML, setEditSelections, getNodeLanguage, createActivityHTML, createLanguageHTML, createLicenseHTML, createRightsHTML, getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getResourceTypeOptionsHTML, getPublicationStatusOptionsHTML, getLanguageOptionsHTML, getLicenseOptionsHTML, getCitationOptionsHTML, getDocumentNodeFromString, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote } from './doc.js'
-import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, getAbsoluteIRI, generateDataURI, getMediaTypeURIs } from './uri.js'
+import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, getAbsoluteIRI, generateDataURI, getMediaTypeURIs, getPrefixedNameFromIRI } from './uri.js'
 import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, serializeGraph, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentOutbox, getAgentStorage, getAgentInbox, getLinkRelationFromHead, sortGraphTriples, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraph, getGraphDate } from './graph.js'
 import { notifyInbox, sendNotifications, postActivity } from './inbox.js'
 import { uniqueArray, fragmentFromString, hashCode, generateAttributeId, escapeRegExp, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, matchAllIndex, isValidISBN, findPreviousDateTime } from './util.js'
@@ -454,7 +454,7 @@ DO = {
                     var motivatedBy = bodyValue.slice(0, -1);
 
                     var noteData = {
-                      "type": 'article',
+                      "type": bodyValue === 'Liked' ? 'approve' : 'disapprove',
                       "mode": "read",
                       "motivatedByIRI": motivatedBy,
                       "id": id,
@@ -632,7 +632,7 @@ DO = {
                 var bodyValue = 'Bookmarked';
 
                 var noteData = {
-                  "type": 'article',
+                  "type": 'bookmark',
                   "mode": "read",
                   "motivatedByIRI": motivatedBy,
                   "id": id,
@@ -8637,6 +8637,7 @@ WHERE {\n\
       var buttonDelete = '';
       var note = '';
       var targetLabel = '';
+      var bodyAltLabel = '';
       var articleClass = '';
       var prefixes = ' prefix="rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns# schema: http://schema.org/ dcterms: http://purl.org/dc/terms/ oa: http://www.w3.org/ns/oa# as: https://www.w3.org/ns/activitystreams# ldp: http://www.w3.org/ns/ldp#"';
 
@@ -8644,55 +8645,66 @@ WHERE {\n\
 
       var motivatedByIRI = n.motivatedByIRI || '';
       var motivatedByLabel = '';
+
+      motivatedByIRI = getPrefixedNameFromIRI(motivatedByIRI);
+
       switch(motivatedByIRI) {
         case 'oa:replying': default:
           motivatedByIRI = 'oa:replying';
           motivatedByLabel = 'replies';
           targetLabel = 'In reply to';
+          bodyAltLabel = 'Replied';
           aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
           aPrefix = prefixes;
           break;
         case 'oa:assessing':
           motivatedByLabel = 'reviews';
           targetLabel = 'Review of';
+          bodyAltLabel = 'Reviewed';
           aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
           aPrefix = prefixes;
           break;
         case 'oa:questioning':
           motivatedByLabel = 'questions';
           targetLabel = 'Questions';
+          bodyAltLabel = 'Questioned';
           aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
           aPrefix = prefixes;
           break;
         case 'oa:describing':
           motivatedByLabel = 'describes';
           targetLabel = 'Describes';
+          bodyAltLabel = 'Described'
           aAbout = '#' + n.id;
           break;
         case 'oa:commenting':
           motivatedByLabel = 'comments';
           targetLabel = 'Comments on';
+          bodyAltLabel = 'Commented';
           aAbout = '#' + n.id;
           break;
         case 'oa:bookmarking': case 'bookmark:Bookmark':
           motivatedByLabel = 'bookmarks';
           targetLabel = 'Bookmarked';
+          bodyAltLabel = 'Bookmarked';
           aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
           aPrefix = prefixes;
           break;
         case 'as:Like':
           motivatedByLabel = 'Liked';
           targetLabel = 'Like of';
+          bodyAltLabel = 'Liked';
           aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
           aPrefix = prefixes;
           break;
         case 'as:Dislike':
           motivatedByLabel = 'Disliked';
           targetLabel = 'Dislike of';
+          bodyAltLabel = 'Disliked';
           aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
           aPrefix = prefixes;
           break;
-        }
+      }
 
       switch(n.mode) {
         default: case 'read':
@@ -8795,17 +8807,20 @@ WHERE {\n\
                 var bodyLanguage = createLanguageHTML(bodyItem.language, {property:'dcterms:language', label:'Language'}) || language;
                 var bodyLicense = createLicenseHTML(bodyItem.license, {rel:'schema:license', label:'License'}) || license;
                 var bodyRights = createRightsHTML(bodyItem.rights, {rel:'dcterms:rights', label:'Rights'}) || rights;
+                var bodyValue = bodyItem.value || bodyAltLabel;
+                // var bodyValue = bodyItem.value || '';
+                // var bodyFormat = bodyItem.format ? bodyItem.format : 'rdf:HTML';
 
-                if (bodyItem.purpose && bodyItem.value) {
+                if (bodyItem.purpose) {
                   if (bodyItem.purpose == "describing" || bodyItem.purpose == DO.C.Vocab["oadescribing"]["@id"]) {
-                    body += '<section id="note-' + n.id + '" rel="oa:hasBody" resource="#note-' + n.id + '"><h' + (hX+1) + ' property="schema:name" rel="oa:hasPurpose" resource="oa:describing">Note</h' + (hX+1) + '>' + bodyLanguage + bodyLicense + bodyRights + '<div datatype="rdf:HTML"' + lang + ' property="rdf:value schema:description" resource="#note-' + n.id + '" typeof="oa:TextualBody"' + xmlLang + '>' + bodyItem.value + '</div></section>';
+                    body += '<section id="note-' + n.id + '" rel="oa:hasBody" resource="#note-' + n.id + '"><h' + (hX+1) + ' property="schema:name" rel="oa:hasPurpose" resource="oa:describing">Note</h' + (hX+1) + '>' + bodyLanguage + bodyLicense + bodyRights + '<div datatype="rdf:HTML"' + lang + ' property="rdf:value schema:description" resource="#note-' + n.id + '" typeof="oa:TextualBody"' + xmlLang + '>' + bodyValue + '</div></section>';
                   }
                   if (bodyItem.purpose == "tagging" || bodyItem.purpose == DO.C.Vocab["oatagging"]["@id"]) {
-                    tagsArray.push(bodyItem.value);
+                    tagsArray.push(bodyValue);
                   }
                 }
                 else {
-                  body += '<section id="note-' + n.id + '" rel="oa:hasBody" resource="#note-' + n.id + '"><h' + (hX+1) + ' property="schema:name">Note</h' + (hX+1) + '>' + bodyLanguage + bodyLicense + bodyRights + '<div datatype="rdf:HTML"' + lang + ' property="rdf:value schema:description" resource="#note-' + n.id + '" typeof="oa:TextualBody"' + xmlLang + '>' + bodyItem.value + '</div></section>';
+                  body += '<section id="note-' + n.id + '" rel="oa:hasBody" resource="#note-' + n.id + '"><h' + (hX+1) + ' property="schema:name">Note</h' + (hX+1) + '>' + bodyLanguage + bodyLicense + bodyRights + '<div datatype="rdf:HTML"' + lang + ' property="rdf:value schema:description" resource="#note-' + n.id + '" typeof="oa:TextualBody"' + xmlLang + '>' + bodyValue + '</div></section>';
                 }
               });
 
