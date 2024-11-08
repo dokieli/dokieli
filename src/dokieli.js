@@ -9931,6 +9931,7 @@ WHERE {\n\
                   break;
                 case 'article':
                   tmpl = [
+                  '<label for="bookmark-tagging">Tags</label> <input id="bookmark-tagging" class="medium-editor-toolbar-input" placeholder="Separate tags with commas" /><br/>',
                   '<textarea id="article-content" name="content" cols="20" rows="5" class="medium-editor-toolbar-textarea" placeholder="', this.placeholderText, '"></textarea>',
                   '<select id="article-language" name="language" class="medium-editor-toolbar-select">', getLanguageOptionsHTML(), '</select>',
                   '<select id="article-license" name="license" class="medium-editor-toolbar-select">',
@@ -9952,6 +9953,7 @@ WHERE {\n\
                   break;
                 case 'approve':
                   tmpl = [
+                  '<label for="bookmark-tagging">Tags</label> <input id="bookmark-tagging" class="medium-editor-toolbar-input" placeholder="Separate tags with commas" /><br/>',
                   '<textarea id="approve-content" name="content" cols="20" rows="2" class="medium-editor-toolbar-textarea" placeholder="Strong point? Convincing argument?"></textarea>',
                   '<select id="article-language" name="language" class="medium-editor-toolbar-select">', getLanguageOptionsHTML(), '</select>',
                   '<select id="approve-license" name="license" class="medium-editor-toolbar-select">',
@@ -9963,6 +9965,7 @@ WHERE {\n\
                   break;
                 case 'disapprove':
                   tmpl = [
+                  '<label for="bookmark-tagging">Tags</label> <input id="bookmark-tagging" class="medium-editor-toolbar-input" placeholder="Separate tags with commas" /><br/>',
                   '<textarea id="disapprove-content" name="content" cols="20" rows="2" class="medium-editor-toolbar-textarea" placeholder="Weak point? Error? Inaccurate?"></textarea>',
                   '<select id="article-language" name="language" class="medium-editor-toolbar-select">', getLanguageOptionsHTML(), '</select>',
                   '<select id="disapprove-license" name="license" class="medium-editor-toolbar-select">',
@@ -9974,6 +9977,7 @@ WHERE {\n\
                   break;
                 case 'specificity':
                   tmpl = [
+                  '<label for="bookmark-tagging">Tags</label> <input id="bookmark-tagging" class="medium-editor-toolbar-input" placeholder="Separate tags with commas" /><br/>',
                   '<textarea id="specificity-content" name="content" cols="20" rows="2" class="medium-editor-toolbar-textarea" placeholder="Citation or specificity needed?"></textarea>',
                   '<select id="article-language" name="language" class="medium-editor-toolbar-select">', getLanguageOptionsHTML(), '</select>',
                   '<select id="specificity-license" name="license" class="medium-editor-toolbar-select">',
@@ -10439,6 +10443,7 @@ WHERE {\n\
                   if(aIL) {
                     DO.C.User.UI.annotationInboxLocation.checked = opts.annotationInboxLocation = aIL.checked;
                   }
+                  opts.tagging = this.getInput().tagging.value;
                   opts.language = this.getInput().language.value;
                   opts.license = this.getInput().license.value;
                   break;
@@ -10756,7 +10761,7 @@ WHERE {\n\
                       bodyObject["rights"] = bodyObject["license"] = license;
                     }
 
-                    noteData["body"] = [bodyObject];
+                    noteData["body"] = [bodyObject].concat(DO.U.tagsToBodyObjects(opts.tagging));
 
                     if (DO.C.User.IRI) {
                       noteData.creator["iri"] = DO.C.User.IRI;
@@ -11336,6 +11341,7 @@ WHERE {\n\
                   r.annotationLocationService = this.getForm().querySelector('#annotation-location-service');
                   r.annotationLocationPersonalStorage = this.getForm().querySelector('#annotation-location-personal-storage');
                   r.annotationInboxLocation = this.getForm().querySelector('#annotation-inbox');
+                  r.tagging = this.getForm().querySelector('#bookmark-tagging.medium-editor-toolbar-input');
                   r.language = this.getForm().querySelector('#article-language.medium-editor-toolbar-select');
                   r.license = this.getForm().querySelector('#article-license.medium-editor-toolbar-select');
                   break;
@@ -11350,6 +11356,7 @@ WHERE {\n\
                   r.annotationLocationService = this.getForm().querySelector('#annotation-location-service');
                   r.annotationLocationPersonalStorage = this.getForm().querySelector('#annotation-location-personal-storage');
                   r.annotationInboxLocation = this.getForm().querySelector('#annotation-inbox');
+                  r.tagging = this.getForm().querySelector('#bookmark-tagging.medium-editor-toolbar-input');
                   r.language = this.getForm().querySelector('#article-language.medium-editor-toolbar-select');
                   r.license = this.getForm().querySelector('#approve-license.medium-editor-toolbar-select');
                   break;
@@ -11358,6 +11365,7 @@ WHERE {\n\
                   r.annotationLocationService = this.getForm().querySelector('#annotation-location-service');
                   r.annotationLocationPersonalStorage = this.getForm().querySelector('#annotation-location-personal-storage');
                   r.annotationInboxLocation = this.getForm().querySelector('#annotation-inbox');
+                  r.tagging = this.getForm().querySelector('#bookmark-tagging.medium-editor-toolbar-input');
                   r.language = this.getForm().querySelector('#article-language.medium-editor-toolbar-select');
                   r.license = this.getForm().querySelector('#disapprove-license.medium-editor-toolbar-select');
                   break;
@@ -11366,6 +11374,7 @@ WHERE {\n\
                   r.annotationLocationService = this.getForm().querySelector('#annotation-location-service');
                   r.annotationLocationPersonalStorage = this.getForm().querySelector('#annotation-location-personal-storage');
                   r.annotationInboxLocation = this.getForm().querySelector('#annotation-inbox');
+                  r.tagging = this.getForm().querySelector('#bookmark-tagging.medium-editor-toolbar-input');
                   r.language = this.getForm().querySelector('#article-language.medium-editor-toolbar-select');
                   r.license = this.getForm().querySelector('#specificity-license.medium-editor-toolbar-select');
                   break;
