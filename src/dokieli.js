@@ -202,8 +202,6 @@ DO = {
       var aside = document.querySelector('#document-notifications');
 
       var showProgress = function(){
-        // var icon = aside.querySelector('.fa-spin');
-        // if (icon) return;
 
         var info = aside.querySelector('div.info');
         info.replaceChildren();
@@ -214,24 +212,16 @@ DO = {
       }
 
       var removeProgress = function() {
-        // var icon = aside.querySelector('div .fa-spin');
-        // icon.parentNode.removeChild(icon);
         var info = aside.querySelector('div.info');
         info.replaceChildren();
         DO.U.initializeButtonMore(aside);
       }
 
-      // var promises = [];
-
-      // console.log(DO.C.User);
-
       var promises = [];
       promises.push(...DO.U.processAgentActivities(DO.C.User));
-Promise.allSettled(promises).then((r) => console.log(r))
-console.log(promises)
+      Promise.allSettled(promises).then((r) => removeProgress())
 
       if (DO.C.User.Contacts && Object.keys(DO.C.User.Contacts).length > 0){
-console.log('user has contacts')
         showProgress();
 
         Object.keys(DO.C.User.Contacts).forEach(function(iri){
@@ -244,52 +234,43 @@ console.log('user has contacts')
        Promise.allSettled(promises).then(() => removeProgress())
       }
       else if (DO.C.User.IRI) {
-console.log('---------else if.....')
         showProgress();
 
         getUserContacts(DO.C.User.IRI)
           .then(contacts => {
             if (contacts.length > 0) {
-console.log(contacts)
-              contacts.forEach(function(url) {
-                getSubjectInfo(url).then(subject => {
+              const contactsPromises = contacts.map(function(url) {
+                return getSubjectInfo(url).then(subject => {
                   if (subject.Graph) {
                     DO.C.User.Contacts[url] = subject;
 
                     promises.push(...DO.U.processAgentActivities(DO.C.User.Contacts[url]));
                   }
-                  // return DO.U.processAgentActivities(DO.C.User.Contacts[url]);
+                  return DO.U.processAgentActivities(DO.C.User.Contacts[url]);
                 })
               });
-// console.log( { contactsPromises })
+              promises.push(...contactsPromises);
 
             }
           })
           .then(() => {
-
-            console.log(promises)
+            // FIXME: this is triggered prematurely - review why contact's promises are being resolved before the user's
             Promise.allSettled(promises).then(() => {
-              console.log('removeProgress')
               removeProgress()
             })
           })
           .catch((e) => {
-console.log(e)
-            // removeProgress()
+            removeProgress()
           })
 
       }
       else {
         // Promise.allSettled(promises).then(() => removeProgress())
       }
-      // Promise.allSettled(promises)
-      //   .then(r => {
-      //     removeProgress()
-      //   })
+
     },
 
     processAgentActivities: function(agent) {
-      console.log("processAgentActivities", agent.TypeIndex)
       if (agent.TypeIndex && Object.keys(agent.TypeIndex).length) {
         // console.log(agent.IRI, agent.TypeIndex)
         // console.log(DO.U.processAgentTypeIndex(agent))
