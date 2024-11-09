@@ -216,31 +216,29 @@ DO = {
 
       var promises = [];
       promises.push(...DO.U.processAgentActivities(DO.C.User));
-      
-              showProgress();
 
-        var processContacts = (contacts) => {
-        console.log("fetching and processing contacts", contacts);
-            if (contacts.length > 0) {
-              var contactsPromises = contacts.map((url) =>
-getSubjectInfo(url).then((subject) => {
-                  if (subject.Graph) {
-                    DO.C.User.Contacts[url] = subject;
-return DO.U.processAgentActivities(subject); 
+      showProgress();
+
+      var processContacts = (contacts) => {
+        if (contacts.length > 0) {
+          var contactsPromises = contacts.map((url) =>
+            getSubjectInfo(url).then((subject) => {
+              if (subject.Graph) {
+                DO.C.User.Contacts[url] = subject;
+                return DO.U.processAgentActivities(subject); 
               }
               return [];
             })
           );
-    
+
           return Promise.allSettled(contactsPromises).then((allContactPromises) => {
             promises.push(...allContactPromises.flat());
           });
         }
-        return Promise.resolve(); 
+        return Promise.resolve();
       };
-    
+
       var processExistingContacts = (contacts) => {
-        console.log("existing contacts", contacts);
         var contactsPromises = Object.keys(contacts).map((iri) => {
           var contact = DO.C.User.Contacts[iri];
           if (contact.IRI) {
