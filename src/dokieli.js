@@ -8576,14 +8576,13 @@ WHERE {\n\
       if (id) return;
 
       var noteDataIRI = noteData.iri;
-      // delete noteData.iri;
+      
 // console.log(noteData)
       var note = DO.U.createNoteDataHTML(noteData);
 
       var datetime = noteData.datetime ? noteData.datetime : '1900-01-01T00:00:00.000Z';
 
-      // var li = '<li data-datetime="' + noteData.datetime + '"><blockquote cite="' + noteData.iri + '">'+ note + '</blockquote></li>';
-      var li = '<li data-datetime="' + datetime + '"><blockquote cite="' + noteDataIRI + '">'+ note + '</blockquote></li>';
+            var li = '<li data-datetime="' + datetime + '"><blockquote cite="' + noteDataIRI + '">'+ note + '</blockquote></li>';
 // console.log(li);
       var aside = document.getElementById('document-notifications');
 
@@ -8594,17 +8593,20 @@ WHERE {\n\
       var notifications = document.querySelector('#document-notifications > div > ul');
       var timesNodes = aside.querySelectorAll('div > ul > li[data-datetime]');
       var previousElement = null;
+
+      //Maintain reverse chronological order
       if (timesNodes.length) {
         var times = Array.from(timesNodes).map(element => element.getAttribute("data-datetime"));
-        var previousDateTime = findPreviousDateTime(times, noteData.datetime);
-        previousElement = Array.from(timesNodes).find((element) => previousDateTime && previousDateTime === element.datetime ? element : null);
+var sortedTimes = times.sort().reverse();
+        var previousDateTime = findPreviousDateTime(sortedTimes, noteData.datetime);
+        previousElement = Array.from(timesNodes).find((element) => previousDateTime && previousDateTime === element.getAttribute("data-datetime") ? element : null);
       }
 
       if (previousElement) {
-        previousElement.insertAdjacentHTML('afterend', li);
+        previousElement.insertAdjacentHTML('beforebegin', li);
       }
       else {
-        notifications.insertAdjacentHTML('afterbegin', li);
+        notifications.insertAdjacentHTML('beforeend', li);
       }
     },
 
