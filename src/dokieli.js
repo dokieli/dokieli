@@ -201,13 +201,10 @@ DO = {
     showContactsActivities: function() {
       var aside = document.querySelector('#document-notifications');
 
-      var showProgress = function(){
-
+      var showProgress = function() {
         var info = aside.querySelector('div.info');
         info.replaceChildren();
-
-        var progress =  fragmentFromString(`<span class="progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]} Checking activities</span>`);
-
+        var progress = fragmentFromString(`<span class="progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]} Checking activities</span>`);
         info.appendChild(progress);
       }
 
@@ -219,55 +216,58 @@ DO = {
 
       var promises = [];
       promises.push(...DO.U.processAgentActivities(DO.C.User));
-      Promise.allSettled(promises).then((r) => removeProgress())
+      
+              showProgress();
 
-      if (DO.C.User.Contacts && Object.keys(DO.C.User.Contacts).length > 0){
-        showProgress();
-
-        Object.keys(DO.C.User.Contacts).forEach(function(iri){
-          var contact = DO.C.User.Contacts[iri];
-          if (!contact.IRI) return;
-
-          promises.push(...DO.U.processAgentActivities(contact));
-        });
-
-       Promise.allSettled(promises).then(() => removeProgress())
-      }
-      else if (DO.C.User.IRI) {
-        showProgress();
-
-        getUserContacts(DO.C.User.IRI)
-          .then(contacts => {
+        var processContacts = (contacts) => {
+        console.log("fetching and processing contacts", contacts);
             if (contacts.length > 0) {
-              const contactsPromises = contacts.map(function(url) {
-                return getSubjectInfo(url).then(subject => {
+              var contactsPromises = contacts.map((url) =>
+getSubjectInfo(url).then((subject) => {
                   if (subject.Graph) {
                     DO.C.User.Contacts[url] = subject;
-
-                    promises.push(...DO.U.processAgentActivities(DO.C.User.Contacts[url]));
-                  }
-                  return DO.U.processAgentActivities(DO.C.User.Contacts[url]);
-                })
-              });
-              promises.push(...contactsPromises);
-
-            }
-          })
-          .then(() => {
-            // FIXME: this is triggered prematurely - review why contact's promises are being resolved before the user's
-            Promise.allSettled(promises).then(() => {
-              removeProgress()
+return DO.U.processAgentActivities(subject); 
+              }
+              return [];
             })
-          })
-          .catch((e) => {
-            removeProgress()
-          })
-
+          );
+    
+          return Promise.allSettled(contactsPromises).then((allContactPromises) => {
+            promises.push(...allContactPromises.flat());
+          });
+        }
+        return Promise.resolve(); 
+      };
+    
+      var processExistingContacts = (contacts) => {
+        console.log("existing contacts", contacts);
+        var contactsPromises = Object.keys(contacts).map((iri) => {
+          var contact = DO.C.User.Contacts[iri];
+          if (contact.IRI) {
+            return DO.U.processAgentActivities(contact);
+          }
+          return [];
+        });
+    
+        return Promise.allSettled(contactsPromises).then((allContactPromises) => {
+          promises.push(...allContactPromises.flat());
+        });
+      };
+    
+      function getContactsAndActivities() {
+        console.log("getContactsAndActivities");
+        if (DO.C.User.Contacts && Object.keys(DO.C.User.Contacts).length > 0) {
+          return processExistingContacts(DO.C.User.Contacts);
+        } else if (DO.C.User.IRI) {
+          return getUserContacts(DO.C.User.IRI).then(processContacts);
+        }
+        return Promise.resolve();
       }
-      else {
-        // Promise.allSettled(promises).then(() => removeProgress())
-      }
-
+    
+      getContactsAndActivities()
+        .then(() => Promise.allSettled(promises))
+.then(() => removeProgress())
+      .catch(() => removeProgress());
     },
 
     processAgentActivities: function(agent) {
