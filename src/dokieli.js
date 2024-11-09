@@ -528,7 +528,6 @@ DO = {
 
                 var objectGraph = s.child(object);
                 var inReplyTo = objectGraph.asinReplyTo && objectGraph.asinReplyTo.at(0);
-                console.log(object, target, inReplyTo)
 
                 if(object && (target || inReplyTo)) {
                   var targetPathURL = getPathURL(target) || getPathURL(inReplyTo);
@@ -10593,32 +10592,6 @@ WHERE {\n\
               var options = {};
               var annotationDistribution = [] , aLS = {};
 
-              if((opts.annotationLocationPersonalStorage && DO.C.User.Outbox) || (!opts.annotationLocationPersonalStorage && !opts.annotationLocationService && DO.C.User.Outbox)) {
-                containerIRI = DO.C.User.Outbox[0];
-
-                var fromContentType = 'text/html';
-                // contentType = 'application/ld+json';
-                contentType = fromContentType;
-
-                noteURL = noteIRI = containerIRI + id;
-                var contextProfile = {
-                  '@context': [
-                    'https://www.w3.org/ns/activitystreams',
-                    { 'oa': 'http://www.w3.org/ns/oa#', 'schema': 'http://schema.org/' }
-                  ],
-                  // 'subjectURI': noteIRI,
-                  'profile': 'https://www.w3.org/ns/activitystreams'
-                };
-                aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'annotationInbox': annotationInbox };
-                if (typeof DO.C.User.Storage === 'undefined') {
-                  aLS['canonical'] = true;
-                }
-
-                aLS = Object.assign(aLS, contextProfile)
-
-                annotationDistribution.push(aLS);
-              }
-
               var activityTypeMatched = false;
               var activityIndex = DO.C.ActionActivityIndex[_this.action];
 
@@ -10669,7 +10642,33 @@ WHERE {\n\
                 }
               }
 
-              if (!activityTypeMatched && (opts.annotationLocationPersonalStorage && DO.C.User.Storage) || (!opts.annotationLocationPersonalStorage && !opts.annotationLocationService && DO.C.User.Storage)) {
+              if((opts.annotationLocationPersonalStorage && DO.C.User.Outbox) || (!opts.annotationLocationPersonalStorage && !opts.annotationLocationService && DO.C.User.Outbox)) {
+                containerIRI = DO.C.User.Outbox[0];
+
+                var fromContentType = 'text/html';
+                // contentType = 'application/ld+json';
+                contentType = fromContentType;
+
+                noteURL = noteIRI = containerIRI + id;
+                var contextProfile = {
+                  '@context': [
+                    'https://www.w3.org/ns/activitystreams',
+                    { 'oa': 'http://www.w3.org/ns/oa#', 'schema': 'http://schema.org/' }
+                  ],
+                  // 'subjectURI': noteIRI,
+                  'profile': 'https://www.w3.org/ns/activitystreams'
+                };
+                aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'annotationInbox': annotationInbox };
+                if (typeof DO.C.User.Storage === 'undefined' && !activityTypeMatched) {
+                  aLS['canonical'] = true;
+                }
+
+                aLS = Object.assign(aLS, contextProfile)
+
+                annotationDistribution.push(aLS);
+              }
+
+              if (!activityTypeMatched && ((opts.annotationLocationPersonalStorage && DO.C.User.Storage) || (!opts.annotationLocationPersonalStorage && !opts.annotationLocationService && DO.C.User.Storage))) {
                 containerIRI = DO.C.User.Storage[0];
 
                 fromContentType = 'text/html';
