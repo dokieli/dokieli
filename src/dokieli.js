@@ -519,10 +519,19 @@ DO = {
                 }
               }
               else if(resourceTypes.indexOf('https://www.w3.org/ns/activitystreams#Announce') > -1 || resourceTypes.indexOf('https://www.w3.org/ns/activitystreams#Create') > -1) {
-                if(s.asobject && s.asobject.at(0) && s.astarget && s.astarget.at(0)) {
-                  var o = {};
+                var o = {};
 
-                  var targetPathURL = getPathURL(s.astarget.at(0));
+                var object = (s.asobject && s.asobject.at(0)) ? s.asobject.at(0) : undefined;
+                //TODO: if no object, leave.
+
+                var target = (s.astarget && s.astarget.at(0)) ? s.astarget.at(0) : undefined;
+
+                var objectGraph = s.child(object);
+                var inReplyTo = objectGraph.asinReplyTo && objectGraph.asinReplyTo.at(0);
+                console.log(object, target, inReplyTo)
+
+                if(object && (target || inReplyTo)) {
+                  var targetPathURL = getPathURL(target) || getPathURL(inReplyTo);
 
                   if (targetPathURL == currentPathURL) {
                     o['targetInOriginalResource'] = true;
@@ -535,8 +544,6 @@ DO = {
                   }
 
                   if (o['targetInOriginalResource'] || o['targetInMemento'] || o['targetInSameAs']){
-                    var object = s.asobject.at(0);
-                    var target = s.astarget.at(0);
                     subjectsReferences.push(object);
 
                     if (options.notification) {
@@ -560,7 +567,7 @@ DO = {
                                 citation = {
                                   'citingEntity': object,
                                   'citationCharacterization': citationCharacterization,
-                                  'citedEntity': target
+                                  'citedEntity': target || inReplyTo
                                 }
                               }
                             })
@@ -11042,7 +11049,7 @@ WHERE {\n\
 
               var createNotificationData = function(annotation, options) {
                 options = options || {};
-                var notificationType, notificationObject, notificationContext, notificationTarget, notificationStatements;
+                var notificationType, notificationObject, notificationContext, notificationTarget, notificationInReplyTo, notificationStatements;
 
                 var noteIRI = (options.relativeObject) ? '#' + id : annotation['noteIRI'];
 
@@ -11054,29 +11061,29 @@ WHERE {\n\
 
                 switch(_this.action) {
                   default: case 'article': case 'specificity':
-                    notificationType = ['as:Create'];
+                    // notificationType = ['as:Create'];
                     notificationObject = noteIRI;
-                    notificationTarget = targetIRI;
+                    notificationInReplyTo = targetIRI;
                     break;
                   case 'approve':
-                    notificationType = ['as:Like'];
+                    // notificationType = ['as:Like'];
                     notificationObject = targetIRI;
                     notificationContext = noteIRI;
                     break;
                   case 'disapprove':
-                    notificationType = ['as:Dislike'];
+                    // notificationType = ['as:Dislike'];
                     notificationObject = targetIRI;
                     notificationContext = noteIRI;
                     break;
                   case 'bookmark':
-                    notificationType = ['as:Add'];
+                    // notificationType = ['as:Add'];
                     notificationObject = noteIRI;
                     notificationTarget = annotation['containerIRI'];
                     break;
                 }
 
                 var notificationData = {
-                  "type": notificationType,
+                  "type": ['as:Announce'],
                   "slug": id,
                   "object": notificationObject,
                   "license": opts.license
@@ -11088,6 +11095,10 @@ WHERE {\n\
 
                 if(typeof notificationTarget !== 'undefined') {
                   notificationData['target'] = notificationTarget;
+                }
+
+                if(typeof notificationInReplyTo !== 'undefined') {
+                  notificationData['inReplyTo'] = notificationInReplyTo;
                 }
 
                 notificationData['statements'] = notificationStatements;
