@@ -251,9 +251,8 @@ DO = {
           promises.push(...allContactPromises.flat());
         });
       };
-    
+
       function getContactsAndActivities() {
-        console.log("getContactsAndActivities");
         if (DO.C.User.Contacts && Object.keys(DO.C.User.Contacts).length > 0) {
           return processExistingContacts(DO.C.User.Contacts);
         } else if (DO.C.User.IRI) {
@@ -261,11 +260,11 @@ DO = {
         }
         return Promise.resolve();
       }
-    
+
       getContactsAndActivities()
         .then(() => Promise.allSettled(promises))
-.then(() => removeProgress())
-      .catch(() => removeProgress());
+        .then(() => removeProgress())
+        .catch(() => removeProgress());
     },
 
     processAgentActivities: function(agent) {
@@ -8595,7 +8594,7 @@ WHERE {\n\
       //Maintain reverse chronological order
       if (timesNodes.length) {
         var times = Array.from(timesNodes).map(element => element.getAttribute("data-datetime"));
-var sortedTimes = times.sort().reverse();
+        var sortedTimes = times.sort().reverse();
         var previousDateTime = findPreviousDateTime(sortedTimes, noteData.datetime);
         previousElement = Array.from(timesNodes).find((element) => previousDateTime && previousDateTime === element.getAttribute("data-datetime") ? element : null);
       }
