@@ -1,4 +1,4 @@
-import { uniqueArray, getDateTimeISO, removeChildren, escapeRegExp, generateUUID, generateAttributeId, hashCode, fragmentFromString, getHash } from "../../src/util";
+import { uniqueArray, getDateTimeISO, removeChildren, escapeRegExp, generateUUID, generateAttributeId, hashCode, fragmentFromString, getHash, findPreviousDateTime } from "../../src/util";
 
 describe("util", () => {
   describe("uniqueArray", () => {
@@ -35,6 +35,16 @@ describe("util", () => {
       expect(resultString).toEqual("example \\(test\\)");
     });
   });
+
+  describe("findPreviousDateTime", () => {
+    it("returns the previous date time", () => {
+      const times = [
+        '2024-11-08T18:18:50.286Z', '2024-11-08T17:50:10.488Z', '2024-11-08T17:31:44.289Z', '2024-11-08T12:45:12.806Z', '2024-11-08T12:38:51.837Z', '2024-11-08T12:35:25.833Z', '2024-11-08T12:20:20.252Z', '2024-11-04T12:13:53.355Z', '2024-11-04T11:40:49.758Z', '2024-11-04T11:29:50.932Z', '2024-11-04T11:29:34.775Z', '2024-11-01T17:27:21.930Z', '2024-11-01T16:38:20.088Z'];
+      const checkTime = '2024-11-08T17:41:33.987Z';
+      const result = findPreviousDateTime(times, checkTime);
+      expect(result).toEqual("2024-11-08T17:31:44.289Z");
+    });
+  })
 
   describe("generateUUID", () => {
     it("returns a 36-character-long UUID", () => {
