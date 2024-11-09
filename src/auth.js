@@ -397,7 +397,8 @@ function afterSignIn () {
 
   for (let i = 0; i < buttonDelete.length; i++) {
     buttonDelete[i].addEventListener('click', function (e) {
-      handleDeleteNote(e);
+      var button = e.target.closest('button.delete');
+      handleDeleteNote(button);
     })
   }
 }
