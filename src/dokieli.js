@@ -204,7 +204,7 @@ DO = {
       var showProgress = function() {
         var info = aside.querySelector('div.info');
         info.replaceChildren();
-        var progress = fragmentFromString(`<span class="progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]} Checking activities</span>`);
+        var progress = fragmentFromString(`<span class="progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"].replace(' fa-fw', '')} Checking activities</span>`);
         info.appendChild(progress);
       }
 
