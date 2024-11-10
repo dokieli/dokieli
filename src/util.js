@@ -197,13 +197,13 @@ function isValidISBN (str) {
 }
 
 function findPreviousDateTime(times, checkTime) {
-const sortedTimes = uniqueArray(times).sort().reverse();
+  const sortedTimes = uniqueArray(times).sort().reverse();
 
   let previousDateTime = null;
   for(let time of sortedTimes) {
     if (time <= checkTime) {
       previousDateTime = time;
-break;
+      break;
     }
   }
 
