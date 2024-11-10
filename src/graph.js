@@ -1440,6 +1440,13 @@ function getAuthorizationsMatching (g, matchers) {
   return authorizations;
 }
 
+function getGraphInbox(s) {
+  return (
+    s.ldpinbox?._array?.length > 0 ? s.ldpinbox._array :
+    s.asinbox?._array?.length > 0 ? s.asinbox._array :
+    undefined
+  );
+}
 
 export {
   constructGraph,
@@ -1506,6 +1513,7 @@ export {
   getGraphConceptLabel,
   getGraphDescription,
   getGraphTypes,
+  getGraphInbox,
   sortGraphTriples,
   getGraphAudience,
   getACLResourceGraph,
