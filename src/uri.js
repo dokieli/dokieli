@@ -44,7 +44,7 @@ function getProxyableIRI(url, options = {}) {
 
   if ((typeof document !== 'undefined' && document.location.protocol === 'https:' && pIRI.slice(0, 5).toLowerCase() === 'http:') || 'forceProxy' in options) {
     var proxyURL = getProxyURL(options);
-    pIRI = (proxyURL) ? proxyURL + encodeString(pIRI) : pIRI;
+    pIRI = (proxyURL) ? proxyURL + encodeURIComponent(pIRI) : pIRI;
   }
 
   return pIRI;
