@@ -334,7 +334,7 @@ top:0;
 .do.on {
 line-height:1.6;
 font-size:1em;
-padding:2em;
+padding:1em;
 overflow:auto;
 z-index:2147483647;
 }
@@ -357,8 +357,9 @@ border-top:0;
 border-bottom-left-radius:0.5em;
 border-bottom-right-radius:0.5em;
 box-shadow:0.25em 0.25em 0.25em rgba(0,0,0,0.1);
-max-width:35em;
+max-width:45em;
 width:90%;
+padding:2em;
 }
 menu.do.on {
 border-left:1px solid #ccc;
@@ -377,6 +378,11 @@ aside.do.on:not([id="document-items"]) label {
 min-width:5%;
 display:inline-block;
 }
+
+div#share-resource-share-url label {
+display:block;
+}
+
 aside.do.on:not([id="document-items"]) label[for$="-input"] {
 vertical-align: middle;
 }
@@ -388,18 +394,23 @@ aside.do input[type="checkbox"] {
 padding:0;
 vertical-align: middle;
 padding: 0;
-margin: 0.5em;
+margin: 0.5em 0.5em 0.5em 0.25em;
 width: 1.5em;
 height: 1.5em;
 vertical-align: middle;
+cursor: pointer;
 }
 aside.do input[type="text"] {
-width: calc(60% - 6em);
-padding: 10px;
-font-size: 16px;
+width: calc(100% - 14em);padding: 0.75em;
+font-size: 1em;
 border: 2px solid #ccc;
 border-radius: 5px;
-margin: 0.5em;
+margin: 0.5em
+}
+
+aside.do input#share-resource-clipboard{
+width: calc(100% - 7em);
+margin-left: 0;
 }
 aside.do input + label {
 margin-left:0.25em;
@@ -408,12 +419,14 @@ display:inline-block;
 }
 
 aside.do textarea {
+display: block;
 width:96% !important;
 max-width:44em !important;
-padding: 10px;
-font-size: 16px;
+padding: 0.75em;
+font-size: 1em;
 border: 2px solid #ccc;
 border-radius: 5px;
+margin-bottom: 1em;
 }
 
 aside.do.on ul {
@@ -424,6 +437,7 @@ list-style: none;
 aside.do.on li {
 text-align:left !important;
 display:list-item !important;
+padding:0 !important;
 }
 aside.do.on li li {
 margin-left:1em;
@@ -472,7 +486,6 @@ width:35%;
 
 #share-resource.do.on li {
 margin:0 0 0.5em 0;
-line-height: 1;
 }
 #share-resource.do.on #share-resource-address-book {
 margin-bottom:1em;
@@ -508,14 +521,15 @@ width:60%;
 float:right;
 }
 
-
+/* 
 #share-resource-share-url input[type="text"] {
   font-family: monospace;
-}
+} */
 
 #share-resource-share-url button.copy-to-clipboard {
 display:inline-block;
 margin:0;
+padding:0;
 }
 .autocomplete {
 position: relative;
@@ -586,21 +600,23 @@ margin-top:1.5em;
 margin-bottom:0.5em;
 }
 #document-notifications button.toggle {
-  justify-content: center;
-  position: absolute;
-  top: 1em;
-  left: -1em;
-  width: 2.3em;
-  padding: 0;
-  height: 2.3em;
-  border-radius: 50%;
-  border:1px solid rgba(0, 0, 0, 0.35);
-  background-color: #fff;
-  transition: box-shadow 0.3s;
+justify-content: center;
+position: absolute;
+top: 1em;
+left: -1em;
+width: 2.3em;
+padding: 0;
+height: 2.3em;
+border-radius: 50%;
+border:1px solid rgba(0, 0, 0, 0.35);
+background-color: #fff;
+transition: box-shadow 0.3s;
 }
 
 #document-notifications button.toggle:hover {
-  box-shadow: 0 0 1.2em rgba(33, 33, 33, 0.2);
+box-shadow: 0 0 1.2em rgba(33, 33, 33, 0.2);
+fill: #080 !important;
+transition: fill 0.3s;
 }
 /* #location-open-document-update, #location-new-update
 {
@@ -647,20 +663,26 @@ align-items: center;
 #document-notifications span.progress > button.more {
 width:max-content;
 align-items: center;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    border: none !important;
-    box-shadow: none !important;
-    cursor: pointer;
-    display: inline-flex;
-    font-size: 1em;
-    font-weight: 600;
+border: 1px solid rgba(0, 0, 0, 0.1);
+border: none !important;
+box-shadow: none !important;
+cursor: pointer;
+display: inline-flex;
+font-size: 1em;
+font-weight: 600;
 padding: 0.5em;
-    background-color: #fff;
+background-color: #fff;
+margin: 0;
+}
+#document-notifications span.progress > button.more:hover {
+fill: #080 !important;
+transition: fill 0.3s;
 }
 #document-notifications span.progress .fa-spin {
-  align-self: center;
-  padding: 0.5em;
-  }
+align-self: center;
+margin-right:0.5em;
+padding: 0.5em;
+}
 #document-notifications article button.delete {
 right:1em;
 }
@@ -1013,9 +1035,16 @@ float:left;
 color:#000 !important;
 background-color:#fff !important;
 }
-#document-menu section button:hover {
-background-color:#eee !important;
+
+#document-menu section button:not([disabled]):hover,
+#document-menu section button:not([disabled]):focus {
+/* background-color:rgba(238, 255, 238, 0.1) !important;
+transition: background-color 0.3s; */
+color: #080 !important;
+transition: color 0.3s;
 cursor:pointer !important;
+transition: fill 0.3s;
+fill: #080;
 }
 #document-menu section button[disabled] {
 color:#777 !important;
@@ -1363,12 +1392,12 @@ color:#000;
 }
 
 aside.do.on select {
-  padding: 10px;
-  font-size: 16px;
-  border: 2px solid #ccc;
-  border-radius: 5px;
-  margin: 0.5em 0;
-  background: #fff;
+padding: 10px;
+font-size: 16px;
+border: 2px solid #ccc;
+border-radius: 5px;
+margin: 0.5em 0;
+background: #fff;
 }
 
 .do.sortable .sortable-placeholder {
@@ -1416,45 +1445,52 @@ color:#FF0000;
 }
 button.close {
 position:absolute;
-top:0.5em;
-right:0.5em;
+top:0.75em;
+right:1em;
 z-index:2147483647;
 padding:0 !important;
 border: none !important;
 box-shadow: none !important;
 background-color: #fff !important;
 }
+button.close:hover,
+button.copy-to-clipboard:hover,
+button.delete:hover { 
+fill: #080 !important;
+transition: fill 0.3s;
+}
 aside.do button {
-  align-items: center;
-  border-radius: .25rem;
-  box-shadow: rgba(0, 0, 0, 0.06) 0 0.4em 0.6em;
-  cursor: pointer;
-  display: inline-flex;
-  font-size: 1em;
-  font-weight: 600;
-  margin: 0;
-  padding: .875rem 1.5em;
-  color: #fff;
-  border:none;
-  transition: opacity 0.3s;
-  }
-  aside.do button:hover {
-    opacity: 0.8;
-  }
-  aside.do button.delete {
-  position:absolute;
-  top:0;
-  right:0;
-  z-index:2147483647;
-  color:inherit;
-  }
-  button.copy-to-clipboard {
-  display:block;
-  margin:-2.5em 0 2.5em auto;
-  border: none !important;
-  box-shadow: none !important;
-  background-color: #fff;
-  }
+align-items: center;
+border-radius: .25rem;
+box-shadow: rgba(0, 0, 0, 0.06) 0 0.4em 0.6em;
+cursor: pointer;
+display: inline-flex;
+font-size: 1em;
+font-weight: bold;
+margin: 0.5em 0;
+padding: 0.9em 1.25em;
+color: #fff;
+border:none;
+transition: opacity 0.3s;
+}
+aside.do button:hover:not(.toggle) {
+opacity: 0.8;
+}
+aside.do button.delete {
+position:absolute;
+top:0;
+right:0;
+z-index:2147483647;
+color:inherit;
+}
+button.copy-to-clipboard {
+display:block;
+margin:-2.5em 0 2.5em auto;
+border: none !important;
+box-shadow: none !important;
+background-color: #fff;
+width: 4em;
+}
 
 button.copy-to-clipboard > svg, 
 button.signout-user > svg,
