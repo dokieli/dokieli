@@ -334,7 +334,7 @@ top:0;
 .do.on {
 line-height:1.6;
 font-size:1em;
-padding:1em;
+padding:2em;
 overflow:auto;
 z-index:2147483647;
 }
@@ -386,12 +386,20 @@ padding:0.2em;
 }
 aside.do input[type="checkbox"] {
 padding:0;
-margin-left:0;
+vertical-align: middle;
+padding: 0;
+margin: 0.5em;
+width: 1.5em;
+height: 1.5em;
 vertical-align: middle;
 }
 aside.do input[type="text"] {
-width:60%;
-max-width:22em;
+width: calc(60% - 6em);
+padding: 10px;
+font-size: 16px;
+border: 2px solid #ccc;
+border-radius: 5px;
+margin: 0.5em;
 }
 aside.do input + label {
 margin-left:0.25em;
@@ -402,7 +410,10 @@ display:inline-block;
 aside.do textarea {
 width:96% !important;
 max-width:44em !important;
-font-size:1em !important;
+padding: 10px;
+font-size: 16px;
+border: 2px solid #ccc;
+border-radius: 5px;
 }
 
 aside.do.on ul {
@@ -482,6 +493,7 @@ width: 100%;
 
 #share-resource > div h3 {
 margin-top:1em;
+margin-bottom: 0.5em;
 }
 #share-resource-permissions,
 #share-resource-share-url {
@@ -496,6 +508,10 @@ width:60%;
 float:right;
 }
 
+
+#share-resource-share-url input[type="text"] {
+  font-family: monospace;
+}
 
 #share-resource-share-url button.copy-to-clipboard {
 display:inline-block;
@@ -562,7 +578,7 @@ z-index:2147483646;
 width:25em;
 height:100%;
 max-height:100%;
-padding-left:3em;
+padding-left:2em;
 overflow: unset;
 }
 #document-notifications h2 {
@@ -570,12 +586,31 @@ margin-top:1.5em;
 margin-bottom:0.5em;
 }
 #document-notifications button.toggle {
-position: absolute;
-top: 0;
-left: 0;
-width:2em;
-height:100%;
+  justify-content: center;
+  position: absolute;
+  top: 1em;
+  left: -1em;
+  width: 2.3em;
+  padding: 0;
+  height: 2.3em;
+  border-radius: 50%;
+  border:1px solid rgba(0, 0, 0, 0.35);
+  background-color: #fff;
+  transition: box-shadow 0.3s;
 }
+
+#document-notifications button.toggle:hover {
+  box-shadow: 0 0 1.2em rgba(33, 33, 33, 0.2);
+}
+/* #location-open-document-update, #location-new-update
+{
+  margin-left: 1em;
+}
+
+#location-open-document-create-container-button, #location-new-create-container-button {
+  margin: 0.5em;
+} */
+
 
 #document-notifications .count {
 margin-bottom:0;
@@ -604,15 +639,32 @@ margin:0;
 overflow-y: auto;
 height: 100%;
 }
-#document-notifications > div > button.more {
-width:max-content;
+
+#document-notifications span.progress {
+display: flex;
+align-items: center;
 }
+#document-notifications span.progress > button.more {
+width:max-content;
+align-items: center;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border: none !important;
+    box-shadow: none !important;
+    cursor: pointer;
+    display: inline-flex;
+    font-size: 1em;
+    font-weight: 600;
+padding: 0.5em;
+    background-color: #fff;
+}
+#document-notifications span.progress .fa-spin {
+  align-self: center;
+  padding: 0.5em;
+  }
 #document-notifications article button.delete {
 right:1em;
 }
-#document-notifications > div > .fa-spin {
-align-self: center;
-}
+
 
 #document-notifications ul.activities > li {
 margin-bottom:2em;
@@ -848,10 +900,20 @@ top:0.615em;
 right:0.615em;
 font-size:1.75em;
 display:inherit !important;
-padding:0;
-width:1.5em;
-height:1.5em;
+width: 1.8em;
+height: 1.8em;
+border-radius: 0.25em;
 vertical-align:middle;
+border: 1px solid rgba(0, 0, 0, 0.35);
+box-shadow: rgba(0, 0, 0, 0.06) 0 0.4em 0.6em;
+background-color: #fff;
+display: inline-flex;
+cursor: pointer;
+transition: box-shadow .3s;
+}
+
+#document-menu > button:hover {
+  box-shadow: 0 0 1.2em rgba(33,33,33,0.2); 
 }
 
 #document-menu:not([class~=on]) > header,
@@ -1029,6 +1091,11 @@ list-style: disc none inside;
 list-style-type:none;
 margin-left:0;
 }
+
+#list-of-stuff ul { 
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
 #document-views ul {
 max-width:75%;
 float:left;
@@ -1060,7 +1127,6 @@ z-index:2147483646;
 }
 
 #list-of-stuff li {
-width:44%;
 display:inline-block !important;
 }
 
@@ -1126,7 +1192,7 @@ float:none;
 
 #document-menu #document-views > svg.fas {
 float:left;
-margin:0.5em 1em 0 2.75em;
+margin:0.25em 1em 0 2.75em
 }
 
 #document-menu .editor-disable,
@@ -1296,6 +1362,15 @@ font-weight:bold;
 color:#000;
 }
 
+aside.do.on select {
+  padding: 10px;
+  font-size: 16px;
+  border: 2px solid #ccc;
+  border-radius: 5px;
+  margin: 0.5em 0;
+  background: #fff;
+}
+
 .do.sortable .sortable-placeholder {
 outline:1px dashed #777;
 }
@@ -1331,6 +1406,7 @@ line-height:1;
 padding:0.25em;
 z-index:2147483647;
 hyphens:initial;
+background-color: #080;
 }
 .do button + button {
 margin-left:1em;
@@ -1343,21 +1419,48 @@ position:absolute;
 top:0.5em;
 right:0.5em;
 z-index:2147483647;
-padding:0;
+padding:0 !important;
+border: none !important;
+box-shadow: none !important;
+background-color: #fff !important;
 }
 aside.do button {
-font-weight:bold;
-}
-aside.do button.delete {
-position:absolute;
-top:0;
-right:0;
-z-index:2147483647;
-color:inherit;
-}
-button.copy-to-clipboard {
-display:block;
-margin:-2.5em 0 2.5em auto;
+  align-items: center;
+  border-radius: .25rem;
+  box-shadow: rgba(0, 0, 0, 0.06) 0 0.4em 0.6em;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 1em;
+  font-weight: 600;
+  margin: 0;
+  padding: .875rem 1.5em;
+  color: #fff;
+  border:none;
+  transition: opacity 0.3s;
+  }
+  aside.do button:hover {
+    opacity: 0.8;
+  }
+  aside.do button.delete {
+  position:absolute;
+  top:0;
+  right:0;
+  z-index:2147483647;
+  color:inherit;
+  }
+  button.copy-to-clipboard {
+  display:block;
+  margin:-2.5em 0 2.5em auto;
+  border: none !important;
+  box-shadow: none !important;
+  background-color: #fff;
+  }
+
+button.copy-to-clipboard > svg, 
+button.signout-user > svg,
+#document-views > svg {
+width:1.5em;
+height:1.5em;
 }
 
 dd.do button {
