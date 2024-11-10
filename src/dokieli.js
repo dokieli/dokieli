@@ -5941,9 +5941,11 @@ console.log(e);
         DO.U.triggerBrowse(input.value, id, action);
       }, false);
 
-      createButton.addEventListener('click', function(e){
-        DO.U.showCreateContainer(input.value, id, action, e);
-      }, false);
+      if (DO.C.User.OIDC) {
+        createButton.addEventListener('click', function(e){
+          DO.U.showCreateContainer(input.value, id, action, e);
+        }, false);
+      }
     },
 
     triggerBrowse: function(url, id, action){
@@ -6103,8 +6105,16 @@ console.log(response)
       id = id || 'browser-location';
       action = action || 'write';
 
-      parent.insertAdjacentHTML('beforeend', '<div id="' + id + '"><label for="' + id +'-input">URL</label> <input type="text" id="' + id +'-input" name="' + id + '-input" placeholder="https://example.org/path/to/" /><button id="' + id +'-update" disabled="disabled" title="Browse location">Browse</button> <button id="' + id + '-create-container-button' + '" title="Create container (folder)">Create container</button></div>\n\
-      <div id="' + id + '-create-container"></div><div id="' + id + '-listing"></div>');
+      console.log(parent);
+
+      var createContainerButton = '';
+      var createContainerDiv = '';
+      if  (DO.C.User.OIDC) {
+        createContainerButton = ' <button id="' + id + '-create-container-button' + '" title="Create container (folder)">Create container</button>';
+        createContainerDiv = '<div id="' + id + '-create-container"></div>';
+      }
+
+      parent.insertAdjacentHTML('beforeend', '<div id="' + id + '"><label for="' + id +'-input">URL</label> <input type="text" id="' + id +'-input" name="' + id + '-input" placeholder="https://example.org/path/to/" /><button id="' + id +'-update" disabled="disabled" title="Browse location">Browse</button>' + createContainerButton+ '</div>' + createContainerDiv + '<div id="' + id + '-listing"></div>');
 
       var inputBox = document.getElementById(id);
       var createContainer = document.getElementById(id + '-create-container');
@@ -6173,13 +6183,16 @@ console.log(response)
           function(){
             var input = document.getElementById(id + '-input');
 
-            browseButton.addEventListener('click', function(){
-              createContainer.innerHTML = '';
-              DO.U.triggerBrowse(input.value, id, action);
-            }, false);
-            createButton.addEventListener('click', function(e){
-              DO.U.showCreateContainer(input.value, id, action, e);
-            }, false);
+            if (DO.C.User.OIDC) {
+              browseButton.addEventListener('click', function(){
+                createContainer.innerHTML = '';
+                DO.U.triggerBrowse(input.value, id, action);
+              }, false);
+
+              createButton.addEventListener('click', function(e){
+                DO.U.showCreateContainer(input.value, id, action, e);
+              }, false);
+            }
           }
         )
       }
