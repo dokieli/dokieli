@@ -462,17 +462,7 @@ function getResourceGraph (iri, headers, options = {}) {
     Object.assign(headers, defaultHeaders)
   }
 
-  if (iri.slice(0, 5).toLowerCase() === 'http:') {
-    options['noCredentials'] = true
-
-    if (document.location.host !== new URL(iri).host) {
-      options['forceProxy'] = true
-    }
-  }
-
-  let pIRI = getProxyableIRI(iri, options)
-
-  return getResource(pIRI, headers, options)
+  return getResource(iri, headers, options)
     .then(response => {
 
       let cT = response.headers.get('Content-Type')
@@ -492,7 +482,7 @@ function getResourceGraph (iri, headers, options = {}) {
     .then(g => {
       let fragment = (iri.lastIndexOf('#') >= 0) ? iri.substr(iri.lastIndexOf('#')) : ''
 
-      return SimpleRDF(Config.Vocab, options['subjectURI'], g, ld.store).child(pIRI + fragment)
+      return SimpleRDF(Config.Vocab, options['subjectURI'], g, ld.store).child(getProxyableIRI(iri) + fragment)
 
     })
     .catch(e => {
@@ -836,6 +826,7 @@ function getUserContacts(iri) {
     else {
       return getResourceGraph(iri).then(
         function(g){
+          // if(typeof g._graph == 'undefined' || g.resource || g.cause || g.status?.startsWith(5)) {
           if(typeof g._graph == 'undefined') {
             return Promise.resolve([]);
           }

@@ -253,15 +253,23 @@ function getResource (url, headers = {}, options = {}) {
         options.credentials = 'omit'
         return getResource(url, headers, options)
       }
-      else if (!error?.status) {
+      // else if (!error?.status) {
+      else {
+        if (options.proxyForced) { 
+          throw new Error('Cannot fetch proxied URL: ' + url);
+        }
         var pIRI = getProxyableIRI(url, {'forceProxy': true});
+
         if (pIRI !== url) {
-// console.log('forceProxy: ' + pIRI);
+          options['proxyForced'] = true;
           return getResource(pIRI, headers, options);
+        }
+        else {
+          throw new Error('Error fetching resource', { cause: error });
         }
       }
 
-      throw error
+      // throw error
     })
     .then(response => {
       if (!response.ok) {  // not a 2xx level response

@@ -957,8 +957,8 @@ DO = {
             .text(function(d){ return legendInfo[d].label + ' (' + legendInfo[d].count + ')'} )
       }
 
-      function handleResource (pIRI, headers, options) {
-        return getResource(pIRI, headers, options)
+      function handleResource (iri, headers, options) {
+        return getResource(iri, headers, options)
 //           .catch(error => {
 // // console.log(error)
 //             // if (error.status === 0) {
@@ -1103,12 +1103,12 @@ DO = {
                 options['subjectURI'] = iri;
                 //TODO: These values need not be set here. getResource(Graph) should take care of it. Refactor handleResource
                 var headers = { 'Accept': setAcceptRDFTypes() };
-                var pIRI = getProxyableIRI(iri);
-                if (pIRI.slice(0, 5).toLowerCase() == 'http:') {
+                // var pIRI = getProxyableIRI(iri);
+                if (iri.slice(0, 5).toLowerCase() == 'http:') {
                   options['noCredentials'] = true;
                 }
 
-                handleResource(pIRI, headers, options);
+                handleResource(iri, headers, options);
               }
             })
 
@@ -1432,13 +1432,13 @@ DO = {
       }
 
       DO.U.processResources(resources, options).then(
-        function(url) {
+        function(urls) {
           var promises = [];
-          url.forEach(function(u) {
+          urls.forEach(function(url) {
             // console.log(u);
             // window.setTimeout(function () {
-              var pIRI = getProxyableIRI(u);
-              promises.push(getResourceGraph(pIRI));
+              // var pIRI = getProxyableIRI(u);
+              promises.push(getResourceGraph(url));
             // }, 1000)
           });
 
@@ -2366,11 +2366,11 @@ DO = {
       var citationsList = DO.C.Resource[documentURL].citations;
 
       var promises = [];
-      citationsList.forEach(function(u) {
+      citationsList.forEach(function(url) {
         // console.log(u);
         // window.setTimeout(function () {
-          var pIRI = getProxyableIRI(u);
-          promises.push(getResourceGraph(pIRI));
+          // var pIRI = getProxyableIRI(u);
+          promises.push(getResourceGraph(url));
         // }, 1000)
       });
 
@@ -3805,10 +3805,10 @@ console.log(reason);
           var promises = [];
           var resourceData = {};
 
-          urls.forEach(function (u) {
-            var pIRI = getProxyableIRI(u);
+          urls.forEach(function (url) {
+            // var pIRI = getProxyableIRI(u);
             promises.push(
-              getResource(pIRI)
+              getResource(url)
                 .then(function (response) {
                   var cT = response.headers.get('Content-Type');
                   var options = {};
@@ -3818,12 +3818,12 @@ console.log(reason);
                   return response.text()
                     .then(data => getResourceInfo(data, options))
                     .catch(function (error) {
-                      console.error(`Error fetching ${u}:`, error.message);
+                      console.error(`Error fetching ${url}:`, error.message);
                       return Promise.resolve(); // or handle the error accordingly
                     });
                 })
                 .then((result) => {
-                  resourceData[u] = result; // Directly store the result in resourceData
+                  resourceData[url] = result; // Directly store the result in resourceData
                 })
             );
           });
@@ -6243,13 +6243,13 @@ console.log(response)
     openResource: function(iri, options) {
       options = options || {};
       var headers = { 'Accept': setAcceptRDFTypes() };
-      var pIRI = getProxyableIRI(iri);
+      // var pIRI = getProxyableIRI(iri);
       // if (pIRI.slice(0, 5).toLowerCase() == 'http:') {
       // }
 
       // options['noCredentials'] = true;
 
-      var handleResource = function handleResource (pIRI, headers, options) {
+      var handleResource = function handleResource (iri, headers, options) {
         var message = {
           'content': 'Opening <a href="' + iri + '" target="_blank">' + iri + '</a>.',
           'type': 'info',
@@ -6259,7 +6259,7 @@ console.log(response)
         message.content = '<span class="progress">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + message.content + '</span>';
         showActionMessage(document.documentElement, message);
 
-        return getResource(pIRI, headers, options)
+        return getResource(iri, headers, options)
           .catch(error => {
             console.log(error)
             // console.log(error.status)
@@ -6340,7 +6340,7 @@ console.log(response)
           })
       }
 
-      handleResource(pIRI, headers, options);
+      handleResource(iri, headers, options);
     },
 
     parseMarkdown: function(data, options) {
@@ -6379,15 +6379,15 @@ console.log(response)
              types.indexOf(DO.C.Vocab['asOrderedCollection']["@id"]) >= 0) {
 
             return DO.U.processResources(options['subjectURI'], options).then(
-              function(url) {
+              function(urls) {
 
                 var promises = [];
-                url.forEach(function(u) {
+                urls.forEach(function(url) {
                   // console.log(u);
                   // window.setTimeout(function () {
 
                     // var pIRI = getProxyableIRI(u);
-                    promises.push(getResourceGraph(u));
+                    promises.push(getResourceGraph(url));
                   // }, 1000)
                 });
 
@@ -8433,8 +8433,8 @@ WHERE {\n\
 
     processCitationClaim: function(citation) {
 // console.log('  processCitationClaim(' + citation.citingEntity + ')')
-      var pIRI = getProxyableIRI(citation.citingEntity);
-      return getResourceGraph(pIRI).then(
+      // var pIRI = getProxyableIRI(citation.citingEntity);
+      return getResourceGraph(citation.citingEntity).then(
         function(i) {
           var cEURL = stripFragmentFromString(citation.citingEntity);
           DO.C.Activity[cEURL] = {};
