@@ -8463,81 +8463,81 @@ WHERE {\n\
       // else
 
 // console.log("  " + citationCharacterization + "  " + citedEntity);
-    var citationCharacterizationLabel = DO.C.Citation[citationCharacterization] || citationCharacterization;
+      var citationCharacterizationLabel = DO.C.Citation[citationCharacterization] || citationCharacterization;
 
-    var id = generateUUID(citingEntity);
-    var refId;
+      var id = generateUUID(citingEntity);
+      var refId;
 
-    var cEURL = stripFragmentFromString(citingEntity);
-    var citingEntityLabel = getGraphLabel(s);
-    if (!citingEntityLabel) {
-      var cEL = getGraphLabel(s.child(cEURL));
-      citingEntityLabel = cEL ? cEL : citingEntity;
-    }
-    citation['citingEntityLabel'] = citingEntityLabel;
+      var cEURL = stripFragmentFromString(citingEntity);
+      var citingEntityLabel = getGraphLabel(s);
+      if (!citingEntityLabel) {
+        var cEL = getGraphLabel(s.child(cEURL));
+        citingEntityLabel = cEL ? cEL : citingEntity;
+      }
+      citation['citingEntityLabel'] = citingEntityLabel;
 
-    var citedEntityLabel = getGraphLabel(DO.C.Resource[documentURL].graph.child(citedEntity))
-    if (!citedEntityLabel) {
-      cEL = DO.C.Resource[documentURL].graph(DO.C.Resource[documentURL].graph.child(stripFragmentFromString(citedEntity)))
-      citedEntityLabel = cEL ? cEL : citedEntity;
-    }
-    citation['citedEntityLabel'] = citedEntityLabel;
+      var citedEntityLabel = getGraphLabel(DO.C.Resource[documentURL].graph.child(citedEntity))
+      if (!citedEntityLabel) {
+        cEL = DO.C.Resource[documentURL].graph(DO.C.Resource[documentURL].graph.child(stripFragmentFromString(citedEntity)))
+        citedEntityLabel = cEL ? cEL : citedEntity;
+      }
+      citation['citedEntityLabel'] = citedEntityLabel;
 
-    var noteData = {
-      'id': id,
-      'iri': citingEntity,
-      'type': 'ref-citation',
-      'mode': 'read',
-      'citation': citation
-    }
+      var noteData = {
+        'id': id,
+        'iri': citingEntity,
+        'type': 'ref-citation',
+        'mode': 'read',
+        'citation': citation
+      }
 
 // console.log(noteData)
-    var noteDataHTML = DO.U.createNoteDataHTML(noteData);
+      var noteDataHTML = DO.U.createNoteDataHTML(noteData);
 
-    var asideNote = '\n\
+      var asideNote = '\n\
 <aside class="note do">\n\
 <blockquote cite="' + citingEntity + '">'+ noteDataHTML + '</blockquote>\n\
 </aside>\n\
 ';
 // console.log(asideNote)
-    var asideNode = fragmentFromString(asideNote);
+      var asideNode = fragmentFromString(asideNote);
 
-    var fragment, fragmentNode;
+      var fragment, fragmentNode;
 
-  // //FIXME: If containerNode is used.. the rest is buggy
+// //FIXME: If containerNode is used.. the rest is buggy
 
-    fragment = getFragmentFromString(citedEntity);
+      fragment = getFragmentFromString(citedEntity);
 // console.log("  fragment: " + fragment)
-    fragmentNode = document.querySelector('[id="' + fragment + '"]');
+      fragmentNode = document.querySelector('[id="' + fragment + '"]');
 
-    if (fragmentNode) {
+      if (fragmentNode) {
 // console.log(asideNote)
-      var containerNode = fragmentNode;
-      refId = fragment;
+        var containerNode = fragmentNode;
+        refId = fragment;
 // console.log(fragment);
 // console.log(fragmentNode);
-      containerNode.appendChild(asideNode);
-      DO.U.positionNote(refId, id, citingEntityLabel);
-    }
-    else {
-      var dl;
-      var citingItem = '<li><a about="' + citingEntity + '" href="' + citingEntity + '" rel="' + citationCharacterization + '" resource="' + citedEntity + '">' + citingEntityLabel + '</a> (' + citationCharacterizationLabel + ')</li>';
-
-      var documentCitedBy = 'document-cited-by';
-      var citedBy = document.getElementById(documentCitedBy);
-
-      if(citedBy) {
-        var ul = citedBy.querySelector('ul');
-        var spo = ul.querySelector('[about="' + citingEntity + '"][rel="' + citationCharacterization + '"][resource="' + citedEntity + '"]');
-        if (!spo) {
-          ul.appendChild(fragmentFromString(citingItem));
-        }
+        containerNode.appendChild(asideNode);
+        DO.U.positionNote(refId, id, citingEntityLabel);
       }
       else {
-        dl = '        <dl class="do" id="' + documentCitedBy + '"><dt>Cited By</dt><dd><ul>' + citingItem + '</ul></dl>';
-        insertDocumentLevelHTML(document, dl, { 'id': documentCitedBy });
+        var dl;
+        var citingItem = '<li><a about="' + citingEntity + '" href="' + citingEntity + '" rel="' + citationCharacterization + '" resource="' + citedEntity + '">' + citingEntityLabel + '</a> (' + citationCharacterizationLabel + ')</li>';
+
+        var documentCitedBy = 'document-cited-by';
+        var citedBy = document.getElementById(documentCitedBy);
+
+        if(citedBy) {
+          var ul = citedBy.querySelector('ul');
+          var spo = ul.querySelector('[about="' + citingEntity + '"][rel="' + citationCharacterization + '"][resource="' + citedEntity + '"]');
+          if (!spo) {
+            ul.appendChild(fragmentFromString(citingItem));
+          }
+        }
+        else {
+          dl = '        <dl class="do" id="' + documentCitedBy + '"><dt>Cited By</dt><dd><ul>' + citingItem + '</ul></dl>';
+          insertDocumentLevelHTML(document, dl, { 'id': documentCitedBy });
+        }
       }
-    }
     },
 
     initializeButtonMore: function(node) {
