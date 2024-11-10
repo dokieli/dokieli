@@ -4290,12 +4290,13 @@ console.log(reason);
 
       var id = 'location-reply-to'
       var action = 'write'
+      var note;
+      var noteIRI;
 
       DO.U.setupResourceBrowser(replyToResource, id, action)
       document.getElementById(id).insertAdjacentHTML('afterbegin', '<p>Choose a location to save your reply.</p>')
 
-      replyToResource.insertAdjacentHTML('beforeend', '<p>Your reply will be saved at <samp id="' + id +'-' + action +
-        '">https://example.org/path/to/article</samp></p>')
+      replyToResource.insertAdjacentHTML('beforeend', '<p>Your reply will be saved at <samp id="' + id +'-' + action + '"></samp></p>')
 
       var bli = document.getElementById(id + '-input')
       bli.focus()
@@ -4308,7 +4309,7 @@ console.log(reason);
         }
 
         if (e.target.closest('button.reply')) {
-          var note = document
+          note = document
             .querySelector('#reply-to-resource #reply-to-resource-note')
             .value.trim()
 
@@ -4316,20 +4317,30 @@ console.log(reason);
           if (rm) {
             rm.parentNode.removeChild(rm)
           }
+          replyToResource.insertAdjacentHTML('beforeend', '<div class="response-message"></div>')
+
+          noteIRI = document.querySelector('#reply-to-resource #' + id + '-' + action).innerText.trim();
+
+          try {
+            noteIRI = noteIRI && noteIRI.length ? new URL(noteIRI).href : noteIRI;
+          } catch (e) {
+            noteIRI = noteIRI; // Keep the original value if it's not a valid URL
+          }
+
+          if (!note || !noteIRI) {
+            document.querySelector('#reply-to-resource .response-message')
+              .innerHTML = '<p class="error">Need a note and a location to save it.</p>'
+            return
+          }
+
+          sendReply();
         }
+      })
 
-        replyToResource.insertAdjacentHTML('beforeend', '<div class="response-message"></div>')
-
-        if (!iri || !note) {
-          document.querySelector('#reply-to-resource .response-message')
-            .innerHTML = '<p class="error">Need a note and a location to save it.</p>'
-          return
-        }
-
+      function sendReply() {
         var datetime = getDateTimeISO()
         var attributeId = generateAttributeId()
-        var noteIRI = document.querySelector('#reply-to-resource #' + id +
-          '-' + action).innerText.trim()
+
         var motivatedBy = "oa:replying"
         var noteData = {
           "type": 'article',
@@ -4480,7 +4491,7 @@ console.log(reason);
                 'We could not notify the author of your reply:' +
                 error.message + '</p>'
           })
-      })
+      }
     },
 
     shareResource: function shareResource (e, iri) {
