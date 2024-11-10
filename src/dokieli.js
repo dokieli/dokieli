@@ -11046,62 +11046,54 @@ WHERE {\n\
                 return noteData;
               }
 
-              var createNotificationData = function(annotation, options) {
-                options = options || {};
-                var notificationType, notificationObject, notificationContext, notificationTarget, notificationInReplyTo, notificationStatements;
-
+              var createActivityData = function(annotation, options = {}) {
+// console.log(annotation, options)
                 var noteIRI = (options.relativeObject) ? '#' + id : annotation['noteIRI'];
 
-                notificationStatements = '    <dl about="' + noteIRI + '">\n\
+                var notificationStatements = '    <dl about="' + noteIRI + '">\n\
   <dt>Object type</dt><dd><a about="' + noteIRI + '" typeof="oa:Annotation" href="' + DO.C.Vocab['oaAnnotation']['@id'] + '">Annotation</a></dd>\n\
-  <dt>Motivation</dt><dd><a href="' + DO.C.Prefixes[motivatedBy.split(':')[0]] + motivatedBy.split(':')[1] + '" property="oa:motivation">' + motivatedBy.split(':')[1] + '</a></dd>\n\
+  <dt>Motivation</dt><dd><a href="' + DO.C.Prefixes[annotation.motivatedByIRI.split(':')[0]] + annotation.motivatedByIRI.split(':')[1] + '" property="oa:motivation">' + annotation.motivatedByIRI.split(':')[1] + '</a></dd>\n\
 </dl>\n\
 ';
 
-                switch(_this.action) {
-                  default: case 'article': case 'specificity':
-                    // notificationType = ['as:Create'];
-                    notificationObject = noteIRI;
-                    notificationInReplyTo = targetIRI;
-                    break;
-                  case 'approve':
-                    // notificationType = ['as:Like'];
-                    notificationObject = targetIRI;
-                    notificationContext = noteIRI;
-                    break;
-                  case 'disapprove':
-                    // notificationType = ['as:Dislike'];
-                    notificationObject = targetIRI;
-                    notificationContext = noteIRI;
-                    break;
-                  case 'bookmark':
-                    // notificationType = ['as:Add'];
-                    notificationObject = noteIRI;
-                    notificationTarget = annotation['containerIRI'];
-                    break;
-                }
-
                 var notificationData = {
-                  "type": ['as:Announce'],
                   "slug": id,
-                  "object": notificationObject,
-                  "license": opts.license
+                  "license": opts.license,
+                  "statements": notificationStatements
                 };
+// console.log(_this.action)
 
-                if(typeof notificationContext !== 'undefined') {
-                  notificationData['context'] = notificationContext;
+                if (options.announce) {
+                  notificationData['type'] = ['as:Announce'];
+                  notificationData['object'] = noteIRI;
+                  notificationData['inReplyTo'] = targetIRI;
+                }
+                else {
+                  switch(_this.action) {
+                    default: case 'article': case 'specificity':
+                      notificationData['type'] = ['as:Create'];
+                      notificationData['object'] = noteIRI;
+                      notificationData['inReplyTo'] = targetIRI;
+                      break;
+                    case 'approve':
+                      notificationData['type'] = ['as:Like'];
+                      notificationData['object'] = targetIRI;
+                      notificationData['context'] = noteIRI;
+                      break;
+                    case 'disapprove':
+                      notificationData['type'] = ['as:Dislike'];
+                      notificationData['object'] = targetIRI;
+                      notificationData['context'] = noteIRI;
+                      break;
+                    case 'bookmark':
+                      notificationData['type'] = ['as:Add'];
+                      notificationData['object'] = noteIRI;
+                      notificationData['target'] = annotation['containerIRI'];
+                      break;
+                  }
                 }
 
-                if(typeof notificationTarget !== 'undefined') {
-                  notificationData['target'] = notificationTarget;
-                }
-
-                if(typeof notificationInReplyTo !== 'undefined') {
-                  notificationData['inReplyTo'] = notificationInReplyTo;
-                }
-
-                notificationData['statements'] = notificationStatements;
-
+// console.log(notificationData);
                 return notificationData;
               }
 
@@ -11140,13 +11132,17 @@ WHERE {\n\
                     inboxPromise = Promise.resolve(DO.C.Resource[documentURL].inbox)
                   }
                   else {
-                    inboxPromise = getLinkRelation(DO.C.Vocab['ldpinbox']['@id'], documentURL);
+                    inboxPromise =
+                      getLinkRelation(DO.C.Vocab['ldpinbox']['@id'], documentURL)
+                        .catch(() => {
+                          return getLinkRelationFromRDF(DO.C.Vocab['asinbox']['@id'], documentURL);
+                        });
                   }
                 }
 
                 return inboxPromise
                   .catch(error => {
-                    console.log('Error fetching ldp:inbox endpoint:', error)
+                    console.log('Error fetching ldp:inbox and as:inbox endpoint:', error)
                     throw error
                   })
                   .then(inboxes => {
@@ -11154,7 +11150,7 @@ WHERE {\n\
                     // closest IRI (not necessarily the document).
 
                     if (inboxes.length > 0) {
-                      var notificationData = createNotificationData(annotation);
+                      var notificationData = createActivityData(annotation, { 'announce': true });
 
                       notificationData['inbox'] = inboxes[0];
 
@@ -11174,10 +11170,11 @@ WHERE {\n\
                   annotationDistribution.forEach(annotation => {
                     var data = '';
 
-                    var notificationData = createNotificationData(annotation, { 'relativeObject': true });
+                    var noteData = createNoteData(annotation);
+                    annotation['motivatedByIRI'] = noteData['motivatedByIRI']
 
-                    var noteData = createNoteData(annotation)
                     if ('profile' in annotation && annotation.profile == 'https://www.w3.org/ns/activitystreams') {
+                      var notificationData = createActivityData(annotation, { 'relativeObject': true });
                       notificationData['statements'] = DO.U.createNoteDataHTML(noteData);
                       note = createActivityHTML(notificationData);
                     }
@@ -11347,10 +11344,11 @@ WHERE {\n\
                             "statements": notificationStatements
                           };
 
-                          notifyInbox(notificationData).then(
-                            function(s){
-                              console.log('Sent Linked Data Notification to ' + inboxURL);
-                            });
+                          notifyInbox(notificationData)
+                            // .then(
+                            //   function(s){
+                            //     console.log('Sent notification to ' + inboxURL);
+                            // });
                         }
                       });
                       break;
