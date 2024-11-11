@@ -582,7 +582,7 @@
                     <dd>An article can be replied with a note and have its own <a href="#resource-language">language</a> and <a href="#resource-license">license</a>. The user can use the <a href="#resource-browser">resource browser</a> to choose the location of the reply in a <a href="#personal-storage">personal storage</a> or an annotation service.</dd>
 
                     <dt id="resource-notifications">Notifications</dt>
-                    <dd>The user can overlay annotations and activities that they or their contacts have created, targeting the current document or a specific part of it.</dd>
+                    <dd>The user can overlay interactions, such as annotations, bookmarks, comments, and reactions, from themselves and their contacts onto the document.</dd>
 
                     <dt id="resource-annotations">Annotations</dt>
                     <dd>Articles can be annotated with various motivations. Annotations themselves can also be annotated. Some kinds of annotations are kept with the article, while others are independent resources stored externally to the article. The user may assign a specific <a href="#resource-language">language</a> and a <a href="#resource-license">license</a> for some types of annotations.
