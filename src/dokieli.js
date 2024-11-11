@@ -8565,7 +8565,7 @@ WHERE {\n\
     },
 
     initializeButtonMore: function(node) {
-      var progress = fragmentFromString('<span class="progress">' + DO.C.Button.More + ' Discover activities from your social circles!</span>');
+      var progress = fragmentFromString('<span class="progress">' + DO.C.Button.More + ' See more interactions with this document</span>');
       node.querySelector('div.info').replaceChildren(progress);
 
       node = document.getElementById('document-notifications');
