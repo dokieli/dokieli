@@ -2577,6 +2577,8 @@ DO = {
       if (sections.length > 0) {
         DO.U.showListOfStuff(documentItems);
 
+        DO.U.showHighlightStructuredData(documentItems);
+
         DO.U.showTableOfContents(documentItems, sections)
 
         if(DO.C.SortableList && DO.C.EditorEnabled) {
@@ -2587,6 +2589,30 @@ DO = {
       DO.U.showDocumentMetadata(documentItems);
 
       DO.U.showDocumentCommunicationOptions(documentItems);
+    },
+
+    showHighlightStructuredData: function(node) {
+      if (!node) { return; }
+
+      var html = '<section id="highlight-data" class="do"><h2>Highlight Data</h2><ul><li><input id="highlight-structured-data" name="highlight-structured-data" type="checkbox" /> <label for="highlight-structured-data">Structure</label></li></ul></section>';
+
+      node.insertAdjacentHTML('beforeend', html);
+
+      var structuredData = document.querySelector('#highlight-data')
+
+      var contextNode = selectArticleNode(document);
+
+      structuredData.addEventListener('change', function(e){
+        var input = e.target.closest('#highlight-structured-data');
+        if (input) {
+          if (input.checked) {
+            contextNode.classList.add('highlight-structure');
+          }
+          else {
+            contextNode.classList.remove('highlight-structure');
+          }
+        }
+      });
     },
 
     showListOfStuff: function(node) {

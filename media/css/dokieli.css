@@ -889,6 +889,86 @@ a.highlight,
 .highlight .highlight { background-color:#0099FF; color:#000000; }
 .highlight .highlight .highlight { background-color:#0000FF; color:#FFFFFF; }
 
+.highlight-structure [rel],
+.highlight-structure [property] {
+border-radius:0.25em;
+}
+
+.highlight-structure [typeof~="skos:Concept"],
+.highlight-structure [typeof~="skos:Collection"],
+.highlight-structure [rel~="skos:hasTopConcept"][resource], .highlight-structure [rel~="skos:hasTopConcept"][href], .highlight-structure [rel~="skos:hasTopConcept"] > [resource], .highlight-structure [rel~="skos:hasTopConcept"] > [href],
+.highlight-structure [rel~="skos:topConceptOf"][resource], .highlight-structure [rel~="skos:topConceptOf"][href], .highlight-structure [rel~="skos:topConceptOf"] > [resource], .highlight-structure [rel~="skos:topConceptOf"] > [href],
+.highlight-structure [rel~="skos:inScheme"][resource], .highlight-structure [rel~="skos:inScheme"][href], .highlight-structure [rel~="skos:inScheme"] > [resource], .highlight-structure [rel~="skos:inScheme"] > [href],
+.highlight-structure [rel~="skos:semanticRelation"][resource], .highlight-structure [rel~="skos:semanticRelation"][href], .highlight-structure [rel~="skos:semanticRelation"] > [resource], .highlight-structure [rel~="skos:semanticRelation"] > [href],
+.highlight-structure [rel~="schema:audience"][resource], .highlight-structure [rel~="schema:audience"][href], .highlight-structure [rel~="schema:audience"] > [resource], .highlight-structure [rel~="schema:audience"] > [href] {
+  background-color:#d1001c;
+color:#fff;
+}
+.highlight-structure [typeof~="schema:Event"],
+.highlight-structure [typeof~="bibo:Event"],
+.highlight-structure [typeof~="bibo:Conference"],
+.highlight-structure [rel~="schema:presentedAt"][resource], .highlight-structure [rel~="schema:presentedAt"][href], .highlight-structure [rel~="schema:presentedAt"] > [resource], .highlight-structure [rel~="schema:presentedAt"] > [href] {
+  background-color:#FFB900;
+color:#000;
+}
+.highlight-structure [typeof~="qb:DataSet"] {
+  background-color:#ff7f00;
+color:#000;
+}
+.highlight-structure [typeof~="doap:Specification"],
+.highlight-structure [rel~="odrl:hasPolicy"] {
+  background-color:#ff00ff;
+color:#fff;
+}
+.highlight-structure [typeof~="odrl:"] {
+  background-color:#0088ee;
+color:#000;
+}
+.highlight-structure [typeof~="bibo:Slide"] {
+background-color:#009999;
+color:#000;
+}
+.highlight-structure [about][rel~="foaf:knows"], .highlight-structure [about][rel~="foaf:knows"][href], .highlight-structure [about] >[rel~="foaf:knows"], .highlight-structure [about] > [rel~="foaf:knows"] {
+  background-color:#900090;
+  color:#fff;
+}
+.highlight-structure [rel~="dcterms:creator"],
+.highlight-structure [rel~="dcterms:publisher"],
+.highlight-structure [rel~="schema:author"],
+.highlight-structure [rel~="schema:contributor"],
+.highlight-structure [rel~="schema:creator"],
+.highlight-structure [rel~="schema:editor"],
+.highlight-structure [rel~="schema:performer"],
+.highlight-structure [rel~="schema:publisher"],
+.highlight-structure [rel~="foaf:knows"],
+.highlight-structure [rel~="foaf:maker"],
+.highlight-structure [rel~="as:actor"],
+.highlight-structure [rel~="as:attributedTo"] {
+  [resource], [href], > [resource], > [href] {
+    background-color:#900090;
+    color:#fff;
+  }
+}
+.highlight-structure [rel~="cito:"] {
+  [resource], [href], > [resource], > [href] {
+    background-color:#00ffff;
+    color:#000;
+  }
+}
+.highlight-structure [rel~="spec:requirement"],
+.highlight-structure [property~="spec:requirementReference"] {
+  background-color:#9a3a00;
+color:#fff;
+}
+.highlight-structure [rel~="spec:advisement"] {
+  background-color:#9a6c00;
+color:#fff;
+}
+.highlight-structure [rel~="spec:testSuite"][resource], .highlight-structure [rel~="spec:testSuite"][href], .highlight-structure [rel~="spec:testSuite"] > [resource], .highlight-structure [rel~="spec:testSuite"] > [href] {
+  background-color:#ff7f00;
+color:#000;
+}
+
 #document-action-message > ul > li {
 border-radius:0.5em;
 border:1px solid #CCCCCC;
