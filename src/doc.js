@@ -4,12 +4,13 @@ import Config from './config.js'
 import { getDateTimeISO, fragmentFromString, generateAttributeId, uniqueArray, generateUUID, matchAllIndex } from './util.js'
 import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath } from './uri.js'
 import { getResource, getResourceHead, deleteResource, processSave, patchResourceWithAcceptPatch } from './fetcher.js'
-import * as ld from './simplerdf.cjs'
-const SimpleRDF = ld.SimpleRDF
+import rdf from "rdf-ext";
 import { getResourceGraph, sortGraphTriples, getGraphContributors, getGraphAuthors, getGraphEditors, getGraphPerformers, getGraphPublishers, getGraphLabel, getGraphEmail, getGraphTitle, getGraphConceptLabel, getGraphPublished, getGraphUpdated, getGraphDescription, getGraphLicense, getGraphRights, getGraphFromData, getGraphAudience, getGraphTypes } from './graph.js'
 import { createRDFaHTML, Icon } from './template.js'
 import LinkHeader from "http-link-header";
 import DOMPurify from 'dompurify';
+
+const ns = Config.ns;
 
 function escapeCharacters(string) {
   return String(string).replace(/[&<>"']/g, function (match) {
@@ -982,9 +983,9 @@ function showTimeMap(node, url) {
 
       var items = [];
       triples.forEach(function(t){
-        var s = t.subject.nominalValue;
-        var p = t.predicate.nominalValue;
-        var o = t.object.nominalValue;
+        var s = t.subject.value;
+        var p = t.predicate.value;
+        var o = t.object.value;
 
         if(p === Config.Vocab['memmementoDateTime']) {
           items.push('<li><a href="' + s + '" target="_blank">' + o + '</a></li>');
@@ -1194,7 +1195,7 @@ function getGraphContributorsRole(g, options) {
 
     var email = getGraphEmail(g.child(s));
     if (email) {
-      email = (typeof email === 'string') ? email : email.iri().toString();
+      // email = (typeof email === 'string') ? email : email.iri().toString();
       aUN['email'] = email.startsWith('mailto:') ? email.slice(7) : email;
     }
 
@@ -1222,8 +1223,8 @@ function getGraphData(s, options) {
   var documentURL = options['subjectURI'];
 
   var info = {
-    'state': Config.Vocab['ldpRDFSource']['@id'],
-    'profile': Config.Vocab['ldpRDFSource']['@id']
+    'state': ns.ldp.RDFSource,
+    'profile': ns.ldp.RDFSource
   };
 
   info['graph'] = s;
@@ -1236,6 +1237,7 @@ function getGraphData(s, options) {
   info['description'] = getGraphDescription(s);
   info['license'] = getGraphLicense(s);
   info['rights'] = getGraphRights(s);
+  info['language'] = getGraphLanguage(s);
   // info['summary'] = graph.getGraphSummary(s);
   // info['creator'] = graph.getGraphCreators(s);
   info['contributors'] = getGraphContributorsRole(s, { role: 'contributor' });
@@ -1245,88 +1247,96 @@ function getGraphData(s, options) {
   info['publishers'] = getGraphContributorsRole(s, { role: 'publisher' });
   info['audience'] = getGraphAudience(s);
 
-  info['profile'] = Config.Vocab['ldpRDFSource']['@id'];
+  info['profile'] = ns.ldp.RDFSource;
 
   //Check if the resource is immutable
-  s.rdftype.forEach(function(resource) {
-    if (resource == Config.Vocab['memMemento']['@id']) {
-      info['state'] = Config.Vocab['memMemento']['@id'];
+  s.out(ns.rdf.type).values.forEach(type => {
+    if (type == ns.mem.Memento) {
+      info['state'] = ns.mem.Memento;
     }
   });
 
-  if (s.reloriginal) {
-    info['state'] = Config.Vocab['memMemento']['@id'];
-    info['original'] = s.memoriginal;
+  var original = s.out(ns.mem.original);
+  if (original.values.length) {
+    info['state'] = ns.mem.Memento;
+    info['original'] = original.values[0];
 
-    if (s.reloriginal == options['subjectURI']) {
+    if (info['original']  == options['subjectURI']) {
       //URI-R (The Original Resource is a Fixed Resource)
-
-      info['profile'] = Config.Vocab['memOriginalResource']['@id'];
+      info['profile'] = ns.mem.OriginalResource;
     }
     else {
       //URI-M
-
-      info['profile'] = Config.Vocab['memMemento']['@id'];
+      info['profile'] = ns.mem.Memento;
     }
   }
 
-  if (s.memmemento) {
+  var memento = s.out(ns.mem.memento)
+  if (memento.values.length) {
     //URI-R
-
-    info['profile'] = Config.Vocab['memOriginalResource']['@id'];
-    info['memento'] = s.memmemento;
+    info['profile'] = ns.mem.OriginalResource;
+    info['memento'] = memento.values[0];
   }
 
-  if(s.memoriginal && s.memmemento && s.memoriginal != s.memmemento) {
+  original = s.out(ns.mem.original);
+  memento = s.out(ns.mem.memento);
+  if (original.values.length && memento.values.length && original[0] != memento[0]) {
     //URI-M (Memento without a TimeGate)
-
-    info['profile'] = Config.Vocab['memMemento']['@id'];
-    info['original'] = s.memoriginal;
-    info['memento'] = s.memmemento;
+    info['profile'] = ns.mem.Memento;
+    info['original'] =  original.values[0];
+    info['memento'] = memento.values[0];
   }
 
-  if(s.rellatestversion) {
-    info['latest-version'] = s.rellatestversion;
+  var latestVersion = s.out(ns.rel.latestVersion);
+  if (latestVersion.values.length) {
+    info['latest-version'] = latestVersion.values.[0];
   }
 
-  if(s.relpredecessorversion) {
-    info['predecessor-version'] = s.relpredecessorversion;
+  var predecessorVersion = s.out(ns.rel.predecessorVersion);
+  if (predecessorVersion.values.length) {
+    info['predecessor-version'] = predecessorVersion.values[0];
   }
 
-  if(s.memtimemap) {
-    info['timemap'] = s.memtimemap;
+  var timemap = s.out(ns.mem.timemap);
+  if (timemap.values.length) {
+    info['timemap'] = timemap.values[0];
   }
 
-  if(s.memtimegate) {
-    info['timegate'] = s.memtimegate;
+  var timegate = s.out(ns.mem.timegate);
+  if (timegate.values.length) {
+    info['timegate'] = timegate.values[0];
   }
-  if(!Config.OriginalResourceInfo || ('mode' in options && options.mode == 'update' )) {
+
+  if (!Config.OriginalResourceInfo || ('mode' in options && options.mode == 'update' )) {
     Config['OriginalResourceInfo'] = info;
   }
 
-  info['inbox'] = s.ldpinbox._array;
-  info['annotationService'] = s.oaannotationService._array;
+  info['inbox'] = s.out(ns.ldp.inbox).values;
+  info['annotationService'] = s.out(ns.oa.annotationService).values;
 
   //TODO: Refactor
   //FIXME: permissionsActions, specrequirement, skosConceptSchemes are assumed to be from document's policies
 
-  if(s.odrlhasPolicy && s.odrlhasPolicy.at(0) && s.iri().toString() == documentURL) {
+  var hasPolicy = s.out(ns.odrl.hasPolicy);
+  if (hasPolicy.values.length && s.in().trim().value == documentURL) {
     info['odrl'] = getResourceInfoODRLPolicies(s);
   }
 
   info['spec'] = {};
-  if(s.specrequirement && s.specrequirement.at(0) && s.iri().toString() == documentURL) {
+  var requirement = s.out(ns.spec.requirement);
+  if (requirement.values.length && s.in().trim().value == documentURL) {
     info['spec']['requirement'] = getResourceInfoSpecRequirements(s);
   }
 
-  if(s.specchangelog && s.specchangelog.at(0) && s.iri().toString() == documentURL) {
-    var changelog = s.child(s.specchangelog.at(0))
-    if (changelog.specchange && changelog.specchange.at(0)) {
-      info['change'] = getResourceInfoSpecChanges(changelog);
+  var changelog = s.out(ns.spec.changelog);
+  if (changelog.values.length && s.in().trim().value == documentURL) {
+    if (changelog.out(ns.spec.change).values.length) {
+      info['spec']['change'] = getResourceInfoSpecChanges(changelog);
     }
   }
 
-  if(s.specadvisement && s.specadvisement.at(0) && s.iri().toString() == documentURL) {
+  var advisement = s.out(ns.spec.advisement);
+  if (advisement.value.length && s.in().trim().value == documentURL) {
     info['spec']['advisement'] = getResourceInfoSpecAdvisements(s);
   }
 
@@ -1336,6 +1346,14 @@ function getGraphData(s, options) {
 
   return info;
 }
+
+/**
+ * getResourceInfo
+ * 
+ * @param
+ * @param 
+ * @returns {Promise<Object>}
+ */
 
 function getResourceInfo(data, options) {
   data = data || getDocument();
@@ -1350,23 +1368,31 @@ function getResourceInfo(data, options) {
 
   var promises = [];
 
-  promises.push(getGraphFromDataBlock(data, options));
+  // promises.push(getGraphFromDataBlock(data, options));
   promises.push(getGraphFromData(data, options));
 
   return Promise.allSettled(promises)
-    .then(function(resolvedPromises){
-      var dataGraph = SimpleRDF();
-      resolvedPromises.forEach(function(response){
-        if (response.value) {
-          var g = response.value;
-          dataGraph.graph().addAll(g);
-        }
+    .then(resolvedPromises => {
+      // var dataGraph = SimpleRDF();getGraphData
+      return rdf.dataset().then(dataset => {
+        resolvedPromises.forEach(response => {
+          console.log(response.value)
+          if (response.value) {
+            dataset.addAll(response.value.dataset);
+          }
+        })
+
+        return rdf.grapoi({ dataset });
       })
 
-      return Promise.resolve(dataGraph)
+      // return Promise.resolve(dataGraph)
     })
-    .then(function(dataGraph){
-      var s = SimpleRDF(Config.Vocab, documentURL, dataGraph.graph(), ld.store).child(documentURL);
+    .then(g => {
+      // var s = SimpleRDF(Config.Vocab, documentURL, dataGraph.graph(), ld.store).child(documentURL);
+
+      var s = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(documentURL)('')});
+console.log(s);
+
       var info = getGraphData(s, options);
 
       if (documentURL == Config.DocumentURL) {
@@ -1539,7 +1565,7 @@ function getResourceSupplementalInfo (documentURL, options) {
 
               if (g) {
                 //FIXME: Consider the case where `linkTarget` URL is redirected and so may not be same as `s`.
-                var s = g.iri().toString();
+                var s = g.in().trim().value;
                 Config['Resource'][s] = {};
                 Config['Resource'][s]['graph'] = g;
               }
@@ -1556,22 +1582,16 @@ function getResourceSupplementalInfo (documentURL, options) {
 
 function getResourceInfoCitations(g) {
   var documentURL = Config.DocumentURL;
-  var citationsList = [];
-  var citationProperties = Object.keys(Config.Citation).concat([Config.Vocab["dctermsreferences"]["@id"]]);
+  var citationProperties = Object.keys(Config.Citation).concat([ns.dcterms.references]);
 
-  var triples = g._graph;
-  triples.forEach(function(t){
-    var s = t.subject.nominalValue;
-    var p = t.predicate.nominalValue;
-    var o = t.object.nominalValue;
+  var predicates = citationProperties.map((property) => {
+    return rdf.namespace(property)('');
+  })
 
-    if(citationProperties.indexOf(p) > -1) {
-      citationsList.push(o);
-    }
-  });
+  var citationsList = g.out(predicates).distinct().values;
 
   var externals = [];
-  citationsList.forEach(function(i){
+  citationsList.forEach(i => {
     var iAbsolute = stripFragmentFromString(i);
     if (iAbsolute !== documentURL){
       externals.push(iAbsolute)
@@ -1586,49 +1606,52 @@ function getResourceInfoODRLPolicies(s) {
   var info = {}
   info['odrl'] = {};
 
-  s.odrlhasPolicy.forEach(function(policyIRI) {
+  var policy = s.out(ns.odrl.hasPolicy);
+
+  policy.forEach(policyIRI => {
     info['odrl'][policyIRI] = {};
 
-    var policyGraph = s.child(policyIRI);
-    var policyTypes = policyGraph.rdftype;
+    var policyGraph = rdf.grapoi({ dataset: s.dataset, term: rdf.namespace(policyIRI)('')});
+    var policyTypes = policyGraph.out(ns.rdf.type).values;
 
-    info['odrl'][policyIRI]['rdftype'] = policyTypes._array;
+    info['odrl'][policyIRI]['rdftype'] = policyTypes;
 
-    policyTypes.forEach(function(pT) {
-      if(pT == Config.Vocab['odrlOffer']["@id"]){
-        var permissions = policyGraph.odrlpermission;
+    policyTypes.forEach(pT => {
+      if (pT == ns.odrl.Offer){
+        var permissions = policyGraph.out(ns.odrl.permission).values;
 
-        permissions.forEach(function(permissionIRI){
+        permissions.forEach(permissionIRI => {
           info['odrl'][policyIRI]['permission'] = {};
           info['odrl'][policyIRI]['permission'][permissionIRI] = {};
 
-          var permissionGraph = s.child(permissionIRI);
-          var permissionAssigner = permissionGraph.odrlassigner;
+          var permissionGraph = rdf.grapoi({ dataset: s.dataset, term: rdf.namespace(permissionIRI)('')});
+
+          var permissionAssigner = permissionGraph.out(ns.odrl.assigner).values;
           info['odrl'][policyIRI]['permission'][permissionIRI]['action'] = info['odrl']['permissionAssigner'] = permissionAssigner;
 
-          var permissionActions = permissionGraph.odrlaction;
-          info['odrl'][policyIRI]['permission'][permissionIRI]['action'] = info['odrl']['permissionActions'] = permissionActions._array;
+          var permissionActions = permissionGraph.out(ns.odrl.action).values;
+          info['odrl'][policyIRI]['permission'][permissionIRI]['action'] = info['odrl']['permissionActions'] = permissionActions;
         });
-
       }
-      if(pT == Config.Vocab['odrlAgreement']["@id"]){
-        var prohibition = policyGraph.odrlprohibition;
 
-        prohibition.forEach(function(prohibitionIRI){
+      if (pT == ns.odrl.Agreement){
+        var prohibition = policyGraph.out(ns.odrl.prohibition).values;
+
+        prohibition.forEach(prohibitionIRI => {
           info['odrl'][policyIRI]['prohibition'] = {};
           info['odrl'][policyIRI]['prohibition'][prohibitionIRI] = {};
 
-          var prohibitionGraph = s.child(prohibitionIRI);
-          var prohibitionAssigner = prohibitionGraph.odrlassigner;
+          var prohibitionGraph = rdf.grapoi({ dataset: s.dataset, term: rdf.namespace(prohibitionIRI)('')});
+
+          var prohibitionAssigner = prohibitionGraph.out(ns.odrl.assigner).values;
           info['odrl'][policyIRI]['prohibition'][prohibitionIRI]['action'] = info['odrl']['prohibitionAssigner'] = prohibitionAssigner;
 
-          var prohibitionAssignee = prohibitionGraph.odrlassignee;
+          var prohibitionAssignee = prohibitionGraph.out(ns.odrl.assignee).values;
           info['odrl'][policyIRI]['prohibition'][prohibitionIRI]['action'] = info['odrl']['prohibitionAssignee'] = prohibitionAssignee;
 
-          var prohibitionActions = prohibitionGraph.odrlaction;
-          info['odrl'][policyIRI]['prohibition'][prohibitionIRI]['action'] = info['odrl']['prohibitionActions'] = prohibitionActions._array;
+          var prohibitionActions = prohibitionGraph.out(ns.odrl.action).values;
+          info['odrl'][policyIRI]['prohibition'][prohibitionIRI]['action'] = info['odrl']['prohibitionActions'] = prohibitionActions;
         });
-
       }
     });
   });
@@ -1636,32 +1659,32 @@ function getResourceInfoODRLPolicies(s) {
   return info['odrl'];
 }
 
+//TODO: Review graphoi
 function getResourceInfoSpecRequirements(s) {
   var info = {}
   info['spec'] = {};
   info['spec']['requirement'] = {};
 
-  s.specrequirement.forEach(function(requirementIRI) {
+  s.out(ns.spec.requirement).values.forEach(requirementIRI => {
     info['spec']['requirement'][requirementIRI] = {};
 
-    var requirementGraph = s.child(requirementIRI);
-    var statement = requirementGraph.specstatement;
-    var requirementSubject = requirementGraph.specrequirementSubject;
-    var requirementLevel = requirementGraph.specrequirementLevel;
+    var requirementGraph = rdf.grapoi({ dataset: s.dataset, term: rdf.namespace(requirementIRI)('')});
 
-    info['spec']['requirement'][requirementIRI][Config.Vocab['specstatement']["@id"]] = statement;
-    info['spec']['requirement'][requirementIRI][Config.Vocab['specrequirementSubject']["@id"]] = requirementSubject;
-    info['spec']['requirement'][requirementIRI][Config.Vocab['specrequirementLevel']["@id"]] = requirementLevel;
+    info['spec']['requirement'][requirementIRI][ns.spec.statement] = requirementGraph.out(ns.spec.statement).values[0];
+    info['spec']['requirement'][requirementIRI][ns.spec.requirementSubject] = requirementGraph.out(ns.spec.requirementSubject).values[0];
+    info['spec']['requirement'][requirementIRI][ns.spec.requirementLevel] = requirementGraph.out(ns.spec.requirementLevel).values[0];
 
-    Object.keys(Config.Citation).forEach(function(citationIRI){
-      if (requirementGraph[citationIRI] && requirementGraph[citationIRI].at(0)) {
-        info['spec']['requirement'][requirementIRI][citationIRI] = requirementGraph[citationIRI]._array;
+    Object.keys(Config.Citation).forEach(citationIRI => {
+      var requirementCitations = requirementGraph.out(rdf.namespace(citationIRI)('')).values;
+
+      if (requirementCitations.length) {
+        info['spec']['requirement'][requirementIRI][citationIRI] = requirementCitations;
       }
     });
 
-    var seeAlso = requirementGraph[Config.Vocab['rdfsseeAlso']["@id"]];
-    if (seeAlso && seeAlso.at(0)) {
-      info['spec']['requirement'][requirementIRI][Config.Vocab['rdfsseeAlso']["@id"]] = seeAlso._array;
+    var seeAlso = requirementGraph.out(ns.rdfs.seeAlso).values;
+    if (seeAlso.length) {
+      info['spec']['requirement'][requirementIRI][ns.rdfs.seeAlso] = seeAlso;
     }
   });
 
@@ -1670,32 +1693,31 @@ function getResourceInfoSpecRequirements(s) {
   return info['spec']['requirement'];
 }
 
+//TODO: Review graphoi
 function getResourceInfoSpecAdvisements(s) {
   var info = {}
   info['spec'] = {};
   info['spec']['advisement'] = {};
 
-  s.specadvisement.forEach(function(advisementIRI) {
+  s.out(ns.spec.advisement).forEach(advisementIRI => {
     info['spec']['advisement'][advisementIRI] = {};
 
-    var advisementGraph = s.child(advisementIRI);
-    var statement = advisementGraph.specstatement;
-    // var advisementSubject = advisementGraph.specadvisementSubject;
-    var advisementLevel = advisementGraph.specadvisementLevel;
+    var advisementGraph = rdf.grapoi({ dataset: s.dataset, term: rdf.namespace(advisementIRI)('')});
 
-    info['spec']['advisement'][advisementIRI][Config.Vocab['specstatement']["@id"]] = statement;
-    // info['spec'][advisementIRI][Config.Vocab['specadvisementSubject']["@id"]] = advisementSubject;
-    info['spec']['advisement'][advisementIRI][Config.Vocab['specadvisementLevel']["@id"]] = advisementLevel;
+    info['spec']['advisement'][advisementIRI][ns.spec.statement] =  advisementGraph.out(ns.spec.statement).values[0];
+    // info['spec'][advisementIRI][ns.spec.advisementSubject] = advisementSubject;
+    info['spec']['advisement'][advisementIRI][ns.spec.advisementLevel] = advisementGraph.out(ns.spec.advisementLevel).values[0];
+    var advisementCitations = advisementGraph.out(rdf.namespace(citationIRI)('')).values;
 
-    Object.keys(Config.Citation).forEach(function(citationIRI){
-      if (advisementGraph[citationIRI] && advisementGraph[citationIRI].at(0)) {
-        info['spec']['advisement'][advisementIRI][citationIRI] = advisementGraph[citationIRI]._array;
+    Object.keys(Config.Citation).forEach(citationIRI => {
+      if (advisementCitations.length) {
+        info['spec']['advisement'][advisementIRI][citationIRI] = advisementCitations;
       }
     });
 
-    var seeAlso = advisementGraph[Config.Vocab['rdfsseeAlso']["@id"]];
-    if (seeAlso && seeAlso.at(0)) {
-      info['spec']['advisement'][advisementIRI][Config.Vocab['rdfsseeAlso']["@id"]] = seeAlso._array;
+    var seeAlso = advisementGraph.out(ns.rdfs.seeAlso).values;
+    if (seeAlso.length) {
+      info['spec']['advisement'][advisementIRI][ns.rdfs.seeAlso] = seeAlso;
     }
   });
 
@@ -1704,24 +1726,20 @@ function getResourceInfoSpecAdvisements(s) {
   return info['spec']['advisement'];
 }
 
+//TODO: Review grapoi
 function getResourceInfoSpecChanges(s) {
   var info = {}
   info['change'] = {};
 
-  s.specchange.forEach(function(changeIRI) {
+  var change = s.out(ns.spec.change);
+  
+  change.values.forEach(changeIRI => {
+    var changeGraph = rdf.grapoi({ dataset: s.dataset, term: rdf.namespace(changeIRI)('')});
     info['change'][changeIRI] = {};
-
-    var changeGraph = s.child(changeIRI);
-    var statement = changeGraph.specstatement;
-    var changeSubject = changeGraph.specchangeSubject;
-    var changeClass = changeGraph.specchangeClass;
-
-    info['change'][changeIRI][Config.Vocab['specstatement']["@id"]] = statement;
-    info['change'][changeIRI][Config.Vocab['specchangeSubject']["@id"]] = changeSubject;
-    info['change'][changeIRI][Config.Vocab['specchangeClass']["@id"]] = changeClass;
+    info['change'][changeIRI][ns.spec.statement] = changeGraph.out(ns.spec.statement).values[0];
+    info['change'][changeIRI][ns.spec.changeSubject] = changeGraph.out(ns.spec.changeSubject).values[0];
+    info['change'][changeIRI][ns.spec.changeClass] = changeGraph.out(ns.spec.changeClass).values[0];
   });
-
-// console.log(info['change'])
 
   return info['change'];
 }
@@ -1730,12 +1748,12 @@ function getResourceInfoSKOS(g) {
   var info = {};
   info['skos'] = {'data': {}, 'type': {}};
 
-  info['skos']['graph'] = g._graph.filter(function(t) {
-    var s = t.subject.nominalValue;
-    var p = t.predicate.nominalValue;
-    var o = t.object.nominalValue;
+  info['skos']['graph'] = g._graph.filter(t => {
+    var s = t.subject.value;
+    var p = t.predicate.value;
+    var o = t.object.value;
 
-    var isRDFType = (p == Config.Vocab['rdftype']['@id']) ? true : false;
+    var isRDFType = (p == ns.rdf.type) ? true : false;
     var isSKOSProperty = p.startsWith('http://www.w3.org/2004/02/skos/core#');
     var isSKOSObject = o.startsWith('http://www.w3.org/2004/02/skos/core#');
 
@@ -1806,19 +1824,19 @@ function updateFeatureStatesOfResourceInfo(info) {
     }
 
     if (info['odrl'] && info['odrl']['prohibitionActions'] && info['odrl']['prohibitionAssignee'] == Config.User.IRI) {
-      if (info['odrl']['prohibitionActions'].indexOf('http://www.w3.org/ns/odrl/2/archive') > -1) {
+      if (info['odrl']['prohibitionActions'].includes(ns.odrl.archive)) {
         Config.ButtonState['snapshot-internet-archive'] = false;
       }
 
-      if (info['odrl']['prohibitionActions'].indexOf('http://www.w3.org/ns/odrl/2/derive') > -1) {
+      if (info['odrl']['prohibitionActions'].includes(ns.odrl.derive)) {
         Config.ButtonState['resource-save-as'] = false;
       }
 
-      if (info['odrl']['prohibitionActions'].indexOf('http://www.w3.org/ns/odrl/2/print') > -1) {
+      if (info['odrl']['prohibitionActions'].includes(ns.odrl.print)) {
         Config.ButtonState['resource-print'] = false;
       }
 
-      if (info['odrl']['prohibitionActions'].indexOf('http://www.w3.org/ns/odrl/2/reproduce') > -1) {
+      if (info['odrl']['prohibitionActions'].includes(ns.odrl.reproduce)) {
         Config.ButtonState['create-immutable'] = false;
         Config.ButtonState['create-version'] = false;
         Config.ButtonState['export-as-html'] = false;
@@ -1828,7 +1846,7 @@ function updateFeatureStatesOfResourceInfo(info) {
         Config.ButtonState['generate-feed'] = false;
       }
 
-      if (info['odrl']['prohibitionActions'].indexOf('http://www.w3.org/ns/odrl/2/transform') > -1) {
+      if (info['odrl']['prohibitionActions'].includes(ns.odrl.transform)) {
         Config.ButtonState['export-as-html'] = false;
       }
     }
@@ -1881,8 +1899,8 @@ function createImmutableResource(url, data, options) {
   rootNode = setDocumentRelation(rootNode, [r], o);
 
   o = { 'id': 'document-original', 'title': 'Original resource' };
-  if (Config.OriginalResourceInfo['state'] == Config.Vocab['memMemento']['@id']
-    && Config.OriginalResourceInfo['profile'] == Config.Vocab['memOriginalResource']['@id']) {
+  if (Config.OriginalResourceInfo['state'] == ns.mem.Memento
+    && Config.OriginalResourceInfo['profile'] == ns.mem.OriginalResource) {
     r = { 'rel': 'mem:original', 'href': immutableURL };
   }
   else {
@@ -1910,7 +1928,7 @@ function createImmutableResource(url, data, options) {
 
 
   //Update URI-R
-  if (Config.OriginalResourceInfo['state'] != Config.Vocab['memMemento']['@id']) {
+  if (Config.OriginalResourceInfo['state'] != ns.mem.Memento) {
     setDate(document, { 'id': 'document-created', 'property': 'schema:dateCreated', 'title': 'Created', 'datetime': date });
 
     o = { 'id': 'document-identifier', 'title': 'Identifier' };

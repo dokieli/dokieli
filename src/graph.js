@@ -1,7 +1,8 @@
 'use strict'
 
-import * as ld from "./simplerdf.cjs";
-const SimpleRDF = ld.SimpleRDF
+import rdf from "rdf-ext";
+import { RdfaParser } from "rdfa-streaming-parser";
+import { Readable } from "readable-stream";
 import Config from './config.js'
 import { stripFragmentFromString, getProxyableIRI, getBaseURL, getPathURL, getAbsoluteIRI, getParentURLPath } from './uri.js'
 import { uniqueArray } from './util.js'
@@ -9,15 +10,7 @@ import { setAcceptRDFTypes, getResource, getResourceHead } from './fetcher.js'
 import LinkHeader from "http-link-header";
 import DOMPurify from 'dompurify';
 
-const store = ld.store;
-
-function constructGraph (url) {
-  return SimpleRDF(Config.Vocab, url);
-}
-
-function getGraph (url) {
-  return SimpleRDF(Config.Vocab, url, null, store).get()
-}
+const ns = Config.ns;
 
 function getGraphFromData (data, options = {}) {
   if (!('contentType' in options)) {
@@ -30,15 +23,21 @@ function getGraphFromData (data, options = {}) {
   // https://github.com/rdf-ext/rdf-parser-rdfa/issues/3
   // https://github.com/simplerdf/simplerdf/issues/19
 
-  if (!('subjectURI' in options)) {
-    // console.log(options)
-    options['subjectURI'] = 'http://localhost/d79351f4-cdb8-4228-b24f-3e9ac74a840d'
-  }
+  // if (!('subjectURI' in options)) {
+  //   // console.log(options)
+  //   options['subjectURI'] = 'http://localhost/d79351f4-cdb8-4228-b24f-3e9ac74a840d'
+  // }
 
-  if (options.contentType == 'text/html' || options.contentType == 'application/xhtml+xml' || options.contentType == 'text/turtle' || options.contentType == 'application/ld+json' || options.contentType == 'application/activity+json') {
+  // // TODO: Revisit this as setting base will be now be taken care of by rdf-ext in getRDFParser, so this may not be needed
+  // const baseNeededMediaTypes = ['text/html', 'application/xhtml+xml', 'text/turtle', 'application/ld+json', 'application/activity+json'];
+  // if (baseNeededMediaTypes.includes(options.contentType)){
+  //   data = setDocumentBase(data, options.subjectURI, options.contentType)
+  // }
 
-      data = setDocumentBase(data, options.subjectURI, options.contentType)
-  }
+  // if (options.contentType == 'text/html' || options.contentType == 'application/xhtml+xml' || options.contentType == 'text/turtle' || options.contentType == 'application/ld+json' || options.contentType == 'application/activity+json') {
+
+  //     data = setDocumentBase(data, options.subjectURI, options.contentType)
+  // }
 
   switch (options.contentType) {
     case 'application/activity+json': case 'application/json':
@@ -46,25 +45,61 @@ function getGraphFromData (data, options = {}) {
       break;
     case 'text/plain':
     case 'text/markdown':
-    case 'image/svg+xml':
+    // case 'image/svg+xml':
       options.contentType = 'text/html';
       break;
     default:
       break;
   }
 
+  //TODO: Look into a wrapping function so that we don't have to pass baseURI twice; getRDFParser, parser.import
+  const parser = getRDFParser(options.subjectURI, options.contentType);
+  const nodeStream = stringToStream(data);
+  const quadStream = parser.import(nodeStream, { 'baseIRI': options.subjectURI });
+console.log(quadStream)
+
+  return rdf.dataset().import(quadStream).then((dataset) => {
+console.log(dataset)
+console.log(dataset.toCanonical());
+    return rdf.grapoi({ dataset });
+  });
+
+
 // console.log(data)
 // console.log(options)
-  return SimpleRDF.parse(data, options['contentType'], options['subjectURI'])
-    .then(function(g){
-      // var o = { 'contentType': 'application/n-triples' };
-      var o = { 'contentType': 'text/turtle' };
-      return serializeGraph(g, o).then(function(d){
-        d = skolem(d, o);
-        d = setDocumentBase(d, options.subjectURI, o.contentType);
-// console.log(d)
-        return SimpleRDF.parse(d, o['contentType'], options['subjectURI']);
-      })});
+//   return SimpleRDF.parse(data, options['contentType'], options['subjectURI'])
+//     .then(function(g){
+//       // var o = { 'contentType': 'application/n-triples' };
+//       var o = { 'contentType': 'text/turtle' };
+//       return serializeGraph(g, o).then(function(d){
+//         d = skolem(d, o);
+//         d = setDocumentBase(d, options.subjectURI, o.contentType);
+// // console.log(d)
+//         return SimpleRDF.parse(d, o['contentType'], options['subjectURI']);
+//       })});
+}
+
+function stringToStream(str) {
+  return new Readable({
+    read() {
+      this.push(str);
+      this.push(null);
+    }
+  })
+}
+
+function getRDFParser(baseIRI, contentType) {
+  var RDFaMediaTypes = ['text/html', 'application/xhtml+xml', 'image/svg+xml', 'application/xml', 'text/xml'];
+
+  if (RDFaMediaTypes.includes(contentType)) {
+    return new RdfaParser({
+      baseIRI: baseIRI,
+      contentType: contentType,
+    });
+  }
+  else {
+    return rdf.formats.parsers.get(contentType);
+  }
 }
 
 function getMatchFromData (data, spo = {}, options = {}) {
@@ -482,8 +517,7 @@ function getResourceGraph (iri, headers, options = {}) {
     .then(g => {
       let fragment = (iri.lastIndexOf('#') >= 0) ? iri.substr(iri.lastIndexOf('#')) : ''
 
-      return SimpleRDF(Config.Vocab, options['subjectURI'], g, ld.store).child(getProxyableIRI(iri) + fragment)
-
+      return rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(getProxyableIRI(iri) + fragment)('')});
     })
     .catch(e => {
       if ('resource' in e || 'cause' in e || e.status?.toString().startsWith('5')) {
@@ -957,69 +991,85 @@ function processSameAs(s, callback) {
 }
 
 function getAgentPreferredProxy (s) {
-  return s.solidpreferredProxy || undefined
+  return s.out(ns.solid.preferredProxy).value || undefined
 }
 
 function getAgentPreferredPolicy (s) {
-  return s.solidpreferredPolicy || undefined
+  return s.out(ns.solid.preferredPolicy).value || undefined
 }
 
 function getAgentName (s) {
-  var name = s.foafname || s.schemaname || s.vcardfn || s.asname || s.rdfslabel || undefined
+  var name = s.out(ns.foaf.name).value || s.out(ns.schema.name).value || s.out(ns.vcard.fn).value || s.out(ns.as.name).value || s.out(ns.rdfs.label).value || undefined
   if (typeof name === 'undefined') {
-    if (s.schemafamilyName && s.schemafamilyName.length > 0 && s.schemagivenName && s.schemagivenName.length > 0) {
-      name = s.schemagivenName + ' ' + s.schemafamilyName
-    } else if (s.foaffamilyName && s.foaffamilyName.length > 0 && s.foafgivenName && s.foafgivenName.length > 0) {
-      name = s.foafgivenName + ' ' + s.foaffamilyName
-    } else if (s.vcardfamilyname && s.vcardfamilyname.length > 0 && s.vcardgivenname && s.vcardgivenname.length > 0) {
-      name = s.vcardgivenname + ' ' + s.vcardfamilyname
-    } else if (s.foafnick && s.foafnick.length > 0) {
-      name = s.foafnick
-    } else if (s.vcardnickname && s.vcardnickname.length > 0) {
-      name = s.vcardnickname
+    if (s.out(ns.schema.familyName).value && s.out(ns.schema.familyName).value.length > 0 && s.out(ns.schema.givenName).value && s.out(ns.schema.givenName).value.length > 0) {
+      name = s.out(ns.schema.givenName).value + ' ' + s.out(ns.schema.familyName).value
+    } else if (s.out(ns.foaf.familyName).value && s.out(ns.foaf.familyName).value.length > 0 && s.out(ns.foaf.givenName).value && s.out(ns.foaf.givenName).value.length > 0) {
+      name = s.out(ns.foaf.givenName).value + ' ' + s.out(ns.foaf.familyName).value
+    } else if (s.out(ns.vcard.familyname).value && s.out(ns.vcard.familyname).value.length > 0 && s.out(ns.vcard.givenname).value && s.out(ns.vcard.givenname).value.length > 0) {
+      name = s.out(ns.vcard.givenname).value + ' ' + s.out(ns.vcard.familyname).value
+    } else if (s.out(ns.foaf.nick).value && s.out(ns.foaf.nick).value.length > 0) {
+      name = s.out(ns.foaf.nick).value
+    } else if (s.out(ns.vcard.nickname).value && s.out(ns.vcard.nickname).value.length > 0) {
+      name = s.out(ns.vcard.nickname).value
     }
   }
   return name === undefined ? undefined : DOMPurify.sanitize(name)
 }
 
 function getAgentURL (s) {
-  return s.foafhomepage || s.foafweblog || s.schemaurl || s.vcardurl || undefined
+  return s.out(ns.foaf.homepage).value || s.out(ns.foaf.weblog).value || s.out(ns.schema.url).value || s.out(ns.vcard.url).value || undefined
 }
 
 function getAgentDelegates (s) {
-  return (s.acldelegates && s.acldelegates._array.length > 0)
-    ? s.acldelegates._array
-    : undefined
+  var d = s.out(ns.acl.delegates).values;
+  return (
+    d.length > 0 ? d :
+    undefined
+  );
 }
 
 function getAgentStorage (s) {
-  return (s.pimstorage && s.pimstorage._array.length > 0)
-    ? s.pimstorage._array
-    : undefined
+  var d = s.out(ns.pim.storage).values;
+  return (
+    d.length > 0 ? d :
+    undefined
+  );
 }
 
 function getAgentOutbox (s) {
-  return (s.asoutbox && s.asoutbox._array.length > 0)
-    ? s.asoutbox._array
-    : undefined
+  var d = s.out(ns.as.outbox).values;
+  return (
+    d.length > 0 ? d :
+    undefined
+  );
 }
 
 function getAgentInbox (s) {
-  return (s.ldpinbox && s.ldpinbox._array.length > 0)
-    ? s.ldpinbox._array
-    : (s.asinbox && s.asinbox._array.length > 0)
-      ? s.asinbox._array
-      : undefined
+  return getGraphInbox(s);
+}
+
+function getGraphInbox(s) {
+  var ldpinbox = s.out(ns.ldp.inbox).values;
+  var asinbox = s.out(ns.as.inbox).values;
+  return (
+    ldpinbox.length > 0 ? ldpinbox :
+    asinbox.length > 0 ? asinbox :
+    undefined
+  );
 }
 
 function getAgentKnows (s) {
   var knows = [];
 
-  if(s.foafknows && s.foafknows._array.length > 0){
-    knows = knows.concat(s.foafknows._array);
+  var foafknows = s.out(ns.foaf.knows).values;
+  var schemaknows = s.out(ns.schema.knows).values;
+
+  if (foafknows.length > 0){
+    knows = knows.concat(foafknows);
   }
-  if(s.schemaknows && s.schemaknows._array.length > 0){
-    knows = knows.concat(s.schemaknows._array);
+
+  if (schemaknows.length > 0){
+    knows = knows.concat(schemaknows);
   }
 
   knows = uniqueArray(knows);
@@ -1044,50 +1094,58 @@ function getAgentFollowing (s) {
 }
 
 function getAgentPublicTypeIndex (s) {
-  return (s.solidpublicTypeIndex && s.solidpublicTypeIndex.length > 0)
-    ? s.solidpublicTypeIndex
+  var d = s.out(ns.solid.publicTypeIndex.values);
+  return (d.length > 0)
+    ? d
     : undefined
 }
 
 function getAgentPrivateTypeIndex (s) {
-  return (s.solidprivateTypeIndex && s.solidprivateTypeIndex.length > 0)
-    ? s.solidprivateTypeIndex
+  var d = s.out(ns.solid.privateTypeIndex.values);
+  return (d.length > 0)
+    ? d
     : undefined
 }
 
 function getAgentPreferencesFile (s) {
-  return (s.pimpreferencesFile && s.pimpreferencesFile.length > 0)
-    ? s.pimpreferencesFile
+  var d = s.out(ns.pim.preferencesFile.values);
+  return (d.length > 0)
+    ? d
     : undefined
 }
 
 function getAgentLiked (s) {
-  return (s.asliked && s.asliked._array.length > 0)
-    ? s.asliked._array
+  var d = s.out(ns.as.liked.values);
+  return (d.length > 0)
+    ? d
     : undefined
 }
 
 function getAgentOccupations (s) {
-  return (s.schemahasOccupation && s.schemahasOccupation._array.length > 0)
-    ? s.schemahasOccupation._array
+  var d = s.out(ns.schema.hasOccupation.values);
+  return (d.length > 0)
+    ? d
     : undefined
 }
 
 function getGraphAudience (s) {
-  return (s.schemaaudience && s.schemaaudience._array.length > 0)
-    ? s.schemaaudience._array
+  var d = s.out(ns.schema.audience.values);
+  return (d.length > 0)
+    ? d
     : undefined
 }
 
 function getAgentPublications (s) {
-  return (s.foafpublications && s.foafpublications._array.length > 0)
-    ? s.foafpublications._array
+  var d = s.out(ns.foaf.publications.values);
+  return (d.length > 0)
+    ? da
     : undefined
 }
 
 function getAgentMade (s) {
-  return (s.foafmade && s.foafmade._array.length > 0)
-    ? s.foafmade._array
+  var d = s.out(ns.foaf.made).values;
+  return (d.length > 0)
+    ? d
     : undefined
 }
 
@@ -1115,45 +1173,61 @@ function getGraphImage (s) {
 }
 
 function getGraphEmail(s) {
-  var d = s.schemaemail || s.foafmbox || undefined ;
-  return DOMPurify.sanitize(d);
+  var email = s.out(ns.schema.email).values;
+  var mbox = s.out(ns.foaf.mbox).values;
+  var d =
+    email.length > 0 ? email[0].value :
+    mbox.length > 0 ? mbox[0].value :
+    undefined;
+
+  return d === undefined ? undefined : DOMPurify.sanitize(d)
 }
 
 function getGraphContributors(s) {
+  var d = s.out(ns.schema.contributor).values;
   return (
-    s.schemacontributor?._array?.length > 0 ? s.schemacontributor._array :
+    d.length > 0 ? d :
     undefined
   )
 }
 
 function getGraphEditors(s) {
+  var d = s.out(ns.schema.editor).values;
   return (
-    s.schemaeditor?._array?.length > 0 ? s.schemaeditor._array :
+    d.length > 0 ? d :
     undefined
   )
 }
 
 function getGraphAuthors(s) {
+  var author = s.out(ns.schema.author).values;
+  var creator = s.out(ns.schema.creator).values;
+  var actor = s.out(ns.as.author).values;
+  var dcreator = s.out(ns.dcterms.creator).values;
+
   return (
-    s.schemaauthor?._array?.length > 0 ? s.schemaauthor._array :
-    s.schemacreator?._array?.length > 0 ? s.schemacreator._array :
-    s.asactor?._array?.length > 0 ? s.asactor._array :
-    s.dctermscreator?._array?.length > 0 ? s.dctermscreator._array :
+    author.length > 0 ? author :
+    creator.length > 0 ? creator :
+    actor.length > 0 ? actor :
+    dcreator.length > 0 ? dcreator :
     undefined
   );
 }
 
 function getGraphPerformers(s) {
+  var d = s.out(ns.schema.performer).values;
   return (
-    s.schemaperformer?._array?.length > 0 ? s.schemaperformer._array :
+    d.length > 0 ? d :
     undefined
   )
 }
 
 function getGraphPublishers(s) {
+  var publisher = s.out(ns.schema.publisher).values;
+  var dpublisher = s.out(ns.dcterms.publisher).values;
   return (
-    s.schemapublisher?._array?.length > 0 ? s.schemapublisher._array :
-    s.dctermspublisher?._array?.length > 0 ? s.dctermspublisher._array :
+    publisher.length > 0 ? publisher :
+    dpublisher.length > 0 ? dpublisher :
     undefined
   )
 }
@@ -1163,44 +1237,44 @@ function getGraphDate(s) {
 }
 
 function getGraphPublished(s) {
-  var d = s.schemadatePublished || s.aspublished || s.dctermsissued || s.dctermsdate || s.provgeneratedAtTime || undefined;
+  var d = s.out(ns.schema.datePublished).value || s.out(ns.as.published).value || s.out(ns.dcterms.issued).value || s.out(ns.dcterms.date).value || s.out(ns.prov.generatedAtTime).value || undefined;
   return d === undefined ? undefined : DOMPurify.sanitize(d)
 }
 
 function getGraphUpdated(s) {
-  var d = s.schemadateModified || s.asupdated || s.dctermsmodified || s.dctermsdate || s.provgeneratedAtTime || undefined;
+  var d = s.out(ns.schema.dateModified).value || s.out(ns.as.updated).value || s.out(ns.dcterms.modified).value || s.out(ns.dcterms.date).value || s.out(ns.prov.generatedAtTime).value || undefined;
   return d === undefined ? undefined : DOMPurify.sanitize(d)
 }
 
 function getGraphCreated(s) {
-  var d = s.schemadateCreated || s.dctermscreated || s.dctermsdate || s.provgeneratedAtTime || undefined;
+  var d = s.out(ns.schema.dateCreated).value || s.out(ns.dcterms.created).value || s.out(ns.dcterms.date).value || s.out(ns.prov.generatedAtTime).value || undefined;
   return d === undefined ? undefined : DOMPurify.sanitize(d)
 }
 
 function getGraphLanguage(s) {
-  return s.dctermslanguage || s.dclanguage || s.schemainLanguage || undefined;
+  return s.out(ns.dcterms.language).value || s.out(ns.dcelements.language).value || s.out(ns.schema.inLanguage).value || undefined;
 }
 
 function getGraphLicense(s) {
-  return s.dctermslicense || s.schemalicense || s.cclicense || s.xhvlicense || undefined;
+  return s.out(ns.dcterms.license).value || s.out(ns.schema.license).value || s.out(ns.cc.license).value || s.out(ns.xhv.license).value || undefined;
 }
 
 function getGraphRights(s) {
-  return s.dctermsrights || getGraphLicense(s) || undefined;
+  return s.out(ns.dcterms.rights).value || getGraphLicense(s) || undefined;
 }
 
 function getGraphLabel(s) {
-  var d = s.schemaname || s.dctermstitle || s.dcelementstitle || getAgentName(s) || s.assummary || undefined;
+  var d = s.out(ns.schema.name).value || s.out(ns.dcterms.title).value || s.out(ns.dcelements.title).value || getAgentName(s) || s.out(ns.as.summary).value || undefined;
   return d === undefined ? undefined : DOMPurify.sanitize(d)
 }
 
 function getGraphTitle(s) {
-  var d = s.schemaname || s.dctermstitle || s.dcelementstitle || s.asname || undefined;
+  var d = s.out(ns.schema.name).value || s.out(ns.dcterms.title).value || s.out(ns.dcelements.title).value || s.out(ns.as.name).value || undefined;
   return d === undefined ? undefined : DOMPurify.sanitize(d)
 }
 
 function getGraphLabelOrIRI(s) {
-  return getGraphLabel(s) || s.iri().toString();
+  return getGraphLabel(s) || s.in().trim().value;
 }
 
 function getUserLabelOrIRI(iri) {
@@ -1289,11 +1363,12 @@ function getGraphConceptLabel(g, options) {
 }
 
 function getGraphDescription(s) {
-  var d = s.schemadescription || s.dctermsdescription || s.dcelementsdescription || s.schemaname || s.asname || undefined;
+  var d = s.out(ns.schema.description).value || s.out(ns.dcterms.description).value || s.out(ns.dcelements.description).value || s.out(ns.schema.name).value || s.out(ns.as.name).value || undefined;
   return d === undefined ? undefined : DOMPurify.sanitize(d)
 }
+
 function getGraphTypes(s) {
-  return s.rdftype._array;
+  return s.out(ns.rdf.type).values;
 }
 
 function sortGraphTriples(g, options) {
@@ -1445,17 +1520,7 @@ function getAuthorizationsMatching (g, matchers) {
   return authorizations;
 }
 
-function getGraphInbox(s) {
-  return (
-    s.ldpinbox?._array?.length > 0 ? s.ldpinbox._array :
-    s.asinbox?._array?.length > 0 ? s.asinbox._array :
-    undefined
-  );
-}
-
 export {
-  constructGraph,
-  getGraph,
   getGraphFromData,
   getMatchFromData,
   serializeDataToPreferredContentType,
@@ -1524,5 +1589,7 @@ export {
   getACLResourceGraph,
   getAccessSubjects,
   getAuthorizationsMatching,
-  getUserLabelOrIRI
+  getUserLabelOrIRI,
+  stringToStream,
+  getRDFParser
 }

@@ -30,13 +30,12 @@ import { gfm, gfmHtml } from 'micromark-extension-gfm'
 import { gfmTagfilterHtml } from 'micromark-extension-gfm-tagfilter'
 import LinkHeader from 'http-link-header';
 import DOMPurify from 'dompurify';
-import * as ld from './simplerdf.cjs'
 import Config from './config.js';
 
 let DO;
 
-if(typeof window.DO === 'undefined'){
-const SimpleRDF = ld.SimpleRDF
+if (typeof window.DO === 'undefined'){
+
 DO = {
   C: Config,
 

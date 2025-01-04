@@ -1,6 +1,6 @@
 'use strict';
 
-import { isArray } from 'simplerdf';
+// import { isArray } from 'simplerdf';
 import Config from './config.js';
 
 function encodeString(string) {

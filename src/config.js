@@ -1,6 +1,7 @@
 'use strict'
 
 import { Icon } from './template.js';
+import rdf from 'rdf-ext';
 
 /**
  * Configuration
@@ -468,6 +469,48 @@ export default {
     'cito': 'http://purl.org/spar/cito/',
     'qudt-unit': 'http://qudt.org/vocab/unit#',
     'ex': 'http://example.org/'
+  },
+
+  ns : {
+    'sdmx-dimension':  rdf.namespace('http://purl.org/linked-data/sdmx/2009/dimension'),
+    'sdmx-measure':  rdf.namespace('http://purl.org/linked-data/sdmx/2009/measure'),
+    'test-description': rdf.namespace('http://www.w3.org/2006/03/test-description#'),
+    acl: rdf.namespace('http://www.w3.org/ns/auth/acl#'),
+    as: rdf.namespace('https://www.w3.org/ns/activitystreams#'),
+    bibo: rdf.namespace('http://purl.org/ontology/bibo/'),
+    bookmark: rdf.namespace('http://www.w3.org/2002/01/bookmark#'),
+    cc:  rdf.namespace('http://creativecommons.org/ns#'),
+    cito: rdf.namespace('http://purl.org/spar/cito/'),
+    dcat: rdf.namespace('http://www.w3.org/ns/dcat#'),
+    dcelements: rdf.namespace('http://purl.org/dc/elements/'),
+    dcterms:  rdf.namespace('http://purl.org/dc/terms/'),
+    doap: rdf.namespace('http://usefulinc.com/ns/doap#'),
+    doc: rdf.namespace('http://www.w3.org/2000/10/swap/pim/doc#'),
+    foaf:  rdf.namespace('http://xmlns.com/foaf/0.1/'),
+    ldp: rdf.namespace('http://www.w3.org/ns/ldp#'),
+    mem: rdf.namespace('http://mementoweb.org/ns#'),
+    notify: rdf.namespace('http://www.w3.org/ns/solid/notifications#'),
+    oa: rdf.namespace('http://www.w3.org/ns/oa#'),
+    odrl: rdf.namespace('http://www.w3.org/ns/odrl/2/'),
+    owl:  rdf.namespace('http://www.w3.org/2002/07/owl/'),
+    pim: rdf.namespace('http://www.w3.org/ns/pim/space#'),
+    prov:  rdf.namespace('http://www.w3.org/ns/prov#'),
+    pso: rdf.namespace('http://purl.org/spar/pso/'),
+    qb: rdf.namespace('http://purl.org/linked-data/cube#'),
+    qudt:  rdf.namespace('http://qudt.org/vocab/unit#'),
+    rdf: rdf.namespace('http://www.w3.org/1999/02/22-rdf-syntax-ns#'),
+    rdfs: rdf.namespace('http://www.w3.org/2000/01/rdf-schema#'),
+    rel: rdf.namespace('https://www.w3.org/ns/iana/link-relations/relation#'),
+    schema:  rdf.namespace('http://schema.org/'),
+    sioc: rdf.namespace('http://rdfs.org/sioc/ns#'),
+    skos:  rdf.namespace('http://www.w3.org/2004/02/skos/core#'),
+    skosxl:  rdf.namespace('http://www.w3.org/2008/05/skos-xl#'),
+    solid: rdf.namespace('http://www.w3.org/ns/solid/terms#'),
+    spec: rdf.namespace('http://www.w3.org/ns/spec#'),
+    vcard:  rdf.namespace('http://www.w3.org/2006/vcard/ns#'),
+    void: rdf.namespace('http://rdfs.org/ns/void#'),
+    wgs: rdf.namespace('http://www.w3.org/2003/01/geo/wgs84_pos#'),
+    xhv:  rdf.namespace('http://www.w3.org/1999/xhtml/vocab#')
   },
 
   Vocab: {
