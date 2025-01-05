@@ -113,9 +113,7 @@ function getMatchFromData (data, spo = {}, options = {}) {
 
   return getGraphFromData(data, options)
     .then(g => {
-      let s = SimpleRDF(Config.Vocab, spo.subject, g, store).child(spo.subject)
-
-      return s[spo.predicate]
+      return g.out(spo.predicate);
     })
     .catch(() => {
       return undefined
@@ -1022,26 +1020,17 @@ function getAgentURL (s) {
 
 function getAgentDelegates (s) {
   var d = s.out(ns.acl.delegates).values;
-  return (
-    d.length > 0 ? d :
-    undefined
-  );
+  return d.length ? d : undefined;;
 }
 
 function getAgentStorage (s) {
   var d = s.out(ns.pim.storage).values;
-  return (
-    d.length > 0 ? d :
-    undefined
-  );
+  return d.length ? d : undefined;;
 }
 
 function getAgentOutbox (s) {
   var d = s.out(ns.as.outbox).values;
-  return (
-    d.length > 0 ? d :
-    undefined
-  );
+  return d.length ? d : undefined;;
 }
 
 function getAgentInbox (s) {
@@ -1095,58 +1084,42 @@ function getAgentFollowing (s) {
 
 function getAgentPublicTypeIndex (s) {
   var d = s.out(ns.solid.publicTypeIndex.values);
-  return (d.length > 0)
-    ? d
-    : undefined
+  return d.length ? d : undefined;
 }
 
 function getAgentPrivateTypeIndex (s) {
   var d = s.out(ns.solid.privateTypeIndex.values);
-  return (d.length > 0)
-    ? d
-    : undefined
+  return d.length ? d : undefined;
 }
 
 function getAgentPreferencesFile (s) {
   var d = s.out(ns.pim.preferencesFile.values);
-  return (d.length > 0)
-    ? d
-    : undefined
+  return d.length ? d : undefined;
 }
 
 function getAgentLiked (s) {
   var d = s.out(ns.as.liked.values);
-  return (d.length > 0)
-    ? d
-    : undefined
+  return d.length ? d : undefined;
 }
 
 function getAgentOccupations (s) {
   var d = s.out(ns.schema.hasOccupation.values);
-  return (d.length > 0)
-    ? d
-    : undefined
+  return d.length ? d : undefined;
 }
 
 function getGraphAudience (s) {
   var d = s.out(ns.schema.audience.values);
-  return (d.length > 0)
-    ? d
-    : undefined
+  return d.length ? d : undefined;
 }
 
 function getAgentPublications (s) {
   var d = s.out(ns.foaf.publications.values);
-  return (d.length > 0)
-    ? da
-    : undefined
+  return d.length ? d : undefined;
 }
 
 function getAgentMade (s) {
   var d = s.out(ns.foaf.made).values;
-  return (d.length > 0)
-    ? d
-    : undefined
+  return d.length ? d : undefined;
 }
 
 function getGraphImage (s) {
@@ -1185,18 +1158,12 @@ function getGraphEmail(s) {
 
 function getGraphContributors(s) {
   var d = s.out(ns.schema.contributor).values;
-  return (
-    d.length > 0 ? d :
-    undefined
-  )
+  return d.length ? d : undefined;
 }
 
 function getGraphEditors(s) {
   var d = s.out(ns.schema.editor).values;
-  return (
-    d.length > 0 ? d :
-    undefined
-  )
+  return d.length ? d : undefined;
 }
 
 function getGraphAuthors(s) {
@@ -1216,10 +1183,7 @@ function getGraphAuthors(s) {
 
 function getGraphPerformers(s) {
   var d = s.out(ns.schema.performer).values;
-  return (
-    d.length > 0 ? d :
-    undefined
-  )
+  return d.length ? d : undefined;
 }
 
 function getGraphPublishers(s) {

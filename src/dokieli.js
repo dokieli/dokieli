@@ -411,7 +411,7 @@ DO = {
           var subjectsReferences = [];
           var subjects = [];
           g.graph().toArray().forEach(function(t){
-            subjects.push(t.subject.nominalValue);
+            subjects.push(t.subject.value);
           });
           subjects = uniqueArray(subjects);
 
@@ -1192,12 +1192,12 @@ DO = {
       }
     },
 
+    //TODO: Review grapoi
     convertGraphToVisualisationGraph: function(url, g, options){
 // console.log(g);
       DO.C['Graphs'] = DO.C['Graphs'] || {};
-      g = SimpleRDF(DO.C.Vocab, options['subjectURI'], g, ld.store).child(url);
-// console.log(g.toString())
-      var dataGraph = SimpleRDF();
+
+      var dataGraph = rdf.dataset();
       var graphs = {};
       graphs[options['subjectURI']] = g;
 
@@ -1207,20 +1207,18 @@ DO = {
 
       DO.C['Graphs'][options['subjectURI']] = g;
 
-      Object.keys(graphs).forEach(function(i){
-        var g = graphs[i].graph();
-
-        dataGraph.graph().addAll(g);
+      Object.keys(graphs).forEach(i => {
+        dataGraph.addAll(graphs[i].dataset);
       });
 
       var graphData = {"nodes":[], "links": [], "resources": options.resources };
       var graphNodes = [];
 
-      dataGraph.graph().toArray().forEach(function(t){
+      dataGraph.out().quads().forEach(t => {
         if(
-          // t.predicate.nominalValue == 'http://www.w3.org/1999/02/22-rdf-syntax-ns#first' ||
-          // t.predicate.nominalValue == 'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest' ||
-          t.object.nominalValue == 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'
+          // t.predicate.value == 'http://www.w3.org/1999/02/22-rdf-syntax-ns#first' ||
+          // t.predicate.value == 'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest' ||
+          t.object.value == 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'
           ) {
           return;
         }
@@ -1231,9 +1229,9 @@ DO = {
         var sVisited = false;
         var oVisited = false;
 
-        switch(t.subject.interfaceName) {
+        switch(t.subject.termType) {
           default: case 'NamedNode':
-            if (stripFragmentFromString(t.subject.nominalValue) != url) {
+            if (stripFragmentFromString(t.subject.value) != url) {
               sGroup = 7;
             }
             break;
@@ -1242,9 +1240,9 @@ DO = {
             break;
         }
 
-        switch(t.object.interfaceName) {
+        switch(t.object.termType) {
           default: case 'NamedNode':
-            if (stripFragmentFromString(t.object.nominalValue) != url) {
+            if (stripFragmentFromString(t.object.value) != url) {
               oGroup = 7;
             }
             break;
@@ -1256,128 +1254,128 @@ DO = {
             break;
         }
 
-        if (t.subject.nominalValue.startsWith('http://example.com/.well-known/genid/')) {
+        if (t.subject.value.startsWith('http://example.com/.well-known/genid/')) {
           sGroup = 8;
         }
-        if (t.object.nominalValue.startsWith('http://example.com/.well-known/genid/')) {
+        if (t.object.value.startsWith('http://example.com/.well-known/genid/')) {
           oGroup = 8;
         }
 
-        if (t.predicate.nominalValue == DO.C.Vocab['rdftype']['@id']){
+        if (t.predicate.value == ns.rdf.type.value){
           oGroup = 6;
 
-          if (isActorType(t.object.nominalValue)) {
+          if (isActorType(t.object.value)) {
             sGroup = 10;
           }
 
-          switch (t.object.nominalValue) {
-            case DO.C.Vocab['qbDataSet']['@id']:
+          switch (t.object.value) {
+            case ns.qb.DataSet.value:
               oGroup = 11;
               break;
-            case DO.C.Vocab['doapSpecification']['@id']:
+            case ns.doap.Specification.value:
               sGroup = 14;
               break;
-            case DO.C.Vocab['odrlAgreement']['@id']:
-            case DO.C.Vocab['odrlAssertion']['@id']:
-            case DO.C.Vocab['odrlOffer']['@id']:
-            case DO.C.Vocab['odrlPolicy']['@id']:
-            case DO.C.Vocab['odrlPrivacy']['@id']:
-            case DO.C.Vocab['odrlRequest']['@id']:
-            case DO.C.Vocab['odrlSet']['@id']:
-            case DO.C.Vocab['odrlTicket']['@id']:
+            case ns.odrl.Agreement.value:
+            case ns.odrl.Assertion.value:
+            case ns.odrl.Offer.value:
+            case ns.odrl.Policy.value:
+            case ns.odrl.Privacy.value:
+            case ns.odrl.Request.value:
+            case ns.odrl.Set.value:
+            case ns.odrl.Ticket.value:
               sGroup = 15;
               break;
-            case DO.C.Vocab['schemaEvent']['@id']:
-            case DO.C.Vocab['biboEvent']['@id']:
-            case DO.C.Vocab['biboConference']['@id']:
+            case ns.schema.Event.value:
+            case ns.bibo.Event.value:
+            case ns.bibo.Conference.value:
               sGroup = 16;
               break;
-            case DO.C.Vocab['biboSlide']['@id']:
+            case ns.bibo.Slide.value:
               sGroup = 17;
               break;
           }
         }
 
-        if (t.subject.nominalValue == 'http://purl.org/ontology/bibo/presentedAt') {
+        if (t.subject.value == 'http://purl.org/ontology/bibo/presentedAt') {
           oGroup = 16;
         }
-        if (Config.Event.Property.hasOwnProperty(t.predicate.nominalValue)) {
+        if (Config.Event.Property.hasOwnProperty(t.predicate.value)) {
           sGroup = 16;
         }
 
-        if (isActorProperty(t.predicate.nominalValue)) {
+        if (isActorProperty(t.predicate.value)) {
           oGroup = 10;
         }
-        if (t.predicate.nominalValue.startsWith('http://purl.org/spar/cito/')) {
+        if (t.predicate.value.startsWith('http://purl.org/spar/cito/')) {
           oGroup = 9;
         }
-        switch(t.predicate.nominalValue) {
-          case DO.C.Vocab['foafknows']['@id']:
+        switch(t.predicate.value) {
+          case ns.foaf.knows.value:
             sGroup = 10;
             oGroup = 10;
             break;
-          case DO.C.Vocab['specrequirement']['@id']:
-          case DO.C.Vocab['specrequirementReference']['@id']:
+          case ns.spec.requirement.value:
+          case ns.spec.requirementReference.value:
             oGroup = 12;
             break;
-          case DO.C.Vocab['specadvisement']['@id']:
+          case ns.spec.advisement.value:
             oGroup = 13;
             break;
-          case DO.C.Vocab['spectestSuite']['@id']:
+          case ns.spec.testSuite.value:
             oGroup = 11;
             break;
-          case DO.C.Vocab['odrlhasPolicy']['@id']:
+          case ns.odrl.hasPolicy.value:
             oGroup = 14;
             break;
-          case DO.C.Vocab['skoshasTopConcept']['@id']:
-          case DO.C.Vocab['skosinScheme']['@id']:
-          case DO.C.Vocab['skosCollection']['@id']:
-          case DO.C.Vocab['skossemanticRelation']['@id']:
-          case DO.C.Vocab['skostopConceptOf']['@id']:
-          case DO.C.Vocab['schemaaudience']['@id']:
+          case ns.skos.hasTopConcept.value:
+          case ns.skos.inScheme.value:
+          case ns.skos.collection.value:
+          case ns.skos.semanticRelation.value:
+          case ns.skos.topConceptOf.value:
+          case ns.schema.audience.value:
             oGroup = 18;
             break;
         }
 
-        if (DO.C.Graphs[t.subject.nominalValue]) {
+        if (DO.C.Graphs[t.subject.value]) {
           // sGroup = 1;
           sVisited = true;
         }
-        if (DO.C.Graphs[t.object.nominalValue]) {
+        if (DO.C.Graphs[t.object.value]) {
           // oGroup = 1;
           oVisited = true;
         }
 
         //Initial root node
-        if (t.subject.nominalValue == url) {
+        if (t.subject.value == url) {
           sGroup = 5;
           sVisited = true;
         }
 
-        if (t.object.nominalValue == url) {
+        if (t.object.value == url) {
           oGroup = 5;
           oVisited = true;
         }
 
         //FIXME: groups are set once - not updated.
 
-        var objectValue = t.object.nominalValue;
-        if (t.object.interfaceName == 'Literal') {
+        var objectValue = t.object.value;
+        if (t.object.termType == 'Literal') {
           //TODO: Revisit
-          // if(t.object.datatype.nominalValue == 'http://www.w3.org/rdf/1999/02/22-rdf-syntax-ns#HTML') {
+          // if(t.object.datatype.termType.value == 'http://www.w3.org/rdf/1999/02/22-rdf-syntax-ns#HTML') {
           // }
           // objectValue = escapeCharacters(objectValue);
           objectValue = DOMPurify.sanitize(objectValue);
         }
 
-        if(graphNodes.indexOf(t.subject.nominalValue) == -1) {
-          graphNodes.push(t.subject.nominalValue);
-          graphData.nodes.push({"id": t.subject.nominalValue, "group": sGroup, "visited": sVisited });
+        if (!graphNodes.includes(t.subject.value)) {
+          graphNodes.push(t.subject.value);
+          graphData.nodes.push({"id": t.subject.value, "group": sGroup, "visited": sVisited });
         }
-        if(graphNodes.indexOf(t.object.nominalValue) == -1) {
-          if (t.object.nominalValue in DO.C.Resource) {
-            // console.log(t.object.nominalValue)
-            DO.C.Resource[t.object.nominalValue].rdftype.forEach(function(type){
+        if (!graphNodes.indexOf(t.object.value)) {
+          if (t.object.value in DO.C.Resource) {
+            // console.log(t.object.value)
+            DO.C.Resource[t.object.value].rdftype.forEach(type => {
               if (isActorType(type)) {
                 // console.log(type)
                 oGroup = 10
@@ -1389,7 +1387,7 @@ DO = {
           graphData.nodes.push({"id": objectValue, "group": oGroup, "visited": oVisited });
         }
 
-        graphData.links.push({"source": t.subject.nominalValue, "target": objectValue, "value": t.predicate.nominalValue});
+        graphData.links.push({"source": t.subject.value, "target": objectValue, "value": t.predicate.value});
       });
 // console.log(graphNodes)
 // console.log(graph)
@@ -1423,6 +1421,7 @@ DO = {
       }
     },
 
+    //TODO: Review grapoi
     showGraphResources: function(resources, selector, options) {
       selector = selector || getDocumentContentNode(document);
       options = options || {};
@@ -1430,48 +1429,49 @@ DO = {
         resources = uniqueArray(resources);
       }
 
-      DO.U.processResources(resources, options).then(
-        function(urls) {
+      DO.U.processResources(resources, options)
+        .then(urls => {
           var promises = [];
-          urls.forEach(function(url) {
-            // console.log(u);
+          urls.forEach(url => {
             // window.setTimeout(function () {
-              // var pIRI = getProxyableIRI(u);
               promises.push(getResourceGraph(url));
             // }, 1000)
           });
 
-          var dataGraph = SimpleRDF();
+          Promise.allSettled(promises)
+            .then(resolvedPromises => {
+              const dataset = rdf.dataset();
+        
+              resolvedPromises.forEach(response => {
+console.log(response.value)
+                if (response.value) {
+                  dataset.addAll(response.value.dataset);
+                }
+              })
 
-          Promise.all(promises)
-            .then(function(graphs) {
-              graphs.forEach(function(g){
-                g = g.graph();
-
-                dataGraph.graph().addAll(g);
-              });
+              var g = rdf.grapoi({ dataset });
 
               if ('filter' in options) {
-                dataGraph = dataGraph.graph().filter(function(g) {
-                  if ('subjects' in options.filter && options.filter.subjects.length > 0 && options.filter.subjects.indexOf(g.subject.nominalValue) >= 0) {
+                const quads = g.out().quads().map(g => {
+                  if ('subjects' in options.filter && options.filter.subjects.length > 0 && options.filter.subjects.includes(g.subject.value)) {
                     return g;
                   }
-                  if ('predicates' in options.filter && options.filter.predicates.length > 0 && options.filter.predicates.indexOf(g.predicate.nominalValue) >= 0) {
+                  if ('predicates' in options.filter && options.filter.predicates.length > 0 && options.filter.predicates.includes(g.predicate.value)) {
                     return g;
                   }
                 });
+
+                dataset = rdf.dataset(quads);
               }
 
-              serializeGraph(dataGraph, { 'contentType': 'text/turtle' })
-                .then(function(data){
-                  options['contentType'] = 'text/turtle';
-                  options['resources'] = resources;
-                  // options['subjectURI'] = url;
-                  //FIXME: For multiple graphs (fetched resources), options.subjectURI is the last item, so it is inaccurate
-                  DO.U.showVisualisationGraph(options.subjectURI, data, selector, options);
-                });
+              // serializeGraph(dataset, { 'contentType': 'text/turtle' })
+              options['contentType'] = 'text/turtle';
+              options['resources'] = resources;
+              // options['subjectURI'] = url;
+              //FIXME: For multiple graphs (fetched resources), options.subjectURI is the last item, so it is inaccurate
+              DO.U.showVisualisationGraph(options.subjectURI, dataset.toCanonical(), selector, options);
             });
-        });
+      });
     },
 
     processResources: function(resources, options) {
@@ -1797,15 +1797,16 @@ DO = {
       });
     },
 
+    //TODO: Review grapoi
     processPotentialAction: function(resourceInfo) {
       var g = resourceInfo.graph;
-      var triples = g._graph;
+      var triples = g.out().quads();
       triples.forEach(function(t){
-        var s = t.subject.nominalValue;
-        var p = t.predicate.nominalValue;
-        var o = t.object.nominalValue;
+        var s = t.subject.value;
+        var p = t.predicate.value;
+        var o = t.object.value;
 
-        if(p == DO.C.Vocab['schemapotentialAction']['@id']) {
+        if (p == ns.schema.potentialAction) {
           var action = o;
           var documentOrigin = (document.location.origin === "null") ? "file://" : document.location.origin;
           var originPathname = documentOrigin + document.location.pathname;
@@ -2268,9 +2269,9 @@ DO = {
       var triples = s._graph;
       var citations = Object.keys(DO.C.Citation).concat(DO.C.Vocab["schemacitation"]["@id"]);
       triples.forEach(function(t){
-        var s = t.subject.nominalValue;
-        var p = t.predicate.nominalValue;
-        var o = t.object.nominalValue;
+        var s = t.subject.value;
+        var p = t.predicate.value;
+        var o = t.object.value;
 
         if(citations.indexOf(p) > -1) {
           citationsTo.push(t);
@@ -2382,12 +2383,13 @@ DO = {
       return contentCount;
     },
 
+    //TODO: Review grapoi
     showExtendedConcepts: function() {
       var documentURL = DO.C.DocumentURL;
       var citationsList = DO.C.Resource[documentURL].citations;
 
       var promises = [];
-      citationsList.forEach(function(url) {
+      citationsList.forEach(url => {
         // console.log(u);
         // window.setTimeout(function () {
           // var pIRI = getProxyableIRI(u);
@@ -2395,15 +2397,15 @@ DO = {
         // }, 1000)
       });
 
-      var dataGraph = SimpleRDF();
+      var dataset = rdf.dataset();
       var html = [];
 
       return Promise.all(promises.map(p => p.catch(e => e)))
-        .then(function(graphs) {
-          graphs.forEach(function(g){
+        .then(graphs => {
+          graphs.forEach(g => {
 // console.log(g)
-            if (g && g._graph.length > 0){
-              var documentURL = g.iri().toString();
+            if (g && g.in().values.length > 0){
+              var documentURL = g.in().value;
 // console.log(documentURL)
 // console.log(g)
               DO.C.Resource[documentURL] = DO.C.Resource[documentURL] || {};
@@ -2411,10 +2413,10 @@ DO = {
               DO.C.Resource[documentURL]['skos'] = getResourceInfoSKOS(g);
               DO.C.Resource[documentURL]['title'] = getGraphLabel(g) || documentURL;
 
-              if (DO.C.Resource[documentURL]['skos']['graph']._graph.length > 0) {
+              if (DO.C.Resource[documentURL]['skos']['graph'].in().values.length) {
                 html.push('<section><h4><a href="' + documentURL + '">' + DO.C.Resource[documentURL]['title'] + '</a></h4><div><dl>' + DO.U.getDocumentConceptDefinitionsHTML(documentURL) + '</dl></div></section>');
 
-                dataGraph.graph().addAll(DO.C.Resource[documentURL]['skos']['graph']);
+                dataset.addAll(DO.C.Resource[documentURL]['skos']['graph']);
               }
             }
           });
@@ -2447,7 +2449,7 @@ DO = {
             if (button) {
               button.parentNode.removeChild(button);
 
-              serializeGraph(dataGraph, { 'contentType': 'text/turtle' })
+              serializeGraph(dataset, { 'contentType': 'text/turtle' })
                 .then(function(data){
                   var options = {};
                   options['subjectURI'] = DO.C.DocumentURL;
@@ -2461,7 +2463,7 @@ DO = {
 
 
 // console.log(DO.C.Resource)
-          return dataGraph;
+          return dataset;
         });
     },
 
@@ -3129,7 +3131,7 @@ console.log(reason);
 
       var subjects = [];
       testSuiteGraph.graph().toArray().forEach(function(t){
-        subjects.push(t.subject.nominalValue);
+        subjects.push(t.subject.value);
       });
       subjects = uniqueArray(subjects);
 
@@ -6432,27 +6434,26 @@ console.log(response)
       return html;
     },
 
+    //XXX: Review grapoi
     buildResourceView: function(data, options) {
       if (!DO.C.MediaTypes.RDF.includes(options['contentType'])) {
         return Promise.resolve({"data": data, "options": options});
       }
 
       return getGraphFromData(data, options).then(
-        function(i){
-          var s = SimpleRDF(DO.C.Vocab, options['subjectURI'], i, ld.store).child(options['subjectURI']);
-// console.log(s)
-          var title = getGraphLabel(s) || options.subjectURI;
+        function(g){
+// console.log(g)
+          var title = getGraphLabel(g) || options.subjectURI;
           var h1 = '<a href="' +  options.subjectURI + '">' + title + '</a>';
 
-          var types = s.rdftype._array;
+          var types = g.out(ns.rdf.type).values;
 // console.log(types)
-          if(types.indexOf(DO.C.Vocab['ldpContainer']["@id"]) >= 0 ||
-             types.indexOf(DO.C.Vocab['asCollection']["@id"]) >= 0 ||
-             types.indexOf(DO.C.Vocab['asOrderedCollection']["@id"]) >= 0) {
+          if(types.includes(DO.C.Vocab['ldpContainer']["@id"]) ||
+             types.includes(DO.C.Vocab['asCollection']["@id"]) ||
+             types.includes(DO.C.Vocab['asOrderedCollection']["@id"])) {
 
             return DO.U.processResources(options['subjectURI'], options).then(
               function(urls) {
-
                 var promises = [];
                 urls.forEach(function(url) {
                   // console.log(u);
@@ -7427,6 +7428,7 @@ console.log(response)
       return a;
     },
 
+    //TODO: Review grapoi
     getCitation: function(i, options) {
 // console.log(i)
 // console.log(options)
@@ -7439,7 +7441,8 @@ console.log(response)
         var headers = {'Accept': 'application/json'};
         var wikidataHeaders = {'Accept': 'application/ld+json'};
 
-        var isbnData = SimpleRDF(DO.C.Vocab, url);
+        var isbnDataset = rdf.dataset();
+        var isbnData = rdf.grapoi({ dataset: isbnDataset, term: rdf.namespace(url)('')});
 
         return getResource(url, headers, options)
           .then(function(response) {
@@ -7455,7 +7458,7 @@ console.log(response)
 
             if (data.title) {
 // console.log(data.title)
-              isbnData.schemaname = data.title;
+              isbnData.addOut(ns.schema.name, data.title);
             }
 
           //Unused
@@ -7465,12 +7468,12 @@ console.log(response)
 
             if (data.publish_date) {
 // console.log(data.publish_date)
-              isbnData.schemadatePublished = getDateTimeISOFromMDY(data.publish_date)
+              isbnData.addOut(schemadatePublished, getDateTimeISOFromMDY(data.publish_date));
             }
 
             if (data.covers) {
 // console.log(data.covers)
-              isbnData.schemaimage = 'https://covers.openlibrary.org/b/id/' + data.covers[0] + '-S.jpg';
+              isbnData.addOut(ns.schema.image, rdf.namespace('https://covers.openlibrary.org/b/id/' + data.covers[0] + '-S.jpg')(''));
               // document.body.insertAdjacentHTML('afterbegin', '<img src="' + img + '"/>');
 
               //   async function fetchImage(url) {
@@ -7503,17 +7506,15 @@ console.log(response)
 // console.log(data.links[0].url)
                     authorURL = data.links[0].url;
                   }
-                  isbnData.schemaauthor = [authorURL];
+                  isbnData.addOut(ns.schema.author, rdf.namespace(authorURL)(''), authorName => {
+                    if (data.name) {
+                      authorName.addOut(ns.schema.name, data.name);
+                    }
+                  });
 
-                  if (data.name) {
-// console.log(data.name)
-                    isbnData.child(authorURL).schemaname = data.name;
-                  }
-// console.log(isbnData)
+                  return isbnData;
 
-                  return isbnData.child(url);
-
-                //Unused:
+                //XXX: Working but unused:
 //                 if (data.remote_ids && data.remote_ids.wikidata) {
 //                   //wE has a few redirects to wW
 //                   var wE = 'https://www.wikidata.org/entity/' + data.remote_ids.wikidata;
@@ -7535,7 +7536,7 @@ console.log(response)
                 }));
             }
 
-            // XXX Unused for now:
+            // XXX: Working but unused:
             // if (data.identifiers?.wikidata && Array.isArray(data.identifiers.wikidata) && data.identifiers.wikidata.length > 0) {
               // var w = 'https://www.wikidata.org/entity/' + data.identifiers.wikidata[0];
               // promises.push(getResourceGraph(w, wikidataHeaders, options).then(function(g){
@@ -7897,8 +7898,8 @@ WHERE {\n\
       var elementTitle = ('elementId' in options) ? options.elementId : '';
       var items = '';
       triples.forEach(function(t){
-        var s = t.subject.nominalValue;
-        var o = t.object.nominalValue;
+        var s = t.subject.value;
+        var o = t.object.value;
         switch(options.element) {
           case 'ol': case 'ul': default:
             items += '<li><a href="' + s + '">' + o + '</a></li>';
@@ -10423,9 +10424,9 @@ WHERE {\n\
                             if(triples.length > 0) {
                               var observations = {};
                               triples.forEach(function(t){
-                                var s = t.subject.nominalValue;
-                                var p = t.predicate.nominalValue;
-                                var o = t.object.nominalValue;
+                                var s = t.subject.value;
+                                var p = t.predicate.value;
+                                var o = t.object.value;
                                 observations[s] = observations[s] || {};
                                 observations[s][p] = o;
                               });
