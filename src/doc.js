@@ -5,7 +5,7 @@ import { getDateTimeISO, fragmentFromString, generateAttributeId, uniqueArray, g
 import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath } from './uri.js'
 import { getResource, getResourceHead, deleteResource, processSave, patchResourceWithAcceptPatch } from './fetcher.js'
 import rdf from "rdf-ext";
-import { getResourceGraph, sortGraphTriples, getGraphContributors, getGraphAuthors, getGraphEditors, getGraphPerformers, getGraphPublishers, getGraphLabel, getGraphEmail, getGraphTitle, getGraphConceptLabel, getGraphPublished, getGraphUpdated, getGraphDescription, getGraphLicense, getGraphRights, getGraphFromData, getGraphAudience, getGraphTypes } from './graph.js'
+import { getResourceGraph, sortGraphTriples, getGraphContributors, getGraphAuthors, getGraphEditors, getGraphPerformers, getGraphPublishers, getGraphLabel, getGraphEmail, getGraphTitle, getGraphConceptLabel, getGraphPublished, getGraphUpdated, getGraphDescription, getGraphLicense, getGraphRights, getGraphFromData, getGraphAudience, getGraphTypes, getGraphLanguage } from './graph.js'
 import { createRDFaHTML, Icon } from './template.js'
 import LinkHeader from "http-link-header";
 import DOMPurify from 'dompurify';
@@ -1184,16 +1184,18 @@ function getGraphContributorsRole(g, options) {
 
   var contributorData = [];
 
-  contributors.forEach(function(s){
+  contributors.forEach(contributor => {
     var aUN = {};
-    aUN['uri'] = s;
+    aUN['uri'] = contributor;
     //XXX: Only checks within the same document.
-    var label = getGraphLabel(g.child(s));
+    var g = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(contributor)('')});
+
+    var label = getGraphLabel(g);
     if (label) {
       aUN['name'] = label;
     }
 
-    var email = getGraphEmail(g.child(s));
+    var email = getGraphEmail(g);
     if (email) {
       // email = (typeof email === 'string') ? email : email.iri().toString();
       aUN['email'] = email.startsWith('mailto:') ? email.slice(7) : email;
@@ -1289,7 +1291,7 @@ function getGraphData(s, options) {
 
   var latestVersion = s.out(ns.rel.latestVersion);
   if (latestVersion.values.length) {
-    info['latest-version'] = latestVersion.values.[0];
+    info['latest-version'] = latestVersion.values[0];
   }
 
   var predecessorVersion = s.out(ns.rel.predecessorVersion);
@@ -1336,7 +1338,7 @@ function getGraphData(s, options) {
   }
 
   var advisement = s.out(ns.spec.advisement);
-  if (advisement.value.length && s.in().trim().value == documentURL) {
+  if (advisement.values.length && s.in().trim().value == documentURL) {
     info['spec']['advisement'] = getResourceInfoSpecAdvisements(s);
   }
 
@@ -1373,23 +1375,18 @@ function getResourceInfo(data, options) {
 
   return Promise.allSettled(promises)
     .then(resolvedPromises => {
-      // var dataGraph = SimpleRDF();getGraphData
-      return rdf.dataset().then(dataset => {
-        resolvedPromises.forEach(response => {
-          console.log(response.value)
-          if (response.value) {
-            dataset.addAll(response.value.dataset);
-          }
-        })
+      const dataset = rdf.dataset();
 
-        return rdf.grapoi({ dataset });
+      resolvedPromises.forEach(response => {
+console.log(response.value)
+        if (response.value) {
+          dataset.addAll(response.value.dataset);
+        }
       })
 
-      // return Promise.resolve(dataGraph)
+      return rdf.grapoi({ dataset });
     })
     .then(g => {
-      // var s = SimpleRDF(Config.Vocab, documentURL, dataGraph.graph(), ld.store).child(documentURL);
-
       var s = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(documentURL)('')});
 console.log(s);
 
@@ -1456,19 +1453,18 @@ function getGraphFromDataBlock(data, options) {
     });
 
     return Promise.allSettled(promises)
-      .then(function(resolvedPromises){
-        var dataGraph = SimpleRDF();
-        resolvedPromises.forEach(function(response){
+      .then(resolvedPromises => {
+        const dataset = rdf.dataset();
+
+        resolvedPromises.forEach(response => {
+console.log(response.value)
           if (response.value) {
-            var g = response.value;
-            g = SimpleRDF(Config.Vocab, documentURL, g, ld.store).child(documentURL);
-  
-            dataGraph.graph().addAll(g.graph());
+            dataset.addAll(response.value.dataset);
           }
         })
 
-        return dataGraph.graph();
-      })
+        return rdf.grapoi({ dataset });
+      });
   }
   else {
     return Promise.resolve();
@@ -1602,6 +1598,7 @@ function getResourceInfoCitations(g) {
   return citationsList;
 }
 
+//TODO: Review grapoi
 function getResourceInfoODRLPolicies(s) {
   var info = {}
   info['odrl'] = {};
@@ -1659,7 +1656,7 @@ function getResourceInfoODRLPolicies(s) {
   return info['odrl'];
 }
 
-//TODO: Review graphoi
+//TODO: Review grapoi
 function getResourceInfoSpecRequirements(s) {
   var info = {}
   info['spec'] = {};
@@ -1693,7 +1690,7 @@ function getResourceInfoSpecRequirements(s) {
   return info['spec']['requirement'];
 }
 
-//TODO: Review graphoi
+//TODO: Review grapoi
 function getResourceInfoSpecAdvisements(s) {
   var info = {}
   info['spec'] = {};
@@ -1744,11 +1741,15 @@ function getResourceInfoSpecChanges(s) {
   return info['change'];
 }
 
+//TODO: Review grapoi
 function getResourceInfoSKOS(g) {
   var info = {};
   info['skos'] = {'data': {}, 'type': {}};
 
-  info['skos']['graph'] = g._graph.filter(t => {
+  const quads = [];
+
+  g.out().quads().forEach(t => {
+console.log(t)
     var s = t.subject.value;
     var p = t.predicate.value;
     var o = t.object.value;
@@ -1756,6 +1757,8 @@ function getResourceInfoSKOS(g) {
     var isRDFType = (p == ns.rdf.type) ? true : false;
     var isSKOSProperty = p.startsWith('http://www.w3.org/2004/02/skos/core#');
     var isSKOSObject = o.startsWith('http://www.w3.org/2004/02/skos/core#');
+
+console.log(isRDFType, isSKOSProperty, isSKOSObject);
 
     if (isRDFType && isSKOSObject) {
       info['skos']['type'][o] = info['skos']['type'][o] || [];
@@ -1766,11 +1769,16 @@ function getResourceInfoSKOS(g) {
       info['skos']['data'][s] = info['skos']['data'][s] || {};
       info['skos']['data'][s][p] = info['skos']['data'][s][p] || [];
       info['skos']['data'][s][p].push(o);
-      return t;
+      quads.push(t);
     }
   });
 
-// console.log(info['skos'])
+console.log(info['skos']);
+console.log(quads);
+  const dataset = rdf.dataset(quads);
+console.log(dataset);
+  info['skos']['graph'] = rdf.grapoi({ dataset });
+
   return info['skos'];
 }
 
