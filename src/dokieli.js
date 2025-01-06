@@ -2276,7 +2276,7 @@ console.log(response.value)
       var g = DO.C.Resource[documentURL].graph;
       var ng = rdf.grapoi({ dataset: g.dataset });
       var citations = Object.keys(DO.C.Citation).concat([ns.dcterms.references, ns.schema.citation]);
-      var triples = Array.from(g.out().quads());
+      var triples = g.out().quads();
       for (const t of triples) {
 // console.log(t)
         var s = t.subject.value;
@@ -2300,7 +2300,7 @@ console.log(response.value)
       conceptsList = (skos.type && skos.type[ns.skos.Concept]) ? skos.type[ns.skos.Concept] : conceptsList;
 
       var concepts = '<tr class="concepts"><th>Concepts</th><td>' + conceptsList.length + '</td></tr>';
-      var statements = '<tr class="statements"><th>Statements</th><td>' + triples.length + '</td></tr>';
+      var statements = '<tr class="statements"><th>Statements</th><td>' + Array.from(triples).length + '</td></tr>';
 
       // var g = s.child(options['subjectURI']);
 
@@ -2482,11 +2482,11 @@ console.log(response.value)
         });
     },
 
+    //TODO: Review grapoi
     getDocumentConceptDefinitionsHTML: function(documentURL) {
 // console.log(documentURL)
-      var g;
       var s = '';
-      Object.keys(DO.C.Resource[documentURL]['skos']['type']).forEach(function(rdftype) {
+      Object.keys(DO.C.Resource[documentURL]['skos']['type']).forEach(rdftype => {
 // console.log(rdftype)
         s += '<dt>' + DO.C.SKOSClasses[rdftype] + 's</dt>';
 
@@ -2494,9 +2494,9 @@ console.log(response.value)
           s += '<dd><ul>';
         }
 
-        sortToLower(DO.C.Resource[documentURL]['skos']['type'][rdftype]).forEach(function(subject) {
-// console.log(subject)
-          g = DO.C.Resource[documentURL]['graph'].child(subject);
+        sortToLower(DO.C.Resource[documentURL]['skos']['type'][rdftype]).forEach(subject => {
+console.log(rdftype, subject)
+          var g = rdf.grapoi({dataset: DO.C.Resource[documentURL]['graph'].dataset, term: rdf.namespace(subject)('')});
 
           var conceptLabel = sortToLower(getGraphConceptLabel(g));
           conceptLabel = (conceptLabel.length > 0) ? conceptLabel.join(' / ') : getFragmentOrLastPath(subject);
@@ -2518,7 +2518,7 @@ console.log(response.value)
 
               if (concept && concept.length > 0) {
                 sortToLower(concept).forEach(function(c) {
-                  var conceptGraph = DO.C.Resource[documentURL]['graph'].child(c);
+                  var conceptGraph = rdf.grapoi({dataset: DO.C.Resource[documentURL]['graph'].dataset, term: rdf.namespace(c)('')});
                   var cLabel = getGraphConceptLabel(conceptGraph);
                   cLabel = (cLabel.length > 0) ? cLabel : [getFragmentOrLastPath(c)];
                   cLabel.forEach(function(cL) {

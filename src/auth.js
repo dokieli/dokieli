@@ -1,5 +1,6 @@
 'use strict'
 
+import rdf from 'rdf-ext';
 import Config from './config.js'
 import { deleteResource } from './fetcher.js'
 import { removeChildren, fragmentFromString } from './util.js'
@@ -8,6 +9,8 @@ import { Icon } from './template.js'
 import { getResourceGraph, getAgentName, getGraphImage, getAgentURL, getAgentPreferredProxy, getAgentPreferredPolicy, getAgentPreferredPolicyRule, setPreferredPolicyInfo, getAgentDelegates, getAgentKnows, getAgentFollowing, getAgentStorage, getAgentOutbox, getAgentInbox, getAgentPreferencesFile, getAgentPublicTypeIndex, getAgentPrivateTypeIndex, getAgentTypeIndex, getAgentSupplementalInfo, getAgentSeeAlso, getAgentPreferencesInfo, getAgentLiked, getAgentOccupations, getAgentPublications, getAgentMade } from './graph.js'
 import { removeLocalStorageAuthClient, removeLocalStorageDocument, removeLocalStorageProfile, updateLocalStorageProfile } from './storage.js'
 import solidAuth, { logout, popupLogin } from 'solid-auth-client'
+
+const ns = Config.ns;
 
 // const { OIDCWebClient } = require('@trust/oidc-web')
 
@@ -265,7 +268,7 @@ function setContactInfo(subjectIRI, options = {}) {
   });
 }
 
-
+//TODO: Review grapoi
 /**
  * @param subjectIRI {string}
  *
@@ -285,44 +288,41 @@ function getSubjectInfo (subjectIRI, options = {}) {
 
   return getResourceGraph(subjectIRI, headers, options)
     .then(g => {
-      var s;
-
       //TODO: Consider whether to construct an empty graph (useful to work only with their IRI);
-
-      if (typeof g?._graph === 'undefined') {
+      if (!Array.from(g.out().quads()).length) {
         return {};
       }
 
-      s = g.child(subjectIRI);
+      g = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(subjectIRI)('')});
 
       return {
-        Graph: s,
+        Graph: g,
         IRI: subjectIRI,
-        Name: getAgentName(s),
-        Image: getGraphImage(s),
-        URL: getAgentURL(s),
+        Name: getAgentName(g),
+        Image: getGraphImage(g),
+        URL: getAgentURL(g),
         Role: options.role,
         UI: options.ui,
         OIDC: !!options.oidc,
-        ProxyURL: getAgentPreferredProxy(s),
-        PreferredPolicy: getAgentPreferredPolicy(s),
-        Delegates: getAgentDelegates(s),
+        ProxyURL: getAgentPreferredProxy(g),
+        PreferredPolicy: getAgentPreferredPolicy(g),
+        Delegates: getAgentDelegates(g),
         Contacts: {},
-        Knows: getAgentKnows(s),
-        Following: getAgentFollowing(s),
+        Knows: getAgentKnows(g),
+        Following: getAgentFollowing(g),
         SameAs: [],
         SeeAlso: [],
-        Storage: getAgentStorage(s),
-        Outbox: getAgentOutbox(s),
-        Inbox: getAgentInbox(s),
+        Storage: getAgentStorage(g),
+        Outbox: getAgentOutbox(g),
+        Inbox: getAgentInbox(g),
         TypeIndex: {},
-        PreferencesFile: getAgentPreferencesFile(s),
-        PublicTypeIndex: getAgentPublicTypeIndex(s),
-        PrivateTypeIndex: getAgentPrivateTypeIndex(s),
-        Liked: getAgentLiked(s),
-        Occupations: getAgentOccupations(s),
-        Publications: getAgentPublications(s),
-        Made: getAgentMade(s),
+        PreferencesFile: getAgentPreferencesFile(g),
+        PublicTypeIndex: getAgentPublicTypeIndex(g),
+        PrivateTypeIndex: getAgentPrivateTypeIndex(g),
+        Liked: getAgentLiked(g),
+        Occupations: getAgentOccupations(g),
+        Publications: getAgentPublications(g),
+        Made: getAgentMade(g),
       }
     })
     .then(agent => {
@@ -340,6 +340,7 @@ function getSubjectInfo (subjectIRI, options = {}) {
     });
   }
 
+//TODO: Review grapoi
 function afterSignIn () {
   getResourceSupplementalInfo(Config.DocumentURL).then(resourceInfo => {
     updateFeatureStatesOfResourceInfo(resourceInfo);
@@ -358,13 +359,13 @@ function afterSignIn () {
     promises.push(getAgentPreferencesInfo(Config.User.Graph)
       .then(preferencesInfo => {
         Config.User['Preferences'] = { graph: preferencesInfo };
-        return preferencesInfo.child(Config.User.IRI);
+        return rdf.grapoi({ dataset: preferencesInfo.dataset, term: rdf.namespace(Config.User.IRI)('')});
       })
       .then(g => {
         setPreferredPolicyInfo(g);
       })
       .catch(error => {
-        var g = Config.User.Graph.child(Config.User.IRI);
+        var g = rdf.grapoi({ dataset: Config.User.Graph.dataset, term: rdf.namespace(Config.User.IRI)('')});
         setPreferredPolicyInfo(g);
       }))
 

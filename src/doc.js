@@ -1156,7 +1156,7 @@ function getGraphContributorsRole(g, options) {
   options = options || {};
   options['sort'] = options['sort'] || false;
   options['role'] = options['role'] || 'contributor';
-
+// console.log(options)
   var contributors;
 
   switch(options.role) {
@@ -1188,14 +1188,14 @@ function getGraphContributorsRole(g, options) {
     var aUN = {};
     aUN['uri'] = contributor;
     //XXX: Only checks within the same document.
-    var g = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(contributor)('')});
+    var go = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(contributor)('')});
 
-    var label = getGraphLabel(g);
+    var label = getGraphLabel(go);
     if (label) {
       aUN['name'] = label;
     }
 
-    var email = getGraphEmail(g);
+    var email = getGraphEmail(go);
     if (email) {
       // email = (typeof email === 'string') ? email : email.iri().toString();
       aUN['email'] = email.startsWith('mailto:') ? email.slice(7) : email;
@@ -1774,7 +1774,7 @@ function getResourceInfoSKOS(g) {
   });
 
 console.log(info['skos']);
-console.log(quads);
+// console.log(quads);
   const dataset = rdf.dataset(quads);
 // console.log(dataset);
   info['skos']['graph'] = rdf.grapoi({ dataset });

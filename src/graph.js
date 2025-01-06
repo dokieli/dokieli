@@ -546,7 +546,7 @@ function getLinkRelation (property, url, data) {
     return getLinkRelationFromHead(property, url)
       .catch(() => {
         if (!data) {
-          getLinkRelationFromRDF(property, url)
+          return getLinkRelationFromRDF(property, url)
         }
       });
   }
@@ -563,7 +563,7 @@ function getLinkRelation (property, url, data) {
           // TODO: Should this get all or a given subject's?
           var endpoints = result.match(subjectURI, property).toArray()
           if (endpoints.length > 0) {
-            return endpoints.map(function(t){ return t.object.nominalValue })
+            return endpoints.map(function(t){ return t.object.value })
           }
 
 // console.log(property + ' endpoint was not found in message body')
@@ -608,28 +608,13 @@ function getLinkRelationFromRDF (property, url, subjectIRI) {
   subjectIRI = subjectIRI || url
 
   return getResourceGraph(subjectIRI)
-    .then(function (i) {
-        var s = i.child(subjectIRI)
+    .then(i => {
+        var s = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(subjectIRI)('')});
 
-//XXX: Why is this switch needed? Use default?
-        switch (property) {
-          case Config.Vocab['ldpinbox']['@id']:
-            if (s.ldpinbox._array.length > 0){
-// console.log(s.ldpinbox._array)
-              return [s.ldpinbox.at(0)]
-            }
-            break
-          case Config.Vocab['oaannotationService']['@id']:
-            if (s.oaannotationService._array.length > 0){
-// console.log(s.oaannotationService._array)
-              return [s.oaannotationService.at(0)]
-            }
-            break
-          default:
-            if (s[property]._array.length > 0) {
-              return [s[property].at(0)]
-            }
-            break
+        var values = s.out(rdf.namespace(property)('')).values;
+
+        if (values.length) {
+          return values;
         }
 
         return Promise.reject({'message': property + " endpoint was not found in message body"})
@@ -658,48 +643,53 @@ function getAgentPreferencesInfo(g) {
   }
 }
 
-
+//TODO: Review grapoi
 function getAgentPreferredPolicyRule(s) {
   var preferredPolicyRule = {};
 
-  if (s && s.odrlprohibition && s.odrlprohibition.at(0)) {
-    var prohibitionG = s.child(s.odrlprohibition.at(0));
+  var prohibitions = s.out(ns.odrl.prohibition).values;
+  if (prohibitions.length) {
+    var prohibitionG = rdf.grapoi({ dataset: s.dataset, term: rdf.namespace(prohibitions[0])('')});
 
-    if (prohibitionG.odrlaction && prohibitionG.odrlaction._array.length > 0) {
+    if (prohibitionG.out(ns.odrl.action).values.length) {
       preferredPolicyRule['Prohibition'] = {};
-      preferredPolicyRule['Prohibition']['Actions'] = prohibitionG.odrlaction._array;
+      preferredPolicyRule['Prohibition']['Actions'] = prohibitionG.out(ns.odrl.action).values;
     }
   }
 
-  if (s && s.odrlpermission && s.odrlpermission.at(0)) {
-    var permissionG = s.child(s.odrlpermission.at(0));
+  var permissions = s.out(ns.odrl.permissions).values;
+  if (permissions.length) {
+    var permissionG = rdf.grapoi({ dataset: s.dataset, term: rdf.namespace(permissions[0])('')});
 
-    if (permissionG.odrlaction && permissionG.odrlaction._array.length > 0) {
+    if (permissionG.out(ns.odrl.action).values.length) {
       preferredPolicyRule['Permission'] = {};
-      preferredPolicyRule['Permission']['Actions'] = permissionG.odrlaction._array;
+      preferredPolicyRule['Permission']['Actions'] = permissionG.out(ns.odrl.action).values;
     }
   }
 
   return preferredPolicyRule;
 }
 
+//TODO: Review grapoi
 function setPreferredPolicyInfo(g) {
   Config.User['PreferredPolicy'] = getAgentPreferredPolicy(g);
-  var s = g.child(Config.User.PreferredPolicy);
+  var s = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(Config.User.PreferredPolicy)('')});
   Config.User['PreferredPolicyRule'] = getAgentPreferredPolicyRule(s);
 }
 
+//TODO: Review grapoi
 function getAgentSupplementalInfo(iri) {
   if (iri == Config.User.IRI) {
     return processSameAs(Config.User.Graph, getAgentSupplementalInfo);
   }
   else {
-    return getResourceGraph(iri).then(
-      function(g){
-        if(typeof g._graph == 'undefined') {
+    return getResourceGraph(iri)
+      .then(g => {
+        if (!Array.from(g.out().quads()).length) {
           return Promise.resolve([]);
         }
-        var s = g.child(iri);
+
+        var s = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(iri)('')});
 
         Config.User.Name = Config.User.Name || getAgentName(s);
 
@@ -767,40 +757,40 @@ function getAgentSupplementalInfo(iri) {
   }
 }
 
-function getAgentSeeAlso(g, baseURI, subjectURI) {
+function getAgentSeeAlso(g, baseURI) {
   if (!g) { return Promise.resolve([]); }
 
-  subjectURI = baseURI = baseURI || g.iri().toString();
+  baseURI = baseURI || g.in().trim().value;
 
-  var seeAlso = g.child(baseURI).rdfsseeAlso;
+  // var seeAlso = g.child(baseURI).rdfsseeAlso;
+  var seeAlso = g.out(ns.rdfs.seeAlso).values;
 
-  if (seeAlso && seeAlso._array.length > 0) {
+  if (seeAlso.length) {
     var iris = [];
     var promises = [];
 
-    seeAlso._array.forEach(function(iri){
+    seeAlso.forEach(iri => {
       if (!Config.User.SeeAlso.includes(iri)) {
         iris.push(iri)
       }
     });
 
-    iris.forEach(function(iri){
+    iris.forEach(iri => {
       Config.User.SeeAlso = uniqueArray(Config.User.SeeAlso.concat(iri));
       promises.push(getResourceGraph(iri));
     });
 
     return Promise.allSettled(promises)
-      .then(function(results) {
+      .then(results => {
         var promisesGetAgentSeeAlso = [];
 
         results.forEach(result => {
 // console.log(result)
 
           var g = result.value;
-          var iri = g.iri().toString();
 
           if (g) {
-            var s = g.child(subjectURI)
+            var s = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(baseURI)('')});
 
             var knows = getAgentKnows(s) || [];
             var liked = getAgentLiked(s) || [];
@@ -838,7 +828,7 @@ function getAgentSeeAlso(g, baseURI, subjectURI) {
                 : made;
             }
 
-            promisesGetAgentSeeAlso.push(getAgentSeeAlso(g, iri, subjectURI))
+            promisesGetAgentSeeAlso.push(getAgentSeeAlso(g, g.in().trim().value))
           }
         })
 
@@ -909,9 +899,9 @@ function getAgentTypeIndex(s) {
           typeIndexes[typeIndexType] = {};
 
           triples.forEach(function(t){
-            var s = t.subject.nominalValue;
-            var p = t.predicate.nominalValue;
-            var o = t.object.nominalValue;
+            var s = t.subject.value;
+            var p = t.predicate.value;
+            var o = t.object.value;
 
             if (p == Config.Vocab['solidforClass']['@id']) {
               typeIndexes[typeIndexType][s] = {};
@@ -920,9 +910,9 @@ function getAgentTypeIndex(s) {
           });
 
           triples.forEach(function(t){
-            var s = t.subject.nominalValue;
-            var p = t.predicate.nominalValue;
-            var o = t.object.nominalValue;
+            var s = t.subject.value;
+            var p = t.predicate.value;
+            var o = t.object.value;
 
             if(typeIndexes[typeIndexType][s]) {
               if (p == Config.Vocab['solidinstance']['@id'] ||
@@ -1003,40 +993,40 @@ function getAgentPreferredPolicy (s) {
 }
 
 function getAgentName (s) {
-  var name = s.out(ns.foaf.name).value || s.out(ns.schema.name).value || s.out(ns.vcard.fn).value || s.out(ns.as.name).value || s.out(ns.rdfs.label).value || undefined
+  var name = s.out(ns.foaf.name).values[0] || s.out(ns.schema.name).values[0] || s.out(ns.vcard.fn).values[0] || s.out(ns.as.name).values[0] || s.out(ns.rdfs.label).values[0] || undefined;
   if (typeof name === 'undefined') {
-    if (s.out(ns.schema.familyName).value && s.out(ns.schema.familyName).value.length > 0 && s.out(ns.schema.givenName).value && s.out(ns.schema.givenName).value.length > 0) {
-      name = s.out(ns.schema.givenName).value + ' ' + s.out(ns.schema.familyName).value
-    } else if (s.out(ns.foaf.familyName).value && s.out(ns.foaf.familyName).value.length > 0 && s.out(ns.foaf.givenName).value && s.out(ns.foaf.givenName).value.length > 0) {
-      name = s.out(ns.foaf.givenName).value + ' ' + s.out(ns.foaf.familyName).value
-    } else if (s.out(ns.vcard.familyname).value && s.out(ns.vcard.familyname).value.length > 0 && s.out(ns.vcard.givenname).value && s.out(ns.vcard.givenname).value.length > 0) {
-      name = s.out(ns.vcard.givenname).value + ' ' + s.out(ns.vcard.familyname).value
-    } else if (s.out(ns.foaf.nick).value && s.out(ns.foaf.nick).value.length > 0) {
-      name = s.out(ns.foaf.nick).value
-    } else if (s.out(ns.vcard.nickname).value && s.out(ns.vcard.nickname).value.length > 0) {
-      name = s.out(ns.vcard.nickname).value
+    if (s.out(ns.schema.familyName).values.length && s.out(ns.schema.givenName).values.length) {
+      name = s.out(ns.schema.givenName).values[0] + ' ' + s.out(ns.schema.familyName).values[0];
+    } else if (s.out(ns.foaf.familyName).values.length && s.out(ns.foaf.givenName).values.length) {
+      name = s.out(ns.foaf.givenName).values[0] + ' ' + s.out(ns.foaf.familyName).values[0];
+    } else if (s.out(ns.vcard.familyname).values.length && s.out(ns.vcard.givenname).values.length) {
+      name = s.out(ns.vcard.givenname).values[0] + ' ' + s.out(ns.vcard.familyname).values[0];
+    } else if (s.out(ns.foaf.nick).values.length) {
+      name = s.out(ns.foaf.nick).values;
+    } else if (s.out(ns.vcard.nickname).values.length){
+      name = s.out(ns.vcard.nickname).values
     }
   }
   return name === undefined ? undefined : DOMPurify.sanitize(name)
 }
 
 function getAgentURL (s) {
-  return s.out(ns.foaf.homepage).value || s.out(ns.foaf.weblog).value || s.out(ns.schema.url).value || s.out(ns.vcard.url).value || undefined
+  return s.out(ns.foaf.homepage).values[0] || s.out(ns.foaf.weblog).values[0] || s.out(ns.schema.url).values[0] || s.out(ns.vcard.url).values[0] || undefined
 }
 
 function getAgentDelegates (s) {
   var d = s.out(ns.acl.delegates).values;
-  return d.length ? d : undefined;;
+  return d.length ? d : undefined;
 }
 
 function getAgentStorage (s) {
   var d = s.out(ns.pim.storage).values;
-  return d.length ? d : undefined;;
+  return d.length ? d : undefined;
 }
 
 function getAgentOutbox (s) {
   var d = s.out(ns.as.outbox).values;
-  return d.length ? d : undefined;;
+  return d.length ? d : undefined;
 }
 
 function getAgentInbox (s) {
@@ -1128,17 +1118,20 @@ function getAgentMade (s) {
   return d.length ? d : undefined;
 }
 
+//TODO: Review grapoi
 function getGraphImage (s) {
-  if (s.asimage || s.asicon) {
-    var image = s.asimage || s.asicon;
-    s._graph.some(function(t){
-      if(t.predicate.nominalValue == Config.Vocab['asurl']['@id'] || t.predicate.nominalValue == Config.Vocab['ashref']['@id']) {
-        if (t.subject.nominalValue == s.asicon || "_:" + t.subject.nominalValue == s.asicon) {
-          image = t.object.nominalValue;
+  var image = s.out(ns.as.image).values;
+  var icon = s.out(ns.as.icon).values;
+  if (image.length || icon.length) {
+    var image = image[0] || icon[0];
+    Array.from(s.out().quads()).some(t => {
+      if (t.predicate.value == ns.as.url || t.predicate.value == ns.as.href) {
+        if (t.subject.value == s.out(ns.as.icon).values[0] || "_:" + t.subject.value == s.out(ns.as.icon).values[0]) {
+          image = t.object.value;
           return true;
         }
-        else if (t.subject.nominalValue == s.asimage || "_:" + t.subject.nominalValue == s.asimage) {
-          image = t.object.nominalValue;
+        else if (t.subject.value == s.out(ns.as.image).values[0] || "_:" + t.subject.value == s.out(ns.as.image).values[0]) {
+          image = t.object.value;
           return true;
         }
         return false;
@@ -1147,7 +1140,7 @@ function getGraphImage (s) {
     return image;
   }
   else {
-    return s.foafimg || s.schemaimage || s.vcardphoto || s.vcardhasPhoto || s.siocavatar || s.foafdepiction || undefined
+    return s.out(ns.foaf.img).values[0] || s.out(ns.schema.image).values[0] || s.out(ns.vcard.photo).values[0] || s.out(ns.vcard.hasPhoto).values[0] || s.out(ns.sioc.avatar).values[0] || s.out(ns.foaf.depiction).values[0] || undefined
   }
 }
 
@@ -1155,8 +1148,8 @@ function getGraphEmail(s) {
   var email = s.out(ns.schema.email).values;
   var mbox = s.out(ns.foaf.mbox).values;
   var d =
-    email.length > 0 ? email[0].value :
-    mbox.length > 0 ? mbox[0].value :
+    email.length ? email[0] :
+    mbox.length ? mbox[0] :
     undefined;
 
   return d === undefined ? undefined : DOMPurify.sanitize(d)
@@ -1207,39 +1200,39 @@ function getGraphDate(s) {
 }
 
 function getGraphPublished(s) {
-  var d = s.out(ns.schema.datePublished).value || s.out(ns.as.published).value || s.out(ns.dcterms.issued).value || s.out(ns.dcterms.date).value || s.out(ns.prov.generatedAtTime).value || undefined;
-  return d === undefined ? undefined : DOMPurify.sanitize(d)
+  var d = s.out(ns.schema.datePublished).values[0] || s.out(ns.as.published).values[0] || s.out(ns.dcterms.issued).values[0] || s.out(ns.dcterms.date).values[0] || s.out(ns.prov.generatedAtTime).values [0] || undefined;
+  return d === undefined ? undefined : DOMPurify.sanitize(d);
 }
 
 function getGraphUpdated(s) {
-  var d = s.out(ns.schema.dateModified).value || s.out(ns.as.updated).value || s.out(ns.dcterms.modified).value || s.out(ns.dcterms.date).value || s.out(ns.prov.generatedAtTime).value || undefined;
-  return d === undefined ? undefined : DOMPurify.sanitize(d)
+  var d = s.out(ns.schema.dateModified).values[0] || s.out(ns.as.updated).values[0] || s.out(ns.dcterms.modified).values[0] || s.out(ns.dcterms.date).values[0] || s.out(ns.prov.generatedAtTime).values[0] || undefined;
+  return d === undefined ? undefined : DOMPurify.sanitize(d);
 }
 
 function getGraphCreated(s) {
-  var d = s.out(ns.schema.dateCreated).value || s.out(ns.dcterms.created).value || s.out(ns.dcterms.date).value || s.out(ns.prov.generatedAtTime).value || undefined;
-  return d === undefined ? undefined : DOMPurify.sanitize(d)
+  var d = s.out(ns.schema.dateCreated).values[0] || s.out(ns.dcterms.created).values[0] || s.out(ns.dcterms.date).values[0] || s.out(ns.prov.generatedAtTime).values[0] || undefined;
+  return d === undefined ? undefined : DOMPurify.sanitize(d);
 }
 
 function getGraphLanguage(s) {
-  return s.out(ns.dcterms.language).value || s.out(ns.dcelements.language).value || s.out(ns.schema.inLanguage).value || undefined;
+  return s.out(ns.dcterms.language).values[0] || s.out(ns.dcelements.language).values[0] || s.out(ns.schema.inLanguage).values[0] || undefined;
 }
 
 function getGraphLicense(s) {
-  return s.out(ns.dcterms.license).value || s.out(ns.schema.license).value || s.out(ns.cc.license).value || s.out(ns.xhv.license).value || undefined;
+  return s.out(ns.dcterms.license).values[0] || s.out(ns.schema.license).values[0] || s.out(ns.cc.license).values[0] || s.out(ns.xhv.license).values[0] || undefined;
 }
 
 function getGraphRights(s) {
-  return s.out(ns.dcterms.rights).value || getGraphLicense(s) || undefined;
+  return s.out(ns.dcterms.rights).values[0] || getGraphLicense(s) || undefined;
 }
 
 function getGraphLabel(s) {
-  var d = s.out(ns.schema.name).value || s.out(ns.dcterms.title).value || s.out(ns.dcelements.title).value || getAgentName(s) || s.out(ns.as.summary).value || undefined;
+  var d = s.out(ns.schema.name).values[0] || s.out(ns.dcterms.title).values[0] || s.out(ns.dcelements.title).values[0] || getAgentName(s) || s.out(ns.as.summary).values[0] || undefined;
   return d === undefined ? undefined : DOMPurify.sanitize(d)
 }
 
 function getGraphTitle(s) {
-  var d = s.out(ns.schema.name).value || s.out(ns.dcterms.title).value || s.out(ns.dcelements.title).value || s.out(ns.as.name).value || undefined;
+  var d = s.out(ns.schema.name).values[0] || s.out(ns.dcterms.title).values[0] || s.out(ns.dcelements.title).values[0] || s.out(ns.as.name).values[0] || undefined;
   return d === undefined ? undefined : DOMPurify.sanitize(d)
 }
 
@@ -1270,49 +1263,51 @@ function getGraphConceptLabel(g, options) {
     notation: []
   };
   options = options || {};
-  options['subjectURI'] = options['subjectURI'] || g.iri().toString();
+  options['subjectURI'] = options['subjectURI'] || g.in().trim().value;
   options['lang'] = options['lang'] || 'en';
 
   //FIXME: Using this approach temporarily that is tied to SimpleRDF for convenience until it is replaced. It is fugly but it works. Make it better!
 
-  var triples = g._graph
+  var triples = Array.from(g.out().quads());
 
   triples.forEach(function(t){
 // console.log(t)
-    var s = t.subject.nominalValue;
-    var p = t.predicate.nominalValue;
-    var o = t.object.nominalValue;
+    var s = t.subject.value;
+    var p = t.predicate.value;
+    var o = t.object.value;
 
     if (s == options['subjectURI']){
-      if (p == Config.Vocab['skosprefLabel']['@id'] && (t.object.language && (t.object.language == '' || t.object.language.toLowerCase().startsWith(options['lang'])))) {
+      if (p == ns.skos.prefLabel && (t.object.language && (t.object.language == '' || t.object.language.toLowerCase().startsWith(options['lang'])))) {
         labels.prefLabel.push(o);
       }
-      else if (p == Config.Vocab['skosxlprefLabel']['@id']) {
-        g.child(o)._graph.forEach(function(oT){
-          var oS = oT.subject.nominalValue;
-          var oP = oT.predicate.nominalValue;
-          var oO = oT.object.nominalValue;
+      else if (p == ns.skosxl.prefLabel) {
+        var quads = rdf.grapoi({dataset: DO.C.Resource[documentURL]['graph'].dataset, term: rdf.namespace(o)('')}).out().quads();
+        quads.forEach(oT => {
+          var oS = oT.subject.value;
+          var oP = oT.predicate.value;
+          var oO = oT.object.value;
 
-          if (oS == o && oP == Config.Vocab['skosxlliteralForm']['@id'] && (oT.object.language && (oT.object.language == '' || oT.object.language.toLowerCase().startsWith(options['lang'])))) {
+          if (oS == o && oP == ns.skosxl.literalForm && (oT.object.language && (oT.object.language == '' || oT.object.language.toLowerCase().startsWith(options['lang'])))) {
             labels.xlprefLabel.push(oO);
           }
         })
       }
-      else if (p == Config.Vocab['skosaltLabel']['@id'] && (t.object.language && (t.object.language == '' || t.object.language.toLowerCase().startsWith(options['lang'])))) {
+      else if (p == ns.skos.altLabel && (t.object.language && (t.object.language == '' || t.object.language.toLowerCase().startsWith(options['lang'])))) {
         labels.altLabel.push(o);
       }
-      else if (p == Config.Vocab['skosxlaltLabel']['@id']) {
-        g.child(o)._graph.forEach(function(oT){
-          var oS = oT.subject.nominalValue;
-          var oP = oT.predicate.nominalValue;
-          var oO = oT.object.nominalValue;
+      else if (p == ns.skosxl.altLabel) {
+        var quads = rdf.grapoi({dataset: DO.C.Resource[documentURL]['graph'].dataset, term: rdf.namespace(o)('')}).out().quads();
+        quads.forEach(oT => {
+          var oS = oT.subject.value;
+          var oP = oT.predicate.value;
+          var oO = oT.object.value;
 
-          if (oS == o && oP == Config.Vocab['skosxlliteralForm']['@id'] && (oT.object.language && (oT.object.language == '' || oT.object.language.toLowerCase().startsWith(options['lang'])))) {
+          if (oS == o && oP == ns.skosxl.literalForm && (oT.object.language && (oT.object.language == '' || oT.object.language.toLowerCase().startsWith(options['lang'])))) {
             labels.xlaltLabel.push(oO);
           }
         })
       }
-      else if (p == Config.Vocab['skosnotation']['@id']) {
+      else if (p == ns.skos.notation) {
         labels.notation.push(o);
       }
     }
@@ -1348,9 +1343,9 @@ function sortGraphTriples(g, options) {
   }
 
   g.toArray().sort(function (a, b) {
-    return a[options.sortBy].nominalValue
+    return a[options.sortBy].value
       .toLowerCase()
-      .localeCompare(b[options.sortBy].nominalValue.toLowerCase());
+      .localeCompare(b[options.sortBy].value.toLowerCase());
   });
 
   return g;
@@ -1457,7 +1452,7 @@ function getAuthorizationsMatching (g, matchers) {
 
   var subjects = [];
   g.graph().toArray().forEach(function(t){
-    subjects.push(t.subject.nominalValue);
+    subjects.push(t.subject.value);
   });
   subjects = uniqueArray(subjects);
 
