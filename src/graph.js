@@ -56,11 +56,11 @@ function getGraphFromData (data, options = {}) {
   const parser = getRDFParser(options.subjectURI, options.contentType);
   const nodeStream = stringToStream(data);
   const quadStream = parser.import(nodeStream, { 'baseIRI': options.subjectURI });
-console.log(quadStream)
+// console.log(quadStream)
 
   return rdf.dataset().import(quadStream).then((dataset) => {
-console.log(dataset)
-console.log(dataset.toCanonical());
+// console.log(dataset)
+// console.log(dataset.toCanonical());
     return rdf.grapoi({ dataset });
   });
 
@@ -487,6 +487,7 @@ function traverseRDFList(g, resource) {
   return result;
 }
 
+//TODO: Review grapoi
 function getResourceGraph (iri, headers, options = {}) {
   let wildCard = options.excludeMarkup ? '' : ',*/*;q=0.1';
   let defaultHeaders = {'Accept': setAcceptRDFTypes(options) + wildCard}
@@ -543,8 +544,13 @@ function getResourceOnlyRDF(url) {
 function getLinkRelation (property, url, data) {
   if (url) {
     return getLinkRelationFromHead(property, url)
-      .catch(() => getLinkRelationFromRDF(property, url))
-  } else {
+      .catch(() => {
+        if (!data) {
+          getLinkRelationFromRDF(property, url)
+        }
+      });
+  }
+  else if (data) {
     var subjectURI = window.location.href.split(window.location.search || window.location.hash || /[?#]/)[0]
 
     var options = {

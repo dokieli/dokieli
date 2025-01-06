@@ -30,8 +30,10 @@ import { gfm, gfmHtml } from 'micromark-extension-gfm'
 import { gfmTagfilterHtml } from 'micromark-extension-gfm-tagfilter'
 import LinkHeader from 'http-link-header';
 import DOMPurify from 'dompurify';
+import rdf from 'rdf-ext';
 import Config from './config.js';
 
+const ns = Config.ns;
 let DO;
 
 if (typeof window.DO === 'undefined'){
@@ -168,19 +170,16 @@ DO = {
         );
     },
 
-    showInboxNotifications: function() {
-      getLinkRelation(DO.C.Vocab['ldpinbox']['@id'], null, DO.C.DocumentString).then(
-        function(i) {
-          i.forEach(function(inboxURL) {
+    showInboxNotifications: function(url, data) {
+      //TODO: Consider checking multiple getLinkRelation, [ns.ldp.inbox, ns.as.inbox]
+      getLinkRelation(ns.ldp.inbox, url, data)
+        .then(i => {
+          i.forEach(inboxURL => {
             if (!DO.C.Inbox[inboxURL]) {
               DO.U.showNotificationSources(inboxURL);
             }
           });
-        },
-        function(reason) {
-// console.log(reason);
-        }
-      );
+        });
     },
 
     showNotificationSources: function(url) {
@@ -1760,12 +1759,22 @@ console.log(response.value)
 
       //Fugly
       function checkResourceInfo() {
+// console.log(DO.C.Resource[documentURL])
+
         if (documentURL in DO.C.Resource && 'state' in DO.C.Resource[documentURL]) {
           DO.U.processPotentialAction(DO.C.Resource[documentURL]);
+
+          if (DO.C.Resource[documentURL].inbox?.length && !DO.C.Inbox[DO.C.Resource[documentURL].inbox[0]]) {
+            DO.U.showNotificationSources(DO.C.Resource[documentURL].inbox[0]);
+          }
         }
         else {
           getResourceInfo(DO.C.DocumentString).then(function(resourceInfo){
             DO.U.processPotentialAction(resourceInfo);
+
+            if (DO.C.Resource[documentURL].inbox?.length && !DO.C.Inbox[DO.C.Resource[documentURL].inbox[0]]) {
+              DO.U.showNotificationSources(DO.C.Resource[documentURL].inbox[0]);
+            }
           });
           // window.setTimeout(checkResourceInfo, 100);
         }
@@ -2247,6 +2256,7 @@ console.log(response.value)
       // edih.addEventListener('click', eventEmbedData);
     },
 
+    //TODO: Review grapoi
     showDocumentMetadata: function(node) {
       if(document.querySelector('#document-metadata')) { return; }
 
@@ -2260,23 +2270,24 @@ console.log(response.value)
       var advisements = [];
       var skos = [];
 
-      var subjectURI = window.location.origin + window.location.pathname;
-      var options = {'contentType': 'text/html', 'subjectURI': subjectURI };
-
-      var s = DO.C.Resource[documentURL].graph;
- // console.log(s)
-
-      var triples = s._graph;
-      var citations = Object.keys(DO.C.Citation).concat(DO.C.Vocab["schemacitation"]["@id"]);
-      triples.forEach(function(t){
+      // var subjectURI = window.location.origin + window.location.pathname;
+      // var options = {'contentType': 'text/html', 'subjectURI': subjectURI };
+// console.log(options)
+      var g = DO.C.Resource[documentURL].graph;
+      var ng = rdf.grapoi({ dataset: g.dataset });
+      var citations = Object.keys(DO.C.Citation).concat([ns.dcterms.references, ns.schema.citation]);
+      var triples = Array.from(g.out().quads());
+      for (const t of triples) {
+// console.log(t)
         var s = t.subject.value;
         var p = t.predicate.value;
         var o = t.object.value;
 
-        if(citations.indexOf(p) > -1) {
+        //TODO: Distinguish between external/internal for DO.C.Resource[documentURL].citations (right now it is external only), then use that for citations in showDocumentMetadata instead of using this triples.forEach
+        if (citations.includes(p)) {
           citationsTo.push(t);
         }
-      });
+      };
 
       requirements = (DO.C.Resource[documentURL].spec && DO.C.Resource[documentURL].spec['requirement']) ? Object.keys(DO.C.Resource[documentURL].spec['requirement']) : [];
       advisements = (DO.C.Resource[documentURL].spec && DO.C.Resource[documentURL].spec['advisement']) ? Object.keys(DO.C.Resource[documentURL].spec['advisement']) : [];
@@ -2286,13 +2297,13 @@ console.log(response.value)
       requirements = '<tr class="requirements"><th>Requirements</th><td>' + requirements.length + '</td></tr>';
       advisements = '<tr class="advisements"><th>Advisements</th><td>' + advisements.length + '</td></tr>';
       var conceptsList = [];
-      conceptsList = (skos.type && skos.type[DO.C.Vocab['skosConcept']['@id']]) ? skos.type[DO.C.Vocab['skosConcept']['@id']] : conceptsList;
+      conceptsList = (skos.type && skos.type[ns.skos.Concept]) ? skos.type[ns.skos.Concept] : conceptsList;
 
       var concepts = '<tr class="concepts"><th>Concepts</th><td>' + conceptsList.length + '</td></tr>';
       var statements = '<tr class="statements"><th>Statements</th><td>' + triples.length + '</td></tr>';
 
-      var g = s.child(options['subjectURI']);
-// console.log(g)
+      // var g = s.child(options['subjectURI']);
+
 
       var graphEditors = getGraphEditors(g);
       var graphAuthors = getGraphAuthors(g);
@@ -2301,7 +2312,8 @@ console.log(response.value)
 
       if (graphEditors) {
         graphEditors.forEach(i => {
-          let name = getGraphLabelOrIRI(g.child(i));
+          var go = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(i)('')});
+          let name = getGraphLabelOrIRI(go);
           name = (name === i) ? getUserLabelOrIRI(i) : name;
           editors.push(`<li>${name}</li>`);
         });
@@ -2312,7 +2324,8 @@ console.log(response.value)
 
       if (graphAuthors) {
         graphAuthors.forEach(i => {
-          let name = getGraphLabelOrIRI(g.child(i));
+          var go = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(i)('')});
+          let name = getGraphLabelOrIRI(go);
           name = (name === i) ? getUserLabelOrIRI(i) : name;
           authors.push(`<li>${name}</li>`);
         });
@@ -2323,7 +2336,8 @@ console.log(response.value)
 
       if (graphContributors) {
         graphContributors.forEach(i => {
-          let name = getGraphLabelOrIRI(g.child(i));
+          var go = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(i)('')});
+          let name = getGraphLabelOrIRI(go);
           name = (name === i) ? getUserLabelOrIRI(i) : name;
           contributors.push(`<li>${name}</li>`);
         });
@@ -2334,7 +2348,8 @@ console.log(response.value)
 
       if (graphPerformers) {
         graphPerformers.forEach(i => {
-          let name = getGraphLabelOrIRI(g.child(i));
+          var go = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(i)('')});
+          let name = getGraphLabelOrIRI(go);
           name = (name === i) ? getUserLabelOrIRI(i) : name;
           performers.push(`<li>${name}</li>`);
         });
@@ -2475,7 +2490,7 @@ console.log(response.value)
 // console.log(rdftype)
         s += '<dt>' + DO.C.SKOSClasses[rdftype] + 's</dt>';
 
-        if (rdftype == DO.C.Vocab['skosConcept']['@id']) {
+        if (rdftype == ns.skos.Concept) {
           s += '<dd><ul>';
         }
 
@@ -2488,7 +2503,7 @@ console.log(response.value)
           conceptLabel = conceptLabel.trim();
           conceptLabel = '<a href="' + subject + '">' + conceptLabel + '</a>';
 
-          if (rdftype == DO.C.Vocab['skosConcept']['@id']) {
+          if (rdftype == ns.skos.Concept) {
             s += '<li>' + conceptLabel + '</li>';
           }
           else {
@@ -2518,7 +2533,7 @@ console.log(response.value)
           }
         })
 
-        if (rdftype == DO.C.Vocab['skosConcept']['@id']) {
+        if (rdftype == ns.skos.Concept) {
           s += '</ul></dd>';
         }
       });

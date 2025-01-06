@@ -26,7 +26,6 @@ export default {
       DO.U.showFragment();
       DO.U.initCopyToClipboard();
       DO.U.setDocumentMode();
-      DO.U.showInboxNotifications();
       DO.U.initMath();
       DO.U.initSlideshow();
     }

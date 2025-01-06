@@ -5,7 +5,7 @@ import { getDateTimeISO, fragmentFromString, generateAttributeId, uniqueArray, g
 import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath } from './uri.js'
 import { getResource, getResourceHead, deleteResource, processSave, patchResourceWithAcceptPatch } from './fetcher.js'
 import rdf from "rdf-ext";
-import { getResourceGraph, sortGraphTriples, getGraphContributors, getGraphAuthors, getGraphEditors, getGraphPerformers, getGraphPublishers, getGraphLabel, getGraphEmail, getGraphTitle, getGraphConceptLabel, getGraphPublished, getGraphUpdated, getGraphDescription, getGraphLicense, getGraphRights, getGraphFromData, getGraphAudience, getGraphTypes, getGraphLanguage } from './graph.js'
+import { getResourceGraph, sortGraphTriples, getGraphContributors, getGraphAuthors, getGraphEditors, getGraphPerformers, getGraphPublishers, getGraphLabel, getGraphEmail, getGraphTitle, getGraphConceptLabel, getGraphPublished, getGraphUpdated, getGraphDescription, getGraphLicense, getGraphRights, getGraphFromData, getGraphAudience, getGraphTypes, getGraphLanguage, getGraphInbox } from './graph.js'
 import { createRDFaHTML, Icon } from './template.js'
 import LinkHeader from "http-link-header";
 import DOMPurify from 'dompurify';
@@ -1313,7 +1313,7 @@ function getGraphData(s, options) {
     Config['OriginalResourceInfo'] = info;
   }
 
-  info['inbox'] = s.out(ns.ldp.inbox).values;
+  info['inbox'] = getGraphInbox(s);
   info['annotationService'] = s.out(ns.oa.annotationService).values;
 
   //TODO: Refactor
@@ -1370,7 +1370,7 @@ function getResourceInfo(data, options) {
 
   var promises = [];
 
-  // promises.push(getGraphFromDataBlock(data, options));
+  promises.push(getGraphFromDataBlock(data, options));
   promises.push(getGraphFromData(data, options));
 
   return Promise.allSettled(promises)
@@ -1378,7 +1378,7 @@ function getResourceInfo(data, options) {
       const dataset = rdf.dataset();
 
       resolvedPromises.forEach(response => {
-console.log(response.value)
+// console.log(response.value)
         if (response.value) {
           dataset.addAll(response.value.dataset);
         }
@@ -1387,10 +1387,10 @@ console.log(response.value)
       return rdf.grapoi({ dataset });
     })
     .then(g => {
-      var s = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(documentURL)('')});
-console.log(s);
+      // var s = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(documentURL)('')});
+// console.log(s);
 
-      var info = getGraphData(s, options);
+      var info = getGraphData(g, options);
 
       if (documentURL == Config.DocumentURL) {
         updateFeatureStatesOfResourceInfo(info);
@@ -1457,7 +1457,7 @@ function getGraphFromDataBlock(data, options) {
         const dataset = rdf.dataset();
 
         resolvedPromises.forEach(response => {
-console.log(response.value)
+// console.log(response.value)
           if (response.value) {
             dataset.addAll(response.value.dataset);
           }
@@ -1578,7 +1578,7 @@ function getResourceSupplementalInfo (documentURL, options) {
 
 function getResourceInfoCitations(g) {
   var documentURL = Config.DocumentURL;
-  var citationProperties = Object.keys(Config.Citation).concat([ns.dcterms.references]);
+  var citationProperties = Object.keys(Config.Citation).concat([ns.dcterms.references, ns.schema.citation]);
 
   var predicates = citationProperties.map((property) => {
     return rdf.namespace(property)('');
@@ -1749,7 +1749,7 @@ function getResourceInfoSKOS(g) {
   const quads = [];
 
   g.out().quads().forEach(t => {
-console.log(t)
+// console.log(t)
     var s = t.subject.value;
     var p = t.predicate.value;
     var o = t.object.value;
@@ -1758,7 +1758,7 @@ console.log(t)
     var isSKOSProperty = p.startsWith('http://www.w3.org/2004/02/skos/core#');
     var isSKOSObject = o.startsWith('http://www.w3.org/2004/02/skos/core#');
 
-console.log(isRDFType, isSKOSProperty, isSKOSObject);
+// console.log(isRDFType, isSKOSProperty, isSKOSObject);
 
     if (isRDFType && isSKOSObject) {
       info['skos']['type'][o] = info['skos']['type'][o] || [];
@@ -1776,7 +1776,7 @@ console.log(isRDFType, isSKOSProperty, isSKOSObject);
 console.log(info['skos']);
 console.log(quads);
   const dataset = rdf.dataset(quads);
-console.log(dataset);
+// console.log(dataset);
   info['skos']['graph'] = rdf.grapoi({ dataset });
 
   return info['skos'];
