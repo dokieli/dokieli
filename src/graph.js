@@ -106,7 +106,7 @@ function getMatchFromData (data, spo = {}, options = {}) {
   if (!data) { return Promise.resolve({}) }
 
   spo['subject'] = spo.subject || window.location.origin + window.location.pathname
-  spo['predicate'] = spo.predicate || Config.Vocab['rdfslabel']
+  spo['predicate'] = spo.predicate || ns.rdfs.label
 
   options['contentType'] = options.contentType || 'text/html'
   options['subjectURI'] = options.subjectURI || spo.subject
@@ -759,9 +759,10 @@ function getAgentSupplementalInfo(iri) {
 
 function getAgentSeeAlso(g, baseURI) {
   if (!g) { return Promise.resolve([]); }
-
+console.log('------')
+  console.log(baseIRI)
   baseURI = baseURI || g.in().trim().value;
-
+console.log(g.in().trim().value)
   // var seeAlso = g.child(baseURI).rdfsseeAlso;
   var seeAlso = g.out(ns.rdfs.seeAlso).values;
 
@@ -827,7 +828,7 @@ function getAgentSeeAlso(g, baseURI) {
                 ? uniqueArray(Config.User.Made.concat(made))
                 : made;
             }
-
+console.log(g.in().trim().value)
             promisesGetAgentSeeAlso.push(getAgentSeeAlso(g, g.in().trim().value))
           }
         })
@@ -881,7 +882,7 @@ function getUserContacts(iri) {
 
 function getAgentTypeIndex(s) {
   //XXX: TypeRegistration forClasses of interest but for now lets store what we find without filtering.
-  // const TypeRegistrationClasses = [Config.Vocab['oaAnnotation']['@id'], Config.Vocab['asAnnounce']['@id']];
+  // const TypeRegistrationClasses = [ns.oa.Annotation, ns.as.Announce];
 
   var fetchTypeRegistration = function(iri, typeIndexType) {
     return getResourceGraph(iri)
@@ -903,7 +904,7 @@ function getAgentTypeIndex(s) {
             var p = t.predicate.value;
             var o = t.object.value;
 
-            if (p == Config.Vocab['solidforClass']['@id']) {
+            if (p == ns.solid.forClass) {
               typeIndexes[typeIndexType][s] = {};
               typeIndexes[typeIndexType][s][p] = o;
             }
@@ -915,8 +916,8 @@ function getAgentTypeIndex(s) {
             var o = t.object.value;
 
             if(typeIndexes[typeIndexType][s]) {
-              if (p == Config.Vocab['solidinstance']['@id'] ||
-                  p == Config.Vocab['solidinstanceContainer']['@id']) {
+              if (p == ns.solid.instance ||
+                  p == ns.solid.instanceContainer) {
                 typeIndexes[typeIndexType][s][p] = o;
               }
             }
@@ -933,10 +934,10 @@ function getAgentTypeIndex(s) {
   var privateTypeIndex = getAgentPrivateTypeIndex(s);
 
   if (publicTypeIndex) {
-    promises.push(fetchTypeRegistration(publicTypeIndex, Config.Vocab['solidpublicTypeIndex']['@id']))
+    promises.push(fetchTypeRegistration(publicTypeIndex, ns.solid.publicTypeIndex))
   }
   if (privateTypeIndex && Config.User.OIDC) {
-    promises.push(fetchTypeRegistration(privateTypeIndex, Config.Vocab['solidprivateTypeIndex']['@id']))
+    promises.push(fetchTypeRegistration(privateTypeIndex, ns.solid.privateTypeIndex))
   }
 
   return Promise.allSettled(promises)
@@ -1459,7 +1460,7 @@ function getAuthorizationsMatching (g, matchers) {
   subjects.forEach(i => {
     var s = g.child(i);
 
-    if (s.rdftype._array.includes(Config.Vocab['aclAuthorization']['@id'])) {
+    if (s.rdftype._array.includes(ns.acl.Authorization)) {
       var authorizationIRI = s.iri().toString();
       var candidateAuthorization = {};
 

@@ -70,15 +70,15 @@ DO = {
 // console.log(s.toString());
 
             var types = s.rdftype;
-            if (types.indexOf(DO.C.Vocab['ldpContainer']["@id"]) > -1 ||
-               types.indexOf(DO.C.Vocab['asCollection']["@id"]) > -1 ||
-               types.indexOf(DO.C.Vocab['asOrderedCollection']["@id"]) > -1) {
+            if (types.indexOf(ns.ldp.Container) > -1 ||
+               types.indexOf(ns.as.Collection) > -1 ||
+               types.indexOf(ns.as.OrderedCollection) > -1) {
               DO.C.Collections.push(url);
             }
 
-            if (types.indexOf(DO.C.Vocab['ldpContainer']["@id"]) < 0 &&
-               types.indexOf(DO.C.Vocab['asCollection']["@id"]) < 0 &&
-               types.indexOf(DO.C.Vocab['asOrderedCollection']["@id"]) < 0) {
+            if (types.indexOf(ns.ldp.Container) < 0 &&
+               types.indexOf(ns.as.Collection) < 0 &&
+               types.indexOf(ns.as.OrderedCollection) < 0) {
               DO.C.CollectionPages.push(url);
             }
 
@@ -96,11 +96,11 @@ DO = {
                   //FIXME: This may need to be processed outside of items? See also comment above about processing Collection and CollectionPages.
                   var types = r.rdftype._array || [];
                   //Include only non-container/collection and items that's not from an RDFList
-                  if (types.indexOf(DO.C.Vocab['ldpContainer']["@id"]) < 0 &&
-                     types.indexOf(DO.C.Vocab['asCollection']["@id"]) < 0 &&
-                     types.indexOf(DO.C.Vocab['asCollectionPage']["@id"]) < 0 &&
-                     types.indexOf(DO.C.Vocab['asOrderedCollection']["@id"]) < 0 &&
-                     types.indexOf(DO.C.Vocab['asOrderedCollectionPage']["@id"]) < 0) {
+                  if (types.indexOf(ns.ldp.Container) < 0 &&
+                     types.indexOf(ns.as.Collection) < 0 &&
+                     types.indexOf(ns.as.CollectionPage) < 0 &&
+                     types.indexOf(ns.as.OrderedCollection) < 0 &&
+                     types.indexOf(ns.as.OrderedCollectionPage) < 0) {
                     //XXX: The following is not used at the moment:
                     // DO.C.CollectionItems[resource] = s;
 
@@ -149,7 +149,7 @@ DO = {
 // console.log(resource);
               var types = s.child(resource).rdftype;
 // console.log(types);
-              if(types.indexOf(DO.C.Vocab['ldpContainer']["@id"]) < 0) {
+              if(types.indexOf(ns.ldp.Container) < 0) {
                 notifications.push(resource);
               }
             });
@@ -284,17 +284,17 @@ DO = {
       var promises = [];
       var documentTypes = DO.C.ActivitiesObjectTypes.concat(Object.keys(DO.C.ResourceType));
 
-      var publicTypeIndexes = agent.TypeIndex[DO.C.Vocab['solidpublicTypeIndex']['@id']] || {};
-      var privateTypeIndexes = agent.TypeIndex[DO.C.Vocab['solidprivateTypeIndex']['@id']] || {};
+      var publicTypeIndexes = agent.TypeIndex[ns.solid.publicTypeIndex] || {};
+      var privateTypeIndexes = agent.TypeIndex[ns.solid.privateTypeIndex] || {};
       //XXX: Perhaps these shouldn't be merged and kept apart or have the UI clarify what's public/private, and additional engagements keep that context
       var typeIndexes = Object.assign({}, publicTypeIndexes, privateTypeIndexes);
 
       var recognisedTypes = [];
 
       Object.values(typeIndexes).forEach(typeRegistration => {
-        var forClass = typeRegistration[DO.C.Vocab['solidforClass']['@id']];
-        var instance = typeRegistration[DO.C.Vocab['solidinstance']['@id']];
-        var instanceContainer = typeRegistration[DO.C.Vocab['solidinstanceContainer']['@id']];
+        var forClass = typeRegistration[ns.solid.forClass];
+        var instance = typeRegistration[ns.solid.instance];
+        var instanceContainer = typeRegistration[ns.solid.instanceContainer];
 
         if (documentTypes.includes(forClass)) {
           recognisedTypes.push(forClass);
@@ -1406,7 +1406,7 @@ DO = {
         DO.U.showGraphResources(resources, selector, options);
       }
       else {
-        var property = (resources && 'filter' in options && 'predicates' in options.filter && options.filter.predicates.length > 0) ? options.filter.predicates[0] : DO.C.Vocab['ldpinbox']['@id'];
+        var property = (resources && 'filter' in options && 'predicates' in options.filter && options.filter.predicates.length > 0) ? options.filter.predicates[0] : ns.ldp.inbox;
         var iri = (resources) ? resources : location.href.split(location.search||location.hash||/[?#]/)[0];
 
         getLinkRelation(property, iri).then(
@@ -2511,7 +2511,7 @@ console.log(rdftype, subject)
             s += '<dl>';
             s += '<dt>' + conceptLabel + '</dt><dd><ul>';
 
-            var hasConcepts = [DO.C.Vocab['skoshasTopConcept']['@id'], DO.C.Vocab['skosmember']['@id']];
+            var hasConcepts = [ns.skos.hasTopConcept, ns.skos.member];
 
             hasConcepts.forEach(function(hasConcept) {
               var concept = DO.C.Resource[documentURL]['skos']['data'][subject][hasConcept];
@@ -2814,7 +2814,7 @@ console.log(rdftype, subject)
               s += '<tbody>';
               Object.keys(DO.C.Resource[documentURL]['spec']['requirement']).forEach(function(i) {
 // console.log(DO.C.Resource[documentURL]['spec'][i])
-                var statement = DO.C.Resource[documentURL]['spec']['requirement'][i][DO.C.Vocab['specstatement']['@id']] || i;
+                var statement = DO.C.Resource[documentURL]['spec']['requirement'][i][ns.spec.statement] || i;
                 //FIXME: This selector is brittle.
                 // var requirementIRI = document.querySelector('#document-identifier [rel="owl:sameAs"]');
                 var requirementIRI = document.querySelector('#document-latest-published-version [rel~="rel:latest-version"]');
@@ -2823,14 +2823,14 @@ console.log(rdftype, subject)
                 requirementIRI = i.replace(stripFragmentFromString(i), requirementIRI);
                 statement = '<a href="' + requirementIRI + '">' + statement + '</a>';
 
-                var requirementSubjectIRI = DO.C.Resource[documentURL]['spec']['requirement'][i][DO.C.Vocab['specrequirementSubject']['@id']];
+                var requirementSubjectIRI = DO.C.Resource[documentURL]['spec']['requirement'][i][ns.spec.requirementSubject];
                 var requirementSubjectLabel = requirementSubjectIRI || '<span class="warning">?</span>';
                 if (requirementSubjectLabel.startsWith('http')) {
                   requirementSubjectLabel = getFragmentFromString(requirementSubjectIRI) || getURLLastPath(requirementSubjectIRI) || requirementSubjectLabel;
                 }
                 var requirementSubject = '<a href="' + requirementSubjectIRI + '">' + requirementSubjectLabel + '</a>';
 
-                var requirementLevelIRI = DO.C.Resource[documentURL]['spec']['requirement'][i][DO.C.Vocab['specrequirementLevel']['@id']];
+                var requirementLevelIRI = DO.C.Resource[documentURL]['spec']['requirement'][i][ns.spec.requirementLevel];
                 var requirementLevelLabel = requirementLevelIRI || '<span class="warning">?</span>';
                 if (requirementLevelLabel.startsWith('http')) {
                   requirementLevelLabel = getFragmentFromString(requirementLevelIRI) || getURLLastPath(requirementLevelIRI) || requirementLevelLabel;
@@ -2853,7 +2853,7 @@ console.log(rdftype, subject)
               s += '<tbody>';
               Object.keys(DO.C.Resource[documentURL]['spec']['advisement']).forEach(function(i) {
 // console.log(DO.C.Resource[documentURL]['spec']['advisement'][i])
-                var statement = DO.C.Resource[documentURL]['spec']['advisement'][i][DO.C.Vocab['specstatement']['@id']] || i;
+                var statement = DO.C.Resource[documentURL]['spec']['advisement'][i][ns.spec.statement] || i;
                 //FIXME: This selector is brittle.
                 //TODO: Revisit this:
                 // var advisementIRI = document.querySelector('#document-identifier [rel="owl:sameAs"]');
@@ -2863,14 +2863,14 @@ console.log(rdftype, subject)
                 advisementIRI = i.replace(stripFragmentFromString(i), advisementIRI);
                 statement = '<a href="' + advisementIRI + '">' + statement + '</a>';
 
-                // var advisementSubjectIRI = DO.C.Resource[documentURL]['spec']['advisement'][i][DO.C.Vocab['specadvisementSubject']['@id']];
+                // var advisementSubjectIRI = DO.C.Resource[documentURL]['spec']['advisement'][i][ns.spec.advisementSubject];
                 // var advisementSubjectLabel = advisementSubjectIRI || '<span class="warning">?</span>';
                 // if (advisementSubjectLabel.startsWith('http')) {
                 //   advisementSubjectLabel = getFragmentFromString(advisementSubjectIRI) || getURLLastPath(advisementSubjectIRI) || advisementSubjectLabel;
                 // }
                 // var advisementSubject = '<a href="' + advisementSubjectIRI + '">' + advisementSubjectLabel + '</a>';
 
-                var advisementLevelIRI = DO.C.Resource[documentURL]['spec']['advisement'][i][DO.C.Vocab['specadvisementLevel']['@id']];
+                var advisementLevelIRI = DO.C.Resource[documentURL]['spec']['advisement'][i][ns.spec.advisementLevel];
                 var advisementLevelLabel = advisementLevelIRI || '<span class="warning">?</span>';
                 if (advisementLevelLabel.startsWith('http')) {
                   advisementLevelLabel = getFragmentFromString(advisementLevelIRI) || getURLLastPath(advisementLevelIRI) || advisementLevelLabel;
@@ -3049,7 +3049,7 @@ console.log(reason);
                         var sR = tr.getAttribute('about');
                         var td = tr.querySelector('td:nth-child(3)');
                         var sourceRequirementURI = sourceGraphURI + '#' + getFragmentFromString(sR);
-                        var statement = DO.C.Resource[sourceGraphURI].spec['requirement'][sourceRequirementURI][DO.C.Vocab['specstatement']['@id']] || sR;
+                        var statement = DO.C.Resource[sourceGraphURI].spec['requirement'][sourceRequirementURI][ns.spec.statement] || sR;
                         td.innerHTML = '<a href="' + sR + '">' + statement + '</a>';
                       });
                     }
@@ -3089,7 +3089,7 @@ console.log(reason);
       Object.keys(sourceRequirements).forEach(sR => {
         DO.C.Resource[sourceGraphURI].spec['requirement'][sR]['diff'] = {};
 
-        var sRStatement = sourceRequirements[sR][DO.C.Vocab['specstatement']['@id']] || '';
+        var sRStatement = sourceRequirements[sR][ns.spec.statement] || '';
         var tR = targetGraphURI + '#' + getFragmentFromString(sR);
 
         DO.C.Resource[sourceGraphURI].spec['requirement'][sR]['diff'][tR] = {};
@@ -3097,14 +3097,14 @@ console.log(reason);
         var tRStatement = '';
 
         if (targetRequirements[tR]) {
-          tRStatement = targetRequirements[tR][DO.C.Vocab['specstatement']['@id']] || '';
+          tRStatement = targetRequirements[tR][ns.spec.statement] || '';
         }
 
-        var change = changes.filter(change => change[DO.C.Vocab['specchangeSubject']['@id']] == sR)[0];
+        var change = changes.filter(change => change[ns.spec.changeSubject] == sR)[0];
         var changeHTML = '';
         if (change) {
-          var changeClass = change[DO.C.Vocab['specchangeClass']['@id']];
-          var changeDescription = change[DO.C.Vocab['specstatement']['@id']];
+          var changeClass = change[ns.spec.changeClass];
+          var changeDescription = change[ns.spec.statement];
           if (changeClass) {
             var changeClassValue = DO.C.ChangeClasses[changeClass] || changeClass;
             if (changeDescription) {
@@ -3167,9 +3167,9 @@ console.log(reason);
           if (resourceTypes.indexOf('http://www.w3.org/2006/03/test-description#TestCase') > -1){
             if (s.specrequirementReference && s.specrequirementReference.startsWith(specificationReferenceBase)) {
               testCases[testCaseIRI] = {};
-              testCases[testCaseIRI][DO.C.Vocab['specrequirementReference']['@id']] = s.specrequirementReference;
-              testCases[testCaseIRI][DO.C.Vocab['testdescriptionreviewStatus']['@id']] = s.testdescriptionreviewStatus;
-              testCases[testCaseIRI][DO.C.Vocab['dctermstitle']] = s.dctermstitle;
+              testCases[testCaseIRI][ns.spec.requirementReference] = s.specrequirementReference;
+              testCases[testCaseIRI][ns['test-description'].reviewStatus] = s.testdescriptionreviewStatus;
+              testCases[testCaseIRI][ns.dcterms.title] = s.dctermstitle;
             }
           }
         }
@@ -3181,13 +3181,13 @@ console.log(reason);
         var requirement = tr.querySelector('td:nth-child(3) a').href;
 
         Object.keys(testCases).forEach(testCaseIRI => {
-          if (testCases[testCaseIRI][DO.C.Vocab['specrequirementReference']['@id']] == requirement) {
-            var testCaseLabel = testCases[testCaseIRI][DO.C.Vocab['dctermstitle']] || testCaseIRI;
+          if (testCases[testCaseIRI][ns.spec.requirementReference] == requirement) {
+            var testCaseLabel = testCases[testCaseIRI][ns.dcterms.title] || testCaseIRI;
 
             var testCaseHTML = '<a href="'+ testCaseIRI + '">' + testCaseLabel + '</a>';
 
-            if (testCases[testCaseIRI][DO.C.Vocab['testdescriptionreviewStatus']['@id']]) {
-              var reviewStatusIRI = testCases[testCaseIRI][DO.C.Vocab['testdescriptionreviewStatus']['@id']];
+            if (testCases[testCaseIRI][ns['test-description'].reviewStatus]) {
+              var reviewStatusIRI = testCases[testCaseIRI][ns['test-description'].reviewStatus];
               var reviewStatusLabel = getFragmentFromString(reviewStatusIRI) || getURLLastPath(reviewStatusIRI) || reviewStatusIRI;
 
               var reviewStatusHTML = ' (<a href="'+ reviewStatusIRI + '">' + reviewStatusLabel + '</a>)';
@@ -4492,7 +4492,7 @@ console.log(reason);
               .innerHTML = '<p class="success"><a target="_blank" href="' + response.url + '">Reply saved!</a></p>'
 
             // Determine the inbox endpoint, to send the notification to
-            return getLinkRelation(DO.C.Vocab['ldpinbox']['@id'], null, getDocument())
+            return getLinkRelation(ns.ldp.inbox, null, getDocument())
               .catch(error => {
                 console.error('Could not fetch inbox endpoint:', error)
 
@@ -4511,7 +4511,7 @@ console.log(reason);
             let notificationStatements = '    <dl about="' + noteIRI +
               '">\n<dt>Object type</dt><dd><a about="' +
               noteIRI + '" typeof="oa:Annotation" href="' +
-              DO.C.Vocab['oaAnnotation']['@id'] +
+              ns.oa.Annotation +
               '">Annotation</a></dd>\n<dt>Motivation</dt><dd><a href="' +
               DO.C.Prefixes[motivatedBy.split(':')[0]] +
               motivatedBy.split(':')[1] + '" property="oa:motivation">' +
@@ -4577,7 +4577,7 @@ console.log(reason);
       }
 
       var shareResourceLinkedResearch = '';
-      if (DO.C.User.IRI && DO.C.OriginalResourceInfo['rdftype'] && DO.C.OriginalResourceInfo.rdftype.includes(DO.C.Vocab['schemaScholarlyArticle']['@id']) || DO.C.OriginalResourceInfo.rdftype.includes(DO.C.Vocab['schemaThesis']['@id'])) {
+      if (DO.C.User.IRI && DO.C.OriginalResourceInfo['rdftype'] && DO.C.OriginalResourceInfo.rdftype.includes(ns.schema.ScholarlyArticle) || DO.C.OriginalResourceInfo.rdftype.includes(ns.schema.Thesis)) {
         shareResourceLinkedResearch = `
           <div id="share-resource-external">
             <h3>Share with research community</h3>
@@ -4739,7 +4739,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
                   var li = document.getElementById('share-resource-access-subject-' + encodeURIComponent(contact));
                   var options = {};
                   options['accessContext'] = 'Share';
-                  options['selectedAccessMode'] = DO.C.Vocab['aclRead']['@id'];
+                  options['selectedAccessMode'] = ns.acl.Read;
                   DO.U.showAccessModeSelection(li, '', contact, 'agent', options);
 
                   var select = document.querySelector('[id="' + li.id + '"] select');
@@ -4799,9 +4799,9 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 // console.log(verifiedAccessModes)
 
                 const selectedAccessMode =
-                  (verifiedAccessModes.includes(DO.C.Vocab['aclControl']['@id']) && DO.C.Vocab['aclControl']['@id']) ||
-                  (verifiedAccessModes.includes(DO.C.Vocab['aclWrite']['@id']) && DO.C.Vocab['aclWrite']['@id']) ||
-                  (verifiedAccessModes.includes(DO.C.Vocab['aclRead']['@id']) && DO.C.Vocab['aclRead']['@id']) ||
+                  (verifiedAccessModes.includes(ns.acl.Control) && ns.acl.Control) ||
+                  (verifiedAccessModes.includes(ns.acl.Write) && ns.acl.Write) ||
+                  (verifiedAccessModes.includes(ns.acl.Read) && ns.acl.Read) ||
                   '';
 
                 var options = options || {};
@@ -4813,7 +4813,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
             }
 
             Object.keys(subjectsWithAccess).forEach(accessSubject => {
-              if (accessSubject === DO.C.Vocab['foafAgent']['@id'] || accessSubject === DO.C.User.IRI) {
+              if (accessSubject === ns.foaf.Agent || accessSubject === DO.C.User.IRI) {
                 return;
               }
 
@@ -5040,14 +5040,14 @@ console.log(e);
             }
             else {
               switch (selectedMode) {
-                case DO.C.Vocab['aclRead']['@id']:
-                  updatedMode = [DO.C.Vocab['aclRead']['@id']];
+                case ns.acl.Read:
+                  updatedMode = [ns.acl.Read];
                   break;
-                case DO.C.Vocab['aclWrite']['@id']:
-                  updatedMode = [DO.C.Vocab['aclRead']['@id'], DO.C.Vocab['aclWrite']['@id']];
+                case ns.acl.Write:
+                  updatedMode = [ns.acl.Read, ns.acl.Write];
                   break;
-                case DO.C.Vocab['aclControl']['@id']:
-                  updatedMode = [DO.C.Vocab['aclRead']['@id'], DO.C.Vocab['aclWrite'], DO.C.Vocab['aclControl']['@id']];
+                case ns.acl.Control:
+                  updatedMode = [ns.acl.Read, ns.acl.Write, ns.acl.Control];
                   break;
               }
 
@@ -5163,7 +5163,7 @@ console.log(e);
           return Promise.resolve(aI);
         }
         else {
-          return getLinkRelationFromHead(DO.C.Vocab['ldpinbox']['@id'], iri);
+          return getLinkRelationFromHead(ns.ldp.inbox, iri);
         }
       }
 
@@ -5320,13 +5320,13 @@ console.log(e);
                 var startAt = new Date(d.getTime() + 1000);
                 var endAt = new Date(startAt.getTime() + 3600000);
 
-                if (features.indexOf(DO.C.Vocab['notifystartAt']) > -1) {
+                if (features.indexOf(ns.notify.startAt) > -1) {
                   data['startAt'] = startAt.toISOString();
                 }
-                if (features.indexOf(DO.C.Vocab['notifyendAt']) > -1) {
+                if (features.indexOf(ns.notify.endAt) > -1) {
                   data['endAt'] = endAt.toISOString();
                 }
-                if (features.indexOf(DO.C.Vocab['notifyrate']) > -1) {
+                if (features.indexOf(ns.notify.rate) > -1) {
                   data['rate'] = "PT10S";
                 }
               }
@@ -5357,7 +5357,7 @@ console.log(e);
       var sD = document.getElementById(id + '-storage-description');
 
       if (samp && !sD) {
-        var sDPromise = getLinkRelation(DO.C.Vocab['solidstorageDescription']['@id'], storageUrl);
+        var sDPromise = getLinkRelation(ns.solid.storageDescription, storageUrl);
 
         return sDPromise
           .then(sDURLs => {
@@ -5473,7 +5473,7 @@ console.log(e);
           var policyDetails = [];
 
           var types = policy.rdftype._array;
-          var indexPolicy = types.indexOf(DO.C.Vocab['odrlOffer']["@id"]) || types.indexOf(DO.C.Vocab['odrlAgreement']["@id"]);
+          var indexPolicy = types.indexOf(ns.odrl.Offer) || types.indexOf(ns.odrl.Agreement);
           if (indexPolicy >= 0) {
             var rule = types[indexPolicy];
             //XXX: Label derived from URI.
@@ -5684,11 +5684,11 @@ console.log(e);
               var label, href = iri;
 
               switch (iri) {
-                case DO.C.Vocab['notifystartAt']:
-                case DO.C.Vocab['notifyendAt']:
-                case DO.C.Vocab['notifystate']:
-                case DO.C.Vocab['notifyrate']:
-                case DO.C.Vocab['notifyaccept']:
+                case ns.notify.startAt:
+                case ns.notify.endAt:
+                case ns.notify.state:
+                case ns.notify.rate:
+                case ns.notify.accept:
                   label = getFragmentFromString(iri);
                   href = 'https://solidproject.org/TR/2022/notifications-protocol-20221231#notify-' + label;
                   break;
@@ -5741,7 +5741,7 @@ console.log(e);
     subscribeToNotificationChannel: function(url, data) {
       switch(data.type){
         //doap:implements <https://solidproject.org/TR/websocket-channel-2023>
-        case DO.C.Vocab['notifyWebSocketChannel2023']['@id']:
+        case ns.notify.WebSocketChannel2023:
           return DO.U.subscribeToWebSocketChannel(url, data);
       }
     },
@@ -5756,8 +5756,7 @@ console.log(e);
 
       switch (options.contentType) {
         case 'text/turtle':
-          var notifyChannelType = 'notify' + d.type;
-          data = '<> a <' + DO.C.Vocab[notifyChannelType]['@id']  + '> ;\n\
+          data = '<> a <' + ns.notify[d.type]  + '> ;\n\
   <http://www.w3.org/ns/solid/notifications#topic> <' + d.topic + '> .';
           break;
 
@@ -5830,8 +5829,8 @@ console.log(e);
           DO.C.Subscription[data.topic]['Response'] = data;
 
           switch (data.type) {
-            case 'WebSocketChannel2023': case DO.C.Vocab['notifyWebSocketChannel2023']['@id']:
-              data.type = DO.C.Vocab['notifyWebSocketChannel2023']['@id'];
+            case 'WebSocketChannel2023': case ns.notify.WebSocketChannel2023:
+              data.type = ns.notify.WebSocketChannel2023;
               return DO.U.connectToWebSocket(data.receiveFrom, data).then(function(i){
                 DO.C.Subscription[data.topic]['Connection'] = i;
                 // return Promise.resolve();
@@ -5859,7 +5858,7 @@ console.log(e);
               }
 
               //TODO d.type == 'LDNChannel2023' && data.sender
-              if ((d.type == 'WebSocketChannel2023' || d.type == DO.C.Vocab['notifyWebSocketChannel2023']['@id']) && data.receiveFrom) {
+              if ((d.type == 'WebSocketChannel2023' || d.type == ns.notify.WebSocketChannel2023) && data.receiveFrom) {
                 return Promise.resolve(data);
               }
             }
@@ -6076,7 +6075,7 @@ console.log(e);
 
         var patch = {};
         var containerLabel = input.value.trim();
-        var insertG = '<> <' + DO.C.Vocab['dctermstitle'] +  '> """' + containerLabel.replace(/"/g, '\"') + '""" .';
+        var insertG = '<> <' + ns.dcterms.title +  '> """' + containerLabel.replace(/"/g, '\"') + '""" .';
         patch = { 'insert': insertG };
 
         containerLabel = containerLabel.endsWith('/') ? containerLabel.slice(0, -1) : containerLabel;
@@ -6241,7 +6240,7 @@ console.log(response)
         DO.U.initBrowse(baseUrl, input, browseButton, createButton, id, action);
       }
       else {
-        getLinkRelation(DO.C.Vocab['oaannotationService']['@id'], null, getDocument()).then(
+        getLinkRelation(ns.oa.annotationService, null, getDocument()).then(
           function(storageUrl) {
             DO.U.initBrowse(storageUrl[0], input, browseButton, createButton, id, action);
           },
@@ -6463,9 +6462,9 @@ console.log(response)
 
           var types = g.out(ns.rdf.type).values;
 // console.log(types)
-          if(types.includes(DO.C.Vocab['ldpContainer']["@id"]) ||
-             types.includes(DO.C.Vocab['asCollection']["@id"]) ||
-             types.includes(DO.C.Vocab['asOrderedCollection']["@id"])) {
+          if(types.includes(ns.ldp.Container) ||
+             types.includes(ns.as.Collection) ||
+             types.includes(ns.as.OrderedCollection)) {
 
             return DO.U.processResources(options['subjectURI'], options).then(
               function(urls) {
@@ -7148,8 +7147,8 @@ console.log(response)
               linkHeaders = LinkHeader.parse(link);
             }
 
-            if (DO.C.User.IRI && linkHeaders && linkHeaders.has('rel', DO.C.Vocab['ldpinbox']['@id'])){
-              inboxURL = linkHeaders.rel(DO.C.Vocab['ldpinbox']['@id'])[0].uri;
+            if (DO.C.User.IRI && linkHeaders && linkHeaders.has('rel', ns.ldp.inbox)){
+              inboxURL = linkHeaders.rel(ns.ldp.inbox)[0].uri;
               requestAccess = '<p><button class="request-access" data-inbox="' + inboxURL +'" data-target="' + storageIRI + '" title="Send an access request to resource inbox.">Request Access</button></p>'
             }
 
@@ -7195,10 +7194,10 @@ console.log(response)
                   '">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + '</span>')
 
                 var notificationStatements = `<dl about="` + objectId + `" prefix="acl: http://www.w3.org/ns/auth/acl#">
-  <dt>Object type</dt><dd><a about="` + objectId + `" href="` + DO.C.Vocab['aclAuthorization']['@id'] + `" typeof="acl:Authorization">Authorization</a></dd>
+  <dt>Object type</dt><dd><a about="` + objectId + `" href="` + ns.acl.Authorization+ `" typeof="acl:Authorization">Authorization</a></dd>
   <dt>Agents</dt><dd><a href="` + agent + `" property="acl:agent">` + agent + `</a></dd>
   <dt>Access to</dt><dd><a href="` + accessTo + `" property="acl:accessTo">` + accessTo + `</a></dd>
-  <dt>Modes</dt><dd><a href="` + DO.C.Vocab['aclRead']['@id'] + `" property="acl:mode">Read</a></dd><dd><a href="` + DO.C.Vocab['aclWrite']['@id'] + `" property="acl:mode">Write</a></dd>
+  <dt>Modes</dt><dd><a href="` + ns.acl.Read + `" property="acl:mode">Read</a></dd><dd><a href="` + ns.acl.Write + `" property="acl:mode">Write</a></dd>
 </dl>
 `;
 
@@ -8900,10 +8899,10 @@ WHERE {\n\
                 // var bodyFormat = bodyItem.format ? bodyItem.format : 'rdf:HTML';
 
                 if (bodyItem.purpose) {
-                  if (bodyItem.purpose == "describing" || bodyItem.purpose == DO.C.Vocab["oadescribing"]["@id"]) {
+                  if (bodyItem.purpose == "describing" || bodyItem.purpose == ns.oa.describing) {
                     body += '<section id="note-' + n.id + '" rel="oa:hasBody" resource="#note-' + n.id + '"><h' + (hX+1) + ' property="schema:name" rel="oa:hasPurpose" resource="oa:describing">Note</h' + (hX+1) + '>' + bodyLanguage + bodyLicense + bodyRights + '<div datatype="rdf:HTML"' + lang + ' property="rdf:value schema:description" resource="#note-' + n.id + '" typeof="oa:TextualBody"' + xmlLang + '>' + bodyValue + '</div></section>';
                   }
-                  if (bodyItem.purpose == "tagging" || bodyItem.purpose == DO.C.Vocab["oatagging"]["@id"]) {
+                  if (bodyItem.purpose == "tagging" || bodyItem.purpose == ns.oa.tagging) {
                     tagsArray.push(bodyValue);
                   }
                 }
@@ -9262,7 +9261,7 @@ WHERE {\n\
                 }
                 contributorId = ' id="' + contributorId + '"';
 
-                var contributorInList = (DO.C.Resource[documentURL].rdftype.indexOf(DO.C.Vocab['schemaScholarlyArticle']['@id']) > -1) ?
+                var contributorInList = (DO.C.Resource[documentURL].rdftype.indexOf(ns.schema.ScholarlyArticle) > -1) ?
                   ' inlist="" rel="bibo:' + contributorRole + 'List" resource="' + DO.C.User.IRI + '"' : '';
 
                 var userHTML = '<dd class="do"' + contributorId + contributorInList + '><span about="" rel="schema:' + contributorRole + '">' + getAgentHTML({'avatarSize': 32}) + '</span><button class="add-' + contributorRole + '" contenteditable="false" title="Add ' + contributorName + ' as ' + contributorRole + '">' + Icon[".fas.fa-plus"] + '</button></dd>';
@@ -9409,7 +9408,7 @@ WHERE {\n\
               });
             }
 
-            if (s.rdftype.indexOf(DO.C.Vocab["doapSpecification"]["@id"]) > -1) {
+            if (s.rdftype.indexOf(ns.doap.Specification) > -1) {
               var documentTestSuite = 'document-test-suite';
               var testSuite = document.getElementById(documentTestSuite);
               if (!testSuite) {
@@ -9983,7 +9982,7 @@ WHERE {\n\
 
               updateAnnotationInboxForm();
 
-              return getLinkRelation(DO.C.Vocab['oaannotationService']['@id'], null, getDocument()).then(
+              return getLinkRelation(ns.oa.annotationService, null, getDocument()).then(
                 function(url) {
                   DO.C.AnnotationService = url[0];
                   updateAnnotationServiceForm();
@@ -10683,8 +10682,8 @@ WHERE {\n\
 
                 //TODO: Preferring publicTypeIndex for now. Refactor this when the UI allows user to decide whether to have it public or private.
 
-                var publicTypeIndexes = DO.C.User.TypeIndex[DO.C.Vocab['solidpublicTypeIndex']['@id']];
-                var privateTypeIndexes = DO.C.User.TypeIndex[DO.C.Vocab['solidprivateTypeIndex']['@id']];
+                var publicTypeIndexes = DO.C.User.TypeIndex[ns.solid.publicTypeIndex];
+                var privateTypeIndexes = DO.C.User.TypeIndex[ns.solid.privateTypeIndex];
 
                 if (publicTypeIndexes) {
                   var publicTIValues = Object.values(publicTypeIndexes);
@@ -10693,9 +10692,9 @@ WHERE {\n\
                     //XXX: For now, we are only sending the annotation to one location that's already matched
                     if (activityTypeMatched) return;
 
-                    var forClass = ti[DO.C.Vocab['solidforClass']['@id']];
-                    var instanceContainer = ti[DO.C.Vocab['solidinstanceContainer']['@id']];
-                    var instance = ti[DO.C.Vocab['solidinstance']['@id']];
+                    var forClass = ti[ns.solid.forClass];
+                    var instanceContainer = ti[ns.solid.instanceContainer];
+                    var instance = ti[ns.solid.instance];
 
                     if (activityIndex.includes(forClass)) {
                       if (instanceContainer) {
@@ -10925,8 +10924,8 @@ WHERE {\n\
                     if (DO.C.User.URL) {
                       noteData.creator["url"] = DO.C.User.URL;
                     }
-                    if (opts.annotationInboxLocation && DO.C.User.TypeIndex && DO.C.User.TypeIndex[DO.C.Vocab['asAnnounce']['@id']]) {
-                      noteData.inbox = DO.C.User.TypeIndex[DO.C.Vocab['asAnnounce']['@id']];
+                    if (opts.annotationInboxLocation && DO.C.User.TypeIndex && DO.C.User.TypeIndex[ns.as.Announce]) {
+                      noteData.inbox = DO.C.User.TypeIndex[ns.as.Announce];
                     }
 
                     // note = DO.U.createNoteDataHTML(noteData);
@@ -11134,7 +11133,7 @@ WHERE {\n\
                 var noteIRI = (options.relativeObject) ? '#' + id : annotation['noteIRI'];
 
                 var notificationStatements = '    <dl about="' + noteIRI + '">\n\
-  <dt>Object type</dt><dd><a about="' + noteIRI + '" typeof="oa:Annotation" href="' + DO.C.Vocab['oaAnnotation']['@id'] + '">Annotation</a></dd>\n\
+  <dt>Object type</dt><dd><a about="' + noteIRI + '" typeof="oa:Annotation" href="' + ns.oa.Annotation + '">Annotation</a></dd>\n\
   <dt>Motivation</dt><dd><a href="' + DO.C.Prefixes[annotation.motivatedByIRI.split(':')[0]] + annotation.motivatedByIRI.split(':')[1] + '" property="oa:motivation">' + annotation.motivatedByIRI.split(':')[1] + '</a></dd>\n\
 </dl>\n\
 ';
@@ -11216,9 +11215,9 @@ WHERE {\n\
                   }
                   else {
                     inboxPromise =
-                      getLinkRelation(DO.C.Vocab['ldpinbox']['@id'], documentURL)
+                      getLinkRelation(ns.ldp.inbox, documentURL)
                         .catch(() => {
-                          return getLinkRelationFromRDF(DO.C.Vocab['asinbox']['@id'], documentURL);
+                          return getLinkRelationFromRDF(ns.as.inbox, documentURL);
                         });
                   }
                 }

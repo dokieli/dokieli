@@ -987,7 +987,7 @@ function showTimeMap(node, url) {
         var p = t.predicate.value;
         var o = t.object.value;
 
-        if(p === Config.Vocab['memmementoDateTime']) {
+        if (p === ns.mem.mementoDateTime) {
           items.push('<li><a href="' + s + '" target="_blank">' + o + '</a></li>');
         }
       });
@@ -1773,7 +1773,7 @@ function getResourceInfoSKOS(g) {
     }
   });
 
-console.log(info['skos']);
+// console.log(info['skos']);
 // console.log(quads);
   const dataset = rdf.dataset(quads);
 // console.log(dataset);
@@ -2256,7 +2256,7 @@ function showRobustLinksDecoration(node) {
 
     versionurl = (versionurl) ? '<span>Version</span><span><a href="' + versionurl + '" target="_blank">' + versiondate + '</a></span>' : '';
 
-    // var citations = Object.keys(Config.Citation).concat(Config.Vocab["schemacitation"]["@id"]);
+    // var citations = Object.keys(Config.Citation).concat(ns.schema.citation);
 
     //FIXME: This is ultimately inaccurate because it should be obtained through RDF parser
     var citation = '';
@@ -2417,7 +2417,7 @@ function createLanguageHTML(language, options = {}) {
 
 function getAnnotationInboxLocationHTML() {
   var s = '', inputs = [], checked = '';
-  if (Config.User.TypeIndex && Config.User.TypeIndex[Config.Vocab['asAnnounce']['@id']]) {
+  if (Config.User.TypeIndex && Config.User.TypeIndex[ns.as.Announce]) {
     if (Config.User.UI && Config.User.UI['annotationInboxLocation'] && Config.User.UI.annotationInboxLocation['checked']) {
       checked = ' checked="checked"';
     }
@@ -2487,7 +2487,7 @@ function getPublicationStatusOptionsHTML(options) {
     }
   }
   else {
-    selectedIRI = Config.Vocab['psodraft']['@id'];
+    selectedIRI = ns.pso.draft;
   }
 
   Object.keys(Config.PublicationStatus).forEach(function(iri){

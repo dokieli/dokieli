@@ -80,7 +80,7 @@ function sendNotifications(tos, note, iri, shareResource) {
 }
 
 function inboxResponse(to, toInput) {
-  return getLinkRelation(Config.Vocab['ldpinbox']['@id'], to)
+  return getLinkRelation(ns.ldp.inbox, to)
     .then(inboxes => inboxes[0])
 
     .catch(error => {
