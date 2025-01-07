@@ -200,6 +200,7 @@ function getResource (url, headers = {}, options = {}) {
   var _fetch = Config.User.OIDC? __fetch : fetch;
 
   url = url || currentLocation()
+  console.log(url)
   if (url.startsWith('file:')){
     return;
   }

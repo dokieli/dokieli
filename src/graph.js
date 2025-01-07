@@ -498,7 +498,6 @@ function getResourceGraph (iri, headers, options = {}) {
 
   return getResource(iri, headers, options)
     .then(response => {
-
       let cT = response.headers.get('Content-Type')
       options['contentType'] = (cT) ? cT.split(';')[ 0 ].trim() : 'text/turtle'
 
@@ -514,9 +513,15 @@ function getResourceGraph (iri, headers, options = {}) {
       return getGraphFromData(data, options)
     })
     .then(g => {
+      console.log(g)
       let fragment = (iri.lastIndexOf('#') >= 0) ? iri.substr(iri.lastIndexOf('#')) : ''
-
-      return rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(getProxyableIRI(iri) + fragment)('')});
+console.log(iri, getProxyableIRI(iri), fragment)
+var r = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(iri)('')});
+console.log(r.term.value)
+      // var r =  rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(getProxyableIRI(iri) + fragment)('')});
+      // var r = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(iri)});
+      console.log(Array.from(r.out().quads()))
+      return r;
     })
     .catch(e => {
       if ('resource' in e || 'cause' in e || e.status?.toString().startsWith('5')) {
@@ -757,13 +762,11 @@ function getAgentSupplementalInfo(iri) {
   }
 }
 
-function getAgentSeeAlso(g, baseURI) {
+function getAgentSeeAlso(g, subjectURI) {
   if (!g) { return Promise.resolve([]); }
-console.log('------')
-  console.log(baseIRI)
-  baseURI = baseURI || g.in().trim().value;
-console.log(g.in().trim().value)
-  // var seeAlso = g.child(baseURI).rdfsseeAlso;
+
+  subjectURI = subjectURI || g.term.value;
+  var baseURI = stripFragmentFromString(subjectURI);
   var seeAlso = g.out(ns.rdfs.seeAlso).values;
 
   if (seeAlso.length) {
@@ -771,8 +774,8 @@ console.log(g.in().trim().value)
     var promises = [];
 
     seeAlso.forEach(iri => {
-      if (!Config.User.SeeAlso.includes(iri)) {
-        iris.push(iri)
+      if (!Config.User.SeeAlso.includes(iri) && (stripFragmentFromString(iri) != baseURI)) {
+        iris.push(iri);
       }
     });
 
@@ -786,12 +789,10 @@ console.log(g.in().trim().value)
         var promisesGetAgentSeeAlso = [];
 
         results.forEach(result => {
-// console.log(result)
-
           var g = result.value;
 
           if (g) {
-            var s = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(baseURI)('')});
+            var s = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(subjectURI)('')});
 
             var knows = getAgentKnows(s) || [];
             var liked = getAgentLiked(s) || [];
@@ -799,37 +800,37 @@ console.log(g.in().trim().value)
             var publications = getAgentPublications(s) || [];
             var made = getAgentMade(s) || [];
 
-            if (knows.length > 0) {
+            if (knows.length) {
               Config.User.Knows = (Config.User.Knows)
                 ? uniqueArray(Config.User.Knows.concat(knows))
                 : knows;
             }
 
-            if (liked.length > 0) {
+            if (liked.length) {
               Config.User.Liked = (Config.User.Liked)
                 ? uniqueArray(Config.User.Liked.concat(liked))
                 : liked;
             }
 
-            if (occupations.length > 0) {
+            if (occupations.length) {
               Config.User.Occupations = (Config.User.Occupations)
                 ? uniqueArray(Config.User.Occupations.concat(occupations))
                 : occupations;
             }
 
-            if (publications.length > 0) {
+            if (publications.length) {
               Config.User.Publications = (Config.User.Publications)
                 ? uniqueArray(Config.User.Publications.concat(publications))
                 : publications;
             }
 
-            if (made.length > 0) {
+            if (made.length) {
               Config.User.Made = (Config.User.Made)
                 ? uniqueArray(Config.User.Made.concat(made))
                 : made;
             }
-console.log(g.in().trim().value)
-            promisesGetAgentSeeAlso.push(getAgentSeeAlso(g, g.in().trim().value))
+
+            promisesGetAgentSeeAlso.push(getAgentSeeAlso(g, subjectURI))
           }
         })
 
@@ -886,20 +887,20 @@ function getAgentTypeIndex(s) {
 
   var fetchTypeRegistration = function(iri, typeIndexType) {
     return getResourceGraph(iri)
-      .then(function(g){
+      .then(g => {
         //XXX: https://github.com/solid/type-indexes/issues/29 for potential property to discover TypeRegistrations.
 // console.log(iri, g);
         if(!g) {
           return {};
         }
 
-        var triples = g.graph().toArray();
+        var triples = Array.from(g.out().quads());
 // console.log(triples);
-        if(triples.length > 0) {
+        if (triples.length) {
           var typeIndexes = {};
           typeIndexes[typeIndexType] = {};
 
-          triples.forEach(function(t){
+          triples.forEach(t => {
             var s = t.subject.value;
             var p = t.predicate.value;
             var o = t.object.value;
@@ -910,7 +911,7 @@ function getAgentTypeIndex(s) {
             }
           });
 
-          triples.forEach(function(t){
+          triples.forEach(t => {
             var s = t.subject.value;
             var p = t.predicate.value;
             var o = t.object.value;
@@ -933,11 +934,11 @@ function getAgentTypeIndex(s) {
   var publicTypeIndex = getAgentPublicTypeIndex(s);
   var privateTypeIndex = getAgentPrivateTypeIndex(s);
 
-  if (publicTypeIndex) {
-    promises.push(fetchTypeRegistration(publicTypeIndex, ns.solid.publicTypeIndex))
+  if (publicTypeIndex?.length) {
+    promises.push(fetchTypeRegistration(publicTypeIndex[0], ns.solid.publicTypeIndex))
   }
-  if (privateTypeIndex && Config.User.OIDC) {
-    promises.push(fetchTypeRegistration(privateTypeIndex, ns.solid.privateTypeIndex))
+  if (privateTypeIndex?.length && Config.User.OIDC) {
+    promises.push(fetchTypeRegistration(privateTypeIndex[0], ns.solid.privateTypeIndex))
   }
 
   return Promise.allSettled(promises)
@@ -955,12 +956,13 @@ function getAgentTypeIndex(s) {
 }
 
 function processSameAs(s, callback) {
-  if (s.owlsameAs && s.owlsameAs._array.length > 0){
-    var iris = s.owlsameAs._array;
+  var sameAs = s.out(ns.owl.sameAs).values;
+
+  if (sameAs.length){
     var promises = [];
-    iris.forEach(function(iri){
+    sameAs.forEach(function(iri){
 // console.log(iri);
-      if(iri != Config.User.IRI && Config.User.SameAs.indexOf(iri) < 0) {
+      if(iri != Config.User.IRI && !Config.User.SameAs.includes(iri)) {
         Config.User.SameAs = uniqueArray(Config.User.SameAs.concat(iri));
 
         if (typeof callback !== 'undefined') {
@@ -986,11 +988,11 @@ function processSameAs(s, callback) {
 }
 
 function getAgentPreferredProxy (s) {
-  return s.out(ns.solid.preferredProxy).value || undefined
+  return s.out(ns.solid.preferredProxy).values[0] || undefined
 }
 
 function getAgentPreferredPolicy (s) {
-  return s.out(ns.solid.preferredPolicy).value || undefined
+  return s.out(ns.solid.preferredPolicy).values[0] || undefined
 }
 
 function getAgentName (s) {
@@ -1050,17 +1052,17 @@ function getAgentKnows (s) {
   var foafknows = s.out(ns.foaf.knows).values;
   var schemaknows = s.out(ns.schema.knows).values;
 
-  if (foafknows.length > 0){
+  if (foafknows.length){
     knows = knows.concat(foafknows);
   }
 
-  if (schemaknows.length > 0){
+  if (schemaknows.length){
     knows = knows.concat(schemaknows);
   }
 
   knows = uniqueArray(knows);
 
-  return (knows.length > 0) ? knows : undefined;
+  return (knows.length) ? knows : undefined;
 }
 
 function getAgentFollowing (s) {
@@ -1080,37 +1082,37 @@ function getAgentFollowing (s) {
 }
 
 function getAgentPublicTypeIndex (s) {
-  var d = s.out(ns.solid.publicTypeIndex.values);
+  var d = s.out(ns.solid.publicTypeIndex).values;
   return d.length ? d : undefined;
 }
 
 function getAgentPrivateTypeIndex (s) {
-  var d = s.out(ns.solid.privateTypeIndex.values);
+  var d = s.out(ns.solid.privateTypeIndex).values;
   return d.length ? d : undefined;
 }
 
 function getAgentPreferencesFile (s) {
-  var d = s.out(ns.pim.preferencesFile.values);
+  var d = s.out(ns.pim.preferencesFile).values;
   return d.length ? d : undefined;
 }
 
 function getAgentLiked (s) {
-  var d = s.out(ns.as.liked.values);
+  var d = s.out(ns.as.liked).values;
   return d.length ? d : undefined;
 }
 
 function getAgentOccupations (s) {
-  var d = s.out(ns.schema.hasOccupation.values);
+  var d = s.out(ns.schema.hasOccupation).values;
   return d.length ? d : undefined;
 }
 
 function getGraphAudience (s) {
-  var d = s.out(ns.schema.audience.values);
+  var d = s.out(ns.schema.audience).values;
   return d.length ? d : undefined;
 }
 
 function getAgentPublications (s) {
-  var d = s.out(ns.foaf.publications.values);
+  var d = s.out(ns.foaf.publications).values;
   return d.length ? d : undefined;
 }
 

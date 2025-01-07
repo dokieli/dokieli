@@ -2593,24 +2593,24 @@ function showResourceAudienceAgentOccupations() {
       if (Config.User.Occupations.includes(audience)){
         matches.push(getResourceGraph(audience).then(g => {
           Config.Resource[audience] = { graph: g };
-          return (g) ? g.child(audience) : g;
+          return (g) ? rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(audience)('')}) : g;
         }));
       }
     })
 
     Promise.allSettled(matches)
-      .then(function(results){
+      .then(results => {
         var ul = [];
 
         results.forEach(result => {
           var g = result.value;
 
           if (g) {
-            var iri = g.iri().toString();
+            var iri = g.term.value;
             //TODO: Update getGraphConceptLabel to have an optional parameter that takes language tag, e.g., 'en'.
             var skosLabels = getGraphConceptLabel(g);
             var label = iri;
-            if (skosLabels.length > 0) {
+            if (skosLabels.length) {
               // label = skosLabels[Math.floor(Math.random() * skosLabels.length)];
               label = skosLabels[0];
               Config.Resource[iri]['labels'] = skosLabels;

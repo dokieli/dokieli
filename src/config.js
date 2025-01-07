@@ -382,7 +382,8 @@ export default {
       "https://www.w3.org/ns/activitystreams#Group":"Group",
       "https://www.w3.org/ns/activitystreams#Organization":"Organization",
       "https://www.w3.org/ns/activitystreams#Person":"Person",
-      "https://www.w3.org/ns/activitystreams#Service":"Service"
+      "https://www.w3.org/ns/activitystreams#Service":"Service",
+      "https://d-nb.info/standards/elementset/gnd#DifferentiatedPerson":"Person"
     },
 
     Property: {
