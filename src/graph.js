@@ -13,9 +13,10 @@ import DOMPurify from 'dompurify';
 const ns = Config.ns;
 
 function getGraphFromData (data, options = {}) {
-  if (!('contentType' in options)) {
-    options['contentType'] = 'text/turtle'
-  }
+  options['contentType'] = options.contentType || 'text/turtle';
+
+  var baseIRI = options.subjectURI || Config.DocumentURL;
+  baseIRI = stripFragmentFromString(baseIRI);
 
   // FIXME: These are fugly but a temporary fix to get around the baseURI not being passed to the DOM parser. This injects the `base` element into the document so that the parsers fallsback to that. The actual fix should happen upstream. See related issues:
   // https://github.com/dokieli/dokieli/issues/132
@@ -52,10 +53,12 @@ function getGraphFromData (data, options = {}) {
       break;
   }
 
+
+
   //TODO: Look into a wrapping function so that we don't have to pass baseURI twice; getRDFParser, parser.import
-  const parser = getRDFParser(options.subjectURI, options.contentType);
+  const parser = getRDFParser(baseIRI, options.contentType);
   const nodeStream = stringToStream(data);
-  const quadStream = parser.import(nodeStream, { 'baseIRI': options.subjectURI });
+  const quadStream = parser.import(nodeStream, { baseIRI: baseIRI });
 // console.log(quadStream)
 
   return rdf.dataset().import(quadStream).then((dataset) => {
@@ -505,24 +508,25 @@ function getResourceGraph (iri, headers, options = {}) {
         return Promise.reject({ resource: iri, response: response, message: 'Unsupported media type for RDF parsing: ' + options['contentType'] })
       }
 
-      options['subjectURI'] = stripFragmentFromString(iri)
+      // options['subjectURI'] = stripFragmentFromString(iri)
+      options['subjectURI'] = iri
 
       return response.text()
     })
     .then(data => {
       return getGraphFromData(data, options)
     })
-    .then(g => {
-      console.log(g)
-      let fragment = (iri.lastIndexOf('#') >= 0) ? iri.substr(iri.lastIndexOf('#')) : ''
-console.log(iri, getProxyableIRI(iri), fragment)
-var r = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(iri)('')});
-console.log(r.term.value)
-      // var r =  rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(getProxyableIRI(iri) + fragment)('')});
-      // var r = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(iri)});
-      console.log(Array.from(r.out().quads()))
-      return r;
-    })
+//     .then(g => {
+// console.log(g)
+//       let fragment = (iri.lastIndexOf('#') >= 0) ? iri.substr(iri.lastIndexOf('#')) : ''
+// console.log(iri, getProxyableIRI(iri), fragment)
+//       var r = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(iri)('')});
+// console.log(r.term.value)
+//       // var r =  rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(getProxyableIRI(iri) + fragment)('')});
+
+//       console.log(Array.from(r.out().quads()))
+//       return r;
+//     })
     .catch(e => {
       if ('resource' in e || 'cause' in e || e.status?.toString().startsWith('5')) {
         return e;
@@ -640,8 +644,8 @@ function getAgentPreferencesInfo(g) {
 
   var preferencesFile = getAgentPreferencesFile(g) || Config.User.PreferencesFile;
 
-  if (preferencesFile) {
-    return getResourceGraph(preferencesFile);
+  if (preferencesFile.length) {
+    return getResourceGraph(preferencesFile[0]);
   }
   else {
     return Promise.reject({});
@@ -889,13 +893,15 @@ function getAgentTypeIndex(s) {
     return getResourceGraph(iri)
       .then(g => {
         //XXX: https://github.com/solid/type-indexes/issues/29 for potential property to discover TypeRegistrations.
-// console.log(iri, g);
-        if(!g) {
+console.log(iri, g, g.term.value, typeIndexType);
+        if (!g) {
           return {};
         }
 
+        // g = rdf.grapoi({ dataset: g.dataset });
+
         var triples = Array.from(g.out().quads());
-// console.log(triples);
+console.log(triples);
         if (triples.length) {
           var typeIndexes = {};
           typeIndexes[typeIndexType] = {};
@@ -910,20 +916,20 @@ function getAgentTypeIndex(s) {
               typeIndexes[typeIndexType][s][p] = o;
             }
           });
-
+console.log(typeIndexes)
           triples.forEach(t => {
             var s = t.subject.value;
             var p = t.predicate.value;
             var o = t.object.value;
 
-            if(typeIndexes[typeIndexType][s]) {
+            if (typeIndexes[typeIndexType][s]) {
               if (p == ns.solid.instance ||
                   p == ns.solid.instanceContainer) {
                 typeIndexes[typeIndexType][s][p] = o;
               }
             }
           });
-// console.log(typeIndexes)
+console.log(typeIndexes)
           return typeIndexes
         }
       })
@@ -1266,14 +1272,16 @@ function getGraphConceptLabel(g, options) {
     notation: []
   };
   options = options || {};
-  options['subjectURI'] = options['subjectURI'] || g.in().trim().value;
+  options['subjectURI'] = options['subjectURI'] || g.term.value;
   options['lang'] = options['lang'] || 'en';
+
+  var documentURL = Config.DocumentURL;
 
   //FIXME: Using this approach temporarily that is tied to SimpleRDF for convenience until it is replaced. It is fugly but it works. Make it better!
 
   var triples = Array.from(g.out().quads());
 
-  triples.forEach(function(t){
+  triples.forEach(t => {
 // console.log(t)
     var s = t.subject.value;
     var p = t.predicate.value;
@@ -1284,7 +1292,7 @@ function getGraphConceptLabel(g, options) {
         labels.prefLabel.push(o);
       }
       else if (p == ns.skosxl.prefLabel) {
-        var quads = rdf.grapoi({dataset: DO.C.Resource[documentURL]['graph'].dataset, term: rdf.namespace(o)('')}).out().quads();
+        var quads = rdf.grapoi({dataset: Config.Resource[documentURL]['graph'].dataset, term: rdf.namespace(o)('')}).out().quads();
         quads.forEach(oT => {
           var oS = oT.subject.value;
           var oP = oT.predicate.value;
@@ -1299,7 +1307,7 @@ function getGraphConceptLabel(g, options) {
         labels.altLabel.push(o);
       }
       else if (p == ns.skosxl.altLabel) {
-        var quads = rdf.grapoi({dataset: DO.C.Resource[documentURL]['graph'].dataset, term: rdf.namespace(o)('')}).out().quads();
+        var quads = rdf.grapoi({dataset: Config.Resource[documentURL]['graph'].dataset, term: rdf.namespace(o)('')}).out().quads();
         quads.forEach(oT => {
           var oS = oT.subject.value;
           var oP = oT.predicate.value;
@@ -1462,7 +1470,7 @@ function getAuthorizationsMatching (g, matchers) {
   subjects.forEach(i => {
     var s = g.child(i);
 
-    if (s.rdftype._array.includes(ns.acl.Authorization)) {
+    if (s.rdftype._array.includes(ns.acl.Authorization.value)) {
       var authorizationIRI = s.iri().toString();
       var candidateAuthorization = {};
 

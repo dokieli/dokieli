@@ -1832,19 +1832,19 @@ function updateFeatureStatesOfResourceInfo(info) {
     }
 
     if (info['odrl'] && info['odrl']['prohibitionActions'] && info['odrl']['prohibitionAssignee'] == Config.User.IRI) {
-      if (info['odrl']['prohibitionActions'].includes(ns.odrl.archive)) {
+      if (info['odrl']['prohibitionActions'].includes(ns.odrl.archive.value)) {
         Config.ButtonState['snapshot-internet-archive'] = false;
       }
 
-      if (info['odrl']['prohibitionActions'].includes(ns.odrl.derive)) {
+      if (info['odrl']['prohibitionActions'].includes(ns.odrl.derive.value)) {
         Config.ButtonState['resource-save-as'] = false;
       }
 
-      if (info['odrl']['prohibitionActions'].includes(ns.odrl.print)) {
+      if (info['odrl']['prohibitionActions'].includes(ns.odrl.print.value)) {
         Config.ButtonState['resource-print'] = false;
       }
 
-      if (info['odrl']['prohibitionActions'].includes(ns.odrl.reproduce)) {
+      if (info['odrl']['prohibitionActions'].includes(ns.odrl.reproduce.value)) {
         Config.ButtonState['create-immutable'] = false;
         Config.ButtonState['create-version'] = false;
         Config.ButtonState['export-as-html'] = false;
@@ -1854,7 +1854,7 @@ function updateFeatureStatesOfResourceInfo(info) {
         Config.ButtonState['generate-feed'] = false;
       }
 
-      if (info['odrl']['prohibitionActions'].includes(ns.odrl.transform)) {
+      if (info['odrl']['prohibitionActions'].includes(ns.odrl.transform.value)) {
         Config.ButtonState['export-as-html'] = false;
       }
     }
@@ -2607,8 +2607,10 @@ function showResourceAudienceAgentOccupations() {
 
           if (g) {
             var iri = g.term.value;
+
             //TODO: Update getGraphConceptLabel to have an optional parameter that takes language tag, e.g., 'en'.
             var skosLabels = getGraphConceptLabel(g);
+console.log(iri, skosLabels)
             var label = iri;
             if (skosLabels.length) {
               // label = skosLabels[Math.floor(Math.random() * skosLabels.length)];

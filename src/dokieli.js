@@ -82,7 +82,7 @@ DO = {
               DO.C.CollectionPages.push(url);
             }
 
-            var items = [s.asitems, s.asorderedItems, s.ldpcontains];
+            var items = [s.asitems, s.asorderedItems, s.out(ns.ldp.contains)];
             Object.keys(items).forEach(function(i) {
               items[i].forEach(function(resource){
 // console.log(resource)
@@ -94,7 +94,7 @@ DO = {
                 }
                 else {
                   //FIXME: This may need to be processed outside of items? See also comment above about processing Collection and CollectionPages.
-                  var types = r.rdftype._array || [];
+                  var types = r.out(ns.rdf.type).values || [];
                   //Include only non-container/collection and items that's not from an RDFList
                   if (types.indexOf(ns.ldp.Container) < 0 &&
                      types.indexOf(ns.as.Collection) < 0 &&
@@ -145,7 +145,7 @@ DO = {
             DO.C.Inbox[url]['Graph'] = i;
 
             var s = i.child(url);
-            s.ldpcontains.forEach(function(resource) {
+            s.out(ns.ldp.contains).forEach(function(resource) {
 // console.log(resource);
               var types = s.child(resource).rdftype;
 // console.log(types);
@@ -417,7 +417,7 @@ DO = {
           subjects.forEach(function(i){
             var s = g.child(i)
 // console.log(s)
-            var types = s.rdftype._array || [];
+            var types = s.out(ns.rdf.type).values || [];
 
             if (types.length > 0) {
               var resourceTypes = types;
@@ -3160,7 +3160,7 @@ console.log(reason);
         var s = testSuiteGraph.child(i)
         var testCaseIRI = s.iri().toString();
 // console.log(s)
-        var types = s.rdftype._array || [];
+        var types = s.out(ns.rdf.type).values || [];
 
         if (types.length > 0) {
           var resourceTypes = types;
@@ -4577,7 +4577,7 @@ console.log(reason);
       }
 
       var shareResourceLinkedResearch = '';
-      if (DO.C.User.IRI && DO.C.OriginalResourceInfo['rdftype'] && DO.C.OriginalResourceInfo.rdftype.includes(ns.schema.ScholarlyArticle) || DO.C.OriginalResourceInfo.rdftype.includes(ns.schema.Thesis)) {
+      if (DO.C.User.IRI && DO.C.OriginalResourceInfo['rdftype'] && DO.C.OriginalResourceInfo.rdftype.includes(ns.schema.ScholarlyArticle.value) || DO.C.OriginalResourceInfo.rdftype.includes(ns.schema.Thesis.value)) {
         shareResourceLinkedResearch = `
           <div id="share-resource-external">
             <h3>Share with research community</h3>
@@ -4799,9 +4799,9 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 // console.log(verifiedAccessModes)
 
                 const selectedAccessMode =
-                  (verifiedAccessModes.includes(ns.acl.Control) && ns.acl.Control) ||
-                  (verifiedAccessModes.includes(ns.acl.Write) && ns.acl.Write) ||
-                  (verifiedAccessModes.includes(ns.acl.Read) && ns.acl.Read) ||
+                  (verifiedAccessModes.includes(ns.acl.Control.value) && ns.acl.Control.value) ||
+                  (verifiedAccessModes.includes(ns.acl.Write.value) && ns.acl.Write.value) ||
+                  (verifiedAccessModes.includes(ns.acl.Read.value) && ns.acl.Read.value) ||
                   '';
 
                 var options = options || {};
@@ -5237,27 +5237,23 @@ console.log(e);
         list.innerHTML = '';
 
         var urlPath = url.split("/");
-        if(urlPath.length > 4){ // This means it's not the base URL
+        if (urlPath.length > 4){ // This means it's not the base URL
           urlPath.splice(-2,2);
           var prevUrl = forceTrailingSlash(urlPath.join("/"));
           var upBtn = '<li class="container"><input type="radio" name="containers" value="' + prevUrl + '" id="' + prevUrl + '" /><label for="' + prevUrl + '" id="browser-up">..</label></li>';
           list.insertAdjacentHTML('afterbegin', upBtn);
         }
 
-        var current = g.child(url);
-        var contains = current.ldpcontains;
+        var current = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(url)('')});
+        var contains = current.out(ns.ldp.contains).values;
         var containersLi = Array();
         var resourcesLi = Array();
-        contains.forEach(function(c){
-          var cg = g.child(c);
-          var types = cg.rdftype;
-          var resourceTypes = [];
-          types.forEach(function(type){
-            resourceTypes.push(type);
-          });
-
+        contains.forEach(c => {
+          var cg = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(c)('')});
+          var resourceTypes = cg.out(ns.rdf.type).values;
+ 
           var path = c.split("/");
-          if(resourceTypes.indexOf('http://www.w3.org/ns/ldp#Container') > -1 || resourceTypes.indexOf('http://www.w3.org/ns/ldp#BasicContainer') > -1){
+          if (resourceTypes.includes(ns.ldp.Container.value) || resourceTypes.includes(ns.ldp.BasicContainer.value)){
             var slug = path[path.length-2];
             containersLi.push('<li class="container"><input type="radio" name="resources" value="' + c + '" id="' + slug + '"/><label for="' + slug + '">' + decodeURIComponent(slug) + '</label></li>');
           }
@@ -5368,7 +5364,7 @@ console.log(e);
               ///TODO: Handle multiple storage descriptions?
               var sDURL = sDURLs[0];
               DO.C.Storages = DO.C.Storages || {};
-              DO.C.Storages[s.iri().toString()] = {
+              DO.C.Storages[s.term.value] = {
                 "storageDescription": sDURL
               };
             }
@@ -5386,9 +5382,9 @@ console.log(e);
                 if (!storageDescriptionNode) {
                   var storageLocation = '<dl id="storage-location"><dt>Storage location</dt><dd><a href="' + storageUrl +'" target="_blank">' + storageUrl + '</a></dd></dl>';
 
-                  getResourceGraph(sDURL).then(function(g){
+                  getResourceGraph(sDURL).then(g => {
                     if (g) {
-                      g = (g.foafprimaryTopic) ? g.child(g.foafprimaryTopic) : g.child(storageUrl);
+                      g = (g.foafprimaryTopic) ? rdf.grapoi({ dataset: g.dataset, term: ns.foaf.primaryTopic }) : rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(storageUrl)('')});
 
                       var selfDescription = DO.U.getStorageSelfDescription(g);
                       var contactInformation = DO.U.getContactInformation(g);
@@ -5399,7 +5395,7 @@ console.log(e);
                       sD.insertAdjacentHTML('beforeend', '<div id="' + id + '-storage-description">' + storageLocation + selfDescription + contactInformation + persistencePolicy + odrlPolicies + communicationOptions + '</div>');
 
                       var subscriptionsId = id + '-storage-description-details';
-                      var topicResource = s.iri().toString();
+                      var topicResource = s.term.value;
 
                       var nodes = document.querySelectorAll('[id="' + id + '-storage-description"] [id^="notification-subscriptions-"]');
                       DO.U.buttonSubscribeNotificationChannel(nodes, topicResource);
@@ -5426,16 +5422,17 @@ console.log(e);
       var s = '';
 
       var storageName = getGraphLabel(g);
-      var storageURL = g.iri().toString();
+      
+      var storageURL = g.term.value;
 
       storageName = (typeof storageName !== 'undefined') ? storageName : storageURL;
 
-      DO.C.Resource[g.iri().toString()] = DO.C.Resource[g.iri().toString()] || {};
-      DO.C.Resource[g.iri().toString()]['title'] = storageName;
-      DO.C.Resource[g.iri().toString()]['description'] = g.schemaabstract || g.dctermsdescription || g.rdfvalue || g.assummary || g.schemadescription || g.ascontent || undefined;
+      DO.C.Resource[storageURL] = DO.C.Resource[storageURL] || {};
+      DO.C.Resource[storageURL]['title'] = storageName;
+      DO.C.Resource[storageURL]['description'] = g.out(ns.schema.abstract).values[0] || g.out(ns.dcterms.description).values[0] || g.out(ns.rdf.value).values[0] || g.out(ns.as.summary).values[0] || g.out(ns.schema.description).values[0] || g.out(ns.as.content).values[0] || undefined;
 
       var storageTitle = '<dt>Storage name</dt><dd><a href="' + storageURL + '">' + storageName + '</a></dd>';
-      var storageDescription = (DO.C.Resource[g.iri().toString()]['description']) ? '<dt>Storage description</dt><dd>' + DO.C.Resource[g.iri().toString()]['description'] + '</dd>' : '';
+      var storageDescription = (DO.C.Resource[storageURL]['description']) ? '<dt>Storage description</dt><dd>' + DO.C.Resource[storageURL]['description'] + '</dd>' : '';
 
       s = '<dl id="storage-self-description">' + storageTitle + storageDescription + '</dl>';
 
@@ -5445,14 +5442,16 @@ console.log(e);
     getPersistencePolicy: function(g) {
       var s = '';
 
-      if (g.pimpersistencePolicy && g.pimpersistencePolicy._array.length > 0) {
+      var persistencePolicy = g.out(ns.pim.persistencePolicy).values;
+
+      if (persistencePolicy.length) {
         var pp = [];
 
-        DO.C.Resource[g.iri().toString()] = DO.C.Resource[g.iri().toString()] || {};
-        DO.C.Resource[g.iri().toString()]['persistencePolicy'] = [];
+        DO.C.Resource[g.term.value] = DO.C.Resource[g.term.value] || {};
+        DO.C.Resource[g.term.value]['persistencePolicy'] = [];
 
-        g.pimpersistencePolicy.forEach(function(iri){
-          DO.C.Resource[g.iri().toString()]['persistencePolicy'].push(iri);
+        persistencePolicy.forEach(iri => {
+          DO.C.Resource[g.term.value]['persistencePolicy'].push(iri);
 
           pp.push('<dd><a href="' + iri  + '" target="_blank">' + iri + '</a></dd>');
         });
@@ -5467,13 +5466,15 @@ console.log(e);
       var s = '';
       var odrlPolicies = [];
 
-      if (g.odrlhasPolicy && g.odrlhasPolicy._array.length > 0) {
-        g.odrlhasPolicy._array.forEach(function(iri){
-          var policy = g.child(iri);
+      var hasPolicy = g.out(ns.odrl.hasPolicy).values;
+
+      if (hasPolicy.length) {
+        hasPolicy.forEach(iri => {
+          var policy = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(iri)('') });
           var policyDetails = [];
 
-          var types = policy.rdftype._array;
-          var indexPolicy = types.indexOf(ns.odrl.Offer) || types.indexOf(ns.odrl.Agreement);
+          var types = policy.out(ns.rdf.type).values;
+          var indexPolicy = types.indexOf(ns.odrl.Offer.value) || types.indexOf(ns.odrl.Agreement.value);
           if (indexPolicy >= 0) {
             var rule = types[indexPolicy];
             //XXX: Label derived from URI.
@@ -5484,24 +5485,27 @@ console.log(e);
 
           //TODO: odrl:Set
 
-          if (policy.odrluid && policy.odrluid.at(0)) {
-            policyDetails.push('<dt>Unique identifier<dt><dd><a href="' + policy.odrluid + '" target="_blank">' + policy.odrluid + '</a></dd>');
+          var uid = policy.out(ns.odrl.uid).values[0];
+          if (uid) {
+            policyDetails.push('<dt>Unique identifier<dt><dd><a href="' + uid + '" target="_blank">' + uid + '</a></dd>');
           }
 
-          if (policy.odrtarget && policy.odrltarget.at(0)) {
-            policyDetails.push('<dt>Target<dt><dd><a href="' + policy.odrltarget + '" target="_blank">' + policy.odrltarget + '</a></dd>');
+          var target = policy.out(ns.odrl.target).values[0];
+          if (target) {
+            policyDetails.push('<dt>Target<dt><dd><a href="' + target + '" target="_blank">' + target + '</a></dd>');
           }
-
-          if (policy.odrlpermission && policy.odrlpermission.at(0)) {
-            var ruleG = g.child(policy.odrlpermission.at(0));
+          
+          var permission = policy.out(ns.odrl.permission).values[0];
+          if (permission) {
+            var ruleG = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(permission)('') });
 
             policyDetails.push(DO.U.getODRLRuleActions(ruleG));
             policyDetails.push(DO.U.getODRLRuleAssigners(ruleG));
             policyDetails.push(DO.U.getODRLRuleAssignees(ruleG));
           }
-
-          if (policy.odrlprohibition && policy.odrlprohibition.at(0)) {
-            ruleG = g.child(policy.odrlprohibition.at(0));
+          var prohibition = policy.out(ns.odrl.prohibition).values[0];
+          if (prohibition) {
+            ruleG = ruleG = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(prohibition)('') });
 
             policyDetails.push(DO.U.getODRLRuleActions(ruleG));
             policyDetails.push(DO.U.getODRLRuleAssigners(ruleG));
@@ -6462,9 +6466,9 @@ console.log(response)
 
           var types = g.out(ns.rdf.type).values;
 // console.log(types)
-          if(types.includes(ns.ldp.Container) ||
-             types.includes(ns.as.Collection) ||
-             types.includes(ns.as.OrderedCollection)) {
+          if(types.includes(ns.ldp.Container.value) ||
+             types.includes(ns.as.Collection.value) ||
+             types.includes(ns.as.OrderedCollection.value)) {
 
             return DO.U.processResources(options['subjectURI'], options).then(
               function(urls) {
@@ -8182,8 +8186,8 @@ WHERE {\n\
             if (body) {
 // console.log(body.toString());
 
-              if (body.rdftype && body.rdftype._array.length > 0) {
-                bodyObject['type'] = body.rdftype._array;
+              if (body.rdftype && body.out(ns.rdf.type).values.length > 0) {
+                bodyObject['type'] = body.out(ns.rdf.type).values;
               }
 
               if (body.rdfvalue) {
@@ -8252,7 +8256,7 @@ WHERE {\n\
 // console.log(selector);
 
 // console.log(selector.rdftype);
-// console.log(selector.rdftype._array);
+// console.log(selector.out(ns.rdf.type).values);
           //FIXME: This is taking the first rdf:type. There could be multiple.
           var selectorTypes;
           if (selector.rdftype && selector.rdftype.at(0)) {
