@@ -293,7 +293,7 @@ function getSubjectInfo (subjectIRI, options = {}) {
         return {};
       }
 
-      g = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(subjectIRI)('')});
+      g = g.node(rdf.namedNode(subjectIRI));
 
       return {
         Graph: g,
@@ -322,7 +322,7 @@ function getSubjectInfo (subjectIRI, options = {}) {
         Liked: getAgentLiked(g),
         Occupations: getAgentOccupations(g),
         Publications: getAgentPublications(g),
-        Made: getAgentMade(g),
+        Made: getAgentMade(g)
       }
     })
     .then(agent => {
@@ -359,13 +359,13 @@ function afterSignIn () {
     promises.push(getAgentPreferencesInfo(Config.User.Graph)
       .then(preferencesInfo => {
         Config.User['Preferences'] = { graph: preferencesInfo };
-        return rdf.grapoi({ dataset: preferencesInfo.dataset, term: rdf.namespace(Config.User.IRI)('')});
+        return preferencesInfo.node(rdf.namedNode(Config.User.IRI));
       })
       .then(g => {
         setPreferredPolicyInfo(g);
       })
       .catch(error => {
-        var g = rdf.grapoi({ dataset: Config.User.Graph.dataset, term: rdf.namespace(Config.User.IRI)('')});
+        var g = Config.User.Graph.node(rdf.namedNode(Config.User.IRI));
         setPreferredPolicyInfo(g);
       }))
 

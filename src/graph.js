@@ -12,6 +12,9 @@ import DOMPurify from 'dompurify';
 
 const ns = Config.ns;
 
+//https://github.com/rdfjs-base/io
+// https://github.com/rdfjs-base/formats/
+
 function getGraphFromData (data, options = {}) {
   options['contentType'] = options.contentType || 'text/turtle';
 
@@ -59,11 +62,10 @@ function getGraphFromData (data, options = {}) {
   const parser = getRDFParser(baseIRI, options.contentType);
   const nodeStream = stringToStream(data);
   const quadStream = parser.import(nodeStream, { baseIRI: baseIRI });
+  // const dataset = rdf.dataset().import(quadStream);
 // console.log(quadStream)
-
+  // return rdf.grapoi({ dataset });
   return rdf.dataset().import(quadStream).then((dataset) => {
-// console.log(dataset)
-// console.log(dataset.toCanonical());
     return rdf.grapoi({ dataset });
   });
 
@@ -83,12 +85,13 @@ function getGraphFromData (data, options = {}) {
 }
 
 function stringToStream(str) {
-  return new Readable({
-    read() {
-      this.push(str);
-      this.push(null);
-    }
-  })
+  return Readable.from([str]);
+  // return new Readable({
+  //   read() {
+  //     this.push(str);
+  //     this.push(null);
+  //   }
+  // })
 }
 
 function getRDFParser(baseIRI, contentType) {
@@ -618,7 +621,7 @@ function getLinkRelationFromRDF (property, url, subjectIRI) {
 
   return getResourceGraph(subjectIRI)
     .then(i => {
-        var s = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(subjectIRI)('')});
+        var s = g.node(rdf.namedNode(subjectIRI));
 
         var values = s.out(rdf.namespace(property)('')).values;
 
@@ -644,7 +647,7 @@ function getAgentPreferencesInfo(g) {
 
   var preferencesFile = getAgentPreferencesFile(g) || Config.User.PreferencesFile;
 
-  if (preferencesFile.length) {
+  if (preferencesFile?.length) {
     return getResourceGraph(preferencesFile[0]);
   }
   else {
@@ -658,7 +661,7 @@ function getAgentPreferredPolicyRule(s) {
 
   var prohibitions = s.out(ns.odrl.prohibition).values;
   if (prohibitions.length) {
-    var prohibitionG = rdf.grapoi({ dataset: s.dataset, term: rdf.namespace(prohibitions[0])('')});
+    var prohibitionG = s.node(rdf.namedNode(prohibitions[0]));
 
     if (prohibitionG.out(ns.odrl.action).values.length) {
       preferredPolicyRule['Prohibition'] = {};
@@ -668,7 +671,7 @@ function getAgentPreferredPolicyRule(s) {
 
   var permissions = s.out(ns.odrl.permissions).values;
   if (permissions.length) {
-    var permissionG = rdf.grapoi({ dataset: s.dataset, term: rdf.namespace(permissions[0])('')});
+    var permissionG = s.node(rdf.namedNode(permissions[0]));
 
     if (permissionG.out(ns.odrl.action).values.length) {
       preferredPolicyRule['Permission'] = {};
@@ -682,7 +685,7 @@ function getAgentPreferredPolicyRule(s) {
 //TODO: Review grapoi
 function setPreferredPolicyInfo(g) {
   Config.User['PreferredPolicy'] = getAgentPreferredPolicy(g);
-  var s = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(Config.User.PreferredPolicy)('')});
+  var s = g.node(rdf.namedNode(Config.User.PreferredPolicy));
   Config.User['PreferredPolicyRule'] = getAgentPreferredPolicyRule(s);
 }
 
@@ -698,7 +701,7 @@ function getAgentSupplementalInfo(iri) {
           return Promise.resolve([]);
         }
 
-        var s = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(iri)('')});
+        var s = g.node(rdf.namedNode(iri));
 
         Config.User.Name = Config.User.Name || getAgentName(s);
 
@@ -796,7 +799,7 @@ function getAgentSeeAlso(g, subjectURI) {
           var g = result.value;
 
           if (g) {
-            var s = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(subjectURI)('')});
+            var s = g.node(rdf.namedNode(subjectURI));
 
             var knows = getAgentKnows(s) || [];
             var liked = getAgentLiked(s) || [];
@@ -1003,7 +1006,15 @@ function getAgentPreferredPolicy (s) {
 
 function getAgentName (s) {
   var name = s.out(ns.foaf.name).values[0] || s.out(ns.schema.name).values[0] || s.out(ns.vcard.fn).values[0] || s.out(ns.as.name).values[0] || s.out(ns.rdfs.label).values[0] || undefined;
+  // var name = s.out([ns.foaf.name, ns.schema.name]).values[0]
   if (typeof name === 'undefined') {
+    // s.hasOut(ns.schema.familyName).hasOut(ns.schema.givenName)
+    // .map(ptr => {
+    //   return ptr.out(ns.schema.familyName).values[0] + ' '
+    //   ptr.out(ns.schema.givenName).values[0]
+    // })
+    // .out([ns.schema.familyName, ns.schema.givenName]).join(' ')
+
     if (s.out(ns.schema.familyName).values.length && s.out(ns.schema.givenName).values.length) {
       name = s.out(ns.schema.givenName).values[0] + ' ' + s.out(ns.schema.familyName).values[0];
     } else if (s.out(ns.foaf.familyName).values.length && s.out(ns.foaf.givenName).values.length) {
@@ -1134,7 +1145,14 @@ function getGraphImage (s) {
   if (image.length || icon.length) {
     var image = image[0] || icon[0];
     Array.from(s.out().quads()).some(t => {
+      // var image = s.out([ns.as.icon, ns.as.image]).out([ns.as.url, ns.as.href]).values[0];
       if (t.predicate.value == ns.as.url || t.predicate.value == ns.as.href) {
+        // https://github.com/rdfjs-base/to-ntriples
+        // toNT(t.subject)
+        // toNT(t)
+        // toNT(s.dataset)
+        //t.subject.term.equals(s.out(ns.as.icon).terms[0])
+
         if (t.subject.value == s.out(ns.as.icon).values[0] || "_:" + t.subject.value == s.out(ns.as.icon).values[0]) {
           image = t.object.value;
           return true;
@@ -1292,7 +1310,7 @@ function getGraphConceptLabel(g, options) {
         labels.prefLabel.push(o);
       }
       else if (p == ns.skosxl.prefLabel) {
-        var quads = rdf.grapoi({dataset: Config.Resource[documentURL]['graph'].dataset, term: rdf.namespace(o)('')}).out().quads();
+        var quads = Config.Resource[documentURL]['graph'].node(rdf.namedNode(o)).out().quads();
         quads.forEach(oT => {
           var oS = oT.subject.value;
           var oP = oT.predicate.value;
@@ -1307,7 +1325,7 @@ function getGraphConceptLabel(g, options) {
         labels.altLabel.push(o);
       }
       else if (p == ns.skosxl.altLabel) {
-        var quads = rdf.grapoi({dataset: Config.Resource[documentURL]['graph'].dataset, term: rdf.namespace(o)('')}).out().quads();
+        var quads = Config.Resource[documentURL]['graph'].node(rdf.namedNode(o)).out().quads();
         quads.forEach(oT => {
           var oS = oT.subject.value;
           var oP = oT.predicate.value;

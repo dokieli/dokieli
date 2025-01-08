@@ -1605,7 +1605,15 @@ function getResourceInfoODRLPolicies(s) {
 
   var policy = s.out(ns.odrl.hasPolicy);
 
-  policy.forEach(policyIRI => {
+  // for (const policy of s.out(ns.odrl.hasPolicy)) {
+  //   const policyIRI = policy.value
+
+  //   for (const policyType of policy.out(ns.rdf.type)) {
+  //     const policyTypeIRI = policyType.values;
+  //   }
+    
+  // }
+  policy.values.forEach(policyIRI => {
     info['odrl'][policyIRI] = {};
 
     var policyGraph = rdf.grapoi({ dataset: s.dataset, term: rdf.namespace(policyIRI)('')});
@@ -1747,6 +1755,24 @@ function getResourceInfoSKOS(g) {
   info['skos'] = {'data': {}, 'type': {}};
 
   const quads = [];
+
+  // g.out().filter(ptr => {
+  //   return [...ptr.quads()][0].predicate.value.startsWith('')
+  // })
+
+  // const people = []
+
+  // for (const person of g.node(null).hasOut(ns.rdf.type, ns.foaf.Person).hasOut(ns.foaf.image)) {
+  //   people.push({
+  //     firstName: person.out(ns.foaf.firstName).value,
+  //     image: ptr.out(ns.foaf.image).value
+  //   })
+  //  }
+   
+  //  const images = await Promise.all(g.node([person1])
+  //  .map(ptr => fetch(ptr.out(ns.foaf.image).value)))
+  //  //.out([ns.foaf.firstName, ns.foaf.lastName]).values.join(' ')
+
 
   g.out().quads().forEach(t => {
 // console.log(t)
@@ -2610,7 +2636,7 @@ function showResourceAudienceAgentOccupations() {
 
             //TODO: Update getGraphConceptLabel to have an optional parameter that takes language tag, e.g., 'en'.
             var skosLabels = getGraphConceptLabel(g);
-console.log(iri, skosLabels)
+
             var label = iri;
             if (skosLabels.length) {
               // label = skosLabels[Math.floor(Math.random() * skosLabels.length)];

@@ -2274,9 +2274,9 @@ console.log(response.value)
       // var options = {'contentType': 'text/html', 'subjectURI': subjectURI };
 // console.log(options)
       var g = DO.C.Resource[documentURL].graph;
-      var ng = rdf.grapoi({ dataset: g.dataset });
       var citations = Object.keys(DO.C.Citation).concat([ns.dcterms.references, ns.schema.citation]);
       var triples = g.out().quads();
+      // g.out().terms.length
       for (const t of triples) {
 // console.log(t)
         var s = t.subject.value;
@@ -2300,7 +2300,8 @@ console.log(response.value)
       conceptsList = (skos.type && skos.type[ns.skos.Concept]) ? skos.type[ns.skos.Concept] : conceptsList;
 
       var concepts = '<tr class="concepts"><th>Concepts</th><td>' + conceptsList.length + '</td></tr>';
-      var statements = '<tr class="statements"><th>Statements</th><td>' + Array.from(triples).length + '</td></tr>';
+      // TODO: Review grapoi . Check it matches expected
+      var statements = '<tr class="statements"><th>Statements</th><td>' + g.out().terms.length + '</td></tr>';
 
       // var g = s.child(options['subjectURI']);
 
@@ -2312,7 +2313,7 @@ console.log(response.value)
 
       if (graphEditors) {
         graphEditors.forEach(i => {
-          var go = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(i)('')});
+          var go = g.node(rdf.namedNode(i));
           let name = getGraphLabelOrIRI(go);
           name = (name === i) ? getUserLabelOrIRI(i) : name;
           editors.push(`<li>${name}</li>`);
@@ -2324,7 +2325,7 @@ console.log(response.value)
 
       if (graphAuthors) {
         graphAuthors.forEach(i => {
-          var go = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(i)('')});
+          var go = g.node(rdf.namedNode(i));
           let name = getGraphLabelOrIRI(go);
           name = (name === i) ? getUserLabelOrIRI(i) : name;
           authors.push(`<li>${name}</li>`);
@@ -2336,7 +2337,7 @@ console.log(response.value)
 
       if (graphContributors) {
         graphContributors.forEach(i => {
-          var go = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(i)('')});
+          var go = g.node(rdf.namedNode(i));
           let name = getGraphLabelOrIRI(go);
           name = (name === i) ? getUserLabelOrIRI(i) : name;
           contributors.push(`<li>${name}</li>`);
@@ -2348,7 +2349,7 @@ console.log(response.value)
 
       if (graphPerformers) {
         graphPerformers.forEach(i => {
-          var go = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(i)('')});
+          var go = g.node(rdf.namedNode(i));
           let name = getGraphLabelOrIRI(go);
           name = (name === i) ? getUserLabelOrIRI(i) : name;
           performers.push(`<li>${name}</li>`);
@@ -2496,7 +2497,7 @@ console.log(response.value)
 
         sortToLower(DO.C.Resource[documentURL]['skos']['type'][rdftype]).forEach(subject => {
 console.log(rdftype, subject)
-          var g = rdf.grapoi({dataset: DO.C.Resource[documentURL]['graph'].dataset, term: rdf.namespace(subject)('')});
+          var g = DO.C.Resource[documentURL]['graph'].node(rdf.namedNode(subject));
 
           var conceptLabel = sortToLower(getGraphConceptLabel(g));
           conceptLabel = (conceptLabel.length > 0) ? conceptLabel.join(' / ') : getFragmentOrLastPath(subject);
@@ -2518,7 +2519,7 @@ console.log(rdftype, subject)
 
               if (concept && concept.length > 0) {
                 sortToLower(concept).forEach(function(c) {
-                  var conceptGraph = rdf.grapoi({dataset: DO.C.Resource[documentURL]['graph'].dataset, term: rdf.namespace(c)('')});
+                  var conceptGraph = DO.C.Resource[documentURL]['graph'].node(rdf.namedNode(c));
                   var cLabel = getGraphConceptLabel(conceptGraph);
                   cLabel = (cLabel.length > 0) ? cLabel : [getFragmentOrLastPath(c)];
                   cLabel.forEach(function(cL) {
@@ -5244,12 +5245,12 @@ console.log(e);
           list.insertAdjacentHTML('afterbegin', upBtn);
         }
 
-        var current = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(url)('')});
+        var current = g.node(rdf.namedNode(url));
         var contains = current.out(ns.ldp.contains).values;
         var containersLi = Array();
         var resourcesLi = Array();
         contains.forEach(c => {
-          var cg = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(c)('')});
+          var cg = g.node(rdf.namedNode(c));
           var resourceTypes = cg.out(ns.rdf.type).values;
  
           var path = c.split("/");
@@ -5384,7 +5385,8 @@ console.log(e);
 
                   getResourceGraph(sDURL).then(g => {
                     if (g) {
-                      g = (g.foafprimaryTopic) ? rdf.grapoi({ dataset: g.dataset, term: ns.foaf.primaryTopic }) : rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(storageUrl)('')});
+                      var primaryTopic = g.out(ns.foaf.primaryTopic).values;
+                      g = (primaryTopic.length) ? g.node(primaryTopic[0]) : g.node(rdf.namedNode(storageUrl));
 
                       var selfDescription = DO.U.getStorageSelfDescription(g);
                       var contactInformation = DO.U.getContactInformation(g);
@@ -5470,7 +5472,7 @@ console.log(e);
 
       if (hasPolicy.length) {
         hasPolicy.forEach(iri => {
-          var policy = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(iri)('') });
+          var policy = g.node(rdf.namedNode(iri));
           var policyDetails = [];
 
           var types = policy.out(ns.rdf.type).values;
@@ -5494,10 +5496,10 @@ console.log(e);
           if (target) {
             policyDetails.push('<dt>Target<dt><dd><a href="' + target + '" target="_blank">' + target + '</a></dd>');
           }
-          
+
           var permission = policy.out(ns.odrl.permission).values[0];
           if (permission) {
-            var ruleG = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(permission)('') });
+            var ruleG = g.node(rdf.namedNode(permission));
 
             policyDetails.push(DO.U.getODRLRuleActions(ruleG));
             policyDetails.push(DO.U.getODRLRuleAssigners(ruleG));
@@ -5505,7 +5507,7 @@ console.log(e);
           }
           var prohibition = policy.out(ns.odrl.prohibition).values[0];
           if (prohibition) {
-            ruleG = ruleG = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(prohibition)('') });
+            ruleG = g.node(rdf.namedNode(prohibition));
 
             policyDetails.push(DO.U.getODRLRuleActions(ruleG));
             policyDetails.push(DO.U.getODRLRuleAssigners(ruleG));
@@ -5523,63 +5525,62 @@ console.log(e);
       return s;
     },
 
-    getODRLRuleActions: function(r) {
+    getODRLRuleActions: function(g) {
 // console.log(r.odrlaction)
       var actions = [];
 
-      if (r.odrlaction && r.odrlaction._array.length > 0) {
-        r.odrlaction._array.forEach(function(iri){
+      var actions = g.out(ns.odrl.action).values;
 
-          //FIXME: Label derived from URI.
-          var label = iri;
-          var href = iri;
+      actions.forEach(iri => {
+        //FIXME: Label derived from URI.
+        var label = iri;
+        var href = iri;
 
-          if (iri.startsWith('http://www.w3.org/ns/odrl/2/')) {
-            label = iri.substr(iri.lastIndexOf('/') + 1);
-            href = 'https://www.w3.org/TR/odrl-vocab/#term-' + label;
-          }
-          else if (iri.startsWith('http://creativecommons.org/ns#')) {
-            label = iri.substr(iri.lastIndexOf('#') + 1);
-            href = 'https://www.w3.org/TR/odrl-vocab/#term-' + label;
-          }
-          else if (iri.lastIndexOf('#')) {
-            label = iri.substr(iri.lastIndexOf('#') + 1);
-          }
-          else if (iri.lastIndexOf('/')) {
-            label = iri.substr(iri.lastIndexOf('/') + 1);
-          }
+        if (iri.startsWith('http://www.w3.org/ns/odrl/2/')) {
+          label = iri.substr(iri.lastIndexOf('/') + 1);
+          href = 'https://www.w3.org/TR/odrl-vocab/#term-' + label;
+        }
+        else if (iri.startsWith('http://creativecommons.org/ns#')) {
+          label = iri.substr(iri.lastIndexOf('#') + 1);
+          href = 'https://www.w3.org/TR/odrl-vocab/#term-' + label;
+        }
+        else if (iri.lastIndexOf('#')) {
+          label = iri.substr(iri.lastIndexOf('#') + 1);
+        }
+        else if (iri.lastIndexOf('/')) {
+          label = iri.substr(iri.lastIndexOf('/') + 1);
+        }
 
-          var warning = '';
-          var attributeClass = '';
-          var attributeTitle = '';
+        var warning = '';
+        var attributeClass = '';
+        var attributeTitle = '';
 
-          //Get user's actions from preferred policy (prohibition) to check for conflicts with storage's policy (permission)
-          if (DO.C.User.PreferredPolicyRule && DO.C.User.PreferredPolicyRule.Prohibition && DO.C.User.PreferredPolicyRule.Prohibition.Actions.indexOf(iri) > -1) {
-            warning = Icon[".fas.fa-circle-exclamation"] + ' ';
-            attributeClass = ' class="warning"';
-            attributeTitle = ' title="The action (' + label + ') is prohibited by preferred policy."';
-          }
+        //Get user's actions from preferred policy (prohibition) to check for conflicts with storage's policy (permission)
+        if (DO.C.User.PreferredPolicyRule && DO.C.User.PreferredPolicyRule.Prohibition && DO.C.User.PreferredPolicyRule.Prohibition.Actions.includes()(iri)) {
+          warning = Icon[".fas.fa-circle-exclamation"] + ' ';
+          attributeClass = ' class="warning"';
+          attributeTitle = ' title="The action (' + label + ') is prohibited by preferred policy."';
+        }
 
-          actions.push('<li' + attributeTitle + '>' + warning + '<a' + attributeClass + ' href="' + href + '" resource="' + iri + '">' + label + '</a></li>')
-        });
+        actions.push('<li' + attributeTitle + '>' + warning + '<a' + attributeClass + ' href="' + href + '" resource="' + iri + '">' + label + '</a></li>')
+      });
 
-        actions = '<dt>Actions</dt><dd><ul rel="odrl:action">' + actions.join('') + '</ul></dd>';
+      actions = '<dt>Actions</dt><dd><ul rel="odrl:action">' + actions.join('') + '</ul></dd>';
 
-        return actions;
-      }
+      return actions;
     },
 
     getODRLRuleAssigners: function(g) {
       var s = '';
       var a = [];
 
-      if (g.odrlassigner && g.odrlassigner._array.length > 0) {
-        g.odrlassigner._array.forEach(function(iri){
-          a.push('<dd><a href="' + iri + '" target="_blank">' + iri + '</a></dd>');
-        });
+      var assigners = g.out(ns.odrl.assigner).values;
 
-        s = '<dt>Assigners</dt>' + a.join('');
-      }
+      assigners.forEach(iri => {
+        a.push('<dd><a href="' + iri + '" target="_blank">' + iri + '</a></dd>');
+      });
+
+      s = '<dt>Assigners</dt>' + a.join('');
 
       return s;
     },
@@ -5588,13 +5589,13 @@ console.log(e);
       var s = '';
       var a = [];
 
-      if (g.odrlassignee && g.odrlassignee._array.length > 0) {
-        g.odrlassignee._array.forEach(function(iri){
-          a.push('<dd><a href="' + iri + '" target="_blank">' + iri + '</a></dd>');
-        });
+      var assignees = g.out(ns.odrl.assignees).values;
 
-        s = '<dt>Assignees</dt>' + a.join('');
-      }
+      assignees.forEach(iri => {
+        a.push('<dd><a href="' + iri + '" target="_blank">' + iri + '</a></dd>');
+      });
+
+      s = '<dt>Assignees</dt>' + a.join('');
 
       return s;
     },
@@ -5603,13 +5604,14 @@ console.log(e);
       var s = '';
       var resourceOwners = [];
 
+      var solidOwner = g.out(ns.solid.owner).values;
 
-      if (g.solidowner && g.solidowner._array.length > 0) {
-        DO.C.Resource[g.iri().toString()] = DO.C.Resource[g.iri().toString()] || {};
-        DO.C.Resource[g.iri().toString()]['owner'] = [];
+      if (solidOwner.length) {
+        DO.C.Resource[g.term.value] = DO.C.Resource[g.term.value] || {};
+        DO.C.Resource[g.term.value]['owner'] = [];
 
-        g.solidowner._array.forEach(function(iri){
-          DO.C.Resource[g.iri().toString()]['owner'].push(iri);
+        solidOwner.forEach(iri => {
+          DO.C.Resource[g.term.value]['owner'].push(iri);
 
           resourceOwners.push('<dd><a href="' + iri + '" target="_blank">' + iri + '</a></dd>');
         });
@@ -5621,8 +5623,8 @@ console.log(e);
     },
 
     getCommunicationOptions: function(g, options = {}) {
-      var subjectURI = options.subjectURI || g.iri().toString();
-      g = g.child(subjectURI);
+      var subjectURI = options.subjectURI || g.term.value;
+      g = g.node(rdf.namedNode(subjectURI));
 // console.log(subjectURI)
       var notificationSubscriptions = DO.U.getNotificationSubscriptions(g);
       var notificationChannels = DO.U.getNotificationChannels(g);
@@ -5642,12 +5644,8 @@ console.log(e);
       if (notificationSubscriptions) {
         nSHTML.push('<dl id="notification-subscriptions-' + subjectURI + '"><dt>Notification Subscriptions</dt>');
 
-        notificationSubscriptions.forEach(function(subscription){
-          var nSChannelType = '';
-          var nSSubscription = '';
-          var nSFeatures = '';
-
-          var nS = g.child(subscription);
+        notificationSubscriptions.forEach(subscription => {
+          var nS = g.node(rdf.namedNode(subscription));
           var channelType = DO.U.getNotificationChannelTypes(nS);
           var features = DO.U.getNotificationFeatures(nS);
 
@@ -5717,27 +5715,31 @@ console.log(e);
     },
 
     //https://solidproject.org/TR/notifications-protocol#discovery
-    getNotificationSubscriptions: function(s) {
-      return (s.notifysubscription && s.notifysubscription._array.length > 0)
-        ? s.notifysubscription._array
+    getNotificationSubscriptions: function(g) {
+      var notifysubscription = g.out(ns.notify.subscription).values;
+      return (notifysubscription.length)
+        ? notifysubscription
         : undefined
     },
 
-    getNotificationChannels: function(s) {
-      return (s.notifychannel && s.notifychannel._array.length > 0)
-        ? s.notifychannel._array
+    getNotificationChannels: function(g) {
+      var notifychannel = g.out(ns.notify.channel).values;
+      return (notifychannel.length)
+        ? notifychannel
         : undefined
     },
 
-    getNotificationChannelTypes: function(s) {
-      return (s.notifychannelType)
-        ? s.notifychannelType
+    getNotificationChannelTypes: function(g) {
+      var notifychannelType = g.out(ns.notify.channelType).values;
+      return (notifychannelType)
+        ? notifychannelType
         : undefined
     },
 
-    getNotificationFeatures: function(s) {
-      return (s.notifyfeature && s.notifyfeature._array.length > 0)
-        ? s.notifyfeature._array
+    getNotificationFeatures: function(g) {
+      var notifyfeature = g.out(ns.notify.feature).values;
+      return (notifyfeature.length)
+        ? notifyfeature
         : undefined
     },
 
@@ -5745,7 +5747,7 @@ console.log(e);
     subscribeToNotificationChannel: function(url, data) {
       switch(data.type){
         //doap:implements <https://solidproject.org/TR/websocket-channel-2023>
-        case ns.notify.WebSocketChannel2023:
+        case ns.notify.WebSocketChannel2023.value:
           return DO.U.subscribeToWebSocketChannel(url, data);
       }
     },
@@ -5833,8 +5835,8 @@ console.log(e);
           DO.C.Subscription[data.topic]['Response'] = data;
 
           switch (data.type) {
-            case 'WebSocketChannel2023': case ns.notify.WebSocketChannel2023:
-              data.type = ns.notify.WebSocketChannel2023;
+            case 'WebSocketChannel2023': case ns.notify.WebSocketChannel2023.value:
+              data.type = ns.notify.WebSocketChannel2023.value;
               return DO.U.connectToWebSocket(data.receiveFrom, data).then(function(i){
                 DO.C.Subscription[data.topic]['Connection'] = i;
                 // return Promise.resolve();
@@ -5862,7 +5864,7 @@ console.log(e);
               }
 
               //TODO d.type == 'LDNChannel2023' && data.sender
-              if ((d.type == 'WebSocketChannel2023' || d.type == ns.notify.WebSocketChannel2023) && data.receiveFrom) {
+              if ((d.type == 'WebSocketChannel2023' || d.type == ns.notify.WebSocketChannel2023.value) && data.receiveFrom) {
                 return Promise.resolve(data);
               }
             }
@@ -7459,8 +7461,7 @@ console.log(response)
         var headers = {'Accept': 'application/json'};
         var wikidataHeaders = {'Accept': 'application/ld+json'};
 
-        var isbnDataset = rdf.dataset();
-        var isbnData = rdf.grapoi({ dataset: isbnDataset, term: rdf.namespace(url)('')});
+        var isbnData = rdf.grapoi({ dataset: rdf.dataset() }).node(rdf.namedNode(url));
 
         return getResource(url, headers, options)
           .then(function(response) {
@@ -7491,7 +7492,7 @@ console.log(response)
 
             if (data.covers) {
 // console.log(data.covers)
-              isbnData.addOut(ns.schema.image, rdf.namespace('https://covers.openlibrary.org/b/id/' + data.covers[0] + '-S.jpg')(''));
+              isbnData.addOut(ns.schema.image, rdf.namedNode('https://covers.openlibrary.org/b/id/' + data.covers[0] + '-S.jpg'));
               // document.body.insertAdjacentHTML('afterbegin', '<img src="' + img + '"/>');
 
               //   async function fetchImage(url) {
@@ -7524,7 +7525,7 @@ console.log(response)
 // console.log(data.links[0].url)
                     authorURL = data.links[0].url;
                   }
-                  isbnData.addOut(ns.schema.author, rdf.namespace(authorURL)(''), authorName => {
+                  isbnData.addOut(ns.schema.author, rdf.namedNode(authorURL), authorName => {
                     if (data.name) {
                       authorName.addOut(ns.schema.name, data.name);
                     }
@@ -11629,3 +11630,4 @@ else {
 
 window.DO = DO;
 export default DO
+
