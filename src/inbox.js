@@ -19,15 +19,15 @@ function sendNotifications(tos, note, iri, shareResource) {
     var rootIRI = Config.Resource[iri] || Config.Resource[getPathURL(iri)];
 
     if (rootIRI) {
-      if (Config.Resource[iri].rdftype.length > 0) {
-        notificationData['objectTypes'] = Config.Resource[iri].rdftype;
+      if (getGraphTypes(Config.Resource[iri]).length) {
+        notificationData['objectTypes'] = getGraphTypes(Config.Resource[iri])[0];
       }
       if (Config.Resource[iri].license) {
         notificationData['objectLicense'] = Config.Resource[iri].license;
       }
     }
     else {
-      var g = Config.Resource[iri].graph.child(iri);
+      var g = Config.Resource[iri].graph.node(rdf.namedNode(iri));
       var types = getGraphTypes(g);
       if (types.length > 0) {
         notificationData['objectTypes'] = types;

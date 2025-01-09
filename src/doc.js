@@ -987,7 +987,7 @@ function showTimeMap(node, url) {
         var p = t.predicate.value;
         var o = t.object.value;
 
-        if (p === ns.mem.mementoDateTime) {
+        if (p === ns.mem.mementoDateTime.value) {
           items.push('<li><a href="' + s + '" target="_blank">' + o + '</a></li>');
         }
       });
@@ -1225,8 +1225,8 @@ function getGraphData(s, options) {
   var documentURL = options['subjectURI'];
 
   var info = {
-    'state': ns.ldp.RDFSource,
-    'profile': ns.ldp.RDFSource
+    'state': ns.ldp.RDFSource.value,
+    'profile': ns.ldp.RDFSource.value
   };
 
   info['graph'] = s;
@@ -1249,64 +1249,64 @@ function getGraphData(s, options) {
   info['publishers'] = getGraphContributorsRole(s, { role: 'publisher' });
   info['audience'] = getGraphAudience(s);
 
-  info['profile'] = ns.ldp.RDFSource;
+  info['profile'] = ns.ldp.RDFSource.value;
 
   //Check if the resource is immutable
   s.out(ns.rdf.type).values.forEach(type => {
-    if (type == ns.mem.Memento) {
-      info['state'] = ns.mem.Memento;
+    if (type == ns.mem.Memento.value) {
+      info['state'] = ns.mem.Memento.value;
     }
   });
 
-  var original = s.out(ns.mem.original);
-  if (original.values.length) {
-    info['state'] = ns.mem.Memento;
-    info['original'] = original.values[0];
+  var original = s.out(ns.mem.original).values;
+  if (original.length) {
+    info['state'] = ns.mem.Memento.value;
+    info['original'] = original[0];
 
     if (info['original']  == options['subjectURI']) {
       //URI-R (The Original Resource is a Fixed Resource)
-      info['profile'] = ns.mem.OriginalResource;
+      info['profile'] = ns.mem.OriginalResource.value;
     }
     else {
       //URI-M
-      info['profile'] = ns.mem.Memento;
+      info['profile'] = ns.mem.Memento.value;
     }
   }
 
-  var memento = s.out(ns.mem.memento)
-  if (memento.values.length) {
+  var memento = s.out(ns.mem.memento).values;
+  if (memento.length) {
     //URI-R
-    info['profile'] = ns.mem.OriginalResource;
-    info['memento'] = memento.values[0];
+    info['profile'] = ns.mem.OriginalResource.value;
+    info['memento'] = memento[0];
   }
 
-  original = s.out(ns.mem.original);
-  memento = s.out(ns.mem.memento);
-  if (original.values.length && memento.values.length && original[0] != memento[0]) {
+  original = s.out(ns.mem.original).values;
+  memento = s.out(ns.mem.memento).values;
+  if (original.length && memento.length && original[0] != memento[0]) {
     //URI-M (Memento without a TimeGate)
-    info['profile'] = ns.mem.Memento;
-    info['original'] =  original.values[0];
-    info['memento'] = memento.values[0];
+    info['profile'] = ns.mem.Memento.value;
+    info['original'] =  original[0];
+    info['memento'] = memento[0];
   }
 
-  var latestVersion = s.out(ns.rel.latestVersion);
-  if (latestVersion.values.length) {
-    info['latest-version'] = latestVersion.values[0];
+  var latestVersion = s.out(ns.rel.latestVersion).values;
+  if (latestVersion.length) {
+    info['latest-version'] = latestVersion[0];
   }
 
-  var predecessorVersion = s.out(ns.rel.predecessorVersion);
-  if (predecessorVersion.values.length) {
-    info['predecessor-version'] = predecessorVersion.values[0];
+  var predecessorVersion = s.out(ns.rel.predecessorVersion).values;
+  if (predecessorVersion.length) {
+    info['predecessor-version'] = predecessorVersion[0];
   }
 
-  var timemap = s.out(ns.mem.timemap);
-  if (timemap.values.length) {
-    info['timemap'] = timemap.values[0];
+  var timemap = s.out(ns.mem.timemap).values;
+  if (timemap.length) {
+    info['timemap'] = timemap[0];
   }
 
-  var timegate = s.out(ns.mem.timegate);
-  if (timegate.values.length) {
-    info['timegate'] = timegate.values[0];
+  var timegate = s.out(ns.mem.timegate).values;
+  if (timegate.length) {
+    info['timegate'] = timegate[0];
   }
 
   if (!Config.OriginalResourceInfo || ('mode' in options && options.mode == 'update' )) {
@@ -1320,25 +1320,25 @@ function getGraphData(s, options) {
   //FIXME: permissionsActions, specrequirement, skosConceptSchemes are assumed to be from document's policies
 
   var hasPolicy = s.out(ns.odrl.hasPolicy);
-  if (hasPolicy.values.length && s.in().trim().value == documentURL) {
+  if (hasPolicy.values.length && s.term.value == documentURL) {
     info['odrl'] = getResourceInfoODRLPolicies(s);
   }
 
   info['spec'] = {};
-  var requirement = s.out(ns.spec.requirement);
-  if (requirement.values.length && s.in().trim().value == documentURL) {
+  var requirement = s.out(ns.spec.requirement).values;
+  if (requirement.length && s.term.value == documentURL) {
     info['spec']['requirement'] = getResourceInfoSpecRequirements(s);
   }
 
   var changelog = s.out(ns.spec.changelog);
-  if (changelog.values.length && s.in().trim().value == documentURL) {
+  if (changelog.values.length && s.term.value == documentURL) {
     if (changelog.out(ns.spec.change).values.length) {
       info['spec']['change'] = getResourceInfoSpecChanges(changelog);
     }
   }
 
-  var advisement = s.out(ns.spec.advisement);
-  if (advisement.values.length && s.in().trim().value == documentURL) {
+  var advisement = s.out(ns.spec.advisement).values;
+  if (advisement.length && s.term.value == documentURL) {
     info['spec']['advisement'] = getResourceInfoSpecAdvisements(s);
   }
 
@@ -1561,7 +1561,7 @@ function getResourceSupplementalInfo (documentURL, options) {
 
               if (g) {
                 //FIXME: Consider the case where `linkTarget` URL is redirected and so may not be same as `s`.
-                var s = g.in().trim().value;
+                var s = g.term.value;
                 Config['Resource'][s] = {};
                 Config['Resource'][s]['graph'] = g;
               }
@@ -1578,10 +1578,10 @@ function getResourceSupplementalInfo (documentURL, options) {
 
 function getResourceInfoCitations(g) {
   var documentURL = Config.DocumentURL;
-  var citationProperties = Object.keys(Config.Citation).concat([ns.dcterms.references, ns.schema.citation]);
+  var citationProperties = Object.keys(Config.Citation).concat([ns.dcterms.references.value, ns.schema.citation.value]);
 
   var predicates = citationProperties.map((property) => {
-    return rdf.namespace(property)('');
+    return rdf.namedNode(property);
   })
 
   var citationsList = g.out(predicates).distinct().values;
@@ -1605,7 +1605,7 @@ function getResourceInfoODRLPolicies(s) {
 
   var policy = s.out(ns.odrl.hasPolicy);
 
-  // for (const policy of s.out(ns.odrl.hasPolicy)) {
+  // for (const policy of s.outzodrl.hasPolicy)) {
   //   const policyIRI = policy.value
 
   //   for (const policyType of policy.out(ns.rdf.type)) {
@@ -1622,7 +1622,7 @@ function getResourceInfoODRLPolicies(s) {
     info['odrl'][policyIRI]['rdftype'] = policyTypes;
 
     policyTypes.forEach(pT => {
-      if (pT == ns.odrl.Offer){
+      if (pT == ns.odrl.Offer.value) {
         var permissions = policyGraph.out(ns.odrl.permission).values;
 
         permissions.forEach(permissionIRI => {
@@ -1639,7 +1639,7 @@ function getResourceInfoODRLPolicies(s) {
         });
       }
 
-      if (pT == ns.odrl.Agreement){
+      if (pT == ns.odrl.Agreement.value) {
         var prohibition = policyGraph.out(ns.odrl.prohibition).values;
 
         prohibition.forEach(prohibitionIRI => {
@@ -1675,9 +1675,9 @@ function getResourceInfoSpecRequirements(s) {
 
     var requirementGraph = s.node(rdf.namedNode(requirementIRI));
 
-    info['spec']['requirement'][requirementIRI][ns.spec.statement] = requirementGraph.out(ns.spec.statement).values[0];
-    info['spec']['requirement'][requirementIRI][ns.spec.requirementSubject] = requirementGraph.out(ns.spec.requirementSubject).values[0];
-    info['spec']['requirement'][requirementIRI][ns.spec.requirementLevel] = requirementGraph.out(ns.spec.requirementLevel).values[0];
+    info['spec']['requirement'][requirementIRI][ns.spec.statement.value] = requirementGraph.out(ns.spec.statement).values[0];
+    info['spec']['requirement'][requirementIRI][ns.spec.requirementSubject.value] = requirementGraph.out(ns.spec.requirementSubject).values[0];
+    info['spec']['requirement'][requirementIRI][ns.spec.requirementLevel.value] = requirementGraph.out(ns.spec.requirementLevel).values[0];
 
     Object.keys(Config.Citation).forEach(citationIRI => {
       var requirementCitations = requirementGraph.out(rdf.namedNode(citationIRI)).values;
@@ -1689,7 +1689,7 @@ function getResourceInfoSpecRequirements(s) {
 
     var seeAlso = requirementGraph.out(ns.rdfs.seeAlso).values;
     if (seeAlso.length) {
-      info['spec']['requirement'][requirementIRI][ns.rdfs.seeAlso] = seeAlso;
+      info['spec']['requirement'][requirementIRI][ns.rdfs.seeAlso.value] = seeAlso;
     }
   });
 
@@ -1781,7 +1781,7 @@ function getResourceInfoSKOS(g) {
     var p = t.predicate.value;
     var o = t.object.value;
 
-    var isRDFType = (p == ns.rdf.type) ? true : false;
+    var isRDFType = (p == ns.rdf.type.value) ? true : false;
     var isSKOSProperty = p.startsWith('http://www.w3.org/2004/02/skos/core#');
     var isSKOSObject = o.startsWith('http://www.w3.org/2004/02/skos/core#');
 
@@ -1934,8 +1934,8 @@ function createImmutableResource(url, data, options) {
   rootNode = setDocumentRelation(rootNode, [r], o);
 
   o = { 'id': 'document-original', 'title': 'Original resource' };
-  if (Config.OriginalResourceInfo['state'] == ns.mem.Memento
-    && Config.OriginalResourceInfo['profile'] == ns.mem.OriginalResource) {
+  if (Config.OriginalResourceInfo['state'] == ns.mem.Memento.value
+    && Config.OriginalResourceInfo['profile'] == ns.mem.OriginalResource.value) {
     r = { 'rel': 'mem:original', 'href': immutableURL };
   }
   else {
@@ -1963,7 +1963,7 @@ function createImmutableResource(url, data, options) {
 
 
   //Update URI-R
-  if (Config.OriginalResourceInfo['state'] != ns.mem.Memento) {
+  if (Config.OriginalResourceInfo['state'] != ns.mem.Memento.value) {
     setDate(document, { 'id': 'document-created', 'property': 'schema:dateCreated', 'title': 'Created', 'datetime': date });
 
     o = { 'id': 'document-identifier', 'title': 'Identifier' };
@@ -2444,7 +2444,7 @@ function createLanguageHTML(language, options = {}) {
 
 function getAnnotationInboxLocationHTML() {
   var s = '', inputs = [], checked = '';
-  if (Config.User.TypeIndex && Config.User.TypeIndex[ns.as.Announce]) {
+  if (Config.User.TypeIndex && Config.User.TypeIndex[ns.as.Announce.value]) {
     if (Config.User.UI && Config.User.UI['annotationInboxLocation'] && Config.User.UI.annotationInboxLocation['checked']) {
       checked = ' checked="checked"';
     }
@@ -2514,7 +2514,7 @@ function getPublicationStatusOptionsHTML(options) {
     }
   }
   else {
-    selectedIRI = ns.pso.draft;
+    selectedIRI = ns.pso.draft.value;
   }
 
   Object.keys(Config.PublicationStatus).forEach(function(iri){

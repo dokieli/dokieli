@@ -480,14 +480,14 @@ function setDocumentBase (data, baseURI, contentType) {
 }
 
 function traverseRDFList(g, resource) {
-  var b = g.child(resource);
+  var b = g.node(rdf.namedNode(resource));
   var result = [];
 
-  if (b.rdffirst) {
-    result.push(b.rdffirst);
+  if (b.out(ns.rdf.first).values.length) {
+    result.push(b.out(ns.rdf.first).values[0]);
   }
-  if (b.rdfrest && b.rdfrest !== 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil') {
-    result = result.concat(traverseRDFList(g, b.rdfrest));
+  if (b.out(ns.rdf.rest).values.length && b.out(ns.rdf.rest).values[0] !== 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil') {
+    result = result.concat(traverseRDFList(g, bb.out(ns.rdf.rest).values[0]));
   }
 
   return result;
@@ -864,11 +864,11 @@ function getUserContacts(iri) {
       return getResourceGraph(iri).then(
         function(g){
           // if(typeof g._graph == 'undefined' || g.resource || g.cause || g.status?.startsWith(5)) {
-          if(typeof g._graph == 'undefined') {
+          if(typeof g == 'undefined') {
             return Promise.resolve([]);
           }
 
-          var s = g.child(iri);
+          var s = g.node(rdf.namedNode(iri));
 
           var knows = getAgentKnows(s) || [];
 
@@ -1264,7 +1264,7 @@ function getGraphTitle(s) {
 }
 
 function getGraphLabelOrIRI(s) {
-  return getGraphLabel(s) || s.in().trim().value;
+  return getGraphLabel(s) || s.term.value;
 }
 
 function getUserLabelOrIRI(iri) {
@@ -1480,20 +1480,20 @@ function getAuthorizationsMatching (g, matchers) {
 // console.log("getAuthorizationsMatching:", g, matchers);
 
   var subjects = [];
-  g.graph().toArray().forEach(function(t){
+  g.quads().forEach(t => {
     subjects.push(t.subject.value);
   });
   subjects = uniqueArray(subjects);
 
   subjects.forEach(i => {
-    var s = g.child(i);
+    var s = g.node(rdf.namedNode(i));
 
-    if (s.rdftype._array.includes(ns.acl.Authorization.value)) {
-      var authorizationIRI = s.iri().toString();
+    if (s.out(ns.rdf.type).values.includes(ns.acl.Authorization.value)) {
+      var authorizationIRI = s.term.value;
       var candidateAuthorization = {};
 
       Object.keys(matchers).forEach(key => {
-        if (s['acl' + key]._array.includes(matchers[key])) {
+        if (s.out(ns.acl[key]).values.includes(matchers[key])) {
           candidateAuthorization[key] = matchers[key];
         }
       })
@@ -1504,7 +1504,7 @@ function getAuthorizationsMatching (g, matchers) {
         var properties = ['agent', 'agentClass', 'agentGroup', 'accessTo', 'default', 'mode', 'origin'];
         var authorization = {};
         properties.forEach(p => {
-          authorization[p] = s['acl' + p]._array;
+          authorization[p] = s.out(ns.acl[p]).values;
         })
         authorizations[authorizationIRI] = authorization;
       }
