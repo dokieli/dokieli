@@ -393,7 +393,8 @@ DO = {
         //   return [];
         // })
         .then(g => {
-          if (!g || g.resource) return;
+          // if (!g || g.resource) return;
+          if (!g) return;
 
           if (options.notification) {
             DO.C.Notification[url] = {};
@@ -409,13 +410,13 @@ DO = {
 
           var subjectsReferences = [];
           var subjects = [];
-          g.graph().toArray().forEach(function(t){
+          g.out().quads().forEach(function(t){
             subjects.push(t.subject.value);
           });
           subjects = uniqueArray(subjects);
 
           subjects.forEach(function(i){
-            var s = g.child(i)
+            var s = g.node(rdf.namedNode(i));
 // console.log(s)
             var types = s.out(ns.rdf.type).values || [];
 
@@ -427,25 +428,25 @@ DO = {
               var rights = getGraphRights(s);
 
               //XXX: May need to be handled in a similar way to to as:Anounce/Create?
-              if(resourceTypes.indexOf('https://www.w3.org/ns/activitystreams#Like') > -1 ||
-                 resourceTypes.indexOf('https://www.w3.org/ns/activitystreams#Dislike') > -1){
-                if(s.asobject && s.asobject.at(0) && getPathURL(s.asobject.at(0)) == currentPathURL ) {
-                  if(s.ascontext && s.ascontext.at(0)){
-                    var context = s.ascontext.at(0);
+              if(resourceTypes.includes(ns.as.Like.value)||
+                 resourceTypes.includes(ns.as.Dislike.value)){
+                if(s.out(ns.as.object).values.length && getPathURL(s.out(ns.as.object).values[0]) == currentPathURL ) {
+                  if(s.out(ns.as.context).values.length){
+                    var context = s.out(ns.as.context).values[0]
                     subjectsReferences.push(context);
                     return DO.U.showActivities(context)
                       .then(iri => iri)
                       .catch(e => console.log(context + ': context is unreachable', e));
                   }
                   else {
-                    var iri = s.iri().toString();
-                    var targetIRI = s.asobject.at(0);
+                    var iri = s.term.value;;
+                    var targetIRI = s.out(ns.as.object).values[0]
                     // var motivatedBy = 'oa:assessing';
                     var id = generateUUID(iri);
                     var refId = 'r-' + id;
                     var refLabel = id;
 
-                    var bodyValue = (resourceTypes.indexOf('https://www.w3.org/ns/activitystreams#Like') > -1) ? 'Liked' : 'Disliked';
+                    var bodyValue = (resourceTypes.includes(ns.as.Like.value)) ? 'Liked' : 'Disliked';
                     var motivatedBy = bodyValue.slice(0, -1);
 
                     var noteData = {
@@ -477,11 +478,11 @@ DO = {
 
                     noteData["body"] = [bodyObject];
 
-                    if (s.asactor && s.asactor.at(0)){
+                    if (s.out(ns.as.actor).values.length) {
                       noteData['creator'] = {
-                        'iri': s.asactor.at(0)
+                        'iri': s.out(ns.as.actor).values[0]
                       }
-                      var a = g.child(noteData['creator']['iri']);
+                      var a = g.node(rdf.namedNode(noteData['creator']['iri']));
                       var actorName = getAgentName(a);
                       var actorImage = getGraphImage(a);
 
@@ -492,7 +493,7 @@ DO = {
                         noteData['creator']['image'] = actorImage;
                       }
                     }
-                    else if(resourceTypes.indexOf('https://www.w3.org/ns/activitystreams#Dislike') > -1) {
+                    else if(resourceTypes.includes(ns.as.Dislike.value)) {
                       noteData['creator'] = {
                         'name': 'Anonymous Coward'
                       }
@@ -507,25 +508,26 @@ DO = {
                   }
                 }
               }
-              else if(resourceTypes.indexOf('https://www.w3.org/ns/activitystreams#Relationship') > -1){
-                if(s.assubject && s.assubject.at(0) && s.asrelationship && s.asrelationship.at(0) && s.asobject && s.asobject.at(0) && getPathURL(s.asobject.at(0)) == currentPathURL) {
-                  var subject = s.assubject.at(0);
+              else if(resourceTypes.includes(ns.as.Relationship.value)){
+                if(s.out(ns.as.subject).values.length && as.out(as.relationship).values.length && s.out(ns.as.object).values.length && getPathURL(s.out(ns.as.object).values[0]) == currentPathURL) {
+                  var subject = s.out(ns.as.subject).values[0];
                   subjectsReferences.push(subject);
                   return DO.U.showActivities(subject)
                     .then(iri => iri)
                     .catch(e => console.log(subject + ': subject is unreachable', e));
                 }
               }
-              else if(resourceTypes.indexOf('https://www.w3.org/ns/activitystreams#Announce') > -1 || resourceTypes.indexOf('https://www.w3.org/ns/activitystreams#Create') > -1) {
+              else if(resourceTypes.includes(ns.as.Announce.value) || resourceTypes.includes(ns.as.Create.value)) {
                 var o = {};
 
-                var object = (s.asobject && s.asobject.at(0)) ? s.asobject.at(0) : undefined;
+                var object = s.out(ns.as.object).values.length ? s.out(ns.as.object).values[0] : undefined;
                 //TODO: if no object, leave.
 
-                var target = (s.astarget && s.astarget.at(0)) ? s.astarget.at(0) : undefined;
+                var target = s.out(ns.as.target).values.length ? s.out(ns.as.target).values[0] : undefined;
 
-                var objectGraph = s.child(object);
-                var inReplyTo = objectGraph.asinReplyTo && objectGraph.asinReplyTo.at(0);
+
+                var objectGraph = s.node(rdf.namedNode(object));
+                var inReplyTo = objectGraph.out(ns.as.inReplyTo).values.length && objectGraph.out(ns.as.inReplyTo).values[0];
 
                 if(object && (target || inReplyTo)) {
                   var targetPathURL = getPathURL(target) || getPathURL(inReplyTo);
@@ -533,10 +535,10 @@ DO = {
                   if (targetPathURL == currentPathURL) {
                     o['targetInOriginalResource'] = true;
                   }
-                  else if (DO.C.Resource[documentURL].graph.rellatestversion && targetPathURL == getPathURL(DO.C.Resource[documentURL].graph.rellatestversion)) {
+                  else if (DO.C.Resource[documentURL].graph.out(ns.rel.latestversion).values.length && targetPathURL == getPathURL(DO.C.Resource[documentURL].graph.out(ns.rel.latestversion).values[0])) {
                     o['targetInMemento'] = true;
                   }
-                  else if (DO.C.Resource[documentURL].graph.owlsameAs && DO.C.Resource[documentURL].graph.owlsameAs.at(0) == targetPathURL) {
+                  else if (DO.C.Resource[documentURL].graph.out(ns.owl.sameAs).values.length && DO.C.Resource[documentURL].graph.out(ns.owl.sameAs).values[0] == targetPathURL) {
                     o['targetInSameAs'] = true;
                   }
 
@@ -551,7 +553,7 @@ DO = {
                       return DO.U.showAnnotation(object, s, o);
                     }
                     else {
-                      s = s.child(object);
+                      s = s.node(rdf.namedNode(object));
                       var citation = {};
 
                       // if (target.startsWith(currentPathURL)) {
@@ -589,10 +591,11 @@ DO = {
                 // var iri = s.iri().toString();
                 // return DO.U.showCitations(iri, s)
               // }
-              else if(resourceTypes.indexOf('https://www.w3.org/ns/activitystreams#Add') > -1) {
-                var object = s.asobject ? s.asobject.at(0) : undefined;
-                var target = s.astarget ? s.astarget.at(0) : undefined;
-                var origin = s.asorigin ? s.asorigin.at(0) : undefined;
+              else if(resourceTypes.includes(ns.as.Add.value)) {
+                var object = s.out(ns.as.object).values.length ? s.out(ns.as.object).values[0] : undefined;
+                var target = s.out(ns.as.target).values.length ? s.out(ns.as.target).values[0] : undefined;
+                var object = s.out(ns.as.origin).values.length ? s.out(ns.as.origin).values[0] : undefined;
+
 
                 if (object && (target || origin)) {
                   var targetPathURL = getPathURL(target);
@@ -615,16 +618,16 @@ DO = {
                   }
                 }
               }
-              else if(resourceTypes.indexOf('http://www.w3.org/ns/oa#Annotation') > -1 && getPathURL(s.oahasTarget) == currentPathURL && !subjectsReferences.includes(i)) {
+              else if (resourceTypes.includes(ns.oa.Annotation.value) && getPathURL(s.out(ns.oa.hasTarget).values[0]) == currentPathURL && !subjectsReferences.includes(i)) {
                 return DO.U.showAnnotation(i, s);
               }
               else if (!subjectsReferences.includes(i) && documentTypes.some(item => resourceTypes.includes(item)) && s.asinReplyTo && s.asinReplyTo.at(0) && getPathURL(s.asinReplyTo.at(0)) == currentPathURL) {
                   subjectsReferences.push(i);
                 return DO.U.showAnnotation(i, s);
               }
-              else if (resourceTypes.indexOf('http://www.w3.org/2002/01/bookmark#Bookmark') > -1 && s.bookmarkrecalls && getPathURL(s.bookmarkrecalls) == currentPathURL ) {
-                var iri = s.iri().toString();
-                var targetIRI = s.bookmarkrecalls;
+              else if (resourceTypes.includes(ns.bookmark.Bookmark.value) && s.out(ns.bookmark.recalls).values.length && getPathURL(s.out(ns.bookmark.recalls).values[0]) == currentPathURL ) {
+                var iri = s.term.value;
+                var targetIRI = s.out(ns.bookmark.recalls).values[0];
                 var motivatedBy = 'bookmark:Bookmark';
                 var id = generateUUID(iri);
                 var refId = 'r-' + id;
@@ -660,7 +663,7 @@ DO = {
                   noteData['creator'] = {
                     'iri': creator
                   }
-                  var a = g.child(noteData['creator']['iri']);
+                  var a = g.node(rdf.namedNode(noteData['creator']['iri']));
                   var actorName = getAgentName(a);
                   var actorImage = getGraphImage(a);
 
@@ -996,7 +999,6 @@ DO = {
 
       function buildGraphObject(graph, options) {
         var graphObject = {};
-
         var nodes = graph.nodes;
         var nodeById = new Map();
         nodes.forEach(function(n){
@@ -1010,10 +1012,12 @@ DO = {
         var uniqueNodes = {};
 
         links.forEach(function(link) {
+
           var s = link.source = nodeById.get(link.source),
               t = link.target = nodeById.get(link.target),
               i = {}; // intermediate node
               // linkValue = link.value
+
           nodes.push(i);
 
           if (uniqueNodes[s.id] > -1) {
@@ -1180,7 +1184,7 @@ DO = {
       }
       else if (typeof data == 'undefined') {
         if (DO.C.Resource[documentURL] && DO.C.Resource[documentURL].graph) {
-          return DO.U.convertGraphToVisualisationGraph(requestURL, DO.C.Resource[documentURL].graph.graph(), options);
+          return DO.U.convertGraphToVisualisationGraph(requestURL, DO.C.Resource[documentURL].graph, options);
         }
         else {
           data = getDocument(null, optionsNormalisation);
@@ -1196,7 +1200,7 @@ DO = {
 // console.log(g);
       DO.C['Graphs'] = DO.C['Graphs'] || {};
 
-      var dataGraph = rdf.dataset();
+      var dataGraph = rdf.grapoi({ dataset: rdf.dataset().addAll(g.dataset)});
       var graphs = {};
       graphs[options['subjectURI']] = g;
 
@@ -1207,7 +1211,7 @@ DO = {
       DO.C['Graphs'][options['subjectURI']] = g;
 
       Object.keys(graphs).forEach(i => {
-        dataGraph.addAll(graphs[i].dataset);
+        dataGraph.dataset.addAll(graphs[i].dataset);
       });
 
       var graphData = {"nodes":[], "links": [], "resources": options.resources };
@@ -1371,7 +1375,7 @@ DO = {
           graphNodes.push(t.subject.value);
           graphData.nodes.push({"id": t.subject.value, "group": sGroup, "visited": sVisited });
         }
-        if (!graphNodes.indexOf(t.object.value)) {
+        if (!graphNodes.includes(t.object.value)) {
           if (t.object.value in DO.C.Resource) {
             // console.log(t.object.value)
             DO.C.Resource[t.object.value].rdftype.forEach(type => {
@@ -4884,8 +4888,7 @@ console.log(e);
 
     //TODO: Revisit this function and addShareResourceContactInput to generalise.
     addAccessSubjectItem: function(node, s, url) {
-      var iri = s?.iri().toString() || url;
-// console.log(iri.toString());
+      var iri = s?.term.value || url;
 
       var id = encodeURIComponent(iri);
       var name = s ? getAgentName(s) || iri : iri;
@@ -5137,8 +5140,7 @@ console.log(e);
     },
 
     addShareResourceContactInput: function(node, s) {
-      var iri = s?.iri().toString();
-// console.log(iri.toString());
+      var iri = s.term.value;
       var inbox = DO.C.User.Contacts[iri]['Inbox'];
 
       if (inbox && inbox.length > 0) {

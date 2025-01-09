@@ -1188,7 +1188,7 @@ function getGraphContributorsRole(g, options) {
     var aUN = {};
     aUN['uri'] = contributor;
     //XXX: Only checks within the same document.
-    var go = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(contributor)('')});
+    var go = g.node(rdf.namedNode(contributor));
 
     var label = getGraphLabel(go);
     if (label) {
@@ -1616,7 +1616,7 @@ function getResourceInfoODRLPolicies(s) {
   policy.values.forEach(policyIRI => {
     info['odrl'][policyIRI] = {};
 
-    var policyGraph = rdf.grapoi({ dataset: s.dataset, term: rdf.namespace(policyIRI)('')});
+    var policyGraph = s.node(rdf.namedNode(policyIRI));
     var policyTypes = policyGraph.out(ns.rdf.type).values;
 
     info['odrl'][policyIRI]['rdftype'] = policyTypes;
@@ -1629,7 +1629,7 @@ function getResourceInfoODRLPolicies(s) {
           info['odrl'][policyIRI]['permission'] = {};
           info['odrl'][policyIRI]['permission'][permissionIRI] = {};
 
-          var permissionGraph = rdf.grapoi({ dataset: s.dataset, term: rdf.namespace(permissionIRI)('')});
+          var permissionGraph = s.node(rdf.namedNode(permissionIRI));
 
           var permissionAssigner = permissionGraph.out(ns.odrl.assigner).values;
           info['odrl'][policyIRI]['permission'][permissionIRI]['action'] = info['odrl']['permissionAssigner'] = permissionAssigner;
@@ -1646,7 +1646,7 @@ function getResourceInfoODRLPolicies(s) {
           info['odrl'][policyIRI]['prohibition'] = {};
           info['odrl'][policyIRI]['prohibition'][prohibitionIRI] = {};
 
-          var prohibitionGraph = rdf.grapoi({ dataset: s.dataset, term: rdf.namespace(prohibitionIRI)('')});
+          var prohibitionGraph = s.node(rdf.namedNode(prohibitionIRI));
 
           var prohibitionAssigner = prohibitionGraph.out(ns.odrl.assigner).values;
           info['odrl'][policyIRI]['prohibition'][prohibitionIRI]['action'] = info['odrl']['prohibitionAssigner'] = prohibitionAssigner;
@@ -1673,14 +1673,14 @@ function getResourceInfoSpecRequirements(s) {
   s.out(ns.spec.requirement).values.forEach(requirementIRI => {
     info['spec']['requirement'][requirementIRI] = {};
 
-    var requirementGraph = rdf.grapoi({ dataset: s.dataset, term: rdf.namespace(requirementIRI)('')});
+    var requirementGraph = s.node(rdf.namedNode(requirementIRI));
 
     info['spec']['requirement'][requirementIRI][ns.spec.statement] = requirementGraph.out(ns.spec.statement).values[0];
     info['spec']['requirement'][requirementIRI][ns.spec.requirementSubject] = requirementGraph.out(ns.spec.requirementSubject).values[0];
     info['spec']['requirement'][requirementIRI][ns.spec.requirementLevel] = requirementGraph.out(ns.spec.requirementLevel).values[0];
 
     Object.keys(Config.Citation).forEach(citationIRI => {
-      var requirementCitations = requirementGraph.out(rdf.namespace(citationIRI)('')).values;
+      var requirementCitations = requirementGraph.out(rdf.namedNode(citationIRI)).values;
 
       if (requirementCitations.length) {
         info['spec']['requirement'][requirementIRI][citationIRI] = requirementCitations;
@@ -1707,12 +1707,12 @@ function getResourceInfoSpecAdvisements(s) {
   s.out(ns.spec.advisement).forEach(advisementIRI => {
     info['spec']['advisement'][advisementIRI] = {};
 
-    var advisementGraph = rdf.grapoi({ dataset: s.dataset, term: rdf.namespace(advisementIRI)('')});
+    var advisementGraph = s.node(rdf.namedNode(advisementIRI));
 
     info['spec']['advisement'][advisementIRI][ns.spec.statement] =  advisementGraph.out(ns.spec.statement).values[0];
     // info['spec'][advisementIRI][ns.spec.advisementSubject] = advisementSubject;
     info['spec']['advisement'][advisementIRI][ns.spec.advisementLevel] = advisementGraph.out(ns.spec.advisementLevel).values[0];
-    var advisementCitations = advisementGraph.out(rdf.namespace(citationIRI)('')).values;
+    var advisementCitations = advisementGraph.out(rdf.namedNode(citationIRI)).values;
 
     Object.keys(Config.Citation).forEach(citationIRI => {
       if (advisementCitations.length) {
@@ -1739,7 +1739,8 @@ function getResourceInfoSpecChanges(s) {
   var change = s.out(ns.spec.change);
   
   change.values.forEach(changeIRI => {
-    var changeGraph = rdf.grapoi({ dataset: s.dataset, term: rdf.namespace(changeIRI)('')});
+    var changeGraph = s.node(rdf.namedNode(changeIRI));
+
     info['change'][changeIRI] = {};
     info['change'][changeIRI][ns.spec.statement] = changeGraph.out(ns.spec.statement).values[0];
     info['change'][changeIRI][ns.spec.changeSubject] = changeGraph.out(ns.spec.changeSubject).values[0];
@@ -2619,7 +2620,7 @@ function showResourceAudienceAgentOccupations() {
       if (Config.User.Occupations.includes(audience)){
         matches.push(getResourceGraph(audience).then(g => {
           Config.Resource[audience] = { graph: g };
-          return (g) ? rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(audience)('')}) : g;
+          return g ? g.node(rdf.namedNode(audience)) : g;
         }));
       }
     })
