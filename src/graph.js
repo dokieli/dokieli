@@ -56,16 +56,15 @@ function getGraphFromData (data, options = {}) {
       break;
   }
 
-
-
   //TODO: Look into a wrapping function so that we don't have to pass baseURI twice; getRDFParser, parser.import
   const parser = getRDFParser(baseIRI, options.contentType);
-  const nodeStream = stringToStream(data);
+  const nodeStream = Readable.from([data]);
   const quadStream = parser.import(nodeStream, { baseIRI: baseIRI });
   // const dataset = rdf.dataset().import(quadStream);
 // console.log(quadStream)
   // return rdf.grapoi({ dataset });
   return rdf.dataset().import(quadStream).then((dataset) => {
+// console.log(dataset.toCanonical())
     return rdf.grapoi({ dataset });
   });
 
@@ -84,23 +83,29 @@ function getGraphFromData (data, options = {}) {
 //       })});
 }
 
-function stringToStream(str) {
-  return Readable.from([str]);
-  // return new Readable({
-  //   read() {
-  //     this.push(str);
-  //     this.push(null);
-  //   }
-  // })
-}
-
 function getRDFParser(baseIRI, contentType) {
   var RDFaMediaTypes = ['text/html', 'application/xhtml+xml', 'image/svg+xml', 'application/xml', 'text/xml'];
+
+  var profile = '';
+  switch(contentType) {
+    case 'text/html':
+      profile = 'html';
+      break;
+    case 'application/xhtml+xml':
+      profile = 'xhtml';
+      break;
+    case 'image/svg+xml':
+    case 'application/xml':
+    case 'text/xml':
+      profile = 'xml';
+      break;
+  }
 
   if (RDFaMediaTypes.includes(contentType)) {
     return new RdfaParser({
       baseIRI: baseIRI,
       contentType: contentType,
+      profile: profile
     });
   }
   else {
@@ -111,11 +116,11 @@ function getRDFParser(baseIRI, contentType) {
 function getMatchFromData (data, spo = {}, options = {}) {
   if (!data) { return Promise.resolve({}) }
 
-  spo['subject'] = spo.subject || window.location.origin + window.location.pathname
-  spo['predicate'] = spo.predicate || ns.rdfs.label
+  spo['subject'] = spo.subject || window.location.origin + window.location.pathname;
+  spo['predicate'] = spo.predicate || ns.rdfs.label.value;
 
-  options['contentType'] = options.contentType || 'text/html'
-  options['subjectURI'] = options.subjectURI || spo.subject
+  options['contentType'] = options.contentType || 'text/html';
+  options['subjectURI'] = options.subjectURI || spo.subject;
 
   return getGraphFromData(data, options)
     .then(g => {
@@ -519,17 +524,20 @@ function getResourceGraph (iri, headers, options = {}) {
     .then(data => {
       return getGraphFromData(data, options)
     })
-//     .then(g => {
+    .then(g => {
 // console.log(g)
 //       let fragment = (iri.lastIndexOf('#') >= 0) ? iri.substr(iri.lastIndexOf('#')) : ''
 // console.log(iri, getProxyableIRI(iri), fragment)
-//       var r = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(iri)('')});
+//       var r = 
 // console.log(r.term.value)
 //       // var r =  rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(getProxyableIRI(iri) + fragment)('')});
 
 //       console.log(Array.from(r.out().quads()))
 //       return r;
-//     })
+
+    //   return g.node(rdf.namedNode(iri));
+      return rdf.grapoi({ dataset: g.dataset, term: rdf.namedNode(stripFragmentFromString(iri))});
+    })
     .catch(e => {
       if ('resource' in e || 'cause' in e || e.status?.toString().startsWith('5')) {
         return e;
@@ -896,15 +904,15 @@ function getAgentTypeIndex(s) {
     return getResourceGraph(iri)
       .then(g => {
         //XXX: https://github.com/solid/type-indexes/issues/29 for potential property to discover TypeRegistrations.
-console.log(iri, g, g.term.value, typeIndexType);
+// console.log(iri, g, g.term.value, typeIndexType);
         if (!g) {
           return {};
         }
 
-        // g = rdf.grapoi({ dataset: g.dataset });
+        g = rdf.grapoi({ dataset: g.dataset });
 
         var triples = Array.from(g.out().quads());
-console.log(triples);
+
         if (triples.length) {
           var typeIndexes = {};
           typeIndexes[typeIndexType] = {};
@@ -914,25 +922,25 @@ console.log(triples);
             var p = t.predicate.value;
             var o = t.object.value;
 
-            if (p == ns.solid.forClass) {
+            if (p == ns.solid.forClass.value) {
               typeIndexes[typeIndexType][s] = {};
               typeIndexes[typeIndexType][s][p] = o;
             }
           });
-console.log(typeIndexes)
+
           triples.forEach(t => {
             var s = t.subject.value;
             var p = t.predicate.value;
             var o = t.object.value;
 
             if (typeIndexes[typeIndexType][s]) {
-              if (p == ns.solid.instance ||
-                  p == ns.solid.instanceContainer) {
+              if (p == ns.solid.instance.value ||
+                  p == ns.solid.instanceContainer.value) {
                 typeIndexes[typeIndexType][s][p] = o;
               }
             }
           });
-console.log(typeIndexes)
+// console.log(typeIndexes)
           return typeIndexes
         }
       })
@@ -944,10 +952,10 @@ console.log(typeIndexes)
   var privateTypeIndex = getAgentPrivateTypeIndex(s);
 
   if (publicTypeIndex?.length) {
-    promises.push(fetchTypeRegistration(publicTypeIndex[0], ns.solid.publicTypeIndex))
+    promises.push(fetchTypeRegistration(publicTypeIndex[0], ns.solid.publicTypeIndex.value))
   }
   if (privateTypeIndex?.length && Config.User.OIDC) {
-    promises.push(fetchTypeRegistration(privateTypeIndex[0], ns.solid.privateTypeIndex))
+    promises.push(fetchTypeRegistration(privateTypeIndex[0], ns.solid.privateTypeIndex.value))
   }
 
   return Promise.allSettled(promises)
@@ -1024,7 +1032,7 @@ function getAgentName (s) {
     } else if (s.out(ns.foaf.nick).values.length) {
       name = s.out(ns.foaf.nick).values;
     } else if (s.out(ns.vcard.nickname).values.length){
-      name = s.out(ns.vcard.nickname).values
+      name = s.out(ns.vcard.nickname).values;
     }
   }
   return name === undefined ? undefined : DOMPurify.sanitize(name)
@@ -1146,7 +1154,7 @@ function getGraphImage (s) {
     var image = image[0] || icon[0];
     Array.from(s.out().quads()).some(t => {
       // var image = s.out([ns.as.icon, ns.as.image]).out([ns.as.url, ns.as.href]).values[0];
-      if (t.predicate.value == ns.as.url || t.predicate.value == ns.as.href) {
+      if (t.predicate.value == ns.as.url.value || t.predicate.value == ns.as.href.value) {
         // https://github.com/rdfjs-base/to-ntriples
         // toNT(t.subject)
         // toNT(t)
@@ -1281,6 +1289,7 @@ function getUserLabelOrIRI(iri) {
   return name;
 }
 
+//XXX: RDFa issue retaining markup on non `datatype` nodes: https://github.com/rubensworks/rdfa-streaming-parser.js/issues/49
 function getGraphConceptLabel(g, options) {
   var labels = {
     prefLabel: [],
@@ -1306,37 +1315,40 @@ function getGraphConceptLabel(g, options) {
     var o = t.object.value;
 
     if (s == options['subjectURI']){
-      if (p == ns.skos.prefLabel && (t.object.language && (t.object.language == '' || t.object.language.toLowerCase().startsWith(options['lang'])))) {
+      if (p == ns.skos.prefLabel.value) {
+        console.log(t.object)
+      }
+      if (p == ns.skos.prefLabel.value && (t.object.language && (t.object.language == '' || t.object.language.toLowerCase().startsWith(options['lang'])))) {
         labels.prefLabel.push(o);
       }
-      else if (p == ns.skosxl.prefLabel) {
+      else if (p == ns.skosxl.prefLabel.value) {
         var quads = Config.Resource[documentURL]['graph'].node(rdf.namedNode(o)).out().quads();
         quads.forEach(oT => {
           var oS = oT.subject.value;
           var oP = oT.predicate.value;
           var oO = oT.object.value;
 
-          if (oS == o && oP == ns.skosxl.literalForm && (oT.object.language && (oT.object.language == '' || oT.object.language.toLowerCase().startsWith(options['lang'])))) {
+          if (oS == o && oP == ns.skosxl.literalForm.value && (oT.object.language && (oT.object.language == '' || oT.object.language.toLowerCase().startsWith(options['lang'])))) {
             labels.xlprefLabel.push(oO);
           }
         })
       }
-      else if (p == ns.skos.altLabel && (t.object.language && (t.object.language == '' || t.object.language.toLowerCase().startsWith(options['lang'])))) {
+      else if (p == ns.skos.altLabel.value && (t.object.language && (t.object.language == '' || t.object.language.toLowerCase().startsWith(options['lang'])))) {
         labels.altLabel.push(o);
       }
-      else if (p == ns.skosxl.altLabel) {
+      else if (p == ns.skosxl.altLabel.value) {
         var quads = Config.Resource[documentURL]['graph'].node(rdf.namedNode(o)).out().quads();
         quads.forEach(oT => {
           var oS = oT.subject.value;
           var oP = oT.predicate.value;
           var oO = oT.object.value;
 
-          if (oS == o && oP == ns.skosxl.literalForm && (oT.object.language && (oT.object.language == '' || oT.object.language.toLowerCase().startsWith(options['lang'])))) {
+          if (oS == o && oP == ns.skosxl.literalForm.value && (oT.object.language && (oT.object.language == '' || oT.object.language.toLowerCase().startsWith(options['lang'])))) {
             labels.xlaltLabel.push(oO);
           }
         })
       }
-      else if (p == ns.skos.notation) {
+      else if (p == ns.skos.notation.value) {
         labels.notation.push(o);
       }
     }
@@ -1584,6 +1596,5 @@ export {
   getAccessSubjects,
   getAuthorizationsMatching,
   getUserLabelOrIRI,
-  stringToStream,
   getRDFParser
 }

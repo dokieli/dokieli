@@ -144,34 +144,28 @@ DO = {
       DO.C.Inbox[url]['Notifications'] = [];
 
       return getResourceGraph(url)
-        .then(
-          function(i) {
-            DO.C.Inbox[url]['Graph'] = i;
+        .then(i => {
+          DO.C.Inbox[url]['Graph'] = i;
 
-            var s = i.node(rdf.namedNode(url));
-            s.out(ns.ldp.contains).forEach(resource => {
+          var s = i.node(rdf.namedNode(url));
+          s.out(ns.ldp.contains).values.forEach(resource => {
 // console.log(resource);
-              var types = getGraphTypes(s.node(rdf.namedNode(resource)));
+            var types = getGraphTypes(s.node(rdf.namedNode(resource)));
 // console.log(types);
-              if(!types.includes(ns.ldp.Container.value)) {
-                notifications.push(resource);
-              }
-            });
+            if(!types.includes(ns.ldp.Container.value)) {
+              notifications.push(resource);
+            }
+          });
 // console.log(notifications);
-            if (notifications.length > 0) {
-              DO.C.Inbox[url]['Notifications'] = notifications;
-              return notifications;
-            }
-            else {
-              var reason = {"message": "There are no notifications."};
-              return Promise.reject(reason);
-            }
-          },
-          function(reason) {
-// console.log(reason);
-            return reason;
+          if (notifications.length) {
+            DO.C.Inbox[url]['Notifications'] = notifications;
+            return notifications;
           }
-        );
+          else {
+            var reason = {"message": "There are no notifications."};
+            return Promise.reject(reason);
+          }
+        });
     },
 
     showInboxNotifications: function(url, data) {
@@ -482,9 +476,10 @@ DO = {
 
                     noteData["body"] = [bodyObject];
 
-                    if (s.out(ns.as.actor).values.length) {
+                    var actor = s.out(ns.as.actor).values;
+                    if (actor.length) {
                       noteData['creator'] = {
-                        'iri': s.out(ns.as.actor).values[0];
+                        'iri': actor[0]
                       }
                       var a = g.node(rdf.namedNode(noteData['creator']['iri']));
                       var actorName = getAgentName(a);
@@ -561,7 +556,7 @@ DO = {
 
                       // if (target.startsWith(currentPathURL)) {
                         Object.keys(DO.C.Citation).forEach(citationCharacterization => {
-                          var citedEntity = s[citationCharacterization];
+                          var citedEntity = s.out(rdf.namedNode(citationCharacterization)).values;
                           // if(citedEntity) {
                             citedEntity.forEach(cE => {
                               if(cE.startsWith(currentPathURL)) {
@@ -842,7 +837,7 @@ DO = {
       width = options.width || parseInt(s.ownerDocument.defaultView.getComputedStyle(s, null)["width"]);
       height = options.height || parseInt(s.ownerDocument.defaultView.getComputedStyle(s, null)["height"]);
 
-      if('title' in options) {
+      if ('title' in options) {
         svg.append('title')
           .attr('property', 'dcterms:title')
           .text(options.title);
@@ -1222,7 +1217,7 @@ DO = {
       var graphNodes = [];
 
       dataGraph.out().quads().forEach(t => {
-        if(
+        if (
           // t.predicate.value == 'http://www.w3.org/1999/02/22-rdf-syntax-ns#first' ||
           // t.predicate.value == 'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest' ||
           t.object.value == 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'
@@ -1385,7 +1380,7 @@ DO = {
           if (!graphNodes.includes(t.object.value)) {
             if (t.object.value in DO.C.Resource) {
               // console.log(t.object.value)
-              DO.C.Resource[t.object.value].out(ns.rdf.type).values.forEach(type => {
+              DO.C.Resource[t.object.value].graph.out(ns.rdf.type).values.forEach(type => {
                 if (isActorType(type)) {
                   // console.log(type)
                   oGroup = 10
@@ -1856,13 +1851,13 @@ DO = {
                       svgGraph.parentNode.removeChild(svgGraph);
                     }
                     else {
-                      serializeGraph(g, { 'contentType': 'text/turtle' })
-                        .then(function(data){
+                      // serializeGraph(g, { 'contentType': 'text/turtle' })
+                      //   .then(data => {
                           var options = {};
                           options['subjectURI'] = so[0];
                           options['contentType'] = 'text/turtle';
-                          DO.U.showVisualisationGraph(options.subjectURI, data, selector, options);
-                        });
+                          DO.U.showVisualisationGraph(options.subjectURI, g.dataset.toCanonical(), selector, options);
+                        // });
                     }
                   }
                 }
@@ -2422,13 +2417,17 @@ DO = {
 
       var dataset = rdf.dataset();
       var html = [];
+      var options = { 'resources': [] };
 
-      return Promise.all(promises.map(p => p.catch(e => e)))
+      return Promise.allSettled(promises)
+        .then(results => results.filter(r => r.status === 'fulfilled' && r.value).map(r => r.value))
         .then(graphs => {
+// console.log(graphs);
           graphs.forEach(g => {
-// console.log(g)
-            if (g && g.in().values.length > 0){
-              var documentURL = g.in().value;
+            if (g && g.out().terms.length){
+            // if (g) {
+              var documentURL = g.term.value;
+              g = rdf.grapoi({dataset: g.dataset})
 // console.log(documentURL)
 // console.log(g)
               DO.C.Resource[documentURL] = DO.C.Resource[documentURL] || {};
@@ -2436,10 +2435,11 @@ DO = {
               DO.C.Resource[documentURL]['skos'] = getResourceInfoSKOS(g);
               DO.C.Resource[documentURL]['title'] = getGraphLabel(g) || documentURL;
 
-              if (DO.C.Resource[documentURL]['skos']['graph'].in().values.length) {
+              if (DO.C.Resource[documentURL]['skos']['graph'].out().terms.length) {
                 html.push('<section><h4><a href="' + documentURL + '">' + DO.C.Resource[documentURL]['title'] + '</a></h4><div><dl>' + DO.U.getDocumentConceptDefinitionsHTML(documentURL) + '</dl></div></section>');
 
-                dataset.addAll(DO.C.Resource[documentURL]['skos']['graph']);
+                dataset.addAll(DO.C.Resource[documentURL]['skos']['graph'].dataset);
+                options['resources'].push(documentURL);
               }
             }
           });
@@ -2472,13 +2472,14 @@ DO = {
             if (button) {
               button.parentNode.removeChild(button);
 
-              serializeGraph(dataset, { 'contentType': 'text/turtle' })
-                .then(function(data){
-                  var options = {};
+              // serializeGraph(dataset, { 'contentType': 'text/turtle' })
+              //   .then(function(data){
+              ///FIXME: This DO.C.DocumentURL doesn't seem right other than what the visualisation's root node becomes?
                   options['subjectURI'] = DO.C.DocumentURL;
                   options['contentType'] = 'text/turtle';
-                  DO.U.showVisualisationGraph(options.subjectURI, data, selector, options);
-                });
+                  //FIXME: For multiple graphs (fetched resources), options.subjectURI is the last item, so it is inaccurate
+                  DO.U.showVisualisationGraph(options.subjectURI, dataset.toCanonical(), selector, options);
+                // });
             }
           })
 
@@ -2506,6 +2507,7 @@ DO = {
           var g = DO.C.Resource[documentURL]['graph'].node(rdf.namedNode(subject));
 
           var conceptLabel = sortToLower(getGraphConceptLabel(g));
+          console.log(conceptLabel)
           conceptLabel = (conceptLabel.length > 0) ? conceptLabel.join(' / ') : getFragmentOrLastPath(subject);
           conceptLabel = conceptLabel.trim();
           conceptLabel = '<a href="' + subject + '">' + conceptLabel + '</a>';
@@ -2524,12 +2526,13 @@ DO = {
               var concept = DO.C.Resource[documentURL]['skos']['data'][subject][hasConcept];
 
               if (concept?.length) {
-                sortToLower(concept).forEach(function(c) {
+                sortToLower(concept).forEach(c => {
                   var conceptGraph = DO.C.Resource[documentURL]['graph'].node(rdf.namedNode(c));
                   var cLabel = getGraphConceptLabel(conceptGraph);
                   cLabel = (cLabel.length) ? cLabel : [getFragmentOrLastPath(c)];
-                  cLabel.forEach(function(cL) {
+                  cLabel.forEach(cL => {
                     cL = cL.trim();
+                    console.log(cL)
                     s += '<li><a href="' + c + '">' + cL + '</a></li>';
                   });
                 });
@@ -5387,7 +5390,7 @@ console.log(e);
                   getResourceGraph(sDURL).then(g => {
                     if (g) {
                       var primaryTopic = g.out(ns.foaf.primaryTopic).values;
-                      g = (primaryTopic.length) ? g.node(primaryTopic[0]) : g.node(rdf.namedNode(storageUrl));
+                      g = (primaryTopic.length) ? g.node(rdf.namedNode(primaryTopic[0])) : g.node(rdf.namedNode(storageUrl));
 
                       var selfDescription = DO.U.getStorageSelfDescription(g);
                       var contactInformation = DO.U.getContactInformation(g);
@@ -5530,9 +5533,9 @@ console.log(e);
 // console.log(r.odrlaction)
       var actions = [];
 
-      var actions = g.out(ns.odrl.action).values;
+      var actionsIRIs = g.out(ns.odrl.action).values;
 
-      actions.forEach(iri => {
+      actionsIRIs.forEach(iri => {
         //FIXME: Label derived from URI.
         var label = iri;
         var href = iri;
@@ -5557,7 +5560,7 @@ console.log(e);
         var attributeTitle = '';
 
         //Get user's actions from preferred policy (prohibition) to check for conflicts with storage's policy (permission)
-        if (DO.C.User.PreferredPolicyRule && DO.C.User.PreferredPolicyRule.Prohibition && DO.C.User.PreferredPolicyRule.Prohibition.Actions.includes()(iri)) {
+        if (DO.C.User.PreferredPolicyRule && DO.C.User.PreferredPolicyRule.Prohibition && DO.C.User.PreferredPolicyRule.Prohibition.Actions.includes(iri)) {
           warning = Icon[".fas.fa-circle-exclamation"] + ' ';
           attributeClass = ' class="warning"';
           attributeTitle = ' title="The action (' + label + ') is prohibited by preferred policy."';
@@ -6027,8 +6030,8 @@ console.log(e);
 // console.log(url)
         var headers;
         headers = {'Accept': 'text/turtle, application/ld+json'};
-        getResourceGraph(url, headers).then(function(g){
-          DO.U.generateBrowserList(g, url, id, action).then(function(l){
+        getResourceGraph(url, headers).then(g => {
+          DO.U.generateBrowserList(g, url, id, action).then(l => {
             DO.U.showStorageDescription(g, id, url);
             return l;
           },
@@ -7577,7 +7580,7 @@ console.log(response)
             return Promise.allSettled(promises)
               .then(function(results) {
                 var items = [];
-                results.forEach(function(result){
+                results.forEach(result => {
 // console.log(result)
                   items.push(result.value);
                 })
@@ -11647,4 +11650,3 @@ else {
 
 window.DO = DO;
 export default DO
-t

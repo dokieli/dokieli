@@ -1319,8 +1319,8 @@ function getGraphData(s, options) {
   //TODO: Refactor
   //FIXME: permissionsActions, specrequirement, skosConceptSchemes are assumed to be from document's policies
 
-  var hasPolicy = s.out(ns.odrl.hasPolicy);
-  if (hasPolicy.values.length && s.term.value == documentURL) {
+  var hasPolicy = s.out(ns.odrl.hasPolicy).values;
+  if (hasPolicy.length && s.term.value == documentURL) {
     info['odrl'] = getResourceInfoODRLPolicies(s);
   }
 
@@ -1378,7 +1378,6 @@ function getResourceInfo(data, options) {
       const dataset = rdf.dataset();
 
       resolvedPromises.forEach(response => {
-// console.log(response.value)
         if (response.value) {
           dataset.addAll(response.value.dataset);
         }
@@ -1387,8 +1386,7 @@ function getResourceInfo(data, options) {
       return rdf.grapoi({ dataset });
     })
     .then(g => {
-      // var s = rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(documentURL)('')});
-// console.log(s);
+      g = g.node(rdf.namedNode(documentURL));
 
       var info = getGraphData(g, options);
 
@@ -1704,15 +1702,15 @@ function getResourceInfoSpecAdvisements(s) {
   info['spec'] = {};
   info['spec']['advisement'] = {};
 
-  s.out(ns.spec.advisement).forEach(advisementIRI => {
+  s.out(ns.spec.advisement).values.forEach(advisementIRI => {
     info['spec']['advisement'][advisementIRI] = {};
 
     var advisementGraph = s.node(rdf.namedNode(advisementIRI));
 
-    info['spec']['advisement'][advisementIRI][ns.spec.statement] =  advisementGraph.out(ns.spec.statement).values[0];
-    // info['spec'][advisementIRI][ns.spec.advisementSubject] = advisementSubject;
-    info['spec']['advisement'][advisementIRI][ns.spec.advisementLevel] = advisementGraph.out(ns.spec.advisementLevel).values[0];
-    var advisementCitations = advisementGraph.out(rdf.namedNode(citationIRI)).values;
+    info['spec']['advisement'][advisementIRI][ns.spec.statement.value] =  advisementGraph.out(ns.spec.statement).values[0];
+    // info['spec'][advisementIRI][ns.spec.advisementSubject.value] = advisementSubject;
+    info['spec']['advisement'][advisementIRI][ns.spec.advisementLevel.value] = advisementGraph.out(ns.spec.advisementLevel).values[0];
+    var advisementCitations = advisementGraph.out(rdf.namedNode(advisementIRI)).values;
 
     Object.keys(Config.Citation).forEach(citationIRI => {
       if (advisementCitations.length) {
@@ -1722,7 +1720,7 @@ function getResourceInfoSpecAdvisements(s) {
 
     var seeAlso = advisementGraph.out(ns.rdfs.seeAlso).values;
     if (seeAlso.length) {
-      info['spec']['advisement'][advisementIRI][ns.rdfs.seeAlso] = seeAlso;
+      info['spec']['advisement'][advisementIRI][ns.rdfs.seeAlso.value] = seeAlso;
     }
   });
 
@@ -1742,9 +1740,9 @@ function getResourceInfoSpecChanges(s) {
     var changeGraph = s.node(rdf.namedNode(changeIRI));
 
     info['change'][changeIRI] = {};
-    info['change'][changeIRI][ns.spec.statement] = changeGraph.out(ns.spec.statement).values[0];
-    info['change'][changeIRI][ns.spec.changeSubject] = changeGraph.out(ns.spec.changeSubject).values[0];
-    info['change'][changeIRI][ns.spec.changeClass] = changeGraph.out(ns.spec.changeClass).values[0];
+    info['change'][changeIRI][ns.spec.statement.value] = changeGraph.out(ns.spec.statement).values[0];
+    info['change'][changeIRI][ns.spec.changeSubject.value] = changeGraph.out(ns.spec.changeSubject).values[0];
+    info['change'][changeIRI][ns.spec.changeClass.value] = changeGraph.out(ns.spec.changeClass).values[0];
   });
 
   return info['change'];
@@ -1774,13 +1772,14 @@ function getResourceInfoSKOS(g) {
   //  .map(ptr => fetch(ptr.out(ns.foaf.image).value)))
   //  //.out([ns.foaf.firstName, ns.foaf.lastName]).values.join(' ')
 
-
+// console.log(g.terms.length)
+// console.log(Array.from(g.out().quads()).length)
   g.out().quads().forEach(t => {
 // console.log(t)
     var s = t.subject.value;
     var p = t.predicate.value;
     var o = t.object.value;
-
+// console.log(s, p, o)
     var isRDFType = (p == ns.rdf.type.value) ? true : false;
     var isSKOSProperty = p.startsWith('http://www.w3.org/2004/02/skos/core#');
     var isSKOSObject = o.startsWith('http://www.w3.org/2004/02/skos/core#');
