@@ -260,7 +260,7 @@ function createFeedXML(feed, options) {
   var year = new Date(now).getFullYear();
 
   var feedItems = [];
-  Object.keys(feed.items).forEach(function(i) {
+  Object.keys(feed.items).forEach(i => {
     var fI = '';
     var url = i;
     var origin = new URL(url).origin;
@@ -269,7 +269,7 @@ function createFeedXML(feed, options) {
     var title = ('title' in feed.items[i]) ? '<title>' + feed.items[i].title + '</title>' : '';
 
     //TODO: This would normally only work for input content is using a markup language.
-    var description = feed.items[i].description.replace(/(data|src|href)=(['"])([^'"]+)(['"])/ig, function(match, p1, p2, p3, p4) {
+    var description = feed.items[i].description.replace(/(data|src|href)=(['"])([^'"]+)(['"])/ig, (match, p1, p2, p3, p4) => {
       var isAbsolute = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(p3); // Check if the value is an absolute URL
       return `${p1}="${isAbsolute ? p3 : (p3.startsWith('/') ? origin : url) + '/' + p3}"`;
     });
@@ -285,7 +285,7 @@ function createFeedXML(feed, options) {
     switch (options.contentType) {
       case 'application/atom+xml':
         if ('author' in feed.items[i] && typeof feed.items[i].author !== 'undefined') {
-          feed.items[i].author.forEach(function(author){
+          feed.items[i].author.forEach(author => {
             var a = `    <author>
       <uri>${author.uri}</uri>${'name' in author ? `
       <name>${author.name}</name>` : ''}${'email' in author ? `
@@ -453,7 +453,7 @@ function createActivityHTML(o) {
   var asObjectTypes = ''
   if ('object' in o && 'objectTypes' in o && o.objectTypes.length > 0) {
     asObjectTypes = '<dl><dt>Types</dt>'
-    o.objectTypes.forEach(function(t){
+    o.objectTypes.forEach(t => {
       asObjectTypes += '<dd><a about="' + o.object + '" href="' + t + '" typeof="'+ t +'">' + t + '</a></dd>'
     })
     asObjectTypes += '</dl>'
@@ -538,7 +538,7 @@ function removeSelectorFromNode(node, selector) {
   var clone = node.cloneNode(true);
   var x = clone.querySelectorAll(selector);
 
-  x.forEach(function(i){
+  x.forEach(i => {
     i.parentNode.removeChild(i);
   })
 
@@ -912,7 +912,7 @@ function setEditSelections(options) {
 }
 
 function getRDFaPrefixHTML(prefixes){
-  return Object.keys(prefixes).map(function(i){ return i + ': ' + prefixes[i]; }).join(' ');
+  return Object.keys(prefixes).map(i => { return i + ': ' + prefixes[i]; }).join(' ');
 }
 
 function setDocumentRelation(rootNode, data, options) {
@@ -923,7 +923,7 @@ function setDocumentRelation(rootNode, data, options) {
   var dl = rootNode.querySelector('#' + options.id);
   var dd;
 
-  data.forEach(function(d){
+  data.forEach(d => {
     var documentRelation = '<dd>' + createRDFaHTML(d) + '</dd>';
 
     if(dl) {
@@ -982,7 +982,7 @@ function showTimeMap(node, url) {
       var triples = sortGraphTriples(g.graph(), { sortBy: 'object' });
 
       var items = [];
-      triples.forEach(function(t){
+      triples.forEach(t => {
         var s = t.subject.value;
         var p = t.predicate.value;
         var o = t.object.value;
@@ -1118,7 +1118,7 @@ function handleDeleteNote(button) {
 }
 
 function buttonClose() {
-  document.addEventListener('click', function(e) {
+  document.addEventListener('click', e => {
     var button = e.target.closest('button.close')
     if (button) {
       var parent = button.parentNode;
@@ -1128,7 +1128,7 @@ function buttonClose() {
 }
 
 function notificationsToggle() {
-  document.addEventListener('click', function(e) {
+  document.addEventListener('click', e => {
     var button = e.target.closest('button.toggle');
     if (button) {
       var aside = button.closest('aside');
@@ -1409,10 +1409,10 @@ function getGraphFromDataBlock(data, options) {
     var node = getDocumentNodeFromString(data, options);
 
     var selectors = Config.MediaTypes.RDF
-      .filter(function(mediaType) {
+      .filter(mediaType => {
         return !Config.MediaTypes.Markup.includes(mediaType);
       })
-      .map(function(mediaType) {
+      .map(mediaType => {
         return 'script[type="' + mediaType + '"]';
       });
 // console.log(selectors)
@@ -1420,7 +1420,7 @@ function getGraphFromDataBlock(data, options) {
 
     var scripts = node.querySelectorAll(selectors.join(', '));
 // console.log(scripts)
-    scripts.forEach(function(script){
+    scripts.forEach(script => {
       var scriptType = script.getAttribute('type').trim();
       var scriptData = script.textContent;
 // console.log(scriptData)
@@ -1431,7 +1431,7 @@ function getGraphFromDataBlock(data, options) {
 // console.log(scriptData)
       //Cleans up the data block from comments at the beginning and end of the script.
       var lines = scriptData.split(/\r\n|\r|\n/);
-      lines = lines.filter(function(line, index) {
+      lines = lines.filter((line, index) => {
         if (index === 0 || index === lines.length - 1) {
           line = line.trim();
           return !line.startsWith('#') && !line.startsWith('//');
@@ -1492,13 +1492,13 @@ function getResourceSupplementalInfo (documentURL, options) {
     var rHeaders = { 'Cache-Control': 'no-cache' };
     var rOptions = { 'noCache': true };
     return getResourceHead(documentURL, rHeaders, rOptions)
-      .then(function(response) {
+      .then(response => {
         var headers = response.headers;
 
         Config['Resource'][documentURL]['headers'] = {};
         Config['Resource'][documentURL]['headers']['response'] = headers;
 
-        checkHeaders.forEach(function(header){
+        checkHeaders.forEach(header => {
           var headerValue = response.headers.get(header);
           // headerValue = 'foo=bar ,user=" READ wriTe Append control ", public=" read append" ,other="read " , baz= write, group=" ",,';
 
@@ -1512,7 +1512,7 @@ function getResourceSupplementalInfo (documentURL, options) {
 
               Config['Resource'][documentURL]['headers']['wac-allow']['permissionGroup'] = {};
 
-              wacAllowMatches.forEach(function(match){
+              wacAllowMatches.forEach(match => {
                 var modesString = match[2] || '';
                 var accessModes = uniqueArray(modesString.toLowerCase().split(/\s+/));
 
@@ -1553,8 +1553,8 @@ function getResourceSupplementalInfo (documentURL, options) {
         }
 
         return Promise.allSettled(promises)
-          .then(function(results) {
-            results.forEach(function(result){
+          .then(results => {
+            results.forEach(result => {
               var g = result.value;
 
               if (g) {
@@ -1812,7 +1812,7 @@ function updateDocumentDoButtonStates() {
   var documentDo = document.getElementById('document-do');
 
   if (documentDo) {
-    Object.keys(Config.ButtonStates).forEach(function(id){
+    Object.keys(Config.ButtonStates).forEach(id => {
       var s = documentDo.querySelector('.' + id);
 
       if (s) {
@@ -2074,7 +2074,7 @@ function removeNodesWithIds(ids) {
 
   ids = (Array.isArray(ids)) ? ids : [ids];
 
-  ids.forEach(function(id) {
+  ids.forEach(id => {
     var node = document.getElementById(id);
     if(node) {
       node.parentNode.removeChild(node);
@@ -2148,7 +2148,7 @@ function updateReferences(referencesList, options){
     cite.insertAdjacentHTML('afterend', ref);
   }
 
-  citeA.forEach(function(a){
+  citeA.forEach(a => {
     var ref, refId, refLabel, rId;
     var cite = a.parentNode;
     var jumpLink;
@@ -2255,7 +2255,7 @@ function showRobustLinksDecoration(node) {
 // console.log(node)
   var nodes = node.querySelectorAll('[data-versionurl], [data-originalurl]');
 // console.log(nodes)
-  nodes.forEach(function(i){
+  nodes.forEach(i => {
     if (i.nextElementSibling && i.nextElementSibling.classList.contains('do') && i.nextElementSibling.classList.contains('robustlinks')) {
       return;
     }
@@ -2303,8 +2303,8 @@ function showRobustLinksDecoration(node) {
     i.insertAdjacentHTML('afterend', '<span class="do robustlinks"><button title="Show Robust Links">🔗</button><span>' + citation + originalurl + versionurl + nearlinkdateurl + '</span></span>');
   });
 
-  document.querySelectorAll('.do.robustlinks').forEach(function(i){
-    i.addEventListener('click', function(e){
+  document.querySelectorAll('.do.robustlinks').forEach(i => {
+    i.addEventListener('click', (e) => {
       if (e.target.closest('button')) {
         var pN = e.target.parentNode;
         if (pN.classList.contains('on')){
@@ -2347,7 +2347,7 @@ function getTestDescriptionReviewStatusHTML() {
 
   reviewStatusHTML.push('<dl id="test-description-review-statuses">');
 
-  Object.keys(Config.TestDescriptionReviewStatus).forEach(function(i){
+  Object.keys(Config.TestDescriptionReviewStatus).forEach(i => {
     reviewStatusHTML.push('<dt>' + getFragmentFromString(i) + '</dt>');
     reviewStatusHTML.push('<dd>' + Config.TestDescriptionReviewStatus[i] + '</dd>');
   })
@@ -2494,7 +2494,7 @@ function getResourceTypeOptionsHTML(options) {
     selectedType = 'http://schema.org/Article';
   }
 
-  Object.keys(Config.ResourceType).forEach(function(iri){
+  Object.keys(Config.ResourceType).forEach(iri => {
     var selected = (iri == selectedType) ? ' selected="selected"' : '';
     s += '<option value="' + iri + '" title="' + Config.ResourceType[iri].description  + '"' + selected + '>' + Config.ResourceType[iri].name  + '</option>';
   });
@@ -2516,7 +2516,7 @@ function getPublicationStatusOptionsHTML(options) {
     selectedIRI = ns.pso.draft.value;
   }
 
-  Object.keys(Config.PublicationStatus).forEach(function(iri){
+  Object.keys(Config.PublicationStatus).forEach(iri => {
     var selected = (iri == selectedIRI) ? ' selected="selected"' : '';
     s += '<option value="' + iri + '" title="' + Config.PublicationStatus[iri].description  + '"' + selected + '>' + Config.PublicationStatus[iri].name  + '</option>';
   })
@@ -2541,7 +2541,7 @@ function getLanguageOptionsHTML(options) {
     selectedLang = 'en';
   }
 
-  Object.keys(Config.Languages).forEach(function(lang){
+  Object.keys(Config.Languages).forEach(lang => {
     let selected = (lang == selectedLang) ? ' selected="selected"' : '';
     s += '<option' + selected + ' value="' + lang + '">' + Config.Languages[lang] + '</option>';
   });
@@ -2566,7 +2566,7 @@ function getLicenseOptionsHTML(options) {
     selectedIRI = 'https://creativecommons.org/licenses/by/4.0/';
   }
 
-  Object.keys(Config.License).forEach(function(iri){
+  Object.keys(Config.License).forEach(iri => {
     if(iri != 'NoLicense') {
       var selected = (iri == selectedIRI) ? ' selected="selected"' : '';
       s += '<option value="' + iri + '" title="' + Config.License[iri].description  + '"' + selected + '>' + Config.License[iri].name  + '</option>';
@@ -2580,7 +2580,7 @@ function getCitationOptionsHTML(type) {
   type = type || 'cites';
 
   var s = '';
-  Object.keys(Config.Citation).forEach(function(iri){
+  Object.keys(Config.Citation).forEach(iri => {
     s += '<option value="' + iri + '">' + Config.Citation[iri]  + '</option>';
   })
 
@@ -2615,7 +2615,7 @@ function showResourceAudienceAgentOccupations() {
   if (Config.User.Occupations && Config.User.Occupations.length > 0) {
     var matches = [];
 
-    Config.Resource[Config.DocumentURL].audience.forEach(function(audience){
+    Config.Resource[Config.DocumentURL].audience.forEach(audience => {
       if (Config.User.Occupations.includes(audience)){
         matches.push(getResourceGraph(audience).then(g => {
           Config.Resource[audience] = { graph: g };
@@ -2666,7 +2666,7 @@ function showResourceAudienceAgentOccupations() {
 }
 
 function setCopyToClipboard(contentNode, triggerNode, options = {}) {
-  triggerNode.addEventListener('click', function(e) {
+  triggerNode.addEventListener('click', e => {
     if (e.target.closest('button.copy-to-clipboard')) {
       var text;
 
@@ -2720,7 +2720,7 @@ function serializeTableToText(table) {
   var theadData = serializeTableSectionToText(thead);
 
   var tbodyData = [];
-  tbodies.forEach(function(tbody){
+  tbodies.forEach(tbody => {
     tbodyData.push(serializeTableSectionToText(tbody));
   })
   tbodyData = tbodyData.join('\n');
@@ -2750,7 +2750,7 @@ function serializeTableSectionToText(section) {
       break;
   }
 
-  rows.forEach(function(tr){
+  rows.forEach(tr => {
     var cells;
 
     switch(section.nodeName.toLowerCase()) {
@@ -2765,7 +2765,7 @@ function serializeTableSectionToText(section) {
 
     var rowData = [];
 
-    cells.forEach(function(cell){
+    cells.forEach(cell => {
       var sanitized = DOMPurify.sanitize(cell.textContent.trim()).replace(/"/g, '""');
       rowData.push(sanitized);
     });
@@ -2778,7 +2778,7 @@ function serializeTableSectionToText(section) {
 
 
 function focusNote() {
-  document.addEventListener('click', function(e) {
+  document.addEventListener('click', e => {
     var ref = e.target.closest('span.ref.do sup a');
 
     if (ref) {

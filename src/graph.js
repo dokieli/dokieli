@@ -72,10 +72,10 @@ function getGraphFromData (data, options = {}) {
 // console.log(data)
 // console.log(options)
 //   return SimpleRDF.parse(data, options['contentType'], options['subjectURI'])
-//     .then(function(g){
+//     .then(g => {
 //       // var o = { 'contentType': 'application/n-triples' };
 //       var o = { 'contentType': 'text/turtle' };
-//       return serializeGraph(g, o).then(function(d){
+//       return serializeGraph(g, o).then(d => {
 //         d = skolem(d, o);
 //         d = setDocumentBase(d, options.subjectURI, o.contentType);
 // // console.log(d)
@@ -251,7 +251,7 @@ function serializeData (data, fromContentType, toContentType, options) {
             data = data.replace(new RegExp('"@id"', 'g'), '"id"')
             data = data.replace(new RegExp('"@type"', 'g'), '"type"')
 
-            context.forEach(function(c){
+            context.forEach(c => {
               var search = '';
               var replace = '';
 
@@ -455,7 +455,7 @@ function setDocumentBase (data, baseURI, contentType) {
 
       if (Array.isArray(data['@context'])) {
         var found = false;
-        data['@context'].forEach(function(a){
+        data['@context'].forEach(a => {
           if (typeof a === 'object' && '@base' in a) {
             found = true;
           }
@@ -583,7 +583,7 @@ function getLinkRelation (property, url, data) {
           // TODO: Should this get all or a given subject's?
           var endpoints = result.match(subjectURI, property).toArray()
           if (endpoints.length > 0) {
-            return endpoints.map(function(t){ return t.object.value })
+            return endpoints.map(t => { return t.object.value })
           }
 
 // console.log(property + ' endpoint was not found in message body')
@@ -603,7 +603,7 @@ function getLinkRelationFromHead (property, url) {
   // console.log(property)
   // console.log(linkHeaders)
         var uris = [];
-        properties.forEach(function(property){
+        properties.forEach(property => {
           if (linkHeaders.has('rel', property)) {
             uris.push(linkHeaders.rel(property)[0].uri);
           }
@@ -767,7 +767,7 @@ function getAgentSupplementalInfo(iri) {
         }
 
         return processSameAs(s, getAgentSupplementalInfo)
-                .then(function(){
+                .then(() => {
                   return getAgentSeeAlso(s)
                 });
       },
@@ -850,11 +850,11 @@ function getAgentSeeAlso(g, subjectURI) {
         })
 
         return Promise.allSettled(promisesGetAgentSeeAlso)
-          .then(function(results) {
+          .then(results => {
             return Promise.resolve([]);
           })
       })
-      .catch(function(e) {
+      .catch(e => {
         return Promise.resolve([]);
       });
   }
@@ -869,8 +869,8 @@ function getUserContacts(iri) {
       return processSameAs(Config.User.Graph, getUserContacts);
     }
     else {
-      return getResourceGraph(iri).then(
-        function(g){
+      return getResourceGraph(iri)
+        .then(g => {
           // if(typeof g._graph == 'undefined' || g.resource || g.cause || g.status?.startsWith(5)) {
           if(typeof g == 'undefined') {
             return Promise.resolve([]);
@@ -887,13 +887,14 @@ function getUserContacts(iri) {
           }
 
           return processSameAs(s, getUserContacts);
-        }).catch(e => {
-           return Promise.resolve([]);
-          });
+        })
+        .catch(e => {
+          return Promise.resolve([]);
+        });
     }
   }
 
-  return fyn(iri).then(function(i){ return Config.User.Knows || []; });
+  return fyn(iri).then(i => { return Config.User.Knows || []; });
 }
 
 function getAgentTypeIndex(s) {
@@ -959,12 +960,12 @@ function getAgentTypeIndex(s) {
   }
 
   return Promise.allSettled(promises)
-    .then(function(results) {
+    .then(results => {
       results.filter(result => !(result instanceof Error));
 
       var typeIndexes = {};
 
-      results.forEach(function(result) {
+      results.forEach(result => {
         Object.assign(typeIndexes, result.value);
       });
 
@@ -977,7 +978,7 @@ function processSameAs(s, callback) {
 
   if (sameAs.length){
     var promises = [];
-    sameAs.forEach(function(iri){
+    sameAs.forEach(iri => {
 // console.log(iri);
       if(iri != Config.User.IRI && !Config.User.SameAs.includes(iri)) {
         Config.User.SameAs = uniqueArray(Config.User.SameAs.concat(iri));
@@ -992,10 +993,10 @@ function processSameAs(s, callback) {
     });
 
     return Promise.all(promises)
-      .then(function(results) {
+      .then(results => {
         return Promise.resolve([]);
       })
-      .catch(function(e) {
+      .catch(e => {
         return Promise.resolve([]);
       });
   }
@@ -1405,8 +1406,8 @@ function getACLResourceGraph(documentURL, iri, options = {}) {
 // console.log(pathURL)
 
   //TODO: Consider whether to skip this HEAD if we already determined the ACLResource previously. While possible the effectiveACLResource is unlikely to change.
-  return getLinkRelationFromHead('acl', iri).then(
-    function(i) {
+  return getLinkRelationFromHead('acl', iri)
+    .then(i => {
       if (i.length > 0) {
         var aR = i[0];
 
@@ -1416,7 +1417,7 @@ function getACLResourceGraph(documentURL, iri, options = {}) {
         Config.Resource[iri]['acl']['defaultACLResource'] = Config.Resource[iri]['acl']['defaultACLResource'] || aclResource;
 
         return getResourceGraph(aclResource)
-          .then(function(g){
+          .then(g => {
 // console.log(i)
 // console.log(i.status)
 //404?

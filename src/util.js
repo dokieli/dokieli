@@ -178,7 +178,7 @@ function matchAllIndex(string, regexp) {
     // String.prototype.matchAll = function(regexp) {
       var matches = [];
       // this.replace(regexp, function() {
-      string.replace(regexp, function() {
+      string.replace(regexp, o => {
         var arr = ([]).slice.call(arguments, 0);
         var extras = arr.splice(-2);
         arr.index = extras[0];

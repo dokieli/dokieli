@@ -103,7 +103,7 @@ function generateGeoView(data) {
   }
 
   var x = new L.GPX(data, gptOptions)
-    .on('loaded', function(e) {
+    .on('loaded', e => {
       var gpx = e.target;
       // console.log(e);
       map.fitBounds(gpx.getBounds());
@@ -155,7 +155,7 @@ function generateGeoView(data) {
   
   // console.log(map)
   // console.log(leafletImage)
-  // leafletImage(map, function(err, canvas) {
+  // leafletImage(map, (err, canvas) => {
   //     var img = document.createElement('img');
   //     var dimensions = map.getSize();
   //     img.width = dimensions.x;
@@ -218,15 +218,16 @@ function getGPXActivityHTML(rootNode, contextNode, options) {
   data['metadataBoundsURL'] = `https://www.openstreetmap.org/?minlon=${data.minLon}&amp;minlat=${data.minLat}&amp;maxlon=${data.maxLon}&amp;maxlat=${data.maxLat}`;
 
   //FIXME: I prefer to have this HTML by the table but right now this may be the simplest/best place to put it because lookupPlace needs to be called with lat/lon
-  lookupPlace(data.centreLat, data.centreLon).then(function(response) {
-    setTimeout(function() {
-      document.querySelector('[typeof="schema:ExerciseAction"]')
-        .appendChild(fragmentFromString(`
-                  <dt>Place</dt>
-                  <dd><a href="https://www.wikidata.org/entity/${response.details.extratags.wikidata}" rel="schema:exerciseCourse">${response.reverse.features[0].properties.name}</a> (<a about="https://www.wikidata.org/entity/${response.details.extratags.wikidata}" rel="schema:hasMap" href="${data.metadataBoundsURL}">map</a>)</dd>
-                `)
-    )}, 3000);
-  })
+  lookupPlace(data.centreLat, data.centreLon)
+    .then(response => {
+      setTimeout(() => {
+        document.querySelector('[typeof="schema:ExerciseAction"]')
+          .appendChild(fragmentFromString(`
+                    <dt>Place</dt>
+                    <dd><a href="https://www.wikidata.org/entity/${response.details.extratags.wikidata}" rel="schema:exerciseCourse">${response.reverse.features[0].properties.name}</a> (<a about="https://www.wikidata.org/entity/${response.details.extratags.wikidata}" rel="schema:hasMap" href="${data.metadataBoundsURL}">map</a>)</dd>
+                  `))
+      }, 3000);
+    });
 
 // console.log(data.metadataTime);
 // console.log(data.minLat)
@@ -255,7 +256,7 @@ function getGPXActivityHTML(rootNode, contextNode, options) {
 // console.log(trksegs);
 
   options['gpxtpx'] = {};
-  Object.keys(gpxtpx).forEach(function(element) {
+  Object.keys(gpxtpx).forEach(element => {
     options['gpxtpx'][element] = getXPathValue(rootNode, `gpx:trkpt[1]/gpx:extensions/gpxtpx:TrackPointExtension/gpxtpx:${element}`, trksegContextNode, null, 'BOOLEAN_TYPE');
   });
 
@@ -285,7 +286,7 @@ function getGPXActivityHTML(rootNode, contextNode, options) {
   var tfootColSpan = 4;
   var gpxtpxTH = [];
   var gpxtpxLI = [];
-  Object.keys(gpxtpx).forEach(function(element) {
+  Object.keys(gpxtpx).forEach(element => {
     if (options['gpxtpx'][element]) {
       tfootColSpan++;
       gpxtpxTH.push(`<th rel="qb:component" resource="#component/${data.dataset}/measure/${element}" typeof="qb:ComponentSpecification"><span rel="qb:componentProperty" resource="${gpxtpx[element].property}" typeof="qb:MeasureProperty"><span property="skos:prefLabel" rel="rdfs:subPropertyOf" resource="sdmx-measure:obsValue">${gpxtpx[element].label}</span></span></th>`);
@@ -414,7 +415,7 @@ function getGPXextensionsHTML(rootNode, contextNode, data, options) {
   var extensionsContextNode = contextNode.querySelector('extensions');
 
   var html = [];
-  Object.keys(gpxtpx).forEach(function(element) {
+  Object.keys(gpxtpx).forEach(element => {
     if (options['gpxtpx'][element]) {
       var value = getXPathValue(rootNode, "gpxtpx:TrackPointExtension/gpxtpx:" + element, extensionsContextNode, null, gpxtpx[element].xpathResultType);
       html.push(`<td datatype="${gpxtpx[element].datatype}" property="${gpxtpx[element].property}">${value}</td>`);

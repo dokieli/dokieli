@@ -65,7 +65,7 @@ async function showUserSigninSignout (node) {
 
     userInfo = document.getElementById('user-info')
 
-    userInfo.addEventListener('click', async function(e) {
+    userInfo.addEventListener('click', async (e) => {
       if (e.target.closest('.signout-user')) {
         removeLocalStorageDocument()
 
@@ -374,7 +374,7 @@ function afterSignIn () {
   }
 
   Promise.allSettled(promises)
-    .then(function(results) {
+    .then(results => {
       var uI = document.getElementById('user-info')
       if (uI) {
         uI.innerHTML = getUserSignedInHTML()
@@ -384,7 +384,7 @@ function afterSignIn () {
 
       return updateLocalStorageProfile(Config.User)
     })
-    .catch(function(e) {
+    .catch(e => {
       return Promise.resolve();
     });
 

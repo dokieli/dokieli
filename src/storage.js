@@ -88,7 +88,7 @@ function enableAutoSave(key, options) {
   switch (options.method) {
     default:
     case 'localStorage':
-      id = setInterval(function() {
+      id = setInterval(() => {
         var data = getDocument();
         getHash(data).then(hash => {
           if (!('hash' in Config.AutoSave.Items[key][options.method] && Config.AutoSave.Items[key][options.method].hash == hash)) {
@@ -100,7 +100,7 @@ function enableAutoSave(key, options) {
       break;
 
     case 'http':
-      id = setInterval(function() {
+      id = setInterval(() => {
         var data = getDocument();
         getHash(data).then(hash => {
           if (!('hash' in Config.AutoSave.Items[key][options.method] && Config.AutoSave.Items[key][options.method].hash == hash)) {
@@ -176,15 +176,15 @@ function getLocalStorageProfile(key) {
 
   if (Config.WebExtension) {
     if (typeof browser !== 'undefined') {
-      return browser.storage.sync.get(key).then(function(o){ return o[key]; });
+      return browser.storage.sync.get(key).then(o => { return o[key]; });
     }
     else {
       var value = {};
-      chrome.storage.sync.get(key, function(o){ value = o[key]; })
+      chrome.storage.sync.get(key, o => { value = o[key]; })
 
       // eslint-disable-next-line no-unused-vars
-      return new Promise(function(resolve, reject){
-        window.setTimeout(function() {
+      return new Promise((resolve, reject) => {
+        window.setTimeout(() => {
           return resolve(value)
         }, 50);
       });
@@ -274,7 +274,7 @@ function showAutoSaveStorage(node, iri) {
 
   node.insertAdjacentHTML('beforeend', '<ul id="autosave-items" class="on">' + useLocalStorage + useHTTPStorage + '</ul>');
 
-  node.querySelector('#autosave-items').addEventListener('click', function(e) {
+  node.querySelector('#autosave-items').addEventListener('click', e => {
     if (e.target.closest('input.autosave')) {
       var method;
       switch (e.target.id){

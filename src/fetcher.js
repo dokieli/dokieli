@@ -352,10 +352,10 @@ function getResourceOptions (url, options = {}) {
 
 //TODO: Move these and doc.js:getRDFaPrefixHTML (rename) elsewhere.
 function getN3PrefixesString(prefixes){
-  return Object.keys(prefixes).map(function(i){ return '@prefix ' + i + ': ' + '<' + prefixes[i] + '> .' }).join('\n');
+  return Object.keys(prefixes).map(i => { return '@prefix ' + i + ': ' + '<' + prefixes[i] + '> .' }).join('\n');
 }
 function getSPARQLPrefixesString(prefixes){
-  return Object.keys(prefixes).map(function(i){ return 'PREFIX ' + i + ': ' + '<' + prefixes[i] + '>' }).join('\n');
+  return Object.keys(prefixes).map(i => { return 'PREFIX ' + i + ': ' + '<' + prefixes[i] + '>' }).join('\n');
 }
 //https://www.w3.org/TR/sparql11-query/#rVar
 function containsSPARQLVariable(str) {
@@ -416,7 +416,7 @@ function patchResourceGraph (url, patches, options = {}) {
       var patchId = '_:' + generateUUID();
       data += `${patchId} a solid:InsertDeletePatch .\n`;
       var deletes = '';
-      patches.forEach(function(patch){
+      patches.forEach(patch => {
         if (patch.delete) {
           if (!deletes.length) {
             deletes += `${patchId} solid:deletes {`

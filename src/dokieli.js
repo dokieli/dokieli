@@ -794,7 +794,7 @@ DO = {
       group = Object.assign(group, legendCategories);
 
       // var a = [];
-      // Object.keys(group).forEach(function(i){
+      // Object.keys(group).forEach(i => {
       //   a.push('<div style="background-color:' + group[i].color + '; width:5em; height:5em;">' + group[i].label + '</div>');
       // });
       // getDocumentContentNode(document).insertAdjacentHTML('beforeend', a.join(''));
@@ -817,7 +817,7 @@ DO = {
 
       var graphView = document.querySelector(selector);
       graphView.insertAdjacentHTML('beforeend', '<button class="export" title="Export graph as SVG">Export</button>');
-      graphView.addEventListener('click', function(e) {
+      graphView.addEventListener('click', (e) => {
         if (e.target.closest('button.export')) {
           var svgNode = graphView.querySelector('svg[typeof="http://purl.org/dc/dcmitype/Image"]');
 
@@ -856,7 +856,7 @@ DO = {
             .attr("y", 20)
             .text("Resources: ")
 
-        go.resources.forEach(function(i, index){
+        go.resources.forEach((i, index) => {
           graphResources
             .append('a')
               .attr('fill', legendCategories[7].color)
@@ -943,18 +943,18 @@ DO = {
           .enter()
           .append("circle")
             .attr("cx", 10)
-            .attr("cy", function(d,i){ return 150 + i*25 })
+            .attr("cy", (d, i) => { return 150 + i*25 })
             .attr("r", nodeRadius)
-            .attr("fill", function(d){ return legendInfo[d].color })
+            .attr("fill", (d) => { return legendInfo[d].color })
 
         graphLegend.selectAll("foobarbazqux")
           .data(legendGroups)
           .enter()
           .append("text")
             .attr("x", 25)
-            .attr("y", function(d,i){ return 155 + i*25 })
-            .attr("fill", function(d){ return legendInfo[d].color })
-            .text(function(d){ return legendInfo[d].label + ' (' + legendInfo[d].count + ')'} )
+            .attr("y", (d, i) => { return 155 + i*25 })
+            .attr("fill", (d) => { return legendInfo[d].color })
+            .text((d) => { return legendInfo[d].label + ' (' + legendInfo[d].count + ')'} )
       }
 
       function handleResource (iri, headers, options) {
@@ -1000,7 +1000,7 @@ DO = {
         var graphObject = {};
         var nodes = graph.nodes;
         var nodeById = new Map();
-        nodes.forEach(function(n){
+        nodes.forEach(n => {
           nodeById.set(n.id, n);
         })
         var links = graph.links;
@@ -1010,8 +1010,7 @@ DO = {
 // console.log(nodeById)
         var uniqueNodes = {};
 
-        links.forEach(function(link) {
-
+        links.forEach(link => {
           var s = link.source = nodeById.get(link.source),
               t = link.target = nodeById.get(link.target),
               i = {}; // intermediate node
@@ -1070,31 +1069,31 @@ DO = {
         // link.transition();
 
         var node = graphObjects.selectAll("circle")
-          .data(go.nodes.filter(function(d) {
+          .data(go.nodes.filter(d => {
             if (go.uniqueNodes[d.id] && go.uniqueNodes[d.id].index == d.index) {
               return d.id;
             }
           }))
           .enter()
           .append('a')
-            .attr('href', function(d) {
+            .attr('href', (d) => {
               if ('type' in group[d.group] && group[d.group].type !== 'rdfs:Literal' && !d.id.startsWith('http://example.com/.well-known/genid/')) {
                 return d.id
               }
               return null
             })
-            .attr('rel', function(d) {
+            .attr('rel', (d) => {
               if (this.getAttribute('href') === null) { return null }
               return 'dcterms:references'
             })
           .append('circle')
             .attr('r', nodeRadius)
-            .attr('fill', function(d) { return group[d.group].color; })
-            .attr('stroke', function (d) {
+            .attr('fill', (d) => { return group[d.group].color; })
+            .attr('stroke', (d) => {
               if (d.visited) { return group[3].color }
               else if (d.group == 4) { return group[2].color }
               else { return group[7].color }})
-            .on('click', function(e, d) {
+            .on('click', (e, d) => {
               e.preventDefault();
               e.stopPropagation();
 
@@ -1114,7 +1113,7 @@ DO = {
             })
 
         node.append('title')
-          .text(function(d) { return d.id; });
+          .text(d => { return d.id; });
 
             // .call(d3.drag()
             //     .on("start", dragstarted)
@@ -1174,9 +1173,10 @@ DO = {
       var optionsNormalisation = restOptions;
 
       if (typeof data == 'string') {
-        return getGraphFromData(data, options).then(function(g){
-          return DO.U.convertGraphToVisualisationGraph(requestURL, g, options);
-        });
+        return getGraphFromData(data, options)
+          .then(g => {
+            return DO.U.convertGraphToVisualisationGraph(requestURL, g, options);
+          });
       }
       else if (typeof data == 'object') {
         return DO.U.convertGraphToVisualisationGraph(requestURL, data, options);
@@ -1187,9 +1187,10 @@ DO = {
         }
         else {
           data = getDocument(null, optionsNormalisation);
-          return getGraphFromData(data, options).then(function(g){
-            return DO.U.convertGraphToVisualisationGraph(requestURL, g, options);
-          });
+          return getGraphFromData(data, options)
+            .then(g => {
+              return DO.U.convertGraphToVisualisationGraph(requestURL, g, options);
+            });
         }
       }
     },
@@ -1507,7 +1508,7 @@ DO = {
         var selectorsArray = matches[1].split(',')
         var selector = {};
 
-        selectorsArray.forEach(function(s){
+        selectorsArray.forEach(s => {
           var kv = s.split('=');
 
           if (kv.length == 2) {
@@ -1574,7 +1575,7 @@ DO = {
       var textMatches = matchAllIndex(containerNodeTextContent, new RegExp(phrase, 'g'));
 // console.log(textMatches)
 
-      textMatches.forEach(function(item) {
+      textMatches.forEach(item => {
 // console.log('phrase:')
 // console.log(phrase)
 // console.log(item)
@@ -1775,7 +1776,7 @@ DO = {
           }
         }
         else {
-          getResourceInfo(DO.C.DocumentString).then(function(resourceInfo){
+          getResourceInfo(DO.C.DocumentString).then(resourceInfo => {
             DO.U.processPotentialAction(resourceInfo);
 
             if (DO.C.Resource[documentURL].inbox?.length && !DO.C.Inbox[DO.C.Resource[documentURL].inbox[0]]) {
@@ -1797,7 +1798,7 @@ DO = {
     },
 
     processActivateAction: function() {
-      document.addEventListener('click', function(e) {
+      document.addEventListener('click', (e) => {
         if (e.target.closest('[about="#document-menu"][typeof="schema:ActivateAction"], [href="#document-menu"][typeof="schema:ActivateAction"], [resource="#document-menu"][typeof="schema:ActivateAction"]')) {
           e.preventDefault();
           e.stopPropagation();
@@ -1828,7 +1829,7 @@ DO = {
 // console.log(originPathname)
 // console.log(action.startsWith(originPathname + '#'))
           if (action.startsWith(originPathname)) {
-            document.addEventListener('click', function(e) {
+            document.addEventListener('click', (e) => {
               var fragment = action.substr(action.lastIndexOf('#'));
 // console.log(fragment)
               if (fragment) {
@@ -1871,7 +1872,7 @@ DO = {
 
     showDocumentInfo: function() {
       document.documentElement.appendChild(fragmentFromString('<menu id="document-menu" class="do"><button class="show" title="Open menu">' + Icon[".fas.fa-bars"] + '</button><header></header><div></div><footer><dl><dt>About</dt><dd id="about-dokieli"><img alt="" height="16" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAn1BMVEUAAAAAjwAAkAAAjwAAjwAAjwAAjwAAjwAAkAAAdwAAjwAAjQAAcAAAjwAAjwAAiQAAjwAAjAAAjwAAjwAAjwAAjwAAkAAAjwAAjwAAjwAAjQAAjQAAhQAAhQAAkAAAkAAAkAAAjgAAjwAAiQAAhAAAkAAAjwAAjwAAkAAAjwAAjgAAjgAAjQAAjwAAjQAAjwAAkAAAjwAAjQAAiwAAkABp3EJyAAAANHRSTlMA+fH89enaabMF4iADxJ4SiSa+uXztyoNvQDcsDgvl3pRiXBcH1M+ppJlWUUpFMq6OdjwbMc1+ZgAABAhJREFUeNrt29nSmkAQBeAGZBMUxH3f993/vP+zJZVKVZKCRhibyc3/XVt6SimYPjPSt28Vmt5W/fu2T/9B9HIf7Tp+0RsgDC6DY6OLvzxJj8341DnsakgZUNUmo2XsORYYS6rOeugukhnyragiq56JIs5UEQ/FXKgidRTzompEKOhG1biioDFV44mCAqrGAQWtqRptA8VMqCpR6zpo9iy84VO1opWHPBZVb9QAzyQN/D1YNungJ+DMSYsbOFvSIwGjR3p0wGiQHkMw2qRHC4w76RGBcSA9NmAcSY8QjAdpYiFbTJoYyNYnTWrI1iFNusj2JE1sZBuQJtyE5pImc3Y21cRhZ1NNtsh2Ik127HCsSY8djjVpINuVhPnjVefobee2adXqu2S/6FyivABDEjQ9Lxo1pDlNd5wg24ikRK5ngKGhHhg1DSgZk4RrD6pa9LlRAnUBfWp6xCe+6EOvOT6yrmrigZaCZHPAp6b0gaiBFKvRd0/D1rr1OrvxDqiyoZmmPt9onib0t/VybyEXqdu0Cw16rUNVAfZFlzdjr5KOaoAUK6JsrgWGQapuBlIS4gy70gEmTrk1fuAgU40UxWXv6wvZAC2Dqfx0BfBK1z1H0aJ0WH7Ub4oG8JDlpBCgK1l5tSjHQSoAf0HVfMqxF+yqpzVk2ZGuAGdk8ijPHZlmpOCg0vh5cgE2JtN3qQSoU3lXpbKlLRegrzTpt+U2TNpKY2YiFiA0kS1Q6QccweZ/oinASm2B3RML0AGDNAU4qq3udmIXYVttD3YrFsBR24N1xG5EJpTeaiYWwILS5WRKBfChFsCSehpOwKi/yS0V4AsMWym3TWUFgMqIsRYL8AVOSDlaYgEitbZnDKll+UatchyJBSC1c3lDuQA2VHYAL3KneHpgLCjHSS7AHYyEciwh1g88wDB94rlyAVxwhsR7ygW4gRMTry8XwDdUDkXFgjVdD5wRsRaCAWJwPGI1Baval8Ie3Hqn8AjjhHbZr2DzrInumDTBGlCG8xy8QPY3MNLX4TiRP1q+BWs2pn9ECwu5+qTABc+80h++28UbTkjlTW3wrM6Ufrtu8d5J9Svg1Vch/RTcUYQdUHm+g1z1x2gSGyjGGVN5F7xjoTCjE0ndC3jJMzfCftmiciZ1lNGe3vCGufOWVMLIQHHehi3X1O8JJxR236SalUzninbu937BlwfV/I3k4KdGk2xm+MHuLa8Z0i9TC280qLRrF+8cw9RSjrOg8oIG8j2YgULsbGPomsgR0x9nsOzkOLh+kZr1owZGbfC2JJl78fIV0Wei/gxZDl85XWVtt++cxhuSEQ6bdfzLjlvM86PbaD4vQUjSglV8385My7CdXtO9+ZSyrLcf7nBN376V8gMpRztyq6RXYQAAAABJRU5ErkJggg==" width="16" /><a href="https://dokie.li/" target="_blank">dokieli</a> is an ' + Icon[".fab.fa-osi"] + ' <a href="https://github.com/dokieli/dokieli" target="_blank">open source</a> project. There is ' + Icon[".fas.fa-flask"] + ' <a href="https://dokie.li/docs" target="_blank">documentation</a> and public ' + Icon[".fas.fa-comments"] + ' <a href="https://matrix.to/#/%23dokieli:matrix.org" target="_blank">chat</a>. Made with fun.</dd></dl></footer></menu>'));
-      document.querySelector('#document-menu').addEventListener('click', function(e) {
+      document.querySelector('#document-menu').addEventListener('click', (e) => {
         var button = e.target.closest('button');
         if(button){
           if (button.classList.contains('show')) {
@@ -2036,7 +2037,7 @@ DO = {
       }
 
       if(DO.C.GraphViewerAvailable) {
-        document.querySelector('#document-views.do').addEventListener('click', function(e){
+        document.querySelector('#document-views.do').addEventListener('click', (e) => {
           if (e.target.closest('.resource-visualise')) {
             if(document.querySelector('#graph-view')) { return; }
 
@@ -2047,7 +2048,7 @@ DO = {
             document.documentElement.appendChild(fragmentFromString('<aside id="graph-view" class="do on">' + DO.C.Button.Close + '<h2>Graph view</h2></aside>'));
 
             var graphView = document.getElementById('graph-view');
-            graphView.addEventListener('click', function(e) {
+            graphView.addEventListener('click', (e) => {
               if (e.target.closest('button.close')) {
                 var rv = document.querySelector('#document-views .resource-visualise');
                 if (rv) {
@@ -2205,7 +2206,7 @@ DO = {
         document.querySelector('#embed-data-turtle textarea').focus();
         var a = document.querySelectorAll('#embed-data-entry nav a');
         for(let i = 0; i < a.length; i++) {
-          a[i].addEventListener('click', function(e) {
+          a[i].addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
 
@@ -2221,13 +2222,13 @@ DO = {
           });
         }
 
-        document.querySelector('#embed-data-entry button.close').addEventListener('click', function(e) {
+        document.querySelector('#embed-data-entry button.close').addEventListener('click', (e) => {
           document.querySelector('button.embed-data-meta').removeAttribute('disabled');
         });
 
         var buttonSave = document.querySelectorAll('#embed-data-entry button.save');
         for (let i = 0; i < buttonSave.length; i++) {
-          buttonSave[i].addEventListener('click', function(e) {
+          buttonSave[i].addEventListener('click', (e) => {
             var textarea = e.target.parentNode.querySelector('textarea');
             var name = textarea.getAttribute('name');
             var scriptEntry = textarea.value;
@@ -2467,13 +2468,13 @@ DO = {
 
           var selector = '#' + id + ' figure';
 
-          aC.addEventListener('click', function(e){
+          aC.addEventListener('click', (e) => {
             var button = e.target.closest('button.graph');
             if (button) {
               button.parentNode.removeChild(button);
 
               // serializeGraph(dataset, { 'contentType': 'text/turtle' })
-              //   .then(function(data){
+              //   .then(data => {
               ///FIXME: This DO.C.DocumentURL doesn't seem right other than what the visualisation's root node becomes?
                   options['subjectURI'] = DO.C.DocumentURL;
                   options['contentType'] = 'text/turtle';
@@ -2563,7 +2564,7 @@ DO = {
         else {
           var db = DO.C.Resource[documentURL].headers.linkHeaders.rel('describedby');
 
-          var missingResource = db.filter(function(relationItem) { return !DO.C.Resource[relationItem.uri]; });
+          var missingResource = db.filter(relationItem => { return !DO.C.Resource[relationItem.uri]; });
 
           if (missingResource == undefined) {
             window.setTimeout(waitUntil, 250);
@@ -2629,7 +2630,7 @@ DO = {
 
       var structuredData = document.querySelector('#highlight-data')
 
-      structuredData.addEventListener('change', function(e){
+      structuredData.addEventListener('change', (e) => {
         var input = e.target.closest('#highlight-structured-data');
         if (input) {
           if (input.checked) {
@@ -2670,7 +2671,7 @@ DO = {
         node.insertAdjacentHTML('beforeend', '<section id="list-of-stuff" class="do"><h2>List of Stuff</h2><ul>' + s.join('') + '</ul></section>');
 
         if (DO.C.EditorEnabled) {
-          document.getElementById('list-of-stuff').addEventListener('click', function(e){
+          document.getElementById('list-of-stuff').addEventListener('click', (e) => {
             if (e.target.closest('input')) {
               var id = e.target.id.slice(6);
               if(!e.target.getAttribute('checked')) {
@@ -2822,7 +2823,7 @@ DO = {
               s += '<caption>Conformance Requirements and Test Coverage</caption>'
               s += '<thead><tr><th colspan="3">Requirement</th></tr><tr><th>Subject</th><th>Level</th><th>Statement</th></tr></thead>';
               s += '<tbody>';
-              Object.keys(DO.C.Resource[documentURL]['spec']['requirement']).forEach(function(i) {
+              Object.keys(DO.C.Resource[documentURL]['spec']['requirement']).forEach(i => {
 // console.log(DO.C.Resource[documentURL]['spec'][i])
                 var statement = DO.C.Resource[documentURL]['spec']['requirement'][i][ns.spec.statement.value] || i;
                 //FIXME: This selector is brittle.
@@ -2861,7 +2862,7 @@ DO = {
               s += '<caption>Non-normative Advisements</caption>'
               s += '<thead><tr><th colspan="2">Advisement</th></tr><tr><th>Level</th><th>Statement</th></tr></thead>';
               s += '<tbody>';
-              Object.keys(DO.C.Resource[documentURL]['spec']['advisement']).forEach(function(i) {
+              Object.keys(DO.C.Resource[documentURL]['spec']['advisement']).forEach(i => {
 // console.log(DO.C.Resource[documentURL]['spec']['advisement'][i])
                 var statement = DO.C.Resource[documentURL]['spec']['advisement'][i][ns.spec.statement.value] || i;
                 //FIXME: This selector is brittle.
@@ -2898,7 +2899,7 @@ DO = {
             else if (id == 'list-of-abbreviations') {
               if (nodes.length > 0) {
                 nodes = [].slice.call(nodes);
-                nodes.sort(function(a, b) {
+                nodes.sort((a, b) => {
                   return a.textContent.toLowerCase().localeCompare(b.textContent.toLowerCase());
                 });
               }
@@ -3027,7 +3028,7 @@ console.log(reason);
                 buttonRD.innerHTML = Icon[".fas.fa-plus-minus"];
                 buttonRD.disabled = false;
 
-                buttonRD.addEventListener('click', function(e) {
+                buttonRD.addEventListener('click', (e) => {
                   var button = e.target.closest('button');
                   if (button){
                     if (button.classList.contains('add')) {
@@ -3071,7 +3072,7 @@ console.log(reason);
       }
 
       if (id == 'list-of-concepts') {
-        document.getElementById(id).addEventListener('click', function(e) {
+        document.getElementById(id).addEventListener('click', (e) => {
           var button = e.target.closest('button.add');
           if (button) {
             button.disabled = true;
@@ -3184,7 +3185,7 @@ console.log(reason);
 
 // console.log(testCases);
 
-      table.querySelectorAll('tbody tr').forEach(function(tr){
+      table.querySelectorAll('tbody tr').forEach(tr => {
         var requirement = tr.querySelector('td:nth-child(3) a').href;
 
         Object.keys(testCases).forEach(testCaseIRI => {
@@ -3279,7 +3280,7 @@ console.log(reason);
       var ids = (selector) ? document.querySelectorAll(selector) : document.querySelectorAll('main *[id]:not(input):not(textarea):not(select):not(#content)');
 
       for(var i = 0; i < ids.length; i++){
-        ids[i].addEventListener('mouseenter', function(e){
+        ids[i].addEventListener('mouseenter', (e) => {
           var fragment = document.querySelector('*[id="' + e.target.id + '"] > .do.fragment');
           if (!fragment && e.target.parentNode.nodeName.toLowerCase() != 'aside'){
             const sign = DO.U.getSelectorSign(e.target);
@@ -3303,7 +3304,7 @@ console.log(reason);
           }
         });
 
-        ids[i].addEventListener('mouseleave', function(e){
+        ids[i].addEventListener('mouseleave', (e) => {
           var fragment = document.querySelector('[id="' + e.target.id + '"] > .do.fragment');
           if (fragment && fragment.parentNode) {
             fragment.parentNode.removeChild(fragment);
@@ -3373,7 +3374,7 @@ console.log(reason);
 
       //TODO: Move unique list of existing RL's to DO.C.Resource?
       var robustLinksUnique = {};
-      robustLinks.forEach(function(i){
+      robustLinks.forEach(i => {
         if (!robustLinksUnique[i.href]) {
           robustLinksUnique[i.href] = {
             "node": i,
@@ -3397,7 +3398,7 @@ console.log(reason);
       rlInput.insertAdjacentHTML('afterbegin', '<p class="count"><data>' + rlCandidates.length + '</data> candidates.</p>');
 
       var rlUL = document.querySelector('#robustify-links-list');
-      rlCandidates.forEach(function(i){
+      rlCandidates.forEach(i => {
         var html = '<li><input id="' + i.href + '" type="checkbox" value="' + i.href + '" /> <label for="' + i.href + '"><a href="' + i.href + '" target="_blank" title="' + i.textContent + '">' + i.href + '</a></label>';
 
           //TODO: addEventListener
@@ -3428,7 +3429,7 @@ console.log(reason);
 
           var promises = [];
 
-          rlChecked.forEach(function(i){
+          rlChecked.forEach(i => {
 // console.log('Robustifying: ' + i.value)
 // console.log(i);
 
@@ -3450,7 +3451,7 @@ console.log(reason);
 
             var robustifyLinksReuse = document.querySelector('#robustify-links-reuse');
             if (robustifyLinksReuse.checked) {
-              Object.keys(robustLinksUnique).forEach(function(url){
+              Object.keys(robustLinksUnique).forEach(url => {
                 if (i.value == url) {
 // console.log(robustLinksUnique[url])
                   progress.innerHTML = '<a href="' + robustLinksUnique[url]["data-versionurl"] + '" target="_blank">' + Icon[".fas.fa-archive"] + '</a>';
@@ -3483,7 +3484,7 @@ console.log(reason);
 
                   showRobustLinksDecoration(node.closest('cite'));
                 })
-                .catch(function(r){
+                .catch(r => {
                   progress.innerHTML = Icon[".fas.fa-times-circle"] + ' Unable to archive. Try later.';
                 });
             }
@@ -3497,13 +3498,13 @@ console.log(reason);
           // console.log(rlInput.value)
           // console.log(e.target.checked)
           if (e.target.checked) {
-            rlInput.forEach(function(i) {
+            rlInput.forEach(i => {
               i.setAttribute('checked', 'checked');
               i.checked = true;
             });
           }
           else {
-            rlInput.forEach(function(i) {
+            rlInput.forEach(i => {
               i.removeAttribute('checked');
               i.checked = false;
             });
@@ -3525,7 +3526,7 @@ console.log(reason);
 
     createRobustLink: function(uri, node, options){
       return DO.U.snapshotAtEndpoint(undefined, uri, 'https://web.archive.org/save/', '', {'Accept': '*/*', 'showActionMessage': false })
-        .then(function(r){
+        .then(r => {
 // console.log(r)
           //FIXME TODO: Doesn't handle relative URLs in Content-Location from w3.org or something. Getting Overview.html but base is lost.
           if (r) {
@@ -3810,7 +3811,7 @@ console.log(reason);
       document.documentElement.appendChild(fragmentFromString('<aside id="generate-feed" class="do on">' + DO.C.Button.Close + '<h2>Generate Feed</h2></aside>'));
 
       var generateFeed = document.getElementById('generate-feed');
-      generateFeed.addEventListener('click', function(e) {
+      generateFeed.addEventListener('click', (e) => {
         if (e.target.closest('button.close')) {
           document.querySelector('#document-do .generate-feed').disabled = false;
         }
@@ -4004,7 +4005,7 @@ console.log(reason);
 
       mementoItems = document.getElementById('memento-items');
 
-      mementoItems.addEventListener('click', function(e) {
+      mementoItems.addEventListener('click', (e) => {
         if (e.target.closest('button.resource-save') ||
             e.target.closest('button.create-version') ||
             e.target.closest('button.create-immutable')) {
@@ -4196,7 +4197,7 @@ console.log(reason);
 
       document.documentElement.appendChild(fragmentFromString('<aside id="message-log" class="do on">' + DO.C.Button.Close + '<h2>Message Log</h2><div>' + messageLog + '</div></aside>'));
 
-      document.querySelector('#message-log button.close').addEventListener('click', function(e) {
+      document.querySelector('#message-log button.close').addEventListener('click', (e) => {
         document.querySelector('button.message-log').removeAttribute('disabled');
       });
     },
@@ -4209,7 +4210,7 @@ console.log(reason);
 
       document.documentElement.appendChild(fragmentFromString('<aside id="delete-document" class="do on">' + DO.C.Button.Close + '<h2>Delete Document</h2><div><p>Are you sure you want to delete the following document?</p><p><code>' + url  +'</code></p></div><button class="cancel" title="Cancel delete">Cancel</button><button class="delete" title="Delete document">Delete</button></aside>'));
 
-      document.querySelector('#delete-document').addEventListener('click', function(e) {
+      document.querySelector('#delete-document').addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
 
@@ -4333,7 +4334,7 @@ console.log(reason);
       var data = getDocument();
       options = options || {};
 
-      getResourceInfo(data, options).then(function(i) {
+      getResourceInfo(data, options).then(i => {
         if (e.target.closest('.create-version')) {
           createMutableResource(url);
         }
@@ -4695,13 +4696,13 @@ console.log('XXX: Cannot access effectiveACLResource', e);
             const input = document.getElementById('share-resource-search-contacts');
             const suggestions = document.querySelector('#share-resource-permissions .suggestions');
 
-            input.addEventListener('focus', function(e) {
+            input.addEventListener('focus', (e) => {
               if (!e.target.value.length) {
                 showSuggestions(getFilteredContacts());
               }
             });
 
-            input.addEventListener('input', function(e) {
+            input.addEventListener('input', (e) => {
               const query = e.target.value.trim().toLowerCase();
               showSuggestions(getFilteredContacts(query));
             });
@@ -4741,7 +4742,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
                 var ul = document.querySelector('#share-resource-permissions ul');
 
-                suggestion.addEventListener('click', function() {
+                suggestion.addEventListener('click', () => {
                   DO.U.addAccessSubjectItem(ul, DO.C.User.Contacts[contact].Graph, contact);
                   var li = document.getElementById('share-resource-access-subject-' + encodeURIComponent(contact));
                   var options = {};
@@ -4861,7 +4862,7 @@ console.log(e);
           var note = document.querySelector('#share-resource #share-resource-note').value.trim();
 
           var ps = document.querySelectorAll('#share-resource-contacts .progress');
-          ps.forEach(function(p){
+          ps.forEach(p => {
             p.parentNode.removeChild(p);
           });
 
@@ -5105,7 +5106,7 @@ console.log(e);
       var shareResourceNode = document.getElementById('share-resource-contacts');
 
       if (DO.C.User.Contacts && Object.keys(DO.C.User.Contacts).length > 0){
-        Object.keys(DO.C.User.Contacts).forEach(function(iri){
+        Object.keys(DO.C.User.Contacts).forEach(iri => {
           if (DO.C.User.Contacts[iri].Inbox && DO.C.User.IRI !== iri) {
             DO.U.addShareResourceContactInput(shareResourceNode, DO.C.User.Contacts[iri].Graph);
           }
@@ -5122,13 +5123,14 @@ console.log(e);
       return getUserContacts(url).then(
         function(contacts) {
           if(contacts.length > 0) {
-            contacts.forEach(function(url) {
-              getSubjectInfo(url).then(subject => {
-                DO.C.User.Contacts[url] = subject;
-                if (subject.Graph) {
-                  DO.U.addShareResourceContactInput(node, subject.Graph);
-                }
-              });
+            contacts.forEach(url => {
+              getSubjectInfo(url)
+                .then(subject => {
+                  DO.C.User.Contacts[url] = subject;
+                  if (subject.Graph) {
+                    DO.U.addShareResourceContactInput(node, subject.Graph);
+                  }
+                });
             });
 
             // return Promise.all(promises)
@@ -5185,11 +5187,11 @@ console.log(e);
       //TODO: Some refactoring needed because it is radio only. For now this function is not called for inputType=checkbox
       var inputType = (id == 'location-generate-feed') ? 'checkbox' : 'radio';
 
-      button.addEventListener('click', function(){
+      button.addEventListener('click', () => {
         if(button.parentNode.classList.contains('container')){
           var headers;
           headers = {'Accept': 'text/turtle, application/ld+json'};
-          getResourceGraph(url, headers).then(function(g){
+          getResourceGraph(url, headers).then(g => {
               actionNode.textContent = (action == 'write') ? url + generateAttributeId() : url;
               return DO.U.generateBrowserList(g, url, id, action);
             },
@@ -5224,7 +5226,7 @@ console.log(e);
       //TODO: This should be part of refactoring.
       var inputType = (id == 'location-generate-feed') ? 'checkbox' : 'radio';
 
-      return new Promise(function(resolve, reject){
+      return new Promise((resolve, reject) => {
         document.getElementById(id + '-input').value = url;
 
         var msgs = document.getElementById(id).querySelectorAll('.response-message');
@@ -5299,8 +5301,8 @@ console.log(e);
 
     buttonSubscribeNotificationChannel: function(nodes, topicResource) {
       //TODO: Consider using typeof selector instead and make sure it is in the markup
-      nodes.forEach(function(subNode){
-        subNode.addEventListener('click', function(e) {
+      nodes.forEach(subNode => {
+        subNode.addEventListener('click', (e) => {
           var button = e.target.closest('button');
 
           if (button){
@@ -5333,7 +5335,7 @@ console.log(e);
               }
 
               DO.U.subscribeToNotificationChannel(subscription, data)
-              .then(function(i){
+              .then(i => {
                 if (DO.C.Subscription[data.topic] && 'Connection' in DO.C.Subscription[data.topic]) {
                   button.textContent = 'Unsubscribe';
                   button.setAttribute('class', 'unsubscribe');
@@ -5380,7 +5382,7 @@ console.log(e);
 
             sD = document.getElementById(id + '-storage-description-details');
 
-            sD.addEventListener('click', function(e){
+            sD.addEventListener('click', (e) => {
               if (!sD.open) {
                 var storageDescriptionNode = document.getElementById(id + '-storage-description');
 
@@ -5686,7 +5688,7 @@ console.log(e);
 
             var nF = [];
 
-            features.forEach(function(iri){
+            features.forEach(iri => {
               var label, href = iri;
 
               switch (iri) {
@@ -5841,7 +5843,7 @@ console.log(e);
           switch (data.type) {
             case 'WebSocketChannel2023': case ns.notify.WebSocketChannel2023.value:
               data.type = ns.notify.WebSocketChannel2023.value;
-              return DO.U.connectToWebSocket(data.receiveFrom, data).then(function(i){
+              return DO.U.connectToWebSocket(data.receiveFrom, data).then(i => {
                 DO.C.Subscription[data.topic]['Connection'] = i;
                 // return Promise.resolve();
               });
@@ -5921,7 +5923,7 @@ console.log(e);
 
           var nTypes = (Array.isArray(data.type)) ? data.type : [data.type];
           var types = '';
-          nTypes.forEach(function(t){
+          nTypes.forEach(t => {
             types += types + '<dd><a href="' + t + '">' + t + '</a></dd>';
           })
 
@@ -5952,7 +5954,7 @@ console.log(e);
 
     connectToWebSocket: function(url, data) {
       function connect() {
-        return new Promise(function(resolve, reject) {
+        return new Promise((resolve, reject) => {
 // console.log(data)
           var protocols = [data.type];
 // protocols = ['solid-0.1'];
@@ -5973,7 +5975,7 @@ console.log(e);
           ws.onclose = function(e) {
             message = {'message': 'Socket to ' + url + ' is closed.'};
             //TODO: Separate reconnect on connection dropping from intentional close.
-            // setTimeout(function() { connect(); }, 1000);
+            // setTimeout(() => { connect(); }, 1000);
             // var timeout = 250;
             // setTimeout(connect, Math.min(10000,timeout+=timeout));
 
@@ -5995,7 +5997,7 @@ console.log(e);
         });
       }
 
-      return connect().then().catch(function(err) {
+      return connect().then().catch((err) => {
         console.log(err)
       });
     },
@@ -6005,20 +6007,23 @@ console.log(e);
       input.value = baseUrl;
       var headers;
       headers = {'Accept': 'text/turtle, application/ld+json'};
-      getResourceGraph(baseUrl, headers).then(function(g){
-        DO.U.generateBrowserList(g, baseUrl, id, action).then(function(i){
-          DO.U.showStorageDescription(g, id, baseUrl);
+      getResourceGraph(baseUrl, headers)
+        .then(g => {
+          DO.U.generateBrowserList(g, baseUrl, id, action)
+            .then(i => {
+              DO.U.showStorageDescription(g, id, baseUrl);
+            });
+        })
+        .then(i => {
+          document.getElementById(id + '-' + action).textContent = (action == 'write') ? input.value + generateAttributeId() : input.value;
         });
-      }).then(function(i){
-        document.getElementById(id + '-' + action).textContent = (action == 'write') ? input.value + generateAttributeId() : input.value;
-      });
 
-      browseButton.addEventListener('click', function(e){
+      browseButton.addEventListener('click', (e) => {
         DO.U.triggerBrowse(input.value, id, action);
       }, false);
 
       if (DO.C.User.OIDC) {
-        createButton.addEventListener('click', function(e){
+        createButton.addEventListener('click', (e) => {
           DO.U.showCreateContainer(input.value, id, action, e);
         }, false);
       }
@@ -6069,7 +6074,7 @@ console.log(e);
 
       var createButton = document.querySelector('#' + id + '-create-container button.insert');
 
-      input.addEventListener('keyup', function(e){
+      input.addEventListener('keyup', (e) => {
         var containerLabel = input.value.trim();
 
         if (containerLabel.length > 0) {
@@ -6080,7 +6085,7 @@ console.log(e);
         }
       });
 
-      createButton.addEventListener('click', function(e){
+      createButton.addEventListener('click', (e) => {
         //FIXME: Escaping containerLabel and containerURL (request-target) can be better.
 
         var patch = {};
@@ -6197,7 +6202,7 @@ console.log(response)
       var input = document.getElementById(id + '-input');
       var browseButton = document.getElementById(id + '-update');
 
-      input.addEventListener('keyup', function(e){
+      input.addEventListener('keyup', (e) => {
         var msgs = document.getElementById(id).querySelectorAll('.response-message');
         for(var i = 0; i < msgs.length; i++){
           msgs[i].parentNode.removeChild(msgs[i]);
@@ -6258,12 +6263,12 @@ console.log(response)
             var input = document.getElementById(id + '-input');
 
             if (DO.C.User.OIDC) {
-              browseButton.addEventListener('click', function(){
+              browseButton.addEventListener('click', () => {
                 createContainer.innerHTML = '';
                 DO.U.triggerBrowse(input.value, id, action);
               }, false);
 
-              createButton.addEventListener('click', function(e){
+              createButton.addEventListener('click', (e) => {
                 DO.U.showCreateContainer(input.value, id, action, e);
               }, false);
             }
@@ -6479,7 +6484,7 @@ console.log(response)
             return DO.U.processResources(options['subjectURI'], options).then(
               function(urls) {
                 var promises = [];
-                urls.forEach(function(url) {
+                urls.forEach(url => {
                   // console.log(u);
                   // window.setTimeout(function () {
 
@@ -6490,12 +6495,12 @@ console.log(response)
 
                 // return Promise.all(promises.map(p => p.catch(e => e)))
                 return Promise.allSettled(promises)
-                  .then(function(results) {
+                  .then(results => {
                     var items = [];
                     // graphs.filter(result => !(result instanceof Error));
 
                     //TODO: Refactor if/else based on getResourceGraph
-                    results.forEach(function(result){
+                    results.forEach(result => {
 // console.log(result.value)
 
                       //XXX: Not sure about htis.
@@ -6638,7 +6643,7 @@ console.log(response)
 // console.log(data)
             tmpl = await generateGeoView(data)
             // FIXME: Tested with generateGeoView returning a Promise but somehow
-            .then(function(i){
+            .then(i => {
               var id = 'geo';
               var metadataBounds = document.querySelector('#' + id + ' figcaption a');
               if (metadataBounds) {
@@ -6692,7 +6697,7 @@ console.log(response)
           }
           doFiles = doFiles.concat(['dokieli.css', 'dokieli.js']);
 
-          doFiles.forEach(function(i){
+          doFiles.forEach(i => {
 // console.log(i);
             var media = i.endsWith('.css') ? tmpl.querySelectorAll('head link[rel~="stylesheet"][href$="/' + i + '"]') : tmpl.querySelectorAll('head script[src$="/' + i + '"]');
 // console.log(media);
@@ -6720,7 +6725,7 @@ console.log(response)
           }
           else {
             var baseElements = tmpl.querySelectorAll('head base');
-            baseElements.forEach(function(baseElement) {
+            baseElements.forEach(baseElement => {
               baseElement.remove();
             });
           }
@@ -6886,7 +6891,7 @@ console.log(response)
       document.documentElement.appendChild(fragmentFromString('<aside id="save-as-document" class="do on">' + DO.C.Button.Close + '<h2>Save As Document</h2></aside>'));
 
       var saveAsDocument = document.getElementById('save-as-document');
-      saveAsDocument.addEventListener('click', function(e) {
+      saveAsDocument.addEventListener('click', (e) => {
         if (e.target.closest('button.close')) {
           document.querySelector('#document-do .resource-save-as').disabled = false;
         }
@@ -6898,7 +6903,7 @@ console.log(response)
       var locationInboxAction = 'read';
       saveAsDocument.insertAdjacentHTML('beforeend', '<div><input id="' + locationInboxId + '-set" name="' + locationInboxId + '-set" type="checkbox" /> <label for="' + locationInboxId + '-set">Set Inbox</label></div>');
 
-      saveAsDocument.addEventListener('click', function(e) {
+      saveAsDocument.addEventListener('click', (e) => {
         if (e.target.closest('input#' + locationInboxId + '-set')) {
           if (e.target.getAttribute('checked')) {
             e.target.removeAttribute('checked');
@@ -6924,7 +6929,7 @@ console.log(response)
       var locationAnnotationServiceAction = 'read';
       saveAsDocument.insertAdjacentHTML('beforeend', '<div><input id="' + locationAnnotationServiceId + '-set" name="' + locationAnnotationServiceId + '-set" type="checkbox" /> <label for="' + locationAnnotationServiceId + '-set">Set Annotation Service</label></div>');
 
-      saveAsDocument.addEventListener('click', function(e) {
+      saveAsDocument.addEventListener('click', (e) => {
         if (e.target.closest('input#' + locationAnnotationServiceId + '-set')) {
           if (e.target.getAttribute('checked')) {
             e.target.removeAttribute('checked');
@@ -6958,7 +6963,7 @@ console.log(response)
         imgTestResult = 'earl:inapplicable';
       }
       else {
-        img.forEach(function(i){
+        img.forEach(i => {
           if (i.hasAttribute('alt')) {
             if(i.alt.trim() === '') {
               imgCantTell.push(i);
@@ -6985,7 +6990,7 @@ console.log(response)
         videoTestResult = 'earl:inapplicable';
       }
       else {
-        video.forEach(function(i){
+        video.forEach(i => {
           if (i.querySelector('track') && i.hasAttribute('kind')) {
             videoPassed.push(i);
           }
@@ -7009,7 +7014,7 @@ console.log(response)
         audioTestResult = 'earl:inapplicable';
       }
       else {
-        audio.forEach(function(i){
+        audio.forEach(i => {
           if (i.querySelector('track') && i.hasAttribute('kind')) {
             audioPassed.push(i);
           }
@@ -7199,7 +7204,7 @@ console.log(response)
             )
 
             if (DO.C.User.IRI && requestAccess) {
-              document.querySelector('#save-as-document .response-message .request-access').addEventListener('click', function(e) {
+              document.querySelector('#save-as-document .response-message .request-access').addEventListener('click', (e) => {
                 var objectId = '#' + generateUUID();
 
                 inboxURL = e.target.dataset.inbox;
@@ -7269,7 +7274,7 @@ console.log(response)
       var input = document.getElementById('source-edit');
       input.value = getDocument();
 
-      sourceBox.addEventListener('click', function(e) {
+      sourceBox.addEventListener('click', (e) => {
         if (e.target.closest('button.create')) {
           var url = window.location.origin + window.location.pathname;
           var data = document.getElementById('source-edit').value;
@@ -7477,7 +7482,7 @@ console.log(response)
         var isbnData = rdf.grapoi({ dataset: rdf.dataset() }).node(rdf.namedNode(url));
 
         return getResource(url, headers, options)
-          .then(function(response) {
+          .then(response => {
 // console.log(response)
             return response.text();
           }).then(data => {
@@ -7525,10 +7530,11 @@ console.log(response)
               var a = 'https://openlibrary.org' + data.authors[0].key;
 // console.log(a)
               promises.push(getResource(a, headers, options)
-                .then(function(response){
+                .then(response => {
 // console.log(response)
                   return response.text();
-                }).then(data => {
+                })
+                .then(data => {
                   //TODO: try/catch?
                   data = JSON.parse(data);
 // console.log(data)
@@ -7552,7 +7558,7 @@ console.log(response)
 //                   var wE = 'https://www.wikidata.org/entity/' + data.remote_ids.wikidata;
 //                   var wW = 'https://www.wikidata.org/wiki/Special:EntityData/' + data.remote_ids.wikidata + '.jsonld';
 //                   promises.push(getResourceGraph(wW, wikidataHeaders, options)
-//                     .then(function(g){
+//                     .then(g => {
 // // console.log(g)
 // // console.log(g.iri().toString())
 //                       var s = g.graph().match(wE.replace(/^https:/, 'http:'))
@@ -7571,14 +7577,14 @@ console.log(response)
             // XXX: Working but unused:
             // if (data.identifiers?.wikidata && Array.isArray(data.identifiers.wikidata) && data.identifiers.wikidata.length > 0) {
               // var w = 'https://www.wikidata.org/entity/' + data.identifiers.wikidata[0];
-              // promises.push(getResourceGraph(w, wikidataHeaders, options).then(function(g){
+              // promises.push(getResourceGraph(w, wikidataHeaders, options).then(g => {
 // console.log(g);
 // console.log(g.toString());
               // }));
             // }
 
             return Promise.allSettled(promises)
-              .then(function(results) {
+              .then(results => {
                 var items = [];
                 results.forEach(result => {
 // console.log(result)
@@ -7738,19 +7744,19 @@ console.log(response)
     highlightItems: function() {
       var highlights = getDocumentContentNode(document).querySelectorAll('*[class*="highlight-"]');
       for (var i = 0; i < highlights.length; i++) {
-        highlights[i].addEventListener('mouseenter', function(e) {
+        highlights[i].addEventListener('mouseenter', (e) => {
           var c = e.target.getAttribute('class').split(' ')
-                    .filter(function(s) { return s.startsWith('highlight-'); });
+                    .filter(s => { return s.startsWith('highlight-'); });
           var highlightsX = getDocumentContentNode(document).querySelectorAll('*[class~="'+ c[0] +'"]');
           for (var j = 0; j < highlightsX.length; j++) {
             highlightsX[j].classList.add('do', 'highlight');
           }
         });
 
-        highlights[i].addEventListener('mouseleave', function(e) {
+        highlights[i].addEventListener('mouseleave', (e) => {
           var c = e.target.getAttribute('class');
           c = e.target.getAttribute('class').split(' ')
-                    .filter(function(s) { return s.startsWith('highlight-'); });
+                    .filter(s => { return s.startsWith('highlight-'); });
           var highlightsX = getDocumentContentNode(document).querySelectorAll('*[class~="'+ c[0] +'"]');
           for (var j = 0; j < highlightsX.length; j++) {
             highlightsX[j].classList.remove('do', 'highlight');
@@ -7797,7 +7803,7 @@ console.log(response)
             }
             else {
               labelsPattern += "  VALUES ?labelProperty {";
-              options.optional.prefLabels.forEach(function(property){
+              options.optional.prefLabels.forEach(property => {
                 labelsPattern += ' ' + property;
               });
               labelsPattern += " } ?resource ?labelProperty ?prefLabel .";
@@ -7877,7 +7883,7 @@ WHERE {\n\
       var observation = 'http://purl.org/linked-data/cube#Observation';
 
       var dotSize = 1;
-      var values = data.map(function(n) { return n[obsValue]; }),
+      var values = data.map(n => { return n[obsValue]; }),
         min = Math.min.apply(null, values),
         max = Math.max.apply(null, values);
 
@@ -7938,7 +7944,7 @@ WHERE {\n\
       var elementName = ('elementId' in options) ? ' name="' + options.elementId + '"' : '';
       var elementTitle = ('elementId' in options) ? options.elementId : '';
       var items = '';
-      triples.forEach(function(t){
+      triples.forEach(t => {
         var s = t.subject.value;
         var o = t.object.value;
         switch(options.element) {
@@ -7970,7 +7976,7 @@ WHERE {\n\
       selector = selector || '.tabs';
       var nodes = document.querySelectorAll(selector);
 
-      nodes.forEach(function(node){
+      nodes.forEach(node => {
         var li = node.querySelectorAll('nav li.selected');
         var figure = node.querySelectorAll('figure.selected');
 
@@ -7979,7 +7985,7 @@ WHERE {\n\
           node.querySelector('figure').classList.add('selected');
         }
 
-        node.querySelector('nav').addEventListener('click', function(e) {
+        node.querySelector('nav').addEventListener('click', (e) => {
           var a = e.target;
           if (a.closest('a')) {
             e.preventDefault();
@@ -8124,7 +8130,7 @@ WHERE {\n\
 // console.log(notification)
             if (DO.C.Notification[notification]) {
               if (DO.C.Notification[notification]['Activities']) {
-                DO.C.Notification[notification]['Activities'].forEach(function(activity){
+                DO.C.Notification[notification]['Activities'].forEach(activity => {
   // console.log('   ' + activity)
                   if (!document.querySelector('[about="' + activity + '"]') && DO.C.Activity[activity] && DO.C.Activity[activity]['Graph']) {
                     DO.U.showAnnotation(activity, DO.C.Activity[activity]['Graph']);
@@ -8396,7 +8402,7 @@ WHERE {\n\
           if(DO.C.User.IRI) {
             var buttonDelete = document.querySelector('aside.do blockquote[cite="' + noteIRI + '"] article button.delete');
             if (buttonDelete) {
-              buttonDelete.addEventListener('click', function(e) {
+              buttonDelete.addEventListener('click', (e) => {
                 var button = e.target.closest('button.delete');
                 handleDeleteNote(button);
               });
@@ -9234,7 +9240,7 @@ WHERE {\n\
             var documentURL = DO.C.DocumentURL;
 
             //FIXME: This is a horrible way of hacking MediumEditorTable
-            document.querySelectorAll('i.fa-table, i.fa-link, i.fa-picture-o').forEach(function(i){
+            document.querySelectorAll('i.fa-table, i.fa-link, i.fa-picture-o').forEach(i => {
               var icon = Icon[".fas.fa-table.fa-2x"].replace(/ fa\-2x/, '');
 
               if (i.classList.contains('fa-link') > 0) {
@@ -9300,7 +9306,7 @@ WHERE {\n\
               contributorNode.insertAdjacentHTML('beforeend', '<dd class="do"><button class="invite-' + contributorRole + '" contenteditable="false" title="Invite ' + contributorRole +'">' + Icon[".fas.fa-bullhorn"] + '</button></dd>');
 
               contributorNode = document.getElementById(contributorNodeId);
-              contributorNode.addEventListener('click', function(e){
+              contributorNode.addEventListener('click', (e) => {
                 var button = e.target.closest('button.add-' + contributorRole);
                 if (button){
                   var n = e.target.closest('.do');
@@ -9333,7 +9339,7 @@ WHERE {\n\
 
                     if (iri.startsWith('http')) {
                       //TODO: Refactor. There is overlap with addShareResourceContactInput and getAgentHTML
-                      getResourceGraph(iri).then(function(s){
+                      getResourceGraph(iri).then(s => {
                         // var iri = s.iri().toString();
                         // var id = encodeURIComponent(iri);
 
@@ -9379,8 +9385,8 @@ WHERE {\n\
               insertDocumentLevelHTML(document, dl, { 'id': documentLanguage });
 
               var dLangS = document.querySelector('#' + documentLanguage + ' select');
-              dLangS.addEventListener('change', function(e){
-                dLangS.querySelectorAll('option').forEach(function(o){
+              dLangS.addEventListener('change', (e) => {
+                dLangS.querySelectorAll('option').forEach(o => {
                   o.removeAttribute('selected');
                 });
                 dLangS.querySelector('option[value="' + e.target.value + '"]').setAttribute('selected', 'selected');
@@ -9394,8 +9400,8 @@ WHERE {\n\
               insertDocumentLevelHTML(document, dl, { 'id': documentLicense });
 
               var dLS = document.querySelector('#' + documentLicense + ' select');
-              dLS.addEventListener('change', function(e){
-                dLS.querySelectorAll('option').forEach(function(o){
+              dLS.addEventListener('change', (e) => {
+                dLS.querySelectorAll('option').forEach(o => {
                   o.removeAttribute('selected');
                 });
                 dLS.querySelector('option[value="' + e.target.value + '"]').setAttribute('selected', 'selected');
@@ -9409,8 +9415,8 @@ WHERE {\n\
               insertDocumentLevelHTML(document, dl, { 'id': documentType });
 
               var dTypeS = document.querySelector('#' + documentType + ' select');
-              dTypeS.addEventListener('change', function(e){
-                dTypeS.querySelectorAll('option').forEach(function(o){
+              dTypeS.addEventListener('change', (e) => {
+                dTypeS.querySelectorAll('option').forEach(o => {
                   o.removeAttribute('selected');
                 });
                 dTypeS.querySelector('option[value="' + e.target.value + '"]').setAttribute('selected', 'selected');
@@ -9424,8 +9430,8 @@ WHERE {\n\
               insertDocumentLevelHTML(document, dl, { 'id': documentStatus });
 
               var dSS = document.querySelector('#' + documentStatus + ' select');
-              dSS.addEventListener('change', function(e){
-                dSS.querySelectorAll('option').forEach(function(o){
+              dSS.addEventListener('change', (e) => {
+                dSS.querySelectorAll('option').forEach(o => {
                   o.removeAttribute('selected');
                 });
                 dSS.querySelector('option[value="' + e.target.value + '"]').setAttribute('selected', 'selected');
@@ -9442,7 +9448,7 @@ WHERE {\n\
 
                 //XXX: This is a workaround until we understand why the input value is not available in setEditSelections() where it is using `document.querySelector` to get the value fresh. The following catches the blur event and sets the input value back to itself, and that seems to be available setEditSelections().
                 var dTS = document.querySelector('#' + documentTestSuite + ' input');
-                dTS.addEventListener('blur', function(e){
+                dTS.addEventListener('blur', (e) => {
                   dTS.setAttribute('value', dTS.value)
                 });
               }
@@ -9459,7 +9465,7 @@ WHERE {\n\
 
                 //XXX: Same as above comment about workaround for setEditSelections
                 var dI = document.querySelector('#' + documentInbox + ' input');
-                dI.addEventListener('blur', function(e){
+                dI.addEventListener('blur', (e) => {
                   dI.setAttribute('value', dI.value);
                 });
               }
@@ -9475,7 +9481,7 @@ WHERE {\n\
 
                 //XXX: Same as above comment about workaround for setEditSelections
                 var dIRT = document.querySelector('#' + documentInReplyTo + ' input');
-                dIRT.addEventListener('blur', function(e){
+                dIRT.addEventListener('blur', (e) => {
                   dIRT.setAttribute('value', dI.value);
                 });
               }
@@ -9486,7 +9492,7 @@ WHERE {\n\
           }
 
           //XXX: This should be perhaps limited to certain nodes?
-          document.querySelectorAll('.do').forEach(function(node){
+          document.querySelectorAll('.do').forEach(node => {
             node.setAttribute('contenteditable', 'false');
           })
 
@@ -10253,7 +10259,7 @@ WHERE {\n\
                   }
 
                   var specref = document.querySelector('#specref-search-submit');
-                  specref.addEventListener('click', function(e) {
+                  specref.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
 // console.log(e);
@@ -10277,7 +10283,7 @@ WHERE {\n\
 
                       //TODO: Clean input data
 
-                      Object.keys(data).forEach(function(key) {
+                      Object.keys(data).forEach(key => {
 // console.log(data[key])
                         if ('href' in data[key] &&
                             !('aliasOf' in data[key]) && !('versionOf' in data[key]) &&
@@ -10316,7 +10322,7 @@ WHERE {\n\
                         }
 
                         //XXX: Assigning 'change' action to ul because it gets removed when there is a new search result / replaced. Perhaps it'd be nicer (but more expensive?) to destroy/create .specref-search-results node?
-                        specrefSearchResults.querySelector('ul').addEventListener('change', function(e){
+                        specrefSearchResults.querySelector('ul').addEventListener('change', (e) => {
                           var checkedCheckbox = e.target.closest('input');
                           if (checkedCheckbox) {
 // console.log(e.target);
@@ -10365,7 +10371,7 @@ WHERE {\n\
                   var textInputB = selection.substr(selection.indexOf(' of ') + 4);
 
                   if(!DO.C.RefAreas[textInputB.toUpperCase()]) {
-                    Object.keys(DO.C.RefAreas).forEach(function(key) {
+                    Object.keys(DO.C.RefAreas).forEach(key => {
                       if(DO.C.RefAreas[key].toLowerCase() == textInputB.toLowerCase()) {
                         textInputB = key;
                       }
@@ -10379,12 +10385,12 @@ WHERE {\n\
 
                   if(!DO.C.RefAreas[textInputB.toUpperCase()]) {
                     var refAreas;
-                    Object.keys(DO.C.RefAreas).forEach(function(key) {
+                    Object.keys(DO.C.RefAreas).forEach(key => {
                       refAreas += '<option value="' + key + '">' + key + ' - ' + DO.C.RefAreas[key] + '</option>';
                     });
                     form.querySelector('.medium-editor-toolbar-save').insertAdjacentHTML('beforebegin', '<div id="' + sparklineGraphId + '">`' + textInputB + '` is not available. Try: ' + '<select name="refAreas"><option>Select a reference area</option>' + refAreas + '</select></div>');
                     var rA = document.querySelector('#' + sparklineGraphId + ' select[name="refAreas"]');
-                    rA.addEventListener('change', function(e) {
+                    rA.addEventListener('change', (e) => {
                       e.preventDefault();
                       e.stopPropagation();
                       textInputB = e.target.value;
@@ -10417,18 +10423,18 @@ WHERE {\n\
                   sG = document.getElementById(sparklineGraphId);
 
                   getResourceGraph(queryURL)
-                    .then(function(g){
+                    .then(g => {
                       sG.removeAttribute('class');
                       var triples = sortGraphTriples(g.graph(), { sortBy: 'object' });
                       return DO.U.getListHTMLFromTriples(triples, {element: 'select', elementId: resultContainerId});
                     })
-                    .then(function(listHTML){
+                    .then(listHTML => {
                       sG.innerHTML = listHTML;
                       form.removeChild(form.querySelector('.fas.fa-circle-notch.fa-spin.fa-fw'));
                     })
-                    .then(function(x){
+                    .then(x => {
                       var rC = document.getElementById(resultContainerId);
-                      rC.addEventListener('change', function(e) {
+                      rC.addEventListener('change', (e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         var sparkline = sG.querySelectorAll('.sparkline, .sparkline-info');
@@ -10455,14 +10461,14 @@ WHERE {\n\
                         queryURL = getProxyableIRI(queryURL);
 
                         getResourceGraph(queryURL)
-                          .then(function(g){
+                          .then(g => {
                             var triples = sortGraphTriples(g.graph(), { sortBy: 'object' });
                             
                             g = g.graph().toArray();
 // console.log(triples);
                             if(triples.length > 0) {
                               var observations = {};
-                              triples.forEach(function(t){
+                              triples.forEach(t => {
                                 var s = t.subject.value;
                                 var p = t.predicate.value;
                                 var o = t.object.value;
@@ -10471,7 +10477,7 @@ WHERE {\n\
                               });
 // console.log(observations);
                               var list = [], item;
-                              Object.keys(observations).forEach(function(key) {
+                              Object.keys(observations).forEach(key => {
                                 item = {};
                                 observations[key]['http://purl.org/linked-data/cube#Observation'] = key;
                                 item[key] = observations[key];
@@ -10625,7 +10631,7 @@ WHERE {\n\
                 opts.buttonClass = this.customClassOption;
               }
 
-              Object.keys(opts).forEach(function(key) {
+              Object.keys(opts).forEach(key => {
                 if(typeof opts[key] === 'string') {
                   opts[key] = opts[key].trim();
                 }
@@ -11383,7 +11389,7 @@ WHERE {\n\
                       options['refId'] = refId;
 
                       //TODO: offline mode
-                      DO.U.getCitation(opts.url, options).then(function(citationGraph) {
+                      DO.U.getCitation(opts.url, options).then(citationGraph => {
                         var citationURI = opts.url;
 // console.log(citationGraph)
 // console.log(citationGraph.toString())
@@ -11640,10 +11646,10 @@ WHERE {\n\
 }; //DO
 
 if (document.readyState === "loading") {
-  document.addEventListener('DOMContentLoaded', function(){ DO.C.init(); });
+  document.addEventListener('DOMContentLoaded', () => { DO.C.init(); });
 }
 else {
-  window.addEventListener("load", function(){ DO.C.init(); });
+  window.addEventListener("load", () => { DO.C.init(); });
 }
 
 }
