@@ -1535,7 +1535,7 @@ console.log(s, i)
     showTextQuoteSelector: function(containerNode) {
       var motivatedBy = 'oa:highlighting';
       var selector = DO.U.getTextQuoteSelectorFromLocation(document.location);
-      if (selector && selector.exact && selector.exact.length > 0) {
+      if (selector && selector.exact && selector.exact.length) {
         //XXX: TODO: Copied from showAnnotation
 
         var refId = document.location.hash.substring(1);
@@ -1556,11 +1556,15 @@ console.log(refId)
     },
 
     importTextQuoteSelector: function(containerNode, selector, refId, motivatedBy, docRefType, options) {
+// console.log(containerNode)
+// console.log(selector)
+// console.log(refId)
+// console.log(motivatedBy)
+// console.log(docRefType)
+// console.log(options)
       var containerNodeTextContent = containerNode.textContent;
       //XXX: Seems better?
       // var containerNodeTextContent = fragmentFromString(getDocument(containerNode)).textContent.trim();
-
-
 // console.log(containerNodeTextContent);
       options = options || {};
 
@@ -1609,10 +1613,10 @@ console.log(refId)
 // console.log(r.commonAncestorContainer)
         selectedParentNode = r.commonAncestorContainer.parentNode;
 // console.log('selectedParentNode:')
-console.log(selectedParentNode)
-console.log(r.commonAncestorContainer.parentNode.nodeValue)
+// console.log(selectedParentNode)
+// console.log(r.commonAncestorContainer.parentNode.nodeValue)
         var selectedParentNodeValue = r.commonAncestorContainer.nodeValue;
-console.log(selectedParentNodeValue)
+// console.log(selectedParentNodeValue)
 
         var selectionUpdated = fragmentFromString(selectedParentNodeValue.substr(0, r.startOffset) + ref + selectedParentNodeValue.substr(r.startOffset + exact.length));
 // console.log(selectionUpdated)
@@ -8150,7 +8154,6 @@ WHERE {\n\
         }
       }
 
-      // var datetime = note.schemadatePublished || note.dctermscreated || note.aspublished;
       var datetime = getGraphDate(note);
 
 // console.log(datetime);
@@ -8335,7 +8338,6 @@ console.log('----')
             "suffix": suffix
           };
 
-console.log(containerNode, selector, refId, motivatedBy, docRefType)
 
           var selectedParentNode = DO.U.importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, { 'do': true });
 
@@ -10651,6 +10653,7 @@ console.log(parentNodeWithId, targetIRI)
 
             completeFormSave: function (opts) {
               var _this = this;
+console.log(_this)
 // console.log(this.base)
 // console.log(opts);
 // console.log('completeFormSave() with this.action: ' + this.action);
@@ -10737,7 +10740,7 @@ console.log(parentNodeWithId, targetIRI)
                     var instanceContainer = ti[ns.solid.instanceContainer.value];
                     var instance = ti[ns.solid.instance.value];
 
-                    if (activityIndex.includes(forClass)) {
+                    if (activityIndex?.includes(forClass)) {
                       if (instanceContainer) {
                         activityTypeMatched = true;
 
