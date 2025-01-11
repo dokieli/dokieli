@@ -17,9 +17,14 @@ const ns = Config.ns;
 
 function getGraphFromData (data, options = {}) {
   options['contentType'] = options.contentType || 'text/turtle';
-
+console.log(options)
   var baseIRI = options.subjectURI || Config.DocumentURL;
+
+  console.log(data)
+  console.log(baseIRI)
+
   baseIRI = stripFragmentFromString(baseIRI);
+console.log(baseIRI)
 
   // FIXME: These are fugly but a temporary fix to get around the baseURI not being passed to the DOM parser. This injects the `base` element into the document so that the parsers fallsback to that. The actual fix should happen upstream. See related issues:
   // https://github.com/dokieli/dokieli/issues/132
@@ -57,14 +62,14 @@ function getGraphFromData (data, options = {}) {
   }
 
   //TODO: Look into a wrapping function so that we don't have to pass baseURI twice; getRDFParser, parser.import
-  const parser = getRDFParser(baseIRI, options.contentType);
+  const parser = getRDFParser(new String(''), options.contentType);
   const nodeStream = Readable.from([data]);
-  const quadStream = parser.import(nodeStream, { baseIRI: baseIRI });
+  const quadStream = parser.import(nodeStream, { baseIRI: new String('') });
   // const dataset = rdf.dataset().import(quadStream);
 // console.log(quadStream)
   // return rdf.grapoi({ dataset });
   return rdf.dataset().import(quadStream).then((dataset) => {
-// console.log(dataset.toCanonical())
+console.log(dataset.toCanonical())
     return rdf.grapoi({ dataset });
   });
 
@@ -138,15 +143,37 @@ function serializeDataToPreferredContentType(data, options) {
       return Promise.resolve(data);
 
     case 'text/turtle':
-      return serializeData(data, options['contentType'], 'text/turtle', options);
+    case 'application/n-triples':
+    case 'application/n-quads':
+    case 'text/n3':
+      return serializeData(data, options['contentType'], options['preferredContentType'], options);
 
     case 'application/ld+json':
+    case 'application/activity+json':
     case 'application/json':
     case '*/*':
     default:
       return serializeData(data, options['contentType'], 'application/ld+json', options);
   }
 }
+
+function serializeData (data, fromContentType, toContentType, options = {}) {
+  // if (!rdf.formats.serializers.get(toContentType)) { return Promise.reject('XXX: Should not be here'); }
+  
+  if (fromContentType === toContentType) {
+    return Promise.resolve(data);
+  }
+
+  options['contentType'] = fromContentType;
+
+  return getGraphFromData(data, options)
+    .then(g => {
+      options['contentType'] = toContentType;
+
+      return serializeGraph(g, options);
+    });
+}
+
 
 /**
  * @param data
@@ -156,7 +183,7 @@ function serializeDataToPreferredContentType(data, options) {
  *
  * @returns {Promise}
  */
-function serializeData (data, fromContentType, toContentType, options) {
+function XXXOLDserializeData (data, fromContentType, toContentType, options) {
   if (fromContentType === toContentType) {
     return Promise.resolve(data)
   }
@@ -232,7 +259,7 @@ function serializeData (data, fromContentType, toContentType, options) {
 
         default:
           return serializeGraph(g, options)
-      }     
+      }
     })
     .then(data => {
       switch (toContentType) {
@@ -333,22 +360,40 @@ function serializeData (data, fromContentType, toContentType, options) {
     })
 }
 
+function streamToString (stream) {
+  const chunks = [];
+  return new Promise((resolve, reject) => {
+    stream.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+    stream.on('error', (err) => reject(err));
+    stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+  })
+}
+
 function serializeGraph (g, options = {}) {
   if (!('contentType' in options)) {
     options['contentType'] = 'text/turtle'
   }
+console.log(options)
 
-  return store.serializers[options.contentType].serialize(g._graph)
-    .then(data => {
-      data = applyParserSerializerFixes(data, options.contentType)
+  try {
+  var quads = g.out().quads();
+  return streamToString(rdf.formats.serializers.get(options.contentType, { compact: true, prettyPrint: true }).import(Readable.from(quads), { compact: true, prettyPrint: true }));
+} catch(e) {
+  console.log(e)
+}
+
+
+  // return store.serializers[options.contentType].serialize(g._graph)
+  //   .then(data => {
+  //     data = applyParserSerializerFixes(data, options.contentType)
 
       // XXX: .compact doesn't work as advertised
       // if (options.contentType === 'application/ld+json' && '@context' in options) {
       //   return jsonld.promises().compact(data, options['@context'], {'skipExpansion': true})
       // }
 
-      return data
-    })
+    //   return data
+    // })
 }
 
 function applyParserSerializerFixes(data, contentType) {
@@ -492,7 +537,7 @@ function traverseRDFList(g, resource) {
     result.push(b.out(ns.rdf.first).values[0]);
   }
   if (b.out(ns.rdf.rest).values.length && b.out(ns.rdf.rest).values[0] !== 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil') {
-    result = result.concat(traverseRDFList(g, bb.out(ns.rdf.rest).values[0]));
+    result = result.concat(traverseRDFList(g, b.out(ns.rdf.rest).values[0]));
   }
 
   return result;
@@ -1092,18 +1137,18 @@ function getAgentKnows (s) {
 }
 
 function getAgentFollowing (s) {
-  var following = [];
-// console.log(s.asfollowing)
-  if (s.asfollowing) {
+  var following = s.out(ns.as.following).values;
+
+  if (following.length) {
     var options = {
       headers: {'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams", application/activity+json, text/turtle'},
       noCredentials: true
     };
-    return DO.U.getItemsList(s.asfollowing, options).then(following => {
-      following = uniqueArray(following);
-// console.log(following);
-      return (following.length > 0) ? following : undefined;
-    });
+    return DO.U.getItemsList(following, options)
+      .then(items => {
+  // console.log(following);
+        return (items.length) ? items : undefined;
+      });
   }
 }
 
@@ -1531,6 +1576,7 @@ export {
   getGraphFromData,
   getMatchFromData,
   serializeDataToPreferredContentType,
+  XXXOLDserializeData,
   serializeData,
   serializeGraph,
   applyParserSerializerFixes,

@@ -391,6 +391,7 @@ DO = {
         //   return [];
         // })
         .then(g => {
+          console.log(g)
           // if (!g || g.resource) return;
           if (!g) return;
 
@@ -415,7 +416,7 @@ DO = {
 
           subjects.forEach(i => {
             var s = g.node(rdf.namedNode(i));
-// console.log(s)
+console.log(s, i)
             var types = getGraphTypes(s);
 
             if (types.length) {
@@ -1548,7 +1549,8 @@ DO = {
           'do': true,
           'mode': '#selector'
         };
-
+console.log(selector)
+console.log(refId)
         DO.U.importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, options)
       }
     },
@@ -1607,11 +1609,11 @@ DO = {
 // console.log(r.commonAncestorContainer)
         selectedParentNode = r.commonAncestorContainer.parentNode;
 // console.log('selectedParentNode:')
-// console.log(selectedParentNode)
+console.log(selectedParentNode)
+console.log(r.commonAncestorContainer.parentNode.nodeValue)
         var selectedParentNodeValue = r.commonAncestorContainer.nodeValue;
-// console.log(selectedParentNodeValue)
+console.log(selectedParentNodeValue)
 
-// console.log(selectedParentNodeValue.substr(0, r.startOffset) + ref + selectedParentNodeValue.substr(r.startOffset + exact.length))
         var selectionUpdated = fragmentFromString(selectedParentNodeValue.substr(0, r.startOffset) + ref + selectedParentNodeValue.substr(r.startOffset + exact.length));
 // console.log(selectionUpdated)
 
@@ -2874,7 +2876,7 @@ DO = {
                 advisementIRI = i.replace(stripFragmentFromString(i), advisementIRI);
                 statement = '<a href="' + advisementIRI + '">' + statement + '</a>';
 
-                // var advisementSubjectIRI = DO.C.Resource[documentURL]['spec']['advisement'][i][ns.spec.advisementSubject];
+                // var advisementSubjectIRI = DO.C.Resource[documentURL]['spec']['advisement'][i][ns.spec.advisementSubject.value];
                 // var advisementSubjectLabel = advisementSubjectIRI || '<span class="warning">?</span>';
                 // if (advisementSubjectLabel.startsWith('http')) {
                 //   advisementSubjectLabel = getFragmentFromString(advisementSubjectIRI) || getURLLastPath(advisementSubjectIRI) || advisementSubjectLabel;
@@ -6255,7 +6257,7 @@ console.log(response)
         DO.U.initBrowse(baseUrl, input, browseButton, createButton, id, action);
       }
       else {
-        getLinkRelation(ns.oa.annotationService, null, getDocument()).then(
+        getLinkRelation(ns.oa.annotationService.value, null, getDocument()).then(
           function(storageUrl) {
             DO.U.initBrowse(storageUrl[0], input, browseButton, createButton, id, action);
           },
@@ -6594,7 +6596,7 @@ console.log(response)
         published = ', <time content="' + datePublished + '" datetime="' + datePublished + '" property="schema:dataPublished">' + datePublished.substr(0,10) + '</time>';
       }
 
-      if (g.out(ns.oa.hasBody)) {
+      if (g.out(ns.oa.hasBody).values.length) {
         summary = g.node(rdf.namedNode(summary)).out(ns.rdf.value).values[0];
       }
       else {
@@ -6605,9 +6607,9 @@ console.log(response)
         summary = '<div datatype="rdf:HTML" property="schema:description">' + summary + '</div>';
       }
 
-      if (g.out(astag).values.length) {
+      if (g.out(ns.as.tag).values.length) {
         tags = [];
-        g.out(astag).values.forEach(tagURL => {
+        g.out(ns.as.tag).values.forEach(tagURL => {
           var t = g.node(g.namedNode(tagURL));
           var tagName = getFragmentOrLastPath(tagURL);
 
@@ -8262,16 +8264,16 @@ WHERE {\n\
           // return Promise.reject();
           return;
         }
+        console.log(hasTarget);
 
         var target = g.node(rdf.namedNode(hasTarget));
-// console.log(target);
         var targetIRI = target.term.value;
-// console.log(targetIRI);
+console.log(targetIRI);
 
         var source = target.out(ns.oa.hasSource).values[0];
 // console.log(source);
 // console.log(note.oamotivatedBy);
-        var motivatedBy = note.out(ns.oamotivatedBy).values[0];
+        var motivatedBy = note.out(ns.oa.motivatedBy).values[0];
         if (motivatedBy) {
           refLabel = DO.U.getReferenceLabel(motivatedBy);
         }
@@ -8280,13 +8282,13 @@ WHERE {\n\
         var selector = target.out(ns.oa.hasSelector).values[0];
         if (selector) {
           selector = g.node(rdf.namedNode(selector));
-// console.log(selector);
+console.log(selector);
 
 // console.log(selector.rdftype);
 // console.log(selector.out(ns.rdf.type).values);
           //FIXME: This is taking the first rdf:type. There could be multiple.
           var selectorTypes = getGraphTypes(selector)[0];
-
+console.log(selectorTypes)
 // console.log(selectorTypes == 'http://www.w3.org/ns/oa#FragmentSelector');
           if (selectorTypes == ns.oa.TextQuoteSelector.value) {
             exact = selector.out(ns.oa.exact).values[0];
@@ -8296,14 +8298,14 @@ WHERE {\n\
           else if (selectorTypes == ns.oa.FragmentSelector.value) {
             var refinedBy = selector.out(ns.oa.refinedBy).values[0];
             refinedBy = refinedBy && selector.node(rdf.namedNode(refinedBy));
-// console.log(refinedBy)
+console.log(refinedBy)
             exact = refinedBy && refinedBy.out(ns.oa.exact).values[0];
             prefix = refinedBy && refinedBy.out(ns.oa.prefix).values[0];
             suffix = refinedBy && refinedBy.out(ns.oa.suffix).values[0];
 // console.log(selector.rdfvalue)
             if (selector.out(ns.rdf.value).values[0] && selector.out(ns.dcterms.conformsTo).values[0] && selector.out(ns.dcterms.conformsTo).values[0].endsWith('://tools.ietf.org/html/rfc3987')) {
-              var fragment = selector.out(ns.rdf.value).values[0]
-// console.log(fragment)
+              var fragment = selector.out(ns.rdf.value).values[0];
+console.log(fragment)
               fragment = (fragment.indexOf('#') == 0) ? getFragmentFromString(fragment) : fragment;
 
               if (fragment !== '') {
@@ -8312,10 +8314,10 @@ WHERE {\n\
             }
           }
         }
-// console.log(exact);
-// console.log(prefix);
-// console.log(suffix);
-// console.log('----')
+console.log(exact);
+console.log(prefix);
+console.log(suffix);
+console.log('----')
         var docRefType = '<sup class="ref-annotation"><a href="#' + id + '" rel="cito:hasReplyFrom" resource="' + noteIRI + '">' + refLabel + '</a></sup>';
 
         var containerNodeTextContent = containerNode.textContent;
@@ -8333,11 +8335,13 @@ WHERE {\n\
             "suffix": suffix
           };
 
+console.log(containerNode, selector, refId, motivatedBy, docRefType)
+
           var selectedParentNode = DO.U.importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, { 'do': true });
 
           var parentNodeWithId = selectedParentNode.closest('[id]');
           targetIRI = (parentNodeWithId) ? documentURL + '#' + parentNodeWithId.id : documentURL;
-
+console.log(parentNodeWithId, targetIRI)
           var noteData = {
             "type": 'article',
             "mode": "read",
@@ -10013,7 +10017,7 @@ WHERE {\n\
 
               updateAnnotationInboxForm();
 
-              return getLinkRelation(ns.oa.annotationService, null, getDocument()).then(
+              return getLinkRelation(ns.oa.annotationService.value, null, getDocument()).then(
                 function(url) {
                   DO.C.AnnotationService = url[0];
                   updateAnnotationServiceForm();
@@ -10708,6 +10712,12 @@ WHERE {\n\
               var activityTypeMatched = false;
               var activityIndex = DO.C.ActionActivityIndex[_this.action];
 
+              function checkDuplicateLocation(annotationDistribution, containerIRI) {
+                return Object.keys(annotationDistribution).some(
+                  item => annotationDistribution[item].containerIRI !== containerIRI
+                );
+              }
+
               //XXX: Use TypeIndex location as canonical if available, otherwise storage. Note how noteIRI is treated later
               if((opts.annotationLocationPersonalStorage && DO.C.User.TypeIndex) || (!opts.annotationLocationPersonalStorage && !opts.annotationLocationService && DO.C.User.TypeIndex)) {
 
@@ -10778,7 +10788,9 @@ WHERE {\n\
 
                 aLS = Object.assign(aLS, contextProfile)
 
-                annotationDistribution.push(aLS);
+                if (checkDuplicateLocation(annotationDistribution, containerIRI)) {
+                  annotationDistribution.push(aLS);
+                }
               }
 
               if (!activityTypeMatched && ((opts.annotationLocationPersonalStorage && DO.C.User.Storage) || (!opts.annotationLocationPersonalStorage && !opts.annotationLocationService && DO.C.User.Storage))) {
@@ -10794,7 +10806,9 @@ WHERE {\n\
                 };
                 aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true, 'annotationInbox': annotationInbox };
 
-                annotationDistribution.push(aLS);
+                if (checkDuplicateLocation(annotationDistribution, containerIRI)) {
+                  annotationDistribution.push(aLS);
+                }
               }
 
               if(opts.annotationLocationService && typeof DO.C.AnnotationService !== 'undefined') {
@@ -10827,7 +10841,9 @@ WHERE {\n\
 
                 aLS = Object.assign(aLS, contextProfile)
 
-                annotationDistribution.push(aLS);
+                if (checkDuplicateLocation(annotationDistribution, containerIRI)) {
+                  annotationDistribution.push(aLS);
+                }
               }
 
 // console.log(annotationDistribution);
@@ -10839,7 +10855,7 @@ WHERE {\n\
 
               var targetIRI = (parentNodeWithId) ? resourceIRI + '#' + parentNodeWithId.id : resourceIRI;
               var documentURL = resourceIRI;
-              var latestVersion = DO.C.Resource[documentURL].graph.rellatestversion;
+              var latestVersion = DO.C.Resource[documentURL].graph.out(ns.rel.latestversion).values[0];
               if (latestVersion) {
                 resourceIRI = latestVersion;
                 targetIRI = (parentNodeWithId) ? latestVersion + '#' + parentNodeWithId.id : latestVersion;
@@ -10847,7 +10863,7 @@ WHERE {\n\
               }
 // console.log(latestVersion)
 // console.log(resourceIRI)
-// console.log(targetIRI)
+console.log(targetIRI)
 
               var targetLanguage = getNodeLanguage(parentNodeWithId);
               var selectionLanguage = getNodeLanguage(selectedParentElement);
@@ -11217,14 +11233,16 @@ WHERE {\n\
 
                 if ('profile' in annotation && annotation.profile == 'https://www.w3.org/ns/activitystreams') {
                   return DO.U.showActivities(annotation['noteIRI'])
-                    .catch(() => {
+                    .catch((error) => {
+                      console.log('Error showing activities:', error)
                       return Promise.resolve()
                     })
                 }
                 else {
 // console.log(options)
                   return DO.U.showActivities(annotation[ 'noteIRI' ], options)
-                    .catch(() => {
+                    .catch((error) => {
+                      console.log('Error showing activities:', error)
                       return Promise.resolve()
                     })
                 }
@@ -11261,8 +11279,8 @@ WHERE {\n\
                   .then(inboxes => {
                     // TODO: resourceIRI for getLinkRelation should be the
                     // closest IRI (not necessarily the document).
-
-                    if (inboxes.length > 0) {
+// console.log(inboxes)
+                    if (inboxes.length) {
                       var notificationData = createActivityData(annotation, { 'announce': true });
 
                       notificationData['inbox'] = inboxes[0];
@@ -11315,7 +11333,7 @@ WHERE {\n\
                           annotation['noteIRI'] = annotation['noteURL'] = location
                         }
 
-// console.log(annotation)
+console.log(annotation, options)
                         return positionActivity(annotation, options)
                        })
 

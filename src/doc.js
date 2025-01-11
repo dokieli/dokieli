@@ -1859,29 +1859,29 @@ function updateFeatureStatesOfResourceInfo(info) {
 
     if (info['odrl'] && info['odrl']['prohibitionActions'] && info['odrl']['prohibitionAssignee'] == Config.User.IRI) {
       if (info['odrl']['prohibitionActions'].includes(ns.odrl.archive.value)) {
-        Config.ButtonState['snapshot-internet-archive'] = false;
+        Config.ButtonStates['snapshot-internet-archive'] = false;
       }
 
       if (info['odrl']['prohibitionActions'].includes(ns.odrl.derive.value)) {
-        Config.ButtonState['resource-save-as'] = false;
+        Config.ButtonStates['resource-save-as'] = false;
       }
 
       if (info['odrl']['prohibitionActions'].includes(ns.odrl.print.value)) {
-        Config.ButtonState['resource-print'] = false;
+        Config.ButtonStates['resource-print'] = false;
       }
 
       if (info['odrl']['prohibitionActions'].includes(ns.odrl.reproduce.value)) {
-        Config.ButtonState['create-immutable'] = false;
-        Config.ButtonState['create-version'] = false;
-        Config.ButtonState['export-as-html'] = false;
-        Config.ButtonState['resource-save-as'] = false;
-        Config.ButtonState['robustify-links'] = false;
-        Config.ButtonState['snapshot-internet-archive'] = false;
-        Config.ButtonState['generate-feed'] = false;
+        Config.ButtonStates['create-immutable'] = false;
+        Config.ButtonStates['create-version'] = false;
+        Config.ButtonStates['export-as-html'] = false;
+        Config.ButtonStates['resource-save-as'] = false;
+        Config.ButtonStates['robustify-links'] = false;
+        Config.ButtonStates['snapshot-internet-archive'] = false;
+        Config.ButtonStates['generate-feed'] = false;
       }
 
       if (info['odrl']['prohibitionActions'].includes(ns.odrl.transform.value)) {
-        Config.ButtonState['export-as-html'] = false;
+        Config.ButtonStates['export-as-html'] = false;
       }
     }
   }

@@ -510,7 +510,8 @@ export default {
     vcard:  rdf.namespace('http://www.w3.org/2006/vcard/ns#'),
     void: rdf.namespace('http://rdfs.org/ns/void#'),
     wgs: rdf.namespace('http://www.w3.org/2003/01/geo/wgs84_pos#'),
-    xhv:  rdf.namespace('http://www.w3.org/1999/xhtml/vocab#')
+    xhv:  rdf.namespace('http://www.w3.org/1999/xhtml/vocab#'),
+    xsd: rdf.namespace('http://www.w3.org/2001/XMLSchema#')
   },
 
   Vocab: {

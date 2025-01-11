@@ -113,24 +113,36 @@ function deleteResource (url, options = {}) {
 
 function getAcceptPostPreference (url) {
   const pIRI = getProxyableIRI(url)
-
+// console.trace()
   return getResourceOptions(pIRI, {'header': 'Accept-Post'})
     .catch(error => {
 //      console.log(error)
       return {'headers': 'application/ld+json'}
     })
     .then(result => {
-      let header = result.headers.trim().split(/\s*,\s*/)
+      let header = result.headers.trim().split(/\s*,\s*/);
 
-      if (header.indexOf('text/html') > -1 || header.indexOf('application/xhtml+xml') > -1) {
-        return 'text/html'
-      } else if (header.indexOf('text/turtle') > -1 || header.indexOf('*/*') > -1) {
-        return 'text/turtle'
-      } else if (header.indexOf('application/ld+json') > -1 || header.indexOf('application/json') > -1) {
-        return 'application/ld+json'
-      } else {
-        console.log('Accept-Post contains unrecognised media-range; ' + result.headers)
-        return result.headers
+      if (header.includes('text/html') || header.includes('application/xhtml+xml')) {
+        return 'text/html';
+      }
+      else if (header.includes('application/ld+json') || header.includes('application/json') || header.includes('application/activity+json') || header.includes('*/*')) {
+        return 'application/ld+json';
+      }
+      else if (header.includes('text/turtle')) {
+        return 'text/turtle';
+      }
+      else if (header.includes('application/n-triples')) {
+        return 'application/n-triples';
+      }
+      else if (header.includes('application/n-quads')) {
+        return 'application/n-quads';
+      }
+      else if (header.includes('text/n3')) {
+        return 'text/n3';
+      }
+      else {
+        console.log('Accept-Post contains unrecognised media-range; ' + result.headers);
+        return result.headers;
       }
     })
 }
