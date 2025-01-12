@@ -16,26 +16,26 @@ const ns = Config.ns;
 // https://github.com/rdfjs-base/formats/
 
 function getGraphFromData (data, options = {}) {
-  options['contentType'] = options.contentType || 'text/turtle';
-console.log(options)
-  var baseIRI = options.subjectURI || Config.DocumentURL;
 
-  console.log(data)
-  console.log(baseIRI)
+  options['contentType'] = options.contentType || 'text/turtle';
+  if (!('subjectURI' in options)) {
+    options['subjectURI'] = 'http://localhost/d79351f4-cdb8-4228-b24f-3e9ac74a840d'
+  }
+// console.log(options)
+  var baseIRI = options.subjectURI
+  //  || Config.DocumentURL;
+
+// console.log(data)
+// console.log(baseIRI)
 
   baseIRI = stripFragmentFromString(baseIRI);
-console.log(baseIRI)
+// console.log(baseIRI)
 
   // FIXME: These are fugly but a temporary fix to get around the baseURI not being passed to the DOM parser. This injects the `base` element into the document so that the parsers fallsback to that. The actual fix should happen upstream. See related issues:
   // https://github.com/dokieli/dokieli/issues/132
   // https://github.com/rdf-ext/rdf-parser-dom/issues/2
   // https://github.com/rdf-ext/rdf-parser-rdfa/issues/3
   // https://github.com/simplerdf/simplerdf/issues/19
-
-  // if (!('subjectURI' in options)) {
-  //   // console.log(options)
-  //   options['subjectURI'] = 'http://localhost/d79351f4-cdb8-4228-b24f-3e9ac74a840d'
-  // }
 
   // // TODO: Revisit this as setting base will be now be taken care of by rdf-ext in getRDFParser, so this may not be needed
   // const baseNeededMediaTypes = ['text/html', 'application/xhtml+xml', 'text/turtle', 'application/ld+json', 'application/activity+json'];
@@ -62,14 +62,14 @@ console.log(baseIRI)
   }
 
   //TODO: Look into a wrapping function so that we don't have to pass baseURI twice; getRDFParser, parser.import
-  const parser = getRDFParser(new String(''), options.contentType);
+  const parser = getRDFParser(baseIRI, options.contentType);
   const nodeStream = Readable.from([data]);
-  const quadStream = parser.import(nodeStream, { baseIRI: new String('') });
+  const quadStream = parser.import(nodeStream, { baseIRI: baseIRI });
   // const dataset = rdf.dataset().import(quadStream);
 // console.log(quadStream)
   // return rdf.grapoi({ dataset });
   return rdf.dataset().import(quadStream).then((dataset) => {
-console.log(dataset.toCanonical())
+// console.log(dataset.toCanonical())
     return rdf.grapoi({ dataset });
   });
 
@@ -373,14 +373,31 @@ function serializeGraph (g, options = {}) {
   if (!('contentType' in options)) {
     options['contentType'] = 'text/turtle'
   }
-console.log(options)
+// console.log(options)
 
   try {
-  var quads = g.out().quads();
-  return streamToString(rdf.formats.serializers.get(options.contentType, { compact: true, prettyPrint: true }).import(Readable.from(quads), { compact: true, prettyPrint: true }));
-} catch(e) {
-  console.log(e)
-}
+    var quads = g.out().quads();
+
+    // console.log(Array.from(quads))
+
+    // if (options?.subjectURI == 'http://localhost/d79351f4-cdb8-4228-b24f-3e9ac74a840d') {
+    //   for (let quad of Array.from(quads)) {
+    //     quad.subject.value = quad.subject.value.replace(/http:\/\/localhost\/d79351f4-cdb8-4228-b24f-3e9ac74a840d/g, '');
+    //     quad.subject.value = quad.object.value.replace(/http:\/\/localhost\/d79351f4-cdb8-4228-b24f-3e9ac74a840d/g, '');
+    //   }
+    // }
+
+    // console.log(Array.from(quads))
+
+    return streamToString(rdf.formats.serializers.get(options.contentType, { compact: true, prettyPrint: true }).import(Readable.from(quads), { compact: true, prettyPrint: true })).then((data) => {
+      // if (options?.subjectURI == 'http://localhost/d79351f4-cdb8-4228-b24f-3e9ac74a840d') {
+      return data.replace(/http:\/\/localhost\/d79351f4-cdb8-4228-b24f-3e9ac74a840d/g, '');
+      // }
+    });
+  }
+  catch(e) {
+    console.log(e)
+  }
 
 
   // return store.serializers[options.contentType].serialize(g._graph)

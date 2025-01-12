@@ -50,8 +50,8 @@ DO = {
       options['excludeMarkup'] = true;
 
       DO.C['CollectionItems'] = DO.C['CollectionItems'] || {};
-      DO.C['CollectionPages'] = ('CollectionPages' in DO.C && DO.C.CollectionPages.length > 0) ? DO.C.CollectionPages : [];
-      DO.C['Collections'] = ('Collections' in DO.C && DO.C.Collections.length > 0) ? DO.C.Collections : [];
+      DO.C['CollectionPages'] = ('CollectionPages' in DO.C && DO.C.CollectionPages.length) ? DO.C.CollectionPages : [];
+      DO.C['Collections'] = ('Collections' in DO.C && DO.C.Collections.length) ? DO.C.Collections : [];
 
       const mediaTypeURIPrefix = "http://www.w3.org/ns/iana/media-types/";
       //TODO: Move this elsewhere (call from DO.C.init()?) where it runs once and stores it in e.g, DO.C.MediaTypeURIs
@@ -85,9 +85,9 @@ DO = {
 
             var items = [s.out(ns.as.items).values, s.out(ns.as.orderedItems).values, s.out(ns.ldp.contains).values];
 
-            Object.keys(items).forEach(i => {
-              items[i].forEach(resource => {
-// console.log(resource)
+            items.forEach(i => {
+              i.forEach(resource => {
+console.log(resource)
                 var r = s.node(rdf.namedNode(resource));
 
                 if (r.out(ns.rdf.first).values.length || r.out(ns.rdf.rest).values.length) {
@@ -144,10 +144,10 @@ DO = {
       DO.C.Inbox[url]['Notifications'] = [];
 
       return getResourceGraph(url)
-        .then(i => {
-          DO.C.Inbox[url]['Graph'] = i;
+        .then(g => {
+          DO.C.Inbox[url]['Graph'] = g;
 
-          var s = i.node(rdf.namedNode(url));
+          var s = g.node(rdf.namedNode(url));
           s.out(ns.ldp.contains).values.forEach(resource => {
 // console.log(resource);
             var types = getGraphTypes(s.node(rdf.namedNode(resource)));
@@ -319,8 +319,8 @@ DO = {
 
     processAgentStorageOutbox: function(agent) {
       var promises = [];
-      if (agent.Storage && agent.Storage.length > 0) {
-        if (agent.Outbox && agent.Outbox.length > 0) {
+      if (agent.Storage && agent.Storage.length) {
+        if (agent.Outbox && agent.Outbox.length) {
           if (agent.Storage[0] === agent.Outbox[0]) {
             promises.push(DO.U.showActivitiesSources(agent.Outbox[0]));
           }
@@ -333,7 +333,7 @@ DO = {
           promises.push(DO.U.showActivitiesSources(agent.Storage[0]))
         }
       }
-      else if (agent.Outbox && agent.Outbox.length > 0) {
+      else if (agent.Outbox && agent.Outbox.length) {
         promises.push(DO.U.showActivitiesSources(agent.Outbox[0]));
       }
 
@@ -391,9 +391,8 @@ DO = {
         //   return [];
         // })
         .then(g => {
-          console.log(g)
-          // if (!g || g.resource) return;
-          if (!g) return;
+          // console.log(g)
+          if (!g || g.resource) return;
 
           if (options.notification) {
             DO.C.Notification[url] = {};
@@ -416,7 +415,7 @@ DO = {
 
           subjects.forEach(i => {
             var s = g.node(rdf.namedNode(i));
-console.log(s, i)
+
             var types = getGraphTypes(s);
 
             if (types.length) {
@@ -429,17 +428,18 @@ console.log(s, i)
               //XXX: May need to be handled in a similar way to to as:Anounce/Create?
               if (resourceTypes.includes(ns.as.Like.value) ||
                  resourceTypes.includes(ns.as.Dislike.value)){
-                if (s.out(ns.as.object).values.length && getPathURL(s.out(ns.as.object).values[0]) == currentPathURL ) {
-                  if (s.out(ns.as.context).values.length) {
-                    var context = s.out(ns.as.context).values[0];
-                    subjectsReferences.push(context);
-                    return DO.U.showActivities(context)
+                var object = s.out(ns.as.object).values;
+                if (object.length && getPathURL(object.values[0]) == currentPathURL) {
+                  var context = s.out(ns.as.context).values;
+                  if (context.length) {
+                    subjectsReferences.push(context[0]);
+                    return DO.U.showActivities(context[0])
                       .then(iri => iri)
-                      .catch(e => console.log(context + ': context is unreachable', e));
+                      .catch(e => console.log(context[0] + ': context is unreachable', e));
                   }
                   else {
                     var iri = s.term.value;
-                    var targetIRI = s.out(ns.as.object).values[0];
+                    var targetIRI = object[0];
                     // var motivatedBy = 'oa:assessing';
                     var id = generateUUID(iri);
                     var refId = 'r-' + id;
@@ -1414,7 +1414,7 @@ console.log(s, i)
         DO.U.showGraphResources(resources, selector, options);
       }
       else {
-        var property = (resources && 'filter' in options && 'predicates' in options.filter && options.filter.predicates.length > 0) ? options.filter.predicates[0] : ns.ldp.inbox.value;
+        var property = (resources && 'filter' in options && 'predicates' in options.filter && options.filter.predicates.length) ? options.filter.predicates[0] : ns.ldp.inbox.value;
         var iri = (resources) ? resources : location.href.split(location.search||location.hash||/[?#]/)[0];
 
         getLinkRelation(property, iri).then(
@@ -1460,10 +1460,10 @@ console.log(s, i)
 
               if ('filter' in options) {
                 const quads = g.out().quads().map(g => {
-                  if ('subjects' in options.filter && options.filter.subjects.length > 0 && options.filter.subjects.includes(g.subject.value)) {
+                  if ('subjects' in options.filter && options.filter.subjects.length && options.filter.subjects.includes(g.subject.value)) {
                     return g;
                   }
-                  if ('predicates' in options.filter && options.filter.predicates.length > 0 && options.filter.predicates.includes(g.predicate.value)) {
+                  if ('predicates' in options.filter && options.filter.predicates.length && options.filter.predicates.includes(g.predicate.value)) {
                     return g;
                   }
                 });
@@ -1549,8 +1549,8 @@ console.log(s, i)
           'do': true,
           'mode': '#selector'
         };
-console.log(selector)
-console.log(refId)
+// console.log(selector)
+// console.log(refId)
         DO.U.importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, options)
       }
     },
@@ -1614,7 +1614,6 @@ console.log(refId)
         selectedParentNode = r.commonAncestorContainer.parentNode;
 // console.log('selectedParentNode:')
 // console.log(selectedParentNode)
-// console.log(r.commonAncestorContainer.parentNode.nodeValue)
         var selectedParentNodeValue = r.commonAncestorContainer.nodeValue;
 // console.log(selectedParentNodeValue)
 
@@ -1714,7 +1713,7 @@ console.log(refId)
         });
 // console.log(urls);
 
-        if (urls.length > 0) {
+        if (urls.length) {
           // var options = {'license': 'https://creativecommons.org/publicdomain/zero/1.0/', 'filter': { 'subjects': [docURI, iri] }, 'title': iri };
           var options = {'subjectURI': urls[0], 'license': 'https://creativecommons.org/publicdomain/zero/1.0/', 'title': urls[0] };
 
@@ -2020,7 +2019,7 @@ console.log(refId)
       }
       s += '<li><button title="Change to native device/browser view">Native</button></li>';
 
-      if (stylesheets.length > 0) {
+      if (stylesheets.length) {
         for (var i = 0; i < stylesheets.length; i++) {
           var stylesheet = stylesheets[i];
           var view = stylesheet.getAttribute('title');
@@ -2185,7 +2184,7 @@ console.log(refId)
         }
 
         var scriptCurrentData = {};
-        if (scriptCurrent.length > 0) {
+        if (scriptCurrent.length) {
           for(var i = 0; i < scriptCurrent.length; i++) {
             var v = scriptCurrent[i];
             var id = v.id;
@@ -2240,7 +2239,7 @@ console.log(refId)
             var scriptEntry = textarea.value;
             var script = document.getElementById(name);
 
-            if (scriptEntry.length > 0) {
+            if (scriptEntry.length) {
               //If there was a script already
               if (script) {
                 script.textContent = scriptType[name].cdataStart + scriptEntry + scriptType[name].cdataEnd;
@@ -2327,7 +2326,7 @@ console.log(refId)
           name = (name === i) ? getUserLabelOrIRI(i) : name;
           editors.push(`<li>${name}</li>`);
         });
-        if (editors.length > 0){
+        if (editors.length){
           editors = '<tr class="people"><th>Editors</th><td><ul class="editors">' + editors.join('') + '</ul></td></tr>';
         }
       }
@@ -2339,7 +2338,7 @@ console.log(refId)
           name = (name === i) ? getUserLabelOrIRI(i) : name;
           authors.push(`<li>${name}</li>`);
         });
-        if (authors.length > 0){
+        if (authors.length){
           authors = '<tr class="people"><th>Authors</th><td><ul class="authors">' + authors.join('') + '</ul></td></tr>';
         }
       }
@@ -2351,7 +2350,7 @@ console.log(refId)
           name = (name === i) ? getUserLabelOrIRI(i) : name;
           contributors.push(`<li>${name}</li>`);
         });
-        if (contributors.length > 0){
+        if (contributors.length){
           contributors = '<tr class="people"><th>Contributors</th><td><ul class="contributors">' + contributors.join('') + '</ul></td></tr>';
         }
       }
@@ -2363,7 +2362,7 @@ console.log(refId)
           name = (name === i) ? getUserLabelOrIRI(i) : name;
           performers.push(`<li>${name}</li>`);
         });
-        if (performers.length > 0){
+        if (performers.length){
           performers = '<tr class="people"><th>Performers</th><td><ul class="performers">' + performers.join('') + '</ul></td></tr>';
         }
       }
@@ -2393,7 +2392,7 @@ console.log(refId)
       var doctype = (node instanceof Element && node.tagName.toLowerCase() === 'html') ? getDoctype() : '';
       var content = node.textContent.trim();
       var contentCount = { readingTime:1, words:0, chars:0, lines:0, pages:{A4:1, USLetter:1}, bytes:0 };
-      if (content.length > 0) {
+      if (content.length) {
         var lineHeight = node.ownerDocument.defaultView.getComputedStyle(node, null)["line-height"];
         var linesCount = Math.ceil(node.clientHeight / parseInt(lineHeight));
         contentCount = {
@@ -2515,7 +2514,7 @@ console.log(refId)
 
           var conceptLabel = sortToLower(getGraphConceptLabel(g));
           console.log(conceptLabel)
-          conceptLabel = (conceptLabel.length > 0) ? conceptLabel.join(' / ') : getFragmentOrLastPath(subject);
+          conceptLabel = (conceptLabel.length) ? conceptLabel.join(' / ') : getFragmentOrLastPath(subject);
           conceptLabel = conceptLabel.trim();
           conceptLabel = '<a href="' + subject + '">' + conceptLabel + '</a>';
 
@@ -2582,7 +2581,7 @@ console.log(refId)
               }
             });
 
-            if (html.length > 0) {
+            if (html.length) {
               node.insertAdjacentHTML('beforeend', html);
 
               var nodes = document.querySelectorAll('#' + node.id + ' [id^="notification-subscriptions-"]');
@@ -2673,7 +2672,7 @@ console.log(refId)
         s.push('<li><input id="l-o-s-' + id +'" type="checkbox"' + disabledInput + checkedInput + '/><label for="l-o-s-' + id + '">' + label + '</label></li>');
       });
 
-      if (s.length > 0) {
+      if (s.length) {
         node.insertAdjacentHTML('beforeend', '<section id="list-of-stuff" class="do"><h2>List of Stuff</h2><ul>' + s.join('') + '</ul></section>');
 
         if (DO.C.EditorEnabled) {
@@ -2739,7 +2738,7 @@ console.log(refId)
             s += '<li' + currentHash + dataId + '><a href="#' + section.id + '">' + heading.textContent + '</a>';
             var subsections = section.parentNode.querySelectorAll('[id="' + section.id + '"] > div > section[rel*="hasPart"]:not([class~="slide"]), [id="' + section.id + '"] > section[rel*="hasPart"]:not([class~="slide"])');
 
-            if (subsections.length > 0) {
+            if (subsections.length) {
               s += '<ol'+ attributeClass +'>';
               s += DO.U.getListOfSections(subsections, options);
               s += '</ol>';
@@ -2769,7 +2768,7 @@ console.log(refId)
 
         var nodes = rootNode.querySelectorAll('*:not([class~="do"]) ' + selector);
 
-        if (id == 'table-of-contents' || id == 'list-of-concepts' || nodes.length > 0) {
+        if (id == 'table-of-contents' || id == 'list-of-concepts' || nodes.length) {
           var tId = document.getElementById(id);
 
           if(tId) { tId.parentNode.removeChild(tId); }
@@ -2797,7 +2796,7 @@ console.log(refId)
               s += '<section id="' + id + '">';
               s += '<h2>' + label + '</h2>';
               var d = DO.C.Resource[documentURL].citations || [];
-              if (d.length > 0) {
+              if (d.length) {
                 s += '<div><p id="include-concepts"><button class="add">Include concepts</button> from <data value="' + d.length + '">' + d.length + '</data> external references.</p>';
               }
               s += '<dl>';
@@ -2903,7 +2902,7 @@ console.log(refId)
               s += '</tbody>';
             }
             else if (id == 'list-of-abbreviations') {
-              if (nodes.length > 0) {
+              if (nodes.length) {
                 nodes = [].slice.call(nodes);
                 nodes.sort((a, b) => {
                   return a.textContent.toLowerCase().localeCompare(b.textContent.toLowerCase());
@@ -3175,7 +3174,7 @@ console.log(reason);
 // console.log(s)
         var types = getGraphTypes(s);
 
-        if (types.length > 0) {
+        if (types.length) {
           var resourceTypes = types;
           if (resourceTypes.includes('http://www.w3.org/2006/03/test-description#TestCase')) {
             var requirementReference = s.out(ns.spec.requirementReference).values[0];
@@ -3595,7 +3594,7 @@ console.log(reason);
         "504": svgFail + ' Archive timeout. Please try later.'
       }
 
-      // if(note.length > 0) {
+      // if(note.length) {
       //   noteData.annotation["message"] = note;
       // }
 
@@ -3652,7 +3651,7 @@ console.log(reason);
       var checkLinkHeader = function(response) {
         var link = response.headers.get('Link');
 
-        if (link && link.length > 0) {
+        if (link && link.length) {
           var rels = LinkHeader.parse(link);
           if (rels.has('rel', 'memento')) {
             var o = {
@@ -3688,7 +3687,7 @@ console.log(reason);
 
               let location = response.headers.get('Content-Location');
 // console.log(location)
-              if (location && location.length > 0) {
+              if (location && location.length) {
                 //XXX: Scrape Internet Archive's HTML
                 if (location.startsWith('/web/')) {
                   var o = {
@@ -3861,7 +3860,7 @@ console.log(reason);
         var options = {};
         var feedFormat = DO.C.MediaTypes.Feed[0];
         var feedFormatSelectionChecked = generateFeed.querySelector('select[name="feed-format"]')
-        if (feedFormatSelectionChecked.length > 0) {
+        if (feedFormatSelectionChecked.length) {
           feedFormat = (DO.C.MediaTypes.Feed.indexOf(feedFormatSelectionChecked.value) > -1) ? feedFormatSelectionChecked.value : feedFormat;
 
           options['contentType'] = feedFormat;
@@ -3877,7 +3876,7 @@ console.log(reason);
 
         var checkedInput = generateFeed.querySelectorAll('#' + id + '-ul' + ' input[type="checkbox"]:checked')
         checkedInput = Array.from(checkedInput)
-        if (checkedInput.length > 0) {
+        if (checkedInput.length) {
           feedURLSelection = checkedInput.map((el) => el.value);
         }
 // console.log(feedURLSelection)
@@ -4190,7 +4189,7 @@ console.log(reason);
 
       var messageLog;
 
-      if (DO.C.MessageLog && DO.C.MessageLog.length > 0) {
+      if (DO.C.MessageLog && DO.C.MessageLog.length) {
         messageLog = '<table><caption>Messages</caption><thead><tr><th>Date/Time</th><th>Message</th><th>Type</th></tr></thead><tbody>';
         Object.keys(DO.C.MessageLog).forEach(i => {
           messageLog += '<tr><td><time>' + DO.C.MessageLog[i].dateTime + '</time></td><td>' + DO.C.MessageLog[i].content + '</td><td>' + DO.C.MessageLog[i].type + '</td></tr>';
@@ -4243,7 +4242,7 @@ console.log(reason);
 
                   //TODO: Reuse saveAsDocument's catch to request access by checking the Link header.
 
-                  var details = (data.trim().length > 0) ? '<details><summary>Details</summary><div>' + data + '</div></details>' : '';
+                  var details = (data.trim().length) ? '<details><summary>Details</summary><div>' + data + '</div></details>' : '';
                   var message = '';
                   if (error.status) {
                     switch(error.status) {
@@ -4286,7 +4285,7 @@ console.log(reason);
 // console.log(data);
                   data = DOMPurify.sanitize(data);
 
-                  var details = (data.trim().length > 0) ? '<details><summary>Details</summary><div>' + data + '</div></details>' : '';
+                  var details = (data.trim().length) ? '<details><summary>Details</summary><div>' + data + '</div></details>' : '';
                   var message = '';
                   switch(response.status) {
                     case 200: default:
@@ -4450,13 +4449,13 @@ console.log(reason);
         }
 
         var language = document.querySelector('#reply-to-resource-language')
-        if (language && language.length > 0) {
+        if (language && language.length) {
           noteData["language"] = language.value.trim()
           noteData["body"]["language"] = noteData["language"];
         }
 
         var license = document.querySelector('#reply-to-resource-license')
-        if (license && license.length > 0) {
+        if (license && license.length) {
           noteData["license"] = license.value.trim()
           noteData["body"]["rights"] = noteData["body"]["license"] = noteData["rights"] = noteData["license"];
         }
@@ -4739,7 +4738,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
                 var name = DO.C.User.Contacts[contact].Name || contact;
                 var img = DO.C.User.Contacts[contact].Image;
-                if (!(img && img.length > 0)) {
+                if (!(img && img.length)) {
                   img = generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
                 }
                 img = '<img alt="" height="32" src="' + img + '" width="32" />';
@@ -4862,7 +4861,7 @@ console.log(e);
           var resourceTo = document.querySelector('#share-resource #share-resource-to');
           if (resourceTo) {
             resourceTo = resourceTo.value.trim();
-            tos = (resourceTo.length > 0) ? resourceTo.split(/\r\n|\r|\n/) : [];
+            tos = (resourceTo.length) ? resourceTo.split(/\r\n|\r|\n/) : [];
           }
 
           var note = document.querySelector('#share-resource #share-resource-note').value.trim();
@@ -4878,7 +4877,7 @@ console.log(e);
           }
 
           var srci = document.querySelectorAll('#share-resource-contacts input:checked');
-          if (srci.length > 0) {
+          if (srci.length) {
             for(var i = 0; i < srci.length; i++) {
               tos.push(srci[i].value);
             }
@@ -4902,7 +4901,7 @@ console.log(e);
       var id = encodeURIComponent(iri);
       var name = s ? getAgentName(s) || iri : iri;
       var img = s ? getGraphImage(s) : null;
-      if (!(img && img.length > 0)) {
+      if (!(img && img.length)) {
         img = generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
       }
       img = '<img alt="" height="32" src="' + img + '" width="32" />';
@@ -5111,7 +5110,7 @@ console.log(e);
       node.innerHTML = '<ul id="share-resource-contacts"></ul>';
       var shareResourceNode = document.getElementById('share-resource-contacts');
 
-      if (DO.C.User.Contacts && Object.keys(DO.C.User.Contacts).length > 0){
+      if (DO.C.User.Contacts && Object.keys(DO.C.User.Contacts).length){
         Object.keys(DO.C.User.Contacts).forEach(iri => {
           if (DO.C.User.Contacts[iri].Inbox && DO.C.User.IRI !== iri) {
             DO.U.addShareResourceContactInput(shareResourceNode, DO.C.User.Contacts[iri].Graph);
@@ -5128,7 +5127,7 @@ console.log(e);
 
       return getUserContacts(url).then(
         function(contacts) {
-          if(contacts.length > 0) {
+          if(contacts.length) {
             contacts.forEach(url => {
               getSubjectInfo(url)
                 .then(subject => {
@@ -5153,11 +5152,11 @@ console.log(e);
       var iri = s.term.value;
       var inbox = DO.C.User.Contacts[iri]['Inbox'];
 
-      if (inbox && inbox.length > 0) {
+      if (inbox && inbox.length) {
         var id = encodeURIComponent(iri);
         var name = getAgentName(s) || iri;
         var img = getGraphImage(s);
-        if (!(img && img.length > 0)) {
+        if (!(img && img.length)) {
           img = generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
         }
         img = '<img alt="" height="32" src="' + img + '" width="32" />';
@@ -5182,7 +5181,7 @@ console.log(e);
 
       return checkInbox(s)
         .then(inboxes => {
-          if (inboxes && inboxes.length > 0) {
+          if (inboxes && inboxes.length) {
             DO.C.User.Contacts[iri]['Inbox'] = inboxes;
           }
         })
@@ -5263,7 +5262,7 @@ console.log(e);
         var resourcesLi = Array();
         contains.forEach(c => {
           var cg = g.node(rdf.namedNode(c));
-          var resourceTypes = cg.out(ns.rdf.type).values;
+          var resourceTypes = getGraphTypes(cg);
  
           var path = c.split("/");
           if (resourceTypes.includes(ns.ldp.Container.value) || resourceTypes.includes(ns.ldp.BasicContainer.value)){
@@ -5324,7 +5323,7 @@ console.log(e);
 
               var features = DO.C.Resource[topicResource]['subscription'][subscription]['feature'];
 
-              if (features && features.length > 0) {
+              if (features && features.length) {
                 var d = new Date();
                 var startAt = new Date(d.getTime() + 1000);
                 var endAt = new Date(startAt.getTime() + 3600000);
@@ -5373,7 +5372,7 @@ console.log(e);
             // TODO: resourceIRI for getLinkRelation should be the
             // closest IRI (not necessarily the document).
 
-            if (sDURLs.length > 0) {
+            if (sDURLs.length) {
               ///TODO: Handle multiple storage descriptions?
               var sDURL = sDURLs[0];
               DO.C.Storages = DO.C.Storages || {};
@@ -6083,7 +6082,7 @@ console.log(e);
       input.addEventListener('keyup', (e) => {
         var containerLabel = input.value.trim();
 
-        if (containerLabel.length > 0) {
+        if (containerLabel.length) {
           createButton.removeAttribute('disabled');
         }
         else {
@@ -6249,7 +6248,7 @@ console.log(response)
 
       // TODO: Show and use storage, outbox, annotationService as opposed to first available.
 
-      if(DO.C.User.Storage && DO.C.User.Storage.length > 0) {
+      if(DO.C.User.Storage && DO.C.User.Storage.length) {
         baseUrl = forceTrailingSlash(DO.C.User.Storage[0]);
       }
       else if(DO.C.User.Outbox && DO.C.User.Outbox[0]) {
@@ -6533,7 +6532,7 @@ console.log(response)
 
                     var listItems = '';
 
-                    if (items.length > 0) {
+                    if (items.length) {
                       listItems = "<ul>" + items.join('') + "</ul>";
                     }
 
@@ -6818,7 +6817,7 @@ console.log(response)
 
         var newDocument = document.getElementById('create-new-document')
         var storageIRI = newDocument.querySelector('#' + id + '-' + action).innerText.trim()
-        var title = (storageIRI.length > 0) ? getURLLastPath(storageIRI) : ''
+        var title = (storageIRI.length) ? getURLLastPath(storageIRI) : ''
         title = DO.U.generateLabelFromString(title);
 
         var rm = newDocument.querySelector('.response-message')
@@ -6830,7 +6829,7 @@ console.log(response)
         var baseURLSelectionChecked = newDocument.querySelector('select[name="base-url"]')
         // console.log(baseURLSelectionChecked);
 
-        if (baseURLSelectionChecked.length > 0) {
+        if (baseURLSelectionChecked.length) {
           var baseURLType = baseURLSelectionChecked.value
           var nodes = html.querySelectorAll('head link, [src], object[data]')
           if (baseURLType == 'base-url-relative') {
@@ -6982,9 +6981,9 @@ console.log(response)
         });
       }
       var imgAccessibilityReport = '';
-      if (imgFailed.length > 0 || imgCantTell.length > 0) {
-        imgAccessibilityReport += (imgFailed.length > 0) ? '<li>Fail: Images (<code>img</code>) without alternative text (<code>alt</code>).</li>' : '';
-        imgAccessibilityReport += (imgCantTell.length > 0) ? '<li>Can\'t Tell: Images (<code>img</code>) without a non-empty alternative text (<code>alt</code>).</li>' : '';
+      if (imgFailed.length || imgCantTell.length) {
+        imgAccessibilityReport += (imgFailed.length) ? '<li>Fail: Images (<code>img</code>) without alternative text (<code>alt</code>).</li>' : '';
+        imgAccessibilityReport += (imgCantTell.length) ? '<li>Can\'t Tell: Images (<code>img</code>) without a non-empty alternative text (<code>alt</code>).</li>' : '';
       }
 
       var video = document.querySelectorAll('video');
@@ -7006,7 +7005,7 @@ console.log(response)
         });
       }
       var videoAccessibilityReport = '';
-      if (videoFailed.length > 0) {
+      if (videoFailed.length) {
         videoAccessibilityReport += '<li>Fail: Videos (<code>video</code>) without external timed text tracks (<code>track</code> or <code>track</code> with <code>kind</code> of text track.)</li>';
       }
 
@@ -7030,14 +7029,14 @@ console.log(response)
         });
       }
       var audioAccessibilityReport = '';
-      if (audioFailed.length > 0) {
+      if (audioFailed.length) {
         audioAccessibilityReport += '<li>Fail: Audios (<code>audio</code>) without external timed text tracks (<code>track</code> or <code>track</code> with <code>kind</code> of text track.)</li>';
       }
 
       var aRWarning = '<p>This document contains some content, e.g., images, videos, audio, that is not accompanied with alternative text or an alternative text field without information. End users with disabilities will likely experience difficulty accessing the content. Please consider adding alternative text before continuing:</p>';
       var aRSuccess = '<p>All content in this document includes alternative text. End users with disabilities will likely have a good experience with this document.</p>';
       var accessibilityReport = '';
-      if (imgAccessibilityReport.length > 0 || audioAccessibilityReport.length > 0 || videoAccessibilityReport.length > 0) {
+      if (imgAccessibilityReport.length || audioAccessibilityReport.length || videoAccessibilityReport.length) {
         accessibilityReport += aRWarning + '<ul>' + imgAccessibilityReport + audioAccessibilityReport + videoAccessibilityReport + '</ul>';
       }
       else {
@@ -7123,7 +7122,7 @@ console.log(response)
         }
 
         var baseURLSelectionChecked = saveAsDocument.querySelector('select[name="base-url"]')
-        if (baseURLSelectionChecked.length > 0) {
+        if (baseURLSelectionChecked.length) {
           var baseURLType = baseURLSelectionChecked.value
           var nodes = html.querySelectorAll('head link, [src], object[data]')
           var base = html.querySelector('head base[href]');
@@ -7317,7 +7316,7 @@ console.log(response)
 
     rewriteBaseURL: function(nodes, options) {
       options = options || {};
-      if (typeof nodes === 'object' && nodes.length > 0) {
+      if (typeof nodes === 'object' && nodes.length) {
         for (var i = 0; i < nodes.length; i++) {
           var node = nodes[i];
           var url, ref;
@@ -7398,7 +7397,7 @@ console.log(response)
     },
 
     generateLabelFromString: function(s) {
-      if (typeof s === 'string' && s.length > 0) {
+      if (typeof s === 'string' && s.length) {
         s = s.replace(/-/g, ' ');
         s = (s !== '.html' && s.endsWith('.html')) ? s.substr(0, s.lastIndexOf('.html')) : s;
         s = (s !== '.' && s.endsWith('.')) ? s.substr(0, s.lastIndexOf('.')) : s;
@@ -7532,7 +7531,7 @@ console.log(response)
               // const h = img.height;
             }
 
-            if (data.authors && Array.isArray(data.authors) && data.authors.length > 0 && data.authors[0].key) {
+            if (data.authors && Array.isArray(data.authors) && data.authors.length && data.authors[0].key) {
               var a = 'https://openlibrary.org' + data.authors[0].key;
 // console.log(a)
               promises.push(getResource(a, headers, options)
@@ -7546,7 +7545,7 @@ console.log(response)
 // console.log(data)
 
                   var authorURL = 'http://example.com/.well-known/genid/' + generateUUID();
-                  if (data.links && Array.isArray(data.links) && data.links.length > 0) {
+                  if (data.links && Array.isArray(data.links) && data.links.length) {
 // console.log(data.links[0].url)
                     authorURL = data.links[0].url;
                   }
@@ -7581,7 +7580,7 @@ console.log(response)
             }
 
             // XXX: Working but unused:
-            // if (data.identifiers?.wikidata && Array.isArray(data.identifiers.wikidata) && data.identifiers.wikidata.length > 0) {
+            // if (data.identifiers?.wikidata && Array.isArray(data.identifiers.wikidata) && data.identifiers.wikidata.length) {
               // var w = 'https://www.wikidata.org/entity/' + data.identifiers.wikidata[0];
               // promises.push(getResourceGraph(w, wikidataHeaders, options).then(g => {
 // console.log(g);
@@ -7635,7 +7634,7 @@ console.log(response)
         title = getGraphLabel(subject) || '';
       }
       title = escapeCharacters(title);
-      title = (title.length > 0) ? '<cite>' + title + '</cite>, ' : '';
+      title = (title.length) ? '<cite>' + title + '</cite>, ' : '';
       var datePublished = subject.schemadatePublished || subject.dctermsissued || subject.dctermsdate || subject.schemadateCreated || subject.dctermscreated || '';
       var dateVersion = subject.schemadateModified || datePublished;
       datePublished = (datePublished) ? datePublished.substr(0,4) + ', ' : '';
@@ -7673,7 +7672,7 @@ console.log(response)
       }
 // console.log(authorList);
 
-      if (authorList.length > 0) {
+      if (authorList.length) {
         authorList.forEach(authorIRI => {
           var s = subject.node(rdf.namedNode(authorIRI));
           var author = getAgentName(s);
@@ -7710,7 +7709,7 @@ console.log(response)
 
       var dataVersionDate = (dateVersion) ? ' data-versiondate="' + dateVersion + '"' : '';
 
-      var content = ('content' in options && options.content.length > 0) ? options.content + ', ' : '';
+      var content = ('content' in options && options.content.length) ? options.content + ', ' : '';
 
       var citationReason = 'Reason: ' + DO.C.Citation[options.citationRelation];
 
@@ -8019,7 +8018,7 @@ WHERE {\n\
     getReferenceLabel: function(motivatedBy) {
       motivatedBy = motivatedBy || '';
       //TODO: uriToPrefix
-      motivatedBy = (motivatedBy.length > 0 && motivatedBy.slice(0, 4) == 'http' && motivatedBy.indexOf('#') > -1) ? 'oa:' + motivatedBy.substr(motivatedBy.lastIndexOf('#') + 1) : motivatedBy;
+      motivatedBy = (motivatedBy.length && motivatedBy.slice(0, 4) == 'http' && motivatedBy.indexOf('#') > -1) ? 'oa:' + motivatedBy.substr(motivatedBy.lastIndexOf('#') + 1) : motivatedBy;
 
       return DO.C.MotivationSign[motivatedBy] || '#';
     },
@@ -8267,11 +8266,10 @@ WHERE {\n\
           // return Promise.reject();
           return;
         }
-        console.log(hasTarget);
 
         var target = g.node(rdf.namedNode(hasTarget));
         var targetIRI = target.term.value;
-console.log(targetIRI);
+// console.log(targetIRI);
 
         var source = target.out(ns.oa.hasSource).values[0];
 // console.log(source);
@@ -8285,13 +8283,13 @@ console.log(targetIRI);
         var selector = target.out(ns.oa.hasSelector).values[0];
         if (selector) {
           selector = g.node(rdf.namedNode(selector));
-console.log(selector);
+// console.log(selector);
 
 // console.log(selector.rdftype);
 // console.log(selector.out(ns.rdf.type).values);
           //FIXME: This is taking the first rdf:type. There could be multiple.
           var selectorTypes = getGraphTypes(selector)[0];
-console.log(selectorTypes)
+// console.log(selectorTypes)
 // console.log(selectorTypes == 'http://www.w3.org/ns/oa#FragmentSelector');
           if (selectorTypes == ns.oa.TextQuoteSelector.value) {
             exact = selector.out(ns.oa.exact).values[0];
@@ -8301,14 +8299,14 @@ console.log(selectorTypes)
           else if (selectorTypes == ns.oa.FragmentSelector.value) {
             var refinedBy = selector.out(ns.oa.refinedBy).values[0];
             refinedBy = refinedBy && selector.node(rdf.namedNode(refinedBy));
-console.log(refinedBy)
+// console.log(refinedBy)
             exact = refinedBy && refinedBy.out(ns.oa.exact).values[0];
             prefix = refinedBy && refinedBy.out(ns.oa.prefix).values[0];
             suffix = refinedBy && refinedBy.out(ns.oa.suffix).values[0];
 // console.log(selector.rdfvalue)
             if (selector.out(ns.rdf.value).values[0] && selector.out(ns.dcterms.conformsTo).values[0] && selector.out(ns.dcterms.conformsTo).values[0].endsWith('://tools.ietf.org/html/rfc3987')) {
               var fragment = selector.out(ns.rdf.value).values[0];
-console.log(fragment)
+// console.log(fragment)
               fragment = (fragment.indexOf('#') == 0) ? getFragmentFromString(fragment) : fragment;
 
               if (fragment !== '') {
@@ -8317,10 +8315,10 @@ console.log(fragment)
             }
           }
         }
-console.log(exact);
-console.log(prefix);
-console.log(suffix);
-console.log('----')
+// console.log(exact);
+// console.log(prefix);
+// console.log(suffix);
+// console.log('----')
         var docRefType = '<sup class="ref-annotation"><a href="#' + id + '" rel="cito:hasReplyFrom" resource="' + noteIRI + '">' + refLabel + '</a></sup>';
 
         var containerNodeTextContent = containerNode.textContent;
@@ -8338,12 +8336,11 @@ console.log('----')
             "suffix": suffix
           };
 
-
           var selectedParentNode = DO.U.importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, { 'do': true });
 
           var parentNodeWithId = selectedParentNode.closest('[id]');
           targetIRI = (parentNodeWithId) ? documentURL + '#' + parentNodeWithId.id : documentURL;
-console.log(parentNodeWithId, targetIRI)
+// console.log(parentNodeWithId, targetIRI)
           var noteData = {
             "type": 'article',
             "mode": "read",
@@ -8475,8 +8472,8 @@ console.log(parentNodeWithId, targetIRI)
           inReplyTo = note.out(ns.as.inReplyTo).values[0];
           inReplyToRel = 'as:inReplyTo';
         }
-        else if (note.out(ns.sioc.replyof).values[0]) {
-          inReplyTo = note.out(ns.sioc.replyof).values[0];
+        else if (note.out(ns.sioc.reply_of).values[0]) {
+          inReplyTo = note.out(ns.sioc.reply_of).values[0];
           inReplyToRel = 'sioc:reply_of';
         }
 
@@ -8950,8 +8947,8 @@ console.log(parentNodeWithId, targetIRI)
               if (tagsArray.length) {
                 tagsArray = tagsArray
                   .map(tag => escapeCharacters(tag.trim()))
-                  .filter(tag => tag.length > 0);
-                  tagsArray = uniqueArray(tagsArray.sort());
+                  .filter(tag => tag.length);
+                tagsArray = uniqueArray(tagsArray.sort());
 
                 var tags = tagsArray.map(tag => '<li about="#tag-' + n.id + '-' + generateAttributeId(null, tag) + '" typeof="oa:TextualBody" property="rdf:value" rel="oa:hasPurpose" resource="oa:tagging">' + tag + '</li>').join('');
 
@@ -9059,7 +9056,7 @@ console.log(parentNodeWithId, targetIRI)
       let tagsArray = string
         .split(',')
         .map(tag => escapeCharacters(tag.trim()))
-        .filter(tag => tag.length > 0);
+        .filter(tag => tag.length);
 
       tagsArray = uniqueArray(tagsArray.sort());
 
@@ -9352,7 +9349,7 @@ console.log(parentNodeWithId, targetIRI)
                         var name = getAgentName(s) || iri;
                         var img = getGraphImage(s);
 
-                        img = (img && img.length > 0) ? '<img alt="" height="32" rel="schema:image" src="' + img + '" width="32" /> ' : '';
+                        img = (img && img.length) ? '<img alt="" height="32" rel="schema:image" src="' + img + '" width="32" /> ' : '';
                         var userHTML = fragmentFromString('<span about="" rel="schema:' + contributorRole + '"><span about="' + iri + '" typeof="schema:Person">' + img + '<a href="' + iri + '" rel="schema:url">' + name + '</a></span></span>');
 
                         n.replaceChild(userHTML, input);
@@ -10472,7 +10469,7 @@ console.log(parentNodeWithId, targetIRI)
                             
                             g = g.graph().toArray();
 // console.log(triples);
-                            if(triples.length > 0) {
+                            if (triples.length) {
                               var observations = {};
                               triples.forEach(t => {
                                 var s = t.subject.value;
@@ -10653,7 +10650,6 @@ console.log(parentNodeWithId, targetIRI)
 
             completeFormSave: function (opts) {
               var _this = this;
-console.log(_this)
 // console.log(this.base)
 // console.log(opts);
 // console.log('completeFormSave() with this.action: ' + this.action);
@@ -10866,7 +10862,7 @@ console.log(_this)
               }
 // console.log(latestVersion)
 // console.log(resourceIRI)
-console.log(targetIRI)
+// console.log(targetIRI)
 
               var targetLanguage = getNodeLanguage(parentNodeWithId);
               var selectionLanguage = getNodeLanguage(selectedParentElement);
@@ -11262,7 +11258,7 @@ console.log(targetIRI)
                   inboxPromise = Promise.resolve([annotation.annotationInbox])
                 }
                 else {
-                  if ('inbox' in DO.C.Resource[documentURL] && DO.C.Resource[documentURL].inbox.length > 0) {
+                  if ('inbox' in DO.C.Resource[documentURL] && DO.C.Resource[documentURL].inbox.length) {
                     inboxPromise = Promise.resolve(DO.C.Resource[documentURL].inbox)
                   }
                   else {
@@ -11336,7 +11332,7 @@ console.log(targetIRI)
                           annotation['noteIRI'] = annotation['noteURL'] = location
                         }
 
-console.log(annotation, options)
+// console.log(annotation, options)
                         return positionActivity(annotation, options)
                        })
 
