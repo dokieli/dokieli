@@ -87,7 +87,7 @@ DO = {
 
             items.forEach(i => {
               i.forEach(resource => {
-console.log(resource)
+// console.log(resource)
                 var r = s.node(rdf.namedNode(resource));
 
                 if (r.out(ns.rdf.first).values.length || r.out(ns.rdf.rest).values.length) {
@@ -4724,7 +4724,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
                   DO.C.User.Contacts[contact].IRI?.toLowerCase().includes(query) ||
                   DO.C.User.Contacts[contact].URL?.toLowerCase().includes(query)
                 );
-
+// console.log(matchesQuery)
                 return !subjectsWithAccessKeys.has(contact) && matchesQuery;
               });
             }
@@ -4791,6 +4791,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
             var ul = document.querySelector('#share-resource-permissions ul');
 
             var showPermissions = function(s, accessSubject) {
+// console.log(accessSubject)
               if (accessSubject != DO.C.User.IRI) {
                 DO.U.addAccessSubjectItem(ul, s, accessSubject);
 
@@ -4833,14 +4834,13 @@ console.log('XXX: Cannot access effectiveACLResource', e);
               //Gets some information about the accessSubject that can be displayed besides their URI.
               getResourceGraph(accessSubject)
                 .catch(e => {
-console.log(e);
                   showPermissions(null, accessSubject);
                 })
                 .then(g => {
-                  if (typeof g?._graph === 'undefined') {
-                    showPermissions(null, accessSubject);
+                  var s;
+                  if (g) {
+                    s = g.node(rdf.namedNode(accessSubject));
                   }
-                  var s = g.node(rdf.namedNode(accessSubject))
                   showPermissions(s, accessSubject);
                 })
             })
@@ -9441,7 +9441,7 @@ WHERE {\n\
               });
             }
 
-            if (s.rdftype.includes(ns.doap.Specification.value)) {
+            if (getGraphTypes(s).includes(ns.doap.Specification.value)) {
               var documentTestSuite = 'document-test-suite';
               var testSuite = document.getElementById(documentTestSuite);
               if (!testSuite) {

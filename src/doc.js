@@ -1230,7 +1230,7 @@ function getGraphData(s, options) {
   };
 
   info['graph'] = s;
-  info['rdftype'] = getGraphTypes(s)
+  info['rdftype'] = getGraphTypes(s);
 
   info['title'] = getGraphTitle(s);
   // info['label'] = graph.getGraphLabel(s);

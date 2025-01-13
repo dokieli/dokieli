@@ -578,7 +578,7 @@ function getResourceGraph (iri, headers, options = {}) {
 
       if (options['contentType'] == 'application/json') {
         return response.json().then(data => {
-            if (data['@context']) {
+          if (data['@context']) {
             data = transformJsonldContextURLScheme(data);
             return JSON.stringify(data);
           }
@@ -606,7 +606,9 @@ function getResourceGraph (iri, headers, options = {}) {
 //       console.log(Array.from(r.out().quads()))
 //       return r;
 
-    //   return g.node(rdf.namedNode(iri));
+// console.log(stripFragmentFromString(iri))
+
+//       return g.node(rdf.namedNode(iri));
       return rdf.grapoi({ dataset: g.dataset, term: rdf.namedNode(stripFragmentFromString(iri))});
     })
     .catch(e => {
@@ -1476,7 +1478,7 @@ function getACLResourceGraph(documentURL, iri, options = {}) {
   //TODO: Consider whether to skip this HEAD if we already determined the ACLResource previously. While possible the effectiveACLResource is unlikely to change.
   return getLinkRelationFromHead('acl', iri)
     .then(i => {
-      if (i.length > 0) {
+      if (i.length) {
         var aR = i[0];
 
         var aclResource = getAbsoluteIRI(baseURL, aR);
@@ -1501,7 +1503,6 @@ function getACLResourceGraph(documentURL, iri, options = {}) {
                 return Promise.reject(new Error('effectiveACLResource not determined. https://solidproject.org/TR/2024/wac-20240512#effective-acl-resource-algorithm'));
               }
             }
-// console.log(g)
 
             Config.Resource[documentURL]['acl']['effectiveACLResource'] = aclResource;
             Config.Resource[aclResource] = {};
@@ -1558,14 +1559,18 @@ function getAccessSubjects (authorizations, options) {
 function getAuthorizationsMatching (g, matchers) {
   var authorizations = {};
 
-// console.log("getAuthorizationsMatching:", g, matchers);
+// console.log("getAuthorizationsMatching:", g.terms, g.out().values, matchers);
 
   var subjects = [];
-  g.quads().forEach(t => {
+
+  g = rdf.grapoi({ dataset: g.dataset });
+
+  g.out().quads().forEach(t => {
+// console.log(t)
     subjects.push(t.subject.value);
   });
   subjects = uniqueArray(subjects);
-
+// console.log(subjects)
   subjects.forEach(i => {
     var s = g.node(rdf.namedNode(i));
 

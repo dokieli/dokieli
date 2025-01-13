@@ -19,8 +19,8 @@ function sendNotifications(tos, note, iri, shareResource) {
     var rootIRI = Config.Resource[iri] || Config.Resource[getPathURL(iri)];
 
     if (rootIRI) {
-      if (getGraphTypes(Config.Resource[iri]).length) {
-        notificationData['objectTypes'] = getGraphTypes(Config.Resource[iri])[0];
+      if (Config.Resource[iri].rdftype.length) {
+        notificationData['objectTypes'] = Config.Resource[iri].rdftype;
       }
       if (Config.Resource[iri].license) {
         notificationData['objectLicense'] = Config.Resource[iri].license;
