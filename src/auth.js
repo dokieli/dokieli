@@ -289,7 +289,8 @@ function getSubjectInfo (subjectIRI, options = {}) {
   return getResourceGraph(subjectIRI, headers, options)
     .then(g => {
       //TODO: Consider whether to construct an empty graph (useful to work only with their IRI);
-      if (g && !Array.from(g.out().quads()).length) {
+
+      if (!g || g.resource || (g && !Array.from(g.out().quads()).length)) {
         return {};
       }
 

@@ -55,7 +55,7 @@
     "micromark-extension-gfm": "^3.0.0",
     "micromark-extension-gfm-tagfilter": "^2.0.0",
     "rdf-ext": "^2.5.2",
-    "rdfa-streaming-parser": "^3.0.0",
+    "rdfa-streaming-parser": "^3.0.1",
     "solid-auth-client": "^2.5.6"
   },
   "devDependencies": {

@@ -573,15 +573,24 @@ function getResourceGraph (iri, headers, options = {}) {
     .then(response => {
       let cT = response.headers.get('Content-Type')
       options['contentType'] = (cT) ? cT.split(';')[ 0 ].trim() : 'text/turtle'
-
-      if (!Config.MediaTypes.RDF.includes(options['contentType'])) {
-        return Promise.reject({ resource: iri, response: response, message: 'Unsupported media type for RDF parsing: ' + options['contentType'] })
-      }
-
       // options['subjectURI'] = stripFragmentFromString(iri)
       options['subjectURI'] = iri
 
-      return response.text()
+      if (options['contentType'] == 'application/json') {
+        return response.json().then(data => {
+            if (data['@context']) {
+            data = transformJsonldContextURLScheme(data);
+            return JSON.stringify(data);
+          }
+
+          return Promise.reject({ resource: iri, response: response, message: 'Unsupported media type for RDF parsing (without @context): ' + options['contentType'] })
+        });
+      }
+      else if (!Config.MediaTypes.RDF.includes(options['contentType'])) {
+        return Promise.reject({ resource: iri, response: response, message: 'Unsupported media type for RDF parsing: ' + options['contentType'] })
+      }
+
+      return response.text();
     })
     .then(data => {
       return getGraphFromData(data, options)
@@ -1161,7 +1170,7 @@ function getAgentFollowing (s) {
       headers: {'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams", application/activity+json, text/turtle'},
       noCredentials: true
     };
-    return DO.U.getItemsList(following, options)
+    return DO.U.getItemsList(following[0], options)
       .then(items => {
   // console.log(following);
         return (items.length) ? items : undefined;
@@ -1378,9 +1387,6 @@ function getGraphConceptLabel(g, options) {
     var o = t.object.value;
 
     if (s == options['subjectURI']){
-      if (p == ns.skos.prefLabel.value) {
-        console.log(t.object)
-      }
       if (p == ns.skos.prefLabel.value && (t.object.language && (t.object.language == '' || t.object.language.toLowerCase().startsWith(options['lang'])))) {
         labels.prefLabel.push(o);
       }

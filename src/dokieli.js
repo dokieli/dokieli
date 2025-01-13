@@ -2513,7 +2513,7 @@ console.log(resource)
           var g = DO.C.Resource[documentURL]['graph'].node(rdf.namedNode(subject));
 
           var conceptLabel = sortToLower(getGraphConceptLabel(g));
-          console.log(conceptLabel)
+// console.log(conceptLabel)
           conceptLabel = (conceptLabel.length) ? conceptLabel.join(' / ') : getFragmentOrLastPath(subject);
           conceptLabel = conceptLabel.trim();
           conceptLabel = '<a href="' + subject + '">' + conceptLabel + '</a>';
