@@ -6,7 +6,7 @@ import { Readable } from "readable-stream";
 import Config from './config.js'
 import { stripFragmentFromString, getProxyableIRI, getBaseURL, getPathURL, getAbsoluteIRI, getParentURLPath } from './uri.js'
 import { uniqueArray } from './util.js'
-import { setAcceptRDFTypes, getResource, getResourceHead } from './fetcher.js'
+import { setAcceptRDFTypes, getResource, getResourceHead, currentLocation } from './fetcher.js'
 import LinkHeader from "http-link-header";
 import DOMPurify from 'dompurify';
 
@@ -121,7 +121,7 @@ function getRDFParser(baseIRI, contentType) {
 function getMatchFromData (data, spo = {}, options = {}) {
   if (!data) { return Promise.resolve({}) }
 
-  spo['subject'] = spo.subject || window.location.origin + window.location.pathname;
+  spo['subject'] = spo.subject || currentLocation();
   spo['predicate'] = spo.predicate || ns.rdfs.label.value;
 
   options['contentType'] = options.contentType || 'text/html';
@@ -644,7 +644,8 @@ function getLinkRelation (property, url, data) {
       });
   }
   else if (data) {
-    var subjectURI = window.location.href.split(window.location.search || window.location.hash || /[?#]/)[0]
+    var subjectURI = currentLocation();
+    // var subjectURI = window.location.href.split(window.location.search || window.location.hash || /[?#]/)[0]
 
     var options = {
       'contentType': 'text/html',
@@ -652,17 +653,20 @@ function getLinkRelation (property, url, data) {
     }
 
     return getGraphFromData(data, options)
-      .then(function (result) {
-          // TODO: Should this get all or a given subject's?
-          var endpoints = result.match(subjectURI, property).toArray()
-          if (endpoints.length > 0) {
-            return endpoints.map(t => { return t.object.value })
-          }
+      .then(g => {
+        g = g.node(rdf.namedNode(subjectURI));
+        // TODO: Should this get all or a given subject's?
+        var endpoints = g.out(rdf.namedNode(property)).values;
+
+        if (endpoints?.length) {
+          return endpoints;
+        }
 
 // console.log(property + ' endpoint was not found in message body')
-          return getLinkRelationFromHead(property, subjectURI)
-        })
-  }
+        return getLinkRelationFromHead(property, subjectURI)
+      })
+
+    }
 }
 
 function getLinkRelationFromHead (property, url) {
@@ -671,7 +675,7 @@ function getLinkRelationFromHead (property, url) {
   return getResourceHead(url).then(
     function (i) {
       var link = i.headers.get('Link')
-      if (link && link.length > 0) {
+      if (link && link.length) {
         var linkHeaders = LinkHeader.parse(link)
   // console.log(property)
   // console.log(linkHeaders)
@@ -682,7 +686,7 @@ function getLinkRelationFromHead (property, url) {
           }
         });
 
-        if (uris.length > 0) {
+        if (uris.length) {
           return uris;
         }
 
@@ -696,15 +700,14 @@ function getLinkRelationFromHead (property, url) {
   );
 }
 
-function getLinkRelationFromRDF (property, url, subjectIRI) {
-  url = url || window.location.origin + window.location.pathname
-  subjectIRI = subjectIRI || url
+function getLinkRelationFromRDF (property, url) {
+  if (!url) { return Promise.reject({'message': 'Missing url paramater' })}
 
-  return getResourceGraph(subjectIRI)
+  return getResourceGraph(url)
     .then(i => {
-        var s = g.node(rdf.namedNode(subjectIRI));
+        var s = g.node(rdf.namedNode(url));
 
-        var values = s.out(rdf.namespace(property)('')).values;
+        var values = s.out(rdf.namedNode(property)).values;
 
         if (values.length) {
           return values;

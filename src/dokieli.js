@@ -43,7 +43,7 @@ DO = {
 
   U: {
     getItemsList: function(url, options) {
-      url = url || window.location.origin + window.location.pathname;
+      url = url || currentLocation();
       options = options || {};
       options['resourceItems'] = options.resourceItems || [];
       options['headers'] = options.headers || {};
@@ -137,7 +137,7 @@ DO = {
 
 
     getNotifications: function(url) {
-      url = url || window.location.origin + window.location.pathname;
+      url = url || currentLocation();
       var notifications = [];
 
       DO.C.Inbox[url] = {};
@@ -404,7 +404,7 @@ DO = {
             DO.C.Activity[url]['Graph'] = g;
           }
 
-          var currentPathURL = window.location.origin + window.location.pathname;
+          var currentPathURL = currentLocation();
 
           var subjectsReferences = [];
           var subjects = [];
@@ -415,7 +415,6 @@ DO = {
 
           subjects.forEach(i => {
             var s = g.node(rdf.namedNode(i));
-
             var types = getGraphTypes(s);
 
             if (types.length) {
@@ -710,7 +709,7 @@ DO = {
 
     //Borrowed some of the d3 parts from https://bl.ocks.org/mbostock/4600693
     showVisualisationGraph: function(url, data, selector, options) {
-      url = url || window.location.origin + window.location.pathname;
+      url = url || currentLocation();
       selector = selector || 'body';
       options = options || {};
       options['contentType'] = options.contentType || 'text/html';
@@ -2281,7 +2280,7 @@ DO = {
       var advisements = [];
       var skos = [];
 
-      // var subjectURI = window.location.origin + window.location.pathname;
+      // var subjectURI = currentLocation();
       // var options = {'contentType': 'text/html', 'subjectURI': subjectURI };
 // console.log(options)
       var g = DO.C.Resource[documentURL].graph;
@@ -3577,7 +3576,7 @@ console.log(reason);
     },
 
     snapshotAtEndpoint: function snapshotAtEndpoint (e, iri, endpoint, noteData, options = {}) {
-      iri = iri || window.location.origin + window.location.pathname;
+      iri = iri || currentLocation();
       endpoint = endpoint || 'https://pragma.archivelab.org/';
       options.noCredentials = true
 
@@ -4335,7 +4334,7 @@ console.log(reason);
     },
 
     resourceSave: function(e, options) {
-      var url = window.location.origin + window.location.pathname;
+      var url = currentLocation();
       var data = getDocument();
       options = options || {};
 
@@ -4504,19 +4503,12 @@ console.log(reason);
               .querySelector('.response-message')
               .innerHTML = '<p class="success"><a target="_blank" href="' + response.url + '">Reply saved!</a></p>'
 
-            // Determine the inbox endpoint, to send the notification to
-            return getLinkRelation(ns.ldp.inbox.value, null, getDocument())
-              .catch(error => {
-                console.error('Could not fetch inbox endpoint:', error)
-
-                // re-throw
-                throw new Error('Could not determine the author inbox endpoint')
-              })
+            return getLinkRelation(ns.ldp.inbox.value, null, getDocument());
           })
 
           .then(inboxes => {
             if (!inboxes) {
-              throw new Error('Author inbox endpoint is empty or missing')
+              throw new Error('Inbox is empty or missing')
             }
 
             var inboxURL = inboxes[0]
@@ -7281,7 +7273,7 @@ console.log(response)
 
       sourceBox.addEventListener('click', (e) => {
         if (e.target.closest('button.create')) {
-          var url = window.location.origin + window.location.pathname;
+          var url = currentLocation();
           var data = document.getElementById('source-edit').value;
           document.documentElement.innerHTML = data;
           DO.U.showDocumentInfo();
@@ -8477,7 +8469,7 @@ WHERE {\n\
           inReplyToRel = 'sioc:reply_of';
         }
 
-        if (inReplyTo && inReplyTo.includes(window.location.origin + window.location.pathname)) {
+        if (inReplyTo && inReplyTo.includes(currentLocation())) {
           noteData = {
             "type": 'article',
             "mode": "read",
@@ -9280,7 +9272,7 @@ WHERE {\n\
               }
 
               //User can add themselves as a contributor
-              if (DO.C.User.IRI && s['schema' + contributorRole].indexOf(DO.C.User.IRI) < 0){
+              if (DO.C.User.IRI && !s.out(ns.schema[contributorRole]).includes(DO.C.User.IRI)){
                 var contributorId;
                 var contributorName = DO.C.User.Name || DO.C.User.IRI;
                 if (DO.C.User.Name) {
@@ -10711,139 +10703,142 @@ WHERE {\n\
               var activityTypeMatched = false;
               var activityIndex = DO.C.ActionActivityIndex[_this.action];
 
-              function checkDuplicateLocation(annotationDistribution, containerIRI) {
+              function isDuplicateLocation(annotationDistribution, containerIRI) {
                 return Object.keys(annotationDistribution).some(
-                  item => annotationDistribution[item].containerIRI !== containerIRI
+                  item => annotationDistribution[item].containerIRI == containerIRI
                 );
               }
 
-              //XXX: Use TypeIndex location as canonical if available, otherwise storage. Note how noteIRI is treated later
-              if((opts.annotationLocationPersonalStorage && DO.C.User.TypeIndex) || (!opts.annotationLocationPersonalStorage && !opts.annotationLocationService && DO.C.User.TypeIndex)) {
+              //Use if (activityIndex) when all _this.action values are taken into account e.g., `note` in author mode
+              if (_this.action !== 'selector') {
+                //XXX: Use TypeIndex location as canonical if available, otherwise storage. Note how noteIRI is treated later
+                if((opts.annotationLocationPersonalStorage && DO.C.User.TypeIndex) || (!opts.annotationLocationPersonalStorage && !opts.annotationLocationService && DO.C.User.TypeIndex)) {
 
-                //TODO: Preferring publicTypeIndex for now. Refactor this when the UI allows user to decide whether to have it public or private.
+                  //TODO: Preferring publicTypeIndex for now. Refactor this when the UI allows user to decide whether to have it public or private.
 
-                var publicTypeIndexes = DO.C.User.TypeIndex[ns.solid.publicTypeIndex.value];
-                var privateTypeIndexes = DO.C.User.TypeIndex[ns.solid.privateTypeIndex.value];
+                  var publicTypeIndexes = DO.C.User.TypeIndex[ns.solid.publicTypeIndex.value];
+                  var privateTypeIndexes = DO.C.User.TypeIndex[ns.solid.privateTypeIndex.value];
 
-                if (publicTypeIndexes) {
-                  var publicTIValues = Object.values(publicTypeIndexes);
-// console.log(publicTIValues)
-                  publicTIValues.forEach(ti => {
-                    //XXX: For now, we are only sending the annotation to one location that's already matched
-                    if (activityTypeMatched) return;
+                  if (publicTypeIndexes) {
+                    var publicTIValues = Object.values(publicTypeIndexes);
+  // console.log(publicTIValues)
+                    publicTIValues.forEach(ti => {
+                      //XXX: For now, we are only sending the annotation to one location that's already matched
+                      if (activityTypeMatched) return;
 
-                    var forClass = ti[ns.solid.forClass.value];
-                    var instanceContainer = ti[ns.solid.instanceContainer.value];
-                    var instance = ti[ns.solid.instance.value];
+                      var forClass = ti[ns.solid.forClass.value];
+                      var instanceContainer = ti[ns.solid.instanceContainer.value];
+                      var instance = ti[ns.solid.instance.value];
 
-                    if (activityIndex?.includes(forClass)) {
-                      if (instanceContainer) {
-                        activityTypeMatched = true;
+                      if (activityIndex?.includes(forClass)) {
+                        if (instanceContainer) {
+                          activityTypeMatched = true;
 
-                        containerIRI = instanceContainer;
+                          containerIRI = instanceContainer;
 
-                        fromContentType = 'text/html';
-                        // contentType = 'text/html';
-                        contentType = fromContentType;
-        
-                        noteURL = noteIRI = containerIRI + id;
-                        contextProfile = {
-                          // 'subjectURI': noteIRI,
-                        };
-                        aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true, 'annotationInbox': annotationInbox };
+                          fromContentType = 'text/html';
+                          // contentType = 'text/html';
+                          contentType = fromContentType;
+          
+                          noteURL = noteIRI = containerIRI + id;
+                          contextProfile = {
+                            // 'subjectURI': noteIRI,
+                          };
+                          aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true, 'annotationInbox': annotationInbox };
 
-                        annotationDistribution.push(aLS);
+                          annotationDistribution.push(aLS);
+                        }
+                        //TODO: Not handling instance yet.
                       }
-                      //TODO: Not handling instance yet.
-                    }
-                  })
+                    })
 
-                }
-                else if (privateTypeIndexes) {
+                  }
+                  else if (privateTypeIndexes) {
 
-                }
-              }
-
-              if((opts.annotationLocationPersonalStorage && DO.C.User.Outbox) || (!opts.annotationLocationPersonalStorage && !opts.annotationLocationService && DO.C.User.Outbox)) {
-                containerIRI = DO.C.User.Outbox[0];
-
-                var fromContentType = 'text/html';
-                // contentType = 'application/ld+json';
-                contentType = fromContentType;
-
-                noteURL = noteIRI = containerIRI + id;
-                var contextProfile = {
-                  '@context': [
-                    'https://www.w3.org/ns/activitystreams',
-                    { 'oa': 'http://www.w3.org/ns/oa#', 'schema': 'http://schema.org/' }
-                  ],
-                  // 'subjectURI': noteIRI,
-                  'profile': 'https://www.w3.org/ns/activitystreams'
-                };
-                aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'annotationInbox': annotationInbox };
-                if (typeof DO.C.User.Storage === 'undefined' && !activityTypeMatched) {
-                  aLS['canonical'] = true;
+                  }
                 }
 
-                aLS = Object.assign(aLS, contextProfile)
+                if ((opts.annotationLocationPersonalStorage && DO.C.User.Outbox) || (!opts.annotationLocationPersonalStorage && !opts.annotationLocationService && DO.C.User.Outbox)) {
+                  containerIRI = DO.C.User.Outbox[0];
 
-                if (checkDuplicateLocation(annotationDistribution, containerIRI)) {
-                  annotationDistribution.push(aLS);
-                }
-              }
+                  var fromContentType = 'text/html';
+                  // contentType = 'application/ld+json';
+                  contentType = fromContentType;
 
-              if (!activityTypeMatched && ((opts.annotationLocationPersonalStorage && DO.C.User.Storage) || (!opts.annotationLocationPersonalStorage && !opts.annotationLocationService && DO.C.User.Storage))) {
-                containerIRI = DO.C.User.Storage[0];
-
-                fromContentType = 'text/html';
-                // contentType = 'text/html';
-                contentType = fromContentType;
-
-                noteURL = noteIRI = containerIRI + id;
-                contextProfile = {
-                  // 'subjectURI': noteIRI,
-                };
-                aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true, 'annotationInbox': annotationInbox };
-
-                if (checkDuplicateLocation(annotationDistribution, containerIRI)) {
-                  annotationDistribution.push(aLS);
-                }
-              }
-
-              if(opts.annotationLocationService && typeof DO.C.AnnotationService !== 'undefined') {
-                containerIRI = DO.C.AnnotationService;
-                fromContentType = 'text/html';
-                // contentType = 'application/ld+json';
-                contentType = fromContentType;
-
-                contextProfile = {
-                  '@context': [
-                    'http://www.w3.org/ns/anno.jsonld',
-                    { 'as': 'https://www.w3.org/ns/activitystreams#', 'schema': 'http://schema.org/' }
-                  ],
-                  // 'subjectURI': noteIRI,
-                  'profile': 'http://www.w3.org/ns/anno.jsonld'
-                };
-
-                if(!opts.annotationLocationPersonalStorage && opts.annotationLocationService) {
                   noteURL = noteIRI = containerIRI + id;
-                  aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true,'annotationInbox': annotationInbox };
-                }
-                else if(opts.annotationLocationPersonalStorage) {
-                  noteURL = containerIRI + id;
+                  var contextProfile = {
+                    '@context': [
+                      'https://www.w3.org/ns/activitystreams',
+                      { 'oa': 'http://www.w3.org/ns/oa#', 'schema': 'http://schema.org/' }
+                    ],
+                    // 'subjectURI': noteIRI,
+                    'profile': 'https://www.w3.org/ns/activitystreams'
+                  };
                   aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'annotationInbox': annotationInbox };
+                  if (typeof DO.C.User.Storage === 'undefined' && !activityTypeMatched) {
+                    aLS['canonical'] = true;
+                  }
+
+                  aLS = Object.assign(aLS, contextProfile)
+
+                  if (!isDuplicateLocation(annotationDistribution, containerIRI)) {
+                    annotationDistribution.push(aLS);
+                  }
                 }
-                else {
+
+                if (!activityTypeMatched && ((opts.annotationLocationPersonalStorage && DO.C.User.Storage) || (!opts.annotationLocationPersonalStorage && !opts.annotationLocationService && DO.C.User.Storage))) {
+                  containerIRI = DO.C.User.Storage[0];
+
+                  fromContentType = 'text/html';
+                  // contentType = 'text/html';
+                  contentType = fromContentType;
+
                   noteURL = noteIRI = containerIRI + id;
+                  contextProfile = {
+                    // 'subjectURI': noteIRI,
+                  };
                   aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true, 'annotationInbox': annotationInbox };
+
+                  if (!isDuplicateLocation(annotationDistribution, containerIRI)) {
+                    annotationDistribution.push(aLS);
+                  }
                 }
 
-                aLS = Object.assign(aLS, contextProfile)
+                if (opts.annotationLocationService && typeof DO.C.AnnotationService !== 'undefined') {
+                  containerIRI = DO.C.AnnotationService;
+                  fromContentType = 'text/html';
+                  // contentType = 'application/ld+json';
+                  contentType = fromContentType;
 
-                if (checkDuplicateLocation(annotationDistribution, containerIRI)) {
-                  annotationDistribution.push(aLS);
+                  contextProfile = {
+                    '@context': [
+                      'http://www.w3.org/ns/anno.jsonld',
+                      { 'as': 'https://www.w3.org/ns/activitystreams#', 'schema': 'http://schema.org/' }
+                    ],
+                    // 'subjectURI': noteIRI,
+                    'profile': 'http://www.w3.org/ns/anno.jsonld'
+                  };
+
+                  if (!opts.annotationLocationPersonalStorage && opts.annotationLocationService) {
+                    noteURL = noteIRI = containerIRI + id;
+                    aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true,'annotationInbox': annotationInbox };
+                  }
+                  else if (opts.annotationLocationPersonalStorage) {
+                    noteURL = containerIRI + id;
+                    aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'annotationInbox': annotationInbox };
+                  }
+                  else {
+                    noteURL = noteIRI = containerIRI + id;
+                    aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true, 'annotationInbox': annotationInbox };
+                  }
+
+                  aLS = Object.assign(aLS, contextProfile)
+
+                  if (!isDuplicateLocation(annotationDistribution, containerIRI)) {
+                    annotationDistribution.push(aLS);
+                  }
                 }
-              }
+              }//if (_this.action !== 'selector') {
 
 // console.log(annotationDistribution);
 
@@ -11294,7 +11289,7 @@ WHERE {\n\
                     }
                   })
               }
-
+// console.log(annotationDistribution)
               switch(this.action) {
                 case 'article': case 'approve': case 'disapprove': case 'specificity': case 'bookmark':
                   annotationDistribution.forEach(annotation => {
@@ -11426,7 +11421,7 @@ WHERE {\n\
 
                         //XXX: I don't know what this is going on about...
                         // else if (stripFragmentFromString(options.citationId) !==  getProxyableIRI(options.citationId)) {
-                        //   citationURI = window.location.origin + window.location.pathname;
+                        //   citationURI = currentLocation();
                         // }
 
                         var citation = DO.U.getCitationHTML(citationGraph, citationURI, options);
