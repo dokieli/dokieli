@@ -1069,31 +1069,31 @@ DO = {
         // link.transition();
 
         var node = graphObjects.selectAll("circle")
-          .data(go.nodes.filter(d => {
+          .data(go.nodes.filter(function(d) {
             if (go.uniqueNodes[d.id] && go.uniqueNodes[d.id].index == d.index) {
               return d.id;
             }
           }))
           .enter()
           .append('a')
-            .attr('href', (d) => {
+            .attr('href', function(d) {
               if ('type' in group[d.group] && group[d.group].type !== 'rdfs:Literal' && !d.id.startsWith('http://example.com/.well-known/genid/')) {
                 return d.id
               }
               return null
             })
-            .attr('rel', (d) => {
+            .attr('rel', function(d) {
               if (this.getAttribute('href') === null) { return null }
               return 'dcterms:references'
             })
           .append('circle')
             .attr('r', nodeRadius)
-            .attr('fill', (d) => { return group[d.group].color; })
-            .attr('stroke', (d) => {
+            .attr('fill', function(d) { return group[d.group].color; })
+            .attr('stroke', function(d) {
               if (d.visited) { return group[3].color }
               else if (d.group == 4) { return group[2].color }
               else { return group[7].color }})
-            .on('click', (e, d) => {
+            .on('click', function(e, d) {
               e.preventDefault();
               e.stopPropagation();
 
@@ -1113,7 +1113,7 @@ DO = {
             })
 
         node.append('title')
-          .text(d => { return d.id; });
+          .text(function(d) { return d.id; });
 
             // .call(d3.drag()
             //     .on("start", dragstarted)
@@ -3175,7 +3175,7 @@ console.log(reason);
 
         if (types.length) {
           var resourceTypes = types;
-          if (resourceTypes.includes('http://www.w3.org/2006/03/test-description#TestCase')) {
+          if (resourceTypes.includes(ns['test-description'].TestCase)) {
             var requirementReference = s.out(ns.spec.requirementReference).values[0];
             if (requirementReference && requirementReference.startsWith(specificationReferenceBase)) {
               testCases[testCaseIRI] = {};
@@ -6883,7 +6883,7 @@ console.log(response)
       })
     },
 
-    saveAsDocument: function saveAsDocument (e) {
+    saveAsDocument: async function saveAsDocument (e) {
       e.target.disabled = true;
       document.documentElement.appendChild(fragmentFromString('<aside id="save-as-document" class="do on">' + DO.C.Button.Close + '<h2>Save As Document</h2></aside>'));
 
@@ -7050,8 +7050,7 @@ console.log(response)
       bli.focus();
       bli.placeholder = 'https://example.org/path/to/article';
 
-
-      saveAsDocument.addEventListener('click', e => {
+      saveAsDocument.addEventListener('click', async (e) => {
         if (!e.target.closest('button.create')) {
           return
         }
@@ -7064,7 +7063,7 @@ console.log(response)
           rm.parentNode.removeChild(rm)
         }
 
-        if(!storageIRI.length) {
+        if (!storageIRI.length) {
           saveAsDocument.insertAdjacentHTML('beforeend',
             '<div class="response-message"><p class="error">' +
             'Specify the location to save the article to, and optionally set its <em>inbox</em> or <em>annotation service</em>.</p></div>'
@@ -7079,9 +7078,7 @@ console.log(response)
         var dokielize = document.querySelector('#dokielize-resource')
         if (dokielize.checked) {
           html = getDocument(html)
-// console.log(html)
-          html = DO.U.spawnDokieli(document, html, 'text/html', storageIRI, {'init': false})
-// console.log(html)
+          html = await DO.U.spawnDokieli(document, html, 'text/html', storageIRI, {'init': false})
         }
 
         var wasDerived = document.querySelector('#derivation-data')
@@ -7262,19 +7259,21 @@ console.log(response)
     },
 
     viewSource: function(e) {
-      e.target.disabled = true;
+      if (e) {
+        e.target.closest('button').disabled = true;
+      }
 
       var buttonDisabled = (document.location.protocol === 'file:') ? ' disabled="disabled"' : '';
 
-      document.documentElement.appendChild(fragmentFromString('<aside id="source-view" class="do on">' + DO.C.Button.Close + '<h2>Source</h2><textarea id="source-edit" rows="24" cols="80"></textarea><p><button class="create"'+ buttonDisabled + ' title="Update source">Update</button></p></aside>'));
+      document.documentElement.appendChild(fragmentFromString('<aside id="source-view" class="do on">' + DO.C.Button.Close + '<h2>Source</h2><textarea id="source-edit" rows="24" cols="80"></textarea><p><button class="update"'+ buttonDisabled + ' title="Update source">Update</button></p></aside>'));
       var sourceBox = document.getElementById('source-view');
       var input = document.getElementById('source-edit');
       input.value = getDocument();
 
       sourceBox.addEventListener('click', (e) => {
-        if (e.target.closest('button.create')) {
-          var url = currentLocation();
+        if (e.target.closest('button.update')) {
           var data = document.getElementById('source-edit').value;
+          //FIXME: dokieli related stuff may be getting repainted / updated in the DOM
           document.documentElement.innerHTML = data;
           DO.U.showDocumentInfo();
           DO.U.showDocumentMenu(e);
@@ -9272,7 +9271,7 @@ WHERE {\n\
               }
 
               //User can add themselves as a contributor
-              if (DO.C.User.IRI && !s.out(ns.schema[contributorRole]).includes(DO.C.User.IRI)){
+              if (DO.C.User.IRI && !s.out(ns.schema[contributorRole]).values.includes(DO.C.User.IRI)){
                 var contributorId;
                 var contributorName = DO.C.User.Name || DO.C.User.IRI;
                 if (DO.C.User.Name) {
@@ -11331,7 +11330,7 @@ WHERE {\n\
                         return positionActivity(annotation, options)
                        })
 
-                      .then(() => {
+                      .then(function() {
                         if (this.action != 'bookmark') {
                           return sendNotification(annotation, options)
                         }

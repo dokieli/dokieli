@@ -7,6 +7,8 @@ import { getMatchFromData, getLinkRelation, serializeDataToPreferredContentType,
 import { getAcceptPostPreference, postResource } from './fetcher.js';
 import Config from './config.js';
 
+const ns = Config.ns;
+
 function sendNotifications(tos, note, iri, shareResource) {
   return new Promise((resolve, reject) => {
     var notificationData = {
@@ -29,7 +31,7 @@ function sendNotifications(tos, note, iri, shareResource) {
     else {
       var g = Config.Resource[iri].graph.node(rdf.namedNode(iri));
       var types = getGraphTypes(g);
-      if (types.length > 0) {
+      if (types.length) {
         notificationData['objectTypes'] = types;
       }
       var license = getGraphLicense(g);
@@ -38,50 +40,53 @@ function sendNotifications(tos, note, iri, shareResource) {
       }
     }
 
-        tos.forEach(to => {
-          notificationData['to'] = to;
+    tos.forEach(to => {
+      notificationData['to'] = to;
 
-          var toInput = shareResource.querySelector('[value="' + to + '"]') ||
-            shareResource.querySelector('#share-resource-to');
+      var toInput = shareResource.querySelector('[value="' + to + '"]') ||
+        shareResource.querySelector('#share-resource-to');
 
-          toInput.parentNode.insertAdjacentHTML('beforeend',
-            '<span class="progress" data-to="' + to +
-            '">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + '</span>');
+      toInput.parentNode.insertAdjacentHTML('beforeend',
+        '<span class="progress" data-to="' + to +
+        '">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + '</span>');
 
-          inboxResponse(to, toInput)
+      inboxResponse(to, toInput)
 
-            .then(inboxURL => {
-              notificationData['inbox'] = inboxURL;
+        .then(inboxURL => {
+          notificationData['inbox'] = inboxURL;
 
-              notifyInbox(notificationData)
-                .then(response => {
-                  var location = response.headers.get('Location');
+          notifyInbox(notificationData)
+            .then(response => {
+              var location = response.headers.get('Location');
 
-                  if (location) {
-                    location = getAbsoluteIRI(inboxURL, location);
+              if (location) {
+                location = getAbsoluteIRI(inboxURL, location);
 
-                    toInput
-                      .parentNode
-                      .querySelector('.progress[data-to="' + to + '"]')
-                      .innerHTML = '<a target="_blank" href="' +
-                      location + '">' + Icon[".fas.fa-check-circle.fa-fw"] + '</a>';
-                  }
-                })
-                .catch(error => {
-                  // console.log('Error in notifyInbox:', error)
-                  toInput
-                    .parentNode
-                    .querySelector('.progress[data-to="' + to + '"]')
-                    .innerHTML = Icon[".fas.fa-times-circle.fa-fw"] + ' Unable to notify. Try later.';
-                });
+                toInput
+                  .parentNode
+                  .querySelector('.progress[data-to="' + to + '"]')
+                  .innerHTML = '<a target="_blank" href="' +
+                  location + '">' + Icon[".fas.fa-check-circle.fa-fw"] + '</a>';
+              }
+            })
+            .catch(error => {
+              // console.log('Error in notifyInbox:', error)
+              toInput
+                .parentNode
+                .querySelector('.progress[data-to="' + to + '"]')
+                .innerHTML = Icon[".fas.fa-times-circle.fa-fw"] + ' Unable to notify. Try later.';
             });
         });
+    });
   });
 }
 
 function inboxResponse(to, toInput) {
-  return getLinkRelation(ns.ldp.inbox, to)
-    .then(inboxes => inboxes[0])
+  return getLinkRelation(ns.ldp.inbox.value, to)
+    .then(inboxes => {
+      console.log(inboxes)
+      return inboxes[0]
+    })
 
     .catch(error => {
       // console.log('Error in inboxResponse:', error)
@@ -117,10 +122,7 @@ function notifyInbox(o) {
     'contentType': 'text/html',
     'profile': 'https://www.w3.org/ns/activitystreams'
   };
-
-  var pIRI = getProxyableIRI(inboxURL);
-
-  return postActivity(pIRI, slug, data, options);
+  return postActivity(inboxURL, slug, data, options);
 }
 
 function postActivity(url, slug, data, options) {

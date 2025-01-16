@@ -704,10 +704,9 @@ function getLinkRelationFromRDF (property, url) {
   if (!url) { return Promise.reject({'message': 'Missing url paramater' })}
 
   return getResourceGraph(url)
-    .then(i => {
-        var s = g.node(rdf.namedNode(url));
-
-        var values = s.out(rdf.namedNode(property)).values;
+    .then(g => {
+        g = g.node(rdf.namedNode(url));
+        var values = g.out(rdf.namedNode(property)).values;
 
         if (values.length) {
           return values;

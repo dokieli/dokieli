@@ -917,7 +917,7 @@ function getRDFaPrefixHTML(prefixes){
 
 function setDocumentRelation(rootNode, data, options) {
   rootNode = rootNode || document;
-  if(!data || !options) { return; }
+  if (!data || !options) { return; }
 
   var h = [];
   var dl = rootNode.querySelector('#' + options.id);
@@ -926,17 +926,17 @@ function setDocumentRelation(rootNode, data, options) {
   data.forEach(d => {
     var documentRelation = '<dd>' + createRDFaHTML(d) + '</dd>';
 
-    if(dl) {
+    if (dl) {
       if (Config.DocumentItems.indexOf(options.id) > -1) {
         dd = dl.querySelector('dd');
         dl.removeChild(dd);
       }
       else {
-        var relation = dl.querySelector('[rel="' + d.rel +  '"][href="' + d.href  + '"]');
+        var relation = dl.querySelector('[rel="' + d.rel + '"][href="' + d.href + '"]');
 
-        if(relation) {
+        if (relation) {
           dd = relation.closest('dd');
-          if(dd) {
+          if (dd) {
             dl.removeChild(dd);
           }
         }
@@ -948,7 +948,7 @@ function setDocumentRelation(rootNode, data, options) {
     }
   });
 
-  if(h.length > 0) {
+  if (h.length) {
     var html = '<dl id="' + options.id + '"><dt>' + options.title + '</dt>' + h.join('') + '</dl>';
     rootNode = insertDocumentLevelHTML(rootNode, html, { 'id': options.id });
   }
