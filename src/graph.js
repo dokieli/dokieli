@@ -622,7 +622,7 @@ function getResourceGraph (iri, headers, options = {}) {
 
 function getResourceOnlyRDF(url) {
   return getResourceHead(url)
-    .then(function (response) {
+    .then(response => {
       var cT = response.headers.get('Content-Type');
       var options = {};
       options['contentType'] = (cT) ? cT.split(';')[0].toLowerCase().trim() : '';
@@ -630,6 +630,9 @@ function getResourceOnlyRDF(url) {
       if (DO.C.MediaTypes.RDF.includes(options['contentType'])) {
         var headers = { 'Accept': setAcceptRDFTypes() };
         return getResourceGraph(url, headers);
+      } 
+      else {
+        return Promise.reject({ resource: url, response: response, message: 'Unsupported media type for RDF parsing: ' + options['contentType'] });
       }
     });
 }
@@ -1103,8 +1106,8 @@ function getAgentName (s) {
       name = s.out(ns.schema.givenName).values[0] + ' ' + s.out(ns.schema.familyName).values[0];
     } else if (s.out(ns.foaf.familyName).values.length && s.out(ns.foaf.givenName).values.length) {
       name = s.out(ns.foaf.givenName).values[0] + ' ' + s.out(ns.foaf.familyName).values[0];
-    } else if (s.out(ns.vcard.familyname).values.length && s.out(ns.vcard.givenname).values.length) {
-      name = s.out(ns.vcard.givenname).values[0] + ' ' + s.out(ns.vcard.familyname).values[0];
+    } else if (s.out(ns.vcard['family-name']).values.length && s.out(ns.vcard['given-name']).values.length) {
+      name = s.out(ns.vcard['given-name']).values[0] + ' ' + s.out(ns.vcard['family-name']).values[0];
     } else if (s.out(ns.foaf.nick).values.length) {
       name = s.out(ns.foaf.nick).values;
     } else if (s.out(ns.vcard.nickname).values.length){
@@ -1455,14 +1458,15 @@ function sortGraphTriples(g, options) {
   if (!("sortBy" in options)) {
     options["sortBy"] = "object";
   }
-
-  g.toArray().sort(function (a, b) {
+  g = rdf.grapoi({ dataset: g.dataset });
+  var quads = Array.from(g.out().quads());
+  quads.sort(function(a, b) {
     return a[options.sortBy].value
       .toLowerCase()
       .localeCompare(b[options.sortBy].value.toLowerCase());
   });
 
-  return g;
+  return quads;
 }
 
 // https://solidproject.org/TR/2024/wac-20240512#effective-acl-resource-algorithm

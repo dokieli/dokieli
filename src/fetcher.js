@@ -233,6 +233,7 @@ function getResource (url, headers = {}, options = {}) {
     headers['Cache-Control'] = 'no-store'
   }
 
+  //XXX: Do we need this?
   if (!options.noCredentials) {
     options.credentials = 'include'
   }
@@ -245,9 +246,10 @@ function getResource (url, headers = {}, options = {}) {
 
 // console.log(options)
 // console.log(error)
+// console.error(error)
 
       if (error?.status == 405) {
-// console.log('status: 405')
+// console.log('status: 405', error)
         throw error
       }
       else if (error?.status == 401) {
@@ -275,6 +277,8 @@ function getResource (url, headers = {}, options = {}) {
 
         if (pIRI !== url) {
           options['proxyForced'] = true;
+          options.noCredentials = true;
+          options.credentials = 'omit';
           return getResource(pIRI, headers, options);
         }
         else {

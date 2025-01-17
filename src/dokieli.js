@@ -533,7 +533,7 @@ DO = {
                   if (targetPathURL == currentPathURL) {
                     o['targetInOriginalResource'] = true;
                   }
-                  else if (DO.C.Resource[documentURL].graph.out(ns.rel.latestversion).values.length && targetPathURL == getPathURL(DO.C.Resource[documentURL].graph.out(ns.rel.latestversion).values[0])) {
+                  else if (DO.C.Resource[documentURL].graph.out(ns.rel['latest-version']).values.length && targetPathURL == getPathURL(DO.C.Resource[documentURL].graph.out(ns.rel['latest-version']).values[0])) {
                     o['targetInMemento'] = true;
                   }
                   else if (DO.C.Resource[documentURL].graph.out(ns.owl.sameAs).values.length && DO.C.Resource[documentURL].graph.out(ns.owl.sameAs).values[0] == targetPathURL) {
@@ -651,8 +651,9 @@ DO = {
                 var creator = options.agent;
                 //TODO: Move to graph.js?
                 Object.keys(DO.C.Actor.Property).some(key => {
-                  if (s[key] && s[key].at(0)) {
-                    creator = s[key].at(0);
+                  const { values } = s.out(rdf.namedNode(key));
+                  if (values.length) {
+                    creator = values[0];
                     return true;
                   }
                 })
@@ -2989,44 +2990,49 @@ DO = {
         }
       }
 
-      insertDocumentLevelHTML(document, s, { 'id': id });
+      insertDocumentLevelHTML(document, s, { id });
 
       if (id == 'table-of-requirements') {
-        var testSuites = DO.C.Resource[documentURL].graph.spectestSuite;
-        if (testSuites && testSuites.at(0)) {
+        // var options = { noCredentials: true };
+        var options = {};
+        var testSuites = DO.C.Resource[documentURL].graph.out(ns.spec.testSuite).values;
+// testSuites = [];
+// console.log(testSuites)
+        if (testSuites.length) {
           //TODO: Process all spec:testSuites
-          var url = testSuites.at(0);
+          var url = testSuites[0];
 
-          getResourceGraph(url).then(
-            function(g){
-// console.log(g)
+          getResourceGraph(url, null, options)
+            .then(g => {
+// console.log(g.out().values)
               if (g) {
                 DO.U.insertTestCoverageToTable(id, g);
               }
-            },
-            function(reason){
+            })
+            .catch(reason => {
 console.log(reason);
-            }
-          );
+            });
         }
 
-        var predecessorVersion = DO.C.Resource[documentURL].graph.relpredecessorversion;
-        if (predecessorVersion) {
-          url = predecessorVersion;
+        var predecessorVersion = DO.C.Resource[documentURL].graph.out(ns.rel['predecessor-version']).values;
+// predecessorVersion = [];
+        if (predecessorVersion.length) {
+          url = predecessorVersion[0];
 
           var sourceGraph = DO.C.Resource[documentURL].graph;
           var sourceGraphURI = sourceGraph.term.value;
-
+// console.log(sourceGraphURI)
           var buttonTextDiffRequirements = 'Diff requirements with the predecessor version';
 
           var table = document.getElementById(id);
           var thead = table.querySelector('thead');
           thead.querySelector('tr > th').insertAdjacentHTML('beforeend', '<button id="include-diff-requirements" class="do add" disabled="disabled" title="' + buttonTextDiffRequirements + '">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + '</button>');
 
-          getResourceGraph(url)
+          getResourceGraph(url, null, options)
             .then(targetGraph => {
               if (targetGraph) {
                 var targetGraphURI = targetGraph.term.value;
+// console.log(targetGraphURI)
 
                 var buttonRD = document.getElementById('include-diff-requirements');
                 buttonRD.innerHTML = Icon[".fas.fa-plus-minus"];
@@ -3092,11 +3098,12 @@ console.log(reason);
       var documentURL = DO.C.DocumentURL;
       var sourceGraphURI = sourceGraph.term.value;
       var targetGraphURI = targetGraph.term.value;
+// console.log(sourceGraphURI, targetGraphURI)
       var sourceRequirements = getResourceInfoSpecRequirements(sourceGraph);
       var targetRequirements = getResourceInfoSpecRequirements(targetGraph);
-
-      var changes = Object.values(DO.C.Resource[sourceGraphURI].change);
-
+// console.log(sourceRequirements, targetRequirements)
+      var changes = Object.values(DO.C.Resource[sourceGraphURI].spec.change);
+// console.log(changes)
       Object.keys(sourceRequirements).forEach(sR => {
         DO.C.Resource[sourceGraphURI].spec['requirement'][sR]['diff'] = {};
 
@@ -3156,7 +3163,10 @@ console.log(reason);
       thead.querySelector('tr:nth-child(2)').insertAdjacentHTML('beforeend', '<th>Test Case (Review Status)</th>');
 
       var subjects = [];
-      testSuiteGraph.quads().forEach(t => {
+      testSuiteGraph  = rdf.grapoi({ dataset: testSuiteGraph.dataset });
+// console.log(testSuiteGraph)
+      testSuiteGraph.out().quads().forEach(t => {
+// console.log(t)
         subjects.push(t.subject.value);
       });
       subjects = uniqueArray(subjects);
@@ -3170,12 +3180,10 @@ console.log(reason);
       subjects.forEach(i => {
         var s = testSuiteGraph.node(rdf.namedNode(i));
         var testCaseIRI = s.term.value;
-// console.log(s)
         var types = getGraphTypes(s);
 
         if (types.length) {
-          var resourceTypes = types;
-          if (resourceTypes.includes(ns['test-description'].TestCase)) {
+          if (types.includes(ns['test-description'].TestCase.value)) {
             var requirementReference = s.out(ns.spec.requirementReference).values[0];
             if (requirementReference && requirementReference.startsWith(specificationReferenceBase)) {
               testCases[testCaseIRI] = {};
@@ -3888,7 +3896,7 @@ console.log(reason);
             // var pIRI = getProxyableIRI(u);
             promises.push(
               getResource(url)
-                .then(function (response) {
+                .then(response => {
                   var cT = response.headers.get('Content-Type');
                   var options = {};
                   options['contentType'] = (cT) ? cT.split(';')[0].toLowerCase().trim() : 'text/turtle';
@@ -6625,7 +6633,6 @@ console.log(response)
     spawnDokieli: async function(documentNode, data, contentType, iri, options){
       options =  options || {};
 
-      // if (DO.C.MediaTypes.RDF.includes(contentType)) {
         var tmpl = document.implementation.createHTMLDocument('template');
 // console.log(tmpl);
 
@@ -7557,7 +7564,7 @@ console.log(response)
 //                     .then(g => {
 // // console.log(g)
 // // console.log(g.iri().toString())
-//                       var s = g.graph().match(wE.replace(/^https:/, 'http:'))
+//                       var s = g.match(wE.replace(/^https:/, 'http:'))
 // // console.log(s.toString());
 
 //                       console.log(isbnData)
@@ -7626,8 +7633,8 @@ console.log(response)
       }
       title = escapeCharacters(title);
       title = (title.length) ? '<cite>' + title + '</cite>, ' : '';
-      var datePublished = subject.schemadatePublished || subject.dctermsissued || subject.dctermsdate || subject.schemadateCreated || subject.dctermscreated || '';
-      var dateVersion = subject.schemadateModified || datePublished;
+      var datePublished = getGraphDate(subject) || '';
+      var dateVersion = subject.out(ns.schema.dateModified).values[0] || datePublished;
       datePublished = (datePublished) ? datePublished.substr(0,4) + ', ' : '';
       var dateAccessed = 'Accessed: ' + getDateTimeISO();
       var authors = [], authorList = [];
@@ -7690,11 +7697,13 @@ console.log(response)
       }
 
       var dataVersionURL;
-      if (subject.memmemento) {
-        dataVersionURL = subject.memmemento;
+      var memento = subject.out(ns.mem.memento).values;
+      var latestVersion = subject.out(ns.rel['latest-version']).values;
+      if (memento.length) {
+        dataVersionURL = memento;
       }
-      else if (subject.rellatestversion) {
-        dataVersionURL = subject.rellatestversion;
+      else if (latestVersion.length) {
+        dataVersionURL = latestVersion;
       }
       dataVersionURL = (dataVersionURL) ? ' data-versionurl="' + dataVersionURL + '"' : '';
 
@@ -10419,7 +10428,7 @@ WHERE {\n\
                   getResourceGraph(queryURL)
                     .then(g => {
                       sG.removeAttribute('class');
-                      var triples = sortGraphTriples(g.graph(), { sortBy: 'object' });
+                      var triples = sortGraphTriples(g, { sortBy: 'object' });
                       return DO.U.getListHTMLFromTriples(triples, {element: 'select', elementId: resultContainerId});
                     })
                     .then(listHTML => {
@@ -10456,9 +10465,7 @@ WHERE {\n\
 
                         getResourceGraph(queryURL)
                           .then(g => {
-                            var triples = sortGraphTriples(g.graph(), { sortBy: 'object' });
-                            
-                            g = g.graph().toArray();
+                            var triples = sortGraphTriples(g, { sortBy: 'object' });
 // console.log(triples);
                             if (triples.length) {
                               var observations = {};
@@ -10473,11 +10480,11 @@ WHERE {\n\
                               var list = [], item;
                               Object.keys(observations).forEach(key => {
                                 item = {};
-                                observations[key]['http://purl.org/linked-data/cube#Observation'] = key;
+                                observations[key][ns.qb.Observation.value] = key;
                                 item[key] = observations[key];
                                 list.push(item[key]);
                               });
-                              var sortByKey = 'http://purl.org/linked-data/sdmx/2009/dimension#refPeriod';
+                              var sortByKey = ns['sdmx-dimension'].refPeriod;
                               list.sort(function (a, b) {
                                 return a[sortByKey].toLowerCase().localeCompare(b[sortByKey].toLowerCase());
                               });
@@ -10848,7 +10855,7 @@ WHERE {\n\
 
               var targetIRI = (parentNodeWithId) ? resourceIRI + '#' + parentNodeWithId.id : resourceIRI;
               var documentURL = resourceIRI;
-              var latestVersion = DO.C.Resource[documentURL].graph.out(ns.rel.latestversion).values[0];
+              var latestVersion = DO.C.Resource[documentURL].graph.out(ns.rel['latest-version']).values[0];
               if (latestVersion) {
                 resourceIRI = latestVersion;
                 targetIRI = (parentNodeWithId) ? latestVersion + '#' + parentNodeWithId.id : latestVersion;

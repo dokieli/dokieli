@@ -979,9 +979,8 @@ function showTimeMap(node, url) {
         node.removeChild(timemap);
       }
 
-      var triples = sortGraphTriples(g.graph(), { sortBy: 'object' });
-
       var items = [];
+      var triples = sortGraphTriples(g, { sortBy: 'object' });
       triples.forEach(t => {
         var s = t.subject.value;
         var p = t.predicate.value;
@@ -1289,12 +1288,12 @@ function getGraphData(s, options) {
     info['memento'] = memento[0];
   }
 
-  var latestVersion = s.out(ns.rel.latestVersion).values;
+  var latestVersion = s.out(ns.rel['latest-version']).values;
   if (latestVersion.length) {
     info['latest-version'] = latestVersion[0];
   }
 
-  var predecessorVersion = s.out(ns.rel.predecessorVersion).values;
+  var predecessorVersion = s.out(ns.rel['predecessor-version']).values;
   if (predecessorVersion.length) {
     info['predecessor-version'] = predecessorVersion[0];
   }
@@ -1735,10 +1734,9 @@ function getResourceInfoSpecChanges(s) {
   info['change'] = {};
 
   var change = s.out(ns.spec.change);
-  
-  change.values.forEach(changeIRI => {
-    var changeGraph = s.node(rdf.namedNode(changeIRI));
 
+  change.values.forEach(changeIRI => {
+  var changeGraph = s.node(rdf.namedNode(changeIRI));
     info['change'][changeIRI] = {};
     info['change'][changeIRI][ns.spec.statement.value] = changeGraph.out(ns.spec.statement).values[0];
     info['change'][changeIRI][ns.spec.changeSubject.value] = changeGraph.out(ns.spec.changeSubject).values[0];

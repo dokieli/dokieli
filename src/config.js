@@ -445,7 +445,7 @@ export default {
   ],
 
   MediaTypes: {
-    RDF: ['text/turtle', 'application/ld+json', 'application/activity+json', 'text/html', 'image/svg+xml', 'text/markdown', 'application/rdf+xml'],
+    RDF: ['text/turtle', 'application/ld+json', 'application/activity+json', 'text/html', 'image/svg+xml', 'application/rdf+xml'],
 
     Binary: ['image/png', 'image/jpeg', 'image/gif', 'image/x-icon'],
 
@@ -471,7 +471,7 @@ export default {
     'ex': 'http://example.org/'
   },
 
-  ns : {
+  ns: {
     'sdmx-dimension':  rdf.namespace('http://purl.org/linked-data/sdmx/2009/dimension'),
     'sdmx-measure':  rdf.namespace('http://purl.org/linked-data/sdmx/2009/measure'),
     'test-description': rdf.namespace('http://www.w3.org/2006/03/test-description#'),
