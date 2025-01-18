@@ -7,7 +7,7 @@
  */
 
 import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceGraph, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource } from './fetcher.js'
-import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, buttonClose, notificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, getButtonDisabledHTML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getClosestSectionNode, getAgentHTML, setEditSelections, getNodeLanguage, createActivityHTML, createLanguageHTML, createLicenseHTML, createRightsHTML, getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getResourceTypeOptionsHTML, getPublicationStatusOptionsHTML, getLanguageOptionsHTML, getLicenseOptionsHTML, getCitationOptionsHTML, getDocumentNodeFromString, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote } from './doc.js'
+import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, buttonClose, notificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, getButtonDisabledHTML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getClosestSectionNode, getAgentHTML, setEditSelections, getNodeLanguage, createActivityHTML, createLanguageHTML, createLicenseHTML, createRightsHTML, getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getResourceTypeOptionsHTML, getPublicationStatusOptionsHTML, getLanguageOptionsHTML, getLicenseOptionsHTML, getCitationOptionsHTML, getDocumentNodeFromString, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown } from './doc.js'
 import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, getAbsoluteIRI, generateDataURI, getMediaTypeURIs, getPrefixedNameFromIRI } from './uri.js'
 import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, serializeGraph, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getLinkRelationFromRDF, sortGraphTriples, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphInbox, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes } from './graph.js'
 import { notifyInbox, sendNotifications, postActivity } from './inbox.js'
@@ -25,9 +25,6 @@ import * as d3Force from 'd3-force';
 const d3 = { ...d3Selection, ...d3Force };
 import shower from '@shower/core'
 import { diffChars } from 'diff'
-import { micromark as marked } from 'micromark'
-import { gfm, gfmHtml } from 'micromark-extension-gfm'
-import { gfmTagfilterHtml } from 'micromark-extension-gfm-tagfilter'
 import LinkHeader from 'http-link-header';
 import DOMPurify from 'dompurify';
 import rdf from 'rdf-ext';
@@ -2993,8 +2990,8 @@ DO = {
       insertDocumentLevelHTML(document, s, { id });
 
       if (id == 'table-of-requirements') {
-        // var options = { noCredentials: true };
-        var options = {};
+        var options = { noCredentials: true };
+        // var options = {};
         var testSuites = DO.C.Resource[documentURL].graph.out(ns.spec.testSuite).values;
 // testSuites = [];
 // console.log(testSuites)
@@ -3583,7 +3580,7 @@ console.log(reason);
         });
     },
 
-    snapshotAtEndpoint: function snapshotAtEndpoint (e, iri, endpoint, noteData, options = {}) {
+    snapshotAtEndpoint: function(e, iri, endpoint, noteData, options = {}) {
       iri = iri || currentLocation();
       endpoint = endpoint || 'https://pragma.archivelab.org/';
       options.noCredentials = true
@@ -6411,8 +6408,8 @@ console.log(response)
                 var spawnOptions = {};
 
                 var checkMarkdownInMediaTypes = ['text/markdown', 'text/plain'];
-                if  (checkMarkdownInMediaTypes.indexOf(options['contentType']) > -1) {
-                  data = DO.U.parseMarkdown(data, {createDocument: true});
+                if  (checkMarkdownInMediaTypes.includes(options['contentType'])) {
+                  data = parseMarkdown(data, {createDocument: true});
                   spawnOptions['defaultStylesheet'] = true;
                   //XXX: Perhaps okay for text/markdown but not text/plain?
                   options.contentType = 'text/html';
@@ -6449,23 +6446,6 @@ console.log(response)
       }
 
       handleResource(iri, headers, options);
-    },
-
-    parseMarkdown: function(data, options) {
-      options = options || {};
-// console.log(data)
-      var extensions = {
-        extensions: [gfm()],
-        allowDangerousHtml: true,
-        htmlExtensions: [gfmHtml(), gfmTagfilterHtml()]
-      };
-      var html = marked(data, extensions);
-// console.log(parsed)
-      if (options.createDocument) {
-        html = createHTML('', '<article>' + html+ '</article>');
-      }
-// console.log(html);
-      return html;
     },
 
     //XXX: Review grapoi

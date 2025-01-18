@@ -9,6 +9,9 @@ import { getResourceGraph, sortGraphTriples, getGraphContributors, getGraphAutho
 import { createRDFaHTML, Icon } from './template.js'
 import LinkHeader from "http-link-header";
 import DOMPurify from 'dompurify';
+import { micromark as marked } from 'micromark';
+import { gfm, gfmHtml } from 'micromark-extension-gfm';
+import { gfmTagfilterHtml } from 'micromark-extension-gfm-tagfilter';
 
 const ns = Config.ns;
 
@@ -2794,6 +2797,23 @@ function focusNote() {
   });
 }
 
+function parseMarkdown(data, options) {
+  options = options || {};
+// console.log(data)
+  var extensions = {
+    extensions: [gfm()],
+    allowDangerousHtml: true,
+    htmlExtensions: [gfmHtml(), gfmTagfilterHtml()]
+  };
+  var html = marked(data, extensions);
+// console.log(parsed)
+  if (options.createDocument) {
+    html = createHTML('', '<article>' + html + '</article>');
+  }
+// console.log(html);
+  return html;
+}
+
 export {
   escapeCharacters,
   cleanEscapeCharacters,
@@ -2871,5 +2891,6 @@ export {
   setCopyToClipboard,
   serializeTableToText,
   serializeTableSectionToText,
-  focusNote
+  focusNote,
+  parseMarkdown
 }

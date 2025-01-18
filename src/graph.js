@@ -6,6 +6,7 @@ import { Readable } from "readable-stream";
 import Config from './config.js'
 import { stripFragmentFromString, getProxyableIRI, getBaseURL, getPathURL, getAbsoluteIRI, getParentURLPath } from './uri.js'
 import { uniqueArray } from './util.js'
+import { parseMarkdown } from "./doc.js";
 import { setAcceptRDFTypes, getResource, getResourceHead, currentLocation } from './fetcher.js'
 import LinkHeader from "http-link-header";
 import DOMPurify from 'dompurify';
@@ -576,7 +577,12 @@ function getResourceGraph (iri, headers, options = {}) {
       // options['subjectURI'] = stripFragmentFromString(iri)
       options['subjectURI'] = iri
 
-      if (options['contentType'] == 'application/json') {
+      //XXX: Perhaps okay for text/markdown but not text/plain?
+      if  (['text/markdown', 'text/plain'].includes(options['contentType'])) {
+        options.contentType = 'text/html';
+        return response.text().then(data => parseMarkdown(data, {createDocument: true}));
+      }
+      else if (options['contentType'] == 'application/json') {
         return response.json().then(data => {
           if (data['@context']) {
             data = transformJsonldContextURLScheme(data);
@@ -593,6 +599,7 @@ function getResourceGraph (iri, headers, options = {}) {
       return response.text();
     })
     .then(data => {
+// console.log(data, options)
       return getGraphFromData(data, options)
     })
     .then(g => {
