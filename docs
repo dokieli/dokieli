@@ -5,11 +5,8 @@
     <title>dokieli documentation</title>
     <meta content="width=device-width, initial-scale=1" name="viewport" />
     <link href="media/css/basic.css" media="all" rel="stylesheet" title="Basic" />
-    <link href="media/css/lncs.css" media="all" rel="stylesheet alternate" title="LNCS" />
-    <link href="media/css/acm.css" media="all" rel="stylesheet alternate" title="ACM" />
-    <link href="https://www.w3.org/StyleSheets/TR/2021/base.css" rel="stylesheet alternate" media="all" title="W3C-Base" />
     <link href="media/css/dokieli.css" media="all" rel="stylesheet" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_HTMLorMML"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_HTMLorMML"></script> -->
     <script src="scripts/dokieli.js"></script>
   </head>
 
@@ -82,7 +79,7 @@
           <section id="principles" inlist="" rel="schema:hasPart" resource="#principles">
             <h2 property="schema:name">Principles</h2>
             <div datatype="rdf:HTML" property="schema:description">
-              <p>Dokieli's core design principles are autonomy and universal access. Dokieli promotes self-publishing by allowing individuals to publish and annotate articles using their preferred identities and personal storage, supporting both personal and social activities. It does not track users, collect statistics, or report user behavior without consent. As a client-side application, it operates independently of any specific server or service. In line with dokieli’s commitment to user freedom, content created with it can be used by other standards-compliant applications.</p>
+              <p>Dokieli's core design principles are autonomy and universal access. Dokieli promotes self-publishing by enabling individuals to author and annotate articles using their preferred identities and personal storage, supporting both personal and social activities. It does not track users, collect statistics, or report user behaviour. As a client-side application, it operates independently of any specific server or service. In line with dokieli's commitment to user freedom, content created with it can be used by other standards-compliant applications.</p>
             </div>
           </section>
 
@@ -571,9 +568,9 @@
               <section id="features" inlist="" rel="schema:hasPart" resource="#features">
                 <h3 property="schema:name">Features</h3>
                 <div datatype="rdf:HTML" property="schema:description">
-                  <dl>
+                  <dl rel="schema:hasPart">
                     <dt id="signin-user"><i class="fa fa-user-secret"></i>Sign in</dt>
-                    <dd>Allows the user to identify themselves using their WebID where they can also authenticate themselves. dokieli retrieves information related to user's identity to adapt the user interface as well as with operations related to user's actions.</dd>
+                    <dd>Allows the user to identify themselves using their personal online identifier (such as a WebID) where they can also authenticate themselves. dokieli retrieves information related to user's identity to adapt the user interface as well as with operations related to user's actions.</dd>
 
                     <dt id="resource-share"><i class="fa fa-bullhorn"></i>Share</dt>
                     <dd>The user can share the current article or a part of it with individuals or groups from their contacts as well as to any specific agent. The list of contacts is generated through a discovery mechanism where dokieli follows <samp>foaf:knows</samp> relations as well as traversing equivalent profiles (<code>owl:sameAs</code>) and determines their inboxes. dokieli sends a notification to user selected targets with information such as who sent the notification, when it was created, its license and motivation.</dd>
@@ -581,8 +578,17 @@
                     <dt id="resource-reply"><i class="fa fa-reply"></i>Reply</dt>
                     <dd>An article can be replied with a note and have its own <a href="#resource-language">language</a> and <a href="#resource-license">license</a>. The user can use the <a href="#resource-browser">resource browser</a> to choose the location of the reply in a <a href="#personal-storage">personal storage</a> or an annotation service.</dd>
 
-                    <dt id="resource-notifications">Notifications</dt>
-                    <dd>The user can overlay interactions, such as annotations, bookmarks, comments, and reactions, from themselves and their contacts onto the document.</dd>
+                    <dt about="#resource-notifications" id="resource-notifications" property="schema:name">Notifications</dt>
+                    <dd>
+                      <p about="#resource-notifications" datatype="rdf:HTML" property="schema:description">The Notifications feature helps to view your own and your own contacts' interactions and activities on documents, such as comments, annotations, reactions, and bookmarks. <a href="#sign-in" rel="rdfs:seeAlso">Sign in</a> to dokieli so that it can find find these notifications.</p>
+
+                      <figure about="#resource-notifications" id="figure-dokieli-notifications" rel="schema:video" resource="#figure-dokieli-notifications">
+                        <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-notifications.jpg" preload="none" resource="#figure-dokieli-notifications" typeof="schema:VideoObject" width="800">
+                          <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-notifications.webm" type="video/webm" />
+                        </video>
+                        <figcaption><a href="https://dokie.li/media/video/dokieli-notifications.webm">Video</a> of notifications in dokieli [<time datatype="xsd:duration" datetime="PT17S" property="schema:duration">15s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                      </figure>
+                    </dd>
 
                     <dt id="resource-annotations">Annotations</dt>
                     <dd>Articles can be annotated with various motivations. Annotations themselves can also be annotated. Some kinds of annotations are kept with the article, while others are independent resources stored externally to the article. The user may assign a specific <a href="#resource-language">language</a> and a <a href="#resource-license">license</a> for some types of annotations.
