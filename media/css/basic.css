@@ -91,11 +91,11 @@ body {
   /*width:100%;*/
 }
 
-header:first-of-type {
+body header:first-of-type {
   text-align: center;
 }
 
-header:first-of-type {
+body header:first-of-type {
   margin-top: 2em;
 }
 
@@ -606,8 +606,8 @@ dl+hr:before {
   content: "\2042";
 }
 
-header:first-of-type,
-footer:first-of-type {
+body header:first-of-type,
+body footer:first-of-type {
   overflow: hidden;
   padding-top: 1em;
   padding-bottom: 1em;
@@ -616,28 +616,28 @@ footer:first-of-type {
   margin-top: 2em;
 }
 
-footer:first-of-type>* {
+body footer:first-of-type>* {
   max-width: 50em;
   margin: 0 auto;
 }
 
-header:first-of-type a,
-footer:first-of-type a,
-footer:first-of-type a:hover {
+body header:first-of-type a,
+body footer:first-of-type a,
+body footer:first-of-type a:hover {
   color: inherit;
   border-bottom-color: #080;
 }
 
-header:first-of-type a:hover,
-footer:first-of-type a:hover {
+body header:first-of-type a:hover,
+body footer:first-of-type a:hover {
   background-color: transparent;
 }
 
-footer:first-of-type a:visited {
+body footer:first-of-type a:visited {
   color: #fff;
 }
 
-footer:first-of-type h2 {
+body footer:first-of-type h2 {
   margin-top: 1em;
 }
 
@@ -1224,8 +1224,8 @@ margin-bottom:0;
 #home #features,
 #home #get-involved,
 /* #home #supporters, */
-header:first-of-type,
-footer:first-of-type {
+body header:first-of-type,
+body footer:first-of-type {
   padding: 1em 0.25em;
   margin-top: 0;
   margin-bottom:0;
@@ -1252,17 +1252,17 @@ footer:first-of-type {
   content: "";
 }
 
-header:first-of-type {
+body header:first-of-type {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-header:first-of-type {
+body header:first-of-type {
   padding:0.5em 1em;
 }
 
-header:first-of-type address a {
+body header:first-of-type address a {
   display: block;
   font-size: 2em;
   font-weight: bold;
@@ -1271,22 +1271,22 @@ header:first-of-type address a {
   line-height: 1;
 }
 
-header:first-of-type address a img {
+body header:first-of-type address a img {
 vertical-align: middle;
 }
 
-header:first-of-type address span {
+body header:first-of-type address span {
 margin-left:0.25em;
 }
 body.do-site header:first-of-type address span {
 display: none;
 }
 
-header:first-of-type nav {
+body header:first-of-type nav {
 margin-right:4.5em;
 }
 
-header:first-of-type ul {
+body header:first-of-type ul {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -1294,13 +1294,13 @@ header:first-of-type ul {
   gap: 2em;
 }
 
-header:first-of-type li {
+body header:first-of-type li {
   display: inline;
 }
-header:first-of-type li:before {
+body header:first-of-type li:before {
   content: "";
 }
-header:first-of-type li a {
+body header:first-of-type li a {
   text-decoration: none;
 }
 
