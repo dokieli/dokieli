@@ -243,7 +243,7 @@ export const buttonIcons = {
 }
 
 //Given a button action, generates an HTML string for the button including an icon and text.
-export function getButtonHTML({ button, buttonClass, buttonDisabled, buttonTitle, buttonTextContent, buttonType, iconSize }) {
+export function getButtonHTML({ button, buttonClass, buttonDisabled, buttonRel, buttonResource, buttonTitle, buttonTextContent, buttonType, iconSize }) {
   if (!button) {
     throw new Error('Need to pass button.');
   }
@@ -254,6 +254,8 @@ export function getButtonHTML({ button, buttonClass, buttonDisabled, buttonTitle
   const type = buttonType ? ` type="${buttonType}"` : '';
   const textContent = buttonTextContent || buttonIcons[button]?.textContent;
   let icon = buttonIcons[button]?.icon;
+  const rel = buttonRel ? ` rel="${buttonRel}"` : '';
+  const resource = buttonResource ? ` resource="${buttonResource}"` : '';
 
   if (iconSize) {
     let parser = new DOMParser();
@@ -265,5 +267,5 @@ export function getButtonHTML({ button, buttonClass, buttonDisabled, buttonTitle
 
   const buttonContent = (!icon && !textContent) ? button : `${icon ? icon : ''} ${textContent ? `<span>${textContent}</span>` : ''}`;
 
-  return `<button${className}${disabled}${title}${type}>${buttonContent}</button>`;
+  return `<button${className}${disabled}${rel}${resource}${title}${type}>${buttonContent}</button>`;
 }
