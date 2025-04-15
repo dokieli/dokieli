@@ -7,7 +7,7 @@
  */
 
 import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceGraph, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource } from './fetcher.js'
-import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, buttonClose, notificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, getButtonDisabledHTML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getClosestSectionNode, getAgentHTML, setEditSelections, getNodeLanguage, createActivityHTML, createLanguageHTML, createLicenseHTML, createRightsHTML, getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getResourceTypeOptionsHTML, getPublicationStatusOptionsHTML, getLanguageOptionsHTML, getLicenseOptionsHTML, getCitationOptionsHTML, getDocumentNodeFromString, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown, getReferenceLabel, createNoteDataHTML, isButtonDisabled, hasNonWhitespaceText } from './doc.js'
+import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, buttonClose, buttonInfo, notificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, getButtonDisabledHTML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getClosestSectionNode, getAgentHTML, setEditSelections, getNodeLanguage, createActivityHTML, createLanguageHTML, createLicenseHTML, createRightsHTML, getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getResourceTypeOptionsHTML, getPublicationStatusOptionsHTML, getLanguageOptionsHTML, getLicenseOptionsHTML, getCitationOptionsHTML, getDocumentNodeFromString, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown, getReferenceLabel, createNoteDataHTML, isButtonDisabled, hasNonWhitespaceText } from './doc.js'
 import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, getAbsoluteIRI, generateDataURI, getMediaTypeURIs, getPrefixedNameFromIRI } from './uri.js'
 import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, serializeGraph, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getLinkRelationFromRDF, sortGraphTriples, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphInbox, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes } from './graph.js'
 import { notifyInbox, sendNotifications, postActivity } from './inbox.js'
@@ -194,14 +194,21 @@ DO = {
 
       var showProgress = function() {
         var info = aside.querySelector('div.info');
-        info.replaceChildren();
-        var progress = fragmentFromString(`<span class="progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"].replace(' fa-fw', '')} Checking activities</span>`);
-        info.appendChild(progress);
+        var progressOld = info.querySelector('.progress');
+        var progressNew = fragmentFromString(`<div class="progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"].replace(' fa-fw', '')} Checking activities</div>`);
+
+        if (progressOld) {
+          info.replaceChild(progressNew, progressOld)
+        }
+        else {
+          info.appendChild(progressNew);
+        }
       }
 
       var removeProgress = function() {
         var info = aside.querySelector('div.info');
-        info.replaceChildren();
+        var progressOld = info.querySelector('.progress');
+        info.removeChild(progressOld);
         DO.U.initializeButtonMore(aside);
       }
 
@@ -1638,6 +1645,7 @@ DO = {
 
     initDocumentActions: function() {
       buttonClose();
+      buttonInfo();
       notificationsToggle();
       showRobustLinksDecoration();
       focusNote();
@@ -3836,7 +3844,7 @@ console.log(reason);
 
                 generateFeed.insertAdjacentHTML('beforeend',
                   '<div class="response-message"><p class="success">' +
-                  'Document saved at <a href="' + url + documentMode + '">' + url + '</a></p></div>'
+                  'Document saved at <a href="' + url + documentMode + '" target="_blank">' + url + '</a></p></div>'
                 )
 
                 window.open(url + documentMode, '_blank')
@@ -8556,8 +8564,16 @@ WHERE {\n\
     },
 
     initializeButtonMore: function(node) {
-      var progress = fragmentFromString('<span class="progress">' + DO.C.Button.More + ' See more interactions with this document</span>');
-      node.querySelector('div.info').replaceChildren(progress);
+      var info = node.querySelector('div.info');
+      var progressOld = info.querySelector('.progress');
+      var progressNew = fragmentFromString('<div class="progress">' + DO.C.Button.More + ' See more interactions with this document</div>');
+
+      if (progressOld) {
+        info.replaceChild(progressNew, progressOld)
+      }
+      else {
+        info.appendChild(progressNew);
+      }
 
       node = document.getElementById('document-notifications');
 
@@ -8578,7 +8594,8 @@ WHERE {\n\
       //<progress min="0" max="100" value="0"></progress>
       //<div class="actions"><a href="/docs#resource-activities" target="_blank">${Icon[".fas.fa-circle-info"]}</a></div>
 
-      var aside = `<aside class="do" id="document-notifications">${DO.C.Button.Toggle}<h2>Notifications</h2><div><div class="info"></div><ul class="activities"></ul></div></aside>`;
+      //TEMP buttonRel/Resource
+      var aside = `<aside class="do" id="document-notifications">${DO.C.Button.Toggle}<h2>Notifications ${getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Notifications', buttonRel: 'rel:help', buttonResource: Config.ButtonInfo['resource-notifications'] })}</h2><div><div class="info"></div><ul class="activities"></ul></div></aside>`;
       contextNode.insertAdjacentHTML('beforeend', aside);
       aside = document.getElementById('document-notifications');
 
