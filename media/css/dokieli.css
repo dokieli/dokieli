@@ -216,6 +216,18 @@ dl svg.fas-fa-2x {
 vertical-align: bottom;
 }
 
+/*
+[target="_blank"]:after {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3e%3cpath fill='currentColor' d='M352 0c-12.9 0-24.6 7.8-29.6 19.8s-2.2 25.7 6.9 34.9L370.7 96 201.4 265.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L416 141.3l41.4 41.4c9.2 9.2 22.9 11.9 34.9 6.9s19.8-16.6 19.8-29.6l0-128c0-17.7-14.3-32-32-32L352 0zM80 32C35.8 32 0 67.8 0 112L0 432c0 44.2 35.8 80 80 80l320 0c44.2 0 80-35.8 80-80l0-112c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 112c0 8.8-7.2 16-16 16L80 448c-8.8 0-16-7.2-16-16l0-320c0-8.8 7.2-16 16-16l112 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L80 32z'%3e%3c/path%3e%3c/svg%3e");
+  width:16px;
+  height:16px;
+  display:inline-block;
+  background-repeat:no-repeat;
+  vertical-align: middle;
+  content: '';
+  margin-left:0.5em;
+}
+*/
 
 i.fas, i.far, i.fab {
 background-repeat:no-repeat;
@@ -681,26 +693,37 @@ display:flex;
 flex-direction: column;
 max-height: 90%;
 }
-#document-notifications .info {
-padding-bottom:1em;
-margin-bottom:1em;
-font-weight:normal;
-vertical-align: middle;
-border-bottom:1px solid #eee;
-}
 #document-notifications .progress {
 margin:0;
 }
+#document-notifications > div.info {
+overflow-y: auto;
+max-height:max-content;
+}
+#document-notifications details {
+font-weight:normal;
+}
+
 #document-notifications > div > ul.activities {
 overflow-y: auto;
 height: 100%;
 }
 
-#document-notifications span.progress {
+#document-notifications div.progress {
 display: flex;
 align-items: center;
 }
-#document-notifications span.progress > button.more {
+#document-notifications button.info {
+cursor:help;
+vertical-align: middle;
+}
+#document-notifications button.info[disabled] {
+cursor:initial;
+}
+
+/*TODO: info could be generalised*/
+#document-notifications button.info,
+#document-notifications div.progress > button.more {
 width:max-content;
 align-items: center;
 border: 1px solid rgba(0, 0, 0, 0.1);
@@ -709,16 +732,20 @@ box-shadow: none !important;
 cursor: pointer;
 display: inline-flex;
 font-size: 1em;
-font-weight: 600;
 padding: 0.5em;
 background-color: #fff;
 margin: 0;
 }
-#document-notifications span.progress > button.more:hover {
+#document-notifications button.info {
+font-size:24px;
+}
+
+#document-notifications button.info:hover,
+#document-notifications div.progress > button.more:hover {
 fill: #080 !important;
 transition: fill 0.3s;
 }
-#document-notifications span.progress .fa-spin {
+#document-notifications div.progress .fa-spin {
 align-self: center;
 padding: 0.5em;
 }
