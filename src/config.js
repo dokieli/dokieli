@@ -101,6 +101,10 @@ export default {
     Toggle: getButtonHTML({ button: 'toggle', buttonClass: 'toggle', buttonTitle: 'Show/Hide' }),
     More: getButtonHTML({ button: 'more', buttonClass: 'more', buttonTitle: 'Show more' })
   },
+  //TODO: Use a single object for Button, ButtonInfo, ButtonStates?
+  ButtonInfo: {
+    'resource-notifications': 'https://dokie.li/docs#resource-notifications'
+  },
   ButtonStates: {
     'resource-share': true,
     'resource-reply': true,
