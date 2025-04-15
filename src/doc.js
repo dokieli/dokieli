@@ -1482,6 +1482,7 @@ function buttonInfo() {
       let title = '';
       let description = '';
       let video = '';
+      let details = '';
 
       // console.log(title) 
       //TODO: Possibly change reuse of Config.Resource to Cache API or something
@@ -1566,12 +1567,12 @@ function buttonInfo() {
 
           return details;
         })
+        .then(details => {
+          e.target.closest('.do').querySelector('div.info').prepend(fragmentFromString(details));
+        })
         .catch((error) => {
           button.disabled = false;
           e.target.closest('.do').querySelector('div.info').prepend(fragmentFromString(errorMessage));
-        })
-        .finally(details => {
-          e.target.closest('.do').querySelector('div.info').prepend(fragmentFromString(details));
         });
     }
   });
