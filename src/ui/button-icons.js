@@ -239,6 +239,10 @@ export const buttonIcons = {
   'local-storage': {
     title: '',
     icon: Icon[".fas.fa-database"]
+  },
+  info: {
+    title: 'info',
+    icon: Icon[".fas.fa-circle-info"]
   }
 }
 
