@@ -1,7 +1,7 @@
 'use strict'
 
 import Config from './config.js'
-import { getDateTimeISO, fragmentFromString, generateAttributeId, uniqueArray, generateUUID, matchAllIndex } from './util.js'
+import { getDateTimeISO, fragmentFromString, generateAttributeId, uniqueArray, generateUUID, matchAllIndex, parseISODuration } from './util.js'
 import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath, getPrefixedNameFromIRI, generateDataURI, getProxyableIRI } from './uri.js'
 import { getResource, getResourceHead, deleteResource, processSave, patchResourceWithAcceptPatch } from './fetcher.js'
 import rdf from "rdf-ext";
@@ -1458,6 +1458,125 @@ function handleDeleteNote(button) {
   }
 }
 
+//TODO: Inform the user that this information feature may fetch a resource from another origin, and ask whether they want to go ahead with it.
+function buttonInfo() {
+  const errorMessage = `<p class="error">Can't find the documentation. Try later.</p>`;
+
+  document.addEventListener('click', e => {
+    // console.log(e.target)
+    const button = e.target.closest('button.info[rel="rel:help"][resource][title]:not([disabled])');
+    // console.log(button)
+
+    if (button) {
+      button.disabled = true;
+
+      button.closest('.do')?.querySelector('div.info .error')?.remove();;
+
+      // const rel = button.getAttribute('rel');
+      const resource = button.getAttribute('resource');
+      const url = stripFragmentFromString(resource);
+      // console.log(rel, resource, url)
+
+      if (!url && !title) { return; }
+
+      let title = '';
+      let description = '';
+      let video = '';
+
+      // console.log(title) 
+      //TODO: Possibly change reuse of Config.Resource to Cache API or something
+      var getInfoGraph = function() {
+        if (Config.Resource[url]) {
+          return Promise.resolve(Config.Resource[url].graph);
+        }
+        else {
+          return getResourceGraph(url)
+                  .then(graph => {
+                    Config.Resource[url] = { graph };
+                    return graph;
+                  });
+        }
+      };
+
+      getInfoGraph()
+        .then(g => {
+          // console.log(g)
+          var infoG = g.node(rdf.namedNode(resource));
+          // console.log(infoG.dataset.toCanonical())
+          title = getGraphTitle(infoG);
+          description = getGraphDescription(infoG);
+          //TODO: Multiple video values
+          const videoObject = infoG.out(ns.schema.video).value;
+          const videoObjectGraph = g.node(rdf.namedNode(videoObject));
+          const videoContentUrl = videoObjectGraph.out(ns.schema.contentUrl).value;
+          const videoEncodingFormat = videoObjectGraph.out(ns.schema.encodingFormat).value;
+          const videoDuration = videoObjectGraph.out(ns.schema.duration).value;
+          const videoDurationLabel = parseISODuration(videoDuration);
+
+          // console.log(title, description, videoObject, videoContentUrl, videoEncodingFormat, videoDuration)
+
+          if (title.length && description.length) {
+            if (videoContentUrl) {
+              let figcaption = '';
+              let duration = '';
+              let encodingFormat = '';
+              let comma = (videoDuration && videoEncodingFormat) ? `, ` : '';
+
+              if (videoDuration || videoEncodingFormat) {
+                if (videoDuration) {
+                  duration = `<time datatype="xsd:duration" datetime="${videoDuration}" property="schema:duration">${videoDurationLabel}</time>`;
+                }
+
+                if (videoEncodingFormat) {
+                  encodingFormat = `<span lang="" property="schema:encodingFormat" xml:lang="">${videoEncodingFormat}</span>`;
+                }
+
+                figcaption = `
+                  <figcaption><a href="${videoContentUrl}">Video</a> of in dokieli [${duration}${comma}${encodingFormat}]</figcaption>
+                `;
+              }
+
+              video = `
+                <figure about="${videoObject}" id="figure-dokieli-notifications" rel="schema:video" resource="#figure-dokieli-notifications">
+                  <video controls="controls" crossorigin="anonymous" preload="none" resource="${videoObject}" typeof="schema:VideoObject" width="800">
+                    <source rel="schema:contentUrl" src="${videoContentUrl}" />
+                  </video>
+                  ${figcaption}
+                </figure>
+                `;
+            }
+
+            details = `
+              <details about="${resource}" open="">
+                <summary property="schema:name">About ${title}</summary>
+                <div datatype="rdf:HTML" property="schema:description">
+                ${description}
+                </div>
+                ${video}
+                <dl>
+                  <dt>Source</dt>
+                  <dd><a href="${resource}" rel="noopener" target="_blank">${resource}</a></dd>
+                </dl>
+              </details>
+            `;
+
+            //XXX: the target attribute is sanitized by DOMPurify in fragmentFromString, so it doesn't output at the moment
+            // console.log(details)
+          }
+
+          return details;
+        })
+        .catch((error) => {
+          button.disabled = false;
+          e.target.closest('.do').querySelector('div.info').prepend(fragmentFromString(errorMessage));
+        })
+        .finally(details => {
+          e.target.closest('.do').querySelector('div.info').prepend(fragmentFromString(details));
+        });
+    }
+  });
+}
+
 function buttonClose() {
   document.addEventListener('click', e => {
     var button = e.target.closest('button.close')
@@ -1690,6 +1809,9 @@ function getGraphData(s, options) {
   //XXX: change i to s. testing. should be same as subjectURI?
   info['skos'] = getResourceInfoSKOS(s);
   info['citations'] = getResourceInfoCitations(s);
+
+  info['video'] = s.out(ns.schema.video).values;
+  info['audio'] = s.out(ns.schema.audio).values;
 
   return info;
 }
@@ -3413,6 +3535,7 @@ export {
   setDocumentStatus,
   getDocumentStatusHTML,
   buttonClose,
+  buttonInfo,
   notificationsToggle,
   getButtonDisabledHTML,
   showTimeMap,
