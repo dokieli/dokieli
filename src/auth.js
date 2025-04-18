@@ -6,15 +6,30 @@ import { deleteResource } from './fetcher.js'
 import { removeChildren, fragmentFromString } from './util.js'
 import { getAgentHTML, showActionMessage, showGeneralMessages, getResourceSupplementalInfo, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, handleDeleteNote } from './doc.js'
 import { Icon } from './ui/icons.js'
-import { getResourceGraph, getAgentName, getGraphImage, getAgentURL, getAgentPreferredProxy, getAgentPreferredPolicy, getAgentPreferredPolicyRule, setPreferredPolicyInfo, getAgentDelegates, getAgentKnows, getAgentFollowing, getAgentStorage, getAgentOutbox, getAgentInbox, getAgentPreferencesFile, getAgentPublicTypeIndex, getAgentPrivateTypeIndex, getAgentTypeIndex, getAgentSupplementalInfo, getAgentSeeAlso, getAgentPreferencesInfo, getAgentLiked, getAgentOccupations, getAgentPublications, getAgentMade } from './graph.js'
+import { getResourceGraph, getAgentName, getGraphImage, getAgentURL, getAgentPreferredProxy, getAgentPreferredPolicy, getAgentPreferredPolicyRule, setPreferredPolicyInfo, getAgentDelegates, getAgentKnows, getAgentFollowing, getAgentStorage, getAgentOutbox, getAgentInbox, getAgentPreferencesFile, getAgentPublicTypeIndex, getAgentPrivateTypeIndex, getAgentTypeIndex, getAgentSupplementalInfo, getAgentSeeAlso, getAgentPreferencesInfo, getAgentLiked, getAgentOccupations, getAgentPublications, getAgentMade, getAgentOIDCIssuer } from './graph.js'
 import { removeLocalStorageAuthClient, removeLocalStorageDocument, removeLocalStorageProfile, updateLocalStorageProfile } from './storage.js'
-import solidAuth from 'solid-auth-client'
+// import solidAuth from 'solid-auth-client'
 import { getButtonHTML } from './ui/button-icons.js';
+import { Session } from '@uvdsl/solid-oidc-client-browser';
 
 const ns = Config.ns;
-const { logout, popupLogin } = solidAuth;
+// const { logout, popupLogin } = solidAuth;
+const session = new Session();
 
 // const { OIDCWebClient } = require('@trust/oidc-web')
+
+// click button
+// open modal
+// get user WebID / IDP
+
+// do this: 
+// const redirect_uri = window.location.href;
+// const idp = "your IDP";
+// session.login(idp, redirect_uri);
+
+// after sign in 
+// restoreSession().then(() => console.log("Logged in:", session.webId));
+
 
 
 function getUserSignedInHTML() {
@@ -24,13 +39,17 @@ function getUserSignedInHTML() {
 
 
 async function showUserSigninSignout (node) {
-  const session = await solidAuth.currentSession();
+  session = await restoreSession().then(() => session);
+
+  //TODO: Check 
   var webId = session ? session.webId : null;
+
+
   // was LoggedId with new OIDC WebID
   if (webId && (webId != Config.User.IRI || !Config.User.IRI)) {
      await setUserInfo(webId, { oidc: true })
           .then(() => {
-            afterSignIn()
+            afterSetUserInfo()
           })
   }
   // was LoggedOut as OIDC
@@ -149,10 +168,10 @@ function showUserIdentityInput (e) {
     })
   }
 
-  var buttonSignInOIDC = document.querySelector('#user-identity-input button.signin-oidc')
-  if (buttonSignInOIDC) {
-    buttonSignInOIDC.addEventListener('click', submitSignInOIDC)
-  }
+  // var buttonSignInOIDC = document.querySelector('#user-identity-input button.signin-oidc')
+  // if (buttonSignInOIDC) {
+  //   buttonSignInOIDC.addEventListener('click', submitSignInOIDC)
+  // }
 
   inputWebID.focus()
 }
@@ -213,10 +232,24 @@ function submitSignIn (url) {
         userIdentityInput.parentNode.removeChild(userIdentityInput)
       }
 
-      afterSignIn()
+      signInWithOIDC()
+
+      // afterSetUserInfo()
     })
 }
 
+//XXX: User Profile should've been fetch by now.
+ function signInWithOIDC() {
+  if (!Config.User.OIDCIssuer) {
+    throw new Error('Could not sign in with OIDC - no OIDCIssuer');
+  }
+  const idp = "https://solidcommunity.net"; //Config.User.OIDCIssuer should be available (or undefined) after setUserInfo
+
+  const redirect_uri = window.location.href;
+
+  // redirects away from dokieli
+  session.login(idp, redirect_uri);
+}
 
 function submitSignInOIDC (url) {
   var userIdentityInput = document.getElementById('user-identity-input')
@@ -240,7 +273,7 @@ function submitSignInOIDC (url) {
                 userIdentityInput.parentNode.removeChild(userIdentityInput)
               }
 
-              afterSignIn()
+              afterSetUserInfo()
             })
          }
       }).catch((err) => {
@@ -304,6 +337,7 @@ function getSubjectInfo (subjectIRI, options = {}) {
         Role: options.role,
         UI: options.ui,
         OIDC: !!options.oidc,
+        OIDCIssuer: getAgentOIDCIssuer(g),
         ProxyURL: getAgentPreferredProxy(g),
         PreferredPolicy: getAgentPreferredPolicy(g),
         Delegates: getAgentDelegates(g),
@@ -341,7 +375,7 @@ function getSubjectInfo (subjectIRI, options = {}) {
   }
 
 //TODO: Review grapoi
-function afterSignIn () {
+function afterSetUserInfo () {
   getResourceSupplementalInfo(Config.DocumentURL).then(resourceInfo => {
     updateFeatureStatesOfResourceInfo(resourceInfo);
     updateDocumentDoButtonStates();
@@ -409,7 +443,7 @@ function afterSignIn () {
 }
 
 export {
-  afterSignIn,
+  afterSetUserInfo,
   enableDisableButton,
   getUserSignedInHTML,
   getSubjectInfo,

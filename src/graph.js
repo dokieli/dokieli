@@ -1109,6 +1109,14 @@ function getAgentPreferredPolicy (s) {
   return s.out(ns.solid.preferredPolicy).values[0] || undefined
 }
 
+//TODO: undefined?
+function getAgentOIDCIssuer (s) {
+  let idp = s.out(ns.solid.oidcIssuer)?.values[0] || undefined;
+  idp = idp ? idp.endsWith("/").substring(0, idp.length - 1) : idp;
+
+  return idp;
+}
+
 function getAgentName (s) {
   var name = s.out(ns.foaf.name).values[0] || s.out(ns.schema.name).values[0] || s.out(ns.vcard.fn).values[0] || s.out(ns.as.name).values[0] || s.out(ns.rdfs.label).values[0] || undefined;
   // var name = s.out([ns.foaf.name, ns.schema.name]).values[0]
@@ -1653,6 +1661,7 @@ export {
   processSameAs,
   getAgentPreferredProxy,
   getAgentPreferredPolicy,
+  getAgentOIDCIssuer,
   getAgentName,
   getAgentURL,
   getAgentDelegates,

@@ -14,6 +14,7 @@ export default {
       DO.U.setDocumentURL(url);
       DO.U.setDocumentString();
       DO.U.setPolyfill();
+      DO.U.initAuth();
       DO.U.initUser();
       DO.U.initCurrentStylesheet();
       DO.U.setDocRefType();
