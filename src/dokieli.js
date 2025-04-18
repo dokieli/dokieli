@@ -1502,7 +1502,12 @@ DO = {
     initAuth: function() {
 // restore session, replace fetch globally (if needed), restore state from local storage if applicable
 // restoreAfterREdirect / handleRedirect
-      restoreSession.then((session) => {
+
+      restoreSession().then((session) => {
+        if (!session) {
+          console.log("No session");
+          return;
+        }
         console.log("Logged in: ", session.webId)
       })
     },
