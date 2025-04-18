@@ -14,7 +14,12 @@ import { Session } from '@uvdsl/solid-oidc-client-browser';
 
 const ns = Config.ns;
 // const { logout, popupLogin } = solidAuth;
-const session = new Session();
+let session = new Session();
+
+export async function restoreSession() {
+  return session.handleRedirectFromLogin();
+}
+
 
 // const { OIDCWebClient } = require('@trust/oidc-web')
 

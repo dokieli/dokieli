@@ -14,7 +14,7 @@ import { notifyInbox, sendNotifications, postActivity } from './inbox.js'
 import { uniqueArray, fragmentFromString, hashCode, generateAttributeId, escapeRegExp, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, matchAllIndex, isValidISBN, findPreviousDateTime } from './util.js'
 import { generateGeoView } from './geo.js'
 import { getLocalStorageProfile, showAutoSaveStorage, hideAutoSaveStorage, updateLocalStorageProfile } from './storage.js'
-import { showUserSigninSignout, showUserIdentityInput, setContactInfo, getSubjectInfo } from './auth.js'
+import { showUserSigninSignout, showUserIdentityInput, setContactInfo, getSubjectInfo, restoreSession } from './auth.js'
 import { Icon } from './ui/icons.js'
 import * as d3Selection from 'd3-selection';
 import * as d3Force from 'd3-force';
@@ -31,9 +31,6 @@ import { Session } from '@uvdsl/solid-oidc-client-browser';
 
 const session = new Session();
 
-async function restoreSession() {
-  await session.handleRedirectFromLogin();
-}
 
 const ns = Config.ns;
 let DO;

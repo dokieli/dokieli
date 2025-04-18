@@ -210,7 +210,7 @@ function getAcceptPutPreference (url) {
  */
 function getResource (url, headers = {}, options = {}) {
   var _fetch = Config.User.OIDC? __fetch : fetch;
-  fetch = session.isActive ? session.fetch : fetch
+  // fetch = session.isActive ? session.fetch : fetch
 
   url = url || currentLocation()
 // console.log(url)
