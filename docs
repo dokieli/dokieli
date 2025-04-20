@@ -79,7 +79,7 @@
           <section id="principles" inlist="" rel="schema:hasPart" resource="#principles">
             <h2 property="schema:name">Principles</h2>
             <div datatype="rdf:HTML" property="schema:description">
-              <p>Dokieli's core design principles are autonomy and universal access. Dokieli promotes self-publishing by enabling individuals to author and annotate articles using their preferred identities and personal storage, supporting both personal and social activities. It does not track users, collect statistics, or report user behaviour. As a client-side application, it operates independently of any specific server or service. In line with dokieli's commitment to user freedom, content created with it can be used by other standards-compliant applications.</p>
+              <p>Dokieli's core design principles are autonomy and universal access. Dokieli promotes self-publishing by allowing individuals to publish and annotate articles using their preferred identities and personal storage, supporting both personal and social activities. It does not track users, collect statistics, or report user behavior without consent. As a client-side application, it operates independently of any specific server or service. In line with dokieli’s commitment to user freedom, content created with it can be used by other standards-compliant applications.</p>
             </div>
           </section>
 
@@ -231,7 +231,7 @@
 
                     <dt id="html-rdfa">RDFa</dt>
                     <dd>dokieli can consume and produce <cite><a href="https://www.w3.org/TR/rdfa-core/">RDFa Core 1.1</a></cite> syntax.</dd>
-                    <dd>To preserve the order of content, <code>@inlist</code> is used eg. <code>&lt;section inlist=""</code>, <code>&lt;dd id="Sarven-Capadisli" inlist="" rel="bibo:authorList" resource="https://csarven.ca/#i"&gt;</code>.</dd>
+                    <dd>To preserve the order of content, <code>@inlist</code> is used eg. <code>&lt;section inlist=""</code>, <code>&lt;dd id="Sarven-Capadisli" inlist="" rel="bibo:authorList" resource="http://csarven.ca/#i"&gt;</code>.</dd>
                     <dd>A <code>section</code>s <code>@id</code> value is used as part of <code>section</code>'s <code>@resource</code> as a fragment, eg. <code>&lt;section id="introduction" rel="schema:hasPart" resource="#introduction"&gt;</code>. This allows the same identifier to be used for humans and machines, the value is derived from normalising its heading value as mentioned earlier.</dd>
                     <dd>Relating parts is done with <code>rel="schema:hasPart"</code>, eg. sections with subsection: <pre><code>&lt;section id="structure-and-semantics" inlist="" rel="schema:hasPart" resource="#structure-and-semantics"&gt;</code>
 <code>  &lt;section id="html-patterns" inlist="" rel="schema:hasPart" resource="#html-patterns"&gt;</code></pre>
@@ -281,7 +281,7 @@
 
                       <pre id="html-document-identifier"><code>&lt;dl id="document-identifier"&gt;</code>
 <code>  &lt;dt&gt;Identifier&lt;/dt&gt;</code>
-<code>  &lt;dd&gt;&lt;a href="https://csarven.ca/dokieli-rww" rel="owl:sameAs">https://csarven.ca/dokieli-rww&lt;/a&gt;&lt;/dd&gt;</code>
+<code>  &lt;dd&gt;&lt;a href="http://csarven.ca/dokieli-rww" rel="owl:sameAs">http://csarven.ca/dokieli-rww&lt;/a&gt;&lt;/dd&gt;</code>
 <code>&lt;/dl&gt;</code></pre>
 
                       <p>The <code>owl:sameAs</code> indirectly gives this article, ie. any copy, an identifier. The identifier is typically where an article was originally made accessible from, so having this by default for copy distribution helps to keep its connection to source. </p>
@@ -342,19 +342,19 @@
 <pre id="html-profile-anonymous"><code>&lt;span typeof="schema:Person"&gt;Lunatic Scholar&lt;/span&gt;</code></pre>
 
                       <p>The markup for a WebID profile including their name:</p>
-<pre id="html-profile-iri-name"><code>&lt;span about="https://csarven.ca/#i" property="schema:name"&gt;Sarven Capadisli&lt;/span&gt;</code></pre>
+<pre id="html-profile-iri-name"><code>&lt;span about="http://csarven.ca/#i" property="schema:name"&gt;Sarven Capadisli&lt;/span&gt;</code></pre>
 
                       <p>If they have an image:</p>
-<pre id="html-profile-image"><code>&lt;img alt="" height="48" rel="schema:image" src="https://csarven.ca/media/images/sarven-capadisli.jpg" width="48" /&gt;</code></pre>
+<pre id="html-profile-image"><code>&lt;img alt="" height="48" rel="schema:image" src="http://csarven.ca/media/images/sarven-capadisli.jpg" width="48" /&gt;</code></pre>
 
                       <p>Progressively described name, image, and URL is useful in templates:</p>
-<pre id="html-profile-iri-name-image-enhanced"><code>&lt;span about="https://csarven.ca/#i" typeof="schema:Person"&gt;&lt;img alt="" height="48" rel="schema:image" src="https://csarven.ca/media/images/sarven-capadisli.jpg" width="48" /&gt; &lt;a href="https://csarven.ca/" rel="schema:url"&gt;&lt;span about="https://csarven.ca/#i" property="schema:name"&gt;Sarven Capadisli&lt;/span&gt;&lt;/a&gt;&lt;/span&gt;</code></pre>
+<pre id="html-profile-iri-name-image-enhanced"><code>&lt;span about="http://csarven.ca/#i" typeof="schema:Person"&gt;&lt;img alt="" height="48" rel="schema:image" src="http://csarven.ca/media/images/sarven-capadisli.jpg" width="48" /&gt; &lt;a href="http://csarven.ca/" rel="schema:url"&gt;&lt;span about="http://csarven.ca/#i" property="schema:name"&gt;Sarven Capadisli&lt;/span&gt;&lt;/a&gt;&lt;/span&gt;</code></pre>
 
                       <p>Alternatively applying the DRY principle:</p>
-<pre id="html-profile-iri-name-image-dry"><code>&lt;a about="https://csarven.ca/#i" href="https://csarven.ca/" property="schema:name" rel="schema:url" typeof="schema:Person"&gt;Sarven Capadisli&lt;/a&gt;</code></pre>
+<pre id="html-profile-iri-name-image-dry"><code>&lt;a about="http://csarven.ca/#i" href="http://csarven.ca/" property="schema:name" rel="schema:url" typeof="schema:Person"&gt;Sarven Capadisli&lt;/a&gt;</code></pre>
 
                       <p>If they are one of the authors of a document, the profile can be wrapped like:</p>
-<pre id="html-profile-author"><code>&lt;dd id="Sarven-Capadisli" inlist="" rel="bibo:authorList" resource="https://csarven.ca/#i"&gt;&lt;span about="" rel="schema:creator schema:publisher schema:author"&gt;&lt;!-- profile --&gt;&lt;/span&gt;&lt;/dd&gt;</code></pre>
+<pre id="html-profile-author"><code>&lt;dd id="Sarven-Capadisli" inlist="" rel="bibo:authorList" resource="http://csarven.ca/#i"&gt;&lt;span about="" rel="schema:creator schema:publisher schema:author"&gt;&lt;!-- profile --&gt;&lt;/span&gt;&lt;/dd&gt;</code></pre>
 
                       <p>See also <var>getUserHTML</var> (dokieli.js)</p>
                     </div>
@@ -392,7 +392,7 @@
 <code></code>
 <code>        &lt;dl class="author-name"&gt;</code>
 <code>          &lt;dt&gt;Authors&lt;/dt&gt;</code>
-<code>          &lt;dd&gt;&lt;span rel="schema:creator"&gt;&lt;span about="https://csarven.ca/#i" typeof="schema:Person"&gt;&lt;img alt="" height="48" rel="schema:image" src="https://csarven.ca/media/images/sarven-capadisli.jpg" width="48" /&gt; &lt;a href="https://csarven.ca/" rel="schema:url"&gt;&lt;span about="https://csarven.ca/#i" property="schema:name"&gt;Sarven Capadisli&lt;/span&gt;&lt;/a&gt;&lt;/span&gt;&lt;/span&gt;&lt;/dd&gt;</code>
+<code>          &lt;dd&gt;&lt;span rel="schema:creator"&gt;&lt;span about="http://csarven.ca/#i" typeof="schema:Person"&gt;&lt;img alt="" height="48" rel="schema:image" src="http://csarven.ca/media/images/sarven-capadisli.jpg" width="48" /&gt; &lt;a href="http://csarven.ca/" rel="schema:url"&gt;&lt;span about="http://csarven.ca/#i" property="schema:name"&gt;Sarven Capadisli&lt;/span&gt;&lt;/a&gt;&lt;/span&gt;&lt;/span&gt;&lt;/dd&gt;</code>
 <code>        &lt;/dl&gt;</code>
 <code></code>
 <code>        &lt;dl class="published"&gt;</code>
@@ -412,9 +412,9 @@
 <code>        &lt;/dl&gt;</code>
 <code></code>
 <code>        &lt;dl class="target"&gt;</code>
-<code>          &lt;dt&gt;&lt;a href="https://csarven.ca/dokieli-rww#abstract" rel="oa:hasTarget"&gt;In reply to&lt;/a&gt; (&lt;a about="https://csarven.ca/dokieli-rww#abstract" href="https://csarven.ca/dokieli-rww" rel="oa:hasSource" typeof="oa:SpecificResource"&gt;part of&lt;/a&gt;)&lt;/dt&gt;</code>
+<code>          &lt;dt&gt;&lt;a href="http://csarven.ca/dokieli-rww#abstract" rel="oa:hasTarget"&gt;In reply to&lt;/a&gt; (&lt;a about="http://csarven.ca/dokieli-rww#abstract" href="http://csarven.ca/dokieli-rww" rel="oa:hasSource" typeof="oa:SpecificResource"&gt;part of&lt;/a&gt;)&lt;/dt&gt;</code>
 <code>          &lt;dd&gt;</code>
-<code>            &lt;blockquote about="https://csarven.ca/dokieli-rww#abstract" cite="https://csarven.ca/dokieli-rww#abstract"&gt;</code>
+<code>            &lt;blockquote about="http://csarven.ca/dokieli-rww#abstract" cite="http://csarven.ca/dokieli-rww#abstract"&gt;</code>
 <code>              &lt;div rel="oa:hasSelector" resource="i:#fragment-selector" typeof="oa:FragmentSelector"&gt;</code>
 <code>                &lt;dl class="conformsto"&gt;</code>
 <code>                  &lt;dt&gt;Fragment selector conforms to&lt;/dt&gt;</code>
@@ -432,7 +432,7 @@
 <code></code>
 <code>        &lt;dl class="renderedvia"&gt;</code>
 <code>          &lt;dt&gt;Rendered via&lt;/dt&gt;</code>
-<code>          &lt;dd&gt;&lt;a about="https://csarven.ca/dokieli-rww#abstract" href="https://dokie.li/" rel="oa:renderedVia"&gt;dokieli&lt;/a&gt;&lt;/dd&gt;</code>
+<code>          &lt;dd&gt;&lt;a about="http://csarven.ca/dokieli-rww#abstract" href="https://dokie.li/" rel="oa:renderedVia"&gt;dokieli&lt;/a&gt;&lt;/dd&gt;</code>
 <code>        &lt;/dl&gt;</code>
 <code></code>
 <code>        &lt;section id="note-b6738766-3ce5-4054-96a9-ced7f05b439f" rel="oa:hasBody" resource="i:#note-b6738766-3ce5-4054-96a9-ced7f05b439f"&gt;</code>
@@ -515,13 +515,13 @@
 <code>            &lt;dd&gt;&lt;a href="https://linkedresearch.org/annotation/csarven.ca/dokieli-rww/b6738766-3ce5-4054-96a9-ced7f05b439f" property="as:object"&gt;https://linkedresearch.org/annotation/csarven.ca/dokieli-rww/b6738766-3ce5-4054-96a9-ced7f05b439f&lt;/a&gt;&lt;/dd&gt;</code>
 <code></code>
 <code>            &lt;dt&gt;Target&lt;/dt&gt;</code>
-<code>            &lt;dd&gt;&lt;a href="https://csarven.ca/dokieli-rww#abstract" property="as:target"&gt;https://csarven.ca/dokieli-rww#abstract&lt;/a&gt;&lt;/dd&gt;</code>
+<code>            &lt;dd&gt;&lt;a href="http://csarven.ca/dokieli-rww#abstract" property="as:target"&gt;http://csarven.ca/dokieli-rww#abstract&lt;/a&gt;&lt;/dd&gt;</code>
 <code></code>
 <code>            &lt;dt&gt;Updated&lt;/dt&gt;</code>
 <code>            &lt;dd&gt;&lt;time datetime="2017-04-15T21:31:45.711Z" datatype="xsd:dateTime" property="as:updated" content="2017-04-15T21:31:45.711Z"&gt;2017-04-15 21:31:45&lt;/time&gt;&lt;/dd&gt;</code>
 <code></code>
 <code>            &lt;dt&gt;Actor&lt;/dt&gt;</code>
-<code>            &lt;dd&gt;&lt;a href="https://csarven.ca/#i" property="as:actor"&gt;https://csarven.ca/#i&lt;/a&gt;&lt;/dd&gt;</code>
+<code>            &lt;dd&gt;&lt;a href="http://csarven.ca/#i" property="as:actor"&gt;http://csarven.ca/#i&lt;/a&gt;&lt;/dd&gt;</code>
 <code></code>
 <code>            &lt;dt&gt;License&lt;/dt&gt;</code>
 <code>            &lt;dd&gt;&lt;a href="https://creativecommons.org/publicdomain/zero/1.0/" property="schema:license"&gt;https://creativecommons.org/publicdomain/zero/1.0/&lt;/a&gt;&lt;/dd&gt;</code>
