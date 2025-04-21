@@ -14,10 +14,10 @@ import { Session } from '@uvdsl/solid-oidc-client-browser';
 
 const ns = Config.ns;
 // const { logout, popupLogin } = solidAuth;
-let session = new Session();
+Config['Session'] = new Session();
 
 export async function restoreSession() {
-  return session.handleRedirectFromLogin();
+  return Config['Session'].handleRedirectFromLogin();
 }
 
 
@@ -44,10 +44,10 @@ function getUserSignedInHTML() {
 
 
 async function showUserSigninSignout (node) {
-  session = await restoreSession().then(() => session);
+  // await restoreSession().then(() => Config['Session']);
 
   //TODO: Check 
-  var webId = session ? session.webId : null;
+  var webId = Config['Session'] ? Config['Session'].webId : null;
 
 
   // was LoggedId with new OIDC WebID
@@ -253,7 +253,7 @@ function submitSignIn (url) {
   const redirect_uri = window.location.href;
 
   // redirects away from dokieli
-  session.login(idp, redirect_uri);
+  Config['Session'].login(idp, redirect_uri);
 }
 
 function submitSignInOIDC (url) {

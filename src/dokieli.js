@@ -29,7 +29,7 @@ import { Editor } from './editor/editor.js';
 import { getButtonHTML } from './ui/button-icons.js'
 // import { Session } from '@uvdsl/solid-oidc-client-browser';
 
-// const session = new Session();
+const session = Config.Session;
 
 
 const ns = Config.ns;
@@ -1504,12 +1504,12 @@ DO = {
 // restoreAfterREdirect / handleRedirect
       console.log(window.location.href)
 
-      restoreSession().then((session) => {
-        if (!session) {
+      restoreSession().then(() => {
+        if (!Config['Session']) {
           console.log("No session");
           return;
         }
-        console.log("Logged in: ", session.webId)
+        console.log("Logged in: ", Config['Session'].webId)
       })
     },
 
