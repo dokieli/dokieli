@@ -248,7 +248,7 @@ function submitSignIn (url) {
   if (!Config.User.OIDCIssuer) {
     throw new Error('Could not sign in with OIDC - no OIDCIssuer');
   }
-  const idp = "https://solidcommunity.net"; //Config.User.OIDCIssuer should be available (or undefined) after setUserInfo
+  const idp = Config.User.OIDCIssuer;
 
   const redirect_uri = window.location.href;
 
