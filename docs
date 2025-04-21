@@ -219,10 +219,10 @@
                     </dd>
 
                     <dt id="html-embed-turtle-json-ld-trig">Embedding Turtle, JSON-LD, and TriG</dt>
-                    <dd>Turtle, JSON-LD, and TriG syntaxes are placed within respective <code>script</code> blocks in <code>head</code> eg. <code>&lt;script id="meta-json-ld" type="application/ld+json" title="JSON-LD"&gt;&lt;/script&gt;</code>. Data is enclosed in <code>CDATA</code> sections. This pattern is detected, visible and editable from <cite>Embed Data</cite> in <i class="fa fa-bars"></i> <a href="#dokieli-menu">dokieli menu</a>. See also <var>showEmbedData</var> (dokieli.js).</dd>
+                    <dd>Turtle, JSON-LD, and TriG syntaxes are placed within respective <code>script</code> blocks in <code>head</code> eg. <code>&lt;script id="meta-json-ld" type="application/ld+json" title="JSON-LD"&gt;&lt;/script&gt;</code>. Data is enclosed in <code>CDATA</code> sections. This pattern is detected, visible and editable from <cite>Embed Data</cite> in <i class="fas fa-bars"></i> <a href="#dokieli-menu">dokieli menu</a>. See also <var>showEmbedData</var> (dokieli.js).</dd>
 
                     <dt id="html-css">CSS</dt>
-                    <dd>Multiple stylesheets can be included with <code>@media</code>, and when accompanied with <code>@title</code>, some user-agents can provide options for the user to switch between them, as well as from the <i class="fa fa-bars"></i> <a href="#dokieli-menu">dokieli menu</a>, eg. <pre>&lt;!-- Primary stylesheet --&gt;
+                    <dd>Multiple stylesheets can be included with <code>@media</code>, and when accompanied with <code>@title</code>, some user-agents can provide options for the user to switch between them, as well as from the <i class="fas fa-bars"></i> <a href="#dokieli-menu">dokieli menu</a>, eg. <pre>&lt;!-- Primary stylesheet --&gt;
 <code>&lt;link href="media/css/basic.css" media="all" rel="stylesheet" title="Basic" /&gt;</code>
 &lt;!-- Alternate stylesheet --&gt;
 <code>&lt;link href="media/css/acm.css" media="all" rel="stylesheet alternate" title="ACM" /&gt;</code>
@@ -554,7 +554,7 @@
               <section id="document-modes" inlist="" rel="schema:hasPart" resource="#document-modes">
                 <h3 property="schema:name">Document modes</h3>
                 <div datatype="rdf:HTML" property="schema:description">
-                  <p>There UI adapts to the <em>document mode</em> the user is in: <cite>author</cite>, <cite>review</cite>, <cite>social</cite>. By default the <cite>social</cite> mode is engaged. The <i class="fa fa-bars"></i> <a href="#dokieli-menu">dokieli menu</a> allows the user to engage the author mode through the <i class="fa fa-i-cursor"></i> <a href="#editor-enable">Edit</a> operation, and the review mode with <i class="fa fa-balance-scale"></i> <a href="#review-enable">Review</a>. See also <var>setDocumentMode</var> (dokieli.js).</p>
+                  <p>There UI adapts to the <em>document mode</em> the user is in: <cite>author</cite>, <cite>review</cite>, <cite>social</cite>. By default the <cite>social</cite> mode is engaged. The <i class="fas fa-bars"></i> <a href="#dokieli-menu">dokieli menu</a> allows the user to engage the author mode through the <i class="fas fa-i-cursor"></i> <a href="#editor-enable">Edit</a> operation, and the review mode with <i class="fas fa-balance-scale"></i> <a href="#review-enable">Review</a>. See also <var>setDocumentMode</var> (dokieli.js).</p>
                 </div>
               </section>
 
@@ -569,13 +569,13 @@
                 <h3 property="schema:name">Features</h3>
                 <div datatype="rdf:HTML" property="schema:description">
                   <dl rel="schema:hasPart">
-                    <dt id="signin-user"><i class="fa fa-user-secret"></i>Sign in</dt>
+                    <dt id="signin-user"><i class="fas fa-user-secret"></i>Sign in</dt>
                     <dd>Allows the user to identify themselves using their personal online identifier (such as a WebID) where they can also authenticate themselves. dokieli retrieves information related to user's identity to adapt the user interface as well as with operations related to user's actions.</dd>
 
-                    <dt id="resource-share"><i class="fa fa-bullhorn"></i>Share</dt>
+                    <dt id="resource-share"><i class="fas fa-bullhorn"></i>Share</dt>
                     <dd>The user can share the current article or a part of it with individuals or groups from their contacts as well as to any specific agent. The list of contacts is generated through a discovery mechanism where dokieli follows <samp>foaf:knows</samp> relations as well as traversing equivalent profiles (<code>owl:sameAs</code>) and determines their inboxes. dokieli sends a notification to user selected targets with information such as who sent the notification, when it was created, its license and motivation.</dd>
 
-                    <dt id="resource-reply"><i class="fa fa-reply"></i>Reply</dt>
+                    <dt id="resource-reply"><i class="fas fa-reply"></i>Reply</dt>
                     <dd>An article can be replied with a note and have its own <a href="#resource-language">language</a> and <a href="#resource-license">license</a>. The user can use the <a href="#resource-browser">resource browser</a> to choose the location of the reply in a <a href="#personal-storage">personal storage</a> or an annotation service.</dd>
 
                     <dt about="#resource-notifications" id="resource-notifications" property="schema:name">Notifications</dt>
@@ -605,19 +605,19 @@
                         <dd>A note to indicate a reply to selected text or node.</dd>
                         <dt>Tagging</dt>
                         <dd>The user can associate tags (natural language text) to selected text which is used as part of purpose for annotations such as <a href="#annotation-bookmarking">bookmarking</a>, <a href="#annotation-replying">replying</a>, and <a href="#resource-commenting">commenting</a>.</dd>
-                        <dt><i class="fa fa-thumbs-up"></i>Approve</dt>
+                        <dt><i class="fas fa-thumbs-up"></i>Approve</dt>
                         <dd>General agreement with the selected text. Optional note can indicate why the selection is a strong point or a convincing argument.</dd>
-                        <dt><i class="fa fa-thumbs-down"></i>Disapprove</dt>
+                        <dt><i class="fas fa-thumbs-down"></i>Disapprove</dt>
                         <dd>General disagreement with the selected text. Optional note can indicate why the selection is a weak point, an error, or inaccurate.</dd>
-                        <dt><i class="fa fa-crosshairs"></i>Specificity</dt>
+                        <dt><i class="fas fa-crosshairs"></i>Specificity</dt>
                         <dd>Request to increase specificity on selected text. Optional note can indicate that a citation or more specificity is needed.</dd>
                       </dl>
                     </dd>
 
-                    <dt id="resource-new"><i class="fa fa-lightbulb-o"></i>New</dt>
+                    <dt id="resource-new"><i class="fas fa-lightbulb"></i>New</dt>
                     <dd>This feature allows a new document to be created at specified location. The new document is constructed based on  If the user is signed in with their WebID and their personal storage location is identifier, the default location for the new resource will have the storage URL (<code>pim:storage</code>) as its base. If the user does not have a WebID and a storage, and if the article refers to an annotation service (<code>oa:annotationService</code>), it will use that URL instead. The URL can be input directly, and otherwise a name will be autogenerated for the resource. This feature uses the <cite><a href="#resource-browser">resource browser</a></cite> to navigate HTTP URLs. See also <var>generateAttributeId</var> (dokieli.js). On create, the resulting hyperlink will be shown and a new tab in the browser will be prompted.</dd>
 
-                    <dt id="resource-open"><i class="fa fa-coffee"></i>Open</dt>
+                    <dt id="resource-open"><i class="fas fa-coffee"></i>Open</dt>
                     <dd>Documents can be opened from a local filesystem or by entering an HTTP URL. Both options read the resource's content, and if dokieli's CSS and JavaScript are not present, they are included before updating the DOM and initiating dokieli. This feature uses the <cite><a href="#resource-browser">resource browser</a></cite> to navigate HTTP URLs. See also <var>openDocument</var> (dokieli.js). There are special handling of data formats such as:
                       <dl>
                         <dt id="gps-data">GPS data</dt>
@@ -627,10 +627,10 @@
                       </dl>
                     </dd>
 
-                    <dt id="resource-save"><i class="fa fa-life-ring"></i>Save</dt>
+                    <dt id="resource-save"><i class="fas fa-life-ring"></i>Save</dt>
                     <dd>This feature makes a <a href="#http-put">write operation</a> (<code>HTTP PUT</code>) request to the current location of the document (<var>window.location</var>). The document is normalised in that dokieli related items are removed from the DOM before making the request.</dd>
 
-                    <dt id="resource-save-as"><i class="fa fa-paper-plane-o"></i>Save As</dt>
+                    <dt id="resource-save-as"><i class="far fa-paper-plane"></i>Save As</dt>
                     <dd>The <cite>Save As</cite> operation is similar to <cite>New</cite> for normalising some of the URLs and same as <cite>Save</cite> operation for normalising the DOM before making the request to specified location. If <cite>Derivation data</cite> is checked for inclusion, <a href="#html-document-derived-from-on">derived from and on</a> information is included in the created document. This feature uses the <cite><a href="#resource-browser">resource browser</a></cite> to navigate HTTP URLs.
                       <dl>
                         <dt id="resource-set-inbox">Set Inbox</dt>
@@ -664,14 +664,14 @@
                     <dt id="generate-feed">Generate Feed</dt>
                     <dd>The user can generate and publish a custom web feed based on a list of documents they have selected from a storage. The user can specify the feed's title, <a href="#resource-language">language</a>, <a href="#resource-license">license</a>, and format such as RSS or Atom.</dd>
 
-                    <dt id="resource-export"><i class="fa fa-external-link"></i>Export</dt>
+                    <dt id="resource-export"><i class="fas fa-external-link"></i>Export</dt>
                     <dd>The user can export the article as HTML and save to their local filesystem.</dd>
 
 
-                    <dt id="resource-print"><i class="fa fa-print"></i>Print</dt>
+                    <dt id="resource-print"><i class="fas fa-print"></i>Print</dt>
                     <dd>Requests to print the current document (<code>window.print()</code>).</dd>
 
-                    <dt id="editor-enable"><i class="fa fa-i-cursor"></i>Edit</dt>
+                    <dt id="editor-enable"><i class="fas fa-i-cursor"></i>Edit</dt>
                     <dd><cite>Editor</cite> is one of the document modes a user can be in. The available features reflect the edit operation. Edits reside in the DOM until a <cite>Save</cite> or <cite>Save As</cite> is triggered. There are content formatting and structuring features to indicate heading, italics, bold, ordered an unordered listing, inline code, preformatted text, hyperlinking, inline quotes, adding images, tables, as well as:
                       <dl>
                         <dt id="resource-interactive-embeddable-objects">Interactive and embeddable objects</dt>
@@ -688,16 +688,16 @@
                     <dt id="resource-autosaving">Autosaving</dt>
                     <dd>While the user is in <a href="#editor-enable">editing</a> their article, the document is autosaved to local storage. The user can optionally enable autosaving the resource.</dd>
 
-                    <dt id="resource-source"><i class="fa fa-code"></i>Source</dt>
+                    <dt id="resource-source"><i class="fas fa-code"></i>Source</dt>
                     <dd>The user can edit the current state of the article. <em>Updating</em>, only updates the DOM, where write operations on the article resource itself are handled by features such as <a href="#resource-save">Save</a>.</dd>
 
-                    <dt id="embed-data-meta"><i class="fa fa-table"></i>Embed Data</dt>
+                    <dt id="embed-data-meta"><i class="fas fa-table"></i>Embed Data</dt>
                     <dd>The user can embed and update supplemental data to be stored with the article using RDF syntaxes such as Turtle, JSON-LD, and TriG.</dd>
 
                     <dt id="message-log">Messages</dt>
                     <dd>The user can read the all of the messages that were raised to their attention by dokieli for example as the result of some action.</dd>
 
-                    <dt id="dokieli-views"><i class="fa fa-magic"></i>Views</dt>
+                    <dt id="dokieli-views"><i class="fas fa-magic"></i>Views</dt>
                     <dd>The dokieli menu will list primary and alternate stylesheets that are <a href="#html-css">detected in HTML</a>. <cite>Native</cite> is always available and it will essentially disable all other stylesheets, thereby user-agent's default stylesheets are gets applied. When a view is selected, eg. <cite>Basic</cite> (which happens to be the one that is used on this article as primary), it becomes the primary stylesheet, and the rest of the stylesheets become alternate and disabled.</dd>
 
                     <dt id="resource-graph">Graph visualisation</dt>
