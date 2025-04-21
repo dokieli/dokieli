@@ -3,12 +3,11 @@
 import Config from './config.js'
 import { generateUUID } from './util.js'
 import { getProxyableIRI } from './uri.js'
-import * as solidAuth from 'solid-auth-client'
 
 const DEFAULT_CONTENT_TYPE = 'text/html; charset=utf-8'
 const LDP_RESOURCE = '<http://www.w3.org/ns/ldp#Resource>; rel="type"'
 
-const __fetch = solidAuth.fetch;
+const __fetch = Config['Session']?.authFetch || fetch;
 
 function setAcceptRDFTypes(options = {}) {
   const excludeMarkup = options.excludeMarkup || false;
@@ -210,7 +209,7 @@ function getAcceptPutPreference (url) {
  */
 function getResource (url, headers = {}, options = {}) {
   var _fetch = Config.User.OIDC? __fetch : fetch;
-  // fetch = session.isActive ? session.fetch : fetch
+  // var _fetch = Config['Session'].isActive ? Config['Session'].authFetch : fetch
 
   url = url || currentLocation()
 // console.log(url)
@@ -330,7 +329,7 @@ function getResourceHead (url, headers = {}, options = {}) {
  * @returns {Promise} Resolves with `{ headers: ... }` object
  */
 function getResourceOptions (url, options = {}) {
-  var _fetch = Config.User.OIDC? __fetch : fetch;
+  var _fetch = Config.User.OIDC ? __fetch : fetch;
   url = url || currentLocation()
 
   options.method = 'OPTIONS'

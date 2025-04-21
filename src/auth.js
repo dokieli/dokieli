@@ -44,10 +44,8 @@ function getUserSignedInHTML() {
 
 
 async function showUserSigninSignout (node) {
-  // await restoreSession().then(() => Config['Session']);
-
   //TODO: Check 
-  var webId = Config['Session'] ? Config['Session'].webId : null;
+  var webId = Config['Session'].isActive ? Config['Session'].webId : null;
 
 
   // was LoggedId with new OIDC WebID
@@ -98,7 +96,7 @@ async function showUserSigninSignout (node) {
         removeLocalStorageDocument()
 
         if (Config.User.OIDC) {
-          await logout();
+          await Config['Session'].logout();
           removeLocalStorageAuthClient()
         }
 
