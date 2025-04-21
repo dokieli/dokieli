@@ -27,9 +27,9 @@ import rdf from 'rdf-ext';
 import Config from './config.js';
 import { Editor } from './editor/editor.js';
 import { getButtonHTML } from './ui/button-icons.js'
-import { Session } from '@uvdsl/solid-oidc-client-browser';
+// import { Session } from '@uvdsl/solid-oidc-client-browser';
 
-const session = new Session();
+// const session = new Session();
 
 
 const ns = Config.ns;
@@ -1502,6 +1502,7 @@ DO = {
     initAuth: function() {
 // restore session, replace fetch globally (if needed), restore state from local storage if applicable
 // restoreAfterREdirect / handleRedirect
+      console.log(window.location.href)
 
       restoreSession().then((session) => {
         if (!session) {
