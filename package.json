@@ -40,7 +40,7 @@
   },
   "dependencies": {
     "@shower/core": "^3.3.0",
-    "@uvdsl/solid-oidc-client-browser": "^0.0.4",
+    "@uvdsl/solid-oidc-client-browser": "^0.0.6",
     "buffer": "^6.0.3",
     "d3-force": "^3.0.0",
     "d3-selection": "^3.0.0",
