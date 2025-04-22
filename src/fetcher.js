@@ -7,7 +7,10 @@ import { getProxyableIRI } from './uri.js'
 const DEFAULT_CONTENT_TYPE = 'text/html; charset=utf-8'
 const LDP_RESOURCE = '<http://www.w3.org/ns/ldp#Resource>; rel="type"'
 
-const __fetch = Config['Session']?.authFetch || fetch;
+function authFetch(url, options) {
+  const request = new Request(url, options);
+  return Config['Session'].authFetch(request)
+}
 
 function setAcceptRDFTypes(options = {}) {
   const excludeMarkup = options.excludeMarkup || false;
@@ -82,7 +85,7 @@ function currentLocation (options = {}) {
  * @returns {Promise<Response>}
  */
 function deleteResource (url, options = {}) {
-  var _fetch = Config.User.OIDC? __fetch : fetch;
+  var _fetch = Config['Session'] ? __fetch : fetch;
 
   if (!url) {
     return Promise.reject(new Error('Cannot DELETE resource - missing url'))
@@ -208,8 +211,8 @@ function getAcceptPutPreference (url) {
  * @returns {Promise<string>|Promise<ArrayBuffer>}
  */
 function getResource (url, headers = {}, options = {}) {
-  var _fetch = Config.User.OIDC? __fetch : fetch;
-  // var _fetch = Config['Session'].isActive ? Config['Session'].authFetch : fetch
+  // var _fetch = Config['Session'] ? __fetch : fetch;
+  var _fetch = Config['Session'].isActive ? authFetch : fetch
 
   url = url || currentLocation()
 // console.log(url)
@@ -329,7 +332,7 @@ function getResourceHead (url, headers = {}, options = {}) {
  * @returns {Promise} Resolves with `{ headers: ... }` object
  */
 function getResourceOptions (url, options = {}) {
-  var _fetch = Config.User.OIDC ? __fetch : fetch;
+  var _fetch = Config['Session'].isActive ? authFetch : fetch
   url = url || currentLocation()
 
   options.method = 'OPTIONS'
@@ -459,7 +462,7 @@ function patchResourceGraph (url, patches, options = {}) {
 }
 
 function patchResource (url, data, options = {}) {
-  var _fetch = Config.User.OIDC? __fetch : fetch;
+  var _fetch = Config['Session'].isActive ? authFetch : fetch
 
   options.headers = options.headers || {}
 
@@ -490,7 +493,7 @@ function patchResource (url, data, options = {}) {
 }
 
 function postResource (url, slug, data, contentType, links, options = {}) {
-  var _fetch = Config.User.OIDC? __fetch : fetch;
+  var _fetch = Config['Session'].isActive ? authFetch : fetch
   if (!url) {
     return Promise.reject(new Error('Cannot POST resource - missing url'))
   }
@@ -559,7 +562,7 @@ function postResource (url, slug, data, contentType, links, options = {}) {
  * @returns {Promise<Response>}
  */
 function putResource (url, data, contentType, links, options = {}) {
-  var _fetch = Config.User.OIDC? __fetch : fetch;
+  var _fetch = Config['Session'].isActive ? authFetch : fetch
   if (!url) {
     return Promise.reject(new Error('Cannot PUT resource - missing url'))
   }
