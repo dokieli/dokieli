@@ -153,12 +153,6 @@ function removeLocalStorageItem(key) {
   }
 }
 
-function removeLocalStorageAuthClient(key) {
-  key = key || 'solid-auth-client';
-
-  return removeLocalStorageItem(key)
-}
-
 function removeLocalStorageDocument(key) {
   key = key || Config.DocumentURL;
 
@@ -320,7 +314,6 @@ export {
   enableAutoSave,
   disableAutoSave,
   removeLocalStorageItem,
-  removeLocalStorageAuthClient,
   removeLocalStorageDocument,
   removeLocalStorageProfile,
   getLocalStorageProfile,

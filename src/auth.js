@@ -1,5 +1,3 @@
-'use strict'
-
 import rdf from 'rdf-ext';
 import Config from './config.js'
 import { deleteResource } from './fetcher.js'
@@ -7,41 +5,20 @@ import { removeChildren, fragmentFromString } from './util.js'
 import { getAgentHTML, showActionMessage, showGeneralMessages, getResourceSupplementalInfo, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, handleDeleteNote } from './doc.js'
 import { Icon } from './ui/icons.js'
 import { getResourceGraph, getAgentName, getGraphImage, getAgentURL, getAgentPreferredProxy, getAgentPreferredPolicy, getAgentPreferredPolicyRule, setPreferredPolicyInfo, getAgentDelegates, getAgentKnows, getAgentFollowing, getAgentStorage, getAgentOutbox, getAgentInbox, getAgentPreferencesFile, getAgentPublicTypeIndex, getAgentPrivateTypeIndex, getAgentTypeIndex, getAgentSupplementalInfo, getAgentSeeAlso, getAgentPreferencesInfo, getAgentLiked, getAgentOccupations, getAgentPublications, getAgentMade, getAgentOIDCIssuer } from './graph.js'
-import { removeLocalStorageAuthClient, removeLocalStorageDocument, removeLocalStorageProfile, updateLocalStorageProfile } from './storage.js'
-// import solidAuth from 'solid-auth-client'
+import { removeLocalStorageDocument, removeLocalStorageProfile, updateLocalStorageProfile } from './storage.js'
 import { getButtonHTML } from './ui/button-icons.js';
 import { Session } from '@uvdsl/solid-oidc-client-browser';
 
 const ns = Config.ns;
-// const { logout, popupLogin } = solidAuth;
 Config['Session'] = new Session();
 
 export async function restoreSession() {
   return Config['Session'].handleRedirectFromLogin();
 }
 
-
-// const { OIDCWebClient } = require('@trust/oidc-web')
-
-// click button
-// open modal
-// get user WebID / IDP
-
-// do this: 
-// const redirect_uri = window.location.href;
-// const idp = "your IDP";
-// session.login(idp, redirect_uri);
-
-// after sign in 
-// restoreSession().then(() => console.log("Logged in:", session.webId));
-
-
-
 function getUserSignedInHTML() {
-  // return getAgentHTML() + '<button class="signout-user" title="Live long and prosper">' + Icon[".far.fa-spock-hand"] + '</button>'
   return getAgentHTML() + getButtonHTML({ button: 'signout', buttonClass: 'signout-user', buttonTitle: 'Live long and prosper"' });
 }
-
 
 async function showUserSigninSignout (node) {
   //TODO: Check 
@@ -50,13 +27,13 @@ async function showUserSigninSignout (node) {
 
   // was LoggedId with new OIDC WebID
   if (webId && (webId != Config.User.IRI || !Config.User.IRI)) {
-     await setUserInfo(webId, { oidc: true })
+     await setUserInfo(webId)
           .then(() => {
             afterSetUserInfo()
           })
   }
   // was LoggedOut as OIDC
-  if (!webId && Config.User.IRI && Config.User.OIDC) {
+  if (!webId && Config.User.IRI && Config['Session']?.isActive) {
     removeLocalStorageProfile()
 
     Config.User = {
@@ -95,9 +72,8 @@ async function showUserSigninSignout (node) {
       if (e.target.closest('.signout-user')) {
         removeLocalStorageDocument()
 
-        if (Config.User.OIDC) {
+        if (Config['Session']?.isActive) {
           await Config['Session'].logout();
-          removeLocalStorageAuthClient()
         }
 
         removeLocalStorageProfile()
@@ -126,8 +102,6 @@ async function showUserSigninSignout (node) {
       su.addEventListener('click', showUserIdentityInput)
     }
 
-    // var rA = document.querySelector('#document-menu .resource-notifications')
-    // if(rA) { rA.setAttribute('disabled', 'disabled') }
   }
 }
 
@@ -138,12 +112,7 @@ function showUserIdentityInput (e) {
   }
 
   var webid = Config.User.WebIdDelegate ? Config.User.WebIdDelegate : "";
-  var code = '<aside id="user-identity-input" class="do on">' + Config.Button.Close + '<h2>Sign in</h2><p id="user-identity-input-webid"><label>WebID</label> <input id="webid" type="text" placeholder="https://csarven.ca/#i" value="'+webid+'" name="webid"/> <button class="signin">Sign in</button></p>';
-  //XXX: This limitation may not be necessary.
-  // if (window.location.protocol === "https:") {
-    code += '<p id="user-identity-input-oidc">or with <label>OpenID Connect</label> <button class="signin-oidc">Sign in</button></p>';
-  // }
-  code += '</aside>';
+  var code = '<aside id="user-identity-input" class="do on">' + Config.Button.Close + '<h2>Sign in</h2><p id="user-identity-input-webid"><label>WebID</label> <input id="webid" type="text" placeholder="https://csarven.ca/#i" value="'+webid+'" name="webid"/> <button class="signin">Sign in</button></p></aside>';
 
   document.body.appendChild(fragmentFromString(code))
 
@@ -170,11 +139,6 @@ function showUserIdentityInput (e) {
       inputWebID.addEventListener(eventType, e => { enableDisableButton(e, buttonSignIn) })
     })
   }
-
-  // var buttonSignInOIDC = document.querySelector('#user-identity-input button.signin-oidc')
-  // if (buttonSignInOIDC) {
-  //   buttonSignInOIDC.addEventListener('click', submitSignInOIDC)
-  // }
 
   inputWebID.focus()
 }
@@ -223,7 +187,7 @@ function submitSignIn (url) {
     return Promise.resolve()
   }
 
-  return setUserInfo(url, { oidc: false })
+  return setUserInfo(url)
     .then(() => {
       var uI = document.getElementById('user-info')
       if (uI) {
@@ -250,40 +214,8 @@ function submitSignIn (url) {
 
   const redirect_uri = window.location.href;
 
-  // redirects away from dokieli
+  // Redirects away from dokieli :( but hopefully only briefly :)
   Config['Session'].login(idp, redirect_uri);
-}
-
-function submitSignInOIDC (url) {
-  var userIdentityInput = document.getElementById('user-identity-input')
-
-  var popupUri = Config.OidcPopupUrl;
-
-  if (solidAuth) {
-    popupLogin({ popupUri })
-      .then((session) => {
-         if (session && session.webId) {
-           console.log("Connected:", session.webId);
-           setUserInfo(session.webId, { oidc: true })
-            .then(() => {
-              var uI = document.getElementById('user-info')
-              if (uI) {
-                removeChildren(uI);
-                uI.insertAdjacentHTML('beforeend', getUserSignedInHTML());
-              }
-
-              if (userIdentityInput) {
-                userIdentityInput.parentNode.removeChild(userIdentityInput)
-              }
-
-              afterSetUserInfo()
-            })
-         }
-      }).catch((err) => {
-        console.log('submitSignInOIDC - '+err);
-        return Promise.resolve();
-      });
-  }
 }
 
 function setUserInfo (subjectIRI, options = {}) {
@@ -339,7 +271,6 @@ function getSubjectInfo (subjectIRI, options = {}) {
         URL: getAgentURL(g),
         Role: options.role,
         UI: options.ui,
-        OIDC: !!options.oidc,
         OIDCIssuer: getAgentOIDCIssuer(g),
         ProxyURL: getAgentPreferredProxy(g),
         PreferredPolicy: getAgentPreferredPolicy(g),
@@ -425,9 +356,6 @@ function afterSetUserInfo () {
       return Promise.resolve();
     });
 
-  // var rA = document.querySelector('#document-menu .resource-notifications')
-  // if(rA) { rA.removeAttribute('disabled') }
-
   var user = document.querySelectorAll('aside.do article *[rel~="dcterms:creator"] > *[about="' + Config.User.IRI + '"]');
 
   for (let i = 0; i < user.length; i++) {
@@ -454,6 +382,5 @@ export {
   setContactInfo,
   showUserIdentityInput,
   showUserSigninSignout,
-  submitSignIn,
-  submitSignInOIDC
+  submitSignIn
 }

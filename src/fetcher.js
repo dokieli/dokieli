@@ -1,5 +1,3 @@
-'use strict'
-
 import Config from './config.js'
 import { generateUUID } from './util.js'
 import { getProxyableIRI } from './uri.js'
@@ -85,7 +83,7 @@ function currentLocation (options = {}) {
  * @returns {Promise<Response>}
  */
 function deleteResource (url, options = {}) {
-  var _fetch = Config['Session'] ? __fetch : fetch;
+  const _fetch = Config['Session'].isActive ? authFetch : fetch;
 
   if (!url) {
     return Promise.reject(new Error('Cannot DELETE resource - missing url'))
@@ -211,8 +209,7 @@ function getAcceptPutPreference (url) {
  * @returns {Promise<string>|Promise<ArrayBuffer>}
  */
 function getResource (url, headers = {}, options = {}) {
-  // var _fetch = Config['Session'] ? __fetch : fetch;
-  var _fetch = Config['Session'].isActive ? authFetch : fetch
+  const _fetch = Config['Session'].isActive ? authFetch : fetch;
 
   url = url || currentLocation()
 // console.log(url)
@@ -332,7 +329,8 @@ function getResourceHead (url, headers = {}, options = {}) {
  * @returns {Promise} Resolves with `{ headers: ... }` object
  */
 function getResourceOptions (url, options = {}) {
-  var _fetch = Config['Session'].isActive ? authFetch : fetch
+  const _fetch = Config['Session'].isActive ? authFetch : fetch;
+
   url = url || currentLocation()
 
   options.method = 'OPTIONS'
@@ -462,7 +460,7 @@ function patchResourceGraph (url, patches, options = {}) {
 }
 
 function patchResource (url, data, options = {}) {
-  var _fetch = Config['Session'].isActive ? authFetch : fetch
+  const _fetch = Config['Session'].isActive ? authFetch : fetch;
 
   options.headers = options.headers || {}
 
@@ -493,7 +491,8 @@ function patchResource (url, data, options = {}) {
 }
 
 function postResource (url, slug, data, contentType, links, options = {}) {
-  var _fetch = Config['Session'].isActive ? authFetch : fetch
+  const _fetch = Config['Session'].isActive ? authFetch : fetch;
+
   if (!url) {
     return Promise.reject(new Error('Cannot POST resource - missing url'))
   }
@@ -562,7 +561,8 @@ function postResource (url, slug, data, contentType, links, options = {}) {
  * @returns {Promise<Response>}
  */
 function putResource (url, data, contentType, links, options = {}) {
-  var _fetch = Config['Session'].isActive ? authFetch : fetch
+  const _fetch = Config['Session'].isActive ? authFetch : fetch;
+
   if (!url) {
     return Promise.reject(new Error('Cannot PUT resource - missing url'))
   }

@@ -49,11 +49,9 @@ export default {
     IRI: null,
     Role: null,
     UI: {},
-    OIDC: false,
     WebIdDelegate: null
   },
   ContributorRoles: ['author', 'editor'],
-  OidcPopupUrl: (window.location.hostname == 'localhost' || !navigator.onLine) ? (window.location.pathname.substr(0, window.location.pathname.lastIndexOf('/') + 1)) + 'popup.html' : 'https://dokie.li/popup.html',
   LocalDocument: (document.location.protocol == 'file:'),
   UseLocalStorage: false,
   AutoSave: {

@@ -27,7 +27,6 @@ import rdf from 'rdf-ext';
 import Config from './config.js';
 import { Editor } from './editor/editor.js';
 import { getButtonHTML } from './ui/button-icons.js'
-// import { Session } from '@uvdsl/solid-oidc-client-browser';
 
 const session = Config.Session;
 
@@ -1500,16 +1499,15 @@ DO = {
     },
 
     initAuth: function() {
-// restore session, replace fetch globally (if needed), restore state from local storage if applicable
-// restoreAfterREdirect / handleRedirect
-      console.log(window.location.href)
+      // console.log(window.location.href)
 
       restoreSession().then(() => {
         if (!Config['Session']) {
           console.log("No session");
           return;
         }
-        console.log("Logged in: ", Config['Session'].webId)
+
+        console.log("Logged in: ", Config['Session'].webId);
       })
     },
 
@@ -5926,7 +5924,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
         DO.U.triggerBrowse(input.value, id, action);
       }, false);
 
-      if (DO.C.User.OIDC) {
+      if (DO.C['Session']?.isActive) {
         createButton.addEventListener('click', (e) => {
           DO.U.showCreateContainer(input.value, id, action, e);
         }, false);
@@ -6092,7 +6090,7 @@ console.log(response)
 
       var createContainerButton = '';
       var createContainerDiv = '';
-      if  (DO.C.User.OIDC) {
+      if  (DO.C['Session']?.isActive) {
         createContainerButton = ' <button id="' + id + '-create-container-button' + '" title="Create container (folder)">Create container</button>';
         createContainerDiv = '<div id="' + id + '-create-container"></div>';
       }
@@ -6166,7 +6164,7 @@ console.log(response)
           function(){
             var input = document.getElementById(id + '-input');
 
-            if (DO.C.User.OIDC) {
+            if (DO.C['Session']?.isActive) {
               browseButton.addEventListener('click', () => {
                 createContainer.innerHTML = '';
                 DO.U.triggerBrowse(input.value, id, action);

@@ -1051,7 +1051,7 @@ function getAgentTypeIndex(s) {
   if (publicTypeIndex?.length) {
     promises.push(fetchTypeRegistration(publicTypeIndex[0], ns.solid.publicTypeIndex.value))
   }
-  if (privateTypeIndex?.length && Config.User.OIDC) {
+  if (privateTypeIndex?.length && DO.C['Session']?.isActive) {
     promises.push(fetchTypeRegistration(privateTypeIndex[0], ns.solid.privateTypeIndex.value))
   }
 
