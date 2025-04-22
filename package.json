@@ -64,8 +64,7 @@
     "prosemirror-state": "^1.4.3",
     "prosemirror-view": "^1.37.2",
     "rdf-ext": "^2.5.2",
-    "rdfa-streaming-parser": "^3.0.1",
-    "solid-auth-client": "^2.5.6"
+    "rdfa-streaming-parser": "^3.0.1"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.9.1",
