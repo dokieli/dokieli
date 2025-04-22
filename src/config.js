@@ -11,10 +11,10 @@ export default {
   init: function(url) {
     var contentNode = DO.U?.getContentNode(document);
     if (contentNode) {
+      DO.U.initAuth();
       DO.U.setDocumentURL(url);
       DO.U.setDocumentString();
       DO.U.setPolyfill();
-      DO.U.initAuth();
       DO.U.initUser();
       DO.U.initCurrentStylesheet();
       DO.U.setDocRefType();
