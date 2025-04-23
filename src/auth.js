@@ -187,6 +187,7 @@ function submitSignIn (url) {
     return Promise.resolve()
   }
 
+  //TODO: Consider throwing an error with setUserInfo where there is no profile, and so don't trigger signInWithOIDC at all.
   return setUserInfo(url)
     .then(() => {
       var uI = document.getElementById('user-info')
@@ -210,9 +211,13 @@ function submitSignIn (url) {
 
 //XXX: User Profile should've been fetch by now.
  async function signInWithOIDC() {
-  if (!Config.User.OIDCIssuer) {
+  if (Config.User.IRI && !Config.User.OIDCIssuer) {
     throw new Error('OIDC issuer not found in profile, not signed in. Using information from profile to personalize the UI.');
   }
+  else if (!Config.User.IRI) {
+    throw  new Error('Cannot sign in because no profile was found. You are now in anonymous mode.');
+  }
+
   const idp = Config.User.OIDCIssuer;
 
   const redirect_uri = window.location.href;
@@ -260,7 +265,7 @@ function getSubjectInfo (subjectIRI, options = {}) {
     .then(g => {
       //TODO: Consider whether to construct an empty graph (useful to work only with their IRI);
 
-      if (!g || g.resource || (g && !Array.from(g.out().quads()).length)) {
+      if (!g || g.resource || g.cause || (g && !Array.from(g.out().quads()).length)) {
         return {};
       }
 
