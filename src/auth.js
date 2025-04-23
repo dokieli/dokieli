@@ -200,15 +200,18 @@ function submitSignIn (url) {
       }
 
       signInWithOIDC()
+      .catch(e => {
+        showActionMessage(document.body, { timer: null, content: e.message, type: 'info' });
+      })
 
       // afterSetUserInfo()
     })
 }
 
 //XXX: User Profile should've been fetch by now.
- function signInWithOIDC() {
+ async function signInWithOIDC() {
   if (!Config.User.OIDCIssuer) {
-    throw new Error('Could not sign in with OIDC - no OIDCIssuer');
+    throw new Error('OIDC issuer not found in profile, not signed in. Using information from profile to personalize the UI.');
   }
   const idp = Config.User.OIDCIssuer;
 
