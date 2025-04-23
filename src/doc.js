@@ -927,20 +927,22 @@ function showActionMessage(node, message, options = {}) {
   }
   node.querySelector('#document-action-message > h2 + ul').insertAdjacentHTML('afterbegin', messageItem);
 
-  window.setTimeout(function () {
-    var aside = node.querySelector('#document-action-message');
-    if (aside) {
-      var li = aside.querySelector('#' + id);
-      if (li) {
-        li.parentNode.removeChild(li);
+  if (message.timer !== null) {
+    window.setTimeout(function () {
+      var aside = node.querySelector('#document-action-message');
+      if (aside) {
+        var li = aside.querySelector('#' + id);
+        if (li) {
+          li.parentNode.removeChild(li);
+        }
+      
+        li = aside.querySelector('h2 + ul > li');
+        if (!li) {
+          node.removeChild(aside);
+        }
       }
-    
-      li = aside.querySelector('h2 + ul > li');
-      if (!li) {
-        node.removeChild(aside);
-      }
-    }
-  }, message.timer);
+    }, message.timer);
+  }
 
   //TODO: To halt the timer when the user hovers over the message.
   // aside.addEventListener('hover', function (e) {
