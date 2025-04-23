@@ -1207,7 +1207,7 @@ a.highlight,
 border-radius:0.5em;
 border:1px solid #CCCCCC;
 margin-top:1em;
-padding:0 1em;
+padding:1em !important;
 background-color:#FFFFFF;
 color:#000;
 font-weight: normal;
