@@ -5,11 +5,10 @@ import { RdfaParser } from "rdfa-streaming-parser";
 import { Readable } from "readable-stream";
 import Config from './config.js'
 import { stripFragmentFromString, getProxyableIRI, getBaseURL, getPathURL, getAbsoluteIRI, getParentURLPath } from './uri.js'
-import { uniqueArray } from './util.js'
+import { domSanitize, uniqueArray } from './util.js'
 import { parseMarkdown } from "./doc.js";
 import { setAcceptRDFTypes, getResource, getResourceHead, currentLocation } from './fetcher.js'
 import LinkHeader from "http-link-header";
-import DOMPurify from 'dompurify';
 
 const ns = Config.ns;
 
@@ -1140,7 +1139,7 @@ function getAgentName (s) {
       name = s.out(ns.vcard.nickname).values;
     }
   }
-  return name === undefined ? undefined : DOMPurify.sanitize(name)
+  return name === undefined ? undefined : domSanitize(name)
 }
 
 function getAgentURL (s) {
@@ -1292,7 +1291,7 @@ function getGraphEmail(s) {
     mbox.length ? mbox[0] :
     undefined;
 
-  return d === undefined ? undefined : DOMPurify.sanitize(d)
+  return d === undefined ? undefined : domSanitize(d)
 }
 
 function getGraphContributors(s) {
@@ -1341,17 +1340,17 @@ function getGraphDate(s) {
 
 function getGraphPublished(s) {
   var d = s.out(ns.schema.datePublished).values[0] || s.out(ns.as.published).values[0] || s.out(ns.dcterms.issued).values[0] || s.out(ns.dcterms.date).values[0] || s.out(ns.prov.generatedAtTime).values [0] || undefined;
-  return d === undefined ? undefined : DOMPurify.sanitize(d);
+  return d === undefined ? undefined : domSanitize(d);
 }
 
 function getGraphUpdated(s) {
   var d = s.out(ns.schema.dateModified).values[0] || s.out(ns.as.updated).values[0] || s.out(ns.dcterms.modified).values[0] || s.out(ns.dcterms.date).values[0] || s.out(ns.prov.generatedAtTime).values[0] || undefined;
-  return d === undefined ? undefined : DOMPurify.sanitize(d);
+  return d === undefined ? undefined : domSanitize(d);
 }
 
 function getGraphCreated(s) {
   var d = s.out(ns.schema.dateCreated).values[0] || s.out(ns.dcterms.created).values[0] || s.out(ns.dcterms.date).values[0] || s.out(ns.prov.generatedAtTime).values[0] || undefined;
-  return d === undefined ? undefined : DOMPurify.sanitize(d);
+  return d === undefined ? undefined : domSanitize(d);
 }
 
 function getGraphLanguage(s) {
@@ -1368,12 +1367,12 @@ function getGraphRights(s) {
 
 function getGraphLabel(s) {
   var d = s.out(ns.schema.name).values[0] || s.out(ns.dcterms.title).values[0] || s.out(ns.dcelements.title).values[0] || getAgentName(s) || s.out(ns.as.summary).values[0] || undefined;
-  return d === undefined ? undefined : DOMPurify.sanitize(d)
+  return d === undefined ? undefined : domSanitize(d)
 }
 
 function getGraphTitle(s) {
   var d = s.out(ns.schema.name).values[0] || s.out(ns.dcterms.title).values[0] || s.out(ns.dcelements.title).values[0] || s.out(ns.as.name).values[0] || undefined;
-  return d === undefined ? undefined : DOMPurify.sanitize(d)
+  return d === undefined ? undefined : domSanitize(d)
 }
 
 function getGraphLabelOrIRI(s) {
@@ -1460,7 +1459,7 @@ function getGraphConceptLabel(g, options) {
 
   for (var key in labels) {
     if (labels.hasOwnProperty(key)) {
-      flattenedLabels = flattenedLabels.concat(labels[key].sort().map(element => DOMPurify.sanitize(element)));
+      flattenedLabels = flattenedLabels.concat(labels[key].sort().map(element => domSanitize(element)));
     }
   }
 
@@ -1472,7 +1471,7 @@ function getGraphConceptLabel(g, options) {
 
 function getGraphDescription(s) {
   var d = s.out(ns.schema.description).value || s.out(ns.dcterms.description).value || s.out(ns.dcelements.description).value || s.out(ns.schema.name).value || s.out(ns.as.name).value || undefined;
-  return d === undefined ? undefined : DOMPurify.sanitize(d)
+  return d === undefined ? undefined : domSanitize(d)
 }
 
 function getGraphTypes(s) {

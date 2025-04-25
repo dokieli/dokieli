@@ -54,8 +54,9 @@ function sleep(ms) {
 }
 
 function fragmentFromString(strHTML) {
-  strHTML = DOMPurify.sanitize(strHTML);
-  return document.createRange().createContextualFragment(strHTML);
+  // ALLOW_UNKNOWN_PROTOCOLS is needed for namespaced attribute values that DOMPurify mistakenly interpret as an unknown protocol protocol; it will allow mailto: but strip out others it does not recognize
+  const cleanHTML = domSanitize(strHTML, { ALLOW_UNKNOWN_PROTOCOLS: true });
+  return document.createRange().createContextualFragment(cleanHTML);
 }
 
 function generateUUID(inputString) {
@@ -194,6 +195,16 @@ function hashCode(s) {
   return hash;
 }
 
+function domSanitize(strHTML, options = {}) {
+  // ALLOW_UNKNOWN_PROTOCOLS is needed for namespaced attribute values that DOMPurify mistakenly interpret as an unknown protocol protocol; it will allow mailto: but strip out others it does not recognize
+  const cleanHTML = DOMPurify.sanitize(strHTML, {
+    ALLOW_UNKNOWN_PROTOCOLS: options.ALLOW_UNKNOWN_PROTOCOLS === false ? false : true,
+    ...options
+  });
+
+  return cleanHTML;
+}
+
 function sortToLower(array, key) {
   return array.sort(function (a, b) {
     if (key) {
@@ -305,5 +316,6 @@ export {
   findPreviousDateTime,
   getFormValues,
   kebabToCamel,
-  parseISODuration
+  parseISODuration,
+  domSanitize
 };

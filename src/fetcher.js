@@ -40,7 +40,7 @@ function copyResource (fromURL, toURL, options = {}) {
         : response.text()
     })
     .then(contents => {
-      //XXX: Should this sanitize (DOMPurify.sanitize(contents)) or copy resource as is?
+      //XXX: Should this sanitize (domSanitize(contents)) or copy resource as is?
       return putResource(toURL, contents, contentType, null, options)
         .catch(error => {
           if (error.status === 0) {

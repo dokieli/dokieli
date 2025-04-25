@@ -11,7 +11,7 @@ import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessag
 import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, getAbsoluteIRI, generateDataURI, getMediaTypeURIs, getPrefixedNameFromIRI } from './uri.js'
 import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, serializeGraph, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getLinkRelationFromRDF, sortGraphTriples, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphInbox, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes, filterQuads } from './graph.js'
 import { notifyInbox, sendNotifications, postActivity } from './inbox.js'
-import { uniqueArray, fragmentFromString, hashCode, generateAttributeId, escapeRegExp, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, matchAllIndex, isValidISBN, findPreviousDateTime } from './util.js'
+import { uniqueArray, fragmentFromString, hashCode, generateAttributeId, escapeRegExp, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, matchAllIndex, isValidISBN, findPreviousDateTime, domSanitize } from './util.js'
 import { generateGeoView } from './geo.js'
 import { getLocalStorageProfile, showAutoSaveStorage, hideAutoSaveStorage, updateLocalStorageProfile } from './storage.js'
 import { showUserSigninSignout, showUserIdentityInput, setContactInfo, getSubjectInfo, restoreSession } from './auth.js'
@@ -22,7 +22,6 @@ const d3 = { ...d3Selection, ...d3Force };
 import shower from '@shower/core'
 import { diffChars } from 'diff'
 import LinkHeader from 'http-link-header';
-import DOMPurify from 'dompurify';
 import rdf from 'rdf-ext';
 import Config from './config.js';
 import { Editor } from './editor/editor.js';
@@ -1376,7 +1375,7 @@ DO = {
           // if(t.object.datatype.termType.value == 'http://www.w3.org/rdf/1999/02/22-rdf-syntax-ns#HTML') {
           // }
           // objectValue = escapeCharacters(objectValue);
-          objectValue = DOMPurify.sanitize(objectValue);
+          objectValue = domSanitize(objectValue);
         }
 
         //XXX: Don't remember why this if was included but it seems to be problematic since it skips adding nodes where the object doesn't have a type. So commenting it out for now. Seems to work as expected.
@@ -3572,7 +3571,8 @@ console.log(reason);
                   return response.text()
                     .then(data => {
 // console.log(data)
-                      data = DOMPurify.sanitize(data);
+                      // ALLOW_UNKNOWN_PROTOCOLS is needed for namespaced attribute values that DOMPurify mistakenly interpret as an unknown protocol protocol; it will allow mailto: but strip out others it does not recognize
+                      data = domSanitize(data, { ALLOW_UNKNOWN_PROTOCOLS: true });
 
                       var regexp = /var redirUrl = "([^"]*)";/;
                       var match = data.match(regexp);
@@ -4136,7 +4136,7 @@ console.log(reason);
               error.response.text()
                 .then(data => {
 // console.log(data);
-                  data = DOMPurify.sanitize(data);
+                  data = domSanitize(data);
 
                   //TODO: Reuse saveAsDocument's catch to request access by checking the Link header.
 
@@ -4181,7 +4181,7 @@ console.log(reason);
               return response.text()
                 .then(data => {
 // console.log(data);
-                  data = DOMPurify.sanitize(data);
+                  data = domSanitize(data);
 
                   var details = (data.trim().length) ? '<details><summary>Details</summary><div>' + data + '</div></details>' : '';
                   var message = '';
@@ -6299,7 +6299,7 @@ console.log(response)
                 //XXX: Revisit DOMPurify. This removes... pretty much everything. We don't necessarily want to completely get rid of styles (`link` or `style` tags). `script` tag and perhaps `style` attribute could perhaps be filtered - not sure if that's something we want to keep. Definitely do not remove RDF attributes (DO.C.RDFaAttributes).
                 // var sT = [...DO.C.MediaTypes.Markup, ...['text/plain', 'application/xhtml+xml']];
                 // if (sT.includes(options['contentType'])) {
-                //   data = DOMPurify.sanitize(data);
+                //   data = domSanitize(data);
                 //   console.log(DOMPurify.removed)
                 // }
 
@@ -6521,7 +6521,7 @@ console.log(response)
         switch(contentType){
           case 'text/html': case 'application/xhtml+xml':
             //TODO: Remoe scripts, keep styles?
-            //tmpl.documentElement.appendChild(fragmentFromString(DOMPurify.sanitize(data)));
+            //tmpl.documentElement.appendChild(fragmentFromString(domSanitize(data)));
             tmpl.documentElement.innerHTML = data;
             break;
 
