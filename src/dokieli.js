@@ -1637,10 +1637,10 @@ DO = {
         window.history.replaceState({}, null, url.substr(0, url.lastIndexOf('?')));
       }
       else if (DO.C.Resource[DO.C.DocumentURL].contentType == 'text/html') {
-        var tmpl = document.implementation.createHTMLDocument('template');
-        var fragment = fragmentFromString(DO.C.Resource[DO.C.DocumentURL].data);
-        tmpl.documentElement.replaceChildren(fragment);
-        var node = selectArticleNode(tmpl);
+        // var tmpl = document.implementation.createHTMLDocument('template');
+        // var fragment = fragmentFromString(DO.C.Resource[DO.C.DocumentURL].data);
+        // tmpl.documentElement.replaceChildren(fragment);
+        var node = selectArticleNode(document);
         var hasContent = hasNonWhitespaceText(node);
 
         if (!hasContent) {
