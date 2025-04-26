@@ -122,7 +122,6 @@ article {
 
 h1 {
   font-size: 2em;
-  text-align: center;
   margin: 0.75em 0;
   color: #000;
 }
@@ -1306,6 +1305,7 @@ margin-right:4.5em;
 
 #home h1 {
   font-size:3em;
+  text-align:center;
 }
 
 #home #get-involved h2,

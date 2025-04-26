@@ -192,6 +192,7 @@ font-size:1em !important;
 }
 #document-editor.editor-toolbar {
 z-index:2147483647;
+max-width:calc(100% - 2em);
 }
 .editor-toolbar svg.fas,
 .editor-toolbar svg.far,
@@ -327,30 +328,23 @@ font-family:sans-serif;
 
 
 /*XXX: ProseMirror inserts p for certain block groups (below). In the markup, these tags might only include inline or text content, and so the schema wraps them with p but that is cumbersome and messes up the UI. The styles here at least try to make the p look inline.*/
-figcaption > p:only-child,
-li > p:only-child,
-dd > p:only-child,
-th > p:only-child,
-td > p:only-child,
-caption > p:only-child,
-figcaption > p:only-child,
-li > p:only-child a,
-dd > p:only-child a,
-th > p:only-child a,
-td > p:only-child a,
-caption > p:only-child a {
+figcaption > p:first-child,
+li > p:first-child,
+dd > p:first-child,
+th > p:first-child,
+td > p:first-child,
+caption > p:first-child,
+figcaption > p:first-child,
+li > p:first-child a,
+dd > p:first-child a,
+th > p:first-child a,
+td > p:first-child a,
+caption > p:first-child a {
 display:inline !important;
 padding:0 !important;
 margin:0 !important;
 float:none !important;
 }
-
-/* figcaption > p:first-of-type:nth-of-type(1):not(:only-child),
-li > p:first-of-type:nth-of-type(1):not(:only-child) {
-  margin-top: 0;
-} */
-
-
 
 
 dl.info dt,
@@ -2611,14 +2605,10 @@ span {
   }
 }
 
-  /* // TODO: move to editor.css? */
-.editor-slashmenu {
-  /* padding: 1em !important; */
-}
-
 .editor-slashmenu li {
   list-style: none;
   padding:0;
+  margin:0;
 }
 
 .editor-slashmenu li button span {
@@ -2629,9 +2619,12 @@ span {
 
 .editor-slashmenu li button {
   display: flex !important;
-  padding:0.5em 0.5em 0.5em 0;
+  padding:0.75em 1em;
 }
-
+.editor-slashmenu li button:hover {
+fill:#080;
+color:#080;
+}
 
 /* .editor-form label[for^="rdfa-"] {
 font-weight:bold;
@@ -2832,7 +2825,6 @@ max-width:none;
 
   [class~="do-new"] h1:has(br:only-child):after {
     width:100%;
-    text-align:center;
   }
 
   [class~="do-new"] h1[data-placeholder]:has(br),
@@ -2892,7 +2884,9 @@ h1 + div p:first-child {
     display: flex;
     flex-wrap: nowrap;
     margin: 0;
-    padding: 0; }
+    padding: 0;
+    overflow-x: auto;
+  }
   .editor-toolbar .editor-form-actions li {
     float: left;
     list-style: none;
@@ -2945,6 +2939,7 @@ h1 + div p:first-child {
   }
   .editor-form ul {
     margin:0;
+    padding:0;
   }
   .editor-form li:has(input:first-child) {
     list-style-type: none;

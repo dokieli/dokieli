@@ -60,12 +60,11 @@ export const buttonIcons = {
   },
   pre: {
     title: 'code (block)',
-    icon: Icon['.fas.fa-code']
+    icon: Icon['.fas.fa-terminal']
   },
   code: {
     title: 'code (inline)',
-    // icon: Icon['.fas.fa-code']
-    textContent: 'code'
+    icon: Icon['.fas.fa-code']
   },
   blockquote: {
     title: 'blockquote (with source)',

@@ -4019,8 +4019,8 @@ console.log(reason);
         if (b) {
           var node = b.closest('li');
           b.outerHTML = DO.C.Editor.EnableEditorButton;
-          DO.Editor.toggleEditor('social', e);
           DO.U.hideDocumentMenu();
+          DO.Editor.toggleEditor('social', e);
           hideAutoSaveStorage(node.querySelector('#autosave-items'), documentURL);
         }
         else {
@@ -4028,8 +4028,8 @@ console.log(reason);
           if (b) {
             node = b.closest('li');
             b.outerHTML = DO.C.Editor.DisableEditorButton;
-            DO.Editor.toggleEditor('author', e);
             DO.U.hideDocumentMenu();
+            DO.Editor.toggleEditor('author', e);
             showAutoSaveStorage(node, documentURL);
           }
         }
@@ -6665,9 +6665,9 @@ console.log(response)
     },
 
     createNewDocument: function(e) {
-      DO.Editor.toggleEditor('author', e, { template: 'new' });
-
       DO.U.hideDocumentMenu();
+
+      DO.Editor.toggleEditor('author', e, { template: 'new' });
     },
 
     //XXX: To be deprecated. Formerly used for createNewDocument 

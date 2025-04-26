@@ -117,15 +117,25 @@ export class Editor {
     // Add initial nodes h1, p with no content.
     // Update head > title to 'Untitled'. Make sure to have Save update head > title with h1 value (if specified).
     const titleElement = document.querySelector('head title');
+
     if (titleElement) {
       titleElement.textContent = 'Untitled';
-    } else {
+    }
+    else {
       const newTitle = document.createElement('title');
       newTitle.textContent = 'Untitled';
       document.head.appendChild(newTitle);
     }
     // TODO: Remove aria-label when content is updated
+
+    var documentMenu = document.getElementById('document-menu');
+
     document.body.replaceChildren(fragmentFromString(`<main><article><h1 aria-label="Add a title" data-placeholder="${this.placeholder.h1}" property="schema:name"></h1><div datatype="rdf:HTML" property="schema:description"><p data-placeholder="${this.placeholder.p}"></p></div></article></main>`));
+
+    document.body.appendChild(documentMenu);
+
+    document.body.removeAttribute('id');
+    document.body.removeAttribute('class');
 
     // If the initial nodes have no content, show placeholder text, else remove placeholder text.
 
