@@ -468,7 +468,6 @@ console.log(node)
           if (searchResultsItems) {
             specrefSearchResults = document.querySelector('.specref-search-results');
             if(specrefSearchResults) {
-              //FIXME: innerHTML
               specrefSearchResults.replaceChildren(fragmentFromString(searchResultsHTML));
             }
     
@@ -645,14 +644,13 @@ TODO: Heading sectioning
                   //Heading
                   var heading = document.createElement(tagNames[0]);
                   heading.setAttribute('property', 'schema:name');
-                  heading.innerHTML = this.base.selection;
+                  heading.setHTMLUnsafe(domSanitize(this.base.selection));
 // console.log(heading);
 // console.log(selection);
 
 
                   var divDescription = parentSection.getElementsByTagName('div')[0];
 // console.log(divDescription);
-// console.log(divDescription.innerHTML);
 // console.log(divDescription.childNodes);
 // console.log(divDescription.length);
 // console.log(selectedParentElement);
@@ -720,7 +718,7 @@ TODO: Heading sectioning
 
                   var selectionUpdated = document.createElement('div');
                   selectionUpdated.appendChild(section);
-                  selectionUpdated = selectionUpdated.innerHTML;
+                  selectionUpdated = selectionUpdated.getHTML();
 // console.log(selectionUpdated);
 
 
@@ -758,7 +756,7 @@ TODO: Heading sectioning
 // console.log(selection);
                     var foo = document.createElement('div');
                     foo.appendChild(parentSection);
-                    parentSection = foo.innerHTML;
+                    parentSection = foo.getHTML();
 // console.log(parentSection + selectionUpdated);
                     MediumEditor.util.insertHTMLCommand(this.base.selectedDocument, parentSection + selectionUpdated);
                   }

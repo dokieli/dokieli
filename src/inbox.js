@@ -1,11 +1,10 @@
-'use strict';
-
 import { getDocument, createActivityHTML, createHTML } from './doc.js';
 import { Icon } from './ui/icons.js'
 import { getAbsoluteIRI, getPathURL, getProxyableIRI } from './uri.js';
 import { getMatchFromData, getLinkRelation, serializeDataToPreferredContentType, getGraphLicense, getGraphTypes } from './graph.js';
 import { getAcceptPostPreference, postResource } from './fetcher.js';
 import Config from './config.js';
+import { domSanitize } from './util.js';
 
 const ns = Config.ns;
 
@@ -65,8 +64,8 @@ function sendNotifications(tos, note, iri, shareResource) {
                 toInput
                   .parentNode
                   .querySelector('.progress[data-to="' + to + '"]')
-                  .innerHTML = '<a target="_blank" href="' +
-                  location + '">' + Icon[".fas.fa-check-circle.fa-fw"] + '</a>';
+                  .setHTMLUnsafe(domSanitize('<a target="_blank" href="' +
+                  location + '">' + Icon[".fas.fa-check-circle.fa-fw"] + '</a>'));
               }
             })
             .catch(error => {
@@ -74,7 +73,7 @@ function sendNotifications(tos, note, iri, shareResource) {
               toInput
                 .parentNode
                 .querySelector('.progress[data-to="' + to + '"]')
-                .innerHTML = Icon[".fas.fa-times-circle.fa-fw"] + ' Unable to notify. Try later.';
+                .setHTMLUnsafe(domSanitize(Icon[".fas.fa-times-circle.fa-fw"] + ' Unable to notify. Try later.'));
             });
         });
     });
@@ -94,7 +93,7 @@ function inboxResponse(to, toInput) {
       toInput
         .parentNode
         .querySelector('.progress[data-to="' + to + '"]')
-        .innerHTML = Icon[".fas.fa-times-circle.fa-fw"] + ' Inbox not responding. Try later.';
+        .setHTMLUnsafe(domSanitize(Icon[".fas.fa-times-circle.fa-fw"] + ' Inbox not responding. Try later.'))
     });
 }
 

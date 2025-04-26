@@ -1801,7 +1801,7 @@ DO = {
       dMenuButton.classList.remove('show');
       dMenuButton.classList.add('hide');
       dMenuButton.setAttribute('title', 'Hide Menu');
-      dMenuButton.innerHTML = Icon[".fas.fa-minus"];
+      dMenuButton.setHTMLUnsafe(domSanitize(Icon[".fas.fa-minus"]));
       dMenu.classList.add('on');
       // body.classList.add('on-document-menu');
 
@@ -1850,7 +1850,7 @@ DO = {
       dMenuButton.classList.remove('hide');
       dMenuButton.classList.add('show');
       dMenuButton.setAttribute('title', 'Open Menu');
-      dMenuButton.innerHTML = Icon[".fas.fa-bars"];
+      dMenuButton.setHTMLUnsafe(domSanitize(Icon[".fas.fa-bars"]));
       removeNodesWithIds(DO.C.DocumentDoItems);
     },
 
@@ -1995,7 +1995,7 @@ DO = {
           dMenuButton.classList.remove('show');
           dMenuButton.classList.add('hide');
           dMenuButton.setAttribute('title', 'Open Menu');
-          dMenuButton.innerHTML = Icon[".fas.fa-minus"];
+          dMenuButton.setHTMLUnsafe(domSanitize(Icon[".fas.fa-minus"]));
           dMenu.classList.remove('on');
           body.classList.remove('on-document-menu');
 
@@ -2059,7 +2059,7 @@ DO = {
           for(var i = 0; i < scriptCurrent.length; i++) {
             var v = scriptCurrent[i];
             var id = v.id;
-            scriptCurrentData[id] = v.innerHTML.split(/\r\n|\r|\n/);
+            scriptCurrentData[id] = v.getHTML().split(/\r\n|\r|\n/);
             scriptCurrentData[id].shift();
             scriptCurrentData[id].pop();
             scriptCurrentData[id] = {
@@ -2906,7 +2906,7 @@ console.log(reason);
 // console.log(targetGraphURI)
 
                 var buttonRD = document.getElementById('include-diff-requirements');
-                buttonRD.innerHTML = Icon[".fas.fa-plus-minus"];
+                buttonRD.setHTMLUnsafe(domSanitize(Icon[".fas.fa-plus-minus"]));
                 buttonRD.disabled = false;
 
                 buttonRD.addEventListener('click', (e) => {
@@ -2916,7 +2916,7 @@ console.log(reason);
                       button.classList.remove('add');
                       button.classList.add('remove');
                       button.setAttribute('title', "Show requirements");
-                      button.innerHTML = Icon[".fas.fa-list-check"];
+                      button.setHTMLUnsafe(domSanitize(Icon[".fas.fa-list-check"]));
 
                       if (!button.classList.contains('checked')) {
                         DO.U.diffRequirements(sourceGraph, targetGraph);
@@ -2928,21 +2928,21 @@ console.log(reason);
                         var td = tr.querySelector('td:nth-child(3)');
                         sR = sR.replace(stripFragmentFromString(sR), sourceGraphURI);
                         var tR = targetGraphURI + '#' + getFragmentFromString(sR);
-                        td.innerHTML = DO.C.Resource[sourceGraphURI].spec['requirement'][sR]['diff'][tR]['statement'] || '';
+                        td.setHTMLUnsafe(domSanitize(DO.C.Resource[sourceGraphURI].spec['requirement'][sR]['diff'][tR]['statement'])) || '';
                       });
                     }
                     else if (button.classList.contains('remove')) {
                       button.classList.remove('remove');
                       button.classList.add('add');
                       button.setAttribute('title', buttonTextDiffRequirements);
-                      button.innerHTML = Icon[".fas.fa-plus-minus"];
+                      button.setHTMLUnsafe(domSanitize(Icon[".fas.fa-plus-minus"]));
 
                       table.querySelectorAll('tbody tr').forEach(tr => {
                         var sR = tr.getAttribute('about');
                         var td = tr.querySelector('td:nth-child(3)');
                         var sourceRequirementURI = sourceGraphURI + '#' + getFragmentFromString(sR);
                         var statement = DO.C.Resource[sourceGraphURI].spec['requirement'][sourceRequirementURI][ns.spec.statement.value] || sR;
-                        td.innerHTML = '<a href="' + sR + '">' + statement + '</a>';
+                        td.setHTMLUnsafe(domSanitize('<a href="' + sR + '">' + statement + '</a>'));
                       });
                     }
                   }
@@ -3330,7 +3330,7 @@ console.log(reason);
               Object.keys(robustLinksUnique).forEach(url => {
                 if (i.value == url) {
 // console.log(robustLinksUnique[url])
-                  progress.innerHTML = '<a href="' + robustLinksUnique[url]["data-versionurl"] + '" target="_blank">' + Icon[".fas.fa-archive"] + '</a>';
+                  progress.setHTMLUnsafe(domSanitize('<a href="' + robustLinksUnique[url]["data-versionurl"] + '" target="_blank">' + Icon[".fas.fa-archive"] + '</a>'));
 // console.log(node)
                   node.setAttribute("data-versionurl", robustLinksUnique[url]["data-versionurl"]);
                   node.setAttribute("data-versiondate", robustLinksUnique[url]["data-versiondate"]);
@@ -3356,12 +3356,12 @@ console.log(reason);
 // console.log('Add    robustLinksUnique: ' + Object.keys(robustLinksUnique).length);
                   }
 
-                  progress.innerHTML = '<a href="' + versionURL + '" target="_blank">' + Icon[".fas.fa-archive"] + '</a>';
+                  progress.setHTMLUnsafe(domSanitize('<a href="' + versionURL + '" target="_blank">' + Icon[".fas.fa-archive"] + '</a>'));
 
                   showRobustLinksDecoration(node.closest('cite'));
                 })
                 .catch(r => {
-                  progress.innerHTML = Icon[".fas.fa-times-circle"] + ' Unable to archive. Try later.';
+                  progress.setHTMLUnsafe(domSanitize(Icon[".fas.fa-times-circle"] + ' Unable to archive. Try later.'));
                 });
             }
 // console.log('</robustLinksUnique: ' + Object.keys(robustLinksUnique).length);
@@ -3498,7 +3498,7 @@ console.log(reason);
             'timer': 3000
           }
           addMessageToLog(message, Config.MessageLog);
-          progress.innerHTML = responseMessages[response.status];
+          progress.setHTMLUnsafe(domSanitize(responseMessages[response.status]));
         }
 
         return Promise.reject(responseMessages[response.status]);
@@ -3513,7 +3513,7 @@ console.log(reason);
             'type': 'success'
           }
           addMessageToLog(message, Config.MessageLog);
-          progress.innerHTML = message.content
+          progress.setHTMLUnsafe(domSanitize(message.content));
         }
 
         return Promise.resolve(o);
@@ -3648,7 +3648,7 @@ console.log(reason);
                   'type': 'info'
                 }
                 addMessageToLog(message, Config.MessageLog);
-                progress.innerHTML = message.content
+                progress.setHTMLUnsafe(domSanitize(message.content));
               }
 
               return { "response": response, "location": location };
@@ -3661,7 +3661,7 @@ console.log(reason);
                   'type': 'error'
                 }
                 addMessageToLog(message, Config.MessageLog);
-                progress.innerHTML = message.content;
+                progress.setHTMLUnsafe(domSanitize(message.content));
               }
 
               return Promise.reject(responseMessages[response.status])
@@ -3676,7 +3676,7 @@ console.log(reason);
                 'type': 'error'
               }
               addMessageToLog(message, Config.MessageLog);
-              progress.innerHTML = message.content;
+              progress.setHTMLUnsafe(domSanitize(message.content));
             }
           })
       }
@@ -4213,7 +4213,7 @@ console.log(reason);
                 })
                 .then(() => {
                   //FIXME:
-                  getDocumentContentNode(document).innerHTML = '<main><article about="" typeof="schema:Article"></article></main>';
+                  getDocumentContentNode(document).setHTMLUnsafe(domSanitize('<main><article about="" typeof="schema:Article"></article></main>'));
                   Editor.init('author');
 
 
@@ -4312,8 +4312,8 @@ console.log(reason);
 
           if (!note || !noteIRI) {
             document.querySelector('#reply-to-resource .response-message')
-              .innerHTML = '<p class="error">Need a note and a location to save it.</p>'
-            return
+              .setHTMLUnsafe(domSanitize('<p class="error">Need a note and a location to save it.</p>'));
+            return;
           }
 
           sendReply();
@@ -4405,7 +4405,7 @@ console.log(reason);
           .then(response => {
             replyToResource
               .querySelector('.response-message')
-              .innerHTML = '<p class="success"><a target="_blank" href="' + response.url + '">Reply saved!</a></p>'
+              .setHTMLUnsafe(domSanitize('<p class="success"><a target="_blank" href="' + response.url + '">Reply saved!</a></p>'));
 
             return getLinkRelation(ns.ldp.inbox.value, null, getDocument());
           })
@@ -4454,18 +4454,15 @@ console.log(reason);
               notificationSent = notificationSent + ", but location unknown."
             }
 
-            replyToResource
-              .querySelector('.response-message')
-              .innerHTML += '<p class="success">' + notificationSent + '</p>'
+            var responseMessage = replyToResource.querySelector('.response-message');
+            responseMessage.setHTMLUnsafe(domSanitize(responseMessage.getHTML() + '<p class="success">' + notificationSent + '</p>'));
           })
 
           .catch(error => {
             // Catch-all error, actually notify the user
-            replyToResource
-              .querySelector('.response-message')
-              .innerHTML += '<p class="error">' +
-                'We could not notify the author of your reply:' +
-                error.message + '</p>'
+            var responseMessage = replyToResource.querySelector('.response-message');
+            responseMessage.setHTMLUnsafe(domSanitize(responseMessage.getHTML() + '<p class="error">We could not notify the author of your reply:' + error.message + '</p>'));
+
           })
       }
     },
@@ -4630,8 +4627,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
             }
 
             var showSuggestions = function (filteredContacts) {
-              //TODO: Change innerHTML
-              suggestions.innerHTML = '';
+              suggestions.replaceChildren();
 
               filteredContacts.forEach(contact => {
                 const suggestion = document.createElement('li');
@@ -4673,8 +4669,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
                         })
                     });
 
-                  //TODO: Change from innerHTML
-                  suggestions.innerHTML = '';
+                  suggestions.replaceChildren();
                   input.value = '';
                 });
 
@@ -5005,7 +5000,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
     },
 
     selectContacts: function(node, url) {
-      node.innerHTML = '<ul id="share-resource-contacts"></ul>';
+      node.setHTMLUnsafe(domSanitize('<ul id="share-resource-contacts"></ul>'));
       var shareResourceNode = document.getElementById('share-resource-contacts');
 
       if (DO.C.User.Contacts && Object.keys(DO.C.User.Contacts).length){
@@ -5040,7 +5035,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
           }
           //TODO: This feature used to exist where user was able to enter WebIDs in a textarea (one per line? comma-separated).
           // else {
-          //   node.innerHTML = 'No contacts with ' + Icon[".fas.fa-inbox"] + ' inbox found in your profile, but you can enter contacts individually:';
+          //   node.setHTMLUnsafe(domSanitize('No contacts with ' + Icon[".fas.fa-inbox"] + ' inbox found in your profile, but you can enter contacts individually:'));
           // }
 
           return Promise.resolve();
@@ -5141,11 +5136,11 @@ console.log('XXX: Cannot access effectiveACLResource', e);
         //TODO: Perhaps this should be handled outside of generateBrowserList?
         var createContainer = document.getElementById(id + '-create-container');
         if (createContainer) {
-          createContainer.innerHTML = '';
+          createContainer.replaceChildren();
         }
 
         var list = document.getElementById(id + '-ul');
-        list.innerHTML = '';
+        list.replaceChildren();
 
         var urlPath = url.split("/");
         if (urlPath.length > 4){ // This means it's not the base URL
@@ -5280,7 +5275,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
               };
             }
             if (sD) {
-              sD.innerHTML = '';
+              sD.replaceChildren();
             }
             samp.insertAdjacentHTML('afterend', '<details id="' + id + '-storage-description-details"><summary>Storage details</summary></details>');
 
@@ -5968,7 +5963,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
       var div = document.getElementById(id + '-create-container');
       if (div) {
-        div.innerHTML = '';
+        div.replaceChildren();
       }
 
       div.insertAdjacentHTML('beforeend', '<label for="' + id + '-create-container-name">Container Name</label> <input id="' + id + '-create-container-name" name="' + id + '-create-container-name" type="text" placeholder="My Secret Stuff" /> <button class="insert" disabled="disabled">Create</button>');
@@ -6168,7 +6163,7 @@ console.log(response)
 
             if (DO.C['Session']?.isActive) {
               browseButton.addEventListener('click', () => {
-                createContainer.innerHTML = '';
+                createContainer.replaceChildren();
                 DO.U.triggerBrowse(input.value, id, action);
               }, false);
 
@@ -6522,7 +6517,7 @@ console.log(response)
           case 'text/html': case 'application/xhtml+xml':
             //TODO: Remoe scripts, keep styles?
             //tmpl.documentElement.appendChild(fragmentFromString(domSanitize(data)));
-            tmpl.documentElement.innerHTML = data;
+            tmpl.documentElement.setHTMLUnsafe(domSanitize(data));
             break;
 
           case 'application/gpx+xml':
@@ -6633,7 +6628,7 @@ console.log(response)
         }
 
         if (options.init === true) {
-          documentNode.documentElement.innerHTML = tmpl.documentElement.innerHTML;
+          documentNode.documentElement.setHTMLUnsafe(domSanitize(tmpl.documentElement.getHTML()));
           documentNode.documentElement.querySelectorAll('head link[rel~="stylesheet"][disabled][class~="do"]').forEach(e => {
             e.removeAttribute('disabled');
             e.classList.remove('do');
@@ -6725,8 +6720,8 @@ console.log(response)
           nodes = DO.U.rewriteBaseURL(nodes, {'baseURLType': baseURLType})
         }
 
-        html.querySelector('body').innerHTML = '<main><article about="" typeof="schema:Article"><h1 property="schema:name">' + title + '</h1></article></main>'
-        html.querySelector('head title').innerHTML = title
+        html.querySelector('body').setHTMLUnsafe(domSanitize('<main><article about="" typeof="schema:Article"><h1 property="schema:name">' + title + '</h1></article></main>'));
+        html.querySelector('head title').setHTMLUnsafe(domSanitize(title));
         html = getDocument(html)
 
         putResource(storageIRI, html)
@@ -7157,7 +7152,7 @@ console.log(response)
 
                     responseMessage
                       .querySelector('.progress[data-to="' + inboxURL + '"]')
-                      .innerHTML = Icon[".fas.fa-times-circle.fa-fw"] + ' Unable to notify. Try later.'
+                      .setHTMLUnsafe(domSanitize(Icon[".fas.fa-times-circle.fa-fw"] + ' Unable to notify. Try later.'))
                   })
                   .then(response => {
                     var notificationSent = 'Notification sent';
@@ -7172,7 +7167,7 @@ console.log(response)
 
                     responseMessage
                       .querySelector('.progress[data-to="' + inboxURL + '"]')
-                      .innerHTML = notificationSent
+                      .setHTMLUnsafe(domSanitize(notificationSent))
                   })
 
               })
@@ -7197,7 +7192,7 @@ console.log(response)
         if (e.target.closest('button.update')) {
           var data = document.getElementById('source-edit').value;
           //FIXME: dokieli related stuff may be getting repainted / updated in the DOM
-          document.documentElement.innerHTML = data;
+          document.documentElement.setHTMLUnsafe(domSanitize(data));
           DO.U.showDocumentInfo();
           DO.U.showDocumentMenu(e);
           DO.U.viewSource();

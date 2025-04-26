@@ -64,7 +64,7 @@ export class SlashMenu {
 
   hideMenu() {
     this.menuContainer.style.display = "none";
-    this.menuContainer.innerHTML = ""; 
+    this.menuContainer.replaceChildren(); 
   }
 
   formClickHandler(e, button) {

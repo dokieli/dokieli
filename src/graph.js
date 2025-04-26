@@ -506,7 +506,7 @@ function setDocumentBase (data, baseURI, contentType) {
   switch(contentType) {
     case 'text/html': case 'application/xhtml+xml':
       template = document.implementation.createHTMLDocument()
-      template.documentElement.innerHTML = data
+      template.documentElement.setHTMLUnsafe(domSanitize(data));
       base = template.querySelector('head base[href]')
       if (!base) {
         template.querySelector('head').insertAdjacentHTML('afterbegin', '<base href="' + baseURI + '" />')

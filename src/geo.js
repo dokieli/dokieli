@@ -60,7 +60,7 @@ function generateGeoView(data) {
   }
 
   //XXX: This (tmpl) is not really being used in the return;
-  tmpl.documentElement.innerHTML = document.documentElement.innerHTML;
+  tmpl.documentElement.setHTMLUnsafe(domSanitize(document.documentElement.getHTML()));
 
   mapNode = document.querySelector('[typeof="schema:Map"]');
   var mapOptions = {
@@ -161,7 +161,7 @@ function generateGeoView(data) {
   //     img.width = dimensions.x;
   //     img.height = dimensions.y;
   //     img.src = canvas.toDataURL();
-  //     // document.getElementById('map').innerHTML = '';
+  //     // document.getElementById('map').replaceChildren();
   //     document.body.appendChild(img);
   // });
 
