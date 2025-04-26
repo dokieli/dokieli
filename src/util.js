@@ -154,7 +154,7 @@ function getFormValues(form) {
   const formData = new FormData(form);
 
   const formValues = Object.fromEntries(
-    [...formData.entries()].map(([key, value]) => [key, typeof value === "string" ? value.trim() : value])
+    [...formData.entries()].map(([key, value]) => [key, typeof value === "string" ? domSanitize(value.trim()) : value])
   );
 
 // console.log(formValues);
