@@ -127,7 +127,7 @@ export default {
   DOMNormalisation: {
     'voidElements': ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source', 'track', 'wbr'],
     'selfClosing': ['circle', 'ellipse', 'line', 'path', 'polygon', 'polyline', 'rect', 'stop', 'use'],
-    'skipAttributes': ['aria-multiline', 'contenteditable', 'data-medium-editor-editor-index', 'data-medium-editor-element', 'data-medium-focused', 'data-placeholder', 'medium-editor-index', 'role', 'spellcheck', 'style'],
+    'skipAttributes': ['aria-multiline', 'contenteditable', 'data-placeholder', 'role', 'spellcheck', 'style'],
     'sortAttributes': true,
     'skipNodeWithClass': 'do',
     'skipNodeWithId': ['toc-nav'],
@@ -136,7 +136,7 @@ export default {
       'element': 'mark'
     },
     'replaceClassItemWith': {
-      'source': ['medium-editor-element', 'medium-editor-placeholder', 'on-document-menu'],
+      'source': ['on-document-menu'],
       'target': ''
     },
     'skipClassWithValue': '',
