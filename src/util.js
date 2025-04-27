@@ -203,6 +203,35 @@ function domSanitize(strHTML, options = {}) {
   return cleanHTML;
 }
 
+function sanitizeObject(input) {
+  if (typeof input !== 'object' || input === null || Array.isArray(input)) {
+    return {};
+  }
+
+  const safe = {};
+
+  for (const key in input) {
+    if (!Object.prototype.hasOwnProperty.call(input, key)) continue;
+    if (key === '__proto__' || key === 'constructor' || key === 'prototype') continue;
+
+    const value = input[key];
+
+    if (
+      typeof value === 'string' ||
+      typeof value === 'number' ||
+      typeof value === 'boolean' ||
+      value === null
+    ) {
+      safe[key] = value;
+    }
+    else if (typeof value === 'object') {
+      safe[key] = sanitizeObject(value);
+    }
+  }
+
+  return safe;
+}
+
 function sortToLower(array, key) {
   return array.sort(function (a, b) {
     if (key) {
@@ -315,5 +344,6 @@ export {
   getFormValues,
   kebabToCamel,
   parseISODuration,
-  domSanitize
+  domSanitize,
+  sanitizeObject
 };
