@@ -11,7 +11,7 @@ import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessag
 import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, getAbsoluteIRI, generateDataURI, getMediaTypeURIs, getPrefixedNameFromIRI } from './uri.js'
 import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, serializeGraph, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getLinkRelationFromRDF, sortGraphTriples, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphInbox, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes, filterQuads } from './graph.js'
 import { notifyInbox, sendNotifications, postActivity } from './inbox.js'
-import { uniqueArray, fragmentFromString, hashCode, generateAttributeId, escapeRegExp, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, matchAllIndex, isValidISBN, findPreviousDateTime, domSanitize } from './util.js'
+import { uniqueArray, fragmentFromString, hashCode, generateAttributeId, escapeRegExp, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, matchAllIndex, isValidISBN, findPreviousDateTime, domSanitize, sanitizeObject } from './util.js'
 import { generateGeoView } from './geo.js'
 import { getLocalStorageProfile, showAutoSaveStorage, hideAutoSaveStorage, updateLocalStorageProfile } from './storage.js'
 import { showUserSigninSignout, showUserIdentityInput, setContactInfo, getSubjectInfo, restoreSession } from './auth.js'
@@ -1517,7 +1517,7 @@ DO = {
         if (user && 'object' in user) {
           // user.object.describes.Role = (DO.C.User.IRI && user.object.describes.Role) ? user.object.describes.Role : 'social';
 
-          DO.C['User'] = user.object.describes;
+          DO.C['User'] = sanitizeObject(user.object.describes);
         }
       })
     },
@@ -3572,7 +3572,7 @@ console.log(reason);
                     .then(data => {
 // console.log(data)
                       // ALLOW_UNKNOWN_PROTOCOLS is needed for namespaced attribute values that DOMPurify mistakenly interpret as an unknown protocol protocol; it will allow mailto: but strip out others it does not recognize
-                      data = domSanitize(data, { ALLOW_UNKNOWN_PROTOCOLS: true });
+                      data = domSanitize(data);
 
                       var regexp = /var redirUrl = "([^"]*)";/;
                       var match = data.match(regexp);
