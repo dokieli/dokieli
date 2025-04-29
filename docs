@@ -88,12 +88,19 @@
           <section id="user-interface" inlist="" rel="schema:hasPart" resource="#user-interface">
             <h2 property="schema:name">User interface</h2>
             <div datatype="rdf:HTML" property="schema:description">
-              <p>In this section we go over dokieli's UI; interface <a href="#interface-modes">modes</a>, <a href="dokieli-menu">menu</a>, and <a href="#features">features</a>.</p>
+              <p>In this section we go over dokieli's UI; interface <a href="#interface-modes">modes</a>, <a href="#dokieli-menu">menu</a>, and <a href="#features">features</a>.</p>
 
-              <section id="interface-modes" inlist="" rel="schema:hasPart" resource="#interface-modes">
-                <h3 property="schema:name">Interface modes</h3>
+              <section id="interface-modes" inlist="" rel="schema:hasPart" resource="#interface-modes" typeof="skos:ConceptScheme">
+                <h3 property="schema:name skos:prefLabel">Interface modes</h3>
                 <div datatype="rdf:HTML" property="schema:description">
-                  <p>The user interface (<abbr title="User Interface">UI</abbr>) can be in either <cite>social</cite> or <cite>author</cite>. The default mode is <cite>social</cite> mode - when the document loads without specific directives. The modes can be switched from the main dokieli <a href="#dokieli-menu">menu</a> using the <i class="fas fa-i-cursor"></i> <a href="#editor-enable">Edit</a> operation.</p>
+                  <p property="skos:definition">The user interface (<abbr title="User Interface">UI</abbr>) can be in either <cite>social</cite> or <cite>author</cite>. The modes can be switched from the dokieli <a href="#dokieli-menu">menu</a> via the <i class="fas fa-i-cursor"></i> <a href="#editor-enable">Edit</a> operation.</p>
+
+                  <dl rel="skos:hasTopConcept">
+                    <dt about="#mode-social" property="skos:prefLabel" typeof="skos:Concept"><dfn id="mode-social">Social</dfn></dt>
+                    <dd about="#mode-social" property="skos:definition">The social mode focuses on features allowing users to view, annotate and share content. This is the default mode when the document loads without specific directives.</dd>
+                    <dt about="#mode-author" property="skos:prefLabel" typeof="skos:Concept"><dfn id="mode-author">Author</dfn></dt>
+                    <dd about="#mode-author" property="skos:definition">The author mode focuses on features allowing users to edit and publish the article. It enables editing of content, structure, and semantic annotations.</dd>
+                  </dl>
                 </div>
               </section>
 
