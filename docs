@@ -107,7 +107,7 @@
               <section id="dokieli-menu" inlist="" rel="schema:hasPart" resource="#dokieli-menu">
                 <h3 property="schema:name">dokieli menu</h3>
                 <div datatype="rdf:HTML" property="schema:description">
-                  <p about="" rel="schema:potentialAction">The <a href="#document-menu" typeof="schema:ActivateAction"><i class="fas fa-bars"></i> menu</a> enables users to access various <a href="#features">features</a>.</p>
+                  <p about="" rel="schema:potentialAction">The <a href="#document-menu" typeof="schema:ActivateAction"><i class="fas fa-bars"></i> menu</a> provides access to key top-level <a href="#features">features</a> such as signing in, authoring and publishing content, managing links and data, viewing document structure, and exporting or sharing the article.</p>
                 </div>
               </section>
 
