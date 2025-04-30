@@ -111,10 +111,12 @@
                 </div>
               </section>
 
-              <section id="features" inlist="" rel="schema:hasPart" resource="#features">
+              <section id="features" inlist="" rel="schema:hasPart" resource="#features" typeof="skos:ConceptScheme">
                 <h3 property="schema:name">Features</h3>
                 <div datatype="rdf:HTML" property="schema:description">
-                  <dl rel="schema:hasPart">
+                  <p property="schema:definition">dokieli's features make it possible to view, create, and share content.</p>
+
+                  <dl rel="skos:hasTopConcept">
                     <dt about="#feature-signin" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-user-secret"></i><dfn id="feature-signin">Sign in</dfn></dt>
                     <dd about="#feature-signin" property="skos:definition">The <em>sign in</em> enables the user to identify themselves with dokieli using their personal online identifier. dokieli gathers the information linked from the user's profile to adapt the user interface and to customise interactions based on their preferences.</dd>
 
