@@ -115,8 +115,8 @@
                 <h3 property="schema:name">Features</h3>
                 <div datatype="rdf:HTML" property="schema:description">
                   <dl rel="schema:hasPart">
-                    <dt id="signin-user"><i class="fas fa-user-secret"></i>Sign in</dt>
-                    <dd>Allows the user to identify themselves using their personal online identifier (such as a WebID) where they can also authenticate themselves. dokieli retrieves information related to user's identity to adapt the user interface as well as with operations related to user's actions.</dd>
+                    <dt about="#feature-signin" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-user-secret"></i><dfn id="feature-signin">Sign in</dfn></dt>
+                    <dd about="#feature-signin" property="skos:definition">The <em>sign in</em> enables the user to identify themselves with dokieli using their personal online identifier. dokieli gathers the information linked from the user's profile to adapt the user interface and to customise interactions based on their preferences.</dd>
 
                     <dt id="resource-share"><i class="fas fa-bullhorn"></i>Share</dt>
                     <dd>The user can share the current article or a part of it with individuals or groups from their contacts as well as to any specific agent. The list of contacts is generated through a discovery mechanism where dokieli follows <samp>foaf:knows</samp> relations as well as traversing equivalent profiles (<code>owl:sameAs</code>) and determines their inboxes. dokieli sends a notification to user selected targets with information such as who sent the notification, when it was created, its license and motivation.</dd>
