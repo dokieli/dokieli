@@ -123,8 +123,8 @@
                     <dt about="#feature-share" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-user-secret"></i><dfn id="feature-share">Share</dfn></dt>
                     <dd about="#feature-share" property="skos:definition"><em>Share</em> makes it possible to notify specific individuals and groups about an article or a specific part within. Signed in users having owner permissions on an article can give others the permission to view, edit, or be co-owners. The contacts listed are the ones discovered through signed in user's profile that have the means to receive notifications in their inboxes. The notification includes minimal information about the article, such as who sent the notification, when it was created, its license and motivation.</dd>
 
-                    <dt id="resource-reply"><i class="fas fa-reply"></i>Reply</dt>
-                    <dd>An article can be replied with a note and have its own <a href="#resource-language">language</a> and <a href="#resource-license">license</a>. The user can use the <a href="#resource-browser">resource browser</a> to choose the location of the reply in a <a href="#personal-storage">personal storage</a> or an annotation service.</dd>
+                    <dt about="#feature-reply" property="skos:prefLabel"><i class="fas fa-reply"></i><dfn id="feature-reply">Reply</dfn></dt>
+                    <dd about="#feature-reply" property="skos:definition">An article can be replied with a note and have its own <a href="#resource-language">language</a> and <a href="#resource-license">license</a>. The user can specify where they want to save their reply by <a href="#resource-browser">browsing</a> to a location in a <a href="#personal-storage">storage</a> or an annotation service.</dd>
 
                     <dt about="#resource-notifications" id="resource-notifications" property="schema:name">Notifications</dt>
                     <dd>
