@@ -955,9 +955,14 @@
           <section id="storage" inlist="" rel="schema:hasPart" resource="#storage">
             <h2 property="schema:name">Storage</h2>
             <div datatype="rdf:HTML" property="schema:description">
+              <p>Articles and annotations can stored in various places such as personal storage, annotation service, or local storage.</p>
+
               <dl>
                 <dt id="personal-storage">Personal storage</dt>
                 <dd>WebID's with <code>pim:storage</code> can get to use their personal online data storage with dokieli's read-write operations, eg all annotations, <cite>Reply</cite>, <cite>Review</cite>, <cite>New</cite>, <cite>Save As</cite>.</dd>
+
+                <dt id="annotation-service">Annotation service</dt>
+                <dd>An article or annotation can offer an annotation service (with <code>as:annotationService</code>) in which their responses can be stored. An annotation service may or may not be access controlled. Annotation service can also serve as a place for a copy of annotation stored elsewhere.</dd>
 
                 <dt id="local-storage">Local storage</dt>
                 <dd>There is a <cite>Local Storage</cite> feature which uses user-agent's <var>window.localStorage</var>, with default 1m autosave.</dd>
