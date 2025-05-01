@@ -181,8 +181,8 @@
                       </dl>
                     </dd>
 
-                    <dt id="feature-save"><i class="fas fa-life-ring"></i>Save</dt>
-                    <dd>This feature makes a <a href="#http-put">write operation</a> (<code>HTTP PUT</code>) request to the current location of the document (<var>window.location</var>). The document is normalised in that dokieli related items are removed from the DOM before making the request.</dd>
+                    <dt about="#feature-save" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-life-ring"></i><dfn id="feature-save">Save</dfn></dt>
+                    <dd about="#feature-save" property="skos:definition">An article can be <em>saved</em> at its current location, when available to the user.</dd>
 
                     <dt id="feature-save-as"><i class="far fa-paper-plane"></i>Save As</dt>
                     <dd>The <cite>Save As</cite> operation is similar to <cite>New</cite> for normalising some of the URLs and same as <cite>Save</cite> operation for normalising the DOM before making the request to specified location. If <cite>Derivation data</cite> is checked for inclusion, <a href="#html-document-derived-from-on">derived from and on</a> information is included in the created document. This feature uses the <cite><a href="#resource-browser">resource browser</a></cite> to navigate HTTP URLs.
