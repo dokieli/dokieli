@@ -958,13 +958,13 @@
               <p property="skos:definition">Articles and annotations can stored in various places such as personal storage, annotation service, or local storage.</p>
 
               <dl rel="skos:hasTopConcept">
-                <dt about="#personal-storage" property="skos:prefLabel" typeof="skos:Concept"><dfn id="personal-storage">
+                <dt about="#personal-storage" property="skos:prefLabel" typeof="skos:Concept"><dfn id="personal-storage">Personal storage</dfn></dt>
                 <dd about="#personal-storage" property="skos:definition">WebID's with <code>pim:storage</code> can get to use their personal online data storage with dokieli's read-write operations, eg all annotations, <cite>Reply</cite>, <cite>Review</cite>, <cite>New</cite>, <cite>Save As</cite>.</dd>
 
-                <dt about="#annotation-service" property="skos:prefLabel" typeof="skos:Concept"><dfn id="annotation-service">
+                <dt about="#annotation-service" property="skos:prefLabel" typeof="skos:Concept"><dfn id="annotation-service">Annotation service</dfn></dt>
                 <dd about="#annotation-service" property="skos:definition">An article or annotation can offer an annotation service (with <code>as:annotationService</code>) in which their responses can be stored. An annotation service may or may not be access controlled. Annotation service can also serve as a place for a copy of annotation stored elsewhere.</dd>
 
-                <dt about="#local-storage" property="skos:prefLabel" typeof="skos:Concept"><dfn id="local-storage">
+                <dt about="#local-storage" property="skos:prefLabel" typeof="skos:Concept"><dfn id="local-storage">Local storage</dfn></dt>
                 <dd about="#local-storage" property="skos:definition">There is a <cite>Local Storage</cite> feature which uses user-agent's <var>window.localStorage</var>, with default 1m autosave.</dd>
               </dl>
             </div>
