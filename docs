@@ -114,7 +114,7 @@
               <section id="features" inlist="" rel="schema:hasPart" resource="#features" typeof="skos:ConceptScheme">
                 <h3 property="schema:name">Features</h3>
                 <div datatype="rdf:HTML" property="schema:description">
-                  <p property="schema:definition">dokieli's features make it possible to view, create, and share content.</p>
+                  <p property="sko:definition">dokieli's features make it possible to view, create, and share content.</p>
 
                   <dl rel="skos:hasTopConcept">
                     <dt about="#feature-signin" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-user-secret"></i><dfn id="feature-signin">Sign in</dfn></dt>
@@ -138,29 +138,35 @@
                       </figure>
                     </dd>
 
-                    <dt id="resource-annotations">Annotations</dt>
-                    <dd>Articles can be annotated with various motivations. Annotations themselves can also be annotated. Some kinds of annotations are kept with the article, while others are independent resources stored externally to the article. The user may assign a specific <a href="#resource-language">language</a> and a <a href="#resource-license">license</a> for some types of annotations.
-                      <dl>
-                        <dt>Bookmarking</dt>
-                        <dd>The document or selected text can be bookmarked where the user can include a note, assign <a href="#annotation-tagging">tags</a>.</dd>
-                        <dt>Commenting</dt>
-                        <dd>Node or text level targeting for an annotation including a <a href="#annotation-describing">description</a> and <a href="#annotation-tagging">tags</a>.</dd>
-                        <dt>Describing</dt>
-                        <dd>A note to indicate a footnote. Used as part of purpose for <a href="#annotation-bookmarking">bookmarking</a> and <a href="#resource-commenting">commenting</a>.</dd>
-                        <dt>Highlighting</dt>
-                        <dd>Node or text level targeting that gives the user a URI that they can use for deep-linking and referencing.</dd>
-                        <dt>Replying</dt>
-                        <dd>A note to indicate a reply to selected text or node.</dd>
-                        <dt>Tagging</dt>
-                        <dd>The user can associate tags (natural language text) to selected text which is used as part of purpose for annotations such as <a href="#annotation-bookmarking">bookmarking</a>, <a href="#annotation-replying">replying</a>, and <a href="#resource-commenting">commenting</a>.</dd>
-                        <dt><i class="fas fa-thumbs-up"></i>Approve</dt>
-                        <dd>General agreement with the selected text. Optional note can indicate why the selection is a strong point or a convincing argument.</dd>
-                        <dt><i class="fas fa-thumbs-down"></i>Disapprove</dt>
-                        <dd>General disagreement with the selected text. Optional note can indicate why the selection is a weak point, an error, or inaccurate.</dd>
-                        <dt><i class="fas fa-crosshairs"></i>Specificity</dt>
-                        <dd>Request to increase specificity on selected text. Optional note can indicate that a citation or more specificity is needed.</dd>
-                      </dl>
-                    </dd>
+                    <dt about="#feature-annotation" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-annotation">Sign in</dfn></dt>
+                    <dd about="#feature-annotation" property="skos:definition">Articles can be annotated with motivations such as bookmarking, commenting, describing, highlighting, replying, tagging, assessments. Annotations themselves can also be annotated. Annotations can be stored in one more places such as a <a href="#personal-storage">storage</a> or an <a href="#annotation-service">annotation service</a>. Each annotation can have its own distinct <a href="#resource-language">language</a> and a <a href="#resource-license">license</a> for some types of annotations.</dd>
+
+                    <dt>Bookmarking</dt>
+                    <dd>The document or selected text can be bookmarked where the user can include a note, assign <a href="#annotation-tagging">tags</a>.</dd>
+
+                    <dt>Commenting</dt>
+                    <dd>Node or text level targeting for an annotation including a <a href="#annotation-describing">description</a> and <a href="#annotation-tagging">tags</a>.</dd>
+
+                    <dt>Describing</dt>
+                    <dd>A note to indicate a footnote. Used as part of purpose for <a href="#annotation-bookmarking">bookmarking</a> and <a href="#resource-commenting">commenting</a>.</dd>
+
+                    <dt>Highlighting</dt>
+                    <dd>Node or text level targeting that gives the user a URI that they can use for deep-linking and referencing.</dd>
+
+                    <dt>Replying</dt>
+                    <dd>A note to indicate a reply to selected text or node.</dd>
+
+                    <dt>Tagging</dt>
+                    <dd>The user can associate tags (natural language text) to selected text which is used as part of purpose for annotations such as <a href="#annotation-bookmarking">bookmarking</a>, <a href="#annotation-replying">replying</a>, and <a href="#resource-commenting">commenting</a>.</dd>
+
+                    <dt><i class="fas fa-thumbs-up"></i>Approve</dt>
+                    <dd>General agreement with the selected text. Optional note can indicate why the selection is a strong point or a convincing argument.</dd>
+
+                    <dt><i class="fas fa-thumbs-down"></i>Disapprove</dt>
+                    <dd>General disagreement with the selected text. Optional note can indicate why the selection is a weak point, an error, or inaccurate.</dd>
+
+                    <dt><i class="fas fa-crosshairs"></i>Specificity</dt>
+                    <dd>Request to increase specificity on selected text. Optional note can indicate that a citation or more specificity is needed.</dd>
 
                     <dt id="resource-new"><i class="fas fa-lightbulb"></i>New</dt>
                     <dd>This feature allows a new document to be created at specified location. The new document is constructed based on  If the user is signed in with their WebID and their personal storage location is identifier, the default location for the new resource will have the storage URL (<code>pim:storage</code>) as its base. If the user does not have a WebID and a storage, and if the article refers to an annotation service (<code>oa:annotationService</code>), it will use that URL instead. The URL can be input directly, and otherwise a name will be autogenerated for the resource. This feature uses the <cite><a href="#resource-browser">resource browser</a></cite> to navigate HTTP URLs. See also <var>generateAttributeId</var> (dokieli.js). On create, the resulting hyperlink will be shown and a new tab in the browser will be prompted.</dd>
