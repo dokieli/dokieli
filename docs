@@ -117,8 +117,8 @@
                   <p property="sko:definition">dokieli's features make it possible to view, create, and share content.</p>
 
                   <dl rel="skos:hasTopConcept">
-                    <dt about="#feature-signin" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-user-secret"></i><dfn id="feature-signin">Sign in</dfn></dt>
-                    <dd about="#feature-signin" property="skos:definition">The <em>sign in</em> enables the user to identify themselves with dokieli using their personal online identifier. dokieli gathers the information linked from the user's profile to adapt the user interface and to customise interactions based on their preferences.</dd>
+                    <dt about="#feature-sign-in" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-user-secret"></i><dfn id="feature-sign-in">Sign in</dfn></dt>
+                    <dd about="#feature-sign-in" property="skos:definition">The <em>sign in</em> enables the user to identify themselves with dokieli using their personal online identifier. dokieli gathers the information linked from the user's profile to adapt the user interface and to customise interactions based on their preferences.</dd>
 
                     <dt about="#feature-share" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-user-secret"></i><dfn id="feature-share">Share</dfn></dt>
                     <dd about="#feature-share" property="skos:definition"><em>Share</em> makes it possible to notify specific individuals and groups about an article or a specific part within. Signed in users having owner permissions on an article can give others the permission to view, edit, or be co-owners. The contacts listed are the ones discovered through signed in user's profile that have the means to receive notifications in their inboxes. The notification includes minimal information about the article, such as who sent the notification, when it was created, its license and motivation.</dd>
@@ -181,10 +181,10 @@
                       </dl>
                     </dd>
 
-                    <dt id="resource-save"><i class="fas fa-life-ring"></i>Save</dt>
+                    <dt id="feature-save"><i class="fas fa-life-ring"></i>Save</dt>
                     <dd>This feature makes a <a href="#http-put">write operation</a> (<code>HTTP PUT</code>) request to the current location of the document (<var>window.location</var>). The document is normalised in that dokieli related items are removed from the DOM before making the request.</dd>
 
-                    <dt id="resource-save-as"><i class="far fa-paper-plane"></i>Save As</dt>
+                    <dt id="feature-save-as"><i class="far fa-paper-plane"></i>Save As</dt>
                     <dd>The <cite>Save As</cite> operation is similar to <cite>New</cite> for normalising some of the URLs and same as <cite>Save</cite> operation for normalising the DOM before making the request to specified location. If <cite>Derivation data</cite> is checked for inclusion, <a href="#html-document-derived-from-on">derived from and on</a> information is included in the created document. This feature uses the <cite><a href="#resource-browser">resource browser</a></cite> to navigate HTTP URLs.
                       <dl>
                         <dt id="resource-set-inbox">Set Inbox</dt>
@@ -243,7 +243,7 @@
                     <dd>While the user is in <a href="#editor-enable">editing</a> their article, the document is autosaved to local storage. The user can optionally enable autosaving the resource.</dd>
 
                     <dt id="resource-source"><i class="fas fa-code"></i>Source</dt>
-                    <dd>The user can edit the current state of the article. <em>Updating</em>, only updates the DOM, where write operations on the article resource itself are handled by features such as <a href="#resource-save">Save</a>.</dd>
+                    <dd>The user can edit the current state of the article. <em>Updating</em>, only updates the DOM, where write operations on the article resource itself are handled by features such as <a href="#feature-save">Save</a>.</dd>
 
                     <dt id="embed-data-meta"><i class="fas fa-table"></i>Embed Data</dt>
                     <dd>The user can embed and update supplemental data to be stored with the article using RDF syntaxes such as Turtle, JSON-LD, and TriG.</dd>
