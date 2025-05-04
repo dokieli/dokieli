@@ -277,8 +277,8 @@
                     <dt about="#feature-views" property="skos:prefLabel"><i class="fas fa-magic"></i><dfn id="feature-views">Views</dfn></dt>
                     <dd about="#feature-views" property="skos:definition">The dokieli menu lists primary and alternate stylesheets that are <a href="#html-css">detected in the HTML</a>. <cite>Native</cite> is always available and disables all other stylesheets, allowing the user agent’s default styles to apply. When a view is selected—e.g., <cite>Basic</cite> (which is the current primary stylesheet for this article)—it becomes the primary stylesheet, while the others are set as alternate and disabled.</dd>
 
-                    <dt id="resource-graph">Graph visualisation</dt>
-                    <dd>The user can view a graph visualisation of the document's underlying "machine-readable semantics (RDFa). The view lists the resources that are in the view, number of statements, number of unique nodes, creator, license, and legend. The visualisation can be exported to an SVG.</dd>
+                    <dt about="#feature-graph" property="skos:prefLabel"><dfn id="feature-graph">Graph visualisation</dfn></dt>
+                    <dd about="#feature-graph" property="skos:definition">Displays a graph visualisation of the document’s underlying machine-readable semantics (RDFa), including a list of resources, the number of statements, unique nodes, creator, license, and a legend. The visualisation can be exported as an SVG.</dd>
 
                     <dt id="list-of-stuff">List of Stuff</dt>
                     <dd>Options to generate and include various content such as:
