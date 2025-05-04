@@ -126,7 +126,7 @@
                     <dt about="#feature-reply" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-reply"></i><dfn id="feature-reply">Reply</dfn></dt>
                     <dd about="#feature-reply" property="skos:definition">An article can be replied with a note and have its own <a href="#resource-language">language</a> and <a href="#resource-license">license</a>. The user can specify where they want to save their reply by <a href="#resource-browser">browsing</a> to a location in a <a href="#personal-storage">storage</a> or an annotation service.</dd>
 
-                    <dt about="#feature-notifications" id="feature-notifications" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-inbox"></i><dfn id="feature-notifications">Notifications</dfn></dt>
+                    <dt about="#feature-notifications" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-inbox"></i><dfn id="feature-notifications">Notifications</dfn></dt>
                     <dd>
                       <p about="#feature-notifications" property="skos:definition">The Notifications feature helps to view your own and your own contacts' interactions and activities on documents, such as comments, annotations, reactions, and bookmarks. <a href="#feature-sign-in" rel="rdfs:seeAlso">Sign in</a> to dokieli so that it can find find these notifications.</p>
 
@@ -173,10 +173,10 @@
                     <dd about="#feature-new" property="skos:definition">A <em>new</em> article can be temporarily authored until it is stored in <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or <a href="#local-storage" rel="rdfs:seeAlso">local storage</a>. In order to persist the article long term, the user can <a href="#feature-save" rel="rdfs:seeAlso">Save</a> or <a href="#feature-save-as">Save as</a> the article.</dd>
 
                     <dt about="#feature-open" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-coffee"></i><dfn id="feature-open">Open</dfn></dt>
-                    <dd about="#feature-open" property="skos:definition">
-                      <p>A document can be <em>opened</em> (imported) from a local filesystem or by specifying the URL of the resource on the web. <a href="#resource-browser" rel="rdfs:seeAlso">resource browser</a> can be used to navigate to the document of interest in the <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or <a href="#annotation-service" rel="rdfs:seeAlso">annotation service</a>. Custom views are available when importing some data formats such as:</p>
+                    <dd>
+                      <p about="#feature-open" property="skos:definition">A document can be <em>opened</em> (imported) from a local filesystem or by specifying the URL of the resource on the web. <a href="#resource-browser" rel="rdfs:seeAlso">resource browser</a> can be used to navigate to the document of interest in the <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or <a href="#annotation-service" rel="rdfs:seeAlso">annotation service</a>. Custom views are available when importing some data formats such as:</p>
 
-                      <dl rel="dcterms:subject">
+                      <dl about="#feature-open" rel="dcterms:subject">
                         <dt about="#html-documents" property="skos:prefLabel"><dfn id="html-documents">HTML documents</dfn></dt>
                         <dd about="#html-documents" property="skos:definition">When opening an (X)HTML document, only the content is imported. CSS, JavaScript, and other additional elements are excluded for security reasons. After importing, dokieli can be used as usual with all of its <a href="#features">features</a>.</dd>
 
@@ -194,19 +194,28 @@
                     <dt about="#feature-save" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-life-ring"></i><dfn id="feature-save">Save</dfn></dt>
                     <dd about="#feature-save" property="skos:definition">An article can be <em>saved</em> in its current state and location, making it possible to return to the same content and URL later, when access is available.</dd>
 
-                    <dt id="feature-save-as"><i class="far fa-paper-plane"></i>Save As</dt>
-                    <dd>The <cite>Save As</cite> operation is similar to <cite>New</cite> for normalising some of the URLs and same as <cite>Save</cite> operation for normalising the DOM before making the request to specified location. If <cite>Derivation data</cite> is checked for inclusion, <a href="#html-document-derived-from-on">derived from and on</a> information is included in the created document. This feature uses the <cite><a href="#resource-browser">resource browser</a></cite> to navigate HTTP URLs.
-                      <dl>
-                        <dt id="resource-set-inbox">Set Inbox</dt>
-                        <dd>The user can associate an inbox to an article using the <a href="#resource-browser">resource browser</a>.</dd>
-                        <dt id="resource-set-annotation">Set Annotation</dt>
-                        <dd>The user can associate an <a href="#annotation-service">annotation service</a> to an article using the <a href="#resource-browser">resource browser</a> so that others' annotations can optionally be copied to this location.</dd>
-                        <dt id="resource-dokielize">dokielize</dt>
-                        <dd>Normalises the document to be valid, normalised, as well as includes the dokieli scripts so that the application be used in the derived version.</dd>
-                        <dt id="resource-accessibility-report">Accessibility Report</dt>
-                        <dd>Provides additional accessibility information about the current document so that the user can find ways to improve the content's accessibility.</dd>
-                        <dt id="storge-details">Storage details</dt>
-                        <dd>The user can examine information about the storage such as its location, name, description, owners, URI persistence policy, and digital rights policies as well as be informed about any conflicts with their preferred policies, and notification subscription options and subscribing to live changes.</dd>
+                    <dt about="#feature-save-as" property="skos:prefLabel" typeof="skos:Concept"><i class="far fa-paper-plane"></i><dfn id="feature-save-as">Save As</dfn></dt>
+                    <dd>
+                      <p about="#feature-save-as" property="skos:definition">An article can be <em>saved</em> in its current state at a specific location in a <a href="#personal-storage">personal storage</a>. This feature uses the <cite><a href="#resource-browser">resource browser</a></cite> to navigate HTTP URLs.</p>
+
+                      <dl about="#feature-save-as" rel="dcterms:subject">
+                        <dt about="#resource-set-inbox" property="skos:prefLabel"><dfn id="resource-set-inbox">Set inbox</dfn></dt>
+                        <dd about="#resource-set-inbox" property="skos:definition">An inbox can be assigned to an article or annotation by specifying its location using the <a href="#resource-browser" rel="rdfs:seeAlso">resource browser</a> so that notifications about the article or annotation can be shared.</dd>
+
+                        <dt about="#resource-set-annotation" property="skos:prefLabel"><dfn id="resource-set-annotation">Set annotation</dfn></dt>
+                        <dd about="#resource-set-annotation" property="skos:definition">An <a href="#annotation-service">annotation service</a> can be assigned to an article or annotation by specifying its location using the <a href="#resource-browser" rel="rdfs:seeAlso">resource browser</a> so that others' annotations can optionally be copied to this location.</dd>
+
+                        <dt about="#resource-dokielize" property="skos:prefLabel"><dfn id="resource-dokielize">dokielize</dfn></dt>
+                        <dd about="#resource-dokielize" property="skos:definition">Normalises the document to be valid, normalised, as well as includes the dokieli scripts so that the application be used in the derived version.</dd>
+
+                        <dt about="#resource-derivation-data" property="skos:prefLabel"><dfn id="resource-derivation-data">Derivation data</dfn></dt>
+                        <dd about="#resource-derivation-data" property="skos:definition">When <em>derivation data</em> is checked for inclusion, <a href="#html-document-derived-from-on">derived from and on</a> information is included in the created document.</dd>
+
+                        <dt about="#resource-accessibility-report" property="skos:prefLabel"><dfn id="resource-accessibility-report">Accessibility report</dfn></dt>
+                        <dd about="#resource-accessibility-report" property="skos:definition">Provides additional accessibility information about the current document so that the author can find ways to improve the content's accessibility.</dd>
+
+                        <dt about="#storage-details" property="skos:prefLabel"><dfn id="storage-details">Storage details</dfn></dt>
+                        <dd about="#storage-details" property="skos:definition">The user can examine information about the storage such as its location, name, description, owners, URI persistence policy, and digital rights policies as well as be informed about any conflicts with their preferred policies, and notification subscription options and subscribing to live changes.</dd>
                       </dl>
                     </dd>
 
