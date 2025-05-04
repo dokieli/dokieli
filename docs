@@ -274,8 +274,8 @@
                     <dt about="#feature-message-log" property="skos:prefLabel"><dfn id="message-log">Messages</dfn></dt>
                     <dd about="#feature-message-log" property="skos:definition">Displays all messages raised by dokieli, for example as feedback or notifications resulting from specific actions.</dd>
 
-                    <dt id="dokieli-views"><i class="fas fa-magic"></i>Views</dt>
-                    <dd>The dokieli menu will list primary and alternate stylesheets that are <a href="#html-css">detected in HTML</a>. <cite>Native</cite> is always available and it will essentially disable all other stylesheets, thereby user-agent's default stylesheets are gets applied. When a view is selected, eg. <cite>Basic</cite> (which happens to be the one that is used on this article as primary), it becomes the primary stylesheet, and the rest of the stylesheets become alternate and disabled.</dd>
+                    <dt about="#feature-views" property="skos:prefLabel"><i class="fas fa-magic"></i><dfn id="feature-views">Views</dfn></dt>
+                    <dd about="#feature-views" property="skos:definition">The dokieli menu lists primary and alternate stylesheets that are <a href="#html-css">detected in the HTML</a>. <cite>Native</cite> is always available and disables all other stylesheets, allowing the user agent’s default styles to apply. When a view is selected—e.g., <cite>Basic</cite> (which is the current primary stylesheet for this article)—it becomes the primary stylesheet, while the others are set as alternate and disabled.</dd>
 
                     <dt id="resource-graph">Graph visualisation</dt>
                     <dd>The user can view a graph visualisation of the document's underlying "machine-readable semantics (RDFa). The view lists the resources that are in the view, number of statements, number of unique nodes, creator, license, and legend. The visualisation can be exported to an SVG.</dd>
