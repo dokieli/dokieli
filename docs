@@ -228,8 +228,8 @@
                     <dt id="resource-memento">Memento</dt>
                     <dd>The user can access the memento (version history) of a document.</dd>
 
-                    <dt id="resource-robustify-links">Robustify Links</dt>
-                    <dd>In order to work around content-drift and link-rot, users can decorate links to include Robust Links, e.g. the URI of a snapshot from the Internet Archive, datetime stamp at the time of linking, and other context.</dd>
+                    <dt about="feature-robustify-links" property="skos:prefLabel"><dfn id="feature-robustify-links">Robustify Links</dfn></dt>
+                    <dd about="feature-robustify-links" property="skos:definition">In order to work around content-drift and link-rot, users can decorate links to include Robust Links, e.g. the URI of a snapshot from the <a href="https://archive.org/">Internet Archive</a>, datetime stamp at the time of linking, and other context.</dd>
 
                     <dt id="resource-archive">Archive</dt>
                     <dd>Sends an archival request of the current article to the Internet Archive <a href="https://web.archive.org/">Wayback Machine</a>.</dd>
