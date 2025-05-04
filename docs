@@ -280,27 +280,37 @@
                     <dt about="#feature-graph" property="skos:prefLabel"><dfn id="feature-graph">Graph visualisation</dfn></dt>
                     <dd about="#feature-graph" property="skos:definition">Displays a graph visualisation of the document’s underlying machine-readable semantics (RDFa), including a list of resources, the number of statements, unique nodes, creator, license, and a legend. The visualisation can be exported as an SVG.</dd>
 
-                    <dt id="list-of-stuff">List of Stuff</dt>
-                    <dd>Options to generate and include various content such as:
+                    <dt about="#feature-list-of-stuff" property="skos:prefLabel"><dfn id="list-of-stuff">List of Stuff</dfn></dt>
+                    <dd about="#feature-list-of-stuff" property="skos:definition">
+                      <p>Options to generate and include various types of content, such as:</p>
+
                       <dl>
                         <dt>Contents</dt>
-                        <dd>For table of contents.</dd>
+                        <dd>Generates a table of contents.</dd>
+
                         <dt>Figures</dt>
-                        <dd>List of figures in the document and links to them.</dd>
+                        <dd>Lists all figures in the document with links to each.</dd>
+
                         <dt>Tables</dt>
-                        <dd>List of tables in the document and links to them.</dd>
+                        <dd>Lists all tables in the document with links to each.</dd>
+
                         <dt>Abbreviations</dt>
-                        <dd>List of abbreviations in the document and their definitions.</dd>
+                        <dd>Lists abbreviations in the document along with their definitions.</dd>
+
                         <dt>Quotations</dt>
-                        <dd>List of quotations in the document and links to them.</dd>
+                        <dd>Lists all quotations in the document with links to each.</dd>
+
                         <dt>Concepts</dt>
-                        <dd>List of concept schemes and concepts in the document and links to them. The user can include additional concepts that are defined in resources that are externally references from the current document, as well as a graph visualisation of the concepts.</dd>
+                        <dd>Lists concept schemes and concepts in the document with links. Additional concepts from externally referenced resources can also be included, along with a graph visualisation of the concepts.</dd>
+
                         <dt>Requirements</dt>
-                        <dd>Table of conformance requirements and test coverage (of a technical specification) including the requirement subject, level  and statement, and test cases per requirement, and links to them. The use can optionally see the difference in changes between the current document and the previous version of the document, as well as the information from the changelog.</dd>
+                        <dd>Creates a table of conformance requirements and test coverage (for technical specifications), showing the requirement subject, level, statement, and related test cases with links. Optionally displays changes between the current and previous versions of the document, along with changelog details.</dd>
+
                         <dt>Advisements</dt>
-                        <dd>Table of advisements (in a technical specification) including their levels and statements and links to them.</dd>
+                        <dd>Creates a table of advisements (in technical specifications), including their levels, statements, and links.</dd>
+
                         <dt>References</dt>
-                        <dd>List of tables in the document and links to them.</dd>
+                        <dd>Lists references in the document with links to each.</dd>
                       </dl>
                     </dd>
 
