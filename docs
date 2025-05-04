@@ -134,6 +134,7 @@
                         <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-notifications.jpg" preload="none" resource="#figure-dokieli-notifications" typeof="schema:VideoObject" width="800">
                           <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-notifications.webm" type="video/webm" />
                         </video>
+
                         <figcaption><a href="https://dokie.li/media/video/dokieli-notifications.webm">Video</a> (<a href="https://dokie.li/media/images/dokieli-notifications.jpg" rel="schema:thumbnailUrl">poster</a>) of notifications in dokieli [<time datatype="xsd:duration" datetime="PT15S" property="schema:duration">15s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
                       </figure>
                     </dd>
@@ -176,7 +177,7 @@
                       <p>A document can be <em>opened</em> (imported) from a local filesystem or by specifying the URL of the resource on the web. <a href="#resource-browser" rel="rdfs:seeAlso">resource browser</a> can be used to navigate to the document of interest in the <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or <a href="#annotation-service" rel="rdfs:seeAlso">annotation service</a>. Custom views are available when importing some data formats such as:</p>
 
                       <dl rel="dcterms:subject">
-                        <dt about="#html-documents" property="skos:prefLabel"><dfn id="html-data">HTML documents</dfn></dt>
+                        <dt about="#html-documents" property="skos:prefLabel"><dfn id="html-documents">HTML documents</dfn></dt>
                         <dd about="#html-documents" property="skos:definition">When opening an (X)HTML document, only the content is imported. CSS, JavaScript, and other additional elements are excluded for security reasons. After importing, dokieli can be used as usual with all of its <a href="#features">features</a>.</dd>
 
                         <dt about="#gps-data" property="skos:prefLabel"><dfn id="gps-data">GPS data</dfn></dt>
@@ -185,13 +186,13 @@
                         <dt about="#activity-collection" property="skos:prefLabel"><dfn id="activity-collection">Activity collection</dfn></dt>
                         <dd about="#activity-collection" property="skos:definition">The user can view a chronological list of social interactions and content-related activities, such as posting, liking, following, and sharing, within a collection.</dd>
 
-                        <dt about="#other-data" property="skos:prefLabel"><dfn id="gps-data">Other data</dfn></dt>
+                        <dt about="#other-data" property="skos:prefLabel"><dfn id="other-data">Other data</dfn></dt>
                         <dd about="#other-data" property="skos:definition">Data in unsupported or unrecognized formats will be displayed as-is, without any processing.</dd>
                       </dl>
                     </dd>
 
                     <dt about="#feature-save" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-life-ring"></i><dfn id="feature-save">Save</dfn></dt>
-                    <dd about="#feature-save" property="skos:definition">An article can be <em>saved</em> at its current location, when available to the user.</dd>
+                    <dd about="#feature-save" property="skos:definition">An article can be <em>saved</em> in its current state and location, making it possible to return to the same content and URL later, when access is available.</dd>
 
                     <dt id="feature-save-as"><i class="far fa-paper-plane"></i>Save As</dt>
                     <dd>The <cite>Save As</cite> operation is similar to <cite>New</cite> for normalising some of the URLs and same as <cite>Save</cite> operation for normalising the DOM before making the request to specified location. If <cite>Derivation data</cite> is checked for inclusion, <a href="#html-document-derived-from-on">derived from and on</a> information is included in the created document. This feature uses the <cite><a href="#resource-browser">resource browser</a></cite> to navigate HTTP URLs.
