@@ -265,11 +265,11 @@
                     <dt id="resource-autosaving">Autosaving</dt>
                     <dd>While the user is in <a href="#editor-enable">editing</a> their article, the document is autosaved to local storage. The user can optionally enable autosaving the resource.</dd>
 
-                    <dt about="feature-source" property="skos:prefLabel"><i class="fas fa-code"></i><dfn id="resource-source">Source</dfn></dt>
-                    <dd about="feature-source" property="skos:definition">Allows direct editing of the article's current state. Updating is temporary until committed using features such as changes are committed using <a href="#feature-save" rel="rdfs:seeAlso">Save</a>, <a href="#feature-save-as" rel="rdfs:seeAlso">Save As</a>, <a href="#resource-version" rel="rdfs:seeAlso">Version</a>, or <a href="#resource-immutable" rel="rdfs:seeAlso">Immutable</a>.</dd>
+                    <dt about="#feature-source" property="skos:prefLabel"><i class="fas fa-code"></i><dfn id="resource-source">Source</dfn></dt>
+                    <dd about="#feature-source" property="skos:definition">Allows direct editing of the article's current state. Updating is temporary until committed using features such as changes are committed using <a href="#feature-save" rel="rdfs:seeAlso">Save</a>, <a href="#feature-save-as" rel="rdfs:seeAlso">Save As</a>, <a href="#resource-version" rel="rdfs:seeAlso">Version</a>, or <a href="#resource-immutable" rel="rdfs:seeAlso">Immutable</a>.</dd>
 
-                    <dt id="embed-data-meta"><i class="fas fa-table"></i>Embed Data</dt>
-                    <dd>The user can embed and update supplemental data to be stored with the article using RDF syntaxes such as Turtle, JSON-LD, and TriG.</dd>
+                    <dt about="#feature-embed-meta-data" property="skos:prefLabel"><i class="fas fa-table"></i><dfn id="embed-data-meta">Embed Data</dfn></dt>
+                    <dd about="#feature-embed-meta-data" property="skos:definition">Enables embedding and updating supplemental data to be stored with the article using RDF syntaxes such as Turtle, JSON-LD, and TriG.</dd>
 
                     <dt id="message-log">Messages</dt>
                     <dd>The user can read the all of the messages that were raised to their attention by dokieli for example as the result of some action.</dd>
