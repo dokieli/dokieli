@@ -228,14 +228,14 @@
                     <dt id="resource-memento">Memento</dt>
                     <dd>The user can access the memento (version history) of a document.</dd>
 
-                    <dt about="feature-robustify-links" property="skos:prefLabel"><dfn id="feature-robustify-links">Robustify Links</dfn></dt>
-                    <dd about="feature-robustify-links" property="skos:definition">To help mitigate content drift and link rot, links can be enhanced with additional context such as a snapshot URI from the <a href="https://archive.org/">Internet Archive</a>, a timestamp of when the link was created, and other relevant metadata.</dd>
+                    <dt about="#feature-robustify-links" property="skos:prefLabel"><dfn id="feature-robustify-links">Robustify Links</dfn></dt>
+                    <dd about="#feature-robustify-links" property="skos:definition">To help mitigate content drift and link rot, links can be enhanced with additional context such as a snapshot URI from the <a href="https://archive.org/">Internet Archive</a>, a timestamp of when the link was created, and other relevant metadata.</dd>
 
                     <dt id="resource-archive">Archive</dt>
                     <dd>Sends an archival request of the current article to the Internet Archive <a href="https://web.archive.org/">Wayback Machine</a>.</dd>
 
-                    <dt about="feature-generate-feed" property="skos:prefLabel"><dfn id="feature-generate-feed">Generate Feed</dfn></dt>
-                    <dd about="feature-generate-feed" property="skos:definition">Enables the creation and publication of a custom web feed from a selected list of documents in <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a>, with options to set the feed's title, <a href="#resource-language">language</a>, <a href="#resource-license">license</a>, and format, e.g., RSS or Atom.</dd>
+                    <dt about="#feature-generate-feed" property="skos:prefLabel"><dfn id="feature-generate-feed">Generate Feed</dfn></dt>
+                    <dd about="#feature-generate-feed" property="skos:definition">Enables the creation and publication of a custom web feed from a selected list of documents in <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a>, with options to set the feed's title, <a href="#resource-language">language</a>, <a href="#resource-license">license</a>, and format, e.g., RSS or Atom.</dd>
 
                     <dt id="resource-export"><i class="fas fa-external-link"></i>Export</dt>
                     <dd>The user can export the article as HTML and save to their local filesystem.</dd>
@@ -243,17 +243,22 @@
                     <dt id="resource-print"><i class="fas fa-print"></i>Print</dt>
                     <dd>Requests to print the current document (<code>window.print()</code>).</dd>
 
-                    <dt id="editor-enable"><i class="fas fa-i-cursor"></i>Edit</dt>
-                    <dd><cite>Editor</cite> is one of the document modes a user can be in. The available features reflect the edit operation. Edits reside in the DOM until a <cite>Save</cite> or <cite>Save As</cite> is triggered. There are content formatting and structuring features to indicate heading, italics, bold, ordered an unordered listing, inline code, preformatted text, hyperlinking, inline quotes, adding images, tables, as well as:
-                      <dl>
-                        <dt id="resource-interactive-embeddable-objects">Interactive and embeddable objects</dt>
-                        <dd>User can include a chart based on statistical data such as sparklines.</dd>
-                        <dt id="resource-semantic-annotation">Semantic annotation</dt>
-                        <dd>The user can mark content to be both further machine-readable (RDFa) in addition to being human-readable.</dd>
-                        <dt id="resource-footnotes-citations">Footnotes and citations</dt>
-                        <dd>The user can create footnotes and citations for their selected text where they are contextual, robust, and the cited entity can be notified about the citation (for back-referencing). References can be ISBNs or URLs of any kind. For contextual citations for instance, the citing entity (an argument) cites the cited entity (observation results) as source of factual evidence for statements it contains. The user can also search for bibliographic information about technical specifications for the purpose citing.</dd>
-                        <dt id="authoring-widgets">Authoring widgets</dt>
-                        <dd>The user can add contributors to the article and send a notification to them about the article. The user can specify the document's language, license, inbox, in reply to, document type (such as article, specification, slideshow), document status, test suite.</dd>
+                    <dt about="#feature-edit" property="skos:prefLabel"><dfn id="feature-edit"><i class="fas fa-i-cursor"></i>Edit</dfn></dt>
+                    <dd >
+                      <p about="#feature-edit" property="skos:definition">The Edit feature offers authoring tools for formatting, linking, and structuring articles. Edits are temporary unless autosave is enabled or changes are committed using <a href="#feature-save">Save</a>, <a href="#feature-save-as">Save As</a>, <a href="#resource-version">Version</a>, or <a href="#resource-immutable">Immutable</a>. Standard formatting options include headings, italics, bold, ordered and unordered lists, inline code, preformatted text, hyperlinks, inline quotes, images, and tables. Additional capabilities include:</p>
+
+                      <dl about="#feature-edit" rel="dcterms:subject">
+                        <dt about="#resource-interactive-embeddable-objects" property="skos:prefLabel" id="resource-interactive-embeddable-objects"><dfn>Interactive and embeddable objects</dfn></dt>
+                        <dd about="#resource-interactive-embeddable-objects" property="skos:definition">Charts and other visual elements, such as sparklines, can be embedded based on statistical data.</dd>
+
+                        <dt about="#feature-semantic-annotation" property="skos:prefLabel"><dfn id="resource-semantic-annotation">Semantic annotation</dfn></dt>
+                        <dd about="#feature-semantic-annotation" property="skos:definition">Content can be semantically marked to enhance machine-readability (RDFa), while remaining human-readable.</dd>
+
+                        <dt about="#feature-semantic-annotation" property="skos:prefLabel"><dfn id="resource-footnotes-citations">Footnotes and citations</dfn></dt>
+                        <dd about="#feature-semantic-annotation" property="skos:definition">Footnotes and citations can be added to selected text, providing contextual, robust references. Cited entities can be notified for back-referencing. References may include ISBNs or URLs. For contextual citations, for example, a citing entity (an argument) may reference a cited entity (observation results) as factual evidence. Bibliographic searches for technical specifications are also supported for citation purposes.</dd>
+
+                        <dt about="#feature-authoring-widgets" property="skos:prefLabel"><dfn id="authoring-widgets">Authoring widgets</dfn></dt>
+                        <dd about="#feature-authoring-widgets" property="skos:definition">Additional authoring options include adding contributors and notifying them, setting the document's language, license, inbox, in reply to, status, type, and test suite.</dd>
                       </dl>
                     </dd>
 
