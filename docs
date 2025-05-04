@@ -229,17 +229,16 @@
                     <dd>The user can access the memento (version history) of a document.</dd>
 
                     <dt about="feature-robustify-links" property="skos:prefLabel"><dfn id="feature-robustify-links">Robustify Links</dfn></dt>
-                    <dd about="feature-robustify-links" property="skos:definition">In order to work around content-drift and link-rot, users can decorate links to include Robust Links, e.g. the URI of a snapshot from the <a href="https://archive.org/">Internet Archive</a>, datetime stamp at the time of linking, and other context.</dd>
+                    <dd about="feature-robustify-links" property="skos:definition">To help mitigate content drift and link rot, links can be enhanced with additional context such as a snapshot URI from the <a href="https://archive.org/">Internet Archive</a>, a timestamp of when the link was created, and other relevant metadata.</dd>
 
                     <dt id="resource-archive">Archive</dt>
                     <dd>Sends an archival request of the current article to the Internet Archive <a href="https://web.archive.org/">Wayback Machine</a>.</dd>
 
-                    <dt id="generate-feed">Generate Feed</dt>
-                    <dd>The user can generate and publish a custom web feed based on a list of documents they have selected from a storage. The user can specify the feed's title, <a href="#resource-language">language</a>, <a href="#resource-license">license</a>, and format such as RSS or Atom.</dd>
+                    <dt about="feature-generate-feed" property="skos:prefLabel"><dfn id="feature-generate-feed">Generate Feed</dfn></dt>
+                    <dd about="feature-generate-feed" property="skos:definition">Enables the creation and publication of a custom web feed from a selected list of documents in <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a>, with options to set the feed's title, <a href="#resource-language">language</a>, <a href="#resource-license">license</a>, and format, e.g., RSS or Atom.</dd>
 
                     <dt id="resource-export"><i class="fas fa-external-link"></i>Export</dt>
                     <dd>The user can export the article as HTML and save to their local filesystem.</dd>
-
 
                     <dt id="resource-print"><i class="fas fa-print"></i>Print</dt>
                     <dd>Requests to print the current document (<code>window.print()</code>).</dd>
