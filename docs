@@ -245,7 +245,7 @@
 
                     <dt about="#feature-edit" property="skos:prefLabel"><dfn id="feature-edit"><i class="fas fa-i-cursor"></i>Edit</dfn></dt>
                     <dd >
-                      <p about="#feature-edit" property="skos:definition">The Edit feature offers authoring tools for formatting, linking, and structuring articles. Edits are temporary unless autosave is enabled or changes are committed using <a href="#feature-save">Save</a>, <a href="#feature-save-as">Save As</a>, <a href="#resource-version">Version</a>, or <a href="#resource-immutable">Immutable</a>. Standard formatting options include headings, italics, bold, ordered and unordered lists, inline code, preformatted text, hyperlinks, inline quotes, images, and tables. Additional capabilities include:</p>
+                      <p about="#feature-edit" property="skos:definition">The Edit feature offers authoring tools for formatting, linking, and structuring articles. Edits are temporary unless autosave is enabled or changes are committed using <a href="#feature-save" rel="rdfs:seeAlso">Save</a>, <a href="#feature-save-as" rel="rdfs:seeAlso">Save As</a>, <a href="#resource-version" rel="rdfs:seeAlso">Version</a>, or <a href="#resource-immutable" rel="rdfs:seeAlso">Immutable</a>. Standard formatting options include headings, italics, bold, ordered and unordered lists, inline code, preformatted text, hyperlinks, inline quotes, images, and tables. Additional capabilities include:</p>
 
                       <dl about="#feature-edit" rel="dcterms:subject">
                         <dt about="#resource-interactive-embeddable-objects" property="skos:prefLabel" id="resource-interactive-embeddable-objects"><dfn>Interactive and embeddable objects</dfn></dt>
@@ -265,8 +265,8 @@
                     <dt id="resource-autosaving">Autosaving</dt>
                     <dd>While the user is in <a href="#editor-enable">editing</a> their article, the document is autosaved to local storage. The user can optionally enable autosaving the resource.</dd>
 
-                    <dt id="resource-source"><i class="fas fa-code"></i>Source</dt>
-                    <dd>The user can edit the current state of the article. <em>Updating</em>, only updates the DOM, where write operations on the article resource itself are handled by features such as <a href="#feature-save">Save</a>.</dd>
+                    <dt about="feature-source" property="skos:prefLabel"><i class="fas fa-code"></i><dfn id="resource-source">Source</dfn></dt>
+                    <dd about="feature-source" property="skos:definition">Allows direct editing of the article's current state. Updating is temporary until committed using features such as changes are committed using <a href="#feature-save" rel="rdfs:seeAlso">Save</a>, <a href="#feature-save-as" rel="rdfs:seeAlso">Save As</a>, <a href="#resource-version" rel="rdfs:seeAlso">Version</a>, or <a href="#resource-immutable" rel="rdfs:seeAlso">Immutable</a>.</dd>
 
                     <dt id="embed-data-meta"><i class="fas fa-table"></i>Embed Data</dt>
                     <dd>The user can embed and update supplemental data to be stored with the article using RDF syntaxes such as Turtle, JSON-LD, and TriG.</dd>
