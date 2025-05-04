@@ -314,8 +314,8 @@
                       </dl>
                     </dd>
 
-                    <dt id="document-metadata">Document metadata</dt>
-                    <dd>Based on document's underlying structured data, displays information about its contributors such as editors and authors, number of citations, requirements, advisements, concepts, statements, as well as an estimated reading time, number of characters, words, and bytes.</dd>
+                    <dt about="#feature-document-metadata" property="skos:prefLabel"><dfn id="document-metadata">Document metadata</dt>
+                    <dd about="#feature-document-metadata" property="skos:definition">Based on document's underlying structured data, displays information about its contributors such as editors and authors, number of citations, requirements, advisements, concepts, statements, as well as an estimated reading time, number of characters, words, and bytes.</dd>
                   </dl>
                 </div>
               </section>
