@@ -124,7 +124,7 @@
                     <dd about="#feature-share" property="skos:definition"><em>Share</em> makes it possible to notify specific individuals and groups about an article or a specific part within. Signed in users having owner permissions on an article can give others the permission to view, edit, or be co-owners. The contacts listed are the ones discovered through signed in user's profile that have the means to receive notifications in their inboxes. The notification includes minimal information about the article, such as who sent the notification, when it was created, its license and motivation.</dd>
 
                     <dt about="#feature-reply" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-reply"></i><dfn id="feature-reply">Reply</dfn></dt>
-                    <dd about="#feature-reply" property="skos:definition">An article can be replied with a note and have its own <a href="#resource-language">language</a> and <a href="#resource-license">license</a>. The user can specify where they want to save their reply by <a href="#resource-browser">browsing</a> to a location in a <a href="#personal-storage">storage</a> or an annotation service.</dd>
+                    <dd about="#feature-reply" property="skos:definition">An article can be replied with a note and have its own <a href="#resource-language" rel="rdfs:seeAlso">language</a> and <a href="#resource-license" rel="rdfs:seeAlso">license</a>. The user can specify where they want to save their reply by <a href="#resource-browser" rel="rdfs:seeAlso">browsing</a> to a location in a <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or an annotation service.</dd>
 
                     <dt about="#feature-notifications" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-inbox"></i><dfn id="feature-notifications">Notifications</dfn></dt>
                     <dd>
@@ -140,7 +140,7 @@
                     </dd>
 
                     <dt about="#feature-annotation" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-annotation">Sign in</dfn></dt>
-                    <dd about="#feature-annotation" property="skos:definition">Articles can be annotated with motivations such as bookmarking, commenting, describing, highlighting, replying, tagging, assessments. Annotations themselves can also be annotated. Annotations can be stored in one more places such as a <a href="#personal-storage">storage</a> or an <a href="#annotation-service">annotation service</a>. Each annotation can have its own distinct <a href="#resource-language">language</a> and a <a href="#resource-license">license</a> for some types of annotations.</dd>
+                    <dd about="#feature-annotation" property="skos:definition">Articles can be annotated with motivations such as bookmarking, commenting, describing, highlighting, replying, tagging, assessments. Annotations themselves can also be annotated. Annotations can be stored in one more places such as a <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or an <a href="#annotation-service" rel="rdfs:seeAlso">annotation service</a>. Each annotation can have its own distinct <a href="#resource-language" rel="rdfs:seeAlso">language</a> and a <a href="#resource-license" rel="rdfs:seeAlso">license</a> for some types of annotations.</dd>
 
                     <dt>Bookmarking</dt>
                     <dd>The document or selected text can be bookmarked where the user can include a note, assign <a href="#annotation-tagging">tags</a>.</dd>
@@ -196,7 +196,7 @@
 
                     <dt about="#feature-save-as" property="skos:prefLabel" typeof="skos:Concept"><i class="far fa-paper-plane"></i><dfn id="feature-save-as">Save As</dfn></dt>
                     <dd>
-                      <p about="#feature-save-as" property="skos:definition">An article can be <em>saved</em> in its current state at a specific location in a <a href="#personal-storage">personal storage</a>. This feature uses the <cite><a href="#resource-browser">resource browser</a></cite> to navigate HTTP URLs.</p>
+                      <p about="#feature-save-as" property="skos:definition">An article can be <em>saved</em> in its current state at a specific location in a <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a>. This feature uses the <cite><a href="#resource-browser" rel="rdfs:seeAlso">resource browser</a></cite> to navigate HTTP URLs.</p>
 
                       <dl about="#feature-save-as" rel="dcterms:subject">
                         <dt about="#resource-set-inbox" property="skos:prefLabel"><dfn id="resource-set-inbox">Set inbox</dfn></dt>
@@ -314,7 +314,7 @@
                       </dl>
                     </dd>
 
-                    <dt about="#feature-document-metadata" property="skos:prefLabel"><dfn id="document-metadata">Document metadata</dt>
+                    <dt about="#feature-document-metadata" property="skos:prefLabel"><dfn id="document-metadata">Document metadata</dfn></dt>
                     <dd about="#feature-document-metadata" property="skos:definition">Based on document's underlying structured data, displays information about its contributors such as editors and authors, number of citations, requirements, advisements, concepts, statements, as well as an estimated reading time, number of characters, words, and bytes.</dd>
                   </dl>
                 </div>
@@ -323,27 +323,29 @@
               <section id="components" inlist="" rel="schema:hasPart" resource="#components">
                 <h3 property="schema:name">Components</h3>
                 <div datatype="rdf:HTML" property="schema:description">
+                  <p>Articles, annotations, and notifications can include common components that provide additional information or functionality.</p>
+
                   <dl>
-                    <dt id="resource-license">License</dt>
-                    <dd>The user can specify the <em>rights and license</em> for their articles and annotations from a list of <cite><a href="https://creativecommons.org/">Creative Commons</a></cite> licenses, e.g., <span resource="#annotation-rights" typeof="schema:ChooseAction">CC BY 4.0</span>. Notifications by default use the <cite><a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0 1.0 Universal</a></cite> license.</dd>
+                    <dt about="#resource-license" property="skos:prefLabel"><dfn id="resource-license">License</dfn></dt>
+                    <dd about="#resource-license" property="skos:definition">Licenses and rights can be specified for articles and annotations from a list of <cite><a href="https://creativecommons.org/">Creative Commons</a></cite> options, e.g., <span resource="#annotation-rights" typeof="schema:ChooseAction">CC BY 4.0</span>. Notifications, by default, use the <cite><a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0 1.0 Universal</a></cite> license.</dd>
 
-                    <dt id="resource-language">Language</dt>
-                    <dd>The user can assign the language of an article or an annotation from a selection (182 languages). Alternatively, the user can use the semantic annotator to specify the language of a text selection or nodes.</dd>
+                    <dt about="#resource-language" property="skos:prefLabel"><dfn id="resource-language">Language</dfn></dt>
+                    <dd about="#resource-language" property="skos:definition">The language of an article or annotation can be set from a list (182 languages available). Alternatively, language can be applied to specific text selections or nodes using the semantic annotator.</dd>
 
-                    <dt id="resource-browser">Resource browser</dt>
-                    <dd >The <em>resource browser</em> eg. available for <cite>New</cite>, <cite>Open</cite>, <cite>Save As</cite> operations can be used to navigate through a Webspace. It does this by using the <cite><a href="https://www.w3.org/TR/ldp/">Linked Data Platform</a></cite>'s containment rules to retrieve and then display the container's index. If the user's personal storage location is known, it will be used as default location for the resource browser. Alternatively, if the article refers to an annotation service, it will be used as start location.</dd>
+                    <dt about="#resource-browser" property="skos:prefLabel"><dfn id="resource-browser">Resource browser</dfn></dt>
+                    <dd about="#resource-browser" property="skos:definition">The <em>resource browser</em> is part of features such as <a href="#feature-new" rel="rdfs:seeAlso">New</a>, <a href="#feature-open" rel="rdfs:seeAlso">Open</a>, <a href="#feature-save-as" rel="rdfs:seeAlso">Save As</a>, and <a href="#feature-generate-feed" rel="rdfs:seeAlso">Generate Feed</a> lets you navigate locations such as a <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a>, <a href="#annotation-service" rel="rdfs:seeAlso">annotation service</a>, or a <a href="#activity-collection" rel="rdfs:seeAlso">activity collection</a>. If a personal storage location is known, it is used by default; otherwise, the start location can be based on an annotation service referenced by the article.</dd>
 
-                    <dt id="base-url-selection">Base URL selection</dt>
-                    <dd>To determine the base URL, when new documents are created or saved as, media resources from <var>head link, [src], object[data]</var> (querySelector) will have their URLs normalised to use current document's base URL as its absolute URL (this is the <q>Use references as is</q> option). If <q>Copy to your storage</q> is selected, relative URLs will not be updated as the copy operation reuses the same file paths when resource are copied to destination. The <em>copy</em> operation does an <code>HTTP GET</code> for each source, then <code>HTTP PUT</code> to target.</dd>
+                    <dt about="#base-url-selection" property="skos:prefLabel"><dfn id="base-url-selection">Base URL selection</dfn></dt>
+                    <dd about="#base-url-selection" property="skos:definition">When creating or saving documents, media resources (e.g., <var>head link</var>, <var>[src]</var>, <var>object[data]</var>) are normalised to use the document's base URL as their absolute path (the <q>Use references as is</q> option). If <q>Copy to your storage</q> is selected, relative URLs remain unchanged, as the <em title="the copy operation performs an HTTP GET to source and HTTP PUT to the target">copy</em> process reuses the same file paths.</dd>
 
-                    <dt id="resource-clipboard">Clipboard</dt>
-                    <dd>The user can copy the contents of preformatted text and tables (in CSV format) to their clipboard.</dd>
+                    <dt about="#clipboard" property="skos:prefLabel"><dfn id="resource-clipboard">Clipboard</dfn></dt>
+                    <dd about="#clipboard" property="skos:definition">Text and tables (in CSV format) can be copied to the clipboard.</dd>
 
-                    <dt id="resource-fragments">Fragments</dt>
-                    <dd>The user can see and click on a fragment in the document which is useful for specific referencing.</dd>
+                    <dt about="#resource-fragments" property="skos:prefLabel"><dfn id="resource-fragments">Fragments</dfn></dt>
+                    <dd about="#resource-fragments" property="skos:definition">Clickable fragments are available for easy, specific referencing within the document.</dd>
 
-                    <dt id="resource-tabs">Tabs view</dt>
-                    <dd>Navigation items provide a tab view for the user.</dd>
+                    <dt about="#resource-tabs" property="skos:prefLabel"><dfn id="resource-tabs">Tabs view</dfn></dt>
+                    <dd about="#resource-tabs" property="skos:definition">Navigation items are presented in a tabbed view for easier access.</dd>
                   </dl>
                 </div>
               </section>
@@ -394,7 +396,7 @@
                     <dd>HTML5 <cite><a href="https://www.w3.org/TR/html-polyglot/" rel="cito:citesAsAuthority">Polyglot Markup</a></cite> is used to ensure that when content is processed or served as HTML or XHTML (<code>text/html</code>, <code>application/xhtml+xml</code>), they can generally be used in both HTML and XML ecosystems without further intervention. See also <var>getDocument</var> (dokieli.js) for details on DOM normalisation.</dd>
 
                     <dt id="html-identifiers">Identifiers</dt>
-                    <dd>Unique identifiers (<code>@id</code>) may be placed on any element. Identifiers are auto-generated by normalising some input eg. <code>section</code>s use their heading's text content as input, <code>table</code>s from <code>caption</code>. Anything of importance should have an identifier, and aimed to be included for common patterns out of the box. <code>@id</code> values are reused in RDFa. See also <var>generateAttributeId</var> (dokieli.js) and its application in different places.</dd>
+                    <dd>Unique identifiers (<code>@id</code>) may be placed on any element. Identifiers are auto-generated by normalising some input e.g., <code>section</code>s use their heading's text content as input, <code>table</code>s from <code>caption</code>. Anything of importance should have an identifier, and aimed to be included for common patterns out of the box. <code>@id</code> values are reused in RDFa. See also <var>generateAttributeId</var> (dokieli.js) and its application in different places.</dd>
 
                     <dt id="html-outline">Outline</dt>
                     <dd>
@@ -402,13 +404,13 @@
                         <li><code>title</code> is used.</li>
                         <li><code>main &gt; article</code> (querySelector) is considered to be the location of the primary content.</li>
                         <li><code>h1</code> is typically the first element node after <code>main &gt; article</code></li>
-                        <li>There is a resource type, eg. <code>schema:Article</code> that can be found in <code>main &gt; article</code> which is about the article. <code>body</code> may contain broad classes.</li>
+                        <li>There is a resource type, e.g., <code>schema:Article</code> that can be found in <code>main &gt; article</code> which is about the article. <code>body</code> may contain broad classes.</li>
                       </ul>
                     </dd>
 
                     <dt id="html-section">Section</dt>
                     <dd>
-                      <p>Sectioning is declared with <code>section</code> and typically have a heading, eg. <code>h2</code> as its first child. Subsections may appear as a child of parent <code>section</code>, or as a child of <code>div</code> (which is a child of parent <code>section</code>), ie. <code>section section</code> or <code>section div section</code>. The headings of subsections are enumerated eg. <code>section h2</code> would have a subsection with <code>section h3</code>. Sections <code>id</code>s and heading text are used to dynamically build the table of contents.</p>
+                      <p>Sectioning is declared with <code>section</code> and typically have a heading, e.g., <code>h2</code> as its first child. Subsections may appear as a child of parent <code>section</code>, or as a child of <code>div</code> (which is a child of parent <code>section</code>), ie. <code>section section</code> or <code>section div section</code>. The headings of subsections are enumerated e.g., <code>section h2</code> would have a subsection with <code>section h3</code>. Sections <code>id</code>s and heading text are used to dynamically build the table of contents.</p>
 
                       <figure class="listing" id="html-section-source" rel="schema:hasPart" resource="#html-section-source">
                         <pre about="#html-section-source" lang="" property="schema:description" typeof="fabio:Script" xml:lang=""><code class="highlight-section">&lt;section&gt;</code>
@@ -428,7 +430,7 @@
                     </dd>
 
                     <dt id="html-aside">Aside</dt>
-                    <dd><code>aside</code>s can technically appear anywhere, but tend to appear as the last element node in <code>section</code>, eg. for related content, footnotes. If the <code>aside</code> is introduced to the DOM via JavaScript for like annotations, they have a similar structure to <code>section</code>.</dd>
+                    <dd><code>aside</code>s can technically appear anywhere, but tend to appear as the last element node in <code>section</code>, e.g., for related content, footnotes. If the <code>aside</code> is introduced to the DOM via JavaScript for like annotations, they have a similar structure to <code>section</code>.</dd>
 
                     <dt id="html-div">Division</dt>
                     <dd><code>div</code>s within <code>section</code> are used to wrap a block of arbitrary markup and content. See also RDFa below.</dd>
@@ -467,7 +469,7 @@
                     </dd>
 
                     <dt id="html-math">Math</dt>
-                    <dd>For mathematical equations <code>figure class="equation"</code> can be used to hint at an equation display. <cite><a href="https://www.w3.org/TR/MathML/">MathML</a></cite> base equation with <code>&lt;math xmlns="http://www.w3.org/1998/Math/MathML"&gt;</code> root can be included here (see also source). Alternatively, if <cite><a href="https://www.mathjax.org/">MathJax</a></cite> JavaScript is available in the document, <cite><a href="https://en.wikibooks.org/wiki/LaTeX/Mathematics">(La)TeX</a></cite>, eg. <samp>\lim_{x \to \infty} \exp(-x) = 0</samp> and <cite><a href="http://asciimath.org/">ASCIIMath</a></cite>, eg. <samp>sum_(i=1)^n i^3=((n(n+1))/2)^2</samp>, syntaxes can be input within the authoring mode (via <cite>Edit</cite>).
+                    <dd>For mathematical equations <code>figure class="equation"</code> can be used to hint at an equation display. <cite><a href="https://www.w3.org/TR/MathML/">MathML</a></cite> base equation with <code>&lt;math xmlns="http://www.w3.org/1998/Math/MathML"&gt;</code> root can be included here (see also source). Alternatively, if <cite><a href="https://www.mathjax.org/">MathJax</a></cite> JavaScript is available in the document, <cite><a href="https://en.wikibooks.org/wiki/LaTeX/Mathematics">(La)TeX</a></cite>, e.g., <samp>\lim_{x \to \infty} \exp(-x) = 0</samp> and <cite><a href="http://asciimath.org/">ASCIIMath</a></cite>, e.g., <samp>sum_(i=1)^n i^3=((n(n+1))/2)^2</samp>, syntaxes can be input within the authoring mode (via <cite>Edit</cite>).
 
                       <figure class="equation" typeof="doco:FormulaBox">
                         <math xmlns="http://www.w3.org/1998/Math/MathML">
@@ -493,10 +495,10 @@
                     </dd>
 
                     <dt id="html-embed-turtle-json-ld-trig">Embedding Turtle, JSON-LD, and TriG</dt>
-                    <dd>Turtle, JSON-LD, and TriG syntaxes are placed within respective <code>script</code> blocks in <code>head</code> eg. <code>&lt;script id="meta-json-ld" type="application/ld+json" title="JSON-LD"&gt;&lt;/script&gt;</code>. Data is enclosed in <code>CDATA</code> sections. This pattern is detected, visible and editable from <cite>Embed Data</cite> in <i class="fas fa-bars"></i> <a href="#dokieli-menu">dokieli menu</a>. See also <var>showEmbedData</var> (dokieli.js).</dd>
+                    <dd>Turtle, JSON-LD, and TriG syntaxes are placed within respective <code>script</code> blocks in <code>head</code> e.g., <code>&lt;script id="meta-json-ld" type="application/ld+json" title="JSON-LD"&gt;&lt;/script&gt;</code>. Data is enclosed in <code>CDATA</code> sections. This pattern is detected, visible and editable from <cite>Embed Data</cite> in <i class="fas fa-bars"></i> <a href="#dokieli-menu">dokieli menu</a>. See also <var>showEmbedData</var> (dokieli.js).</dd>
 
                     <dt id="html-css">CSS</dt>
-                    <dd>Multiple stylesheets can be included with <code>@media</code>, and when accompanied with <code>@title</code>, some user-agents can provide options for the user to switch between them, as well as from the <i class="fas fa-bars"></i> <a href="#dokieli-menu">dokieli menu</a>, eg. <pre>&lt;!-- Primary stylesheet --&gt;
+                    <dd>Multiple stylesheets can be included with <code>@media</code>, and when accompanied with <code>@title</code>, some user-agents can provide options for the user to switch between them, as well as from the <i class="fas fa-bars"></i> <a href="#dokieli-menu">dokieli menu</a>, e.g., <pre>&lt;!-- Primary stylesheet --&gt;
 <code>&lt;link href="media/css/basic.css" media="all" rel="stylesheet" title="Basic" /&gt;</code>
 &lt;!-- Alternate stylesheet --&gt;
 <code>&lt;link href="media/css/acm.css" media="all" rel="stylesheet alternate" title="ACM" /&gt;</code>
@@ -505,12 +507,12 @@
 
                     <dt id="html-rdfa">RDFa</dt>
                     <dd>dokieli can consume and produce <cite><a href="https://www.w3.org/TR/rdfa-core/">RDFa Core 1.1</a></cite> syntax.</dd>
-                    <dd>To preserve the order of content, <code>@inlist</code> is used eg. <code>&lt;section inlist=""</code>, <code>&lt;dd id="Sarven-Capadisli" inlist="" rel="bibo:authorList" resource="https://csarven.ca/#i"&gt;</code>.</dd>
-                    <dd>A <code>section</code>s <code>@id</code> value is used as part of <code>section</code>'s <code>@resource</code> as a fragment, eg. <code>&lt;section id="introduction" rel="schema:hasPart" resource="#introduction"&gt;</code>. This allows the same identifier to be used for humans and machines, the value is derived from normalising its heading value as mentioned earlier.</dd>
-                    <dd>Relating parts is done with <code>rel="schema:hasPart"</code>, eg. sections with subsection: <pre><code>&lt;section id="structure-and-semantics" inlist="" rel="schema:hasPart" resource="#structure-and-semantics"&gt;</code>
+                    <dd>To preserve the order of content, <code>@inlist</code> is used e.g., <code>&lt;section inlist=""</code>, <code>&lt;dd id="Sarven-Capadisli" inlist="" rel="bibo:authorList" resource="https://csarven.ca/#i"&gt;</code>.</dd>
+                    <dd>A <code>section</code>s <code>@id</code> value is used as part of <code>section</code>'s <code>@resource</code> as a fragment, e.g., <code>&lt;section id="introduction" rel="schema:hasPart" resource="#introduction"&gt;</code>. This allows the same identifier to be used for humans and machines, the value is derived from normalising its heading value as mentioned earlier.</dd>
+                    <dd>Relating parts is done with <code>rel="schema:hasPart"</code>, e.g., sections with subsection: <pre><code>&lt;section id="structure-and-semantics" inlist="" rel="schema:hasPart" resource="#structure-and-semantics"&gt;</code>
 <code>  &lt;section id="html-patterns" inlist="" rel="schema:hasPart" resource="#html-patterns"&gt;</code></pre>
                     </dd>
-                    <dd><code>div</code>s are used to hold a block of HTML markup and types of content together eg. <code>&lt;div datatype="rdf:HTML" property="schema:description" resource="#introduction" typeof="deo:Introduction"&gt;</code> makes it possible to declare that it contains HTML markup, and describes an introductory text.</dd>
+                    <dd><code>div</code>s are used to hold a block of HTML markup and types of content together e.g., <code>&lt;div datatype="rdf:HTML" property="schema:description" resource="#introduction" typeof="deo:Introduction"&gt;</code> makes it possible to declare that it contains HTML markup, and describes an introductory text.</dd>
                     <dd>Some of the prefixes (<code>@prefix</code>) on the <code>body</code> element are defined in the <cite><a href="https://www.w3.org/2011/rdfa-context/rdfa-1.1.html">RDFa Core Initial Context</a></cite>. These prefixes are defined in dokieli for the purpose of being compact, robust, and to minimise potential errors for consumers.</dd>
                   </dl>
 
@@ -565,7 +567,7 @@
 <code>  &lt;dd&gt;&lt;a href="https://linkedresearch.org/inbox/csarven.ca/dokieli-rww/" rel="ldp:inbox">inbox/&lt;/a&gt;&lt;/dd&gt;</code>
 <code>&lt;/dl&gt;</code></pre>
 
-                      <p><code>ldp:inbox</code> relation gives an article its own Inbox where it can receive notifications about eg. annotations or activities relevant to an article. The notifications can be consumed by applications to offer additional content and interactive possibilities. dokieli can both send and consume notifications by way of discovering an article's inbox. Notifications are created for activities like announcements, creating, (dis)liking, and consumed in order to be displayed in context of available content. The protocol to send and consume notifications in dokieli uses <cite><a href="https://www.w3.org/TR/ldn/">Linked Data Notifications</a></cite>.</p>
+                      <p><code>ldp:inbox</code> relation gives an article its own Inbox where it can receive notifications about e.g., annotations or activities relevant to an article. The notifications can be consumed by applications to offer additional content and interactive possibilities. dokieli can both send and consume notifications by way of discovering an article's inbox. Notifications are created for activities like announcements, creating, (dis)liking, and consumed in order to be displayed in context of available content. The protocol to send and consume notifications in dokieli uses <cite><a href="https://www.w3.org/TR/ldn/">Linked Data Notifications</a></cite>.</p>
 
                       <pre id="html-document-annotation-service"><code>&lt;dl id="document-annotation-service"&gt;</code>
 <code>  &lt;dt&gt;Annotation Service&lt;/dt&gt;</code>
@@ -598,7 +600,7 @@
 <code>  &lt;dd&gt;&lt;a href="https://creativecommons.org/licenses/by/4.0/" rel="schema:license" title="Creative Commons Attribution 4.0 Unported"&gt;CC BY 4.0&lt;/a&gt;&lt;/dd&gt;</code>
 <code>&lt;/dl&gt;</code></pre>
 
-                      <p>Nice to declare a license or rights to signal under what conditions the document may be reused, reshared or remixed, eg. via <cite><a href="https://creativecommons.org/">Creative Commons</a></cite> license. Articles and notifications tend to use <code>schema:license</code> and annotations use <code>dcterms:rights</code> (given <cite><a href="https://www.w3.org/TR/annotation-vocab/">Web Annotation Vocabulary</a></cite>).</p>
+                      <p>Nice to declare a license or rights to signal under what conditions the document may be reused, reshared or remixed, e.g., via <cite><a href="https://creativecommons.org/">Creative Commons</a></cite> license. Articles and notifications tend to use <code>schema:license</code> and annotations use <code>dcterms:rights</code> (given <cite><a href="https://www.w3.org/TR/annotation-vocab/">Web Annotation Vocabulary</a></cite>).</p>
 
                       <pre id="html-document-derived-from-on"><code>&lt;dl id="document-derived-from"&gt;</code>
 <code>  &lt;dt&gt;Derived From&lt;/dt&lt;</code>
@@ -733,7 +735,7 @@
 
                       <p><code>oa:canonical</code> refers to a canonical IRI that can be used to deduplicate the annotation. If an user chooses to store their annotation at their personal Webspace as well as when an <a href="#annotation-service">annotation service</a> (if offered), dokieli treats the resource at personal space as the canonical, and the resource at the <a href="#annotation-service">annotation service</a> as the copy where it refers to the personal space (<code>oa:via</code>).</p>
 
-                      <p>If an annotation resource is introduced to the article's DOM as part of an <code>aside</code>, they have a structure similar to an <code>article</code>, and may be displayed in different ways, eg. in marginalia:</p>
+                      <p>If an annotation resource is introduced to the article's DOM as part of an <code>aside</code>, they have a structure similar to an <code>article</code>, and may be displayed in different ways, e.g., in marginalia:</p>
 
                       <pre id="html-aside-do"><code>&lt;aside class="note do"&gt;</code>
 <code>  &lt;blockquote cite="https://linkedresearch.org/annotation/csarven.ca/dokieli-rww/b6738766-3ce5-4054-96a9-ced7f05b439f"&gt;</code>
@@ -756,7 +758,7 @@
                     <div property="schema:description">
                       <p>Notifications are discovered from <cite><a href="https://www.w3.org/TR/ldn/">LDN</a></cite> Inboxes. An article (or a fragment within) may have an inbox relation (<code>ldp:inbox</code>) which helps dokieli to discover it, and then fetch the notifications.</p>
 
-                      <p>Notifications are intended to be brief, giving sufficient information for consumers to decide if they want use to them. If the notifications are generated by dokieli, eg. via an annotation activity, they typically include some provenance level data like generation date, actor that triggered it, license, where the annotation can be found, what it annotated, and the motivation for it. Notifications will not include the annotation body, but consumers can fetch their URLs (as mentioned in the <a href="#html-annotation">annotation section</a>).</p>
+                      <p>Notifications are intended to be brief, giving sufficient information for consumers to decide if they want use to them. If the notifications are generated by dokieli, e.g., via an annotation activity, they typically include some provenance level data like generation date, actor that triggered it, license, where the annotation can be found, what it annotated, and the motivation for it. Notifications will not include the annotation body, but consumers can fetch their URLs (as mentioned in the <a href="#html-annotation">annotation section</a>).</p>
 
                       <p>See also <var>createNoteDataHTML</var> (dokieli.js)</p>
 
@@ -958,7 +960,7 @@
                         <dd>Articles typically use <code>text/html</code> with embedded RDFa. Where a server implements <code>GET</code> with <code>text/html</code>, and allows <code>PUT</code> for writing, the assumption is that it can allow <code>text/html</code>. In the future, dokieli can check for the <code>Accept-Put</code> header with <code>OPTIONS</code> to determine a suitable type. At this time, HTML+RDFa is an important default for articles.</dd>
 
                         <dt id="request-to-send-annotation">Annotation</dt>
-                        <dd>Annotations use the <code>POST</code> method with <code>Content-Type</code> header value determined by type of location to write to: personal storage space eg. given a profile's <code>pim:storage</code>; made to an <a href="#annotation-service">annotation service</a> eg. an article's <code>oa:annotationService</code>; sent to profile's outbox's outbox: <code>as:outbox</code>. The <cite><a href="https://www.w3.org/TR/annotation-protocol/">Web Annotation Protocol</a></cite> requires <code>application/ld+json</code> by default. dokieli sends an <code>OPTIONS</code> request to check for the <code>Accept-Post</code> header and sends the payload in one of the serializations that the server prefers. If it is not set, it will fallback to <code>application/ld+json</code> as preferred by Wen Annotation and ActivityPub.</dd>
+                        <dd>Annotations use the <code>POST</code> method with <code>Content-Type</code> header value determined by type of location to write to: personal storage space e.g., given a profile's <code>pim:storage</code>; made to an <a href="#annotation-service">annotation service</a> e.g., an article's <code>oa:annotationService</code>; sent to profile's outbox's outbox: <code>as:outbox</code>. The <cite><a href="https://www.w3.org/TR/annotation-protocol/">Web Annotation Protocol</a></cite> requires <code>application/ld+json</code> by default. dokieli sends an <code>OPTIONS</code> request to check for the <code>Accept-Post</code> header and sends the payload in one of the serializations that the server prefers. If it is not set, it will fallback to <code>application/ld+json</code> as preferred by Wen Annotation and ActivityPub.</dd>
 
                         <dt id="request-to-send-notification">Notification</dt>
                         <dd>Notifications use <code>OPTIONS</code> to check the response's <code>Accept-Post</code> HTTP header. If it is set and matches one of the acceptable RDF mediatypes that dokieli can parse, it will use that mediatype to serialize the payload before <code>POST</code>ing. <span rel="schema:hasPart" resource="#dokieli-notification-post-content-type-json-ld">If it is not set, it will fallback to <code>application/ld+json</code> as required by the <cite><a href="https://www.w3.org/TR/ldn/#test-sender-header-post-content-type-json-ld" rel="cito:citesAsAuthority">Linked Data Notifications</a></cite> specification.</span></dd>
@@ -1040,7 +1042,7 @@
 <code># Install packages</code>
 <code>yarn install</code>
 <code></code>
-<code># Build eg. to create scripts/dokieli.js</code>
+<code># Build e.g., to create scripts/dokieli.js</code>
 <code>yarn build</code>
 <code></code>
 <code># or automatically rebuild when files change</code>
