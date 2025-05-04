@@ -128,7 +128,7 @@
 
                     <dt about="#feature-notifications" id="feature-notifications" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-inbox"></i><dfn id="feature-notifications">Notifications</dfn></dt>
                     <dd about="">
-                      <p about="#feature-notifications" datatype="rdf:HTML" property="schema:description">The Notifications feature helps to view your own and your own contacts' interactions and activities on documents, such as comments, annotations, reactions, and bookmarks. <a href="#sign-in" rel="rdfs:seeAlso">Sign in</a> to dokieli so that it can find find these notifications.</p>
+                      <p about="#feature-notifications" datatype="rdf:HTML" property="schema:description">The Notifications feature helps to view your own and your own contacts' interactions and activities on documents, such as comments, annotations, reactions, and bookmarks. <a href="#feature-sign-in" rel="rdfs:seeAlso">Sign in</a> to dokieli so that it can find find these notifications.</p>
 
                       <figure about="#feature-notifications" id="figure-dokieli-notifications" rel="schema:video" resource="#figure-dokieli-notifications">
                         <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-notifications.jpg" preload="none" resource="#figure-dokieli-notifications" typeof="schema:VideoObject" width="800">
