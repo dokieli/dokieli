@@ -82,6 +82,55 @@
               <p>Dokieli is a client-side editor and browser extension for decentralised article publishing, annotations, and social interactions, built as an open-source project using open web standards. Dokieli's core design principles are <em>autonomy</em> and <em>universal access</em>.</p>
 
               <p>As an application running in the web browser, dokieli works independently of any specific server or service. All content produced by dokieli can be used by other standards-compliant applications. dokieli takes a privacy-conscious approach by allowing individuals to choose where they store their content and who can access it. Dokieli does not collect or share its users' data.</p>
+
+              <p>Made with fun.</p>
+            </div>
+          </section>
+
+          <section id="using-dokieli" inlist="" rel="schema:hasPart" resource="#using-dokieli">
+            <h2 property="schema:name">Using dokieli</h2>
+            <div datatype="rdf:HTML" property="schema:description">
+              <p>Dokieli can be used in the following ways:</p>
+
+              <ul>
+                <li>As an Embeddable Client-Side Web Application</li>
+                <li>As a Web Extension (<a href="#web-extension">instructions</a>)</li>
+              </ul>
+
+              <section id="embeddable-client-side-web-application" inlist="" rel="schema:hasPart" resource="#mbeddable-client-side-web-application">
+                <h3 property="schema:name">Embeddable Client-Side Web Application</h3>
+                <div datatype="rdf:HTML" property="schema:description">
+                  <p>Dokieli can be embedded into any HTML document by including its CSS and JavaScript in the <code>&lt;head&gt;</code> section of the document. Once the document is opened in any browser, dokieli provides authoring, annotating, and publishing features.</p>
+
+                  <pre><code>&lt;link href="https://dokie.li/media/css/basic.css" media="all" rel="stylesheet" title="Basic" /&gt;</code>
+<code>&lt;link href="https://dokie.li/media/css/dokieli.css" media="all" rel="stylesheet" /&gt;</code>
+<code>&lt;script src="https://dokie.li/scripts/dokieli.js"&gt;&lt;/script&gt;</code></pre>
+
+                <p>It can also be embedded in an <strong>iframe</strong> within an existing HTML page, enabling editing and annotation features directly inside the iframe.</p>
+                </div>
+              </section>
+
+              <section id="web-extension" inlist="" rel="schema:hasPart" resource="#web-extension">
+                <h3 property="schema:name">Web Extension</h3>
+                <div datatype="rdf:HTML" property="schema:description">
+                  <p>Dokieli can also be used as a browser extension, providing full functionality directly in the browser. The extension works in Firefox and Chromium-based browsers, offering a browser toolbar option that enables the same features as the standalone web application.</p>
+
+                  <p>Currently the extension works with Firefox and Chromium browsers. The extension can be used in the following way:</p>
+
+                  <ol>
+                    <li>Clone the dokieli repository from <a href="https://github.com/dokieli/dokieli">https://github.com/dokieli/dokieli</a> (or fork it).</li>
+                    <li>
+                      <dl>
+                        <dt>Firefox</dt>
+                        <dd>From the "Add-ons and themes" menu, select "Debug Add-ons" (or go to <code>about:debugging#/runtime/this-firefox</code> from the addressbar) and import by selecting any file from the cloned dokieli directory (e.g., <code>manifest.json</code>). See also <a href="https://developer.mozilla.org/en-US/Add-ons/WebExtensions/Temporary_Installation_in_Firefox">temporary installation in Firefox</a>. Note that if you restart your browser, you'll need to go through this process.</dd>
+
+                        <dt>Chromium</dt>
+                        <dd>The general process for browsers such as Chrome, Brave, Vivaldi, <a href="https://en.wikipedia.org/wiki/Chromium_(web_browser)#Browsers_based_on_Chromium">etc.</a>, are as follows. From the "Extensions" menu (or go to <code>chrome://extensions/</code>, <code>brave://extensions</code>, <code>vivaldi://extensions/</code> from addressbar), check the "developer mode" option. Import the dokieli directory from "Load unpacked".</dd>
+                      </dl>
+                    </li>
+                  </ol>
+                </div>
+              </section>
             </div>
           </section>
 
@@ -124,7 +173,7 @@
                     <dd about="#feature-share" property="skos:definition"><em>Share</em> makes it possible to notify specific individuals and groups about an article or a specific part within. Signed in users having owner permissions on an article can give others the permission to view, edit, or be co-owners. The contacts listed are the ones discovered through signed in user's profile that have the means to receive notifications in their inboxes. The notification includes minimal information about the article, such as who sent the notification, when it was created, its license and motivation.</dd>
 
                     <dt about="#feature-reply" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-reply"></i><dfn id="feature-reply">Reply</dfn></dt>
-                    <dd about="#feature-reply" property="skos:definition">An article can be replied with a note and have its own <a href="#resource-language" rel="rdfs:seeAlso">language</a> and <a href="#resource-license" rel="rdfs:seeAlso">license</a>. The user can specify where they want to save their reply by <a href="#resource-browser" rel="rdfs:seeAlso">browsing</a> to a location in a <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or an annotation service.</dd>
+                    <dd about="#feature-reply" property="skos:definition">An article can be replied with a note and have its own <a href="#resource-language" rel="rdfs:seeAlso">language</a> and <a href="#resource-license" rel="rdfs:seeAlso">license</a>. The user can specify where they want to save their reply by <a href="#resource-browser" rel="rdfs:seeAlso">browsing</a> to a location in a <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or an <a href="#annotation-service" rel="rdfs:seeAlso">annotation service</a>.</dd>
 
                     <dt about="#feature-notifications" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-inbox"></i><dfn id="feature-notifications">Notifications</dfn></dt>
                     <dd>
@@ -339,7 +388,7 @@
                     <dd about="#base-url-selection" property="skos:definition">When creating or saving documents, media resources (e.g., <var>head link</var>, <var>[src]</var>, <var>object[data]</var>) are normalised to use the document's base URL as their absolute path (the <q>Use references as is</q> option). If <q>Copy to your storage</q> is selected, relative URLs remain unchanged, as the <em title="the copy operation performs an HTTP GET to source and HTTP PUT to the target">copy</em> process reuses the same file paths.</dd>
 
                     <dt about="#clipboard" property="skos:prefLabel"><dfn id="resource-clipboard">Clipboard</dfn></dt>
-                    <dd about="#clipboard" property="skos:definition">Text and tables (in CSV format) can be copied to the clipboard.</dd>
+                    <dd about="#clipboard" property="skos:definition">Text, code, and tables (in CSV format) can be copied to the clipboard.</dd>
 
                     <dt about="#resource-fragments" property="skos:prefLabel"><dfn id="resource-fragments">Fragments</dfn></dt>
                     <dd about="#resource-fragments" property="skos:definition">Clickable fragments are available for easy, specific referencing within the document.</dd>
@@ -1011,42 +1060,30 @@
             </div>
           </section>
 
-          <section id="web-extension" inlist="" rel="schema:hasPart" resource="#web-extension">
-            <h2 property="schema:name">Web Extension</h2>
-            <div datatype="rdf:HTML" property="schema:description">
-              <p>The dokieli <cite><a href="https://developer.mozilla.org/en-US/Add-ons/WebExtensions">Web Extension</a></cite> is a minimal package of dokieli which contains the core CSS and JavaScript that works as a browser add-on. When user triggers it from their browser toolbar, it provides the same functionality as a <cite>single-page application</cite>, ie. initialised and rendered in the browser DOM.</p>
-
-              <p>Currently the extension works with Firefox and Chromium browsers. The extension can be used in the following way:</p>
-
-              <ol>
-                <li>Clone the dokieli repository from <a href="https://github.com/dokieli/dokieli">https://github.com/dokieli/dokieli</a> (or forked copy) to your local machine.</li>
-                <li>
-                  <dl>
-                    <dt>Firefox</dt>
-                    <dd>From the "Add-ons and themes" menu, select "Debug Add-ons" (or go to <code>about:debugging#/runtime/this-firefox</code> from the addressbar) and import by selecting any file from the cloned dokieli directory (e.g., <code>manifest.json</code>). See also <a href="https://developer.mozilla.org/en-US/Add-ons/WebExtensions/Temporary_Installation_in_Firefox">temporary installation in Firefox</a>. Note that if you restart your browser, you'll need to go through this process.</dd>
-
-                    <dt>Chromium</dt>
-                    <dd>The general process for browsers such as Chrome, Brave, Vivaldi, <a href="https://en.wikipedia.org/wiki/Chromium_(web_browser)#Browsers_based_on_Chromium">etc.</a>, are as follows. From the "Extensions" menu (or go to <code>chrome://extensions/</code>, <code>brave://extensions</code>, <code>vivaldi://extensions/</code> from addressbar), check the "developer mode" option. Import the dokieli directory from "Load unpacked".</dd>
-                  </dl>
-                </li>
-              </ol>
-            </div>
-          </section>
-
           <section id="development" inlist="" rel="schema:hasPart" resource="#development">
             <h2 property="schema:name">Development</h2>
             <div datatype="rdf:HTML" property="schema:description">
-<pre><code>git clone https://github.com/dokieli/dokieli</code>
+              <p>Just a brief overview here. For more details and up to date information, refer to the <a href="https://github.com/dokieli/dokieli/blob/main/README.md#setup">setup instructions</a> in the dokieli's repository.</p>
+
+<pre><code># Clone your work repository, for example:</code>
+<code>git clone git@github.com:YOUR-USERNAME/dokieli</code>
 <code>cd dokieli</code>
 <code></code>
 <code># Install packages</code>
-<code>yarn install</code>
+<code>yarn</code>
 <code></code>
-<code># Build e.g., to create scripts/dokieli.js</code>
+<code># Make your code updates at src/, media/ etc.</code>
+<code># Build e.g., to create scripts/dokieli.js:</code>
 <code>yarn build</code>
 <code></code>
-<code># or automatically rebuild when files change</code>
-<code>yarn watch</code></pre>
+<code># or automatically rebuild when files change:</code>
+<code>yarn watch</code>
+<code></code>
+<code># or create a minified scripts/dokieli.js</code>
+<code>yarn minify</code>
+<code></code>
+<code># To serve static files, you can use any HTTP server, e.g.:</code>
+<code>npx serve</code></pre>
             </div>
           </section>
         </div>
