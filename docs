@@ -133,15 +133,33 @@
             </div>
           </section>
 
+          <section id="documents" inlist="" rel="schema:hasPart" resource="#documents">
+            <h3 property="schema:name">Documents</h3>
+            <div datatype="rdf:HTML" property="schema:description">
+              <p>Articles, annotations, and notifications are the main types of documents dokieli generates.</p>
+
+              <dl rel="dcterms:subject">
+                <dt about="#article" property="skos:prefLabel" typeof="skos:Concept">Article</dt>
+                <dd about="#article" property="skos:definition">Dokieli supports authoring various kinds of articles, such as blog posts, course descriptions, guides, news articles, recipes, reviews, scholarly articles, slideshows, technical specifications, theses, travelogues, or anything that simply is an "article". Articles are both human- and machine-readable, and can be highly structured, linked, versioned, annotated, shared, access-controlled, and stored across different <a href="#storage" rel="rdfs:seeAlso">storages</a>. Collections of articles can be syndicated via web feeds. While <a href="#annotation" rel="rdfs:seeAlso">annotations</a> and <a href="#notification" rel="rdfs:seeAlso">notifications</a> differ in purpose, they share a similar structure and usability.</dd>
+
+                <dt about="#annotation" property="skos:prefLabel" typeof="skos:Concept">Annotation</dt>
+                <dd about="#annotation" property="skos:definition">An annotation is a standalone piece of information about, or part of, an <a href="#article" rel="rdfs:seeAlso">article</a> or another annotation, with purposes such as assessing, bookmarking, classifying, commenting, linking, replying, questioning, or tagging. Annotations can be stored in locations like <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or an <a href="#annotation-service" rel="rdfs:seeAlso">annotation service</a>, and each can have its own <a href="#resource-language" rel="rdfs:seeAlso">language</a>, <a href="#resource-license" rel="rdfs:seeAlso">license</a>, and inbox to receive related <a href="#notification" rel="rdfs:seeAlso">notifications</a>. When an article or annotation with an inbox is annotated, a notification is automatically sent to enable discovery. Although annotations can be displayed in the context of their targets, they remain distinct resources and are not stored with the article.</dd>
+
+                <dt about="#notification" property="skos:prefLabel" typeof="skos:Concept">Notification</dt>
+                <dd about="#notification" property="skos:definition">A notification describes an activity such as an <a href="#annotation" rel="rdfs:seeAlso">annotation</a>, a <a href="#feature-footnotes-citations" rel="rdf:seeAlso">citation</a>, or a share action, and is sent to a target's inbox, e.g., an <a href="#article" rel="rdfs:seeAlso">article</a>, annotation, person, or group. Notifications are brief and include key provenance details, such as who performed the action, when, where, the motivation, licensing, and language, helping consumers decide whether to engage further. The notification does not include the full content, e.g., an annotation body, but provides links to fetch it. Notifications help surface related activities in context and can support workflows like collaboration, credibility checks, or peer review.</dd>
+              </dl>
+            </div>
+          </section>
+
           <section id="user-interface" inlist="" rel="schema:hasPart" resource="#user-interface">
             <h2 property="schema:name">User interface</h2>
             <div datatype="rdf:HTML" property="schema:description">
-              <p>In this section we go over dokieli's UI; interface <a href="#interface-modes">modes</a>, <a href="#dokieli-menu">menu</a>, and <a href="#features">features</a>.</p>
+              <p>In this section we go over dokieli's UI; interface <a href="#modes">modes</a>, <a href="#menu">menu</a>, and <a href="#features">features</a>.</p>
 
-              <section id="interface-modes" inlist="" rel="schema:hasPart" resource="#interface-modes" typeof="skos:ConceptScheme">
-                <h3 property="schema:name skos:prefLabel">Interface modes</h3>
+              <section id="modes" inlist="" rel="schema:hasPart" resource="#modes" typeof="skos:ConceptScheme">
+                <h3 property="schema:name skos:prefLabel">Modes</h3>
                 <div datatype="rdf:HTML" property="schema:description">
-                  <p property="skos:definition">The user interface (<abbr title="User Interface">UI</abbr>) can be in either <cite>social</cite> or <cite>author</cite>. The modes can be switched from the dokieli <a href="#dokieli-menu">menu</a> via the <i class="fas fa-i-cursor"></i> <a href="#editor-enable">Edit</a> operation.</p>
+                  <p property="skos:definition">The user interface (<abbr title="User Interface">UI</abbr>) can be in either <cite>social</cite> or <cite>author</cite>. The modes can be switched from the dokieli <a href="#menu">menu</a> via the <i class="fas fa-i-cursor"></i> <a href="#editor-enable">Edit</a> operation.</p>
 
                   <dl rel="skos:hasTopConcept">
                     <dt about="#mode-social" property="skos:prefLabel" typeof="skos:Concept"><dfn id="mode-social">Social</dfn></dt>
@@ -152,8 +170,8 @@
                 </div>
               </section>
 
-              <section id="dokieli-menu" inlist="" rel="schema:hasPart" resource="#dokieli-menu">
-                <h3 property="schema:name">dokieli menu</h3>
+              <section id="menu" inlist="" rel="schema:hasPart" resource="#menu">
+                <h3 property="schema:name">Menu</h3>
                 <div datatype="rdf:HTML" property="schema:description">
                   <p about="" rel="schema:potentialAction">The <a href="#document-menu" typeof="schema:ActivateAction"><i class="fas fa-bars"></i> menu</a> provides access to key top-level <a href="#features">features</a> such as signing in, authoring and publishing content, managing links and data, viewing document structure, and exporting or sharing the article.</p>
                 </div>
@@ -222,16 +240,16 @@
                       <p about="#feature-open" property="skos:definition">A document can be <em>opened</em> (imported) from a local filesystem or by specifying the URL of the resource on the web. <a href="#resource-browser" rel="rdfs:seeAlso">resource browser</a> can be used to navigate to the document of interest in the <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or <a href="#annotation-service" rel="rdfs:seeAlso">annotation service</a>. Custom views are available when importing some data formats such as:</p>
 
                       <dl about="#feature-open" rel="dcterms:subject">
-                        <dt about="#html-documents" property="skos:prefLabel"><dfn id="html-documents">HTML documents</dfn></dt>
+                        <dt about="#html-documents" property="skos:prefLabel" typeof="skos:Concept"><dfn id="html-documents">HTML documents</dfn></dt>
                         <dd about="#html-documents" property="skos:definition">When opening an (X)HTML document, only the content is imported. CSS, JavaScript, and other additional elements are excluded for security reasons. After importing, dokieli can be used as usual with all of its <a href="#features">features</a>.</dd>
 
-                        <dt about="#gps-data" property="skos:prefLabel"><dfn id="gps-data">GPS data</dfn></dt>
+                        <dt about="#gps-data" property="skos:prefLabel" typeof="skos:Concept"><dfn id="gps-data">GPS data</dfn></dt>
                         <dd about="#gps-data" property="skos:definition">The user can view a map (<a href="https://www.openstreetmap.org/">OpenStreetMap</a>) that includes a track, along with detailed GPS and extension data in a table. This data includes time period, latitude, longitude, altitude, heart rate, cadence, speed, air temperature, water temperature, and depth. The table also provides a summary of the publication date, publisher, actor, total distance, total time, average pace, average heart rate, elevation gain, and elevation loss. Additionally, the nearest city to the track is identified and linked on <a href="https://www.wikidata.org/">Wikidata</a>.</dd>
 
-                        <dt about="#activity-collection" property="skos:prefLabel"><dfn id="activity-collection">Activity collection</dfn></dt>
+                        <dt about="#activity-collection" property="skos:prefLabel" typeof="skos:Concept"><dfn id="activity-collection">Activity collection</dfn></dt>
                         <dd about="#activity-collection" property="skos:definition">The user can view a chronological list of social interactions and content-related activities, such as posting, liking, following, and sharing, within a collection.</dd>
 
-                        <dt about="#other-data" property="skos:prefLabel"><dfn id="other-data">Other data</dfn></dt>
+                        <dt about="#other-data" property="skos:prefLabel" typeof="skos:Concept"><dfn id="other-data">Other data</dfn></dt>
                         <dd about="#other-data" property="skos:definition">Data in unsupported or unrecognized formats will be displayed as-is, without any processing.</dd>
                       </dl>
                     </dd>
@@ -244,22 +262,22 @@
                       <p about="#feature-save-as" property="skos:definition">An article can be <em>saved</em> in its current state at a specific location in a <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a>. This feature uses the <cite><a href="#resource-browser" rel="rdfs:seeAlso">resource browser</a></cite> to navigate HTTP URLs.</p>
 
                       <dl about="#feature-save-as" rel="dcterms:subject">
-                        <dt about="#resource-set-inbox" property="skos:prefLabel"><dfn id="resource-set-inbox">Set inbox</dfn></dt>
+                        <dt about="#resource-set-inbox" property="skos:prefLabel" typeof="skos:Concept"><dfn id="resource-set-inbox">Set inbox</dfn></dt>
                         <dd about="#resource-set-inbox" property="skos:definition">An inbox can be assigned to an article or annotation by specifying its location using the <a href="#resource-browser" rel="rdfs:seeAlso">resource browser</a> so that notifications about the article or annotation can be shared.</dd>
 
-                        <dt about="#resource-set-annotation" property="skos:prefLabel"><dfn id="resource-set-annotation">Set annotation</dfn></dt>
+                        <dt about="#resource-set-annotation" property="skos:prefLabel" typeof="skos:Concept"><dfn id="resource-set-annotation">Set annotation</dfn></dt>
                         <dd about="#resource-set-annotation" property="skos:definition">An <a href="#annotation-service">annotation service</a> can be assigned to an article or annotation by specifying its location using the <a href="#resource-browser" rel="rdfs:seeAlso">resource browser</a> so that others' annotations can optionally be copied to this location.</dd>
 
-                        <dt about="#resource-dokielize" property="skos:prefLabel"><dfn id="resource-dokielize">dokielize</dfn></dt>
+                        <dt about="#resource-dokielize" property="skos:prefLabel" typeof="skos:Concept"><dfn id="resource-dokielize">dokielize</dfn></dt>
                         <dd about="#resource-dokielize" property="skos:definition">Normalises the document to be valid, normalised, as well as includes the dokieli scripts so that the application be used in the derived version.</dd>
 
-                        <dt about="#resource-derivation-data" property="skos:prefLabel"><dfn id="resource-derivation-data">Derivation data</dfn></dt>
+                        <dt about="#resource-derivation-data" property="skos:prefLabel" typeof="skos:Concept"><dfn id="resource-derivation-data">Derivation data</dfn></dt>
                         <dd about="#resource-derivation-data" property="skos:definition">When <em>derivation data</em> is checked for inclusion, <a href="#html-document-derived-from-on">derived from and on</a> information is included in the created document.</dd>
 
-                        <dt about="#resource-accessibility-report" property="skos:prefLabel"><dfn id="resource-accessibility-report">Accessibility report</dfn></dt>
+                        <dt about="#resource-accessibility-report" property="skos:prefLabel" typeof="skos:Concept"><dfn id="resource-accessibility-report">Accessibility report</dfn></dt>
                         <dd about="#resource-accessibility-report" property="skos:definition">Provides additional accessibility information about the current document so that the author can find ways to improve the content's accessibility.</dd>
 
-                        <dt about="#storage-details" property="skos:prefLabel"><dfn id="storage-details">Storage details</dfn></dt>
+                        <dt about="#storage-details" property="skos:prefLabel" typeof="skos:Concept"><dfn id="storage-details">Storage details</dfn></dt>
                         <dd about="#storage-details" property="skos:definition">The user can examine information about the storage such as its location, name, description, owners, URI persistence policy, and digital rights policies as well as be informed about any conflicts with their preferred policies, and notification subscription options and subscribing to live changes.</dd>
                       </dl>
                     </dd>
@@ -273,13 +291,13 @@
                     <dt id="resource-memento">Memento</dt>
                     <dd>The user can access the memento (version history) of a document.</dd>
 
-                    <dt about="#feature-robustify-links" property="skos:prefLabel"><dfn id="feature-robustify-links">Robustify Links</dfn></dt>
+                    <dt about="#feature-robustify-links" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-robustify-links">Robustify Links</dfn></dt>
                     <dd about="#feature-robustify-links" property="skos:definition">To help mitigate content drift and link rot, links can be enhanced with additional context such as a snapshot URI from the <a href="https://archive.org/">Internet Archive</a>, a timestamp of when the link was created, and other relevant metadata.</dd>
 
                     <dt id="resource-archive">Archive</dt>
                     <dd>Sends an archival request of the current article to the Internet Archive <a href="https://web.archive.org/">Wayback Machine</a>.</dd>
 
-                    <dt about="#feature-generate-feed" property="skos:prefLabel"><dfn id="feature-generate-feed">Generate Feed</dfn></dt>
+                    <dt about="#feature-generate-feed" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-generate-feed">Generate Feed</dfn></dt>
                     <dd about="#feature-generate-feed" property="skos:definition">Enables the creation and publication of a custom web feed from a selected list of documents in <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a>, with options to set the feed's title, <a href="#resource-language">language</a>, <a href="#resource-license">license</a>, and format, e.g., RSS or Atom.</dd>
 
                     <dt id="resource-export"><i class="fas fa-external-link"></i>Export</dt>
@@ -288,7 +306,7 @@
                     <dt id="resource-print"><i class="fas fa-print"></i>Print</dt>
                     <dd>Requests to print the current document (<code>window.print()</code>).</dd>
 
-                    <dt about="#feature-edit" property="skos:prefLabel"><dfn id="feature-edit"><i class="fas fa-i-cursor"></i>Edit</dfn></dt>
+                    <dt about="#feature-edit" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-edit"><i class="fas fa-i-cursor"></i>Edit</dfn></dt>
                     <dd >
                       <p about="#feature-edit" property="skos:definition">The Edit feature offers authoring tools for formatting, linking, and structuring articles. Edits are temporary unless autosave is enabled or changes are committed using <a href="#feature-save" rel="rdfs:seeAlso">Save</a>, <a href="#feature-save-as" rel="rdfs:seeAlso">Save As</a>, <a href="#resource-version" rel="rdfs:seeAlso">Version</a>, or <a href="#resource-immutable" rel="rdfs:seeAlso">Immutable</a>. Standard formatting options include headings, italics, bold, ordered and unordered lists, inline code, preformatted text, hyperlinks, inline quotes, images, and tables. Additional capabilities include:</p>
 
@@ -296,13 +314,13 @@
                         <dt about="#resource-interactive-embeddable-objects" property="skos:prefLabel" id="resource-interactive-embeddable-objects"><dfn>Interactive and embeddable objects</dfn></dt>
                         <dd about="#resource-interactive-embeddable-objects" property="skos:definition">Charts and other visual elements, such as sparklines, can be embedded based on statistical data.</dd>
 
-                        <dt about="#feature-semantic-annotation" property="skos:prefLabel"><dfn id="resource-semantic-annotation">Semantic annotation</dfn></dt>
+                        <dt about="#feature-semantic-annotation" property="skos:prefLabel" typeof="skos:Concept"><dfn id="resource-semantic-annotation">Semantic annotation</dfn></dt>
                         <dd about="#feature-semantic-annotation" property="skos:definition">Content can be semantically marked to enhance machine-readability (RDFa), while remaining human-readable.</dd>
 
-                        <dt about="#feature-footnotes-citations" property="skos:prefLabel"><dfn id="resource-footnotes-citations">Footnotes and citations</dfn></dt>
+                        <dt about="#feature-footnotes-citations" property="skos:prefLabel" typeof="skos:Concept"><dfn id="resource-footnotes-citations">Footnotes and citations</dfn></dt>
                         <dd about="#feature-footnotes-citations" property="skos:definition">Footnotes and citations can be added to selected text, providing contextual, robust references. Cited entities can be notified for back-referencing. References may include ISBNs or URLs. For contextual citations, for example, a citing entity (an argument) may reference a cited entity (observation results) as factual evidence. Bibliographic searches for technical specifications are also supported for citation purposes.</dd>
 
-                        <dt about="#feature-authoring-widgets" property="skos:prefLabel"><dfn id="authoring-widgets">Authoring widgets</dfn></dt>
+                        <dt about="#feature-authoring-widgets" property="skos:prefLabel" typeof="skos:Concept"><dfn id="authoring-widgets">Authoring widgets</dfn></dt>
                         <dd about="#feature-authoring-widgets" property="skos:definition">Additional authoring options include adding contributors and notifying them, setting the document's language, license, inbox, in reply to, status, type, and test suite.</dd>
                       </dl>
                     </dd>
@@ -316,16 +334,16 @@
                     <dt about="#feature-embed-meta-data" property="skos:prefLabel"><i class="fas fa-table"></i><dfn id="embed-data-meta">Embed Data</dfn></dt>
                     <dd about="#feature-embed-meta-data" property="skos:definition">Enables embedding and updating supplemental data to be stored with the article using RDF syntaxes such as Turtle, JSON-LD, and TriG.</dd>
 
-                    <dt about="#feature-message-log" property="skos:prefLabel"><dfn id="message-log">Messages</dfn></dt>
+                    <dt about="#feature-message-log" property="skos:prefLabel" typeof="skos:Concept"><dfn id="message-log">Messages</dfn></dt>
                     <dd about="#feature-message-log" property="skos:definition">Displays all messages raised by dokieli, for example as feedback or notifications resulting from specific actions.</dd>
 
                     <dt about="#feature-views" property="skos:prefLabel"><i class="fas fa-magic"></i><dfn id="feature-views">Views</dfn></dt>
-                    <dd about="#feature-views" property="skos:definition">The dokieli menu lists primary and alternate stylesheets that are <a href="#html-css">detected in the HTML</a>. <cite>Native</cite> is always available and disables all other stylesheets, allowing the user agent’s default styles to apply. When a view is selected—e.g., <cite>Basic</cite> (which is the current primary stylesheet for this article)—it becomes the primary stylesheet, while the others are set as alternate and disabled.</dd>
+                    <dd about="#feature-views" property="skos:definition">The dokieli <a hef="#menu" rel="rdfs:seeAlso">menu</a> lists primary and alternate stylesheets that are <a href="#html-css">detected in the HTML</a>. <cite>Native</cite> is always available and disables all other stylesheets, allowing the user agent’s default styles to apply. When a view is selected—e.g., <cite>Basic</cite> (which is the current primary stylesheet for this article)—it becomes the primary stylesheet, while the others are set as alternate and disabled.</dd>
 
-                    <dt about="#feature-graph" property="skos:prefLabel"><dfn id="feature-graph">Graph visualisation</dfn></dt>
+                    <dt about="#feature-graph" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-graph">Graph visualisation</dfn></dt>
                     <dd about="#feature-graph" property="skos:definition">Displays a graph visualisation of the document's underlying semantics, including a list of resources, the number of statements, unique nodes, creator, license, and a legend. The visualisation can be exported as an SVG.</dd>
 
-                    <dt about="#feature-list-of-stuff" property="skos:prefLabel"><dfn id="feature-list-of-stuff">List of Stuff</dfn></dt>
+                    <dt about="#feature-list-of-stuff" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-list-of-stuff">List of Stuff</dfn></dt>
                     <dd about="#feature-list-of-stuff" property="skos:definition">
                       <p>Options to generate and include various types of content, such as:</p>
 
@@ -359,7 +377,7 @@
                       </dl>
                     </dd>
 
-                    <dt about="#feature-document-metadata" property="skos:prefLabel"><dfn id="document-metadata">Document metadata</dfn></dt>
+                    <dt about="#feature-document-metadata" property="skos:prefLabel" typeof="skos:Concept"><dfn id="document-metadata">Document metadata</dfn></dt>
                     <dd about="#feature-document-metadata" property="skos:definition">Based on document's underlying structured data, displays information about its contributors such as editors and authors, number of citations, requirements, advisements, concepts, statements, as well as an estimated reading time, number of characters, words, and bytes.</dd>
                   </dl>
                 </div>
@@ -371,47 +389,29 @@
                   <p>Articles, annotations, and notifications can include common components that provide additional information or functionality.</p>
 
                   <dl>
-                    <dt about="#resource-license" property="skos:prefLabel"><dfn id="resource-license">License</dfn></dt>
+                    <dt about="#resource-license" property="skos:prefLabel" typeof="skos:Concept"><dfn id="resource-license">License</dfn></dt>
                     <dd about="#resource-license" property="skos:definition">Licenses and rights can be specified for articles and annotations from a list of <cite><a href="https://creativecommons.org/">Creative Commons</a></cite> options, e.g., <span resource="#annotation-rights" typeof="schema:ChooseAction">CC BY 4.0</span>. Notifications, by default, use the <cite><a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0 1.0 Universal</a></cite> license.</dd>
 
-                    <dt about="#resource-language" property="skos:prefLabel"><dfn id="resource-language">Language</dfn></dt>
+                    <dt about="#resource-language" property="skos:prefLabel" typeof="skos:Concept"><dfn id="resource-language">Language</dfn></dt>
                     <dd about="#resource-language" property="skos:definition">The language of an article or annotation can be set from a list (182 languages available). Alternatively, language can be applied to specific text selections or nodes using the semantic annotator.</dd>
 
-                    <dt about="#resource-browser" property="skos:prefLabel"><dfn id="resource-browser">Resource browser</dfn></dt>
+                    <dt about="#resource-browser" property="skos:prefLabel" typeof="skos:Concept"><dfn id="resource-browser">Resource browser</dfn></dt>
                     <dd about="#resource-browser" property="skos:definition">The <em>resource browser</em> is part of features such as <a href="#feature-new" rel="rdfs:seeAlso">New</a>, <a href="#feature-open" rel="rdfs:seeAlso">Open</a>, <a href="#feature-save-as" rel="rdfs:seeAlso">Save As</a>, and <a href="#feature-generate-feed" rel="rdfs:seeAlso">Generate Feed</a> lets you navigate locations such as a <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a>, <a href="#annotation-service" rel="rdfs:seeAlso">annotation service</a>, or a <a href="#activity-collection" rel="rdfs:seeAlso">activity collection</a>. If a personal storage location is known, it is used by default; otherwise, the start location can be based on an annotation service referenced by the article.</dd>
 
-                    <dt about="#base-url-selection" property="skos:prefLabel"><dfn id="base-url-selection">Base URL selection</dfn></dt>
+                    <dt about="#base-url-selection" property="skos:prefLabel" typeof="skos:Concept"><dfn id="base-url-selection">Base URL selection</dfn></dt>
                     <dd about="#base-url-selection" property="skos:definition">When creating or saving documents, media resources (e.g., <var>head link</var>, <var>[src]</var>, <var>object[data]</var>) are normalised to use the document's base URL as their absolute path (the <q>Use references as is</q> option). If <q>Copy to your storage</q> is selected, relative URLs remain unchanged, as the <em title="the copy operation performs an HTTP GET to source and HTTP PUT to the target">copy</em> process reuses the same file paths.</dd>
 
-                    <dt about="#clipboard" property="skos:prefLabel"><dfn id="resource-clipboard">Clipboard</dfn></dt>
+                    <dt about="#clipboard" property="skos:prefLabel" typeof="skos:Concept"><dfn id="resource-clipboard">Clipboard</dfn></dt>
                     <dd about="#clipboard" property="skos:definition">Text, code, and tables (in CSV format) can be copied to the clipboard.</dd>
 
-                    <dt about="#resource-fragments" property="skos:prefLabel"><dfn id="resource-fragments">Fragments</dfn></dt>
+                    <dt about="#resource-fragments" property="skos:prefLabel" typeof="skos:Concept"><dfn id="resource-fragments">Fragments</dfn></dt>
                     <dd about="#resource-fragments" property="skos:definition">Clickable fragments are available for easy, specific referencing within the document.</dd>
 
-                    <dt about="#resource-tabs" property="skos:prefLabel"><dfn id="resource-tabs">Tabs view</dfn></dt>
+                    <dt about="#resource-tabs" property="skos:prefLabel" typeof="skos:Concept"><dfn id="resource-tabs">Tabs view</dfn></dt>
                     <dd about="#resource-tabs" property="skos:definition">Navigation items are presented in a tabbed view for easier access.</dd>
                   </dl>
                 </div>
               </section>
-            </div>
-          </section>
-
-          <section id="dokieli-documents" inlist="" rel="schema:hasPart" resource="#dokieli-documents">
-            <h3 property="schema:name">dokieli documents</h3>
-            <div datatype="rdf:HTML" property="schema:description">
-              <p>Articles, annotations, and notifications are the main types of documents dokieli generates.</p>
-
-              <dl rel="dcterms:subject">
-                <dt about="#article" property="skos:prefLabel" typeof="skos:Concept">Article</dt>
-                <dd about="#article" property="skos:definition">Dokieli supports authoring various kinds of articles, such as blog posts, course descriptions, guides, news articles, recipes, reviews, scholarly articles, slideshows, technical specifications, theses, travelogues, or anything that simply is an "article". Articles are both human- and machine-readable, and can be highly structured, linked, versioned, annotated, shared, access-controlled, and stored across different <a href="#storage" rel="rdfs:seeAlso">storages</a>. Collections of articles can be syndicated via web feeds. While <a href="#annotation" rel="rdfs:seeAlso">annotations</a> and <a href="#notification" rel="rdfs:seeAlso">notifications</a> differ in purpose, they share a similar structure and usability.</dd>
-
-                <dt about="#annotation" property="skos:prefLabel" typeof="skos:Concept">Annotation</dt>
-                <dd about="#annotation" property="skos:definition">An annotation is a standalone piece of information about, or part of, an <a href="#article" rel="rdfs:seeAlso">article</a> or another annotation, with purposes such as assessing, bookmarking, classifying, commenting, linking, replying, questioning, or tagging. Annotations can be stored in locations like <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or an <a href="#annotation-service" rel="rdfs:seeAlso">annotation service</a>, and each can have its own <a href="#resource-language" rel="rdfs:seeAlso">language</a>, <a href="#resource-license" rel="rdfs:seeAlso">license</a>, and inbox to receive related <a href="#notification" rel="rdfs:seeAlso">notifications</a>. When an article or annotation with an inbox is annotated, a notification is automatically sent to enable discovery. Although annotations can be displayed in the context of their targets, they remain distinct resources and are not stored with the article.</dd>
-
-                <dt about="#notification" property="skos:prefLabel" typeof="skos:Concept">Notification</dt>
-                <dd about="#notification" property="skos:definition">A notification describes an activity such as an <a href="#annotation" rel="rdfs:seeAlso">annotation</a>, a <a href="#feature-footnotes-citations" rel="rdf:seeAlso">citation</a>, or a share action, and is sent to a target's inbox, e.g., an <a href="#article" rel="rdfs:seeAlso">article</a>, annotation, person, or group. Notifications are brief and include key provenance details, such as who performed the action, when, where, the motivation, licensing, and language, helping consumers decide whether to engage further. The notification does not include the full content, e.g., an annotation body, but provides links to fetch it. Notifications help surface related activities in context and can support workflows like collaboration, credibility checks, or peer review.</dd>
-              </dl>
             </div>
           </section>
 
@@ -517,70 +517,6 @@
                   </section>
                 </div>
               </section>
-            </div>
-          </section>
-
-          <section id="http-operations" inlist="" rel="schema:hasPart" resource="#http-operations">
-            <h2 property="schema:name">HTTP operations</h2>
-            <div datatype="rdf:HTML" property="schema:description">
-              <p>dokieli conforms to <cite><a href="https://www.w3.org/TR/ldp/" rel="cito:citesAsAuthority">Linked Data Platform</a></cite> (LDP) protocol for create, update, and delete operations.</p>
-
-              <p id="http-put">Article operations like <cite>New</cite>, <cite>Save</cite>, <cite>Save As</cite>,  <cite>Reply</cite> use <code>HTTP PUT</code>, <cite>Review</cite> and other annotation operations use <code>HTTP POST</code>.</p>
-
-              <p id="http-post">Notifications are sent with <code>HTTP POST</code>. <cite>Save</cite> and <cite>Save As</cite> normalises the HTML before sending.</p>
-
-              <table id="http-request-to-send">
-                <caption>Request to send</caption>
-                <thead>
-                  <tr>
-                    <th></th>
-                    <th>HTTP method(s)</th>
-                    <th><code>Content-Type</code></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr><th>Article</th><td><code>PUT</code></td><td><code>text/html</code></td></tr>
-                  <tr><th>Annotation</th><td><code>OPTIONS</code>, <code>POST</code></td><td><code>text/html</code>, <code>application/ld+json</code>, <code>text/turtle</code></td></tr>
-                  <tr><th>Notification</th><td><code>OPTIONS</code>, <code>POST</code></td><td><code>text/html</code>, <code>application/ld+json</code>, <code>text/turtle</code></td></tr>
-                </tbody>
-                <tfoot>
-                  <tr>
-                    <td colspan="3">
-                      <dl>
-                        <dt id="request-to-send-article">Article</dt>
-                        <dd>Articles typically use <code>text/html</code> with embedded RDFa. Where a server implements <code>GET</code> with <code>text/html</code>, and allows <code>PUT</code> for writing, the assumption is that it can allow <code>text/html</code>. In the future, dokieli can check for the <code>Accept-Put</code> header with <code>OPTIONS</code> to determine a suitable type. At this time, HTML+RDFa is an important default for articles.</dd>
-
-                        <dt id="request-to-send-annotation">Annotation</dt>
-                        <dd>Annotations use the <code>POST</code> method with <code>Content-Type</code> header value determined by type of location to write to: personal storage space e.g., given a profile's <code>pim:storage</code>; made to an <a href="#annotation-service">annotation service</a> e.g., an article's <code>oa:annotationService</code>; sent to profile's outbox's outbox: <code>as:outbox</code>. The <cite><a href="https://www.w3.org/TR/annotation-protocol/">Web Annotation Protocol</a></cite> requires <code>application/ld+json</code> by default. dokieli sends an <code>OPTIONS</code> request to check for the <code>Accept-Post</code> header and sends the payload in one of the serializations that the server prefers. If it is not set, it will fallback to <code>application/ld+json</code> as preferred by Wen Annotation and ActivityPub.</dd>
-
-                        <dt id="request-to-send-notification">Notification</dt>
-                        <dd>Notifications use <code>OPTIONS</code> to check the response's <code>Accept-Post</code> HTTP header. If it is set and matches one of the acceptable RDF mediatypes that dokieli can parse, it will use that mediatype to serialize the payload before <code>POST</code>ing. <span rel="schema:hasPart" resource="#dokieli-notification-post-content-type-json-ld">If it is not set, it will fallback to <code>application/ld+json</code> as required by the <cite><a href="https://www.w3.org/TR/ldn/#test-sender-header-post-content-type-json-ld" rel="cito:citesAsAuthority">Linked Data Notifications</a></cite> specification.</span></dd>
-                      </dl>
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
-
-              <aside id="http-patch">
-                <p>Current reasons for using <code>HTTP POST</code> and <code>PUT</code> instead of <code>PATCH</code>:</p>
-
-                <ul>
-                  <li>Servers with <cite><a href="https://tools.ietf.org/html/rfc5261" rel="cito:citesAsAuthority">XML Patch</a></cite> and mediatype <code>application/xml-patch+xml</code> (<cite><a href="https://tools.ietf.org/html/rfc7351" rel="cito:citesAsAuthority">RFC 7351</a></cite>) capability in the Linked Data ecosystem are not well supported.</li>
-
-                  <li><code>HTTP PATCH</code> with <cite><a href="https://www.w3.org/TR/sparql11-update/" rel="cito:citesAsAuthority">SPARQL Update</a></cite> (using mediatype <code>application/sparql-update</code>) would not work for RDFa representations because it would require additional server-side knowledge: HTML+RDFa serializer. This also makes server implementations a dependency for dokieli which is an undesirable design pattern.</li>
-
-                  <li><code>HTTP PATCH</code> can help to optimise HTTP requests provided that the server processes the SPARQL query and eventually publishes the final state of the article. dokieli's use of <code>HTTP POST</code> and <code>HTTP PUT</code> on the other hand does not expect or impose operations other than to store and serve the article. If servers would like to do versioning and how, dokieli leaves it to the servers to decide.</li>
-                </ul>
-              </aside>
-
-              <p id="http-proxy">Due to <cite><a href="https://www.w3.org/TR/mixed-content/">Mixed Content</a></cite> implementations in Web browsers, ie. <q>fetching of content over unencrypted or unauthenticated connections in the context of an encrypted and authenticated document</q>, is subject to being blocked by the Web browser. Hence, an https document (eg article at https) will not be able to use the contents of an http document (eg. an http WebID). As a workaround, dokieli uses a proxy endpoint by default in order to use the contents of an http resource. An https document fetching an https resource will not use the proxy.</p>
-            </div>
-          </section>
-
-          <section id="authentication" inlist="" rel="schema:hasPart" resource="#authentication">
-            <h2 property="schema:name">Authentication</h2>
-            <div datatype="rdf:HTML" property="schema:description">
-              <p>dokieli was originally intended to handle different authentication mechanisms. <a href="https://www.w3.org/2005/Incubator/webid/spec/tls/">WebID-TLS</a> is currently supported to authenticate with servers.</p>
             </div>
           </section>
 
