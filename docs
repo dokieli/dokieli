@@ -93,12 +93,12 @@
               <p>Dokieli can be used in the following ways:</p>
 
               <ul>
-                <li>As an Embeddable Client-Side Web Application</li>
-                <li>As a Web Extension (<a href="#web-extension">instructions</a>)</li>
+                <li>As an <a href="#embeddable-web-application">Embeddable Web Application</a></li>
+                <li>As a <a href="#web-extension">Web Extension</a></li>
               </ul>
 
-              <section id="embeddable-client-side-web-application" inlist="" rel="schema:hasPart" resource="#mbeddable-client-side-web-application">
-                <h3 property="schema:name">Embeddable Client-Side Web Application</h3>
+              <section id="embeddable-web-application" inlist="" rel="schema:hasPart" resource="#mbeddable-web-application">
+                <h3 property="schema:name">Embeddable Web Application</h3>
                 <div datatype="rdf:HTML" property="schema:description">
                   <p>Dokieli can be embedded into any HTML document by including its CSS and JavaScript in the <code>&lt;head&gt;</code> section of the document. Once the document is opened in any browser, dokieli provides authoring, annotating, and publishing features.</p>
 
