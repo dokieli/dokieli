@@ -106,7 +106,7 @@
 <code>&lt;link href="https://dokie.li/media/css/dokieli.css" media="all" rel="stylesheet" /&gt;</code>
 <code>&lt;script src="https://dokie.li/scripts/dokieli.js"&gt;&lt;/script&gt;</code></pre>
 
-                <p>It can also be embedded in an <strong>iframe</strong> within an existing HTML page, enabling editing and annotation features directly inside the iframe.</p>
+                <p>It can also be embedded in an <code>iframe</code> within an existing HTML page, enabling editing and annotation features directly inside the iframe.</p>
                 </div>
               </section>
 
@@ -187,9 +187,6 @@
                         <figcaption><a href="https://dokie.li/media/video/dokieli-notifications.webm">Video</a> (<a href="https://dokie.li/media/images/dokieli-notifications.jpg" rel="schema:thumbnailUrl">poster</a>) of notifications in dokieli [<time datatype="xsd:duration" datetime="PT15S" property="schema:duration">15s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
                       </figure>
                     </dd>
-
-                    <dt about="#feature-annotation" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-annotation">Sign in</dfn></dt>
-                    <dd about="#feature-annotation" property="skos:definition">Articles can be annotated with motivations such as bookmarking, commenting, describing, highlighting, replying, tagging, assessments. Annotations themselves can also be annotated. Annotations can be stored in one more places such as a <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or an <a href="#annotation-service" rel="rdfs:seeAlso">annotation service</a>. Each annotation can have its own distinct <a href="#resource-language" rel="rdfs:seeAlso">language</a> and a <a href="#resource-license" rel="rdfs:seeAlso">license</a> for some types of annotations.</dd>
 
                     <dt>Bookmarking</dt>
                     <dd>The document or selected text can be bookmarked where the user can include a note, assign <a href="#annotation-tagging">tags</a>.</dd>
@@ -420,17 +417,17 @@
               <section id="dokieli-documents" inlist="" rel="schema:hasPart" resource="#dokieli-documents">
                 <h3 property="schema:name">dokieli documents</h3>
                 <div datatype="rdf:HTML" property="schema:description">
-                  <p>Articles, annotations, and notifications are generally the kind of documents that dokieli generates or ?</p>
+                  <p>Articles, annotations, and notifications are the main types of documents dokieli generates.</p>
 
-                  <dl>
-                    <dt>Article</dt>
-                    <dd>An article may contain RDF classes like <samp>schema:CreativeWork sioc:Post prov:Entity schema:Article</samp>, otherwise, there is no unique data that would indicate that it is a "dokieli" document. If the HTML+RDFa representation includes dokieli.js and the DOM is ready, the <code>DO</code>: <code>Object { C: {…}, U: {…} }</code> will be available.</dd>
+                  <dl rel="dcterms:subject">
+                    <dt about="#article" property="skos:prefLabel" typeof="skos:Concept">Article</dt>
+                    <dd about="#article" property="skos:definition">Dokieli supports authoring various kinds of articles, such as blog posts, course descriptions, guides, news articles, recipes, reviews, scholarly articles, slideshows, technical specifications, theses, travelogues, or anything that simply is an "article". Articles are both human- and machine-readable, and can be highly structured, linked, versioned, annotated, shared, access-controlled, and stored across different <a href="#storage" rel="rdfs:seeAlso">storages</a>. Collections of articles can be syndicated via web feeds. While <a href="#annotation" rel="rdfs:seeAlso">annotations</a> and <a href="#notification" rel="rdfs:seeAlso">notifications</a> differ in purpose, they share a similar structure and usability.</dd>
 
-                    <dt>Annotation</dt>
-                    <dd>An annotation has the <code>oa:Annotation</code> class. It is possible to know that the article was rendered by dokieli: <code>?s oa:renderedVia &lt;https://dokie.li/&gt;</code>, and we can assume that the annotation was created by it as well. This is not strictly true since that property could have been put there by something else. Annotations represented in HTML+RDFa do not include dokieli.js.</dd>
+                    <dt about="#annotation" property="skos:prefLabel" typeof="skos:Concept">Annotation</dt>
+                    <dd about="#annotation" property="skos:definition">An annotation is a standalone piece of information about, or part of, an <a href="#article" rel="rdfs:seeAlso">article</a> or another annotation, with purposes like assessing, bookmarking, classifying, commenting, linking, replying, questioning, or tagging. Annotations can be stored in locations such as <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or an <a href="#annotation-service" rel="rdfs:seeAlso">annotation service</a>, and each can have its own <a href="#resource-language" rel="rdfs:seeAlso">language</a>, <a href="#resource-license" rel="rdfs:seeAlso">license</a>, and inbox to receive related <a href="#notification" rel="rdfs:seeAlso">notifications</a>. When annotated, articles or annotations with inboxes are automatically notified for discoverability.</dd>
 
-                    <dt>Notification</dt>
-                    <dd>A notification may have one of the following classes: <code>as:Announce</code>, <code>as:Like</code>, <code>as:Dislike</code>, <code>as:Relationship</code>. Notifications represented in HTML+RDFa do not include dokieli.js.</dd>
+                    <dt about="#notification" property="skos:prefLabel" typeof="skos:Concept">Notification</dt>
+                    <dd about="#notification" property="skos:definition">A notification describes an activity (such as an <a href="#annotation" rel="rdfs:seeAlso">annotation</a>) and is sent to a target's inbox, e.g., an article, annotation, person, or group. Notifications include details like who performed the action, when, and where, along with <a href="#resource-language" rel="rdfs:seeAlso">language</a> and <a href="#resource-license" rel="rdfs:seeAlso">license</a> data. They help surface annotations in context and can also be used for sharing, inviting collaborators, or triggering processes like credibility assessments or reviews.</dd>
                   </dl>
                 </div>
               </section>
