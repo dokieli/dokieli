@@ -300,8 +300,8 @@
                         <dt about="#feature-semantic-annotation" property="skos:prefLabel"><dfn id="resource-semantic-annotation">Semantic annotation</dfn></dt>
                         <dd about="#feature-semantic-annotation" property="skos:definition">Content can be semantically marked to enhance machine-readability (RDFa), while remaining human-readable.</dd>
 
-                        <dt about="#feature-semantic-annotation" property="skos:prefLabel"><dfn id="resource-footnotes-citations">Footnotes and citations</dfn></dt>
-                        <dd about="#feature-semantic-annotation" property="skos:definition">Footnotes and citations can be added to selected text, providing contextual, robust references. Cited entities can be notified for back-referencing. References may include ISBNs or URLs. For contextual citations, for example, a citing entity (an argument) may reference a cited entity (observation results) as factual evidence. Bibliographic searches for technical specifications are also supported for citation purposes.</dd>
+                        <dt about="#feature-footnotes-citations" property="skos:prefLabel"><dfn id="resource-footnotes-citations">Footnotes and citations</dfn></dt>
+                        <dd about="#feature-footnotes-citations" property="skos:definition">Footnotes and citations can be added to selected text, providing contextual, robust references. Cited entities can be notified for back-referencing. References may include ISBNs or URLs. For contextual citations, for example, a citing entity (an argument) may reference a cited entity (observation results) as factual evidence. Bibliographic searches for technical specifications are also supported for citation purposes.</dd>
 
                         <dt about="#feature-authoring-widgets" property="skos:prefLabel"><dfn id="authoring-widgets">Authoring widgets</dfn></dt>
                         <dd about="#feature-authoring-widgets" property="skos:definition">Additional authoring options include adding contributors and notifying them, setting the document's language, license, inbox, in reply to, status, type, and test suite.</dd>
