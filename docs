@@ -1060,30 +1060,12 @@
             </div>
           </section>
 
-          <section id="development" inlist="" rel="schema:hasPart" resource="#development">
-            <h2 property="schema:name">Development</h2>
+          <section id="contributing" inlist="" rel="schema:hasPart" resource="#contributing">
+            <h2 property="schema:name">Contributing</h2>
             <div datatype="rdf:HTML" property="schema:description">
-              <p>Just a brief overview here. For more details and up to date information, refer to the <a href="https://github.com/dokieli/dokieli/blob/main/README.md#setup">setup instructions</a> in the dokieli's repository.</p>
+              <p>Thank you for investing your time in contribution to the dokieli project!</p>
 
-<pre><code># Clone your work repository, for example:</code>
-<code>git clone git@github.com:YOUR-USERNAME/dokieli</code>
-<code>cd dokieli</code>
-<code></code>
-<code># Install packages</code>
-<code>yarn</code>
-<code></code>
-<code># Make your code updates at src/, media/ etc.</code>
-<code># Build e.g., to create scripts/dokieli.js:</code>
-<code>yarn build</code>
-<code></code>
-<code># or automatically rebuild when files change:</code>
-<code>yarn watch</code>
-<code></code>
-<code># or create a minified scripts/dokieli.js</code>
-<code>yarn minify</code>
-<code></code>
-<code># To serve static files, you can use any HTTP server, e.g.:</code>
-<code>npx serve</code></pre>
+              <p>The <a href="https://github.com/dokieli/dokieli/">dokieli repository</a> contains the source and there is a <a href="https://github.com/dokieli/dokieli/blob/main/CONTRIBUTING.md">contributing guide</a>.</p>
             </div>
           </section>
         </div>
