@@ -1490,6 +1490,8 @@ function buttonInfo() {
       let description = '';
       let video = '';
       let details = '';
+      let seeAlso = '';
+      let subject = '';
 
       // console.log(title) 
       //TODO: Possibly change reuse of Config.Resource to Cache API or something
@@ -1513,18 +1515,38 @@ function buttonInfo() {
           // console.log(infoG.dataset.toCanonical())
           title = getGraphTitle(infoG);
           description = getGraphDescription(infoG);
+          // console.log(title, description)
+
+          let seeAlsos = infoG.out(ns.rdfs.seeAlso).values;
+          // console.log(seeAlsos);
+
+          let subjects = infoG.out(ns.dcterms.subject).values;
+          // console.log(subjects);
+
           //TODO: Multiple video values
-          const videoObject = infoG.out(ns.schema.video).value;
-          const videoObjectGraph = g.node(rdf.namedNode(videoObject));
-          const videoContentUrl = videoObjectGraph.out(ns.schema.contentUrl).value;
-          const videoEncodingFormat = videoObjectGraph.out(ns.schema.encodingFormat).value;
-          const videoDuration = videoObjectGraph.out(ns.schema.duration).value;
-          const videoDurationLabel = parseISODuration(videoDuration);
-          const videoThumbnailUrl = videoObjectGraph.out(ns.schema.thumbnailUrl).value;
+          let videoObject = infoG.out(ns.schema.video).value;
+          // console.log(videoObject);
 
-          // console.log(title, description, videoObject, videoContentUrl, videoEncodingFormat, videoDuration)
+          if (title && description) {
+            let videoContentUrl, videoEncodingFormat, videoThumbnailUrl, videoDuration, videoDurationLabel;
 
-          if (title.length && description.length) {
+            if (videoObject) {
+              let videoObjectGraph = g.node(rdf.namedNode(videoObject));
+
+              if (videoObjectGraph) {
+                videoContentUrl = videoObjectGraph.out(ns.schema.contentUrl).value;
+                videoEncodingFormat = videoObjectGraph.out(ns.schema.encodingFormat).value;
+                videoThumbnailUrl = videoObjectGraph.out(ns.schema.thumbnailUrl).value;
+                videoDuration = videoObjectGraph.out(ns.schema.duration).value;
+                // console.log(videoContentUrl, videoEncodingFormat, videoThumbnailUrl, videoDuration);
+
+                if (videoDuration) {
+                  videoDurationLabel = parseISODuration(videoDuration);
+                  // console.log(videoDurationLabel);
+                }
+              }
+            }
+
             if (videoContentUrl) {
               let figcaption = '';
               let duration = '';
@@ -1562,6 +1584,48 @@ function buttonInfo() {
                 `;
             }
 
+            if (seeAlsos) {
+              seeAlsos = uniqueArray(seeAlsos).sort();
+
+              seeAlso = `
+                <dt>See also</dt><dd><ul>
+                ${seeAlsos.map(seeAlsoIRI => {
+                  const seeAlsoIRIG = g.node(rdf.namedNode(seeAlsoIRI));
+                  const seeAlsoTitle = getGraphTitle(seeAlsoIRIG) || seeAlsoIRI;
+                  return `<li><a href="${seeAlsoIRI}" rel="rdfs:seeAlso noopener" target="_blank">${seeAlsoTitle}</a></li>`;
+                }).join('')}
+                </ul></dd>
+              `;
+            }
+
+            if (subjects) {
+              subjects = uniqueArray(subjects).sort();
+
+              const subjectItems = [];
+
+              subjects.forEach(subjectIRI => {
+                const subjectIRIG = g.node(rdf.namedNode(subjectIRI));
+                const subjectTitle = getGraphTitle(subjectIRIG);
+                const subjectDescription = getGraphDescription(subjectIRIG);
+                // console.log(subjectTitle, subjectDescription);
+
+                if (subjectTitle.length && subjectDescription.length) {
+                  subjectItems.push(`
+                    <dt about="${subjectIRI}" property="skos:prefLabel">${subjectTitle}</dt>
+                    <dd about="${subjectIRI}" property="skos:definition">${subjectDescription}</dd>
+                  `);
+                }
+              })
+
+              if (subjectItems.length) {
+                subject = `
+                  <dt>Subjects</dt><dd><dl>
+                  ${subjectItems.join('')}
+                  </dl></dd>
+                `;
+              }
+            }
+
             details = `
               <details about="${resource}" open="">
                 <summary property="schema:name">About ${title}</summary>
@@ -1571,7 +1635,9 @@ function buttonInfo() {
                 ${video}
                 <dl>
                   <dt>Source</dt>
-                  <dd><a href="${resource}" rel="noopener" target="_blank">${resource}</a></dd>
+                  <dd><a href="${resource}" rel="dcterms:source noopener" target="_blank">${resource}</a></dd>
+                  ${subject}
+                  ${seeAlso}
                 </dl>
               </details>
             `;
