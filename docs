@@ -358,6 +358,9 @@
                     <dt about="#feature-message-log" property="skos:prefLabel" typeof="skos:Concept"><dfn id="message-log">Messages</dfn></dt>
                     <dd about="#feature-message-log" property="skos:definition">Displays all messages raised by dokieli, for example as feedback or notifications resulting from specific actions.</dd>
 
+                    <dt about="#feature-delete" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-delete-document">Delete</dfn></dt>
+                    <dd about="#feature-delete" property="skos:definition">Deletes article or annotation from <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a>, when access is available.</dd>
+
                     <dt about="#feature-views" property="skos:prefLabel"><i class="fas fa-magic"></i><dfn id="feature-views">Views</dfn></dt>
                     <dd about="#feature-views" property="skos:definition">The dokieli <a hef="#menu" rel="rdfs:seeAlso">menu</a> lists primary and alternate stylesheets that are <a href="#html-css">detected in the HTML</a>. <cite>Native</cite> is always available and disables all other stylesheets, allowing the user agent’s default styles to apply. When a view is selected—e.g., <cite>Basic</cite> (which is the current primary stylesheet for this article)—it becomes the primary stylesheet, while the others are set as alternate and disabled.</dd>
 
