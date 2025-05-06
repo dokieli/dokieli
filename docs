@@ -198,12 +198,16 @@
                     <dd about="#feature-sign-in" property="skos:definition">The <em>sign in</em> enables the user to identify themselves with dokieli using their personal online identifier. dokieli gathers the information linked from the user's profile to adapt the user interface and to customise interactions based on their preferences.</dd>
 
                     <dt about="#feature-share" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-user-secret"></i><dfn id="feature-share">Share</dfn></dt>
-                    <dd about="#feature-share" property="skos:definition">
-                      <figure>
-                        <img alt="" height="204" rel="schema:image" src="media/images/dokieli-illustration-sharing.jpg" width="460" />
-                      </figure>
+                    <dd>
+                      <p about="#feature-share" property="skos:definition"><em>Share</em> makes it possible to notify specific individuals and groups about an article or a specific part within. Signed in users having owner permissions on an article can give others the permission to view, edit, or be co-owners. The contacts listed are the ones discovered through signed in user's profile that have the means to receive notifications in their inboxes. The notification includes minimal information about the article, such as who sent the notification, when it was created, its license and motivation.</p>
 
-                      <p><em>Share</em> makes it possible to notify specific individuals and groups about an article or a specific part within. Signed in users having owner permissions on an article can give others the permission to view, edit, or be co-owners. The contacts listed are the ones discovered through signed in user's profile that have the means to receive notifications in their inboxes. The notification includes minimal information about the article, such as who sent the notification, when it was created, its license and motivation.</p>
+                      <figure about="#feature-share" id="figure-dokieli-share" rel="schema:video" resource="#figure-dokieli-share">
+                        <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-share.jpg" preload="none" resource="#figure-dokieli-share" typeof="schema:VideoObject" width="800">
+                          <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-share.webm" type="video/webm" />
+                        </video>
+
+                        <figcaption><a href="https://dokie.li/media/video/dokieli-share.webm">Video</a> (<a href="https://dokie.li/media/images/dokieli-share.jpg" rel="schema:thumbnailUrl">poster</a>) of dokieli Share [<time datatype="xsd:duration" datetime="PT22S" property="schema:duration">22s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                      </figure>
                     </dd>
 
                     <dt about="#feature-reply" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-reply"></i><dfn id="feature-reply">Reply</dfn></dt>
@@ -260,8 +264,18 @@
                         <dt about="#html-documents" property="skos:prefLabel" typeof="skos:Concept"><dfn id="html-documents">HTML documents</dfn></dt>
                         <dd about="#html-documents" property="skos:definition">When opening an (X)HTML document, only the content is imported. CSS, JavaScript, and other additional elements are excluded for security reasons. After importing, dokieli can be used as usual with all of its <a href="#features">features</a>.</dd>
 
-                        <dt about="#gps-data" property="skos:prefLabel" typeof="skos:Concept"><dfn id="gps-data">GPS data</dfn></dt>
-                        <dd about="#gps-data" property="skos:definition">The user can view a map (<a href="https://www.openstreetmap.org/">OpenStreetMap</a>) that includes a track, along with detailed GPS and extension data in a table. This data includes time period, latitude, longitude, altitude, heart rate, cadence, speed, air temperature, water temperature, and depth. The table also provides a summary of the publication date, publisher, actor, total distance, total time, average pace, average heart rate, elevation gain, and elevation loss. Additionally, the nearest city to the track is identified and linked on <a href="https://www.wikidata.org/">Wikidata</a>.</dd>
+                        <dt about="#geo-stats" property="skos:prefLabel" typeof="skos:Concept"><dfn id="geo-stats">Geo and Stats</dfn></dt>
+                        <dd>
+                          <p about="#geo-stats" property="skos:definition">The user can view a map (<a href="https://www.openstreetmap.org/">OpenStreetMap</a>) that includes a track, along with detailed <abbr title="Global Positioning System">GPS</abbr> and extension data in a table. This data includes time period, latitude, longitude, altitude, heart rate, cadence, speed, air temperature, water temperature, and depth. The table also provides a summary of the publication date, publisher, actor, total distance, total time, average pace, average heart rate, elevation gain, and elevation loss. Additionally, the nearest city to the track is identified and linked on <a href="https://www.wikidata.org/">Wikidata</a>.</p>
+
+                          <figure about="#geo-stats" id="figure-dokieli-geo-stats" rel="schema:video" resource="#figure-dokieli-geo-stats">
+                            <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-geo-stats.jpg" preload="none" resource="#figure-dokieli-geo-stats" typeof="schema:VideoObject" width="800">
+                              <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-geo-stats.webm" type="video/webm" />
+                            </video>
+
+                            <figcaption><a href="https://dokie.li/media/video/dokieli-geo-stats.webm">Video</a> (<a href="https://dokie.li/media/images/dokieli-geo-stats.jpg" rel="schema:thumbnailUrl">poster</a>) of Geo and statistical data importing and viewing in dokieli [<time datatype="xsd:duration" datetime="PT14S" property="schema:duration">14s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                          </figure>
+                        </dd>
 
                         <dt about="#activity-collection" property="skos:prefLabel" typeof="skos:Concept"><dfn id="activity-collection">Activity collection</dfn></dt>
                         <dd about="#activity-collection" property="skos:definition">The user can view a chronological list of social interactions and content-related activities, such as posting, liking, following, and sharing, within a collection.</dd>
@@ -295,7 +309,17 @@
                         <dd about="#resource-accessibility-report" property="skos:definition">Provides additional accessibility information about the current document so that the author can find ways to improve the content's accessibility.</dd>
 
                         <dt about="#storage-details" property="skos:prefLabel" typeof="skos:Concept"><dfn id="storage-details">Storage details</dfn></dt>
-                        <dd about="#storage-details" property="skos:definition">The user can examine information about the storage such as its location, name, description, owners, URI persistence policy, and digital rights policies as well as be informed about any conflicts with their preferred policies, and notification subscription options and subscribing to live changes.</dd>
+                        <dd>
+                          <p about="#storage-details" property="skos:definition">The user can examine information about the storage such as its location, name, description, owners, URI persistence policy, and digital rights policies as well as be informed about any conflicts with their preferred policies, and notification subscription options and subscribing to live changes.</p>
+
+                          <figure about="#storage-details" id="figure-dokieli-odrl-storage-description" rel="schema:video" resource="#figure-dokieli-odrl-storage-description">
+                            <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-odrl-storage-description.jpg" preload="none" resource="#figure-dokieli-odrl-storage-description" typeof="schema:VideoObject" width="800">
+                              <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-odrl-storage-description.webm" type="video/webm" />
+                            </video>
+
+                            <figcaption><a href="https://dokie.li/media/video/dokieli-odrl-storage-description.webm">Video</a> (<a href="https://dokie.li/media/images/dokieli-odrl-storage-description.jpg" rel="schema:thumbnailUrl">poster</a>) of ODRL in dokieli [<time datatype="xsd:duration" datetime="PT12S" property="schema:duration">12s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                          </figure>
+                          </dd>
                       </dl>
                     </dd>
 
@@ -309,13 +333,33 @@
                     <dd>The user can access the memento (version history) of a document.</dd>
 
                     <dt about="#feature-robustify-links" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-robustify-links">Robustify Links</dfn></dt>
-                    <dd about="#feature-robustify-links" property="skos:definition">To help mitigate content drift and link rot, links can be enhanced with additional context such as a snapshot URI from the <a href="https://archive.org/">Internet Archive</a>, a timestamp of when the link was created, and other relevant metadata.</dd>
+                    <dd>
+                      <p about="#feature-robustify-links" property="skos:definition">To help mitigate content drift and link rot, links can be enhanced with additional context such as a snapshot URI from the <a href="https://archive.org/">Internet Archive</a>, a timestamp of when the link was created, and other relevant metadata.</p>
+
+                      <figure about="#feature-robustify-links" id="figure-dokieli-robustify-links" rel="schema:video" resource="#figure-dokieli-robustify-links">
+                        <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-robustify-links.jpg" preload="none" resource="#figure-dokieli-robustify-links" typeof="schema:VideoObject" width="800">
+                          <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-robustify-links.webm" type="video/webm" />
+                        </video>
+
+                        <figcaption><a href="https://dokie.li/media/video/dokieli-robustify-links.webm">Video</a> (<a href="https://dokie.li/media/images/dokieli-robustify-links.jpg" rel="schema:thumbnailUrl">poster</a>) of robustify links in dokieli [<time datatype="xsd:duration" datetime="PT19S" property="schema:duration">19s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                      </figure>
+                    </dd>
 
                     <dt id="resource-archive">Archive</dt>
                     <dd>Sends an archival request of the current article to the Internet Archive <a href="https://web.archive.org/">Wayback Machine</a>.</dd>
 
                     <dt about="#feature-generate-feed" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-generate-feed">Generate Feed</dfn></dt>
-                    <dd about="#feature-generate-feed" property="skos:definition">Enables the creation and publication of a custom web feed from a selected list of documents in <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a>, with options to set the feed's title, <a href="#resource-language">language</a>, <a href="#resource-license">license</a>, and format, e.g., RSS or Atom.</dd>
+                    <dd>
+                      <p about="#feature-generate-feed" property="skos:definition">Enables the creation and publication of a custom web feed from a selected list of documents in <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a>, with options to set the feed's title, <a href="#resource-language">language</a>, <a href="#resource-license">license</a>, and format, e.g., RSS or Atom.</p>
+
+                      <figure about="#feature-generate-feed" id="figure-dokieli-generate-feed" rel="schema:video" resource="#figure-dokieli-generate-feed">
+                        <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-generate-feed.jpg" preload="none" resource="#figure-dokieli-generate-feed" typeof="schema:VideoObject" width="800">
+                          <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-generate-feed.webm" type="video/webm" />
+                        </video>
+
+                        <figcaption><a href="https://dokie.li/media/video/dokieli-generate-feed.webm">Video</a> (<a href="https://dokie.li/media/images/dokieli-generate-feed.jpg" rel="schema:thumbnailUrl">poster</a>) of generating and publishing web feed in dokieli [<time datatype="xsd:duration" datetime="PT9S" property="schema:duration">9s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                      </figure>
+                    </dd>
 
                     <dt id="resource-export"><i class="fas fa-external-link"></i>Export</dt>
                     <dd>The user can export the article as HTML and save to their local filesystem.</dd>
@@ -333,13 +377,33 @@
 
                       <dl about="#feature-edit" rel="dcterms:subject">
                         <dt about="#feature-interactive-embeddable-objects" property="skos:prefLabel" id="feature-interactive-embeddable-objects"><dfn>Interactive and embeddable objects</dfn></dt>
-                        <dd about="#feature-interactive-embeddable-objects" property="skos:definition">Charts and other visual elements, such as sparklines, can be embedded based on statistical data.</dd>
+                        <dd>
+                          <p about="#feature-interactive-embeddable-objects" property="skos:definition">Charts and other visual elements, such as sparklines, can be embedded based on statistical data.</p>
+
+                          <figure about="#feature-interactive-embeddable-objects" id="figure-dokieli-sparqlines" rel="schema:video" resource="#figure-dokieli-sparqlines">
+                            <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-sparqlines.jpg" preload="none" resource="#figure-dokieli-sparqlines" typeof="schema:VideoObject" width="800">
+                              <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-sparqlines.webm" type="video/webm" />
+                            </video>
+
+                            <figcaption><a href="https://dokie.li/media/video/dokieli-sparqlines.webm">Video</a> (<a href="https://dokie.li/media/images/dokieli-sparqlines.jpg" rel="schema:thumbnailUrl">poster</a>) of Sparqlines interaction in dokieli [<time datatype="xsd:duration" datetime="PT25S" property="schema:duration">25s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                          </figure>
+                        </dd>
 
                         <dt about="#feature-semantic-annotation" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-semantic-annotation">Semantic annotation</dfn></dt>
                         <dd about="#feature-semantic-annotation" property="skos:definition">Content can be semantically marked to enhance machine-readability (RDFa), while remaining human-readable.</dd>
 
                         <dt about="#feature-footnotes-citations" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-footnotes-citations">Footnotes and citations</dfn></dt>
-                        <dd about="#feature-footnotes-citations" property="skos:definition">Footnotes and citations can be added to selected text, providing contextual, robust references. Cited entities can be notified for back-referencing. References may include ISBNs or URLs. For contextual citations, for example, a citing entity (an argument) may reference a cited entity (observation results) as factual evidence. Bibliographic searches for technical specifications are also supported for citation purposes.</dd>
+                        <dd>
+                          <p about="#feature-footnotes-citations" property="skos:definition">Footnotes and citations can be added to selected text, providing contextual, robust references. Cited entities can be notified for back-referencing. References may include ISBNs or URLs. For contextual citations, for example, a citing entity (an argument) may reference a cited entity (observation results) as factual evidence. Bibliographic searches for technical specifications are also supported for citation purposes.</p>
+
+                          <figure about="#feature-footnotes-citations" id="figure-dokieli-citation" rel="schema:hasPart" resource="#figure-dokieli-citation">
+                            <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-citation.jpg" preload="none" resource="#figure-dokieli-citation" typeof="schema:VideoObject" width="800">
+                              <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-citation.webm" type="video/webm" />
+                            </video>
+
+                            <figcaption><a href="https://dokie.li/media/video/dokieli-citation.webm">Video</a> (<a href="https://dokie.li/media/images/dokieli-citation.jpg" rel="schema:thumbnailUrl">poster</a>) of semantic inline citations and notification in dokieli [<time datatype="xsd:duration" datetime="PT40S" property="schema:duration">40s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                          </figure>
+                        </dd>
 
                         <dt about="#feature-authoring-widgets" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-authoring-widgets">Authoring widgets</dfn></dt>
                         <dd about="#feature-authoring-widgets" property="skos:definition">Additional authoring options include adding contributors and notifying them, setting the document's language, license, inbox, in reply to, status, type, and test suite.</dd>
@@ -371,7 +435,7 @@
                     <dd about="#feature-list-of-stuff" property="skos:definition">
                       <p>Options to generate and include various types of content, such as:</p>
 
-                      <dl>
+                      <dl rel="dcterms:subject">
                         <dt>Contents</dt>
                         <dd>Generates a table of contents.</dd>
 
@@ -390,8 +454,18 @@
                         <dt>Concepts</dt>
                         <dd>Lists concept schemes and concepts in the document with links. Additional concepts from externally referenced resources can also be included, along with a graph visualisation of the concepts.</dd>
 
-                        <dt>Requirements</dt>
-                        <dd>Creates a table of conformance requirements and test coverage (for technical specifications), showing the requirement subject, level, statement, and related test cases with links. Optionally displays changes between the current and previous versions of the document, along with changelog details.</dd>
+                        <dt about="#feature-requirements" property="skos:prefLabel">Requirements</dt>
+                        <dd>
+                          <p about="#feature-requirements" property="skos:definition">Creates a table of conformance requirements and test coverage (for technical specifications), showing the requirement subject, level, statement, and related test cases with links. Optionally displays changes between the current and previous versions of the document, along with changelog details.</p>
+
+                          <figure about="#feature-requirements" id="figure-dokieli-spec-conformance" rel="schema:video" resource="#figure-dokieli-spec-conformance">
+                            <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-spec-conformance.jpg" preload="none" resource="#figure-dokieli-spec-conformance" typeof="schema:VideoObject" width="800">
+                              <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-spec-conformance.webm" type="video/webm" />
+                            </video>
+
+                            <figcaption><a href="https://dokie.li/media/video/dokieli-spec-conformance.webm">Video</a> (<a href="https://dokie.li/media/images/dokieli-spec-conformance.jpg" rel="schema:thumbnailUrl">poster</a>) of in dokieli [<time datatype="xsd:duration" datetime="PT19S" property="schema:duration">19s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                          </figure>
+                        </dd>
 
                         <dt>Advisements</dt>
                         <dd>Creates a table of advisements (in technical specifications), including their levels, statements, and links.</dd>
