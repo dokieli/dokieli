@@ -42,7 +42,12 @@
 
           <dl id="document-modified">
             <dt>Modified</dt>
-            <dd><time content="2024-07-09T00:00:00Z" datatype="xsd:dateTime" datetime="2024-07-09T00:00:00Z" property="schema:dateModified">2024-07-09</time></dd>
+            <dd><time content="2025-05-07T00:00:00Z" datatype="xsd:dateTime" datetime="2025-05-07T00:00:00Z" property="schema:dateModified">2025-05-07</time></dd>
+          </dl>
+
+          <dl id="document-type">
+            <dt>Document Type</dt>
+            <dd><a href="http://schema.org/Article" rel="rdf:type">Article</a></dd>
           </dl>
 
           <dl id="document-license">
@@ -50,19 +55,19 @@
             <dd><a href="https://creativecommons.org/licenses/by/4.0/" rel="schema:license" title="Creative Commons Attribution 4.0 Unported">CC BY 4.0</a></dd>
           </dl>
 
-          <dl id="document-feedback">
-            <dt>Feedback</dt>
-            <dd><a href="https://github.com/dokieli/dokieli" rel="doap:repository">GitHub dokieli/dokieli</a> (<a href="https://github.com/dokieli/dokieli/pulls">pull requests</a>, <a href="https://github.com/dokieli/dokieli/issues/new">new issue</a>, <a href="https://github.com/dokieli/dokieli/issues" rel="doap:bug-database">open issues</a>)</dd>
-          </dl>
-
           <dl id="document-language">
             <dt>Language</dt>
             <dd><span content="en" lang="" property="dcterms:language" xml:lang="">English</span></dd>
           </dl>
 
-          <dl id="document-type">
-            <dt>Document Type</dt>
-            <dd><a href="http://schema.org/Article" rel="rdf:type">Article</a></dd>
+          <dl id="document-author">
+            <dt>Authors</dt>
+            <dd id="Sarven-Capadisli"><span about="" rel="schema:author"><span about="https://csarven.ca/#i" typeof="schema:Person"><a href="https://csarven.ca/" rel="schema:url"><span about="https://csarven.ca/#i" property="schema:name"><span property="schema:givenName">Sarven</span> <span property="schema:familyName">Capadisli</span></span></a></span></span></dd>
+          </dl>
+
+          <dl id="document-feedback">
+            <dt>Feedback</dt>
+            <dd><a href="https://github.com/dokieli/dokieli" rel="doap:repository">GitHub dokieli/dokieli</a> (<a href="https://github.com/dokieli/dokieli/pulls">pull requests</a>, <a href="https://github.com/dokieli/dokieli/issues/new">new issue</a>, <a href="https://github.com/dokieli/dokieli/issues" rel="doap:bug-database">open issues</a>)</dd>
           </dl>
         </details>
 
