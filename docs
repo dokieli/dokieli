@@ -326,22 +326,22 @@
                     <dt about="#feature-edit" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-edit"><i class="fas fa-i-cursor"></i>Edit</dfn></dt>
                     <dd>
                       <figure>
-                        <img alt="" height="508" rel="schema:image" src="media/images/dokieli-illustration-authoring.jpg" width="511" />
+                        <img alt="" height="254" rel="schema:image" src="media/images/dokieli-illustration-authoring.jpg" width="255" />
                       </figure>
 
                       <p about="#feature-edit" property="skos:definition">The Edit feature offers authoring tools for formatting, linking, and structuring articles. Edits are temporary unless autosave is enabled or changes are committed using <a href="#feature-save" rel="rdfs:seeAlso">Save</a>, <a href="#feature-save-as" rel="rdfs:seeAlso">Save As</a>, <a href="#resource-version" rel="rdfs:seeAlso">Version</a>, or <a href="#resource-immutable" rel="rdfs:seeAlso">Immutable</a>. Standard formatting options include headings, italics, bold, ordered and unordered lists, inline code, preformatted text, hyperlinks, inline quotes, images, and tables. Additional capabilities include:</p>
 
                       <dl about="#feature-edit" rel="dcterms:subject">
-                        <dt about="#resource-interactive-embeddable-objects" property="skos:prefLabel" id="resource-interactive-embeddable-objects"><dfn>Interactive and embeddable objects</dfn></dt>
-                        <dd about="#resource-interactive-embeddable-objects" property="skos:definition">Charts and other visual elements, such as sparklines, can be embedded based on statistical data.</dd>
+                        <dt about="#feature-interactive-embeddable-objects" property="skos:prefLabel" id="feature-interactive-embeddable-objects"><dfn>Interactive and embeddable objects</dfn></dt>
+                        <dd about="#feature-interactive-embeddable-objects" property="skos:definition">Charts and other visual elements, such as sparklines, can be embedded based on statistical data.</dd>
 
-                        <dt about="#feature-semantic-annotation" property="skos:prefLabel" typeof="skos:Concept"><dfn id="resource-semantic-annotation">Semantic annotation</dfn></dt>
+                        <dt about="#feature-semantic-annotation" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-semantic-annotation">Semantic annotation</dfn></dt>
                         <dd about="#feature-semantic-annotation" property="skos:definition">Content can be semantically marked to enhance machine-readability (RDFa), while remaining human-readable.</dd>
 
-                        <dt about="#feature-footnotes-citations" property="skos:prefLabel" typeof="skos:Concept"><dfn id="resource-footnotes-citations">Footnotes and citations</dfn></dt>
+                        <dt about="#feature-footnotes-citations" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-footnotes-citations">Footnotes and citations</dfn></dt>
                         <dd about="#feature-footnotes-citations" property="skos:definition">Footnotes and citations can be added to selected text, providing contextual, robust references. Cited entities can be notified for back-referencing. References may include ISBNs or URLs. For contextual citations, for example, a citing entity (an argument) may reference a cited entity (observation results) as factual evidence. Bibliographic searches for technical specifications are also supported for citation purposes.</dd>
 
-                        <dt about="#feature-authoring-widgets" property="skos:prefLabel" typeof="skos:Concept"><dfn id="authoring-widgets">Authoring widgets</dfn></dt>
+                        <dt about="#feature-authoring-widgets" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-authoring-widgets">Authoring widgets</dfn></dt>
                         <dd about="#feature-authoring-widgets" property="skos:definition">Additional authoring options include adding contributors and notifying them, setting the document's language, license, inbox, in reply to, status, type, and test suite.</dd>
                       </dl>
                     </dd>
@@ -352,19 +352,19 @@
                     <dt about="#feature-source" property="skos:prefLabel"><i class="fas fa-code"></i><dfn id="resource-source">Source</dfn></dt>
                     <dd about="#feature-source" property="skos:definition">Allows direct editing of the article's current state. Updating is temporary until committed using features such as changes are committed using <a href="#feature-save" rel="rdfs:seeAlso">Save</a>, <a href="#feature-save-as" rel="rdfs:seeAlso">Save As</a>, <a href="#resource-version" rel="rdfs:seeAlso">Version</a>, or <a href="#resource-immutable" rel="rdfs:seeAlso">Immutable</a>.</dd>
 
-                    <dt about="#feature-embed-meta-data" property="skos:prefLabel"><i class="fas fa-table"></i><dfn id="embed-data-meta">Embed Data</dfn></dt>
-                    <dd about="#feature-embed-meta-data" property="skos:definition">Enables embedding and updating supplemental data to be stored with the article using RDF syntaxes such as Turtle, JSON-LD, and TriG.</dd>
+                    <dt about="#feature-embed-data" property="skos:prefLabel"><i class="fas fa-table"></i><dfn id="feature-embed-data">Embed Data</dfn></dt>
+                    <dd about="#feature-embed-data" property="skos:definition">Enables embedding and updating supplemental data to be stored with the article using RDF syntaxes such as Turtle, JSON-LD, and TriG.</dd>
 
-                    <dt about="#feature-message-log" property="skos:prefLabel" typeof="skos:Concept"><dfn id="message-log">Messages</dfn></dt>
+                    <dt about="#feature-message-log" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-message-log">Message Log</dfn></dt>
                     <dd about="#feature-message-log" property="skos:definition">Displays all messages raised by dokieli, for example as feedback or notifications resulting from specific actions.</dd>
 
-                    <dt about="#feature-delete" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-delete-document">Delete</dfn></dt>
+                    <dt about="#feature-delete" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-delete">Delete</dfn></dt>
                     <dd about="#feature-delete" property="skos:definition">Deletes article or annotation from <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a>, when access is available.</dd>
 
                     <dt about="#feature-views" property="skos:prefLabel"><i class="fas fa-magic"></i><dfn id="feature-views">Views</dfn></dt>
                     <dd about="#feature-views" property="skos:definition">The dokieli <a hef="#menu" rel="rdfs:seeAlso">menu</a> lists primary and alternate stylesheets that are <a href="#html-css">detected in the HTML</a>. <cite>Native</cite> is always available and disables all other stylesheets, allowing the user agent’s default styles to apply. When a view is selected—e.g., <cite>Basic</cite> (which is the current primary stylesheet for this article)—it becomes the primary stylesheet, while the others are set as alternate and disabled.</dd>
 
-                    <dt about="#feature-graph-view" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-graph-view">Graph visualisation</dfn></dt>
+                    <dt about="#feature-graph-view" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-graph-view">Graph view</dfn></dt>
                     <dd about="#feature-graph-view" property="skos:definition">Displays a graph visualisation of the document's underlying semantics, including a list of resources, the number of statements, unique nodes, creator, license, and a legend. The visualisation can be exported as an SVG.</dd>
 
                     <dt about="#feature-list-of-stuff" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-list-of-stuff">List of Stuff</dfn></dt>
