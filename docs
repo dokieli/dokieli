@@ -364,8 +364,8 @@
                     <dt about="#feature-views" property="skos:prefLabel"><i class="fas fa-magic"></i><dfn id="feature-views">Views</dfn></dt>
                     <dd about="#feature-views" property="skos:definition">The dokieli <a hef="#menu" rel="rdfs:seeAlso">menu</a> lists primary and alternate stylesheets that are <a href="#html-css">detected in the HTML</a>. <cite>Native</cite> is always available and disables all other stylesheets, allowing the user agent’s default styles to apply. When a view is selected—e.g., <cite>Basic</cite> (which is the current primary stylesheet for this article)—it becomes the primary stylesheet, while the others are set as alternate and disabled.</dd>
 
-                    <dt about="#feature-graph" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-graph">Graph visualisation</dfn></dt>
-                    <dd about="#feature-graph" property="skos:definition">Displays a graph visualisation of the document's underlying semantics, including a list of resources, the number of statements, unique nodes, creator, license, and a legend. The visualisation can be exported as an SVG.</dd>
+                    <dt about="#feature-graph-view" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-graph-view">Graph visualisation</dfn></dt>
+                    <dd about="#feature-graph-view" property="skos:definition">Displays a graph visualisation of the document's underlying semantics, including a list of resources, the number of statements, unique nodes, creator, license, and a legend. The visualisation can be exported as an SVG.</dd>
 
                     <dt about="#feature-list-of-stuff" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-list-of-stuff">List of Stuff</dfn></dt>
                     <dd about="#feature-list-of-stuff" property="skos:definition">
