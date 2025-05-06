@@ -86,48 +86,59 @@
             </div>
           </section>
 
-          <section id="using-dokieli" inlist="" rel="schema:hasPart" resource="#using-dokieli">
-            <h2 property="schema:name">Using dokieli</h2>
+          <section id="getting-started" inlist="" rel="schema:hasPart" resource="#getting-started">
+            <h2 property="schema:name">Getting started</h2>
             <div datatype="rdf:HTML" property="schema:description">
-              <p>Dokieli can be used in the following ways:</p>
+              <p>Here is how you can use dokieli and get involved:</p>
 
-              <ul>
-                <li>As an <a href="#embeddable-web-application">Embeddable Web Application</a></li>
-                <li>As a <a href="#web-extension">Web Extension</a></li>
-              </ul>
-
-              <section id="embeddable-web-application" inlist="" rel="schema:hasPart" resource="#mbeddable-web-application">
-                <h3 property="schema:name">Embeddable Web Application</h3>
+              <section id="using-dokieli" inlist="" rel="schema:hasPart" resource="using-dokieli">
+                <h3>Using dokieli</h3>
                 <div datatype="rdf:HTML" property="schema:description">
-                  <p>Dokieli can be embedded into any HTML document by including its CSS and JavaScript in the <code>&lt;head&gt;</code> section of the document. Once the document is opened in any browser, dokieli provides authoring, annotating, and publishing features.</p>
+                  <section id="embeddable-web-application" inlist="" rel="schema:hasPart" resource="#embeddable-web-application">
+                    <h4 property="schema:name">Embeddable Web Application</h4>
+                    <div datatype="rdf:HTML" property="schema:description">
+                      <p>Dokieli can be embedded into any HTML document by including its CSS and JavaScript in the <code>&lt;head&gt;</code> section of the document. Once the document is opened in any browser, dokieli provides authoring, annotating, and publishing features.</p>
 
-                  <pre><code>&lt;link href="https://dokie.li/media/css/basic.css" media="all" rel="stylesheet" title="Basic" /&gt;</code>
+                      <pre><code>&lt;link href="https://dokie.li/media/css/basic.css" media="all" rel="stylesheet" title="Basic" /&gt;</code>
 <code>&lt;link href="https://dokie.li/media/css/dokieli.css" media="all" rel="stylesheet" /&gt;</code>
 <code>&lt;script src="https://dokie.li/scripts/dokieli.js"&gt;&lt;/script&gt;</code></pre>
 
-                <p>It can also be embedded in an <code>iframe</code> within an existing HTML page, enabling editing and annotation features directly inside the iframe.</p>
+                      <p>Dokieli can also be embedded in an <code>iframe</code> within an existing HTML document or dynamically as a <code>Blob</code> using JavaScript. This enables full editing and annotation features directly inside the frame. For example:</p>
+
+                      <pre><code>&lt;iframe height="720" src="https://dokie.li/new" width="1280"&gt;&lt;/iframe&gt;</code></pre>
+                    </div>
+                  </section>
+
+                  <section id="web-extension" inlist="" rel="schema:hasPart" resource="#web-extension">
+                    <h4 property="schema:name">Web Extension</h4>
+                    <div datatype="rdf:HTML" property="schema:description">
+                      <p>Dokieli can also be used as a browser extension, providing full functionality directly in the browser. The extension works in Firefox and Chromium-based browsers, offering a browser toolbar option that enables the same features as the standalone web application.</p>
+
+                      <p>Currently the extension works with Firefox and Chromium browsers. The extension can be used in the following way:</p>
+
+                      <ol>
+                        <li>Clone the dokieli repository from <a href="https://github.com/dokieli/dokieli">https://github.com/dokieli/dokieli</a> (or fork it).</li>
+                        <li>
+                          <dl>
+                            <dt>Firefox</dt>
+                            <dd>From the "Add-ons and themes" menu, select "Debug Add-ons" (or go to <code>about:debugging#/runtime/this-firefox</code> from the addressbar) and import by selecting any file from the cloned dokieli directory (e.g., <code>manifest.json</code>). See also <a href="https://developer.mozilla.org/en-US/Add-ons/WebExtensions/Temporary_Installation_in_Firefox">temporary installation in Firefox</a>. Note that if you restart your browser, you'll need to go through this process.</dd>
+
+                            <dt>Chromium</dt>
+                            <dd>The general process for browsers such as Chrome, Brave, Vivaldi, <a href="https://en.wikipedia.org/wiki/Chromium_(web_browser)#Browsers_based_on_Chromium">etc.</a>, are as follows. From the "Extensions" menu (or go to <code>chrome://extensions/</code>, <code>brave://extensions</code>, <code>vivaldi://extensions/</code> from addressbar), check the "developer mode" option. Import the dokieli directory from "Load unpacked".</dd>
+                          </dl>
+                        </li>
+                      </ol>
+                    </div>
+                  </section>
                 </div>
               </section>
 
-              <section id="web-extension" inlist="" rel="schema:hasPart" resource="#web-extension">
-                <h3 property="schema:name">Web Extension</h3>
+              <section id="contributing" inlist="" rel="schema:hasPart" resource="#contributing">
+                <h2 property="schema:name">Contributing</h2>
                 <div datatype="rdf:HTML" property="schema:description">
-                  <p>Dokieli can also be used as a browser extension, providing full functionality directly in the browser. The extension works in Firefox and Chromium-based browsers, offering a browser toolbar option that enables the same features as the standalone web application.</p>
+                  <p>Thank you for investing your time in contributing to the dokieli project! All kinds of contributions are welcome - code, ideas, feedback, and more.</p>
 
-                  <p>Currently the extension works with Firefox and Chromium browsers. The extension can be used in the following way:</p>
-
-                  <ol>
-                    <li>Clone the dokieli repository from <a href="https://github.com/dokieli/dokieli">https://github.com/dokieli/dokieli</a> (or fork it).</li>
-                    <li>
-                      <dl>
-                        <dt>Firefox</dt>
-                        <dd>From the "Add-ons and themes" menu, select "Debug Add-ons" (or go to <code>about:debugging#/runtime/this-firefox</code> from the addressbar) and import by selecting any file from the cloned dokieli directory (e.g., <code>manifest.json</code>). See also <a href="https://developer.mozilla.org/en-US/Add-ons/WebExtensions/Temporary_Installation_in_Firefox">temporary installation in Firefox</a>. Note that if you restart your browser, you'll need to go through this process.</dd>
-
-                        <dt>Chromium</dt>
-                        <dd>The general process for browsers such as Chrome, Brave, Vivaldi, <a href="https://en.wikipedia.org/wiki/Chromium_(web_browser)#Browsers_based_on_Chromium">etc.</a>, are as follows. From the "Extensions" menu (or go to <code>chrome://extensions/</code>, <code>brave://extensions</code>, <code>vivaldi://extensions/</code> from addressbar), check the "developer mode" option. Import the dokieli directory from "Load unpacked".</dd>
-                      </dl>
-                    </li>
-                  </ol>
+                  <p>The <a href="https://github.com/dokieli/dokieli/">dokieli repository</a> has the source, and there's a <a href="https://github.com/dokieli/dokieli/blob/main/CONTRIBUTING.md">contributing guide</a> to get started. Use dokieli. Test it. Report bugs or fix them. Improve docs. Write or translate articles and share them. Add to the examples. Join the chat for help or discussion. Share ideas or open issues for features you want to see. Every bit helps move the project forward.</p>
                 </div>
               </section>
             </div>
@@ -187,7 +198,13 @@
                     <dd about="#feature-sign-in" property="skos:definition">The <em>sign in</em> enables the user to identify themselves with dokieli using their personal online identifier. dokieli gathers the information linked from the user's profile to adapt the user interface and to customise interactions based on their preferences.</dd>
 
                     <dt about="#feature-share" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-user-secret"></i><dfn id="feature-share">Share</dfn></dt>
-                    <dd about="#feature-share" property="skos:definition"><em>Share</em> makes it possible to notify specific individuals and groups about an article or a specific part within. Signed in users having owner permissions on an article can give others the permission to view, edit, or be co-owners. The contacts listed are the ones discovered through signed in user's profile that have the means to receive notifications in their inboxes. The notification includes minimal information about the article, such as who sent the notification, when it was created, its license and motivation.</dd>
+                    <dd about="#feature-share" property="skos:definition">
+                      <figure>
+                        <img alt="" height="204" rel="schema:image" src="media/images/dokieli-illustration-sharing.jpg" width="460" />
+                      </figure>
+
+                      <p><em>Share</em> makes it possible to notify specific individuals and groups about an article or a specific part within. Signed in users having owner permissions on an article can give others the permission to view, edit, or be co-owners. The contacts listed are the ones discovered through signed in user's profile that have the means to receive notifications in their inboxes. The notification includes minimal information about the article, such as who sent the notification, when it was created, its license and motivation.</p>
+                    </dd>
 
                     <dt about="#feature-reply" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-reply"></i><dfn id="feature-reply">Reply</dfn></dt>
                     <dd about="#feature-reply" property="skos:definition">An article can be replied with a note and have its own <a href="#resource-language" rel="rdfs:seeAlso">language</a> and <a href="#resource-license" rel="rdfs:seeAlso">license</a>. The user can specify where they want to save their reply by <a href="#resource-browser" rel="rdfs:seeAlso">browsing</a> to a location in a <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or an <a href="#annotation-service" rel="rdfs:seeAlso">annotation service</a>.</dd>
@@ -307,7 +324,11 @@
                     <dd>Requests to print the current document (<code>window.print()</code>).</dd>
 
                     <dt about="#feature-edit" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-edit"><i class="fas fa-i-cursor"></i>Edit</dfn></dt>
-                    <dd >
+                    <dd>
+                      <figure>
+                        <img alt="" height="508" rel="schema:image" src="media/images/dokieli-illustration-authoring.jpg" width="511" />
+                      </figure>
+
                       <p about="#feature-edit" property="skos:definition">The Edit feature offers authoring tools for formatting, linking, and structuring articles. Edits are temporary unless autosave is enabled or changes are committed using <a href="#feature-save" rel="rdfs:seeAlso">Save</a>, <a href="#feature-save-as" rel="rdfs:seeAlso">Save As</a>, <a href="#resource-version" rel="rdfs:seeAlso">Version</a>, or <a href="#resource-immutable" rel="rdfs:seeAlso">Immutable</a>. Standard formatting options include headings, italics, bold, ordered and unordered lists, inline code, preformatted text, hyperlinks, inline quotes, images, and tables. Additional capabilities include:</p>
 
                       <dl about="#feature-edit" rel="dcterms:subject">
@@ -535,15 +556,6 @@
                 <dt about="#local-storage" property="skos:prefLabel" typeof="skos:Concept"><dfn id="local-storage">Local storage</dfn></dt>
                 <dd about="#local-storage" property="skos:definition">There is a <cite>Local Storage</cite> feature which uses user-agent's <var>window.localStorage</var>, with default 1m autosave.</dd>
               </dl>
-            </div>
-          </section>
-
-          <section id="contributing" inlist="" rel="schema:hasPart" resource="#contributing">
-            <h2 property="schema:name">Contributing</h2>
-            <div datatype="rdf:HTML" property="schema:description">
-              <p>Thank you for investing your time in contribution to the dokieli project!</p>
-
-              <p>The <a href="https://github.com/dokieli/dokieli/">dokieli repository</a> contains the source and there is a <a href="https://github.com/dokieli/dokieli/blob/main/CONTRIBUTING.md">contributing guide</a>.</p>
             </div>
           </section>
         </div>
