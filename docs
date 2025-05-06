@@ -151,13 +151,43 @@
 
               <dl rel="dcterms:subject">
                 <dt about="#article" property="skos:prefLabel" typeof="skos:Concept">Article</dt>
-                <dd about="#article" property="skos:definition">Dokieli supports authoring various kinds of articles, such as blog posts, course descriptions, guides, news articles, recipes, reviews, scholarly articles, slideshows, technical specifications, theses, travelogues, or anything that simply is an "article". Articles are both human- and machine-readable, and can be highly structured, linked, versioned, annotated, shared, access-controlled, and stored across different <a href="#storage" rel="rdfs:seeAlso">storages</a>. Collections of articles can be syndicated via web feeds. While <a href="#annotation" rel="rdfs:seeAlso">annotations</a> and <a href="#notification" rel="rdfs:seeAlso">notifications</a> differ in purpose, they share a similar structure and usability.</dd>
+                <dd>
+                  <figure about="#publishing">
+                    <img alt="" height="267" rel="schema:image" src="media/images/dokieli-illustration-publishing.jpg" width="469" />
+
+                    <figcaption about="media/images/dokieli-illustration-authoring.jpg">
+                      <p>Illustration by <a href="https://patrickhochstenbach.net/" rel="schema:creator" resource="https://patrickhochstenbach.net/profile/card#me">Patrick Hochstenbach</a>, <a href="https://creativecommons.org/licenses/by/4.0/" rel="schema:license">CC BY 4.0</a>.</p>
+                    </figcaption>
+                  </figure>
+
+                  <p about="#article" property="skos:definition">Dokieli supports authoring various kinds of articles, such as blog posts, course descriptions, guides, news articles, recipes, reviews, scholarly articles, slideshows, technical specifications, theses, travelogues, or anything that simply is an "article". Articles are both human- and machine-readable, and can be highly structured, linked, versioned, annotated, shared, access-controlled, and stored across different <a href="#storage" rel="rdfs:seeAlso">storages</a>. Collections of articles can be syndicated via web feeds. While <a href="#annotation" rel="rdfs:seeAlso">annotations</a> and <a href="#notification" rel="rdfs:seeAlso">notifications</a> differ in purpose, they share a similar structure and usability.</p>
+                </dd>
 
                 <dt about="#annotation" property="skos:prefLabel" typeof="skos:Concept">Annotation</dt>
-                <dd about="#annotation" property="skos:definition">An annotation is a standalone piece of information about, or part of, an <a href="#article" rel="rdfs:seeAlso">article</a> or another annotation, with purposes such as assessing, bookmarking, classifying, commenting, linking, replying, questioning, or tagging. Annotations can be stored in locations like <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or an <a href="#annotation-service" rel="rdfs:seeAlso">annotation service</a>, and each can have its own <a href="#resource-language" rel="rdfs:seeAlso">language</a>, <a href="#resource-license" rel="rdfs:seeAlso">license</a>, and inbox to receive related <a href="#notification" rel="rdfs:seeAlso">notifications</a>. When an article or annotation with an inbox is annotated, a notification is automatically sent to enable discovery. Although annotations can be displayed in the context of their targets, they remain distinct resources and are not stored with the article.</dd>
+                <dd>
+                  <figure about="#annotation">
+                    <img alt="" height="204" rel="schema:image" src="media/images/dokieli-illustration-annotations.jpg" width="460" />
+
+                    <figcaption about="media/images/dokieli-illustration-authoring.jpg">
+                      <p>Illustration by <a href="https://patrickhochstenbach.net/" rel="schema:creator" resource="https://patrickhochstenbach.net/profile/card#me">Patrick Hochstenbach</a>, <a href="https://creativecommons.org/licenses/by/4.0/" rel="schema:license">CC BY 4.0</a>.</p>
+                    </figcaption>
+                  </figure>
+
+                  <p about="#annotation" property="skos:definition">An annotation is a standalone piece of information about, or part of, an <a href="#article" rel="rdfs:seeAlso">article</a> or another annotation, with purposes such as assessing, bookmarking, classifying, commenting, linking, replying, questioning, or tagging. Annotations can be stored in locations like <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or an <a href="#annotation-service" rel="rdfs:seeAlso">annotation service</a>, and each can have its own <a href="#resource-language" rel="rdfs:seeAlso">language</a>, <a href="#resource-license" rel="rdfs:seeAlso">license</a>, and inbox to receive related <a href="#notification" rel="rdfs:seeAlso">notifications</a>. When an article or annotation with an inbox is annotated, a notification is automatically sent to enable discovery. Although annotations can be displayed in the context of their targets, they remain distinct resources and are not stored with the article.</p>
+                </dd>
 
                 <dt about="#notification" property="skos:prefLabel" typeof="skos:Concept">Notification</dt>
-                <dd about="#notification" property="skos:definition">A notification describes an activity such as an <a href="#annotation" rel="rdfs:seeAlso">annotation</a>, a <a href="#feature-footnotes-citations" rel="rdf:seeAlso">citation</a>, or a share action, and is sent to a target's inbox, e.g., an <a href="#article" rel="rdfs:seeAlso">article</a>, annotation, person, or group. Notifications are brief and include key provenance details, such as who performed the action, when, where, the motivation, licensing, and language, helping consumers decide whether to engage further. The notification does not include the full content, e.g., an annotation body, but provides links to fetch it. Notifications help surface related activities in context and can support workflows like collaboration, credibility checks, or peer review.</dd>
+                <dd>
+                  <figure about="#notification">
+                    <img alt="" height="204" rel="schema:image" src="media/images/dokieli-illustration-sharing.jpg" width="460" />
+
+                    <figcaption about="media/images/dokieli-illustration-authoring.jpg">
+                      <p>Illustration by <a href="https://patrickhochstenbach.net/" rel="schema:creator" resource="https://patrickhochstenbach.net/profile/card#me">Patrick Hochstenbach</a>, <a href="https://creativecommons.org/licenses/by/4.0/" rel="schema:license">CC BY 4.0</a>.</p>
+                    </figcaption>
+                  </figure>
+
+                  <p about="#notification" property="skos:definition">A notification describes an activity such as an <a href="#annotation" rel="rdfs:seeAlso">annotation</a>, a <a href="#feature-footnotes-citations" rel="rdf:seeAlso">citation</a>, or a share action, and is sent to a target's inbox, e.g., an <a href="#article" rel="rdfs:seeAlso">article</a>, annotation, person, or group. Notifications are brief and include key provenance details, such as who performed the action, when, where, the motivation, licensing, and language, helping consumers decide whether to engage further. The notification does not include the full content, e.g., an annotation body, but provides links to fetch it. Notifications help surface related activities in context and can support workflows like collaboration, credibility checks, or peer review.</p>
+                </dd>
               </dl>
             </div>
           </section>
@@ -369,8 +399,12 @@
 
                     <dt about="#feature-edit" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-edit"><i class="fas fa-i-cursor"></i>Edit</dfn></dt>
                     <dd>
-                      <figure>
-                        <img alt="" height="254" rel="schema:image" src="media/images/dokieli-illustration-authoring.jpg" width="255" />
+                      <figure about="#feature-edit">
+                        <img alt="" height="255" rel="schema:image" src="media/images/dokieli-illustration-authoring.jpg" width="256" />
+
+                        <figcaption about="media/images/dokieli-illustration-authoring.jpg">
+                          <p>Illustration by <a href="https://patrickhochstenbach.net/" rel="schema:creator" resource="https://patrickhochstenbach.net/profile/card#me">Patrick Hochstenbach</a>, <a href="https://creativecommons.org/licenses/by/4.0/" rel="schema:license">CC BY 4.0</a>.</p>
+                        </figcaption>
                       </figure>
 
                       <p about="#feature-edit" property="skos:definition">The Edit feature offers authoring tools for formatting, linking, and structuring articles. Edits are temporary unless autosave is enabled or changes are committed using <a href="#feature-save" rel="rdfs:seeAlso">Save</a>, <a href="#feature-save-as" rel="rdfs:seeAlso">Save As</a>, <a href="#resource-version" rel="rdfs:seeAlso">Version</a>, or <a href="#resource-immutable" rel="rdfs:seeAlso">Immutable</a>. Standard formatting options include headings, italics, bold, ordered and unordered lists, inline code, preformatted text, hyperlinks, inline quotes, images, and tables. Additional capabilities include:</p>
