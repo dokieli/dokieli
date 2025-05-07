@@ -369,5 +369,7 @@ export {
   kebabToCamel,
   parseISODuration,
   domSanitize,
-  sanitizeObject
+  sanitizeObject,
+  tranformIconstoCSS,
+  getIconsFromCurrentDocument
 };
