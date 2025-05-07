@@ -6244,7 +6244,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
         }
         addMessageToLog(message, Config.MessageLog);
         message.content = '<span class="progress">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + message.content + '</span>';
-        showActionMessage(document.body, message);
+        const messageId = showActionMessage(document.body, message);
 
         return getResource(iri, headers, options)
           .catch(error => {
@@ -6253,6 +6253,8 @@ console.log('XXX: Cannot access effectiveACLResource', e);
             // console.log(error.response)
 
             //XXX: It was either a CORS related issue or 4xx/5xx.
+
+            document.getElementById(messageId).remove();
 
             var message = 'Unable to open <a href="' + iri + '" target="_blank">' + iri + '</a>.';
             message = {
