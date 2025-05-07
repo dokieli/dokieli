@@ -145,7 +145,7 @@
 
                   <p>The <a href="https://github.com/dokieli/dokieli/">dokieli repository</a> has the source, and there's a <a href="https://github.com/dokieli/dokieli/blob/main/CONTRIBUTING.md">contributing guide</a> to get started. Use dokieli. Test it. Report bugs or fix them. Improve docs. Write or translate articles and share them. Add to the examples. Join the chat for help or discussion. Share ideas or open issues for features you want to see. Every bit helps move the project forward.</p>
 
-                  <p about="#illustrations-patrick-hochstenbach" typeof="rdfa:Pattern">Illustrations by <a href="https://patrickhochstenbach.net/" rel="schema:creator" resource="https://patrickhochstenbach.net/profile/card#me">Patrick Hochstenbach</a>, <a href="https://creativecommons.org/licenses/by/4.0/" rel="schema:license">Creative Commons Attribution 4.0 Unported 4.0</a>.</p>
+                  <p about="#illustrations-patrick-hochstenbach" id="illustrations-patrick-hochstenbach" typeof="rdfa:Pattern">Illustrations by <a href="https://patrickhochstenbach.net/" rel="schema:creator" resource="https://patrickhochstenbach.net/profile/card#me">Patrick Hochstenbach</a>, <a href="https://creativecommons.org/licenses/by/4.0/" rel="schema:license">Creative Commons Attribution 4.0 Unported 4.0</a>.</p>
                 </div>
               </section>
             </div>
@@ -158,8 +158,8 @@
 
               <dl rel="dcterms:subject">
                 <dt about="#article" property="skos:prefLabel" typeof="skos:Concept">Article</dt>
-                <dd>
-                  <figure about="#article">
+                <dd about="#article">
+                  <figure>
                     <img alt="" height="267" rel="schema:image" src="media/images/dokieli-illustration-publishing.jpg" width="469" />
 
                     <figcaption about="media/images/dokieli-illustration-publishing.jpg">
@@ -167,12 +167,12 @@
                     </figcaption>
                   </figure>
 
-                  <p about="#article" property="skos:definition">Dokieli supports authoring various kinds of articles, such as blog posts, course descriptions, guides, news articles, recipes, reviews, scholarly articles, slideshows, technical specifications, theses, travelogues, or anything that simply is an "article". Articles are both human- and machine-readable, and can be highly structured, linked, versioned, annotated, shared, access-controlled, and stored across different <a href="#storage" rel="rdfs:seeAlso">storages</a>. Collections of articles can be syndicated via web feeds. While <a href="#annotation" rel="rdfs:seeAlso">annotations</a> and <a href="#notification" rel="rdfs:seeAlso">notifications</a> differ in purpose, they share a similar structure and usability.</p>
+                  <p property="skos:definition">Dokieli supports authoring various kinds of articles, such as blog posts, course descriptions, guides, news articles, recipes, reviews, scholarly articles, slideshows, technical specifications, theses, travelogues, or anything that simply is an "article". Articles are both human- and machine-readable, and can be highly structured, linked, versioned, annotated, shared, access-controlled, and stored across different <a href="#storage" rel="rdfs:seeAlso">storages</a>. Collections of articles can be syndicated via web feeds. While <a href="#annotation" rel="rdfs:seeAlso">annotations</a> and <a href="#notification" rel="rdfs:seeAlso">notifications</a> differ in purpose, they share a similar structure and usability.</p>
                 </dd>
 
                 <dt about="#annotation" property="skos:prefLabel" typeof="skos:Concept">Annotation</dt>
-                <dd>
-                  <figure about="#annotation">
+                <dd about="#annotation">
+                  <figure>
                     <img alt="" height="204" rel="schema:image" src="media/images/dokieli-illustration-annotations.jpg" width="460" />
 
                     <figcaption about="media/images/dokieli-illustration-annotations.jpg">
@@ -180,12 +180,12 @@
                     </figcaption>
                   </figure>
 
-                  <p about="#annotation" property="skos:definition">An annotation is a standalone piece of information about, or part of, an <a href="#article" rel="rdfs:seeAlso">article</a> or another annotation, with purposes such as assessing, bookmarking, classifying, commenting, linking, replying, questioning, or tagging. Annotations can be stored in locations like <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or an <a href="#annotation-service" rel="rdfs:seeAlso">annotation service</a>, and each can have its own <a href="#resource-language" rel="rdfs:seeAlso">language</a>, <a href="#resource-license" rel="rdfs:seeAlso">license</a>, and inbox to receive related <a href="#notification" rel="rdfs:seeAlso">notifications</a>. When an article or annotation with an inbox is annotated, a notification is automatically sent to enable discovery. Although annotations can be displayed in the context of their targets, they remain distinct resources and are not stored with the article.</p>
+                  <p property="skos:definition">An annotation is a standalone piece of information about, or part of, an <a href="#article" rel="rdfs:seeAlso">article</a> or another annotation, with purposes such as assessing, bookmarking, classifying, commenting, linking, replying, questioning, or tagging. Annotations can be stored in locations like <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or an <a href="#annotation-service" rel="rdfs:seeAlso">annotation service</a>, and each can have its own <a href="#resource-language" rel="rdfs:seeAlso">language</a>, <a href="#resource-license" rel="rdfs:seeAlso">license</a>, and inbox to receive related <a href="#notification" rel="rdfs:seeAlso">notifications</a>. When an article or annotation with an inbox is annotated, a notification is automatically sent to enable discovery. Although annotations can be displayed in the context of their targets, they remain distinct resources and are not stored with the article.</p>
                 </dd>
 
                 <dt about="#notification" property="skos:prefLabel" typeof="skos:Concept">Notification</dt>
-                <dd>
-                  <figure about="#notification">
+                <dd about="#notification">
+                  <figure>
                     <img alt="" height="204" rel="schema:image" src="media/images/dokieli-illustration-sharing.jpg" width="460" />
 
                     <figcaption about="media/images/dokieli-illustration-sharing.jpg">
@@ -193,7 +193,7 @@
                     </figcaption>
                   </figure>
 
-                  <p about="#notification" property="skos:definition">A notification describes an activity such as an <a href="#annotation" rel="rdfs:seeAlso">annotation</a>, a <a href="#feature-footnotes-citations" rel="rdf:seeAlso">citation</a>, or a share action, and is sent to a target's inbox, e.g., an <a href="#article" rel="rdfs:seeAlso">article</a>, annotation, person, or group. Notifications are brief and include key provenance details, such as who performed the action, when, where, the motivation, licensing, and language, helping consumers decide whether to engage further. The notification does not include the full content, e.g., an annotation body, but provides links to fetch it. Notifications help surface related activities in context and can support workflows like collaboration, credibility checks, or peer review.</p>
+                  <p property="skos:definition">A notification describes an activity such as an <a href="#annotation" rel="rdfs:seeAlso">annotation</a>, a <a href="#feature-footnotes-citations" rel="rdf:seeAlso">citation</a>, or a share action, and is sent to a target's inbox, e.g., an <a href="#article" rel="rdfs:seeAlso">article</a>, annotation, person, or group. Notifications are brief and include key provenance details, such as who performed the action, when, where, the motivation, licensing, and language, helping consumers decide whether to engage further. The notification does not include the full content, e.g., an annotation body, but provides links to fetch it. Notifications help surface related activities in context and can support workflows like collaboration, credibility checks, or peer review.</p>
                 </dd>
               </dl>
             </div>
@@ -235,10 +235,10 @@
                     <dd about="#feature-sign-in" property="skos:definition">The <em>sign in</em> enables the user to identify themselves with dokieli using their personal online identifier. dokieli gathers the information linked from the user's profile to adapt the user interface and to customise interactions based on their preferences.</dd>
 
                     <dt about="#feature-share" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-user-secret"></i><dfn id="feature-share">Share</dfn></dt>
-                    <dd>
-                      <p about="#feature-share" property="skos:definition"><em>Share</em> makes it possible to notify specific individuals and groups about an article or a specific part within. Signed in users having owner permissions on an article can give others the permission to view, edit, or be co-owners. The contacts listed are the ones discovered through signed in user's profile that have the means to receive notifications in their inboxes. The notification includes minimal information about the article, such as who sent the notification, when it was created, its license and motivation.</p>
+                    <dd about="#feature-share">
+                      <p property="skos:definition"><em>Share</em> makes it possible to notify specific individuals and groups about an article or a specific part within. Signed in users having owner permissions on an article can give others the permission to view, edit, or be co-owners. The contacts listed are the ones discovered through signed in user's profile that have the means to receive notifications in their inboxes. The notification includes minimal information about the article, such as who sent the notification, when it was created, its license and motivation.</p>
 
-                      <figure about="#feature-share" id="figure-dokieli-share" rel="schema:video" resource="#figure-dokieli-share">
+                      <figure id="figure-dokieli-share" rel="schema:video" resource="#figure-dokieli-share">
                         <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-share.jpg" preload="none" resource="#figure-dokieli-share" typeof="schema:VideoObject" width="800">
                           <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-share.webm" type="video/webm" />
                         </video>
@@ -251,10 +251,10 @@
                     <dd about="#feature-reply" property="skos:definition">An article can be replied with a note and have its own <a href="#resource-language" rel="rdfs:seeAlso">language</a> and <a href="#resource-license" rel="rdfs:seeAlso">license</a>. The user can specify where they want to save their reply by <a href="#resource-browser" rel="rdfs:seeAlso">browsing</a> to a location in a <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or an <a href="#annotation-service" rel="rdfs:seeAlso">annotation service</a>.</dd>
 
                     <dt about="#feature-notifications" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-inbox"></i><dfn id="feature-notifications">Notifications</dfn></dt>
-                    <dd>
-                      <p about="#feature-notifications" property="skos:definition">The Notifications feature helps to view your own and your own contacts' interactions and activities on documents, such as comments, annotations, reactions, and bookmarks. <a href="#feature-sign-in" rel="rdfs:seeAlso">Sign in</a> to dokieli so that it can find find these notifications.</p>
+                    <dd about="#feature-notifications">
+                      <p property="skos:definition">The Notifications feature helps to view your own and your own contacts' interactions and activities on documents, such as comments, annotations, reactions, and bookmarks. <a href="#feature-sign-in" rel="rdfs:seeAlso">Sign in</a> to dokieli so that it can find find these notifications.</p>
 
-                      <figure about="#feature-notifications" id="figure-dokieli-notifications" rel="schema:video" resource="#figure-dokieli-notifications">
+                      <figure id="figure-dokieli-notifications" rel="schema:video" resource="#figure-dokieli-notifications">
                         <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-notifications.jpg" preload="none" resource="#figure-dokieli-notifications" typeof="schema:VideoObject" width="800">
                           <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-notifications.webm" type="video/webm" />
                         </video>
@@ -294,18 +294,18 @@
                     <dd about="#feature-new" property="skos:definition">A <em>new</em> article can be temporarily authored until it is stored in <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or <a href="#local-storage" rel="rdfs:seeAlso">local storage</a>. In order to persist the article long term, the user can <a href="#feature-save" rel="rdfs:seeAlso">Save</a> or <a href="#feature-save-as">Save as</a> the article.</dd>
 
                     <dt about="#feature-open" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-coffee"></i><dfn id="feature-open">Open</dfn></dt>
-                    <dd>
-                      <p about="#feature-open" property="skos:definition">A document can be <em>opened</em> (imported) from a local filesystem or by specifying the URL of the resource on the web. <a href="#resource-browser" rel="rdfs:seeAlso">resource browser</a> can be used to navigate to the document of interest in the <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or <a href="#annotation-service" rel="rdfs:seeAlso">annotation service</a>. Custom views are available when importing some data formats such as:</p>
+                    <dd about="#feature-open">
+                      <p property="skos:definition">A document can be <em>opened</em> (imported) from a local filesystem or by specifying the URL of the resource on the web. <a href="#resource-browser" rel="rdfs:seeAlso">resource browser</a> can be used to navigate to the document of interest in the <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or <a href="#annotation-service" rel="rdfs:seeAlso">annotation service</a>. Custom views are available when importing some data formats such as:</p>
 
-                      <dl about="#feature-open" rel="dcterms:subject">
+                      <dl rel="dcterms:subject">
                         <dt about="#html-documents" property="skos:prefLabel" typeof="skos:Concept"><dfn id="html-documents">HTML documents</dfn></dt>
                         <dd about="#html-documents" property="skos:definition">When opening an (X)HTML document, only the content is imported. CSS, JavaScript, and other additional elements are excluded for security reasons. After importing, dokieli can be used as usual with all of its <a href="#features">features</a>.</dd>
 
                         <dt about="#geo-stats" property="skos:prefLabel" typeof="skos:Concept"><dfn id="geo-stats">Geo and Stats</dfn></dt>
-                        <dd>
-                          <p about="#geo-stats" property="skos:definition">The user can view a map (<a href="https://www.openstreetmap.org/">OpenStreetMap</a>) that includes a track, along with detailed <abbr title="Global Positioning System">GPS</abbr> and extension data in a table. This data includes time period, latitude, longitude, altitude, heart rate, cadence, speed, air temperature, water temperature, and depth. The table also provides a summary of the publication date, publisher, actor, total distance, total time, average pace, average heart rate, elevation gain, and elevation loss. Additionally, the nearest city to the track is identified and linked on <a href="https://www.wikidata.org/">Wikidata</a>.</p>
+                        <dd about="#geo-stats">
+                          <p property="skos:definition">The user can view a map (<a href="https://www.openstreetmap.org/">OpenStreetMap</a>) that includes a track, along with detailed <abbr title="Global Positioning System">GPS</abbr> and extension data in a table. This data includes time period, latitude, longitude, altitude, heart rate, cadence, speed, air temperature, water temperature, and depth. The table also provides a summary of the publication date, publisher, actor, total distance, total time, average pace, average heart rate, elevation gain, and elevation loss. Additionally, the nearest city to the track is identified and linked on <a href="https://www.wikidata.org/">Wikidata</a>.</p>
 
-                          <figure about="#geo-stats" id="figure-dokieli-geo-stats" rel="schema:video" resource="#figure-dokieli-geo-stats">
+                          <figure id="figure-dokieli-geo-stats" rel="schema:video" resource="#figure-dokieli-geo-stats">
                             <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-geo-stats.jpg" preload="none" resource="#figure-dokieli-geo-stats" typeof="schema:VideoObject" width="800">
                               <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-geo-stats.webm" type="video/webm" />
                             </video>
@@ -326,10 +326,10 @@
                     <dd about="#feature-save" property="skos:definition">An article can be <em>saved</em> in its current state and location, making it possible to return to the same content and URL later, when access is available.</dd>
 
                     <dt about="#feature-save-as" property="skos:prefLabel" typeof="skos:Concept"><i class="far fa-paper-plane"></i><dfn id="feature-save-as">Save As</dfn></dt>
-                    <dd>
-                      <p about="#feature-save-as" property="skos:definition">An article can be <em>saved</em> in its current state at a specific location in a <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a>. This feature uses the <cite><a href="#resource-browser" rel="rdfs:seeAlso">resource browser</a></cite> to navigate HTTP URLs.</p>
+                    <dd about="#feature-save-as">
+                      <p property="skos:definition">An article can be <em>saved</em> in its current state at a specific location in a <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a>. This feature uses the <cite><a href="#resource-browser" rel="rdfs:seeAlso">resource browser</a></cite> to navigate HTTP URLs.</p>
 
-                      <dl about="#feature-save-as" rel="dcterms:subject">
+                      <dl rel="dcterms:subject">
                         <dt about="#resource-set-inbox" property="skos:prefLabel" typeof="skos:Concept"><dfn id="resource-set-inbox">Set inbox</dfn></dt>
                         <dd about="#resource-set-inbox" property="skos:definition">An inbox can be assigned to an article or annotation by specifying its location using the <a href="#resource-browser" rel="rdfs:seeAlso">resource browser</a> so that notifications about the article or annotation can be shared.</dd>
 
@@ -346,10 +346,10 @@
                         <dd about="#resource-accessibility-report" property="skos:definition">Provides additional accessibility information about the current document so that the author can find ways to improve the content's accessibility.</dd>
 
                         <dt about="#storage-details" property="skos:prefLabel" typeof="skos:Concept"><dfn id="storage-details">Storage details</dfn></dt>
-                        <dd>
-                          <p about="#storage-details" property="skos:definition">The user can examine information about the storage such as its location, name, description, owners, URI persistence policy, and digital rights policies as well as be informed about any conflicts with their preferred policies, and notification subscription options and subscribing to live changes.</p>
+                        <dd about="#storage-details">
+                          <p property="skos:definition">The user can examine information about the storage such as its location, name, description, owners, URI persistence policy, and digital rights policies as well as be informed about any conflicts with their preferred policies, and notification subscription options and subscribing to live changes.</p>
 
-                          <figure about="#storage-details" id="figure-dokieli-odrl-storage-description" rel="schema:video" resource="#figure-dokieli-odrl-storage-description">
+                          <figure id="figure-dokieli-odrl-storage-description" rel="schema:video" resource="#figure-dokieli-odrl-storage-description">
                             <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-odrl-storage-description.jpg" preload="none" resource="#figure-dokieli-odrl-storage-description" typeof="schema:VideoObject" width="800">
                               <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-odrl-storage-description.webm" type="video/webm" />
                             </video>
@@ -370,10 +370,10 @@
                     <dd>The user can access the memento (version history) of a document.</dd>
 
                     <dt about="#feature-robustify-links" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-robustify-links">Robustify Links</dfn></dt>
-                    <dd>
-                      <p about="#feature-robustify-links" property="skos:definition">To help mitigate content drift and link rot, links can be enhanced with additional context such as a snapshot URI from the <a href="https://archive.org/">Internet Archive</a>, a timestamp of when the link was created, and other relevant metadata.</p>
+                    <dd about="#feature-robustify-links">
+                      <p property="skos:definition">To help mitigate content drift and link rot, links can be enhanced with additional context such as a snapshot URI from the <a href="https://archive.org/">Internet Archive</a>, a timestamp of when the link was created, and other relevant metadata.</p>
 
-                      <figure about="#feature-robustify-links" id="figure-dokieli-robustify-links" rel="schema:video" resource="#figure-dokieli-robustify-links">
+                      <figure id="figure-dokieli-robustify-links" rel="schema:video" resource="#figure-dokieli-robustify-links">
                         <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-robustify-links.jpg" preload="none" resource="#figure-dokieli-robustify-links" typeof="schema:VideoObject" width="800">
                           <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-robustify-links.webm" type="video/webm" />
                         </video>
@@ -386,10 +386,10 @@
                     <dd>Sends an archival request of the current article to the Internet Archive <a href="https://web.archive.org/">Wayback Machine</a>.</dd>
 
                     <dt about="#feature-generate-feed" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-generate-feed">Generate Feed</dfn></dt>
-                    <dd>
-                      <p about="#feature-generate-feed" property="skos:definition">Enables the creation and publication of a custom web feed from a selected list of documents in <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a>, with options to set the feed's title, <a href="#resource-language">language</a>, <a href="#resource-license">license</a>, and format, e.g., RSS or Atom.</p>
+                    <dd about="#feature-generate-feed">
+                      <p property="skos:definition">Enables the creation and publication of a custom web feed from a selected list of documents in <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a>, with options to set the feed's title, <a href="#resource-language">language</a>, <a href="#resource-license">license</a>, and format, e.g., RSS or Atom.</p>
 
-                      <figure about="#feature-generate-feed" id="figure-dokieli-generate-feed" rel="schema:video" resource="#figure-dokieli-generate-feed">
+                      <figure id="figure-dokieli-generate-feed" rel="schema:video" resource="#figure-dokieli-generate-feed">
                         <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-generate-feed.jpg" preload="none" resource="#figure-dokieli-generate-feed" typeof="schema:VideoObject" width="800">
                           <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-generate-feed.webm" type="video/webm" />
                         </video>
@@ -405,8 +405,8 @@
                     <dd>Requests to print the current document (<code>window.print()</code>).</dd>
 
                     <dt about="#feature-edit" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-edit"><i class="fas fa-i-cursor"></i>Edit</dfn></dt>
-                    <dd>
-                      <figure about="#feature-edit">
+                    <dd about="#feature-edit">
+                      <figure>
                         <img alt="" height="255" rel="schema:image" src="media/images/dokieli-illustration-authoring.jpg" width="256" />
 
                         <figcaption about="media/images/dokieli-illustration-authoring.jpg">
@@ -414,14 +414,14 @@
                         </figcaption>
                       </figure>
 
-                      <p about="#feature-edit" property="skos:definition">The Edit feature offers authoring tools for formatting, linking, and structuring articles. Edits are temporary unless autosave is enabled or changes are committed using <a href="#feature-save" rel="rdfs:seeAlso">Save</a>, <a href="#feature-save-as" rel="rdfs:seeAlso">Save As</a>, <a href="#resource-version" rel="rdfs:seeAlso">Version</a>, or <a href="#resource-immutable" rel="rdfs:seeAlso">Immutable</a>. Standard formatting options include headings, italics, bold, ordered and unordered lists, inline code, preformatted text, hyperlinks, inline quotes, images, and tables. Additional capabilities include:</p>
+                      <p property="skos:definition">The Edit feature offers authoring tools for formatting, linking, and structuring articles. Edits are temporary unless autosave is enabled or changes are committed using <a href="#feature-save" rel="rdfs:seeAlso">Save</a>, <a href="#feature-save-as" rel="rdfs:seeAlso">Save As</a>, <a href="#resource-version" rel="rdfs:seeAlso">Version</a>, or <a href="#resource-immutable" rel="rdfs:seeAlso">Immutable</a>. Standard formatting options include headings, italics, bold, ordered and unordered lists, inline code, preformatted text, hyperlinks, inline quotes, images, and tables. Additional capabilities include:</p>
 
-                      <dl about="#feature-edit" rel="dcterms:subject">
+                      <dl rel="dcterms:subject">
                         <dt about="#feature-interactive-embeddable-objects" property="skos:prefLabel" id="feature-interactive-embeddable-objects"><dfn>Interactive and embeddable objects</dfn></dt>
-                        <dd>
-                          <p about="#feature-interactive-embeddable-objects" property="skos:definition">Charts and other visual elements, such as sparklines, can be embedded based on statistical data.</p>
+                        <dd about="#feature-interactive-embeddable-objects">
+                          <p property="skos:definition">Charts and other visual elements, such as sparklines, can be embedded based on statistical data.</p>
 
-                          <figure about="#feature-interactive-embeddable-objects" id="figure-dokieli-sparqlines" rel="schema:video" resource="#figure-dokieli-sparqlines">
+                          <figure id="figure-dokieli-sparqlines" rel="schema:video" resource="#figure-dokieli-sparqlines">
                             <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-sparqlines.jpg" preload="none" resource="#figure-dokieli-sparqlines" typeof="schema:VideoObject" width="800">
                               <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-sparqlines.webm" type="video/webm" />
                             </video>
@@ -434,10 +434,10 @@
                         <dd about="#feature-semantic-annotation" property="skos:definition">Content can be semantically marked to enhance machine-readability (RDFa), while remaining human-readable.</dd>
 
                         <dt about="#feature-footnotes-citations" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-footnotes-citations">Footnotes and citations</dfn></dt>
-                        <dd>
-                          <p about="#feature-footnotes-citations" property="skos:definition">Footnotes and citations can be added to selected text, providing contextual, robust references. Cited entities can be notified for back-referencing. References may include ISBNs or URLs. For contextual citations, for example, a citing entity (an argument) may reference a cited entity (observation results) as factual evidence. Bibliographic searches for technical specifications are also supported for citation purposes.</p>
+                        <dd about="#feature-footnotes-citations">
+                          <p property="skos:definition">Footnotes and citations can be added to selected text, providing contextual, robust references. Cited entities can be notified for back-referencing. References may include ISBNs or URLs. For contextual citations, for example, a citing entity (an argument) may reference a cited entity (observation results) as factual evidence. Bibliographic searches for technical specifications are also supported for citation purposes.</p>
 
-                          <figure about="#feature-footnotes-citations" id="figure-dokieli-citation" rel="schema:hasPart" resource="#figure-dokieli-citation">
+                          <figure id="figure-dokieli-citation" rel="schema:hasPart" resource="#figure-dokieli-citation">
                             <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-citation.jpg" preload="none" resource="#figure-dokieli-citation" typeof="schema:VideoObject" width="800">
                               <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-citation.webm" type="video/webm" />
                             </video>
@@ -496,10 +496,10 @@
                         <dd>Lists concept schemes and concepts in the document with links. Additional concepts from externally referenced resources can also be included, along with a graph visualisation of the concepts.</dd>
 
                         <dt about="#feature-requirements" property="skos:prefLabel">Requirements</dt>
-                        <dd>
-                          <p about="#feature-requirements" property="skos:definition">Creates a table of conformance requirements and test coverage (for technical specifications), showing the requirement subject, level, statement, and related test cases with links. Optionally displays changes between the current and previous versions of the document, along with changelog details.</p>
+                        <dd about="#feature-requirements">
+                          <p property="skos:definition">Creates a table of conformance requirements and test coverage (for technical specifications), showing the requirement subject, level, statement, and related test cases with links. Optionally displays changes between the current and previous versions of the document, along with changelog details.</p>
 
-                          <figure about="#feature-requirements" id="figure-dokieli-spec-conformance" rel="schema:video" resource="#figure-dokieli-spec-conformance">
+                          <figure id="figure-dokieli-spec-conformance" rel="schema:video" resource="#figure-dokieli-spec-conformance">
                             <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-spec-conformance.jpg" preload="none" resource="#figure-dokieli-spec-conformance" typeof="schema:VideoObject" width="800">
                               <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-spec-conformance.webm" type="video/webm" />
                             </video>
@@ -564,6 +564,7 @@
                     <h4 property="schema:name">Measures to support accessibility</h4>
                     <div datatype="rdf:HTML" property="schema:description">
                       <p>dokieli takes the following measures to ensure accessibility of dokieli:</p>
+
                       <ul class="organizational-effort accessibility-measures">
                         <li>Include accessibility throughout our internal policies.</li>
                         <li>Assign clear accessibility goals and responsibilities.</li>
@@ -590,9 +591,11 @@
                     <h4 property="schema:name">Technical specifications</h4>
                     <div datatype="rdf:HTML" property="schema:description">
                       <p>Accessibility of dokieli relies on the following technologies to work with the particular combination of web browser and any assistive technologies or plugins installed on your computer:</p>
+
                       <ul>
                         <li>HTML</li>
                       </ul>
+
                       <p>These technologies are relied upon for conformance with the accessibility standards used.</p>
                     </div>
                   </section>
@@ -601,6 +604,7 @@
                     <h4 property="schema:name">Assessment approach</h4>
                     <div datatype="rdf:HTML" property="schema:description">
                       <p>dokieli assessed the accessibility of dokieli by the following approaches:</p>
+
                       <ul>
                         <li>Self-evaluation</li>
                       </ul>
