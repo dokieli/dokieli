@@ -1362,7 +1362,7 @@ function getGraphLabel(s) {
 }
 
 function getGraphTitle(s) {
-  var d = s.out(ns.schema.name).values[0] || s.out(ns.dcterms.title).values[0] || s.out(ns.dcelements.title).values[0] || s.out(ns.as.name).values[0] || undefined;
+  var d = s.out(ns.schema.name).values[0] || s.out(ns.dcterms.title).values[0] || s.out(ns.dcelements.title).values[0] || s.out(ns.as.name).values[0] || s.out(ns.skos.prefLabel).values[0] || undefined;
   return d === undefined ? undefined : domSanitize(d)
 }
 
@@ -1461,7 +1461,7 @@ function getGraphConceptLabel(g, options) {
 }
 
 function getGraphDescription(s) {
-  var d = s.out(ns.schema.description).value || s.out(ns.dcterms.description).value || s.out(ns.dcelements.description).value || s.out(ns.schema.name).value || s.out(ns.as.name).value || undefined;
+  var d = s.out(ns.schema.description).value || s.out(ns.dcterms.description).value || s.out(ns.dcelements.description).value || s.out(ns.schema.name).value || s.out(ns.as.name).value || s.out(ns.skos.definition).value || undefined;
   return d === undefined ? undefined : domSanitize(d)
 }
 
