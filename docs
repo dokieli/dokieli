@@ -318,10 +318,10 @@
                       <p property="skos:definition">A document can be <em>opened</em> (imported) from a local filesystem or by specifying the URL of the resource on the web. <a href="#feature-browser" rel="rdfs:seeAlso">resource browser</a> can be used to navigate to the document of interest in the <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or <a href="#annotation-service" rel="rdfs:seeAlso">annotation service</a>. Custom views are available when importing some data formats such as:</p>
 
                       <dl rel="dcterms:subject">
-                        <dt about="#html-documents" property="skos:prefLabel" typeof="skos:Concept"><i class="fa fa-html5"></i><dfn id="html-documents">HTML documents</dfn></dt>
+                        <dt about="#html-documents" property="skos:prefLabel" typeof="skos:Concept"><i class="fab fa-html5"></i><dfn id="html-documents">HTML documents</dfn></dt>
                         <dd about="#html-documents" property="skos:definition">When opening an (X)HTML document, only the content is imported. CSS, JavaScript, and other additional elements are excluded for security reasons. After importing, dokieli can be used as usual with all of its <a href="#features">features</a>.</dd>
 
-                        <dt about="#geo-stats" property="skos:prefLabel" typeof="skos:Concept"><dfn id="geo-stats"><i class="fas fa-map"></i>Geo and Stats</dfn></dt>
+                        <dt about="#geo-stats" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-map"></i><dfn id="geo-stats">Geo and Stats</dfn></dt>
                         <dd about="#geo-stats">
                           <p property="skos:definition">The user can view a map (<a href="https://www.openstreetmap.org/">OpenStreetMap</a>) that includes a track, along with detailed <abbr title="Global Positioning System">GPS</abbr> and extension data in a table. This data includes time period, latitude, longitude, altitude, heart rate, cadence, speed, air temperature, water temperature, and depth. The table also provides a summary of the publication date, publisher, actor, total distance, total time, average pace, average heart rate, elevation gain, and elevation loss. Additionally, the nearest city to the track is identified and linked on <a href="https://www.wikidata.org/">Wikidata</a>.</p>
 
@@ -334,7 +334,7 @@
                           </figure>
                         </dd>
 
-                        <dt about="#activity-collection" property="skos:prefLabel" typeof="skos:Concept"><dfn id="activity-collection"><i class="fas fa-bolt"></i>Activity collection</dfn></dt>
+                        <dt about="#activity-collection" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-bolt"></i><dfn id="activity-collection">Activity collection</dfn></dt>
                         <dd about="#activity-collection" property="skos:definition">The user can view a chronological list of social interactions and content-related activities, such as posting, liking, following, and sharing, within a collection.</dd>
 
                         <dt about="#other-data" property="skos:prefLabel" typeof="skos:Concept"><dfn id="other-data">Other data</dfn></dt>
