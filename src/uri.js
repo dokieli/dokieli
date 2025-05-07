@@ -225,6 +225,27 @@ function isFileProtocol(urlString) {
   }
 }
 
+function svgToDataURI(svg, options = {}) {
+  svg = svg
+    .replace(/ class="[^"]*"/g, '')
+    .replace(/ fill="[^"]*"/g, '')
+    .replace(/>\s+</g, '><')
+    .trim();
+
+  // svg = svg.replace('<path ', '<path fill="currentColor" ');
+
+  svg = svg
+    .replace(/</g, '%3c')
+    .replace(/>/g, '%3e')
+    // .replace(/'/g, '%27')
+    .replace(/"/g, "'")
+    // .replace(/#/g, '%23')
+    .replace(/\n/g, '')
+    .replace(/\r/g, '');
+
+  return `data:image/svg+xml,${svg}`;
+}
+
 export {
   encodeString,
   decodeString,
