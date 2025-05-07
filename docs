@@ -147,7 +147,7 @@
 
                   <p>The <a href="https://github.com/dokieli/dokieli/">dokieli repository</a> has the source, and there's a <a href="https://github.com/dokieli/dokieli/blob/main/CONTRIBUTING.md">contributing guide</a> to get started. Use dokieli. Test it. Report bugs or fix them. Improve docs. Write or translate articles and share them. Add to the examples. Join the chat for help or discussion. Share ideas or open issues for features you want to see. Every bit helps move the project forward.</p>
 
-                  <p about="#illustrations-patrick-hochstenbach" id="illustrations-patrick-hochstenbach" typeof="rdfa:Pattern">Illustrations by <a href="https://patrickhochstenbach.net/" rel="schema:creator" resource="https://patrickhochstenbach.net/profile/card#me" typeof="schema:Person">Patrick Hochstenbach</a>, <a href="https://creativecommons.org/licenses/by/4.0/" rel="schema:license">Creative Commons Attribution 4.0 Unported</a>.</p>
+                  <p id="illustrations-patrick-hochstenbach">Illustrations by <a href="https://patrickhochstenbach.net/">Patrick Hochstenbach</a>, <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 Unported</a>.</p>
                 </div>
               </section>
             </div>
@@ -165,7 +165,7 @@
                     <img alt="" height="267" rel="schema:image" src="media/images/dokieli-illustration-publishing.jpg" width="469" />
 
                     <figcaption about="media/images/dokieli-illustration-publishing.jpg">
-                      <p><a href="#illustrations-patrick-hochstenbach" rel="rdfa:copy" title="Illustration by Patrick Hochstenbach, CC-BY 4.0."><i class="fab fa-creative-commons-by"></i></a></p>
+                      <p><a href="#illustrations-patrick-hochstenbach" title="Illustration by Patrick Hochstenbach, CC-BY 4.0."><i class="fab fa-creative-commons-by"></i></a></p>
                     </figcaption>
                   </figure>
 
@@ -178,7 +178,7 @@
                     <img alt="" height="204" rel="schema:image" src="media/images/dokieli-illustration-annotations.jpg" width="460" />
 
                     <figcaption about="media/images/dokieli-illustration-annotations.jpg">
-                      <p><a href="#illustrations-patrick-hochstenbach" rel="rdfa:copy" title="Illustration by Patrick Hochstenbach, CC-BY 4.0."><i class="fab fa-creative-commons-by"></i></a></p>
+                      <p><a href="#illustrations-patrick-hochstenbach" title="Illustration by Patrick Hochstenbach, CC-BY 4.0."><i class="fab fa-creative-commons-by"></i></a></p>
                     </figcaption>
                   </figure>
 
@@ -191,7 +191,7 @@
                     <img alt="" height="204" rel="schema:image" src="media/images/dokieli-illustration-sharing.jpg" width="460" />
 
                     <figcaption about="media/images/dokieli-illustration-sharing.jpg">
-                      <p><a href="#illustrations-patrick-hochstenbach" rel="rdfa:copy" title="Illustration by Patrick Hochstenbach, CC-BY 4.0."><i class="fab fa-creative-commons-by"></i></a></p>
+                      <p><a href="#illustrations-patrick-hochstenbach" title="Illustration by Patrick Hochstenbach, CC-BY 4.0."><i class="fab fa-creative-commons-by"></i></a></p>
                     </figcaption>
                   </figure>
 
@@ -430,7 +430,7 @@
                         <img alt="" height="255" rel="schema:image" src="media/images/dokieli-illustration-authoring.jpg" width="256" />
 
                         <figcaption about="media/images/dokieli-illustration-authoring.jpg">
-                          <p><a href="#illustrations-patrick-hochstenbach" rel="rdfa:copy" title="Illustration by Patrick Hochstenbach, CC-BY 4.0."><i class="fab fa-creative-commons-by"></i></a></p>
+                          <p><a href="#illustrations-patrick-hochstenbach" title="Illustration by Patrick Hochstenbach, CC-BY 4.0."><i class="fab fa-creative-commons-by"></i></a></p>
                         </figcaption>
                       </figure>
 
