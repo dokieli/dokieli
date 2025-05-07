@@ -582,8 +582,8 @@ dd+dt {
   margin-top: 1em;
 }
 
-p+dl {
-  margin-top: 0;
+p + dl {
+  margin-top: 1em;
 }
 
 section+hr,
@@ -670,6 +670,10 @@ video,
 audio,
 object {
   vertical-align: middle;
+}
+
+iframe {
+  max-width: 100%;
 }
 
 figure {
@@ -799,6 +803,10 @@ body {
 
 article {
   counter-reset: caption 0;
+}
+
+figcaption {
+  margin-top:1em;
 }
 
 figure:not([class~="listing"]):not([class~="equation"]) figcaption {
