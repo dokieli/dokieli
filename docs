@@ -211,7 +211,7 @@
                 <dd about="#personal-storage" property="skos:definition">A personal storage is where individuals or groups can store their presonal information, as well as articles, annotations, and notifications. The storage is typically access controlled for reading or writing data.</dd>
 
                 <dt about="#annotation-service" property="skos:prefLabel" typeof="skos:Concept"><dfn id="annotation-service">Annotation service</dfn></dt>
-                <dd about="#annotation-service" property="skos:definition">An article or annotation can offer an <a href="#annotation-service">annotation service</a> (with <code>as:annotationService</code>) in which their responses can be stored. An <a href="#annotation-service">annotation service</a> may or may not be access controlled. <a href="#annotation-service">annotation service</a> can also serve as a place for a copy of annotation stored elsewhere.</dd>
+                <dd about="#annotation-service" property="skos:definition">An article or annotation can offer an <a href="#annotation-service">annotation service</a> in which their responses can be stored. An <a href="#annotation-service">annotation service</a> may or may not be access controlled. <a href="#annotation-service">annotation service</a> can also serve as a place for a copy of annotation stored elsewhere.</dd>
 
                 <dt about="#local-storage" property="skos:prefLabel" typeof="skos:Concept"><dfn id="local-storage">Local storage</dfn></dt>
                 <dd about="#local-storage" property="skos:definition">The local storage in the user's browser is used for autosave and offline access.</dd>
@@ -254,7 +254,7 @@
                     <dt about="#feature-sign-in" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-user-astronaut"></i><dfn id="feature-sign-in">Sign in</dfn></dt>
                     <dd about="#feature-sign-in" property="skos:definition">The <em>sign in</em> enables the user to identify themselves with dokieli using their personal online identifier. dokieli gathers the information linked from the user's profile to adapt the user interface and to customise interactions based on their preferences.</dd>
 
-                    <dt about="#feature-share" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-sign-in"></i><dfn id="feature-share">Share</dfn></dt>
+                    <dt about="#feature-share" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-bullhorn"></i><dfn id="feature-share">Share</dfn></dt>
                     <dd about="#feature-share">
                       <p property="skos:definition"><em>Share</em> makes it possible to notify specific individuals and groups about an article or a specific part within. Signed in users having owner permissions on an article can give others the permission to view, edit, or be co-owners. The contacts listed are the ones discovered through signed in user's profile that have the means to receive notifications in their inboxes. The notification includes minimal information about the article, such as who sent the notification, when it was created, its license and motivation.</p>
 
@@ -318,7 +318,7 @@
                       <p property="skos:definition">A document can be <em>opened</em> (imported) from a local filesystem or by specifying the URL of the resource on the web. <a href="#feature-browser" rel="rdfs:seeAlso">resource browser</a> can be used to navigate to the document of interest in the <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or <a href="#annotation-service" rel="rdfs:seeAlso">annotation service</a>. Custom views are available when importing some data formats such as:</p>
 
                       <dl rel="dcterms:subject">
-                        <dt about="#html-documents" property="skos:prefLabel" typeof="skos:Concept"><dfn id="html-documents">HTML documents</dfn></dt>
+                        <dt about="#html-documents" property="skos:prefLabel" typeof="skos:Concept"><i class="fa fa-html5"></i><dfn id="html-documents">HTML documents</dfn></dt>
                         <dd about="#html-documents" property="skos:definition">When opening an (X)HTML document, only the content is imported. CSS, JavaScript, and other additional elements are excluded for security reasons. After importing, dokieli can be used as usual with all of its <a href="#features">features</a>.</dd>
 
                         <dt about="#geo-stats" property="skos:prefLabel" typeof="skos:Concept"><dfn id="geo-stats"><i class="fas fa-map"></i>Geo and Stats</dfn></dt>
@@ -383,10 +383,10 @@
                     <dt about="#feature-version" property="skos:prefLabel" typeof="skos:Concept" id="feature-version"><i class="fas fa-code-branch"></i><dfn id="feature-version">Version</dfn></dt>
                     <dd about="#feature-version" property="skos:definition">Generates a derived copy of the current document as a mutable resource including provenance.</dd>
 
-                    <dt about="#feature-immutable" property="skos:prefLabel" typeof="skos:Concept" id="feature-immutable"><i class="fas fa-snowflake"></i><dfn id="feature-immutable">Immutable</dfn></dt>
+                    <dt about="#feature-immutable" property="skos:prefLabel" typeof="skos:Concept" id="feature-immutable"><i class="far fa-snowflake"></i><dfn id="feature-immutable">Immutable</dfn></dt>
                     <dd about="#feature-immutable" property="skos:prefLabel">Generates a derived copy of the current document as an immutable or frozen Memento resource including provenance. Creates or updates a Memento TimeMap including a reference to the immutable resource.</dd>
 
-                    <dt about="#feature-memento" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-clock"></i><dfn id="feature-memento">Memento</dfn></dt>
+                    <dt about="#feature-memento" property="skos:prefLabel" typeof="skos:Concept"><i class="far fa-clock"></i><dfn id="feature-memento">Memento</dfn></dt>
                     <dd about="#feature-memento" property="skos:definition">The user can access the memento (version history) of a document.</dd>
 
                     <dt about="#feature-robustify-links" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-link"></i><dfn id="feature-robustify-links">Robustify Links</dfn></dt>
@@ -418,7 +418,7 @@
                       </figure>
                     </dd>
 
-                    <dt about="#feature-export" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-external-link"></i><dfn id="feature-export">Export</dfn></dt>
+                    <dt about="#feature-export" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-external-link-alt"></i><dfn id="feature-export">Export</dfn></dt>
                     <dd about="#feature-export" property="skos:definition">The user can export the article as HTML and save to their local filesystem.</dd>
 
                     <dt about="#feature-print" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-print"></i><dfn id="feature-print">Print</dfn></dt>
@@ -471,7 +471,7 @@
                       </dl>
                     </dd>
 
-                    <dt about="#feature-autosaving" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-autosaving">Autosaving</dfn></dt>
+                    <dt about="#feature-autosaving" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-piggy-bank"></i><dfn id="feature-autosaving">Autosaving</dfn></dt>
                     <dd about="#feature-autosaving" property="skos:definition">While the user is in <a href="#editor-enable">editing</a> their article, the document is autosaved to local storage. The user can optionally enable autosaving the resource.</dd>
 
                     <dt about="#feature-source" property="skos:prefLabel"><i class="fas fa-code"></i><dfn id="feature-source">Source</dfn></dt>
@@ -480,16 +480,16 @@
                     <dt about="#feature-embed-data" property="skos:prefLabel"><i class="fas fa-table"></i><dfn id="feature-embed-data">Embed Data</dfn></dt>
                     <dd about="#feature-embed-data" property="skos:definition">Enables embedding and updating supplemental data to be stored with the article using RDF syntaxes such as Turtle, JSON-LD, and TriG.</dd>
 
-                    <dt about="#feature-message-log" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-message-log">Message Log</dfn></dt>
+                    <dt about="#feature-message-log" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-scroll"></i><dfn id="feature-message-log">Message Log</dfn></dt>
                     <dd about="#feature-message-log" property="skos:definition">Displays all messages raised by dokieli, for example as feedback or notifications resulting from specific actions.</dd>
 
-                    <dt about="#feature-delete" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-delete">Delete</dfn></dt>
+                    <dt about="#feature-delete" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-trash-alt"></i><dfn id="feature-delete">Delete</dfn></dt>
                     <dd about="#feature-delete" property="skos:definition">Deletes article or annotation from <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a>, when access is available.</dd>
 
                     <dt about="#feature-views" property="skos:prefLabel"><i class="fas fa-magic"></i><dfn id="feature-views">Views</dfn></dt>
                     <dd about="#feature-views" property="skos:definition">The dokieli <a hef="#menu" rel="rdfs:seeAlso">menu</a> lists primary and alternate stylesheets that are <a href="#html-css">detected in the HTML</a>. <cite>Native</cite> is always available and disables all other stylesheets, allowing the user agent’s default styles to apply. When a view is selected—e.g., <cite>Basic</cite> (which is the current primary stylesheet for this article)—it becomes the primary stylesheet, while the others are set as alternate and disabled.</dd>
 
-                    <dt about="#feature-graph-view" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-graph-view">Graph view</dfn></dt>
+                    <dt about="#feature-graph-view" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-circle-nodes"></i><dfn id="feature-graph-view">Graph view</dfn></dt>
                     <dd about="#feature-graph-view" property="skos:definition">Displays a graph visualisation of the document's underlying semantics, including a list of resources, the number of statements, unique nodes, creator, license, and a legend. The visualisation can be exported as an SVG.</dd>
 
                     <dt about="#feature-list-of-stuff" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-list-of-stuff">List of Stuff</dfn></dt>
@@ -497,7 +497,7 @@
                       <p>Options to generate and include various types of content, such as:</p>
 
                       <dl rel="dcterms:subject">
-                        <dt about="#feature-contents" property="skos:prefLabel"><i class="fas hand-point-up"></i><dfn id="feature-contents">Contents</dfn></dt>
+                        <dt about="#feature-contents" property="skos:prefLabel"><i class="fas fa-hand-pointer"></i><dfn id="feature-contents">Contents</dfn></dt>
                         <dd about="#feature-contents">Generates a table of contents.</dd>
 
                         <dt about="#feature-figures" property="skos:prefLabel"><i class="fas fa-leaf"></i><dfn id="feature-figures">Figures</dfn></dt>
@@ -509,7 +509,7 @@
                         <dt about="#feature-abbreviations" property="skos:prefLabel"><i class="fas fa-font"></i><dfn id="feature-abbreviations">Abbreviations</dfn></dt>
                         <dd about="#feature-abbreviations">Lists abbreviations in the document along with their definitions.</dd>
 
-                        <dt about="#feature-quotations" property="skos:prefLabel"><i class="fas fa-quote-left"></i><dfn id="feature-quotations">Quotations</dfn></dt>
+                        <dt about="#feature-quotations" property="skos:prefLabel"><i class="fas fa-quote-right"></i><dfn id="feature-quotations">Quotations</dfn></dt>
                         <dd about="#feature-quotations">Lists all quotations in the document with links to each.</dd>
 
                         <dt about="#feature-concepts" property="skos:prefLabel"><i class="fas fa-book-atlas"></i><dfn id="feature-concepts">Concepts</dfn></dt>
