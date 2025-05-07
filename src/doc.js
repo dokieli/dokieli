@@ -5,7 +5,7 @@ import { getDateTimeISO, fragmentFromString, generateAttributeId, uniqueArray, g
 import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath, getPrefixedNameFromIRI, generateDataURI, getProxyableIRI } from './uri.js'
 import { getResource, getResourceHead, deleteResource, processSave, patchResourceWithAcceptPatch } from './fetcher.js'
 import rdf from "rdf-ext";
-import { getResourceGraph, sortGraphTriples, getGraphContributors, getGraphAuthors, getGraphEditors, getGraphPerformers, getGraphPublishers, getGraphLabel, getGraphEmail, getGraphTitle, getGraphConceptLabel, getGraphPublished, getGraphUpdated, getGraphDescription, getGraphLicense, getGraphRights, getGraphFromData, getGraphAudience, getGraphTypes, getGraphLanguage, getGraphInbox, getUserLabelOrIRI } from './graph.js'
+import { getResourceGraph, sortGraphTriples, getGraphContributors, getGraphAuthors, getGraphEditors, getGraphPerformers, getGraphPublishers, getGraphLabel, getGraphEmail, getGraphTitle, getGraphConceptLabel, getGraphPublished, getGraphUpdated, getGraphDescription, getGraphLicense, getGraphRights, getGraphFromData, getGraphAudience, getGraphTypes, getGraphLanguage, getGraphInbox, getUserLabelOrIRI, getGraphImage } from './graph.js'
 import LinkHeader from "http-link-header";
 import { micromark as marked } from 'micromark';
 import { gfm, gfmHtml } from 'micromark-extension-gfm';
@@ -1488,6 +1488,7 @@ function buttonInfo() {
 
       let title = '';
       let description = '';
+      let image = '';
       let video = '';
       let details = '';
       let seeAlso = '';
@@ -1517,6 +1518,8 @@ function buttonInfo() {
           description = getGraphDescription(infoG);
           // console.log(title, description)
 
+          let imageUrl = getGraphImage(infoG);
+
           let seeAlsos = infoG.out(ns.rdfs.seeAlso).values;
           // console.log(seeAlsos);
 
@@ -1528,6 +1531,15 @@ function buttonInfo() {
           // console.log(videoObject);
 
           if (title && description) {
+            if (imageUrl) {
+              imageUrl = new URL(imageUrl).href;
+              image = `
+                <figure>
+                  <img alt="" rel="schema:image" src="${imageUrl}" />
+                </figure>
+              `;
+            }
+
             let videoContentUrl, videoEncodingFormat, videoThumbnailUrl, videoDuration, videoDurationLabel;
 
             if (videoObject) {
@@ -1587,15 +1599,17 @@ function buttonInfo() {
             if (seeAlsos) {
               seeAlsos = uniqueArray(seeAlsos).sort();
 
-              seeAlso = `
-                <dt>See also</dt><dd><ul>
-                ${seeAlsos.map(seeAlsoIRI => {
-                  const seeAlsoIRIG = g.node(rdf.namedNode(seeAlsoIRI));
-                  const seeAlsoTitle = getGraphTitle(seeAlsoIRIG) || seeAlsoIRI;
-                  return `<li><a href="${seeAlsoIRI}" rel="rdfs:seeAlso noopener" target="_blank">${seeAlsoTitle}</a></li>`;
-                }).join('')}
-                </ul></dd>
-              `;
+              if (seeAlsos.length) {
+                seeAlso = `
+                  <dt>See also</dt><dd><ul>
+                  ${seeAlsos.map(seeAlsoIRI => {
+                    const seeAlsoIRIG = g.node(rdf.namedNode(seeAlsoIRI));
+                    const seeAlsoTitle = getGraphTitle(seeAlsoIRIG) || seeAlsoIRI;
+                    return `<li><a href="${seeAlsoIRI}" rel="rdfs:seeAlso noopener" target="_blank">${seeAlsoTitle}</a></li>`;
+                  }).join('')}
+                  </ul></dd>
+                `;
+                }
             }
 
             if (subjects) {
@@ -1629,6 +1643,7 @@ function buttonInfo() {
             details = `
               <details about="${resource}" open="">
                 <summary property="schema:name">About ${title}</summary>
+                ${image}
                 <div datatype="rdf:HTML" property="schema:description">
                 ${description}
                 </div>
