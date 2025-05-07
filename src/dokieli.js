@@ -6494,6 +6494,21 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
     spawnDokieli: async function(documentNode, data, contentType, iri, options = {}){
       iri = domSanitize(iri);
+      const isHttpIRI = isHttpOrHttpsProtocol(iri);
+      const isFileIRI = isFileProtocol(iri);
+
+      if (!isHttpIRI && !isFileIRI) {
+        const message = `Cannot open non http(s): or file: URLs.`;
+        const messageObject = {
+          'content': message,
+          'type': 'error',
+          'timer': 3000,
+        }
+        addMessageToLog(messageObject, Config.MessageLog);
+        showActionMessage(document.body, messageObject);
+
+        throw new Error(message);
+      }
 
       var tmpl = document.implementation.createHTMLDocument('template');
       // console.log(tmpl);
@@ -6538,10 +6553,12 @@ console.log('XXX: Cannot access effectiveACLResource', e);
           // <pre type=&quot;' + contentType + '&quot; -- nice but `type` is undefined attribute for `pre`.at the moment. Create issue in WHATWG for fun/profit?
           iframe.srcdoc = '<pre>' + data + '</pre>';
           iframe.width = '1280'; iframe.height = '720';
-          var dl = fragmentFromString('<dl><dt><a href="' + iri + '" target="_blank">' + iri + '</a></dt><dd></dd></dl>');
-          dl.querySelector('dd').appendChild(iframe);
-          tmpl.documentElement.appendChild(dl);
 
+          const dt = (isFileIRI) ? `<code>${iri.slice(5)}</code>` : `<a href="${iri}" rel="noopener" target="_blank">${iri}</a>`;
+
+          var main = fragmentFromString(`<main><article><dl><dt>${dt}</dt><dd></dd></dl></article></main>`);
+          main.querySelector('dd').appendChild(iframe);
+          tmpl.body.appendChild(main);
           break;
       }
 
@@ -6579,23 +6596,22 @@ console.log('XXX: Cannot access effectiveACLResource', e);
         node.setAttribute('src', node.src);
       })
 
-      if (options.init === true) {
+      if (options.init === true && isHttpIRI) {
+        var baseElements = document.querySelectorAll('head base');
+        baseElements.forEach(baseElement => {
+          baseElement.remove();
+        });
+
         document.querySelector('head').insertAdjacentHTML('afterbegin', '<base href="' + iri + '" />');
         //TODO: Setting the base URL with `base` seems to work correctly, i.e., link base is opened document's URL, and simpler than updating some of the elements' href/src/data attributes. Which approach may be better depends on actions afterwards, e.g., Save As (perhaps other features as well) may need to remove the base and go with the user selection.
         // var nodes = tmpl.querySelectorAll('head link, [src], object[data]');
         // nodes = DO.U.rewriteBaseURL(nodes, {'baseURLType': 'base-url-absolute', 'iri': iri});
       }
-      else {
-        var baseElements = dicument.querySelectorAll('head base');
-        baseElements.forEach(baseElement => {
-          baseElement.remove();
-        });
-      }
 
       if (contentType == 'application/gpx+xml') {
         options['init'] = false;
 
-        //XXX: Should this be taken care by updating the document.documentElement and then running DO.C.init(iri) ? If I'm asking, then probably yes.
+        //XXX: Should this be taken care by ufpdating the document.documentElement and then running DO.C.init(iri) ? If I'm asking, then probably yes.
         var asideOpenDocument = document.getElementById('open-document');
         if (asideOpenDocument) {
           asideOpenDocument.parentNode.removeChild(asideOpenDocument);
@@ -6603,7 +6619,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
         document.querySelector('#document-do .resource-open').disabled = false;
         DO.U.hideDocumentMenu();
       }
-      else if (!iri.startsWith('file:') && options.init) {
+      else if (options.init === true) { // && !isFileIRI ?
         // window.open(iri, '_blank');
 
         //TODO: Which approach?
@@ -6613,7 +6629,9 @@ console.log('XXX: Cannot access effectiveACLResource', e);
         //   tmpl.body.appendChild(node);
         // });
 
-        document.documentElement.replaceChild(tmpl.body.cloneNode(true), document.body);
+        const tmplBody = tmpl.body.cloneNode(true);
+
+        document.documentElement.replaceChild(tmplBody, document.body);
         DO.U.showDocumentInfo();
         DO.U.initEditor();
 
