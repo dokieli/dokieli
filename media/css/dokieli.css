@@ -658,7 +658,34 @@ display:none;
 max-width:calc(100% - 3em);
 padding: 0;
 }
-}  
+}
+
+aside.do button.info {
+cursor:help;
+vertical-align: middle;
+font-size:24px;
+}
+aside.do div.progress > button.more {
+cursor: pointer;
+}
+aside.do button.info:hover,
+aside.do div.progress > button.more:hover {
+fill: #080 !important;
+transition: fill 0.3s;
+}
+.do button.info,
+.do div.progress > button.more {
+width:max-content;
+align-items: center;
+border: 1px solid rgba(0, 0, 0, 0.1);
+border: none !important;
+box-shadow: none !important;
+display: inline-flex;
+font-size: 1em;
+padding: 0.5em;
+background-color: #fff;
+margin: 0;
+}
 
 #document-notifications {
 position: fixed;
@@ -725,9 +752,20 @@ margin:0;
 overflow-y: auto;
 max-height:max-content;
 }
-#document-notifications details {
+aside.do div.info:not(:empty) {
+margin-bottom: 1em;
+border-bottom: 1px solid #ccc;
+display: block;
+}
+aside.do div.info details {
 font-weight:normal;
 }
+aside.do div.info details img {
+width: 50%;
+height:auto;
+}
+
+
 #document-notifications details video {
 max-width: 100%;
 }
@@ -741,38 +779,12 @@ height: 100%;
 display: flex;
 align-items: center;
 }
-#document-notifications button.info {
-cursor:help;
-vertical-align: middle;
-}
+
 #document-notifications button.info[disabled] {
 cursor:initial;
 }
 
-/*TODO: info could be generalised*/
-#document-notifications button.info,
-#document-notifications div.progress > button.more {
-width:max-content;
-align-items: center;
-border: 1px solid rgba(0, 0, 0, 0.1);
-border: none !important;
-box-shadow: none !important;
-cursor: pointer;
-display: inline-flex;
-font-size: 1em;
-padding: 0.5em;
-background-color: #fff;
-margin: 0;
-}
-#document-notifications button.info {
-font-size:24px;
-}
 
-#document-notifications button.info:hover,
-#document-notifications div.progress > button.more:hover {
-fill: #080 !important;
-transition: fill 0.3s;
-}
 #document-notifications div.progress .fa-spin {
 align-self: center;
 padding: 0.5em;
