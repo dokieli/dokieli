@@ -1678,9 +1678,14 @@ DO = {
 
       DO.U.processActivateAction();
 
-      var annotationRights = document.querySelectorAll('[about="#annotation-rights"][typeof="schema:ChooseAction"], [href="#annotation-rights"][typeof="schema:ChooseAction"], [resource="#annotation-rights"][typeof="schema:ChooseAction"]');
-      for (var i = 0; i < annotationRights.length; i++){
-        annotationRights[i].parentNode.replaceChild(fragmentFromString('<select>' + getLicenseOptionsHTML() + '</select>'), annotationRights[i]);
+      var licenseOptions = document.querySelectorAll('[about="#feature-license-options"][typeof="schema:ChooseAction"], [href="#feature-license-options"][typeof="schema:ChooseAction"], [resource="#feature-license-options"][typeof="schema:ChooseAction"]');
+      for (var i = 0; i < licenseOptions.length; i++){
+        licenseOptions[i].parentNode.replaceChild(fragmentFromString('<select>' + getLicenseOptionsHTML() + '</select>'), licenseOptions[i]);
+      }
+
+      var languageOptions = document.querySelectorAll('[about="#feature-language-options"][typeof="schema:ChooseAction"], [href="#feature-language-options"][typeof="schema:ChooseAction"], [resource="#feature-language-options"][typeof="schema:ChooseAction"]');
+      for (var i = 0; i < languageOptions.length; i++){
+        languageOptions[i].parentNode.replaceChild(fragmentFromString('<select>' + getLanguageOptionsHTML() + '</select>'), languageOptions[i]);
       }
     },
 
