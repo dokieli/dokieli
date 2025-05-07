@@ -1,5 +1,7 @@
 import DOMPurify from 'dompurify';
 import { rdfaAttributes } from 'src/editor/schema/base';
+import { svgToDataURI } from './uri.js';
+import { Icon } from './ui/icons.js'
 
 function uniqueArray(a) {
   return Array.from(new Set(a));
@@ -312,6 +314,16 @@ function parseISODuration(duration) {
   if (seconds) parts.push(`${seconds}s`);
 
   return parts.length ? parts.join(', ') : '0s';
+}
+
+function tranformIconstoCSS(icons) {
+  let cssOutput = '';
+
+  Object.entries(icons).forEach(([key, svg]) => {
+    cssOutput += `i${key} { background-image: url("${svgToDataURI(svg)}"); }\n`;
+  });
+
+  return cssOutput;
 }
 
 function getIconsFromCurrentDocument() {
