@@ -11,7 +11,7 @@ import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessag
 import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, generateDataURI, getMediaTypeURIs, isHttpOrHttpsProtocol, isFileProtocol } from './uri.js'
 import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes, filterQuads } from './graph.js'
 import { notifyInbox, sendNotifications } from './inbox.js'
-import { uniqueArray, fragmentFromString, generateAttributeId, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, isValidISBN, findPreviousDateTime, domSanitize, sanitizeObject, escapeRDFLiteral } from './util.js'
+import { uniqueArray, fragmentFromString, generateAttributeId, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, isValidISBN, findPreviousDateTime, domSanitize, sanitizeObject, escapeRDFLiteral, tranformIconstoCSS, getIconsFromCurrentDocument } from './util.js'
 import { generateGeoView } from './geo.js'
 import { getLocalStorageProfile, showAutoSaveStorage, hideAutoSaveStorage } from './storage.js'
 import { showUserSigninSignout, showUserIdentityInput, getSubjectInfo, restoreSession } from './auth.js'
@@ -1870,6 +1870,12 @@ DO = {
       if (Object.keys(DO.C.RefType).indexOf(DO.C.DocRefType) == -1) {
         DO.C.DocRefType = 'LNCS';
       }
+    },
+
+    generateCSSBasedOnCurrentDocumentIcons: function() {
+      var icons = getIconsFromCurrentDocument();
+      var css = tranformIconstoCSS(icons);
+      console.log(css);
     },
 
     getCurrentLinkStylesheet: function() {
