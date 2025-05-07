@@ -314,6 +314,24 @@ function parseISODuration(duration) {
   return parts.length ? parts.join(', ') : '0s';
 }
 
+function getIconsFromCurrentDocument() {
+  var usedIcons = Array.from(document.querySelectorAll('i[class*="fa-"]'))
+    .flatMap(el => Array.from(el.classList))
+    .filter(cls => cls.startsWith('fa-'));
+
+  var uniqueClasses = [...new Set(usedIcons)];
+
+  var filteredEntries = Object.entries(Icon).filter(([cls]) =>
+    uniqueClasses.some(usedCls => cls.includes(usedCls))
+  );
+
+  var sortedEntries = filteredEntries.sort(([a], [b]) => a.localeCompare(b));
+
+  var newIcons = Object.fromEntries(sortedEntries);
+
+  return newIcons;
+}
+
 export {
   debounce,
   uniqueArray,
