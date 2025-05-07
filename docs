@@ -70,7 +70,7 @@
             <dd><a href="https://github.com/dokieli/dokieli" rel="doap:repository">GitHub dokieli/dokieli</a> (<a href="https://github.com/dokieli/dokieli/pulls">pull requests</a>, <a href="https://github.com/dokieli/dokieli/issues/new">new issue</a>, <a href="https://github.com/dokieli/dokieli/issues" rel="doap:bug-database">open issues</a>)</dd>
           </dl>
 
-          <nav id="table-of-contents"><h2>Contents</h2><div><ol class="toc"><li data-id="abstract"><a href="#abstract">Abstract</a></li><li data-id="principles"><a href="#principles">Principles</a></li><li data-id="getting-started"><a href="#getting-started">Getting started</a><ol><li data-id="using-dokieli"><a href="#using-dokieli">Using dokieli</a><ol><li data-id="embeddable-web-application"><a href="#embeddable-web-application">Embeddable Web Application</a></li><li data-id="web-extension"><a href="#web-extension">Web Extension</a></li></ol></li><li data-id="contributing"><a href="#contributing">Contributing</a></li></ol></li><li data-id="documents"><a href="#documents">Documents</a></li><li data-id="user-interface"><a href="#user-interface">User interface</a><ol><li data-id="modes"><a href="#modes">Modes</a></li><li data-id="menu"><a href="#menu">Menu</a></li><li data-id="features"><a href="#features">Features</a></li><li data-id="components"><a href="#components">Components</a></li></ol></li><li data-id="accessibility-usability-inclusion"><a href="#accessibility-usability-inclusion">Accessibility, Usability, and Inclusion</a><ol><li data-id="accessibility-statement"><a href="#accessibility-statement">Accessibility Statement</a><ol><li data-id="accessibility-measures-to-support-accessibility"><a href="#accessibility-measures-to-support-accessibility">Measures to support accessibility</a></li><li data-id="accessibility-conformance-status"><a href="#accessibility-conformance-status">Conformance status</a></li><li data-id="accessibility-feedback"><a href="#accessibility-feedback">Feedback</a></li><li data-id="accessibility-technical-specifications"><a href="#accessibility-technical-specifications">Technical specifications</a></li><li data-id="accessibility-assessment-approach"><a href="#accessibility-assessment-approach">Assessment approach</a></li></ol></li><li data-id="authoring-accessibility"><a href="#authoring-accessibility">Authoring accessibility</a><ol><li data-id="authoring-tool-user-interface-accessibility"><a href="#authoring-tool-user-interface-accessibility">Authoring tool user interface accessibility</a></li><li data-id="support-for-producing-accessible-content"><a href="#support-for-producing-accessible-content">Support for producing accessible content</a></li></ol></li></ol></li><li data-id="storage"><a href="#storage">Storage</a></li></ol></div></nav>
+          <nav id="table-of-contents"><h2>Contents</h2><div><ol class="toc"><li data-id="abstract"><a href="#abstract">Abstract</a></li><li data-id="principles"><a href="#principles">Principles</a></li><li data-id="getting-started"><a href="#getting-started">Getting started</a><ol><li data-id="using-dokieli"><a href="#using-dokieli">Using dokieli</a><ol><li data-id="embeddable-web-application"><a href="#embeddable-web-application">Embeddable Web Application</a></li><li data-id="web-extension"><a href="#web-extension">Web Extension</a></li></ol></li><li data-id="contributing"><a href="#contributing">Contributing</a></li></ol></li><li data-id="documents"><a href="#documents">Documents</a></li><li data-id="storage"><a href="#storage">Storage</a></li><li data-id="user-interface"><a href="#user-interface">User interface</a><ol><li data-id="modes"><a href="#modes">Modes</a></li><li data-id="menu"><a href="#menu">Menu</a></li><li data-id="features"><a href="#features">Features</a></li><li data-id="components"><a href="#components">Components</a></li></ol></li><li data-id="accessibility-usability-inclusion"><a href="#accessibility-usability-inclusion">Accessibility, Usability, and Inclusion</a><ol><li data-id="accessibility-statement"><a href="#accessibility-statement">Accessibility Statement</a><ol><li data-id="accessibility-measures-to-support-accessibility"><a href="#accessibility-measures-to-support-accessibility">Measures to support accessibility</a></li><li data-id="accessibility-conformance-status"><a href="#accessibility-conformance-status">Conformance status</a></li><li data-id="accessibility-feedback"><a href="#accessibility-feedback">Feedback</a></li><li data-id="accessibility-technical-specifications"><a href="#accessibility-technical-specifications">Technical specifications</a></li><li data-id="accessibility-assessment-approach"><a href="#accessibility-assessment-approach">Assessment approach</a></li></ol></li><li data-id="authoring-accessibility"><a href="#authoring-accessibility">Authoring accessibility</a><ol><li data-id="authoring-tool-user-interface-accessibility"><a href="#authoring-tool-user-interface-accessibility">Authoring tool user interface accessibility</a></li><li data-id="support-for-producing-accessible-content"><a href="#support-for-producing-accessible-content">Support for producing accessible content</a></li></ol></li></ol></li></ol></div></nav>
         </details>
 
         <div datatype="rdf:HTML" id="content" property="schema:description">
@@ -197,6 +197,24 @@
 
                   <p property="skos:definition">A notification describes an activity such as an <a href="#annotation" rel="rdfs:seeAlso">annotation</a>, a <a href="#feature-footnotes-citations" rel="rdf:seeAlso">citation</a>, or a share action, and is sent to a target's inbox, e.g., an <a href="#article" rel="rdfs:seeAlso">article</a>, annotation, person, or group. Notifications are brief and include key provenance details, such as who performed the action, when, where, the motivation, licensing, and language, helping consumers decide whether to engage further. The notification does not include the full content, e.g., an annotation body, but provides links to fetch it. Notifications help surface related activities in context and can support workflows like collaboration, credibility checks, or peer review.</p>
                 </dd>
+              </dl>
+            </div>
+          </section>
+
+          <section id="storage" inlist="" rel="schema:hasPart" resource="#storage" typeof="skos:ConceptScheme">
+            <h2 property="schema:name">Storage</h2>
+            <div datatype="rdf:HTML" property="schema:description">
+              <p property="skos:definition">Articles and annotations can stored in various places such as personal storage, annotation service, or local storage.</p>
+
+              <dl rel="skos:hasTopConcept">
+                <dt about="#personal-storage" property="skos:prefLabel" typeof="skos:Concept"><dfn id="personal-storage">Personal storage</dfn></dt>
+                <dd about="#personal-storage" property="skos:definition">A personal storage is where individuals or groups can store their presonal information, as well as articles, annotations, and notifications. The storage is typically access controlled for reading or writing data.</dd>
+
+                <dt about="#annotation-service" property="skos:prefLabel" typeof="skos:Concept"><dfn id="annotation-service">Annotation service</dfn></dt>
+                <dd about="#annotation-service" property="skos:definition">An article or annotation can offer an <a href="#annotation-service">annotation service</a> (with <code>as:annotationService</code>) in which their responses can be stored. An <a href="#annotation-service">annotation service</a> may or may not be access controlled. <a href="#annotation-service">annotation service</a> can also serve as a place for a copy of annotation stored elsewhere.</dd>
+
+                <dt about="#local-storage" property="skos:prefLabel" typeof="skos:Concept"><dfn id="local-storage">Local storage</dfn></dt>
+                <dd about="#local-storage" property="skos:definition">The local storage in the user's browser is used for autosave and offline access.</dd>
               </dl>
             </div>
           </section>
@@ -662,24 +680,6 @@
                   </section>
                 </div>
               </section>
-            </div>
-          </section>
-
-          <section id="storage" inlist="" rel="schema:hasPart" resource="#storage" typeof="skos:ConceptScheme">
-            <h2 property="schema:name">Storage</h2>
-            <div datatype="rdf:HTML" property="schema:description">
-              <p property="skos:definition">Articles and annotations can stored in various places such as personal storage, annotation service, or local storage.</p>
-
-              <dl rel="skos:hasTopConcept">
-                <dt about="#personal-storage" property="skos:prefLabel" typeof="skos:Concept"><dfn id="personal-storage">Personal storage</dfn></dt>
-                <dd about="#personal-storage" property="skos:definition">A personal storage is where individuals or groups can store their presonal information, as well as articles, annotations, and notifications. The storage is typically access controlled for reading or writing data.</dd>
-
-                <dt about="#annotation-service" property="skos:prefLabel" typeof="skos:Concept"><dfn id="annotation-service">Annotation service</dfn></dt>
-                <dd about="#annotation-service" property="skos:definition">An article or annotation can offer an <a href="#annotation-service">annotation service</a> (with <code>as:annotationService</code>) in which their responses can be stored. An <a href="#annotation-service">annotation service</a> may or may not be access controlled. <a href="#annotation-service">annotation service</a> can also serve as a place for a copy of annotation stored elsewhere.</dd>
-
-                <dt about="#local-storage" property="skos:prefLabel" typeof="skos:Concept"><dfn id="local-storage">Local storage</dfn></dt>
-                <dd about="#local-storage" property="skos:definition">The local storage in the user's browser is used for autosave and offline access.</dd>
-              </dl>
             </div>
           </section>
         </div>
