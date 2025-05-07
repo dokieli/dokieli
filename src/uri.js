@@ -198,6 +198,33 @@ function getMediaTypeURIs(mediaTypes) {
   return mediaTypes.map(mediaType => { return `http://www.w3.org/ns/iana/media-types/${mediaType}#Resource` });
 }
 
+function isHttpOrHttpsProtocol(urlString) {
+  try {
+    const url = new URL(urlString);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function isHttpsProtocol(urlString) {
+  try {
+    const url = new URL(urlString);
+    return url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function isFileProtocol(urlString) {
+  try {
+    const url = new URL(urlString);
+    return url.protocol === 'file:';
+  } catch {
+    return false;
+  }
+}
+
 export {
   encodeString,
   decodeString,
@@ -215,5 +242,8 @@ export {
   getLastPathSegment,
   generateDataURI,
   getPrefixedNameFromIRI,
-  getMediaTypeURIs
+  getMediaTypeURIs,
+  isHttpOrHttpsProtocol,
+  isHttpsProtocol,
+  isFileProtocol
 };
