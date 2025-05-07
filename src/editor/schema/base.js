@@ -267,6 +267,15 @@ let customNodes = {
     toDOM(node) { return ["object", { ...node.attrs.originalAttributes }, 0]; },
   },
 
+  iframe: {
+    group: "block",
+    inline: false,
+    atom: true,
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "iframe", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["iframe", { ...node.attrs.originalAttributes }, 0]; }
+  },
+
   //TODO: math
   svg: {
     content: "block+",
