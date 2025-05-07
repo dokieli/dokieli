@@ -803,7 +803,7 @@ DO = {
 
 
       if (selector == '#graph-view' && !document.getElementById('graph-view')) {
-        document.body.appendChild(fragmentFromString('<aside id="graph-view" class="do on">' + DO.C.Button.Close + '<h2>Graph view</h2></aside>'));
+        document.body.appendChild(fragmentFromString(`<aside id="graph-view" class="do on">${DO.C.Button.Close}<h2>Graph view ${getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Graph View', buttonRel: 'rel:help', buttonResource: Config.ButtonInfo['feature-graph-view'] })}</h2><div class="info"></div></aside>`));
       }
 
       var svg = d3.select(selector).append('svg')
@@ -1913,7 +1913,7 @@ DO = {
               e.target.disabled = true;
             }
 
-            document.body.appendChild(fragmentFromString('<aside id="graph-view" class="do on">' + DO.C.Button.Close + '<h2>Graph view</h2></aside>'));
+            document.body.appendChild(fragmentFromString(`<aside id="graph-view" class="do on">${DO.C.Button.Close}<h2>Graph view ${getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Graph View', buttonRel: 'rel:help', buttonResource: Config.ButtonInfo['feature-graph-view'] })}</h2><div class="info"></div></aside>`));
 
             var graphView = document.getElementById('graph-view');
             graphView.addEventListener('click', (e) => {
@@ -2062,13 +2062,16 @@ DO = {
           }
         }
 
-        var embedMenu = '<aside id="embed-data-entry" class="do on tabs">' + DO.C.Button.Close + '\n\
-        <h2>Embed Data</h2>\n\
-        <nav><ul><li class="selected"><a href="#embed-data-turtle">Turtle</a></li><li><a href="#embed-data-json-ld">JSON-LD</a></li><li><a href="#embed-data-trig">TriG</a></li></ul></nav>\n\
-        <div id="embed-data-turtle" class="selected"><textarea placeholder="Enter data in Turtle" name="meta-turtle" cols="80" rows="24">' + ((scriptCurrentData['meta-turtle']) ? scriptCurrentData['meta-turtle'].content : '') + '</textarea><button class="save" title="Embed data into document">Save</button></div>\n\
-        <div id="embed-data-json-ld"><textarea placeholder="Enter data in JSON-LD" name="meta-json-ld" cols="80" rows="24">' + ((scriptCurrentData['meta-json-ld']) ? scriptCurrentData['meta-json-ld'].content : '') + '</textarea><button class="save" title="Embed data into document">Save</button></div>\n\
-        <div id="embed-data-trig"><textarea placeholder="Enter data in TriG" name="meta-trig" cols="80" rows="24">' + ((scriptCurrentData['meta-trig']) ? scriptCurrentData['meta-trig'].content : '') + '</textarea><button class="save" title="Embed data into document">Save</button></div>\n\
-        </aside>';
+        var embedMenu = `
+        <aside id="embed-data-entry" class="do on tabs">${DO.C.Button.Close}
+          <h2>Embed Data ${getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Embed Data', buttonRel: 'rel:help', buttonResource: Config.ButtonInfo['feature-embed-data'] })}</h2>
+          <div class="info"></div>
+          <nav><ul><li class="selected"><a href="#embed-data-turtle">Turtle</a></li><li><a href="#embed-data-json-ld">JSON-LD</a></li><li><a href="#embed-data-trig">TriG</a></li></ul></nav>
+          <div id="embed-data-turtle" class="selected"><textarea placeholder="Enter data in Turtle" name="meta-turtle" cols="80" rows="24">${(scriptCurrentData['meta-turtle'] ? scriptCurrentData['meta-turtle'].content : '')}</textarea><button class="save" title="Embed data into document">Save</button></div>
+          <div id="embed-data-json-ld"><textarea placeholder="Enter data in JSON-LD" name="meta-json-ld" cols="80" rows="24">${(scriptCurrentData['meta-json-ld'] ? scriptCurrentData['meta-json-ld'].content : '')}</textarea><button class="save" title="Embed data into document">Save</button></div>
+          <div id="embed-data-trig"><textarea placeholder="Enter data in TriG" name="meta-trig" cols="80" rows="24">${(scriptCurrentData['meta-trig'] ? scriptCurrentData['meta-trig'].content : '')}</textarea><button class="save" title="Embed data into document">Save</button></div>
+        </aside>
+        `;
 
         document.body.appendChild(fragmentFromString(embedMenu));
         document.querySelector('#embed-data-turtle textarea').focus();
@@ -3235,7 +3238,7 @@ console.log(reason);
 
       var robustLinks = selector || document.querySelectorAll('cite > a[href^="http"][data-versionurl][data-versiondate]');
 
-      document.body.appendChild(fragmentFromString('<aside id="robustify-links" class="do on">' + DO.C.Button.Close + '<h2>Robustify Links</h2><div id="robustify-links-input"><p><input id="robustify-links-select-all" type="checkbox" value="true"/><label for="robustify-links-select-all">Select all</label></p><p><input id="robustify-links-reuse" type="checkbox" value="true" checked="checked"/><label for="robustify-links-reuse">Reuse Robustifed</label></p><ul id="robustify-links-list"></ul></div><button class="robustify" title="Robustify Links">Robustify</button></aside>'));
+      document.body.appendChild(fragmentFromString('<aside id="robustify-links" class="do on">' + DO.C.Button.Close + `<h2>Robustify Links  ${getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Robustify Links', buttonRel: 'rel:help', buttonResource: Config.ButtonInfo['feature-robustify-links'] })}</h2>` + '<div class="info"></div><div id="robustify-links-input"><p><input id="robustify-links-select-all" type="checkbox" value="true"/><label for="robustify-links-select-all">Select all</label></p><p><input id="robustify-links-reuse" type="checkbox" value="true" checked="checked"/><label for="robustify-links-reuse">Reuse Robustifed</label></p><ul id="robustify-links-list"></ul></div><button class="robustify" title="Robustify Links">Robustify</button></aside>'));
 
       //TODO: Move unique list of existing RL's to DO.C.Resource?
       var robustLinksUnique = {};
@@ -4057,7 +4060,7 @@ console.log(reason);
         messageLog = '<p>No messages.</p>';
       }
 
-      document.body.appendChild(fragmentFromString('<aside id="message-log" class="do on">' + DO.C.Button.Close + '<h2>Message Log</h2><div>' + messageLog + '</div></aside>'));
+      document.body.appendChild(fragmentFromString('<aside id="message-log" class="do on">' + DO.C.Button.Close + `<h2>Message Log ${getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Message Log', buttonRel: 'rel:help', buttonResource: Config.ButtonInfo['feature-message-log'] })}</h2>` + '<div class="info"></div><div>' + messageLog + '</div></aside>'));
 
       document.querySelector('#message-log button.close').addEventListener('click', (e) => {
         document.querySelector('button.message-log').removeAttribute('disabled');
@@ -4070,7 +4073,7 @@ console.log(reason);
 
       e.target.closest('button').disabled = true
 
-      document.body.appendChild(fragmentFromString('<aside id="delete-document" class="do on">' + DO.C.Button.Close + '<h2>Delete Document</h2><div><p>Are you sure you want to delete the following document?</p><p><code>' + url  +'</code></p></div><button class="cancel" title="Cancel delete">Cancel</button><button class="delete" title="Delete document">Delete</button></aside>'));
+      document.body.appendChild(fragmentFromString('<aside id="delete-document" class="do on">' + DO.C.Button.Close + `<h2>Delete ${getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Delete', buttonRel: 'rel:help', buttonResource: Config.ButtonInfo['feature-delete'] })}</h2>` + '<div class="info"></div><div><p>Are you sure you want to delete the following document?</p><p><code>' + url  +'</code></p></div><button class="cancel" title="Cancel delete">Cancel</button><button class="delete" title="Delete document">Delete</button></aside>'));
 
       document.querySelector('#delete-document').addEventListener('click', (e) => {
         e.preventDefault();
@@ -4219,7 +4222,7 @@ console.log(reason);
 
       e.target.closest('button').disabled = true
 
-      document.body.appendChild(fragmentFromString('<aside id="reply-to-resource" class="do on">' + DO.C.Button.Close + '<h2>Reply to this</h2><div id="reply-to-resource-input"><p>Reply to <code>' +
+      document.body.appendChild(fragmentFromString('<aside id="reply-to-resource" class="do on">' + DO.C.Button.Close + `<h2>Reply ${getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Reply', buttonRel: 'rel:help', buttonResource: Config.ButtonInfo['feature-reply'] })}</h2>` + '<div class="info"></div><div id="reply-to-resource-input"><p>Reply to <code>' +
         iri +'</code></p><ul><li><p><label for="reply-to-resource-note">Quick reply (plain text note)</label></p><p><textarea id="reply-to-resource-note" rows="10" cols="40" name="reply-to-resource-note" placeholder="Great article!"></textarea></p></li><li><label for="reply-to-resource-language">Language</label> <select id="reply-to-resource-language" name="reply-to-resource-language">' +
         getLanguageOptionsHTML() + '</select></li><li><label for="reply-to-resource-license">License</label> <select id="reply-to-resource-license" name="reply-to-resource-license">' +
         getLicenseOptionsHTML() + '</select></li></ul></div>'))
@@ -4457,7 +4460,9 @@ console.log(reason);
 
       var shareResourceHTML = `
         <aside id="share-resource" class="do on">${DO.C.Button.Close}
-          <h2>Share</h2>
+          <h2>Share ${getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Open', buttonRel: 'rel:help', buttonResource: Config.ButtonInfo['feature-share'] })}</h2>
+          
+          <div class="info"></div>
 
           <div id="share-resource-share-url">
             <h3>Share URL</h3>
@@ -6186,7 +6191,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
       if(typeof e !== 'undefined') {
         e.target.disabled = true;
       }
-      document.body.appendChild(fragmentFromString('<aside id="open-document" class="do on">' + DO.C.Button.Close + '<h2>Open Document</h2><p><label for="open-local-file">Open local file</label> <input type="file" id="open-local-file" name="open-local-file" /></p></aside>'));
+      document.body.insertAdjacentHTML('beforeend', '<aside id="open-document" class="do on">' + DO.C.Button.Close + `<h2>Open Document ${getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Open', buttonRel: 'rel:help', buttonResource: Config.ButtonInfo['feature-open'] })}</h2><div class="info"></div><p><label for="open-local-file">Open local file</label> <input type="file" id="open-local-file" name="open-local-file" /></p></aside>`);
 
       var id = 'location-open-document';
       var action = 'read';
@@ -6742,7 +6747,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
         e.target.closest('button').disabled = true;
       }
 
-      document.body.appendChild(fragmentFromString('<aside id="save-as-document" class="do on">' + DO.C.Button.Close + '<h2>Save As Document</h2></aside>'));
+      document.body.appendChild(fragmentFromString(`<aside id="save-as-document" class="do on">${DO.C.Button.Close}<h2>Save As ${getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Save As', buttonRel: 'rel:help', buttonResource: Config.ButtonInfo['feature-save-as'] })}</h2><div class="info"></div></aside>`));
 
       var saveAsDocument = document.getElementById('save-as-document');
       saveAsDocument.addEventListener('click', (e) => {
@@ -7149,7 +7154,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
       var buttonDisabled = (document.location.protocol === 'file:') ? ' disabled="disabled"' : '';
 
-      document.body.appendChild(fragmentFromString('<aside id="source-view" class="do on">' + DO.C.Button.Close + '<h2>Source</h2><textarea id="source-edit" rows="24" cols="80"></textarea><p><button class="update"'+ buttonDisabled + ' title="Update source">Update</button></p></aside>'));
+      document.body.appendChild(fragmentFromString('<aside id="source-view" class="do on">' + DO.C.Button.Close + `<h2>Source ${getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Source', buttonRel: 'rel:help', buttonResource: Config.ButtonInfo['feature-source'] })}</h2>` + '<div class="info"></div><textarea id="source-edit" rows="24" cols="80"></textarea><p><button class="update"'+ buttonDisabled + ' title="Update source">Update</button></p></aside>'));
       var sourceBox = document.getElementById('source-view');
       var input = document.getElementById('source-edit');
       input.value = getDocument();
@@ -8545,7 +8550,7 @@ WHERE {\n\
       //<div class="actions"><a href="/docs#resource-activities" target="_blank">${Icon[".fas.fa-circle-info"]}</a></div>
 
       //TEMP buttonRel/Resource
-      var aside = `<aside class="do" contenteditable="false" id="document-notifications">${DO.C.Button.Toggle}<h2>Notifications ${getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Notifications', buttonRel: 'rel:help', buttonResource: Config.ButtonInfo['resource-notifications'] })}</h2><div><div class="info"></div><ul class="activities"></ul></div></aside>`;
+      var aside = `<aside class="do" contenteditable="false" id="document-notifications">${DO.C.Button.Toggle}<h2>Notifications ${getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Notifications', buttonRel: 'rel:help', buttonResource: Config.ButtonInfo['feature-notifications'] })}</h2><div><div class="info"></div><ul class="activities"></ul></div></aside>`;
       document.body.insertAdjacentHTML('beforeend', aside);
       aside = document.getElementById('document-notifications');
 

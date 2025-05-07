@@ -112,7 +112,7 @@ function showUserIdentityInput (e) {
   }
 
   var webid = Config.User.WebIdDelegate ? Config.User.WebIdDelegate : "";
-  var code = '<aside id="user-identity-input" class="do on">' + Config.Button.Close + '<h2>Sign in</h2><p id="user-identity-input-webid"><label>WebID</label> <input id="webid" type="text" placeholder="https://csarven.ca/#i" value="'+webid+'" name="webid"/> <button class="signin">Sign in</button></p></aside>';
+  var code = `<aside id="user-identity-input" class="do on">${Config.Button.Close}<h2>Sign in ${getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Sign in', buttonRel: 'rel:help', buttonResource: Config.ButtonInfo['feature-sign-in'] })}</h2><div class="info"></div><p id="user-identity-input-webid"><label>WebID</label> <input id="webid" type="text" placeholder="https://csarven.ca/#i" value="${webid}" name="webid"/> <button class="signin">Sign in</button></p></aside>`;
 
   document.body.appendChild(fragmentFromString(code))
 

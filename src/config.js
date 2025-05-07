@@ -101,7 +101,22 @@ export default {
   },
   //TODO: Use a single object for Button, ButtonInfo, ButtonStates?
   ButtonInfo: {
-    'resource-notifications': 'https://dokie.li/docs#resource-notifications'
+    'feature-annotation': 'https://dokie.li/docs#feature-annotation',
+    'feature-delete': 'https://dokie.li/docs#feature-delete',
+    'feature-embed-data': 'https://dokie.li/docs#feature-embed-data',
+    'feature-generate-feed': 'https://dokie.li/docs#feature-generate-feed',
+    'feature-graph-view': 'https://dokie.li/docs#feature-graph-view',
+    'feature-message-log': 'https://dokie.li/docs#feature-message-log',
+    'feature-new': 'https://dokie.li/docs#feature-new',
+    'feature-notifications': 'https://dokie.li/docs#feature-notifications',
+    'feature-open': 'https://dokie.li/docs#feature-open',
+    'feature-reply': 'https://dokie.li/docs#feature-reply',
+    'feature-robustify-links': 'https://dokie.li/docs#feature-robustify-links',
+    'feature-save': 'https://dokie.li/docs#feature-save',
+    'feature-save-as': 'https://dokie.li/docs#feature-save-as',
+    'feature-share': 'https://dokie.li/docs#feature-share',
+    'feature-sign-in': 'https://dokie.li/docs#feature-sign-in',
+    'feature-source': 'https://dokie.li/docs#feature-source',
   },
   ButtonStates: {
     'resource-share': true,
