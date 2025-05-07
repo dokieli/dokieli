@@ -2100,20 +2100,23 @@ DO = {
         var buttonSave = document.querySelectorAll('#embed-data-entry button.save');
         for (let i = 0; i < buttonSave.length; i++) {
           buttonSave[i].addEventListener('click', (e) => {
-            var textarea = e.target.parentNode.querySelector('textarea');
+            var textarea = e.target.closest('.selected').querySelector('textarea');
             var name = textarea.getAttribute('name');
-            var scriptEntry = textarea.value;
+            var scriptEntry = domSanitize(textarea.value);
             var script = document.getElementById(name);
-
             if (scriptEntry.length) {
               //If there was a script already
               if (script) {
                 script.textContent = scriptType[name].cdataStart + scriptEntry + scriptType[name].cdataEnd;
               }
               else {
-                document.querySelector('head').appendChild(fragmentFromString(scriptType[name].scriptStart + scriptType[name].scriptEnd));
-                var textNode = document.createTextNode(scriptType[name].cdataStart + scriptEntry + scriptType[name].cdataEnd);
-                document.getElementById(name).appendChild(textNode);
+                document.querySelector('head').insertAdjacentHTML('beforeend',
+                  scriptType[name].scriptStart +
+                  scriptType[name].cdataStart +
+                  scriptEntry +
+                  scriptType[name].cdataEnd +
+                  scriptType[name].scriptEnd
+                );
               }
             }
             else {
