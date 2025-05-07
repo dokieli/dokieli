@@ -266,5 +266,6 @@ export {
   getMediaTypeURIs,
   isHttpOrHttpsProtocol,
   isHttpsProtocol,
-  isFileProtocol
+  isFileProtocol,
+  svgToDataURI
 };
