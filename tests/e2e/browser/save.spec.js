@@ -30,9 +30,7 @@ test("saves changes to existing documents", async ({ page }) => {
   const urlInput = await openModal.locator(
     'input[id="location-open-document-input"]'
   );
-  await urlInput.fill(
-    "https://virginia.solidcommunity.net/bd443f2a-4e32-45c5-afca-ccd701b769e6"
-  );
+  await urlInput.fill(process.env.TEST_RESOURCE_URL);
 
   const openButton = await openModal.locator('button:has-text("Open")');
   await openButton.click();
@@ -60,5 +58,4 @@ test("saves changes to existing documents", async ({ page }) => {
   await saveBtn.click();
   const saveSuccess = page.locator("text=Saved document to");
   await expect(saveSuccess).toBeVisible();
-
 });
