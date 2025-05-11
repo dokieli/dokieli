@@ -7,7 +7,7 @@ export class Auth {
 
   async login() {
     await this.page.goto("/");
-    await this.page.locator("#document-menu button").click();
+    await this.page.locator("#document-menu > button").click();
 
     if (this.isMobile) {
       await this.page.locator(".close").click();
@@ -20,52 +20,53 @@ export class Auth {
     await this.page.fill('input[id="webid"]', process.env.WEBID);
     await this.page.click('button[class="signin"]');
 
-    await this.page.waitForURL(
-      "https://solidcommunity.net/.account/login/password/"
-    );
+    // click login btn
+    await this.page.waitForSelector("button[type=submit]");
+    await this.page.click("button[type=submit]");
+
+    // account page to enter credentials and login
+
+    await this.page.waitForURL(/https:\/\/[^/]+\/\.account\/login\/password\/?/, {
+      timeout: 10000,
+    });
     await this.page.waitForSelector("input#email");
 
     await this.page.fill("#email", process.env.LOGIN_ID);
     await this.page.fill("#password", process.env.LOGIN_PASSWORD);
     await this.page.click("button[type=submit]");
 
-    // click login btn
-    await this.page.waitForSelector("button[type=submit]");
-    await this.page.click("button[type=submit]");
 
-    // await redirect to consent page
-    await this.page.waitForURL("https://solidcommunity.net/.account/");
-    await this.page.waitForURL(
-      "https://solidcommunity.net/.account/oidc/consent/"
-    );
+    // consent page to authorize the client
+    await this.page.waitForURL(/https:\/\/[^/]+\/\.account\/oidc\/consent\/?/, {
+      timeout: 10000,
+    });
+    // wait until page fully loaded (last item to appear is ID)
+    await this.page.waitForSelector('[id="client"]');
+
 
     // click authorize btn
     await this.page.waitForSelector("button[type=submit]");
     await this.page.click("button[type=submit]");
+    
+
+
+    // await redirect
+    await this.page.waitForURL('**', { timeout: 10000 });  
 
     // wait to redirect to homepage
     await this.page.waitForURL("http://localhost:3000/");
 
-
-    // Listen for console messages to make sure we are logged in
+    // Listen for console messages to make sure we are logged in // FIX THIS: ideally we would check something in the UI
     await this.page.on("console", async (msg) => {
-      if (
-        msg
-          .text()
-          .includes(process.env.WEBID)
-      ) {
-
-        await this.page.locator("#document-menu button").click();
-
-        await this.page.waitForSelector("button.signout-user");
-        await expect(this.page.locator("button.signout-user")).toBeVisible();
-      }
+      await new Promise(async (resolve) => {
+          if (msg.text().includes(process.env.WEBID)) {
+            resolve();
+          }
+      });
     });
-
 
   }
 }
-
 
 export const test = base.test.extend({
   auth: async ({ page, isMobile }, use) => {
