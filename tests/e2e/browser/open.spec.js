@@ -17,7 +17,7 @@ test("opens new document from URL", async ({ page }) => {
   await expect(openModal).toBeVisible();
 
   const urlInput = openModal.locator('input[id="location-open-document-input"]');
-  await urlInput.fill("https://virginia.solidcommunity.net/bd443f2a-4e32-45c5-afca-ccd701b769e6");
+  await urlInput.fill(process.env.TEST_RESOURCE_URL);
 
   const openButton = openModal.locator('button:has-text("Open")');
   await openButton.click();
