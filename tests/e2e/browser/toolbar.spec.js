@@ -31,13 +31,20 @@ test.describe("social mode", () => {
     expect(accessibilityScanResults.violations).toEqual([]);
   });
 
-  test("toolbar should not have any automatically detectable  WCAG A or AA violations", async ({
+  test("toolbar should not have any automatically detectable WCAG A, AA, or AAA violations", async ({
     page,
   }) => {
     // Analyze  toolbar element
     const accessibilityScanResults = await new AxeBuilder({ page })
       .include(".editor-toolbar")
-      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+      .withTags([
+        "wcag2a",
+        "wcag2aa",
+        "wcag2aaa",
+        "wcag21a",
+        "wcag21aa",
+        "wcag21aaa",
+      ])
       .analyze();
 
     expect(accessibilityScanResults.violations).toEqual([]);
@@ -56,7 +63,7 @@ test.describe("social mode", () => {
       const signInPopupVisible = await signInPopup.isVisible();
 
       // workaround for sign in popup blocking clicks but we actually need to postpone that popup
-      if (signInPopupVisible) {   
+      if (signInPopupVisible) {
         const closeButton = page.locator(".close");
         await closeButton.click();
       }
@@ -96,7 +103,7 @@ test.describe("social mode", () => {
       const signInPopupVisible = await signInPopup.isVisible();
 
       // workaround for sign in popup blocking clicks but we actually need to postpone that popup
-      if (signInPopupVisible) {   
+      if (signInPopupVisible) {
         const closeButton = page.locator(".close");
         await closeButton.click();
       }
@@ -181,11 +188,7 @@ test.describe("author mode", () => {
   test("toolbar popups should not have any automatically detectable accessibility issues", async ({
     page,
   }) => {
-    const buttonsWithPopups = [
-      "link",
-      "q",
-      "semantics"
-    ];
+    const buttonsWithPopups = ["link", "q", "semantics"];
     const buttons = page.locator("ul.editor-form-actions button");
     const count = await buttons.count();
 
@@ -199,11 +202,10 @@ test.describe("author mode", () => {
       const signInPopupVisible = await signInPopup.isVisible();
 
       // workaround for sign in popup blocking clicks but we actually need to postpone that popup
-      if (signInPopupVisible) {   
+      if (signInPopupVisible) {
         const closeButton = page.locator(".close");
         await closeButton.click();
       }
-
 
       if (!buttonName || !buttonsWithPopups.includes(buttonName)) {
         continue; // skip buttons that do not have popups
@@ -226,11 +228,7 @@ test.describe("author mode", () => {
   test("toolbar popups should not have any automatically detectable WCAG A or AA violations", async ({
     page,
   }) => {
-    const buttonsWithPopups = [
-      "link",
-      "q",
-      "semantics"
-    ];
+    const buttonsWithPopups = ["link", "q", "semantics"];
     const buttons = page.locator("ul.editor-form-actions button");
     const count = await buttons.count();
 

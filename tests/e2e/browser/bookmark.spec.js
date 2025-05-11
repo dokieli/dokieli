@@ -1,4 +1,5 @@
 import { test, expect } from "./fixtures";
+import AxeBuilder from "@axe-core/playwright";
 
 test.beforeEach(async ({ auth, page }) => {
   await auth.login();
@@ -29,11 +30,9 @@ async function cleanup(page, bookmark) {
 
 test("should be able to bookmark a resource", async ({ page }) => {
   // TODO: we should not need this here, login should be enough
-  // Listen for console messages to make sure we are logged in 
+  // Listen for console messages to make sure we are logged in
   await page.on("console", async (msg) => {
-    if (
-      msg.text().includes(process.env.WEBID)
-    ) {
+    if (msg.text().includes(process.env.WEBID)) {
       const bookmarkButton = page.locator('[id="editor-button-bookmark"]');
       await bookmarkButton.click();
       await expect(page.locator("textarea#bookmark-content")).toBeVisible();
@@ -44,9 +43,29 @@ test("should be able to bookmark a resource", async ({ page }) => {
 
       const bookmark = page.locator("sup.ref-annotation");
       await expect(bookmark).toBeVisible();
+      await test.step("bookmark popup has no automatically detectable accessibility issues", async () => {
+        const bookmarkPopup = page.locator("[id=editor-form-bookmark]");
+        const accessibilityScanResults = await new AxeBuilder({ page })
+          .include(await bookmarkPopup.elementHandle())
+          .analyze();
+        expect(accessibilityScanResults.violations).toEqual([]);
+      });
 
-      // wait for screencast purposes
-      // await page.waitForTimeout(5000);
+      await test.step("bookmark popup has no WCAG A, AA, or AAA violations", async () => {
+        const bookmarkPopup = page.locator("[id=editor-form-bookmark]");
+        const accessibilityScanResults = await new AxeBuilder({ page })
+          .withTags([
+            "wcag2a",
+            "wcag2aa",
+            "wcag2aaa",
+            "wcag21a",
+            "wcag21aa",
+            "wcag21aaa",
+          ])
+          .include(await bookmarkPopup.elementHandle())
+          .analyze();
+        expect(accessibilityScanResults.violations).toEqual([]);
+      });
 
       await cleanup(page, bookmark);
     }

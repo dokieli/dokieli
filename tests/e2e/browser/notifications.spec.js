@@ -1,4 +1,5 @@
 import { test, expect } from "./fixtures";
+import AxeBuilder from "@axe-core/playwright";
 
 test.beforeEach(async ({ auth, page }) => {
   await auth.login();
@@ -39,6 +40,25 @@ test("notifications are displayed on side panel for authenticated user", async (
   // check if there are any notifications
   const notificationsCount = await notifications.count();
   expect(notificationsCount).toBeGreaterThan(0);
+  
+  await test.step("notifications panel has no automatically detectable accessibility issues", async () => {
+    const accessibilityScanResults = await new AxeBuilder({ page })
+      .include(await notificationsPanel.elementHandle())
+      .analyze();
+    expect(accessibilityScanResults.violations).toEqual([]);
+  });
+
+  await test.step("notifications panel has no WCAG A, AA, or AAA violations", async () => {
+    const accessibilityScanResults = await new AxeBuilder({ page })
+      .withTags([
+        "wcag2a", "wcag2aa", "wcag2aaa",
+        "wcag21a", "wcag21aa", "wcag21aaa"
+      ])
+      .include(await notificationsPanel.elementHandle())
+      .analyze();
+    expect(accessibilityScanResults.violations).toEqual([]);
+  });
+
 });
 
 test("annotations are highlighted in the text", async ({ page }) => {

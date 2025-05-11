@@ -1,19 +1,21 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import path from 'path';
-import fs from 'fs';
+import path from "path";
+import fs from "fs";
 
 test.describe("new page", () => {
-  test.beforeEach(async ({ page }) => {{} 
-  await page.route('https://dokie.li/scripts/dokieli.js', async route => {
-    const localScriptPath = path.resolve('./scripts/dokieli.js');
-    const scriptContent = fs.readFileSync(localScriptPath, 'utf8');
-    await route.fulfill({
-      contentType: 'application/javascript',
-      body: scriptContent
+  test.beforeEach(async ({ page }) => {
+    {
+    }
+    await page.route("https://dokie.li/scripts/dokieli.js", async (route) => {
+      const localScriptPath = path.resolve("./scripts/dokieli.js");
+      const scriptContent = fs.readFileSync(localScriptPath, "utf8");
+      await route.fulfill({
+        contentType: "application/javascript",
+        body: scriptContent,
+      });
     });
   });
-})
   test("new page should not have any automatically detectable accessibility issues", async ({
     page,
   }) => {
@@ -26,7 +28,7 @@ test.describe("new page", () => {
     expect(accessibilityScanResults.violations).toEqual([]);
   });
 
-  test("new page should not have any automatically detectable WCAG A or AA violations", async ({
+  test("new page should not have any automatically detectable WCAG A, AA, or AAA violations", async ({
     page,
   }) => {
     await page.goto("/new");
@@ -34,7 +36,14 @@ test.describe("new page", () => {
     await page.waitForLoadState("load");
 
     const accessibilityScanResults = await new AxeBuilder({ page })
-      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+      .withTags([
+        "wcag2a",
+        "wcag2aa",
+        "wcag2aaa",
+        "wcag21a",
+        "wcag21aa",
+        "wcag21aaa",
+      ])
       .analyze();
 
     expect(accessibilityScanResults.violations).toEqual([]);
@@ -62,9 +71,9 @@ test.describe("new page", () => {
     };
 
     const getPlaceholderText = async (element) => {
-      return element.evaluate(el => el.getAttribute("data-placeholder"));
+      return element.evaluate((el) => el.getAttribute("data-placeholder"));
     };
-    
+
     expect(await isVisible(h1)).toBe(true);
     expect(await getPlaceholderText(h1)).toContain("Title");
 
@@ -88,7 +97,6 @@ test.describe("new page", () => {
     await page.mouse.down();
     await page.mouse.move(box.x + 30, box.y + box.height / 2);
     await page.mouse.up();
-
 
     // Check if the toolbar is visible with the author mode functionality
     const toolbar = page.locator(".editor-toolbar");
@@ -134,9 +142,7 @@ test.describe("via new button", () => {
     expect(accessibilityScanResults.violations).toEqual([]);
   });
 
-  test("initializes a new document in author mode", async ({
-    page,
-  }) => {
+  test("initializes a new document in author mode", async ({ page }) => {
     // Check if initial elements are visible and contain the correct attributes
     const documentEditor = page.locator(".do-new.ProseMirror");
     await expect(documentEditor).toHaveAttribute("contenteditable", "true");
@@ -156,7 +162,7 @@ test.describe("via new button", () => {
     };
 
     const getPlaceholderText = async (element) => {
-      return element.evaluate(el => el.getAttribute("data-placeholder"));
+      return element.evaluate((el) => el.getAttribute("data-placeholder"));
     };
 
     expect(await isVisible(h1)).toBe(true);
@@ -168,9 +174,9 @@ test.describe("via new button", () => {
     // Check if toolbar is visible with the author mode functionality
 
     // Input some text
-    await documentEditor.click(); 
-    await documentEditor.type("Test text"); 
-    await expect(documentEditor).toHaveText("Test text"); 
+    await documentEditor.click();
+    await documentEditor.type("Test text");
+    await expect(documentEditor).toHaveText("Test text");
 
     // Select the text "Test text" using keyboard shortcuts
     await documentEditor.press("Shift+ArrowLeft"); // Select the last character

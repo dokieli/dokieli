@@ -13,7 +13,7 @@ test("homepage should not have any automatically detectable accessibility issues
   expect(accessibilityScanResults.violations).toEqual([]);
 });
 
-test("homepage should not have any automatically detectable WCAG A or AA violations", async ({
+test("homepage should not have any automatically detectable WCAG A, AA, or AAA violations", async ({
   page,
 }) => {
   await page.goto("/");
@@ -21,7 +21,14 @@ test("homepage should not have any automatically detectable WCAG A or AA violati
   await page.waitForLoadState("load");
 
   const accessibilityScanResults = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .withTags([
+      "wcag2a",
+      "wcag2aa",
+      "wcag2aaa",
+      "wcag21a",
+      "wcag21aa",
+      "wcag21aaa",
+    ])
     .analyze();
 
   expect(accessibilityScanResults.violations).toEqual([]);
