@@ -1,22 +1,12 @@
 import { test, expect } from "./fixtures";
 import AxeBuilder from "@axe-core/playwright";
+import { select } from "./utils";
 
 test.beforeEach(async ({ auth, page }) => {
   await auth.login();
   await page.waitForLoadState("load");
 
-  // Click and drag on text to select it
-  const text = page.locator("#summary");
-  const box = await text.boundingBox();
-
-  await text.click();
-  await page.mouse.down();
-  await page.mouse.move(box.x + 30, box.y + box.height / 2);
-  await page.mouse.up();
-
-  // Wait for the toolbar to be visible
-  const toolbar = page.locator(".editor-toolbar");
-  await expect(toolbar).toBeVisible();
+  await select(page, "#summary");
 });
 
 async function cleanup(page, bookmark) {
