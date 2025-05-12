@@ -7,12 +7,12 @@
 | Toolbar commands (author)  | Unauthenticated user; formatting commands (bold, italics, headings from level 1 to level 4, code, pre) work as expected | toolbar-commands.spec.js |
 | Bookmarks    | Authenticated user; user can create a bookmark and it is correctly reflected on the document; user can delete a bookmark  | bookmark.spec.js |
 | Quote with source    | Authenticated user; ...  |  |
-| Citation    | Authenticated user; ...  |  |
+| Citation    | Authenticated user; ...  | citation.spec.js |
 | Semantics    | Authenticated user; ...  |  |
-| Share   | Authenticated user; ...  |  |
+| Share   | Authenticated user; ...  | share.spec.js |
 | Approve / Disapprove    | Authenticated user; ...  |  |
 | Specificity   | Authenticated user; ...  |  |
-| Comment   | Authenticated user; ...  |  |
+| Comment   | Authenticated user; ...  | comment.spec.js |
 | **Document actions (new, save, save as)** ||| 
 | New   | Unauthenticated user; ...  | new.spec.js |
 | Save As   | Authenticated user; ...  | save-as.spec.js |
@@ -25,5 +25,5 @@
 | **Open** ||| 
 | Open   | Unauthenticated user; User can open a document from a URL or a local file | open.spec.js |
 | **Graph** ||| 
-| Open   | Unauthenticated user |  |
-| **Total** | **22 features** | **12 tested (54,54%)** |
+| Graph   | Unauthenticated user |  |
+| **Total** | **22 features** | **14 tested (63,63%)** |
