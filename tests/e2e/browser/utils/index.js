@@ -1,3 +1,6 @@
+import { expect } from "../fixtures";
+
+// FIXME: I think the following function is not used anywhere
 export async function selectText(wordToSelect, page) {
   const boundingBox = await page.evaluate((wordToSelect) => {
     const range = document.createRange();
@@ -48,5 +51,40 @@ export async function selectText(wordToSelect, page) {
     await page.mouse.up();
   } else {
     console.log("Word not found on the page.");
+  }
+}
+
+export async function select(page, selector) {
+  // Click and drag on text to select it
+  const text = page.locator(selector);
+  const box = await text.boundingBox();
+
+  await text.click();
+  await page.mouse.down();
+  await page.mouse.move(box.x + 30, box.y + box.height / 2);
+  await page.mouse.up();
+
+  // Wait for the toolbar to be visible
+  const toolbar = page.locator(".editor-toolbar");
+  await expect(toolbar).toBeVisible();
+}
+
+export async function toggleMode(page, mode) {
+  await page.locator("#document-menu button").click();
+  const menu = page.locator("[id=document-menu]");
+  await expect(menu).toBeVisible();
+  // Toggle mode
+  if (mode === "author") {
+    const editButton = page.locator(".editor-enable");
+    await editButton.click();
+    // Wait for document to be editable
+    const documentEditor = page.locator(".ProseMirror");
+    await expect(documentEditor).toHaveAttribute("contenteditable", "true");
+  } else {
+    const editButton = page.locator(".editor-disable");
+    await editButton.click();
+    // Wait for document to be read-only
+    const documentEditor = page.locator(".ProseMirror");
+    await expect(documentEditor).toHaveAttribute("contenteditable", "false");
   }
 }
