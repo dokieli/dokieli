@@ -6,12 +6,12 @@
 | Toolbar    | Unauthenticated user can see toolbar in both available modes (author and social); unauthenticated user can see all popups when clicking on buttons with an associated popup  | toolbar.spec.js |
 | Toolbar commands (author)  | Unauthenticated user; formatting commands (bold, italics, headings from level 1 to level 4, code, pre) work as expected | toolbar-commands.spec.js |
 | Bookmarks    | Authenticated user; user can create a bookmark and it is correctly reflected on the document; user can delete a bookmark  | bookmark.spec.js |
-| Quote with source    | Authenticated user; ...  |  |
+| Quote with source    | Authenticated user; ...  | quote.spec.js |
 | Citation    | Authenticated user; ...  | citation.spec.js |
 | Semantics    | Authenticated user; ...  |  |
 | Share   | Authenticated user; ...  | share.spec.js |
 | Approve / Disapprove    | Authenticated user; ...  |  |
-| Specificity   | Authenticated user; ...  |  |
+| Specificity   | Authenticated user; ...  | specificity.spec.js |
 | Comment   | Authenticated user; ...  | comment.spec.js |
 | **Document actions (new, save, save as)** ||| 
 | New   | Unauthenticated user; ...  | new.spec.js |
@@ -25,5 +25,5 @@
 | **Open** ||| 
 | Open   | Unauthenticated user; User can open a document from a URL or a local file | open.spec.js |
 | **Graph** ||| 
-| Graph   | Unauthenticated user |  |
-| **Total** | **22 features** | **14 tested (63,63%)** |
+| Graph   | Unauthenticated user | graph.spec.js |
+| **Total** | **19 features** | **16 tested (84,21%)** |
