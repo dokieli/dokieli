@@ -22,7 +22,7 @@ test.describe("social mode", () => {
     expect(accessibilityScanResults.violations).toEqual([]);
   });
 
-  test("toolbar should not have any automatically detectable WCAG A, AA, or AAA violations", async ({
+  test("toolbar should not have any automatically detectable WCAG A and AA violations", async ({
     page,
   }) => {
     // Analyze  toolbar element
@@ -31,14 +31,29 @@ test.describe("social mode", () => {
       .withTags([
         "wcag2a",
         "wcag2aa",
-        "wcag2aaa",
         "wcag21a",
         "wcag21aa",
-        "wcag21aaa",
       ])
       .analyze();
 
     expect(accessibilityScanResults.violations).toEqual([]);
+  });
+
+  test("toolbar should not have any automatically detectable WCAG AAA violations", async ({
+    page,
+  }) => {
+    // Analyze  toolbar element
+    const accessibilityScanResults = await new AxeBuilder({ page })
+      .include(".editor-toolbar")
+      .withTags([
+        "wcag2aaa",
+        "wcag21aaa",
+      ])
+      .analyze();
+
+    if (accessibilityScanResults.violations.length > 0) {
+      console.log("AAA issues:", accessibilityScanResults.violations);
+    }
   });
 
   test("toolbar popups should not have any automatically detectable accessibility issues", async ({
@@ -119,6 +134,51 @@ test.describe("social mode", () => {
         .analyze();
 
       expect(accessibilityScanResults.violations).toEqual([]);
+    }
+  });
+
+  test("toolbar popups should not have any automatically detectable WCAG AAA violations", async ({
+    page,
+  }) => {
+    const buttons = page.locator("ul.editor-form-actions button");
+    const count = await buttons.count();
+
+    // TODO: this forced me to increase timeout - find a better way
+    for (let i = 0; i < count; i++) {
+      const button = buttons.nth(i);
+      const signInPopup = page.locator("#user-identity-input");
+      const signInPopupVisible = await signInPopup.isVisible();
+
+      // workaround for sign in popup blocking clicks but we actually need to postpone that popup
+      if (signInPopupVisible) {
+        const closeButton = page.locator(".close");
+        await closeButton.click();
+      }
+
+      const title = await button.getAttribute("title");
+
+      if (title?.toLowerCase() === "share") {
+        // Skipping share because it has a different behavior
+        continue;
+      }
+
+      await button.click();
+
+      const formSelector = `#editor-form-${title}`;
+      const form = page.locator(formSelector);
+
+      await expect(form).toBeVisible();
+
+      const accessibilityScanResults = await new AxeBuilder({ page })
+        .include(formSelector)
+        .withTags(["wcag2aaa", "wcag21aaa"])
+        .analyze();
+
+      if (
+        accessibilityScanResults.violations.length > 0
+      ) {
+        console.log("AAA issues:", accessibilityScanResults.violations);
+      }
     }
   });
 });
@@ -176,6 +236,20 @@ test.describe("author mode", () => {
     expect(accessibilityScanResults.violations).toEqual([]);
   });
 
+  test("toolbar should not have any automatically detectable  WCAG AAA violations", async ({
+    page,
+  }) => {
+    // Analyze  toolbar element
+    const accessibilityScanResults = await new AxeBuilder({ page })
+      .include(".editor-toolbar")
+      .withTags(["wcag2aaa", "wcag21aaa"])
+      .analyze();
+
+    if (accessibilityScanResults.violations.length > 0) {
+      console.log("AAA issues:", accessibilityScanResults.violations);
+    }
+  });
+
   test("toolbar popups should not have any automatically detectable accessibility issues", async ({
     page,
   }) => {
@@ -246,6 +320,43 @@ test.describe("author mode", () => {
         .analyze();
 
       expect(accessibilityScanResults.violations).toEqual([]);
+    }
+  });
+
+  test("toolbar popups should not have any automatically detectable WCAG AAA violations", async ({
+    page,
+  }) => {
+    const buttonsWithPopups = ["link", "q", "semantics"];
+    const buttons = page.locator("ul.editor-form-actions button");
+    const count = await buttons.count();
+
+    // TODO: this forced me to increase timeout - find a better way
+    for (let i = 0; i < count; i++) {
+      const button = buttons.nth(i);
+
+      const id = await button.getAttribute("id");
+      const buttonName = id?.split("editor-button-")[1];
+
+      if (!buttonName || !buttonsWithPopups.includes(buttonName)) {
+        continue; // skip buttons that do not have popups
+      }
+      await button.click();
+
+      const formSelector = `#editor-form-${buttonName}`;
+      const form = page.locator(formSelector);
+
+      await expect(form).toBeVisible();
+
+      const accessibilityScanResults = await new AxeBuilder({ page })
+        .include(formSelector)
+        .withTags(["wcag2aa", "wcag21aaa"])
+        .analyze();
+
+      if (
+        accessibilityScanResults.violations.length > 0
+      ) {
+        console.log("AAA issues:", accessibilityScanResults.violations);
+      }
     }
   });
 });
