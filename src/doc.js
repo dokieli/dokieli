@@ -3362,14 +3362,14 @@ function showResourceAudienceAgentOccupations() {
               Config.Resource[iri]['labels'] = skosLabels;
             }
 // console.log(label)
-            ul.push('<li><a href="' + iri + '" rel="noopener" target="_blank">' + label + '</a></li>');
+            ul.push(`<li><a href="${iri}" rel="noopener" target="_blank">${label}</a></li>`);
           }
         });
 
         if (ul.length > 0){
-          ul = '<ul>' + ul.join('') + '</ul>';
+          ul = `<ul>${ul.join('')}</ul>`;
 
-          var message = "<p>This document’s audience matches your profile:</p>" + ul;
+          var message = `<p>This document's audience matches your profile:</p>${ul}`;
           message = {
             'content': message,
             'type': 'info',
@@ -3406,7 +3406,7 @@ function setCopyToClipboard(contentNode, triggerNode, options = {}) {
 
       navigator.clipboard.writeText(text)
         .then(() => {
-          var message = 'Copied to clipboard.';
+          var message = `<p>Copied to clipboard.</p>`;
           message = {
             'content': message,
             'type': 'info',
@@ -3416,7 +3416,7 @@ function setCopyToClipboard(contentNode, triggerNode, options = {}) {
           showActionMessage(document.body, message);
         })
         .catch(error => {
-          var message = 'Failed to copy text to clipboard.';
+          var message = `<p>Failed to copy text to clipboard.</p>`;
           message = {
             'content': message,
             'type': 'error',

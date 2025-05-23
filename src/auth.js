@@ -2,7 +2,7 @@ import rdf from 'rdf-ext';
 import Config from './config.js'
 import { deleteResource } from './fetcher.js'
 import { removeChildren, fragmentFromString } from './util.js'
-import { getAgentHTML, showActionMessage, showGeneralMessages, getResourceSupplementalInfo, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, handleDeleteNote } from './doc.js'
+import { getAgentHTML, showActionMessage, showGeneralMessages, getResourceSupplementalInfo, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, handleDeleteNote, addMessageToLog } from './doc.js'
 import { Icon } from './ui/icons.js'
 import { getResourceGraph, getAgentName, getGraphImage, getAgentURL, getAgentPreferredProxy, getAgentPreferredPolicy, getAgentPreferredPolicyRule, setPreferredPolicyInfo, getAgentDelegates, getAgentKnows, getAgentFollowing, getAgentStorage, getAgentOutbox, getAgentInbox, getAgentPreferencesFile, getAgentPublicTypeIndex, getAgentPrivateTypeIndex, getAgentTypeIndex, getAgentSupplementalInfo, getAgentSeeAlso, getAgentPreferencesInfo, getAgentLiked, getAgentOccupations, getAgentPublications, getAgentMade, getAgentOIDCIssuer } from './graph.js'
 import { removeLocalStorageDocument, removeLocalStorageProfile, updateLocalStorageProfile } from './storage.js'
@@ -193,11 +193,12 @@ function submitSignIn (url) {
 
       if (Config.User.IRI && !Config.User.OIDCIssuer) {
         const message = {
-          'content': 'OIDC issuer not found in profile, not signed in. Using information from profile to personalise the UI.',
+          'content': `<p>Cannot sign in. Using information from profile to personalise the UI.</p>`,
           'type': 'info',
           'timer': null
         }
 
+        addMessageToLog(message, Config.MessageLog);
         showActionMessage(document.body, message);
 
         afterSetUserInfo();
@@ -206,11 +207,12 @@ function submitSignIn (url) {
         signInWithOIDC()
           .catch(e => {
             const message = {
-              'content': 'Cannot sign in. Using information from profile to personalise the UI.',
+              'content': `<p>Cannot sign in. Using information from profile to personalise the UI.</p>`,
               'type': 'info',
               'timer': null
             }
-
+            
+            addMessageToLog(message, Config.MessageLog);
             showActionMessage(document.body, message);
 
             afterSetUserInfo();
@@ -229,7 +231,7 @@ function submitSignIn (url) {
   Config['Session'].login(idp, redirect_uri)
     .catch((e) => {
       const message = {
-        'content': 'Cannot sign in. Using information from profile to personalise the UI.',
+        'content': `<p>Cannot sign in. Using information from profile to personalise the UI.</p>`,
         'type': 'info',
         'timer': null
       }

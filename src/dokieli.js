@@ -1564,16 +1564,6 @@ DO = {
       if (open) {
         open = decodeURIComponent(open);
 
-        var message = 'Opening <a href="' + open + '" rel="noopener" target="_blank">' + open + '</a>';
-        message = {
-          'content': message,
-          'type': 'info',
-          'timer': 10000
-        }
-        addMessageToLog(message, Config.MessageLog);
-        message.content = '<span class="progress">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + ' ' + message.content + '</span>';
-        showActionMessage(document.body, message);
-
         DO.U.openResource(open);
 
         window.history.replaceState({}, null, document.location.href.substr(0, document.location.href.lastIndexOf('?')));
@@ -1606,16 +1596,18 @@ DO = {
           // DO.U.showGraphResources([docURI], '#graph-view', options);
           // console.log(options);
 
-          var anchors = urls.map(url => `<a href="${url}">${url}</a>`);
+          var anchors = urls.map(url => `<a href="${url}">${url}</a>`).join(', ');
 
-          message = 'Loading graph(s) ' + anchors.join(', ');
-          message = {
-            'content': message,
+          var message = `Loading graph(s) ${anchors}`;
+          var actionMessage = `<p><span class="progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]} Loading graph(s) ${anchors}</span></p>`;
+
+          const messageObject = {
+            'content': actionMessage,
             'type': 'info',
             'timer': 3000
           }
-          addMessageToLog(message, Config.MessageLog);
-          message.content = '<span class="progress">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + ' ' + message.content + '</span>';
+
+          addMessageToLog({...messageObject, content: message}, Config.MessageLog);
           showActionMessage(document.body, message);
 
           DO.U.showGraph(urls, '#graph-view', options);
@@ -3452,12 +3444,15 @@ console.log(reason);
             }
 
             options['showActionMessage'] = ('showActionMessage' in options) ? options.showActionMessage : true;
+
             if (options.showActionMessage) {
-              var message = 'Archived <a href="' + uri + '">' + uri + '</a> at <a href="' + versionURL + '">' + versionURL + '</a> and created RobustLink.';
+              var message = `<p>Archived <a href="${uri}">${uri}</a> at <a href="${versionURL}">${versionURL}</a> and created RobustLink.</p>`;
+
               message = {
                 'content': message,
                 'type': 'success'
               }
+
               addMessageToLog(message, Config.MessageLog);
               showActionMessage(document.body, message);
             }
@@ -6257,18 +6252,21 @@ console.log('XXX: Cannot access effectiveACLResource', e);
       // options['noCredentials'] = true;
 
       var handleResource = function handleResource (iri, headers, options) {
-        var message = {
-          'content': 'Opening <a href="' + iri + ' "rel="noopener" target="_blank">' + iri + '</a>.',
+        var message = `<p>Opening <a href="${iri} rel="noopener" target="_blank">${iri}</a>.</p>`;
+        var actionMessage = `<p><span class="progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]} Opening <a href="${iri} rel="noopener" target="_blank">${iri}</a></span></p>`;
+
+        const messageObject = {
+          'content': actionMessage,
           'type': 'info',
           'timer': 10000
         }
-        addMessageToLog(message, Config.MessageLog);
-        message.content = '<span class="progress">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + message.content + '</span>';
-        const messageId = showActionMessage(document.body, message);
+
+        addMessageToLog({...messageObject, content: message}, Config.MessageLog);
+        const messageId = showActionMessage(document.body, messageObject);
 
         return getResource(iri, headers, options)
           .catch(error => {
-            console.log(error)
+            // console.log(error)
             // console.log(error.status)
             // console.log(error.response)
 
@@ -6276,15 +6274,18 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
             document.getElementById(messageId).remove();
 
-            var message = 'Unable to open <a href="' + iri + ' "rel="noopener" target="_blank">' + iri + '</a>.';
-            message = {
-              'content': message,
+            var message = `<p>Unable to open <a href="${iri}"rel="noopener" target="_blank">${iri}</a>.</p>`;
+            var actionMessage = `<p><span class="progress">${Icon[".fas.fa-times-circle.fa-fw"]} Unable to open <a href="${iri}"rel="noopener" target="_blank">${iri}</a>.</span></p>`;
+
+            const messageObject = {
+              'content': actionMessage,
               'type': 'error',
-              'timer': 5000
+              'timer': 5000,
+              'code': error.status
             }
-            addMessageToLog(message, Config.MessageLog);
-            message.content = '<span class="progress">' + Icon[".fas.fa-times-circle.fa-fw"] + message.content + '</span>';
-            showActionMessage(document.body, message);
+
+            addMessageToLog({...messageObject, content: message}, Config.MessageLog);
+            showActionMessage(document.body, messageObject);
 
             throw error
           })
@@ -6337,7 +6338,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
                 if (rm) {
                   rm.parentNode.removeChild(rm)
                 }
-                var message = 'Opened <a href="' + iri + '" rel="noopener" target="_blank">' + iri + '</a>.';
+                var message = `<p>Opened <a href="${iri}" rel="noopener" target="_blank">${iri}</a>.</p>`;
                 message = {
                   'content': message,
                   'type': 'success',
@@ -6520,7 +6521,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
       const isFileIRI = isFileProtocol(iri);
 
       if (!isHttpIRI && !isFileIRI) {
-        const message = `Cannot open non http(s): or file: URLs.`;
+        const message = `<p>Cannot open, not valid URL or file location.</p>`;
         const messageObject = {
           'content': message,
           'type': 'error',
@@ -6549,7 +6550,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
               var id = 'geo';
               var metadataBounds = document.querySelector('#' + id + ' figcaption a');
               if (metadataBounds) {
-                var message = 'Opened geo data at <a href="' + metadataBounds.href + '">' + metadataBounds.textContent + '</a>';
+                var message = `<p>Opened geo data at <a href="${metadataBounds.href}">${metadataBounds.textContent}</a></p>`;
                 message = {
                   'content': message,
                   'type': 'info',
