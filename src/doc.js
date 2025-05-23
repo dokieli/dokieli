@@ -1684,6 +1684,26 @@ function buttonClose() {
   });
 }
 
+function buttonSignIn() {
+  document.addEventListener('click', (e) => {
+    var button = e.target.closest('button.signin-user');
+    if (button) {
+      button.disabled = true;
+      showUserIdentityInput();
+    }
+  });
+}
+
+function buttonSignOut() {
+  document.addEventListener('click', e => {
+    var button = e.target.closest('button.signout-user');
+    if (button) {
+      button.disabled = true;
+      signOut();
+    }
+  });
+}
+
 function notificationsToggle() {
   document.addEventListener('click', e => {
     var button = e.target.closest('button.toggle');

@@ -4129,7 +4129,7 @@ console.log(reason);
                   if (error.status) {
                     switch(error.status) {
                       case 401:
-                        message = 'You are lack valid authenticated credentials to delete <code>' + url + '</code>.'
+                        message = 'You lack valid authentication credentials to delete <code>' + url + '</code>.'
                         if(!DO.C.User.IRI){
                           message += ' Try signing in.';
                         }
