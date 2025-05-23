@@ -66,19 +66,17 @@ export class Editor {
     }
   }
 
-  showEditorModeActionMessage(e, mode) {
-    if (e || (typeof e === 'undefined' && mode == 'author')) {
-      var message = 'Activated <em>' + mode + '</em> mode.';
-      message = {
-        'content': message,
-        'type': 'info'
-      }
-      addMessageToLog(message, Config.MessageLog);
-      showActionMessage(document.body, message);
+  showEditorModeActionMessage(mode) {
+    var message = `<p>Activated <em>${mode}</em> mode.</p>`;
+    message = {
+      'content': message,
+      'type': 'info'
     }
+    addMessageToLog(message, Config.MessageLog);
+    showActionMessage(document.body, message);
   }
 
-  toggleEditor(mode, e, options) {
+  toggleEditor(mode, options) {
     DO.Editor['new'] = false;
 
     let node = document.body;
@@ -93,7 +91,7 @@ export class Editor {
 
 // Do not EVER pass options passed to toggleEditor onto this call to init - template option breaks everything. TODO look into this
     this.init(mode, node);
-    this.showEditorModeActionMessage(e, mode);
+    this.showEditorModeActionMessage(mode);
     Config.EditorEnabled = (mode === 'author');
 
     // this.setEditorDataItems(e);
