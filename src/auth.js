@@ -48,8 +48,6 @@ async function showUserSigninSignout (node) {
   userInfoHTML = Config.User.IRI ? signedInHTML : signInHTML;
 
   node.insertAdjacentHTML('afterbegin', userInfoHTML);
-
-
 }
 
 async function signOut() {
@@ -71,8 +69,6 @@ async function signOut() {
 
 
 async function userInfoSignOut(node) {
-  await signOut();
-
   //Clean up the user-info so it can be reconstructed
   removeChildren(node);
 

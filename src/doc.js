@@ -1686,7 +1686,7 @@ function buttonClose() {
 }
 
 function buttonSignIn() {
-  document.addEventListener('click', (e) => {
+  document.addEventListener('click', e => {
     var button = e.target.closest('button.signin-user');
     if (button) {
       button.disabled = true;
@@ -1696,11 +1696,11 @@ function buttonSignIn() {
 }
 
 function buttonSignOut() {
-  document.addEventListener('click', e => {
+  document.addEventListener('click', async (e) => {
     var button = e.target.closest('button.signout-user');
     if (button) {
       button.disabled = true;
-      signOut();
+      await signOut();
     }
   });
 }

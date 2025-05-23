@@ -14,7 +14,7 @@ import { notifyInbox, sendNotifications } from './inbox.js'
 import { uniqueArray, fragmentFromString, generateAttributeId, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, isValidISBN, findPreviousDateTime, domSanitize, sanitizeObject, escapeRDFLiteral, tranformIconstoCSS, getIconsFromCurrentDocument } from './util.js'
 import { generateGeoView } from './geo.js'
 import { getLocalStorageProfile, showAutoSaveStorage, hideAutoSaveStorage, updateLocalStorageProfile } from './storage.js'
-import { showUserSigninSignout, showUserIdentityInput, getSubjectInfo, restoreSession, afterSetUserInfo, setUserInfo } from './auth.js'
+import { showUserSigninSignout, showUserIdentityInput, getSubjectInfo, restoreSession, afterSetUserInfo, setUserInfo, userInfoSignOut } from './auth.js'
 import { Icon } from './ui/icons.js'
 import * as d3Selection from 'd3-selection';
 import * as d3Force from 'd3-force';
@@ -1764,14 +1764,21 @@ DO = {
 
     showDocumentInfo: function() {
       document.body.appendChild(fragmentFromString('<menu class="do" id="document-menu" role="toolbar"><button class="show" title="Open menu">' + Icon[".fas.fa-bars"] + '</button><div><section id="user-info"></section></div></menu>'));
+
+      var userInfo = document.getElementById('user-info');
+
       document.querySelector('#document-menu').addEventListener('click', (e) => {
         var button = e.target.closest('button');
-        if(button){
+
+        if (button) {
           if (button.classList.contains('show')) {
             DO.U.showDocumentMenu(e);
           }
           else if (button.classList.contains('hide')) {
             DO.U.hideDocumentMenu(e);
+          }
+          else if (button.classList.contains('signout-user')) {
+            userInfoSignOut(userInfo);
           }
         }
       });
