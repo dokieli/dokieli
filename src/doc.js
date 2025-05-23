@@ -11,6 +11,7 @@ import { micromark as marked } from 'micromark';
 import { gfm, gfmHtml } from 'micromark-extension-gfm';
 import { gfmTagfilterHtml } from 'micromark-extension-gfm-tagfilter';
 import { Icon } from './ui/icons.js';
+import { showUserIdentityInput, signOut } from './auth.js'
 
 const ns = Config.ns;
 
@@ -3658,6 +3659,8 @@ export {
   getDocumentStatusHTML,
   buttonClose,
   buttonInfo,
+  buttonSignIn,
+  buttonSignOut,
   notificationsToggle,
   getButtonDisabledHTML,
   showTimeMap,

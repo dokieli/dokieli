@@ -49,32 +49,14 @@ async function showUserSigninSignout (node) {
 
   node.insertAdjacentHTML('afterbegin', userInfoHTML);
 
-  node.addEventListener('click', async (e) => {
-    var buttonSignIn = e.target.closest('.signin-user');
-    var buttonSignOut = e.target.closest('.signout-user');
-
-    if (buttonSignIn) {
-      buttonSignIn.disabled = true;
-      showUserIdentityInput();
-    }
-    else if (buttonSignOut) {
-      signOut(node);
-    }
-  });
 
 }
 
-
-async function signOut(node) {
+async function signOut() {
   //Sign out for real
   if (Config['Session']?.isActive) {
     await Config['Session'].logout();
   }
-
-  //Clean up the user-info so it can be reconstructed
-  removeChildren(node);
-
-  node.insertAdjacentHTML('afterbegin', signInHTML);
 
   removeLocalStorageDocument();
 
@@ -85,6 +67,16 @@ async function signOut(node) {
     Role: 'social',
     UI: {}
   }
+}
+
+
+async function userInfoSignOut(node) {
+  await signOut();
+
+  //Clean up the user-info so it can be reconstructed
+  removeChildren(node);
+
+  node.insertAdjacentHTML('afterbegin', signInHTML);
 
   var buttonDeletes = document.querySelectorAll('aside.do blockquote[cite] article button.delete');
   buttonDeletes.forEach(button => {
@@ -99,6 +91,12 @@ async function signOut(node) {
 }
 
 function showUserIdentityInput () {
+  var userIdentityInput = document.getElementById('user-identity-input');
+
+  if (userIdentityInput) {
+    return;
+  }
+
   var signInUser = document.querySelector('#document-menu button.signin-user');
 
   if (signInUser) {
@@ -429,5 +427,6 @@ export {
   showUserIdentityInput,
   showUserSigninSignout,
   submitSignIn,
+  userInfoSignOut,
   signOut
 }
