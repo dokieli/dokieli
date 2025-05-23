@@ -7,7 +7,7 @@
  */
 
 import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceGraph, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource } from './fetcher.js'
-import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, buttonClose, buttonInfo, notificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, getButtonDisabledHTML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getLanguageOptionsHTML, getLicenseOptionsHTML, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown, getReferenceLabel, createNoteDataHTML, isButtonDisabled, hasNonWhitespaceText } from './doc.js'
+import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, buttonClose, buttonInfo, notificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, getButtonDisabledHTML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getLanguageOptionsHTML, getLicenseOptionsHTML, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown, getReferenceLabel, createNoteDataHTML, isButtonDisabled, hasNonWhitespaceText, buttonSignIn, buttonSignOut } from './doc.js'
 import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, generateDataURI, getMediaTypeURIs, isHttpOrHttpsProtocol, isFileProtocol } from './uri.js'
 import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes, filterQuads, getAgentTypeIndex } from './graph.js'
 import { notifyInbox, sendNotifications } from './inbox.js'
@@ -1651,6 +1651,8 @@ DO = {
     initDocumentActions: function() {
       buttonClose();
       buttonInfo();
+      buttonSignIn();
+      buttonSignOut();
       notificationsToggle();
       showRobustLinksDecoration();
       focusNote();
@@ -3975,7 +3977,7 @@ console.log(reason);
           var node = b.closest('li');
           b.outerHTML = DO.C.Editor.EnableEditorButton;
           DO.U.hideDocumentMenu();
-          DO.Editor.toggleEditor('social', e);
+          DO.Editor.toggleEditor('social');
           hideAutoSaveStorage(node.querySelector('#autosave-items'), documentURL);
         }
         else {
@@ -3984,7 +3986,7 @@ console.log(reason);
             node = b.closest('li');
             b.outerHTML = DO.C.Editor.DisableEditorButton;
             DO.U.hideDocumentMenu();
-            DO.Editor.toggleEditor('author', e);
+            DO.Editor.toggleEditor('author');
             showAutoSaveStorage(node, documentURL);
           }
         }
@@ -4102,6 +4104,8 @@ console.log(reason);
         e.stopPropagation();
 
         var buttonCC = e.target.closest('button.close') || e.target.closest('button.cancel');
+        var buttonDelete = e.target.closest('button.delete');
+
         if (buttonCC) {
           var parent = buttonCC.parentNode;
           parent.parentNode.removeChild(parent);
@@ -4111,106 +4115,97 @@ console.log(reason);
             rd.disabled = false;
           }
         }
-        else if (e.target.closest('button.delete')) {
+        else if (buttonDelete) {
           deleteResource(url)
-            .catch((error) => {
-// console.log(error)
-// console.log(error.status)
-// console.log(error.response)
-              error.response.text()
-                .then(data => {
-// console.log(data);
-                  data = domSanitize(data);
-
-                  //TODO: Reuse saveAsDocument's catch to request access by checking the Link header.
-
-                  var details = (data.trim().length) ? '<details><summary>Details</summary><div>' + data + '</div></details>' : '';
-                  var message = '';
-                  if (error.status) {
-                    switch(error.status) {
-                      case 401:
-                        message = 'You lack valid authentication credentials to delete <code>' + url + '</code>.'
-                        if(!DO.C.User.IRI){
-                          message += ' Try signing in.';
-                        }
-                        message += details;
-                        break;
-                      case 403: default:
-                        message = 'Unable to delete <code>' + url + '</code>.';
-                        if(DO.C.User.IRI){
-                          message += ' Your credentails were insufficient. Try signing in with different credentials or request access.';
-                        }
-                        message + details;
-                        break;
-                      case 409:
-                        message = 'There was a conflict when trying to delete <code>' + url + '</code>.' + details;
-                        break;
-                    }
-                  }
-
-                  message = {
-                    'content': message,
-                    'type': 'error',
-                    'timer': 10000
-                  }
-                  addMessageToLog(message, Config.MessageLog);
-                  showActionMessage(document.body, message);
-
-                  // throw error;
-                  // return Promise.reject({});
-                });
-            })
             .then(response => {
-// console.log(response);
-              return response.text()
-                .then(data => {
-// console.log(data);
-                  data = domSanitize(data);
+              DO.Editor.toggleEditor('author', { template: 'new' });
 
-                  var details = (data.trim().length) ? '<details><summary>Details</summary><div>' + data + '</div></details>' : '';
-                  var message = '';
-                  switch(response.status) {
-                    case 200: default:
-                      message = 'Deleted <code>' + url + '</code>.' + details;
-                      break;
-                    case 202:
-                      message = 'Deleting <code>' + url + '</code> will succeed but has not yet been enacted.';
+              var message = '';
+              var actionMessage = '';
+
+              switch(response.status) {
+                case 200: case 204: default:
+                  message = `<p>Deleted <code>${url}</code>.</p>`;
+                  actionMessage = `<p>Deleted <code>${url}</code>.</p>`;
+
+                  break;
+
+                case 202:
+                  message = `<p>Deleting <code>${url}</code> in progress.</p>`;
+                  actionMessage = `<p>Deleting <code>${url}</code> in progress.</p>`;
+
+                  break;
+              }
+
+              const messageObject = {
+                'content': actionMessage,
+                'type': 'success',
+                'timer': 3000,
+                'code': response.status
+              }
+
+              addMessageToLog({...messageObject, content: message}, Config.MessageLog);
+              showActionMessage(document.body, messageObject);
+            })
+            .catch((error) => {
+              // console.log(error)
+              // console.log(error.status)
+              // console.log(error.response)
+
+              //TODO: Reuse saveAsDocument's catch to request access by checking the Link header.
+
+              const buttonSignInHTML = getButtonHTML({ button: 'signin', buttonClass: 'signin-user', buttonTitle: 'Sign in to authenticate', buttonTextContent: 'Sign in' });
+
+              var message = '';
+              var actionMessage = '';
+
+              if (error.status) {
+                switch(error.status) {
+                  case 401:
+                    if (DO.C.User.IRI) {
+                      message = `<p>You do not have permission to delete <code>${url}</code>.</p>`;
+                      //TODO: signoutShowSignIn()
+                      actionMessage = `<p>You do not have permission to delete <code>${url}</code>. Try signing in with a different account.</p>`;
+                    }
+                    else {
+                      message = `<p>You are not signed in.</p>`;
+                      actionMessage = `<p>You are not signed in. ${buttonSignInHTML} and try again.</p>`;
+                    }
+
                     break;
-                    case 204:
-                      message = 'Deleted <code>' + url + '</code>.';
-                      break;
-                  }
 
-                  message = {
-                    'content': message,
-                    'type': 'success',
-                    'timer': 3000
-                  }
-                  addMessageToLog(message, Config.MessageLog);
-                  showActionMessage(document.body, message);
+                  case 403: default:
+                    if (DO.C.User.IRI) {
+                      message = `<p>You do not have permission to delete <code>${url}</code>.</p>`;
+                      //TODO: signoutShowSignIn() requestAccess()
+                      actionMessage = `<p>You do not have permission to delete <code>${url}</code>. Try signing in with a different account or request access.</p>`;
+                    }
+                    else {
+                      message += `<p>You are not signed in.</p>`;
+                      actionMessage = `<p>You are not signed in. ${buttonSignInHTML} and try again.</p>`;
+                    }
 
-                  var buttonD = e.target.closest('button.delete')
-                  if (buttonD) {
-                    var parent = buttonD.parentNode;
-                    parent.parentNode.removeChild(parent);
-                  }
-                })
-                .then(() => {
-                  //FIXME:
-                  getDocumentContentNode(document).setHTMLUnsafe(domSanitize('<main><article about="" typeof="schema:Article"></article></main>'));
-                  DO.Editor.init('author');
+                    break;
 
+                  case 409:
+                    //XXX: If/when there is more (structured) detail from the server, it can be processed and used here.
 
-                  // or better: createHTML() and update spawnDocument()
-                  //XXX Experimental:
-//                   var html = getDocument()
-// console.log(html)
-//                   html = DO.U.spawnDokieli(document, html, 'text/html', url, {'init': true})
-                  // window.history.pushState({}, '', ??????)
+                    message = `<p>It was not possible to delete <code>${url}</code>.</p>`;
+                    actionMessage = `<p>It was not possible to delete <code>${url}</code> because something changed in the meantime. Please reload the document and try again later.</p>`;
 
-                  // Or offer to create a new document somewhere.
-                  // DO.U.createNewDocument(e);
-                })
+                    break;
+                }
+              }
+
+              const messageObject = {
+                'content': actionMessage,
+                'type': 'error',
+                'timer': null,
+                'code': error.status
+              }
+
+              addMessageToLog({...messageObject, content: message}, Config.MessageLog);
+              showActionMessage(document.body, messageObject);
             })
           }
       });
@@ -6675,7 +6670,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
     createNewDocument: function(e) {
       DO.U.hideDocumentMenu();
 
-      DO.Editor.toggleEditor('author', e, { template: 'new' });
+      DO.Editor.toggleEditor('author', { template: 'new' });
     },
 
     //XXX: To be deprecated. Formerly used for createNewDocument 
