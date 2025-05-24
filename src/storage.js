@@ -186,7 +186,13 @@ function getLocalStorageProfile(key) {
   }
   else if (window.localStorage) {
     var o = localStorage.getItem(key);
-    return Promise.resolve(JSON.parse(o));
+    let value = null;
+    try {
+      value = JSON.parse(o);
+    } catch (e) {
+      value = null;
+    }
+    return Promise.resolve(value);
   }
   else {
     return Promise.reject({'message': 'storage is unavailable'})
