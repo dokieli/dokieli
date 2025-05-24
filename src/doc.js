@@ -227,7 +227,7 @@ function getDocumentNodeFromString(data, options) {
 }
 
 function getDocumentContentNode(node) {
-  if (node instanceof HTMLDocument) {
+  if (node instanceof Document) {
     return node.body || undefined; // For HTML documents
   } else if (node instanceof XMLDocument) {
     return node.documentElement || undefined; // For XML documents
