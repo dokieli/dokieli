@@ -33,8 +33,8 @@ describe('Editor.toggleEditor', () => {
   beforeEach(() => {
     document.body.innerHTML = '<body><main><article><h1>Test</h1></article></main></body>';
     editor = new Editor();
-    jest.spyOn(editor, 'init').mockImplementation(() => {});
-    jest.spyOn(editor, 'showEditorModeActionMessage').mockImplementation(() => {});
+    vi.spyOn(editor, 'init').mockImplementation(() => {});
+    vi.spyOn(editor, 'showEditorModeActionMessage').mockImplementation(() => {});
   });
 
   it('should call init and update Config.EditorEnabled', () => {

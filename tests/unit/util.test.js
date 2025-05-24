@@ -11,7 +11,7 @@ describe("util", () => {
   });
 
   describe("getDateTimeISO", () => {
-    jest.useFakeTimers().setSystemTime(new Date("April 25, 2022 02:00:00"));
+    vi.useFakeTimers().setSystemTime(new Date("April 25, 2022 02:00:00"));
     it("returns a date string", () => {
       const result = getDateTimeISO();
       expect(result).toBe("2022-04-25T02:00:00.000Z");

@@ -23,12 +23,39 @@ const htmlContent = `
 </html>
 `;
 
-const dom = new JSDOM(htmlContent.trim());
+const dom = new JSDOM(htmlContent.trim(), { url: "https://example.com/" });
+
+global.window = dom.window;
+global.document = dom.window.document;
+
+beforeAll(() => {
+  const localStorageMock = (() => {
+    let store = {};
+    return {
+      getItem(key) {
+        return store[key] || null;
+      },
+      setItem(key, value) {
+        store[key] = String(value);
+      },
+      removeItem(key) {
+        delete store[key];
+      },
+      clear() {
+        store = {};
+      },
+    };
+  })();
+
+  Object.defineProperty(global, 'localStorage', {
+    value: localStorageMock,
+  });
+});
 
 const createMockEditorView = () => ({
   state: {},
-  dispatch: jest.fn(),
-  focus: jest.fn(),
+  dispatch: vi.fn(),
+  focus: vi.fn(),
   dom: dom.window.document.createElement("div"),
 });
 
@@ -44,7 +71,8 @@ describe("ToolbarView", () => {
     const mockEditorView = createMockEditorView();
     const toolbar = new ToolbarView("social", ["quote"], mockEditorView);
 
-    expect(toolbar.dom).toBeInstanceOf(HTMLElement);
+    expect(toolbar.dom).toHaveProperty('nodeType', 1);
+    expect(typeof toolbar.dom.tagName).toBe('string');
     expect(document.body.contains(toolbar.dom)).toBe(true);
     expect(toolbar.buttons).toHaveLength(1);
     expect(toolbar.buttons[0].button).toBe("quote");
