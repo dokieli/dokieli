@@ -6,10 +6,9 @@ envConfig();
 const config = {
   worker: 8,
   testDir: "./tests/e2e/browser",
-  // temp increase timeout 
-  timeout: 10000,
-  // timeout: 30 * 1000,
-  // timeout: 120 * 1000,
+  // FIXME: temp increase timeout - this is needed to complete login. Look into improving without increasing the timeout so much.
+  // timeout: 10000,
+  timeout: 120 * 1000,
   expect: {
     timeout: 5000,
   },
