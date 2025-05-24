@@ -18,7 +18,7 @@ export default [
     plugins: {
       jest: jestPlugin,
     },
-    ignores: ['node_modules', 'test-setup.js', 'scripts/', 'playwright-report/'],
+    ignores: ['node_modules', 'scripts/', 'playwright-report/'],
     settings: {
       jest: {
         version: 29,
