@@ -1,6 +1,4 @@
-import { jest } from "@jest/globals";
-
-export const mockFetch = jest.fn();
+export const mockFetch = vi.fn();
 
 export const mockFetchHandler = (responses = {}) => {
   return (input, options) => {
@@ -38,5 +36,5 @@ export const setupMockFetch = (responses) => {
 };
 
 export const resetMockFetch = () => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
 };
