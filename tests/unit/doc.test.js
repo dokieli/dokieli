@@ -26,11 +26,44 @@ import {
   getGraphData,
   parseMarkdown,
   serializeTableToText,
+  createLanguageHTML,
+  createInboxHTML,
+  createTestSuiteHTML,
+  createResourceTypeHTML,
+  createPublicationStatusHTML,
+  createInReplyToHTML,
+  createRDFaHTML,
+  createRDFaMarkObject,
+  getReferenceLabel,
 } from "../../src/doc";
 import Config from "../../src/config";
 import MockGrapoi from "../utils/mockGrapoi";
+import { domSanitize, generateAttributeId } from "../../src/util";
+import rdf from 'rdf-ext';
+
+vi.mock(import("../../src/util"), async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    generateAttributeId: vi.fn().mockReturnValue("generated-id"),
+  };
+});
 
 const ns = Config.ns;
+
+Config.PublicationStatus = {
+  "http://example.org/status/published": { name: "Published" },
+  "http://example.org/status/draft": { name: "Draft" },
+};
+
+Config.ResourceType = {
+  "http://example.org/type/article": { name: "Article" },
+};
+
+Config.MotivationSign = {
+  "oa:commenting": "Commenting",
+  "oa:liking": "Liking",
+};
 
 const htmlContent = `
 <!DOCTYPE html>
@@ -53,15 +86,60 @@ const htmlContent = `
   </body>
 </html>
 `;
+function normalizeHTML(html) {
+  return new JSDOM(html).serialize().replace(/\s+/g, " ").trim();
+}
+const dom = new JSDOM(htmlContent.trim(), { url: "https://example.com/" });
 
-const dom = new JSDOM(htmlContent.trim());
+global.window = dom.window;
+global.document = dom.window.document;
 
-//FIXME: Skipping for now.
-describe.skip("domToString", () => {
-  it("converts DOM to string correctly", () => {
-    expect(domToString(dom.window.document.documentElement).trim()).toBe(
-      htmlContent.replace(/<!DOCTYPE html>/i, "").trim()
-    );
+beforeAll(() => {
+  global.Config = {
+    ArticleNodeSelectors: ["article", "section"],
+    DocumentItems: ["doc-item"],
+  };
+  const localStorageMock = (() => {
+    let store = {};
+    return {
+      getItem(key) {
+        return store[key] || null;
+      },
+      setItem(key, value) {
+        store[key] = String(value);
+      },
+      removeItem(key) {
+        delete store[key];
+      },
+      clear() {
+        store = {};
+      },
+    };
+  })();
+
+  Object.defineProperty(global, "localStorage", {
+    value: localStorageMock,
+  });
+});
+
+describe("domToString", () => {
+  it("serializes a clean DOM", () => {
+    function normalizeWhitespace(str) {
+      return str.replace(/\s+/g, "").trim();
+    }
+    const htmlContent = `<!DOCTYPE html>
+<html>
+  <head><title>Test</title></head>
+  <body><p>Hello</p></body>
+</html>`;
+
+    const { window } = new JSDOM(htmlContent);
+    const cleanDocument = window.document;
+
+    const result = domToString(cleanDocument.documentElement).trim();
+    const expected = htmlContent.replace(/<!DOCTYPE html>\s*/, "").trim();
+
+    expect(normalizeWhitespace(result)).toBe(normalizeWhitespace(expected));
   });
 });
 
@@ -141,7 +219,7 @@ describe("createFeedXML", () => {
     description: "Test feed description",
     author: {
       uri: "https://example.com/author",
-      name: "Author Name"
+      name: "Author Name",
     },
     items: {
       "https://example.com/item1": {
@@ -150,15 +228,19 @@ describe("createFeedXML", () => {
         published: "2024-10-17T10:00:00Z",
         updated: "2024-10-17T11:00:00Z",
         author: [
-          { uri: "https://example.com/author", name: "Author Name", email: "author@example.com" }
-        ]
+          {
+            uri: "https://example.com/author",
+            name: "Author Name",
+            email: "author@example.com",
+          },
+        ],
       },
       "https://example.com/item2": {
         title: "Item 2",
         description: "Description of item 2",
         updated: "2024-10-16T10:00:00Z",
-      }
-    }
+      },
+    },
   };
 
   it("creates Atom XML feed", () => {
@@ -166,58 +248,79 @@ describe("createFeedXML", () => {
     const year = new Date().getFullYear();
 
     expect(result).toContain('<feed xmlns="http://www.w3.org/2005/Atom">');
-    expect(result).toContain('<title>Test Feed</title>');
-    expect(result).toContain('<link href="https://example.com/feed" rel="self" />');
-    expect(result).toContain(`<rights>Copyright ${year} Author Name . Rights and license are feed only.</rights>`);
-    expect(result).toContain('<generator uri="https://dokie.li/">dokieli</generator>');
+    expect(result).toContain("<title>Test Feed</title>");
+    expect(result).toContain(
+      '<link href="https://example.com/feed" rel="self" />'
+    );
+    expect(result).toContain(
+      `<rights>Copyright ${year} Author Name . Rights and license are feed only.</rights>`
+    );
+    expect(result).toContain(
+      '<generator uri="https://dokie.li/">dokieli</generator>'
+    );
 
-    expect(result).toContain('<entry>');
-    expect(result).toContain('<id>https://example.com/item1</id>');
-    expect(result).toContain('<title>Item 1</title>');
-    expect(result).toContain('<published>2024-10-17T10:00:00Z</published>');
-    expect(result).toContain('<updated>2024-10-17T11:00:00Z</updated>');
-    expect(result).toContain('<author>');
-    expect(result).toContain('<name>Author Name</name>');
-    expect(result).toContain('<email>author@example.com</email>');
-    expect(result).toContain('</entry>');
+    expect(result).toContain("<entry>");
+    expect(result).toContain("<id>https://example.com/item1</id>");
+    expect(result).toContain("<title>Item 1</title>");
+    expect(result).toContain("<published>2024-10-17T10:00:00Z</published>");
+    expect(result).toContain("<updated>2024-10-17T11:00:00Z</updated>");
+    expect(result).toContain("<author>");
+    expect(result).toContain("<name>Author Name</name>");
+    expect(result).toContain("<email>author@example.com</email>");
+    expect(result).toContain("</entry>");
 
-    expect(result).toContain('<entry>');
-    expect(result).toContain('<id>https://example.com/item2</id>');
-    expect(result).toContain('<title>Item 2</title>');
-    expect(result).toContain('<updated>2024-10-16T10:00:00Z</updated>');
-    expect(result).toContain('</entry>');
+    expect(result).toContain("<entry>");
+    expect(result).toContain("<id>https://example.com/item2</id>");
+    expect(result).toContain("<title>Item 2</title>");
+    expect(result).toContain("<updated>2024-10-16T10:00:00Z</updated>");
+    expect(result).toContain("</entry>");
   });
 
   it("creates RSS XML feed", () => {
-    const result = createFeedXML(feed, { contentType: "application/rss+xml" });    
+    const result = createFeedXML(feed, { contentType: "application/rss+xml" });
     const year = new Date().getFullYear();
 
     expect(result).toContain('<?xml version="1.0" encoding="utf-8"?>');
-    expect(result).toContain('<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">');
-    expect(result).toContain('<channel>');
-    expect(result).toContain('<title>Test Feed</title>');
-    expect(result).toContain('<link>https://example.com</link>');
-    expect(result).toContain('<description>Test feed description</description>');
-    expect(result).toContain(`<copyright>Copyright ${year} Author Name . Rights and license are feed only.</copyright>`);
-    expect(result).toContain('<generator>https://dokie.li/</generator>');
+    expect(result).toContain(
+      '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">'
+    );
+    expect(result).toContain("<channel>");
+    expect(result).toContain("<title>Test Feed</title>");
+    expect(result).toContain("<link>https://example.com</link>");
+    expect(result).toContain(
+      "<description>Test feed description</description>"
+    );
+    expect(result).toContain(
+      `<copyright>Copyright ${year} Author Name . Rights and license are feed only.</copyright>`
+    );
+    expect(result).toContain("<generator>https://dokie.li/</generator>");
 
-    expect(result).toContain('<item>');
-    expect(result).toContain('<guid>https://example.com/item1</guid>');
-    expect(result).toContain('<title>Item 1</title>');
-    expect(result).toContain('<pubDate>Thu, 17 Oct 2024 11:00:00 GMT</pubDate>');
-    expect(result).toContain('<description>Description of item 1</description>');
-    expect(result).toContain('<author>author@example.com (Author Name)</author>');
-    expect(result).toContain('</item>');
+    expect(result).toContain("<item>");
+    expect(result).toContain("<guid>https://example.com/item1</guid>");
+    expect(result).toContain("<title>Item 1</title>");
+    expect(result).toContain(
+      "<pubDate>Thu, 17 Oct 2024 11:00:00 GMT</pubDate>"
+    );
+    expect(result).toContain(
+      "<description>Description of item 1</description>"
+    );
+    expect(result).toContain(
+      "<author>author@example.com (Author Name)</author>"
+    );
+    expect(result).toContain("</item>");
 
-    expect(result).toContain('<item>');
-    expect(result).toContain('<guid>https://example.com/item2</guid>');
-    expect(result).toContain('<title>Item 2</title>');
-    expect(result).toContain('<pubDate>Wed, 16 Oct 2024 10:00:00 GMT</pubDate>');
-    expect(result).toContain('<description>Description of item 2</description>');
-    expect(result).toContain('</item>');
+    expect(result).toContain("<item>");
+    expect(result).toContain("<guid>https://example.com/item2</guid>");
+    expect(result).toContain("<title>Item 2</title>");
+    expect(result).toContain(
+      "<pubDate>Wed, 16 Oct 2024 10:00:00 GMT</pubDate>"
+    );
+    expect(result).toContain(
+      "<description>Description of item 2</description>"
+    );
+    expect(result).toContain("</item>");
   });
 });
-
 
 describe("dumpNode", () => {
   let options, skipAttributes, voidElements, noEsc;
@@ -308,16 +411,26 @@ describe("getDoctype", () => {
 });
 
 describe("getDocumentContentNode", () => {
-  it("should return body for HTMLDocument", () => {
-    const htmlDoc = document.implementation.createHTMLDocument();
-    expect(getDocumentContentNode(htmlDoc)).toBe(htmlDoc.body);
-  });
+  describe("getDocumentContentNode", () => {
+    it("should return body for HTMLDocument", () => {
+      const newDom = new JSDOM(`<!DOCTYPE html><html><body></body></html>`, {
+        url: "https://example.com/",
+      });
+      global.window = newDom.window;
+      global.document = newDom.window.document;
+      global.Document = newDom.window.Document;
+      global.HTMLElement = newDom.window.HTMLElement;
+      expect(getDocumentContentNode(document)).toBe(document.body);
+    });
 
-  it("should return first child for DocumentFragment", () => {
-    const fragment = document.createDocumentFragment();
-    const divNode = document.createElement("div");
-    fragment.appendChild(divNode);
-    expect(getDocumentContentNode(fragment)).toBe(divNode);
+    it("should return first child for DocumentFragment", () => {
+      const document = dom.window.document;
+
+      const fragment = new DocumentFragment();
+      const divNode = document.createElement("div");
+      fragment.appendChild(divNode);
+      expect(getDocumentContentNode(fragment)).toBe(divNode);
+    });
   });
 
   it("should return undefined for unknown document types", () => {
@@ -416,8 +529,15 @@ describe("selectArticleNode", () => {
   });
 
   it("should return default content node when no article node is found", () => {
-    const d = new JSDOM(`<body><section></section></body>`);
-    document = d.window.document;
+    const dom = new JSDOM(`<!DOCTYPE html><html><body></body></html>`, {
+      url: "https://example.com/",
+    });
+    const document = dom.window.document;
+
+    global.window = dom.window;
+    global.document = dom.window.document;
+    global.Document = dom.window.Document;
+    global.HTMLElement = dom.window.HTMLElement;
 
     const result = selectArticleNode(document.body);
     expect(result).toBe(document.body);
@@ -614,7 +734,6 @@ describe("getGraphData", () => {
   };
 
   it("should return correct graph data information", () => {
-    
     const data = [
       {
         subject: "http://example.com/document",
@@ -622,8 +741,8 @@ describe("getGraphData", () => {
         object: "http://www.w3.org/ns/ldp#RDFSource",
       },
     ];
-    
-    const s = new MockGrapoi(data)
+
+    const s = new MockGrapoi(data);
 
     const options = { subjectURI: "http://example.com/document" };
 
@@ -633,9 +752,8 @@ describe("getGraphData", () => {
   });
 });
 
-
-describe('serializeTableToText', () => {
-  it('should serialize table with thead and tbody into text format', () => {
+describe("serializeTableToText", () => {
+  it("should serialize table with thead and tbody into text format", () => {
     document.body.innerHTML = `
       <table>
         <thead>
@@ -648,17 +766,17 @@ describe('serializeTableToText', () => {
       </table>
     `;
 
-    const table = document.querySelector('table');
+    const table = document.querySelector("table");
 
     const result = serializeTableToText(table);
 
-    expect(result).toContain('Header 1');
-    expect(result).toContain('Data 1');
-    expect(result).toContain('Data 3');
-    expect(result).toContain('Data 4');
+    expect(result).toContain("Header 1");
+    expect(result).toContain("Data 1");
+    expect(result).toContain("Data 3");
+    expect(result).toContain("Data 4");
   });
 
-  it('should handle multiple tbodies correctly', () => {
+  it("should handle multiple tbodies correctly", () => {
     document.body.innerHTML = `
       <table>
         <thead>
@@ -673,17 +791,17 @@ describe('serializeTableToText', () => {
       </table>
     `;
 
-    const table = document.querySelector('table');
+    const table = document.querySelector("table");
 
     const result = serializeTableToText(table);
 
-    expect(result).toContain('Data 1');
-    expect(result).toContain('Data 3');
-    expect(result).toContain('Data 4');
-    expect(result.split('\n').length).toBeGreaterThan(1); 
+    expect(result).toContain("Data 1");
+    expect(result).toContain("Data 3");
+    expect(result).toContain("Data 4");
+    expect(result.split("\n").length).toBeGreaterThan(1);
   });
 
-  it('should return an empty string for tables without tbody', () => {
+  it("should return an empty string for tables without tbody", () => {
     document.body.innerHTML = `
       <table>
         <thead>
@@ -692,37 +810,372 @@ describe('serializeTableToText', () => {
       </table>
     `;
 
-    const table = document.querySelector('table');
+    const table = document.querySelector("table");
 
     const result = serializeTableToText(table);
 
-    expect(result).toContain('Header 1');
-    expect(result).not.toContain('Data');
+    expect(result).toContain("Header 1");
+    expect(result).not.toContain("Data");
   });
 });
 
-describe('parseMarkdown', () => {
-  it('should parse markdown into HTML without creating a document', () => {
-    const markdown = '# Test Markdown';
+describe("parseMarkdown", () => {
+  it("should parse markdown into HTML without creating a document", () => {
+    const markdown = "# Test Markdown";
     const result = parseMarkdown(markdown);
 
-    expect(result).toContain('<h1>Test Markdown</h1>');
+    expect(result).toContain("<h1>Test Markdown</h1>");
   });
 
-  it('should parse markdown and create an article element when createDocument is true', () => {
-    const markdown = '# Test Markdown';
+  it("should parse markdown and create an article element when createDocument is true", () => {
+    const markdown = "# Test Markdown";
     const options = { createDocument: true };
     const result = parseMarkdown(markdown, options);
 
-    expect(result).toContain('<article>');
-    expect(result).toContain('<h1>Test Markdown</h1>');
-    expect(result).toContain('</article>');
+    expect(result).toContain("<article>");
+    expect(result).toContain("<h1>Test Markdown</h1>");
+    expect(result).toContain("</article>");
   });
 
-  it('should parse markdown with HTML correctly', () => {
-    const markdown = 'Some <b>bold</b> text';
+  it("should parse markdown with HTML correctly", () => {
+    const markdown = "Some <b>bold</b> text";
     const result = parseMarkdown(markdown);
 
-    expect(result).toContain('<b>bold</b>');
+    expect(result).toContain("<b>bold</b>");
+  });
+});
+
+describe("createLanguageHTML", () => {
+  it("returns correct HTML for known language", () => {
+    const html = createLanguageHTML("en");
+    expect(normalizeHTML(html)).toContain("English");
+    expect(html).toContain("dcterms:language");
+  });
+
+  it("returns empty string for missing language", () => {
+    expect(createLanguageHTML()).toBe("");
+  });
+});
+
+describe("createInboxHTML", () => {
+  it("creates inbox HTML with correct rel", () => {
+    const html = createInboxHTML("https://example.org/inbox");
+    expect(html).toContain("ldp:inbox");
+    expect(html).toContain("https://example.org/inbox");
+  });
+});
+describe("createInReplyToHTML", () => {
+  it("creates correct in-reply-to HTML", () => {
+    const html = createInReplyToHTML("https://example.org/comment/1");
+    expect(html).toContain("as:inReplyTo");
+  });
+});
+
+describe("createPublicationStatusHTML", () => {
+  it("renders status with known label", () => {
+    const html = createPublicationStatusHTML(
+      "http://example.org/status/published"
+    );
+    expect(html).toContain("Published");
+    expect(html).toContain("pso:withStatus");
+  });
+});
+
+describe("createResourceTypeHTML", () => {
+  it("renders resource type", () => {
+    const html = createResourceTypeHTML("http://example.org/type/article");
+    expect(html).toContain("Article");
+    expect(html).toContain("rdf:type");
+  });
+});
+
+describe("createTestSuiteHTML", () => {
+  it("renders test suite HTML", () => {
+    const html = createTestSuiteHTML("https://example.org/tests");
+    expect(html).toContain("spec:testSuite");
+  });
+});
+
+describe("getReferenceLabel", () => {
+  it("returns # if motivatedBy is empty or unknown", () => {
+    expect(getReferenceLabel("")).toBe("#");
+    expect(getReferenceLabel(null)).toBe("#");
+    expect(getReferenceLabel("unknown")).toBe("#");
+  });
+
+  it("returns prefix label if motivatedBy is full URI with # fragment", () => {
+    expect(getReferenceLabel("http://example.org/oa#commenting")).toBe(
+      "Commenting"
+    );
+    expect(getReferenceLabel("http://example.org/oa#liking")).toBe("Liking");
+  });
+
+  it("returns label directly if motivatedBy is known prefix", () => {
+    expect(getReferenceLabel("oa:commenting")).toBe("Commenting");
+  });
+});
+
+describe("createRDFaMarkObject", () => {
+  it("returns correct element and attributes with defaults", () => {
+    const input = {};
+    const result = createRDFaMarkObject(input);
+
+    expect(result.element).toBe("a");
+    expect(result.attrs.about).toMatch("generated-id");
+    expect(result.attrs.property).toBe("rdfs:label");
+    expect(result.attrs.lang).toBeUndefined();
+    expect(result.attrs["xml:lang"]).toBeUndefined();
+    expect(result.attrs.datatype).toBeUndefined();
+  });
+
+  it("uses time element if datatype is xsd:dateTime", () => {
+    const input = { datatype: "xsd:dateTime" };
+    const result = createRDFaMarkObject(input);
+
+    expect(result.element).toBe("time");
+  });
+
+  it("uses span element if href is empty string", () => {
+    const input = { href: "" };
+    const result = createRDFaMarkObject(input);
+
+    expect(result.element).toBe("span");
+  });
+
+  it("sets datatype to undefined if lang is present", () => {
+    const input = { lang: "en", datatype: "someType" };
+    const result = createRDFaMarkObject(input);
+
+    expect(result.attrs.lang).toBe("en");
+    expect(result.attrs["xml:lang"]).toBe("en");
+    expect(result.attrs.datatype).toBeUndefined();
+  });
+
+  it("sets all attributes correctly when provided", () => {
+    const input = {
+      about: "aboutVal",
+      resource: "resourceVal",
+      typeof: "typeOfVal",
+      rel: "relVal",
+      property: "propVal",
+      href: "http://example.com",
+      content: "contentVal",
+      lang: "fr",
+      datatype: "datatypeVal",
+    };
+    const result = createRDFaMarkObject(input);
+
+    expect(result.attrs.about).toBe("aboutVal");
+    expect(result.attrs.resource).toBe("resourceVal");
+    expect(result.attrs["typeof"]).toBe("typeOfVal");
+    expect(result.attrs.rel).toBe("relVal");
+    expect(result.attrs.property).toBe("propVal");
+    expect(result.attrs.href).toBe("http://example.com");
+    expect(result.attrs.content).toBe("contentVal");
+    expect(result.attrs.lang).toBe("fr");
+    expect(result.attrs["xml:lang"]).toBe("fr");
+    expect(result.attrs.datatype).toBeUndefined(); // because lang present
+  });
+});
+
+describe("createRDFaHTML", () => {
+  it("returns span element if no datatype and href is empty string", () => {
+    const r = {
+      href: "",
+      rel: "",
+      about: "",
+      property: "",
+      resource: "",
+      content: "",
+      lang: "",
+      datatype: "",
+      typeOf: "",
+    };
+    const html = createRDFaHTML(r, "");
+    expect(html.startsWith("<span")).toBe(true);
+  });
+
+  it("returns time element if datatype is xsd:dateTime", () => {
+    const r = { datatype: "xsd:dateTime", textContent: "2023-01-01T00:00:00Z" };
+    const html = createRDFaHTML(r, "");
+    expect(html.startsWith("<time")).toBe(true);
+    expect(html).toContain("2023-01-01T00:00:00Z");
+  });
+
+  it("creates expanded HTML with defaults when about and property are missing", () => {
+    const r = {
+      rel: "relVal",
+      href: "http://example.com",
+      resource: "resVal",
+      content: "contVal",
+      lang: "en",
+      datatype: "",
+      typeOf: "typeOfVal",
+      textContent: "text",
+    };
+    const html = createRDFaHTML(r, "expanded");
+
+    expect(html).toContain('rel="relVal"');
+    expect(html).toContain('href="http://example.com"');
+    expect(html).toContain('resource="resVal"');
+    expect(html).toContain('content="contVal"');
+    expect(html).toContain('lang="en"');
+    expect(html).toContain('xml:lang="en"');
+    expect(html).toContain('property="rdfs:label"'); // default property
+    expect(html).toContain('typeof="typeOfVal"');
+    expect(html).toContain("text</a>");
+  });
+
+  it("creates expanded HTML with provided about and property", () => {
+    const r = {
+      about: "aboutVal",
+      property: "propVal",
+      rel: "relVal",
+      href: "link",
+      textContent: "abc",
+    };
+    const html = createRDFaHTML(r, "expanded");
+
+    expect(html).toContain('about="aboutVal"');
+    expect(html).toContain('property="propVal"');
+    expect(html).toContain('rel="relVal"');
+    expect(html).toContain('href="link"');
+    expect(html).toContain("abc</a>");
+  });
+});
+
+function getResourceInfoODRLPolicies(s) {
+  var info = {};
+  info['odrl'] = {};
+
+  var policy = s.out(ns.odrl.hasPolicy);
+
+  policy.values.forEach(policyIRI => {
+    info['odrl'][policyIRI] = {};
+
+    var policyGraph = s.node(rdf.namedNode(policyIRI));
+    var policyTypes = policyGraph.out(ns.rdf.type).values;
+
+    info['odrl'][policyIRI]['rdftype'] = policyTypes;
+
+    policyTypes.forEach(pT => {
+      if (pT == ns.odrl.Offer.value) {
+        var permissions = policyGraph.out(ns.odrl.permission).values;
+
+        permissions.forEach(permissionIRI => {
+          info['odrl'][policyIRI]['permission'] = {};
+          info['odrl'][policyIRI]['permission'][permissionIRI] = {};
+
+          var permissionGraph = s.node(rdf.namedNode(permissionIRI));
+
+          var permissionAssigner = permissionGraph.out(ns.odrl.assigner).values;
+          info['odrl'][policyIRI]['permission'][permissionIRI]['action'] = info['odrl']['permissionAssigner'] = permissionAssigner;
+
+          var permissionActions = permissionGraph.out(ns.odrl.action).values;
+          info['odrl'][policyIRI]['permission'][permissionIRI]['action'] = info['odrl']['permissionActions'] = permissionActions;
+        });
+      }
+
+      if (pT == ns.odrl.Agreement.value) {
+        var prohibition = policyGraph.out(ns.odrl.prohibition).values;
+
+        prohibition.forEach(prohibitionIRI => {
+          info['odrl'][policyIRI]['prohibition'] = {};
+          info['odrl'][policyIRI]['prohibition'][prohibitionIRI] = {};
+
+          var prohibitionGraph = s.node(rdf.namedNode(prohibitionIRI));
+
+          var prohibitionAssigner = prohibitionGraph.out(ns.odrl.assigner).values;
+          info['odrl'][policyIRI]['prohibition'][prohibitionIRI]['action'] = info['odrl']['prohibitionAssigner'] = prohibitionAssigner;
+
+          var prohibitionAssignee = prohibitionGraph.out(ns.odrl.assignee).values;
+          info['odrl'][policyIRI]['prohibition'][prohibitionIRI]['action'] = info['odrl']['prohibitionAssignee'] = prohibitionAssignee;
+
+          var prohibitionActions = prohibitionGraph.out(ns.odrl.action).values;
+          info['odrl'][policyIRI]['prohibition'][prohibitionIRI]['action'] = info['odrl']['prohibitionActions'] = prohibitionActions;
+        });
+      }
+    });
+  });
+
+  return info['odrl'];
+}
+
+describe('getResourceInfoODRLPolicies with MockGrapoi', () => {
+  it('processes Offer policies with permissions correctly', () => {
+    const policyIRI = 'http://example.org/policy/1';
+    const permissionIRI = 'http://example.org/permission/1';
+
+    const s = new MockGrapoi([
+      { subject: { value: 'root' }, predicate: ns.odrl.hasPolicy, object: { value: policyIRI } },
+      { subject: { value: policyIRI }, predicate: ns.rdf.type, object: { value: ns.odrl.Offer.value } },
+      { subject: { value: policyIRI }, predicate: ns.odrl.permission, object: { value: permissionIRI } },
+
+      { subject: { value: permissionIRI }, predicate: ns.odrl.assigner, object: { value: 'assigner1' } },
+      { subject: { value: permissionIRI }, predicate: ns.odrl.action, object: { value: 'action1' } },
+      { subject: { value: permissionIRI }, predicate: ns.odrl.action, object: { value: 'action2' } },
+    ]);
+
+    s.node('root');
+
+    const info = getResourceInfoODRLPolicies(s);
+
+    expect(info[policyIRI].rdftype).toEqual([ns.odrl.Offer.value]);
+    expect(Object.keys(info[policyIRI].permission)).toContain(permissionIRI);
+    expect(info[policyIRI].permission[permissionIRI].action).toEqual(['action1', 'action2']);
+    expect(info.permissionAssigner).toEqual(['assigner1']);
+    expect(info.permissionActions).toEqual(['action1', 'action2']);
+  });
+
+  it('processes Agreement policies with prohibitions correctly', () => {
+    const policyIRI = 'http://example.org/policy/2';
+    const prohibitionIRI = 'http://example.org/prohibition/1';
+
+    const s = new MockGrapoi([
+      { subject: { value: 'root' }, predicate: ns.odrl.hasPolicy, object: { value: policyIRI } },
+      { subject: { value: policyIRI }, predicate: ns.rdf.type, object: { value: ns.odrl.Agreement.value } },
+      { subject: { value: policyIRI }, predicate: ns.odrl.prohibition, object: { value: prohibitionIRI } },
+
+      { subject: { value: prohibitionIRI }, predicate: ns.odrl.assigner, object: { value: 'prohibitionAssigner1' } },
+      { subject: { value: prohibitionIRI }, predicate: ns.odrl.assignee, object: { value: 'prohibitionAssignee1' } },
+      { subject: { value: prohibitionIRI }, predicate: ns.odrl.action, object: { value: 'prohibitionAction1' } },
+      { subject: { value: prohibitionIRI }, predicate: ns.odrl.action, object: { value: 'prohibitionAction2' } },
+    ]);
+
+    s.node('root');
+
+    const info = getResourceInfoODRLPolicies(s);
+
+    expect(info[policyIRI].rdftype).toEqual([ns.odrl.Agreement.value]);
+    expect(Object.keys(info[policyIRI].prohibition)).toContain(prohibitionIRI);
+    expect(info[policyIRI].prohibition[prohibitionIRI].action).toEqual(['prohibitionAction1', 'prohibitionAction2']);
+    expect(info.prohibitionAssigner).toEqual(['prohibitionAssigner1']);
+    expect(info.prohibitionAssignee).toEqual(['prohibitionAssignee1']);
+    expect(info.prohibitionActions).toEqual(['prohibitionAction1', 'prohibitionAction2']);
+  });
+
+  it('returns empty object if no policies', () => {
+    const s = new MockGrapoi([]);
+    s.node('root');
+
+    const info = getResourceInfoODRLPolicies(s);
+
+    expect(info).toEqual({});
+  });
+  it('skips unknown policy types', () => {
+    const policyIRI = 'http://example.org/policy/3';
+  
+    const s = new MockGrapoi([
+      { subject: { value: 'root' }, predicate: ns.odrl.hasPolicy, object: { value: policyIRI } },
+      { subject: { value: policyIRI }, predicate: ns.rdf.type, object: { value: 'http://example.org/UnknownPolicyType' } },
+    ]);
+  
+    s.node('root');
+  
+    const info = getResourceInfoODRLPolicies(s);
+  
+    expect(info[policyIRI].rdftype).toEqual(['http://example.org/UnknownPolicyType']);
+    expect(info[policyIRI].permission).toBeUndefined();
+    expect(info[policyIRI].prohibition).toBeUndefined();
   });
 });
