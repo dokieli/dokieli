@@ -738,6 +738,7 @@ function putResourceWithAcceptPut(url, html, options) {
 }
 
 export {
+  authFetch,
   setAcceptRDFTypes,
   copyResource,
   currentLocation,
