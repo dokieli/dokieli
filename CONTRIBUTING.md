@@ -74,12 +74,12 @@ npx serve
 
 ### Unit tests
 
-dokieli uses [Jest](https://jestjs.io/) for unit tests. 
+dokieli uses [Vitest](https://vitest.dev/) for unit tests.
 
 To run unit tests, run:
 
 ```sh
-yarn test
+yarn test:unit
 ```
 
 Coverage reports are collected in `tests/coverage`.
@@ -97,6 +97,14 @@ yarn test:e2e
 Reports are collected in `playwright-report/`.
 
 Some tests require authentication. To run these tests, you will need to have an `.env` file with credentials. See the `.env.example` file.
+
+### Run all tests
+
+To run both unit and end-to-end browser tests, run:
+
+```sh
+yarn test
+```
 
 ## Code quality
 
