@@ -13,39 +13,27 @@ export default function MockGrapoi(triples = []) {
       throw new Error("No subject selected. Use `.node(subject)` first.");
     }
   
-    const results = Array.from(this.triples)
-      .filter((triple) => triple.subject === this.currentSubject)
-      .map((triple) => triple.object);
+    const subjectValue = typeof this.currentSubject === "string" ? this.currentSubject : this.currentSubject.value;
+    const predicateValue = predicate?.value ?? predicate;
   
-    if (predicate) {
-      const predicates = Array.isArray(predicate) ? predicate : [predicate];
-      return {
-        values: results.filter((result, index) =>
-          predicates.some(p => p.equals(this.triples[index].predicate))
-        ),
-        quads: () => this.triples.filter((triple) =>
-          predicates.some(p => p.equals(triple.predicate)) && triple.subject === this.currentSubject
-        ).map(triple => ({
-          subject: { value: triple.subject },
-          predicate: { value: triple.predicate },
-          object: { value: triple.object }
-        })),
-        distinct: () => ({ values: [...new Set(results)] }),
-      };
-    }
+    const results = this.triples
+      .filter(triple => triple.subject.value === subjectValue && (!predicate || triple.predicate.value === predicateValue))
+      .map(triple => triple.object.value);
   
     return {
       values: results,
-      quads: () => this.triples.filter((triple) =>
-        triple.subject === this.currentSubject
-      ).map(triple => ({
-        subject: { value: triple.subject },
-        predicate: { value: triple.predicate },
-        object: { value: triple.object }
-      })),
+      quads: () =>
+        this.triples
+          .filter(triple => triple.subject.value === subjectValue && (!predicate || triple.predicate.value === predicateValue))
+          .map(triple => ({
+            subject: { value: triple.subject.value },
+            predicate: { value: triple.predicate.value },
+            object: { value: triple.object.value },
+          })),
       distinct: () => ({ values: [...new Set(results)] }),
     };
   };
+  
   
   MockGrapoi.prototype.add = function (subject, predicate, object) {
     this.triples.push({ subject, predicate, object });
