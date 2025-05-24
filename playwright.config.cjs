@@ -24,7 +24,7 @@ const config = {
     actionTimeout: 0,
     baseURL: "http://localhost:3000",
     trace: "on-first-retry",
-    video: "on",
+    video: "on-first-retry",
   },
   projects: [
     {
@@ -32,7 +32,7 @@ const config = {
       use: {
         ...devices["Desktop Chrome"],
       },
-    }/*,
+    },
     {
       name: "firefox",
       use: {
@@ -52,12 +52,12 @@ const config = {
         ...devices["Pixel 5"],
       },
     },
-    // {
-    //   name: "Mobile Safari",
-    //   use: {
-    //     ...devices["iPhone 12"],
-    //   },
-    // },
+    {
+      name: "Mobile Safari",
+      use: {
+        ...devices["iPhone 12"],
+      },
+    },
     {
       name: "Microsoft Edge",
       use: {
@@ -69,7 +69,7 @@ const config = {
       use: {
         channel: "chrome",
       },
-    },*/
+    },
   ],
   outputDir: "test-results/",
 };
