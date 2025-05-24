@@ -177,7 +177,7 @@ test("clicking on the memento button displays memento modal", async ({
 });
 
 
-test.only("clicking on the robustify links button displays robustify links modal", async ({
+test("clicking on the robustify links button displays robustify links modal", async ({
   page,
   isMobile,
 }) => {
