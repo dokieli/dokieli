@@ -3,6 +3,7 @@ import {
   setAcceptRDFTypes,
   getResourceHead,
   getResourceOptions,
+  authFetch
 } from "src/fetcher";
 import { setupMockFetch, resetMockFetch, mockFetch } from "../utils/mockFetch";
 import { Session } from "@uvdsl/solid-oidc-client-browser";
@@ -12,8 +13,8 @@ Config['Session'] = new Session();
 
 describe("fetcher", () => {
   beforeEach(() => {
-    jest.spyOn(global, "fetch").mockImplementation(mockFetch);
-    // jest.spyOn(Session, "authFetch").mockImplementation(mockFetch);
+    vi.spyOn(global, "fetch").mockImplementation(mockFetch);
+    // vi.spyOn(Session, "authFetch").mockImplementation(mockFetch);
   });
 
   afterEach(() => {
@@ -118,7 +119,7 @@ describe("fetcher", () => {
       const options = {};
 
       // Mock the fetch function to resolve with a response that is ok
-      jest.spyOn(global, "fetch").mockResolvedValue({
+      vi.spyOn(global, "fetch").mockResolvedValue({
         ok: true,
         status: 200,
         statusText: "OK",
@@ -136,7 +137,7 @@ describe("fetcher", () => {
       const options = {};
 
       // Mock the fetch function to resolve with a response
-      jest.spyOn(global, "fetch").mockResolvedValue({
+      vi.spyOn(global, "fetch").mockResolvedValue({
         ok: true,
         status: 200,
         statusText: "OK",
@@ -155,7 +156,7 @@ describe("fetcher", () => {
       const options = {};
 
       // Mock the fetch function to resolve with a response that is not ok
-      jest.spyOn(global, "fetch").mockResolvedValue({
+      vi.spyOn(global, "fetch").mockResolvedValue({
         ok: false,
         status: 404,
         statusText: "Not Found",
@@ -171,7 +172,7 @@ describe("fetcher", () => {
       const options = { header: "X-Custom-Header" };
 
       // Mock the fetch function to resolve with a response
-      jest.spyOn(global, "fetch").mockResolvedValue({
+      vi.spyOn(global, "fetch").mockResolvedValue({
         ok: true,
         status: 200,
         statusText: "OK",
@@ -190,7 +191,7 @@ describe("fetcher", () => {
       const options = { header: "X-Custom-Header" };
 
       // Mock the fetch function to resolve with a response
-      jest.spyOn(global, "fetch").mockResolvedValue({
+      vi.spyOn(global, "fetch").mockResolvedValue({
         ok: true,
         status: 200,
         statusText: "OK",
@@ -203,5 +204,70 @@ describe("fetcher", () => {
 
       expect(result).toEqual({ headers: "custom-value" });
     });
+  });
+});
+
+
+describe('authFetch', () => {
+  test('should call Config.Session.authFetch with a Request object', async () => {
+    const url = 'http://example.com/protected-resource';
+    const options = { method: 'GET', headers: { Authorization: 'Bearer token' } };
+
+    const mockAuthFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ message: 'success' }),
+    });
+
+    Config['Session'].authFetch = mockAuthFetch;
+
+    const response = await authFetch(url, options);
+
+    expect(mockAuthFetch).toHaveBeenCalledTimes(1);
+
+    const calledRequest = mockAuthFetch.mock.calls[0][0];
+    expect(calledRequest).toBeInstanceOf(Request);
+    expect(calledRequest.url).toBe(url);
+    expect(calledRequest.method).toBe(options.method);
+    expect(calledRequest.headers.get('Authorization')).toBe('Bearer token');
+
+    expect(response.ok).toBe(true);
+    expect(response.status).toBe(200);
+
+    const data = await response.json();
+    expect(data).toEqual({ message: 'success' });
+  });
+});
+
+describe("setAcceptRDFTypes", () => {
+  beforeAll(() => {
+    Config.MediaTypes = {
+      RDF: [
+        "text/turtle",
+        "application/ld+json",
+        "application/activity+json",
+        "text/html",
+        "image/svg+xml",
+        "application/rdf+xml"
+      ],
+      Markup: [
+        "text/html",
+        "image/svg+xml"
+      ]
+    };
+  });
+
+  test("returns all RDF media types with markup types weighted when excludeMarkup is false or omitted", () => {
+    const result = setAcceptRDFTypes();
+    expect(result).toBe(
+      "text/turtle,application/ld+json,application/activity+json,text/html;q=0.9,image/svg+xml;q=0.9,application/rdf+xml"
+    );
+  });
+
+  test("excludes markup media types when excludeMarkup is true", () => {
+    const result = setAcceptRDFTypes({ excludeMarkup: true });
+    expect(result).toBe(
+      "text/turtle,application/ld+json,application/activity+json,application/rdf+xml"
+    );
   });
 });
