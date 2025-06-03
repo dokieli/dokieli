@@ -317,3 +317,70 @@ export function getButtonHTML({
 
   return `<button${ariaLabel}${className}${disabled}${rel}${resource}${title}${type}>${buttonContent}</button>`;
 }
+
+const enablementPredicates = {
+  '#document-do .resource-share': ({ isAuthenticated, isOnline, isLocalhost }) => {
+    const hasControlAccess = accessModeAllowed(null, 'control');
+    if (!isAuthenticated || !hasControlAccess) return false;
+
+    if (!isOnline && !isLocalhost) return false;
+
+    return true;
+  },
+
+  '#document-do .resource-save': ({ isAuthenticated, isOnline }) => {
+    const hasWriteAccess = hasAccessModes?.includes?.('write');
+    return hasWriteAccess && (isAuthenticated || isOnline);
+  },
+
+  '#document-do .resource-delete': ({ init, isOnline, isLocalhost }) => {
+    if (init) {
+      return false;
+    }
+    else {
+      const hasWriteAccess = accessModeAllowed(null, 'write');
+
+    if (!hasWriteAccess) {
+        return false;
+      }
+      if (!isOnline && !isLocalhost) {
+        return false;
+      }
+      else {
+        return true;
+      }
+    }
+  },
+
+  '#document-do .resource-new': () => true,
+
+  //XXX: For now.
+  'default': () => true
+};
+
+function isButtonEnabled(selector, context) {
+
+  const fn = enablementPredicates[selector] || enablementPredicates['default'];
+
+  return fn(context);
+}
+
+function updateButtons(selectors, context) {
+  const updates = selectors.map(selector => document.querySelector(selector)).filter(Boolean);
+
+  updates.forEach(node => {
+    const buttonEnabled = isButtonEnabled(selector, context);
+
+    if (node.disabled === !buttonEnabled) return;
+
+    node.disabled = !buttonEnabled;
+  });
+}
+
+// const context = {
+//   isAuthenticated: false,
+//   isOnline: false,
+//   isLocalhost: true,
+// }
+
+// updateButtons([buttonSelectors], context);
