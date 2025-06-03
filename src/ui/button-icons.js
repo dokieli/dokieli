@@ -1,3 +1,4 @@
+import { accessModeAllowed } from "../doc.js";
 import { Icon} from "./icons.js";
 
 export const buttonIcons = {
