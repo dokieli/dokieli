@@ -238,11 +238,6 @@ function isLocalhost(urlString) {
   }
 }
 
-function isOnline() {
-  return navigator.onLine;
-}
-
-
 function svgToDataURI(svg, options = {}) {
   svg = svg
     .replace(/ class="[^"]*"/g, '')
@@ -286,6 +281,5 @@ export {
   isHttpsProtocol,
   isFileProtocol,
   isLocalhost,
-  isOnline,
   svgToDataURI
 };

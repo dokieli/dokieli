@@ -349,6 +349,10 @@ function getIconsFromCurrentDocument() {
   return newIcons;
 }
 
+function isOnline() {
+  return navigator.onLine;
+}
+
 export {
   debounce,
   uniqueArray,
@@ -376,5 +380,6 @@ export {
   domSanitize,
   sanitizeObject,
   tranformIconstoCSS,
-  getIconsFromCurrentDocument
+  getIconsFromCurrentDocument,
+  isOnline
 };
