@@ -6308,7 +6308,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
                 DO.U.setDocumentURL(iri);
                 var documentURL = DO.C.DocumentURL;
-                DO.C['Resource'][documentURL] = Config['Resource'][documentURL] || {};
+                DO.C['Resource'][documentURL] = DO.C['Resource'][documentURL] || {};
 
                 var spawnOptions = {};
 
