@@ -2081,7 +2081,7 @@ function getResourceSupplementalInfo (documentURL, options) {
   options = options || {};
   options['reuse'] = options['reuse'] === true ? true : false;
   options['followLinkRelationTypes'] = options['followLinkRelationTypes'] || [];
-  var checkHeaders = ['wac-allow', 'link', 'last-modified'];
+  var checkHeaders = ['wac-allow', 'link', 'last-modified', 'etag', 'expires'];
 
   //TODO: Add `acl` and `http://www.w3.org/ns/solid/terms#storageDescription` to `linkRelationTypesOfInterest` and process them.
 
