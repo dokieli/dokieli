@@ -225,6 +225,11 @@ function isFileProtocol(urlString) {
   }
 }
 
+function isOnline() {
+  return navigator.onLine;
+}
+
+
 function svgToDataURI(svg, options = {}) {
   svg = svg
     .replace(/ class="[^"]*"/g, '')
@@ -267,5 +272,6 @@ export {
   isHttpOrHttpsProtocol,
   isHttpsProtocol,
   isFileProtocol,
+  isOnline,
   svgToDataURI
 };
