@@ -1761,6 +1761,29 @@ DO = {
       });
     },
 
+    monitorNetworkStatus: function() {
+      const onlineFeatures = [
+        'resource-save',
+        'snapshot-internet-archive',
+        'resource-delete'
+      ];
+
+      // const isLocalhost = isOnline();
+
+      window.addEventListener('online', () => {
+        onlineFeatures.forEach(i => {
+
+        })
+      });
+
+      window.addEventListener('offline', () => {
+        // if (isLocalhost) { return; }
+
+        onlineFeatures.forEach(i => {
+
+        })
+      });
+    },
 
     showDocumentInfo: function() {
       document.body.appendChild(fragmentFromString(`<menu class="do" id="document-menu" role="toolbar">${DO.C.Button.OpenMenu}<div><section id="user-info"></section></div></menu>`));
