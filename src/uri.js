@@ -225,6 +225,19 @@ function isFileProtocol(urlString) {
   }
 }
 
+function isLocalhost(urlString) {
+  try {
+    const url = new URL(urlString);
+    if (url.hostname === 'localhost' ||
+        url.hostname.endsWith('.localhost') ||
+        url.hostname === '128.0.0.1') {
+      return true;
+    }
+  } catch {
+    return false;
+  }
+}
+
 function isOnline() {
   return navigator.onLine;
 }
@@ -272,6 +285,7 @@ export {
   isHttpOrHttpsProtocol,
   isHttpsProtocol,
   isFileProtocol,
+  isLocalhost,
   isOnline,
   svgToDataURI
 };
