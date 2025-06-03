@@ -28,6 +28,7 @@ export default {
       DO.U.initEditor();
       DO.U.initMath();
       DO.U.initSlideshow();
+      DO.U.monitorNetworkStatus();
     }
   },
   DocumentURL: '',
