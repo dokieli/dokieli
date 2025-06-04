@@ -320,8 +320,13 @@ export function getButtonHTML({
 }
 
 const enablementPredicates = {
-  '#document-do .resource-share': ({ isAuthenticated, isOnline, isLocalhost }) => {
+  '#document-do .resource-share': ({ init, isAuthenticated, isOnline, isLocalhost }) => {
+    if (init) {
+      return false;
+    }
+
     const hasControlAccess = accessModeAllowed(null, 'control');
+
     if (!isAuthenticated || !hasControlAccess) return false;
 
     if (!isOnline && !isLocalhost) return false;
@@ -329,28 +334,32 @@ const enablementPredicates = {
     return true;
   },
 
-  '#document-do .resource-save': ({ isAuthenticated, isOnline }) => {
-    const hasWriteAccess = hasAccessModes?.includes?.('write');
-    return hasWriteAccess && (isAuthenticated || isOnline);
-  },
-
-  '#document-do .resource-delete': ({ init, isOnline, isLocalhost }) => {
+  '#document-do .resource-save': ({ init, isAuthenticated, isOnline, isLocalhost }) => {
     if (init) {
       return false;
     }
-    else {
-      const hasWriteAccess = accessModeAllowed(null, 'write');
 
-    if (!hasWriteAccess) {
-        return false;
-      }
-      if (!isOnline && !isLocalhost) {
-        return false;
-      }
-      else {
-        return true;
-      }
+    const hasWriteAccess = accessModeAllowed(null, 'write');
+
+    if (!isAuthenticated || !hasWriteAccess) return false;
+
+    if (!isOnline && !isLocalhost) return false;
+
+    return true;
+  },
+
+  '#document-do .resource-delete': ({ init, isAuthenticated, isOnline, isLocalhost }) => {
+    if (init) {
+      return false;
     }
+
+    const hasWriteAccess = accessModeAllowed(null, 'write');
+
+    if (!isAuthenticated || !hasWriteAccess) return false;
+
+    if (!isOnline && !isLocalhost) return false;
+
+    return true;
   },
 
   '#document-do .resource-new': () => true,
@@ -359,14 +368,14 @@ const enablementPredicates = {
   'default': () => true
 };
 
-function isButtonEnabled(selector, context) {
+export function isButtonEnabled(selector, context) {
 
   const fn = enablementPredicates[selector] || enablementPredicates['default'];
 
   return fn(context);
 }
 
-function updateButtons(selectors, context) {
+export function updateButtons(selectors, context) {
   const updates = selectors.map(selector => document.querySelector(selector)).filter(Boolean);
 
   updates.forEach(node => {
@@ -377,11 +386,3 @@ function updateButtons(selectors, context) {
     node.disabled = !buttonEnabled;
   });
 }
-
-// const context = {
-//   isAuthenticated: false,
-//   isOnline: false,
-//   isLocalhost: true,
-// }
-
-// updateButtons([buttonSelectors], context);

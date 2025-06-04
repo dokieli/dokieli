@@ -8,7 +8,7 @@
 
 import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceGraph, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource } from './fetcher.js'
 import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, buttonClose, buttonInfo, notificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, getButtonDisabledHTML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getLanguageOptionsHTML, getLicenseOptionsHTML, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown, getReferenceLabel, createNoteDataHTML, isButtonDisabled, hasNonWhitespaceText, buttonSignIn, buttonSignOut } from './doc.js'
-import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, generateDataURI, getMediaTypeURIs, isHttpOrHttpsProtocol, isFileProtocol } from './uri.js'
+import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, generateDataURI, getMediaTypeURIs, isHttpOrHttpsProtocol, isFileProtocol, isLocalhost } from './uri.js'
 import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes, filterQuads, getAgentTypeIndex } from './graph.js'
 import { notifyInbox, sendNotifications } from './inbox.js'
 import { uniqueArray, fragmentFromString, generateAttributeId, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, isValidISBN, findPreviousDateTime, domSanitize, sanitizeObject, escapeRDFLiteral, tranformIconstoCSS, getIconsFromCurrentDocument, isOnline } from './util.js'
@@ -1762,26 +1762,34 @@ DO = {
     },
 
     monitorNetworkStatus: function() {
-      const onlineFeatures = [
-        'resource-save',
-        'snapshot-internet-archive',
-        'resource-delete'
+      const buttonSelectors = [
+        '#document-do .resource-save',
+        '#document-do .snapshot-internet-archive',
+        '#document-do .resource-delete'
       ];
 
-      // const isLocalhost = isOnline();
-
       window.addEventListener('online', () => {
-        onlineFeatures.forEach(i => {
+        console.log('online');
 
-        })
+        const context = {
+          isAuthenticated: Config['Session'].isActive,
+          isOnline: true,
+          isLocalhost: isLocalhost(DO.C.DocumentURL)
+        }
+
+        updateButtons([buttonSelectors], context);
       });
 
       window.addEventListener('offline', () => {
-        // if (isLocalhost) { return; }
+        console.log('offline');
 
-        onlineFeatures.forEach(i => {
+        const context = {
+          isAuthenticated: Config['Session'].isActive,
+          isOnline: false,
+          isLocalhost: isLocalhost(DO.C.DocumentURL)
+        }
 
-        })
+        updateButtons([buttonSelectors], context);
       });
     },
 
