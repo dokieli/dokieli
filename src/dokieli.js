@@ -25,7 +25,7 @@ import LinkHeader from 'http-link-header';
 import rdf from 'rdf-ext';
 import Config from './config.js';
 import { Editor } from './editor/editor.js';
-import { getButtonHTML } from './ui/button-icons.js'
+import { initButtons, getButtonHTML, updateButtons } from './ui/button-icons.js'
 
 const ns = Config.ns;
 let DO;
@@ -36,6 +36,8 @@ DO = {
   C: Config,
 
   U: {
+    initButtons: initButtons,
+
     getItemsList: function(url, options) {
       url = url || currentLocation();
       options = options || {};
@@ -1772,7 +1774,7 @@ DO = {
         console.log('online');
 
         const context = {
-          isAuthenticated: Config['Session'].isActive,
+          // isAuthenticated: Config['Session'].isActive,
           isOnline: true,
           isLocalhost: isLocalhost(DO.C.DocumentURL)
         }
@@ -1784,7 +1786,7 @@ DO = {
         console.log('offline');
 
         const context = {
-          isAuthenticated: Config['Session'].isActive,
+          // isAuthenticated: Config['Session'].isActive,
           isOnline: false,
           isLocalhost: isLocalhost(DO.C.DocumentURL)
         }
@@ -3953,8 +3955,8 @@ console.log(reason);
       //TODO: Use DO.C.Editor.mode and getButtonHTML instead
       if (DO.C.EditorAvailable) {
         var editFile = (DO.C.EditorEnabled && DO.C.Editor.mode == 'author')
-          ? DO.C.Editor.DisableEditorButton
-          : DO.C.Editor.EnableEditorButton;
+          ? DO.C.Button.DisableEditor
+          : DO.C.Button.EnableEditor;
         s += '<li>' + editFile + '</li>';
       }
 
@@ -4000,7 +4002,7 @@ console.log(reason);
         var documentURL = DO.C.DocumentURL;
         if (b) {
           var node = b.closest('li');
-          b.outerHTML = DO.C.Editor.EnableEditorButton;
+          b.outerHTML = DO.C.Button.EnableEditor;
           DO.U.hideDocumentMenu();
           DO.Editor.toggleEditor('social');
           hideAutoSaveStorage(node.querySelector('#autosave-items'), documentURL);
@@ -4009,7 +4011,7 @@ console.log(reason);
           b = e.target.closest('button.editor-enable');
           if (b) {
             node = b.closest('li');
-            b.outerHTML = DO.C.Editor.DisableEditorButton;
+            b.outerHTML = DO.C.Button.DisableEditor;
             DO.U.hideDocumentMenu();
             DO.Editor.toggleEditor('author');
             showAutoSaveStorage(node, documentURL);

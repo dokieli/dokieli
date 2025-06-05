@@ -1,6 +1,5 @@
 'use strict'
 
-import { getButtonHTML } from './ui/button-icons.js';
 import rdf from 'rdf-ext';
 
 /**
@@ -11,6 +10,7 @@ export default {
   init: function(url) {
     var contentNode = DO.U?.getContentNode(document);
     if (contentNode) {
+      DO.U.initButtons();
       DO.U.initAuth();
       DO.U.setDocumentURL(url);
       DO.U.setDocumentString();
@@ -31,6 +31,7 @@ export default {
       DO.U.monitorNetworkStatus();
     }
   },
+  Button: {},
   DocumentURL: '',
   DocumentString: '',
   Resource: {},
@@ -69,8 +70,7 @@ export default {
   },
   MessageLog: [],
   AvatarSize: 48,
-  DisableLocalStorageButtons: getButtonHTML({ button: 'local-storage', buttonClass: 'local-storage-disable-html', buttonTextContent: 'Local Storage', buttonTitle: 'Disable local storage (temporary) in the browser', iconSize: 'fa-2x' }),
-  EnableLocalStorageButtons: getButtonHTML({ button: 'local-storage', buttonClass: 'local-storage-enable-html', buttonTextContent: 'Local Storage', buttonTitle: 'Enable local storage (temporary) in the browser', iconSize: 'fa-2x' }),
+
   CDATAStart: '//<![CDATA[',
   CDATAEnd: '//]]>',
   SortableList: false,
@@ -84,9 +84,6 @@ export default {
     headings: ["h1", "h2", "h3", "h4", "h5", "h6"],
     regexEmptyHTMLTags: /<[^\/>][^>]*><\/[^>]+>/gim,
     mode: 'social',
-    ButtonLabelType: 'fontawesome',
-    DisableEditorButton: getButtonHTML({ button: 'cursor', buttonClass: 'editor-disable', buttonTextContent: 'Edit', buttonTitle: 'Disable editor', iconSize: 'fa-2x' }),
-    EnableEditorButton: getButtonHTML({ button: 'cursor', buttonClass: 'editor-enable', buttonTextContent: 'Edit', buttonTitle: 'Enable editor', iconSize: 'fa-2x' }),
     Placeholder: {
       h1: 'Title',
       h2: 'Section title',
@@ -94,15 +91,6 @@ export default {
       h4: 'Sub-sub-section title',
       p: 'Cogito, ergo sum.'
     },
-  },
-  Button: {
-    Close: getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close', buttonTitle: 'Close', iconSize: 'fa-2x' }),
-    Delete: getButtonHTML({ button: 'delete', buttonClass: 'delete', buttonTitle: 'Delete' }),
-    Toggle: getButtonHTML({ button: 'toggle', buttonClass: 'toggle', buttonTitle: 'Show/Hide' }),
-    More: getButtonHTML({ button: 'more', buttonClass: 'more', buttonTitle: 'Show more' }),
-    Clipboard: getButtonHTML({ button: 'clipboard', buttonClass: 'do copy-to-clipboard', buttonTitle: 'Copy to clipboard' }),
-    OpenMenu: getButtonHTML({ button: 'bars', buttonClass: 'show', buttonTitle: 'Open menu' }),
-    CloseMenu: getButtonHTML({ button: 'minus', buttonClass: 'hide', buttonTitle: 'Close menu' }),
   },
   //TODO: Use a single object for Button, ButtonInfo, ButtonStates?
   ButtonInfo: {

@@ -1,5 +1,66 @@
 import { accessModeAllowed } from "../doc.js";
 import { Icon} from "./icons.js";
+import Config from "../config.js";
+
+export function initButtons() {
+  Config.Button = {
+    Close: getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close', buttonTitle: 'Close', iconSize: 'fa-2x' }),
+    Delete: getButtonHTML({ button: 'delete', buttonClass: 'delete', buttonTitle: 'Delete' }),
+    Toggle: getButtonHTML({ button: 'toggle', buttonClass: 'toggle', buttonTitle: 'Show/Hide' }),
+    More: getButtonHTML({ button: 'more', buttonClass: 'more', buttonTitle: 'Show more' }),
+    Clipboard: getButtonHTML({ button: 'clipboard', buttonClass: 'do copy-to-clipboard', buttonTitle: 'Copy to clipboard' }),
+    OpenMenu: getButtonHTML({ button: 'bars', buttonClass: 'show', buttonTitle: 'Open menu' }),
+    CloseMenu: getButtonHTML({ button: 'minus', buttonClass: 'hide', buttonTitle: 'Close menu' }),
+    DisableEditor: getButtonHTML({ button: 'cursor', buttonClass: 'editor-disable', buttonTextContent: 'Edit', buttonTitle: 'Disable editor', iconSize: 'fa-2x' }),
+    EnableEditor: getButtonHTML({ button: 'cursor', buttonClass: 'editor-enable', buttonTextContent: 'Edit', buttonTitle: 'Enable editor', iconSize: 'fa-2x' })
+  }
+}
+
+//Given a button action, generates an HTML string for the button including an icon and text.
+export function getButtonHTML({
+  button,
+  buttonClass,
+  buttonLabel,
+  buttonDisabled,
+  buttonRel,
+  buttonResource,
+  buttonTitle,
+  buttonTextContent,
+  buttonType,
+  iconSize }) {
+
+  if (!button) {
+      throw new Error('`button` identifier is required.');
+  }
+
+  const titleContent = buttonTitle || buttonIcons[button]?.title || button;
+  const title = ` title="${titleContent}"`;
+  const textContent = buttonTextContent || buttonIcons[button]?.textContent;
+  const label = buttonLabel || titleContent;
+  const ariaLabel = (label && !textContent) ? ` aria-label="${label}"` : '';
+  const className = buttonClass ? ` class="${buttonClass}"` : '';
+  const disabled = buttonDisabled ? ` disabled=""` : '';
+  let icon = buttonIcons[button]?.icon;
+  const rel = buttonRel ? ` rel="${buttonRel}"` : '';
+  const resource = buttonResource ? ` resource="${buttonResource}"` : '';
+  const type = buttonType ? ` type="${buttonType}"` : '';
+
+  if (icon) {
+    let parser = new DOMParser();
+    let doc = parser.parseFromString(icon, 'image/svg+xml');
+    let svgElement = doc.querySelector('svg');
+    svgElement.setAttribute('aria-hidden', 'true');
+    if (iconSize) {
+      svgElement.classList.add(iconSize);
+    }
+    icon = new XMLSerializer().serializeToString(svgElement);
+  }
+
+  const buttonContent = (!icon && !textContent) ? button : `${icon ? icon : ''} ${textContent ? `<span>${textContent}</span>` : ''}`;
+
+  return `<button${ariaLabel}${className}${disabled}${rel}${resource}${title}${type}>${buttonContent}</button>`;
+}
+
 
 export const buttonIcons = {
   p: {
@@ -274,51 +335,6 @@ export const buttonIcons = {
   }
 }
 
-//Given a button action, generates an HTML string for the button including an icon and text.
-export function getButtonHTML({
-  button,
-  buttonClass,
-  buttonLabel,
-  buttonDisabled,
-  buttonRel,
-  buttonResource,
-  buttonTitle,
-  buttonTextContent,
-  buttonType,
-  iconSize }) {
-
-  if (!button) {
-      throw new Error('`button` identifier is required.');
-  }
-
-  const titleContent = buttonTitle || buttonIcons[button]?.title || button;
-  const title = ` title="${titleContent}"`;
-  const textContent = buttonTextContent || buttonIcons[button]?.textContent;
-  const label = buttonLabel || titleContent;
-  const ariaLabel = (label && !textContent) ? ` aria-label="${label}"` : '';
-  const className = buttonClass ? ` class="${buttonClass}"` : '';
-  const disabled = buttonDisabled ? ` disabled=""` : '';
-  let icon = buttonIcons[button]?.icon;
-  const rel = buttonRel ? ` rel="${buttonRel}"` : '';
-  const resource = buttonResource ? ` resource="${buttonResource}"` : '';
-  const type = buttonType ? ` type="${buttonType}"` : '';
-
-  if (icon) {
-    let parser = new DOMParser();
-    let doc = parser.parseFromString(icon, 'image/svg+xml');
-    let svgElement = doc.querySelector('svg');
-    svgElement.setAttribute('aria-hidden', 'true');
-    if (iconSize) {
-      svgElement.classList.add(iconSize);
-    }
-    icon = new XMLSerializer().serializeToString(svgElement);
-  }
-
-  const buttonContent = (!icon && !textContent) ? button : `${icon ? icon : ''} ${textContent ? `<span>${textContent}</span>` : ''}`;
-
-  return `<button${ariaLabel}${className}${disabled}${rel}${resource}${title}${type}>${buttonContent}</button>`;
-}
-
 const enablementPredicates = {
   '#document-do .resource-share': ({ init, isAuthenticated, isOnline, isLocalhost }) => {
     if (init) {
@@ -369,7 +385,6 @@ const enablementPredicates = {
 };
 
 export function isButtonEnabled(selector, context) {
-
   const fn = enablementPredicates[selector] || enablementPredicates['default'];
 
   return fn(context);
