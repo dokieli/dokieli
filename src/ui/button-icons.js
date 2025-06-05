@@ -1,6 +1,7 @@
 import { accessModeAllowed } from "../doc.js";
 import { Icon} from "./icons.js";
 import Config from "../config.js";
+import { isLocalhost } from "../uri.js";
 
 export function initButtons() {
   Config.Button = {
@@ -12,7 +13,22 @@ export function initButtons() {
     OpenMenu: getButtonHTML({ button: 'bars', buttonClass: 'show', buttonTitle: 'Open menu' }),
     CloseMenu: getButtonHTML({ button: 'minus', buttonClass: 'hide', buttonTitle: 'Close menu' }),
     DisableEditor: getButtonHTML({ button: 'cursor', buttonClass: 'editor-disable', buttonTextContent: 'Edit', buttonTitle: 'Disable editor', iconSize: 'fa-2x' }),
-    EnableEditor: getButtonHTML({ button: 'cursor', buttonClass: 'editor-enable', buttonTextContent: 'Edit', buttonTitle: 'Enable editor', iconSize: 'fa-2x' })
+    EnableEditor: getButtonHTML({ button: 'cursor', buttonClass: 'editor-enable', buttonTextContent: 'Edit', buttonTitle: 'Enable editor', iconSize: 'fa-2x' }),
+    Info: {
+      Delete: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Delete', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-delete' }),
+      EmbedData: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Embed Data', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-embed-data' }),
+      GraphView: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Graph View', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-graph-view'}),
+      GenerateFeeds: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Generate Feed', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-generate-feed' }),
+      MessageLog: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Message Log', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-message-log' }),
+      Notifications: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Notifications', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-notifications' }),
+      Open: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Open', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-open' }),
+      Reply: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Reply', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-reply' }),
+      RobustLinks: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Robustify Links', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-robustify-links' }),
+      SaveAs: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Save As', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-save-as' }),
+      Share: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Share', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-share' }),
+      SignIn: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Sign In', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-sign-in' }),
+      Source: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Source', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-source' })
+    }
   }
 }
 
@@ -335,11 +351,8 @@ export const buttonIcons = {
   }
 }
 
-const enablementPredicates = {
-  '#document-do .resource-share': ({ init, isAuthenticated, isOnline, isLocalhost }) => {
-    if (init) {
-      return false;
-    }
+const buttonState = {
+  '#document-do .resource-share': ({ isAuthenticated, isOnline, isLocalhost }) => {
 
     const hasControlAccess = accessModeAllowed(null, 'control');
 
@@ -350,25 +363,19 @@ const enablementPredicates = {
     return true;
   },
 
-  '#document-do .resource-save': ({ init, isAuthenticated, isOnline, isLocalhost }) => {
-    if (init) {
-      return false;
-    }
-
+  '#document-do .resource-save': ({ isAuthenticated, isOnline, isLocalhost }) => {
     const hasWriteAccess = accessModeAllowed(null, 'write');
+    console.log(hasWriteAccess)
 
     if (!isAuthenticated || !hasWriteAccess) return false;
 
-    if (!isOnline && !isLocalhost) return false;
+    // if (!isOnline && !isLocalhost) return false;
+    if (!isOnline) return false;
 
     return true;
   },
 
-  '#document-do .resource-delete': ({ init, isAuthenticated, isOnline, isLocalhost }) => {
-    if (init) {
-      return false;
-    }
-
+  '#document-do .resource-delete': ({ isAuthenticated, isOnline, isLocalhost }) => {
     const hasWriteAccess = accessModeAllowed(null, 'write');
 
     if (!isAuthenticated || !hasWriteAccess) return false;
@@ -385,16 +392,26 @@ const enablementPredicates = {
 };
 
 export function isButtonEnabled(selector, context) {
-  const fn = enablementPredicates[selector] || enablementPredicates['default'];
+  const fn = buttonState[selector] || buttonState['default'];
 
   return fn(context);
 }
 
-export function updateButtons(selectors, context) {
-  const updates = selectors.map(selector => document.querySelector(selector)).filter(Boolean);
+export function updateButtons(selectors) {
+  const context = {
+    isAuthenticated: Config['Session'].isActive,
+    isOnline: navigator.onLine,
+    isLocalhost: isLocalhost(Config.DocumentURL)
+  }
 
-  updates.forEach(node => {
+  selectors.forEach(selector => {
     const buttonEnabled = isButtonEnabled(selector, context);
+    const node = document.querySelector(selector);
+    
+    if (!node) {
+      console.warn(`Button with selector "${selector}" not found.`);
+      return;
+    }
 
     if (node.disabled === !buttonEnabled) return;
 
