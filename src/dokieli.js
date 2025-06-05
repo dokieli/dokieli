@@ -7,7 +7,7 @@
  */
 
 import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceGraph, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource } from './fetcher.js'
-import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, buttonClose, buttonInfo, notificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, getButtonDisabledHTML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getLanguageOptionsHTML, getLicenseOptionsHTML, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown, getReferenceLabel, createNoteDataHTML, isButtonDisabled, hasNonWhitespaceText, buttonSignIn, buttonSignOut } from './doc.js'
+import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, notificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, getButtonDisabledHTML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getLanguageOptionsHTML, getLicenseOptionsHTML, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown, getReferenceLabel, createNoteDataHTML, isButtonDisabled, hasNonWhitespaceText, eventButtonClose, eventButtonInfo, eventButtonSignIn, eventButtonSignOut } from './doc.js'
 import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, generateDataURI, getMediaTypeURIs, isHttpOrHttpsProtocol, isFileProtocol, isLocalhost } from './uri.js'
 import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes, filterQuads, getAgentTypeIndex } from './graph.js'
 import { notifyInbox, sendNotifications } from './inbox.js'
@@ -1643,10 +1643,10 @@ DO = {
     },
 
     initDocumentActions: function() {
-      buttonClose();
-      buttonInfo();
-      buttonSignIn();
-      buttonSignOut();
+      eventButtonClose();
+      eventButtonInfo();
+      eventButtonSignIn();
+      eventButtonSignOut();
       notificationsToggle();
       showRobustLinksDecoration();
       focusNote();
@@ -3910,59 +3910,30 @@ console.log(reason);
 
       var buttonDisabled = '';
 
-      var s = '<section id="document-do"><h2>Do</h2><ul>';
+      const buttons = [
+        DO.C.Button.Menu.Share,
+        DO.C.Button.Menu.Reply,
+        DO.C.Button.Menu.Notifications,
+        DO.C.Button.Menu.New,
+        DO.C.Button.Menu.Edit,
+        DO.C.Button.Menu.Open,
+        DO.C.Button.Menu.Save,
+        DO.C.Button.Menu.SaveAs,
+        DO.C.Button.Menu.Version,
+        DO.C.Button.Menu.Immutable,
+        DO.C.Button.Menu.Memento,
+        DO.C.Button.Menu.RobustifyLinks,
+        DO.C.Button.Menu.InternetArchive,
+        DO.C.Button.Menu.GenerateFeed,
+        DO.C.Button.Menu.Export,
+        DO.C.Button.Menu.Source,
+        DO.C.Button.Menu.EmbedData,
+        DO.C.Button.Menu.Print,
+        DO.C.Button.Menu.Delete,
+        DO.C.Button.Menu.MessageLog
+      ]
 
-      s += `<li>${getButtonHTML({ button: 'share', buttonClass: 'resource-share', buttonDisabled: isButtonDisabled('resource-share'), buttonTitle: 'Share resource', buttonTextContent: 'Share', iconSize: 'fa-2x' })}</li>`;
-
-      s += `<li>${getButtonHTML({ button: 'in-reply-to', buttonClass: 'resource-reply', buttonTitle: 'Reply', buttonTextContent: 'Reply', iconSize: 'fa-2x' })}</li>`;
-
-      s += `<li>${getButtonHTML({ button: 'activities', buttonClass: 'resource-notifications', buttonTitle: 'Show notifications', buttonTextContent: 'Notifications', iconSize: 'fa-2x' })}</li>`;
-
-      s += `<li>${getButtonHTML({ button: 'new', buttonClass: 'resource-new', buttonTitle: 'Create new article', buttonTextContent: 'New', iconSize: 'fa-2x' })}</li>`;
-
-      s += `<li>${getButtonHTML({ button: 'open', buttonClass: 'resource-open', buttonTitle: 'Open article', buttonTextContent: 'Open', iconSize: 'fa-2x' })}</li>`;
-
-      s += `<li>${getButtonHTML({ button: 'save', buttonClass: 'resource-save', buttonTitle: 'Save article', buttonTextContent: 'Save', iconSize: 'fa-2x' })}</li>`;
-
-      s += `<li>${getButtonHTML({ button: 'save-as', buttonClass: 'resource-save-as', buttonDisabled: isButtonDisabled('resource-save-as'), buttonTitle: 'Save as article', buttonTextContent: 'Save As', iconSize: 'fa-2x' })}</li>`;
-
-      s += `<li>${getButtonHTML({ button: 'memento', buttonClass: 'resource-memento', buttonTitle: 'Memento article', buttonTextContent: 'Memento', iconSize: 'fa-2x' })}</li>`;
-
-      s += `<li>${getButtonHTML({ button: 'version', buttonClass: 'create-version', buttonDisabled: isButtonDisabled('create-version'), buttonTitle: 'Version this article', buttonTextContent: 'Version', iconSize: 'fa-2x' })}</li>`;
-
-      s += `<li>${getButtonHTML({ button: 'immutable', buttonClass: 'create-immutable', buttonDisabled: isButtonDisabled('create-immutable'), buttonTitle: 'Make this article immutable and version it', buttonTextContent: 'Immutable', iconSize: 'fa-2x' })}</li>`;
-
-      s += `<li>${getButtonHTML({ button: 'robustify-links', buttonClass: 'robustify-links', buttonDisabled: isButtonDisabled('robustify-links'), buttonTitle: 'Robustify Links', buttonTextContent: 'Robustify Links', iconSize: 'fa-2x' })}</li>`;
-
-      s += `<li>${getButtonHTML({ button: 'archive', buttonClass: 'snapshot-internet-archive', buttonDisabled: isButtonDisabled('snapshot-internet-archive'), buttonTitle: 'Capture with Internet Archive', buttonTextContent: 'Internet Archive', iconSize: 'fa-2x' })}</li>`;
-
-      s += `<li>${getButtonHTML({ button: 'feed', buttonClass: 'generate-feed', buttonDisabled: isButtonDisabled('generate-feed'), buttonTitle: 'Generate Web feed', buttonTextContent: 'Feed', iconSize: 'fa-2x' })}</li>`;
-
-      s += `<li>${getButtonHTML({ button: 'export', buttonClass: 'export-as-html', buttonDisabled: isButtonDisabled('export-as-html'), buttonTitle: 'Export and save to file', buttonTextContent: 'Export', iconSize: 'fa-2x' })}</li>`;
-
-      //TODO: Use DO.C.Editor.mode and getButtonHTML instead
-      if (DO.C.EditorAvailable) {
-        var editFile = (DO.C.EditorEnabled && DO.C.Editor.mode == 'author')
-          ? DO.C.Button.DisableEditor
-          : DO.C.Button.EnableEditor;
-        s += '<li>' + editFile + '</li>';
-      }
-
-      s += `<li>${getButtonHTML({ button: 'source', buttonClass: 'resource-source', buttonTitle: 'Edit article source code', buttonTextContent: 'Source', iconSize: 'fa-2x' })}</li>`;
-
-      s += `<li>${getButtonHTML({ button: 'data-meta', buttonClass: 'embed-data-meta', buttonTitle: 'Embed structured data', buttonTextContent: 'Embed Data', iconSize: 'fa-2x' })}</li>`;
-
-      if (DO.C.Resource[documentURL]['odrl'] && DO.C.Resource[documentURL]['odrl']['prohibitionAssignee'] == DO.C.User.IRI &&
-        ((Array.isArray(DO.C.Resource[documentURL]['odrl']['prohibitionActions']) && DO.C.Resource[documentURL]['odrl']['prohibitionActions'].some(action => action === 'http://www.w3.org/ns/odrl/2/print')) ||
-        (Array.isArray(DO.C.Resource[documentURL]['odrl']['permissionActions']) && DO.C.Resource[documentURL]['odrl']['permissionActions'].some(action => action === 'http://www.w3.org/ns/odrl/2/print')))) {
-        s += `<li>${getButtonHTML({ button: 'print', buttonClass: 'resource-print', buttonDisabled: getButtonDisabledHTML('resource-print'), buttonTitle: 'Print document', buttonTextContent: 'Print', iconSize: 'fa-2x' })}</li>`;
-      }
-
-      s += `<li>${getButtonHTML({ button: 'delete', buttonClass: 'resource-delete', buttonTitle: 'Delete article', buttonTextContent: 'Delete', iconSize: 'fa-2x' })}</li>`;
-
-      s += `<li>${getButtonHTML({ button: 'messages', buttonClass: 'message-log', buttonTitle: 'Show message log', buttonTextContent: 'Messages', iconSize: 'fa-2x' })}</li>`;
-
-      s += '</ul></section>';
+      var s = `<section id="document-do"><h2>Do</h2><ul>${buttons.map(b => `<li>${b}</li>`).join('')}</ul></section>`;
 
       node.insertAdjacentHTML('beforeend', s);
 
@@ -4169,8 +4140,6 @@ console.log(reason);
 
               //TODO: Reuse saveAsDocument's catch to request access by checking the Link header.
 
-              const buttonSignInHTML = getButtonHTML({ button: 'signin', buttonClass: 'signin-user', buttonTitle: 'Sign in to authenticate', buttonTextContent: 'Sign in' });
-
               var message = '';
               var actionMessage = '';
 
@@ -4184,7 +4153,7 @@ console.log(reason);
                     }
                     else {
                       message = `You are not signed in.`;
-                      actionMessage = `You are not signed in. ${buttonSignInHTML} and try again.`;
+                      actionMessage = `You are not signed in. ${DO.C.Button.SignIn} and try again.`;
                     }
 
                     break;
@@ -4197,7 +4166,7 @@ console.log(reason);
                     }
                     else {
                       message += `You are not signed in.`;
-                      actionMessage = `You are not signed in. ${buttonSignInHTML} and try again.`;
+                      actionMessage = `You are not signed in. ${DO.C.Button.SignIn} and try again.`;
                     }
 
                     break;

@@ -1486,7 +1486,7 @@ function handleDeleteNote(button) {
 }
 
 //TODO: Inform the user that this information feature may fetch a resource from another origin, and ask whether they want to go ahead with it.
-function buttonInfo() {
+function eventButtonInfo() {
   const errorMessage = `<p class="error">Can't find the documentation. Try later.</p>`;
 
   document.addEventListener('click', e => {
@@ -1694,7 +1694,7 @@ function buttonInfo() {
   });
 }
 
-function buttonClose() {
+function eventButtonClose() {
   document.addEventListener('click', e => {
     var button = e.target.closest('button.close')
     if (button) {
@@ -1704,7 +1704,7 @@ function buttonClose() {
   });
 }
 
-function buttonSignIn() {
+function eventButtonSignIn() {
   document.addEventListener('click', e => {
     var button = e.target.closest('button.signin-user');
     if (button) {
@@ -1714,7 +1714,7 @@ function buttonSignIn() {
   });
 }
 
-function buttonSignOut() {
+function eventButtonSignOut() {
   document.addEventListener('click', async (e) => {
     var button = e.target.closest('button.signout-user');
     if (button) {
@@ -3676,10 +3676,10 @@ export {
   setDocumentRelation,
   setDocumentStatus,
   getDocumentStatusHTML,
-  buttonClose,
-  buttonInfo,
-  buttonSignIn,
-  buttonSignOut,
+  eventButtonClose,
+  eventButtonInfo,
+  eventButtonSignIn,
+  eventButtonSignOut,
   notificationsToggle,
   getButtonDisabledHTML,
   showTimeMap,

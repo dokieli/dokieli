@@ -8,22 +8,13 @@ import { getResourceGraph, getAgentName, getGraphImage, getAgentURL, getAgentPre
 import { removeLocalStorageDocument, removeLocalStorageProfile, updateLocalStorageProfile } from './storage.js'
 import { getButtonHTML } from './ui/button-icons.js';
 import { Session } from '@uvdsl/solid-oidc-client-browser';
+import DO from './dokieli.js';
 
 const ns = Config.ns;
 Config['Session'] = new Session();
 
-const signInHTML = getUserSignInHTML();
-
 export async function restoreSession() {
   return Config['Session'].handleRedirectFromLogin();
-}
-
-function getUserSignedInHTML() {
-  return getAgentHTML() + getButtonHTML({ button: 'signout', buttonClass: 'signout-user', buttonTitle: 'Live long and prosper' });
-}
-
-function getUserSignInHTML() {
-  return getButtonHTML({ button: 'signin', buttonClass: 'signin-user', buttonTitle: 'Sign in to authenticate', buttonTextContent: 'Sign in', iconSize: 'fa-2x' })
 }
 
 async function showUserSigninSignout (node) {
@@ -42,10 +33,8 @@ async function showUserSigninSignout (node) {
 
   let userInfoHTML;
 
-  const signedInHTML = getUserSignedInHTML();
-
   //Checks if already know the user from prior load of the page
-  userInfoHTML = Config.User.IRI ? signedInHTML : signInHTML;
+  userInfoHTML = Config.User.IRI ? getAgentHTML() + Config.Button.Menu.SignOut : Config.Button.Menu.SignIn;
 
   node.insertAdjacentHTML('afterbegin', userInfoHTML);
 }
@@ -72,7 +61,7 @@ async function userInfoSignOut(node) {
   //Clean up the user-info so it can be reconstructed
   removeChildren(node);
 
-  node.insertAdjacentHTML('afterbegin', signInHTML);
+  node.insertAdjacentHTML('afterbegin', Config.Button.Menu.SignIn);
 
   var buttonDeletes = document.querySelectorAll('aside.do blockquote[cite] article button.delete');
   buttonDeletes.forEach(button => {
@@ -180,7 +169,7 @@ function submitSignIn (url) {
       var uI = document.getElementById('user-info')
       if (uI) {
         removeChildren(uI);
-        uI.insertAdjacentHTML('beforeend', getUserSignedInHTML());
+        uI.insertAdjacentHTML('beforeend', getAgentHTML() + Config.Button.Menu.SignOut);
       }
 
       if (userIdentityInput) {
@@ -383,7 +372,7 @@ function afterSetUserInfo () {
 
       //FIXME: This works but is it fugly? It is so that 1) we don't have double assignment of event handler on user-info's signOut and to also make sure that the user with a Session can actually signOut (removing children loses the event)
       if (uI && !Config['Session']?.isActive) {
-        // uI.replaceChildren(fragmentFromString(getUserSignedInHTML()))
+        // uI.replaceChildren(fragmentFromString(DO.C.Button.Menu.SignOut))
 
         removeChildren(node);
         showUserSigninSignout(node);
@@ -417,8 +406,6 @@ function afterSetUserInfo () {
 export {
   afterSetUserInfo,
   enableDisableButton,
-  getUserSignedInHTML,
-  getUserSignInHTML,
   getSubjectInfo,
   setUserInfo,
   setContactInfo,
