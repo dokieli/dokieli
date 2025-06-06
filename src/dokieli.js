@@ -7,7 +7,7 @@
  */
 
 import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceGraph, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource } from './fetcher.js'
-import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, notificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, getButtonDisabledHTML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getLanguageOptionsHTML, getLicenseOptionsHTML, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown, getReferenceLabel, createNoteDataHTML, isButtonDisabled, hasNonWhitespaceText, eventButtonClose, eventButtonInfo, eventButtonSignIn, eventButtonSignOut } from './doc.js'
+import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, eventButtonNotificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, getButtonDisabledHTML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getLanguageOptionsHTML, getLicenseOptionsHTML, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown, getReferenceLabel, createNoteDataHTML, isButtonDisabled, hasNonWhitespaceText, eventButtonClose, eventButtonInfo, eventButtonSignIn, eventButtonSignOut } from './doc.js'
 import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, generateDataURI, getMediaTypeURIs, isHttpOrHttpsProtocol, isFileProtocol, isLocalhost } from './uri.js'
 import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes, filterQuads, getAgentTypeIndex } from './graph.js'
 import { notifyInbox, sendNotifications } from './inbox.js'
@@ -25,7 +25,7 @@ import LinkHeader from 'http-link-header';
 import rdf from 'rdf-ext';
 import Config from './config.js';
 import { Editor } from './editor/editor.js';
-import { initButtons, getButtonHTML, updateButtons } from './ui/buttons.js'
+import { initButtons, updateButtons } from './ui/buttons.js'
 
 const ns = Config.ns;
 let DO;
@@ -1647,7 +1647,7 @@ DO = {
       eventButtonInfo();
       eventButtonSignIn();
       eventButtonSignOut();
-      notificationsToggle();
+      eventButtonNotificationsToggle();
       showRobustLinksDecoration();
       focusNote();
 
@@ -1764,22 +1764,16 @@ DO = {
     },
 
     monitorNetworkStatus: function() {
-      const buttonSelectors = [
-        '#document-do .resource-save',
-        '#document-do .snapshot-internet-archive',
-        '#document-do .resource-delete'
-      ];
-
       window.addEventListener('online', () => {
         console.log('online');
 
-        updateButtons([buttonSelectors]);
+        updateButtons();
       });
 
       window.addEventListener('offline', () => {
         console.log('offline');
 
-        updateButtons([buttonSelectors]);
+        updateButtons();
       });
     },
 
@@ -1838,8 +1832,9 @@ DO = {
         DO.U.showDocumentItems();
       }
 
-      getResourceInfo(getDocument()).then(() => {
-        updateDocumentDoButtonStates();
+      getResourceInfo(getDocument()).then(resourceInfo => {
+        DO.C.Resource[DO.C.DocumentURL] = { ...DO.C.Resource[DO.C.DocumentURL], ...resourceInfo };
+        updateButtons();
       });
 
       var options = { 'reuse': true };
@@ -1847,8 +1842,7 @@ DO = {
         options['followLinkRelationTypes'] = ['describedby'];
       }
       getResourceSupplementalInfo(DO.C.DocumentURL, options).then(resourceInfo => {
-        updateFeatureStatesOfResourceInfo(resourceInfo);
-        updateDocumentDoButtonStates();
+        updateButtons();
       });
     },
 
@@ -3937,7 +3931,7 @@ console.log(reason);
 
       node.insertAdjacentHTML('beforeend', s);
 
-      updateDocumentDoButtonStates();
+      // updateDocumentDoButtonStates();
 
       var eD = node.querySelector('.editor-disable');
       if (eD) {

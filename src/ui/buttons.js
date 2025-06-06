@@ -3,6 +3,8 @@ import { Icon} from "./icons.js";
 import Config from "../config.js";
 import { isLocalhost } from "../uri.js";
 
+const ns = Config.ns;
+
 export function initButtons() {
   Config.Button = {
     Close: getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close', buttonTitle: 'Close', iconSize: 'fa-2x' }),
@@ -29,30 +31,30 @@ export function initButtons() {
     },
     SignIn: getButtonHTML({ button: 'signin', buttonClass: 'signin-user', buttonTitle: 'Sign in to authenticate', buttonTextContent: 'Sign in' }),
     Menu: {
-      Delete: getButtonHTML({ button: 'delete', buttonClass: 'resource-delete', buttonTitle: 'Delete article', buttonTextContent: 'Delete', iconSize: 'fa-2x' }),
+      Delete: getButtonHTML({ button: 'delete', buttonClass: 'resource-delete', buttonTitle: 'Delete article', buttonTextContent: 'Delete', iconSize: 'fa-2x', buttonDisabled: true }),
       Edit: Config.EditorEnabled ?
               getButtonHTML({ button: 'cursor', buttonClass: 'editor-disable', buttonTextContent: 'Edit', buttonTitle: 'Disable editor', iconSize: 'fa-2x' }) :
               getButtonHTML({ button: 'cursor', buttonClass: 'editor-enable', buttonTextContent: 'Edit', buttonTitle: 'Enable editor', iconSize: 'fa-2x' }),
       EmbedData: getButtonHTML({ button: 'data-meta', buttonClass: 'embed-data-meta', buttonTitle: 'Embed structured data', buttonTextContent: 'Embed Data', iconSize: 'fa-2x' }),
       Export: getButtonHTML({ button: 'export', buttonClass: 'export-as-html', buttonTitle: 'Export and save to file', buttonTextContent: 'Export', iconSize: 'fa-2x' }),
       GenerateFeed: getButtonHTML({ button: 'feed', buttonClass: 'generate-feed', buttonTitle: 'Generate Web feed', buttonTextContent: 'Feed', iconSize: 'fa-2x' }),
-      Immutable: getButtonHTML({ button: 'immutable', buttonClass: 'create-immutable', buttonTitle: 'Make this article immutable and version it', buttonTextContent: 'Immutable', iconSize: 'fa-2x' }),
+      Immutable: getButtonHTML({ button: 'immutable', buttonClass: 'create-immutable', buttonTitle: 'Make this article immutable and version it', buttonTextContent: 'Immutable', iconSize: 'fa-2x', buttonDisabled: true }),
       InternetArchive: getButtonHTML({ button: 'archive', buttonClass: 'snapshot-internet-archive', buttonTitle: 'Capture with Internet Archive', buttonTextContent: 'Internet Archive', iconSize: 'fa-2x' }),
       Open: getButtonHTML({ button: 'open', buttonClass: 'resource-open', buttonTitle: 'Open article', buttonTextContent: 'Open', iconSize: 'fa-2x' }),
       New: getButtonHTML({ button: 'new', buttonClass: 'resource-new', buttonTitle: 'Create new article', buttonTextContent: 'New', iconSize: 'fa-2x' }),
       Notifications: getButtonHTML({ button: 'activities', buttonClass: 'resource-notifications', buttonTitle: 'Show notifications', buttonTextContent: 'Notifications', iconSize: 'fa-2x' }),
       RobustifyLinks: getButtonHTML({ button: 'robustify-links', buttonClass: 'robustify-links', buttonTitle: 'Robustify Links', buttonTextContent: 'Robustify Links', iconSize: 'fa-2x' }),
-      Save: getButtonHTML({ button: 'save', buttonClass: 'resource-save', buttonTitle: 'Save article', buttonTextContent: 'Save', iconSize: 'fa-2x' }),
+      Save: getButtonHTML({ button: 'save', buttonClass: 'resource-save', buttonTitle: 'Save article', buttonTextContent: 'Save', iconSize: 'fa-2x', buttonDisabled: true }),
       SaveAs: getButtonHTML({ button: 'save-as', buttonClass: 'resource-save-as', buttonTitle: 'Save as article', buttonTextContent: 'Save As', iconSize: 'fa-2x' }),
       Share: getButtonHTML({ button: 'share', buttonClass: 'resource-share', buttonTitle: 'Share resource', buttonTextContent: 'Share', iconSize: 'fa-2x' }),
       SignIn: getButtonHTML({ button: 'signin', buttonClass: 'signin-user', buttonTitle: 'Sign in to authenticate', buttonTextContent: 'Sign in', iconSize: 'fa-2x' }),
       SignOut: getButtonHTML({ button: 'signout', buttonClass: 'signout-user', buttonTitle: 'Live long and prosper' }),
       Source: getButtonHTML({ button: 'source', buttonClass: 'resource-source', buttonTitle: 'Edit article source code', buttonTextContent: 'Source', iconSize: 'fa-2x' }),
-      Memento: getButtonHTML({ button: 'memento', buttonClass: 'resource-memento', buttonTitle: 'Memento article', buttonTextContent: 'Memento', iconSize: 'fa-2x' }),
+      Memento: getButtonHTML({ button: 'memento', buttonClass: 'resource-memento', buttonTitle: 'Memento article', buttonTextContent: 'Memento', iconSize: 'fa-2x', buttonDisabled: true }),
       MessageLog: getButtonHTML({ button: 'messages', buttonClass: 'message-log', buttonTitle: 'Show message log', buttonTextContent: 'Messages', iconSize: 'fa-2x' }),
       Print: getButtonHTML({ button: 'print', buttonClass: 'resource-print', buttonTitle: 'Print document', buttonTextContent: 'Print', iconSize: 'fa-2x' }),
       Reply: getButtonHTML({ button: 'in-reply-to', buttonClass: 'resource-reply', buttonTitle: 'Reply', buttonTextContent: 'Reply', iconSize: 'fa-2x' }),
-      Version: getButtonHTML({ button: 'version', buttonClass: 'create-version', buttonTitle: 'Version this article', buttonTextContent: 'Version', iconSize: 'fa-2x' }),
+      Version: getButtonHTML({ button: 'version', buttonClass: 'create-version', buttonTitle: 'Version this article', buttonTextContent: 'Version', iconSize: 'fa-2x', buttonDisabled: true }),
     }
   }
 }
@@ -376,70 +378,209 @@ export const buttonIcons = {
   }
 }
 
+function hasAccessButtonCheck ({ online, localhost, accessMode }) {
+  if (!accessMode) return false;
+
+  const hasWriteAccess = accessModeAllowed(null, accessMode);
+
+  if (!hasWriteAccess) return false;
+
+  if (!online && !localhost) return false;
+
+  return true;
+}
+
 const buttonState = {
-  '#document-do .resource-share': ({ isAuthenticated, isOnline, isLocalhost }) => {
+  '#document-do .resource-save': (context) => {
+    const info = Config.Resource[Config.DocumentURL];
 
-    const hasControlAccess = accessModeAllowed(null, 'control');
+    if (!hasAccessButtonCheck({...context, accessMode: 'write'})) {
+      return false;
+    }
 
-    if (!isAuthenticated || !hasControlAccess) return false;
-
-    if (!isOnline && !isLocalhost) return false;
-
-    return true;
-  },
-
-  '#document-do .resource-save': ({ isAuthenticated, isOnline, isLocalhost }) => {
-    const hasWriteAccess = accessModeAllowed(null, 'write');
-    console.log(hasWriteAccess)
-
-    if (!isAuthenticated || !hasWriteAccess) return false;
-
-    // if (!isOnline && !isLocalhost) return false;
-    if (!isOnline) return false;
+    if (info.odrl?.prohibitionActions &&
+        info.odrl.prohibitionAssignee === Config.User.IRI &&
+        info.odrl.prohibitionActions.includes(ns.odrl.modify.value)) {
+      return false;
+    }
 
     return true;
   },
 
-  '#document-do .resource-delete': ({ isAuthenticated, isOnline, isLocalhost }) => {
-    const hasWriteAccess = accessModeAllowed(null, 'write');
+  '#document-do .create-version': (context) => {
+    const info = Config.Resource[Config.DocumentURL];
 
-    if (!isAuthenticated || !hasWriteAccess) return false;
+    if (!hasAccessButtonCheck({...context, accessMode: 'write'})) {
+      return false;
+    }
 
-    if (!isOnline && !isLocalhost) return false;
+    if (info.odrl?.prohibitionActions &&
+        info.odrl.prohibitionAssignee === Config.User.IRI &&
+        info.odrl.prohibitionActions.includes(ns.odrl.reproduce.value)) {
+      return false;
+    }
 
     return true;
   },
 
-  '#document-do .resource-new': () => true,
+  '#document-do .create-immutable': (context) => {
+    const info = Config.Resource[Config.DocumentURL];
 
-  //XXX: For now.
-  'default': () => true
+    if (!hasAccessButtonCheck({...context, accessMode: 'write'})) {
+      return false;
+    }
+
+    if (info.odrl?.prohibitionActions &&
+        info.odrl.prohibitionAssignee === Config.User.IRI &&
+        info.odrl.prohibitionActions.includes(ns.odrl.reproduce.value)) {
+      return false;
+    }
+
+    return true;
+  },
+
+  '#document-do .resource-delete': (context) => {
+    const info = Config.Resource[Config.DocumentURL];
+
+    if (!hasAccessButtonCheck({...context, accessMode: 'write'})) {
+      return false;
+    }
+
+    if (info.odrl?.prohibitionActions &&
+        info.odrl.prohibitionAssignee === Config.User.IRI &&
+        info.odrl.prohibitionActions.includes(ns.odrl.delete.value)) {
+      return false;
+    }
+
+    return true;
+  },
+
+  '#document-do .resource-memento': ({ online, localhost }) => {
+    const info = Config.Resource[Config.DocumentURL];
+
+    if (!info['timemap']) return false;
+
+    if (!online && !localhost) return false;
+
+    if (!online && !isLocalhost(info['timemap'])) return false;
+
+    return true;
+  },
+
+  '#document-do .snapshot-internet-archive': ({ online, localhost }) => {
+    const info = Config.Resource[Config.DocumentURL];
+
+    if (info.odrl?.prohibitionActions &&
+        info.odrl.prohibitionAssignee === Config.User.IRI &&
+        (info.odrl.prohibitionActions.includes(ns.odrl.archive.value) ||
+         info.odrl.prohibitionActions.includes(ns.odrl.reproduce.value))) {
+      return false;
+    }
+
+    if (!online || localhost) return false;
+
+    return true;
+  },
+
+  '#document-do .resource-save-as': ({ online, localhost }) => {
+    const info = Config.Resource[Config.DocumentURL];
+
+    if (info.odrl?.prohibitionActions &&
+        info.odrl.prohibitionAssignee === Config.User.IRI &&
+        (info.odrl.prohibitionActions.includes(ns.odrl.derive.value) ||
+         info.odrl.prohibitionActions.includes(ns.odrl.reproduce.value))) {
+      return false;
+    }
+
+    if (!online && !localhost) return false;
+
+    return true;
+  },
+
+  '#document-do .resource-print': () => {
+    const info = Config.Resource[Config.DocumentURL];
+
+    if (info.odrl?.prohibitionActions &&
+        info.odrl.prohibitionAssignee === Config.User.IRI &&
+        info.odrl.prohibitionActions.includes(ns.odrl.print.value)) {
+      return false;
+    }
+
+    return true;
+  },
+
+  '#document-do .export-as-html': () => {
+    const info = Config.Resource[Config.DocumentURL];
+
+    if (info.odrl?.prohibitionActions &&
+        info.odrl.prohibitionAssignee === Config.User.IRI &&
+        (info.odrl.prohibitionActions.includes(ns.odrl.transform.value) ||
+         info.odrl.prohibitionActions.includes(ns.odrl.reproduce.value))) {
+      return false;
+    }
+
+    return true;
+  },
+
+  '#document-do .generate-feed': ({ online, localhost }) => {
+    const info = Config.Resource[Config.DocumentURL];
+
+    if (info.odrl?.prohibitionActions &&
+        info.odrl.prohibitionAssignee === Config.User.IRI &&
+        info.odrl.prohibitionActions.includes(ns.odrl.reproduce.value)) {
+      return false;
+    }
+
+    if (!online && !localhost) return false;
+
+    return true;
+  },
+
+  '#document-do .robustify-links': ({ online, localhost }) => {
+    const info = Config.Resource[Config.DocumentURL];
+
+    if (info.odrl?.prohibitionActions &&
+        info.odrl.prohibitionAssignee === Config.User.IRI &&
+        info.odrl.prohibitionActions.includes(ns.odrl.reproduce.value)) {
+      return false;
+    }
+
+    if (!online) return false;
+
+    return true;
+  },
 };
 
-export function isButtonEnabled(selector, context) {
-  const fn = buttonState[selector] || buttonState['default'];
+
+export function buttonShouldBeEnabled(selector, context) {
+  const fn = buttonState[selector];
+
+  if (!fn) return true;
 
   return fn(context);
 }
 
 export function updateButtons(selectors) {
+  selectors = selectors || Object.keys(buttonState);
+
   const context = {
-    isAuthenticated: Config['Session'].isActive,
-    isOnline: navigator.onLine,
-    isLocalhost: isLocalhost(Config.DocumentURL)
+    authenticated: Config['Session'].isActive,
+    online: navigator.onLine,
+    localhost: isLocalhost(Config.DocumentURL),
+    editorMode: DO.Editor.mode
   }
 
   selectors.forEach(selector => {
-    const buttonEnabled = isButtonEnabled(selector, context);
     const node = document.querySelector(selector);
-    
+
     if (!node) {
       console.warn(`Button with selector "${selector}" not found.`);
       return;
     }
+    const buttonEnabled = buttonShouldBeEnabled(selector, context);
 
-    if (node.disabled === !buttonEnabled) return;
-
-    node.disabled = !buttonEnabled;
+    if (node.disabled !== !buttonEnabled) {
+      node.disabled = !buttonEnabled;
+    }
   });
 }

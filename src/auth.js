@@ -2,7 +2,7 @@ import rdf from 'rdf-ext';
 import Config from './config.js'
 import { deleteResource } from './fetcher.js'
 import { removeChildren, fragmentFromString } from './util.js'
-import { getAgentHTML, showActionMessage, showGeneralMessages, getResourceSupplementalInfo, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, handleDeleteNote, addMessageToLog } from './doc.js'
+import { getAgentHTML, showActionMessage, showGeneralMessages, getResourceSupplementalInfo, handleDeleteNote, addMessageToLog } from './doc.js'
 import { Icon } from './ui/icons.js'
 import { getResourceGraph, getAgentName, getGraphImage, getAgentURL, getAgentPreferredProxy, getAgentPreferredPolicy, getAgentPreferredPolicyRule, setPreferredPolicyInfo, getAgentDelegates, getAgentKnows, getAgentFollowing, getAgentStorage, getAgentOutbox, getAgentInbox, getAgentPreferencesFile, getAgentPublicTypeIndex, getAgentPrivateTypeIndex, getAgentTypeIndex, getAgentSupplementalInfo, getAgentSeeAlso, getAgentPreferencesInfo, getAgentLiked, getAgentOccupations, getAgentPublications, getAgentMade, getAgentOIDCIssuer } from './graph.js'
 import { removeLocalStorageDocument, removeLocalStorageProfile, updateLocalStorageProfile } from './storage.js'
@@ -70,8 +70,15 @@ async function userInfoSignOut(node) {
 
   //Signed out so update button states
   getResourceSupplementalInfo(Config.DocumentURL).then(resourceInfo => {
-    updateFeatureStatesOfResourceInfo(resourceInfo);
-    updateDocumentDoButtonStates();
+    // updateFeatureStatesOfResourceInfo(resourceInfo);
+    // updateDocumentDoButtonStates();
+
+    var selectors = [
+
+    ]
+
+    updateButtons(selectors)
+
   });
 }
 
@@ -336,8 +343,8 @@ function getSubjectInfo (subjectIRI, options = {}) {
 //TODO: Review grapoi
 function afterSetUserInfo () {
   getResourceSupplementalInfo(Config.DocumentURL).then(resourceInfo => {
-    updateFeatureStatesOfResourceInfo(resourceInfo);
-    updateDocumentDoButtonStates();
+    // updateFeatureStatesOfResourceInfo(resourceInfo);
+    // updateDocumentDoButtonStates();
   });
 
   var promises = [];

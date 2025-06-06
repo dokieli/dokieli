@@ -91,27 +91,7 @@ export default {
       p: 'Cogito, ergo sum.'
     },
   },
-  ButtonStates: {
-    'resource-share': true,
-    'resource-reply': true,
-    'resource-notifications': true,
-    'resource-new': true,
-    'resource-open': true,
-    'resource-save': false,
-    'resource-save-as': true,
-    'resource-memento': false,
-    'create-version': false,
-    'create-immutable': false,
-    'robustify-links': true,
-    'snapshot-internet-archive': true,
-    'generate-feed': true,
-    'export-as-html': true,
-    'editor-enable': true,
-    'resource-source': true,
-    'embed-data-meta': true,
-    'resource-delete': false,
-    'message-log': true
-  },
+
   DOMNormalisation: {
     'voidElements': ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source', 'track', 'wbr'],
     'selfClosing': ['circle', 'ellipse', 'line', 'path', 'polygon', 'polyline', 'rect', 'stop', 'use'],

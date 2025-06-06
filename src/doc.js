@@ -12,7 +12,7 @@ import { gfm, gfmHtml } from 'micromark-extension-gfm';
 import { gfmTagfilterHtml } from 'micromark-extension-gfm-tagfilter';
 import { Icon } from './ui/icons.js';
 import { showUserIdentityInput, signOut } from './auth.js'
-import { buttonIcons } from './ui/buttons.js'
+import { buttonIcons, updateButtons } from './ui/buttons.js'
 
 const ns = Config.ns;
 
@@ -1724,7 +1724,7 @@ function eventButtonSignOut() {
   });
 }
 
-function notificationsToggle() {
+function eventButtonNotificationsToggle() {
   document.addEventListener('click', e => {
     var button = e.target.closest('button.toggle');
     if (button) {
@@ -1734,23 +1734,6 @@ function notificationsToggle() {
       window.history.replaceState({}, null, Config.DocumentURL);
     }
   });
-}
-
-function getButtonDisabledHTML(id) {
-  var html = '';
-
-  if (document.location.protocol === 'file:' || !Config.ButtonStates[id]) {
-    html = ' disabled="disabled"';  
-  }
-  if (Config.ButtonStates[id]) {
-    html = '';
-  }
-
-  return html;
-}
-
-function isButtonDisabled(id) {
-  return !Config.ButtonStates[id];
 }
 
 function getGraphContributorsRole(g, options) {
@@ -1904,6 +1887,9 @@ function getGraphData(s, options) {
   if (timemap.length) {
     info['timemap'] = timemap[0];
   }
+  else {
+    info['timemap'] = null;
+  }
 
   var timegate = s.out(ns.mem.timegate).values;
   if (timegate.length) {
@@ -1995,10 +1981,6 @@ function getResourceInfo(data, options) {
       g = g.node(rdf.namedNode(documentURL));
 
       var info = getGraphData(g, options);
-
-      if (documentURL == Config.DocumentURL) {
-        updateFeatureStatesOfResourceInfo(info);
-      }
 
       for (var key in info) {
         if (Object.hasOwn(info, key) && key !== '__proto__' && key !== 'constructor' && key !== 'prototype') {
@@ -2413,85 +2395,6 @@ function getResourceInfoSKOS(g) {
   info['skos']['graph'] = rdf.grapoi({ dataset });
 
   return info['skos'];
-}
-
-function updateDocumentDoButtonStates() {
-  var documentDo = document.getElementById('document-do');
-
-  if (documentDo) {
-    Object.keys(Config.ButtonStates).forEach(id => {
-      var s = documentDo.querySelector('.' + id);
-
-      if (s) {
-        if (Config.ButtonStates[id]) {
-          s.removeAttribute('disabled');
-        }
-        else {
-          s.setAttribute('disabled', 'disabled');
-        }
-      }
-    });
-    return;
-  }
-}
-
-//TODO: This should be triggered after sign-in
-function updateFeatureStatesOfResourceInfo(info) {
-  var writeRequiredFeatures = ['resource-save', 'create-version', 'create-immutable', 'resource-delete'];
-
-  if (!Config.User.IRI) {
-    writeRequiredFeatures.forEach(feature => {
-      Config.ButtonStates[feature] = false;
-    })
-  }
-  // else {
-  //   if ((Config.User.Storage && Config.User.Storage.length > 0) ||
-  //       (Config.User.Outbox && Config.User.Outbox.length > 0) ||
-  //       (Config.User.Knows && Config.User.Knows.length > 0) ||
-  //       (Config.User.Contacts && Object.keys(Config.User.Contacts).length > 0)) {
-  //         Config.ButtonStates['resource-notifications'] = true;
-  //   }
-  // }
-
-  //XXX: This relies on `wac-allow` HTTP header. What to do if no `wac-allow`?
-  var writeAccessMode = accessModeAllowed(Config.DocumentURL, 'write');
-  writeRequiredFeatures.forEach(feature => {
-    Config.ButtonStates[feature] = writeAccessMode;
-  })
-
-  if (typeof info !== 'undefined') {
-    if (info['timemap']) {
-      Config.ButtonStates['resource-memento'] = true;
-    }
-
-    if (info['odrl'] && info['odrl']['prohibitionActions'] && info['odrl']['prohibitionAssignee'] == Config.User.IRI) {
-      if (info['odrl']['prohibitionActions'].includes(ns.odrl.archive.value)) {
-        Config.ButtonStates['snapshot-internet-archive'] = false;
-      }
-
-      if (info['odrl']['prohibitionActions'].includes(ns.odrl.derive.value)) {
-        Config.ButtonStates['resource-save-as'] = false;
-      }
-
-      if (info['odrl']['prohibitionActions'].includes(ns.odrl.print.value)) {
-        Config.ButtonStates['resource-print'] = false;
-      }
-
-      if (info['odrl']['prohibitionActions'].includes(ns.odrl.reproduce.value)) {
-        Config.ButtonStates['create-immutable'] = false;
-        Config.ButtonStates['create-version'] = false;
-        Config.ButtonStates['export-as-html'] = false;
-        Config.ButtonStates['resource-save-as'] = false;
-        Config.ButtonStates['robustify-links'] = false;
-        Config.ButtonStates['snapshot-internet-archive'] = false;
-        Config.ButtonStates['generate-feed'] = false;
-      }
-
-      if (info['odrl']['prohibitionActions'].includes(ns.odrl.transform.value)) {
-        Config.ButtonStates['export-as-html'] = false;
-      }
-    }
-  }
 }
 
 function accessModeAllowed (documentURL, mode) {
@@ -3680,8 +3583,7 @@ export {
   eventButtonInfo,
   eventButtonSignIn,
   eventButtonSignOut,
-  notificationsToggle,
-  getButtonDisabledHTML,
+  eventButtonNotificationsToggle,
   showTimeMap,
   getGraphContributorsRole,
   getGraphData,
@@ -3695,8 +3597,6 @@ export {
   getResourceInfoSKOS,
   getResourceInfoCitations,
   handleDeleteNote,
-  updateDocumentDoButtonStates,
-  updateFeatureStatesOfResourceInfo,
   accessModeAllowed,
   createImmutableResource,
   createMutableResource,
@@ -3739,6 +3639,5 @@ export {
   createRDFaHTML,
   createRDFaMarkObject,
   createDefinitionListHTML,
-  isButtonDisabled,
   hasNonWhitespaceText
 }
