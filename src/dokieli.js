@@ -25,7 +25,7 @@ import LinkHeader from 'http-link-header';
 import rdf from 'rdf-ext';
 import Config from './config.js';
 import { Editor } from './editor/editor.js';
-import { initButtons, getButtonHTML, updateButtons } from './ui/button-icons.js'
+import { initButtons, getButtonHTML, updateButtons } from './ui/buttons.js'
 
 const ns = Config.ns;
 let DO;

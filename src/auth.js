@@ -6,7 +6,7 @@ import { getAgentHTML, showActionMessage, showGeneralMessages, getResourceSupple
 import { Icon } from './ui/icons.js'
 import { getResourceGraph, getAgentName, getGraphImage, getAgentURL, getAgentPreferredProxy, getAgentPreferredPolicy, getAgentPreferredPolicyRule, setPreferredPolicyInfo, getAgentDelegates, getAgentKnows, getAgentFollowing, getAgentStorage, getAgentOutbox, getAgentInbox, getAgentPreferencesFile, getAgentPublicTypeIndex, getAgentPrivateTypeIndex, getAgentTypeIndex, getAgentSupplementalInfo, getAgentSeeAlso, getAgentPreferencesInfo, getAgentLiked, getAgentOccupations, getAgentPublications, getAgentMade, getAgentOIDCIssuer } from './graph.js'
 import { removeLocalStorageDocument, removeLocalStorageProfile, updateLocalStorageProfile } from './storage.js'
-import { getButtonHTML } from './ui/button-icons.js';
+import { getButtonHTML } from './ui/buttons.js';
 import { Session } from '@uvdsl/solid-oidc-client-browser';
 import DO from './dokieli.js';
 

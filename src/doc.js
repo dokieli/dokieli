@@ -12,7 +12,7 @@ import { gfm, gfmHtml } from 'micromark-extension-gfm';
 import { gfmTagfilterHtml } from 'micromark-extension-gfm-tagfilter';
 import { Icon } from './ui/icons.js';
 import { showUserIdentityInput, signOut } from './auth.js'
-import { buttonIcons } from './ui/button-icons.js'
+import { buttonIcons } from './ui/buttons.js'
 
 const ns = Config.ns;
 

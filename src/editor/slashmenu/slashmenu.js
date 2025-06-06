@@ -1,7 +1,7 @@
 import { getLanguageOptionsHTML, getLicenseOptionsHTML, getPublicationStatusOptionsHTML, getResourceTypeOptionsHTML } from "../../doc.js";
 import { Icon } from "../../ui/icons.js";
 import { fragmentFromString } from "../../util.js";
-import { getButtonHTML } from "../../ui/button-icons.js";
+import { getButtonHTML } from "../../ui/buttons.js";
 import { formHandlerLanguage, formHandlerLicense, formHandlerInbox, formHandlerInReplyTo, formHandlerPublicationStatus, formHandlerResourceType, formHandlerTestSuite } from "./handlers.js";
 import { TextSelection } from "prosemirror-state";
 import { DOMParser } from "prosemirror-model";
