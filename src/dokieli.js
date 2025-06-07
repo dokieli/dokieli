@@ -1493,10 +1493,13 @@ DO = {
       return params.get(name);
     },
 
-    initAuth: function() {
-      // console.log(window.location.href)
+    init: function() {
+      DO.U.initAuth()
+        .then(() => DO.C.init());
+    },
 
-      restoreSession().then(() => {
+    initAuth: async function() {
+      return restoreSession().then(() => {
         if (!Config['Session']) {
           console.log("No session");
           return;
@@ -3931,12 +3934,7 @@ console.log(reason);
 
       node.insertAdjacentHTML('beforeend', s);
 
-      // updateDocumentDoButtonStates();
-
-      // var eD = node.querySelector('.editor-disable');
-      // if (eD) {
-      //   showAutoSaveStorage(eD.closest('li'));
-      // }
+      updateButtons();
 
       var dd = document.getElementById('document-do');
 
@@ -8701,10 +8699,11 @@ WHERE {\n\
 }; //DO
 
 if (document.readyState === "loading") {
-  document.addEventListener('DOMContentLoaded', () => { DO.C.init(); });
+  document.addEventListener('DOMContentLoaded', () => { DO.U.init(); });
 }
 else {
-  window.addEventListener("load", () => { DO.C.init(); });
+  window.addEventListener("load", () => { 
+    DO.U.init(); });
 }
 
 }

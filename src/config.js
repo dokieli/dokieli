@@ -1,5 +1,3 @@
-'use strict'
-
 import rdf from 'rdf-ext';
 
 /**
@@ -11,7 +9,6 @@ export default {
     var contentNode = DO.U?.getContentNode(document);
     if (contentNode) {
       DO.U.initButtons();
-      DO.U.initAuth();
       DO.U.setDocumentURL(url);
       DO.U.setDocumentString();
       DO.U.initUser();

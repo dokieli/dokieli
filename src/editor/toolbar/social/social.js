@@ -12,7 +12,7 @@ const ns = Config.ns;
 export class SocialToolbar extends ToolbarView {
   constructor(mode, buttons, editorView) {
     super(mode, buttons, editorView)
-    console.log('mode:', mode);
+    // console.log('mode:', mode);
 
     this.editorView = editorView;
   }

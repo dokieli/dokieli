@@ -53,6 +53,8 @@ async function signOut() {
     Role: 'social',
     UI: {}
   }
+
+  updateButtons();
 }
 
 

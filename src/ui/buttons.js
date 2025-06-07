@@ -32,9 +32,6 @@ export function initButtons() {
     SignIn: getButtonHTML({ button: 'signin', buttonClass: 'signin-user', buttonTitle: 'Sign in to authenticate', buttonTextContent: 'Sign in' }),
     Menu: {
       Delete: getButtonHTML({ button: 'delete', buttonClass: 'resource-delete', buttonTitle: 'Delete article', buttonTextContent: 'Delete', iconSize: 'fa-2x', buttonDisabled: true }),
-      Edit: () => Config.EditorEnabled ?
-              getButtonHTML({ button: 'cursor', buttonClass: 'editor-disable', buttonTextContent: 'Edit', buttonTitle: 'Disable editor', iconSize: 'fa-2x' }) :
-              getButtonHTML({ button: 'cursor', buttonClass: 'editor-enable', buttonTextContent: 'Edit', buttonTitle: 'Enable editor', iconSize: 'fa-2x' }),
       EditEnable: getButtonHTML({ button: 'cursor', buttonClass: 'editor-enable', buttonTextContent: 'Edit', buttonTitle: 'Enable editor', iconSize: 'fa-2x' }),
       EditDisable: getButtonHTML({ button: 'cursor', buttonClass: 'editor-disable', buttonTextContent: 'Edit', buttonTitle: 'Disable editor', iconSize: 'fa-2x' }),
       EmbedData: getButtonHTML({ button: 'data-meta', buttonClass: 'embed-data-meta', buttonTitle: 'Embed structured data', buttonTextContent: 'Embed Data', iconSize: 'fa-2x' }),
@@ -538,8 +535,10 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .robustify-links': ({ online, localhost }) => {
+  '#document-do .robustify-links': ({ online, editorMode }) => {
     const info = Config.Resource[Config.DocumentURL];
+
+    if (editorMode !== 'author') return false;
 
     if (info.odrl?.prohibitionActions &&
         info.odrl.prohibitionAssignee === Config.User.IRI &&
@@ -551,6 +550,20 @@ const buttonState = {
 
     return true;
   },
+
+  '#document-do .embed-data-meta': (editorMode) => {
+    const info = Config.Resource[Config.DocumentURL];
+
+    if (editorMode !== 'author') return false;
+    
+    if (info.odrl?.prohibitionActions &&
+        info.odrl.prohibitionAssignee === Config.User.IRI &&
+        info.odrl.prohibitionActions.includes(ns.odrl.modify.value)) {
+      return false;
+    }
+
+    return true;
+  }
 };
 
 
