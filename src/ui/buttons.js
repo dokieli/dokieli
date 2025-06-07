@@ -32,9 +32,11 @@ export function initButtons() {
     SignIn: getButtonHTML({ button: 'signin', buttonClass: 'signin-user', buttonTitle: 'Sign in to authenticate', buttonTextContent: 'Sign in' }),
     Menu: {
       Delete: getButtonHTML({ button: 'delete', buttonClass: 'resource-delete', buttonTitle: 'Delete article', buttonTextContent: 'Delete', iconSize: 'fa-2x', buttonDisabled: true }),
-      Edit: Config.EditorEnabled ?
+      Edit: () => Config.EditorEnabled ?
               getButtonHTML({ button: 'cursor', buttonClass: 'editor-disable', buttonTextContent: 'Edit', buttonTitle: 'Disable editor', iconSize: 'fa-2x' }) :
               getButtonHTML({ button: 'cursor', buttonClass: 'editor-enable', buttonTextContent: 'Edit', buttonTitle: 'Enable editor', iconSize: 'fa-2x' }),
+      EditEnable: getButtonHTML({ button: 'cursor', buttonClass: 'editor-enable', buttonTextContent: 'Edit', buttonTitle: 'Enable editor', iconSize: 'fa-2x' }),
+      EditDisable: getButtonHTML({ button: 'cursor', buttonClass: 'editor-disable', buttonTextContent: 'Edit', buttonTitle: 'Disable editor', iconSize: 'fa-2x' }),
       EmbedData: getButtonHTML({ button: 'data-meta', buttonClass: 'embed-data-meta', buttonTitle: 'Embed structured data', buttonTextContent: 'Embed Data', iconSize: 'fa-2x' }),
       Export: getButtonHTML({ button: 'export', buttonClass: 'export-as-html', buttonTitle: 'Export and save to file', buttonTextContent: 'Export', iconSize: 'fa-2x' }),
       GenerateFeed: getButtonHTML({ button: 'feed', buttonClass: 'generate-feed', buttonTitle: 'Generate Web feed', buttonTextContent: 'Feed', iconSize: 'fa-2x' }),

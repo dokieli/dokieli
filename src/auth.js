@@ -6,9 +6,8 @@ import { getAgentHTML, showActionMessage, showGeneralMessages, getResourceSupple
 import { Icon } from './ui/icons.js'
 import { getResourceGraph, getAgentName, getGraphImage, getAgentURL, getAgentPreferredProxy, getAgentPreferredPolicy, getAgentPreferredPolicyRule, setPreferredPolicyInfo, getAgentDelegates, getAgentKnows, getAgentFollowing, getAgentStorage, getAgentOutbox, getAgentInbox, getAgentPreferencesFile, getAgentPublicTypeIndex, getAgentPrivateTypeIndex, getAgentTypeIndex, getAgentSupplementalInfo, getAgentSeeAlso, getAgentPreferencesInfo, getAgentLiked, getAgentOccupations, getAgentPublications, getAgentMade, getAgentOIDCIssuer } from './graph.js'
 import { removeLocalStorageDocument, removeLocalStorageProfile, updateLocalStorageProfile } from './storage.js'
-import { getButtonHTML } from './ui/buttons.js';
+import { updateButtons } from './ui/buttons.js';
 import { Session } from '@uvdsl/solid-oidc-client-browser';
-import DO from './dokieli.js';
 
 const ns = Config.ns;
 Config['Session'] = new Session();
@@ -70,15 +69,7 @@ async function userInfoSignOut(node) {
 
   //Signed out so update button states
   getResourceSupplementalInfo(Config.DocumentURL).then(resourceInfo => {
-    // updateFeatureStatesOfResourceInfo(resourceInfo);
-    // updateDocumentDoButtonStates();
-
-    var selectors = [
-
-    ]
-
-    updateButtons(selectors)
-
+    updateButtons();
   });
 }
 
@@ -343,8 +334,7 @@ function getSubjectInfo (subjectIRI, options = {}) {
 //TODO: Review grapoi
 function afterSetUserInfo () {
   getResourceSupplementalInfo(Config.DocumentURL).then(resourceInfo => {
-    // updateFeatureStatesOfResourceInfo(resourceInfo);
-    // updateDocumentDoButtonStates();
+    updateButtons();
   });
 
   var promises = [];
