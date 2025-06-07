@@ -13,6 +13,7 @@ import { fragmentFromString, generateAttributeId } from "../util.js";
 import { updateLocalStorageProfile } from "../storage.js";
 import rdf from 'rdf-ext';
 import { Icon } from "../ui/icons.js";
+import { updateButtons } from "../ui/buttons.js";
 
 const ns = Config.ns;
 
@@ -93,6 +94,8 @@ export class Editor {
     this.init(mode, node);
     this.showEditorModeActionMessage(mode);
     Config.EditorEnabled = (mode === 'author');
+
+    updateButtons();
 
     // this.setEditorDataItems(e);
   }
@@ -223,9 +226,31 @@ export class Editor {
     console.log("Editor created. Mode:", this.mode);
   }
 
+  //WIP: Normalisation:
+  normaliseContent(content) {
+    let newContent = content ?? DOMSerializer.fromSchema(schema).serializeFragment(this.editorView.state.doc.content);
+
+    const wrapper = document.createElement('div');
+    wrapper.appendChild(newContent.cloneNode(true));
+
+    ['li', 'dd', 'figure', 'figcaption', 'td', 'th', 'video', 'audio', 'figure', 'button', 'select', 'textarea'].forEach(tag => {
+      wrapper.querySelectorAll(tag).forEach(el => {
+        if (el.children.length === 1 && el.firstElementChild.tagName.toLowerCase() === 'p') {
+          const p = el.firstElementChild;
+          // Move all children of <p> to <li>/<dd>
+          while (p.firstChild) el.insertBefore(p.firstChild, p);
+          p.remove(); // remove the now-empty <p>
+        }
+      });
+    });
+
+    return wrapper;
+  }
+
   destroyEditor(content) {
     if (this.editorView) {
-      const newContent = content ?? DOMSerializer.fromSchema(schema).serializeFragment(this.editorView.state.doc.content);
+      const normalisedContent = this.normaliseContent(content);
+
       // console.log(content)
       // const serializer = DOMSerializer.fromSchema(schema);
       // const htmlString = new XMLSerializer().serializeToString(fragment);
@@ -241,7 +266,7 @@ export class Editor {
       //TODO: dokieli menu is currently outside of body, but it should be in body. Clone the menu, add it back into the body after replaceChildren
 
       // Restore body content and original nodes
-      document.body.replaceChildren(newContent);
+      document.body.replaceChildren(normalisedContent);
 
       this.restrictedNodes.forEach(node => {
         document.body.appendChild(node);
