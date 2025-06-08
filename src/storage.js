@@ -1,7 +1,7 @@
 'use strict'
 
 import Config from './config.js';
-import { getDateTimeISO, generateUUID, getHash, fragmentFromString } from './util.js';
+import { getDateTimeISO, generateUUID, getHash, fragmentFromString, debounce } from './util.js';
 import { accessModeAllowed, getDocument, updateMutableResource } from './doc.js';
 
 
@@ -40,7 +40,10 @@ function updateLocalStorageDocument(key, data, options) {
   var datetime = getDateTimeISO();
 
   var object = {
-    "@context": "https://www.w3.org/ns/activitystreams",
+    "@context": [
+      "https://www.w3.org/ns/activitystreams",
+      { "digestSRI": "https://www.w3.org/2018/credentials#digestSRI" }
+    ],
     "id": id,
     "type": "Update",
     "object": {
@@ -48,10 +51,12 @@ function updateLocalStorageDocument(key, data, options) {
       "type": "Document",
       "updated": datetime,
       "mediaType": "text/html",
-      "content": data
+      "content": data,
+      "digestSRI": options.digestSRI
     }
   };
 
+  //TODO: Reconsider this key (which is essentially DO.C.DocumentURL) because there is a possibility that some other thing on that page will use the same key? We don't want to conflict with that. Perhaps the key in storage should be something unique, e.g., UUID, digestSRI, or something dokieli-specific? Probably dokieli-specific because we need to have a deterministic way of recalling it. Even if it is just `do-${DO.C.DocumentURL}` which would be sufficient.. or even digestSRI(DO.C.DocumentURL)
   localStorage.setItem(key, JSON.stringify(object));
 
   if (options.autoSave) {
@@ -76,6 +81,35 @@ function updateHTTPStorageDocument(url, data, options) {
   console.log(datetime + ': Document saved.');
 }
 
+function updateStorageDocument(key, data, options) {
+  switch (options.method) {
+    default:
+    case 'localStorage':
+      updateLocalStorageDocument(key, data, options);
+      break;
+
+    case 'http':
+      updateHTTPStorageDocument(key, data, options);
+      break;
+  }
+}
+
+function autoSave(key, options) {
+  var data = getDocument();
+
+  getHash(data).then(hash => {
+    if (!('digestSRI' in Config.AutoSave.Items[key][options.method] &&
+          Config.AutoSave.Items[key][options.method].digestSRI == hash)) {
+
+      options['digestSRI'] = hash;
+
+      updateStorageDocument(key, data, options);
+
+      Config.AutoSave.Items[key][options.method]['digestSRI'] = hash;
+    }
+  });
+}
+
 function enableAutoSave(key, options) {
   options = options || {};
   options['method'] = ('method' in options) ? options.method : 'localStorage';
@@ -83,36 +117,14 @@ function enableAutoSave(key, options) {
   Config.AutoSave.Items[key] = (Config.AutoSave.Items[key]) ? Config.AutoSave.Items[key] : {};
   Config.AutoSave.Items[key][options.method] = (Config.AutoSave.Items[key][options.method]) ? Config.AutoSave.Items[key][options.method] : {};
 
-  var id;
+  let debounceTimeout;
 
-  switch (options.method) {
-    default:
-    case 'localStorage':
-      id = setInterval(() => {
-        var data = getDocument();
-        getHash(data).then(hash => {
-          if (!('hash' in Config.AutoSave.Items[key][options.method] && Config.AutoSave.Items[key][options.method].hash == hash)) {
-            updateLocalStorageDocument(key, data, options);
-            Config.AutoSave.Items[key][options.method]['hash'] = hash;
-          }
-        });
-      }, Config.AutoSave.Timer);
-      break;
-
-    case 'http':
-      id = setInterval(() => {
-        var data = getDocument();
-        getHash(data).then(hash => {
-          if (!('hash' in Config.AutoSave.Items[key][options.method] && Config.AutoSave.Items[key][options.method].hash == hash)) {
-            updateHTTPStorageDocument(key, data, options);
-            Config.AutoSave.Items[key][options.method]['hash'] = hash;
-          }
-        });
-      }, Config.AutoSave.Timer);
-      break;
-  }
-
-  Config.AutoSave.Items[key][options.method]['id'] = id;
+  document.querySelector('.ProseMirror[contenteditable]').addEventListener('input', e => {
+    // debounceTimeout = debounce(() => autoSave, Config.AutoSave.Timer)(key, options);
+    clearTimeout(debounceTimeout);
+    debounceTimeout = setTimeout(() => autoSave(key, options), Config.AutoSave.Timer); // debounce delay 
+    Config.AutoSave.Items[key][options.method]['id'] = debounceTimeout;
+  })
 
   console.log(getDateTimeISO() + ': ' + key + ' ' + options.method + ' autosave enabled.');
 }
@@ -129,6 +141,10 @@ function disableAutoSave(key, options) {
       if (Config.AutoSave.Items[key][method]) {
         clearInterval(Config.AutoSave.Items[key][method].id);
         Config.AutoSave.Items[key][method] = undefined;
+
+        //Update localStorage one last time (but not HTTPStorage?)
+        updateLocalStorageDocument(key, data, options);
+
         console.log(getDateTimeISO() + ': ' + key + ' ' + options.method + ' autosave disabled.');
       }
     })
@@ -246,6 +262,7 @@ function updateLocalStorageProfile(User) {
   }
 }
 
+//XXX: Currently unused but needs to be revisited when there is a UI to allow user to disable autosave
 function showAutoSaveStorage(node, iri) {
   iri = iri || Config.DocumentURL;
 
