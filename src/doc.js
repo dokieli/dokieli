@@ -1,5 +1,3 @@
-'use strict'
-
 import Config from './config.js'
 import { getDateTimeISO, fragmentFromString, generateAttributeId, uniqueArray, generateUUID, matchAllIndex, parseISODuration, domSanitize, getRandomIndex } from './util.js'
 import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath, getPrefixedNameFromIRI, generateDataURI, getProxyableIRI } from './uri.js'
@@ -13,6 +11,7 @@ import { gfmTagfilterHtml } from 'micromark-extension-gfm-tagfilter';
 import { Icon } from './ui/icons.js';
 import { showUserIdentityInput, signOut } from './auth.js'
 import { buttonIcons, updateButtons } from './ui/buttons.js'
+import beautify from 'js-beautify';
 
 const ns = Config.ns;
 
@@ -213,13 +212,27 @@ function getFragmentOfNodesChildren(node) {
 }
 
 function getDocument (cn, options) {
-  let node = cn || document.documentElement.cloneNode(true)
-  options = options || Config.DOMNormalisation
+  let node = cn || document.documentElement.cloneNode(true);
+
+  options = options || Config.DOMNormalisation;
+
+  if (DO.Editor?.mode == 'author') {
+    let pmNode = node.querySelector('.ProseMirror');
+
+    if (pmNode && pmNode.parentNode) {
+      let normalisedContent = DO.Editor.normaliseContent(getFragmentOfNodesChildren(pmNode));
+
+      pmNode.parentNode.replaceChild(normalisedContent, pmNode);
+    }
+  }
 
   let doctype = (node.constructor.name === 'SVGSVGElement') ? '<?xml version="1.0" encoding="utf-8"?>' : getDoctype();
-  let s = (doctype.length > 0) ? doctype + '\n' : ''
-  s += domToString(node, options)
-  return s
+  let s = (doctype.length > 0) ? doctype + '\n' : '';
+  s += domToString(node, options);
+
+  s = beautify.html(s, Config.BeautifyOptions);
+
+  return s;
 }
 
 function getDocumentNodeFromString(data, options) {
