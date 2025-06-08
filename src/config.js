@@ -109,6 +109,11 @@ export default {
     'removeWrapperSelector': '.ProseMirror'
   },
 
+  BeautifyOptions: {
+    "indent_size": 2,
+    "end_with_newline": true
+  },
+
   ArticleNodeSelectors: [
     'main > article',
     'main',
