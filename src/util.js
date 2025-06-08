@@ -143,19 +143,18 @@ function getFormValues(form) {
   return formValues;
 }
 
-function getHash(message, algo = "SHA-256") {
-  var buffer = new TextEncoder("utf-8").encode(message);
-  return crypto.subtle.digest(algo, buffer).then(function (hash) {
-    var hexCodes = [];
-    var view = new DataView(hash);
-    for (var i = 0; i < view.byteLength; i += 4) {
-      var value = view.getUint32(i);
-      var stringValue = value.toString(16);
-      var padding = "00000000";
-      var paddedValue = (padding + stringValue).slice(-padding.length);
-      hexCodes.push(paddedValue);
-    }
-    return hexCodes.join("");
+//SRI hash that's browser safe
+function getHash(message, algo = 'sha512') {
+  if (!['sha256', 'sha384', 'sha512'].includes(algo)) {
+    throw new Error('Unsupported SRI algorithm');
+  }
+
+  const encoder = new TextEncoder();
+  const data = encoder.encode(message);
+
+  return crypto.subtle.digest(algo, data).then(hashBuffer => {
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(hashBuffer)));
+    return `${algo}-${base64}`;
   });
 }
 
