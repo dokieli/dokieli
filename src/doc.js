@@ -205,6 +205,13 @@ function getDoctype () {
   return doctype
 }
 
+function getFragmentOfNodesChildren(node) {
+  const fragment = document.createDocumentFragment();
+  [...node.childNodes].forEach(child => fragment.appendChild(child));
+
+  return fragment;
+}
+
 function getDocument (cn, options) {
   let node = cn || document.documentElement.cloneNode(true)
   options = options || Config.DOMNormalisation
