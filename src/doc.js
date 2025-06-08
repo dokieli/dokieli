@@ -3577,6 +3577,7 @@ export {
   domToString,
   dumpNode,
   getDoctype,
+  getFragmentOfNodesChildren,
   getDocument,
   getDocumentNodeFromString,
   getDocumentContentNode,
