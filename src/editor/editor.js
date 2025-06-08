@@ -7,7 +7,7 @@ import { keymapPlugin } from "./toolbar/author/keymap.js";
 import { AuthorToolbar } from "./toolbar/author/author.js";
 import { SocialToolbar } from "./toolbar/social/social.js";
 import Config from "./../config.js";
-import { addMessageToLog, getAgentHTML, getLanguageOptionsHTML, getLicenseOptionsHTML, getPublicationStatusOptionsHTML, getResourceTypeOptionsHTML, insertDocumentLevelHTML, selectArticleNode, setDate, setEditSelections, showActionMessage, hasNonWhitespaceText } from "../doc.js";
+import { addMessageToLog, getAgentHTML, insertDocumentLevelHTML, setDate, setEditSelections, showActionMessage, hasNonWhitespaceText, getFragmentOfNodesChildren } from "../doc.js";
 import { getAgentName, getGraphImage, getGraphInbox, getGraphTypes, getResourceGraph } from "../graph.js";
 import { fragmentFromString, generateAttributeId } from "../util.js";
 import { updateLocalStorageProfile } from "../storage.js";
@@ -202,7 +202,7 @@ export class Editor {
 
     const state = EditorState.create({
       doc: DOMParser.fromSchema(schema).parse(this.node),
-      plugins: [history(), keymapPlugin, editorToolbarPlugin]
+      plugins: [history(), keymapPlugin, editorToolbarPlugin],
     });
 
     this.node.replaceChildren();
@@ -230,11 +230,11 @@ export class Editor {
   normaliseContent(content) {
     let newContent = content ?? DOMSerializer.fromSchema(schema).serializeFragment(this.editorView.state.doc.content);
 
-    const wrapper = document.createElement('div');
-    wrapper.appendChild(newContent.cloneNode(true));
+    const div = document.createElement('div');
+    div.appendChild(newContent.cloneNode(true));
 
     ['li', 'dd', 'figure', 'figcaption', 'td', 'th', 'video', 'audio', 'figure', 'button', 'select', 'textarea'].forEach(tag => {
-      wrapper.querySelectorAll(tag).forEach(el => {
+      div.querySelectorAll(tag).forEach(el => {
         if (el.children.length === 1 && el.firstElementChild.tagName.toLowerCase() === 'p') {
           const p = el.firstElementChild;
           // Move all children of <p> to <li>/<dd>
@@ -244,7 +244,7 @@ export class Editor {
       });
     });
 
-    return wrapper;
+    return getFragmentOfNodesChildren(div);
   }
 
   destroyEditor(content) {
