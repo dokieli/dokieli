@@ -144,18 +144,17 @@ function getFormValues(form) {
 }
 
 //SRI hash that's browser safe
-function getHash(message, algo = 'sha512') {
-  if (!['sha256', 'sha384', 'sha512'].includes(algo)) {
+async function getHash(message, algo = 'SHA-512') {
+  if (!['SHA-256', 'SHA-384', 'SHA-512'].includes(algo)) {
     throw new Error('Unsupported SRI algorithm');
   }
 
   const encoder = new TextEncoder();
   const data = encoder.encode(message);
+  const hashBuffer = await crypto.subtle.digest(algo, data);
+  const base64 = btoa(String.fromCharCode(...new Uint8Array(hashBuffer)));
 
-  return crypto.subtle.digest(algo, data).then(hashBuffer => {
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(hashBuffer)));
-    return `${algo}-${base64}`;
-  });
+  return `${algo.replace('-', '').toLowerCase()}-${base64}`;
 }
 
 function hashCode(s) {
