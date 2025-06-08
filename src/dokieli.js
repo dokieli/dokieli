@@ -13,7 +13,7 @@ import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation,
 import { notifyInbox, sendNotifications } from './inbox.js'
 import { uniqueArray, fragmentFromString, generateAttributeId, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, isValidISBN, findPreviousDateTime, domSanitize, sanitizeObject, escapeRDFLiteral, tranformIconstoCSS, getIconsFromCurrentDocument, isOnline } from './util.js'
 import { generateGeoView } from './geo.js'
-import { getLocalStorageProfile, showAutoSaveStorage, hideAutoSaveStorage, updateLocalStorageProfile } from './storage.js'
+import { getLocalStorageProfile, showAutoSaveStorage, hideAutoSaveStorage, updateLocalStorageProfile, enableAutoSave, disableAutoSave } from './storage.js'
 import { showUserSigninSignout, showUserIdentityInput, getSubjectInfo, restoreSession, afterSetUserInfo, setUserInfo, userInfoSignOut } from './auth.js'
 import { Icon } from './ui/icons.js'
 import * as d3Selection from 'd3-selection';
@@ -3903,8 +3903,6 @@ console.log(reason);
       var d = node.querySelector('#document-do');
       if (d) { return; }
 
-      var documentURL = DO.C.DocumentURL;
-
       var buttonDisabled = '';
 
       const buttons = [
@@ -3957,6 +3955,8 @@ console.log(reason);
           DO.U.hideDocumentMenu();
           DO.Editor.toggleEditor('social');
           // hideAutoSaveStorage(node.querySelector('#autosave-items'), documentURL);
+
+          disableAutoSave(DO.C.DocumentURL, {'method': 'localStorage'});
         }
         else {
           b = e.target.closest('button.editor-enable');
@@ -3966,9 +3966,10 @@ console.log(reason);
             DO.U.hideDocumentMenu();
             DO.Editor.toggleEditor('author');
             // showAutoSaveStorage(node, documentURL);
+
+            enableAutoSave(DO.C.DocumentURL, {'method': 'localStorage'});
           }
         }
-
 
         if (e.target.closest('.resource-notifications')) {
           DO.U.showNotifications(e);
