@@ -551,7 +551,7 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .embed-data-meta': (editorMode) => {
+  '#document-do .embed-data-meta': ({ editorMode }) => {
     const info = Config.Resource[Config.DocumentURL];
 
     if (editorMode !== 'author') return false;
