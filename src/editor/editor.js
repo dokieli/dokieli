@@ -11,6 +11,7 @@ import { addMessageToLog, getAgentHTML, insertDocumentLevelHTML, setDate, setEdi
 import { getAgentName, getGraphImage, getGraphInbox, getGraphTypes, getResourceGraph } from "../graph.js";
 import { fragmentFromString, generateAttributeId } from "../util.js";
 import { updateLocalStorageProfile } from "../storage.js";
+import { normaliseContent } from '../doc.js';
 import rdf from 'rdf-ext';
 import { Icon } from "../ui/icons.js";
 import { updateButtons } from "../ui/buttons.js";
@@ -226,30 +227,12 @@ export class Editor {
     console.log("Editor created. Mode:", this.mode);
   }
 
-  //WIP: Normalisation:
-  normaliseContent(content) {
-    let newContent = content ?? DOMSerializer.fromSchema(schema).serializeFragment(this.editorView.state.doc.content);
-
-    const div = document.createElement('div');
-    div.appendChild(newContent.cloneNode(true));
-
-    ['li', 'dd', 'figure', 'figcaption', 'td', 'th', 'video', 'audio', 'figure', 'button', 'select', 'textarea'].forEach(tag => {
-      div.querySelectorAll(tag).forEach(el => {
-        if (el.children.length === 1 && el.firstElementChild.tagName.toLowerCase() === 'p') {
-          const p = el.firstElementChild;
-          // Move all children of <p> to <li>/<dd>
-          while (p.firstChild) el.insertBefore(p.firstChild, p);
-          p.remove(); // remove the now-empty <p>
-        }
-      });
-    });
-
-    return getFragmentOfNodesChildren(div);
-  }
 
   destroyEditor(content) {
     if (this.editorView) {
-      const normalisedContent = this.normaliseContent(content);
+      content = content ?? DOMSerializer.fromSchema(schema).serializeFragment(this.editorView.state.doc.content);
+
+      const normalisedContent = normaliseContent(content);
 
       // console.log(content)
       // const serializer = DOMSerializer.fromSchema(schema);

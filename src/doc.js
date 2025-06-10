@@ -211,6 +211,25 @@ function getFragmentOfNodesChildren(node) {
   return fragment;
 }
 
+function normaliseContent (node) {
+  let newContent = node;
+  const div = document.createElement('div');
+  div.appendChild(newContent.cloneNode(true));
+
+  ['li', 'dd', 'figure', 'figcaption', 'td', 'th', 'video', 'audio', 'figure', 'button', 'select', 'textarea'].forEach(tag => {
+    div.querySelectorAll(tag).forEach(el => {
+      if (el.children.length === 1 && el.firstElementChild.tagName.toLowerCase() === 'p') {
+        const p = el.firstElementChild;
+        // Move all children of <p> to <li>/<dd>
+        while (p.firstChild) el.insertBefore(p.firstChild, p);
+        p.remove(); // remove the now-empty <p>
+      }
+    });
+  });
+
+  return getFragmentOfNodesChildren(div);
+}
+
 function getDocument (cn, options) {
   let node = cn || document.documentElement.cloneNode(true);
 
