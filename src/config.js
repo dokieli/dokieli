@@ -95,6 +95,7 @@ export default {
     'skipAttributes': ['aria-multiline', 'contenteditable', 'data-placeholder', 'role', 'spellcheck', 'style'],
     'sortAttributes': true,
     'skipNodeWithClass': 'do',
+    'skipNodeComment': false,
     'skipNodeWithId': ['toc-nav'],
     'classWithChildText': {
       'class': '.do.ref',
