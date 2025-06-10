@@ -235,18 +235,24 @@ function getDocument (cn, options) {
 
   options = options || Config.DOMNormalisation;
 
+  node = normaliseContent(node);
+
   if (DO.Editor?.mode == 'author') {
     let pmNode = node.querySelector('.ProseMirror');
 
     if (pmNode && pmNode.parentNode) {
-      let normalisedContent = DO.Editor.normaliseContent(getFragmentOfNodesChildren(pmNode));
-
-      pmNode.parentNode.replaceChild(normalisedContent, pmNode);
+      pmNode.parentNode.replaceChild(getFragmentOfNodesChildren(pmNode), pmNode);
     }
   }
 
   let doctype = (node.constructor.name === 'SVGSVGElement') ? '<?xml version="1.0" encoding="utf-8"?>' : getDoctype();
   let s = (doctype.length > 0) ? doctype + '\n' : '';
+
+  //In case `node` type is DocumentFragment
+  const div = document.createElement('div');
+  div.appendChild(node.cloneNode(true));
+  node = div.firstChild;
+  
   s += domToString(node, options);
 
   s = beautify.html(s, Config.BeautifyOptions);
