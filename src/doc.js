@@ -155,7 +155,7 @@ function dumpNode (node, options, skipAttributes, voidElements, noEsc) {
         out += (ename === 'body') ? '  </' + ename + '>\n' : (ename === 'html') ? '</' + ename + '>\n' : '</' + ename + '>'
       }
     }
-  } else if (node.nodeType === 8) {
+  } else if (node.nodeType === 8 && 'skipNodeComment' in options && !options.skipNodeComment) {
     // FIXME: If comments are not tabbed in source, a new line is not prepended
     out += '\n\
 <!--' + node.nodeValue + '-->'
@@ -182,7 +182,7 @@ function dumpNode (node, options, skipAttributes, voidElements, noEsc) {
     nl = cleanEscapeCharacters(nl)
     out += nl
   } else {
-    console.log('Warning; Cannot handle serialising nodes of type: ' + node.nodeType)
+    console.warn('Warning; Cannot handle serialising nodes of type: ' + node.nodeType)
   }
 
   return out
