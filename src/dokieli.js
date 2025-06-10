@@ -1767,11 +1767,16 @@ DO = {
     },
 
     monitorNetworkStatus: function() {
-      window.addEventListener('online', () => {
+      window.addEventListener('online', async () => {
         console.log('online');
 
         updateButtons();
+
+        updateToLatestRemoteVersion();
+
+        // bring the document state to latest remote state, doing manual conflict resolution if needed, before saving or after some time offline
       });
+    
 
       window.addEventListener('offline', () => {
         console.log('offline');
