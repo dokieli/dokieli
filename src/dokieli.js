@@ -1780,6 +1780,145 @@ DO = {
       });
     },
 
+    updateToLatestRemoteVersion: function() {
+      const localETag = DO.C.Resource[DO.C.DocumentURL]?.headers?.etag?.['field-value'];
+      let localContentType = 'text/html';
+      const headers = {
+        'Accept': localContentType
+      };
+      const options = {};
+
+      if (localETag) {
+        headers['If-None-Match'] = localETag;
+      }
+
+      getResource(DO.C.DocumentURL, headers, options)
+        .then(response => {
+          // console.log(response)
+
+          response.text()
+            .then(async (data) => {
+              // console.log(data);
+
+              const remoteContent = getDocument(getDocumentNodeFromString(data), {...Config.DOMNormalisation, skipNodeComment: true});
+              const remoteHash = await getHash(remoteContent);
+              const storageObjectValue = localStorage.getItem(DO.C.DocumentURL);
+              //Temporarily always true
+              const remoteAutoSaveEnabled = DO.C.AutoSave.Items[DO.C.DocumentURL]?.http;
+              let localHash, localContent;
+
+              if (storageObjectValue) {
+                const { digestSRI, mediaType, content } = JSON.parse(storageObjectValue).object;
+                localHash = digestSRI;
+                localContentType = mediaType;
+                localContent = content;
+              }
+              else {
+                localContent = getDocument();
+                localHash = await getHash(localContent);
+              }
+
+              // console.log(localContent, remoteContent)
+
+              // console.log(localETag, localHash);
+
+              if (localETag) {
+                var remoteETag = response.headers.get('ETag');
+
+                // console.log(remoteETag, remoteHash);
+
+                //304
+                if (localETag == remoteETag) {
+                  if (remoteAutoSaveEnabled) {
+                    if (localContent) {
+                      putResource(DO.C.DocumentURL, localContent, localContentType, {}, { 'headers': { 'If-Match': localETag } })
+                        .catch(error => {
+                          switch (error.status) {
+                            case 412:
+                            case 409:
+                              DO.U.showResourceUpdateConflict(localContent, remoteContent);
+                              break;
+                          }
+                        });
+                    }
+                  }
+                }
+                //200
+                else {
+                  if (localHash == remoteHash) {
+                    console.log('Nothing to do. Already up to date.');
+                  }
+                  else {
+                    console.log('showResourceUpdateConflict');
+                    DO.U.showResourceUpdateConflict(localContent, remoteContent);
+                  }
+                }
+              }
+              else {
+                if (localHash == remoteHash) {
+                  console.log('Nothing to do. Already up to date.');
+                }
+                else {
+                  console.log('showResourceUpdateConflict');
+                  DO.U.showResourceUpdateConflict(localContent, remoteContent);
+                }
+              }
+            });
+        });
+    },
+
+    showResourceUpdateConflict: function(localContent, remoteContent) {
+      if (!localContent.length || !remoteContent.length) return;
+
+      var tmplLocal = document.implementation.createHTMLDocument('template');
+      tmplLocal.documentElement.setHTMLUnsafe(localContent);
+      let localContentNode = tmplLocal.body;
+      const localContentBody = localContentNode.getHTML().trim();
+
+      var tmplRemote = document.implementation.createHTMLDocument('template');
+      tmplRemote.documentElement.setHTMLUnsafe(remoteContent);
+      const remoteContentBody = tmplRemote.body.getHTML().trim();
+
+      // console.log(localContentBody, remoteContentBody)
+
+      //TODO: CHange Info.GraphView button
+      document.body.appendChild(fragmentFromString(`<aside id="review-changes" class="do on">${DO.C.Button.Close}<h2>Review Changes ${DO.C.Button.Info.GraphView}</h2><div class="info"></div></aside>`));
+
+      var diff = diffChars(remoteContentBody, localContentBody);
+      var diffHTML = [];
+      diff.forEach((part) => {
+        var eName = 'span';
+
+        if (part.added) {
+          eName = 'ins';
+        }
+        else if (part.removed) {
+          eName = 'del';
+        }
+
+        diffHTML.push('<' + eName + '>' + part.value + '</' + eName + '>');
+      });
+
+      var node = document.getElementById('review-changes');
+      node.insertAdjacentHTML('beforeend', `<div class="do-diff">${diffHTML.join('')}</div><button class="review-changes-submit" title="Save">Save</button>`);
+
+      //TODO: Initialise PM on .do-diff
+
+      node.addEventListener('click', e => {
+        var button = e.target.closest('button.review-changes-submit');
+        if (button) {
+          var diffedNode = node.querySelector('.do-diff');
+
+          DO.Editor.replaceContent(DO.Editor.mode, diffedNode);
+          
+
+          node.remove();
+
+          DO.U.updateToLatestRemoteVersion();
+        }
+      });
+    },
+
     showDocumentInfo: function() {
       document.body.appendChild(fragmentFromString(`<menu class="do" id="document-menu" role="toolbar">${DO.C.Button.OpenMenu}<div><section id="user-info"></section></div></menu>`));
 
