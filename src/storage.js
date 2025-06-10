@@ -117,6 +117,10 @@ function enableAutoSave(key, options) {
   Config.AutoSave.Items[key] = (Config.AutoSave.Items[key]) ? Config.AutoSave.Items[key] : {};
   Config.AutoSave.Items[key][options.method] = (Config.AutoSave.Items[key][options.method]) ? Config.AutoSave.Items[key][options.method] : {};
 
+//TEMPORARY FOR TESTING
+   Config.AutoSave.Items[key]['http'] = {};
+
+
   let debounceTimeout;
 
   document.querySelector('.ProseMirror[contenteditable]').addEventListener('input', e => {
