@@ -3603,6 +3603,7 @@ export {
   dumpNode,
   getDoctype,
   getFragmentOfNodesChildren,
+  normaliseContent,
   getDocument,
   getDocumentNodeFromString,
   getDocumentContentNode,
