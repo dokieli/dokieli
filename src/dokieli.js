@@ -13,7 +13,7 @@ import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation,
 import { notifyInbox, sendNotifications } from './inbox.js'
 import { uniqueArray, fragmentFromString, generateAttributeId, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, isValidISBN, findPreviousDateTime, domSanitize, sanitizeObject, escapeRDFLiteral, tranformIconstoCSS, getIconsFromCurrentDocument, getHash } from './util.js'
 import { generateGeoView } from './geo.js'
-import { getLocalStorageProfile, updateLocalStorageProfile, enableAutoSave, disableAutoSave } from './storage.js'
+import { getLocalStorageItem, updateLocalStorageProfile, enableAutoSave, disableAutoSave } from './storage.js'
 import { showUserSigninSignout, showUserIdentityInput, getSubjectInfo, restoreSession, afterSetUserInfo, setUserInfo, userInfoSignOut } from './auth.js'
 import { Icon } from './ui/icons.js'
 import * as d3Selection from 'd3-selection';
@@ -1510,7 +1510,7 @@ DO = {
     },
 
     initUser: function() {
-      getLocalStorageProfile().then(user => {
+      getLocalStorageItem('DO.C.User').then(user => {
         if (user && 'object' in user) {
           // user.object.describes.Role = (DO.C.User.IRI && user.object.describes.Role) ? user.object.describes.Role : 'social';
 
@@ -1772,7 +1772,7 @@ DO = {
 
         updateButtons();
 
-        updateToLatestRemoteVersion();
+        DO.U.updateToLatestRemoteVersion();
 
         // bring the document state to latest remote state, doing manual conflict resolution if needed, before saving or after some time offline
       });
@@ -1785,7 +1785,7 @@ DO = {
       });
     },
 
-    updateToLatestRemoteVersion: function() {
+    updateToLatestRemoteVersion: async function() {
       const localETag = DO.C.Resource[DO.C.DocumentURL]?.headers?.etag?.['field-value'];
       let localContentType = 'text/html';
       const headers = {
@@ -1807,13 +1807,15 @@ DO = {
 
               const remoteContent = getDocument(getDocumentNodeFromString(data), {...Config.DOMNormalisation, skipNodeComment: true});
               const remoteHash = await getHash(remoteContent);
-              const storageObjectValue = localStorage.getItem(DO.C.DocumentURL);
+              const storageObject = await getLocalStorageItem(DO.C.DocumentURL);
+              const latestLocalDocumentItemObject = await getLocalStorageItem(storageObject.items[0]);
+
               //Temporarily always true
               const remoteAutoSaveEnabled = DO.C.AutoSave.Items[DO.C.DocumentURL]?.http;
               let localHash, localContent;
 
-              if (storageObjectValue) {
-                const { digestSRI, mediaType, content } = JSON.parse(storageObjectValue).object;
+              if (latestLocalDocumentItemObject) {
+                const { digestSRI, mediaType, content } = latestLocalDocumentItemObject;
                 localHash = digestSRI;
                 localContentType = mediaType;
                 localContent = content;

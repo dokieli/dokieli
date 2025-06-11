@@ -5,62 +5,95 @@ import { getDateTimeISO, generateUUID, getHash, fragmentFromString, debounce } f
 import { accessModeAllowed, getDocument, updateMutableResource } from './doc.js';
 
 
-function initLocalStorage(key) {
-  if (typeof window.localStorage != 'undefined') {
-    enableLocalStorage(key);
-  }
-}
+// function initLocalStorage(key) {
+//   if (typeof window.localStorage != 'undefined') {
+//     enableLocalStorage(key);
+//   }
+// }
 
-function enableLocalStorage(key) {
-  Config.UseLocalStorage = true;
-  var o = localStorage.getItem(key);
-  try {
-    document.documentElement.replaceChildren(fragmentFromString(JSON.parse(o).object.content));
-    Config.init();
-  } catch(e){
-    // Ignore errors
-  }
-  console.log(getDateTimeISO() + ': ' + key + ' storage enabled.');
-  enableAutoSave(key, {'method': 'localStorage'});
-}
+// function enableLocalStorage(key) {
+//   Config.UseLocalStorage = true;
+//   var o = localStorage.getItem(key);
+//   try {
+//     document.documentElement.replaceChildren(fragmentFromString(JSON.parse(o).object.content));
+//     Config.init();
+//   } catch(e){
+//     // Ignore errors
+//   }
+//   console.log(getDateTimeISO() + ': ' + key + ' storage enabled.');
+//   enableAutoSave(key, {'method': 'localStorage'});
+// }
 
-function disableLocalStorage(key) {
-  Config.UseLocalStorage = false;
-  localStorage.removeItem(key);
-  disableAutoSave(key, {'method': 'localStorage'});
-  console.log(getDateTimeISO() + ': ' + key + ' storage disabled.');
-}
+// function disableLocalStorage(key) {
+//   Config.UseLocalStorage = false;
+//   localStorage.removeItem(key);
+//   disableAutoSave(key, {'method': 'localStorage'});
+//   console.log(getDateTimeISO() + ': ' + key + ' storage disabled.');
+// }
 
-function updateLocalStorageDocument(key, data, options) {
+
+async function updateLocalStorageDocumentWithItem(key, data, options) {
+  if (!key) { Promise.resolve(); }
+
   data = data || getDocument();
   options = options || {};
 
-  var id = generateUUID();
+  var collection = await getLocalStorageItem(key);
+  console.log(collection);
+
+  var id = `${key}#${generateUUID()}`;
 
   var datetime = getDateTimeISO();
+  options.datetime = options.datetime || datetime;
 
-  var object = {
+  if (!collection) {
+    collection = {
+      "@context": [
+        "https://www.w3.org/ns/activitystreams",
+        { "digestSRI": "https://www.w3.org/2018/credentials#digestSRI" }
+      ],
+      id: key,
+      type: "OrderedCollection",
+      updated: datetime,
+      items: []
+    }
+  }
+
+  collection.items.unshift(id);
+  options.collectionKey = key;
+
+  //TODO: Reconsider this key (which is essentially DO.C.DocumentURL) because there is a possibility that some other thing on that page will use the same key? We don't want to conflict with that. Perhaps the key in storage should be something unique, e.g., UUID, digestSRI, or something dokieli-specific? Probably dokieli-specific because we need to have a deterministic way of recalling it. Even if it is just `do-${DO.C.DocumentURL}` which would be sufficient.. or even digestSRI(DO.C.DocumentURL)
+  localStorage.setItem(key, JSON.stringify(collection));
+
+  addLocalStorageDocumentItem(id, data, options);
+}
+
+//TODO removeLocalStorageDocumenItem
+
+function addLocalStorageDocumentItem(id, data, options) {
+  data = data || getDocument();
+  options = options || {};
+
+  var datetime = options.datetime || getDateTimeISO();
+
+  var item = {
     "@context": [
       "https://www.w3.org/ns/activitystreams",
       { "digestSRI": "https://www.w3.org/2018/credentials#digestSRI" }
     ],
-    "id": id,
-    "type": "Update",
-    "object": {
-      "id": key,
-      "type": "Document",
-      "updated": datetime,
-      "mediaType": "text/html",
-      "content": data,
-      "digestSRI": options.digestSRI
-    }
+    id: id,
+    type: "Document",
+    updated: datetime,
+    mediaType: "text/html",
+    content: data,
+    digestSRI: options.digestSRI,
+    partOf: options.collectionKey
   };
 
-  //TODO: Reconsider this key (which is essentially DO.C.DocumentURL) because there is a possibility that some other thing on that page will use the same key? We don't want to conflict with that. Perhaps the key in storage should be something unique, e.g., UUID, digestSRI, or something dokieli-specific? Probably dokieli-specific because we need to have a deterministic way of recalling it. Even if it is just `do-${DO.C.DocumentURL}` which would be sufficient.. or even digestSRI(DO.C.DocumentURL)
-  localStorage.setItem(key, JSON.stringify(object));
+  localStorage.setItem(id, JSON.stringify(item));
 
   if (options.autoSave) {
-    Config.AutoSave.Items[key]['localStorage']['updated'] = object.object.updated;
+    Config.AutoSave.Items[options.collectionKey]['localStorage']['updated'] = item.updated;
   }
 
   console.log(datetime + ': Document saved.');
@@ -81,11 +114,11 @@ function updateHTTPStorageDocument(url, data, options) {
   console.log(datetime + ': Document saved.');
 }
 
-function updateStorageDocument(key, data, options) {
+function updateStorage(key, data, options) {
   switch (options.method) {
     default:
     case 'localStorage':
-      updateLocalStorageDocument(key, data, options);
+      updateLocalStorageDocumentWithItem(key, data, options);
       break;
 
     case 'http':
@@ -97,15 +130,19 @@ function updateStorageDocument(key, data, options) {
 function autoSave(key, options) {
   var data = getDocument();
 
-  getHash(data).then(hash => {
+  getHash(data).then(async (hash) => {
     if (!('digestSRI' in Config.AutoSave.Items[key][options.method] &&
           Config.AutoSave.Items[key][options.method].digestSRI == hash)) {
 
       options['digestSRI'] = hash;
 
-      updateStorageDocument(key, data, options);
+      try {
+        updateStorage(key, data, options);
+        Config.AutoSave.Items[key][options.method]['digestSRI'] = hash;
+      } catch(error) {
+        console.error(getDateTimeISO() + ': Error saving document: ', error);
+      }
 
-      Config.AutoSave.Items[key][options.method]['digestSRI'] = hash;
     }
   });
 }
@@ -119,7 +156,6 @@ function enableAutoSave(key, options) {
 
 //TEMPORARY FOR TESTING
    Config.AutoSave.Items[key]['http'] = {};
-
 
   let debounceTimeout;
 
@@ -147,7 +183,7 @@ function disableAutoSave(key, options) {
         Config.AutoSave.Items[key][method] = undefined;
 
         //Update localStorage one last time (but not HTTPStorage?)
-        updateLocalStorageDocument(key, data, options);
+        updateLocalStorage(key, data, options);
 
         console.log(getDateTimeISO() + ': ' + key + ' ' + options.method + ' autosave disabled.');
       }
@@ -173,20 +209,8 @@ function removeLocalStorageItem(key) {
   }
 }
 
-function removeLocalStorageDocument(key) {
-  key = key || Config.DocumentURL;
-
-  return removeLocalStorageItem(key)
-}
-
-function removeLocalStorageProfile(key) {
-  key = key || 'DO.C.User';
-
-  return removeLocalStorageItem(key)
-}
-
-function getLocalStorageProfile(key) {
-  key = key || 'DO.C.User'
+function getLocalStorageItem(key) {
+  if (!key) { Promise.resolve(); }
 
   if (Config.WebExtension) {
     if (typeof browser !== 'undefined') {
@@ -267,84 +291,83 @@ function updateLocalStorageProfile(User) {
 }
 
 //XXX: Currently unused but needs to be revisited when there is a UI to allow user to disable autosave
-function showAutoSaveStorage(node, iri) {
-  iri = iri || Config.DocumentURL;
+// function showAutoSaveStorage(node, iri) {
+//   iri = iri || Config.DocumentURL;
 
-  if (document.querySelector('#autosave-items')) { return; }
+//   if (document.querySelector('#autosave-items')) { return; }
 
-  var checked;
-  var useLocalStorage = '';
-  if (window.localStorage) {
-    checked = (Config.AutoSave.Items[iri] && Config.AutoSave.Items[iri]['localStorage']) ? ' checked="checked"' : '';
+//   var checked;
+//   var useLocalStorage = '';
+//   if (window.localStorage) {
+//     checked = (Config.AutoSave.Items[iri] && Config.AutoSave.Items[iri]['localStorage']) ? ' checked="checked"' : '';
 
-    //XXX: May bring this back somewhere else.
-    // useLocalStorage = '<li class="local-storage-html-autosave"><input id="local-storage-html-autosave" class="autosave" type="checkbox"' + checked +' /> <label for="local-storage-html-autosave">' + (Config.AutoSave.Timer / 60000) + 'm autosave (local storage)</label></li>';
+//     //XXX: May bring this back somewhere else.
+//     // useLocalStorage = '<li class="local-storage-html-autosave"><input id="local-storage-html-autosave" class="autosave" type="checkbox"' + checked +' /> <label for="local-storage-html-autosave">' + (Config.AutoSave.Timer / 60000) + 'm autosave (local storage)</label></li>';
 
-    //XXX: Enabling autoSave for localStorage
-    enableAutoSave(iri, {'method': 'localStorage'});
-  }
+//     //XXX: Enabling autoSave for localStorage
+//     enableAutoSave(iri, {'method': 'localStorage'});
+//   }
 
-  if (accessModeAllowed(iri, 'write') && navigator.onLine) {
-    checked = (Config.AutoSave.Items[iri] && Config.AutoSave.Items[iri]['http']) ? ' checked="checked"' : '';
+//   if (accessModeAllowed(iri, 'write') && navigator.onLine) {
+//     checked = (Config.AutoSave.Items[iri] && Config.AutoSave.Items[iri]['http']) ? ' checked="checked"' : '';
 
-    var useHTTPStorage = '<li class="http-storage-html-autosave"><input id="http-storage-html-autosave" class="autosave" type="checkbox"' + checked +' /> <label for="http-storage-html-autosave">' + (Config.AutoSave.Timer / 60000) + 'm autosave (http)</label></li>';
+//     var useHTTPStorage = '<li class="http-storage-html-autosave"><input id="http-storage-html-autosave" class="autosave" type="checkbox"' + checked +' /> <label for="http-storage-html-autosave">' + (Config.AutoSave.Timer / 60000) + 'm autosave (http)</label></li>';
 
-    node.insertAdjacentHTML('beforeend', '<ul id="autosave-items" class="on">' + useLocalStorage + useHTTPStorage + '</ul>');
+//     node.insertAdjacentHTML('beforeend', '<ul id="autosave-items" class="on">' + useLocalStorage + useHTTPStorage + '</ul>');
 
-    node.querySelector('#autosave-items').addEventListener('click', e => {
-      if (e.target.closest('input.autosave')) {
-        var method;
-        switch (e.target.id){
-          default:
-          case 'local-storage-html-autosave':
-            method = 'localStorage';
-            break;
-          case 'http-storage-html-autosave':
-            method = 'http';
-            break;
-        }
+//     node.querySelector('#autosave-items').addEventListener('click', e => {
+//       if (e.target.closest('input.autosave')) {
+//         var method;
+//         switch (e.target.id){
+//           default:
+//           case 'local-storage-html-autosave':
+//             method = 'localStorage';
+//             break;
+//           case 'http-storage-html-autosave':
+//             method = 'http';
+//             break;
+//         }
 
-        if (e.target.getAttribute('checked')) {
-          e.target.removeAttribute('checked');
-          disableAutoSave(iri, {'method': method});
-        }
-        else {
-          e.target.setAttribute('checked', 'checked');
-          enableAutoSave(iri, {'method': method});
-        }
-      }
-    });
-  }
-}
+//         if (e.target.getAttribute('checked')) {
+//           e.target.removeAttribute('checked');
+//           disableAutoSave(iri, {'method': method});
+//         }
+//         else {
+//           e.target.setAttribute('checked', 'checked');
+//           enableAutoSave(iri, {'method': method});
+//         }
+//       }
+//     });
+//   }
+// }
 
-function hideAutoSaveStorage(node, iri) {
-  node = node || document.getElementById('autosave-items');
+// function hideAutoSaveStorage(node, iri) {
+//   node = node || document.getElementById('autosave-items');
 
-  if (!node) { return; }
+//   if (!node) { return; }
 
-  iri = iri || Config.DocumentURL;
-  node.parentNode.removeChild(node);
-  disableAutoSave(iri);
-  //XXX: Disabling autoSave for localStorage (as it was enabled by default)
-  if (Config.AutoSave.Items[iri] && Config.AutoSave.Items[iri]['localStorage']) {
-    disableAutoSave(iri, {'method': 'localStorage'});
-  }
-}
+//   iri = iri || Config.DocumentURL;
+//   node.parentNode.removeChild(node);
+//   disableAutoSave(iri);
+//   //XXX: Disabling autoSave for localStorage (as it was enabled by default)
+//   if (Config.AutoSave.Items[iri] && Config.AutoSave.Items[iri]['localStorage']) {
+//     disableAutoSave(iri, {'method': 'localStorage'});
+//   }
+// }
 
 
 export {
-  initLocalStorage,
-  enableLocalStorage,
-  disableLocalStorage,
-  updateLocalStorageDocument,
+  // initLocalStorage,
+  // enableLocalStorage,
+  // disableLocalStorage,
   updateHTTPStorageDocument,
   enableAutoSave,
   disableAutoSave,
+
+  addLocalStorageDocumentItem,
+  getLocalStorageItem,
   removeLocalStorageItem,
-  removeLocalStorageDocument,
-  removeLocalStorageProfile,
-  getLocalStorageProfile,
   updateLocalStorageProfile,
-  showAutoSaveStorage,
-  hideAutoSaveStorage
+  // showAutoSaveStorage,
+  // hideAutoSaveStorage
 }
