@@ -264,9 +264,9 @@ function matchAllIndex(string, regexp) {
     regexp = globalRegexp;
   }
 
-  if (isReDoSVulnerable(regexp)) {
-    throw new Error('Regular expression is potentially vulnerable to ReDoS attack');
-  }
+  // if (isReDoSVulnerable(regexp)) {
+  //   throw new Error('Regular expression is potentially vulnerable to ReDoS attack');
+  // }
   
   for (const match of string.matchAll(regexp)) {
     const arr = [...match]; // Convert the match to an array
