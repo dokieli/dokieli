@@ -13,7 +13,7 @@ import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation,
 import { notifyInbox, sendNotifications } from './inbox.js'
 import { uniqueArray, fragmentFromString, generateAttributeId, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, isValidISBN, findPreviousDateTime, domSanitize, sanitizeObject, escapeRDFLiteral, tranformIconstoCSS, getIconsFromCurrentDocument, getHash } from './util.js'
 import { generateGeoView } from './geo.js'
-import { getLocalStorageItem, updateLocalStorageProfile, enableAutoSave, disableAutoSave } from './storage.js'
+import { getLocalStorageItem, updateLocalStorageProfile, enableAutoSave, disableAutoSave, updateLocalStorageItem } from './storage.js'
 import { showUserSigninSignout, showUserIdentityInput, getSubjectInfo, restoreSession, afterSetUserInfo, setUserInfo, userInfoSignOut } from './auth.js'
 import { Icon } from './ui/icons.js'
 import * as d3Selection from 'd3-selection';
@@ -1785,97 +1785,178 @@ DO = {
       });
     },
 
-    updateToLatestRemoteVersion: async function() {
+    updateToLatestRemoteVersion: async function(options = {}) {
       const localETag = DO.C.Resource[DO.C.DocumentURL]?.headers?.etag?.['field-value'];
       let localContentType = 'text/html';
       const headers = {
         'Accept': localContentType
       };
-      const options = {};
 
       if (localETag) {
         headers['If-None-Match'] = localETag;
       }
 
-      getResource(DO.C.DocumentURL, headers, options)
-        .then(response => {
-          // console.log(response)
+      let storageObject;
+      let latestLocalDocumentItemObject;
+      let remoteHash;
+      let remoteContent;
+      let remoteContentNode;
+      let response;
+      let status;
+      let remoteETag;
+      let previousRemoteHash;
 
-          response.text()
-            .then(async (data) => {
-              // console.log(data);
+      //200
+      try {
+        response = await getResource(DO.C.DocumentURL, headers, {});
+        status = response.status;
+        remoteETag = response.headers.get('ETag');
 
-              const remoteContent = getDocument(getDocumentNodeFromString(data), {...Config.DOMNormalisation, skipNodeComment: true});
-              const remoteHash = await getHash(remoteContent);
-              const storageObject = await getLocalStorageItem(DO.C.DocumentURL);
-              const latestLocalDocumentItemObject = await getLocalStorageItem(storageObject.items[0]);
+        const data = await response.text();
+        data = domSanitize(data);
 
-              //Temporarily always true
-              const remoteAutoSaveEnabled = DO.C.AutoSave.Items[DO.C.DocumentURL]?.http;
-              let localHash, localContent;
+        remoteContentNode = getDocumentNodeFromString(data), {...Config.DOMNormalisation, skipNodeComment: true};
+        remoteContent = getDocument(remoteContentNode);
+        remoteHash = await getHash(remoteContent);
+        previousRemoteHash = DO.C.Resource[DO.C.DocumentURL]['digestSRI'];
+        DO.C.Resource[DO.C.DocumentURL]['digestSRI'] = remoteHash;
 
-              if (latestLocalDocumentItemObject) {
-                const { digestSRI, mediaType, content } = latestLocalDocumentItemObject;
-                localHash = digestSRI;
-                localContentType = mediaType;
-                localContent = content;
-              }
-              else {
-                localContent = getDocument();
-                localHash = await getHash(localContent);
-              }
+        //TODO: Consider updating getResourceInfo
 
-              // console.log(localContent, remoteContent)
+        updateSupplementalInfo(response);
+      }
+      //304, 403, 404
+      catch (e) {
+        status = e.status || 0;
+        remoteETag = e.response.headers.get('ETag');
 
-              // console.log(localETag, localHash);
+        //TODO: Consider updating getResourceInfo
 
-              if (localETag) {
-                var remoteETag = response.headers.get('ETag');
+        updateSupplementalInfo(e.response);
+      }
 
-                // console.log(remoteETag, remoteHash);
+      storageObject = await getLocalStorageItem(DO.C.DocumentURL);
+      latestLocalDocumentItemObject = await getLocalStorageItem(storageObject.items[0]);
 
-                //304
-                if (localETag == remoteETag) {
-                  if (remoteAutoSaveEnabled) {
-                    if (localContent) {
-                      putResource(DO.C.DocumentURL, localContent, localContentType, {}, { 'headers': { 'If-Match': localETag } })
-                        .catch(error => {
-                          switch (error.status) {
-                            case 412:
-                            case 409:
-                              DO.U.showResourceUpdateConflict(localContent, remoteContent);
-                              break;
-                          }
-                        });
-                    }
+      //XXX: Revisit. Temporarily always true
+      const remoteAutoSaveEnabled = DO.C.AutoSave.Items[DO.C.DocumentURL]?.http;
+
+      let localContent = getDocument();
+      let localHash = await getHash(localContent);
+      let localPublished;
+
+      if (latestLocalDocumentItemObject) {
+        const { digestSRI, mediaType, content, published } = latestLocalDocumentItemObject;
+        localHash = digestSRI;
+        localContentType = mediaType;
+        localContent = content;
+        localPublished = published;
+      }
+
+      const hasChanged = localHash !== remoteHash;
+      const remoteHashChanged = remoteHash !== previousRemoteHash;
+
+      // console.log(localContent, remoteContent)
+
+      // console.log(localETag, localHash);
+
+      switch(status) {
+        //ETag may not be present. local or remote may have changed.
+        case 200:
+          if (hasChanged) {
+            //Update local with remote changes
+            if (localPublished) {
+              DO.Editor.replaceContent(DO.Editor.mode, remoteContentNode);
+            }
+            //Remote changed since last time. Review again.
+            else if (remoteHashChanged) {
+              DO.U.showResourceReviewChanges(localContent, remoteContent);
+            }
+            //Apply local changes to remote
+            else if (options.forceLocal) {
+              const headers = localETag ? { 'If-Match': localETag } : {};
+
+              putResource(DO.C.DocumentURL, localContent, localContentType, {}, { headers })
+                .then(response => {
+                  updateLocalStorageItem(latestLocalDocumentItemObject.id, { published: getDateTimeISO() });
+                })
+                .catch(error => {
+                  switch (error.status) {
+                    default:
+                      throw new Error(`${error.status} Unhandled status ${error}`);
+
+                    case 412:
+                      DO.U.showResourceReviewChanges(localContent, remoteContent);
+                      break;
                   }
+                });
+            }//Apply remote changes to local
+            else if (options.forceRemote) {
+              DO.Editor.replaceContent(DO.Editor.mode, remoteContentNode);
+            }
+          }
+
+          break;
+
+        //Because of GET If-None-Match: <etag>
+        case 304:
+          if (remoteAutoSaveEnabled && hasChanged) {
+            putResource(DO.C.DocumentURL, localContent, localContentType, {}, { headers: { 'If-Match': localETag } })
+              .then(response => {
+                updateLocalStorageItem(latestLocalDocumentItemObject.id, { published: getDateTimeISO() });
+              })
+              .catch(error => {
+                switch (error.status) {
+                  default:
+                    throw new Error(`${error.status} Unhandled status ${error}`);
+
+                  case 412:
+                    DO.U.showResourceReviewChanges(localContent, remoteContent);
+                    break;
                 }
-                //200
-                else {
-                  if (localHash == remoteHash) {
-                    console.log('Nothing to do. Already up to date.');
-                  }
-                  else {
-                    console.log('showResourceUpdateConflict');
-                    DO.U.showResourceUpdateConflict(localContent, remoteContent);
-                  }
+              });
+          }
+
+          break;
+
+        case 404:
+          if (remoteAutoSaveEnabled) {
+            putResource(DO.C.DocumentURL, localContent, localContentType, {}, { headers: { 'If-None-Match': '*' } })
+              .then(response => {
+                updateLocalStorageItem(latestLocalDocumentItemObject.id, { published: getDateTimeISO() });
+              })
+              .catch(error => {
+                switch (error.status) {
+                  default:
+                    throw new Error(`${error.status} Unhandled status ${error}`);
+
+                  case 412:
+                    DO.U.showResourceReviewChanges(localContent, remoteContent);
+                    break;
                 }
-              }
-              else {
-                if (localHash == remoteHash) {
-                  console.log('Nothing to do. Already up to date.');
-                }
-                else {
-                  console.log('showResourceUpdateConflict');
-                  DO.U.showResourceUpdateConflict(localContent, remoteContent);
-                }
-              }
-            });
-        });
+              });
+          }
+
+          break;
+
+        case 403:
+          console.log(`TODO: ${status} Request access because you lost access. Keep working in local.`);
+          break;
+
+        default:
+          console.log(`TODO: ${status} Unhandled status code.`)
+          break;
+      }
     },
 
-    showResourceUpdateConflict: function(localContent, remoteContent) {
+    showResourceReviewChanges: function(localContent, remoteContent) {
       if (!localContent.length || !remoteContent.length) return;
+
+      const reviewChanges = document.getElementById('review-changes');
+
+      if (reviewChanges) {
+        reviewChanges.remove();
+      }
 
       var tmplLocal = document.implementation.createHTMLDocument('template');
       tmplLocal.documentElement.setHTMLUnsafe(localContent);
@@ -1907,22 +1988,60 @@ DO = {
       });
 
       var node = document.getElementById('review-changes');
-      node.insertAdjacentHTML('beforeend', `<div class="do-diff">${diffHTML.join('')}</div><button class="review-changes-submit" title="Save">Save</button>`);
+      node.insertAdjacentHTML('beforeend', `
+        <div class="do-diff">${diffHTML.join('')}</div>
+        <button class="review-changes-save-local" title="Keep my edits">Keep my changes</button>
+        <button class="review-changes-save-remote" title="Discard my edits and use remote version">Overwrite my changes</button>
+        <button class="review-changes-submit" title="Save">Save</button>
+      `);
 
-      //TODO: Initialise PM on .do-diff
+      const diffNode = document.querySelector('#review-changes .do-diff');
+
+      DO.Editor.init("author", diffNode);
 
       node.addEventListener('click', e => {
-        var button = e.target.closest('button.review-changes-submit');
-        if (button) {
-          var diffedNode = node.querySelector('.do-diff');
+        var button = e.target.closest('button');
 
-          DO.Editor.replaceContent(DO.Editor.mode, diffedNode);
-          
+        if (button) {
+          DO.Editor.toggleMode();
+
+          var diffedNode = node.querySelector('.do-diff');
 
           node.remove();
 
-          DO.U.updateToLatestRemoteVersion();
+          //TODO: Progress
+
+          //TODO: update getResourceInfo somewhere
+
+          if (button.classList.contains('review-changes-save-local')) {
+            // keep editor area with current contents
+            // try to push but need to check latest before
+            // check if things are still up to date with remote
+            DO.U.updateToLatestRemoteVersion({ forceLocal: true });
+          }
+          else if (button.classList.contains('review-changes-save-remote')) {
+            DO.U.updateToLatestRemoteVersion({ forceRemote: true });
+          }
+          else if (button.classList.contains('review-changes-submit')) {
+            // same as first one but with contents of diff panel
+            diffedNode.querySelectorAll('del').forEach(el => el.remove());
+            diffedNode.querySelectorAll('ins').forEach(el => {
+              const parent = el.parentNode;
+              while (el.firstChild) parent.insertBefore(el.firstChild, el);
+              el.remove();
+            });
+            // update local content with the stuff in the diff editor view
+            DO.Editor.replaceContent(DO.Editor.mode, diffNode);
+
+            getResourceInfo(getDocument()).then(resourceInfo => {
+              DO.C.Resource[DO.C.DocumentURL] = { ...DO.C.Resource[DO.C.DocumentURL], ...resourceInfo };
+              updateButtons();
+            });
+
+            DO.U.updateToLatestRemoteVersion({ forceLocal: true });
+          }
         }
+
       });
     },
 
