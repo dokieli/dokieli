@@ -354,6 +354,11 @@ margin-right:0.25em;
 content:"#";
 }
 
+#review-changes .ProseMirror {
+  border:1px dashed #080;
+}
+
+
 progress { margin:0 1em; }
 figure .progress { display:block; margin:0 auto; }
 .progress { vertical-align: middle; margin: 0 0.5em; }
@@ -1421,7 +1426,7 @@ margin-top:0;
 button[class~="signin-user"],
 button[class|="resource"],
 button[class~="editor-enable"],
-button[class|="review"],
+/* button[class|="review"], */
 button[class~="embed-data-meta"],
 button[class~="robustlinks-reuse"] {
 display:inline-block;
