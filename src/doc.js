@@ -2105,7 +2105,7 @@ function getGraphFromDataBlock(data, options) {
 }
 
 function updateSupplementalInfo(response, options) {
-  var checkHeaders = options.checkHeaders ?? ['wac-allow', 'link', 'last-modified', 'etag', 'expires'];
+  var checkHeaders = options?.checkHeaders ?? ['wac-allow', 'link', 'last-modified', 'etag', 'expires'];
   var headers = response.headers;
   var documentURL = Config.DocumentURL;
 
