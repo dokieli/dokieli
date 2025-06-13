@@ -69,7 +69,7 @@ async function updateLocalStorageDocumentWithItem(key, data, options) {
 }
 
 async function updateLocalStorageItem(id, data) {
-  const item = await getLocalStorageItem(id);
+  let item = await getLocalStorageItem(id);
 
   if (!item) { return; }
 

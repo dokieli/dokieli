@@ -1867,16 +1867,16 @@ DO = {
         //ETag may not be present. local or remote may have changed.
         case 200:
           if (hasChanged) {
-            //Update local with remote changes
             if (localPublished) {
+              console.log(`Update local with remote changes.`);
               DO.Editor.replaceContent(DO.Editor.mode, remoteContentNode);
             }
-            //Remote changed since last time. Review again.
             else if (remoteHashChanged) {
+              console.log(`Remote changed since last time. Review again.`);
               DO.U.showResourceReviewChanges(localContent, remoteContent);
             }
-            //Apply local changes to remote
-            else if (options.forceLocal) {
+            else if (options.forceLocal || !remoteHashChanged) {
+              console.log(`Apply local changes to remote.`);
               const headers = localETag ? { 'If-Match': localETag } : {};
 
               putResource(DO.C.DocumentURL, localContent, localContentType, {}, { headers })
@@ -1893,9 +1893,13 @@ DO = {
                       break;
                   }
                 });
-            }//Apply remote changes to local
+            }
             else if (options.forceRemote) {
+              console.log(`Apply remote changes to local.`);
               DO.Editor.replaceContent(DO.Editor.mode, remoteContentNode);
+            }
+            else {
+              console.log(`--- Why are we here? ---`);
             }
           }
 
@@ -1904,6 +1908,7 @@ DO = {
         //Because of GET If-None-Match: <etag>
         case 304:
           if (remoteAutoSaveEnabled && hasChanged) {
+            console.log(`Local has changed. Push to remote.`)
             putResource(DO.C.DocumentURL, localContent, localContentType, {}, { headers: { 'If-Match': localETag } })
               .then(response => {
                 updateLocalStorageItem(latestLocalDocumentItemObject.id, { published: getDateTimeISO() });
@@ -1924,6 +1929,7 @@ DO = {
 
         case 404:
           if (remoteAutoSaveEnabled) {
+            console.log('Remote was deleted. Push local to remote.');
             putResource(DO.C.DocumentURL, localContent, localContentType, {}, { headers: { 'If-None-Match': '*' } })
               .then(response => {
                 updateLocalStorageItem(latestLocalDocumentItemObject.id, { published: getDateTimeISO() });
