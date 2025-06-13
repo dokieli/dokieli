@@ -68,6 +68,19 @@ async function updateLocalStorageDocumentWithItem(key, data, options) {
   addLocalStorageDocumentItem(id, data, options);
 }
 
+async function updateLocalStorageItem(id, data) {
+  const item = await getLocalStorageItem(id);
+
+  if (!item) { return; }
+
+  item = {
+    ...item,
+    ...data
+  }
+
+  localStorage.setItem(id, JSON.stringify(item));
+}
+
 //TODO removeLocalStorageDocumenItem
 
 function addLocalStorageDocumentItem(id, data, options) {
@@ -89,6 +102,10 @@ function addLocalStorageDocumentItem(id, data, options) {
     digestSRI: options.digestSRI,
     partOf: options.collectionKey
   };
+
+  if (DO.C.User) {
+    item['actor'] = DO.C.User.IRI;
+  }
 
   localStorage.setItem(id, JSON.stringify(item));
 
@@ -363,7 +380,7 @@ export {
   updateHTTPStorageDocument,
   enableAutoSave,
   disableAutoSave,
-
+  updateLocalStorageItem,
   addLocalStorageDocumentItem,
   getLocalStorageItem,
   removeLocalStorageItem,
