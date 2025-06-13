@@ -1,5 +1,5 @@
 import Config from './config.js'
-import { getDateTimeISO, fragmentFromString, generateAttributeId, uniqueArray, generateUUID, matchAllIndex, parseISODuration, domSanitize, getRandomIndex } from './util.js'
+import { getDateTimeISO, fragmentFromString, generateAttributeId, uniqueArray, generateUUID, matchAllIndex, parseISODuration, domSanitize, getRandomIndex, getHash } from './util.js'
 import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath, getPrefixedNameFromIRI, generateDataURI, getProxyableIRI } from './uri.js'
 import { getResource, getResourceHead, deleteResource, processSave, patchResourceWithAcceptPatch } from './fetcher.js'
 import rdf from "rdf-ext";
@@ -2104,11 +2104,58 @@ function getGraphFromDataBlock(data, options) {
   }
 }
 
+function updateSupplementalInfo(response, options) {
+  var checkHeaders = options.checkHeaders ?? ['wac-allow', 'link', 'last-modified', 'etag', 'expires'];
+  var headers = response.headers;
+  var documentURL = Config.DocumentURL;
+
+  Config['Resource'][documentURL]['headers'] = {};
+  Config['Resource'][documentURL]['headers']['response'] = headers;
+
+  checkHeaders.forEach(header => {
+    var headerValue = response.headers.get(header);
+    // headerValue = 'foo=bar ,user=" READ wriTe Append control ", public=" read append" ,other="read " , baz= write, group=" ",,';
+
+    if (headerValue) {
+      Config['Resource'][documentURL]['headers'][header] = { 'field-value' : headerValue };
+
+      if (header == 'wac-allow') {
+        var permissionGroups = Config['Resource'][documentURL]['headers']['wac-allow']["field-value"];
+        var wacAllowRegex = new RegExp(/(\w+)\s*=\s*"?\s*((?:\s*[^",\s]+)*)\s*"?/, 'ig');
+        var wacAllowMatches = matchAllIndex(permissionGroups, wacAllowRegex);
+
+        Config['Resource'][documentURL]['headers']['wac-allow']['permissionGroup'] = {};
+
+        wacAllowMatches.forEach(match => {
+          var modesString = match[2] || '';
+          var accessModes = uniqueArray(modesString.toLowerCase().split(/\s+/));
+
+          Config['Resource'][documentURL]['headers']['wac-allow']['permissionGroup'][match[1]] = accessModes;
+        });
+      }
+
+      if (header == 'link') {
+        var linkHeaders = LinkHeader.parse(headerValue);
+
+        Config['Resource'][documentURL]['headers']['linkHeaders'] = linkHeaders;
+
+        Config['Resource'][documentURL]['headers']['linkHeaders'].refs.forEach(relationItem => {
+          relationItem.rel = relationItem.rel.toLowerCase();
+          var linkTarget = relationItem.uri;
+
+          if (!linkTarget.startsWith('http:') && !linkTarget.startsWith('https:')) {
+            linkTarget = relationItem.uri = getAbsoluteIRI(getBaseURL(response.url), linkTarget);
+          }
+        });
+      }
+    }
+  })
+}
+
 function getResourceSupplementalInfo (documentURL, options) {
   options = options || {};
   options['reuse'] = options['reuse'] === true ? true : false;
   options['followLinkRelationTypes'] = options['followLinkRelationTypes'] || [];
-  var checkHeaders = ['wac-allow', 'link', 'last-modified', 'etag', 'expires'];
 
   //TODO: Add `acl` and `http://www.w3.org/ns/solid/terms#storageDescription` to `linkRelationTypesOfInterest` and process them.
 
@@ -2128,49 +2175,7 @@ function getResourceSupplementalInfo (documentURL, options) {
     var rOptions = { 'noCache': true };
     return getResourceHead(documentURL, rHeaders, rOptions)
       .then(response => {
-        var headers = response.headers;
-
-        Config['Resource'][documentURL]['headers'] = {};
-        Config['Resource'][documentURL]['headers']['response'] = headers;
-
-        checkHeaders.forEach(header => {
-          var headerValue = response.headers.get(header);
-          // headerValue = 'foo=bar ,user=" READ wriTe Append control ", public=" read append" ,other="read " , baz= write, group=" ",,';
-
-          if (headerValue) {
-            Config['Resource'][documentURL]['headers'][header] = { 'field-value' : headerValue };
-
-            if (header == 'wac-allow') {
-              var permissionGroups = Config['Resource'][documentURL]['headers']['wac-allow']["field-value"];
-              var wacAllowRegex = new RegExp(/(\w+)\s*=\s*"?\s*((?:\s*[^",\s]+)*)\s*"?/, 'ig');
-              var wacAllowMatches = matchAllIndex(permissionGroups, wacAllowRegex);
-
-              Config['Resource'][documentURL]['headers']['wac-allow']['permissionGroup'] = {};
-
-              wacAllowMatches.forEach(match => {
-                var modesString = match[2] || '';
-                var accessModes = uniqueArray(modesString.toLowerCase().split(/\s+/));
-
-                Config['Resource'][documentURL]['headers']['wac-allow']['permissionGroup'][match[1]] = accessModes;
-              });
-            }
-
-            if (header == 'link') {
-              var linkHeaders = LinkHeader.parse(headerValue);
-
-              Config['Resource'][documentURL]['headers']['linkHeaders'] = linkHeaders;
-
-              Config['Resource'][documentURL]['headers']['linkHeaders'].refs.forEach(relationItem => {
-                relationItem.rel = relationItem.rel.toLowerCase();
-                var linkTarget = relationItem.uri;
-
-                if (!linkTarget.startsWith('http:') && !linkTarget.startsWith('https:')) {
-                  linkTarget = relationItem.uri = getAbsoluteIRI(getBaseURL(response.url), linkTarget);
-                }
-              });
-            }
-          }
-        })
+        updateSupplementalInfo(response);
       })
       .then(() => {
         var promises = [];
@@ -3636,6 +3641,7 @@ export {
   getGraphData,
   getResourceInfo,
   getGraphFromDataBlock,
+  updateSupplementalInfo,
   getResourceSupplementalInfo,
   getResourceInfoODRLPolicies,
   getResourceInfoSpecRequirements,
