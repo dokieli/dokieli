@@ -2104,6 +2104,17 @@ function getGraphFromDataBlock(data, options) {
   }
 }
 
+function updateResourceInfos(documentURL = DO.C.DocumentURL, data, response, options = {}) {
+  data = data || getDocument();
+
+  getResourceInfo(data).then(resourceInfo => {
+    DO.C.Resource[documentURL] = { ...DO.C.Resource[documentURL], ...resourceInfo };
+    updateButtons();
+  });
+
+  updateSupplementalInfo(response);
+}
+
 function updateSupplementalInfo(response, options) {
   var checkHeaders = options?.checkHeaders ?? ['wac-allow', 'link', 'last-modified', 'etag', 'expires'];
   var headers = response.headers;
@@ -3641,6 +3652,7 @@ export {
   getGraphData,
   getResourceInfo,
   getGraphFromDataBlock,
+  updateResourceInfos,
   updateSupplementalInfo,
   getResourceSupplementalInfo,
   getResourceInfoODRLPolicies,
