@@ -1992,8 +1992,10 @@ function getGraphData(s, options) {
  * @returns {Promise<Object>}
  */
 
-function getResourceInfo(data, options) {
-  data = data || getDocument();
+async function getResourceInfo(data, options) {
+  data = data ? getDocumentNodeFromString(data, {...Config.DOMNormalisation, skipNodeComment: true}) : getDocument(null, {...Config.DOMNormalisation, skipNodeComment: true});
+  data = domSanitize(data);
+
   options = options || {};
   options['contentType'] = ('contentType' in options) ? options.contentType : 'text/html';
   options['subjectURI'] = ('subjectURI' in options) ? options.subjectURI : Config.DocumentURL;
@@ -2003,6 +2005,7 @@ function getResourceInfo(data, options) {
   Config['Resource'] = Config['Resource'] || {};
   Config['Resource'][documentURL] = Config['Resource'][documentURL] || {};
   Config['Resource'][documentURL]['data'] = data;
+  Config['Resource'][documentURL]['digestSRI'] = Config['Resource'][documentURL]['digestSRI'] ?? await getHash(data);
   Config['Resource'][documentURL]['contentType'] = options.contentType;
 
   var promises = [];

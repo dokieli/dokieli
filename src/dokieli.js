@@ -1788,6 +1788,9 @@ DO = {
     syncLocalRemoteResource: async function(options = {}) {
       console.log('--- syncLocalRemoteResource');
 
+      //XXX: Revisit. Temporarily always true
+      const remoteAutoSaveEnabled = DO.C.AutoSave.Items[DO.C.DocumentURL]?.http;
+
       const localETag = DO.C.Resource[DO.C.DocumentURL]?.headers?.etag?.['field-value'];
       let localContentType = 'text/html';
       const headers = {
@@ -1806,35 +1809,8 @@ DO = {
       let response;
       let status;
       let remoteETag;
-      // let previousRemoteHash;
+      const previousRemoteHash = DO.C.Resource[DO.C.DocumentURL]['digestSRI'];
 
-      //200
-      try {
-        response = await getResource(DO.C.DocumentURL, headers, {});
-        status = response.status;
-        remoteETag = response.headers.get('ETag');
-
-        let data = await response.text();
-        data = domSanitize(data);
-
-        remoteContentNode = getDocumentNodeFromString(data), {...Config.DOMNormalisation, skipNodeComment: true};
-        remoteContent = getDocument(remoteContentNode);
-        remoteHash = await getHash(remoteContent);
-        // previousRemoteHash = DO.C.Resource[DO.C.DocumentURL]['digestSRI'];
-        // DO.C.Resource[DO.C.DocumentURL]['digestSRI'] = remoteHash;
-      }
-      //304, 403, 404
-      catch (e) {
-        console.log(e);
-        status = e.status || 0;
-        remoteETag = e.response?.headers.get('ETag');
-      }
-
-      storageObject = await getLocalStorageItem(DO.C.DocumentURL);
-      latestLocalDocumentItemObject = await getLocalStorageItem(storageObject.items[0]);
-
-      //XXX: Revisit. Temporarily always true
-      const remoteAutoSaveEnabled = DO.C.AutoSave.Items[DO.C.DocumentURL]?.http;
 
       let localContent = getDocument();
       let localHash = await getHash(localContent);
@@ -1848,10 +1824,37 @@ DO = {
         localPublished = published;
       }
 
+      //200
+      try {
+        response = await getResource(DO.C.DocumentURL, headers, {});
+        status = response.status;
+        remoteETag = response.headers.get('ETag');
+
+        let data = await response.text();
+        data = domSanitize(data);
+
+        remoteContentNode = getDocumentNodeFromString(data, {...Config.DOMNormalisation, skipNodeComment: true});
+        remoteContent = getDocument(remoteContentNode);
+        remoteHash = await getHash(remoteContent);
+
+        DO.C.Resource[DO.C.DocumentURL]['digestSRI'] = remoteHash;
+      }
+      //304, 403, 404
+      catch (e) {
+        console.log(e);
+        status = e.status || 0;
+        remoteETag = e.response?.headers.get('ETag');
+      }
+
+            console.log(previousRemoteHash, remoteHash);
+
       const etagWasUsed = !!(headers['If-None-Match'] && remoteETag);
       const etagsMatch = etagWasUsed && headers['If-None-Match'] === remoteETag;
 
       const localRemoteHashMatch = localHash == remoteHash;
+
+      storageObject = await getLocalStorageItem(DO.C.DocumentURL);
+      latestLocalDocumentItemObject = await getLocalStorageItem(storageObject.items[0]);
 
       if (localHash && remoteHash && localRemoteHashMatch) {
         console.log(`Local and remote unchanged.`);
@@ -1916,7 +1919,7 @@ DO = {
             }
           }
           else {
-            if (etagsMatch) {
+            if (etagsMatch || previousRemoteHash == remoteHash) {
               console.log(`Local unpublished changes. Remote unchanged. Update remote.`);
 
               if (!remoteAutoSaveEnabled) {
