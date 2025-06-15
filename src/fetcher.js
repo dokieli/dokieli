@@ -520,7 +520,7 @@ function postResource (url, slug, data, contentType, links, options = {}) {
 
   options.headers['Content-Type'] = contentType || DEFAULT_CONTENT_TYPE
 
-  links = links
+  links = (typeof links === 'string' && links.trim())
     ? LDP_RESOURCE + ', ' + links
     : LDP_RESOURCE
 
@@ -590,7 +590,7 @@ function putResource (url, data, contentType, links, options = {}) {
 
   options.headers['Content-Type'] = contentType || DEFAULT_CONTENT_TYPE
 
-  links = links
+  links = (typeof links === 'string' && links.trim())
     ? LDP_RESOURCE + ', ' + links
     : LDP_RESOURCE
 
