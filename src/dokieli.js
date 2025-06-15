@@ -7,13 +7,13 @@
  */
 
 import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource } from './fetcher.js'
-import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, eventButtonNotificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getLanguageOptionsHTML, getLicenseOptionsHTML, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown, getReferenceLabel, createNoteDataHTML, hasNonWhitespaceText, eventButtonClose, eventButtonInfo, eventButtonSignIn, eventButtonSignOut, getDocumentNodeFromString, updateSupplementalInfo } from './doc.js'
+import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, eventButtonNotificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getLanguageOptionsHTML, getLicenseOptionsHTML, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown, getReferenceLabel, createNoteDataHTML, hasNonWhitespaceText, eventButtonClose, eventButtonInfo, eventButtonSignIn, eventButtonSignOut, getDocumentNodeFromString, updateResourceInfos } from './doc.js'
 import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, generateDataURI, getMediaTypeURIs, isHttpOrHttpsProtocol, isFileProtocol } from './uri.js'
 import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes, filterQuads, getAgentTypeIndex } from './graph.js'
 import { notifyInbox, sendNotifications } from './inbox.js'
 import { uniqueArray, fragmentFromString, generateAttributeId, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, isValidISBN, findPreviousDateTime, domSanitize, sanitizeObject, escapeRDFLiteral, tranformIconstoCSS, getIconsFromCurrentDocument, getHash } from './util.js'
 import { generateGeoView } from './geo.js'
-import { getLocalStorageItem, updateLocalStorageProfile, enableAutoSave, disableAutoSave, updateLocalStorageItem } from './storage.js'
+import { getLocalStorageItem, updateLocalStorageProfile, enableAutoSave, disableAutoSave, updateLocalStorageItem, autoSave } from './storage.js'
 import { showUserSigninSignout, showUserIdentityInput, getSubjectInfo, restoreSession, afterSetUserInfo, setUserInfo, userInfoSignOut } from './auth.js'
 import { Icon } from './ui/icons.js'
 import * as d3Selection from 'd3-selection';
@@ -1772,7 +1772,7 @@ DO = {
 
         updateButtons();
 
-        DO.U.updateToLatestRemoteVersion();
+        DO.U.syncLocalRemoteResource();
 
         // bring the document state to latest remote state, doing manual conflict resolution if needed, before saving or after some time offline
       });
@@ -1785,7 +1785,9 @@ DO = {
       });
     },
 
-    updateToLatestRemoteVersion: async function(options = {}) {
+    syncLocalRemoteResource: async function(options = {}) {
+      console.log('--- syncLocalRemoteResource');
+
       const localETag = DO.C.Resource[DO.C.DocumentURL]?.headers?.etag?.['field-value'];
       let localContentType = 'text/html';
       const headers = {
@@ -1804,7 +1806,7 @@ DO = {
       let response;
       let status;
       let remoteETag;
-      let previousRemoteHash;
+      // let previousRemoteHash;
 
       //200
       try {
@@ -1818,22 +1820,14 @@ DO = {
         remoteContentNode = getDocumentNodeFromString(data), {...Config.DOMNormalisation, skipNodeComment: true};
         remoteContent = getDocument(remoteContentNode);
         remoteHash = await getHash(remoteContent);
-        previousRemoteHash = DO.C.Resource[DO.C.DocumentURL]['digestSRI'];
-        DO.C.Resource[DO.C.DocumentURL]['digestSRI'] = remoteHash;
-
-        //TODO: Consider updating getResourceInfo
-
-        updateSupplementalInfo(response);
+        // previousRemoteHash = DO.C.Resource[DO.C.DocumentURL]['digestSRI'];
+        // DO.C.Resource[DO.C.DocumentURL]['digestSRI'] = remoteHash;
       }
       //304, 403, 404
       catch (e) {
-        console.log(e)
+        console.log(e);
         status = e.status || 0;
         remoteETag = e.response?.headers.get('ETag');
-
-        //TODO: Consider updating getResourceInfo
-
-        updateSupplementalInfo(e.response);
       }
 
       storageObject = await getLocalStorageItem(DO.C.DocumentURL);
@@ -1854,52 +1848,98 @@ DO = {
         localPublished = published;
       }
 
-      const remoteHashChanged = previousRemoteHash && remoteHash !== previousRemoteHash;
-      const hasChanged = localHash !== remoteHash;
+      const etagWasUsed = !!(headers['If-None-Match'] && remoteETag);
+      const etagsMatch = etagWasUsed && headers['If-None-Match'] === remoteETag;
 
-      console.log(localPublished, remoteHashChanged, hasChanged, options)
+      const localRemoteHashMatch = localHash == remoteHash;
 
-      // console.log(localContent, remoteContent)
+      if (localHash && remoteHash && localRemoteHashMatch) {
+        console.log(`Local and remote unchanged.`);
+        return;
+      }
 
-      // console.log(localETag, localHash);
+      if (options.forceLocal || options.forceRemote) {
+        if (etagWasUsed && !etagsMatch) {
+          console.log(`Cannot force due to missing or changed ETag. Show review.`);
+          DO.U.showResourceReviewChanges(localContent, remoteContent);
+          return;
+        }
 
-      switch(status) {
-        //ETag may not be present. local or remote may have changed.
-        case 200:
-          if (hasChanged) {
-            if (localPublished) {
-              console.log(`Update local with remote changes.`);
-              DO.Editor.replaceContent(DO.Editor.mode, remoteContentNode);
-            }
-            else if (remoteHashChanged) {
-              console.log(`Remote changed since last time. Review again.`);
+        if (!etagWasUsed) {
+          console.log(`ETags were not used. Assume user intent is valid.`);
+        }
+
+        if (options.forceLocal) {
+          console.log(`Force pushing local content.`);
+
+          try {
+            await DO.U.pushLocalContentToRemote(latestLocalDocumentItemObject, { 'If-Match': localETag });
+            return;
+          }
+          catch(error) {
+            if (error.status === 412) {
               DO.U.showResourceReviewChanges(localContent, remoteContent);
             }
-            else if (options.forceLocal || !remoteHashChanged) {
-              console.log(`Apply local changes to remote.`);
-              const headers = localETag ? { 'If-Match': localETag } : {};
-
-              putResource(DO.C.DocumentURL, localContent, localContentType, {}, { headers })
-                .then(response => {
-                  updateLocalStorageItem(latestLocalDocumentItemObject.id, { published: getDateTimeISO() });
-                })
-                .catch(error => {
-                  switch (error.status) {
-                    default:
-                      throw new Error(`${error.status} Unhandled status ${error}`);
-
-                    case 412:
-                      DO.U.showResourceReviewChanges(localContent, remoteContent);
-                      break;
-                  }
-                });
+            else {
+              throw new Error(`${error.status} Unhandled status ${error}`);
             }
-            else if (options.forceRemote) {
-              console.log(`Apply remote changes to local.`);
-              DO.Editor.replaceContent(DO.Editor.mode, remoteContentNode);
+          }
+
+          return;
+        }
+
+        if (options.forceRemote) {
+          console.log(`Force replacing with remote content.`);
+          DO.Editor.replaceContent(DO.Editor.mode, remoteContentNode);
+          autoSave(DO.C.DocumentURL, { method: 'localStorage', autoSave: true });
+          updateResourceInfos(DO.C.DocumentURL, getDocument(), response);
+          return;
+        }
+      }
+
+      console.log(status + ' Checking to see if local or remote changed:');
+
+      switch(status) {
+        case 200:
+          console.log(`Local or remote changed.`);
+
+          if (localPublished) {
+            if (etagsMatch) {
+              console.log(`Local and remote have same version but content differs, likely conflict. Review.`);
+              DO.U.showResourceReviewChanges(localContent, remoteContent);
             }
             else {
-              console.log(`--- Why are we here? ---`);
+              console.log(`Local unchanged. Remote changed. Update local.`);
+              DO.Editor.replaceContent(DO.Editor.mode, remoteContentNode);
+              autoSave(DO.C.DocumentURL, { method: 'localStorage', autoSave: true });
+              updateResourceInfos(DO.C.DocumentURL, getDocument(), response);
+            }
+          }
+          else {
+            if (etagsMatch) {
+              console.log(`Local unpublished changes. Remote unchanged. Update remote.`);
+
+              if (!remoteAutoSaveEnabled) {
+                console.log(`remoteAutoSave is disabled.`);
+                return;
+              }
+
+              try {
+                await DO.U.pushLocalContentToRemote(latestLocalDocumentItemObject, { 'If-Match': localETag });
+                return;
+              }
+              catch(error) {
+                if (error.status === 412) {
+                  DO.U.showResourceReviewChanges(localContent, remoteContent);
+                }
+                else {
+                  throw new Error(`${error.status} Unhandled status ${error}`);
+                }
+              };
+            }
+            else {
+              console.log(`Local unpublished changes. Remote validation unavailable. Review changes.`);
+              DO.U.showResourceReviewChanges(localContent, remoteContent);
             }
           }
 
@@ -1907,43 +1947,55 @@ DO = {
 
         //Because of GET If-None-Match: <etag>
         case 304:
-          if (remoteAutoSaveEnabled && hasChanged) {
-            console.log(`Local has changed. Push to remote.`)
-            putResource(DO.C.DocumentURL, localContent, localContentType, {}, { headers: { 'If-Match': localETag } })
-              .then(response => {
-                updateLocalStorageItem(latestLocalDocumentItemObject.id, { published: getDateTimeISO() });
-              })
-              .catch(error => {
-                switch (error.status) {
-                  default:
-                    throw new Error(`${error.status} Unhandled status ${error}`);
+          if (localPublished) {
+            console.log(`Local published but content differs; update local.`);
+            DO.Editor.replaceContent(DO.Editor.mode, remoteContentNode);
+            autoSave(DO.C.DocumentURL, { method: 'localStorage', autoSave: true });
+            updateResourceInfos(DO.C.DocumentURL, getDocument(), response);
+          }
+          else {
+            console.log(`Local unpublished changes; push to remote.`);
 
-                  case 412:
-                    DO.U.showResourceReviewChanges(localContent, remoteContent);
-                    break;
-                }
-              });
+            if (!remoteAutoSaveEnabled) {
+              console.log(`remoteAutoSave is disabled.`);
+              return;
+            }
+
+            try {
+              await DO.U.pushLocalContentToRemote(latestLocalDocumentItemObject, { 'If-Match': localETag });
+              return;
+            }
+            catch(error) {
+              if (error.status === 412) {
+                DO.U.showResourceReviewChanges(localContent, remoteContent);
+              }
+              else {
+                throw new Error(`${error.status} Unhandled status ${error}`);
+              }
+            };
           }
 
           break;
 
         case 404:
-          if (remoteAutoSaveEnabled) {
-            console.log('Remote was deleted. Push local to remote.');
-            putResource(DO.C.DocumentURL, localContent, localContentType, {}, { headers: { 'If-None-Match': '*' } })
-              .then(response => {
-                updateLocalStorageItem(latestLocalDocumentItemObject.id, { published: getDateTimeISO() });
-              })
-              .catch(error => {
-                switch (error.status) {
-                  default:
-                    throw new Error(`${error.status} Unhandled status ${error}`);
+          console.log('Remote was deleted. Push local to remote.');
 
-                  case 412:
-                    DO.U.showResourceReviewChanges(localContent, remoteContent);
-                    break;
-                }
-              });
+          if (!remoteAutoSaveEnabled) {
+            console.log(`remoteAutoSave is disabled.`);
+            return;
+          }
+
+          try {
+            await DO.U.pushLocalContentToRemote(latestLocalDocumentItemObject, { 'If-None-Match': '*' });
+            return;
+          }
+          catch (error) {
+            if (error.status === 412) {
+              DO.U.showResourceReviewChanges(localContent, remoteContent);
+            }
+            else {
+              throw new Error(`${error.status} Unhandled status ${error}`);
+            }
           }
 
           break;
@@ -1953,9 +2005,24 @@ DO = {
           break;
 
         default:
-          console.log(`TODO: ${status} Unhandled status code.`)
+          console.log(`TODO: ${status} Unhandled status code.`);
           break;
       }
+
+      return;
+    },
+
+    pushLocalContentToRemote: async function(localItem, headers) {
+      const { id, content, mediaType } = localItem;
+      // console.log(localItem, headers)
+
+      const response = await putResource(DO.C.DocumentURL, content, mediaType, null, { headers });
+
+      console.log(`PUT: ${response.status}`);
+
+      updateLocalStorageItem(id, { published: getDateTimeISO() });
+
+      updateResourceInfos(DO.C.DocumentURL, content, response);
     },
 
     showResourceReviewChanges: function(localContent, remoteContent) {
@@ -2012,7 +2079,8 @@ DO = {
         var button = e.target.closest('button');
 
         if (button) {
-          DO.Editor.toggleMode();
+          //XXX: What's this for?
+          // DO.Editor.toggleMode();
 
           var diffedNode = node.querySelector('.do-diff');
 
@@ -2026,10 +2094,10 @@ DO = {
             // keep editor area with current contents
             // try to push but need to check latest before
             // check if things are still up to date with remote
-            DO.U.updateToLatestRemoteVersion({ forceLocal: true });
+            DO.U.syncLocalRemoteResource({ forceLocal: true });
           }
           else if (button.classList.contains('review-changes-save-remote')) {
-            DO.U.updateToLatestRemoteVersion({ forceRemote: true });
+            DO.U.syncLocalRemoteResource({ forceRemote: true });
           }
           else if (button.classList.contains('review-changes-submit')) {
             // same as first one but with contents of diff panel
@@ -2041,13 +2109,10 @@ DO = {
             });
             // update local content with the stuff in the diff editor view
             DO.Editor.replaceContent(DO.Editor.mode, diffNode);
+            autoSave(DO.C.DocumentURL, { method: 'localStorage', autoSave: true });
+            updateResourceInfos(DO.C.DocumentURL, getDocument(), response);
 
-            getResourceInfo(getDocument()).then(resourceInfo => {
-              DO.C.Resource[DO.C.DocumentURL] = { ...DO.C.Resource[DO.C.DocumentURL], ...resourceInfo };
-              updateButtons();
-            });
-
-            DO.U.updateToLatestRemoteVersion({ forceLocal: true });
+            DO.U.syncLocalRemoteResource({ forceLocal: true });
           }
         }
 
