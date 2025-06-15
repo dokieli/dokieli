@@ -39,7 +39,7 @@ async function updateLocalStorageDocumentWithItem(key, data, options) {
   options = options || {};
 
   var collection = await getLocalStorageItem(key);
-  console.log(collection);
+  // console.log(collection);
 
   var id = `${key}#${generateUUID()}`;
 
@@ -131,7 +131,11 @@ function updateHTTPStorageDocument(url, data, options) {
   console.log(datetime + ': Document saved.');
 }
 
-function updateStorage(key, data, options) {
+function updateStorage(key, data, options = {}) {
+  if (!key && !data) return;
+
+  options['method'] = 'localStorage';
+
   switch (options.method) {
     default:
     case 'localStorage':
@@ -145,6 +149,8 @@ function updateStorage(key, data, options) {
 }
 
 function autoSave(key, options) {
+  if (!key) return;
+
   var data = getDocument();
 
   getHash(data).then(async (hash) => {
@@ -380,6 +386,7 @@ export {
   updateHTTPStorageDocument,
   enableAutoSave,
   disableAutoSave,
+  autoSave,
   updateLocalStorageItem,
   addLocalStorageDocumentItem,
   getLocalStorageItem,
