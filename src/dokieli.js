@@ -1831,10 +1831,12 @@ DO = {
         remoteETag = response.headers.get('ETag');
 
         let data = await response.text();
-        data = domSanitize(data);
 
-        remoteContentNode = getDocumentNodeFromString(data, {...Config.DOMNormalisation, skipNodeComment: true});
+        remoteContentNode = getDocumentNodeFromString(data);
         remoteContent = getDocument(remoteContentNode);
+console.log('-- after getDocument', remoteContent)
+        remoteContent = domSanitize(remoteContent, { preserve: true });
+console.log('-- after domSanitize', remoteContent)
         remoteHash = await getHash(remoteContent);
 
         DO.C.Resource[DO.C.DocumentURL]['digestSRI'] = remoteHash;
@@ -1846,7 +1848,9 @@ DO = {
         remoteETag = e.response?.headers.get('ETag');
       }
 
-            console.log(previousRemoteHash, remoteHash);
+      console.log(localContent, localHash);
+      console.log(remoteContent, remoteHash, previousRemoteHash)
+
 
       const etagWasUsed = !!(headers['If-None-Match'] && remoteETag);
       const etagsMatch = etagWasUsed && headers['If-None-Match'] === remoteETag;
@@ -1942,6 +1946,7 @@ DO = {
             }
             else {
               console.log(`Local unpublished changes. Remote validation unavailable. Review changes.`);
+              console.log(localContent, remoteContent)
               DO.U.showResourceReviewChanges(localContent, remoteContent);
             }
           }

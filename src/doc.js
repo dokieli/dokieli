@@ -245,16 +245,18 @@ function getDocument (cn, options) {
     }
   }
 
-  let doctype = (node.constructor.name === 'SVGSVGElement') ? '<?xml version="1.0" encoding="utf-8"?>' : getDoctype();
-  let s = (doctype.length > 0) ? doctype + '\n' : '';
-
   //In case `node` type is DocumentFragment
   const div = document.createElement('div');
   div.appendChild(node.cloneNode(true));
   node = div.firstChild;
-  
-  s += domToString(node, options);
 
+  let s = domToString(node, options);
+
+  s = domSanitize(s, { WHOLE_DOCUMENT: true, FORCE_BODY: true, ADD_TAGS: ['head'] });
+
+  let doctype = (node.constructor.name === 'SVGSVGElement') ? '<?xml version="1.0" encoding="utf-8"?>' : getDoctype();
+  doctype = (doctype.length > 0) ? doctype + '\n' : '';
+  s = doctype + s;
   s = beautify.html(s, Config.BeautifyOptions);
 
   return s;
@@ -1993,7 +1995,7 @@ function getGraphData(s, options) {
  */
 
 async function getResourceInfo(data, options) {
-  data = data ? getDocumentNodeFromString(data, {...Config.DOMNormalisation, skipNodeComment: true}) : getDocument(null, {...Config.DOMNormalisation, skipNodeComment: true});
+  data = data || getDocument();
   data = domSanitize(data);
 
   options = options || {};
@@ -2005,7 +2007,7 @@ async function getResourceInfo(data, options) {
   Config['Resource'] = Config['Resource'] || {};
   Config['Resource'][documentURL] = Config['Resource'][documentURL] || {};
   Config['Resource'][documentURL]['data'] = data;
-  Config['Resource'][documentURL]['digestSRI'] = Config['Resource'][documentURL]['digestSRI'] ?? await getHash(data);
+  Config['Resource'][documentURL]['digestSRI'] = Config['Resource'][documentURL]['digestSRI'] || await getHash(data);
   Config['Resource'][documentURL]['contentType'] = options.contentType;
 
   var promises = [];

@@ -175,13 +175,15 @@ function getRandomIndex(length) {
 }
 
 function domSanitize(strHTML, options = {}) {
-  // ALLOW_UNKNOWN_PROTOCOLS is needed for namespaced attribute values that DOMPurify mistakenly interpret as an unknown protocol protocol; it will allow mailto: but strip out others it does not recognize
+  console.log("DOMPurify in:", strHTML);
+
   const cleanHTML = DOMPurify.sanitize(strHTML, {
-    ALLOW_UNKNOWN_PROTOCOLS: options.ALLOW_UNKNOWN_PROTOCOLS === false ? false : true,
+    ALLOW_UNKNOWN_PROTOCOLS: options.ALLOW_UNKNOWN_PROTOCOLS !== false,
     ADD_ATTR: [...rdfaAttributes, 'xml:lang', 'target'],
     ...options
   });
 
+  console.log("DOMPurify out:", cleanHTML);
   return cleanHTML;
 }
 
