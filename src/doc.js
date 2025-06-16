@@ -252,7 +252,23 @@ function getDocument (cn, options) {
 
   let s = domToString(node, options);
 
-  s = domSanitize(s, { WHOLE_DOCUMENT: true, FORCE_BODY: true, ADD_TAGS: ['head'] });
+  const tempBody = node.body.cloneNode(true);
+  const bodyChildrenSanitized = domSanitize(tempBody.getHTML());
+
+  // Clear existing body children
+  node.body.replaceChildren();
+
+  // Create a temporary container to parse the sanitized string into nodes
+  const tempContainer = document.createElement('div');
+  tempContainer.innerHTML = bodyChildrenSanitized;
+
+  // Append sanitized nodes to the original body
+  for (const child of tempContainer.childNodes) {
+    node.body.appendChild(child);
+  }
+
+  s = node.documentElement.outerHTML;
+
 
   let doctype = (node.constructor.name === 'SVGSVGElement') ? '<?xml version="1.0" encoding="utf-8"?>' : getDoctype();
   doctype = (doctype.length > 0) ? doctype + '\n' : '';

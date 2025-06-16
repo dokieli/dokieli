@@ -2051,7 +2051,7 @@ console.log('-- after domSanitize', remoteContent)
       tmplRemote.documentElement.setHTMLUnsafe(remoteContent);
       const remoteContentBody = tmplRemote.body.getHTML().trim();
 
-      // console.log(localContentBody, remoteContentBody)
+      console.log(localContentBody, remoteContentBody)
 
       //TODO: CHange Info.GraphView button
       document.body.appendChild(fragmentFromString(`<aside id="review-changes" class="do on">${DO.C.Button.Close}<h2>Review Changes ${DO.C.Button.Info.GraphView}</h2><div class="info"></div></aside>`));
