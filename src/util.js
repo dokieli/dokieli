@@ -175,7 +175,7 @@ function getRandomIndex(length) {
 }
 
 function domSanitize(strHTML, options = {}) {
-  console.log("DOMPurify in:", strHTML);
+  // console.log("DOMPurify in:", strHTML);
 
   const cleanHTML = DOMPurify.sanitize(strHTML, {
     ALLOW_UNKNOWN_PROTOCOLS: options.ALLOW_UNKNOWN_PROTOCOLS !== false,
@@ -183,7 +183,7 @@ function domSanitize(strHTML, options = {}) {
     ...options
   });
 
-  console.log("DOMPurify out:", cleanHTML);
+  // console.log("DOMPurify out:", cleanHTML);
   return cleanHTML;
 }
 

@@ -233,10 +233,16 @@ function normaliseContent (node) {
 function getDocument (cn, options) {
   let node = cn || document.documentElement.cloneNode(true);
 
+  if (node instanceof Document) {
+    node = node.documentElement;
+  }
+
   options = options || Config.DOMNormalisation;
 
+  //Literally normalising the HTML
   node = normaliseContent(node);
 
+  //Remove ProseMirror wrap
   if (DO.Editor?.mode == 'author') {
     let pmNode = node.querySelector('.ProseMirror');
 
@@ -248,34 +254,36 @@ function getDocument (cn, options) {
   //In case `node` type is DocumentFragment
   const div = document.createElement('div');
   div.appendChild(node.cloneNode(true));
-  node = div.firstChild;
+  // node = div.firstChild;
 
-  let s = domToString(node, options);
+  let htmlString = div.getHTML();
 
-  const tempBody = node.body.cloneNode(true);
-  const bodyChildrenSanitized = domSanitize(tempBody.getHTML());
+  //Sanitize body
+  const nodeDocument = domSanitizeHTMLBody(htmlString);
+  // htmlString = nodeDocument.documentElement.outerHTML;
 
-  // Clear existing body children
-  node.body.replaceChildren();
+  //Normalise and HTMLise
+  htmlString = domToString(nodeDocument.documentElement, options);
 
-  // Create a temporary container to parse the sanitized string into nodes
-  const tempContainer = document.createElement('div');
-  tempContainer.innerHTML = bodyChildrenSanitized;
-
-  // Append sanitized nodes to the original body
-  for (const child of tempContainer.childNodes) {
-    node.body.appendChild(child);
-  }
-
-  s = node.documentElement.outerHTML;
-
-
-  let doctype = (node.constructor.name === 'SVGSVGElement') ? '<?xml version="1.0" encoding="utf-8"?>' : getDoctype();
+  //Prepend doctype
+  let doctype = (nodeDocument.constructor.name === 'SVGSVGElement') ? '<?xml version="1.0" encoding="utf-8"?>' : getDoctype();
   doctype = (doctype.length > 0) ? doctype + '\n' : '';
-  s = doctype + s;
-  s = beautify.html(s, Config.BeautifyOptions);
+  htmlString = doctype + htmlString;
 
-  return s;
+// console.log(htmlString)
+
+  //Format
+  // htmlString = beautify.html(htmlString, Config.BeautifyOptions);
+
+  return htmlString;
+}
+
+function domSanitizeHTMLBody(htmlString) {
+  const nodeDocument = getDocumentNodeFromString(htmlString);
+  const bodyChildrenSanitized = domSanitize(nodeDocument.body.getHTML());
+  nodeDocument.body.setHTMLUnsafe(bodyChildrenSanitized);
+
+  return nodeDocument;
 }
 
 function getDocumentNodeFromString(data, options) {
@@ -287,7 +295,7 @@ function getDocumentNodeFromString(data, options) {
     data = data.replace(/<!DOCTYPE[^>]*>/i, '');
   }
   var parsedDoc = parser.parseFromString(data, options.contentType);
-  return parsedDoc.documentElement;
+  return parsedDoc;
 }
 
 function getDocumentContentNode(node) {
@@ -2012,7 +2020,7 @@ function getGraphData(s, options) {
 
 async function getResourceInfo(data, options) {
   data = data || getDocument();
-  data = domSanitize(data);
+  // data = domSanitize(data);
 
   options = options || {};
   options['contentType'] = ('contentType' in options) ? options.contentType : 'text/html';
@@ -3642,6 +3650,7 @@ export {
   getFragmentOfNodesChildren,
   normaliseContent,
   getDocument,
+  domSanitizeHTMLBody,
   getDocumentNodeFromString,
   getDocumentContentNode,
   createHTML,
