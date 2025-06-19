@@ -254,7 +254,6 @@ export class Editor {
       this.restrictedNodes.forEach(node => {
         document.body.appendChild(node);
       });
-
       // console.log("Editor destroyed. Mode:", this.mode);
     }
   }

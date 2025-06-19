@@ -1,5 +1,5 @@
 import Config from './config.js'
-import { getDateTimeISO, fragmentFromString, generateAttributeId, uniqueArray, generateUUID, matchAllIndex, parseISODuration, domSanitize, getRandomIndex, getHash } from './util.js'
+import { getDateTimeISO, fragmentFromString, generateAttributeId, uniqueArray, generateUUID, matchAllIndex, parseISODuration, domSanitize, getRandomIndex, getHash, stringFromFragment } from './util.js'
 import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath, getPrefixedNameFromIRI, generateDataURI, getProxyableIRI } from './uri.js'
 import { getResource, getResourceHead, deleteResource, processSave, patchResourceWithAcceptPatch } from './fetcher.js'
 import rdf from "rdf-ext";
@@ -144,7 +144,7 @@ function dumpNode (node, options, skipAttributes, voidElements, noEsc) {
         out += ' />'
       } else {
         out += '>'
-        out += (ename === 'html') ? '\n  ' : ''
+        out += (ename === 'html') ? '\n' : ''
         noEsc.push(ename === 'style' || ename === 'script' || ename === 'pre' || ename === 'code' || ename === 'samp')
 
         for (var i = 0; i < node.childNodes.length; i++) {
@@ -152,7 +152,7 @@ function dumpNode (node, options, skipAttributes, voidElements, noEsc) {
         }
 
         noEsc.pop()
-        out += (ename === 'body') ? '  </' + ename + '>\n' : (ename === 'html') ? '</' + ename + '>\n' : '</' + ename + '>'
+        out += (ename === 'html') ? '\n</' + ename + '>' : '</' + ename + '>'
       }
     }
   } else if (node.nodeType === 8 && 'skipNodeComment' in options && !options.skipNodeComment) {
@@ -213,11 +213,19 @@ function getFragmentOfNodesChildren(node) {
 
 function normaliseContent (node) {
   let newContent = node;
-  const div = document.createElement('div');
-  div.appendChild(newContent.cloneNode(true));
 
-  ['li', 'dd', 'figure', 'figcaption', 'td', 'th', 'video', 'audio', 'figure', 'button', 'select', 'textarea'].forEach(tag => {
-    div.querySelectorAll(tag).forEach(el => {
+  let element = document.createElement('div');
+
+  if (newContent instanceof Document) {
+    element = newContent.documentElement;
+  } else {
+    element.appendChild(newContent.cloneNode(true));
+  }
+
+  const tags = ['li', 'dd', 'figure', 'figcaption', 'td', 'th', 'video', 'audio', 'button', 'select', 'textarea'];
+
+  tags.forEach(tag => {
+    element.querySelectorAll(tag).forEach(el => {
       if (el.children.length === 1 && el.firstElementChild.tagName.toLowerCase() === 'p') {
         const p = el.firstElementChild;
         // Move all children of <p> to <li>/<dd>
@@ -227,27 +235,33 @@ function normaliseContent (node) {
     });
   });
 
-  return getFragmentOfNodesChildren(div);
+  return getFragmentOfNodesChildren(element);
 }
 
 function getDocument (cn, options) {
-  let node = cn || document.documentElement.cloneNode(true);
+  let node = cn || document.documentElement;
 
-  if (node instanceof Document) {
-    node = node.documentElement;
+  if (cn instanceof Document) {
+    node = cn.documentElement;
   }
+
+  node = node.cloneNode(true);
 
   options = options || Config.DOMNormalisation;
 
   //Literally normalising the HTML
   node = normaliseContent(node);
+// console.log(stringFromFragment(node.firstChild));
 
   //Remove ProseMirror wrap
   if (DO.Editor?.mode == 'author') {
     let pmNode = node.querySelector('.ProseMirror');
 
     if (pmNode && pmNode.parentNode) {
+      // console.log(pmNode.parentNode.outerHTML + '<--pmNode.parentNode.outerHTML THERE SHOULD BE NO LINE BREAK BEFORE THIS-->');
       pmNode.parentNode.replaceChild(getFragmentOfNodesChildren(pmNode), pmNode);
+      let temp = node.querySelector('html');
+      // console.log(temp.outerHTML + '<--pmNode.parentNode.outerHTML THERE SHOULD BE NO LINE BREAK BEFORE THIS-->');
     }
   }
 
@@ -255,15 +269,18 @@ function getDocument (cn, options) {
   const div = document.createElement('div');
   div.appendChild(node.cloneNode(true));
   // node = div.firstChild;
+  // console.log(node.outerHTML + '<-- node.outerHTML BE NO LINK BREAK HERE-->')
 
   let htmlString = div.getHTML();
+// console.log(htmlString);
 
-  //Sanitize body
+//Sanitize body
   const nodeDocument = domSanitizeHTMLBody(htmlString);
   // htmlString = nodeDocument.documentElement.outerHTML;
-
+// console.log(htmlString)
   //Normalise and HTMLise
   htmlString = domToString(nodeDocument.documentElement, options);
+// console.log(htmlString)
 
   //Prepend doctype
   let doctype = (nodeDocument.constructor.name === 'SVGSVGElement') ? '<?xml version="1.0" encoding="utf-8"?>' : getDoctype();
@@ -273,30 +290,61 @@ function getDocument (cn, options) {
 // console.log(htmlString)
 
   //Format
-  // htmlString = beautify.html(htmlString, Config.BeautifyOptions);
+  htmlString = beautify.html(htmlString, Config.BeautifyOptions);
 
   return htmlString;
 }
 
 function domSanitizeHTMLBody(htmlString) {
   const nodeDocument = getDocumentNodeFromString(htmlString);
-  const bodyChildrenSanitized = domSanitize(nodeDocument.body.getHTML());
-  nodeDocument.body.setHTMLUnsafe(bodyChildrenSanitized);
 
+  //EXPERIMENTAL
+  // var nodeDocument = document.implementation.createHTMLDocument('template');
+  // nodeDocument.documentElement.setHTMLUnsafe(htmlString);
+
+  const bodyHTML = nodeDocument.body.getHTML();
+  // .trim();
+// console.log(bodyHTML + '<--bodyHTML THERE SHOULD BE NO LINE BREAK BEFORE THIS-->');
+
+  const bodyChildrenSanitized = domSanitize(bodyHTML);
+  // .trim();
+// console.log(bodyChildrenSanitized + '<--domSanitize(bodyHTML) THERE SHOULD BE NO LINE BREAK BEFORE THIS-->');
+
+  nodeDocument.body.setHTMLUnsafe(bodyChildrenSanitized);
+// console.log(nodeDocument.documentElement.outerHTML + '<--bodyChildrenSanitized THERE SHOULD BE NO LINE BREAK BEFORE THIS-->');
   return nodeDocument;
 }
 
-function getDocumentNodeFromString(data, options) {
-  options = options || {};
+function getDocumentNodeFromString(data, options = {}) {
   options['contentType'] = options.contentType || 'text/html';
 
-  var parser = new DOMParser();
-  if (options.contentType == 'text/xml') {
+  if (options.contentType === 'text/xml') {
     data = data.replace(/<!DOCTYPE[^>]*>/i, '');
   }
-  var parsedDoc = parser.parseFromString(data, options.contentType);
+
+  const parser = new DOMParser();
+  const parsedDoc = parser.parseFromString(data, options.contentType);
+
+  // Strip whitespace-only text nodes outside sensitive tags
+  const walker = document.createTreeWalker(
+    parsedDoc,
+    NodeFilter.SHOW_TEXT,
+    {
+      acceptNode: (node) => {
+        const tag = node.parentNode?.nodeName?.toLowerCase();
+        if (['pre', 'code', 'textarea'].includes(tag)) return NodeFilter.FILTER_REJECT;
+        return /^\s*$/.test(node.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      }
+    }
+  );
+
+  const toRemove = [];
+  while (walker.nextNode()) toRemove.push(walker.currentNode);
+  toRemove.forEach(n => n.remove());
+
   return parsedDoc;
 }
+
 
 function getDocumentContentNode(node) {
   if (node instanceof Document) {
@@ -2031,7 +2079,7 @@ async function getResourceInfo(data, options) {
   Config['Resource'] = Config['Resource'] || {};
   Config['Resource'][documentURL] = Config['Resource'][documentURL] || {};
   Config['Resource'][documentURL]['data'] = data;
-  Config['Resource'][documentURL]['digestSRI'] = Config['Resource'][documentURL]['digestSRI'] || await getHash(data);
+  Config['Resource'][documentURL]['digestSRI'] = await getHash(data);
   Config['Resource'][documentURL]['contentType'] = options.contentType;
 
   var promises = [];

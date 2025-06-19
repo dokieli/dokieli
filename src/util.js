@@ -60,6 +60,15 @@ function fragmentFromString(strHTML) {
   return document.createRange().createContextualFragment(domSanitize(strHTML));
 }
 
+function stringFromFragment(fragment) {
+  const container = document.createElement('div');
+  container.appendChild(fragment.cloneNode(true));
+
+  // return container.firstChild?.outerHTML || '';
+
+  return container.innerHTML;
+}
+
 function generateUUID(inputString) {
   // Simple FNV-1a hash function to generate a deterministic 32-bit integer hash for each part
   function fnv1aHash(str, seed = 2166136261) {
@@ -364,6 +373,7 @@ export {
   escapeRDFLiteral,
   sleep,
   fragmentFromString,
+  stringFromFragment,
   generateUUID,
   generateAttributeId,
   generateId,

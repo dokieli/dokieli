@@ -1786,7 +1786,7 @@ DO = {
     },
 
     syncLocalRemoteResource: async function(options = {}) {
-      console.log('--- syncLocalRemoteResource');
+      // console.log('--- syncLocalRemoteResource');
 
       //XXX: Revisit. Temporarily always true
       const remoteAutoSaveEnabled = DO.C.AutoSave.Items[DO.C.DocumentURL]?.http;
@@ -1815,6 +1815,13 @@ DO = {
       let localHash = await getHash(localContent);
       let localPublished;
 
+      let data;
+      let dataHash;
+
+      storageObject = await getLocalStorageItem(DO.C.DocumentURL);
+
+      latestLocalDocumentItemObject = (storageObject && storageObject.items?.length) && await getLocalStorageItem(storageObject.items[0]);
+
       if (latestLocalDocumentItemObject) {
         const { digestSRI, mediaType, content, published } = latestLocalDocumentItemObject;
         localHash = digestSRI;
@@ -1829,12 +1836,23 @@ DO = {
         status = response.status;
         remoteETag = response.headers.get('ETag');
 
-        let data = await response.text();
+        data = await response.text();
+        dataHash = await getHash(data);
 
         remoteContentNode = getDocumentNodeFromString(data);
-        remoteContent = getDocument(remoteContentNode);
+        // console.log("remoteContentNode", remoteContentNode.documentElement.outerHTML)
+        remoteContent = getDocument(remoteContentNode.documentElement);
+        // console.log("remoteContent", remoteContent.outerHTML)
         remoteContentNode = getDocumentNodeFromString(remoteContent);
-// console.log('-- after getDocument', remoteContent)
+
+        //EXPERIMENTAL
+        // This seems equivalent to getDocumentNodeFromString approach.
+        // //documentElement andor setHTMLUnsafe is also messing with whitespace like <html><head> ... </main>       </body>
+        // var tmpl = document.implementation.createHTMLDocument('template');
+        // tmpl.documentElement.setHTMLUnsafe(data);
+        // console.log('tmpl.documentElement.outerHTML', tmpl.documentElement.outerHTML)
+        // remoteContentNode = tmpl.documentElement.cloneNode(true);
+        // remoteContent = getDocument(remoteContentNode);
 
         remoteHash = await getHash(remoteContent);
 
@@ -1847,17 +1865,20 @@ DO = {
         remoteETag = e.response?.headers.get('ETag');
       }
 
-      console.log(localContent, localHash);
-      console.log(remoteContent, remoteHash, previousRemoteHash)
-
+      // console.log(`localContent: ${localContent}`);
+      // console.log(`localHash: ${localHash}`);
+      // console.log('-------');
+      // console.log(`data: ${data}`);
+      // console.log(`dataHash: ${dataHash}`);
+      // console.log('-------');
+      // console.log(`remoteContent: ${remoteContent}`);
+      // console.log(`remoteHash: ${remoteHash}`);
+      // console.log(`previousRemoteHash: ${previousRemoteHash}`);
 
       const etagWasUsed = !!(headers['If-None-Match'] && remoteETag);
       const etagsMatch = etagWasUsed && headers['If-None-Match'] === remoteETag;
 
       const localRemoteHashMatch = localHash == remoteHash;
-
-      storageObject = await getLocalStorageItem(DO.C.DocumentURL);
-      latestLocalDocumentItemObject = await getLocalStorageItem(storageObject.items[0]);
 
       if (localHash && remoteHash && localRemoteHashMatch) {
         console.log(`Local and remote unchanged.`);
@@ -1867,7 +1888,7 @@ DO = {
       if (options.forceLocal || options.forceRemote) {
         if (etagWasUsed && !etagsMatch) {
           console.log(`Cannot force due to missing or changed ETag. Show review.`);
-          DO.U.showResourceReviewChanges(localContent, remoteContent);
+          DO.U.showResourceReviewChanges(localContent, remoteContent, response);
           return;
         }
 
@@ -1884,7 +1905,7 @@ DO = {
           }
           catch(error) {
             if (error.status === 412) {
-              DO.U.showResourceReviewChanges(localContent, remoteContent);
+              DO.U.showResourceReviewChanges(localContent, remoteContent, response);
             }
             else {
               throw new Error(`${error.status} Unhandled status ${error}`);
@@ -1897,7 +1918,7 @@ DO = {
         if (options.forceRemote) {
           console.log(`Force replacing with remote content.`);
           DO.Editor.replaceContent(DO.Editor.mode, remoteContentNode);
-          autoSave(DO.C.DocumentURL, { method: 'localStorage', autoSave: true });
+          autoSave(DO.C.DocumentURL, { method: 'localStorage' });
           updateResourceInfos(DO.C.DocumentURL, getDocument(), response);
           return;
         }
@@ -1912,12 +1933,12 @@ DO = {
           if (localPublished) {
             if (etagsMatch) {
               console.log(`Local and remote have same version but content differs, likely conflict. Review.`);
-              DO.U.showResourceReviewChanges(localContent, remoteContent);
+              DO.U.showResourceReviewChanges(localContent, remoteContent, response);
             }
             else {
               console.log(`Local unchanged. Remote changed. Update local.`);
               DO.Editor.replaceContent(DO.Editor.mode, remoteContentNode);
-              autoSave(DO.C.DocumentURL, { method: 'localStorage', autoSave: true });
+              autoSave(DO.C.DocumentURL, { method: 'localStorage' });
               updateResourceInfos(DO.C.DocumentURL, getDocument(), response);
             }
           }
@@ -1936,7 +1957,7 @@ DO = {
               }
               catch(error) {
                 if (error.status === 412) {
-                  DO.U.showResourceReviewChanges(localContent, remoteContent);
+                  DO.U.showResourceReviewChanges(localContent, remoteContent, response);
                 }
                 else {
                   throw new Error(`${error.status} Unhandled status ${error}`);
@@ -1945,8 +1966,7 @@ DO = {
             }
             else {
               console.log(`Local unpublished changes. Remote validation unavailable. Review changes.`);
-              console.log(localContent, remoteContent)
-              DO.U.showResourceReviewChanges(localContent, remoteContent);
+              DO.U.showResourceReviewChanges(localContent, remoteContent, response);
             }
           }
 
@@ -1957,7 +1977,7 @@ DO = {
           if (localPublished) {
             console.log(`Local published but content differs; update local.`);
             DO.Editor.replaceContent(DO.Editor.mode, remoteContentNode);
-            autoSave(DO.C.DocumentURL, { method: 'localStorage', autoSave: true });
+            autoSave(DO.C.DocumentURL, { method: 'localStorage' });
             updateResourceInfos(DO.C.DocumentURL, getDocument(), response);
           }
           else {
@@ -1974,7 +1994,7 @@ DO = {
             }
             catch(error) {
               if (error.status === 412) {
-                DO.U.showResourceReviewChanges(localContent, remoteContent);
+                DO.U.showResourceReviewChanges(localContent, remoteContent, response);
               }
               else {
                 throw new Error(`${error.status} Unhandled status ${error}`);
@@ -1998,7 +2018,7 @@ DO = {
           }
           catch (error) {
             if (error.status === 412) {
-              DO.U.showResourceReviewChanges(localContent, remoteContent);
+              DO.U.showResourceReviewChanges(localContent, remoteContent, response);
             }
             else {
               throw new Error(`${error.status} Unhandled status ${error}`);
@@ -2032,8 +2052,10 @@ DO = {
       updateResourceInfos(DO.C.DocumentURL, content, response);
     },
 
-    showResourceReviewChanges: function(localContent, remoteContent) {
+    showResourceReviewChanges: function(localContent, remoteContent, response) {
       if (!localContent.length || !remoteContent.length) return;
+
+      // console.log(localContent, remoteContent);
 
       const reviewChanges = document.getElementById('review-changes');
 
@@ -2050,7 +2072,8 @@ DO = {
       tmplRemote.documentElement.setHTMLUnsafe(remoteContent);
       const remoteContentBody = tmplRemote.body.getHTML().trim();
 
-      console.log(localContentBody, remoteContentBody)
+      // console.log(localContentBody + '/---')
+      // console.log(remoteContentBody + '/---')
 
       //TODO: CHange Info.GraphView button
       document.body.appendChild(fragmentFromString(`<aside id="review-changes" class="do on">${DO.C.Button.Close}<h2>Review Changes ${DO.C.Button.Info.GraphView}</h2><div class="info"></div></aside>`));
@@ -2058,7 +2081,7 @@ DO = {
       var diff = diffChars(remoteContentBody, localContentBody);
       var diffHTML = [];
       diff.forEach((part) => {
-        var eName = 'span';
+        let eName;
 
         if (part.added) {
           eName = 'ins';
@@ -2067,12 +2090,17 @@ DO = {
           eName = 'del';
         }
 
-        diffHTML.push('<' + eName + '>' + part.value + '</' + eName + '>');
+        if (eName) {
+          diffHTML.push('<' + eName + '>' + part.value + '</' + eName + '>');
+        }
+        else {
+          diffHTML.push(part.value);
+        }
       });
-console.log(diffHTML.join())
+// console.log(diffHTML.join())
       var node = document.getElementById('review-changes');
       node.insertAdjacentHTML('beforeend', `
-        <div class="do-diff">${diffHTML.join('')}</div>
+        <div class="do do-diff">${diffHTML.join('')}</div>
         <button class="review-changes-save-local" title="Keep my edits">Keep my changes</button>
         <button class="review-changes-save-remote" title="Discard my edits and use remote version">Overwrite my changes</button>
         <button class="review-changes-submit" title="Save">Save</button>
@@ -2088,10 +2116,11 @@ console.log(diffHTML.join())
         if (button) {
           //XXX: What's this for?
           // DO.Editor.toggleMode();
+          if (button.classList.contains('close')) {
+            return;
+          }
 
           var diffedNode = node.querySelector('.do-diff');
-
-          node.remove();
 
           //TODO: Progress
 
@@ -2116,11 +2145,13 @@ console.log(diffHTML.join())
             });
             // update local content with the stuff in the diff editor view
             DO.Editor.replaceContent(DO.Editor.mode, diffNode);
-            autoSave(DO.C.DocumentURL, { method: 'localStorage', autoSave: true });
+            autoSave(DO.C.DocumentURL, { method: 'localStorage' });
             updateResourceInfos(DO.C.DocumentURL, getDocument(), response);
 
             DO.U.syncLocalRemoteResource({ forceLocal: true });
           }
+
+          node.remove();
         }
 
       });
