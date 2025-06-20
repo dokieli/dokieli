@@ -103,7 +103,7 @@ export class Editor {
 
   replaceContent(mode, content) {
     this.destroyEditor(content);
-    this.init(mode);
+    // this.init(mode);
   }
 
   setTemplate(mode, options) {
@@ -176,7 +176,12 @@ export class Editor {
 
   //Creating a ProseMirror editor view at a specified this.node
   createEditor(options) {
-    this.restrictedNodes = Array.from(document.body.querySelectorAll('.do'));
+    // TODO: think about a review mode of initializing and destroying editor
+    const filterIds = ['document-editor', 'review-changes'];
+    const notSelector = filterIds.map(id => `:not([id="${id}"])`).join('');
+    const selector = `.do${notSelector}`;
+    
+    this.restrictedNodes = Array.from(document.body.querySelectorAll(selector));
     this.restrictedNodes.forEach(node => {
       if (node.parentNode) {
         node.parentNode.removeChild(node);
@@ -242,6 +247,7 @@ export class Editor {
       // console.log(json);
 
       this.editorView.destroy();
+
       this.editorView = null;
       this.authorToolbarView = null;
 

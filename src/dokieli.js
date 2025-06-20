@@ -1676,7 +1676,8 @@ DO = {
             }
           });
 
-          var options = { 'reuse': true };
+          // var options = { 'reuse': true };
+          var options = {};
           if (document.location.protocol.startsWith('http')) {
             options['followLinkRelationTypes'] = ['describedby'];
           }
@@ -1782,6 +1783,8 @@ DO = {
 
       updateButtons();
 
+      updateLocalStorageItem(DO.C.DocumentURL, { autoSave: true });
+
       DO.U.syncLocalRemoteResource();
     },
 
@@ -1790,9 +1793,7 @@ DO = {
 
       updateButtons();
 
-      if (DO.C.AutoSave.Items[DO.C.DocumentURL]?.http) {
-        DO.C.AutoSave.Items[DO.C.DocumentURL].http = undefined;
-      }
+      updateLocalStorageItem(DO.C.DocumentURL, { autoSave: false });
 
       autoSave(DO.C.DocumentURL, { method: 'localStorage' });
     },
@@ -1810,9 +1811,6 @@ DO = {
 
     syncLocalRemoteResource: async function(options = {}) {
       // console.log('--- syncLocalRemoteResource');
-
-      //XXX: Revisit. Temporarily always true
-      const remoteAutoSaveEnabled = DO.C.AutoSave.Items[DO.C.DocumentURL]?.http;
 
       const localETag = DO.C.Resource[DO.C.DocumentURL]?.headers?.etag?.['field-value'];
       let localContentType = 'text/html';
@@ -1839,11 +1837,14 @@ DO = {
       let localPublished;
 
       let data;
-      let dataHash;
+      // let dataHash;
 
       storageObject = await getLocalStorageItem(DO.C.DocumentURL);
 
-      latestLocalDocumentItemObject = (storageObject && storageObject.items?.length) && await getLocalStorageItem(storageObject.items[0]);
+      //XXX: Revisit. Temporarily always true
+      const remoteAutoSaveEnabled = (storageObject && storageObject.autoSave !== undefined) ? storageObject.autoSave : true;
+
+      latestLocalDocumentItemObject = (storageObject && storageObject.items?.length) ? await getLocalStorageItem(storageObject.items[0]) : null;
 
       if (latestLocalDocumentItemObject) {
         const { digestSRI, mediaType, content, published } = latestLocalDocumentItemObject;
@@ -1897,7 +1898,7 @@ DO = {
       }
 
       if (options.forceLocal || options.forceRemote) {
-        if (etagWasUsed && !etagsMatch) {
+        if (etagWasUsed && !etagsMatch && !options.forceRemote) {
           console.log(`Cannot force due to missing or changed ETag. Show review.`);
           DO.U.showResourceReviewChanges(localContent, remoteContent, response);
           return;
@@ -1929,6 +1930,7 @@ DO = {
         if (options.forceRemote) {
           console.log(`Force replacing with remote content.`);
           DO.Editor.replaceContent(DO.Editor.mode, remoteContentNode);
+          DO.Editor.init(DO.Editor.mode, document.body);
           autoSave(DO.C.DocumentURL, { method: 'localStorage' });
           updateResourceInfos(DO.C.DocumentURL, getDocument(), response);
           return;
@@ -1949,12 +1951,13 @@ DO = {
             else {
               console.log(`Local unchanged. Remote changed. Update local.`);
               DO.Editor.replaceContent(DO.Editor.mode, remoteContentNode);
+              DO.Editor.init(DO.Editor.mode, document.body);
               autoSave(DO.C.DocumentURL, { method: 'localStorage' });
               updateResourceInfos(DO.C.DocumentURL, getDocument(), response);
             }
           }
           else {
-            if (etagsMatch || previousRemoteHash == remoteHash) {
+            if (latestLocalDocumentItemObject && (etagsMatch || previousRemoteHash == remoteHash)) {
               console.log(`Local unpublished changes. Remote unchanged. Update remote.`);
 
               if (!remoteAutoSaveEnabled) {
@@ -1988,10 +1991,11 @@ DO = {
           if (localPublished) {
             console.log(`Local published but content differs; update local.`);
             DO.Editor.replaceContent(DO.Editor.mode, remoteContentNode);
+            DO.Editor.init(DO.Editor.mode, document.body);
             autoSave(DO.C.DocumentURL, { method: 'localStorage' });
             updateResourceInfos(DO.C.DocumentURL, getDocument(), response);
           }
-          else {
+          else if (latestLocalDocumentItemObject) {
             console.log(`Local unpublished changes; push to remote.`);
 
             if (!remoteAutoSaveEnabled) {
@@ -2185,7 +2189,8 @@ DO = {
               el.remove();
             });
             // update local content with the stuff in the diff editor view
-            DO.Editor.replaceContent(DO.Editor.mode, diffNode);
+            DO.Editor.replaceContent(DO.Editor.mode, remoteContentNode);
+            DO.Editor.init(DO.Editor.mode, document.body);
             autoSave(DO.C.DocumentURL, { method: 'localStorage' });
             updateResourceInfos(DO.C.DocumentURL, getDocument(), response);
 
@@ -2291,16 +2296,20 @@ DO = {
       removeNodesWithIds(DO.C.DocumentDoItems);
     },
 
-    showAutoSave: function(node) {
-      if (document.querySelector('#document-autosave')) { return; }
+    showAutoSave: async function(node) {
+      if (node.querySelector('#document-autosave')) { return; }
+
+      const storageObject = await getLocalStorageItem(DO.C.DocumentURL);
+
+      const checked = (storageObject?.autoSave !== undefined ? storageObject.autoSave : true ) ? ' checked=""' : '';
 
       let html = `
       <section id="document-autosave">
-        <label for="autosave-remote">Autosave</label> <input checked="" id="autosave-remote" title="Keep changes local or sync to remote storage" type="checkbox" />
+        <label for="autosave-remote">Autosave</label> <input${checked} id="autosave-remote" title="Keep changes local or sync to remote storage" type="checkbox" />
       </section>
       `;
 
-      node.insertAdjacentHTML('beforeend', html);
+      node.querySelector('#document-do').insertAdjacentHTML('afterend', html);
 
       document.getElementById('document-autosave').addEventListener('change', (e) => {
         if (e.target.checked) {

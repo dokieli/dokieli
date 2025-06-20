@@ -128,7 +128,7 @@ function updateHTTPStorageDocument(url, data, options = {}) {
   updateMutableResource(url);
 
   // if (options.autoSave) {
-  Config.AutoSave.Items[url]['http']['updated'] = datetime;
+  // Config.AutoSave.Items[url]['http']['updated'] = datetime;
   // }
 
   console.log(datetime + ': Document saved.');
@@ -191,19 +191,22 @@ async function enableAutoSave(key, options = {}) {
   Config.AutoSave.Items[key][options.method] ||= {};
 
   //TEMPORARY FOR TESTING
-  Config.AutoSave.Items[key]['http'] = {};
+  // Config.AutoSave.Items[key]['http'] = {};
 
   let debounceTimeout;
 
   console.log(getDateTimeISO() + ': ' + key + ' ' + options.method + ' autosave enabled.');
+
   await autoSave(key, options);
 
   document.addEventListener('input', e => {
     if (e.target.closest('.ProseMirror[contenteditable]')) {
       // debounceTimeout = debounce(() => autoSave, Config.AutoSave.Timer)(key, options);
-      clearTimeout(debounceTimeout);
+      if (debounceTimeout) {
+        clearTimeout(debounceTimeout);
+      }
       debounceTimeout = setTimeout(() => autoSave(key, options), Config.AutoSave.Timer); // debounce delay 
-      Config.AutoSave.Items[key][options.method]['id'] = debounceTimeout;
+      // Config.AutoSave.Items[key][options.method]['id'] = debounceTimeout;
     }
   })
 
