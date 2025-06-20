@@ -65,6 +65,9 @@ async function updateLocalStorageDocumentWithItem(key, data, options) {
   //TODO: Reconsider this key (which is essentially DO.C.DocumentURL) because there is a possibility that some other thing on that page will use the same key? We don't want to conflict with that. Perhaps the key in storage should be something unique, e.g., UUID, digestSRI, or something dokieli-specific? Probably dokieli-specific because we need to have a deterministic way of recalling it. Even if it is just `do-${DO.C.DocumentURL}` which would be sufficient.. or even digestSRI(DO.C.DocumentURL)
   localStorage.setItem(key, JSON.stringify(collection));
 
+  Config.AutoSave.Items[options.collectionKey] ||= {};
+  Config.AutoSave.Items[options.collectionKey].localStorage ||= {};
+
   console.log(datetime + `: ${key} saved.`);
 
   addLocalStorageDocumentItem(id, data, options);
@@ -85,9 +88,8 @@ async function updateLocalStorageItem(id, data) {
 
 //TODO removeLocalStorageDocumenItem
 
-function addLocalStorageDocumentItem(id, data, options) {
+function addLocalStorageDocumentItem(id, data, options = {}) {
   data = data || getDocument();
-  options = options || {};
 
   var datetime = options.datetime || getDateTimeISO();
 
@@ -112,22 +114,21 @@ function addLocalStorageDocumentItem(id, data, options) {
   localStorage.setItem(id, JSON.stringify(item));
 
   // if (options.autoSave) {
-    Config.AutoSave.Items[options.collectionKey]['localStorage']['updated'] = item.updated;
+  Config.AutoSave.Items[options.collectionKey]['localStorage']['updated'] = item.updated;
   // }
 
   console.log(datetime + `: ${id} saved.`);
 }
 
-function updateHTTPStorageDocument(url, data, options) {
+function updateHTTPStorageDocument(url, data, options = {}) {
   data = data || getDocument();
-  options = options || {};
 
   var datetime = getDateTimeISO();
 
   updateMutableResource(url);
 
   // if (options.autoSave) {
-    Config.AutoSave.Items[url]['http']['updated'] = datetime;
+  Config.AutoSave.Items[url]['http']['updated'] = datetime;
   // }
 
   console.log(datetime + ': Document saved.');
@@ -171,7 +172,9 @@ async function autoSave(key, options) {
 
     try {
       await updateStorage(key, data, options);
-      Config.AutoSave.Items[key][options.method]['digestSRI'] = hash;
+      Config.AutoSave.Items[key] ||= {};
+      Config.AutoSave.Items[key][options.method] ||= {};
+      Config.AutoSave.Items[key][options.method].digestSRI = hash;
     } catch (error) {
       console.error(getDateTimeISO() + ': Error saving document: ', error);
     }
@@ -179,15 +182,16 @@ async function autoSave(key, options) {
 }
 
 
-async function enableAutoSave(key, options) {
-  options = options || {};
+async function enableAutoSave(key, options = {}) {
+  if (!key) return;
+
   options['method'] = ('method' in options) ? options.method : 'localStorage';
   // options['autoSave'] = true;
-  Config.AutoSave.Items[key] = (Config.AutoSave.Items[key]) ? Config.AutoSave.Items[key] : {};
-  Config.AutoSave.Items[key][options.method] = (Config.AutoSave.Items[key][options.method]) ? Config.AutoSave.Items[key][options.method] : {};
+  Config.AutoSave.Items[key] ||= {};
+  Config.AutoSave.Items[key][options.method] ||= {};
 
-//TEMPORARY FOR TESTING
-   Config.AutoSave.Items[key]['http'] = {};
+  //TEMPORARY FOR TESTING
+  Config.AutoSave.Items[key]['http'] = {};
 
   let debounceTimeout;
 
@@ -205,12 +209,11 @@ async function enableAutoSave(key, options) {
 
 }
 
-async function disableAutoSave(key, options) {
-  options = options || {};
+async function disableAutoSave(key, options = {}) {
+  if (!Config.AutoSave.Items[key]) { return; }
+
   options['method'] = ('method' in options) ? options.method : 'localStorage';
   // options['autoSave'] = true;
-
-  if (!Config.AutoSave.Items[key]) { return; }
 
   let methods = Array.isArray(options.method) ? options.method : [options.method];
 
@@ -219,7 +222,6 @@ async function disableAutoSave(key, options) {
       console.log(getDateTimeISO() + ': ' + key + ' ' + options.method + ' autosave disabled.');
 
       await autoSave(key, options);
-
       clearInterval(Config.AutoSave.Items[key][method].id);
       Config.AutoSave.Items[key][method] = undefined;
     }
@@ -240,7 +242,7 @@ function removeLocalStorageItem(key) {
     return Promise.resolve(localStorage.removeItem(key));
   }
   else {
-    return Promise.reject({'message': 'storage is unavailable'})
+    return Promise.reject({ 'message': 'storage is unavailable' })
   }
 }
 
@@ -274,14 +276,14 @@ function getLocalStorageItem(key) {
     return Promise.resolve(value);
   }
   else {
-    return Promise.reject({'message': 'storage is unavailable'})
+    return Promise.reject({ 'message': 'storage is unavailable' })
   }
 }
 
 function updateLocalStorageProfile(User) {
-  if (!User.IRI) { return Promise.resolve({'message': 'User.IRI is not set'}); }
+  if (!User.IRI) { return Promise.resolve({ 'message': 'User.IRI is not set' }); }
 
-  var U = {...User};
+  var U = { ...User };
   var key = 'DO.C.User'
 
   var id = generateUUID();
@@ -310,10 +312,10 @@ function updateLocalStorageProfile(User) {
 
   if (Config.WebExtension) {
     if (typeof browser !== 'undefined') {
-      return browser.storage.sync.set({[key]: object});
+      return browser.storage.sync.set({ [key]: object });
     }
     else {
-      return Promise.resolve(chrome.storage.sync.set({[key]: object}));
+      return Promise.resolve(chrome.storage.sync.set({ [key]: object }));
     }
   }
   else if (window.localStorage) {
@@ -321,7 +323,7 @@ function updateLocalStorageProfile(User) {
     return Promise.resolve(localStorage.setItem(key, JSON.stringify(object)));
   }
   else {
-    return Promise.reject({'message': 'storage is unavailable'})
+    return Promise.reject({ 'message': 'storage is unavailable' })
   }
 }
 

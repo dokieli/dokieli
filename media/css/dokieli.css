@@ -354,8 +354,11 @@ margin-right:0.25em;
 content:"#";
 }
 
-#review-changes .ProseMirror {
+#review-changes .do-diff {
   border:1px dashed #080;
+}
+#review-changes div.info + details {
+  margin:1em 0;
 }
 
 
@@ -380,6 +383,14 @@ html > .do {
 font-family:sans-serif;
 }
 
+.do figcaption,
+.do caption {
+  padding:0;
+}
+.do figcaption:before,
+.do caption:before {
+  content: "";
+}
 
 /*XXX: ProseMirror inserts p for certain block groups (below). In the markup, these tags might only include inline or text content, and so the schema wraps them with p but that is cumbersome and messes up the UI. The styles here at least try to make the p look inline.*/
 figcaption > p:first-child,
@@ -1612,7 +1623,7 @@ content: "";
 }
 
 #document-menu #document-views {
-margin:2em 0 1em 0;
+margin:1em 0;
 }
 
 #document-menu li {
@@ -1696,6 +1707,47 @@ margin-top:1em;
 display:inline-block;
 }
 
+#document-menu #document-auto-publish {
+margin:2em 0 0 0;
+}
+
+#document-auto-publish input[type="checkbox"]{
+  height: 0;
+  width: 0;
+  visibility: hidden;
+}
+
+#document-auto-publish label {
+  margin-left:9em;
+  cursor: pointer;
+  text-indent: -7em;
+  width: 3.5em;
+  height: 1.75em;
+  background: #777;
+  display: block;
+  border-radius: 1em;
+  position: relative;
+}
+
+#document-auto-publish label:before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 1.4em;
+  height: 1.4em;
+  background: #fff;
+  border-radius: 2em;
+}
+
+#document-auto-publish label:has(+ input:checked) {
+  background: #080;
+}
+
+#document-auto-publish label:has(+ input:checked):before {
+  right: 5px;
+  left:auto;
+}
 
 .tabs nav {
 position:relative;
@@ -2025,6 +2077,14 @@ font-variant:small-caps;
 font-style:normal;
 }
 em.rfc2119 { color: #f00; }
+
+del {
+  color: #900;
+}
+
+ins {
+  color: #080;
+}
 
 .todo, .outline, .fixme, .notes {
 border:1px dashed #333;

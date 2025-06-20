@@ -1675,6 +1675,17 @@ DO = {
               DO.U.showNotificationSources(DO.C.Resource[documentURL].inbox[0]);
             }
           });
+
+          var options = { 'reuse': true };
+          if (document.location.protocol.startsWith('http')) {
+            options['followLinkRelationTypes'] = ['describedby'];
+          }
+          getResourceSupplementalInfo(DO.C.DocumentURL, options).then(resourceInfo => {
+            updateButtons();
+
+            DO.U.syncLocalRemoteResource();
+          });
+
           // window.setTimeout(checkResourceInfo, 100);
         }
       }
@@ -1766,22 +1777,34 @@ DO = {
       });
     },
 
+    goOnline: function() {
+      console.log('online');
+
+      updateButtons();
+
+      DO.U.syncLocalRemoteResource();
+    },
+
+    goOffline: function() {
+      console.log('offline');
+
+      updateButtons();
+
+      if (DO.C.AutoSave.Items[DO.C.DocumentURL]?.http) {
+        DO.C.AutoSave.Items[DO.C.DocumentURL].http = undefined;
+      }
+
+      autoSave(DO.C.DocumentURL, { method: 'localStorage' });
+    },
+
     monitorNetworkStatus: function() {
       window.addEventListener('online', async () => {
-        console.log('online');
-
-        updateButtons();
-
-        DO.U.syncLocalRemoteResource();
-
-        // bring the document state to latest remote state, doing manual conflict resolution if needed, before saving or after some time offline
+        DO.U.goOnline();
       });
     
 
-      window.addEventListener('offline', () => {
-        console.log('offline');
-
-        updateButtons();
+      window.addEventListener('offline', async () => {
+        DO.U.goOffline();
       });
     },
 
@@ -1837,22 +1860,10 @@ DO = {
         remoteETag = response.headers.get('ETag');
 
         data = await response.text();
-        dataHash = await getHash(data);
 
         remoteContentNode = getDocumentNodeFromString(data);
-        // console.log("remoteContentNode", remoteContentNode.documentElement.outerHTML)
         remoteContent = getDocument(remoteContentNode.documentElement);
-        // console.log("remoteContent", remoteContent.outerHTML)
         remoteContentNode = getDocumentNodeFromString(remoteContent);
-
-        //EXPERIMENTAL
-        // This seems equivalent to getDocumentNodeFromString approach.
-        // //documentElement andor setHTMLUnsafe is also messing with whitespace like <html><head> ... </main>       </body>
-        // var tmpl = document.implementation.createHTMLDocument('template');
-        // tmpl.documentElement.setHTMLUnsafe(data);
-        // console.log('tmpl.documentElement.outerHTML', tmpl.documentElement.outerHTML)
-        // remoteContentNode = tmpl.documentElement.cloneNode(true);
-        // remoteContent = getDocument(remoteContentNode);
 
         remoteHash = await getHash(remoteContent);
 
@@ -1866,14 +1877,14 @@ DO = {
       }
 
       // console.log(`localContent: ${localContent}`);
-      // console.log(`localHash: ${localHash}`);
+      console.log(`localHash: ${localHash}`);
       // console.log('-------');
       // console.log(`data: ${data}`);
       // console.log(`dataHash: ${dataHash}`);
       // console.log('-------');
       // console.log(`remoteContent: ${remoteContent}`);
-      // console.log(`remoteHash: ${remoteHash}`);
-      // console.log(`previousRemoteHash: ${previousRemoteHash}`);
+      console.log(`remoteHash: ${remoteHash}`);
+      console.log(`previousRemoteHash: ${previousRemoteHash}`);
 
       const etagWasUsed = !!(headers['If-None-Match'] && remoteETag);
       const etagsMatch = etagWasUsed && headers['If-None-Match'] === remoteETag;
@@ -2078,18 +2089,26 @@ DO = {
       //TODO: CHange Info.GraphView button
       document.body.appendChild(fragmentFromString(`<aside id="review-changes" class="do on">${DO.C.Button.Close}<h2>Review Changes ${DO.C.Button.Info.GraphView}</h2><div class="info"></div></aside>`));
 
-      var diff = diffChars(remoteContentBody, localContentBody);
-      var diffHTML = [];
+      const diff = diffChars(remoteContentBody, localContentBody);
+      let diffHTML = [];
+      let insCounter = 0;
+      let delCounter = 0;
+
       diff.forEach((part) => {
+        // console.log(part)
+
         let eName;
 
         if (part.added) {
           eName = 'ins';
+          insCounter++;
         }
         else if (part.removed) {
           eName = 'del';
+          delCounter++;
         }
 
+        //TODO: Show only changes lines/blocks/significant context, e.g., the paragraph that's including the added/removed, and highlight ins/del
         if (eName) {
           diffHTML.push('<' + eName + '>' + part.value + '</' + eName + '>');
         }
@@ -2097,10 +2116,31 @@ DO = {
           diffHTML.push(part.value);
         }
       });
-// console.log(diffHTML.join())
+
+      // console.log(`ins: ${insCounter}, del: ${delCounter}`);
+
+      let detailsInsDel = `
+        <details>
+          <summary>More details about the changes</summary>
+          <table>
+            <caption>Differences</caption>
+            <thead>
+              <tr><th>Change</th><th>Count</th><th>Example</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Added</td><td>${insCounter}</td><td><ins>This is an example text that was added.</ins></td></tr>
+              <tr><td>Removed</td><td>${delCounter}</td><td><del>This is an example text that was removed.</del></td></tr>
+            </tbody>
+          </table>
+        </details>
+        `;
+
       var node = document.getElementById('review-changes');
+
+      node.querySelector('h2 + div.info').insertAdjacentHTML('beforeend', detailsInsDel);
+
       node.insertAdjacentHTML('beforeend', `
-        <div class="do do-diff">${diffHTML.join('')}</div>
+        <div class="do-diff">${diffHTML.join('')}</div>
         <button class="review-changes-save-local" title="Keep my edits">Keep my changes</button>
         <button class="review-changes-save-remote" title="Discard my edits and use remote version">Overwrite my changes</button>
         <button class="review-changes-submit" title="Save">Save</button>
@@ -2108,6 +2148,7 @@ DO = {
 
       const diffNode = document.querySelector('#review-changes .do-diff');
 
+      //FIXME: This is moving do-diff out of review-changes and placing it before </body>
       DO.Editor.init("author", diffNode);
 
       node.addEventListener('click', e => {
@@ -2203,6 +2244,7 @@ DO = {
 
       showUserSigninSignout(dUserInfo);
       DO.U.showDocumentDo(dInfo);
+      DO.U.showAutoPublish(dInfo);
       DO.U.showViews(dInfo);
       DO.U.showAboutDokieli(dInfo);
 
@@ -2247,6 +2289,28 @@ DO = {
       // body.classList.remove('on-document-menu');
 
       removeNodesWithIds(DO.C.DocumentDoItems);
+    },
+
+    showAutoPublish: function(node) {
+      if (document.querySelector('#document-auto-publish')) { return; }
+
+      let html = `
+      <section id="document-auto-publish">
+        <label for="auto-publish">Auto-publish</label> <input checked="" id="auto-publish" title="Keep changes local or sync to remote storage" type="checkbox" />
+      </section>
+      `;
+
+      node.insertAdjacentHTML('beforeend', html);
+
+      document.getElementById('document-auto-publish').addEventListener('change', (e) => {
+        if (e.target.checked) {
+          DO.U.goOnline();
+        }
+        else {
+          DO.U.goOffline();
+        }
+      });
+
     },
 
     showAboutDokieli: function(node) {
