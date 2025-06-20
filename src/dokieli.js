@@ -2244,7 +2244,7 @@ DO = {
 
       showUserSigninSignout(dUserInfo);
       DO.U.showDocumentDo(dInfo);
-      DO.U.showAutoPublish(dInfo);
+      DO.U.showAutoSave(dInfo);
       DO.U.showViews(dInfo);
       DO.U.showAboutDokieli(dInfo);
 
@@ -2291,18 +2291,18 @@ DO = {
       removeNodesWithIds(DO.C.DocumentDoItems);
     },
 
-    showAutoPublish: function(node) {
-      if (document.querySelector('#document-auto-publish')) { return; }
+    showAutoSave: function(node) {
+      if (document.querySelector('#document-autosave')) { return; }
 
       let html = `
-      <section id="document-auto-publish">
-        <label for="auto-publish">Auto-publish</label> <input checked="" id="auto-publish" title="Keep changes local or sync to remote storage" type="checkbox" />
+      <section id="document-autosave">
+        <label for="autosave-remote">Autosave</label> <input checked="" id="autosave-remote" title="Keep changes local or sync to remote storage" type="checkbox" />
       </section>
       `;
 
       node.insertAdjacentHTML('beforeend', html);
 
-      document.getElementById('document-auto-publish').addEventListener('change', (e) => {
+      document.getElementById('document-autosave').addEventListener('change', (e) => {
         if (e.target.checked) {
           DO.U.goOnline();
         }

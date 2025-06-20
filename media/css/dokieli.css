@@ -1695,32 +1695,25 @@ vertical-align: middle;
 }
 
 #document-menu .editor-disable,
-#document-menu .review-disable,
-#document-menu .local-storage-disable-html {
+#document-menu .review-disable {
 background-color:#eee !important;
 }
-#document-menu #autosave-items {
-margin-left:1em;
-}
-#document-menu #autosave-items li {
-margin-top:1em;
-display:inline-block;
-}
 
-#document-menu #document-auto-publish {
+
+#document-menu #document-autosave {
 margin:2em 0 0 0;
 }
 
-#document-auto-publish input[type="checkbox"]{
+#document-autosave input[type="checkbox"]{
   height: 0;
   width: 0;
   visibility: hidden;
 }
 
-#document-auto-publish label {
-  margin-left:9em;
+#document-autosave label {
+  margin-left:7em;
   cursor: pointer;
-  text-indent: -7em;
+  text-indent: -5em;
   width: 3.5em;
   height: 1.75em;
   background: #777;
@@ -1729,7 +1722,7 @@ margin:2em 0 0 0;
   position: relative;
 }
 
-#document-auto-publish label:before {
+#document-autosave label:before {
   content: '';
   position: absolute;
   top: 3px;
@@ -1740,11 +1733,11 @@ margin:2em 0 0 0;
   border-radius: 2em;
 }
 
-#document-auto-publish label:has(+ input:checked) {
+#document-autosave label:has(+ input:checked) {
   background: #080;
 }
 
-#document-auto-publish label:has(+ input:checked):before {
+#document-autosave label:has(+ input:checked):before {
   right: 5px;
   left:auto;
 }
