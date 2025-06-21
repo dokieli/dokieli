@@ -32,11 +32,10 @@ import { accessModeAllowed, getDocument, updateMutableResource } from './doc.js'
 // }
 
 
-async function updateLocalStorageDocumentWithItem(key, data, options) {
+async function updateLocalStorageDocumentWithItem(key, data, options = {}) {
   if (!key) { Promise.resolve(); }
 
   data = data || getDocument();
-  options = options || {};
 
   var collection = await getLocalStorageItem(key);
   // console.log(collection);
@@ -239,6 +238,8 @@ function removeLocalStorageItem(key) {
   if (Config.WebExtension) {
     var browser = (typeof browser !== 'undefined') ? browser : chrome;
 
+    removeLocalStorageDocumentItems(key)
+
     return browser.storage.sync.remove(key);
   }
   else if (window.localStorage) {
@@ -247,6 +248,29 @@ function removeLocalStorageItem(key) {
   else {
     return Promise.reject({ 'message': 'storage is unavailable' })
   }
+}
+
+async function removeLocalStorageDocumentItems(key) {
+  if (!key) return Promise.resolve();
+
+  const collection = await getLocalStorageItem(key);
+
+  if (!collection) return;
+
+  if (collection.items) {
+    console.log(collection.items)
+    for (const item of collection.items) {
+      await removeLocalStorageItem(item);
+    }
+  }
+
+  await removeLocalStorageItem(key);
+}
+
+async function removeLocalStorageAsSignOut() {
+  removeLocalStorageDocumentItems(DO.C.DocumentURL);
+
+  removeLocalStorageItem('DO.C.User');
 }
 
 function getLocalStorageItem(key) {
@@ -408,6 +432,8 @@ export {
   addLocalStorageDocumentItem,
   getLocalStorageItem,
   removeLocalStorageItem,
+  removeLocalStorageDocumentItems,
+  removeLocalStorageAsSignOut,
   updateLocalStorageProfile,
   // showAutoSaveStorage,
   // hideAutoSaveStorage

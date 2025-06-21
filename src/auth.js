@@ -4,7 +4,7 @@ import { removeChildren, fragmentFromString } from './util.js'
 import { getAgentHTML, showActionMessage, showGeneralMessages, getResourceSupplementalInfo, handleDeleteNote, addMessageToLog } from './doc.js'
 import { Icon } from './ui/icons.js'
 import { getResourceGraph, getAgentName, getGraphImage, getAgentURL, getAgentPreferredProxy, getAgentPreferredPolicy, setPreferredPolicyInfo, getAgentDelegates, getAgentKnows, getAgentFollowing, getAgentStorage, getAgentOutbox, getAgentInbox, getAgentPreferencesFile, getAgentPublicTypeIndex, getAgentPrivateTypeIndex, getAgentTypeIndex, getAgentSupplementalInfo, getAgentSeeAlso, getAgentPreferencesInfo, getAgentLiked, getAgentOccupations, getAgentPublications, getAgentMade, getAgentOIDCIssuer } from './graph.js'
-import { removeLocalStorageItem, updateLocalStorageProfile } from './storage.js'
+import { removeLocalStorageAsSignOut, updateLocalStorageProfile } from './storage.js'
 import { updateButtons } from './ui/buttons.js';
 import { Session } from '@uvdsl/solid-oidc-client-browser';
 
@@ -43,9 +43,7 @@ async function signOut() {
     await Config['Session'].logout();
   }
 
-  removeLocalStorageItem(DO.C.DocumentURL);
-
-  removeLocalStorageItem('DO.C.User');
+  removeLocalStorageAsSignOut();
 
   Config.User = {
     IRI: null,
