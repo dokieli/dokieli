@@ -53,11 +53,13 @@ async function updateLocalStorageDocumentWithItem(key, data, options = {}) {
       ],
       id: key,
       type: "OrderedCollection",
-      updated: datetime,
-      items: []
+      items: [],
+      autoSave: true
     }
   }
 
+  collection['updated'] = options.datetime;
+  collection.autoSave = (options.autoSave !== undefined) ? options.autoSave : collection.autoSave;
   collection.items.unshift(id);
   options.collectionKey = key;
 
@@ -105,6 +107,10 @@ function addLocalStorageDocumentItem(id, data, options = {}) {
     digestSRI: options.digestSRI,
     partOf: options.collectionKey
   };
+
+  if (options['init']) {
+    item['published'] = datetime;
+  }
 
   if (DO.C.User) {
     item['actor'] = DO.C.User.IRI;
@@ -238,8 +244,6 @@ function removeLocalStorageItem(key) {
   if (Config.WebExtension) {
     var browser = (typeof browser !== 'undefined') ? browser : chrome;
 
-    removeLocalStorageDocumentItems(key)
-
     return browser.storage.sync.remove(key);
   }
   else if (window.localStorage) {
@@ -258,7 +262,6 @@ async function removeLocalStorageDocumentItems(key) {
   if (!collection) return;
 
   if (collection.items) {
-    console.log(collection.items)
     for (const item of collection.items) {
       await removeLocalStorageItem(item);
     }

@@ -13,7 +13,7 @@ import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation,
 import { notifyInbox, sendNotifications } from './inbox.js'
 import { uniqueArray, fragmentFromString, generateAttributeId, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, isValidISBN, findPreviousDateTime, domSanitize, sanitizeObject, escapeRDFLiteral, tranformIconstoCSS, getIconsFromCurrentDocument, getHash } from './util.js'
 import { generateGeoView } from './geo.js'
-import { getLocalStorageItem, updateLocalStorageProfile, enableAutoSave, disableAutoSave, updateLocalStorageItem, autoSave } from './storage.js'
+import { getLocalStorageItem, updateLocalStorageProfile, enableAutoSave, disableAutoSave, updateLocalStorageItem, autoSave, addLocalStorageDocumentItem } from './storage.js'
 import { showUserSigninSignout, showUserIdentityInput, getSubjectInfo, restoreSession, afterSetUserInfo, setUserInfo, userInfoSignOut } from './auth.js'
 import { Icon } from './ui/icons.js'
 import * as d3Selection from 'd3-selection';
@@ -1645,6 +1645,14 @@ DO = {
       }
     },
 
+    initLocalStorage: function() {
+      getLocalStorageItem(DO.C.DocumentURL).then(collection => {
+        if (!collection) {
+          autoSave(DO.C.DocumentURL, { method: 'localStorage' });
+        }
+      });
+    },
+
     initDocumentActions: function() {
       eventButtonClose();
       eventButtonInfo();
@@ -1778,9 +1786,7 @@ DO = {
       });
     },
 
-    goOnline: function() {
-      console.log('online');
-
+    enableRemoteSync: function() {
       updateButtons();
 
       updateLocalStorageItem(DO.C.DocumentURL, { autoSave: true });
@@ -1788,9 +1794,7 @@ DO = {
       DO.U.syncLocalRemoteResource();
     },
 
-    goOffline: function() {
-      console.log('offline');
-
+    disableRemoteSync: function() {
       updateButtons();
 
       updateLocalStorageItem(DO.C.DocumentURL, { autoSave: false });
@@ -1800,12 +1804,14 @@ DO = {
 
     monitorNetworkStatus: function() {
       window.addEventListener('online', async () => {
-        DO.U.goOnline();
+        console.log('online');
+        DO.U.enableRemoteSync();
       });
     
 
       window.addEventListener('offline', async () => {
-        DO.U.goOffline();
+        console.log('offline');
+        DO.U.disableRemoteSync();
       });
     },
 
@@ -1872,20 +1878,22 @@ DO = {
       }
       //304, 403, 404
       catch (e) {
-        console.log(e);
+        // console.log(e);
+        // console.log(e.response)
         status = e.status || 0;
-        remoteETag = e.response?.headers.get('ETag');
+        response = e.response;
+        remoteETag = response?.headers.get('ETag');
       }
 
       // console.log(`localContent: ${localContent}`);
-      console.log(`localHash: ${localHash}`);
+      // console.log(`localHash: ${localHash}`);
       // console.log('-------');
       // console.log(`data: ${data}`);
       // console.log(`dataHash: ${dataHash}`);
       // console.log('-------');
       // console.log(`remoteContent: ${remoteContent}`);
-      console.log(`remoteHash: ${remoteHash}`);
-      console.log(`previousRemoteHash: ${previousRemoteHash}`);
+      // console.log(`remoteHash: ${remoteHash}`);
+      // console.log(`previousRemoteHash: ${previousRemoteHash}`);
 
       const etagWasUsed = !!(headers['If-None-Match'] && remoteETag);
       const etagsMatch = etagWasUsed && headers['If-None-Match'] === remoteETag;
@@ -1937,7 +1945,7 @@ DO = {
         }
       }
 
-      console.log(status + ' Checking to see if local or remote changed:');
+      // console.log(status + ' Checking to see if local or remote changed:');
 
       switch(status) {
         case 200:
@@ -1988,14 +1996,7 @@ DO = {
 
         //Because of GET If-None-Match: <etag>
         case 304:
-          if (localPublished) {
-            console.log(`Local published but content differs; update local.`);
-            DO.Editor.replaceContent(DO.Editor.mode, remoteContentNode);
-            DO.Editor.init(DO.Editor.mode, document.body);
-            autoSave(DO.C.DocumentURL, { method: 'localStorage' });
-            updateResourceInfos(DO.C.DocumentURL, getDocument(), response);
-          }
-          else if (latestLocalDocumentItemObject) {
+          if (latestLocalDocumentItemObject && !latestLocalDocumentItemObject.published) {
             console.log(`Local unpublished changes; push to remote.`);
 
             if (!remoteAutoSaveEnabled) {
@@ -2080,11 +2081,12 @@ DO = {
 
       var tmplLocal = document.implementation.createHTMLDocument('template');
       tmplLocal.documentElement.setHTMLUnsafe(localContent);
-      let localContentNode = tmplLocal.body;
+      const localContentNode = tmplLocal.body;
       const localContentBody = localContentNode.getHTML().trim();
 
       var tmplRemote = document.implementation.createHTMLDocument('template');
       tmplRemote.documentElement.setHTMLUnsafe(remoteContent);
+      // const remoteContentNode = tmplRemote.body;
       const remoteContentBody = tmplRemote.body.getHTML().trim();
 
       // console.log(localContentBody + '/---')
@@ -2189,7 +2191,7 @@ DO = {
               el.remove();
             });
             // update local content with the stuff in the diff editor view
-            DO.Editor.replaceContent(DO.Editor.mode, remoteContentNode);
+            DO.Editor.replaceContent(DO.Editor.mode, diffNode.querySelector('.ProseMirror'));
             DO.Editor.init(DO.Editor.mode, document.body);
             autoSave(DO.C.DocumentURL, { method: 'localStorage' });
             updateResourceInfos(DO.C.DocumentURL, getDocument(), response);
@@ -2313,10 +2315,10 @@ DO = {
 
       document.getElementById('document-autosave').addEventListener('change', (e) => {
         if (e.target.checked) {
-          DO.U.goOnline();
+          DO.U.enableRemoteSync();
         }
         else {
-          DO.U.goOffline();
+          DO.U.disableRemoteSync();
         }
       });
 

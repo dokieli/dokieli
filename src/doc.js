@@ -235,6 +235,16 @@ function normaliseContent (node) {
     });
   });
 
+  //Remove ProseMirror wrap
+  let pmNode = element.querySelector('.ProseMirror');
+
+  if (pmNode && pmNode.parentNode) {
+    // console.log(pmNode.parentNode.outerHTML + '<--pmNode.parentNode.outerHTML THERE SHOULD BE NO LINE BREAK BEFORE THIS-->');
+    pmNode.parentNode.replaceChild(getFragmentOfNodesChildren(pmNode), pmNode);
+    // let temp = element.querySelector('html');
+    // console.log(temp.outerHTML + '<--pmNode.parentNode.outerHTML THERE SHOULD BE NO LINE BREAK BEFORE THIS-->');
+  }
+
   return getFragmentOfNodesChildren(element);
 }
 
@@ -253,21 +263,9 @@ function getDocument (cn, options) {
   node = normaliseContent(node);
 // console.log(stringFromFragment(node.firstChild));
 
-  //Remove ProseMirror wrap
-  if (DO.Editor?.mode == 'author') {
-    let pmNode = node.querySelector('.ProseMirror');
-
-    if (pmNode && pmNode.parentNode) {
-      // console.log(pmNode.parentNode.outerHTML + '<--pmNode.parentNode.outerHTML THERE SHOULD BE NO LINE BREAK BEFORE THIS-->');
-      pmNode.parentNode.replaceChild(getFragmentOfNodesChildren(pmNode), pmNode);
-      let temp = node.querySelector('html');
-      // console.log(temp.outerHTML + '<--pmNode.parentNode.outerHTML THERE SHOULD BE NO LINE BREAK BEFORE THIS-->');
-    }
-  }
-
   //In case `node` type is DocumentFragment
   const div = document.createElement('div');
-  div.appendChild(node.cloneNode(true));
+  div.appendChild(node);
   // node = div.firstChild;
   // console.log(node.outerHTML + '<-- node.outerHTML BE NO LINK BREAK HERE-->')
 

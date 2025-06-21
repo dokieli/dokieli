@@ -1,4 +1,5 @@
 import rdf from 'rdf-ext';
+import DO from './dokieli.js';
 
 /**
  * Configuration
@@ -12,6 +13,7 @@ export default {
       DO.U.setDocumentURL(url);
       DO.U.setDocumentString();
       DO.U.initUser();
+      DO.U.initLocalStorage();
       DO.U.initCurrentStylesheet();
       DO.U.setDocRefType();
       DO.U.showRefs();

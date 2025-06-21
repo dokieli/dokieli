@@ -240,6 +240,8 @@ export class Editor {
       const normalisedContent = normaliseContent(content);
 
       // console.log(content)
+      // console.log(normalisedContent)
+
       // const serializer = DOMSerializer.fromSchema(schema);
       // const htmlString = new XMLSerializer().serializeToString(fragment);
 

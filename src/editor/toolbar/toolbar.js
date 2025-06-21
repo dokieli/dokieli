@@ -232,7 +232,7 @@ export class ToolbarView {
 
   addToolbar() {
     const documentEditor = document.getElementById('document-editor');
-    console.log(documentEditor)
+
     if (documentEditor) {
       documentEditor.remove();
     }
