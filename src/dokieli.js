@@ -11,7 +11,7 @@ import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessag
 import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, generateDataURI, getMediaTypeURIs, isHttpOrHttpsProtocol, isFileProtocol } from './uri.js'
 import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes, filterQuads, getAgentTypeIndex } from './graph.js'
 import { notifyInbox, sendNotifications } from './inbox.js'
-import { uniqueArray, fragmentFromString, generateAttributeId, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, isValidISBN, findPreviousDateTime, domSanitize, sanitizeObject, escapeRDFLiteral, tranformIconstoCSS, getIconsFromCurrentDocument, getHash } from './util.js'
+import { uniqueArray, fragmentFromString, generateAttributeId, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, isValidISBN, findPreviousDateTime, domSanitize, sanitizeObject, escapeRDFLiteral, tranformIconstoCSS, getIconsFromCurrentDocument, getHash, getDateTimeISOFromDate } from './util.js'
 import { generateGeoView } from './geo.js'
 import { getLocalStorageItem, updateLocalStorageProfile, enableAutoSave, disableAutoSave, updateLocalStorageItem, autoSave, addLocalStorageDocumentItem } from './storage.js'
 import { showUserSigninSignout, showUserIdentityInput, getSubjectInfo, restoreSession, afterSetUserInfo, setUserInfo, userInfoSignOut } from './auth.js'
@@ -1836,6 +1836,8 @@ DO = {
       let response;
       let status;
       let remoteETag;
+      let remoteLastModified;
+      let remoteDate;
       const previousRemoteHash = DO.C.Resource[DO.C.DocumentURL]['digestSRI'];
 
       let localContent = getDocument();
@@ -1860,11 +1862,25 @@ DO = {
         localPublished = published;
       }
 
+      let latestLocalDocumentItemPublishedObject;
+
+      if (storageObject?.items?.length) {
+        for (const item of storageObject.items) {
+          const r = await getLocalStorageItem(item);
+          if (r?.published) {
+            latestLocalDocumentItemPublishedObject = r;
+            break;
+          }
+        }
+      }
+
       //200
       try {
         response = await getResource(DO.C.DocumentURL, headers, {});
         status = response.status;
         remoteETag = response.headers.get('ETag');
+        remoteLastModified = response.headers.get('Last-Modified');
+        remoteDate = response.headers.get('Date');
 
         data = await response.text();
 
@@ -1883,6 +1899,14 @@ DO = {
         status = e.status || 0;
         response = e.response;
         remoteETag = response?.headers.get('ETag');
+        remoteLastModified = response?.headers.get('Last-Modified');
+        remoteDate = response?.headers.get('Date');
+
+        if (latestLocalDocumentItemPublishedObject?.content && !remoteContent) {
+          remoteContent = latestLocalDocumentItemPublishedObject.content;
+          remoteContentNode = getDocumentNodeFromString(remoteContent);
+          remoteHash = await getHash(remoteContent);
+        }
       }
 
       // console.log(`localContent: ${localContent}`);
@@ -1895,6 +1919,8 @@ DO = {
       // console.log(`remoteHash: ${remoteHash}`);
       // console.log(`previousRemoteHash: ${previousRemoteHash}`);
 
+      const remotePublishDate = getDateTimeISOFromDate(remoteLastModified) || getDateTimeISOFromDate(remoteDate) || getDateTimeISO();
+
       const etagWasUsed = !!(headers['If-None-Match'] && remoteETag);
       const etagsMatch = etagWasUsed && headers['If-None-Match'] === remoteETag;
 
@@ -1906,7 +1932,7 @@ DO = {
       }
 
       if (options.forceLocal || options.forceRemote) {
-        if (etagWasUsed && !etagsMatch && !options.forceRemote) {
+        if (etagWasUsed && !etagsMatch && !options.forceRemote && status !== 304) {
           console.log(`Cannot force due to missing or changed ETag. Show review.`);
           DO.U.showResourceReviewChanges(localContent, remoteContent, response);
           return;
@@ -1919,8 +1945,10 @@ DO = {
         if (options.forceLocal) {
           console.log(`Force pushing local content.`);
 
+          const h = localETag ? { 'If-Match': localETag } : {};
+
           try {
-            await DO.U.pushLocalContentToRemote(latestLocalDocumentItemObject, { 'If-Match': localETag });
+            await DO.U.pushLocalContentToRemote(latestLocalDocumentItemObject, h);
             return;
           }
           catch(error) {
@@ -1937,9 +1965,10 @@ DO = {
 
         if (options.forceRemote) {
           console.log(`Force replacing with remote content.`);
+
           DO.Editor.replaceContent(DO.Editor.mode, remoteContentNode);
           DO.Editor.init(DO.Editor.mode, document.body);
-          autoSave(DO.C.DocumentURL, { method: 'localStorage' });
+          autoSave(DO.C.DocumentURL, { method: 'localStorage', published: remotePublishDate });
           updateResourceInfos(DO.C.DocumentURL, getDocument(), response);
           return;
         }
@@ -1958,9 +1987,10 @@ DO = {
             }
             else {
               console.log(`Local unchanged. Remote changed. Update local.`);
+
               DO.Editor.replaceContent(DO.Editor.mode, remoteContentNode);
               DO.Editor.init(DO.Editor.mode, document.body);
-              autoSave(DO.C.DocumentURL, { method: 'localStorage' });
+              autoSave(DO.C.DocumentURL, { method: 'localStorage', published: remotePublishDate });
               updateResourceInfos(DO.C.DocumentURL, getDocument(), response);
             }
           }
@@ -1973,8 +2003,10 @@ DO = {
                 return;
               }
 
+              const h = localETag ? { 'If-Match': localETag } : {};
+
               try {
-                await DO.U.pushLocalContentToRemote(latestLocalDocumentItemObject, { 'If-Match': localETag });
+                await DO.U.pushLocalContentToRemote(latestLocalDocumentItemObject, h);
                 return;
               }
               catch(error) {
@@ -2004,8 +2036,10 @@ DO = {
               return;
             }
 
+            const h = localETag ? { 'If-Match': localETag } : {};
+
             try {
-              await DO.U.pushLocalContentToRemote(latestLocalDocumentItemObject, { 'If-Match': localETag });
+              await DO.U.pushLocalContentToRemote(latestLocalDocumentItemObject, h);
               return;
             }
             catch(error) {
@@ -2061,7 +2095,7 @@ DO = {
 
       const response = await putResource(DO.C.DocumentURL, content, mediaType, null, { headers });
 
-      console.log(`PUT: ${response.status}`);
+      console.log(`Remote updated (${response.status}).`);
 
       updateLocalStorageItem(id, { published: getDateTimeISO() });
 
@@ -2070,6 +2104,8 @@ DO = {
 
     showResourceReviewChanges: function(localContent, remoteContent, response) {
       if (!localContent.length || !remoteContent.length) return;
+
+      updateResourceInfos(DO.C.DocumentURL, getDocument(), response);
 
       // console.log(localContent, remoteContent);
 
@@ -2154,7 +2190,6 @@ DO = {
 
       const diffNode = document.querySelector('#review-changes .do-diff');
 
-      //FIXME: This is moving do-diff out of review-changes and placing it before </body>
       DO.Editor.init("author", diffNode);
 
       node.addEventListener('click', e => {
@@ -2194,7 +2229,6 @@ DO = {
             DO.Editor.replaceContent(DO.Editor.mode, diffNode.querySelector('.ProseMirror'));
             DO.Editor.init(DO.Editor.mode, document.body);
             autoSave(DO.C.DocumentURL, { method: 'localStorage' });
-            updateResourceInfos(DO.C.DocumentURL, getDocument(), response);
 
             DO.U.syncLocalRemoteResource({ forceLocal: true });
           }

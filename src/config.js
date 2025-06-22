@@ -58,7 +58,7 @@ export default {
   HttpTimeout: 5000,
   AutoSave: {
     Methods: ['localStorage', 'http'],
-    Timer: 5000,
+    Timer: 3000,
     Items: {}
   },
   RequestCheck: {

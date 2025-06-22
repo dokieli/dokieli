@@ -28,6 +28,14 @@ function convertToISO8601Duration(timeValue) {
   return formattedDuration;
 }
 
+function getDateTimeISOFromDate(dateHeader) {
+  if (!dateHeader) {
+    return;
+  }
+
+  return new Date(dateHeader).toISOString();
+}
+
 function debounce(func, delay) {
   let timer;
   return function (...args) {
@@ -368,6 +376,7 @@ export {
   getDateTimeISO,
   getDateTimeISOFromMDY,
   convertToISO8601Duration,
+  getDateTimeISOFromDate,
   removeChildren,
   escapeRegExp,
   escapeRDFLiteral,

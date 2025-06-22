@@ -2191,7 +2191,7 @@ function updateResourceInfos(documentURL = DO.C.DocumentURL, data, response, opt
 }
 
 function updateSupplementalInfo(response, options) {
-  var checkHeaders = options?.checkHeaders ?? ['wac-allow', 'link', 'last-modified', 'etag', 'expires'];
+  var checkHeaders = options?.checkHeaders ?? ['wac-allow', 'link', 'last-modified', 'etag', 'expires', 'date'];
   var headers = response.headers;
   var documentURL = Config.DocumentURL;
 

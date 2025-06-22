@@ -56,6 +56,8 @@ async function updateLocalStorageDocumentWithItem(key, data, options = {}) {
       items: [],
       autoSave: true
     }
+
+    options['init'] = true;
   }
 
   collection['updated'] = options.datetime;
@@ -108,8 +110,8 @@ function addLocalStorageDocumentItem(id, data, options = {}) {
     partOf: options.collectionKey
   };
 
-  if (options['init']) {
-    item['published'] = datetime;
+  if (options['init'] || options['published']) {
+    item['published'] = options['published'] || datetime;
   }
 
   if (DO.C.User) {
@@ -186,7 +188,6 @@ async function autoSave(key, options) {
   }
 }
 
-
 async function enableAutoSave(key, options = {}) {
   if (!key) return;
 
@@ -204,17 +205,29 @@ async function enableAutoSave(key, options = {}) {
 
   await autoSave(key, options);
 
+  // TODO: check remote in intervals if no input
   document.addEventListener('input', e => {
+    //I love that this function is called sync but it is async
+    const sync = async (key, options) => {
+      await autoSave(key, options);
+
+      const storageObject = await getLocalStorageItem(DO.C.DocumentURL);
+      const remoteAutoSaveEnabled = (storageObject && storageObject.autoSave !== undefined) ? storageObject.autoSave : true;
+
+      if (remoteAutoSaveEnabled) {
+        DO.U.syncLocalRemoteResource();
+      }
+    }
+
     if (e.target.closest('.ProseMirror[contenteditable]')) {
       // debounceTimeout = debounce(() => autoSave, Config.AutoSave.Timer)(key, options);
       if (debounceTimeout) {
         clearTimeout(debounceTimeout);
       }
-      debounceTimeout = setTimeout(() => autoSave(key, options), Config.AutoSave.Timer); // debounce delay 
+      debounceTimeout = setTimeout(async () => await sync(key, options), Config.AutoSave.Timer); // debounce delay 
       // Config.AutoSave.Items[key][options.method]['id'] = debounceTimeout;
     }
   })
-
 }
 
 async function disableAutoSave(key, options = {}) {

@@ -57,6 +57,7 @@ export class Editor {
 
       case 'social':
       default:
+        this.storeRestrictedNodes();
         this.destroyEditor();
         this.createSocialToolbar(this.node);
         break;
@@ -66,6 +67,13 @@ export class Editor {
       this.showTextQuoteSelectorFromLocation();
       this.hasRunTextQuoteSelector = true;
     }
+  }
+
+  storeRestrictedNodes() {
+    const filterIds = ['document-editor', 'review-changes'];
+    const notSelector = filterIds.map(id => `:not([id="${id}"])`).join('');
+    const selector = `.do${notSelector}`;
+    this.restrictedNodes = Array.from(document.body.querySelectorAll(selector));
   }
 
   showEditorModeActionMessage(mode) {
@@ -177,11 +185,8 @@ export class Editor {
   //Creating a ProseMirror editor view at a specified this.node
   createEditor(options) {
     // TODO: think about a review mode of initializing and destroying editor
-    const filterIds = ['document-editor', 'review-changes'];
-    const notSelector = filterIds.map(id => `:not([id="${id}"])`).join('');
-    const selector = `.do${notSelector}`;
+    this.storeRestrictedNodes();
     
-    this.restrictedNodes = Array.from(document.body.querySelectorAll(selector));
     this.restrictedNodes.forEach(node => {
       if (node.parentNode) {
         node.parentNode.removeChild(node);
@@ -234,13 +239,30 @@ export class Editor {
 
 
   destroyEditor(content) {
-    if (this.editorView) {
+    if (content || this.editorView) {
       content = content ?? DOMSerializer.fromSchema(schema).serializeFragment(this.editorView.state.doc.content);
 
-      const normalisedContent = normaliseContent(content);
+      let normalisedContent;
 
-      // console.log(content)
-      // console.log(normalisedContent)
+      if (content.body) {
+        normalisedContent = normaliseContent(content.body);
+      } else {
+        normalisedContent = normaliseContent(content);
+      }
+  
+      // If normalisedContent includes a <body>, extract just its children
+      let newBodyContent;
+      if (normalisedContent instanceof Document) {
+        newBodyContent = Array.from(normalisedContent.body.childNodes);
+      } else if (normalisedContent instanceof HTMLElement && normalisedContent.tagName.toLowerCase() === 'body') {
+        newBodyContent = Array.from(normalisedContent.childNodes);
+      } else if (normalisedContent instanceof DocumentFragment) {
+        const body = normalisedContent.querySelector('body');
+        newBodyContent = body ? Array.from(body.childNodes) : Array.from(normalisedContent.childNodes);
+      } else {
+        newBodyContent = Array.from(normalisedContent.childNodes ?? []);
+      }
+  
 
       // const serializer = DOMSerializer.fromSchema(schema);
       // const htmlString = new XMLSerializer().serializeToString(fragment);
@@ -248,20 +270,23 @@ export class Editor {
       // const json = this.editorView.state.doc.toJSON();
       // console.log(json);
 
-      this.editorView.destroy();
+      if (this.editorView) {
+        this.editorView.destroy();
 
-      this.editorView = null;
-      this.authorToolbarView = null;
+        this.editorView = null;
+        this.authorToolbarView = null;
+      }
 
       //TODO: Create a new function that normalises, e.g., clean up PM related stuff, handle other non-PM but dokieli stuff
       //TODO: dokieli menu is currently outside of body, but it should be in body. Clone the menu, add it back into the body after replaceChildren
 
       // Restore body content and original nodes
-      document.body.replaceChildren(normalisedContent);
+    
+      document.body.replaceChildren(...newBodyContent, ...this.restrictedNodes);
 
-      this.restrictedNodes.forEach(node => {
-        document.body.appendChild(node);
-      });
+      // this.restrictedNodes.forEach(node => {
+      //   document.body.appendChild(node);
+      // });
       // console.log("Editor destroyed. Mode:", this.mode);
     }
   }
