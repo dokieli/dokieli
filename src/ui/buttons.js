@@ -23,6 +23,7 @@ export function initButtons() {
       Notifications: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Notifications', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-notifications' }),
       Open: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Open', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-open' }),
       Reply: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Reply', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-reply' }),
+      ReviewChanges: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Review Changes', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-review-changes' }),
       RobustLinks: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Robustify Links', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-robustify-links' }),
       SaveAs: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Save As', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-save-as' }),
       Share: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Share', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-share' }),
@@ -374,6 +375,10 @@ export const buttonIcons = {
   minus: {
     title: 'Hide',
     icon: Icon[".fas.fa-minus"]
+  },
+  'review-changes': {
+    title: 'Review changes',
+    icon: Icon[".fas.fa-microscope"]
   }
 }
 
