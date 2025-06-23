@@ -1806,12 +1806,51 @@ DO = {
       window.addEventListener('online', async () => {
         console.log('online');
         DO.U.enableRemoteSync();
+
+        const storageObject = await getLocalStorageItem(DO.C.DocumentURL);
+
+        const remoteAutoSaveEnabled = (storageObject && storageObject.autoSave !== undefined) ? storageObject.autoSave : true;
+
+        let message;
+
+        if (remoteAutoSaveEnabled) {
+          message = "You are back online. Your changes will be synced with the remote server.";
+        } else {
+          message = "You are back online. Changes will be saved only locally because autosave is disabled. You can change this from the main menu.";
+        }
+
+        message = {
+          'content': message,
+          'type': 'info',
+        }
+        addMessageToLog(message, Config.MessageLog);
+        showActionMessage(document.body, message);
       });
     
 
       window.addEventListener('offline', async () => {
         console.log('offline');
         DO.U.disableRemoteSync();
+
+        const storageObject = await getLocalStorageItem(DO.C.DocumentURL);
+
+        const remoteAutoSaveEnabled = (storageObject && storageObject.autoSave !== undefined) ? storageObject.autoSave : true;
+
+        let message;
+
+        if (remoteAutoSaveEnabled) {
+          message = "You are offline. Your changes will be saved locally and synced when you're back online.";
+        } else {
+          message = "You are offline. Changes will be saved only locally because autosave is disabled. You can change this from the main menu.";
+        }
+
+        message = {
+          'content': message,
+          'type': 'info',
+          'timer': null
+        }
+        addMessageToLog(message, Config.MessageLog);
+        showActionMessage(document.body, message);
       });
     },
 
@@ -1849,7 +1888,6 @@ DO = {
 
       storageObject = await getLocalStorageItem(DO.C.DocumentURL);
 
-      //XXX: Revisit. Temporarily always true
       const remoteAutoSaveEnabled = (storageObject && storageObject.autoSave !== undefined) ? storageObject.autoSave : true;
 
       latestLocalDocumentItemObject = (storageObject && storageObject.items?.length) ? await getLocalStorageItem(storageObject.items[0]) : null;
