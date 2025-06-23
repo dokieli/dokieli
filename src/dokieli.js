@@ -1878,19 +1878,57 @@ DO = {
       let remoteLastModified;
       let remoteDate;
       const previousRemoteHash = DO.C.Resource[DO.C.DocumentURL]['digestSRI'];
-
-      let localContent = getDocument();
-      let localHash = await getHash(localContent);
-      let localPublished;
-
-      let data;
-      // let dataHash;
-
       storageObject = await getLocalStorageItem(DO.C.DocumentURL);
 
       const remoteAutoSaveEnabled = (storageObject && storageObject.autoSave !== undefined) ? storageObject.autoSave : true;
 
       latestLocalDocumentItemObject = (storageObject && storageObject.items?.length) ? await getLocalStorageItem(storageObject.items[0]) : null;
+
+      let localContent;
+      let latestLocalDocumentItemObjectPublished;
+      let latestLocalDocumentItemObjectUnpublished;
+
+      if (storageObject?.items?.length) {
+        for (const item of storageObject.items) {
+          const r = await getLocalStorageItem(item);
+          if (r?.published && !latestLocalDocumentItemObjectPublished) {
+            latestLocalDocumentItemObjectPublished = r;
+          }
+          if (!r?.published && !latestLocalDocumentItemObjectUnpublished) {
+            latestLocalDocumentItemObjectUnpublished = r;
+          }
+          if (latestLocalDocumentItemObjectPublished && latestLocalDocumentItemObjectUnpublished) {
+            break;
+          }
+        }
+      }
+
+      localContent = getDocument();
+      let localPublished;
+      let data;
+
+      let reviewOptions = {};
+
+      if (latestLocalDocumentItemObjectUnpublished) {
+        if (latestLocalDocumentItemObjectPublished.digestSRI !== previousRemoteHash) {
+          reviewOptions['message'] = `Remote content has changed since your last edit and you have local unpublished changes.`;
+          DO.U.showResourceReviewChanges(latestLocalDocumentItemObjectUnpublished.content, localContent, DO.C.Resource[DO.C.DocumentURL].response, reviewOptions);
+          return;
+        }
+        else {
+          var tmplLocal = document.implementation.createHTMLDocument('template');
+          tmplLocal.documentElement.setHTMLUnsafe(latestLocalDocumentItemObjectUnpublished.content);
+          const localContentNode = tmplLocal.body;
+          DO.Editor.replaceContent(DO.Editor.mode, localContentNode);
+          DO.Editor.init(DO.Editor.mode, document.body);
+
+          //TODO: Show message that your updates were applied.
+        }
+
+        localContent = latestLocalDocumentItemObjectUnpublished.content;
+      }
+
+      let localHash = await getHash(localContent);
 
       if (latestLocalDocumentItemObject) {
         const { digestSRI, mediaType, content, published } = latestLocalDocumentItemObject;
@@ -1898,18 +1936,6 @@ DO = {
         localContentType = mediaType;
         localContent = content;
         localPublished = published;
-      }
-
-      let latestLocalDocumentItemPublishedObject;
-
-      if (storageObject?.items?.length) {
-        for (const item of storageObject.items) {
-          const r = await getLocalStorageItem(item);
-          if (r?.published) {
-            latestLocalDocumentItemPublishedObject = r;
-            break;
-          }
-        }
       }
 
       //200
@@ -1940,8 +1966,8 @@ DO = {
         remoteLastModified = response?.headers.get('Last-Modified');
         remoteDate = response?.headers.get('Date');
 
-        if (latestLocalDocumentItemPublishedObject?.content && !remoteContent) {
-          remoteContent = latestLocalDocumentItemPublishedObject.content;
+        if (latestLocalDocumentItemObjectPublished?.content && !remoteContent) {
+          remoteContent = latestLocalDocumentItemObjectPublished.content;
           remoteContentNode = getDocumentNodeFromString(remoteContent);
           remoteHash = await getHash(remoteContent);
         }
@@ -1971,8 +1997,8 @@ DO = {
 
       if (options.forceLocal || options.forceRemote) {
         if (etagWasUsed && !etagsMatch && !options.forceRemote && status !== 304) {
-          console.log(`Cannot force due to missing or changed ETag. Show review.`);
-          DO.U.showResourceReviewChanges(localContent, remoteContent, response);
+          reviewOptions['message'] = `Cannot force due to missing or changed ETag. Show review.`;
+          DO.U.showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
           return;
         }
 
@@ -1991,7 +2017,8 @@ DO = {
           }
           catch(error) {
             if (error.status === 412) {
-              DO.U.showResourceReviewChanges(localContent, remoteContent, response);
+              reviewOptions['message'] 
+              DO.U.showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
             }
             else {
               throw new Error(`${error.status} Unhandled status ${error}`);
@@ -2020,8 +2047,8 @@ DO = {
 
           if (localPublished) {
             if (etagsMatch) {
-              console.log(`Local and remote have same version but content differs, likely conflict. Review.`);
-              DO.U.showResourceReviewChanges(localContent, remoteContent, response);
+              reviewOptions['message'] = `Local and remote have same version but content differs, likely conflict. Review.`;
+              DO.U.showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
             }
             else {
               console.log(`Local unchanged. Remote changed. Update local.`);
@@ -2049,7 +2076,8 @@ DO = {
               }
               catch(error) {
                 if (error.status === 412) {
-                  DO.U.showResourceReviewChanges(localContent, remoteContent, response);
+                  reviewOptions['message'] = `Error (412)`;
+                  DO.U.showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
                 }
                 else {
                   throw new Error(`${error.status} Unhandled status ${error}`);
@@ -2057,8 +2085,8 @@ DO = {
               };
             }
             else {
-              console.log(`Local unpublished changes. Remote validation unavailable. Review changes.`);
-              DO.U.showResourceReviewChanges(localContent, remoteContent, response);
+              reviewOptions['message'] = `Local unpublished changes. Remote validation unavailable. Review changes.`;
+              DO.U.showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
             }
           }
 
@@ -2082,7 +2110,8 @@ DO = {
             }
             catch(error) {
               if (error.status === 412) {
-                DO.U.showResourceReviewChanges(localContent, remoteContent, response);
+                reviewOptions['message'] = `Error (412)`;
+                DO.U.showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
               }
               else {
                 throw new Error(`${error.status} Unhandled status ${error}`);
@@ -2106,7 +2135,8 @@ DO = {
           }
           catch (error) {
             if (error.status === 412) {
-              DO.U.showResourceReviewChanges(localContent, remoteContent, response);
+              reviewOptions['message'] = `Error (412)`;
+              DO.U.showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
             }
             else {
               throw new Error(`${error.status} Unhandled status ${error}`);
@@ -2140,7 +2170,7 @@ DO = {
       updateResourceInfos(DO.C.DocumentURL, content, response);
     },
 
-    showResourceReviewChanges: function(localContent, remoteContent, response) {
+    showResourceReviewChanges: function(localContent, remoteContent, response, reviewOptions) {
       if (!localContent.length || !remoteContent.length) return;
 
       updateResourceInfos(DO.C.DocumentURL, getDocument(), response);
@@ -2166,8 +2196,12 @@ DO = {
       // console.log(localContentBody + '/---')
       // console.log(remoteContentBody + '/---')
 
-      //TODO: CHange Info.GraphView button
-      document.body.appendChild(fragmentFromString(`<aside id="review-changes" class="do on">${DO.C.Button.Close}<h2>Review Changes ${DO.C.Button.Info.GraphView}</h2><div class="info"></div></aside>`));
+      let message = '';
+      if (reviewOptions?.message) {
+        message = `<p>${reviewOptions?.message}</p>`;
+      }
+
+      document.body.appendChild(fragmentFromString(`<aside id="review-changes" class="do on">${DO.C.Button.Close}<h2>Review Changes ${DO.C.Button.Info.ReviewChanges}</h2><div class="info">${message}</div></aside>`));
 
       const diff = diffChars(remoteContentBody, localContentBody);
       let diffHTML = [];
@@ -2223,7 +2257,7 @@ DO = {
         <div class="do-diff">${diffHTML.join('')}</div>
         <button class="review-changes-save-local" title="Keep my edits">Keep my changes</button>
         <button class="review-changes-save-remote" title="Discard my edits and use remote version">Overwrite my changes</button>
-        <button class="review-changes-submit" title="Save">Save</button>
+        <button class="review-changes-submit" title="Edit changes and apply them to both local and remote">Save</button>
       `);
 
       const diffNode = document.querySelector('#review-changes .do-diff');
@@ -2236,7 +2270,7 @@ DO = {
         if (button) {
           //XXX: What's this for?
           // DO.Editor.toggleMode();
-          if (button.classList.contains('close')) {
+          if (button.classList.contains('close') || button.classList.contains('info')) {
             return;
           }
 

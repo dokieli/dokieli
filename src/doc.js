@@ -2195,6 +2195,7 @@ function updateSupplementalInfo(response, options) {
   var headers = response.headers;
   var documentURL = Config.DocumentURL;
 
+  Config['Resource'][documentURL]['response'] = response;
   Config['Resource'][documentURL]['headers'] = {};
   Config['Resource'][documentURL]['headers']['response'] = headers;
 
