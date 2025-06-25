@@ -382,23 +382,24 @@ export const buttonIcons = {
   }
 }
 
-function hasAccessButtonCheck ({ online, localhost, accessMode }) {
+function hasAccessButtonCheck (accessMode) {
   if (!accessMode) return false;
 
   const hasWriteAccess = accessModeAllowed(null, accessMode);
 
   if (!hasWriteAccess) return false;
 
-  if (!online && !localhost) return false;
-
   return true;
 }
 
 const buttonState = {
-  '#document-do .resource-save': (context) => {
+  '#document-do .resource-save': ({ online, localhost }) => {
+    console.log("button save function called");
     const info = Config.Resource[Config.DocumentURL];
 
-    if (!hasAccessButtonCheck({...context, accessMode: 'write'})) {
+    if (!online && !localhost) return false;
+
+    if (!hasAccessButtonCheck('write')) {
       return false;
     }
 
@@ -411,10 +412,12 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .create-version': (context) => {
+  '#document-do .create-version': ({ online, localhost }) => {
     const info = Config.Resource[Config.DocumentURL];
 
-    if (!hasAccessButtonCheck({...context, accessMode: 'write'})) {
+    if (!online && !localhost) return false;
+
+    if (!hasAccessButtonCheck('write')) {
       return false;
     }
 
@@ -427,10 +430,12 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .create-immutable': (context) => {
+  '#document-do .create-immutable': ({ online, localhost }) => {
     const info = Config.Resource[Config.DocumentURL];
 
-    if (!hasAccessButtonCheck({...context, accessMode: 'write'})) {
+    if (!online && !localhost) return false;
+
+    if (!hasAccessButtonCheck('write')) {
       return false;
     }
 
@@ -443,10 +448,12 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .resource-delete': (context) => {
+  '#document-do .resource-delete': ({ online, localhost }) => {
     const info = Config.Resource[Config.DocumentURL];
 
-    if (!hasAccessButtonCheck({...context, accessMode: 'write'})) {
+    if (!online && !localhost) return false;
+
+    if (!hasAccessButtonCheck('write')) {
       return false;
     }
 
@@ -582,6 +589,7 @@ export function buttonShouldBeEnabled(selector, context) {
 
 export function updateButtons(selectors) {
   selectors = selectors || Object.keys(buttonState);
+  // console.log("Online: ", navigator.onLine);
 
   const context = {
     authenticated: Config['Session'].isActive,
@@ -598,9 +606,8 @@ export function updateButtons(selectors) {
       return;
     }
     const buttonEnabled = buttonShouldBeEnabled(selector, context);
-
-    if (node.disabled !== !buttonEnabled) {
-      node.disabled = !buttonEnabled;
-    }
+    // console.log(node)
+    // console.log("Button state for", selector, "should be", buttonEnabled ? "enabled" : "disabled");
+    node.disabled = !buttonEnabled;
   });
 }
