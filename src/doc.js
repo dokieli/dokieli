@@ -1037,6 +1037,10 @@ function handleActionMessage(resolved, rejected) {
 function showActionMessage(node, message, options = {}) {
   if (!node || !message) return;
 
+  if (options.clearId) {
+    document.getElementById(options.clearId)?.remove();
+  }
+
   message['timer'] = ('timer' in message) ? message.timer : Config.ActionMessage.Timer;
   message['type'] = ('type' in message) ? message.type : 'info';
 

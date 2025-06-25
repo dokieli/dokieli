@@ -26,6 +26,7 @@ export class Editor {
     // TODO: When choosing the editor node, we need to filter out these items from the content of the editor node. we also need to restore the body to its original form WITH the do elements.
     this.restrictedNodes = [];
     this.node = node || document.body;
+    this.toggleModeMessageId = null;
 
     this.editorView = null;
     this.socialToolbarView = null;
@@ -76,14 +77,17 @@ export class Editor {
     this.restrictedNodes = Array.from(document.body.querySelectorAll(selector));
   }
 
-  showEditorModeActionMessage(mode) {
+  showEditorModeActionMessage(mode, options = {}) {
     var message = `Activated <em>${mode}</em> mode.`;
     message = {
       'content': message,
       'type': 'info'
     }
     addMessageToLog(message, Config.MessageLog);
-    showActionMessage(document.body, message);
+
+    const messageId = showActionMessage(document.body, message, options);
+
+    return messageId;
   }
 
   toggleEditor(mode, options) {
@@ -101,7 +105,7 @@ export class Editor {
 
 // Do not EVER pass options passed to toggleEditor onto this call to init - template option breaks everything. TODO look into this
     this.init(mode, node);
-    this.showEditorModeActionMessage(mode);
+    this.toggleModeMessageId = this.showEditorModeActionMessage(mode, this.toggleModeMessageId ? { clearId: this.toggleModeMessageId } : {});
     Config.EditorEnabled = (mode === 'author');
 
     updateButtons();

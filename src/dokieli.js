@@ -1786,12 +1786,12 @@ DO = {
       });
     },
 
-    enableRemoteSync: function() {
+    enableRemoteSync: async function() {
       updateButtons();
 
       updateLocalStorageItem(DO.C.DocumentURL, { autoSave: true });
 
-      DO.U.syncLocalRemoteResource();
+      await DO.U.syncLocalRemoteResource();
     },
 
     disableRemoteSync: function() {
@@ -1803,9 +1803,11 @@ DO = {
     },
 
     monitorNetworkStatus: function() {
+      let messageId;
+
       window.addEventListener('online', async () => {
         console.log('online');
-        DO.U.enableRemoteSync();
+        await DO.U.enableRemoteSync();
 
         const storageObject = await getLocalStorageItem(DO.C.DocumentURL);
 
@@ -1824,7 +1826,8 @@ DO = {
           'type': 'info',
         }
         addMessageToLog(message, Config.MessageLog);
-        showActionMessage(document.body, message);
+
+        messageId = showActionMessage(document.body, message, messageId ? { clearId: messageId } : {});
       });
     
 
@@ -1850,7 +1853,8 @@ DO = {
           'timer': null
         }
         addMessageToLog(message, Config.MessageLog);
-        showActionMessage(document.body, message);
+
+        messageId = showActionMessage(document.body, message, messageId ? { clearId: messageId } : {});
       });
     },
 
@@ -2419,9 +2423,9 @@ DO = {
 
       node.querySelector('#document-do').insertAdjacentHTML('afterend', html);
 
-      document.getElementById('document-autosave').addEventListener('change', (e) => {
+      document.getElementById('document-autosave').addEventListener('change', async (e) => {
         if (e.target.checked) {
-          DO.U.enableRemoteSync();
+          await DO.U.enableRemoteSync();
         }
         else {
           DO.U.disableRemoteSync();

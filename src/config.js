@@ -65,7 +65,7 @@ export default {
     Timer: 60000
   },
   ActionMessage: {
-    Timer: 1500
+    Timer: 5000
   },
   MessageLog: [],
   AvatarSize: 48,
