@@ -1789,17 +1789,17 @@ DO = {
     enableRemoteSync: async function() {
       updateButtons();
 
-      updateLocalStorageItem(DO.C.DocumentURL, { autoSave: true });
+      await updateLocalStorageItem(DO.C.DocumentURL, { autoSave: true });
 
       await DO.U.syncLocalRemoteResource();
     },
 
-    disableRemoteSync: function() {
+    disableRemoteSync: async function() {
       updateButtons();
 
-      updateLocalStorageItem(DO.C.DocumentURL, { autoSave: false });
+      await updateLocalStorageItem(DO.C.DocumentURL, { autoSave: false });
 
-      autoSave(DO.C.DocumentURL, { method: 'localStorage' });
+      await autoSave(DO.C.DocumentURL, { method: 'localStorage' });
     },
 
     monitorNetworkStatus: function() {
@@ -1833,7 +1833,8 @@ DO = {
 
       window.addEventListener('offline', async () => {
         console.log('offline');
-        DO.U.disableRemoteSync();
+
+        await DO.U.disableRemoteSync();
 
         const storageObject = await getLocalStorageItem(DO.C.DocumentURL);
 
@@ -2428,7 +2429,7 @@ DO = {
           await DO.U.enableRemoteSync();
         }
         else {
-          DO.U.disableRemoteSync();
+          await DO.U.disableRemoteSync();
         }
       });
 
