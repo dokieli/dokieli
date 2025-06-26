@@ -394,7 +394,6 @@ function hasAccessButtonCheck (accessMode) {
 
 const buttonState = {
   '#document-do .resource-save': ({ online, localhost }) => {
-    console.log("button save function called");
     const info = Config.Resource[Config.DocumentURL];
 
     if (!online && !localhost) return false;

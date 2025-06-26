@@ -2081,7 +2081,9 @@ async function getResourceInfo(data, options) {
   Config['Resource'] = Config['Resource'] || {};
   Config['Resource'][documentURL] = Config['Resource'][documentURL] || {};
   Config['Resource'][documentURL]['data'] = data;
-  Config['Resource'][documentURL]['digestSRI'] = await getHash(data);
+  if (options['storeHash']) {
+    Config['Resource'][documentURL]['digestSRI'] = await getHash(data);
+  }
   Config['Resource'][documentURL]['contentType'] = options.contentType;
 
   var promises = [];
@@ -2183,15 +2185,21 @@ function getGraphFromDataBlock(data, options) {
   }
 }
 
-function updateResourceInfos(documentURL = DO.C.DocumentURL, data, response, options = {}) {
+async function updateResourceInfos(documentURL = DO.C.DocumentURL, data, response, options = {}) {
   data = data || getDocument();
 
-  getResourceInfo(data).then(resourceInfo => {
+  await getResourceInfo(data).then(resourceInfo => {
     DO.C.Resource[documentURL] = { ...DO.C.Resource[documentURL], ...resourceInfo };
-    updateButtons();
   });
 
-  updateSupplementalInfo(response);
+  if (response) {
+    updateSupplementalInfo(response, options);
+  }
+  else {
+    await getResourceSupplementalInfo(documentURL, options);
+  }
+
+  updateButtons();
 }
 
 function updateSupplementalInfo(response, options) {

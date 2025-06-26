@@ -1787,11 +1787,12 @@ DO = {
     },
 
     enableRemoteSync: async function() {
-      updateButtons();
-
       await updateLocalStorageItem(DO.C.DocumentURL, { autoSave: true });
 
-      await DO.U.syncLocalRemoteResource();
+      // updateResourceInfos(DO.C.DocumentURL)
+      //   .then(() => {
+          DO.U.syncLocalRemoteResource();
+        // });
     },
 
     disableRemoteSync: async function() {
@@ -1872,6 +1873,8 @@ DO = {
         headers['If-None-Match'] = localETag;
       }
 
+      let reviewOptions = {}
+
       let storageObject;
       let latestLocalDocumentItemObject;
       let remoteHash;
@@ -1883,6 +1886,7 @@ DO = {
       let remoteLastModified;
       let remoteDate;
       const previousRemoteHash = DO.C.Resource[DO.C.DocumentURL]['digestSRI'];
+
       storageObject = await getLocalStorageItem(DO.C.DocumentURL);
 
       const remoteAutoSaveEnabled = (storageObject && storageObject.autoSave !== undefined) ? storageObject.autoSave : true;
@@ -1909,37 +1913,15 @@ DO = {
       }
 
       localContent = getDocument();
+      let localHash = await getHash(localContent);
       let localPublished;
       let data;
 
-      let reviewOptions = {};
-
       if (latestLocalDocumentItemObjectUnpublished) {
-        if (latestLocalDocumentItemObjectPublished.digestSRI !== previousRemoteHash) {
-          reviewOptions['message'] = `Remote content has changed since your last edit and you have local unpublished changes.`;
-          DO.U.showResourceReviewChanges(latestLocalDocumentItemObjectUnpublished.content, localContent, DO.C.Resource[DO.C.DocumentURL].response, reviewOptions);
-          return;
-        }
-        else {
-          var tmplLocal = document.implementation.createHTMLDocument('template');
-          tmplLocal.documentElement.setHTMLUnsafe(latestLocalDocumentItemObjectUnpublished.content);
-          const localContentNode = tmplLocal.body;
-          DO.Editor.replaceContent(DO.Editor.mode, localContentNode);
-          DO.Editor.init(DO.Editor.mode, document.body);
-
-          //TODO: Show message that your updates were applied.
-        }
-
-        localContent = latestLocalDocumentItemObjectUnpublished.content;
-      }
-
-      let localHash = await getHash(localContent);
-
-      if (latestLocalDocumentItemObject) {
-        const { digestSRI, mediaType, content, published } = latestLocalDocumentItemObject;
+        const { digestSRI, mediaType, content, published } = latestLocalDocumentItemObjectUnpublished;
+        localContent = content;
         localHash = digestSRI;
         localContentType = mediaType;
-        localContent = content;
         localPublished = published;
       }
 
@@ -1971,11 +1953,11 @@ DO = {
         remoteLastModified = response?.headers.get('Last-Modified');
         remoteDate = response?.headers.get('Date');
 
-        if (latestLocalDocumentItemObjectPublished?.content && !remoteContent) {
-          remoteContent = latestLocalDocumentItemObjectPublished.content;
-          remoteContentNode = getDocumentNodeFromString(remoteContent);
-          remoteHash = await getHash(remoteContent);
-        }
+        // if (latestLocalDocumentItemObjectPublished?.content) {
+        //   remoteContent = latestLocalDocumentItemObjectPublished.content;
+        //   remoteContentNode = getDocumentNodeFromString(remoteContent);
+        //   remoteHash = await getHash(remoteContent);
+        // }
       }
 
       // console.log(`localContent: ${localContent}`);
@@ -2017,13 +1999,13 @@ DO = {
           const h = localETag ? { 'If-Match': localETag } : {};
 
           try {
-            await DO.U.pushLocalContentToRemote(latestLocalDocumentItemObject, h);
+            await DO.U.pushLocalContentToRemote(latestLocalDocumentItemObjectUnpublished, h);
             return;
           }
           catch(error) {
             if (error.status === 412) {
-              reviewOptions['message'] 
-              DO.U.showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
+              DO.U.syncLocalRemoteResource();
+              // DO.U.showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
             }
             else {
               throw new Error(`${error.status} Unhandled status ${error}`);
@@ -2044,28 +2026,31 @@ DO = {
         }
       }
 
-      // console.log(status + ' Checking to see if local or remote changed:');
+      if (latestLocalDocumentItemObjectUnpublished) {
+        if (latestLocalDocumentItemObjectPublished.digestSRI !== remoteHash) {
+          reviewOptions['message'] = `Remote content has changed since your last edit and you have local unpublished changes.`;
+          DO.U.showResourceReviewChanges(localContent, remoteContent, DO.C.Resource[DO.C.DocumentURL].response, reviewOptions);
+          return;
+        }
+        //Remote didn't change, we want to restore current view with what we have unpublished
+        else {
+          var tmplLocal = document.implementation.createHTMLDocument('template');
+          tmplLocal.documentElement.setHTMLUnsafe(localContent);
+          const localContentNode = tmplLocal.body;
+          DO.Editor.replaceContent(DO.Editor.mode, localContentNode);
+          DO.Editor.init(DO.Editor.mode, document.body);
+
+          //TODO: Show message that your updates were applied.
+        }
+      }
+
 
       switch(status) {
         case 200:
           console.log(`Local or remote changed.`);
 
-          if (localPublished) {
-            if (etagsMatch) {
-              reviewOptions['message'] = `Local and remote have same version but content differs, likely conflict. Review.`;
-              DO.U.showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
-            }
-            else {
-              console.log(`Local unchanged. Remote changed. Update local.`);
-
-              DO.Editor.replaceContent(DO.Editor.mode, remoteContentNode);
-              DO.Editor.init(DO.Editor.mode, document.body);
-              autoSave(DO.C.DocumentURL, { method: 'localStorage', published: remotePublishDate });
-              updateResourceInfos(DO.C.DocumentURL, getDocument(), response);
-            }
-          }
-          else {
-            if (latestLocalDocumentItemObject && (etagsMatch || previousRemoteHash == remoteHash)) {
+          if (latestLocalDocumentItemObjectUnpublished) {
+            if (etagsMatch || previousRemoteHash == remoteHash) {
               console.log(`Local unpublished changes. Remote unchanged. Update remote.`);
 
               if (!remoteAutoSaveEnabled) {
@@ -2076,13 +2061,14 @@ DO = {
               const h = localETag ? { 'If-Match': localETag } : {};
 
               try {
-                await DO.U.pushLocalContentToRemote(latestLocalDocumentItemObject, h);
+                await DO.U.pushLocalContentToRemote(latestLocalDocumentItemObjectUnpublished, h);
                 return;
               }
               catch(error) {
                 if (error.status === 412) {
-                  reviewOptions['message'] = `Error (412)`;
-                  DO.U.showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
+                  // reviewOptions['message'] = `Local unpublished changes. Remote changed in the meantime. Review.`;
+                  // DO.U.showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
+                  DO.U.syncLocalRemoteResource();
                 }
                 else {
                   throw new Error(`${error.status} Unhandled status ${error}`);
@@ -2090,17 +2076,29 @@ DO = {
               };
             }
             else {
-              reviewOptions['message'] = `Local unpublished changes. Remote validation unavailable. Review changes.`;
+              reviewOptions['message'] = `Local unpublished changes. Remote changed. Review changes.`;
               DO.U.showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
             }
+          }
+          else if (!etagsMatch || previousRemoteHash != remoteHash) {
+            console.log(`Local unchaged. Remote changed. Update local.`);
+            DO.Editor.replaceContent(DO.Editor.mode, remoteContentNode);
+            DO.Editor.init(DO.Editor.mode, document.body);
+            autoSave(DO.C.DocumentURL, { method: 'localStorage', published: remotePublishDate });
+            updateResourceInfos(DO.C.DocumentURL, getDocument(), response);
+          }
+          else {
+            reviewOptions['message'] = `No local unpublished changes. Remote unchanged. Review changes.`;
+            DO.U.syncLocalRemoteResource();
+            // DO.U.showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
           }
 
           break;
 
         //Because of GET If-None-Match: <etag>
         case 304:
-          if (latestLocalDocumentItemObject && !latestLocalDocumentItemObject.published) {
-            console.log(`Local unpublished changes; push to remote.`);
+          if (latestLocalDocumentItemObjectUnpublished) {
+            console.log(`Local unpublished changes. Remote unchanged. Update remote.`);
 
             if (!remoteAutoSaveEnabled) {
               console.log(`remoteAutoSave is disabled.`);
@@ -2110,13 +2108,14 @@ DO = {
             const h = localETag ? { 'If-Match': localETag } : {};
 
             try {
-              await DO.U.pushLocalContentToRemote(latestLocalDocumentItemObject, h);
+              await DO.U.pushLocalContentToRemote(latestLocalDocumentItemObjectUnpublished, h);
               return;
             }
             catch(error) {
               if (error.status === 412) {
-                reviewOptions['message'] = `Error (412)`;
-                DO.U.showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
+                // reviewOptions['message'] = `Local unpublished changes. Remote changed in the meantime. Review.`;
+                // DO.U.showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
+                DO.U.syncLocalRemoteResource();
               }
               else {
                 throw new Error(`${error.status} Unhandled status ${error}`);
@@ -2135,13 +2134,14 @@ DO = {
           }
 
           try {
-            await DO.U.pushLocalContentToRemote(latestLocalDocumentItemObject, { 'If-None-Match': '*' });
+            await DO.U.pushLocalContentToRemote(latestLocalDocumentItemObjectUnpublished, { 'If-None-Match': '*' });
             return;
           }
           catch (error) {
             if (error.status === 412) {
-              reviewOptions['message'] = `Error (412)`;
-              DO.U.showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
+              // reviewOptions['message'] = `Error (412)`;
+              // DO.U.showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
+              DO.U.syncLocalRemoteResource();
             }
             else {
               throw new Error(`${error.status} Unhandled status ${error}`);
@@ -2372,18 +2372,12 @@ DO = {
         DO.U.showDocumentItems();
       }
 
-      getResourceInfo(getDocument()).then(resourceInfo => {
-        DO.C.Resource[DO.C.DocumentURL] = { ...DO.C.Resource[DO.C.DocumentURL], ...resourceInfo };
-        updateButtons();
-      });
-
       var options = { 'reuse': true };
       if (document.location.protocol.startsWith('http')) {
         options['followLinkRelationTypes'] = ['describedby'];
       }
-      getResourceSupplementalInfo(DO.C.DocumentURL, options).then(resourceInfo => {
-        updateButtons();
-      });
+
+      updateResourceInfos(DO.C.DocumentURL, getDocument(), null, options);
     },
 
     hideDocumentMenu: function(e) {
@@ -4368,6 +4362,7 @@ console.log(reason);
                   var options = {};
                   options['contentType'] = (cT) ? cT.split(';')[0].toLowerCase().trim() : 'text/turtle';
                   options['subjectURI'] = response.url;
+                  options['storeHash'] = true;
 
                   return response.text()
                     .then(data => getResourceInfo(data, options))
@@ -6867,6 +6862,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
                 }
 
                 if (DO.C.MediaTypes.RDF.includes(options['contentType'])) {
+                  options['storeHash'] = true;
                   getResourceInfo(data, options);
                 }
 
