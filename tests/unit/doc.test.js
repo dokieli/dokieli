@@ -1,6 +1,7 @@
 import { JSDOM } from "jsdom";
 import {
   domToString,
+  normaliseContent,
   escapeCharacters,
   cleanEscapeCharacters,
   fixBrokenHTML,
@@ -124,24 +125,48 @@ beforeAll(() => {
 
 describe("domToString", () => {
   it("serializes a clean DOM", () => {
-    function normalizeWhitespace(str) {
-      return str.replace(/\s+/g, "").trim();
-    }
-    const htmlContent = `<!DOCTYPE html>
-<html>
-  <head><title>Test</title></head>
-  <body><p>Hello</p></body>
-</html>`;
+    const htmlContent = `<head><title>Test</title></head><body><p>asdf</p></body>`;
 
-    const { window } = new JSDOM(htmlContent);
-    const cleanDocument = window.document;
+    const node = window.document.createElement("html");
+    node.innerHTML = htmlContent;
 
-    const result = domToString(cleanDocument.documentElement).trim();
-    const expected = htmlContent.replace(/<!DOCTYPE html>\s*/, "").trim();
+    const result = domToString(node);
 
-    expect(normalizeWhitespace(result)).toBe(normalizeWhitespace(expected));
+    const expected =
+      `<html>
+${htmlContent}
+</html>`
+
+    expect(result).toBe(expected);
   });
 });
+
+describe("getDocumentNodeFromString", () => {
+  it("parses HTML string to document node", () => {
+    const htmlContent = `<html><head><title>Test</title></head><body><p>asdf</p></body></html>`;
+    const expected = `<html>
+<head><title>Test</title></head><body><p>asdf</p></body>
+</html>`;
+    let result = getDocumentNodeFromString(htmlContent);
+    result = domToString(result.documentElement);
+
+    expect(result).toBe(expected);
+  })
+})
+
+describe('normaliseContent', () => {
+  it.only('normalizes content after potential prosemirror schema changes', () => {
+    const htmlContent = `<html><head><title>Test</title></head><body><li><p>asdf</p></li></body></html>`;
+    const dom = new JSDOM(htmlContent);
+    const node = dom.window.document.documentElement.cloneNode(true);
+    const expected = `<html><head><title>Test</title></head><body><li>asdf</li></body></html>`;
+    const result = normaliseContent(node)
+    expect(result).not.toBeUndefined();
+    const div = dom.window.document.createElement("div");
+    div.appendChild(result);
+    expect(div.firstChild.outerHTML).toBe(expected);
+  });
+})
 
 describe("escapeCharacters", () => {
   it("escapes special characters correctly", () => {
