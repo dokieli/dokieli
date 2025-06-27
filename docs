@@ -597,6 +597,9 @@
                     <dt about="#feature-graph-view" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-circle-nodes"></i><dfn id="feature-graph-view">Graph view</dfn></dt>
                     <dd about="#feature-graph-view" property="skos:definition">Displays a graph visualisation of the document's underlying semantics, including a list of resources, the number of statements, unique nodes, creator, license, and a legend. The visualisation can be exported as an SVG.</dd>
 
+                    <dt about="#feature-review-changes" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-microscope"></i><dfn id="feature-review-changes">Review changes</dfn></dt>
+                    <dd about="#feature-review-changes" property="skos:definition">The review changes feature allows comparing local and remote versions of a document when both have changed, and choose to keep the local edits, discard them in favour of the remote version, or manually reconcile and apply changes to both.</dd>
+
                     <dt about="#feature-list-of-stuff" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-list-of-stuff">List of Stuff</dfn></dt>
                     <dd about="#feature-list-of-stuff" property="skos:definition">
                       <p>Options to generate and include various types of content, such as:</p>
