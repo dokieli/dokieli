@@ -2,8 +2,6 @@ import { defineConfig } from 'vitest/config'
 import path from 'path'
 
 import fs from 'fs'
-console.log('Check dom.js exists:', fs.existsSync(path.resolve(__dirname, 'src/editor/utils/dom.js')))
-console.log(path.resolve(__dirname, './src'))
 
 export default defineConfig({
   resolve: {
