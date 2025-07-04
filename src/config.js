@@ -7,6 +7,8 @@ import DO from './dokieli.js';
 
 export default {
   init: function(url) {
+    DO.U.initServiceWorker();
+
     var contentNode = DO.U?.getContentNode(document);
     if (contentNode) {
       DO.U.initButtons();
