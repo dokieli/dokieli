@@ -1651,7 +1651,7 @@ DO = {
 
     initServiceWorker: function () {
       if ('serviceWorker' in navigator && !Config.WebExtensionEnabled) {
-        navigator.serviceWorker.register('/service-worker.js')
+        navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
           .then(() => {
             console.log('Service Worker registered');
           })
