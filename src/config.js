@@ -275,7 +275,6 @@ export default {
   },
   CollectionItemsLimit: 50,
   ContextLength: 32,
-  ProxyURL: ((window.location.hostname == 'localhost' || !navigator.onLine) ? window.location.protocol + '//' + window.location.host + '/proxy?uri=' : 'https://dokie.li/proxy?uri='),
   NotificationLicense: 'https://creativecommons.org/publicdomain/zero/1.0/',
   License: {
     "https://creativecommons.org/publicdomain/zero/1.0/": {'name': 'CC0 1.0', 'description': 'Creative Commons CC0 1.0 Universal'},
