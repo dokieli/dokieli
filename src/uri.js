@@ -93,6 +93,11 @@ function getUrlParams(name) {
   return searchParams.getAll(name);
 }
 
+function stripUrlSearchHash() {
+  const url = window.location.href;
+  const cleanUrl = url.split('?')[0].split('#')[0];
+  window.history.replaceState({}, '', cleanUrl);
+}
 
 function getBaseURL(url) {
   if (typeof url === 'string') {
@@ -278,6 +283,7 @@ export {
   stripFragmentFromString,
   getFragmentFromString,
   getUrlParams,
+  stripUrlSearchHash,
   getBaseURL,
   getPathURL,
   getURLLastPath,
