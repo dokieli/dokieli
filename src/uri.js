@@ -84,6 +84,16 @@ function getFragmentFromString(string) {
   return string;
 }
 
+function getUrlParams(name) {
+  const rawParams = window.location.hash.startsWith('#')
+    ? window.location.hash.slice(1)
+    : window.location.search.slice(1);
+
+  const searchParams = new URLSearchParams(rawParams);
+  return searchParams.getAll(name);
+}
+
+
 function getBaseURL(url) {
   if (typeof url === 'string') {
     url = url.substr(0, url.lastIndexOf('/') + 1);
@@ -267,6 +277,7 @@ export {
   getProxyURL,
   stripFragmentFromString,
   getFragmentFromString,
+  getUrlParams,
   getBaseURL,
   getPathURL,
   getURLLastPath,
