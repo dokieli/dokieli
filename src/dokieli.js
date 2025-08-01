@@ -8,7 +8,7 @@
 
 import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource } from './fetcher.js'
 import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, eventButtonNotificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getLanguageOptionsHTML, getLicenseOptionsHTML, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown, getReferenceLabel, createNoteDataHTML, hasNonWhitespaceText, eventButtonClose, eventButtonInfo, eventButtonSignIn, eventButtonSignOut, getDocumentNodeFromString, updateResourceInfos, accessModePossiblyAllowed, updateSupplementalInfo, processSupplementalInfoLinkHeaders } from './doc.js'
-import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, generateDataURI, getMediaTypeURIs, isHttpOrHttpsProtocol, isFileProtocol } from './uri.js'
+import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, generateDataURI, getMediaTypeURIs, isHttpOrHttpsProtocol, isFileProtocol, getUrlParams, stripUrlSearchHash } from './uri.js'
 import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes, filterQuads, getAgentTypeIndex } from './graph.js'
 import { notifyInbox, sendNotifications } from './inbox.js'
 import { uniqueArray, fragmentFromString, generateAttributeId, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, isValidISBN, findPreviousDateTime, domSanitize, sanitizeObject, escapeRDFLiteral, tranformIconstoCSS, getIconsFromCurrentDocument, getHash, getDateTimeISOFromDate } from './util.js'
@@ -1488,11 +1488,6 @@ DO = {
       }
     },
 
-    urlParam: function(name) {
-      const params = new URLSearchParams(window.location.search);
-      return params.get(name);
-    },
-
     init: function() {
       DO.U.initAuth()
         .then(() => DO.C.init());
@@ -1552,9 +1547,11 @@ DO = {
     setDocumentMode: function(mode) {
       Config.Editor.mode = mode || Config.Editor.mode;
 
-      var style = domSanitize(DO.U.urlParam('style'));
+      var style = getUrlParams('style');
 
-      if (style) {
+      if (style.length) {
+        style = style[0];
+        style = domSanitize(style);
         var title = style.lastIndexOf('/');
         title = (title > -1) ? style.substr(title + 1) : style;
 
@@ -1564,23 +1561,26 @@ DO = {
           document.querySelector('head').insertAdjacentHTML('beforeend', link);
         }
 
-        window.history.replaceState({}, null, document.location.href.substr(0, document.location.href.lastIndexOf('?')));
+        stripUrlSearchHash();
+
         var stylesheets = document.querySelectorAll('head link[rel~="stylesheet"][title]:not([href$="dokieli.css"])');
         DO.U.updateSelectedStylesheets(stylesheets, title);
       }
 
-      var open = domSanitize(DO.U.urlParam('open'));
-      if (open) {
+      var open = getUrlParams('open');
+
+      if (open.length) {
+        open = open[0];
+        open = domSanitize(open);
         open = decodeURIComponent(open);
 
         DO.U.openResource(open);
 
-        window.history.replaceState({}, null, document.location.href.substr(0, document.location.href.lastIndexOf('?')));
+        stripUrlSearchHash();
       }
 
       if (DO.C.GraphViewerAvailable) {
-        var searchParams = new URLSearchParams(window.location.search);
-        var graphs = searchParams.getAll('graph');
+        var graphs = getUrlParams('graph');
 
         var urls = graphs.map(url => {
           url = domSanitize(url);
@@ -1621,19 +1621,20 @@ DO = {
 
           DO.U.showGraph(urls, '#graph-view', options);
 
-          window.history.replaceState({}, null, document.location.href.substr(0, document.location.href.lastIndexOf('?graph')));
+          //stripUrlSearchHash()
         }
       }
 
-      if (DO.U.urlParam('author') == 'true' || DO.U.urlParam('social') == 'true') {
-        if (DO.U.urlParam('social') == 'true') {
-          Config.Editor.mode = 'social';
-        }
-        else if (DO.U.urlParam('author') == 'true') {
-          Config.Editor.mode = 'author';
-        }
-        var url = document.location.href;
-        window.history.replaceState({}, null, url.substr(0, url.lastIndexOf('?')));
+      const paramAuthor = getUrlParams('author');
+      const paramSocial = getUrlParams('social');
+
+      if (paramSocial.length && paramSocial[0] == 'true') {
+        Config.Editor.mode = 'social';
+        stripUrlSearchHash();
+      }
+      else if (paramAuthor.length && paramAuthor[0] == 'true') {
+        Config.Editor.mode = 'author';
+        stripUrlSearchHash();
       }
       else if (DO.C.Resource[DO.C.DocumentURL].contentType == 'text/html') {
         // var tmpl = document.implementation.createHTMLDocument('template');
@@ -4542,7 +4543,7 @@ console.log(reason);
                   'Document saved at <a href="' + url + '" rel="noopener" target="_blank">' + url + '</a></p></div>'
                 )
 
-                window.open(url + documentMode, '_blank')
+                window.open(url, '_blank')
               })
 
               //TODO: Reuse saveAsDocument's catch
@@ -7602,11 +7603,11 @@ console.log('XXX: Cannot access effectiveACLResource', e);
             let url = response.url || storageIRI
             url = domSanitize(url);
 
-            var documentMode = (DO.C.WebExtensionEnabled) ? '' : '?author=true'
+            // var documentMode = (DO.C.WebExtensionEnabled) ? '' : '#author=true'
 
             saveAsDocument.insertAdjacentHTML('beforeend',
               '<div class="response-message"><p class="success">' +
-              'Document saved at <a href="' + url + documentMode + '">' + url + '</a></p></div>'
+              'Document saved at <a href="' + url + '">' + url + '</a></p></div>'
             )
 
             DO.C.DocumentAction = 'save-as';
