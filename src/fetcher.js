@@ -62,18 +62,21 @@ function copyResource (fromURL, toURL, options = {}) {
  * @param {object} options
  * @returns {string}
  */
-function currentLocation (options = {}) {
+function currentLocation(options = {}) {
   const url = new URL(window.location);
 
-  options.removeParams = options.removeParams || { author: 'true', social: 'true' };
+  // Default params to remove
+  const defaultParams = ['author', 'social', 'graph', 'open', 'style'];
 
-  Object.entries(options.removeParams).forEach(([param, value]) => {
-    if (url.searchParams.get(param) === value) {
-      url.searchParams.delete(param);
-    }
+  // Use provided keys or fallback to default
+  const keysToRemove = options.removeParams || defaultParams;
+
+  // Remove by key only, ignoring values
+  keysToRemove.forEach(param => {
+    url.searchParams.delete(param);
   });
 
-  return url.origin + url.pathname + (url.search ? '?' + url.searchParams.toString() : '');
+  return url.origin + url.pathname + (url.searchParams.toString() ? '?' + url.searchParams.toString() : '');
 }
 
 /**
