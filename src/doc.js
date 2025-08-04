@@ -222,7 +222,7 @@ function normaliseContent (node) {
     element.appendChild(newContent.cloneNode(true));
   }
 
-  const tags = ['li', 'dd', 'figure', 'figcaption', 'td', 'th', 'video', 'audio', 'button', 'select', 'textarea'];
+  const tags = ['li', 'dd', 'figcaption', 'td', 'th', 'video', 'audio', 'button', 'select', 'textarea'];
 
   tags.forEach(tag => {
     element.querySelectorAll(tag).forEach(el => {
