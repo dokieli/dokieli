@@ -97,6 +97,7 @@ export default {
   },
 
   DOMNormalisation: {
+    'inlineElements': ['span', 'progress', 'del', 'ins', 'data', 'datalist', 'mark', 'code', 'cite', 'sup', 'sub', 'a', 'time', 'em', 'strong', 'dfn', 'abbr', 'q', 'var', 'samp', 'kbd', 'bdi'],
     'voidElements': ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source', 'track', 'wbr'],
     'selfClosing': ['circle', 'ellipse', 'line', 'path', 'polygon', 'polyline', 'rect', 'stop', 'use'],
     'skipAttributes': ['aria-multiline', 'contenteditable', 'data-placeholder', 'draggable', 'role', 'spellcheck', 'style'],

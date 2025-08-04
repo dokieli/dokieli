@@ -1,4 +1,5 @@
 import { Schema } from "prosemirror-model";
+import Config from 'config';
 
 // export const globalAttributes = ['class', 'dir', 'id', 'lang', 'title', 'translate', 'xml:lang', 'xmlns'];
 // export const markupAttributes = ['alt', 'cite', 'colspan', 'control', 'crossorigin', 'data-cite', 'data-datetime', 'data-event-keyup-enter', 'data-editor-id', 'data-dfn-type', 'data-lt', 'data-id', 'data-inbox', 'data-link-type', 'data-plurals', 'data-to', 'data-target', 'data-type', 'data-versiondate', 'data-versionurl', 'datetime', 'height', 'poster', 'preload', 'rowspan', 'style', 'type', 'width'];
@@ -472,7 +473,8 @@ let customNodes = {
 
 const customMarks = {};
 
-const inlineElements = ['span', 'progress', 'del', 'ins', 'data', 'datalist', 'mark', 'code', 'cite', 'sup', 'sub', 'a', 'time', 'em', 'strong', 'dfn', 'abbr', 'q', 'var', 'samp', 'kbd', 'bdi'];
+const inlineElements = Config.DOMNormalisation.inlineElements;
+
 inlineElements.forEach(tagName => {
   customMarks[tagName] = {
     attrs: { originalAttributes: { default: {} } },
