@@ -1621,7 +1621,7 @@ DO = {
 
           DO.U.showGraph(urls, '#graph-view', options);
 
-          //stripUrlSearchHash()
+          stripUrlSearchHash()
         }
       }
 
