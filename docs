@@ -397,7 +397,7 @@
                     <dt about="#feature-describing" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-sticky-note"></i><dfn id="feature-describing">Describing</dfn></dt>
                     <dd about="#feature-describing" property="skos:definition">A note to indicate a footnote. Used as part of purpose for <a href="#feature-bookmarking">bookmarking</a> and <a href="#feature-commenting">commenting</a>.</dd>
 
-                    <dt about="#feature-highligting" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-highlighter"></i><dfn id="feature-highlighting">Highlighting</dfn></dt>
+                    <dt about="#feature-highlighting" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-highlighter"></i><dfn id="feature-highlighting">Highlighting</dfn></dt>
                     <dd about="#feature-highlighting" property="skos:definition">Node or text level targeting that gives the user a URI that they can use for deep-linking and referencing.</dd>
 
                     <dt about="#feature-replying" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-reply"></i><dfn id="feature-replying">Replying</dfn></dt>
@@ -489,7 +489,7 @@
                     <dd about="#feature-version" property="skos:definition">Generates a derived copy of the current document as a mutable resource including provenance.</dd>
 
                     <dt about="#feature-immutable" property="skos:prefLabel" typeof="skos:Concept"><i class="far fa-snowflake"></i><dfn id="feature-immutable">Immutable</dfn></dt>
-                    <dd about="#feature-immutable" property="skos:prefLabel">Generates a derived copy of the current document as an immutable or frozen Memento resource including provenance. Creates or updates a Memento TimeMap including a reference to the immutable resource.</dd>
+                    <dd about="#feature-immutable" property="skos:definition">Generates a derived copy of the current document as an immutable or frozen Memento resource including provenance. Creates or updates a Memento TimeMap including a reference to the immutable resource.</dd>
 
                     <dt about="#feature-memento" property="skos:prefLabel" typeof="skos:Concept"><i class="far fa-clock"></i><dfn id="feature-memento">Memento</dfn></dt>
                     <dd about="#feature-memento" property="skos:definition">The user can access the memento (version history) of a document.</dd>
