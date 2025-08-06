@@ -11,7 +11,7 @@ import { gfmTagfilterHtml } from 'micromark-extension-gfm-tagfilter';
 import { Icon } from './ui/icons.js';
 import { showUserIdentityInput, signOut } from './auth.js'
 import { buttonIcons, updateButtons } from './ui/buttons.js'
-import beautify from 'js-beautify';
+// import beautify from 'js-beautify';
 
 const ns = Config.ns;
 
@@ -41,9 +41,13 @@ function cleanEscapeCharacters(string) {
 function fixBrokenHTML(html) {
 //  var pattern = new RegExp('<(' + Config.DOMNormalisation.voidElements.join('|') + ')([^>]*)></\\1>|<(' + Config.DOMNormalisation.voidElements.join('|') + ')([^>]*)/>', 'g');
 
-  var pattern = new RegExp('<(' + Config.DOMNormalisation.voidElements.join('|') + ')([^<>]*?)?><\/\\1>', 'g');
+//Works
+// var pattern = new RegExp('<(' + Config.DOMNormalisation.voidElements.join('|') + ')([^<>]*?)?><\/\\1>', 'g');
 
-  var fixedHtml = html.replace(pattern, '<$1$2/>');
+  var tagList = Config.DOMNormalisation.voidElements.concat(Config.DOMNormalisation.selfClosing);
+  var pattern = new RegExp('<(' + tagList.join('|') + ')([^<>]*?)?><\/\\1>', 'g');
+
+  var fixedHtml = html.replace(pattern, '<$1$2 />');
 
   return fixedHtml;
 }
@@ -64,38 +68,34 @@ function getNodeWithoutClasses (node, classNames) {
 
 function domToString (node, options) {
   options = options || Config.DOMNormalisation
-  var voidElements = options.voidElements || []
-  var skipAttributes = options.skipAttributes || []
+  // var voidElements = options.voidElements || []
+  // var skipAttributes = options.skipAttributes || []
   var noEsc = [ false ]
 
-  return dumpNode(node, options, skipAttributes, voidElements, noEsc)
+  return fixBrokenHTML(dumpNode(node, options, noEsc))
 }
 
-function dumpNode (node, options, skipAttributes, voidElements, noEsc) {
+function dumpNode (node, options, noEsc, indentLevel = 0) {
   options = options || Config.DOMNormalisation
   var out = ''
-// console.log(node)
-//   const wrapper = node.querySelector(options.removeWrapperSelector);
-
-//   if (wrapper) {
-//     const parent = wrapper.parentNode;
-
-//     while (wrapper.firstChild) {
-//       parent.insertBefore(wrapper.firstChild, wrapper);
-//     }
-
-//     parent.removeChild(wrapper);
-//   }
 
   if (typeof node.nodeType === 'undefined') return out
 
   if (node.nodeType === 1) {
-    if (options.skipNodeWithId && node.hasAttribute('id') && options.skipNodeWithId.indexOf(node.id) > -1) { return out
+    if (options.skipNodeWithId && node.hasAttribute('id') && options.skipNodeWithId.includes(node.id)) { return out
     }
     else if (node.hasAttribute('class') && 'classWithChildText' in options && node.matches(options.classWithChildText.class)) {
       out += node.querySelector(options.classWithChildText.element).textContent
     }else if (!(options.skipNodeWithClass && node.matches('.' + options.skipNodeWithClass))) {
       var ename = node.nodeName.toLowerCase()
+
+      const lastChild = node.childNodes[node.childNodes.length - 1]
+      const lastWasBlock = lastChild && lastChild.nodeType === 1 && !options.inlineElements.includes(lastChild.nodeName.toLowerCase())
+
+      if (ename !== 'html' && !options.inlineElements.includes(ename)) {
+        out += '\n' + '  '.repeat(indentLevel)
+      }
+
       out += '<' + ename
 
       var attrList = []
@@ -103,13 +103,13 @@ function dumpNode (node, options, skipAttributes, voidElements, noEsc) {
       for (let i = node.attributes.length - 1; i >= 0; i--) {
         var atn = node.attributes[i]
 
-        if (skipAttributes.indexOf(atn.name) > -1) continue
+        if (options.skipAttributes.includes(atn.name)) continue
 
         if (/^\d+$/.test(atn.name)) continue
 
         if (atn.name === 'class' && 'replaceClassItemWith' in options) {
           atn.value.split(' ').forEach(function (aValue) {
-            if (options.replaceClassItemWith.source.indexOf(aValue) > -1) {
+            if (options.replaceClassItemWith.source.includes(aValue)) {
               var re = new RegExp(aValue, 'g')
               atn.value = atn.value.replace(re, options.replaceClassItemWith.target).trim()
             }
@@ -140,19 +140,26 @@ function dumpNode (node, options, skipAttributes, voidElements, noEsc) {
         out += ' ' + attrList.join(' ')
       }
 
-      if (voidElements.indexOf(ename) > -1) {
+      if (options.voidElements.includes(ename)) {
         out += ' />'
       } else {
         out += '>'
-        out += (ename === 'html') ? '\n' : ''
+
         noEsc.push(ename === 'style' || ename === 'script' || ename === 'pre' || ename === 'code' || ename === 'samp')
 
         for (var i = 0; i < node.childNodes.length; i++) {
-          out += dumpNode(node.childNodes[i], options, skipAttributes, voidElements, noEsc)
+          out += dumpNode(node.childNodes[i], options, noEsc, indentLevel + 1)
         }
 
         noEsc.pop()
-        out += (ename === 'html') ? '\n</' + ename + '>' : '</' + ename + '>'
+
+        if (!options.inlineElements.includes(ename) && lastWasBlock) {
+          out += '\n' + '  '.repeat(indentLevel)
+        }
+
+        out += '</' + ename + '>'
+
+        out += (ename == 'html') ? '\n': ''
       }
     }
   } else if (node.nodeType === 8 && 'skipNodeComment' in options && !options.skipNodeComment) {
@@ -316,7 +323,7 @@ function getDocument (cn, options) {
 // console.log(htmlString)
 
   //Format
-  htmlString = beautify.html(htmlString, Config.BeautifyOptions);
+  // htmlString = beautify.html(htmlString, Config.BeautifyOptions);
 
   return htmlString;
 }

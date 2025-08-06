@@ -1,5 +1,5 @@
 import DOMPurify from 'dompurify';
-import { rdfaAttributes } from 'src/editor/schema/base';
+import Config from './config.js'
 import { svgToDataURI } from './uri.js';
 import { Icon } from './ui/icons.js'
 
@@ -196,7 +196,7 @@ function domSanitize(strHTML, options = {}) {
 
   const cleanHTML = DOMPurify.sanitize(strHTML, {
     ALLOW_UNKNOWN_PROTOCOLS: options.ALLOW_UNKNOWN_PROTOCOLS !== false,
-    ADD_ATTR: [...rdfaAttributes, 'xml:lang', 'target'],
+    ADD_ATTR: [...Config.DOMNormalisation.rdfaAttributes, 'alttext', 'xml:lang', `xmlns:ev`, 'target'],
     ...options
   });
 

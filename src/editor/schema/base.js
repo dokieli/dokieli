@@ -3,7 +3,7 @@ import Config from 'config';
 
 // export const globalAttributes = ['class', 'dir', 'id', 'lang', 'title', 'translate', 'xml:lang', 'xmlns'];
 // export const markupAttributes = ['alt', 'cite', 'colspan', 'control', 'crossorigin', 'data-cite', 'data-datetime', 'data-event-keyup-enter', 'data-editor-id', 'data-dfn-type', 'data-lt', 'data-id', 'data-inbox', 'data-link-type', 'data-plurals', 'data-to', 'data-target', 'data-type', 'data-versiondate', 'data-versionurl', 'datetime', 'height', 'poster', 'preload', 'rowspan', 'style', 'type', 'width'];
-export const rdfaAttributes = ['about', 'content', 'datatype', 'href', 'inlist', 'prefix', 'property', 'rel', 'resource', 'rev', 'src', 'typeof', 'vocab'];
+// export const rdfaAttributes = ['about', 'content', 'datatype', 'href', 'inlist', 'prefix', 'property', 'rel', 'resource', 'rev', 'src', 'typeof', 'vocab'];
 // 'voidElements': ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source', 'track', 'wbr'],
 // 'selfClosing': ['circle', 'ellipse', 'line', 'path', 'polygon', 'polyline', 'rect', 'stop', 'use'],
 export const allowedEmptyAttributes = ['open', 'alt'];
@@ -278,6 +278,100 @@ let customNodes = {
   },
 
   //TODO: math
+/*
+  math: {
+    content: "inline+",
+    group: "inline",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "math", getAttrs(node) { return getAttributes(node) }}],
+    toDOM(node) { return ["http://www.w3.org/1998/Math/MathML math", { ...node.attrs.originalAttributes }, 0] }
+  },
+  mfrac: {
+    content: "inline*",
+    group: "inline",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "mfrac", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["http://www.w3.org/1998/Math/MathML mfrac", { ...node.attrs.originalAttributes }, 0]; },
+  },
+  mi: {
+    content: "inline*",
+    group: "inline",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "mi", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["http://www.w3.org/1998/Math/MathML mi", { ...node.attrs.originalAttributes }, 0]; },
+  },
+  mo: {
+    content: "inline*",
+    group: "inline",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "mo", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["http://www.w3.org/1998/Math/MathML mo", { ...node.attrs.originalAttributes }, 0]; },
+  },
+  mn: {
+    content: "inline*",
+    group: "inline",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "mn", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["http://www.w3.org/1998/Math/MathML mn", { ...node.attrs.originalAttributes }, 0]; },
+  },
+  mroot: {
+    content: "inline*",
+    group: "inline",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "mroot", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["http://www.w3.org/1998/Math/MathML mroot", { ...node.attrs.originalAttributes }, 0]; },
+  },
+  mrow: {
+    content: "inline*",
+    group: "inline",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "mrow", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["http://www.w3.org/1998/Math/MathML mrow", { ...node.attrs.originalAttributes }, 0]; },
+  },
+  ms: {
+    content: "inline*",
+    group: "inline",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "ms", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["http://www.w3.org/1998/Math/MathML ms", { ...node.attrs.originalAttributes }, 0]; },
+  },
+  mspace: {
+    content: "inline*",
+    group: "inline",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "mspace", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["http://www.w3.org/1998/Math/MathML mspace", { ...node.attrs.originalAttributes }, 0]; },
+  },
+  msqrt: {
+    content: "inline*",
+    group: "inline",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "msqrt", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["http://www.w3.org/1998/Math/MathML msqrt", { ...node.attrs.originalAttributes }, 0]; },
+  },
+  msub: {
+    content: "inline*",
+    group: "inline",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "msub", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["http://www.w3.org/1998/Math/MathML msub", { ...node.attrs.originalAttributes }, 0]; },
+  },
+  msup: {
+    content: "inline*",
+    group: "inline",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "msup", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["http://www.w3.org/1998/Math/MathML msup", { ...node.attrs.originalAttributes }, 0]; },
+  },
+  mtext: {
+    content: "inline*",
+    group: "inline",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "mtext", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["http://www.w3.org/1998/Math/MathML mtext", { ...node.attrs.originalAttributes }, 0]; },
+  },
+*/
+
   svg: {
     content: "block+",
     group: "block",
@@ -476,11 +570,16 @@ const customMarks = {};
 const inlineElements = Config.DOMNormalisation.inlineElements;
 
 inlineElements.forEach(tagName => {
+  let namespace = '';
+
+  if (tagName == 'math' || tagName == 'mrow' || tagName == 'mi' || tagName == 'mo') {
+    namespace = 'http://www.w3.org/1998/Math/MathML ';
+  }
+
   customMarks[tagName] = {
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: tagName, getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return [tagName, { ...node.attrs.originalAttributes }, 0]; },
-
+    toDOM(node) { return [namespace + tagName, { ...node.attrs.originalAttributes }, 0]; },
     inclusive: false,
     excludes: "",
     group: "inline"

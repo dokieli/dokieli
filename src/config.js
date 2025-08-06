@@ -97,7 +97,8 @@ export default {
   },
 
   DOMNormalisation: {
-    'inlineElements': ['span', 'progress', 'del', 'ins', 'data', 'datalist', 'mark', 'code', 'cite', 'sup', 'sub', 'a', 'time', 'em', 'strong', 'dfn', 'abbr', 'q', 'var', 'samp', 'kbd', 'bdi'],
+    'rdfaAttributes': ['about', 'content', 'datatype', 'href', 'inlist', 'prefix', 'property', 'rel', 'resource', 'rev', 'src', 'typeof', 'vocab'],
+    'inlineElements': ['span', 'progress', 'del', 'ins', 'data', 'datalist', 'mark', 'code', 'cite', 'sup', 'sub', 'a', 'time', 'em', 'strong', 'b', 'i', 'dfn', 'abbr', 'q', 'var', 'samp', 'kbd', 'bdi', 'math', 'mrow', 'mi', 'mo'],
     'voidElements': ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source', 'track', 'wbr'],
     'selfClosing': ['circle', 'ellipse', 'line', 'path', 'polygon', 'polyline', 'rect', 'stop', 'use'],
     'skipAttributes': ['aria-multiline', 'contenteditable', 'data-placeholder', 'draggable', 'role', 'spellcheck', 'style'],
@@ -458,8 +459,6 @@ export default {
 
     Geo: ['application/gpx+xml']
   },
-
-  RDFaAttributes: ["about", "content","datatype", "href", "inlist", "prefix", "property", "rel", "resource", "rev", "src", "typeof", "vocab"],
 
   Prefixes: {
     'xsd': 'http://www.w3.org/2001/XMLSchema#',
