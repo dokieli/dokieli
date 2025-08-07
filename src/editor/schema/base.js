@@ -182,13 +182,20 @@ let customNodes = {
     defining: true
   },
   pre: {
-    content: "text*",
+    content: "inline*",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "pre", preserveWhitespace: "full", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["pre", { ...node.attrs.originalAttributes }, ["code", 0]] },
+    toDOM(node) { return ["pre", { ...node.attrs.originalAttributes }, 0] },
     code: true,
     defining: true
+  },
+  code: {
+    inline: true,
+    group: "inline",
+    content: "inline*",
+    parseDOM: [{ tag: "code" }],
+    toDOM() { return ["code", 0]; }
   },
   blockquote: {
     content: "block*",

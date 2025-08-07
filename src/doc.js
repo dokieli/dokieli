@@ -11,7 +11,6 @@ import { gfmTagfilterHtml } from 'micromark-extension-gfm-tagfilter';
 import { Icon } from './ui/icons.js';
 import { showUserIdentityInput, signOut } from './auth.js'
 import { buttonIcons, updateButtons } from './ui/buttons.js'
-// import beautify from 'js-beautify';
 
 const ns = Config.ns;
 
@@ -39,10 +38,10 @@ function cleanEscapeCharacters(string) {
 }
 
 function fixBrokenHTML(html) {
-//  var pattern = new RegExp('<(' + Config.DOMNormalisation.voidElements.join('|') + ')([^>]*)></\\1>|<(' + Config.DOMNormalisation.voidElements.join('|') + ')([^>]*)/>', 'g');
+  //  var pattern = new RegExp('<(' + Config.DOMNormalisation.voidElements.join('|') + ')([^>]*)></\\1>|<(' + Config.DOMNormalisation.voidElements.join('|') + ')([^>]*)/>', 'g');
 
-//Works
-// var pattern = new RegExp('<(' + Config.DOMNormalisation.voidElements.join('|') + ')([^<>]*?)?><\/\\1>', 'g');
+  //Works
+  // var pattern = new RegExp('<(' + Config.DOMNormalisation.voidElements.join('|') + ')([^<>]*?)?><\/\\1>', 'g');
 
   var tagList = Config.DOMNormalisation.voidElements.concat(Config.DOMNormalisation.selfClosing);
   var pattern = new RegExp('<(' + tagList.join('|') + ')([^<>]*?)?><\/\\1>', 'g');
@@ -52,7 +51,7 @@ function fixBrokenHTML(html) {
   return fixedHtml;
 }
 
-function getNodeWithoutClasses (node, classNames) {
+function getNodeWithoutClasses(node, classNames) {
   classNames = Array.isArray(classNames) ? classNames : [classNames];
   const rootNode = node.nodeType === Node.DOCUMENT_NODE ? node.documentElement : node;
   const clonedRootNode = rootNode.cloneNode(true);
@@ -66,33 +65,39 @@ function getNodeWithoutClasses (node, classNames) {
   return clonedRootNode;
 }
 
-function domToString (node, options) {
+function domToString(node, options) {
   options = options || Config.DOMNormalisation
   // var voidElements = options.voidElements || []
   // var skipAttributes = options.skipAttributes || []
-  var noEsc = [ false ]
+  // var noEsc = [false]
 
-  return fixBrokenHTML(dumpNode(node, options, noEsc))
+  return fixBrokenHTML(dumpNode(node, options))
 }
 
-function dumpNode (node, options, noEsc, indentLevel = 0) {
+function dumpNode(node, options, noEsc = [false], indentLevel = 0, shouldStartWithNewLine = false) {
   options = options || Config.DOMNormalisation
   var out = ''
 
   if (typeof node.nodeType === 'undefined') return out
 
   if (node.nodeType === 1) {
-    if (options.skipNodeWithId && node.hasAttribute('id') && options.skipNodeWithId.includes(node.id)) { return out
+    if (options.skipNodeWithId && node.hasAttribute('id') && options.skipNodeWithId.includes(node.id)) {
+      return out
     }
     else if (node.hasAttribute('class') && 'classWithChildText' in options && node.matches(options.classWithChildText.class)) {
       out += node.querySelector(options.classWithChildText.element).textContent
-    }else if (!(options.skipNodeWithClass && node.matches('.' + options.skipNodeWithClass))) {
+    } else if (!(options.skipNodeWithClass && node.matches('.' + options.skipNodeWithClass))) {
       var ename = node.nodeName.toLowerCase()
 
-      const lastChild = node.childNodes[node.childNodes.length - 1]
-      const lastWasBlock = lastChild && lastChild.nodeType === 1 && !options.inlineElements.includes(lastChild.nodeName.toLowerCase())
+      const onlyChildIsText = node.childNodes.length === 1 && (node.childNodes[0].nodeType === Node.TEXT_NODE || node.childNodes[0].nodeType === Node.CDATA_SECTION_NODE);
 
-      if (ename !== 'html' && !options.inlineElements.includes(ename)) {
+      // for (var i = 0; i < node.childNodes.length; i++) {
+      //   if (!(node.hasAttribute('class') && 'classWithChildText' in options && node.matches(options.classWithChildText.class))) {
+      //     //skip?
+      //   }
+      // }
+
+      if (shouldStartWithNewLine) {
         out += '\n' + '  '.repeat(indentLevel)
       }
 
@@ -147,39 +152,43 @@ function dumpNode (node, options, noEsc, indentLevel = 0) {
 
         noEsc.push(ename === 'style' || ename === 'script' || ename === 'pre' || ename === 'code' || ename === 'samp')
 
+        const shouldStartWithNewLine = !onlyChildIsText && !noEsc.includes(true);
+        const shouldEndWithNewline = !onlyChildIsText;
+
         for (var i = 0; i < node.childNodes.length; i++) {
-          out += dumpNode(node.childNodes[i], options, noEsc, indentLevel + 1)
+          out += dumpNode(node.childNodes[i], options, noEsc, indentLevel + 1, shouldStartWithNewLine)
         }
 
         noEsc.pop()
 
-        if (!options.inlineElements.includes(ename) && lastWasBlock) {
+        if (shouldEndWithNewline) {
           out += '\n' + '  '.repeat(indentLevel)
         }
 
         out += '</' + ename + '>'
 
-        out += (ename == 'html') ? '\n': ''
+        out += (ename == 'html') ? '\n' : ''
       }
     }
   } else if (node.nodeType === 8 && 'skipNodeComment' in options && !options.skipNodeComment) {
     // FIXME: If comments are not tabbed in source, a new line is not prepended
     out += '\n\
 <!--' + node.nodeValue + '-->'
-  } else if (node.nodeType === 3 || node.nodeType === 4) {
+  } else if (node.nodeType === Node.TEXT_NODE || node.nodeType === Node.CDATA_SECTION_NODE) {
     let nl = node.nodeValue
+
     // XXX: Remove new lines which were added after DOM ready
     // .replace(/\n+$/, '')
 
     //FIXME: This section needs a lot of testing. If/when domToString is replaced with XML serializer and DOM sanitizer, this section can be removed.
 
-    nl = nl.replace(/&/g, '&amp;')
+    nl = nl?.replace(/&/g, '&amp;')
     if (noEsc.includes(true)) {
       //Skip style blocks. But do we really want this?
       if (!(node.parentNode && node.parentNode.nodeName.toLowerCase() === 'style') &&
         //Skip data blocks
         !(node.parentNode && node.parentNode.nodeName.toLowerCase() === 'script' && node.parentNode.getAttribute('type') && options.skipEscapingDataBlockTypes.includes(node.parentNode.getAttribute('type').trim()))) {
-          nl = nl.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        nl = nl.replace(/</g, '&lt;').replace(/>/g, '&gt;')
       }
     }
     else { //node is not a child text node of style, script, pre, code, or samp, e.g. catches `<p> < > </p>`.
@@ -188,14 +197,15 @@ function dumpNode (node, options, noEsc, indentLevel = 0) {
     //Clean double escaped entities, e.g., &amp;amp; -> &amp;, &amp;lt; -> &lt;
     nl = cleanEscapeCharacters(nl)
     out += nl
-  } else {
+  }
+  else {
     console.warn('Warning; Cannot handle serialising nodes of type: ' + node.nodeType)
   }
 
   return out
 }
 
-function getDoctype () {
+function getDoctype() {
   /* Get DOCTYPE from http://stackoverflow.com/a/10162353 */
   var node = document.doctype
   var doctype = ''
@@ -218,7 +228,7 @@ function getFragmentOfNodesChildren(node) {
   return fragment;
 }
 
-function normaliseContent (node) {
+function normaliseContent(node) {
   let newContent = node;
 
   let element = document.createElement('div');
@@ -283,7 +293,7 @@ function normaliseContent (node) {
   return getFragmentOfNodesChildren(element);
 }
 
-function getDocument (cn, options) {
+function getDocument(cn, options) {
   let node = cn || document.documentElement;
 
   if (cn instanceof Document) {
@@ -296,7 +306,7 @@ function getDocument (cn, options) {
 
   //Literally normalising the HTML
   node = normaliseContent(node);
-// console.log(stringFromFragment(node.firstChild));
+  // console.log(stringFromFragment(node.firstChild));
 
   //In case `node` type is DocumentFragment
   const div = document.createElement('div');
@@ -305,22 +315,22 @@ function getDocument (cn, options) {
   // console.log(node.outerHTML + '<-- node.outerHTML BE NO LINK BREAK HERE-->')
 
   let htmlString = div.getHTML();
-// console.log(htmlString);
+  // console.log(htmlString);
 
-//Sanitize body
+  //Sanitize body
   const nodeDocument = domSanitizeHTMLBody(htmlString);
   // htmlString = nodeDocument.documentElement.outerHTML;
-// console.log(htmlString)
+  console.log(htmlString)
   //Normalise and HTMLise
   htmlString = domToString(nodeDocument.documentElement, options);
-// console.log(htmlString)
+  console.log(htmlString)
 
   //Prepend doctype
   let doctype = (nodeDocument.constructor.name === 'SVGSVGElement') ? '<?xml version="1.0" encoding="utf-8"?>' : getDoctype();
   doctype = (doctype.length > 0) ? doctype + '\n' : '';
   htmlString = doctype + htmlString;
 
-// console.log(htmlString)
+  // console.log(htmlString)
 
   //Format
   // htmlString = beautify.html(htmlString, Config.BeautifyOptions);
@@ -337,16 +347,71 @@ function domSanitizeHTMLBody(htmlString) {
 
   const bodyHTML = nodeDocument.body.getHTML();
   // .trim();
-// console.log(bodyHTML + '<--bodyHTML THERE SHOULD BE NO LINE BREAK BEFORE THIS-->');
+  // console.log(bodyHTML + '<--bodyHTML THERE SHOULD BE NO LINE BREAK BEFORE THIS-->');
 
   const bodyChildrenSanitized = domSanitize(bodyHTML);
   // .trim();
-// console.log(bodyChildrenSanitized + '<--domSanitize(bodyHTML) THERE SHOULD BE NO LINE BREAK BEFORE THIS-->');
+  // console.log(bodyChildrenSanitized + '<--domSanitize(bodyHTML) THERE SHOULD BE NO LINE BREAK BEFORE THIS-->');
 
   nodeDocument.body.setHTMLUnsafe(bodyChildrenSanitized);
-// console.log(nodeDocument.documentElement.outerHTML + '<--bodyChildrenSanitized THERE SHOULD BE NO LINE BREAK BEFORE THIS-->');
+  // console.log(nodeDocument.documentElement.outerHTML + '<--bodyChildrenSanitized THERE SHOULD BE NO LINE BREAK BEFORE THIS-->');
   return nodeDocument;
 }
+
+// function getDocumentNodeFromString(data, options = {}) {
+//   options.contentType = options.contentType || 'text/html';
+
+//   if (options.contentType === 'text/xml') {
+//     data = data.replace(/<!DOCTYPE[^>]*>/i, '');
+//   }
+
+//   const parser = new DOMParser();
+//   const parsedDoc = parser.parseFromString(data, options.contentType);
+
+//   const isOnlyNewlineAndWhitespace = (text) => /^\s*$/.test(text);
+
+//   ['html', 'body'].forEach(tag => {
+//     const el = parsedDoc.getElementsByTagName(tag)[0];
+//     if (!el) return;
+//     const toRemove = [];
+
+//     const children = Array.from(el.childNodes);
+
+//     for (let i = 0; i < children.length; i++) {
+//       const node = children[i];
+//       const next = children[i + 1];
+
+//       if (
+//         node.nodeType === Node.TEXT_NODE &&
+//         isOnlyNewlineAndWhitespace(node.nodeValue)
+//       ) {
+//         const isLastBeforeClose =
+//           next === undefined &&
+//           el.nodeName.toLowerCase() === 'body' &&
+//           node.nodeValue === '\n';
+//         if (!isLastBeforeClose) {
+//           toRemove.push(node);
+//         }
+//       }
+//     }
+
+//     toRemove.forEach(n => el.removeChild(n));
+//   });
+//   return parsedDoc;
+// }
+
+// function getDocumentNodeFromString(data, options = {}) {
+//   options['contentType'] = options.contentType || 'text/html';
+
+//   if (options.contentType === 'text/xml') {
+//     data = data.replace(/<!DOCTYPE[^>]*>/i, '');
+//   }
+
+//   const parser = new DOMParser();
+//   const parsedDoc = parser.parseFromString(data, options.contentType);
+
+//   return parsedDoc;
+// }
 
 function getDocumentNodeFromString(data, options = {}) {
   options['contentType'] = options.contentType || 'text/html';
@@ -358,7 +423,6 @@ function getDocumentNodeFromString(data, options = {}) {
   const parser = new DOMParser();
   const parsedDoc = parser.parseFromString(data, options.contentType);
 
-  // Strip whitespace-only text nodes outside sensitive tags
   const walker = document.createTreeWalker(
     parsedDoc,
     NodeFilter.SHOW_TEXT,
@@ -366,7 +430,12 @@ function getDocumentNodeFromString(data, options = {}) {
       acceptNode: (node) => {
         const tag = node.parentNode?.nodeName?.toLowerCase();
         if (['pre', 'code', 'textarea'].includes(tag)) return NodeFilter.FILTER_REJECT;
-        return /^\s*$/.test(node.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+
+        if (/^[ \t\r\n]*\r?\n[ \t\r\n]*$/.test(node.nodeValue)) {
+          return NodeFilter.FILTER_ACCEPT;
+        }
+
+        return NodeFilter.FILTER_REJECT;
       }
     }
   );
@@ -377,7 +446,6 @@ function getDocumentNodeFromString(data, options = {}) {
 
   return parsedDoc;
 }
-
 
 function getDocumentContentNode(node) {
   if (node instanceof Document) {
@@ -448,8 +516,8 @@ function createFeedXML(feed, options) {
       var isAbsolute = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(p3); // Check if the value is an absolute URL
       return `${p1}="${isAbsolute ? p3 : (p3.startsWith('/') ? origin : url) + '/' + p3}"`;
     });
-// console.log(description)
-    
+    // console.log(description)
+
     description = escapeCharacters(fixBrokenHTML(description));
 
     var published = '';
@@ -508,8 +576,8 @@ function createFeedXML(feed, options) {
         published = 'updated' in feed.items[i] && typeof feed.items[i].updated !== 'undefined'
           ? '<pubDate>' + new Date(feed.items[i].updated).toUTCString() + '</pubDate>'
           : 'published' in feed.items[i] && typeof feed.items[i].published !== 'undefined'
-          ? '<pubDate>' + new Date(feed.items[i].published).toUTCString() + '</pubDate>'
-          : '';
+            ? '<pubDate>' + new Date(feed.items[i].published).toUTCString() + '</pubDate>'
+            : '';
 
         description = ('description' in feed.items[i]) ? '<description>' + description + '</description>' : '';
 
@@ -581,8 +649,8 @@ function createFeedXML(feed, options) {
       }
 
       description = 'description' in feed
-          ? '<description>' + feed.description + '</description>'
-          : 'title' in feed
+        ? '<description>' + feed.description + '</description>'
+        : 'title' in feed
           ? '<description>' + feed.title + '</description>'
           : '<description>' + feed.self + '</description>';
 
@@ -622,14 +690,14 @@ function createActivityHTML(o) {
   var types = '<dt>Types</dt>'
 
   o.type.forEach(function (t) {
-    types += '<dd><a about="" href="' + Config.Prefixes[t.split(':')[0]] + t.split(':')[1] + '" typeof="'+ t +'">' + t.split(':')[1] + '</a></dd>'
+    types += '<dd><a about="" href="' + Config.Prefixes[t.split(':')[0]] + t.split(':')[1] + '" typeof="' + t + '">' + t.split(':')[1] + '</a></dd>'
   })
 
   var asObjectTypes = ''
   if ('object' in o && 'objectTypes' in o && o.objectTypes.length > 0) {
     asObjectTypes = '<dl><dt>Types</dt>'
     o.objectTypes.forEach(t => {
-      asObjectTypes += '<dd><a about="' + o.object + '" href="' + t + '" typeof="'+ t +'">' + t + '</a></dd>'
+      asObjectTypes += '<dd><a about="' + o.object + '" href="' + t + '" typeof="' + t + '">' + t + '</a></dd>'
     })
     asObjectTypes += '</dl>'
   }
@@ -648,7 +716,7 @@ function createActivityHTML(o) {
   var astarget = ('target' in o && o.target.length > 0) ? '<dt>Target</dt><dd><a href="' + o.target + '" property="as:target">' + o.target + '</a></dd>' : ''
 
   var datetime = getDateTimeISO()
-  var asupdated = '<dt>Updated</dt><dd><time datetime="' + datetime + '" datatype="xsd:dateTime" property="as:updated" content="' + datetime + '">' + datetime.substr(0,19).replace('T', ' ') + '</time></dd>'
+  var asupdated = '<dt>Updated</dt><dd><time datetime="' + datetime + '" datatype="xsd:dateTime" property="as:updated" content="' + datetime + '">' + datetime.substr(0, 19).replace('T', ' ') + '</time></dd>'
 
   var assummary = ('summary' in o && o.summary.length > 0) ? '<dt>Summary</dt><dd property="as:summary" datatype="rdf:HTML">' + o.summary + '</dd>' : ''
 
@@ -678,24 +746,24 @@ function createActivityHTML(o) {
 
   // TODO: Come up with a better title. reuse `types` e.g., Activity Created, Announced..
   var title = 'Notification'
-  if(types.indexOf('as:Announce') > -1){
+  if (types.indexOf('as:Announce') > -1) {
     title += ': Announced'
-  } else if (types.indexOf('as:Create') > -1){
+  } else if (types.indexOf('as:Create') > -1) {
     title += ': Created'
-  } else if (types.indexOf('as:Like') > -1){
+  } else if (types.indexOf('as:Like') > -1) {
     title += ': Liked'
-  } else if (types.indexOf('as:Dislike') > -1){
+  } else if (types.indexOf('as:Dislike') > -1) {
     title += ': Disliked'
-  } else if (types.indexOf('as:Add') > -1){
+  } else if (types.indexOf('as:Add') > -1) {
     title += ': Added'
   }
 
-  var data = '<article'+prefixes+'>\n\
+  var data = '<article' + prefixes + '>\n\
   <h1>' + title + '</h1>\n\
   <section>\n\
     <dl about="">\n\
 ' + dl +
-'    </dl>\n\
+    '    </dl>\n\
   </section>\n\
   <section>\n\
 ' + statements + '\n\
@@ -707,7 +775,7 @@ function createActivityHTML(o) {
 
 
 function createNoteDataHTML(n) {
-// console.log(n);
+  // console.log(n);
   var created = '';
   var lang = '', xmlLang = '', language = '';
   var license = '';
@@ -733,7 +801,7 @@ function createNoteDataHTML(n) {
 
   motivatedByIRI = getPrefixedNameFromIRI(motivatedByIRI);
 
-  switch(motivatedByIRI) {
+  switch (motivatedByIRI) {
     case 'oa:replying': default:
       motivatedByIRI = 'oa:replying';
       motivatedByLabel = 'replies';
@@ -791,13 +859,13 @@ function createNoteDataHTML(n) {
       break;
   }
 
-  switch(n.mode) {
+  switch (n.mode) {
     default: case 'read':
       hX = 3;
       if ('creator' in n && 'iri' in n.creator && n.creator.iri == Config.User.IRI) {
-        buttonDelete = '<button aria-label="Delete item" class="delete do" title="Delete item">' + Icon[".fas.fa-trash-alt"] + '</button>' ;
+        buttonDelete = '<button aria-label="Delete item" class="delete do" title="Delete item">' + Icon[".fas.fa-trash-alt"] + '</button>';
       }
-      articleClass = (motivatedByIRI == 'oa:commenting') ? '': ' class="do"';
+      articleClass = (motivatedByIRI == 'oa:commenting') ? '' : ' class="do"';
       aAbout = ('iri' in n) ? n.iri : aAbout;
       break;
     case 'write':
@@ -812,13 +880,13 @@ function createNoteDataHTML(n) {
   var creatorIRI = '#' + generateAttributeId();
 
   if ('creator' in n) {
-    if('iri' in n.creator) {
+    if ('iri' in n.creator) {
       creatorIRI = n.creator.iri;
     }
 
     creatorName = creatorIRI;
 
-    if('name' in n.creator) {
+    if ('name' in n.creator) {
       creatorName = n.creator.name;
       creatorNameIRI = '<span about="' + creatorIRI + '" property="schema:name">' + creatorName + '</span>';
     }
@@ -852,53 +920,53 @@ function createNoteDataHTML(n) {
     inbox = '<dl class="inbox"><dt>Notifications Inbox</dt><dd><a href="' + n.inbox + '" rel="ldp:inbox">' + n.inbox + '</a></dd></dl>';
   }
 
-  if ('datetime' in n && typeof n.datetime !== 'undefined'){
-    var time = '<time datetime="' + n.datetime + '" datatype="xsd:dateTime" property="dcterms:created" content="' + n.datetime + '">' + n.datetime.substr(0,19).replace('T', ' ') + '</time>';
+  if ('datetime' in n && typeof n.datetime !== 'undefined') {
+    var time = '<time datetime="' + n.datetime + '" datatype="xsd:dateTime" property="dcterms:created" content="' + n.datetime + '">' + n.datetime.substr(0, 19).replace('T', ' ') + '</time>';
     var timeLinked = ('iri' in n) ? '<a href="' + n.iri + '">' + time + '</a>' : time;
     created = '<dl class="created"><dt>Created</dt><dd>' + timeLinked + '</dd></dl>';
   }
 
   if (n.language) {
-    language = createLanguageHTML(n.language, {property:'dcterms:language', label:'Language'});
-    lang = ' lang="' +  n.language + '"';
-    xmlLang = ' xml:lang="' +  n.language + '"';
+    language = createLanguageHTML(n.language, { property: 'dcterms:language', label: 'Language' });
+    lang = ' lang="' + n.language + '"';
+    xmlLang = ' xml:lang="' + n.language + '"';
   }
   if (n.license) {
-    license = createLicenseHTML(n.license, {rel:'schema:license', label:'License'});
+    license = createLicenseHTML(n.license, { rel: 'schema:license', label: 'License' });
   }
   if (n.rights) {
-    rights = createRightsHTML(n.rights, {rel:'dcterms:rights', label:'Rights'});
+    rights = createRightsHTML(n.rights, { rel: 'dcterms:rights', label: 'Rights' });
   }
 
   //TODO: Differentiate language, license, rights on Annotation from Body
-  switch(n.type) {
+  switch (n.type) {
     case 'comment': case 'note': case 'bookmark': case 'approve': case 'disapprove': case 'specificity':
       if (typeof n.target !== 'undefined' || typeof n.inReplyTo !== 'undefined') { //note, annotation, reply
         //FIXME: Could resourceIRI be a fragment URI or *make sure* it is the document URL without the fragment?
         //TODO: Use n.target.iri?
-// console.log(n)
+        // console.log(n)
         if (typeof n.body !== 'undefined') {
           var tagsArray = [];
 
           n.body = Array.isArray(n.body) ? n.body : [n.body];
           n.body.forEach(bodyItem => {
-            var bodyLanguage = createLanguageHTML(bodyItem.language, {property:'dcterms:language', label:'Language'}) || language;
-            var bodyLicense = createLicenseHTML(bodyItem.license, {rel:'schema:license', label:'License'}) || license;
-            var bodyRights = createRightsHTML(bodyItem.rights, {rel:'dcterms:rights', label:'Rights'}) || rights;
+            var bodyLanguage = createLanguageHTML(bodyItem.language, { property: 'dcterms:language', label: 'Language' }) || language;
+            var bodyLicense = createLicenseHTML(bodyItem.license, { rel: 'schema:license', label: 'License' }) || license;
+            var bodyRights = createRightsHTML(bodyItem.rights, { rel: 'dcterms:rights', label: 'Rights' }) || rights;
             var bodyValue = bodyItem.value || bodyAltLabel;
             // var bodyValue = bodyItem.value || '';
             // var bodyFormat = bodyItem.format ? bodyItem.format : 'rdf:HTML';
 
             if (bodyItem.purpose) {
               if (bodyItem.purpose == "describing" || bodyItem.purpose == ns.oa.describing.value) {
-                body += '<section id="note-' + n.id + '" rel="oa:hasBody" resource="#note-' + n.id + '"><h' + (hX+1) + ' property="schema:name" rel="oa:hasPurpose" resource="oa:describing">Note</h' + (hX+1) + '>' + bodyLanguage + bodyLicense + bodyRights + '<div datatype="rdf:HTML"' + lang + ' property="rdf:value schema:description" resource="#note-' + n.id + '" typeof="oa:TextualBody"' + xmlLang + '>' + bodyValue + '</div></section>';
+                body += '<section id="note-' + n.id + '" rel="oa:hasBody" resource="#note-' + n.id + '"><h' + (hX + 1) + ' property="schema:name" rel="oa:hasPurpose" resource="oa:describing">Note</h' + (hX + 1) + '>' + bodyLanguage + bodyLicense + bodyRights + '<div datatype="rdf:HTML"' + lang + ' property="rdf:value schema:description" resource="#note-' + n.id + '" typeof="oa:TextualBody"' + xmlLang + '>' + bodyValue + '</div></section>';
               }
               if (bodyItem.purpose == "tagging" || bodyItem.purpose == ns.oa.tagging.value) {
                 tagsArray.push(bodyValue);
               }
             }
             else {
-              body += '<section id="note-' + n.id + '" rel="oa:hasBody" resource="#note-' + n.id + '"><h' + (hX+1) + ' property="schema:name">Note</h' + (hX+1) + '>' + bodyLanguage + bodyLicense + bodyRights + '<div datatype="rdf:HTML"' + lang + ' property="rdf:value schema:description" resource="#note-' + n.id + '" typeof="oa:TextualBody"' + xmlLang + '>' + bodyValue + '</div></section>';
+              body += '<section id="note-' + n.id + '" rel="oa:hasBody" resource="#note-' + n.id + '"><h' + (hX + 1) + ' property="schema:name">Note</h' + (hX + 1) + '>' + bodyLanguage + bodyLicense + bodyRights + '<div datatype="rdf:HTML"' + lang + ' property="rdf:value schema:description" resource="#note-' + n.id + '" typeof="oa:TextualBody"' + xmlLang + '>' + bodyValue + '</div></section>';
             }
           });
 
@@ -916,7 +984,7 @@ function createNoteDataHTML(n) {
         else if (n.bodyValue !== 'undefined') {
           body += '<p property="oa:bodyValue">' + n.bodyValue + '</p>';
         }
-// console.log(body)
+        // console.log(body)
         var targetIRI = '';
         var targetRelation = 'oa:hasTarget';
         if (typeof n.target !== 'undefined' && 'iri' in n.target) {
@@ -930,7 +998,7 @@ function createNoteDataHTML(n) {
             annotationTextSelector = '<div rel="oa:hasSelector" resource="#fragment-selector" typeof="oa:FragmentSelector"><dl class="conformsto"><dt>Fragment selector conforms to</dt><dd><a content="' + targetIRIFragment + '" lang="" property="rdf:value" rel="dcterms:conformsTo" href="https://tools.ietf.org/html/rfc3987" xml:lang="">RFC 3987</a></dd></dl><dl rel="oa:refinedBy" resource="#text-quote-selector" typeof="oa:TextQuoteSelector"><dt>Refined by</dt><dd><span lang="' + selectionLanguage + '" property="oa:prefix" xml:lang="' + selectionLanguage + '">' + n.target.selector.prefix + '</span><mark lang="' + selectionLanguage + '" property="oa:exact" xml:lang="' + selectionLanguage + '">' + n.target.selector.exact + '</mark><span lang="' + selectionLanguage + '" property="oa:suffix" xml:lang="' + selectionLanguage + '">' + n.target.selector.suffix + '</span></dd></dl></div>';
           }
         }
-        else if(typeof n.inReplyTo !== 'undefined' && 'iri' in n.inReplyTo) {
+        else if (typeof n.inReplyTo !== 'undefined' && 'iri' in n.inReplyTo) {
           targetIRI = n.inReplyTo.iri;
           targetRelation = ('rel' in n.inReplyTo) ? n.inReplyTo.rel : 'as:inReplyTo';
           // TODO: pass document title and maybe author so they can be displayed on the reply too.
@@ -938,12 +1006,12 @@ function createNoteDataHTML(n) {
 
         hasTarget = '<a href="' + targetIRI + '" rel="' + targetRelation + '">' + targetLabel + '</a>';
         if (typeof n.target !== 'undefined' && typeof n.target.source !== 'undefined') {
-          hasTarget += ' (<a about="' + n.target.iri + '" href="' + n.target.source +'" rel="oa:hasSource" typeof="oa:SpecificResource">part of</a>)';
+          hasTarget += ' (<a about="' + n.target.iri + '" href="' + n.target.source + '" rel="oa:hasSource" typeof="oa:SpecificResource">part of</a>)';
         }
 
-        var targetLanguage = (typeof n.target !== 'undefined' && 'language' in n.target && n.target.language.length) ? '<dl><dt>Language</dt><dd><span lang="" property="dcterms:language" xml:lang="">' + n.target.language + '</span></dd></dl>': '';
+        var targetLanguage = (typeof n.target !== 'undefined' && 'language' in n.target && n.target.language.length) ? '<dl><dt>Language</dt><dd><span lang="" property="dcterms:language" xml:lang="">' + n.target.language + '</span></dd></dl>' : '';
 
-        target ='<dl class="target"><dt>' + hasTarget + '</dt>';
+        target = '<dl class="target"><dt>' + hasTarget + '</dt>';
         if (typeof n.target !== 'undefined' && typeof n.target.selector !== 'undefined') {
           target += '<dd><blockquote about="' + targetIRI + '" cite="' + targetIRI + '">' + targetLanguage + annotationTextSelector + '</blockquote></dd>';
         }
@@ -953,7 +1021,7 @@ function createNoteDataHTML(n) {
 
         var canonical = '<dl class="canonical"><dt>Canonical</dt><dd rel="oa:canonical" resource="' + canonicalId + '">' + canonicalId + '</dd></dl>';
 
-        note = '<article about="' + aAbout + '" id="' + n.id + '" typeof="oa:Annotation' + noteType + '"' + aPrefix + articleClass + '>'+buttonDelete+'\n\
+        note = '<article about="' + aAbout + '" id="' + n.id + '" typeof="oa:Annotation' + noteType + '"' + aPrefix + articleClass + '>' + buttonDelete + '\n\
 ' + heading + '\n\
 ' + authors + '\n\
 ' + created + '\n\
@@ -974,7 +1042,7 @@ function createNoteDataHTML(n) {
       body = (bodyValue) ? ((citationURL) ? ', ' + bodyValue : bodyValue) : '';
 
       note = '\n\
-<dl about="#' + n.id +'" id="' + n.id +'" typeof="oa:Annotation">\n\
+<dl about="#' + n.id + '" id="' + n.id + '" typeof="oa:Annotation">\n\
 <dt><a href="#' + n.refId + '" rel="oa:hasTarget">' + n.refLabel + '</a><span rel="oa:motivation" resource="' + motivatedByIRI + '"></span></dt>\n\
 <dd rel="oa:hasBody" resource="#n-' + n.id + '"><div datatype="rdf:HTML" property="rdf:value" resource="#n-' + n.id + '" typeof="oa:TextualBody">' + citationURL + body + '</div></dd>\n\
 </dl>\n\
@@ -991,7 +1059,7 @@ function createNoteDataHTML(n) {
       var citation = '\n\
 <dl about="' + n.citation.citingEntity + '">\n\
 <dt>Cited by</dt><dd><a href="' + n.citation.citingEntity + '">' + citingEntityLabel + '</a></dd>\n\
-<dt>Citation type</dt><dd><a href="' + n.citation.citationCharacterization + '">' + citationCharacterizationLabel+ '</a></dd>\n\
+<dt>Citation type</dt><dd><a href="' + n.citation.citationCharacterization + '">' + citationCharacterizationLabel + '</a></dd>\n\
 <dt>Cites</dt><dd><a href="' + n.citation.citedEntity + '" rel="' + n.citation.citationCharacterization + '">' + citedEntityLabel + '</a></dd>\n\
 </dl>\n\
 ';
@@ -1080,7 +1148,7 @@ function showActionMessage(node, message, options = {}) {
   message['type'] = ('type' in message) ? message.type : 'info';
 
   const id = generateAttributeId();
-  const messageItem = domSanitize('<li id="' + id  + '" class="' + message.type + '">' + buttonIcons[message.type].icon + ' ' + message.content + '</li>');
+  const messageItem = domSanitize('<li id="' + id + '" class="' + message.type + '">' + buttonIcons[message.type].icon + ' ' + message.content + '</li>');
 
   let aside = node.querySelector('#document-action-message');
   if (!aside) {
@@ -1130,7 +1198,7 @@ function showActionMessage(node, message, options = {}) {
   return id;
 }
 
-function hasNonWhitespaceText (node) {
+function hasNonWhitespaceText(node) {
   return !!node.textContent.trim();
 }
 
@@ -1144,7 +1212,7 @@ function insertDocumentLevelHTML(rootNode, h, options) {
   options = options || {};
   h = domSanitize(h);
 
-  options['id'] = ('id' in options) ? options.id : Config.DocumentItems[Config.DocumentItems.length-1];
+  options['id'] = ('id' in options) ? options.id : Config.DocumentItems[Config.DocumentItems.length - 1];
 
   var item = Config.DocumentItems.indexOf(options.id);
 
@@ -1156,8 +1224,8 @@ function insertDocumentLevelHTML(rootNode, h, options) {
   h = '\n\
 ' + h;
 
-  if(item > -1) {
-    for(var i = item; i >= 0; i--) {
+  if (item > -1) {
+    for (var i = item; i >= 0; i--) {
       var node = rootNode.querySelector('#' + Config.DocumentItems[i]);
 
       if (node) {
@@ -1197,13 +1265,13 @@ function setDate(rootNode, options) {
 
   var node = ('property' in options) ? rootNode.querySelector('#' + id + ' [property="' + options.property + '"]') : rootNode.querySelector('#' + id + ' time');
 
-  if(node) {
+  if (node) {
     var datetime = ('datetime' in options) ? options.datetime.toISOString() : getDateTimeISO();
 
-    if(node.getAttribute('datetime')) {
+    if (node.getAttribute('datetime')) {
       node.setAttribute('datetime', datetime);
     }
-    if(node.getAttribute('content')) {
+    if (node.getAttribute('content')) {
       node.setAttribute('content', datetime);
     }
     node.textContent = datetime.substr(0, datetime.indexOf('T'));
@@ -1231,7 +1299,7 @@ function createDateHTML(options) {
     ? '<time content="' + datetime + '" datatype="xsd:dateTime" datetime="' + datetime + '" property="' + options.property + '">' + datetimeLabel + '</time>'
     : '<time datetime="' + datetime + '">' + datetimeLabel + '</time>';
 
-  var date = '        <dl'+c+id+'>\n\
+  var date = '        <dl' + c + id + '>\n\
       <dt>' + title + '</dt>\n\
       <dd>' + time + '</dd>\n\
     </dl>\n\
@@ -1248,7 +1316,7 @@ function setEditSelections(options) {
   }
 
   Config.ContributorRoles.forEach(contributorRole => {
-// console.log(contributorRole)
+    // console.log(contributorRole)
     var contributorNodeId = 'document-' + contributorRole + 's';
     var contributorNode = document.getElementById(contributorNodeId);
     if (contributorNode) {
@@ -1286,7 +1354,7 @@ function setEditSelections(options) {
     var dl = dLangS.closest('#' + documentLanguage);
     dl.removeAttribute('contenteditable');
 
-    if(languageValue == '') {
+    if (languageValue == '') {
       dl.parentNode.removeChild(dl);
     }
     else {
@@ -1308,14 +1376,14 @@ function setEditSelections(options) {
     dl = dLS.closest('#' + documentLicense);
     dl.removeAttribute('contenteditable');
 
-    if(licenseIRI == '') {
+    if (licenseIRI == '') {
       dl.parentNode.removeChild(dl);
     }
     else {
       dl.removeAttribute('class');
       dd = dLS.closest('dd');
       dd.parentNode.removeChild(dd);
-      dd = '<dd><a href="' + licenseIRI+ '" rel="schema:license" title="' + Config.License[licenseIRI].description + '">' + Config.License[licenseIRI].name + '</a></dd>';
+      dd = '<dd><a href="' + licenseIRI + '" rel="schema:license" title="' + Config.License[licenseIRI].description + '">' + Config.License[licenseIRI].name + '</a></dd>';
       dl.insertAdjacentHTML('beforeend', dd);
     }
   }
@@ -1330,14 +1398,14 @@ function setEditSelections(options) {
     dl = dTS.closest('#' + documentType);
     dl.removeAttribute('contenteditable');
 
-    if(typeIRI == '') {
+    if (typeIRI == '') {
       dl.parentNode.removeChild(dl);
     }
     else {
       dl.removeAttribute('class');
       dd = dTS.closest('dd');
       dd.parentNode.removeChild(dd);
-      dd = '<dd><a href="' + typeIRI+ '" rel="rdf:type">' + Config.ResourceType[typeIRI].name + '</a></dd>';
+      dd = '<dd><a href="' + typeIRI + '" rel="rdf:type">' + Config.ResourceType[typeIRI].name + '</a></dd>';
       dl.insertAdjacentHTML('beforeend', dd);
     }
   }
@@ -1352,14 +1420,14 @@ function setEditSelections(options) {
     dl = dSS.closest('#' + documentStatus);
     dl.removeAttribute('contenteditable');
 
-    if(statusIRI == '') {
+    if (statusIRI == '') {
       dl.parentNode.removeChild(dl);
     }
     else {
       dl.removeAttribute('class');
       dd = dSS.closest('dd');
       dd.parentNode.removeChild(dd);
-      dd = '<dd prefix="pso: http://purl.org/spar/pso/" rel="pso:holdsStatusInTime" resource="#' + generateAttributeId() + '"><span rel="pso:withStatus" resource="' + statusIRI  + '" typeof="pso:PublicationStatus">' + Config.PublicationStatus[statusIRI].name + '</span></dd>';
+      dd = '<dd prefix="pso: http://purl.org/spar/pso/" rel="pso:holdsStatusInTime" resource="#' + generateAttributeId() + '"><span rel="pso:withStatus" resource="' + statusIRI + '" typeof="pso:PublicationStatus">' + Config.PublicationStatus[statusIRI].name + '</span></dd>';
 
       dl.insertAdjacentHTML('beforeend', dd);
 
@@ -1378,14 +1446,14 @@ function setEditSelections(options) {
     dl = dTSS.closest('#' + documentTestSuite);
     dl.removeAttribute('contenteditable');
 
-    if(testSuiteIRI == '') {
+    if (testSuiteIRI == '') {
       dl.parentNode.removeChild(dl);
     }
     else {
       dl.removeAttribute('class');
       dd = dTSS.closest('dd');
       dd.parentNode.removeChild(dd);
-      dd = '<dd><a href="' + testSuiteIRI+ '" rel="spec:testSuite">' + testSuiteIRI + '</a></dd>';
+      dd = '<dd><a href="' + testSuiteIRI + '" rel="spec:testSuite">' + testSuiteIRI + '</a></dd>';
       dl.insertAdjacentHTML('beforeend', dd);
     }
   }
@@ -1399,14 +1467,14 @@ function setEditSelections(options) {
     dl = dIS.closest('#' + documentInbox);
     dl.removeAttribute('contenteditable');
 
-    if(inboxIRI == '') {
+    if (inboxIRI == '') {
       dl.parentNode.removeChild(dl);
     }
     else {
       dl.removeAttribute('class');
       dd = dIS.closest('dd');
       dd.parentNode.removeChild(dd);
-      dd = '<dd><a href="' + inboxIRI+ '" rel="ldp:inbox">' + inboxIRI + '</a></dd>';
+      dd = '<dd><a href="' + inboxIRI + '" rel="ldp:inbox">' + inboxIRI + '</a></dd>';
       dl.insertAdjacentHTML('beforeend', dd);
     }
   }
@@ -1420,14 +1488,14 @@ function setEditSelections(options) {
     dl = dIRTS.closest('#' + documentInReplyTo);
     dl.removeAttribute('contenteditable');
 
-    if(inReplyToIRI == '') {
+    if (inReplyToIRI == '') {
       dl.parentNode.removeChild(dl);
     }
     else {
       dl.removeAttribute('class');
       dd = dIRTS.closest('dd');
       dd.parentNode.removeChild(dd);
-      dd = '<dd><a href="' + inReplyToIRI+ '" rel="as:inReplyTo">' + inReplyToIRI + '</a></dd>';
+      dd = '<dd><a href="' + inReplyToIRI + '" rel="as:inReplyTo">' + inReplyToIRI + '</a></dd>';
       dl.insertAdjacentHTML('beforeend', dd);
     }
   }
@@ -1435,7 +1503,7 @@ function setEditSelections(options) {
   getResourceInfo();
 }
 
-function getRDFaPrefixHTML(prefixes){
+function getRDFaPrefixHTML(prefixes) {
   return Object.keys(prefixes).map(i => { return i + ': ' + prefixes[i]; }).join(' ');
 }
 
@@ -1483,16 +1551,16 @@ function setDocumentRelation(rootNode, data, options) {
 
 function showTimeMap(node, url) {
   url = url || Config.OriginalResourceInfo['timemap']
-  if(!url) { return; }
+  if (!url) { return; }
 
   var elementId = 'memento-document';
 
   getResourceGraph(url)
     .then(g => {
-// console.log(g)
+      // console.log(g)
       if (!node) {
         node = document.getElementById(elementId);
-        if(!node) {
+        if (!node) {
           document.body.appendChild(fragmentFromString('<aside id="' + elementId + '" class="do on"><h2>Memento</h2>' + Config.Button.Close + '<dl><dt>TimeMap</dt><dd><a href="' + url + '">' + url + '</a></dd></dl></aside>'));
           node = document.getElementById(elementId);
         }
@@ -1528,7 +1596,7 @@ function showTimeMap(node, url) {
       });
     })
     .catch(error => {
-// console.error(error)
+      // console.error(error)
     });
 }
 
@@ -1552,7 +1620,7 @@ function getDocumentStatusHTML(rootNode, options) {
   var typeLabel = '', typeOf = '';
   var definitionTitle;
 
-  switch(options.type) {
+  switch (options.type) {
     default:
       definitionTitle = 'Document Status';
       break;
@@ -1577,23 +1645,23 @@ function getDocumentStatusHTML(rootNode, options) {
   //TODO: s/update/append
   switch (options.mode) {
     case 'create': default:
-      s = '<dl'+c+id+'><dt>' + definitionTitle + '</dt>' + dd + '</dl>';
+      s = '<dl' + c + id + '><dt>' + definitionTitle + '</dt>' + dd + '</dl>';
       break;
 
     case 'update':
-      if(dl) {
+      if (dl) {
         var clone = dl.cloneNode(true);
         dl.parentNode.removeChild(dl);
         clone.insertAdjacentHTML('beforeend', dd);
         s = clone.outerHTML;
       }
-      else  {
-        s = '<dl'+c+id+'><dt>' + definitionTitle + '</dt>' + dd + '</dl>';
+      else {
+        s = '<dl' + c + id + '><dt>' + definitionTitle + '</dt>' + dd + '</dl>';
       }
       break;
 
     case 'delete':
-      if(dl) {
+      if (dl) {
         clone = dl.cloneNode(true);
         dl.parentNode.removeChild(dl);
 
@@ -1610,7 +1678,7 @@ function getDocumentStatusHTML(rootNode, options) {
       break;
   }
 
-// console.log(s);
+  // console.log(s);
   return s;
 }
 
@@ -1672,16 +1740,16 @@ function eventButtonInfo() {
 
       // console.log(title) 
       //TODO: Possibly change reuse of Config.Resource to Cache API or something
-      var getInfoGraph = function() {
+      var getInfoGraph = function () {
         if (Config.Resource[url]) {
           return Promise.resolve(Config.Resource[url].graph);
         }
         else {
           return getResourceGraph(url)
-                  .then(graph => {
-                    Config.Resource[url] = { graph };
-                    return graph;
-                  });
+            .then(graph => {
+              Config.Resource[url] = { graph };
+              return graph;
+            });
         }
       };
 
@@ -1779,13 +1847,13 @@ function eventButtonInfo() {
                 seeAlso = `
                   <dt>See also</dt><dd><ul>
                   ${seeAlsos.map(seeAlsoIRI => {
-                    const seeAlsoIRIG = g.node(rdf.namedNode(seeAlsoIRI));
-                    const seeAlsoTitle = getGraphTitle(seeAlsoIRIG) || seeAlsoIRI;
-                    return `<li><a href="${seeAlsoIRI}" rel="rdfs:seeAlso noopener" target="_blank">${seeAlsoTitle}</a></li>`;
-                  }).join('')}
+                  const seeAlsoIRIG = g.node(rdf.namedNode(seeAlsoIRI));
+                  const seeAlsoTitle = getGraphTitle(seeAlsoIRIG) || seeAlsoIRI;
+                  return `<li><a href="${seeAlsoIRI}" rel="rdfs:seeAlso noopener" target="_blank">${seeAlsoTitle}</a></li>`;
+                }).join('')}
                   </ul></dd>
                 `;
-                }
+              }
             }
 
             if (subjects) {
@@ -1896,10 +1964,10 @@ function getGraphContributorsRole(g, options) {
   options = options || {};
   options['sort'] = options['sort'] || false;
   options['role'] = options['role'] || 'contributor';
-// console.log(options)
+  // console.log(options)
   var contributors;
 
-  switch(options.role) {
+  switch (options.role) {
     case 'contributor':
     default:
       contributors = getGraphContributors(g);
@@ -1916,8 +1984,8 @@ function getGraphContributorsRole(g, options) {
     case 'publisher':
       contributors = getGraphPublishers(g);
       break;
-    }
-  
+  }
+
   if (!contributors || contributors.length === 0) {
     return undefined;
   }
@@ -1952,8 +2020,8 @@ function getGraphContributorsRole(g, options) {
           ? a.name.localeCompare(b.name)
           : -1
         : b.name
-        ? 1
-        : a.uri.localeCompare(b.uri);
+          ? 1
+          : a.uri.localeCompare(b.uri);
     });
   }
 
@@ -2003,7 +2071,7 @@ function getGraphData(s, options) {
     info['state'] = ns.mem.Memento.value;
     info['original'] = original[0];
 
-    if (info['original']  == options['subjectURI']) {
+    if (info['original'] == options['subjectURI']) {
       //URI-R (The Original Resource is a Fixed Resource)
       info['profile'] = ns.mem.OriginalResource.value;
     }
@@ -2025,7 +2093,7 @@ function getGraphData(s, options) {
   if (original.length && memento.length && original[0] != memento[0]) {
     //URI-M (Memento without a TimeGate)
     info['profile'] = ns.mem.Memento.value;
-    info['original'] =  original[0];
+    info['original'] = original[0];
     info['memento'] = memento[0];
   }
 
@@ -2052,7 +2120,7 @@ function getGraphData(s, options) {
     info['timegate'] = timegate[0];
   }
 
-  if (!Config.OriginalResourceInfo || ('mode' in options && options.mode == 'update' )) {
+  if (!Config.OriginalResourceInfo || ('mode' in options && options.mode == 'update')) {
     Config['OriginalResourceInfo'] = info;
   }
 
@@ -2145,7 +2213,7 @@ async function getResourceInfo(data, options) {
 
       for (var key in info) {
         if (Object.hasOwn(info, key) && key !== '__proto__' && key !== 'constructor' && key !== 'prototype') {
-            Config['Resource'][documentURL][key] = info[key];
+          Config['Resource'][documentURL][key] = info[key];
         }
       }
 
@@ -2166,20 +2234,20 @@ function getGraphFromDataBlock(data, options) {
       .map(mediaType => {
         return 'script[type="' + mediaType + '"]';
       });
-// console.log(selectors)
+    // console.log(selectors)
     var promises = [];
 
     var scripts = node.querySelectorAll(selectors.join(', '));
-// console.log(scripts)
+    // console.log(scripts)
     scripts.forEach(script => {
       var scriptType = script.getAttribute('type').trim();
       var scriptData = script.textContent;
-// console.log(scriptData)
+      // console.log(scriptData)
       var matches = Array.from(scriptData.matchAll(/<!\[CDATA\[(.*?)\]\]>/gs));
       if (matches.length > 0) {
         scriptData = matches.map(match => match[1].trim()).join('\n');
       }
-// console.log(scriptData)
+      // console.log(scriptData)
       //Cleans up the data block from comments at the beginning and end of the script.
       var lines = scriptData.split(/\r\n|\r|\n/);
       lines = lines.filter((line, index) => {
@@ -2191,7 +2259,7 @@ function getGraphFromDataBlock(data, options) {
       });
       scriptData = lines.join('\n');
 
-// console.log(scriptData)
+      // console.log(scriptData)
 
       var o = {
         'subjectURI': documentURL,
@@ -2206,7 +2274,7 @@ function getGraphFromDataBlock(data, options) {
         const dataset = rdf.dataset();
 
         resolvedPromises.forEach(response => {
-// console.log(response.value)
+          // console.log(response.value)
           if (response.value) {
             dataset.addAll(response.value.dataset);
           }
@@ -2255,7 +2323,7 @@ function updateSupplementalInfo(response, options) {
   }
 
   Config['Resource'][documentURL]['response'] = response;
-  Config['Resource'][documentURL]['headers'] = {...preservedHeaders};
+  Config['Resource'][documentURL]['headers'] = { ...preservedHeaders };
   Config['Resource'][documentURL]['headers']['response'] = headers;
 
   checkHeaders.forEach(header => {
@@ -2263,7 +2331,7 @@ function updateSupplementalInfo(response, options) {
     // headerValue = 'foo=bar ,user=" READ wriTe Append control ", public=" read append" ,other="read " , baz= write, group=" ",,';
 
     if (headerValue) {
-      Config['Resource'][documentURL]['headers'][header] = { 'field-value' : headerValue };
+      Config['Resource'][documentURL]['headers'][header] = { 'field-value': headerValue };
 
       if (header == 'wac-allow') {
         var permissionGroups = Config['Resource'][documentURL]['headers']['wac-allow']['field-value'];
@@ -2302,7 +2370,7 @@ function updateSupplementalInfo(response, options) {
   })
 }
 
-function getResourceSupplementalInfo (documentURL, options) {
+function getResourceSupplementalInfo(documentURL, options) {
   options = options || {};
   options['reuse'] = options['reuse'] === true ? true : false;
   options['followLinkRelationTypes'] = options['followLinkRelationTypes'] || [];
@@ -2363,7 +2431,7 @@ function processSupplementalInfoLinkHeaders(documentURL, options = {}) {
       });
 
       return Config['Resource'][documentURL];
-  });
+    });
 }
 
 function getResourceInfoCitations(g) {
@@ -2379,7 +2447,7 @@ function getResourceInfoCitations(g) {
   var externals = [];
   citationsList.forEach(i => {
     var iAbsolute = stripFragmentFromString(i);
-    if (iAbsolute !== documentURL){
+    if (iAbsolute !== documentURL) {
       externals.push(iAbsolute)
     }
   });
@@ -2401,7 +2469,7 @@ function getResourceInfoODRLPolicies(s) {
   //   for (const policyType of policy.out(ns.rdf.type)) {
   //     const policyTypeIRI = policyType.values;
   //   }
-    
+
   // }
   policy.values.forEach(policyIRI => {
     info['odrl'][policyIRI] = {};
@@ -2483,7 +2551,7 @@ function getResourceInfoSpecRequirements(s) {
     }
   });
 
-// console.log(info['spec']['requirement']);
+  // console.log(info['spec']['requirement']);
 
   return info['spec']['requirement'];
 }
@@ -2499,7 +2567,7 @@ function getResourceInfoSpecAdvisements(s) {
 
     var advisementGraph = s.node(rdf.namedNode(advisementIRI));
 
-    info['spec']['advisement'][advisementIRI][ns.spec.statement.value] =  advisementGraph.out(ns.spec.statement).values[0];
+    info['spec']['advisement'][advisementIRI][ns.spec.statement.value] = advisementGraph.out(ns.spec.statement).values[0];
     // info['spec'][advisementIRI][ns.spec.advisementSubject.value] = advisementSubject;
     info['spec']['advisement'][advisementIRI][ns.spec.advisementLevel.value] = advisementGraph.out(ns.spec.advisementLevel).values[0];
     var advisementCitations = advisementGraph.out(rdf.namedNode(advisementIRI)).values;
@@ -2516,7 +2584,7 @@ function getResourceInfoSpecAdvisements(s) {
     }
   });
 
-// console.log(info['spec']['advisement']);
+  // console.log(info['spec']['advisement']);
 
   return info['spec']['advisement'];
 }
@@ -2529,7 +2597,7 @@ function getResourceInfoSpecChanges(s) {
   var change = s.out(ns.spec.change);
 
   change.values.forEach(changeIRI => {
-  var changeGraph = s.node(rdf.namedNode(changeIRI));
+    var changeGraph = s.node(rdf.namedNode(changeIRI));
     info['change'][changeIRI] = {};
     info['change'][changeIRI][ns.spec.statement.value] = changeGraph.out(ns.spec.statement).values[0];
     info['change'][changeIRI][ns.spec.changeSubject.value] = changeGraph.out(ns.spec.changeSubject).values[0];
@@ -2542,7 +2610,7 @@ function getResourceInfoSpecChanges(s) {
 //TODO: Review grapoi
 function getResourceInfoSKOS(g) {
   var info = {};
-  info['skos'] = {'data': {}, 'type': {}};
+  info['skos'] = { 'data': {}, 'type': {} };
 
   const quads = [];
 
@@ -2558,24 +2626,24 @@ function getResourceInfoSKOS(g) {
   //     image: ptr.out(ns.foaf.image).value
   //   })
   //  }
-   
+
   //  const images = await Promise.all(g.node([person1])
   //  .map(ptr => fetch(ptr.out(ns.foaf.image).value)))
   //  //.out([ns.foaf.firstName, ns.foaf.lastName]).values.join(' ')
 
-// console.log(g.terms.length)
-// console.log(Array.from(g.out().quads()).length)
+  // console.log(g.terms.length)
+  // console.log(Array.from(g.out().quads()).length)
   g.out().quads().forEach(t => {
-// console.log(t)
+    // console.log(t)
     var s = t.subject.value;
     var p = t.predicate.value;
     var o = t.object.value;
-// console.log(s, p, o)
+    // console.log(s, p, o)
     var isRDFType = (p == ns.rdf.type.value) ? true : false;
     var isSKOSProperty = p.startsWith('http://www.w3.org/2004/02/skos/core#');
     var isSKOSObject = o.startsWith('http://www.w3.org/2004/02/skos/core#');
 
-// console.log(isRDFType, isSKOSProperty, isSKOSObject);
+    // console.log(isRDFType, isSKOSProperty, isSKOSObject);
 
     if (isRDFType && isSKOSObject) {
       info['skos']['type'][o] = info['skos']['type'][o] || [];
@@ -2590,10 +2658,10 @@ function getResourceInfoSKOS(g) {
     }
   });
 
-// console.log(info['skos']);
-// console.log(quads);
+  // console.log(info['skos']);
+  // console.log(quads);
   const dataset = rdf.dataset(quads);
-// console.log(dataset);
+  // console.log(dataset);
   info['skos']['graph'] = rdf.grapoi({ dataset });
 
   return info['skos'];
@@ -2622,7 +2690,7 @@ function accessModePossiblyAllowed(documentURL, mode) {
 }
 
 function createImmutableResource(url, data, options) {
-  if(!url) return;
+  if (!url) return;
 
   var uuid = generateUUID();
   var containerIRI = url.substr(0, url.lastIndexOf('/') + 1);
@@ -2634,7 +2702,7 @@ function createImmutableResource(url, data, options) {
   rootNode = setDate(rootNode, { 'id': 'document-created', 'property': 'schema:dateCreated', 'title': 'Created', 'datetime': date });
 
   var resourceState = rootNode.querySelector('#' + 'document-resource-state');
-  if(!resourceState){
+  if (!resourceState) {
     var rSO = {
       'id': 'document-resource-state',
       'subjectURI': '',
@@ -2692,7 +2760,7 @@ function createImmutableResource(url, data, options) {
     r = { 'rel': 'mem:memento rel:latest-version', 'href': immutableURL };
     setDocumentRelation(document, [r], o);
 
-    if(Config.OriginalResourceInfo['latest-version']) {
+    if (Config.OriginalResourceInfo['latest-version']) {
       o = { 'id': 'document-predecessor-version', 'title': 'Predecessor Version' };
       r = { 'rel': 'mem:memento rel:predecessor-version', 'href': Config.OriginalResourceInfo['latest-version'] };
       setDocumentRelation(document, [r], o);
@@ -2718,15 +2786,15 @@ function createImmutableResource(url, data, options) {
 
   var patch = { 'insert': insertG };
 
-  patchResourceWithAcceptPatch(timeMapURL, patch).then(() =>{
+  patchResourceWithAcceptPatch(timeMapURL, patch).then(() => {
     showTimeMap(null, timeMapURL)
   });
 }
 
 function createMutableResource(url, data, options) {
-  if(!url) return;
+  if (!url) return;
 
-  setDate(document, { 'id': 'document-created', 'property': 'schema:dateCreated', 'title': 'Created' } );
+  setDate(document, { 'id': 'document-created', 'property': 'schema:dateCreated', 'title': 'Created' });
 
   var uuid = generateUUID();
   var containerIRI = url.substr(0, url.lastIndexOf('/') + 1);
@@ -2742,7 +2810,7 @@ function createMutableResource(url, data, options) {
   r = { 'rel': 'rel:latest-version', 'href': mutableURL };
   setDocumentRelation(document, [r], o);
 
-  if(Config.OriginalResourceInfo['latest-version']) {
+  if (Config.OriginalResourceInfo['latest-version']) {
     o = { 'id': 'document-predecessor-version', 'title': 'Predecessor Version' };
     r = { 'rel': 'rel:predecessor-version', 'href': Config.OriginalResourceInfo['latest-version'] };
     setDocumentRelation(document, [r], o);
@@ -2767,7 +2835,7 @@ function createMutableResource(url, data, options) {
 }
 
 function updateMutableResource(url, data, options) {
-  if(!url) return;
+  if (!url) return;
   options = options || {};
 
   var rootNode = (data) ? fragmentFromString(data).cloneNode(true) : document;
@@ -2776,7 +2844,7 @@ function updateMutableResource(url, data, options) {
     options['datetime'] = new Date();
   }
 
-  setDate(rootNode, { 'id': 'document-modified', 'property': 'schema:dateModified', 'title': 'Modified', 'datetime': options.datetime } );
+  setDate(rootNode, { 'id': 'document-modified', 'property': 'schema:dateModified', 'title': 'Modified', 'datetime': options.datetime });
   setEditSelections(options);
 
   data = getDocument();
@@ -2795,7 +2863,7 @@ function removeNodesWithIds(ids) {
 
   ids.forEach(id => {
     var node = document.getElementById(id);
-    if(node) {
+    if (node) {
       node.parentNode.removeChild(node);
     }
   });
@@ -2847,7 +2915,7 @@ function buildReferences(referencesList, id, citation) {
   }
 }
 
-function updateReferences(referencesList, options){
+function updateReferences(referencesList, options) {
   options = options || {};
   options['external'] = options.external || true;
   options['internal'] = options.internal || false;
@@ -2858,11 +2926,11 @@ function updateReferences(referencesList, options){
 
   var docURL = document.location.origin + document.location.pathname;
 
-  var insertRef = function(cite, rId, refId, refLabel) {
-// console.log(cite);
-// console.log(rId);
-// console.log(refId);
-// console.log(refLabel)
+  var insertRef = function (cite, rId, refId, refLabel) {
+    // console.log(cite);
+    // console.log(rId);
+    // console.log(refId);
+    // console.log(refLabel)
     var ref = '<span class="ref"> <span class="ref-reference" id="' + rId + '">' + Config.RefType[Config.DocRefType].InlineOpen + '<a href="#' + refId + '">' + refLabel + '</a>' + Config.RefType[Config.DocRefType].InlineClose + '</span></span>';
     cite.insertAdjacentHTML('afterend', ref);
   }
@@ -2873,7 +2941,7 @@ function updateReferences(referencesList, options){
     var jumpLink;
 
     if ((options.external && !a.href.startsWith(docURL + '#')) ||
-        (options.internal && a.href.startsWith(docURL + '#'))) {
+      (options.internal && a.href.startsWith(docURL + '#'))) {
 
       refId = uniqueCitations[a.outerHTML];
       rId = 'r-' + generateAttributeId();
@@ -2881,11 +2949,11 @@ function updateReferences(referencesList, options){
       if (refId) {
         refLabel = refId;
         refId = 'ref-' + refId;
-// console.log(refId)
-// console.log(rId)
+        // console.log(refId)
+        // console.log(rId)
 
         jumpLink = document.querySelector('#' + refId + ' .jumplink');
-// console.log(jumpLink)
+        // console.log(jumpLink)
         if (jumpLink) {
           var supAs = jumpLink.querySelectorAll('sup a');
 
@@ -2919,8 +2987,8 @@ function updateReferences(referencesList, options){
         title = title ? ' title="' + title + '"' : '';
 
 
-        if(versionDate && versionURL) {
-           // && (a.href.startsWith('http:') || a.href.startsWith('https:'))) {
+        if (versionDate && versionURL) {
+          // && (a.href.startsWith('http:') || a.href.startsWith('https:'))) {
           // console.log(a);
 
           versionDate = ' data-versiondate="' + versionDate + '"';
@@ -2957,23 +3025,23 @@ function updateReferences(referencesList, options){
       // cite.insertAdjacentHTML('afterend', ref);
     }
   })
-// console.log(uniqueCitations);
+  // console.log(uniqueCitations);
 
   // if (lis.length > 0) {
   //   var updatedList = util.fragmentFromString('<ol>' + lis.join('') + '</ol>');
   //   referencesOl.parentNode.replaceChild(updatedList, referencesOl);
 
-    // XXX: Expensive!
-    // document.querySelectorAll('#references cite > a[data-versionurl][data-originalurl').forEach(a => {
-    //   showRobustLinksDecoration(a.parentNode);
-    // })
+  // XXX: Expensive!
+  // document.querySelectorAll('#references cite > a[data-versionurl][data-originalurl').forEach(a => {
+  //   showRobustLinksDecoration(a.parentNode);
+  // })
 }
 
 function showRobustLinksDecoration(node) {
   node = node || document;
-// console.log(node)
+  // console.log(node)
   var nodes = node.querySelectorAll('[data-versionurl], [data-originalurl]');
-// console.log(nodes)
+  // console.log(nodes)
   nodes.forEach(i => {
     if (i.nextElementSibling && i.nextElementSibling.classList.contains('do') && i.nextElementSibling.classList.contains('robustlinks')) {
       return;
@@ -3013,7 +3081,7 @@ function showRobustLinksDecoration(node) {
     if (rel) {
       citationLabels = getCitationLabelsFromTerms(rel);
 
-      if(citationLabels.length > 0) {
+      if (citationLabels.length > 0) {
         citationType = citationLabels.join(', ');
         citation = '<span>Citation Reason</span><span>' + citationType + '</span>';
       }
@@ -3026,7 +3094,7 @@ function showRobustLinksDecoration(node) {
     i.addEventListener('click', (e) => {
       if (e.target.closest('button')) {
         var pN = e.target.parentNode;
-        if (pN.classList.contains('on')){
+        if (pN.classList.contains('on')) {
           pN.classList.remove('on');
         }
         else {
@@ -3043,13 +3111,13 @@ function getCitationLabelsFromTerms(rel, citations) {
   var citationLabels = [];
 
   rel.split(' ').forEach(term => {
-    if (Config.Citation[term]){
+    if (Config.Citation[term]) {
       citationLabels.push(Config.Citation[term]);
     }
     else {
       var s = term.split(':');
       if (s.length == 2) {
-        citations.forEach(c=>{
+        citations.forEach(c => {
           if (s[1] == getFragmentFromString(c) || s[1] == getURLLastPath(c)) {
             citationLabels.push(Config.Citation[c])
           }
@@ -3153,13 +3221,13 @@ function createDefinitionListHTML(data, options = {}) {
   var dds = [];
 
   data.forEach(d => {
-    var prefix = d.prefix ? ` prefix="${d.prefix}"`: '';
+    var prefix = d.prefix ? ` prefix="${d.prefix}"` : '';
     var lang = d.lang !== undefined ? ` lang="${d.lang}"` : '';
     var xmlLang = d.xmlLang !== undefined ? ` xml:lang="${d.xmlLang}"` : '';
-    var resource = d.resource ? ` resource="${d.resource}"`: '';
-    var content = d.content ? ` content="${d.content}"`: '';
-    var datatype = d.datatype ? ` datatype="${d.datatype}"`: '';
-    var typeOf = d.typeOf ? ` typeof="${d.typeOf}"`: '';
+    var resource = d.resource ? ` resource="${d.resource}"` : '';
+    var content = d.content ? ` content="${d.content}"` : '';
+    var datatype = d.datatype ? ` datatype="${d.datatype}"` : '';
+    var typeOf = d.typeOf ? ` typeof="${d.typeOf}"` : '';
 
     //d.href is required, d.resource is optional.
 
@@ -3233,7 +3301,7 @@ function createInboxHTML(url, options = {}) {
   options['class'] = options.class || 'inbox';
   options['title'] = 'Inbox';
 
-  return createDefinitionListHTML([{'href': url, 'rel': 'ldp:inbox'}], options);
+  return createDefinitionListHTML([{ 'href': url, 'rel': 'ldp:inbox' }], options);
 }
 
 function createInReplyToHTML(url, options = {}) {
@@ -3242,7 +3310,7 @@ function createInReplyToHTML(url, options = {}) {
   options['class'] = options.class || 'in-reply-to';
   options['title'] = 'In reply to';
 
-  return createDefinitionListHTML([{'href': url, 'rel': 'as:inReplyTo'}], options);
+  return createDefinitionListHTML([{ 'href': url, 'rel': 'as:inReplyTo' }], options);
 }
 
 function createPublicationStatusHTML(url, options = {}) {
@@ -3274,7 +3342,7 @@ function createResourceTypeHTML(url, options = {}) {
   var textContent = Config.ResourceType[url].name || url;
   options['title'] = 'Type';
 
-  return createDefinitionListHTML([{'href': url, 'rel': 'rdf:type', textContent}], options);
+  return createDefinitionListHTML([{ 'href': url, 'rel': 'rdf:type', textContent }], options);
 }
 
 function createTestSuiteHTML(url, options = {}) {
@@ -3283,7 +3351,7 @@ function createTestSuiteHTML(url, options = {}) {
   options['class'] = options.class || 'test-suite';
   options['title'] = 'Test Suite';
 
-  return createDefinitionListHTML([{'href': url, 'rel': 'spec:testSuite'}], options);
+  return createDefinitionListHTML([{ 'href': url, 'rel': 'spec:testSuite' }], options);
 }
 
 function getAnnotationInboxLocationHTML(action) {
@@ -3302,7 +3370,7 @@ function getAnnotationInboxLocationHTML(action) {
 function getAnnotationLocationHTML(action) {
   var s = '', inputs = [], checked = '';
 
-  if(typeof Config.AnnotationService !== 'undefined') {
+  if (typeof Config.AnnotationService !== 'undefined') {
     if (Config.User.Storage && Config.User.Storage.length > 0 || Config.User.Outbox && Config.User.Outbox.length > 0) {
       if (Config.User.UI && Config.User.UI['annotationLocationService'] && Config.User.UI.annotationLocationService['checked']) {
         checked = ' checked="checked"';
@@ -3317,9 +3385,9 @@ function getAnnotationLocationHTML(action) {
 
   checked = ' checked="checked"';
 
-  if(Config.User.Storage && Config.User.Storage.length > 0 || Config.User.Outbox && Config.User.Outbox.length > 0) {
+  if (Config.User.Storage && Config.User.Storage.length > 0 || Config.User.Outbox && Config.User.Outbox.length > 0) {
     if (Config.User.UI && Config.User.UI['annotationLocationPersonalStorage'] && !Config.User.UI.annotationLocationPersonalStorage['checked']) {
-        checked = '';
+      checked = '';
     }
 
     inputs.push(`<input type="checkbox" id="${action}-annotation-location-personal-storage" name="${action}-annotation-location-personal-storage"${checked} /><label for="annotation-location-personal-storage">Personal storage</label>`);
@@ -3346,7 +3414,7 @@ function getPublicationStatusOptionsHTML(options) {
 
   Object.keys(Config.PublicationStatus).forEach(iri => {
     var selected = (iri == selectedIRI) ? ' selected="selected"' : '';
-    s += '<option value="' + iri + '" title="' + Config.PublicationStatus[iri].description  + '"' + selected + '>' + Config.PublicationStatus[iri].name  + '</option>';
+    s += '<option value="' + iri + '" title="' + Config.PublicationStatus[iri].description + '"' + selected + '>' + Config.PublicationStatus[iri].name + '</option>';
   })
 
   return s;
@@ -3368,7 +3436,7 @@ function getResourceTypeOptionsHTML(options) {
 
   Object.keys(Config.ResourceType).forEach(iri => {
     var selected = (iri == selectedType) ? ' selected="selected"' : '';
-    s += '<option value="' + iri + '" title="' + Config.ResourceType[iri].description  + '"' + selected + '>' + Config.ResourceType[iri].name  + '</option>';
+    s += '<option value="' + iri + '" title="' + Config.ResourceType[iri].description + '"' + selected + '>' + Config.ResourceType[iri].name + '</option>';
   });
 
   return s;
@@ -3384,7 +3452,7 @@ function getLanguageOptionsHTML(options) {
       s += '<option selected="selected" value="">Choose a language</option>';
     }
   }
-  else if(typeof Config.User.UI.Language !== 'undefined') {
+  else if (typeof Config.User.UI.Language !== 'undefined') {
     selectedLang = Config.User.UI.Language;
   }
   else {
@@ -3409,7 +3477,7 @@ function getLicenseOptionsHTML(options) {
       s += '<option selected="selected" value="">Choose a license</option>';
     }
   }
-  else if(typeof Config.User.UI.License !== 'undefined') {
+  else if (typeof Config.User.UI.License !== 'undefined') {
     selectedIRI = Config.User.UI.License;
   }
   else {
@@ -3417,9 +3485,9 @@ function getLicenseOptionsHTML(options) {
   }
 
   Object.keys(Config.License).forEach(iri => {
-    if(iri != 'NoLicense') {
+    if (iri != 'NoLicense') {
       var selected = (iri == selectedIRI) ? ' selected="selected"' : '';
-      s += '<option value="' + iri + '" title="' + Config.License[iri].description  + '"' + selected + '>' + Config.License[iri].name  + '</option>';
+      s += '<option value="' + iri + '" title="' + Config.License[iri].description + '"' + selected + '>' + Config.License[iri].name + '</option>';
     }
   })
 
@@ -3431,7 +3499,7 @@ function getCitationOptionsHTML(type) {
 
   var s = '';
   Object.keys(Config.Citation).forEach(iri => {
-    s += '<option value="' + iri + '">' + Config.Citation[iri]  + '</option>';
+    s += '<option value="' + iri + '">' + Config.Citation[iri] + '</option>';
   })
 
   return s;
@@ -3449,7 +3517,7 @@ function getAccessModeOptionsHTML(options) {
   options['context'] = options['context'] || 'Share';
   var accessContext = Config.AccessContext[options.context] || 'Share';
 
-  var s  = '<option value="">No access</option>';
+  var s = '<option value="">No access</option>';
 
   var modes = Object.keys(accessContext);
   modes.forEach(mode => {
@@ -3466,7 +3534,7 @@ function showResourceAudienceAgentOccupations() {
     var matches = [];
 
     Config.Resource[Config.DocumentURL].audience.forEach(audience => {
-      if (Config.User.Occupations.includes(audience)){
+      if (Config.User.Occupations.includes(audience)) {
         matches.push(getResourceGraph(audience).then(g => {
           Config.Resource[audience] = { graph: g };
           return g ? g.node(rdf.namedNode(audience)) : g;
@@ -3492,12 +3560,12 @@ function showResourceAudienceAgentOccupations() {
               label = skosLabels[0];
               Config.Resource[iri]['labels'] = skosLabels;
             }
-// console.log(label)
+            // console.log(label)
             ul.push(`<li><a href="${iri}" rel="noopener" target="_blank">${label}</a></li>`);
           }
         });
 
-        if (ul.length > 0){
+        if (ul.length > 0) {
           ul = `<ul>${ul.join('')}</ul>`;
 
           var message = `<span>This document's audience matches your profile:</span>${ul}`;
@@ -3589,7 +3657,7 @@ function serializeTableSectionToText(section) {
   var data = [];
   var rows;
 
-  switch(section.nodeName.toLowerCase()) {
+  switch (section.nodeName.toLowerCase()) {
     case 'thead':
       //FIXME: Assuming the last tr in thead has most specific columns.
       rows = section.querySelectorAll('tr:last-child');
@@ -3602,7 +3670,7 @@ function serializeTableSectionToText(section) {
   rows.forEach(tr => {
     var cells;
 
-    switch(section.nodeName.toLowerCase()) {
+    switch (section.nodeName.toLowerCase()) {
       case 'thead':
         cells = tr.querySelectorAll('th, td');
         break;
@@ -3647,18 +3715,18 @@ function focusNote() {
 
 function parseMarkdown(data, options) {
   options = options || {};
-// console.log(data)
+  // console.log(data)
   var extensions = {
     extensions: [gfm()],
     allowDangerousHtml: true,
     htmlExtensions: [gfmHtml(), gfmTagfilterHtml()]
   };
   var html = marked(data, extensions);
-// console.log(parsed)
+  // console.log(parsed)
   if (options.createDocument) {
     html = createHTML('', '<article>' + html + '</article>');
   }
-// console.log(html);
+  // console.log(html);
   return html;
 }
 
