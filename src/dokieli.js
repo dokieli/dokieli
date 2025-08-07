@@ -20,7 +20,7 @@ import * as d3Selection from 'd3-selection';
 import * as d3Force from 'd3-force';
 const d3 = { ...d3Selection, ...d3Force };
 import shower from '@shower/core'
-import { diffChars } from 'diff'
+import { diffChars, diffArrays } from 'diff'
 import LinkHeader from 'http-link-header';
 import rdf from 'rdf-ext';
 import Config from './config.js';
@@ -1988,7 +1988,9 @@ DO = {
         }
       }
 
-      localContent = getDocument();
+      //XXX: REVISIT THIS. This is  cheap way to reuse initial getDocument value. DocumenString is not currently used besides this.
+      localContent = DO.C.DocumentString || getDocument();
+      DO.C.DocumentString = null;
       let localHash = await getHash(localContent);
       let data;
 
@@ -2049,6 +2051,7 @@ DO = {
         var url = DO.C.DocumentURL;
 
         if (status != 304 && status != 404) {
+          console.log(e)
           switch (status) {
             default:
               message = `Error (${status}).`;
@@ -2360,34 +2363,31 @@ DO = {
 
       document.body.appendChild(fragmentFromString(`<aside id="review-changes" class="do on">${DO.C.Button.Close}<h2>Review Changes ${DO.C.Button.Info.ReviewChanges}</h2><div class="info">${message}</div></aside>`));
 
-      const diff = diffChars(remoteContentBody, localContentBody);
-      let diffHTML = [];
+      const tokenizeHTML = (html) => {
+        return html.split(/(<[^>]+>)/g).filter(Boolean);
+      };
+      
+      const localTokens = tokenizeHTML(localContentBody);
+      const remoteTokens = tokenizeHTML(remoteContentBody);
+      
+      const diff = diffArrays(remoteTokens, localTokens);
       let insCounter = 0;
       let delCounter = 0;
-
-      diff.forEach((part) => {
-        // console.log(part)
-
+      
+      let diffHTML = [];
+      diff.forEach(part => {
+        console.log(part)
         let eName;
-
-        if (part.added) {
-          eName = 'ins';
-          insCounter++;
-        }
-        else if (part.removed) {
-          eName = 'del';
-          delCounter++;
-        }
-
-        //TODO: Show only changes lines/blocks/significant context, e.g., the paragraph that's including the added/removed, and highlight ins/del
+        if (part.added) eName = 'ins';
+        else if (part.removed) eName = 'del';
+      
+        const val = part.value.join('');
         if (eName) {
-          diffHTML.push('<' + eName + '>' + part.value + '</' + eName + '>');
-        }
-        else {
-          diffHTML.push(part.value);
+          diffHTML.push(`<${eName}>${val}</${eName}>`);
+        } else {
+          diffHTML.push(val);
         }
       });
-
       // console.log(`ins: ${insCounter}, del: ${delCounter}`);
 
       let detailsInsDel = `

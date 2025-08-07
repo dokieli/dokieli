@@ -1,4 +1,4 @@
-import { toggleMark, setBlockType } from "prosemirror-commands"
+import { toggleMark, setBlockType, wrapIn } from "prosemirror-commands"
 import { wrapInList, liftListItem } from "prosemirror-schema-list"
 import { DOMSerializer, DOMParser } from "prosemirror-model"
 import { TextSelection } from "prosemirror-state"
@@ -58,7 +58,7 @@ export class AuthorToolbar extends ToolbarView {
       // blockquote: setBlockType(schema.nodes.blockquote),
       // q: toggleMark(schema.marks.q),
       pre: setBlockType(schema.nodes.pre),
-      code: toggleMark(schema.marks.code),
+      code: this.insertCodeInline(schema),
       // math: toggleMark(schema.marks.math), //prosemirror-math
       // citation: citeForm(),
       // semantics: semanticsForm()
@@ -204,6 +204,22 @@ TODO:
         this.cleanupToolbar();
     }
     // })
+  }
+
+  insertCodeInline(schema) {
+    return function (state, dispatch) {
+      const { from, to } = state.selection;
+      const text = state.doc.textBetween(from, to, " ");
+      
+      // Create a new code_inline node with the selected text
+      const node = schema.nodes.code.create(null, schema.text(text));
+  
+      if (dispatch) {
+        dispatch(state.tr.replaceRangeWith(from, to, node).scrollIntoView());
+      }
+  
+      return true;
+    };
   }
 
   insertImage(attrs) {
