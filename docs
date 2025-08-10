@@ -332,7 +332,7 @@
               <section id="modes" inlist="" rel="schema:hasPart" resource="#modes" typeof="skos:ConceptScheme">
                 <h3 property="schema:name skos:prefLabel">Modes</h3>
                 <div datatype="rdf:HTML" property="schema:description">
-                  <p property="skos:definition">The user interface (<abbr title="User Interface">UI</abbr>) can be in either <cite>social</cite> or <cite>author</cite>. The modes can be switched from the dokieli <a href="#menu">menu</a> via the <i class="fas fa-i-cursor"></i> <a href="#editor-enable">Edit</a> operation.</p>
+                  <p property="skos:definition">The user interface (<abbr title="User Interface">UI</abbr>) can be in either <cite>social</cite> or <cite>author</cite>. The modes can be switched from the dokieli <a href="#menu">menu</a> via the <i class="fas fa-i-cursor"></i> <a href="#feature-edit">Edit</a> operation.</p>
 
                   <dl rel="skos:hasTopConcept">
                     <dt about="#mode-social" property="skos:prefLabel" typeof="skos:Concept"><dfn id="mode-social">Social</dfn></dt>
@@ -539,7 +539,7 @@
                         </figcaption>
                       </figure>
 
-                      <p property="skos:definition">The Edit feature offers authoring tools for formatting, linking, and structuring articles. Edits are temporary unless autosave is enabled or changes are committed using <a href="#feature-save" rel="rdfs:seeAlso">Save</a>, <a href="#feature-save-as" rel="rdfs:seeAlso">Save As</a>, <a href="#feature-version" rel="rdfs:seeAlso">Version</a>, or <a href="#feature-immutable" rel="rdfs:seeAlso">Immutable</a>. Standard formatting options include headings, italics, bold, ordered and unordered lists, inline code, preformatted text, hyperlinks, inline quotes, images, and tables. Additional capabilities include:</p>
+                      <p property="skos:definition">The Edit feature offers authoring tools for formatting, linking, and structuring articles. Edits are local unless <a href="#feature-autosaving">autosave</a> is enabled or changes are committed using <a href="#feature-save" rel="rdfs:seeAlso">Save</a>, <a href="#feature-save-as" rel="rdfs:seeAlso">Save As</a>, <a href="#feature-version" rel="rdfs:seeAlso">Version</a>, or <a href="#feature-immutable" rel="rdfs:seeAlso">Immutable</a>. Standard formatting options include headings, italics, bold, ordered and unordered lists, inline code, preformatted text, hyperlinks, inline quotes, images, and tables. Additional capabilities include:</p>
 
                       <dl rel="dcterms:subject">
                         <dt about="#feature-interactive-embeddable-objects" property="skos:prefLabel"><i class="fas fa-chart-line"></i><dfn id="feature-interactive-embeddable-objects">Interactive and embeddable objects</dfn></dt>
@@ -577,7 +577,7 @@
                     </dd>
 
                     <dt about="#feature-autosaving" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-piggy-bank"></i><dfn id="feature-autosaving">Autosaving</dfn></dt>
-                    <dd about="#feature-autosaving" property="skos:definition">While the user is in <a href="#editor-enable">editing</a> their article, the document is autosaved to local storage. The user can optionally enable autosaving the resource.</dd>
+                    <dd about="#feature-autosaving" property="skos:definition">While the user is <a href="#feature-edit">editing</a> their article, the document is autosaved to local storage. When the autosave toggle is enabled, changes are synchronised with the remote resource.</dd>
 
                     <dt about="#feature-source" property="skos:prefLabel"><i class="fas fa-code"></i><dfn id="feature-source">Source</dfn></dt>
                     <dd about="#feature-source" property="skos:definition">Allows direct editing of the article's current state. Updating is temporary until committed using features such as changes are committed using <a href="#feature-save" rel="rdfs:seeAlso">Save</a>, <a href="#feature-save-as" rel="rdfs:seeAlso">Save As</a>, <a href="#feature-version" rel="rdfs:seeAlso">Version</a>, or <a href="#feature-immutable" rel="rdfs:seeAlso">Immutable</a>.</dd>
