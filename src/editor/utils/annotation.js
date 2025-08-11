@@ -2,6 +2,7 @@ import { fragmentFromString, generateUUID } from "./../../util.js";
 import { createRDFaHTML, tagsToBodyObjects } from "./../../doc.js";
 import { Icon } from "../../ui/icons.js";
 import Config from "../../config.js";
+import { generateDataURI } from "../../uri.js";
 
 // 1. new annotation
 // replace the selection with fragment 
