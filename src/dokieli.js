@@ -9,7 +9,7 @@
 import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource } from './fetcher.js'
 import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, eventButtonNotificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getLanguageOptionsHTML, getLicenseOptionsHTML, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown, getReferenceLabel, createNoteDataHTML, hasNonWhitespaceText, eventButtonClose, eventButtonInfo, eventButtonSignIn, eventButtonSignOut, getDocumentNodeFromString, updateResourceInfos, accessModePossiblyAllowed, updateSupplementalInfo, processSupplementalInfoLinkHeaders } from './doc.js'
 import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, generateDataURI, getMediaTypeURIs, isHttpOrHttpsProtocol, isFileProtocol, getUrlParams, stripUrlSearchHash } from './uri.js'
-import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes, filterQuads, getAgentTypeIndex } from './graph.js'
+import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes, filterQuads, getAgentTypeIndex, serializeData } from './graph.js'
 import { notifyInbox, sendNotifications } from './inbox.js'
 import { uniqueArray, fragmentFromString, generateAttributeId, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, isValidISBN, findPreviousDateTime, domSanitize, sanitizeObject, escapeRDFLiteral, tranformIconstoCSS, getIconsFromCurrentDocument, getHash, getDateTimeISOFromDate } from './util.js'
 import { generateGeoView } from './geo.js'
@@ -2735,18 +2735,21 @@ DO = {
 
         var scriptType = {
           'meta-turtle': {
+            mediaType: 'text/turtle',
             scriptStart: '<script id="meta-turtle" title="Turtle" type="text/turtle">',
             cdataStart: '# ' + DO.C.CDATAStart + '\n',
             cdataEnd: '\n# ' + DO.C.CDATAEnd,
             scriptEnd: '</script>'
           },
           'meta-json-ld': {
+            mediaType: 'application/ld+json',
             scriptStart: '<script id="meta-json-ld" title="JSON-LD" type="application/ld+json">',
             cdataStart: DO.C.CDATAStart + '\n',
             cdataEnd: '\n' + DO.C.CDATAEnd,
             scriptEnd: '</script>'
           },
           'meta-trig': {
+            mediaType: 'application/trig',
             scriptStart: '<script id="meta-trig" title="TriG" type="application/trig">',
             cdataStart: '# ' + DO.C.CDATAStart + '\n',
             cdataEnd: '\n# ' + DO.C.CDATAEnd,
@@ -2810,22 +2813,27 @@ DO = {
           buttonSave[i].addEventListener('click', (e) => {
             var textarea = e.target.closest('.selected').querySelector('textarea');
             var name = textarea.getAttribute('name');
-            var scriptEntry = domSanitize(textarea.value);
+            var data = textarea.value.trim();
+
             var script = document.getElementById(name);
-            if (scriptEntry.length) {
+            if (scriptType[name] && data.length) {
               //If there was a script already
-              if (script) {
-                script.textContent = scriptType[name].cdataStart + scriptEntry + scriptType[name].cdataEnd;
-              }
-              else {
-                document.querySelector('head').insertAdjacentHTML('beforeend',
-                  scriptType[name].scriptStart +
-                  scriptType[name].cdataStart +
-                  scriptEntry +
-                  scriptType[name].cdataEnd +
-                  scriptType[name].scriptEnd
-                );
-              }
+
+              serializeData(data, scriptType[name].mediaType, scriptType[name].mediaType, { sanitize: true })
+                .then(scriptEntry => {
+                  if (script) {
+                    script.textContent = scriptType[name].cdataStart + scriptEntry + scriptType[name].cdataEnd;
+                  }
+                  else {
+                    document.querySelector('head').insertAdjacentHTML('beforeend',
+                      scriptType[name].scriptStart +
+                      scriptType[name].cdataStart +
+                      scriptEntry +
+                      scriptType[name].cdataEnd +
+                      scriptType[name].scriptEnd
+                    );
+                  }
+                })
             }
             else {
               //Remove if no longer used

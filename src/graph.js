@@ -146,6 +146,7 @@ function serializeDataToPreferredContentType(data, options) {
     case 'application/n-triples':
     case 'application/n-quads':
     case 'text/n3':
+    case 'application/trig':
       return serializeData(data, options['contentType'], options['preferredContentType'], options);
 
     case 'application/ld+json':
@@ -159,8 +160,7 @@ function serializeDataToPreferredContentType(data, options) {
 
 function serializeData (data, fromContentType, toContentType, options = {}) {
   // if (!rdf.formats.serializers.get(toContentType)) { return Promise.reject('XXX: Should not be here'); }
-  
-  if (fromContentType === toContentType) {
+  if (fromContentType === toContentType && !options.sanitize) {
     return Promise.resolve(data);
   }
 
@@ -168,10 +168,33 @@ function serializeData (data, fromContentType, toContentType, options = {}) {
 
   return getGraphFromData(data, options)
     .then(g => {
-      options['contentType'] = toContentType;
+      options['contentType'] = toContentType;serializeData
+
+      if (options.sanitize) {
+        g = sanitizeGraph(g, options);
+      }
 
       return serializeGraph(g, options);
     });
+}
+
+function sanitizeGraph (g) {
+  var quads = g.out().quads();
+
+  const sanitizedQuads = [];
+
+  Array.from(quads).forEach(q => {
+    if (q.object.termType == 'Literal') {
+      q.object.value = domSanitize(q.object.value);
+    }
+
+    sanitizedQuads.push(q);
+  })
+
+  const dataset = rdf.dataset(sanitizedQuads);
+  g = rdf.grapoi({ dataset });
+
+ return g;
 }
 
 
@@ -371,7 +394,18 @@ function serializeGraph (g, options = {}) {
   try {
     var quads = g.out().quads();
 
-    return streamToString(rdf.formats.serializers.get(options.contentType, { compact: true, prettyPrint: true }).import(Readable.from(quads), { compact: true, prettyPrint: true })).then((data) => {
+    // TODO: should there be a serializer in the SinkMap for trig? 
+    if (options.contentType === 'application/trig') {
+      options.contentType = 'text/n3';
+    }
+
+    const serializer = rdf.formats.serializers.get(options.contentType, { compact: true, prettyPrint: true });
+
+    if (!serializer) {
+      throw new Error(`No serializer found for contentType: ${options.contentType}`);
+    }
+
+    return streamToString(serializer.import(Readable.from(quads), { compact: true, prettyPrint: true })).then((data) => {
       return data.replace(new RegExp(escapeRegExp(localhostUUID), 'g'), '');
     });
   }
@@ -1659,6 +1693,7 @@ export {
   XXXOLDserializeData,
   serializeData,
   serializeGraph,
+  sanitizeGraph,
   applyParserSerializerFixes,
   skolem,
   transformJsonldContextURLScheme,
