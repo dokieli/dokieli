@@ -400,11 +400,8 @@
                     <dt about="#feature-highlighting" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-highlighter"></i><dfn id="feature-highlighting">Highlighting</dfn></dt>
                     <dd about="#feature-highlighting" property="skos:definition">Node or text level targeting that gives the user a URI that they can use for deep-linking and referencing.</dd>
 
-                    <dt about="#feature-replying" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-reply"></i><dfn id="feature-replying">Replying</dfn></dt>
-                    <dd about="#feature-replying" property="skos:definition">A note to indicate a reply to selected text or node.</dd>
-
                     <dt about="#feature-tagging" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-tag"></i><dfn id="feature-tagging">Tagging</dfn></dt>
-                    <dd about="#feature-tagging" property="skos:definition">The user can associate tags (natural language text) to selected text which is used as part of purpose for annotations such as <a href="#feature-bookmarking">bookmarking</a>, <a href="#feature-replying">replying</a>, and <a href="#feature-commenting">commenting</a>.</dd>
+                    <dd about="#feature-tagging" property="skos:definition">The user can associate tags (natural language text) to selected text which is used as part of purpose for annotations such as <a href="#feature-bookmarking">bookmarking</a>, <a href="#feature-in-reply-to">replying</a>, and <a href="#feature-commenting">commenting</a>.</dd>
 
                     <dt about="#feature-approve" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-thumbs-up"></i><dfn id="feature-approve">Approve</dfn></dt>
                     <dd about="#feature-approve" property="skos:definition">General agreement with the selected text. Optional note can indicate why the selection is a strong point or a convincing argument.</dd>
@@ -572,7 +569,7 @@
                         </dd>
 
                         <dt about="#feature-authoring-widgets" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-authoring-widgets">Authoring widgets</dfn></dt>
-                        <dd about="#feature-authoring-widgets" property="skos:definition">Additional authoring options include adding contributors and notifying them, setting the document's language, license, inbox, in reply to, status, type, and test suite.</dd>
+                        <dd about="#feature-authoring-widgets" property="skos:definition">Additional authoring options include adding contributors and notifying them, setting the document's <a href="#feature-language">language</a>, <a href="#feature-license">license</a>, inbox, <a href="#feature-in-reply-to">in reply to</a>, status, type, and test suite.</dd>
                       </dl>
                     </dd>
 
@@ -661,6 +658,9 @@
 
                     <dt about="#feature-language" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-language"></i><dfn id="feature-language">Language</dfn></dt>
                     <dd about="#feature-language" property="skos:definition">The language of an article or annotation can be set from a list (182 languages available, e.g., Armenian). Alternatively, language can be applied to specific text selections or nodes using the semantic annotator.</dd>
+
+                    <dt about="#feature-in-reply-to" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-reply"></i><dfn id="feature-in-reply-to">In reply to</dfn></dt>
+                    <dd about="#feature-in-reply-to" property="skos:definition">Identifies a resource to which the current resource is a reply.</dd>
 
                     <dt about="#feature-browser" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-folder-tree"></i><dfn id="feature-browser">Resource browser</dfn></dt>
                     <dd about="#feature-browser" property="skos:definition">The <em>resource browser</em> is part of features such as <a href="#feature-new" rel="rdfs:seeAlso">New</a>, <a href="#feature-open" rel="rdfs:seeAlso">Open</a>, <a href="#feature-save-as" rel="rdfs:seeAlso">Save As</a>, and <a href="#feature-generate-feed" rel="rdfs:seeAlso">Generate Feed</a> lets you navigate locations such as a <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a>, <a href="#annotation-service" rel="rdfs:seeAlso">annotation service</a>, or a <a href="#activity-collection" rel="rdfs:seeAlso">activity collection</a>. If a personal storage location is known, it is used by default; otherwise, the start location can be based on an annotation service referenced by the article.</dd>
