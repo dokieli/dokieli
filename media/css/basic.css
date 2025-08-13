@@ -48,9 +48,13 @@ height:267mm !important;
 
   a,
   a:visited {
-    border-bottom: none !important;
-    text-decoration: none !important;
-    color: #000 !important;
+    border-bottom: initial !important;
+    text-decoration: underline !important;
+    color: LinkText !important;
+  }
+
+  ul {
+    list-style-position: inside !important;
   }
 
   code,
