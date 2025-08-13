@@ -7214,7 +7214,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
               var id = 'geo';
               var metadataBounds = document.querySelector('#' + id + ' figcaption a');
               if (metadataBounds) {
-                var message = `<Opened geo data at <a href="${metadataBounds.href}">${metadataBounds.textContent}</a>`;
+                var message = `Opened geo data at <a href="${metadataBounds.href}">${metadataBounds.textContent}</a>`;
                 message = {
                   'content': message,
                   'type': 'info',
