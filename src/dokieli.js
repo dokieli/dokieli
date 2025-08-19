@@ -26,6 +26,7 @@ import rdf from 'rdf-ext';
 import Config from './config.js';
 import { Editor } from './editor/editor.js';
 import { initButtons, updateButtons } from './ui/buttons.js'
+import{ csvStringToJson, jsonToHtmlTableString } from './csv.js'
 
 const ns = Config.ns;
 let DO;
@@ -5092,7 +5093,7 @@ console.log(reason);
           .catch(error => {
             // Catch-all error, actually notify the user
             var responseMessage = replyToResource.querySelector('.response-message');
-            responseMessage.setHTMLUnsafe(domSanitize(responseMessage.getHTML() + '<p class="error">We could not notify the author of your reply:' + error.message + '</p>'));
+            responseMessage.setHTMLUnsafe(domSanitize(responseMessage.getHTML() + '<p class="error">We could not save your reply:' + error.message + '</p>'));
 
           })
       }
@@ -6847,27 +6848,46 @@ console.log('XXX: Cannot access effectiveACLResource', e);
       DO.U.setupResourceBrowser(document.getElementById('resource-browser-' + id), id, action);
       document.getElementById('resource-browser-' + id).insertAdjacentHTML('beforeend', '<p><samp id="' + id + '-' + action + '"></samp></p>');
     },
-
     openInputFile: function(e) {
-      var file = e.target.files[0];
-// console.log(file);
-      var contentType = file.type;
-      var options = { 'init': true };
-
-      var reader = new FileReader();
-      reader.onload = function(){
-// console.log(reader);
-
-        var html = DO.U.spawnDokieli(document, reader.result, contentType, 'file:' + file.name, options);
-      };
-      reader.readAsText(file);
+      let files = Array.from(e.target.files); 
+      let options = { 'init': true };
+    
+      let readers = files.map(file => {
+        return new Promise((resolve, reject) => {
+          let reader = new FileReader();
+          reader.onload = () => {
+            resolve({
+              name: file.name,
+              type: file.type,
+              content: reader.result
+            });
+          };
+          reader.onerror = reject;
+          reader.readAsText(file);
+        });
+      });
+    
+      Promise.all(readers).then(results => {
+        let contentType = results.length === 1 ? results[0].type : "application/octet-stream";
+        let iris = results.map(r => 'file:' + r.name)
+    
+        DO.U.spawnDokieli(
+          document,
+          results, 
+          contentType,
+          iris,
+          options
+        );
+      }).catch(err => {
+        console.error("Error reading files:", err);
+      });
     },
 
     openDocument: function (e) {
       if(typeof e !== 'undefined') {
         e.target.disabled = true;
       }
-      document.body.insertAdjacentHTML('beforeend', '<aside id="open-document" class="do on">' + DO.C.Button.Close + `<h2>Open Document ${DO.C.Button.Info.Open}</h2><div class="info"></div><p><label for="open-local-file">Open local file</label> <input type="file" id="open-local-file" name="open-local-file" /></p></aside>`);
+      document.body.insertAdjacentHTML('beforeend', '<aside id="open-document" class="do on">' + DO.C.Button.Close + `<h2>Open Document ${DO.C.Button.Info.Open}</h2><div class="info"></div><p><label for="open-local-file">Open local file</label> <input type="file" id="open-local-file" name="open-local-file" multiple="" /></p></aside>`);
 
       var id = 'location-open-document';
       var action = 'read';
@@ -7179,7 +7199,9 @@ console.log('XXX: Cannot access effectiveACLResource', e);
       return image + name + published + summary + tags;
     },
 
-    spawnDokieli: async function(documentNode, data, contentType, iri, options = {}){
+    spawnDokieli: async function(documentNode, data, contentType, iris, options = {}){
+      let iri =  Array.isArray(iris) ? iris[0] : iris;
+      console.log(iri)
       iri = domSanitize(iri);
       const isHttpIRI = isHttpOrHttpsProtocol(iri);
       const isFileIRI = isFileProtocol(iri);
@@ -7197,19 +7219,69 @@ console.log('XXX: Cannot access effectiveACLResource', e);
         throw new Error(message);
       }
 
+      let files = Array.isArray(data) ? data : [{
+        name: iri,
+        type: contentType,
+        content: data
+      }];
+
       var tmpl = document.implementation.createHTMLDocument('template');
       // console.log(tmpl);
+      if (files.length > 1) {
+        // check if one of the files is a metadata.json
+        const metadataFiles = [];
+        const csvFiles = [];
+
+        files.map((file) => {
+          if (file.name.endsWith("-metadata.json")) {
+            metadataFiles.push(file);
+          }
+          if (file.type === 'text/csv') {
+            csvFiles.push(file)
+          }
+        })
+
+        // handle multiple csv
+        const jsonObjects = csvFiles.map(csvFile => csvStringToJson(csvFile.content))
+
+        jsonObjects.forEach((obj) => {
+          let metadata = {};
+
+          if (metadataFiles.length) {
+            metadataFiles.forEach((mf) => {
+              let tmp = JSON.parse(mf.content);
+
+              if (metadata.url == file.name) {
+                metadata = tmp;
+              }
+            })
+          }
+
+          const htmlString = jsonToHtmlTableString(obj, file.name, metadata)
+          console.log(htmlString)
+        })
+
+      }
 
       switch(contentType){
         case 'text/html': case 'application/xhtml+xml':
-          tmpl.documentElement.setHTMLUnsafe(data);
+          // if multiple HTML files come in, just open the first for now
+          tmpl.documentElement.setHTMLUnsafe(files[0].content);
           tmpl.body.setHTMLUnsafe(domSanitize(tmpl.body.getHTML()));
+          break;
+        
+        case 'text/csv':
+          console.log("single csv case", iri, files);
+          // TODO: the below will be a function later
+          let jsonObject = csvStringToJson(files[0].content); // we only have one for now
+          const htmlString = jsonToHtmlTableString(jsonObject, files[0].name, {});
+          console.log(htmlString)
           break;
 
         case 'application/gpx+xml':
           // console.log(data)
-          tmpl = await generateGeoView(data)
-            // FIXME: Tested with generateGeoView returning a Promise but somehow
+          tmpl = await generateGeoView(files[0].content)
+          // FIXME: Tested with generateGeoView returning a Promise but somehow
             .then(i => {
               var id = 'geo';
               var metadataBounds = document.querySelector('#' + id + ' figcaption a');
@@ -7234,7 +7306,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
           break;
 
         default:
-          data = escapeCharacters(data)
+          data = escapeCharacters(files[0])
           // console.log(data)
           var iframe = document.createElement('iframe');
           // <pre type=&quot;' + contentType + '&quot; -- nice but `type` is undefined attribute for `pre`.at the moment. Create issue in WHATWG for fun/profit?

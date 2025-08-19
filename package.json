@@ -54,6 +54,7 @@
     "micromark": "^4.0.0",
     "micromark-extension-gfm": "^3.0.0",
     "micromark-extension-gfm-tagfilter": "^2.0.0",
+    "papaparse": "^5.5.3",
     "prosemirror-commands": "^1.6.2",
     "prosemirror-example-setup": "^1.2.3",
     "prosemirror-history": "^1.4.1",

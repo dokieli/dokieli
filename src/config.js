@@ -446,6 +446,48 @@ export default {
     'http://www.w3.org/ns/ldp#Container'
   ],
 
+  STRIDEThreatTypes: {
+    Spoofing: [
+      'http://www.grsu.by/net/SecurityPatternCatalogNaiveSchema#STRIDE_Spoofing',
+      'https://w3id.org/dpv/risk#Spoofing',
+      'https://w3id.org/dpv/risk#IdentityFraud',
+      'https://w3id.org/dpv/risk#IdentityTheft',
+      'https://w3id.org/dpv/risk#PhishingScam'
+    ],
+    Tampering: [
+      'http://www.grsu.by/net/SecurityPatternCatalogNaiveSchema#STRIDE_Tampering',
+      'https://w3id.org/dpv/risk#UnauthorisedDataModification',
+      'https://w3id.org/dpv/risk#UnauthorisedCodeModification',
+      'https://w3id.org/dpv/risk#DataCorruption',
+      'https://w3id.org/dpv/risk#IntegrityBreach'
+    ],
+    Repudiation: [
+      'http://www.grsu.by/net/SecurityPatternCatalogNaiveSchema#STRIDE_Repudiation',
+      'https://w3id.org/dpv/risk#AuthorisationFailure',
+      'https://w3id.org/dpv/risk#LackOfSystemTransparency',
+      'https://w3id.org/dpv/risk#LoseTrust',
+      'https://w3id.org/dpv/risk#LoggingControl'
+    ],
+    InformationDisclosure: [
+      'http://www.grsu.by/net/SecurityPatternCatalogNaiveSchema#STRIDE_Information_Disclosure',
+      'https://w3id.org/dpv/risk#UnauthorisedInformationDisclosure',
+      'https://w3id.org/dpv/risk#UnauthorisedDataDisclosure',
+      'https://w3id.org/dpv/risk#UnwantedDisclosureData',
+      'https://w3id.org/dpv/risk#ConfidentialityBreach'
+    ],
+    DenialOfService: [
+      'http://www.grsu.by/net/SecurityPatternCatalogNaiveSchema#STRIDE_Denial_of_Service',
+      'https://w3id.org/dpv/risk#DenialServiceAttack',
+      'https://w3id.org/dpv/risk#AvailabilityBreach'
+    ],
+    ElevationOfPrivilege: [
+      'http://www.grsu.by/net/SecurityPatternCatalogNaiveSchema#STRIDE_Elevation_of_Privilege',
+      'https://w3id.org/dpv/risk#UnauthorisedDataAccess',
+      'https://w3id.org/dpv/risk#UnauthorisedSystemAccess',
+      'https://w3id.org/dpv/risk#UnauthorisedCodeAccess'
+    ]
+  },
+
   MediaTypes: {
     RDF: ['text/turtle', 'application/ld+json', 'application/activity+json', 'text/html', 'image/svg+xml', 'application/rdf+xml'],
 
@@ -493,6 +535,7 @@ export default {
     doap: rdf.namespace('http://usefulinc.com/ns/doap#'),
     doc: rdf.namespace('http://www.w3.org/2000/10/swap/pim/doc#'),
     doco: rdf.namespace('http://purl.org/spar/doco/'),
+    dpv: rdf.namespace('https://w3id.org/dpv#'),
     fabio: rdf.namespace('http://purl.org/spar/fabio/'),
     foaf: rdf.namespace('http://xmlns.com/foaf/0.1/'),
     ldp: rdf.namespace('http://www.w3.org/ns/ldp#'),
@@ -511,6 +554,7 @@ export default {
     rdfa: rdf.namespace(' http://www.w3.org/ns/rdfa#'),
     rdfs: rdf.namespace('http://www.w3.org/2000/01/rdf-schema#'),
     rel: rdf.namespace('https://www.w3.org/ns/iana/link-relations/relation#'),
+    risk: rdf.namespace('https://w3id.org/dpv/risk#'),
     rsa: rdf.namespace('http://www.w3.org/ns/auth/rsa#'),
     schema: rdf.namespace('http://schema.org/'),
     sio: rdf.namespace('http://semanticscience.org/resource/'),
@@ -519,6 +563,7 @@ export default {
     skosxl: rdf.namespace('http://www.w3.org/2008/05/skos-xl#'),
     solid: rdf.namespace('http://www.w3.org/ns/solid/terms#'),
     spec: rdf.namespace('http://www.w3.org/ns/spec#'),
+    tech: rdf.namespace('https://w3id.org/dpv/tech'),
     vcard: rdf.namespace('http://www.w3.org/2006/vcard/ns#'),
     void: rdf.namespace('http://rdfs.org/ns/void#'),
     wgs: rdf.namespace('http://www.w3.org/2003/01/geo/wgs84_pos#'),
