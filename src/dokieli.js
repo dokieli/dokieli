@@ -7233,33 +7233,28 @@ console.log('XXX: Cannot access effectiveACLResource', e);
         const csvFiles = [];
 
         files.map((file) => {
-          if (file.name.endsWith("-metadata.json")) {
+          if (file.name.endsWith("metadata.json")) {
             metadataFiles.push(file);
           }
           if (file.type === 'text/csv') {
+            console.log(file)
             csvFiles.push(file)
           }
         })
 
         // handle multiple csv
-        const jsonObjects = csvFiles.map(csvFile => csvStringToJson(csvFile.content))
-
-        jsonObjects.forEach((obj) => {
-          let metadata = {};
-
-          if (metadataFiles.length) {
-            metadataFiles.forEach((mf) => {
-              let tmp = JSON.parse(mf.content);
-
-              if (metadata.url == file.name) {
-                metadata = tmp;
-              }
-            })
-          }
-
-          const htmlString = jsonToHtmlTableString(obj, file.name, metadata)
-          console.log(htmlString)
+        const jsonObjects = csvFiles.map(csvFile => {
+          let tmp = csvStringToJson(csvFile.content);
+          tmp['url'] = csvFile.name;
+          return tmp;
         })
+
+        let metadata;
+        if (metadataFiles[0] && metadataFiles[0].content) {
+          metadata = JSON.parse(metadataFiles[0].content);
+        }
+        const htmlString = jsonToHtmlTableString(jsonObjects, metadata)
+        console.log(htmlString)
 
       }
 
@@ -7274,7 +7269,8 @@ console.log('XXX: Cannot access effectiveACLResource', e);
           console.log("single csv case", iri, files);
           // TODO: the below will be a function later
           let jsonObject = csvStringToJson(files[0].content); // we only have one for now
-          const htmlString = jsonToHtmlTableString(jsonObject, files[0].name, {});
+          jsonObject['url'] = files[0].name;
+          const htmlString = jsonToHtmlTableString([jsonObject], {});
           console.log(htmlString)
           break;
 
