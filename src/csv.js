@@ -1,25 +1,59 @@
 import Papa from 'papaparse';
-import { domSanitize } from './util';
+import { domSanitize } from './util.js';
+import { escapeCharacters } from './doc.js';
 
 export function csvStringToJson(str) { 
   let json = Papa.parse(str);
   return json;
 }
 
-export function jsonToHtmlTableString(obj, csvFilename, metadata) {
-  const dokieliStrideThreatModelCSVSchema = {
-    "@context": ["http://www.w3.org/ns/csvw", {"@language": "en"}],
+//https://www.w3.org/TR/tabular-data-model/
+//https://www.w3.org/TR/csv2rdf/
+//https://www.w3.org/TR/tabular-metadata/
+export function jsonToHtmlTableString(csvTables, metadata) {
+
+  metadata = metadata || {
+    "@context": [
+      "http://www.w3.org/ns/csvw",
+      {
+        "dpv": "https://w3id.org/dpv#",
+        "risk": "https://w3id.org/dpv/risk#"
+      },
+      {"@language": "en"}
+    ],
+    "@id": "",
     "@type": "TableGroup",
     "tables": [
       {
-        "url": "dokieli-stride-threat-modeling.csv",
-        "dcterms:title": "Dokieli Threat Modeling - STRIDE",
-        "dcat:keyword": ['security risk', 'software security', 'software security assurance', 'threat modelling'],
-        "dcterms:publisher": "https://dokie.li/#i",
+        "url": "assessments.csv",
+        "dcterms:title": [{"@value": "Dokieli Threat Modeling - STRIDE", "@language": "en"}],
+        "dcat:keyword": [
+          {"@value": "security risk", "@language": "en"},
+          {"@value": "software security", "@language": "en"},
+          {"@value": "software security assurance", "@language": "en"},
+          {"@value": "threat modelling", "@language": "en"}
+        ],
+        "dcterms:publisher": {"@id": "https://dokie.li/#i"},
         "dcterms:license": {"@id": "https://creativecommons.org/licenses/by/4.0/"},
-        "dcterms:modified": {"@value": "2025-08-19", "@type": "xsd:date"},
+        "dcterms:modified": {"@value": "2025-08-20", "@type": "xsd:date"},
         "tableSchema": {
-          "aboutUrl": "https://dokie.li/docs#assessment-2025-08-19-{_row}",
+          "foreignKeys": [
+            {
+              "columnReference": "risk",
+              "reference": {
+                "resource": "risks.csv",
+                "columnReference": "risk"
+              }
+            },
+            {
+              "columnReference": "mitigation",
+              "reference": {
+                "resource": "mitigations.csv",
+                "columnReference": "mitigation"
+              }
+            }
+          ],
+          "aboutUrl": "#assessment/2025-08-20/{_row}",
           "columns": [
             {
               "name": "feature",
@@ -35,7 +69,7 @@ export function jsonToHtmlTableString(obj, csvFilename, metadata) {
               "datatype": "string",
               "aboutUrl": "#{risk}",
               "propertyUrl": "dpv:hasImpact",
-              "valueUrl": "#{strideThreatType",
+              "valueUrl": "#{strideThreatType}",
               "null": ["N/A", ""]
             },
             {
@@ -85,6 +119,8 @@ export function jsonToHtmlTableString(obj, csvFilename, metadata) {
       {
         "url": "risks.csv",
         "tableSchema": {
+          "primaryKey": "risk",
+          "aboutUrl": "#{risk}",
           "columns": [
             {
               "name": "risk",
@@ -97,8 +133,7 @@ export function jsonToHtmlTableString(obj, csvFilename, metadata) {
               "name": "description",
               "titles": "Description",
               "datatype": "string",
-              "aboutUrl": "{risk}",
-              "propertyUrl": "dcterms:description",
+              "propertyUrl": "dcterms:description"
             }
           ]
         }
@@ -106,6 +141,8 @@ export function jsonToHtmlTableString(obj, csvFilename, metadata) {
       {
         "url": "mitigations.csv",
         "tableSchema": {
+          "primaryKey": "mitigation",
+          "aboutUrl": "#{mitigation}",
           "columns": [
             {
               "name": "mitigation",
@@ -118,8 +155,7 @@ export function jsonToHtmlTableString(obj, csvFilename, metadata) {
               "name": "description",
               "titles": "Description",
               "datatype": "string",
-              "aboutUrl": "{mitigation}",
-              "propertyUrl": "dcterms:description",
+              "propertyUrl": "dcterms:description"
             }
           ]
         }
@@ -130,7 +166,7 @@ export function jsonToHtmlTableString(obj, csvFilename, metadata) {
   let language, url;
 
   const isPlainObject = (object) => {
-    return Object.prototype.toString.call(value) === '[object Object]';
+    return Object.prototype.toString.call(object) === '[object Object]';
   }
 
   //http://www.w3.org/TR/tabular-data-model/
@@ -145,72 +181,170 @@ export function jsonToHtmlTableString(obj, csvFilename, metadata) {
       })
     }
   }
+  if (!metadata.tables && !metadata.tables.length) { return }
 
-  let caption = metadata['dc:title'] || metadata['@id'] || csvFilename;
+  let tables = metadata.tables;
+  console.log(tables)
+
+  let caption = metadata['dcterms:title'] || metadata['@id'];
   let keywords = metadata['dcat:keyword'];
-  let publisher = metadata['dc:publisher'];
-  let creator = metadata['dc:creator'];
-  let license = metadata['dc:license'];
-  let modified = metadata['dc:modified'];
-  let columns = metadata['columns'];
+  let publisher = metadata['dcterms:publisher'];
+  let creator = metadata['dcterms:creator'];
+  let license = metadata['dcterms:license'];
+  let modified = metadata['dcterms:modified'];
 
-  const { data } = obj;
-  if (!data || data.length === 0) return "<table></table>";
+  let html = '';
+  csvTables.forEach((obj) => {
+    const tableMetadata = tables.find((table) => table.url === obj.url)
+    const metadataColumns = tableMetadata.tableSchema.columns;
+    const tableAboutUrl = tableMetadata.tableSchema.aboutUrl;
+
+    let attributeTypeOf;
+    let attributeProperty;
+    let attributeHrefRel;
+    let attributeAboutId;
+    
+    if (tableAboutUrl) {
+      attributeAboutId = ` about="${tableAboutUrl}" id="${tableAboutUrl.slice(1)}"`;
+    }
+
+    const { data } = obj;
+    if (!data || data.length === 0 ) return "<table></table>";
+    const headers = data[0];
+    const rows = data.slice(1);
   
-  const headers = data[0];
-  const rows = data.slice(1);
-
-//TODO: strideThreatType S or Spoofing
-
-  let html = "<table>";
-  html += `<caption>${caption}</caption>`;
-
-  html += "<thead><tr>";
-  headers.forEach(header => {
-    header = escapeHtml(domSanitize(header));
-    html += `<th>${header}</th>`;
-  });
-  html += "</tr></thead>";
-
-  html += "<tbody>";
-  rows.forEach(row => {
-    html += "<tr>";
-    row.forEach((cell, i) => {
-      const columnName = headers[i];
-      const currentColumn = columns.find(col => col.name === columnName);
-      cell = escapeHtml(domSanitize(cell));
-
-      htmlAttribute = ''
-
-      //TODO: aboutUrl
-      //TODO: valueUrl
-
-      if (currentColumn.datatype == 'string') {
-        htmlAttribute
-      }
-
-      html += `<td${currentColumn.propertyUrl}>${cell}</td>`;
+  //TODO: strideThreatType S or Spoofing
+  
+    html += `<table>`;
+    html += `<caption>${caption}</caption>`;
+  
+    html += `<thead><tr>`;
+    headers.forEach(header => {
+      header = escapeCharacters(domSanitize(header));
+      html += `<th>${header}</th>`;
     });
+    html += `</tr></thead>`;
+  
+    html += `<tbody>`;
+    rows.forEach(row => {
+      html += `<tr${attributeAboutId}>`;
+      row.forEach((cell, i) => {
+        const columnName = headers[i];
+  
+        const currentColumnMetadata = metadataColumns.find(col => col.name === columnName);
+        if (!columnName) return;
 
-    html += "</tr>";
-  });
-  html += "</tbody>";
+        cell = escapeCharacters(domSanitize(cell));
+        const metadataValueUrl = metadataColumns.valueUrl;
+        const templateRegex = /#\{(.*?)\}/g;
+        const variables = getUriTemplateVariables(metadataValueUrl);
+        console.log(variables)
+        let valueUrl = metadataValueUrl;
+        variables?.forEach(variable => {
+          if (!valueUrl) return;
+          valueUrl = valueUrl.replace(templateRegex, getValueByHeader(row, headers, variable))
+        })
+console.log(valueUrl)
+        const columnAboutUrl = currentColumnMetadata.aboutUrl;
+        aboutUrl = columnAboutUrl || tableAboutUrl;
 
-  // html += "<tfoot>";
+        if (aboutUrl) {
+          attributeAboutId = ` about="${aboutUrl}" id="${aboutUrl.slice(1)}"`;
+        }
 
-  // html += "</tfoot>";
+        if (currentColumnMetadata.propertyUrl == 'rdf:type') {
+          attributeTypeOf = ` typeof="${currentColumnMetadata.valueUrl}"`;
+        }
 
-  html += "</table>";
+        if (currentColumnMetadata.propertyUrl == 'dcterms:description') {
+          attributeProperty = ` property="${currentColumnMetadata.propertyUrl}"`;
+        }
 
+        if (currentColumnMetadata.propertyUrl && currentColumnMetadata.valueUrl) {
+          attributeHrefRel = `<a href="${currentColumnMetadata.valueUrl}" rel="${currentColumnMetadata.propertyUrl}">${currentColumnMetadata.valueUrl}</a>`;
+        }
+
+  let tr = `
+    <tr${attributeAboutId}${attributeTypeOf}>
+      <td>${risk}</td>
+      <td${attributeProperty}>${description}</td>
+    </tr>
+  `;
+
+        html += `<td property="${currentColumnMetadata.propertyUrl}">${cell}</td>`;
+
+    'https://w3id.org/dpv/risk#Spoofing',
+    'https://w3id.org/dpv/risk#IdentityFraud',
+    'https://w3id.org/dpv/risk#IdentityTheft',
+    'https://w3id.org/dpv/risk#PhishingScam'
+
+`
+<th>feature</th><th>strideThreatType</th><th>risk</th><th>riskLevel</th><th>mitigation</th><th>description</th><th>issue</th>
+`
+`
+  <tbody>
+    <tr about="${aboutUrl}">
+      <td><a href="https://dokie.li/docs#feature-approving" rel="dcterms:subject">https://dokie.li/docs#feature-approving</td>
+      <td rel="stride:threatType"><span resource="stride:Spoofing">S</a></span></td>
+      <td><a href="#${risk}" rel="dpv:hasImpact">foo</a></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+  </tbody>
+`;
+
+
+
+
+
+
+
+      });
+  
+      html += `</tr>`;
+    });
+    html += `</tbody>`;
+  
+    // html += "<tfoot>";
+  
+    // html += "</tfoot>";
+  
+    html += `</table>`;
+  })
+
+console.log(html)
   return html;
 }
 
-function escapeHtml(str) {
-  if (str === null || str === undefined) return "";
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+function getValueByHeader(row, headers, headerName) {
+  const index = headers.indexOf(headerName);
+  return index !== -1 ? row[index] : undefined;
+}
+
+//TODO: use https://www.npmjs.com/package/uri-templates instead :
+
+function getUriTemplateVariables(uri) {
+/*
+{
+  fill: [Function (anonymous)],
+  fromUri: [Function (anonymous)],
+  varNames: [ 'colour', 'shape' ],
+  template: '/date/{colour}/{shape}/'
+}
+*/
+
+  // return uriTemplates(uri)
+
+
+
+
+  if (!uri) return;
+  //uri = https://example.org/{foo}/{bar}/baz
+  const matches = [...uri.matchAll(/#\{([^}]+)\}/g)].map(m => m[1]);
+  //Output: ["foo", "bar"]
+  return matches;
 }
