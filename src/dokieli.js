@@ -1571,11 +1571,35 @@ DO = {
       var open = getUrlParams('open');
 
       if (open.length) {
-        open = open[0];
-        open = domSanitize(open);
-        open = decodeURIComponent(open);
+        if (open.length > 1) {
+          console.log("Multiple open parameters found", open);
+          // http://localhost:3000/?open=https://dokie.li/tmp/assessments.csv&open=https://dokie.li/tmp/risks.csv&open=https://dokie.li/tmp/mitigations.csv&open=https://dokie.li/tmp/metadata.json
 
-        DO.U.openResource(open);
+            const promises = open.map((o) => fetch(o).then(r => r.json()).then(data => data ))
+                
+            Promise.all(promises).then(results => {
+              let contentType = results.length === 1 ? results[0].type : "application/octet-stream";
+              let iris = results.map(r => 'file:' + r.name)
+          
+              DO.U.spawnDokieli(
+                document,
+                results, 
+                contentType,
+                iris,
+                options
+              );
+            }).catch(err => {
+              console.error("Error reading files:", err);
+            });
+        } else {
+          open = open[0];
+            
+          open = domSanitize(open);
+          open = decodeURIComponent(open);
+
+          DO.U.openResource(open);
+
+        }
 
         stripUrlSearchHash();
       }
@@ -7237,7 +7261,6 @@ console.log('XXX: Cannot access effectiveACLResource', e);
             metadataFiles.push(file);
           }
           if (file.type === 'text/csv') {
-            console.log(file)
             csvFiles.push(file)
           }
         })
@@ -7253,11 +7276,12 @@ console.log('XXX: Cannot access effectiveACLResource', e);
         if (metadataFiles[0] && metadataFiles[0].content) {
           metadata = JSON.parse(metadataFiles[0].content);
         }
-        const htmlString = jsonToHtmlTableString(jsonObjects, metadata)
-        console.log(htmlString)
+        const htmlString = jsonToHtmlTableString(jsonObjects, metadata);
+        tmpl.body.appendChild(fragmentFromString(`<main><article>${htmlString}</article></main>`));
 
       }
-
+      // i don't like doing this but i can't think of this right now
+      else {
       switch(contentType){
         case 'text/html': case 'application/xhtml+xml':
           // if multiple HTML files come in, just open the first for now
@@ -7271,7 +7295,10 @@ console.log('XXX: Cannot access effectiveACLResource', e);
           let jsonObject = csvStringToJson(files[0].content); // we only have one for now
           jsonObject['url'] = files[0].name;
           const htmlString = jsonToHtmlTableString([jsonObject], {});
-          console.log(htmlString)
+          var node = selectArticleNode(document);
+          // document.body.replaceChildren(fragmentFromString('<main><article about="" typeof="schema:Article">' + gpxActivity + '</article></main>'));
+          //TODO: If generateGeoView provides a node to append to, it should append to that node instead of the body:
+          node.appendChild(fragmentFromString(htmlString));
           break;
 
         case 'application/gpx+xml':
@@ -7316,6 +7343,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
           tmpl.body.appendChild(main);
           break;
       }
+    }
 
       if (options.defaultStylesheet) {
         var documentCss = document.querySelectorAll('head link[rel~="stylesheet"][href]');
