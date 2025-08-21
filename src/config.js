@@ -447,45 +447,69 @@ export default {
   ],
 
   STRIDEThreatTypes: {
-    Spoofing: [
-      'http://www.grsu.by/net/SecurityPatternCatalogNaiveSchema#STRIDE_Spoofing',
-      'https://w3id.org/dpv/risk#Spoofing',
-      'https://w3id.org/dpv/risk#IdentityFraud',
-      'https://w3id.org/dpv/risk#IdentityTheft',
-      'https://w3id.org/dpv/risk#PhishingScam'
-    ],
-    Tampering: [
-      'http://www.grsu.by/net/SecurityPatternCatalogNaiveSchema#STRIDE_Tampering',
-      'https://w3id.org/dpv/risk#UnauthorisedDataModification',
-      'https://w3id.org/dpv/risk#UnauthorisedCodeModification',
-      'https://w3id.org/dpv/risk#DataCorruption',
-      'https://w3id.org/dpv/risk#IntegrityBreach'
-    ],
-    Repudiation: [
-      'http://www.grsu.by/net/SecurityPatternCatalogNaiveSchema#STRIDE_Repudiation',
-      'https://w3id.org/dpv/risk#AuthorisationFailure',
-      'https://w3id.org/dpv/risk#LackOfSystemTransparency',
-      'https://w3id.org/dpv/risk#LoseTrust',
-      'https://w3id.org/dpv/risk#LoggingControl'
-    ],
-    InformationDisclosure: [
-      'http://www.grsu.by/net/SecurityPatternCatalogNaiveSchema#STRIDE_Information_Disclosure',
-      'https://w3id.org/dpv/risk#UnauthorisedInformationDisclosure',
-      'https://w3id.org/dpv/risk#UnauthorisedDataDisclosure',
-      'https://w3id.org/dpv/risk#UnwantedDisclosureData',
-      'https://w3id.org/dpv/risk#ConfidentialityBreach'
-    ],
-    DenialOfService: [
-      'http://www.grsu.by/net/SecurityPatternCatalogNaiveSchema#STRIDE_Denial_of_Service',
-      'https://w3id.org/dpv/risk#DenialServiceAttack',
-      'https://w3id.org/dpv/risk#AvailabilityBreach'
-    ],
-    ElevationOfPrivilege: [
-      'http://www.grsu.by/net/SecurityPatternCatalogNaiveSchema#STRIDE_Elevation_of_Privilege',
-      'https://w3id.org/dpv/risk#UnauthorisedDataAccess',
-      'https://w3id.org/dpv/risk#UnauthorisedSystemAccess',
-      'https://w3id.org/dpv/risk#UnauthorisedCodeAccess'
-    ]
+    S: {
+      uri: 'http://www.wikidata.org/entity/Q11081100',
+      name: 'Spoofing',
+      related: [
+        'http://www.grsu.by/net/SecurityPatternCatalogNaiveSchema#STRIDE_Spoofing',
+        'https://w3id.org/dpv/risk#Spoofing',
+        'https://w3id.org/dpv/risk#IdentityFraud',
+        'https://w3id.org/dpv/risk#IdentityTheft',
+        'https://w3id.org/dpv/risk#PhishingScam'
+      ]
+    },
+    T: {
+      uri: 'http://www.wikidata.org/entity/Q7681776',
+      name: 'Tampering',
+      related: [
+        'http://www.grsu.by/net/SecurityPatternCatalogNaiveSchema#STRIDE_Tampering',
+        'https://w3id.org/dpv/risk#UnauthorisedDataModification',
+        'https://w3id.org/dpv/risk#UnauthorisedCodeModification',
+        'https://w3id.org/dpv/risk#DataCorruption',
+        'https://w3id.org/dpv/risk#IntegrityBreach'
+      ]
+    },
+    R: {
+      uri: 'http://www.wikidata.org/entity/Q1327773',
+      name: 'Repudiation',
+      related: [
+        'http://www.grsu.by/net/SecurityPatternCatalogNaiveSchema#STRIDE_Repudiation',
+        'https://w3id.org/dpv/risk#AuthorisationFailure',
+        'https://w3id.org/dpv/risk#LackOfSystemTransparency',
+        'https://w3id.org/dpv/risk#LoseTrust',
+        'https://w3id.org/dpv/risk#LoggingControl'
+      ]
+    },
+    I: {
+      uri: 'http://www.wikidata.org/entity/Q2775060',
+      name: 'Information disclosure',
+      related: [
+        'http://www.grsu.by/net/SecurityPatternCatalogNaiveSchema#STRIDE_Information_Disclosure',
+        'https://w3id.org/dpv/risk#UnauthorisedInformationDisclosure',
+        'https://w3id.org/dpv/risk#UnauthorisedDataDisclosure',
+        'https://w3id.org/dpv/risk#UnwantedDisclosureData',
+        'https://w3id.org/dpv/risk#ConfidentialityBreach'
+      ]
+    },
+    D: {
+      uri: 'http://www.wikidata.org/entity/Q131406',
+      name: 'Denial of service',
+      related: [
+        'http://www.grsu.by/net/SecurityPatternCatalogNaiveSchema#STRIDE_Denial_of_Service',
+        'https://w3id.org/dpv/risk#DenialServiceAttack',
+        'https://w3id.org/dpv/risk#AvailabilityBreach'
+      ]
+    },
+    E: {
+      uri: 'http://www.wikidata.org/entity/Q1856893',
+      name: 'Elevation of privilege',
+      related: [
+        'http://www.grsu.by/net/SecurityPatternCatalogNaiveSchema#STRIDE_Elevation_of_Privilege',
+        'https://w3id.org/dpv/risk#UnauthorisedDataAccess',
+        'https://w3id.org/dpv/risk#UnauthorisedSystemAccess',
+        'https://w3id.org/dpv/risk#UnauthorisedCodeAccess'
+      ]
+    }
   },
 
   MediaTypes: {
