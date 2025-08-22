@@ -24,9 +24,9 @@ export default {
       DO.U.showAsTabs();
       DO.U.initDocumentActions();
       DO.U.showDocumentInfo();
+      DO.U.setDocumentMode();
       DO.U.showFragment();
       DO.U.initCopyToClipboard();
-      DO.U.setDocumentMode();
       DO.U.initEditor();
       DO.U.initMath();
       DO.U.initSlideshow();

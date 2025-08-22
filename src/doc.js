@@ -1220,7 +1220,7 @@ function createDateHTML(options) {
 
   var title = ('title' in options) ? options.title : 'Created';
 
-  var id = ('id' in options && options.id.length > 0) ? ' id="' + options.id + '"' : ' id="document-' + title.toLowerCase().replace(/\W/g, '-') + '"';
+  var id = ('id' in options && options.id.length > 0) ? ' id="' + options.id + '"' : '';
 
   var c = ('class' in options && options.class.length > 0) ? ' class="' + options.class + '"' : '';
 

@@ -1545,7 +1545,7 @@ DO = {
       DO.C.DocumentString = getDocument(node);
     },
 
-    setDocumentMode: function(mode) {
+    setDocumentMode: async function(mode) {
       Config.Editor.mode = mode || Config.Editor.mode;
 
       var style = getUrlParams('style');
@@ -1569,28 +1569,58 @@ DO = {
       }
 
       var open = getUrlParams('open');
-
       if (open.length) {
         if (open.length > 1) {
-          console.log("Multiple open parameters found", open);
-          // http://localhost:3000/?open=https://dokie.li/tmp/assessments.csv&open=https://dokie.li/tmp/risks.csv&open=https://dokie.li/tmp/mitigations.csv&open=https://dokie.li/tmp/metadata.json
+          let openUrls = open.map((url) => `<a href="${url} rel="noopener" target="_blank">${url}</a>`);
+          let urlsHtml = openUrls.join(', ');
+          var message = `Opening ${urlsHtml}`;
+          var actionMessage = `Opening ${urlsHtml}`;
 
-            const promises = open.map((o) => fetch(o).then(r => r.json()).then(data => data ))
-                
-            Promise.all(promises).then(results => {
-              let contentType = results.length === 1 ? results[0].type : "application/octet-stream";
-              let iris = results.map(r => 'file:' + r.name)
-          
-              DO.U.spawnDokieli(
-                document,
-                results, 
-                contentType,
-                iris,
-                options
-              );
-            }).catch(err => {
-              console.error("Error reading files:", err);
-            });
+          const messageObject = {
+            'content': actionMessage,
+            'type': 'info',
+            'timer': 10000
+          }
+
+          addMessageToLog({...messageObject, content: message}, Config.MessageLog);
+          const messageId = showActionMessage(document.body, messageObject);
+
+          async function getMultipleResources() {
+            return await Promise.all(
+              open.map(async (o) => {
+                const r = await fetch(o);
+                if (r.headers.get("content-type") == 'application/json' || r.headers.get("content-type") == 'application/ld+json') {
+                  return {
+                    name: o.split('/').pop(),
+                    type: r.headers.get("content-type"),
+                    content: JSON.stringify(await r.json()),
+                  }
+                } else {
+                  return {
+                    name: o.split('/').pop(),
+                    type: r.headers.get("content-type"),
+                    content: await r.text(),
+                  }
+                }
+              })
+            );
+          }
+
+          let results = await getMultipleResources()
+          const contentTypes = results.map(r => r.type);
+          const contentType = contentTypes.includes('text/csv') ? 'text:csv' : 'text/plain';
+          const iris = open;
+          let spawnOptions = {};
+          spawnOptions['defaultStylesheet'] = false;
+          spawnOptions['init'] = true;
+
+          await DO.U.spawnDokieli(
+            document,
+            results,
+            contentType,
+            iris,
+            spawnOptions
+          );
         } else {
           open = open[0];
             
@@ -1598,13 +1628,24 @@ DO = {
           open = decodeURIComponent(open);
 
           DO.U.openResource(open);
+        }
 
+        let paramGraphView = getUrlParams('graph-view');
+
+        if (paramGraphView.length && paramGraphView[0] == 'true') {
+          DO.U.showVisualisationGraph(DO.C.DocumentURL, getDocument(), '#graph-view');
         }
 
         stripUrlSearchHash();
       }
 
       if (DO.C.GraphViewerAvailable) {
+        let paramGraphView = getUrlParams('graph-view');
+
+        if (paramGraphView.length && paramGraphView[0] == 'true') {
+          DO.U.showVisualisationGraph(DO.C.DocumentURL, getDocument(), '#graph-view');
+        }
+
         var graphs = getUrlParams('graph');
 
         var urls = graphs.map(url => {
@@ -6894,7 +6935,21 @@ console.log('XXX: Cannot access effectiveACLResource', e);
       Promise.all(readers).then(results => {
         let contentType = results.length === 1 ? results[0].type : "application/octet-stream";
         let iris = results.map(r => 'file:' + r.name)
-    
+
+        let filesUrls = iris.map((url) => `<a href="${url} rel="noopener" target="_blank">${url}</a>`);
+        let urlsHtml = filesUrls.join(', ');
+        var message = `Opening ${urlsHtml}`;
+        var actionMessage = `Opening ${urlsHtml}`;
+
+        const messageObject = {
+          'content': actionMessage,
+          'type': 'info',
+          'timer': 10000
+        }
+
+        addMessageToLog({...messageObject, content: message}, Config.MessageLog);
+        const messageId = showActionMessage(document.body, messageObject);
+
         DO.U.spawnDokieli(
           document,
           results, 
@@ -7225,10 +7280,10 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
     spawnDokieli: async function(documentNode, data, contentType, iris, options = {}){
       let iri =  Array.isArray(iris) ? iris[0] : iris;
-      console.log(iri)
       iri = domSanitize(iri);
       const isHttpIRI = isHttpOrHttpsProtocol(iri);
       const isFileIRI = isFileProtocol(iri);
+      const prefixes = "rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns# rdfs: http://www.w3.org/2000/01/rdf-schema# owl: http://www.w3.org/2002/07/owl# xsd: http://www.w3.org/2001/XMLSchema# rdfa: http://www.w3.org/ns/rdfa# dcterms: http://purl.org/dc/terms/ dctypes: http://purl.org/dc/dcmitype/ foaf: http://xmlns.com/foaf/0.1/ pimspace: http://www.w3.org/ns/pim/space# skos: http://www.w3.org/2004/02/skos/core# prov: http://www.w3.org/ns/prov# mem: http://mementoweb.org/ns# qb: http://purl.org/linked-data/cube# schema: http://schema.org/ void: http://rdfs.org/ns/void# rsa: http://www.w3.org/ns/auth/rsa# cert: http://www.w3.org/ns/auth/cert# wgs: http://www.w3.org/2003/01/geo/wgs84_pos# bibo: http://purl.org/ontology/bibo/ sioc: http://rdfs.org/sioc/ns# doap: http://usefulinc.com/ns/doap# dbr: http://dbpedia.org/resource/ dbp: http://dbpedia.org/property/ sio: http://semanticscience.org/resource/ opmw: http://www.opmw.org/ontology/ deo: http://purl.org/spar/deo/ doco: http://purl.org/spar/doco/ cito: http://purl.org/spar/cito/ fabio: http://purl.org/spar/fabio/ oa: http://www.w3.org/ns/oa# as: https://www.w3.org/ns/activitystreams# ldp: http://www.w3.org/ns/ldp# solid: http://www.w3.org/ns/solid/terms# acl: http://www.w3.org/ns/auth/acl# earl: http://www.w3.org/ns/earl# spec: http://www.w3.org/ns/spec# odrl: http://www.w3.org/ns/odrl/2/ dio: https://w3id.org/dio# rel: https://www.w3.org/ns/iana/link-relations/relation# dpv: https://w3id.org/dpv# risk: https://w3id.org/dpv/risk#";
 
       if (!isHttpIRI && !isFileIRI) {
         const message = `Cannot open, not valid URL or file location.`;
@@ -7250,8 +7305,9 @@ console.log('XXX: Cannot access effectiveACLResource', e);
       }];
 
       var tmpl = document.implementation.createHTMLDocument('template');
+      const isCsv = !!files.find((f) => f.type == "text/csv");
       // console.log(tmpl);
-      if (files.length > 1) {
+      if (files.length > 1 && isCsv) {
         // check if one of the files is a metadata.json
         const metadataFiles = [];
         const csvFiles = [];
@@ -7277,10 +7333,14 @@ console.log('XXX: Cannot access effectiveACLResource', e);
           metadata = JSON.parse(metadataFiles[0].content);
         }
         const htmlString = jsonToHtmlTableString(jsonObjects, metadata);
-        tmpl.body.appendChild(fragmentFromString(`<main><article>${htmlString}</article></main>`));
+        // console.log(fragmentFromString(`<main><article>${htmlString}</article></main>`))
+        // this works for urls but not files
+        // document.body.appendChild(fragmentFromString(`<main><article>${htmlString}</article></main>`));
 
+        // and this replaces the whole content
+        tmpl.body.appendChild(fragmentFromString(`<main><article>${htmlString}</article></main>`));
       }
-      // i don't like doing this but i can't think of this right now
+
       else {
       switch(contentType){
         case 'text/html': case 'application/xhtml+xml':
@@ -7290,15 +7350,16 @@ console.log('XXX: Cannot access effectiveACLResource', e);
           break;
         
         case 'text/csv':
-          console.log("single csv case", iri, files);
+          console.error("Must provide a metadata file; single CSVs without metadata not supported yet");
+          // console.log("TODO: Single CSV case", iri, files);
           // TODO: the below will be a function later
-          let jsonObject = csvStringToJson(files[0].content); // we only have one for now
-          jsonObject['url'] = files[0].name;
-          const htmlString = jsonToHtmlTableString([jsonObject], {});
-          var node = selectArticleNode(document);
+          // let jsonObject = csvStringToJson(files[0].content); // we only have one for now
+          // jsonObject['url'] = files[0].name;
+          // const htmlString = jsonToHtmlTableString([jsonObject], {});
+          // var node = selectArticleNode(document);
           // document.body.replaceChildren(fragmentFromString('<main><article about="" typeof="schema:Article">' + gpxActivity + '</article></main>'));
           //TODO: If generateGeoView provides a node to append to, it should append to that node instead of the body:
-          node.appendChild(fragmentFromString(htmlString));
+          // node.appendChild(fragmentFromString(htmlString));
           break;
 
         case 'application/gpx+xml':
@@ -7379,7 +7440,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
         node.setAttribute('src', node.src);
       })
 
-      if (options.init === true && isHttpIRI) {
+      if (options.init === true && isHttpIRI && contentType == 'text/html') {
         var baseElements = document.querySelectorAll('head base');
         baseElements.forEach(baseElement => {
           baseElement.remove();
@@ -7413,6 +7474,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
         // });
 
         const tmplBody = tmpl.body.cloneNode(true);
+        tmplBody.setAttribute('prefix', prefixes);
 
         document.documentElement.replaceChild(tmplBody, document.body);
         DO.U.showDocumentInfo();
