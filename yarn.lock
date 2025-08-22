@@ -2500,6 +2500,7 @@ __metadata:
     micromark: "npm:^4.0.0"
     micromark-extension-gfm: "npm:^3.0.0"
     micromark-extension-gfm-tagfilter: "npm:^2.0.0"
+    papaparse: "npm:^5.5.3"
     patch-package: "npm:^8.0.0"
     process: "npm:^0.11.10"
     prosemirror-commands: "npm:^1.6.2"
@@ -2515,6 +2516,7 @@ __metadata:
     rdf-ext: "npm:^2.5.2"
     rdfa-streaming-parser: "npm:^3.0.1"
     terser-webpack-plugin: "npm:^5.3.3"
+    uri-templates: "npm:^0.2.0"
     vite: "npm:^6.3.5"
     vitest: "npm:^3.1.4"
     webpack: "npm:5.96.1"
@@ -5031,6 +5033,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"papaparse@npm:^5.5.3":
+  version: 5.5.3
+  resolution: "papaparse@npm:5.5.3"
+  checksum: 10c0/623aae6a35703308fd5a39d616fb3837231ebc70697346355ea508154d3f24df75b6554b736afc1924192205518a5db14e75f5e1cf35d154326050a37cdd9447
+  languageName: node
+  linkType: hard
+
 "parent-module@npm:^1.0.0":
   version: 1.0.1
   resolution: "parent-module@npm:1.0.1"
@@ -6318,6 +6327,13 @@ __metadata:
   dependencies:
     punycode: "npm:^2.1.0"
   checksum: 10c0/4ef57b45aa820d7ac6496e9208559986c665e49447cb072744c13b66925a362d96dd5a46c4530a6b8e203e5db5fe849369444440cb22ecfc26c679359e5dfa3c
+  languageName: node
+  linkType: hard
+
+"uri-templates@npm:^0.2.0":
+  version: 0.2.0
+  resolution: "uri-templates@npm:0.2.0"
+  checksum: 10c0/f19a90875c3027fa356a0f62ef0d710c4dfb48ace42ef1cec2c039ba8cd2045f76e9d04c7d575a5c03d73d4ff179f523ed8bb0f95c5c1d3c311237048e41bd59
   languageName: node
   linkType: hard
 
