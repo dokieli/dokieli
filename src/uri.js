@@ -204,6 +204,21 @@ function getPrefixedNameFromIRI(iri) {
   }
 
   return iri;
+} 
+
+function getIRIFromPrefix(qname) {
+  const qnameParts = qname.slice(':');
+
+  if (qnameParts.length == 2) {
+    let prefix = qnameParts[0];
+    let localName = qnameParts[1];
+
+    if (prefix.length && localName.length && ns[prefix].value) {
+       return ns[prefix].value + localName;
+    }
+  }
+
+  return qname;
 }
 
 
@@ -293,6 +308,7 @@ export {
   getLastPathSegment,
   generateDataURI,
   getPrefixedNameFromIRI,
+  getIRIFromPrefix,
   getMediaTypeURIs,
   isHttpOrHttpsProtocol,
   isHttpsProtocol,

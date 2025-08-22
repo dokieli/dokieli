@@ -1,7 +1,7 @@
 import Config from './config.js'
 import Papa from 'papaparse';
 import { domSanitize } from './util.js';
-import { escapeCharacters } from './doc.js';
+import { createDateHTML, createLicenseHTML, escapeCharacters, createDefinitionListHTML } from './doc.js';
 import uriTemplates from 'uri-templates';
 
 export function csvStringToJson(str) {
@@ -12,164 +12,7 @@ export function csvStringToJson(str) {
 //https://www.w3.org/TR/csv2rdf/
 //https://www.w3.org/TR/tabular-metadata/
 export function jsonToHtmlTableString(csvTables, metadata) {
-  metadata = metadata || {
-    "@context": [
-      "http://www.w3.org/ns/csvw",
-      {
-        "dpv": "https://w3id.org/dpv#",
-        "risk": "https://w3id.org/dpv/risk#"
-      },
-      {"@language": "en"}
-    ],
-    "@id": "",
-    "@type": "TableGroup",
-    "tables": [
-      {
-        "url": "assessments.csv",
-        "dcterms:title": [{"@value": "Dokieli Threat Modeling - STRIDE", "@language": "en"}],
-        "dcat:keyword": [
-          {"@value": "security risk", "@language": "en"},
-          {"@value": "software security", "@language": "en"},
-          {"@value": "software security assurance", "@language": "en"},
-          {"@value": "threat modelling", "@language": "en"}
-        ],
-        "dcterms:publisher": {"@id": "https://dokie.li/#i"},
-        "dcterms:license": {"@id": "https://creativecommons.org/licenses/by/4.0/"},
-        "dcterms:modified": {"@value": "2025-08-20", "@type": "xsd:date"},
-        "tableSchema": {
-          "foreignKeys": [
-            {
-              "columnReference": "risk",
-              "reference": {
-                "resource": "risks.csv",
-                "columnReference": "risk"
-              }
-            },
-            {
-              "columnReference": "mitigation",
-              "reference": {
-                "resource": "mitigations.csv",
-                "columnReference": "mitigation"
-              }
-            }
-          ],
-          "aboutUrl": "#assessment/2025-08-20/{_row}",
-          "columns": [
-            {
-              "name": "feature",
-              "titles": "Feature",
-              "datatype": "string",
-              "propertyUrl": "dcterms:subject",
-              "valueUrl": "{feature}",
-              "required": true
-            },
-            {
-              "name": "strideThreatType",
-              "titles": "STRIDE threat type",
-              "datatype": "string",
-              "aboutUrl": "#{risk}",
-              "propertyUrl": "dpv:hasImpact",
-              "valueUrl": "#{strideThreatType}",
-              "null": ["N/A", ""]
-            },
-            {
-              "name": "risk",
-              "titles": "Risk",
-              "datatype": "string",
-              "propertyUrl": "risk:hasRisk",
-              "valueUrl": "#{risk}",
-              "null": ["N/A", ""]
-            },
-            {
-              "name": "riskLevel",
-              "titles": "Risk level",
-              "datatype": "string",
-              "aboutUrl": "#{risk}",
-              "propertyUrl": "risk:hasRiskLevel",
-              "valueUrl": "https://w3id.org/dpv/risk#{riskLevel}",
-              "null": ["N/A", ""]
-            },
-            {
-              "name": "mitigation",
-              "titles": "Mitigation",
-              "datatype": "string",
-              "aboutUrl": "#{risk}",
-              "propertyUrl": "risk:isMitigatedByMeasure",
-              "valueUrl": "#{mitigation}",
-              "null": ["N/A", ""]
-            },
-            {
-              "name": "description",
-              "titles": "Description",
-              "datatype": "string",
-              "propertyUrl": "dcterms:description",
-              "null": ["N/A", ""]
-            },
-            {
-              "name": "issue",
-              "titles": "Issue",
-              "datatype": "string",
-              "propertyUrl": "rdfs:seeAlso",
-              "valueUrl": "{feature}",
-              "null": ["N/A", ""]
-            }
-          ]
-        }
-      },
-      {
-        "url": "risks.csv",
-        "dcterms:title": [{"@value": "Risks", "@language": "en"}],
-        "tableSchema": {
-          "primaryKey": "risk",
-          "aboutUrl": "#{risk}",
-          "columns": [
-            {
-              "name": "risk",
-              "titles": "Risk",
-              "datatype": "string",
-              "propertyUrl": "rdf:type",
-              "valueUrl": "dpv:Risk"
-            },
-            {
-              "name": "description",
-              "titles": "Description",
-              "datatype": "string",
-              "propertyUrl": "dcterms:description"
-            }
-          ]
-        }
-      },
-      {
-        "url": "mitigations.csv",
-        "dcterms:title": [{"@value": "Mitigations", "@language": "en"}],
-        "tableSchema": {
-          "primaryKey": "mitigation",
-          "aboutUrl": "#{mitigation}",
-          "columns": [
-            {
-              "name": "mitigation",
-              "titles": "Mitigation",
-              "datatype": "string",
-              "propertyUrl": "rdf:type",
-              "valueUrl": "dpv:RiskMitigationMeasure"
-            },
-            {
-              "name": "description",
-              "titles": "Description",
-              "datatype": "string",
-              "propertyUrl": "dcterms:description"
-            }
-          ]
-        }
-      }
-    ]
-  }
-
-  let language, url;
-
-  const isPlainObject = (object) => {
-    return Object.prototype.toString.call(object) === '[object Object]';
-  }
+  let language;
 
   //http://www.w3.org/TR/tabular-data-model/
   if (metadata && metadata['@context'] && (metadata['@context'] == 'http://www.w3.org/ns/csvw' || metadata['@context'].includes('http://www.w3.org/ns/csvw') )) {
@@ -183,6 +26,9 @@ export function jsonToHtmlTableString(csvTables, metadata) {
       })
     }
   }
+
+  // console.log(metadata)
+
   if (!metadata.tables && !metadata.tables.length) { return }
 
   let tables = metadata.tables;
@@ -199,16 +45,21 @@ export function jsonToHtmlTableString(csvTables, metadata) {
     const bi = orderMap[b.url] ?? Number.MAX_SAFE_INTEGER;
     return ai - bi;
   });
+  // console.log(csvTables)
 
   let html = '';
 
   let tablesList = {};
 
+  let documentTitle = metadata['dcterms:title'] || metadata['@id'];
+  documentTitle = getTitleAndLanguage(documentTitle);
+
   csvTables.forEach((obj) => {
-    const tableMetadata = tables.find((table) => table.url === obj.url);
+    const tableMetadata = tables.find((table) => table.url === obj.url); 
+    // console.log(tableMetadata)
 
     let caption = tableMetadata['dcterms:title'] || tableMetadata['url'] || tableMetadata['@id'];
-    caption = Array.isArray(caption) ? caption[0] : caption;
+    caption = getTitleAndLanguage(caption);
 
     let keywordsHTML = JSONLDArrayToDL(tableMetadata['dcat:keyword'], 'Keywords', 'dcat:keyword');
     let publisher = tableMetadata['dcterms:publisher'];
@@ -216,8 +67,16 @@ export function jsonToHtmlTableString(csvTables, metadata) {
     let license = tableMetadata['dcterms:license'];
     let modified = tableMetadata['dcterms:modified'];
 
+    license = Array.isArray(license) ? license[0] : license;
+    let licenseHTML = license ? createLicenseHTML(license["@id"], {rel:'dcterms:license', label:'License'}) : '';
+    let modifiedHTML = modified ? createDateHTML({ 'property': 'dcterms:modified', 'title': 'Modified', 'datetime': new Date(tableMetadata['dcterms:modified']["@value"]) }) : '';
+
+    let sourceHTML = createDefinitionListHTML([{rel: 'dcterms:source', href: obj.url}], {title: 'Source'});
+
+
     const metadataColumns = tableMetadata.tableSchema.columns;
-    const metadataColumnsCount = metadataColumns.length;
+    const virtualColumns = metadataColumns.filter((col) => !!col.virtual);
+    const metadataColumnsCount = metadataColumns.length - virtualColumns.length;
     const tableSchemaAboutUrl = tableMetadata.tableSchema.aboutUrl;
     let foreignKeys = tableMetadata.tableSchema.foreignKeys
     foreignKeys = foreignKeys ? foreignKeys.map((foreignKeyObj) => foreignKeyObj.columnReference) : [];
@@ -231,18 +90,10 @@ export function jsonToHtmlTableString(csvTables, metadata) {
     const headers = data[0];
     const rows = data.slice(1);
 
-    let captionLang = '';
-    if (isPlainObject(caption)) {
-      const captionValue = caption["@value"];
-
-      captionLang = ` lang="${caption["@language"]}" xml:lang="${caption["@language"]}"`;
-      caption = captionValue;
-    }
-
-    tablesList[tableMetadata['url']] = caption;
+    tablesList[tableMetadata['url']] = caption.textContent;
 
     html += `<table id="${tableMetadata['url']}">`;
-    html += `<caption${captionLang}>${caption}</caption>`;
+    html += `<caption${caption.language}>${caption.textContent}</caption>`;
   
     html += `<thead><tr>`;
     headers.forEach(header => {
@@ -258,7 +109,7 @@ export function jsonToHtmlTableString(csvTables, metadata) {
         return acc;
       }, {});
 
-      fillValues['_row'] = rowIndex;
+      fillValues['_row'] = rowIndex + 1;
 
       if (tableSchemaAboutUrl) {
         uriTemplate = uriTemplates(domSanitize(tableSchemaAboutUrl));
@@ -268,17 +119,25 @@ export function jsonToHtmlTableString(csvTables, metadata) {
         attributeAboutId = ` about="${tableSchemaAboutUrlValue}" id="${tableSchemaAboutUrlValue.slice(1)}"`;
       }
 
-      html += `<tr${attributeAboutId}>`;
+      const typeVirtualColumns = virtualColumns ? virtualColumns.filter((col) => col.propertyUrl == 'rdf:type'): [];
+
+      const typeValue = typeVirtualColumns.length ? typeVirtualColumns[0].valueUrl : null;
+      const attributeTypeof = typeValue ? ` typeof="${typeValue}"` : '';
+
+      html += `<tr${attributeAboutId}${attributeTypeof}>`;
 
       row.forEach((cell, cellIndex) => {
         const columnName = headers[cellIndex];
         if (!columnName) return;
+
+        cell = cell.trim();
+
         cell = escapeCharacters(domSanitize(cell));
 
         const currentColumnMetadataOriginal = metadataColumns.find(col => col.name === columnName);
         const currentColumnMetadata = { ...currentColumnMetadataOriginal };
         
-        const nullValues = currentColumnMetadata.null || [];
+        const nullValues = currentColumnMetadata.null || [''];
 
         const cellFillValues = headers.reduce((acc, header) => {
           let val = getValueByHeader(row, headers, header);
@@ -286,7 +145,7 @@ export function jsonToHtmlTableString(csvTables, metadata) {
           return acc;
         }, {});
 
-        fillValues['_row'] = rowIndex;
+        fillValues['_row'] = rowIndex + 1;
 
         let isInForeignKeys = !!foreignKeys.includes(currentColumnMetadata.name)
 
@@ -339,7 +198,7 @@ export function jsonToHtmlTableString(csvTables, metadata) {
             }
           }
 
-          if (currentColumnMetadata.propertyUrl == 'dcterms:description') {
+          if (currentColumnMetadata.propertyUrl == 'dcterms:description' && !nullValues.includes(cell)) {
             attributes.push(`property="${currentColumnMetadata.propertyUrl}"`);
           }
 
@@ -388,8 +247,6 @@ export function jsonToHtmlTableString(csvTables, metadata) {
     html += `</tbody>`;
     let publisherHTML = '', publisherHref, publisherName;
 
-    let licenseHTML = '', licenseHref, licenseName;
-
     if (isPlainObject(publisher)) {
       publisherHref = publisher["@id"] || publisher["schema:url"];
       publisherHref = publisherHref["@id"] ? publisherHref["@id"] : publisherHref;
@@ -402,18 +259,8 @@ export function jsonToHtmlTableString(csvTables, metadata) {
       publisherHTML = `<dl><dt>Publisher</dt><dd><a href="${publisherHref}" rel="dcterms:publisher">${publisherName}</a></dd></dl>`;
     }
 
-    if (isPlainObject(license)) {
-      licenseHref = license["@id"] || publisher["schema:url"];
-
-      licenseName = (licenseHref && Config.License[licenseHref]) ? Config.License[licenseHref].name : licenseHref;
-    }
-
-    if (license) {
-      licenseHTML = `<dl><dt>License</dt><dd><a href="${licenseHref}" rel="dcterms:license">${licenseName}</a></dd></dl>`;
-    }
-
-    if (publisherHTML !== '' || licenseHTML !== '' || keywordsHTML !== '') {
-      html += `<tfoot><tr><td colspan="${metadataColumnsCount}">${publisherHTML}${licenseHTML}${keywordsHTML}</td></tr></tfoot>`;
+    if (publisherHTML !== '' || licenseHTML !== '' || keywordsHTML !== '' || modifiedHTML !== '' || sourceHTML !== '') {
+      html += `<tfoot><tr><td colspan="${metadataColumnsCount}">${sourceHTML}${publisherHTML}${licenseHTML}${keywordsHTML}${modifiedHTML}</td></tr></tfoot>`;
     }
 
     html += `</table>`;
@@ -429,10 +276,10 @@ export function jsonToHtmlTableString(csvTables, metadata) {
   })
 
   if (navList.length) {
-    navHtml = `<nav id="list-of-tables"><h2>Tables</h2><div><ol class="toc">${navList.join('')}</ol></div></nav>`;
+    navHtml  = `<nav id="list-of-tables"><h2>Tables</h2><div><ol class="toc">${navList.join('')}</ol></div></nav>`;
   }
 
-  return navHtml + html;
+  return `<h1${documentTitle.language}>${documentTitle.textContent}</h1>${navHtml}${html}`;
 }
 
 function getValueByHeader(row, headers, headerName) {
@@ -440,6 +287,21 @@ function getValueByHeader(row, headers, headerName) {
   return index !== -1 ? row[index] : undefined;
 }
 
+function getTitleAndLanguage(titleObject) {
+  titleObject = Array.isArray(titleObject) ? titleObject[0] : titleObject;
+
+  let language = '';
+  let textContent = titleObject;
+
+  if (isPlainObject(titleObject)) {
+    textContent = titleObject["@value"];
+
+    language = ` lang="${titleObject["@language"]}" xml:lang="${titleObject["@language"]}"`;
+  }
+
+  return { language, textContent };
+
+}
 
 function JSONLDArrayToDL(arr, title, property) {
   if (!Array.isArray(arr) || arr.length === 0) return '';
@@ -449,4 +311,8 @@ function JSONLDArrayToDL(arr, title, property) {
   ).join('');
 
   return `<dl><dt>${title}</dt>${items}</dl>`;
+}
+
+const isPlainObject = (object) => {
+  return Object.prototype.toString.call(object) === '[object Object]';
 }
