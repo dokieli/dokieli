@@ -1629,7 +1629,7 @@ DO = {
 
           DO.U.openResource(open);
         }
-
+        // FIXME: we shouldn't have to call this here too, but there is a situation where the other if block gets triggered before we resolved this one. review and fix.
         let paramGraphView = getUrlParams('graph-view');
 
         if (paramGraphView.length && paramGraphView[0] == 'true') {
