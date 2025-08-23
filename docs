@@ -277,7 +277,7 @@
                   <p property="skos:definition">Dokieli supports authoring various kinds of articles, such as blog posts, course descriptions, guides, news articles, recipes, reviews, scholarly articles, slideshows, technical specifications, theses, travelogues, or anything that simply is an "article". Articles are both human- and machine-readable, and can be highly structured, linked, versioned, annotated, shared, access-controlled, and stored across different <a href="#storage" rel="rdfs:seeAlso">storages</a>. Collections of articles can be syndicated via web feeds. While <a href="#annotation" rel="rdfs:seeAlso">annotations</a> and <a href="#notification" rel="rdfs:seeAlso">notifications</a> differ in purpose, they share a similar structure and usability.</p>
                 </dd>
 
-                <dt about="#annotation" property="skos:prefLabel" typeof="skos:Concept">Annotation</dt>
+                <dt about="#annotation" id="annotation" property="skos:prefLabel" typeof="skos:Concept">Annotation</dt>
                 <dd about="#annotation">
                   <figure>
                     <img alt="" height="204" rel="schema:image" src="media/images/dokieli-illustration-annotations.jpg" width="460" />
@@ -290,7 +290,7 @@
                   <p property="skos:definition">An annotation is a standalone piece of information about, or part of, an <a href="#article" rel="rdfs:seeAlso">article</a> or another annotation, with purposes such as assessing, bookmarking, classifying, commenting, linking, replying, questioning, or tagging. Annotations can be stored in locations like <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or an <a href="#annotation-service" rel="rdfs:seeAlso">annotation service</a>, and each can have its own <a href="#feature-language" rel="rdfs:seeAlso">language</a>, <a href="#feature-license" rel="rdfs:seeAlso">license</a>, and inbox to receive related <a href="#notification" rel="rdfs:seeAlso">notifications</a>. When an article or annotation with an inbox is annotated, a notification is automatically sent to enable discovery. Although annotations can be displayed in the context of their targets, they remain distinct resources and are not stored with the article.</p>
                 </dd>
 
-                <dt about="#notification" property="skos:prefLabel" typeof="skos:Concept">Notification</dt>
+                <dt about="#notification" id="#notification" property="skos:prefLabel" typeof="skos:Concept">Notification</dt>
                 <dd about="#notification">
                   <figure>
                     <img alt="" height="204" rel="schema:image" src="media/images/dokieli-illustration-sharing.jpg" width="460" />
