@@ -16,15 +16,15 @@ export default {
       DO.U.setWebExtensionURL();
       DO.U.setDocumentString();
       DO.U.initUser();
+      DO.U.setDocumentMode();
       DO.U.initLocalStorage();
-      DO.U.initCurrentStylesheet();
-      DO.U.setDocRefType();
       DO.U.showRefs();
       DO.U.highlightItems();
       DO.U.showAsTabs();
       DO.U.initDocumentActions();
       DO.U.showDocumentInfo();
-      DO.U.setDocumentMode();
+      DO.U.setDocRefType();
+      DO.U.initCurrentStylesheet();
       DO.U.showFragment();
       DO.U.initCopyToClipboard();
       DO.U.initEditor();

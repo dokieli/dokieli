@@ -26,7 +26,8 @@ import rdf from 'rdf-ext';
 import Config from './config.js';
 import { Editor } from './editor/editor.js';
 import { initButtons, updateButtons } from './ui/buttons.js'
-import{ csvStringToJson, jsonToHtmlTableString } from './csv.js'
+import { csvStringToJson, jsonToHtmlTableString } from './csv.js'
+import { getMultipleResources } from './fetcher.js'
 
 const ns = Config.ns;
 let DO;
@@ -1548,10 +1549,15 @@ DO = {
     setDocumentMode: async function(mode) {
       Config.Editor.mode = mode || Config.Editor.mode;
 
-      var style = getUrlParams('style');
+      const paramStyle = getUrlParams('style');
+      const paramOpen = getUrlParams('open');
+      const paramAuthor = getUrlParams('author');
+      const paramSocial = getUrlParams('social');
+      const paramGraph = getUrlParams('graph');
+      const paramGraphView = getUrlParams('graph-view');
 
-      if (style.length) {
-        style = style[0];
+      if (paramStyle.length) {
+        let style = paramStyle[0];
         style = domSanitize(style);
         var title = style.lastIndexOf('/');
         title = (title > -1) ? style.substr(title + 1) : style;
@@ -1568,11 +1574,12 @@ DO = {
         DO.U.updateSelectedStylesheets(stylesheets, title);
       }
 
-      var open = getUrlParams('open');
-      if (open.length) {
-        if (open.length > 1) {
-          let openUrls = open.map((url) => `<a href="${url} rel="noopener" target="_blank">${url}</a>`);
-          let urlsHtml = openUrls.join(', ');
+
+      if (paramOpen.length) {
+        let openResources = paramOpen.map((url) => domSanitize(url));
+
+        if (paramOpen.length > 1) {
+          let urlsHtml = openResources.map((url) => `<a href="${url} rel="noopener" target="_blank">${url}</a>`).join(', ');
           var message = `Opening ${urlsHtml}`;
           var actionMessage = `Opening ${urlsHtml}`;
 
@@ -1585,31 +1592,10 @@ DO = {
           addMessageToLog({...messageObject, content: message}, Config.MessageLog);
           const messageId = showActionMessage(document.body, messageObject);
 
-          async function getMultipleResources() {
-            return await Promise.all(
-              open.map(async (o) => {
-                const r = await fetch(o);
-                if (r.headers.get("content-type") == 'application/json' || r.headers.get("content-type") == 'application/ld+json') {
-                  return {
-                    name: o.split('/').pop(),
-                    type: r.headers.get("content-type"),
-                    content: JSON.stringify(await r.json()),
-                  }
-                } else {
-                  return {
-                    name: o.split('/').pop(),
-                    type: r.headers.get("content-type"),
-                    content: await r.text(),
-                  }
-                }
-              })
-            );
-          }
-
-          let results = await getMultipleResources()
+          let results = await getMultipleResources(openResources, { filename: true })
           const contentTypes = results.map(r => r.type);
           const contentType = contentTypes.includes('text/csv') ? 'text:csv' : 'text/plain';
-          const iris = open;
+          const iris = openResources;
           let spawnOptions = {};
           spawnOptions['defaultStylesheet'] = false;
           spawnOptions['init'] = true;
@@ -1622,77 +1608,69 @@ DO = {
             spawnOptions
           );
         } else {
-          open = open[0];
-            
+          open = openResources[0];
+
           open = domSanitize(open);
           open = decodeURIComponent(open);
 
-          DO.U.openResource(open);
+          await DO.U.openResource(open);
         }
-        // FIXME: we shouldn't have to call this here too, but there is a situation where the other if block gets triggered before we resolved this one. review and fix.
-        let paramGraphView = getUrlParams('graph-view');
 
         if (paramGraphView.length && paramGraphView[0] == 'true') {
+          console.log("inside where the graph is shown")
           DO.U.showVisualisationGraph(DO.C.DocumentURL, getDocument(), '#graph-view');
         }
 
-        stripUrlSearchHash();
+        // stripUrlSearchHash();
       }
 
-      if (DO.C.GraphViewerAvailable) {
-        let paramGraphView = getUrlParams('graph-view');
-
-        if (paramGraphView.length && paramGraphView[0] == 'true') {
-          DO.U.showVisualisationGraph(DO.C.DocumentURL, getDocument(), '#graph-view');
-        }
-
-        var graphs = getUrlParams('graph');
-
-        var urls = graphs.map(url => {
-          url = domSanitize(url);
-          // var iri = decodeURIComponent(g);
-
-          //TODO: Need a way to handle potential proxy use eg. https://dokie.li/?graph=https://dokie.li/proxy?uri=https://example.org/
-          //XXX: if iri startsWith https://dokie.li/proxy? then the rest gets chopped.
-          // var docURI = iri.split(/[?#]/)[0];
-
-          //XXX: fugly
-          // var docURI = iri.split(/[#]/)[0];
-          // iri = iri.split('=').pop();
-
-          return stripFragmentFromString(url);
-        });
-        // console.log(urls);
-
-        if (urls.length) {
-          // var options = {'license': 'https://creativecommons.org/publicdomain/zero/1.0/', 'filter': { 'subjects': [docURI, iri] }, 'title': iri };
-          var options = {'subjectURI': urls[0], 'license': 'https://creativecommons.org/publicdomain/zero/1.0/', 'title': urls[0] };
-
-          // DO.U.showGraphResources([docURI], '#graph-view', options);
-          // console.log(options);
-
-          var anchors = urls.map(url => `<a href="${url}">${url}</a>`).join(', ');
-
-          var message = `Loading graph(s) ${anchors}`;
-          var actionMessage = `<span class="progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]} Loading graph(s) ${anchors}</span>`;
-
-          const messageObject = {
-            'content': actionMessage,
-            'type': 'info',
-            'timer': 3000
-          }
-
-          addMessageToLog({...messageObject, content: message}, Config.MessageLog);
-          showActionMessage(document.body, messageObject);
-
-          DO.U.showGraph(urls, '#graph-view', options);
-
-          stripUrlSearchHash()
-        }
+      if (paramGraphView.length && paramGraphView[0] == 'true' && paramOpen.length == 0) {
+        DO.U.showVisualisationGraph(DO.C.DocumentURL, getDocument(), '#graph-view');
       }
 
-      const paramAuthor = getUrlParams('author');
-      const paramSocial = getUrlParams('social');
+
+      var urls = paramGraph.map(url => {
+        url = domSanitize(url);
+        // var iri = decodeURIComponent(g);
+
+        //TODO: Need a way to handle potential proxy use eg. https://dokie.li/?graph=https://dokie.li/proxy?uri=https://example.org/
+        //XXX: if iri startsWith https://dokie.li/proxy? then the rest gets chopped.
+        // var docURI = iri.split(/[?#]/)[0];
+
+        //XXX: fugly
+        // var docURI = iri.split(/[#]/)[0];
+        // iri = iri.split('=').pop();
+
+        return stripFragmentFromString(url);
+      });
+      // console.log(urls);
+
+      if (urls.length) {
+        // var options = {'license': 'https://creativecommons.org/publicdomain/zero/1.0/', 'filter': { 'subjects': [docURI, iri] }, 'title': iri };
+        var options = {'subjectURI': urls[0], 'license': 'https://creativecommons.org/publicdomain/zero/1.0/', 'title': urls[0] };
+
+        // DO.U.showGraphResources([docURI], '#graph-view', options);
+        // console.log(options);
+
+        var anchors = urls.map(url => `<a href="${url}" rel="noopener" target="_blank">${url}</a>`).join(', ');
+
+        var message = `Loading graph(s) ${anchors}`;
+        var actionMessage = `<span class="progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]} Loading graph(s) ${anchors}</span>`;
+
+        const messageObject = {
+          'content': actionMessage,
+          'type': 'info',
+          'timer': 3000
+        }
+
+        addMessageToLog({...messageObject, content: message}, Config.MessageLog);
+        showActionMessage(document.body, messageObject);
+
+        DO.U.showGraph(urls, '#graph-view', options);
+
+        // stripUrlSearchHash();
+      }
+
 
       if (paramSocial.length && paramSocial[0] == 'true') {
         Config.Editor.mode = 'social';
@@ -1702,10 +1680,9 @@ DO = {
         Config.Editor.mode = 'author';
         stripUrlSearchHash();
       }
-      else if (DO.C.Resource[DO.C.DocumentURL].contentType == 'text/html') {
-        // var tmpl = document.implementation.createHTMLDocument('template');
-        // var fragment = fragmentFromString(DO.C.Resource[DO.C.DocumentURL].data);
-        // tmpl.documentElement.replaceChildren(fragment);
+
+      //XXX: This else if works but current document needs to be processed for DO.C.Resource. See also config.js init and whether non text/html is ever the case (e.g., dokieli in SVG?)
+      // else if (DO.C.Resource[DO.C.DocumentURL].contentType == 'text/html') {
         var node = selectArticleNode(document);
         var hasContent = hasNonWhitespaceText(node);
 
@@ -1713,7 +1690,7 @@ DO = {
           Config.Editor.mode = 'author';
           Config.Editor.new = true;
         }
-      }
+      // }
     },
 
     initServiceWorker: function () {
@@ -7002,7 +6979,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
       });
     },
 
-    openResource: function(iri, options) {
+    openResource: async function(iri, options) {
       options = options || {};
       var headers = { 'Accept': setAcceptRDFTypes() };
       // var pIRI = getProxyableIRI(iri);
@@ -7011,7 +6988,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
       // options['noCredentials'] = true;
 
-      var handleResource = function handleResource (iri, headers, options) {
+      var handleResource = async function handleResource (iri, headers, options) {
         var message = `Opening <a href="${iri} rel="noopener" target="_blank">${iri}</a>.`;
         var actionMessage = `Opening <a href="${iri}" rel="noopener" target="_blank">${iri}</a>`;
 
@@ -7023,97 +7000,90 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
         addMessageToLog({...messageObject, content: message}, Config.MessageLog);
         const messageId = showActionMessage(document.body, messageObject);
+        let response;
+        let error;
 
-        return getResource(iri, headers, options)
-          .catch(error => {
-            // console.log(error)
-            // console.log(error.status)
-            // console.log(error.response)
+        try {
+          response = await getResource(iri, headers, options);
+        } catch(e) {
+          error = e;            
+          // console.log(error)
+          // console.log(error.status)
+          // console.log(error.response)
 
-            //XXX: It was either a CORS related issue or 4xx/5xx.
+          //XXX: It was either a CORS related issue or 4xx/5xx.
 
-            document.getElementById(messageId).remove();
+          document.getElementById(messageId).remove();
 
-            var message = `Unable to open <a href="${iri}" rel="noopener" target="_blank">${iri}</a>.`;
-            var actionMessage = `Unable to open <a href="${iri}" rel="noopener" target="_blank">${iri}</a>.`;
+          var message = `Unable to open <a href="${iri}" rel="noopener" target="_blank">${iri}</a>.`;
+          var actionMessage = `Unable to open <a href="${iri}" rel="noopener" target="_blank">${iri}</a>.`;
 
-            const messageObject = {
-              'content': actionMessage,
-              'type': 'error',
-              'timer': 5000,
-              'code': error.status
-            }
+          const messageObject = {
+            'content': actionMessage,
+            'type': 'error',
+            'timer': 5000,
+            'code': error.status
+          }
 
-            addMessageToLog({...messageObject, content: message}, Config.MessageLog);
-            showActionMessage(document.body, messageObject);
+          addMessageToLog({...messageObject, content: message}, Config.MessageLog);
+          showActionMessage(document.body, messageObject);
 
-            throw error
-          })
-          .then(response => {
+          throw error
+        }
+
+        if (response) {
 // console.log(response)
-            iri = encodeURI(iri)
-            var cT = response.headers.get('Content-Type');
-            var options = {};
-            options['contentType'] = (cT) ? cT.split(';')[0].toLowerCase().trim() : 'text/turtle';
-            options['subjectURI'] = iri;
+          iri = encodeURI(iri)
+          var cT = response.headers.get('Content-Type');
+          var options = {};
+          options['contentType'] = (cT) ? cT.split(';')[0].toLowerCase().trim() : 'text/turtle';
+          options['subjectURI'] = iri;
 
-            return response.text()
-              .then(data => {
-                //XXX: Revisit DOMPurify. This removes... pretty much everything. We don't necessarily want to completely get rid of styles (`link` or `style` tags). `script` tag and perhaps `style` attribute could perhaps be filtered - not sure if that's something we want to keep. Definitely do not remove RDF attributes (DO.C.RDFaAttributes).
-                // var sT = [...DO.C.MediaTypes.Markup, ...['text/plain', 'application/xhtml+xml']];
-                // if (sT.includes(options['contentType'])) {
-                //   data = domSanitize(data);
-                //   console.log(DOMPurify.removed)
-                // }
+          let data = await response.text()
 
-                DO.U.setDocumentURL(iri);
-                var documentURL = DO.C.DocumentURL;
-                DO.C['Resource'][documentURL] = DO.C['Resource'][documentURL] || {};
+          DO.U.setDocumentURL(iri);
+          var documentURL = DO.C.DocumentURL;
+          DO.C['Resource'][documentURL] = DO.C['Resource'][documentURL] || {};
 
-                var spawnOptions = {};
+          var spawnOptions = {};
 
-                var checkMarkdownInMediaTypes = ['text/markdown', 'text/plain'];
-                if  (checkMarkdownInMediaTypes.includes(options['contentType'])) {
-                  data = parseMarkdown(data, {createDocument: true});
-                  spawnOptions['defaultStylesheet'] = true;
-                  //XXX: Perhaps okay for text/markdown but not text/plain?
-                  options.contentType = 'text/html';
-                }
+          var checkMarkdownInMediaTypes = ['text/markdown', 'text/plain'];
+          if  (checkMarkdownInMediaTypes.includes(options['contentType'])) {
+            data = parseMarkdown(data, {createDocument: true});
+            spawnOptions['defaultStylesheet'] = true;
+            //XXX: Perhaps okay for text/markdown but not text/plain?
+            options.contentType = 'text/html';
+          }
 
-                if (DO.C.MediaTypes.RDF.includes(options['contentType'])) {
-                  options['storeHash'] = true;
-                  getResourceInfo(data, options);
-                }
+          if (DO.C.MediaTypes.RDF.includes(options['contentType'])) {
+            options['storeHash'] = true;
+            getResourceInfo(data, options);
+          }
 
-                DO.U.buildResourceView(data, options)
-                  .then(o => {
+          const o = await DO.U.buildResourceView(data, options)
 // console.log(o)
-                    spawnOptions['defaultStylesheet'] = ('defaultStylesheet' in o) ? o.defaultStylesheet : (('defaultStylesheet' in spawnOptions) ? spawnOptions['defaultStylesheet'] : false);
-                    spawnOptions['init'] = true;
+          spawnOptions['defaultStylesheet'] = ('defaultStylesheet' in o) ? o.defaultStylesheet : (('defaultStylesheet' in spawnOptions) ? spawnOptions['defaultStylesheet'] : false);
+          spawnOptions['init'] = true;
 
-                    var html = DO.U.spawnDokieli(document, o.data, o.options['contentType'], o.options['subjectURI'], spawnOptions);
-                  })
-              })
-              .then(() => {
-                DO.C.DocumentAction = 'open';
+          var html = await DO.U.spawnDokieli(document, o.data, o.options['contentType'], o.options['subjectURI'], spawnOptions);
+        }
+        DO.C.DocumentAction = 'open';
 
-                var rm = document.querySelector('#document-action-message')
-                if (rm) {
-                  rm.parentNode.removeChild(rm)
-                }
-                var message = `Opened <a href="${iri}" rel="noopener" target="_blank">${iri}</a>.`;
-                message = {
-                  'content': message,
-                  'type': 'success',
-                  'timer': 3000
-                }
-                addMessageToLog(message, Config.MessageLog);
-                showActionMessage(document.body, message);
-              })
-          })
+        var rm = document.querySelector('#document-action-message')
+        if (rm) {
+          rm.parentNode.removeChild(rm)
+        }
+        var message = `Opened <a href="${iri}" rel="noopener" target="_blank">${iri}</a>.`;
+        message = {
+          'content': message,
+          'type': 'success',
+          'timer': 3000
+        }
+        addMessageToLog(message, Config.MessageLog);
+        showActionMessage(document.body, message);
       }
 
-      handleResource(iri, headers, options);
+     await handleResource(iri, headers, options);
     },
 
     //XXX: Review grapoi

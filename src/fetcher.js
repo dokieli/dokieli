@@ -22,6 +22,36 @@ function setAcceptRDFTypes(options = {}) {
     .join(',');
 }
 
+export async function getMultipleResources(resources, options = {}) {
+  return await Promise.all(
+    resources.map(async (url) => {
+      const response = await getResource(url);
+
+      const contentType = response.headers.get("content-type") || 'application/octet-stream';
+
+      const result = {
+        name: options.filename ? url.split('/').pop(): url,
+        type: contentType,
+      }
+
+      switch (contentType) {
+        default:
+          result['content'] = await response.text();
+          break;
+
+        case 'application/json':
+        case 'application/ld+json':
+        case 'application/activity+json':
+          result['content'] = JSON.stringify(await response.json());
+          break;
+      }
+
+      return result;
+    })
+  );
+}
+
+
 // I want HTTP COPY and I want it now!
 function copyResource (fromURL, toURL, options = {}) {
   let headers = { 'Accept': '*/*' }
