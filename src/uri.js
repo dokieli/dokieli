@@ -93,10 +93,25 @@ function getUrlParams(name) {
   return searchParams.getAll(name);
 }
 
-function stripUrlSearchHash() {
-  const url = window.location.href;
-  const cleanUrl = url.split('?')[0].split('#')[0];
-  window.history.replaceState({}, '', cleanUrl);
+function stripUrlParamsFromString(urlString, paramsToStrip = null, stripHash = false) {
+  const url = new URL(urlString, window.location.origin);
+
+  if (Array.isArray(paramsToStrip) && paramsToStrip.length > 0) {
+    paramsToStrip.forEach(param => url.searchParams.delete(param));
+  } else {
+    url.search = '';
+    if (stripHash) {
+      url.hash = '';
+    }
+  }
+
+  return url.toString();
+}
+
+// Side-effect function: updates the browser’s current URL in history
+function stripUrlSearchHash(paramsToStrip = null) {
+  const newUrl = stripUrlParamsFromString(window.location.href, paramsToStrip, true);
+  window.history.replaceState({}, '', newUrl);
 }
 
 function getBaseURL(url) {
@@ -298,6 +313,7 @@ export {
   stripFragmentFromString,
   getFragmentFromString,
   getUrlParams,
+  stripUrlParamsFromString,
   stripUrlSearchHash,
   getBaseURL,
   getPathURL,

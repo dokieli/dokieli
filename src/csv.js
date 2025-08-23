@@ -1,6 +1,6 @@
 import Config from './config.js'
 import Papa from 'papaparse';
-import { domSanitize } from './util.js';
+import { domSanitize, generateUUID, getDateTimeISO } from './util.js';
 import { createDateHTML, createLicenseHTML, escapeCharacters, createDefinitionListHTML } from './doc.js';
 import uriTemplates from 'uri-templates';
 
@@ -12,6 +12,9 @@ export function csvStringToJson(str) {
 //https://www.w3.org/TR/csv2rdf/
 //https://www.w3.org/TR/tabular-metadata/
 export function jsonToHtmlTableString(csvTables, metadata) {
+
+  const metadataUrl = metadata.url;
+  metadata = metadata.content;
   let language;
 
   //http://www.w3.org/TR/tabular-data-model/
@@ -47,7 +50,7 @@ export function jsonToHtmlTableString(csvTables, metadata) {
   });
   // console.log(csvTables)
 
-  let html = '';
+  let tableHTML = '';
 
   let tablesList = {};
 
@@ -71,8 +74,8 @@ export function jsonToHtmlTableString(csvTables, metadata) {
     let licenseHTML = license ? createLicenseHTML(license["@id"], {rel:'dcterms:license', label:'License'}) : '';
     let modifiedHTML = modified ? createDateHTML({ 'property': 'dcterms:modified', 'title': 'Modified', 'datetime': new Date(tableMetadata['dcterms:modified']["@value"]) }) : '';
 
-    let sourceHTML = createDefinitionListHTML([{rel: 'dcterms:source', href: obj.url}], {title: 'Source'});
-
+    const activityGeneratedBy = generateUUID();
+    const activityStartedAt = getDateTimeISO();
 
     const metadataColumns = tableMetadata.tableSchema.columns;
     const virtualColumns = metadataColumns.filter((col) => !!col.virtual);
@@ -81,6 +84,13 @@ export function jsonToHtmlTableString(csvTables, metadata) {
     let foreignKeys = tableMetadata.tableSchema.foreignKeys
     foreignKeys = foreignKeys ? foreignKeys.map((foreignKeyObj) => foreignKeyObj.columnReference) : [];
     let attributeAboutId = '';
+
+    const relColumns = virtualColumns.filter((col) => !!col.aboutUrl && !!col.propertyUrl && !!col.valueUrl).filter((col) => col.valueUrl == tableSchemaAboutUrl );
+
+    const rel = relColumns.length ? relColumns[0].propertyUrl : null;
+    const about = relColumns.length ? relColumns[0].aboutUrl : null;
+    const attributeTableAbout = about ? ` about="${about}"` : '';
+    const attributeTableRel = rel ? ` rel="${rel}"` : '';
 
     let uriTemplate;
     let tableSchemaAboutUrlValue;
@@ -92,17 +102,17 @@ export function jsonToHtmlTableString(csvTables, metadata) {
 
     tablesList[tableMetadata['url']] = caption.textContent;
 
-    html += `<table id="${tableMetadata['url']}">`;
-    html += `<caption${caption.language}>${caption.textContent}</caption>`;
+    tableHTML += `<table${attributeTableAbout} id="${tableMetadata['url']}"${attributeTableRel}>`;
+    tableHTML += `<caption${caption.language}>${caption.textContent}</caption>`;
   
-    html += `<thead><tr>`;
+    tableHTML += `<thead><tr>`;
     headers.forEach(header => {
       header = escapeCharacters(domSanitize(header));
-      html += `<th>${header}</th>`;
+      tableHTML += `<th>${header}</th>`;
     });
-    html += `</tr></thead>`;
+    tableHTML += `</tr></thead>`;
 
-    html += `<tbody>`;
+    tableHTML += `<tbody>`;
     rows.forEach((row, rowIndex) => {
       const fillValues = headers.reduce((acc, header) => {
         acc[header] = getValueByHeader(row, headers, header);
@@ -124,7 +134,7 @@ export function jsonToHtmlTableString(csvTables, metadata) {
       const typeValue = typeVirtualColumns.length ? typeVirtualColumns[0].valueUrl : null;
       const attributeTypeof = typeValue ? ` typeof="${typeValue}"` : '';
 
-      html += `<tr${attributeAboutId}${attributeTypeof}>`;
+      tableHTML += `<tr${attributeAboutId}${attributeTypeof}>`;
 
       row.forEach((cell, cellIndex) => {
         const columnName = headers[cellIndex];
@@ -235,16 +245,16 @@ export function jsonToHtmlTableString(csvTables, metadata) {
         }
 
         if (nullValues.includes(cell)) {
-          html += `<td>${cell}</td>`;
+          tableHTML += `<td>${cell}</td>`;
         }
         else {
-          html += `<td ${attributes.join(' ')}>${childWithAttribute}</td>`;
+          tableHTML += `<td ${attributes.join(' ')}>${childWithAttribute}</td>`;
         }
       })
-      html += `</tr>`;
+      tableHTML += `</tr>`;
     });
 
-    html += `</tbody>`;
+    tableHTML += `</tbody>`;
     let publisherHTML = '', publisherHref, publisherName;
 
     if (isPlainObject(publisher)) {
@@ -259,27 +269,64 @@ export function jsonToHtmlTableString(csvTables, metadata) {
       publisherHTML = `<dl><dt>Publisher</dt><dd><a href="${publisherHref}" rel="dcterms:publisher">${publisherName}</a></dd></dl>`;
     }
 
-    if (publisherHTML !== '' || licenseHTML !== '' || keywordsHTML !== '' || modifiedHTML !== '' || sourceHTML !== '') {
-      html += `<tfoot><tr><td colspan="${metadataColumnsCount}">${sourceHTML}${publisherHTML}${licenseHTML}${keywordsHTML}${modifiedHTML}</td></tr></tfoot>`;
+    const activityEndedAt = getDateTimeISO();
+    const provenanceHTML = generateProvenance(obj.url, metadataUrl, activityGeneratedBy, activityStartedAt, activityEndedAt);
+
+    if (publisherHTML !== '' || licenseHTML !== '' || keywordsHTML !== '' || modifiedHTML !== '' || provenanceHTML !== '') {
+      tableHTML += `<tfoot about=""><tr><td colspan="${metadataColumnsCount}">${provenanceHTML}${publisherHTML}${licenseHTML}${keywordsHTML}${modifiedHTML}</td></tr></tfoot>`;
     }
 
-    html += `</table>`;
+    tableHTML += `</table>`;
   })
 
 
   //TODO: buildListOfStuff('list-of-tables') could do this but it inserts its HTML, and jsonToHtmlTableString is called later.
   let navList = [];
-  let navHtml = '';
+  let navHTML = '';
 
   Object.keys(tablesList).forEach(key => {
     navList.push(`<li><a href="#${key}">${tablesList[key]}</a></li>`);
   })
 
   if (navList.length) {
-    navHtml  = `<nav id="list-of-tables"><h2>Tables</h2><div><ol class="toc">${navList.join('')}</ol></div></nav>`;
+    navHTML  = `<nav id="list-of-tables"><h2>Tables</h2><div><ol class="toc">${navList.join('')}</ol></div></nav>`;
   }
 
-  return `<h1${documentTitle.language}>${documentTitle.textContent}</h1>${navHtml}${html}`;
+  return `<h1${documentTitle.language}>${documentTitle.textContent}</h1>${navHTML}${tableHTML}`;
+}
+
+function generateProvenance (csvUrl, metadataUrl, activityGeneratedBy, activityStartedAt, activityEndedAt) {
+  const provenanceHTML = `
+    <dl about="" rel="prov:wasGeneratedBy">
+      <dt>Generated activity</dt>
+      <dd resource="#${activityGeneratedBy}" typeof="prov:Activity">
+        <dl>
+          <dt>Was associated with</dt>
+          <dd><a href="https://dokie.li/" rel="prov:wasAssociatedWith">dokieli</a></dd>
+          <dt>Started at time</dt>
+          <dd><time datetime="${activityStartedAt}" property="prov:startedAtTime">${activityStartedAt}</time></dd>
+          <dt>Ended at time</dt>
+          <dd><time datetime="${activityEndedAt}" property="prov:endedAtTime">${activityEndedAt}</time></dd>
+          <dt>Usage</dt>
+          <dd rel="prov:qualifiedUsage">
+            <dl resource="#${generateUUID()}" typeof="prov:Usage">
+              <dt>Entity</dt>
+              <dd><a href="${csvUrl}" rel="prov:entity">${csvUrl}</a></dd>
+              <dt>Role</dt>
+              <dd rel="prov:hadRole" resource="csvw:csvEncodedTabularData">CSV encoded tabular data</dd>
+            </dl>
+            <dl resource="#${generateUUID()}" typeof="prov:Usage">
+              <dt>Entity</dt>
+              <dd><a href="${metadataUrl}" rel="prov:entity">${metadataUrl}</a></dd>
+              <dt>Role</dt>
+              <dd rel="prov:hadRole" resource="csvw:tabularMetadata">CSV tabular metadata</dd>
+            </dl>
+          </dd>
+        </dl>
+      </dd>
+    </dl>
+  `
+  return provenanceHTML;
 }
 
 function getValueByHeader(row, headers, headerName) {
