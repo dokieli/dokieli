@@ -11,10 +11,9 @@ export function csvStringToJson(str) {
 //https://www.w3.org/TR/tabular-data-model/
 //https://www.w3.org/TR/csv2rdf/
 //https://www.w3.org/TR/tabular-metadata/
-export function jsonToHtmlTableString(csvTables, metadata) {
-
+export function jsonToHtmlTableString(csvTables, metadata = {}) {
   const metadataUrl = metadata.url;
-  metadata = metadata.content;
+  // metadata = metadata.content;
   let language;
 
   //http://www.w3.org/TR/tabular-data-model/
@@ -30,67 +29,79 @@ export function jsonToHtmlTableString(csvTables, metadata) {
     }
   }
 
-  // console.log(metadata)
+  let tables = metadata?.tables;
 
-  if (!metadata.tables && !metadata.tables.length) { return }
-
-  let tables = metadata.tables;
+  if (!metadata) {
+    tables = [];
+  }
+ 
+  if (!metadata.tables) {
+    if (metadata["@type"] == "Table") {
+      tables = metadata;
+    } 
+  }
 
   const uriTemplateProperties = ['aboutUrl', 'propertyUrl', 'valueUrl'];
 
-  const orderMap = metadata.tables.reduce((acc, table, index) => {
-    acc[table.url] = index;
-    return acc;
-  }, {});
+  if (metadata.tables) {
+    const orderMap = metadata.tables.reduce((acc, table, index) => {
+      acc[table.url] = index;
+      return acc;
+    }, {});
+  
+    csvTables = csvTables.sort((a, b) => {
+      const ai = orderMap[a.url] ?? Number.MAX_SAFE_INTEGER;
+      const bi = orderMap[b.url] ?? Number.MAX_SAFE_INTEGER;
+      return ai - bi;
+    });
+  }
 
-  csvTables = csvTables.sort((a, b) => {
-    const ai = orderMap[a.url] ?? Number.MAX_SAFE_INTEGER;
-    const bi = orderMap[b.url] ?? Number.MAX_SAFE_INTEGER;
-    return ai - bi;
-  });
-  // console.log(csvTables)
 
   let tableHTML = '';
 
   let tablesList = {};
 
   let documentTitle = metadata['dcterms:title'] || metadata['@id'];
-  documentTitle = getTitleAndLanguage(documentTitle);
+  documentTitle = documentTitle ? getTitleAndLanguage(documentTitle) : { textContent: csvTables.map((t) => t.url).join(', ') };
 
   csvTables.forEach((obj) => {
-    const tableMetadata = tables.find((table) => table.url === obj.url); 
-    // console.log(tableMetadata)
+    let tableMetadata;
+    if (metadata.tables) {
+      tableMetadata = tables.find((table) => table.url == obj.url);
+    }
+    else {
+      tableMetadata = metadata;
+    }
 
     let caption = tableMetadata['dcterms:title'] || tableMetadata['url'] || tableMetadata['@id'];
-    caption = getTitleAndLanguage(caption);
+    caption = caption ? getTitleAndLanguage(caption) : { textContent: obj.url };
 
-    let keywordsHTML = JSONLDArrayToDL(tableMetadata['dcat:keyword'], 'Keywords', 'dcat:keyword');
-    let publisher = tableMetadata['dcterms:publisher'];
+    let keywordsHTML = tableMetadata ? JSONLDArrayToDL(tableMetadata['dcat:keyword'], 'Keywords', 'dcat:keyword') : null;
+    let publisher = tableMetadata ? tableMetadata['dcterms:publisher'] : null;
     publisher = Array.isArray(publisher) ? publisher[0] : publisher;
-    let license = tableMetadata['dcterms:license'];
-    let modified = tableMetadata['dcterms:modified'];
+    let license = tableMetadata ? tableMetadata['dcterms:license'] : null;
+    let modified = tableMetadata ? tableMetadata['dcterms:modified'] : null;
 
     license = Array.isArray(license) ? license[0] : license;
     let licenseHTML = license ? createLicenseHTML(license["@id"], {rel:'dcterms:license', label:'License'}) : '';
-    let modifiedHTML = modified ? createDateHTML({ 'property': 'dcterms:modified', 'title': 'Modified', 'datetime': new Date(tableMetadata['dcterms:modified']["@value"]) }) : '';
+    let modifiedHTML = modified ? createDateHTML({ 'property': 'dcterms:modified', 'title': 'Modified', 'datetime': new Date(tableMetadata ? tableMetadata['dcterms:modified']["@value"] : null) }) : '';
 
     const activityGeneratedBy = generateUUID();
     const activityStartedAt = getDateTimeISO();
 
-    const metadataColumns = tableMetadata.tableSchema.columns;
-    const virtualColumns = metadataColumns.filter((col) => !!col.virtual);
-    const metadataColumnsCount = metadataColumns.length - virtualColumns.length;
-    const tableSchemaAboutUrl = tableMetadata.tableSchema.aboutUrl;
-    let foreignKeys = tableMetadata.tableSchema.foreignKeys
+    const metadataColumns = tableMetadata?.tableSchema?.columns;
+    const virtualColumns = metadataColumns?.filter((col) => !!col.virtual);
+    const tableSchemaAboutUrl = tableMetadata?.tableSchema?.aboutUrl;
+    let foreignKeys = tableMetadata?.tableSchema?.foreignKeys
     foreignKeys = foreignKeys ? foreignKeys.map((foreignKeyObj) => foreignKeyObj.columnReference) : [];
     let attributeAboutId = '';
 
-    const relColumns = virtualColumns.filter((col) => !!col.aboutUrl && !!col.propertyUrl && !!col.valueUrl).filter((col) => col.valueUrl == tableSchemaAboutUrl );
+    const relColumns = virtualColumns?.filter((col) => !!col.aboutUrl && !!col.propertyUrl && !!col.valueUrl).filter((col) => col.valueUrl == tableSchemaAboutUrl );
 
-    const rel = relColumns.length ? relColumns[0].propertyUrl : null;
-    const about = relColumns.length ? relColumns[0].aboutUrl : null;
+    const rel = relColumns?.length ? relColumns[0].propertyUrl : null;
+    const about = relColumns?.length ? relColumns[0].aboutUrl : `#${obj.url}`;
     const attributeTableAbout = about ? ` about="${about}"` : '';
-    const attributeTableRel = rel ? ` rel="${rel}"` : '';
+    const attributeTableRel = rel ? ` rel="${rel}"` : ' rel="schema:hasPart"';
 
     let uriTemplate;
     let tableSchemaAboutUrlValue;
@@ -99,11 +110,16 @@ export function jsonToHtmlTableString(csvTables, metadata) {
     if (!data || data.length === 0 ) return "<table></table>";
     const headers = data[0];
     const rows = data.slice(1);
+    const metadataColumnsCount = (metadataColumns?.length - virtualColumns?.length) || headers.length;
 
-    tablesList[tableMetadata['url']] = caption.textContent;
+    if (tableMetadata['url']) {
+      tablesList[tableMetadata['url']] = caption.textContent;
+    } else {
+      tablesList[obj.url] = caption.textContent || obj.url;
+    }
 
-    tableHTML += `<table${attributeTableAbout} id="${tableMetadata['url']}"${attributeTableRel}>`;
-    tableHTML += `<caption${caption.language}>${caption.textContent}</caption>`;
+    tableHTML += `<table${attributeTableAbout} id="${tableMetadata['url'] || obj.url}"${attributeTableRel}>`;
+    tableHTML += `<caption${caption.language || ''}>${caption.textContent}</caption>`;
   
     tableHTML += `<thead><tr>`;
     headers.forEach(header => {
@@ -127,12 +143,15 @@ export function jsonToHtmlTableString(csvTables, metadata) {
         tableSchemaAboutUrlValue = uriTemplate.fill(fillValues);
 
         attributeAboutId = ` about="${tableSchemaAboutUrlValue}" id="${tableSchemaAboutUrlValue.slice(1)}"`;
+      } else {
+        const attributeAbout = `#${obj.url}/${fillValues['_row']}`;
+        attributeAboutId = ` about="${attributeAbout}" id="${attributeAbout.slice(1)}"`;
       }
 
       const typeVirtualColumns = virtualColumns ? virtualColumns.filter((col) => col.propertyUrl == 'rdf:type'): [];
 
       const typeValue = typeVirtualColumns.length ? typeVirtualColumns[0].valueUrl : null;
-      const attributeTypeof = typeValue ? ` typeof="${typeValue}"` : '';
+      const attributeTypeof = typeValue ? ` typeof="${typeValue}"` : ' typeof="csvw:Row"';
 
       tableHTML += `<tr${attributeAboutId}${attributeTypeof}>`;
 
@@ -144,10 +163,10 @@ export function jsonToHtmlTableString(csvTables, metadata) {
 
         cell = escapeCharacters(domSanitize(cell));
 
-        const currentColumnMetadataOriginal = metadataColumns.find(col => col.name === columnName);
+        const currentColumnMetadataOriginal = metadataColumns?.find(col => col.name === columnName);
         const currentColumnMetadata = { ...currentColumnMetadataOriginal };
         
-        const nullValues = currentColumnMetadata.null || [''];
+        const nullValues = currentColumnMetadata?.null || [''];
 
         const cellFillValues = headers.reduce((acc, header) => {
           let val = getValueByHeader(row, headers, header);
@@ -157,7 +176,7 @@ export function jsonToHtmlTableString(csvTables, metadata) {
 
         fillValues['_row'] = rowIndex + 1;
 
-        let isInForeignKeys = !!foreignKeys.includes(currentColumnMetadata.name)
+        let isInForeignKeys = !!foreignKeys.includes(currentColumnMetadata?.name)
 
         let skipProperty = false;
 
@@ -182,7 +201,8 @@ export function jsonToHtmlTableString(csvTables, metadata) {
         const attributes = []
 
         if (currentColumnMetadata.aboutUrl) {
-          attributes.push(`about="${currentColumnMetadata.aboutUrl}"`)
+          attributes.push(`about="${currentColumnMetadata.aboutUrl}"`);
+
           if (!isInForeignKeys) {
             attributes.push(`id="${currentColumnMetadata.aboutUrl.slice(1)}"`);
           }
@@ -241,7 +261,14 @@ export function jsonToHtmlTableString(csvTables, metadata) {
           }
         }
         else {
-          childWithAttribute = `<span property="${columnName}">${cell}</span>`;
+          let hrefValue;
+
+          if (URL.canParse(cell)) {
+            hrefValue = new URL(cell);
+            childWithAttribute = `<a href="${hrefValue}" property="#${columnName}">${cell}</a>`;
+          } else {
+            childWithAttribute = `<span property="#${columnName}">${cell}</span>`;
+          }
         }
 
         if (nullValues.includes(cell)) {
@@ -292,10 +319,24 @@ export function jsonToHtmlTableString(csvTables, metadata) {
     navHTML  = `<nav id="list-of-tables"><h2>Tables</h2><div><ol class="toc">${navList.join('')}</ol></div></nav>`;
   }
 
-  return `<h1${documentTitle.language}>${documentTitle.textContent}</h1>${navHTML}${tableHTML}`;
+  const langAttribute = documentTitle.language ? ` lang="${documentTitle.language}" xml:lang="${language}"` : '';
+
+  return `<h1${langAttribute}>${documentTitle.textContent}</h1>${navHTML}${tableHTML}`;
 }
 
 function generateProvenance (csvUrl, metadataUrl, activityGeneratedBy, activityStartedAt, activityEndedAt) {
+  let csvwTabularMetadataHTML = '';
+
+  if (metadataUrl) {
+    csvwTabularMetadataHTML = `
+            <dl resource="#${generateUUID()}" typeof="prov:Usage">
+              <dt>Entity</dt>
+              <dd><a href="${metadataUrl}" rel="prov:entity">${metadataUrl}</a></dd>
+              <dt>Role</dt>
+              <dd rel="prov:hadRole" resource="csvw:tabularMetadata">CSV tabular metadata</dd>
+            </dl>`;
+  }
+
   const provenanceHTML = `
     <dl about="" rel="prov:wasGeneratedBy">
       <dt>Generated activity</dt>
@@ -315,12 +356,7 @@ function generateProvenance (csvUrl, metadataUrl, activityGeneratedBy, activityS
               <dt>Role</dt>
               <dd rel="prov:hadRole" resource="csvw:csvEncodedTabularData">CSV encoded tabular data</dd>
             </dl>
-            <dl resource="#${generateUUID()}" typeof="prov:Usage">
-              <dt>Entity</dt>
-              <dd><a href="${metadataUrl}" rel="prov:entity">${metadataUrl}</a></dd>
-              <dt>Role</dt>
-              <dd rel="prov:hadRole" resource="csvw:tabularMetadata">CSV tabular metadata</dd>
-            </dl>
+${csvwTabularMetadataHTML}
           </dd>
         </dl>
       </dd>

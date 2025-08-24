@@ -7285,7 +7285,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
         const csvFiles = [];
 
         files.map((file) => {
-          if (file.name.endsWith("metadata.json")) {
+          if (file.type == 'application/json' || file.type == 'application/ld+json') {
             file['url'] = file.name;
             metadataFiles.push(file);
           }
@@ -7301,11 +7301,14 @@ console.log('XXX: Cannot access effectiveACLResource', e);
           return tmp;
         })
 
+        //TODO: multiple metadata files
         let metadata = metadataFiles[0];
         if (metadata && metadata.content) {
           metadata.content = JSON.parse(metadataFiles[0].content);
         }
-        const htmlString = jsonToHtmlTableString(jsonObjects, metadata);
+
+        const htmlString = jsonToHtmlTableString(jsonObjects, metadata?.content);
+
         // console.log(fragmentFromString(`<main><article>${htmlString}</article></main>`))
         // this works for urls but not files
         // document.body.appendChild(fragmentFromString(`<main><article>${htmlString}</article></main>`));
@@ -7321,18 +7324,16 @@ console.log('XXX: Cannot access effectiveACLResource', e);
           tmpl.documentElement.setHTMLUnsafe(files[0].content);
           tmpl.body.setHTMLUnsafe(domSanitize(tmpl.body.getHTML()));
           break;
-        
+
         case 'text/csv':
-          console.error("Must provide a metadata file; single CSVs without metadata not supported yet");
+          // console.error("Must provide a metadata file; single CSVs without metadata not supported yet");
           // console.log("TODO: Single CSV case", iri, files);
-          // TODO: the below will be a function later
-          // let jsonObject = csvStringToJson(files[0].content); // we only have one for now
-          // jsonObject['url'] = files[0].name;
-          // const htmlString = jsonToHtmlTableString([jsonObject], {});
-          // var node = selectArticleNode(document);
-          // document.body.replaceChildren(fragmentFromString('<main><article about="" typeof="schema:Article">' + gpxActivity + '</article></main>'));
-          //TODO: If generateGeoView provides a node to append to, it should append to that node instead of the body:
-          // node.appendChild(fragmentFromString(htmlString));
+          let jsonObject = csvStringToJson(files[0].content); // we only have one for now
+          jsonObject['url'] = files[0].name;
+          jsonObject['name'] = files[0].name;
+          const htmlString = jsonToHtmlTableString([jsonObject], {});
+
+          tmpl.body.replaceChildren(fragmentFromString('<main><article about="" typeof="schema:Article">' + htmlString + '</article></main>'));
           break;
 
         case 'application/gpx+xml':
