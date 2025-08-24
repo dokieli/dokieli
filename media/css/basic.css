@@ -933,12 +933,12 @@ tfoot dl.abbr dd {
   margin-left: 0;
 }
 
-tfoot dl.abbr dd:after {
+tfoot dl.abbr dd:not(:last-of-type)::after {
   content: "\A";
   white-space: pre;
 }
 
-tfoot dl.abbr dt:after {
+tfoot dl.abbr dt::after {
   content: ": ";
 }
 
@@ -952,8 +952,9 @@ tfoot dl.abbr dt {
   font-weight: bold;
 }
 
-dl [class^="earl:"]+dd:after,
-tfoot dd:after {
+dl [class^="earl:"] + dd:not(:last-of-type)::after,
+/* tfoot dd:first-of-type:not(:only-of-type)::before, */
+tfoot dd:not(:last-of-type)::after {
   content: "\A";
   white-space: pre;
 }

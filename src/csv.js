@@ -1,7 +1,7 @@
 import Config from './config.js'
 import Papa from 'papaparse';
 import { domSanitize, generateUUID, getDateTimeISO } from './util.js';
-import { createDateHTML, createLicenseHTML, escapeCharacters, createDefinitionListHTML } from './doc.js';
+import { createDateHTML, createLicenseHTML, escapeCharacters } from './doc.js';
 import uriTemplates from 'uri-templates';
 
 export function csvStringToJson(str) {
@@ -12,8 +12,9 @@ export function csvStringToJson(str) {
 //https://www.w3.org/TR/csv2rdf/
 //https://www.w3.org/TR/tabular-metadata/
 export function jsonToHtmlTableString(csvTables, metadata = {}) {
-  const metadataUrl = metadata.url;
-  // metadata = metadata.content;
+  const metadataUrl = metadata?.url;
+  metadata = metadata?.content;
+
   let language;
 
   //http://www.w3.org/TR/tabular-data-model/
@@ -328,7 +329,7 @@ function generateProvenance (csvUrl, metadataUrl, activityGeneratedBy, activityS
   let csvwTabularMetadataHTML = '';
 
   if (metadataUrl) {
-    csvwTabularMetadataHTML = `
+    csvwTabularMetadataHTML = `            
             <dl resource="#${generateUUID()}" typeof="prov:Usage">
               <dt>Entity</dt>
               <dd><a href="${metadataUrl}" rel="prov:entity">${metadataUrl}</a></dd>
@@ -338,9 +339,9 @@ function generateProvenance (csvUrl, metadataUrl, activityGeneratedBy, activityS
   }
 
   const provenanceHTML = `
-    <dl about="" rel="prov:wasGeneratedBy">
+    <dl about="">
       <dt>Generated activity</dt>
-      <dd resource="#${activityGeneratedBy}" typeof="prov:Activity">
+      <dd rel="prov:wasGeneratedBy" resource="#${activityGeneratedBy}" typeof="prov:Activity">
         <dl>
           <dt>Was associated with</dt>
           <dd><a href="https://dokie.li/" rel="prov:wasAssociatedWith">dokieli</a></dd>
@@ -355,8 +356,7 @@ function generateProvenance (csvUrl, metadataUrl, activityGeneratedBy, activityS
               <dd><a href="${csvUrl}" rel="prov:entity">${csvUrl}</a></dd>
               <dt>Role</dt>
               <dd rel="prov:hadRole" resource="csvw:csvEncodedTabularData">CSV encoded tabular data</dd>
-            </dl>
-${csvwTabularMetadataHTML}
+            </dl>${csvwTabularMetadataHTML}
           </dd>
         </dl>
       </dd>

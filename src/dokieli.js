@@ -7307,7 +7307,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
           metadata.content = JSON.parse(metadataFiles[0].content);
         }
 
-        const htmlString = jsonToHtmlTableString(jsonObjects, metadata?.content);
+        const htmlString = jsonToHtmlTableString(jsonObjects, metadata);
 
         // console.log(fragmentFromString(`<main><article>${htmlString}</article></main>`))
         // this works for urls but not files
