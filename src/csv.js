@@ -15,21 +15,6 @@ export function jsonToHtmlTableString(csvTables, metadata = {}) {
   const metadataUrl = metadata?.url;
   metadata = metadata?.content;
 
-  let language;
-
-  //http://www.w3.org/TR/tabular-data-model/
-  if (metadata && metadata['@context'] && (metadata['@context'] == 'http://www.w3.org/ns/csvw' || metadata['@context'].includes('http://www.w3.org/ns/csvw') )) {
-    if (Array.isArray(metadata['@context'])) {
-      metadata['@context'].forEach(i => {
-        if (isPlainObject(i)) {
-          if (i['@language']) {
-            language = i['@language'];
-          }
-        }
-      })
-    }
-  }
-
   let tables = metadata?.tables;
 
   if (!metadata) {
