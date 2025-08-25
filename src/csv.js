@@ -1,6 +1,6 @@
 import Config from './config.js'
 import Papa from 'papaparse';
-import { domSanitize, generateUUID, getDateTimeISO } from './util.js';
+import { domSanitize, generateUUID, getDateTimeISO, isPlainObject, sanitizeObject } from './util.js';
 import { createDateHTML, createLicenseHTML, escapeCharacters } from './doc.js';
 import uriTemplates from 'uri-templates';
 
@@ -12,6 +12,9 @@ export function csvStringToJson(str) {
 //https://www.w3.org/TR/csv2rdf/
 //https://www.w3.org/TR/tabular-metadata/
 export function jsonToHtmlTableString(csvTables, metadata = {}) {
+  csvTables = csvTables.map((table) => sanitizeObject(table));
+  metadata = sanitizeObject(metadata);
+
   const metadataUrl = metadata?.url;
   metadata = metadata?.content;
 
@@ -31,7 +34,7 @@ export function jsonToHtmlTableString(csvTables, metadata = {}) {
 
   if (metadata.tables) {
     const orderMap = metadata.tables.reduce((acc, table, index) => {
-      acc[table.url] = index;
+      acc[table['url']] = index;
       return acc;
     }, {});
   
@@ -109,7 +112,7 @@ export function jsonToHtmlTableString(csvTables, metadata = {}) {
   
     tableHTML += `<thead><tr>`;
     headers.forEach(header => {
-      header = escapeCharacters(domSanitize(header));
+      header = escapeCharacters(header);
       tableHTML += `<th>${header}</th>`;
     });
     tableHTML += `</tr></thead>`;
@@ -124,7 +127,7 @@ export function jsonToHtmlTableString(csvTables, metadata = {}) {
       fillValues['_row'] = rowIndex + 1;
 
       if (tableSchemaAboutUrl) {
-        uriTemplate = uriTemplates(domSanitize(tableSchemaAboutUrl));
+        uriTemplate = uriTemplates(tableSchemaAboutUrl);
 
         tableSchemaAboutUrlValue = uriTemplate.fill(fillValues);
 
@@ -305,7 +308,7 @@ export function jsonToHtmlTableString(csvTables, metadata = {}) {
     navHTML  = `<nav id="list-of-tables"><h2>Tables</h2><div><ol class="toc">${navList.join('')}</ol></div></nav>`;
   }
 
-  const langAttribute = documentTitle.language ? ` lang="${documentTitle.language}" xml:lang="${language}"` : '';
+  const langAttribute = documentTitle.language ? ` lang="${documentTitle.language}" xml:lang="${documentTitle.language}"` : '';
 
   return `<h1${langAttribute}>${documentTitle.textContent}</h1>${navHTML}${tableHTML}`;
 }
@@ -379,8 +382,4 @@ function JSONLDArrayToDL(arr, title, property) {
   ).join('');
 
   return `<dl><dt>${title}</dt>${items}</dl>`;
-}
-
-const isPlainObject = (object) => {
-  return Object.prototype.toString.call(object) === '[object Object]';
 }

@@ -3911,7 +3911,7 @@ console.log(reason);
     },
 
     showFragment: function(selector) {
-      var ids = (selector) ? document.querySelectorAll(selector) : document.querySelectorAll('main *[id]:not(input):not(textarea):not(select):not(#content)');
+      var ids = (selector) ? document.querySelectorAll(selector) : document.querySelectorAll('main *[id]:not(input):not(textarea):not(select):not(#content):not(tr)');
 
       for(var i = 0; i < ids.length; i++){
         ids[i].addEventListener('mouseenter', (e) => {
@@ -7453,6 +7453,8 @@ console.log('XXX: Cannot access effectiveACLResource', e);
         document.documentElement.replaceChild(tmplBody, document.body);
         DO.U.showDocumentInfo();
         DO.U.initEditor();
+        DO.U.showFragment();
+        DO.U.initCopyToClipboard();
 
         // DO.U.hideDocumentMenu();
         return;

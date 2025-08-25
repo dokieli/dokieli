@@ -18,7 +18,6 @@ export default {
       DO.U.initUser();
       DO.U.setDocumentMode();
       DO.U.initLocalStorage();
-      DO.U.showRefs();
       DO.U.highlightItems();
       DO.U.showAsTabs();
       DO.U.initDocumentActions();

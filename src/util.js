@@ -205,7 +205,33 @@ function domSanitize(strHTML, options = {}) {
 }
 
 function sanitizeObject(input) {
-  if (typeof input !== 'object' || input === null) {
+  for (const key in input) {
+    if (!Object.prototype.hasOwnProperty.call(input, key)) continue;
+    if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+      delete input[key];
+      continue;
+    }
+
+    const value = input[key];
+
+    if (typeof value === 'string') {
+      input[key] = domSanitize(value);
+    }
+    else if (Array.isArray(value)) {
+      input[key] = value.map(item =>
+        typeof item === 'object' && item !== null ? sanitizeObject(item) : item
+      );
+    }
+    else if (typeof value === 'object' && value !== null) {
+      input[key] = sanitizeObject(value);
+    }
+  }
+
+  return input;
+}
+
+function safeObject(input) {
+  if (!isPlainObject(input) || input === null) {
     return {};
   }
 
@@ -227,11 +253,11 @@ function sanitizeObject(input) {
     }
     else if (Array.isArray(value)) {
       safe[key] = value.map(item =>
-        typeof item === 'object' && item !== null ? sanitizeObject(item) : item
+        typeof item === 'object' && item !== null ? safeObject(item) : item
       );
     }
     else if (typeof value === 'object') {
-      safe[key] = sanitizeObject(value);
+      safe[key] = safeObject(value);
     }
   }
 
@@ -370,6 +396,10 @@ function isOnline() {
   return navigator.onLine;
 }
 
+const isPlainObject = (object) => {
+  return typeof object === 'object' && !Array.isArray(object) && object !== null;
+}
+
 export {
   debounce,
   uniqueArray,
@@ -397,8 +427,10 @@ export {
   kebabToCamel,
   parseISODuration,
   domSanitize,
+  safeObject,
   sanitizeObject,
   tranformIconstoCSS,
   getIconsFromCurrentDocument,
-  isOnline
+  isOnline,
+  isPlainObject
 };
