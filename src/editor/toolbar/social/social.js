@@ -1,6 +1,6 @@
 import { formHandlerAnnotate, shareButtonHandler } from "./handlers.js"
 import { ToolbarView, annotateFormControls, updateAnnotationInboxForm, updateAnnotationServiceForm } from "../toolbar.js"
-import { getAnnotationLocationHTML, getAnnotationInboxLocationHTML, getDocument, escapeCharacters } from "../../../doc.js";
+import { getAnnotationLocationHTML, getAnnotationInboxLocationHTML, getDocument, htmlEncode } from "../../../doc.js";
 import Config from "../../../config.js";
 import { fragmentFromString } from "../../../util.js";
 import { showUserIdentityInput } from "../../../auth.js";
@@ -99,13 +99,13 @@ export class SocialToolbar extends ToolbarView {
   // console.log('pS ' + prefixStart);
     var prefix = selectedParentElement.textContent.substr(prefixStart, start - prefixStart);
   // console.log('-' + prefix + '-');
-    prefix = escapeCharacters(prefix);
+    prefix = htmlEncode(prefix);
   
     var suffixEnd = Math.min(selectedParentElement.textContent.length, end + Config.ContextLength);
   // console.log('sE ' + suffixEnd);
     var suffix = selectedParentElement.textContent.substr(end, suffixEnd - end);
   // console.log('-' + suffix + '-');
-    suffix = escapeCharacters(suffix);
+    suffix = htmlEncode(suffix);
   
     return {
       type: 'TextQuoteSelector',

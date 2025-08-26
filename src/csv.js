@@ -1,7 +1,7 @@
 import Config from './config.js'
 import Papa from 'papaparse';
 import { domSanitize, generateUUID, getDateTimeISO, isPlainObject, sanitizeObject } from './util.js';
-import { createDateHTML, createLicenseHTML, escapeCharacters } from './doc.js';
+import { createDateHTML, createLicenseHTML, htmlEncode } from './doc.js';
 import uriTemplates from 'uri-templates';
 
 export function csvStringToJson(str) {
@@ -112,7 +112,7 @@ export function jsonToHtmlTableString(csvTables, metadata = {}) {
   
     tableHTML += `<thead><tr>`;
     headers.forEach(header => {
-      header = escapeCharacters(header);
+      header = htmlEncode(header);
       tableHTML += `<th>${header}</th>`;
     });
     tableHTML += `</tr></thead>`;
@@ -150,7 +150,7 @@ export function jsonToHtmlTableString(csvTables, metadata = {}) {
 
         cell = cell.trim();
 
-        cell = escapeCharacters(domSanitize(cell));
+        cell = htmlEncode(domSanitize(cell));
 
         const currentColumnMetadataOriginal = metadataColumns?.find(col => col.name === columnName);
         const currentColumnMetadata = { ...currentColumnMetadataOriginal };

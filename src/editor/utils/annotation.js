@@ -193,7 +193,7 @@ export function createNoteData(annotation) {
     // case 'sparkline':
     //   var figureIRI = generateAttributeId(null, opts.selectionDataSet);
     //   ref = '<span rel="schema:hasPart" resource="#figure-' + figureIRI + '">\n\
-    //   <a href="' + opts.select + '" property="schema:name" rel="prov:wasDerivedFrom" resource="' + opts.select + '" typeof="qb:DataSet">' + opts.selectionDataSet + '</a> [' + escapeCharacters(Config.RefAreas[opts.selectionRefArea]) + ']\n\
+    //   <a href="' + opts.select + '" property="schema:name" rel="prov:wasDerivedFrom" resource="' + opts.select + '" typeof="qb:DataSet">' + opts.selectionDataSet + '</a> [' + htmlEncode(Config.RefAreas[opts.selectionRefArea]) + ']\n\
     //   <span class="sparkline" rel="schema:image" resource="#' + figureIRI + '">' + opts.sparkline + '</span></span>';
     //   break;
 

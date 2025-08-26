@@ -285,7 +285,7 @@ export function processAction(action, formValues, selectionData) {
 
         case 'ref-reference':
           let options = {};
-          citationUrl = citationUrl.trim(); //XXX: Perhaps use escapeCharacters()?
+          citationUrl = citationUrl.trim(); //XXX: Perhaps use htmlEncode()?
           options['citationId'] = citationUrl;
           options['refId'] = refId;
           options['citationRelation'] = citationRelation;

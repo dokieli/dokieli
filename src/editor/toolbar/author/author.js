@@ -6,7 +6,7 @@ import { schema, allowedEmptyAttributes } from "./../../schema/base.js"
 import { getButtonHTML } from "../../../ui/buttons.js"
 import { formHandlerA, formHandlerAnnotate, formHandlerBlockquote, formHandlerImg, formHandlerQ, formHandlerCitation, formHandlerSemantics } from "./handlers.js"
 import { ToolbarView, annotateFormControls } from "../toolbar.js"
-import { escapeCharacters, getCitationOptionsHTML, getLanguageOptionsHTML } from "../../../doc.js"
+import { htmlEncode, getCitationOptionsHTML, getLanguageOptionsHTML } from "../../../doc.js"
 import { getResource } from "../../../fetcher.js"
 import { fragmentFromString } from "../../../util.js"
 import Config from "../../../config.js";
@@ -251,13 +251,13 @@ TODO:
     // var prefix = selectedParentElement.textContent.substr(prefixStart, start - prefixStart);
     let prefix = doc.textBetween(from - contextLength, from)  // consider \n
     // console.log('-' + prefix + '-');
-    prefix = escapeCharacters(prefix);
+    prefix = htmlEncode(prefix);
     
     // var suffixEnd = Math.min(selectedParentElement.textContent.length, end + Config.ContextLength);
     // console.log('sE ' + suffixEnd);
     let suffix =  doc.textBetween(to, to + contextLength)  // consider \n
     // console.log('-' + suffix + '-');
-    suffix = escapeCharacters(suffix);
+    suffix = htmlEncode(suffix);
 
     return {
       type: 'TextQuoteSelector',

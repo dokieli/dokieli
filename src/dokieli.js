@@ -7,7 +7,7 @@
  */
 
 import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource } from './fetcher.js'
-import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, eventButtonNotificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getLanguageOptionsHTML, getLicenseOptionsHTML, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown, getReferenceLabel, createNoteDataHTML, hasNonWhitespaceText, eventButtonClose, eventButtonInfo, eventButtonSignIn, eventButtonSignOut, getDocumentNodeFromString, updateResourceInfos, accessModePossiblyAllowed, updateSupplementalInfo, processSupplementalInfoLinkHeaders } from './doc.js'
+import { getDocument, getDocumentContentNode, htmlEncode, showActionMessage, selectArticleNode, eventButtonNotificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getLanguageOptionsHTML, getLicenseOptionsHTML, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown, getReferenceLabel, createNoteDataHTML, hasNonWhitespaceText, eventButtonClose, eventButtonInfo, eventButtonSignIn, eventButtonSignOut, getDocumentNodeFromString, updateResourceInfos, accessModePossiblyAllowed, updateSupplementalInfo, processSupplementalInfoLinkHeaders } from './doc.js'
 import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, generateDataURI, getMediaTypeURIs, isHttpOrHttpsProtocol, isFileProtocol, getUrlParams, stripUrlSearchHash, stripUrlParamsFromString } from './uri.js'
 import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes, filterQuads, getAgentTypeIndex, serializeData } from './graph.js'
 import { notifyInbox, sendNotifications } from './inbox.js'
@@ -1377,7 +1377,7 @@ DO = {
           //TODO: Revisit
           // if(t.object.datatype.termType.value == 'http://www.w3.org/rdf/1999/02/22-rdf-syntax-ns#HTML') {
           // }
-          // objectValue = escapeCharacters(objectValue);
+          // objectValue = htmlEncode(objectValue);
           objectValue = domSanitize(objectValue);
         }
 
@@ -7364,7 +7364,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
           break;
 
         default:
-          data = escapeCharacters(files[0])
+          data = htmlEncode(files[0])
           // console.log(data)
           var iframe = document.createElement('iframe');
           // <pre type=&quot;' + contentType + '&quot; -- nice but `type` is undefined attribute for `pre`.at the moment. Create issue in WHATWG for fun/profit?
@@ -8257,7 +8257,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
         title = getGraphLabel(subject) || '';
       }
-      title = escapeCharacters(title);
+      title = htmlEncode(title);
       title = (title.length) ? '<cite>' + title + '</cite>, ' : '';
       var datePublished = getGraphDate(subject) || '';
       var dateVersion = subject.out(ns.schema.dateModified).values[0] || datePublished;

@@ -15,7 +15,7 @@ import { buttonIcons, updateButtons } from './ui/buttons.js'
 
 const ns = Config.ns;
 
-function escapeCharacters(string) {
+function htmlEncode (string) {
   return String(string).replace(/[&<>"']/g, function (match) {
     switch (match) {
       case '&':
@@ -34,7 +34,7 @@ function escapeCharacters(string) {
   });
 }
 
-function cleanEscapeCharacters(string) {
+function fixDoubleEscapedEntities(string) {
   return string.replace(/&amp;(lt|gt|apos|quot|amp);/g, "&$1;")
 }
 
@@ -186,7 +186,7 @@ function dumpNode (node, options, noEsc, indentLevel = 0) {
       nl = nl.replace(/</g, '&lt;').replace(/>/g, '&gt;')
     }
     //Clean double escaped entities, e.g., &amp;amp; -> &amp;, &amp;lt; -> &lt;
-    nl = cleanEscapeCharacters(nl)
+    nl = fixDoubleEscapedEntities(nl)
     out += nl
   } else {
     console.warn('Warning; Cannot handle serialising nodes of type: ' + node.nodeType)
@@ -450,7 +450,7 @@ function createFeedXML(feed, options) {
     });
 // console.log(description)
     
-    description = escapeCharacters(fixBrokenHTML(description));
+    description = htmlEncode(fixBrokenHTML(description));
 
     var published = '';
     var updated = '';
@@ -904,7 +904,7 @@ function createNoteDataHTML(n) {
 
           if (tagsArray.length) {
             tagsArray = tagsArray
-              .map(tag => escapeCharacters(tag.trim()))
+              .map(tag => htmlEncode(tag.trim()))
               .filter(tag => tag.length);
             tagsArray = uniqueArray(tagsArray.sort());
 
@@ -1015,7 +1015,7 @@ function tagsToBodyObjects(string) {
 
   let tagsArray = string
     .split(',')
-    .map(tag => escapeCharacters(tag.trim()))
+    .map(tag => htmlEncode(tag.trim()))
     .filter(tag => tag.length);
 
   tagsArray = uniqueArray(tagsArray.sort());
@@ -3759,8 +3759,8 @@ function createRDFaHTML(r, mode) {
 }
 
 export {
-  escapeCharacters,
-  cleanEscapeCharacters,
+  htmlEncode,
+  fixDoubleEscapedEntities,
   fixBrokenHTML,
   getNodeWithoutClasses,
   domToString,
