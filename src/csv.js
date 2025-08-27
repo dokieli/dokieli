@@ -1,7 +1,7 @@
 import Config from './config.js'
 import Papa from 'papaparse';
-import { domSanitize, generateUUID, getDateTimeISO, isPlainObject, sanitizeObject } from './util.js';
-import { createDateHTML, createLicenseHTML, htmlEncode } from './doc.js';
+import { domSanitize, generateUUID, getDateTimeISO, isPlainObject, sanitizeObject, htmlEncode } from './util.js';
+import { createDateHTML, createLicenseHTML } from './doc.js';
 import uriTemplates from 'uri-templates';
 
 export function csvStringToJson(str) {

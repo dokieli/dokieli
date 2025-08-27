@@ -1,5 +1,5 @@
 import Config from './config.js'
-import { getDateTimeISO, fragmentFromString, generateAttributeId, uniqueArray, generateUUID, matchAllIndex, parseISODuration, domSanitize, getRandomIndex, getHash, stringFromFragment } from './util.js'
+import { getDateTimeISO, fragmentFromString, generateAttributeId, uniqueArray, generateUUID, matchAllIndex, parseISODuration, domSanitize, getRandomIndex, getHash, htmlEncode, fixBrokenHTML, fixDoubleEscapedEntities } from './util.js'
 import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath, getPrefixedNameFromIRI, generateDataURI, getProxyableIRI } from './uri.js'
 import { getResource, getResourceHead, deleteResource, processSave, patchResourceWithAcceptPatch } from './fetcher.js'
 import rdf from "rdf-ext";
@@ -14,43 +14,6 @@ import { buttonIcons, updateButtons } from './ui/buttons.js'
 // import beautify from 'js-beautify';
 
 const ns = Config.ns;
-
-function htmlEncode (string) {
-  return String(string).replace(/[&<>"']/g, function (match) {
-    switch (match) {
-      case '&':
-        return '&amp;';
-      case '<':
-        return '&lt;';
-      case '>':
-        return '&gt;';
-      case '"':
-        return '&quot;';
-      case "'":
-        return '&apos;';
-      default:
-        return match;
-    }
-  });
-}
-
-function fixDoubleEscapedEntities(string) {
-  return string.replace(/&amp;(lt|gt|apos|quot|amp);/g, "&$1;")
-}
-
-function fixBrokenHTML(html) {
-//  var pattern = new RegExp('<(' + Config.DOMNormalisation.voidElements.join('|') + ')([^>]*)></\\1>|<(' + Config.DOMNormalisation.voidElements.join('|') + ')([^>]*)/>', 'g');
-
-//Works
-// var pattern = new RegExp('<(' + Config.DOMNormalisation.voidElements.join('|') + ')([^<>]*?)?><\/\\1>', 'g');
-
-  var tagList = Config.DOMNormalisation.voidElements.concat(Config.DOMNormalisation.selfClosing);
-  var pattern = new RegExp('<(' + tagList.join('|') + ')([^<>]*?)?><\/\\1>', 'g');
-
-  var fixedHtml = html.replace(pattern, '<$1$2 />');
-
-  return fixedHtml;
-}
 
 function getNodeWithoutClasses (node, classNames) {
   classNames = Array.isArray(classNames) ? classNames : [classNames];
@@ -3765,9 +3728,6 @@ function createRDFaHTML(r, mode) {
 }
 
 export {
-  htmlEncode,
-  fixDoubleEscapedEntities,
-  fixBrokenHTML,
   getNodeWithoutClasses,
   domToString,
   dumpNode,

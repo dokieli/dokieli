@@ -3,14 +3,12 @@ import { wrapInList, liftListItem } from "prosemirror-schema-list"
 import { DOMSerializer, DOMParser } from "prosemirror-model"
 import { TextSelection } from "prosemirror-state"
 import { schema, allowedEmptyAttributes } from "./../../schema/base.js"
-import { getButtonHTML } from "../../../ui/buttons.js"
 import { formHandlerA, formHandlerAnnotate, formHandlerBlockquote, formHandlerImg, formHandlerQ, formHandlerCitation, formHandlerSemantics } from "./handlers.js"
 import { ToolbarView, annotateFormControls } from "../toolbar.js"
-import { htmlEncode, getCitationOptionsHTML, getLanguageOptionsHTML } from "../../../doc.js"
+import { getCitationOptionsHTML, getLanguageOptionsHTML } from "../../../doc.js"
 import { getResource } from "../../../fetcher.js"
-import { fragmentFromString } from "../../../util.js"
+import { fragmentFromString, htmlEncode } from "../../../util.js"
 import Config from "../../../config.js";
-import { getSelectedParentElement } from "../../utils/annotation.js"
 
 const ns = Config.ns;
 

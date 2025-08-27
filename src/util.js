@@ -191,6 +191,49 @@ function getRandomIndex(length) {
   return array[0] % length;
 }
 
+function htmlEncode(string) {
+  return String(string).replace(/([&<>"'])/g, function(match, p1, offset, str) {
+    if (p1 === '&') {
+      // Check if this & starts a valid named or numeric entity
+      const semicolonIndex = str.indexOf(';', offset);
+      if (semicolonIndex > -1) {
+        const entity = str.slice(offset, semicolonIndex + 1);
+        if (/^&(?:[a-zA-Z][a-zA-Z0-9]+|#\d+|#x[0-9a-fA-F]+);$/.test(entity)) {
+          return '&'; // Already a valid entity, skip encoding
+        }
+      }
+    }
+
+    switch (p1) {
+      case '&': return '&amp;';
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '"': return '&quot;';
+      case "'": return '&apos;';
+      default: return p1;
+    }
+  });
+}
+
+function fixDoubleEscapedEntities(string) {
+  return string.replace(/&amp;(lt|gt|apos|quot|amp);/g, "&$1;")
+}
+
+function fixBrokenHTML(html) {
+//  var pattern = new RegExp('<(' + Config.DOMNormalisation.voidElements.join('|') + ')([^>]*)></\\1>|<(' + Config.DOMNormalisation.voidElements.join('|') + ')([^>]*)/>', 'g');
+
+//Works
+// var pattern = new RegExp('<(' + Config.DOMNormalisation.voidElements.join('|') + ')([^<>]*?)?><\/\\1>', 'g');
+
+  var tagList = Config.DOMNormalisation.voidElements.concat(Config.DOMNormalisation.selfClosing);
+  var pattern = new RegExp('<(' + tagList.join('|') + ')([^<>]*?)?><\/\\1>', 'g');
+
+  var fixedHtml = html.replace(pattern, '<$1$2 />');
+
+  return fixedHtml;
+}
+
+
 function domSanitize(strHTML, options = {}) {
   // console.log("DOMPurify in:", strHTML);
 
@@ -426,6 +469,9 @@ export {
   getFormValues,
   kebabToCamel,
   parseISODuration,
+  htmlEncode,
+  fixDoubleEscapedEntities,
+  fixBrokenHTML,
   domSanitize,
   safeObject,
   sanitizeObject,

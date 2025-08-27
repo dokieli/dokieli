@@ -1,11 +1,8 @@
 import { formHandlerAnnotate, shareButtonHandler } from "./handlers.js"
-import { ToolbarView, annotateFormControls, updateAnnotationInboxForm, updateAnnotationServiceForm } from "../toolbar.js"
-import { getAnnotationLocationHTML, getAnnotationInboxLocationHTML, getDocument, htmlEncode } from "../../../doc.js";
+import { ToolbarView, annotateFormControls, updateAnnotationInboxForm } from "../toolbar.js"
 import Config from "../../../config.js";
-import { fragmentFromString } from "../../../util.js";
-import { showUserIdentityInput } from "../../../auth.js";
-import { getLinkRelation } from "../../../graph.js";
 import { exportSelection, getSelectedParentElement, restoreSelection } from "../../utils/annotation.js";
+import { htmlEncode } from "../../../util.js";
 
 const ns = Config.ns;
 
