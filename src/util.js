@@ -233,6 +233,11 @@ function fixBrokenHTML(html) {
   return fixedHtml;
 }
 
+function removeXmlns(htmlString, namespace = 'http://www.w3.org/1999/xhtml') {
+  const safeNamespace = escapeRegExp(namespace);
+  const xmlnsRegex = new RegExp(`\\sxmlns=(["'])${safeNamespace}\\1`, 'g');
+  return htmlString.replace(xmlnsRegex, '');
+}
 
 function domSanitize(strHTML, options = {}) {
   // console.log("DOMPurify in:", strHTML);
@@ -475,6 +480,7 @@ export {
   htmlEncode,
   fixDoubleEscapedEntities,
   fixBrokenHTML,
+  removeXmlns,
   domSanitize,
   safeObject,
   sanitizeObject,
