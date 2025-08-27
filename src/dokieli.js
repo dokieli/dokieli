@@ -4518,10 +4518,13 @@ console.log(reason);
           var promises = [];
           var resourceData = {};
 
+          //TODO: update setAcceptTypes to give higher q-value to Config.MediaTypes.Markup than the rest of Config.MediaTypes.RDF
+          // const headers = {'Accept': 'text/html, application/xhtml+xml, image/svg+xml, text/turtle;q=0.9, application/ld+json;q=0.9'};
+          const headers = {};
           urls.forEach(function (url) {
             // var pIRI = getProxyableIRI(u);
             promises.push(
-              getResource(url)
+              getResource(url, headers)
                 .then(response => {
                   var cT = response.headers.get('Content-Type');
                   var options = {};
@@ -4530,14 +4533,19 @@ console.log(reason);
                   options['storeHash'] = true;
 
                   return response.text()
-                    .then(data => getResourceInfo(data, options))
+                    .then(data => {
+                      return getResourceInfo(data, options)
+                      .then(d => ({ response, result: d }))
+                    })
                     .catch(function (error) {
                       console.error(`Error fetching ${url}:`, error.message);
-                      return Promise.resolve(); // or handle the error accordingly
+                      return Promise.resolve(); 
                     });
                 })
-                .then((result) => {
-                  resourceData[url] = result; // Directly store the result in resourceData
+                .then(({response, result}) => {
+                  Config.Resource[url] = result;
+                  updateSupplementalInfo(response, { documentURL: url });
+                  resourceData[url] = Config.Resource[url];
                 })
             );
           });
