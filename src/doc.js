@@ -422,8 +422,8 @@ function createFeedXML(feed, options) {
   options = options || {};
 
   var feedXML = '';
-  var language = ('language' in feed) ? '<language>' + feed.language + '</language>' : '';
-  var title = ('title' in feed) ? '<title>' + feed.title + '</title>' : '<title>' + feed.self + '</title>';
+  var language = feed.language ? '<language>' + feed.language + '</language>' : '';
+  var title = feed.title ? '<title>' + feed.title + '</title>' : '<title>' + feed.self + '</title>';
   var generator = '';
   var license = '';
   var rights = '';
@@ -441,29 +441,28 @@ function createFeedXML(feed, options) {
     var origin = new URL(url).origin;
     var author = '';
     var authorData = [];
-    var title = ('title' in feed.items[i]) ? '<title>' + feed.items[i].title + '</title>' : '';
+    var title = (feed.items[i].title) ? '<title>' + feed.items[i].title + '</title>' : '';
 
     //TODO: This would normally only work for input content is using a markup language.
     var description = feed.items[i].description.replace(/(data|src|href)=(['"])([^'"]+)(['"])/ig, (match, p1, p2, p3, p4) => {
       var isAbsolute = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(p3); // Check if the value is an absolute URL
       return `${p1}="${isAbsolute ? p3 : (p3.startsWith('/') ? origin : url) + '/' + p3}"`;
     });
-// console.log(description)
+    // console.log(description)
     
     description = htmlEncode(fixBrokenHTML(description));
 
     var published = '';
     var updated = '';
-    var date = '';
     var license = '';
 
     switch (options.contentType) {
       case 'application/atom+xml':
-        if ('author' in feed.items[i] && typeof feed.items[i].author !== 'undefined') {
+        if (feed.items[i].author) {
           feed.items[i].author.forEach(author => {
             var a = `    <author>
-      <uri>${author.uri}</uri>${'name' in author ? `
-      <name>${author.name}</name>` : ''}${'email' in author ? `
+      <uri>${author.uri}</uri>${author.name ? `
+      <name>${author.name}</name>` : ''}${author.email ? `
       <email>${author.email}</email>` : ''}
     </author>`;
 
@@ -471,13 +470,18 @@ function createFeedXML(feed, options) {
           })
         }
 
-        published = ('published' in feed.items[i] && typeof feed.items[i].published !== 'undefined') ? '<published>' + feed.items[i].published + '</published>' : '';
-        updated = ('updated' in feed.items[i] && typeof feed.items[i].updated !== 'undefined') ? '<updated>' + feed.items[i].updated + '</updated>' : '';
+        published = feed.items[i].published
+          ? `<published>${feed.items[i].published}</published>`
+          : `<published>${now}</published>`
 
-        description = ('description' in feed.items[i]) ? '<content type="html">' + description + '\n\
+        updated = feed.items[i].updated
+          ? `<updated>${feed.items[i].updated}</updated>`
+          : '';
+
+        description = (feed.items[i].description) ? '<content type="html">' + description + '\n\
       </content>' : '';
 
-        license = ('license' in feed.items[i]) ? '<link rel="license" href="' + feed.items[i].license + '" />' : '';
+        license = (feed.items[i].license) ? '<link rel="license" href="' + feed.items[i].license + '" />' : '';
 
         fI = '\n\
   <entry>\n\
@@ -493,25 +497,27 @@ function createFeedXML(feed, options) {
         break;
 
       case 'application/rss+xml':
-        if ('author' in feed.items[i] && typeof feed.items[i].author !== 'undefined') {
+        if (feed.items[i].author) {
           author = feed.items[i].author.find(item => item.uri === feed.author.uri) || feed.items[i].author[0];
 
-          if ('email' in author) {
+          if (author.email) {
             author = author.name ? `${author.email} (${author.name})` : author.email;
             authorData.push('<author>' + author + '</author>');
           }
-          else if ('uri' in author) {
+          else if (author.uri) {
             authorData.push('<dc:creator>' + (author.name ? author.name : author.uri) + '</dc:creator>');
           }
         }
 
-        published = 'updated' in feed.items[i] && typeof feed.items[i].updated !== 'undefined'
-          ? '<pubDate>' + new Date(feed.items[i].updated).toUTCString() + '</pubDate>'
-          : 'published' in feed.items[i] && typeof feed.items[i].published !== 'undefined'
-          ? '<pubDate>' + new Date(feed.items[i].published).toUTCString() + '</pubDate>'
-          : '';
+        let dateStr =
+          feed.items[i].updated ? new Date(feed.items[i].updated) :
+          feed.items[i].published ? new Date(feed.items[i].published) :
+          feed.items[i].headers?.date ? new Date(feed.items[i].headers.date) :
+          new Date();
 
-        description = ('description' in feed.items[i]) ? '<description>' + description + '</description>' : '';
+        published = `<pubDate>${dateStr.toUTCString()}</pubDate>`;
+
+        description = feed.items[i].description ? '<description>' + description + '</description>' : '';
 
         // license = ('license' in feed.items[i]) ? '<copyright>License: ' + feed.items[i].license + '</copyright>' : '';
 
@@ -532,26 +538,26 @@ function createFeedXML(feed, options) {
 
   switch (options.contentType) {
     case 'application/atom+xml':
-      if ('author' in feed && 'uri' in feed.author) {
+      if (feed.author?.uri) {
         authorData = `
   <author>
     <uri>${feed.author.uri}</uri>
-    ${'name' in feed.author ? `<name>${feed.author.name}</name>` : ''}
+    ${feed.author.name ? `<name>${feed.author.name}</name>` : ''}
   </author>`;
 
-        rights = 'name' in feed.author ? ' ' + feed.author.name : ''
+        rights = feed.author.name ? ' ' + feed.author.name : ''
       }
 
-      description = ('description' in feed) ? '<summary>' + feed.description + '</summary>' : '';
+      description = (feed.description) ? '<summary>' + feed.description + '</summary>' : '';
 
-      if ('license' in feed) {
+      if (feed.license) {
         license = '<link rel="license" href="' + feed.license + '" />';
         rightsLicenseText = ' . License: ' + feed.license;
       }
 
       rights = '<rights>Copyright ' + year + rights + rightsLicenseText + ' . Rights and license are feed only.</rights>';
 
-      generator = '<generator uri="https://dokie.li/">dokieli</generator>';
+      generator = '<generator uri="https://dokie.li/#i">dokieli</generator>';
 
       feedXML = '<feed xmlns="http://www.w3.org/2005/Atom">\n\
   ' + title + '\n\
@@ -570,25 +576,25 @@ function createFeedXML(feed, options) {
     case 'application/rss+xml':
       now = new Date(now).toUTCString();
 
-      if ('author' in feed) {
-        authorData = feed['author'].name || feed['author'].uri || '';
+      if (feed.author) {
+        authorData = feed.author.name || feed.author.uri || '';
 
-        rights = 'name' in feed.author ? ' ' + feed.author.name : ''
+        rights = feed.author.name ? ' ' + feed.author.name : ''
 
         if (authorData) {
           authorData = `<dc:creator>${authorData}</dc:creator>`;
         }
       }
 
-      description = 'description' in feed
+      description = feed.description
           ? '<description>' + feed.description + '</description>'
-          : 'title' in feed
+          : feed.title
           ? '<description>' + feed.title + '</description>'
           : '<description>' + feed.self + '</description>';
 
-      generator = '<generator>https://dokie.li/</generator>';
+      generator = '<generator>https://dokie.li/#i</generator>';
 
-      if ('license' in feed) {
+      if (feed.license) {
         rightsLicenseText = ' . License: ' + feed.license;
       }
 
