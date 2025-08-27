@@ -2,6 +2,7 @@ import DOMPurify from 'dompurify';
 import Config from './config.js'
 import { svgToDataURI } from './uri.js';
 import { Icon } from './ui/icons.js'
+import rdf from 'rdf-ext'
 
 function uniqueArray(a) {
   return Array.from(new Set(a));
@@ -253,8 +254,11 @@ function domSanitize(strHTML, options = {}) {
 }
 
 function sanitizeObject(input, options = {}) {
+  if (typeof input !== 'object' || input === null) return input;
+
   for (const key in input) {
-    if (!Object.prototype.hasOwnProperty.call(input, key)) continue;
+    if (!Object.hasOwn(input, key)) continue;
+
     if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
       delete input[key];
       continue;
@@ -281,39 +285,6 @@ function sanitizeObject(input, options = {}) {
   return input;
 }
 
-function safeObject(input) {
-  if (!isPlainObject(input) || input === null) {
-    return {};
-  }
-
-  const safe = {};
-
-  for (const key in input) {
-    if (!Object.prototype.hasOwnProperty.call(input, key)) continue;
-    if (key === '__proto__' || key === 'constructor' || key === 'prototype') continue;
-
-    const value = input[key];
-
-    if (
-      typeof value === 'string' ||
-      typeof value === 'number' ||
-      typeof value === 'boolean' ||
-      value === null
-    ) {
-      safe[key] = value;
-    }
-    else if (Array.isArray(value)) {
-      safe[key] = value.map(item =>
-        typeof item === 'object' && item !== null ? safeObject(item) : item
-      );
-    }
-    else if (typeof value === 'object') {
-      safe[key] = safeObject(value);
-    }
-  }
-
-  return safe;
-}
 
 function sortToLower(array, key) {
   return array.sort(function (a, b) {
@@ -482,7 +453,6 @@ export {
   fixBrokenHTML,
   removeXmlns,
   domSanitize,
-  safeObject,
   sanitizeObject,
   tranformIconstoCSS,
   getIconsFromCurrentDocument,

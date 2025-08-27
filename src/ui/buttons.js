@@ -621,7 +621,7 @@ export function updateButtons(selectors) {
     const node = document.querySelector(selector);
 
     if (!node) {
-      console.warn(`Button with selector "${selector}" not found.`);
+      // console.warn(`Button with selector "${selector}" not found.`);
       return;
     }
     const buttonEnabled = buttonShouldBeEnabled(selector, context);
