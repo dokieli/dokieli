@@ -247,7 +247,7 @@ function domSanitize(strHTML, options = {}) {
   return cleanHTML;
 }
 
-function sanitizeObject(input) {
+function sanitizeObject(input, options = {}) {
   for (const key in input) {
     if (!Object.prototype.hasOwnProperty.call(input, key)) continue;
     if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
@@ -259,14 +259,17 @@ function sanitizeObject(input) {
 
     if (typeof value === 'string') {
       input[key] = domSanitize(value);
+      if (options.htmlEncode) {
+        input[key] = htmlEncode(input[key]);
+      }
     }
     else if (Array.isArray(value)) {
       input[key] = value.map(item =>
-        typeof item === 'object' && item !== null ? sanitizeObject(item) : item
+        typeof item === 'object' && item !== null ? sanitizeObject(item, options) : item
       );
     }
     else if (typeof value === 'object' && value !== null) {
-      input[key] = sanitizeObject(value);
+      input[key] = sanitizeObject(value, options);
     }
   }
 

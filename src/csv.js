@@ -1,6 +1,6 @@
 import Config from './config.js'
 import Papa from 'papaparse';
-import { domSanitize, generateUUID, getDateTimeISO, isPlainObject, sanitizeObject, htmlEncode } from './util.js';
+import { domSanitize, generateUUID, getDateTimeISO, isPlainObject, sanitizeObject } from './util.js';
 import { createDateHTML, createLicenseHTML } from './doc.js';
 import uriTemplates from 'uri-templates';
 
@@ -12,8 +12,8 @@ export function csvStringToJson(str) {
 //https://www.w3.org/TR/csv2rdf/
 //https://www.w3.org/TR/tabular-metadata/
 export function jsonToHtmlTableString(csvTables, metadata = {}) {
-  csvTables = csvTables.map((table) => sanitizeObject(table));
-  metadata = sanitizeObject(metadata);
+  csvTables = csvTables.map((table) => sanitizeObject(table, { htmlEncode: true }));
+  metadata = sanitizeObject(metadata, { htmlEncode: true });
 
   const metadataUrl = metadata?.url;
   metadata = metadata?.content;
@@ -112,7 +112,6 @@ export function jsonToHtmlTableString(csvTables, metadata = {}) {
   
     tableHTML += `<thead><tr>`;
     headers.forEach(header => {
-      header = htmlEncode(header);
       tableHTML += `<th>${header}</th>`;
     });
     tableHTML += `</tr></thead>`;
@@ -149,8 +148,6 @@ export function jsonToHtmlTableString(csvTables, metadata = {}) {
         if (!columnName) return;
 
         cell = cell.trim();
-
-        cell = htmlEncode(domSanitize(cell));
 
         const currentColumnMetadataOriginal = metadataColumns?.find(col => col.name === columnName);
         const currentColumnMetadata = { ...currentColumnMetadataOriginal };
