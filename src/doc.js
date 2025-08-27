@@ -2208,10 +2208,10 @@ async function updateResourceInfos(documentURL = DO.C.DocumentURL, data, respons
   updateButtons();
 }
 
-function updateSupplementalInfo(response, options) {
+function updateSupplementalInfo(response, options = {}) {
   var checkHeaders = options?.checkHeaders ?? ['wac-allow', 'link', 'last-modified', 'etag', 'expires', 'date', 'allow'];
   var headers = response.headers;
-  var documentURL = Config.DocumentURL;
+  var documentURL = options?.documentURL || Config.DocumentURL;
 
   const preservedHeaders = {};
   if (options?.preserveHeaders?.length) {

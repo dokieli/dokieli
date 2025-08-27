@@ -329,7 +329,7 @@ function generateProvenance (csvUrl, metadataUrl, activityGeneratedBy, activityS
       <dd rel="prov:wasGeneratedBy" resource="#${activityGeneratedBy}" typeof="prov:Activity">
         <dl>
           <dt>Was associated with</dt>
-          <dd><a href="https://dokie.li/" rel="prov:wasAssociatedWith">dokieli</a></dd>
+          <dd><a href="https://dokie.li/#i" rel="prov:wasAssociatedWith">dokieli</a></dd>
           <dt>Started at time</dt>
           <dd><time datetime="${activityStartedAt}" property="prov:startedAtTime">${activityStartedAt}</time></dd>
           <dt>Ended at time</dt>
