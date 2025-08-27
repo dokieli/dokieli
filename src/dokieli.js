@@ -4474,14 +4474,15 @@ console.log(reason);
         }
 
         var generateFeed = document.getElementById('generate-feed')
-        var storageIRI = generateFeed.querySelector('#' + id + '-' + action).innerText.trim()
-// console.log('storageIRI: ' + storageIRI)
+        var storageIRI = generateFeed.querySelector('#' + id + '-' + action).innerText.trim();
+
+        // console.log('storageIRI: ' + storageIRI)
         var rm = generateFeed.querySelector('.response-message')
         if (rm) {
           rm.parentNode.removeChild(rm)
         }
 
-        if (!storageIRI.length) {
+        if (!URL.canParse(storageIRI) || !storageIRI.length) {
           generateFeed.insertAdjacentHTML('beforeend',
             '<div class="response-message"><p class="error">' +
             'Specify the location to generate the feed to.</p></div>'
@@ -4598,6 +4599,10 @@ console.log(reason);
                 progress.parentNode.removeChild(progress)
 
                 let url = response.url || storageIRI
+
+                if (!URL.canParse(url)) {
+                  throw Error("Not a valid URL for value: ", url);
+                }
 
                 generateFeed.insertAdjacentHTML('beforeend',
                   '<div class="response-message"><p class="success">' +
