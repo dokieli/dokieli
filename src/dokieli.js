@@ -4482,7 +4482,7 @@ console.log(reason);
           rm.parentNode.removeChild(rm)
         }
 
-        if (!URL.canParse(storageIRI) || !storageIRI.length) {
+        if (!isHttpOrHttpsProtocol(storageIRI) || !storageIRI.length) {
           generateFeed.insertAdjacentHTML('beforeend',
             '<div class="response-message"><p class="error">' +
             'Specify the location to generate the feed to.</p></div>'
@@ -4600,7 +4600,7 @@ console.log(reason);
 
                 let url = response.url || storageIRI
 
-                if (!URL.canParse(url)) {
+                if (!isHttpOrHttpsProtocol(url)) {
                   throw Error("Not a valid URL for value: ", url);
                 }
 
