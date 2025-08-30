@@ -8,7 +8,7 @@ import { fragmentFromString, generateAttributeId, convertToISO8601Duration } fro
 import { getAgentHTML, createDateHTML, selectArticleNode, setCopyToClipboard } from './doc.js'
 import { getResource } from './fetcher.js'
 
-var gpxTrkptDistance;
+var gpxTrkptDistance = 0;
 //FIXME: Update RDF properties, datatypes, and other information that's temporarily marked/being used with ex:FIXME- below in gpxtpx.
 //Extensions based on https://www8.garmin.com/xmlschemas/TrackPointExtensionv2.xsd
 const gpxtpx = {
@@ -209,7 +209,7 @@ function getGPXActivityHTML(rootNode, contextNode, options) {
   // data['maxLon'] = getXPathValue(rootNode, "/gpx:gpx/gpx:metadata/gpx:bounds/@maxlon", contextNode, null, 'NUMBER_TYPE');
 
   data['startDate'] = getXPathValue(rootNode, "/gpx:gpx/gpx:trk/gpx:trkseg/gpx:trkpt[1]/gpx:time", contextNode, null, 'STRING_TYPE');
-  data['endDate'] = getXPathValue(rootNode, "/gpx:gpx/gpx:trk/gpx:trkseg/gpx:trkpt[last()]/gpx:time", contextNode, null, 'STRING_TYPE');
+  data['endDate'] = getXPathValue(rootNode, "/gpx:gpx/gpx:trk/gpx:trkseg[last()]/gpx:trkpt[last()]/gpx:time", contextNode, null, 'STRING_TYPE');
 
   data['metadataBounds'] = data.minLon + ',' + data.minLat + ',' + data.maxLon + ',' + data.maxLat;
   data['dataset'] = data.startDate + ',' + data.endDate + ',' + data.metadataBounds;
@@ -252,13 +252,12 @@ function getGPXActivityHTML(rootNode, contextNode, options) {
   data['duration'] = utc.substr(utc.indexOf(':') - 2, 8)
 // [${data.startDate} ~ ${data.endDate}]
 
-  var trksegContextNode = contextNode.querySelector('gpx trk trkseg');
-// var trksegs = contextNode.querySelectorAll('gpx trk trkseg')
-// console.log(trksegs);
+  var trksegContextNodes = contextNode.querySelectorAll('gpx trk trkseg');
 
+  //XXX: I'm not sure what this accomplishes
   options['gpxtpx'] = {};
   Object.keys(gpxtpx).forEach(element => {
-    options['gpxtpx'][element] = getXPathValue(rootNode, `gpx:trkpt[1]/gpx:extensions/gpxtpx:TrackPointExtension/gpxtpx:${element}`, trksegContextNode, null, 'BOOLEAN_TYPE');
+    options['gpxtpx'][element] = getXPathValue(rootNode, `gpx:trkpt[1]/gpx:extensions/gpxtpx:TrackPointExtension/gpxtpx:${element}`, trksegContextNodes[0], null, 'BOOLEAN_TYPE');
   });
 
   var datasetPublisher = '';
@@ -318,10 +317,19 @@ function getGPXActivityHTML(rootNode, contextNode, options) {
               <th rel="qb:component" resource="#component/${data.dataset}/measure/altitude" typeof="qb:ComponentSpecification"><span rel="qb:componentProperty" resource="wgs:alt" typeof="qb:MeasureProperty"><span property="skos:prefLabel" rel="rdfs:subPropertyOf" resource="sdmx-measure:obsValue">Altitude</span></span></th>
 ${gpxtpxTH}
             </tr>
-          </thead>
-          <tbody id="dataset/${data.dataset}" rel="schema:hasPart" resource="#dataset/${data.dataset}" typeof="qb:DataSet">` +
+          </thead>`;
+          let isFirstSegment = true;
+          let tbodyId = ` id="dataset/${data.dataset}`;
+          let tbodyTypeof = ` typeof="qb:DataSet"`;
+          trksegContextNodes.forEach(trksegContextNode => {
+html += `
+          <tbody${isFirstSegment ? tbodyId : ''} rel="schema:hasPart" resource="#dataset/${data.dataset}"${isFirstSegment ? tbodyTypeof : ''}>` +
 getGPXtrkptHTML(rootNode, trksegContextNode, data, options) + `
-          </tbody>
+          </tbody>`;
+
+          isFirstSegment = false;
+        });
+html += `
           <tfoot>
             <tr>
               <td about="#dataset/${data.dataset}" colspan="2">
@@ -373,7 +381,6 @@ function getGPXtrkptHTML(rootNode, contextNode, data, options) {
 // console.log(xR)
 
     var lat1, lon1, ele1, lat2, lon2;
-    gpxTrkptDistance = 0;
 
     while (xR) {
 // console.log(xR)
