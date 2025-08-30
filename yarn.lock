@@ -2496,7 +2496,7 @@ __metadata:
     husky: "npm:^9.0.11"
     jest-environment-jsdom: "npm:^29.7.0"
     leaflet: "npm:^1.9.4"
-    leaflet-gpx: "npm:^2.1.2"
+    leaflet-gpx: "npm:^2.2.0"
     micromark: "npm:^4.0.0"
     micromark-extension-gfm: "npm:^3.0.0"
     micromark-extension-gfm-tagfilter: "npm:^2.0.0"
@@ -4185,7 +4185,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"leaflet-gpx@npm:^2.1.2":
+"leaflet-gpx@npm:^2.2.0":
   version: 2.2.0
   resolution: "leaflet-gpx@npm:2.2.0"
   checksum: 10c0/699797a828ff0f4501d5974281f3c6ad31b8023e20e11eb647cbfa07b5230820706ecf0ff7d08c94e9e32c63c1fbc55a65835efaaa5040c670a43bcb4d33d574

@@ -50,7 +50,7 @@
     "fs": "^0.0.1-security",
     "http-link-header": "^1.1.3",
     "leaflet": "^1.9.4",
-    "leaflet-gpx": "^2.1.2",
+    "leaflet-gpx": "^2.2.0",
     "micromark": "^4.0.0",
     "micromark-extension-gfm": "^3.0.0",
     "micromark-extension-gfm-tagfilter": "^2.0.0",
