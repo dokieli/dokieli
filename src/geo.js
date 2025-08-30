@@ -345,7 +345,7 @@ ${gpxtpxLI}
               <td colspan="${tfootColSpan - 2}">
                 <dl about="#activity/${data.dataset}" typeof="schema:ExerciseAction">
                   <dt>Distance</dt>
-                  <dd property="schema:distance">${roundValue(gpxTrkptDistance, 2)} km</dd>
+                  <dd property="schema:distance">${roundValue(gpxTrkptDistance / 1000, 2)} km</dd>
                   <dt>Time</dt>
                   <dd><time datatype="xsd:duration" datetime="${convertToISO8601Duration(data.duration)}" property="schema:activityDuration">${data.duration}</time></dd>
                 </dl>
@@ -372,7 +372,7 @@ function getGPXtrkptHTML(rootNode, contextNode, data, options) {
     var xR = trkpt.iterateNext();
 // console.log(xR)
 
-    var lat1, lon1, lat2, lon2;
+    var lat1, lon1, ele1, lat2, lon2;
     gpxTrkptDistance = 0;
 
     while (xR) {
@@ -394,16 +394,17 @@ getGPXextensionsHTML(rootNode, xR, data, options) + `
               <td rel="qb:dataSet" resource="#dataset/${data.dataset}"></td>
             </tr>`;
 
-      if (typeof lat1 !== 'undefined' && typeof lon1 !== 'undefined') {
-        gpxTrkptDistance = gpxTrkptDistance + calculateDistance(lat1, lon1, data['lat'], data['lon']);
+      if (typeof lat1 !== 'undefined' && typeof lon1 !== 'undefined' && typeof ele1 !== 'undefined') {
+        gpxTrkptDistance = gpxTrkptDistance + calculateDistance(lat1, lon1, ele1, data['lat'], data['lon'], data['ele']);
       }
       lat1 = data['lat'];
       lon1 = data['lon'];
+      ele1 = data['ele'];
 
       xR = trkpt.iterateNext();
     }
 
-    gpxTrkptDistance = gpxTrkptDistance + calculateDistance(lat1, lon1, data['lat'], data['lon']);
+    gpxTrkptDistance = gpxTrkptDistance + calculateDistance(lat1, lon1, ele1, data['lat'], data['lon'], data['ele']);
   }
   catch (e) {
     console.log('Error: Document tree modified during iteration ' + e);
@@ -459,16 +460,44 @@ function evaluateXPath(rootNode, xpathExpression, contextNode, namespaceResolver
   return rootNode.evaluate(xpathExpression, contextNode, namespaceResolver, resultType);
 }
 
-//From https://stackoverflow.com/a/21623206
-function calculateDistance(lat1, lon1, lat2, lon2) {
-  var p = 0.017453292519943295;    // Math.PI / 180
-  var c = Math.cos;
-  var a = 0.5 - c((lat2 - lat1) * p)/2 +
-          c(lat1 * p) * c(lat2 * p) *
-          (1 - c((lon2 - lon1) * p))/2;
-
-  return 12742 * Math.asin(Math.sqrt(a)); // 2 * R; R = 6371 km
+function toRadians(degrees) {
+  return degrees * (Math.PI / 180);
 }
+
+//ECEF_WGS84, returns in meters
+function calculateDistance(lat1, lon1, ele1, lat2, lon2, ele2) {
+  // WGS84 ellipsoid constants
+  const a = 6378137.0;        // semi-major axis (equatorial radius) in meters
+  const f = 1 / 298.257223563; // flattening
+  const e2 = 2 * f - f * f;    // eccentricity squared
+
+  // Convert to radians
+  const φ1 = toRadians(lat1);
+  const λ1 = toRadians(lon1);
+  const φ2 = toRadians(lat2);
+  const λ2 = toRadians(lon2);
+
+  // Prime vertical radius of curvature
+  const N1 = a / Math.sqrt(1 - e2 * Math.sin(φ1) ** 2);
+  const N2 = a / Math.sqrt(1 - e2 * Math.sin(φ2) ** 2);
+
+  // ECEF coordinates
+  const x1 = (N1 + ele1) * Math.cos(φ1) * Math.cos(λ1);
+  const y1 = (N1 + ele1) * Math.cos(φ1) * Math.sin(λ1);
+  const z1 = (N1 * (1 - e2) + ele1) * Math.sin(φ1);
+
+  const x2 = (N2 + ele2) * Math.cos(φ2) * Math.cos(λ2);
+  const y2 = (N2 + ele2) * Math.cos(φ2) * Math.sin(λ2);
+  const z2 = (N2 * (1 - e2) + ele2) * Math.sin(φ2);
+
+  // Euclidean distance in 3D space
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const dz = z2 - z1;
+
+  return Math.sqrt(dx * dx + dy * dy + dz * dz);
+}
+
 
 function roundValue(value, decimals) {
   return Number(Math.round(value + 'e' + decimals) + 'e-' + decimals);
