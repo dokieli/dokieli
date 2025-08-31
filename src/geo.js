@@ -8,7 +8,7 @@ import { fragmentFromString, generateAttributeId, convertToISO8601Duration } fro
 import { getAgentHTML, createDateHTML, selectArticleNode, setCopyToClipboard } from './doc.js'
 import { getResource } from './fetcher.js'
 
-var gpxTrkptDistance = 0;
+let gpxTrkptDistance = 0;
 //FIXME: Update RDF properties, datatypes, and other information that's temporarily marked/being used with ex:FIXME- below in gpxtpx.
 //Extensions based on https://www8.garmin.com/xmlschemas/TrackPointExtensionv2.xsd
 const gpxtpx = {
@@ -24,6 +24,8 @@ const gpxtpx = {
 
 //FIXME: It should perhaps act more like an insert/append as opposed to replacing the body.
 function generateGeoView(data) {
+  gpxTrkptDistance = 0;
+
   var tmpl = document.implementation.createHTMLDocument('template');
 
   var parser = new DOMParser();
@@ -404,6 +406,7 @@ getGPXextensionsHTML(rootNode, xR, data, options) + `
       if (typeof lat1 !== 'undefined' && typeof lon1 !== 'undefined' && typeof ele1 !== 'undefined') {
         gpxTrkptDistance = gpxTrkptDistance + calculateDistance(lat1, lon1, ele1, data['lat'], data['lon'], data['ele']);
       }
+
       lat1 = data['lat'];
       lon1 = data['lon'];
       ele1 = data['ele'];
