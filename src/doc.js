@@ -37,7 +37,7 @@ function domToString(node, options) {
   return fixBrokenHTML(dumpNode(node, options))
 }
 
-function dumpNode(node, options, noEsc = [false], indentLevel = 0, shouldStartWithNewLine = false) {
+function dumpNode(node, options, noEsc = [false], indentLevel = 0, nextNodeShouldStartOnNewLine = false) {
   options = options || Config.DOMNormalisation
   var out = ''
 
@@ -52,15 +52,18 @@ function dumpNode(node, options, noEsc = [false], indentLevel = 0, shouldStartWi
     } else if (!(options.skipNodeWithClass && node.matches('.' + options.skipNodeWithClass))) {
       var ename = node.nodeName.toLowerCase()
 
-      const onlyChildIsText = node.childNodes.length === 1 && (node.childNodes[0].nodeType === Node.TEXT_NODE || node.childNodes[0].nodeType === Node.CDATA_SECTION_NODE);
+      const allChildrenAreInlineOrText = 
+        [...node.childNodes].every(child => 
+          child.nodeType === Node.TEXT_NODE 
+          || (child.nodeType === Node.ELEMENT_NODE 
+            && ( 
+              Config.DOMNormalisation.inlineElements.includes(child.nodeName.toLowerCase()) 
+            || Config.DOMNormalisation.auxInlineElements.includes(child.nodeName.toLowerCase())
+          )
+          )
+        );
 
-      // for (var i = 0; i < node.childNodes.length; i++) {
-      //   if (!(node.hasAttribute('class') && 'classWithChildText' in options && node.matches(options.classWithChildText.class))) {
-      //     //skip?
-      //   }
-      // }
-
-      if (shouldStartWithNewLine) {
+      if (nextNodeShouldStartOnNewLine) {
         out += '\n' + '  '.repeat(indentLevel)
       }
 
@@ -88,14 +91,7 @@ function dumpNode(node, options, noEsc = [false], indentLevel = 0, shouldStartWi
 
         if (!(atn.name === 'class' && 'skipClassWithValue' in options &&
             options.skipClassWithValue === atn.value)) {
-          attrList.push(
-            atn.name + '="' +
-            atn.value
-              .replace(/&/g, '&amp;')
-              .replace(/</g, '&lt;')
-              .replace(/>/g, '&gt;')
-              .replace(/"/g, '&quot;') +
-            '"')
+          attrList.push(atn.name + `="${htmlEncode(atn.value)}"`)
         }
       }
 
@@ -113,18 +109,18 @@ function dumpNode(node, options, noEsc = [false], indentLevel = 0, shouldStartWi
       } else {
         out += '>'
 
-        noEsc.push(ename === 'style' || ename === 'script' || ename === 'pre' || ename === 'code' || ename === 'samp')
+        noEsc.push(ename === 'style' || ename === 'script' || ename === 'pre' || ename === 'code' || ename === 'samp');
 
-        const shouldStartWithNewLine = !onlyChildIsText && !noEsc.includes(true);
-        const shouldEndWithNewline = !onlyChildIsText;
+        const nextNodeShouldStartOnNewLine = !allChildrenAreInlineOrText && !noEsc.includes(true) // /n < 
+        const newlineBeforeClosing = !allChildrenAreInlineOrText && !noEsc.includes(true) // /n </
 
         for (var i = 0; i < node.childNodes.length; i++) {
-          out += dumpNode(node.childNodes[i], options, noEsc, indentLevel + 1, shouldStartWithNewLine)
+          out += dumpNode(node.childNodes[i], options, noEsc, indentLevel + 1, nextNodeShouldStartOnNewLine)
         }
 
         noEsc.pop()
 
-        if (shouldEndWithNewline) {
+        if (newlineBeforeClosing) {
           out += '\n' + '  '.repeat(indentLevel)
         }
 
