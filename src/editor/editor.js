@@ -71,7 +71,7 @@ export class Editor {
   }
 
   storeRestrictedNodes() {
-    const filterSelectors = ['#document-editor', '#review-changes', '.copy-to-clipboard', '.robustlinks'];
+    const filterSelectors = ['#document-editor', '#review-changes', '.copy-to-clipboard', '.robustlinks', '.ref'];
     const notSelector = filterSelectors.map(selector => `:not(${selector})`).join('');
     const selector = `.do${notSelector}`;
     this.restrictedNodes = Array.from(document.body.querySelectorAll(selector));
