@@ -103,7 +103,7 @@ export default {
     'selfClosing': ['circle', 'ellipse', 'line', 'path', 'polygon', 'polyline', 'rect', 'stop', 'use'],
     'skipAttributes': ['aria-multiline', 'contenteditable', 'data-placeholder', 'draggable', 'role', 'spellcheck', 'style'],
     'sortAttributes': true,
-    'skipNodeWithClass': 'do',
+    'skipNodeWithClass': ['do', 'ProseMirror-trailingBreak'],
     'skipNodeComment': true,
     'skipNodeWithId': ['toc-nav'],
     'classWithChildText': {

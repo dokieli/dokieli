@@ -49,7 +49,7 @@ function dumpNode(node, options, noEsc = [false], indentLevel = 0, nextNodeShoul
     }
     else if (node.hasAttribute('class') && 'classWithChildText' in options && node.matches(options.classWithChildText.class)) {
       out += node.querySelector(options.classWithChildText.element).textContent
-    } else if (!(options.skipNodeWithClass && node.matches('.' + options.skipNodeWithClass))) {
+    } else if (!(options.skipNodeWithClass && node.matches('.' + options.skipNodeWithClass.join(',.')))) {
       var ename = node.nodeName.toLowerCase()
 
       const allChildrenAreInlineOrText = 
