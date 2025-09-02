@@ -172,20 +172,6 @@
                 </div>
               </section>
 
-              <section id="project-web-browser-extension" inlist="" rel="schema:hasPart" resource="#project-web-browser-extension">
-                <h3 property="schema:name">Web browser extension</h3>
-                <div datatype="rdf:HTML" property="schema:description">
-                  <dl>
-                    <dt>Description</dt>
-                    <dd>Rebuild the extension using modern standards to improve functionality, UX, and security.</dd>
-                    <dt>Planned for</dt>
-                    <dd><time>2025-Q2</time>–<time>2025-Q4</time></dd>
-                    <dt>Contribute</dt>
-                    <dd><a href="https://opencollective.com/dokieli">Financial support</a>, <a href="https://github.com/dokieli/dokieli/milestone/18">code</a>.</dd>
-                  </dl>
-                </div>
-              </section>
-
               <section id="project-internationalization-localization" inlist="" rel="schema:hasPart" resource="#project-internationalization-localization">
                 <h3 property="schema:name">Internationalization and localization</h3>
                 <div datatype="rdf:HTML" property="schema:description">
@@ -193,23 +179,51 @@
                     <dt>Description</dt>
                     <dd>Add multilingual UI and region-specific content support.</dd>
                     <dt>Planned for</dt>
-                    <dd><time>2025-Q2</time>–<time>2025-Q4</time></dd>
+                    <dd><time>2025-Q3</time>–<time>2025-Q4</time></dd>
                     <dt>Contribute</dt>
                     <dd><a href="https://opencollective.com/dokieli">Financial support</a>, <a href="https://github.com/dokieli/dokieli/milestone/3">code</a>.</dd>
                   </dl>
                 </div>
               </section>
 
-              <section id="project-mobile-support" inlist="" rel="schema:hasPart" resource="#project-mobile-support">
-                <h3 property="schema:name">Mobile support</h3>
+              <section id="project-web-browser-extension" inlist="" rel="schema:hasPart" resource="#project-web-browser-extension">
+                <h3 property="schema:name">Web browser extension</h3>
                 <div datatype="rdf:HTML" property="schema:description">
                   <dl>
                     <dt>Description</dt>
-                    <dd>Adapt the interface for smooth use across mobile devices.</dd>
+                    <dd>Rebuild the extension using modern standards to improve functionality, UX, and security.</dd>
                     <dt>Planned for</dt>
-                    <dd><time>2026-Q2</time>–<time>2026-Q4</time></dd>
+                    <dd><time>2025-Q3</time>–<time>2025-Q4</time></dd>
                     <dt>Contribute</dt>
-                    <dd><a href="https://opencollective.com/dokieli">Financial support</a>, <a href="https://github.com/dokieli/dokieli/milestone/21">code</a>.</dd>
+                    <dd><a href="https://opencollective.com/dokieli">Financial support</a>, <a href="https://github.com/dokieli/dokieli/milestone/18">code</a>.</dd>
+                  </dl>
+                </div>
+              </section>
+
+              <section id="project-modularization" inlist="" rel="schema:hasPart" resource="#project-modularization">
+                <h3 property="schema:name">Modularization</h3>
+                <div datatype="rdf:HTML" property="schema:description">
+                  <dl>
+                    <dt>Description</dt>
+                    <dd>Refactor major parts of dokieli (annotations, notifications, sharing) into standalone npm packages.</dd>
+                    <dt>Planned for</dt>
+                    <dd><time>2026-Q1</time>–<time>2026-Q2</time></dd>
+                    <dt>Contribute</dt>
+                    <dd><a href="https://opencollective.com/dokieli">Financial support</a>, <a href="https://github.com/dokieli/dokieli/milestone/26">code</a>.</dd>
+                  </dl>
+                </div>
+              </section>
+
+              <section id="project-collaborative-editing" inlist="" rel="schema:hasPart" resource="#project-collaborative-editing">
+                <h3 property="schema:name">Collaborative editing</h3>
+                <div datatype="rdf:HTML" property="schema:description">
+                  <dl>
+                    <dt>Description</dt>
+                    <dd>Enable real-time multi-user document editing.</dd>
+                    <dt>Planned for</dt>
+                    <dd><time>2026-Q2</time>–<time>2026-Q2</time></dd>
+                    <dt>Contribute</dt>
+                    <dd><a href="https://opencollective.com/dokieli">Financial support</a>, <a href="https://github.com/dokieli/dokieli/milestone/23">code</a>.</dd>
                   </dl>
                 </div>
               </section>
@@ -228,16 +242,16 @@
                 </div>
               </section>
 
-              <section id="project-collaborative-editing" inlist="" rel="schema:hasPart" resource="#project-collaborative-editing">
-                <h3 property="schema:name">Collaborative editing</h3>
+              <section id="project-mobile-support" inlist="" rel="schema:hasPart" resource="#project-mobile-support">
+                <h3 property="schema:name">Mobile support</h3>
                 <div datatype="rdf:HTML" property="schema:description">
                   <dl>
                     <dt>Description</dt>
-                    <dd>Enable real-time multi-user document editing.</dd>
+                    <dd>Adapt the interface for smooth use across mobile devices.</dd>
                     <dt>Planned for</dt>
-                    <dd><time>2026-Q2</time>–<time>2026-Q4</time></dd>
+                    <dd><time>2027-Q2</time>–<time>2027-Q4</time></dd>
                     <dt>Contribute</dt>
-                    <dd><a href="https://opencollective.com/dokieli">Financial support</a>, <a href="https://github.com/dokieli/dokieli/milestone/23">code</a>.</dd>
+                    <dd><a href="https://opencollective.com/dokieli">Financial support</a>, <a href="https://github.com/dokieli/dokieli/milestone/21">code</a>.</dd>
                   </dl>
                 </div>
               </section>
@@ -249,7 +263,7 @@
                     <dt>Description</dt>
                     <dd>Support structuring, searching, and linking document content.</dd>
                     <dt>Planned for</dt>
-                    <dd><time>2026-Q4</time>–<time>2027-Q2</time></dd>
+                    <dd><time>2027-Q4</time>–<time>2028-Q2</time></dd>
                     <dt>Contribute</dt>
                     <dd><a href="https://opencollective.com/dokieli">Financial support</a>, <a href="https://github.com/dokieli/dokieli/milestone/24">code</a>.</dd>
                   </dl>
