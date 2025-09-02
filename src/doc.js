@@ -830,7 +830,7 @@ function createNoteDataHTML(n) {
       if ('creator' in n && 'iri' in n.creator && n.creator.iri == Config.User.IRI) {
         buttonDelete = '<button aria-label="Delete item" class="delete do" title="Delete item">' + Icon[".fas.fa-trash-alt"] + '</button>';
       }
-      articleClass = (motivatedByIRI == 'oa:commenting') ? '' : ' class="do"';
+      // articleClass = (motivatedByIRI == 'oa:commenting') ? '' : ' class="do"';
       aAbout = ('iri' in n) ? n.iri : aAbout;
       break;
     case 'write':
@@ -986,7 +986,7 @@ function createNoteDataHTML(n) {
 
         var canonical = '<dl class="canonical"><dt>Canonical</dt><dd rel="oa:canonical" resource="' + canonicalId + '">' + canonicalId + '</dd></dl>';
 
-        note = '<article about="' + aAbout + '" id="' + n.id + '" typeof="oa:Annotation' + noteType + '"' + aPrefix + articleClass + '>' + buttonDelete + '\n\
+        note = '<article about="' + aAbout + '" id="' + n.id + '" typeof="oa:Annotation' + noteType + '"' + aPrefix + '>' + buttonDelete + '\n\
 ' + heading + '\n\
 ' + authors + '\n\
 ' + created + '\n\
@@ -1029,7 +1029,7 @@ function createNoteDataHTML(n) {
 </dl>\n\
 ';
 
-      note = '<article about="' + aAbout + '" id="' + n.id + '" prefixes="cito: http://purl.org/spart/cito/"' + articleClass + '>\n\
+      note = '<article about="' + aAbout + '" id="' + n.id + '" prefixes="cito: http://purl.org/spart/cito/">\n\
 ' + heading + '\n\
 ' + citation + '\n\
 </article>';

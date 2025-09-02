@@ -932,21 +932,21 @@ font-size: initial;
 width:100%;
 }
 
-#document-notifications article.do {
+#document-notifications article {
 position:relative;
 }
 
-#document-notifications article.do h2,
-#document-notifications article.do h3,
-#document-notifications article.do h4,
-#document-notifications article.do dt,
-#document-notifications article.do .inbox,
-#document-notifications article.do .target,
-#document-notifications article.do .renderedvia,
-#document-notifications article.do .language,
-#document-notifications article.do .rights,
-#document-notifications article.do .license,
-#document-notifications article.do .canonical,
+#document-notifications article h2,
+#document-notifications article h3,
+#document-notifications article h4,
+#document-notifications article dt,
+#document-notifications article .inbox,
+#document-notifications article .target,
+#document-notifications article .renderedvia,
+#document-notifications article .language,
+#document-notifications article .rights,
+#document-notifications article .license,
+#document-notifications article .canonical,
 aside.note h2,
 aside.note h3,
 aside.note h4,
@@ -966,8 +966,8 @@ display:block;
 }
 
 #document-notifications section,
-#document-notifications article.do dl,
-#document-notifications article.do dl *,
+#document-notifications article dl,
+#document-notifications article dl *,
 .do div,
 aside.note dl,
 aside.note dl * {
