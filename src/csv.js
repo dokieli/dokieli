@@ -24,15 +24,13 @@ export function jsonToHtmlTableString(csvTables, metadata = {}) {
     tables = [];
   }
  
-  if (!metadata.tables) {
-    if (metadata["@type"] == "Table") {
-      tables = metadata;
-    } 
+  if (!metadata?.tables && metadata && metadata["@type"] == "Table") {
+    tables = metadata;
   }
 
   const uriTemplateProperties = ['aboutUrl', 'propertyUrl', 'valueUrl'];
 
-  if (metadata.tables) {
+  if (metadata?.tables) {
     const orderMap = metadata.tables.reduce((acc, table, index) => {
       acc[table['url']] = index;
       return acc;
@@ -50,26 +48,26 @@ export function jsonToHtmlTableString(csvTables, metadata = {}) {
 
   let tablesList = {};
 
-  let documentTitle = metadata['dcterms:title'] || metadata['@id'];
+  let documentTitle = metadata ? metadata['dcterms:title'] || metadata['@id'] : null;
   documentTitle = documentTitle ? getTitleAndLanguage(documentTitle) : { textContent: csvTables.map((t) => t.url).join(', ') };
 
   csvTables.forEach((obj) => {
     let tableMetadata;
-    if (metadata.tables) {
+    if (metadata?.tables) {
       tableMetadata = tables.find((table) => table.url == obj.url);
     }
     else {
       tableMetadata = metadata;
     }
 
-    let caption = tableMetadata['dcterms:title'] || tableMetadata['url'] || tableMetadata['@id'];
+    let caption = tableMetadata ? tableMetadata['dcterms:title'] || tableMetadata['url'] || tableMetadata['@id'] : null;
     caption = caption ? getTitleAndLanguage(caption) : { textContent: obj.url };
 
-    let keywordsHTML = tableMetadata ? JSONLDArrayToDL(tableMetadata['dcat:keyword'], 'Keywords', 'dcat:keyword') : null;
-    let publisher = tableMetadata ? tableMetadata['dcterms:publisher'] : null;
+    let keywordsHTML = tableMetadata ? JSONLDArrayToDL(tableMetadata['dcat:keyword'], 'Keywords', 'dcat:keyword') : '';
+    let publisher = tableMetadata ? tableMetadata['dcterms:publisher'] : '';
     publisher = Array.isArray(publisher) ? publisher[0] : publisher;
-    let license = tableMetadata ? tableMetadata['dcterms:license'] : null;
-    let modified = tableMetadata ? tableMetadata['dcterms:modified'] : null;
+    let license = tableMetadata ? tableMetadata['dcterms:license'] : '';
+    let modified = tableMetadata ? tableMetadata['dcterms:modified'] : '';
 
     license = Array.isArray(license) ? license[0] : license;
     let licenseHTML = license ? createLicenseHTML(license["@id"], {rel:'dcterms:license', label:'License'}) : '';
@@ -101,13 +99,13 @@ export function jsonToHtmlTableString(csvTables, metadata = {}) {
     const rows = data.slice(1);
     const metadataColumnsCount = (metadataColumns?.length - virtualColumns?.length) || headers.length;
 
-    if (tableMetadata['url']) {
+    if (tableMetadata && tableMetadata['url']) {
       tablesList[tableMetadata['url']] = caption.textContent;
     } else {
       tablesList[obj.url] = caption.textContent || obj.url;
     }
 
-    tableHTML += `<table${attributeTableAbout} id="${tableMetadata['url'] || obj.url}"${attributeTableRel}>`;
+    tableHTML += `<table${attributeTableAbout} id="${tableMetadata ? tableMetadata['url'] : obj.url}"${attributeTableRel}>`;
     tableHTML += `<caption${caption.language || ''}>${caption.textContent}</caption>`;
   
     tableHTML += `<thead><tr>`;
