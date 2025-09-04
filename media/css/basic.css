@@ -557,6 +557,9 @@ ul {
   margin-bottom: 1em;
   /* list-style-position: inside; */
 }
+li ul:last-of-type {
+margin-bottom:0;
+}
 
 dt {
   font-weight: bold;
