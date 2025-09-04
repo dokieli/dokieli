@@ -26,9 +26,9 @@ export default {
       DO.U.initCurrentStylesheet();
       DO.U.showFragment();
       DO.U.initCopyToClipboard();
+      DO.U.initSlideshow();
       DO.U.initEditor();
       DO.U.initMath();
-      DO.U.initSlideshow();
       DO.U.monitorNetworkStatus();
     }
   },
