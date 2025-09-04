@@ -279,10 +279,8 @@ function getDocument(cn, options) {
   //Sanitize body
   const nodeDocument = domSanitizeHTMLBody(htmlString);
   // htmlString = nodeDocument.documentElement.outerHTML;
-  console.log(htmlString)
   //Normalise and HTMLise
   htmlString = domToString(nodeDocument.documentElement, options);
-  console.log(htmlString)
 
   //Prepend doctype
   let doctype = (nodeDocument.constructor.name === 'SVGSVGElement') ? '<?xml version="1.0" encoding="utf-8"?>' : getDoctype();
