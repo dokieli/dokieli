@@ -97,8 +97,8 @@ export default {
 
   DOMNormalisation: {
     'rdfaAttributes': ['about', 'content', 'datatype', 'href', 'inlist', 'prefix', 'property', 'rel', 'resource', 'rev', 'src', 'typeof', 'vocab'],
-    'inlineElements': ['span', 'progress', 'del', 'ins', 'data', 'datalist', 'mark', 'cite', 'sup', 'sub', 'a', 'time', 'em', 'strong', 'b', 'i', 'dfn', 'abbr', 'q', 'var', 'samp', 'kbd', 'bdi', 'math', 'mrow', 'mi', 'mo'],
-    'auxInlineElements': ['embed', 'img', 'wbr'],
+    'inlineElements': ['span', 'progress', 'del', 'ins', 'data', 'datalist', 'mark', 'cite', 'sup', 'sub', 'a', 'time', 'em', 'strong', 'b', 'i', 'u', 's', 'strike', 'dfn', 'abbr', 'q', 'var', 'samp', 'kbd', 'bdi', 'math', 'mrow', 'mi', 'mo', 'mfrac', 'embed', 'img', 'wbr', 'code', 'meta', 'link', 'button'],
+    'proseMirrorMarks': ['del', 'ins', 'mark', 'cite', 'sup', 'sub', 'a', 'em', 'strong', 'dfn', 'abbr', 'q'],
     'voidElements': ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source', 'track', 'wbr'],
     'selfClosing': ['circle', 'ellipse', 'line', 'path', 'polygon', 'polyline', 'rect', 'stop', 'use'],
     'skipAttributes': ['aria-multiline', 'contenteditable', 'data-placeholder', 'draggable', 'role', 'spellcheck', 'style'],

@@ -193,9 +193,11 @@ let customNodes = {
   code: {
     inline: true,
     group: "inline",
+    code: true,
     content: "inline*",
-    parseDOM: [{ tag: "code" }],
-    toDOM() { return ["code", 0]; }
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "code", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["code",  { ...node.attrs.originalAttributes }, 0]; }
   },
   blockquote: {
     content: "block*",
@@ -285,10 +287,10 @@ let customNodes = {
   },
 
   //TODO: math
-/*
   math: {
     content: "inline+",
     group: "inline",
+    inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "math", getAttrs(node) { return getAttributes(node) }}],
     toDOM(node) { return ["http://www.w3.org/1998/Math/MathML math", { ...node.attrs.originalAttributes }, 0] }
@@ -296,6 +298,7 @@ let customNodes = {
   mfrac: {
     content: "inline*",
     group: "inline",
+    inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "mfrac", getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return ["http://www.w3.org/1998/Math/MathML mfrac", { ...node.attrs.originalAttributes }, 0]; },
@@ -303,6 +306,7 @@ let customNodes = {
   mi: {
     content: "inline*",
     group: "inline",
+    inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "mi", getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return ["http://www.w3.org/1998/Math/MathML mi", { ...node.attrs.originalAttributes }, 0]; },
@@ -310,10 +314,12 @@ let customNodes = {
   mo: {
     content: "inline*",
     group: "inline",
+    inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "mo", getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return ["http://www.w3.org/1998/Math/MathML mo", { ...node.attrs.originalAttributes }, 0]; },
   },
+/*
   mn: {
     content: "inline*",
     group: "inline",
@@ -328,13 +334,16 @@ let customNodes = {
     parseDOM: [{ tag: "mroot", getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return ["http://www.w3.org/1998/Math/MathML mroot", { ...node.attrs.originalAttributes }, 0]; },
   },
+*/
   mrow: {
     content: "inline*",
     group: "inline",
+    inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "mrow", getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return ["http://www.w3.org/1998/Math/MathML mrow", { ...node.attrs.originalAttributes }, 0]; },
   },
+/*
   ms: {
     content: "inline*",
     group: "inline",
@@ -381,7 +390,8 @@ let customNodes = {
 
   svg: {
     content: "block+",
-    group: "block",
+    group: "inline",
+    inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "svg", getAttrs(node) { return getAttributes(node) }}],
     toDOM(node) { return ["http://www.w3.org/2000/svg svg", { ...node.attrs.originalAttributes }, 0] }
@@ -451,8 +461,9 @@ let customNodes = {
   },
 
   button: {
-    content: "block*",
-    group: "block",
+    content: "inline*",
+    group: "inline",
+    inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "button", getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return ["button", { ...node.attrs.originalAttributes }, 0]; },
@@ -572,16 +583,21 @@ let customNodes = {
   },
 };
 
+Config.DOMNormalisation.inlineElements.filter(el => !Config.DOMNormalisation.proseMirrorMarks.includes(el) && !Object.keys(customNodes).includes(el)).map((tagName) => {
+  customNodes[tagName] = {
+    inline: true,
+    group: "inline",
+    content: "inline*",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: tagName, getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return [tagName, { ...node.attrs.originalAttributes }, 0]; }
+  }
+});
+
 const customMarks = {};
 
-const inlineElements = Config.DOMNormalisation.inlineElements;
-
-inlineElements.forEach(tagName => {
+Config.DOMNormalisation.proseMirrorMarks.forEach(tagName => {
   let namespace = '';
-
-  if (tagName == 'math' || tagName == 'mrow' || tagName == 'mi' || tagName == 'mo') {
-    namespace = 'http://www.w3.org/1998/Math/MathML ';
-  }
 
   customMarks[tagName] = {
     attrs: { originalAttributes: { default: {} } },
@@ -593,10 +609,6 @@ inlineElements.forEach(tagName => {
   }
 
   switch(tagName) {
-    case 'code':
-      customMarks[tagName].code = true;
-      break;
-
     case 'a':
       customMarks[tagName].attrs = {
         originalAttributes: {

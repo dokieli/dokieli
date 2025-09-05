@@ -10,7 +10,7 @@ import { gfm, gfmHtml } from 'micromark-extension-gfm';
 import { gfmTagfilterHtml } from 'micromark-extension-gfm-tagfilter';
 import { Icon } from './ui/icons.js';
 import { showUserIdentityInput, signOut } from './auth.js'
-import { buttonIcons, updateButtons } from './ui/buttons.js'
+import { buttonIcons, getButtonHTML, updateButtons } from './ui/buttons.js'
 
 const ns = Config.ns;
 
@@ -56,14 +56,11 @@ function dumpNode(node, options, noEsc = [false], indentLevel = 0, nextNodeShoul
         [...node.childNodes].every(child => 
           child.nodeType === Node.TEXT_NODE 
           || (child.nodeType === Node.ELEMENT_NODE 
-            && ( 
-              Config.DOMNormalisation.inlineElements.includes(child.nodeName.toLowerCase()) 
-            || Config.DOMNormalisation.auxInlineElements.includes(child.nodeName.toLowerCase())
-          )
+            && Config.DOMNormalisation.inlineElements.includes(child.nodeName.toLowerCase())
           )
         );
 
-      if (nextNodeShouldStartOnNewLine) {
+      if (nextNodeShouldStartOnNewLine && !noEsc.includes(true)) {
         out += '\n' + '  '.repeat(indentLevel)
       }
 
@@ -210,6 +207,9 @@ function normaliseContent(node) {
       }
     });
   });
+  
+  // Remove the trailing breaks that ProseMirror adds for empty nodes
+  element.querySelectorAll('.ProseMirror-trailingBreak').forEach(node => node.remove());
 
   //Remove ProseMirror wrap
   let pmNode = element.querySelector('.ProseMirror');
@@ -3050,19 +3050,14 @@ function showRobustLinksDecoration(node) {
       }
     }
 
-    i.insertAdjacentHTML('afterend', '<span class="do robustlinks"><button title="Show Robust Links">🔗</button><span>' + citation + originalurl + versionurl + nearlinkdateurl + '</span></span>');
+    i.insertAdjacentHTML('afterend', `<span class="do robustlinks">${getButtonHTML({ button: 'robustify-links', buttonTitle: 'Show Robust Links' })}<span>${citation}${originalurl}${versionurl}${nearlinkdateurl}</span></span>`);
   });
 
   document.querySelectorAll('.do.robustlinks').forEach(i => {
     i.addEventListener('click', (e) => {
-      if (e.target.closest('button')) {
-        var pN = e.target.parentNode;
-        if (pN.classList.contains('on')) {
-          pN.classList.remove('on');
-        }
-        else {
-          pN.classList.add('on');
-        }
+      const button = e.target.closest('button');
+      if (button) {
+        button.parentNode.classList.toggle("on");
       }
     });
   });

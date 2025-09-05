@@ -2192,6 +2192,7 @@ display:inline;
 padding:0;
 margin:0 0 0 0.25em;
 font-style:normal;
+font-size:inherit;
 }
 .do.robustlinks button {
 display:inline-block;
@@ -2201,6 +2202,7 @@ border:0;
 font-style:normal;
 position:relative;
 color:#000 !important;
+cursor:pointer;
 }
 .do.robustlinks button span {
 display: inline-block;
