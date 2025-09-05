@@ -2376,7 +2376,6 @@ DO = {
       
       let diffHTML = [];
       diff.forEach(part => {
-        console.log(part)
         let eName;
         if (part.added) eName = 'ins';
         else if (part.removed) eName = 'del';
@@ -7377,7 +7376,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
           break;
 
         default:
-          data = htmlEncode(files[0])
+          data = htmlEncode(files[0].content)
           // console.log(data)
           var iframe = document.createElement('iframe');
           // <pre type=&quot;' + contentType + '&quot; -- nice but `type` is undefined attribute for `pre`.at the moment. Create issue in WHATWG for fun/profit?
