@@ -656,13 +656,13 @@ canvas {
   display: block;
 }
 
-figure>object,
-figure>iframe,
-figure>video,
-figure>audio,
-figure>svg,
-figure>img,
-figure>math {
+figure object,
+figure iframe,
+figure video,
+figure audio,
+figure svg,
+figure img,
+figure math {
   margin: 0 auto;
   display: block;
   text-align: center;
@@ -1362,8 +1362,6 @@ margin-right:4.5em;
 #home #supporters ul  {
   padding: 0;
   list-style: none;
-  display: flex;
-  flex-direction: column;
   margin-top:0;
   margin-bottom: 0;
 }
@@ -1371,20 +1369,15 @@ margin-right:4.5em;
 #home #for-everyone ul li,
 #home #get-involved ul li {
   text-align: left;
-  display: grid;
-  grid-template-rows: 1fr auto;
-  grid-template-columns: 2.5em auto;
-  grid-template-areas:
-    "b a"
-    "b c";
-  grid-column-gap: 1em;
-  margin-top:1em;
+  width: 84%;
+  margin-left: 16%;
+  position: relative;
+  margin-bottom: 1.25em;
 }
 
 
 #home #for-everyone svg,
 #home #get-involved svg {
-  grid-area: b;
   fill: #080;
   width: 2em;
   margin: 0 auto;
@@ -1393,25 +1386,24 @@ margin-right:4.5em;
 
 #home #for-everyone h3,
 #home #get-involved h3 {
-  grid-area: a;
-  display: flex;
-  align-items: baseline;
   margin-top: 0;
-  margin-bottom: 0;
+  margin-bottom: 1em;
   line-height: 1.2;
 }
 
 #home #for-everyone svg,
 #home #get-involved svg {
-  grid-area: b;
   fill: #080;
   width: 2em;
   margin: 0 auto;
+  position: absolute;
+  top: 0;
+  left: -18%;
 }
 
 #home #for-everyone ul li p,
 #home #get-involved ul li p {
-  grid-area: c;
+  margin-block: 0;
 }
 
 #home #supporters li,
