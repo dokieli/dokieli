@@ -8,13 +8,9 @@
     <link href="media/css/dokieli.css" media="all" rel="stylesheet" />
     <script src="scripts/dokieli.js"></script>
   </head>
-
   <body about="" class="do-site" prefix="rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns# rdfs: http://www.w3.org/2000/01/rdf-schema# owl: http://www.w3.org/2002/07/owl# xsd: http://www.w3.org/2001/XMLSchema# rdfa: http://www.w3.org/ns/rdfa# dcterms: http://purl.org/dc/terms/ dctypes: http://purl.org/dc/dcmitype/ foaf: http://xmlns.com/foaf/0.1/ pimspace: http://www.w3.org/ns/pim/space# skos: http://www.w3.org/2004/02/skos/core# prov: http://www.w3.org/ns/prov# mem: http://mementoweb.org/ns# qb: http://purl.org/linked-data/cube# schema: http://schema.org/ void: http://rdfs.org/ns/void# rsa: http://www.w3.org/ns/auth/rsa# cert: http://www.w3.org/ns/auth/cert# wgs: http://www.w3.org/2003/01/geo/wgs84_pos# bibo: http://purl.org/ontology/bibo/ sioc: http://rdfs.org/sioc/ns# doap: http://usefulinc.com/ns/doap# dbr: http://dbpedia.org/resource/ dbp: http://dbpedia.org/property/ sio: http://semanticscience.org/resource/ opmw: http://www.opmw.org/ontology/ deo: http://purl.org/spar/deo/ doco: http://purl.org/spar/doco/ cito: http://purl.org/spar/cito/ fabio: http://purl.org/spar/fabio/ oa: http://www.w3.org/ns/oa# as: https://www.w3.org/ns/activitystreams# ldp: http://www.w3.org/ns/ldp# solid: http://www.w3.org/ns/solid/terms# acl: http://www.w3.org/ns/auth/acl# earl: http://www.w3.org/ns/earl# spec: http://www.w3.org/ns/spec# odrl: http://www.w3.org/ns/odrl/2/ dio: https://w3id.org/dio# rel: https://www.w3.org/ns/iana/link-relations/relation#">
     <header>
-      <address>
-        <a href="/"><img alt="dokieli logo" height="64" src="media/images/logo.png" width="64" /><span>dokieli</span></a>
-      </address>
-
+      <address><a href="/"><img alt="dokieli logo" height="64" src="media/images/logo.png" width="64" /><span>dokieli</span></a></address>
       <nav>
         <ul>
           <li><a href="docs">Documentation</a></li>
@@ -22,57 +18,111 @@
         </ul>
       </nav>
     </header>
-
     <main>
       <article about="">
         <h1 property="schema:name">dokieli documentation</h1>
-
         <details>
           <summary>More details about this document</summary>
-
           <dl id="document-identifier">
             <dt>Identifier</dt>
             <dd><a href="https://dokie.li/docs" rel="owl:sameAs">https://dokie.li/docs</a></dd>
           </dl>
-
           <dl id="document-published">
             <dt>Published</dt>
             <dd><time content="2017-07-15T00:00:00Z" datatype="xsd:dateTime" datetime="2017-07-15T00:00:00Z" property="schema:datePublished">2017-07-15</time></dd>
           </dl>
-
           <dl id="document-modified">
             <dt>Modified</dt>
             <dd><time content="2025-05-07T00:00:00Z" datatype="xsd:dateTime" datetime="2025-05-29T00:00:00Z" property="schema:dateModified">2025-05-29</time></dd>
           </dl>
-
           <dl id="document-type">
             <dt>Document Type</dt>
             <dd><a href="http://schema.org/Article" rel="rdf:type">Article</a></dd>
           </dl>
-
           <dl id="document-license">
             <dt>License</dt>
             <dd><a href="https://creativecommons.org/licenses/by/4.0/" rel="schema:license" title="Creative Commons Attribution 4.0 Unported">CC BY 4.0</a></dd>
           </dl>
-
           <dl id="document-language">
             <dt>Language</dt>
             <dd><span content="en" lang="" property="dcterms:language" xml:lang="">English</span></dd>
           </dl>
-
           <dl id="document-author">
             <dt>Authors</dt>
             <dd id="Sarven-Capadisli"><span about="" rel="schema:author"><span about="https://csarven.ca/#i" typeof="schema:Person"><a href="https://csarven.ca/" rel="schema:url"><span about="https://csarven.ca/#i" property="schema:name"><span property="schema:givenName">Sarven</span> <span property="schema:familyName">Capadisli</span></span></a></span></span></dd>
           </dl>
-
           <dl id="document-feedback">
             <dt>Feedback</dt>
             <dd><a href="https://github.com/dokieli/dokieli" rel="doap:repository">GitHub dokieli/dokieli</a> (<a href="https://github.com/dokieli/dokieli/pulls">pull requests</a>, <a href="https://github.com/dokieli/dokieli/issues/new">new issue</a>, <a href="https://github.com/dokieli/dokieli/issues" rel="doap:bug-database">open issues</a>)</dd>
           </dl>
-
-          <nav id="table-of-contents"><h2>Contents</h2><div><ol class="toc"><li data-id="abstract"><a href="#abstract">Abstract</a></li><li data-id="principles"><a href="#principles">Principles</a></li><li data-id="getting-started"><a href="#getting-started">Getting started</a><ol><li data-id="using-dokieli"><a href="#using-dokieli">Using dokieli</a><ol><li data-id="embeddable-web-application"><a href="#embeddable-web-application">Embeddable Web Application</a></li><li data-id="web-extension"><a href="#web-extension">Web Extension</a></li></ol></li><li data-id="contributing"><a href="#contributing">Contributing</a></li></ol></li><li data-id="roadmap"><a href="#roadmap">Roadmap</a><ol><li data-id="project-credibility-assessment"><a href="#project-credibility-assessment">Credibility assessment</a></li><li data-id="project-web-browser-extension"><a href="#project-web-browser-extension">Web browser extension</a></li><li data-id="project-internationalization-localization"><a href="#project-internationalization-localization">Internationalization and localization</a></li><li data-id="project-mobile-support"><a href="#project-mobile-support">Mobile support</a></li><li data-id="project-end-to-end-encryption"><a href="#project-end-to-end-encryption">End-to-end encryption</a></li><li data-id="project-collaborative-editing"><a href="#project-collaborative-editing">Collaborative editing</a></li><li data-id="project-knowledge-organisation"><a href="#project-knowledge-organisation">Knowledge organisation</a></li></ol></li><li data-id="documents"><a href="#documents">Documents</a></li><li data-id="storage"><a href="#storage">Storage</a></li><li data-id="user-interface"><a href="#user-interface">User interface</a><ol><li data-id="modes"><a href="#modes">Modes</a></li><li data-id="menu"><a href="#menu">Menu</a></li><li data-id="features"><a href="#features">Features</a></li><li data-id="components"><a href="#components">Components</a></li></ol></li><li data-id="accessibility-usability-inclusion"><a href="#accessibility-usability-inclusion">Accessibility, Usability, and Inclusion</a><ol><li data-id="accessibility-statement"><a href="#accessibility-statement">Accessibility Statement</a><ol><li data-id="accessibility-measures-to-support-accessibility"><a href="#accessibility-measures-to-support-accessibility">Measures to support accessibility</a></li><li data-id="accessibility-conformance-status"><a href="#accessibility-conformance-status">Conformance status</a></li><li data-id="accessibility-feedback"><a href="#accessibility-feedback">Feedback</a></li><li data-id="accessibility-technical-specifications"><a href="#accessibility-technical-specifications">Technical specifications</a></li><li data-id="accessibility-assessment-approach"><a href="#accessibility-assessment-approach">Assessment approach</a></li></ol></li><li data-id="authoring-accessibility"><a href="#authoring-accessibility">Authoring accessibility</a><ol><li data-id="authoring-tool-user-interface-accessibility"><a href="#authoring-tool-user-interface-accessibility">Authoring tool user interface accessibility</a></li><li data-id="support-for-producing-accessible-content"><a href="#support-for-producing-accessible-content">Support for producing accessible content</a></li></ol></li></ol></li></ol></div></nav>
+          <nav id="table-of-contents">
+            <h2>Contents</h2>
+            <div>
+              <ol class="toc">
+                <li data-id="abstract"><a href="#abstract">Abstract</a></li>
+                <li data-id="principles"><a href="#principles">Principles</a></li>
+                <li data-id="getting-started">
+                  <p><a href="#getting-started">Getting started</a></p>
+                  <ol>
+                    <li data-id="using-dokieli">
+                      <p><a href="#using-dokieli">Using dokieli</a></p>
+                      <ol>
+                        <li data-id="embeddable-web-application"><a href="#embeddable-web-application">Embeddable Web Application</a></li>
+                        <li data-id="web-extension"><a href="#web-extension">Web Extension</a></li>
+                      </ol>
+                    </li>
+                    <li data-id="contributing"><a href="#contributing">Contributing</a></li>
+                  </ol>
+                </li>
+                <li data-id="roadmap">
+                  <p><a href="#roadmap">Roadmap</a></p>
+                  <ol>
+                    <li data-id="project-credibility-assessment"><a href="#project-credibility-assessment">Credibility assessment</a></li>
+                    <li data-id="project-web-browser-extension"><a href="#project-web-browser-extension">Web browser extension</a></li>
+                    <li data-id="project-internationalization-localization"><a href="#project-internationalization-localization">Internationalization and localization</a></li>
+                    <li data-id="project-mobile-support"><a href="#project-mobile-support">Mobile support</a></li>
+                    <li data-id="project-end-to-end-encryption"><a href="#project-end-to-end-encryption">End-to-end encryption</a></li>
+                    <li data-id="project-collaborative-editing"><a href="#project-collaborative-editing">Collaborative editing</a></li>
+                    <li data-id="project-knowledge-organisation"><a href="#project-knowledge-organisation">Knowledge organisation</a></li>
+                  </ol>
+                </li>
+                <li data-id="documents"><a href="#documents">Documents</a></li>
+                <li data-id="storage"><a href="#storage">Storage</a></li>
+                <li data-id="user-interface">
+                  <p><a href="#user-interface">User interface</a></p>
+                  <ol>
+                    <li data-id="modes"><a href="#modes">Modes</a></li>
+                    <li data-id="menu"><a href="#menu">Menu</a></li>
+                    <li data-id="features"><a href="#features">Features</a></li>
+                    <li data-id="components"><a href="#components">Components</a></li>
+                  </ol>
+                </li>
+                <li data-id="accessibility-usability-inclusion">
+                  <p><a href="#accessibility-usability-inclusion">Accessibility, Usability, and Inclusion</a></p>
+                  <ol>
+                    <li data-id="accessibility-statement">
+                      <p><a href="#accessibility-statement">Accessibility Statement</a></p>
+                      <ol>
+                        <li data-id="accessibility-measures-to-support-accessibility"><a href="#accessibility-measures-to-support-accessibility">Measures to support accessibility</a></li>
+                        <li data-id="accessibility-conformance-status"><a href="#accessibility-conformance-status">Conformance status</a></li>
+                        <li data-id="accessibility-feedback"><a href="#accessibility-feedback">Feedback</a></li>
+                        <li data-id="accessibility-technical-specifications"><a href="#accessibility-technical-specifications">Technical specifications</a></li>
+                        <li data-id="accessibility-assessment-approach"><a href="#accessibility-assessment-approach">Assessment approach</a></li>
+                      </ol>
+                    </li>
+                    <li data-id="authoring-accessibility">
+                      <p><a href="#authoring-accessibility">Authoring accessibility</a></p>
+                      <ol>
+                        <li data-id="authoring-tool-user-interface-accessibility"><a href="#authoring-tool-user-interface-accessibility">Authoring tool user interface accessibility</a></li>
+                        <li data-id="support-for-producing-accessible-content"><a href="#support-for-producing-accessible-content">Support for producing accessible content</a></li>
+                      </ol>
+                    </li>
+                  </ol>
+                </li>
+              </ol>
+            </div>
+          </nav>
         </details>
-
         <div datatype="rdf:HTML" id="content" property="schema:description">
           <section id="abstract">
             <h2>Abstract</h2>
@@ -80,24 +130,18 @@
               <p>dokieli's documentation covers its design principles, architecture, accessibility statements, setup instructions, and usage guidelines that can be useful to authors and developers.</p>
             </div>
           </section>
-
-
           <section id="principles" inlist="" rel="schema:hasPart" resource="#principles">
             <h2 property="schema:name">Principles</h2>
             <div datatype="rdf:HTML" property="schema:description">
               <p>Dokieli is a client-side editor and browser extension for decentralised article publishing, annotations, and social interactions, built as an open-source project using open web standards. Dokieli's core design principles are <em>autonomy</em> and <em>universal access</em>.</p>
-
               <p>As an application running in the web browser, dokieli works independently of any specific server or service. All content produced by dokieli can be used by other standards-compliant applications. dokieli takes a privacy-conscious approach by allowing individuals to choose where they store their content and who can access it. Dokieli does not collect or share its users' data.</p>
-
               <p>Made with fun.</p>
             </div>
           </section>
-
           <section id="getting-started" inlist="" rel="schema:hasPart" resource="#getting-started">
             <h2 property="schema:name">Getting started</h2>
             <div datatype="rdf:HTML" property="schema:description">
               <p>Here is how you can use dokieli and get involved:</p>
-
               <section id="using-dokieli" inlist="" rel="schema:hasPart" resource="using-dokieli">
                 <h3>Using dokieli</h3>
                 <div datatype="rdf:HTML" property="schema:description">
@@ -105,31 +149,24 @@
                     <h4 property="schema:name">Embeddable Web Application</h4>
                     <div datatype="rdf:HTML" property="schema:description">
                       <p>Dokieli can be embedded into any HTML document by including its CSS and JavaScript in the <code>&lt;head&gt;</code> section of the document. Once the document is opened in any browser, dokieli provides authoring, annotating, and publishing features.</p>
-
                       <pre><code>&lt;link href="https://dokie.li/media/css/basic.css" media="all" rel="stylesheet" title="Basic" /&gt;</code>
 <code>&lt;link href="https://dokie.li/media/css/dokieli.css" media="all" rel="stylesheet" /&gt;</code>
 <code>&lt;script src="https://dokie.li/scripts/dokieli.js"&gt;&lt;/script&gt;</code></pre>
-
                       <p>Dokieli can also be embedded in an <code>iframe</code> within an existing HTML document or dynamically as a <code>Blob</code> using JavaScript. This enables full editing and annotation features directly inside the frame. For example:</p>
-
                       <pre><code>&lt;iframe height="720" src="https://dokie.li/new" width="1280"&gt;&lt;/iframe&gt;</code></pre>
                     </div>
                   </section>
-
                   <section id="web-extension" inlist="" rel="schema:hasPart" resource="#web-extension">
                     <h4 property="schema:name">Web Extension</h4>
                     <div datatype="rdf:HTML" property="schema:description">
                       <p>Dokieli can also be used as a browser extension, providing full functionality directly in the browser. The extension works in Firefox and Chromium-based browsers, offering a browser toolbar option that enables the same features as the standalone web application.</p>
-
                       <p>Currently the extension works with Firefox and Chromium browsers. The extension can be used in the following way:</p>
-
                       <ol>
                         <li>Clone the dokieli repository from <a href="https://github.com/dokieli/dokieli">https://github.com/dokieli/dokieli</a> (or fork it).</li>
                         <li>
                           <dl>
                             <dt>Firefox</dt>
                             <dd>From the "Add-ons and themes" menu, select "Debug Add-ons" (or go to <code>about:debugging#/runtime/this-firefox</code> from the addressbar) and import by selecting any file from the cloned dokieli directory (e.g., <code>manifest.json</code>). See also <a href="https://developer.mozilla.org/en-US/Add-ons/WebExtensions/Temporary_Installation_in_Firefox">temporary installation in Firefox</a>. Note that if you restart your browser, you'll need to go through this process.</dd>
-
                             <dt>Chromium</dt>
                             <dd>The general process for browsers such as Chrome, Brave, Vivaldi, <a href="https://en.wikipedia.org/wiki/Chromium_(web_browser)#Browsers_based_on_Chromium">etc.</a>, are as follows. From the "Extensions" menu (or go to <code>chrome://extensions/</code>, <code>brave://extensions</code>, <code>vivaldi://extensions/</code> from addressbar), check the "developer mode" option. Import the dokieli directory from "Load unpacked".</dd>
                           </dl>
@@ -139,25 +176,20 @@
                   </section>
                 </div>
               </section>
-
               <section id="contributing" inlist="" rel="schema:hasPart" resource="#contributing">
                 <h2 property="schema:name">Contributing</h2>
                 <div datatype="rdf:HTML" property="schema:description">
                   <p>Thank you for investing your time in contributing to the dokieli project! All kinds of contributions are welcome - code, ideas, feedback, and more.</p>
-
                   <p>The <a href="https://github.com/dokieli/dokieli/">dokieli repository</a> has the source, and there's a <a href="https://github.com/dokieli/dokieli/blob/main/CONTRIBUTING.md">contributing guide</a> to get started. Use dokieli. Test it. Report bugs or fix them. Improve docs. Write or translate articles and share them. Add to the examples. Join the chat for help or discussion. Share ideas or open issues for features you want to see. Every bit helps move the project forward.</p>
-
                   <p id="illustrations-patrick-hochstenbach">Illustrations by <a href="https://patrickhochstenbach.net/">Patrick Hochstenbach</a>, <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 Unported</a>.</p>
                 </div>
               </section>
             </div>
           </section>
-
           <section id="roadmap" inlist="" rel="schema:hasPart" resource="#roadmap">
             <h2 property="schema:name">Roadmap</h2>
             <div datatype="rdf:HTML" property="schema:description">
               <p>Here are the features and improvements in dokieli's roadmap. Everything here is subject to change.</p>
-
               <section id="project-credibility-assessment" inlist="" rel="schema:hasPart" resource="#project-credibility-assessment">
                 <h3 property="schema:name">Credibility assessment</h3>
                 <div datatype="rdf:HTML" property="schema:description">
@@ -171,7 +203,6 @@
                   </dl>
                 </div>
               </section>
-
               <section id="project-internationalization-localization" inlist="" rel="schema:hasPart" resource="#project-internationalization-localization">
                 <h3 property="schema:name">Internationalization and localization</h3>
                 <div datatype="rdf:HTML" property="schema:description">
@@ -185,7 +216,6 @@
                   </dl>
                 </div>
               </section>
-
               <section id="project-web-browser-extension" inlist="" rel="schema:hasPart" resource="#project-web-browser-extension">
                 <h3 property="schema:name">Web browser extension</h3>
                 <div datatype="rdf:HTML" property="schema:description">
@@ -199,7 +229,6 @@
                   </dl>
                 </div>
               </section>
-
               <section id="project-modularization" inlist="" rel="schema:hasPart" resource="#project-modularization">
                 <h3 property="schema:name">Modularization</h3>
                 <div datatype="rdf:HTML" property="schema:description">
@@ -213,7 +242,6 @@
                   </dl>
                 </div>
               </section>
-
               <section id="project-collaborative-editing" inlist="" rel="schema:hasPart" resource="#project-collaborative-editing">
                 <h3 property="schema:name">Collaborative editing</h3>
                 <div datatype="rdf:HTML" property="schema:description">
@@ -227,7 +255,6 @@
                   </dl>
                 </div>
               </section>
-
               <section id="project-end-to-end-encryption" inlist="" rel="schema:hasPart" resource="#project-end-to-end-encryption">
                 <h3 property="schema:name">End-to-end encryption</h3>
                 <div datatype="rdf:HTML" property="schema:description">
@@ -241,7 +268,6 @@
                   </dl>
                 </div>
               </section>
-
               <section id="project-mobile-support" inlist="" rel="schema:hasPart" resource="#project-mobile-support">
                 <h3 property="schema:name">Mobile support</h3>
                 <div datatype="rdf:HTML" property="schema:description">
@@ -255,7 +281,6 @@
                   </dl>
                 </div>
               </section>
-
               <section id="project-knowledge-organisation" inlist="" rel="schema:hasPart" resource="#project-knowledge-organisation">
                 <h3 property="schema:name">Knowledge organisation</h3>
                 <div datatype="rdf:HTML" property="schema:description">
@@ -271,83 +296,60 @@
               </section>
             </div>
           </section>
-
           <section id="documents" inlist="" rel="schema:hasPart" resource="#documents">
             <h3 property="schema:name">Documents</h3>
             <div datatype="rdf:HTML" property="schema:description">
               <p>Articles, annotations, and notifications are the main types of documents dokieli generates.</p>
-
               <dl rel="dcterms:subject">
                 <dt about="#article" property="skos:prefLabel" typeof="skos:Concept">Article</dt>
                 <dd about="#article">
                   <figure>
-                    <img alt="" height="267" rel="schema:image" src="media/images/dokieli-illustration-publishing.jpg" width="469" />
-
-                    <figcaption about="media/images/dokieli-illustration-publishing.jpg">
-                      <p><a href="#illustrations-patrick-hochstenbach" title="Illustration by Patrick Hochstenbach, CC-BY 4.0."><i class="fab fa-creative-commons-by"></i></a></p>
-                    </figcaption>
+                    <p><img alt="" height="267" rel="schema:image" src="media/images/dokieli-illustration-publishing.jpg" width="469" /></p>
+                    <figcaption about="media/images/dokieli-illustration-publishing.jpg"><a href="#illustrations-patrick-hochstenbach" title="Illustration by Patrick Hochstenbach, CC-BY 4.0."><i class="fab fa-creative-commons-by"></i></a></figcaption>
                   </figure>
-
                   <p property="skos:definition">Dokieli supports authoring various kinds of articles, such as blog posts, course descriptions, guides, news articles, recipes, reviews, scholarly articles, slideshows, technical specifications, theses, travelogues, or anything that simply is an "article". Articles are both human- and machine-readable, and can be highly structured, linked, versioned, annotated, shared, access-controlled, and stored across different <a href="#storage" rel="rdfs:seeAlso">storages</a>. Collections of articles can be syndicated via web feeds. While <a href="#annotation" rel="rdfs:seeAlso">annotations</a> and <a href="#notification" rel="rdfs:seeAlso">notifications</a> differ in purpose, they share a similar structure and usability.</p>
                 </dd>
-
                 <dt about="#annotation" id="annotation" property="skos:prefLabel" typeof="skos:Concept">Annotation</dt>
                 <dd about="#annotation">
                   <figure>
-                    <img alt="" height="204" rel="schema:image" src="media/images/dokieli-illustration-annotations.jpg" width="460" />
-
-                    <figcaption about="media/images/dokieli-illustration-annotations.jpg">
-                      <p><a href="#illustrations-patrick-hochstenbach" title="Illustration by Patrick Hochstenbach, CC-BY 4.0."><i class="fab fa-creative-commons-by"></i></a></p>
-                    </figcaption>
+                    <p><img alt="" height="204" rel="schema:image" src="media/images/dokieli-illustration-annotations.jpg" width="460" /></p>
+                    <figcaption about="media/images/dokieli-illustration-annotations.jpg"><a href="#illustrations-patrick-hochstenbach" title="Illustration by Patrick Hochstenbach, CC-BY 4.0."><i class="fab fa-creative-commons-by"></i></a></figcaption>
                   </figure>
-
                   <p property="skos:definition">An annotation is a standalone piece of information about, or part of, an <a href="#article" rel="rdfs:seeAlso">article</a> or another annotation, with purposes such as assessing (<a href="#feature-approve">approve</a>, <a href="#feature-disapprove">disapparove</a>), <a href="#feature-bookmarking" rel="rdfs:seeAlso">bookmarking</a>, classifying, <a href="#feature-commenting" rel="rdfs:seeAlso">commenting</a>, <a href="#feature-describing" rel="rdfs:seeAlso">describing</a>, linking, <a href="#feature-reply" rel="rdfs:seeAlso">replying</a>, <a href="#feature-specificity" rel="rdfs:seeAlso">questioning</a>, or <a href="#feature-tagging" rel="rdfs:seeAlso">tagging</a>. Annotations can be stored in locations like <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or an <a href="#annotation-service" rel="rdfs:seeAlso">annotation service</a>, and each can have its own <a href="#feature-language" rel="rdfs:seeAlso">language</a>, <a href="#feature-license" rel="rdfs:seeAlso">license</a>, and inbox to receive related <a href="#notification" rel="rdfs:seeAlso">notifications</a>. When an article or annotation with an inbox is annotated, a notification is automatically sent to enable discovery. Although annotations can be displayed in the context of their targets, they remain distinct resources and are not stored with the article.</p>
                 </dd>
-
                 <dt about="#notification" id="#notification" property="skos:prefLabel" typeof="skos:Concept">Notification</dt>
                 <dd about="#notification">
                   <figure>
-                    <img alt="" height="204" rel="schema:image" src="media/images/dokieli-illustration-sharing.jpg" width="460" />
-
-                    <figcaption about="media/images/dokieli-illustration-sharing.jpg">
-                      <p><a href="#illustrations-patrick-hochstenbach" title="Illustration by Patrick Hochstenbach, CC-BY 4.0."><i class="fab fa-creative-commons-by"></i></a></p>
-                    </figcaption>
+                    <p><img alt="" height="204" rel="schema:image" src="media/images/dokieli-illustration-sharing.jpg" width="460" /></p>
+                    <figcaption about="media/images/dokieli-illustration-sharing.jpg"><a href="#illustrations-patrick-hochstenbach" title="Illustration by Patrick Hochstenbach, CC-BY 4.0."><i class="fab fa-creative-commons-by"></i></a></figcaption>
                   </figure>
-
                   <p property="skos:definition">A notification describes an activity such as an <a href="#annotation" rel="rdfs:seeAlso">annotation</a>, a <a href="#feature-footnotes-citations" rel="rdf:seeAlso">citation</a>, or a share action, and is sent to a target's inbox, e.g., an <a href="#article" rel="rdfs:seeAlso">article</a>, annotation, person, or group. Notifications are brief and include key provenance details, such as who performed the action, when, where, the motivation, licensing, and language, helping consumers decide whether to engage further. The notification does not include the full content, e.g., an annotation body, but provides links to fetch it. Notifications help surface related activities in context and can support workflows like collaboration, credibility checks, or peer review.</p>
                 </dd>
               </dl>
             </div>
           </section>
-
           <section id="storage" inlist="" rel="schema:hasPart" resource="#storage" typeof="skos:ConceptScheme">
             <h2 property="schema:name">Storage</h2>
             <div datatype="rdf:HTML" property="schema:description">
               <p property="skos:definition">Articles and annotations can stored in various places such as personal storage, annotation service, or local storage.</p>
-
               <dl rel="skos:hasTopConcept">
                 <dt about="#personal-storage" property="skos:prefLabel" typeof="skos:Concept"><dfn id="personal-storage">Personal storage</dfn></dt>
                 <dd about="#personal-storage" property="skos:definition">A personal storage is where individuals or groups can store their presonal information, as well as articles, annotations, and notifications. The storage is typically access controlled for reading or writing data.</dd>
-
                 <dt about="#annotation-service" property="skos:prefLabel" typeof="skos:Concept"><dfn id="annotation-service">Annotation service</dfn></dt>
                 <dd about="#annotation-service" property="skos:definition">An article or annotation can offer an <a href="#annotation-service">annotation service</a> in which their responses can be stored. An <a href="#annotation-service">annotation service</a> may or may not be access controlled. <a href="#annotation-service">annotation service</a> can also serve as a place for a copy of annotation stored elsewhere.</dd>
-
                 <dt about="#local-storage" property="skos:prefLabel" typeof="skos:Concept"><dfn id="local-storage">Local storage</dfn></dt>
                 <dd about="#local-storage" property="skos:definition">The local storage in the user's browser is used for autosave and offline access.</dd>
               </dl>
             </div>
           </section>
-
           <section id="user-interface" inlist="" rel="schema:hasPart" resource="#user-interface">
             <h2 property="schema:name">User interface</h2>
             <div datatype="rdf:HTML" property="schema:description">
               <p>In this section we go over dokieli's UI; interface <a href="#modes">modes</a>, <a href="#menu">menu</a>, and <a href="#features">features</a>.</p>
-
               <section id="modes" inlist="" rel="schema:hasPart" resource="#modes" typeof="skos:ConceptScheme">
                 <h3 property="schema:name skos:prefLabel">Modes</h3>
                 <div datatype="rdf:HTML" property="schema:description">
                   <p property="skos:definition">The user interface (<abbr title="User Interface">UI</abbr>) can be in either <cite>social</cite> or <cite>author</cite>. The modes can be switched from the dokieli <a href="#menu">menu</a> via the <i class="fas fa-i-cursor"></i> <a href="#feature-edit">Edit</a> operation.</p>
-
                   <dl rel="skos:hasTopConcept">
                     <dt about="#mode-social" property="skos:prefLabel" typeof="skos:Concept"><dfn id="mode-social">Social</dfn></dt>
                     <dd about="#mode-social" property="skos:definition">The social mode focuses on features allowing users to view, annotate and share content. This is the default mode when the document loads without specific directives.</dd>
@@ -356,338 +358,247 @@
                   </dl>
                 </div>
               </section>
-
               <section id="menu" inlist="" rel="schema:hasPart" resource="#menu">
                 <h3 property="schema:name">Menu</h3>
                 <div datatype="rdf:HTML" property="schema:description">
                   <p about="" rel="schema:potentialAction">The <a href="#document-menu" typeof="schema:ActivateAction"><i class="fas fa-bars"></i> menu</a> provides access to key top-level <a href="#features">features</a> such as signing in, authoring and publishing content, managing links and data, viewing document structure, and exporting or sharing the article.</p>
                 </div>
               </section>
-
               <section id="features" inlist="" rel="schema:hasPart" resource="#features" typeof="skos:ConceptScheme">
                 <h3 property="schema:name">Features</h3>
                 <div datatype="rdf:HTML" property="schema:description">
                   <p property="sko:definition">dokieli's features make it possible to view, create, and share content.</p>
-
                   <dl rel="skos:hasTopConcept">
                     <dt about="#feature-sign-in" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-user-astronaut"></i><dfn id="feature-sign-in">Sign in</dfn></dt>
                     <dd about="#feature-sign-in" property="skos:definition">The <em>sign in</em> enables the user to identify themselves with dokieli using their personal online identifier. dokieli gathers the information linked from the user's profile to adapt the user interface and to customise interactions based on their preferences.</dd>
-
                     <dt about="#feature-share" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-bullhorn"></i><dfn id="feature-share">Share</dfn></dt>
                     <dd about="#feature-share">
                       <p property="skos:definition"><em>Share</em> makes it possible to notify specific individuals and groups about an article or a specific part within. Signed in users having owner permissions on an article can give others the permission to view, edit, or be co-owners. The contacts listed are the ones discovered through signed in user's profile that have the means to receive notifications in their inboxes. The notification includes minimal information about the article, such as who sent the notification, when it was created, its license and motivation.</p>
-
                       <figure id="figure-dokieli-share" rel="schema:video" resource="#figure-dokieli-share">
                         <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-share.jpg" preload="none" resource="#figure-dokieli-share" typeof="schema:VideoObject" width="800">
                           <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-share.webm" type="video/webm" />
                         </video>
-
                         <figcaption><a href="https://dokie.li/media/video/dokieli-share.webm">Video</a> (<a href="https://dokie.li/media/images/dokieli-share.jpg" rel="schema:thumbnailUrl">poster</a>) of dokieli Share [<time datatype="xsd:duration" datetime="PT22S" property="schema:duration">22s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
                       </figure>
                     </dd>
-
                     <dt about="#feature-reply" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-reply"></i><dfn id="feature-reply">Reply</dfn></dt>
                     <dd about="#feature-reply" property="skos:definition">An article can be replied with a note and have its own <a href="#feature-language" rel="rdfs:seeAlso">language</a> and <a href="#feature-license" rel="rdfs:seeAlso">license</a>. The user can specify where they want to save their reply by <a href="#feature-browser" rel="rdfs:seeAlso">browsing</a> to a location in a <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or an <a href="#annotation-service" rel="rdfs:seeAlso">annotation service</a>.</dd>
-
                     <dt about="#feature-notifications" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-inbox"></i><dfn id="feature-notifications">Notifications</dfn></dt>
                     <dd about="#feature-notifications">
                       <p property="skos:definition">The Notifications feature helps to view your own and your own contacts' interactions and activities on documents, such as comments, annotations, reactions, and bookmarks. <a href="#feature-sign-in" rel="rdfs:seeAlso">Sign in</a> to dokieli so that it can find these notifications.</p>
-
                       <figure id="figure-dokieli-notifications" rel="schema:video" resource="#figure-dokieli-notifications">
                         <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-notifications.jpg" preload="none" resource="#figure-dokieli-notifications" typeof="schema:VideoObject" width="800">
                           <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-notifications.webm" type="video/webm" />
                         </video>
-
                         <figcaption><a href="https://dokie.li/media/video/dokieli-notifications.webm">Video</a> (<a href="https://dokie.li/media/images/dokieli-notifications.jpg" rel="schema:thumbnailUrl">poster</a>) of notifications in dokieli [<time datatype="xsd:duration" datetime="PT15S" property="schema:duration">15s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
                       </figure>
                     </dd>
-
                     <dt about="#feature-bookmarking" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-bookmark"></i><dfn id="feature-bookmarking">Bookmarking</dfn></dt>
                     <dd about="#feature-bookmarking" property="skos:definition">The document or selected text can be bookmarked where the user can include a note, assign <a href="#feature-tagging">tags</a>.</dd>
-
                     <dt about="#feature-commenting" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-comment"></i><dfn id="feature-commenting">Commenting</dfn></dt>
                     <dd about="#feature-commenting" property="skos:definition">Node or text level targeting for an annotation including a <a href="#feature-describing">description</a> and <a href="#feature-tagging">tags</a>.</dd>
-
                     <dt about="#feature-describing" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-sticky-note"></i><dfn id="feature-describing">Describing</dfn></dt>
                     <dd about="#feature-describing" property="skos:definition">A note to indicate a footnote. Used as part of purpose for <a href="#feature-bookmarking">bookmarking</a> and <a href="#feature-commenting">commenting</a>.</dd>
-
                     <dt about="#feature-highlighting" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-highlighter"></i><dfn id="feature-highlighting">Highlighting</dfn></dt>
                     <dd about="#feature-highlighting" property="skos:definition">Node or text level targeting that gives the user a URI that they can use for deep-linking and referencing.</dd>
-
                     <dt about="#feature-tagging" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-tag"></i><dfn id="feature-tagging">Tagging</dfn></dt>
                     <dd about="#feature-tagging" property="skos:definition">The user can associate tags (natural language text) to selected text which is used as part of purpose for annotations such as <a href="#feature-bookmarking">bookmarking</a>, <a href="#feature-in-reply-to">replying</a>, and <a href="#feature-commenting">commenting</a>.</dd>
-
                     <dt about="#feature-approve" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-thumbs-up"></i><dfn id="feature-approve">Approve</dfn></dt>
                     <dd about="#feature-approve" property="skos:definition">General agreement with the selected text. Optional note can indicate why the selection is a strong point or a convincing argument.</dd>
-
                     <dt about="#feature-disapprove" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-thumbs-down"></i><dfn id="feature-disapprove">Disapprove</dfn></dt>
                     <dd about="#feature-disapprove" property="skos:definition">General disagreement with the selected text. Optional note can indicate why the selection is a weak point, an error, or inaccurate.</dd>
-
                     <dt about="#feature-specificity" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-crosshairs"></i><dfn id="feature-specificity">Specificity</dfn></dt>
                     <dd about="#feature-specificity" property="skos:definition">Request to increase specificity on selected text. Optional note can indicate that a citation or more specificity is needed.</dd>
-
                     <dt about="#feature-new" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-lightbulb"></i><dfn id="feature-new">New</dfn></dt>
                     <dd about="#feature-new" property="skos:definition">A <em>new</em> article can be temporarily authored until it is stored in <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or <a href="#local-storage" rel="rdfs:seeAlso">local storage</a>. In order to persist the article long term, the user can <a href="#feature-save" rel="rdfs:seeAlso">Save</a> or <a href="#feature-save-as">Save as</a> the article.</dd>
-
                     <dt about="#feature-open" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-coffee"></i><dfn id="feature-open">Open</dfn></dt>
                     <dd about="#feature-open">
                       <p property="skos:definition">A document can be <em>opened</em> (imported) from a local filesystem or by specifying the URL of the resource on the web. <a href="#feature-browser" rel="rdfs:seeAlso">resource browser</a> can be used to navigate to the document of interest in the <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or <a href="#annotation-service" rel="rdfs:seeAlso">annotation service</a>. Custom views are available when importing some data formats such as:</p>
-
                       <dl rel="dcterms:subject">
                         <dt about="#html-documents" property="skos:prefLabel" typeof="skos:Concept"><i class="fab fa-html5"></i><dfn id="html-documents">HTML documents</dfn></dt>
                         <dd about="#html-documents" property="skos:definition">When opening an (X)HTML document, only the content is imported. CSS, JavaScript, and other additional elements are excluded for security reasons. After importing, dokieli can be used as usual with all of its <a href="#features">features</a>.</dd>
-
                         <dt about="#geo-stats" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-map"></i><dfn id="geo-stats">Geo and Stats</dfn></dt>
                         <dd about="#geo-stats">
                           <p property="skos:definition">The user can view a map (<a href="https://www.openstreetmap.org/">OpenStreetMap</a>) that includes a track, along with detailed <abbr title="Global Positioning System">GPS</abbr> and extension data in a table. This data includes time period, latitude, longitude, altitude, heart rate, cadence, speed, air temperature, water temperature, and depth. The table also provides a summary of the publication date, publisher, actor, total distance, total time, average pace, average heart rate, elevation gain, and elevation loss. Additionally, the nearest city to the track is identified and linked on <a href="https://www.wikidata.org/">Wikidata</a>.</p>
-
                           <figure id="figure-dokieli-geo-stats" rel="schema:video" resource="#figure-dokieli-geo-stats">
                             <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-geo-stats.jpg" preload="none" resource="#figure-dokieli-geo-stats" typeof="schema:VideoObject" width="800">
                               <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-geo-stats.webm" type="video/webm" />
                             </video>
-
                             <figcaption><a href="https://dokie.li/media/video/dokieli-geo-stats.webm">Video</a> (<a href="https://dokie.li/media/images/dokieli-geo-stats.jpg" rel="schema:thumbnailUrl">poster</a>) of Geo and statistical data importing and viewing in dokieli [<time datatype="xsd:duration" datetime="PT14S" property="schema:duration">14s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
                           </figure>
                         </dd>
-
                         <dt about="#activity-collection" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-bolt"></i><dfn id="activity-collection">Activity collection</dfn></dt>
                         <dd about="#activity-collection" property="skos:definition">The user can view a chronological list of social interactions and content-related activities, such as posting, liking, following, and sharing, within a collection.</dd>
-
                         <dt about="#other-data" property="skos:prefLabel" typeof="skos:Concept"><dfn id="other-data">Other data</dfn></dt>
                         <dd about="#other-data" property="skos:definition">Data in unsupported or unrecognized formats will be displayed as-is, without any processing.</dd>
                       </dl>
                     </dd>
-
                     <dt about="#feature-save" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-life-ring"></i><dfn id="feature-save">Save</dfn></dt>
                     <dd about="#feature-save" property="skos:definition">An article can be <em>saved</em> in its current state and location, making it possible to return to the same content and URL later, when access is available.</dd>
-
                     <dt about="#feature-save-as" property="skos:prefLabel" typeof="skos:Concept"><i class="far fa-paper-plane"></i><dfn id="feature-save-as">Save As</dfn></dt>
                     <dd about="#feature-save-as">
                       <p property="skos:definition">An article can be <em>saved</em> in its current state at a specific location in a <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a>. This feature uses the <cite><a href="#feature-browser" rel="rdfs:seeAlso">resource browser</a></cite> to navigate HTTP URLs.</p>
-
                       <dl rel="dcterms:subject">
                         <dt about="#feature-set-inbox" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-set-inbox">Set inbox</dfn></dt>
                         <dd about="#feature-set-inbox" property="skos:definition">An inbox can be assigned to an article or annotation by specifying its location using the <a href="#feature-browser" rel="rdfs:seeAlso">resource browser</a> so that notifications about the article or annotation can be shared.</dd>
-
                         <dt about="#feature-set-annotation" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-set-annotation">Set annotation</dfn></dt>
                         <dd about="#feature-set-annotation" property="skos:definition">An <a href="#annotation-service">annotation service</a> can be assigned to an article or annotation by specifying its location using the <a href="#feature-browser" rel="rdfs:seeAlso">resource browser</a> so that others' annotations can optionally be copied to this location.</dd>
-
                         <dt about="#feature-dokielize" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-dokielize">dokielize</dfn></dt>
                         <dd about="#feature-dokielize" property="skos:definition">Normalises the document to be valid, normalised, as well as includes the dokieli scripts so that the application be used in the derived version.</dd>
-
                         <dt about="#feature-derivation-data" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-derivation-data">Derivation data</dfn></dt>
                         <dd about="#feature-derivation-data" property="skos:definition">When <em>derivation data</em> is checked for inclusion, <a href="#html-document-derived-from-on">derived from and on</a> information is included in the created document.</dd>
-
                         <dt about="#feature-accessibility-report" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-accessibility-report">Accessibility report</dfn></dt>
                         <dd about="#feature-accessibility-report" property="skos:definition">Provides additional accessibility information about the current document so that the author can find ways to improve the content's accessibility.</dd>
-
                         <dt about="#storage-details" property="skos:prefLabel" typeof="skos:Concept"><dfn id="storage-details">Storage details</dfn></dt>
                         <dd about="#storage-details">
                           <p property="skos:definition">The user can examine information about the storage such as its location, name, description, owners, URI persistence policy, and digital rights policies as well as be informed about any conflicts with their preferred policies, and notification subscription options and subscribing to live changes.</p>
-
                           <figure id="figure-dokieli-odrl-storage-description" rel="schema:video" resource="#figure-dokieli-odrl-storage-description">
                             <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-odrl-storage-description.jpg" preload="none" resource="#figure-dokieli-odrl-storage-description" typeof="schema:VideoObject" width="800">
                               <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-odrl-storage-description.webm" type="video/webm" />
                             </video>
-
                             <figcaption><a href="https://dokie.li/media/video/dokieli-odrl-storage-description.webm">Video</a> (<a href="https://dokie.li/media/images/dokieli-odrl-storage-description.jpg" rel="schema:thumbnailUrl">poster</a>) of ODRL in dokieli [<time datatype="xsd:duration" datetime="PT12S" property="schema:duration">12s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
                           </figure>
-                          </dd>
+                        </dd>
                       </dl>
                     </dd>
-
                     <dt about="#feature-version" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-code-branch"></i><dfn id="feature-version">Version</dfn></dt>
                     <dd about="#feature-version" property="skos:definition">Generates a derived copy of the current document as a mutable resource including provenance.</dd>
-
                     <dt about="#feature-immutable" property="skos:prefLabel" typeof="skos:Concept"><i class="far fa-snowflake"></i><dfn id="feature-immutable">Immutable</dfn></dt>
                     <dd about="#feature-immutable" property="skos:definition">Generates a derived copy of the current document as an immutable or frozen Memento resource including provenance. Creates or updates a Memento TimeMap including a reference to the immutable resource.</dd>
-
                     <dt about="#feature-memento" property="skos:prefLabel" typeof="skos:Concept"><i class="far fa-clock"></i><dfn id="feature-memento">Memento</dfn></dt>
                     <dd about="#feature-memento" property="skos:definition">The user can access the memento (version history) of a document.</dd>
-
                     <dt about="#feature-robustify-links" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-link"></i><dfn id="feature-robustify-links">Robustify Links</dfn></dt>
                     <dd about="#feature-robustify-links">
                       <p property="skos:definition">To help mitigate content drift and link rot, links can be enhanced with additional context such as a snapshot URI from the <a href="https://archive.org/">Internet Archive</a>, a timestamp of when the link was created, and other relevant metadata.</p>
-
                       <figure id="figure-dokieli-robustify-links" rel="schema:video" resource="#figure-dokieli-robustify-links">
                         <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-robustify-links.jpg" preload="none" resource="#figure-dokieli-robustify-links" typeof="schema:VideoObject" width="800">
                           <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-robustify-links.webm" type="video/webm" />
                         </video>
-
                         <figcaption><a href="https://dokie.li/media/video/dokieli-robustify-links.webm">Video</a> (<a href="https://dokie.li/media/images/dokieli-robustify-links.jpg" rel="schema:thumbnailUrl">poster</a>) of robustify links in dokieli [<time datatype="xsd:duration" datetime="PT19S" property="schema:duration">19s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
                       </figure>
                     </dd>
-
                     <dt about="#feature-archive" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-archive"></i><dfn id="feature-archive">Archive</dfn></dt>
                     <dd about="#feature-archive" property="skos:definition">Sends an archival request of the current article to the Internet Archive <a href="https://web.archive.org/">Wayback Machine</a>.</dd>
-
                     <dt about="#feature-generate-feed" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-rss"></i><dfn id="feature-generate-feed">Generate Feed</dfn></dt>
                     <dd about="#feature-generate-feed">
                       <p property="skos:definition">Enables the creation and publication of a custom web feed from a selected list of documents in <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a>, with options to set the feed's title, <a href="#feature-language">language</a>, <a href="#feature-license">license</a>, and format, e.g., RSS or Atom.</p>
-
                       <figure id="figure-dokieli-generate-feed" rel="schema:video" resource="#figure-dokieli-generate-feed">
                         <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-generate-feed.jpg" preload="none" resource="#figure-dokieli-generate-feed" typeof="schema:VideoObject" width="800">
                           <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-generate-feed.webm" type="video/webm" />
                         </video>
-
                         <figcaption><a href="https://dokie.li/media/video/dokieli-generate-feed.webm">Video</a> (<a href="https://dokie.li/media/images/dokieli-generate-feed.jpg" rel="schema:thumbnailUrl">poster</a>) of generating and publishing web feed in dokieli [<time datatype="xsd:duration" datetime="PT9S" property="schema:duration">9s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
                       </figure>
                     </dd>
-
                     <dt about="#feature-export" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-external-link-alt"></i><dfn id="feature-export">Export</dfn></dt>
                     <dd about="#feature-export" property="skos:definition">The user can export the article as HTML and save to their local filesystem.</dd>
-
                     <dt about="#feature-print" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-print"></i><dfn id="feature-print">Print</dfn></dt>
                     <dd about="#feature-print" property="skos:definition">Triggers the browser to print the current document.</dd>
-
                     <dt about="#feature-edit" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-i-cursor"></i><dfn id="feature-edit">Edit</dfn></dt>
                     <dd about="#feature-edit">
                       <figure>
-                        <img alt="" height="255" rel="schema:image" src="media/images/dokieli-illustration-authoring.jpg" width="256" />
-
-                        <figcaption about="media/images/dokieli-illustration-authoring.jpg">
-                          <p><a href="#illustrations-patrick-hochstenbach" title="Illustration by Patrick Hochstenbach, CC-BY 4.0."><i class="fab fa-creative-commons-by"></i></a></p>
-                        </figcaption>
+                        <p><img alt="" height="255" rel="schema:image" src="media/images/dokieli-illustration-authoring.jpg" width="256" /></p>
+                        <figcaption about="media/images/dokieli-illustration-authoring.jpg"><a href="#illustrations-patrick-hochstenbach" title="Illustration by Patrick Hochstenbach, CC-BY 4.0."><i class="fab fa-creative-commons-by"></i></a></figcaption>
                       </figure>
-
                       <p property="skos:definition">The Edit feature offers authoring tools for formatting, linking, and structuring articles. Edits are local unless <a href="#feature-autosaving">autosave</a> is enabled or changes are committed using <a href="#feature-save" rel="rdfs:seeAlso">Save</a>, <a href="#feature-save-as" rel="rdfs:seeAlso">Save As</a>, <a href="#feature-version" rel="rdfs:seeAlso">Version</a>, or <a href="#feature-immutable" rel="rdfs:seeAlso">Immutable</a>. Standard formatting options include headings, italics, bold, ordered and unordered lists, inline code, preformatted text, hyperlinks, inline quotes, images, and tables. Additional capabilities include:</p>
-
                       <dl rel="dcterms:subject">
                         <dt about="#feature-interactive-embeddable-objects" property="skos:prefLabel"><i class="fas fa-chart-line"></i><dfn id="feature-interactive-embeddable-objects">Interactive and embeddable objects</dfn></dt>
                         <dd about="#feature-interactive-embeddable-objects">
                           <p property="skos:definition">Charts and other visual elements, such as sparklines, can be embedded based on statistical data.</p>
-
                           <figure id="figure-dokieli-sparqlines" rel="schema:video" resource="#figure-dokieli-sparqlines">
                             <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-sparqlines.jpg" preload="none" resource="#figure-dokieli-sparqlines" typeof="schema:VideoObject" width="800">
                               <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-sparqlines.webm" type="video/webm" />
                             </video>
-
                             <figcaption><a href="https://dokie.li/media/video/dokieli-sparqlines.webm">Video</a> (<a href="https://dokie.li/media/images/dokieli-sparqlines.jpg" rel="schema:thumbnailUrl">poster</a>) of Sparqlines interaction in dokieli [<time datatype="xsd:duration" datetime="PT25S" property="schema:duration">25s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
                           </figure>
                         </dd>
-
                         <dt about="#feature-semantic-annotation" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-rocket"></i><dfn id="feature-semantic-annotation">Semantic annotation</dfn></dt>
                         <dd about="#feature-semantic-annotation" property="skos:definition">Content can be semantically marked to enhance machine-readability (RDFa), while remaining human-readable.</dd>
-
                         <dt about="#feature-footnotes-citations" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-hashtag"></i><dfn id="feature-footnotes-citations">Footnotes and citations</dfn></dt>
                         <dd about="#feature-footnotes-citations">
                           <p property="skos:definition">Footnotes and citations can be added to selected text, providing contextual, robust references. Cited entities can be notified for back-referencing. References may include ISBNs or URLs. For contextual citations, for example, a citing entity (an argument) may reference a cited entity (observation results) as factual evidence. Bibliographic searches for technical specifications are also supported for citation purposes.</p>
-
                           <figure id="figure-dokieli-citation" rel="schema:hasPart" resource="#figure-dokieli-citation">
                             <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-citation.jpg" preload="none" resource="#figure-dokieli-citation" typeof="schema:VideoObject" width="800">
                               <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-citation.webm" type="video/webm" />
                             </video>
-
                             <figcaption><a href="https://dokie.li/media/video/dokieli-citation.webm">Video</a> (<a href="https://dokie.li/media/images/dokieli-citation.jpg" rel="schema:thumbnailUrl">poster</a>) of semantic inline citations and notification in dokieli [<time datatype="xsd:duration" datetime="PT40S" property="schema:duration">40s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
                           </figure>
                         </dd>
-
                         <dt about="#feature-authoring-widgets" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-authoring-widgets">Authoring widgets</dfn></dt>
                         <dd about="#feature-authoring-widgets" property="skos:definition">Additional authoring options include adding contributors and notifying them, setting the document's <a href="#feature-language">language</a>, <a href="#feature-license">license</a>, inbox, <a href="#feature-in-reply-to">in reply to</a>, status, type, and test suite.</dd>
                       </dl>
                     </dd>
-
                     <dt about="#feature-autosaving" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-piggy-bank"></i><dfn id="feature-autosaving">Autosaving</dfn></dt>
                     <dd about="#feature-autosaving" property="skos:definition">While the user is <a href="#feature-edit">editing</a> their article, the document is autosaved to local storage. When the autosave toggle is enabled, changes are synchronised with the remote resource.</dd>
-
                     <dt about="#feature-source" property="skos:prefLabel"><i class="fas fa-code"></i><dfn id="feature-source">Source</dfn></dt>
                     <dd about="#feature-source" property="skos:definition">Allows direct editing of the article's current state. Updating is temporary until committed using features such as changes are committed using <a href="#feature-save" rel="rdfs:seeAlso">Save</a>, <a href="#feature-save-as" rel="rdfs:seeAlso">Save As</a>, <a href="#feature-version" rel="rdfs:seeAlso">Version</a>, or <a href="#feature-immutable" rel="rdfs:seeAlso">Immutable</a>.</dd>
-
                     <dt about="#feature-embed-data" property="skos:prefLabel"><i class="fas fa-table"></i><dfn id="feature-embed-data">Embed Data</dfn></dt>
                     <dd about="#feature-embed-data" property="skos:definition">Enables embedding and updating supplemental data to be stored with the article using RDF syntaxes such as Turtle, JSON-LD, and TriG.</dd>
-
                     <dt about="#feature-message-log" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-scroll"></i><dfn id="feature-message-log">Message Log</dfn></dt>
                     <dd about="#feature-message-log" property="skos:definition">Displays all messages raised by dokieli, for example as feedback or notifications resulting from specific actions.</dd>
-
                     <dt about="#feature-delete" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-trash-alt"></i><dfn id="feature-delete">Delete</dfn></dt>
                     <dd about="#feature-delete" property="skos:definition">Deletes article or annotation from <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a>, when access is available.</dd>
-
                     <dt about="#feature-views" property="skos:prefLabel"><i class="fas fa-magic"></i><dfn id="feature-views">Views</dfn></dt>
                     <dd about="#feature-views" property="skos:definition">The dokieli <a href="#menu" rel="rdfs:seeAlso">menu</a> lists primary and alternate stylesheets that are <a href="#html-css">detected in the HTML</a>. <cite>Native</cite> is always available and disables all other stylesheets, allowing the user agent’s default styles to apply. When a view is selected—e.g., <cite>Basic</cite> (which is the current primary stylesheet for this article)—it becomes the primary stylesheet, while the others are set as alternate and disabled.</dd>
-
                     <dt about="#feature-graph-view" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-circle-nodes"></i><dfn id="feature-graph-view">Graph view</dfn></dt>
                     <dd about="#feature-graph-view" property="skos:definition">Displays a graph visualisation of the document's underlying semantics, including a list of resources, the number of statements, unique nodes, creator, license, and a legend. The visualisation can be exported as an SVG.</dd>
-
                     <dt about="#feature-review-changes" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-microscope"></i><dfn id="feature-review-changes">Review changes</dfn></dt>
                     <dd about="#feature-review-changes" property="skos:definition">The review changes feature allows comparing local and remote versions of a document when both have changed, and choose to keep the local edits, discard them in favour of the remote version, or manually reconcile and apply changes to both.</dd>
-
                     <dt about="#feature-list-of-stuff" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-list-of-stuff">List of Stuff</dfn></dt>
                     <dd about="#feature-list-of-stuff" property="skos:definition">
                       <p>Options to generate and include various types of content, such as:</p>
-
                       <dl rel="dcterms:subject">
                         <dt about="#feature-contents" property="skos:prefLabel"><i class="fas fa-hand-pointer"></i><dfn id="feature-contents">Contents</dfn></dt>
                         <dd about="#feature-contents">Generates a table of contents.</dd>
-
                         <dt about="#feature-figures" property="skos:prefLabel"><i class="fas fa-leaf"></i><dfn id="feature-figures">Figures</dfn></dt>
                         <dd about="#feature-figures">Lists all figures in the document with links to each.</dd>
-
                         <dt about="#feature-tables" property="skos:prefLabel"><i class="fas fa-table"></i><dfn id="feature-tables">Tables</dfn></dt>
                         <dd about="#feature-tables">Lists all tables in the document with links to each.</dd>
-
                         <dt about="#feature-abbreviations" property="skos:prefLabel"><i class="fas fa-font"></i><dfn id="feature-abbreviations">Abbreviations</dfn></dt>
                         <dd about="#feature-abbreviations">Lists abbreviations in the document along with their definitions.</dd>
-
                         <dt about="#feature-quotations" property="skos:prefLabel"><i class="fas fa-quote-right"></i><dfn id="feature-quotations">Quotations</dfn></dt>
                         <dd about="#feature-quotations">Lists all quotations in the document with links to each.</dd>
-
                         <dt about="#feature-concepts" property="skos:prefLabel"><i class="fas fa-book-atlas"></i><dfn id="feature-concepts">Concepts</dfn></dt>
                         <dd about="#feature-concepts">Lists concept schemes and concepts in the document with links. Additional concepts from externally referenced resources can also be included, along with a graph visualisation of the concepts.</dd>
-
                         <dt about="#feature-requirements" property="skos:prefLabel"><i class="fas fa-vial-circle-check"></i><dfn id="feature-requirements">Requirements</dfn></dt>
                         <dd about="#feature-requirements">
                           <p property="skos:definition">Creates a table of conformance requirements and test coverage (for technical specifications), showing the requirement subject, level, statement, and related test cases with links. Optionally displays changes between the current and previous versions of the document, along with changelog details.</p>
-
                           <figure id="figure-dokieli-spec-conformance" rel="schema:video" resource="#figure-dokieli-spec-conformance">
                             <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-spec-conformance.jpg" preload="none" resource="#figure-dokieli-spec-conformance" typeof="schema:VideoObject" width="800">
                               <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-spec-conformance.webm" type="video/webm" />
                             </video>
-
                             <figcaption><a href="https://dokie.li/media/video/dokieli-spec-conformance.webm">Video</a> (<a href="https://dokie.li/media/images/dokieli-spec-conformance.jpg" rel="schema:thumbnailUrl">poster</a>) of in dokieli [<time datatype="xsd:duration" datetime="PT19S" property="schema:duration">19s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
                           </figure>
                         </dd>
-
                         <dt about="#feature-advisements" property="skos:prefLabel"><i class="fas fa-hat-wizard"></i><dfn id="feature-advisements">Advisements</dfn></dt>
                         <dd about="#feature-advisements">Creates a table of advisements (in technical specifications), including their levels, statements, and links.</dd>
-
                         <dt about="#feature-references" property="skos:prefLabel"><i class="fas fa-hashtag"></i><dfn id="feature-references">References</dfn></dt>
                         <dd about="#feature-references">Lists references in the document with links to each.</dd>
                       </dl>
                     </dd>
-
                     <dt about="#feature-document-metadata" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-jar-wheat"></i><dfn id="feature-document-metadata">Document metadata</dfn></dt>
                     <dd about="#feature-document-metadata" property="skos:definition">Based on document's underlying structured data, displays information about its contributors such as editors and authors, number of citations, requirements, advisements, concepts, statements, as well as an estimated reading time, number of characters, words, and bytes.</dd>
                   </dl>
                 </div>
               </section>
-
               <section id="components" inlist="" rel="schema:hasPart" resource="#components">
                 <h3 property="schema:name">Components</h3>
                 <div datatype="rdf:HTML" property="schema:description">
                   <p>Articles, annotations, and notifications can include common components that provide additional information or functionality.</p>
-
                   <dl>
                     <dt about="#feature-license" property="skos:prefLabel" typeof="skos:Concept"><i class="fab fa-creative-commons"></i><dfn id="feature-license">License</dfn></dt>
                     <dd about="#feature-license" property="skos:definition">Licenses and rights can be specified for articles and annotations from a list of <a href="https://creativecommons.org/">Creative Commons</a> options, e.g., CC BY 4.0. Notifications, by default, use the <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0 1.0 Universal</a> license.</dd>
-
                     <dt about="#feature-language" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-language"></i><dfn id="feature-language">Language</dfn></dt>
                     <dd about="#feature-language" property="skos:definition">The language of an article or annotation can be set from a list (182 languages available, e.g., Armenian). Alternatively, language can be applied to specific text selections or nodes using the semantic annotator.</dd>
-
                     <dt about="#feature-in-reply-to" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-reply"></i><dfn id="feature-in-reply-to">In reply to</dfn></dt>
                     <dd about="#feature-in-reply-to" property="skos:definition">Identifies a resource to which the current resource is a reply.</dd>
-
                     <dt about="#feature-browser" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-folder-tree"></i><dfn id="feature-browser">Resource browser</dfn></dt>
                     <dd about="#feature-browser" property="skos:definition">The <em>resource browser</em> is part of features such as <a href="#feature-new" rel="rdfs:seeAlso">New</a>, <a href="#feature-open" rel="rdfs:seeAlso">Open</a>, <a href="#feature-save-as" rel="rdfs:seeAlso">Save As</a>, and <a href="#feature-generate-feed" rel="rdfs:seeAlso">Generate Feed</a> lets you navigate locations such as a <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a>, <a href="#annotation-service" rel="rdfs:seeAlso">annotation service</a>, or a <a href="#activity-collection" rel="rdfs:seeAlso">activity collection</a>. If a personal storage location is known, it is used by default; otherwise, the start location can be based on an annotation service referenced by the article.</dd>
-
                     <dt about="#feature-base-url-selection" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-igloo"></i><dfn id="feature-base-url-selection">Base URL selection</dfn></dt>
                     <dd about="#feature-base-url-selection" property="skos:definition">When creating or saving documents, media resources (e.g., <var>head link</var>, <var>[src]</var>, <var>object[data]</var>) are normalised to use the document's base URL as their absolute path (the <q>Use references as is</q> option). If <q>Copy to your storage</q> is selected, relative URLs remain unchanged, as the <em title="the copy operation performs an HTTP GET to source and HTTP PUT to the target">copy</em> process reuses the same file paths.</dd>
-
                     <dt about="#feature-clipboard" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-copy"></i><dfn id="feature-clipboard">Clipboard</dfn></dt>
                     <dd about="#feature-clipboard" property="skos:definition">Text, code, and tables (in CSV format) can be copied to the clipboard.</dd>
-
                     <dt about="#feature-fragments" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-anchor"></i><dfn id="feature-fragments">Fragments</dfn></dt>
                     <dd about="#feature-fragments" property="skos:definition">Clickable fragments are available for easy, specific referencing within the document.</dd>
-
                     <dt about="#feature-tabs" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-bars-staggered"></i><dfn id="feature-tabs">Tabs view</dfn></dt>
                     <dd about="#feature-tabs" property="skos:definition">Navigation items are presented in a tabbed view for easier access.</dd>
                   </dl>
@@ -695,7 +606,6 @@
               </section>
             </div>
           </section>
-
           <section id="accessibility-usability-inclusion" inlist="" rel="schema:hasPart" resource="#accessibility-usability-inclusion">
             <h2 property="schema:name">Accessibility, Usability, and Inclusion</h2>
             <div datatype="rdf:HTML" property="schema:description">
@@ -706,7 +616,6 @@
                     <h4 property="schema:name">Measures to support accessibility</h4>
                     <div datatype="rdf:HTML" property="schema:description">
                       <p>dokieli takes the following measures to ensure accessibility of dokieli:</p>
-
                       <ul class="organizational-effort accessibility-measures">
                         <li>Include accessibility throughout our internal policies.</li>
                         <li>Assign clear accessibility goals and responsibilities.</li>
@@ -714,39 +623,32 @@
                       </ul>
                     </div>
                   </section>
-
                   <section id="accessibility-conformance-status" inlist="" rel="schema:hasPart" resource="#accessibility-conformance-status">
                     <h4 property="schema:name">Conformance status</h4>
                     <div datatype="rdf:HTML" property="schema:description">
                       <p>The <a href="https://www.w3.org/WAI/standards-guidelines/wcag/">Web Content Accessibility Guidelines (WCAG)</a> defines requirements for designers and developers to improve accessibility for people with disabilities. It defines three levels of conformance: Level A, Level AA, and Level AAA. dokieli is partially conformant with WCAG 2.1 level AA. Partially conformant means that some parts of the content do not fully conform to the accessibility standard.</p>
                     </div>
                   </section>
-
                   <section id="accessibility-feedback" inlist="" rel="schema:hasPart" resource="#accessibility-feedback">
                     <h4 property="schema:name">Feedback</h4>
                     <div datatype="rdf:HTML" property="schema:description">
                       <p>We welcome your feedback on the accessibility of dokieli. Please let us know if you encounter accessibility barriers on <a href="https://github.com/dokieli/dokieli/issues">dokieli issues</a>.</p>
                     </div>
                   </section>
-
                   <section id="accessibility-technical-specifications" inlist="" rel="schema:hasPart" resource="#accessibility-technical-specifications">
                     <h4 property="schema:name">Technical specifications</h4>
                     <div datatype="rdf:HTML" property="schema:description">
                       <p>Accessibility of dokieli relies on the following technologies to work with the particular combination of web browser and any assistive technologies or plugins installed on your computer:</p>
-
                       <ul>
                         <li>HTML</li>
                       </ul>
-
                       <p>These technologies are relied upon for conformance with the accessibility standards used.</p>
                     </div>
                   </section>
-
                   <section id="accessibility-assessment-approach" inlist="" rel="schema:hasPart" resource="#accessibility-assessment-approach">
                     <h4 property="schema:name">Assessment approach</h4>
                     <div datatype="rdf:HTML" property="schema:description">
                       <p>dokieli assessed the accessibility of dokieli by the following approaches:</p>
-
                       <ul>
                         <li>Self-evaluation</li>
                       </ul>
@@ -754,7 +656,6 @@
                   </section>
                 </div>
               </section>
-
               <section id="authoring-accessibility" inlist="" rel="schema:hasPart" resource="#authoring-accessibility">
                 <h3 property="schema:name">Authoring accessibility</h3>
                 <div datatype="rdf:HTML" property="schema:description">
@@ -762,41 +663,67 @@
                     <h4 property="schema:name">Authoring tool user interface accessibility</h4>
                     <div datatype="rdf:HTML" property="schema:description">
                       <dl>
-                        <dt>Web-based functionality is accessible</dt><dd>partially</dd>
-                        <dt>Non web-based functionality is accessible</dt><dd>not applicable</dd>
-                        <dt>Alternative content available to editors</dt><dd>partially</dd>
-                        <dt>Description</dt><dd>Possible to add alternative content through dokieli's source editor feature. Improvements in the UI will be available in a future version.</dd>
-                        <dt>Editing-view presentation can be programmatically determined</dt><dd>yes</dd>
-                        <dt>Works with keyboard</dt><dd>partially</dd>
-                        <dt>Description</dt><dd>There are some WAI-ARIA landmarks.</dd>
-                        <dt>Enough time</dt><dd>yes</dd>
-                        <dt>Flashing content optional</dt><dd>yes</dd>
-                        <dt>Content can be navigated by structure</dt><dd>yes</dd>
-                        <dt>Content searchable</dt><dd>no</dd>
-                        <dt>Supports display preferences</dt><dd>yes</dd>
-                        <dt>Previews are accessible</dt><dd>not applicable</dd>
-                        <dt>Helps editor prevent and correct mistakes</dt><dd>yes</dd>
-                        <dt>(Accessibility) features documented</dt><dd>partially</dd>
+                        <dt>Web-based functionality is accessible</dt>
+                        <dd>partially</dd>
+                        <dt>Non web-based functionality is accessible</dt>
+                        <dd>not applicable</dd>
+                        <dt>Alternative content available to editors</dt>
+                        <dd>partially</dd>
+                        <dt>Description</dt>
+                        <dd>Possible to add alternative content through dokieli's source editor feature. Improvements in the UI will be available in a future version.</dd>
+                        <dt>Editing-view presentation can be programmatically determined</dt>
+                        <dd>yes</dd>
+                        <dt>Works with keyboard</dt>
+                        <dd>partially</dd>
+                        <dt>Description</dt>
+                        <dd>There are some WAI-ARIA landmarks.</dd>
+                        <dt>Enough time</dt>
+                        <dd>yes</dd>
+                        <dt>Flashing content optional</dt>
+                        <dd>yes</dd>
+                        <dt>Content can be navigated by structure</dt>
+                        <dd>yes</dd>
+                        <dt>Content searchable</dt>
+                        <dd>no</dd>
+                        <dt>Supports display preferences</dt>
+                        <dd>yes</dd>
+                        <dt>Previews are accessible</dt>
+                        <dd>not applicable</dd>
+                        <dt>Helps editor prevent and correct mistakes</dt>
+                        <dd>yes</dd>
+                        <dt>(Accessibility) features documented</dt>
+                        <dd>partially</dd>
                       </dl>
                     </div>
                   </section>
-
                   <section id="support-for-producing-accessible-content" inlist="" rel="schema:hasPart" resource="#support-for-producing-accessible-content">
                     <h4 property="schema:name">Support for producing accessible content</h4>
                     <div datatype="rdf:HTML" property="schema:description">
                       <dl>
-                        <dt>Generates accessible markup</dt><dd>yes</dd>
-                        <dt>Preserves accessibility information</dt><dd>yes</dd>
-                        <dt>Accessible content production is possible</dt><dd>yes</dd>
-                        <dt>Editors guided</dt><dd>partially</dd>
-                        <dt>Text alternatives can be managed</dt><dd>partially</dd>
-                        <dt>Accessible templates available</dt><dd>yes</dd>
-                        <dt>Accessible components/plug-ins available</dt><dd>no</dd>
-                        <dt>Checks accessibility automatically</dt><dd>yes</dd>
-                        <dt>Provides suggestions to content editor about accessibility problems</dt><dd>partially</dd>
-                        <dt>Description</dt><dd>There is an accessibility report provided on 'save as' feature including a list of issues that can be corrected by the content editor.</dd>
-                        <dt>Accessibility features prominent</dt><dd>no</dd>
-                        <dt>Documentation promotes accessibility</dt><dd>not provided</dd>
+                        <dt>Generates accessible markup</dt>
+                        <dd>yes</dd>
+                        <dt>Preserves accessibility information</dt>
+                        <dd>yes</dd>
+                        <dt>Accessible content production is possible</dt>
+                        <dd>yes</dd>
+                        <dt>Editors guided</dt>
+                        <dd>partially</dd>
+                        <dt>Text alternatives can be managed</dt>
+                        <dd>partially</dd>
+                        <dt>Accessible templates available</dt>
+                        <dd>yes</dd>
+                        <dt>Accessible components/plug-ins available</dt>
+                        <dd>no</dd>
+                        <dt>Checks accessibility automatically</dt>
+                        <dd>yes</dd>
+                        <dt>Provides suggestions to content editor about accessibility problems</dt>
+                        <dd>partially</dd>
+                        <dt>Description</dt>
+                        <dd>There is an accessibility report provided on 'save as' feature including a list of issues that can be corrected by the content editor.</dd>
+                        <dt>Accessibility features prominent</dt>
+                        <dd>no</dd>
+                        <dt>Documentation promotes accessibility</dt>
+                        <dd>not provided</dd>
                       </dl>
                     </div>
                   </section>
