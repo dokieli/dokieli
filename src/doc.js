@@ -84,11 +84,16 @@ function dumpNode(node, options, noEsc = [false], indentLevel = 0, nextNodeShoul
           })
         }
 
-        // if ((atn.name === 'class' || atn.name === 'id') && atn.value.length == 0) continue
+        if ((atn.name === 'class' || atn.name === 'id') && atn.value.trim().length == 0) continue
 
-        if (!(atn.name === 'class' && 'skipClassWithValue' in options &&
-            options.skipClassWithValue === atn.value)) {
-          attrList.push(atn.name + `="${htmlEncode(atn.value)}"`)
+        if (!(atn.name === 'class' && 'skipClassWithValue' in options && options.skipClassWithValue === atn.value)) {
+          let htmlEncodeOptions = { 'mode': 'attribute', 'attributeName': atn.name };
+
+          if (Config.DOMNormalisation.urlAttributes.includes(atn.name)) {
+            htmlEncodeOptions['mode'] = 'uri';
+          }
+
+          attrList.push(atn.name + `="${htmlEncode(atn.value, htmlEncodeOptions)}"`)
         }
       }
 
