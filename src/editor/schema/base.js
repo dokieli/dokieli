@@ -270,7 +270,7 @@ let customNodes = {
     toDOM(node) { return ["hr", { ...node.attrs.originalAttributes }]; },
   },
   object: {
-    content: "block+",
+    content: "block*",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "object", getAttrs(node){ return getAttributes(node); }}],
@@ -389,7 +389,7 @@ let customNodes = {
 */
 
   svg: {
-    content: "block+",
+    content: "inline+",
     group: "inline",
     inline: true,
     attrs: { originalAttributes: { default: {} } },
@@ -397,64 +397,81 @@ let customNodes = {
     toDOM(node) { return ["http://www.w3.org/2000/svg svg", { ...node.attrs.originalAttributes }, 0] }
   },
   g: {
-    content: "block*",
-    group: "block",
+    content: "inline*",
+    group: "inline",
+    inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "g", getAttrs(node) { return getAttributes(node) }}],
     toDOM(node) { return ["http://www.w3.org/2000/svg g", { ...node.attrs.originalAttributes }, 0] }
   },
   circle: {
-    content: "block+",
-    group: "block",
+    content: "inline+",
+    group: "inline",
+    inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "circle", getAttrs(node) { return getAttributes(node) }}],
-    toDOM(node) { return ["http://www.w3.org/2000/svg circle", { ...node.attrs.originalAttributes }, 0] }
+    toDOM(node) { return ["http://www.w3.org/2000/svg circle", { ...node.attrs.originalAttributes }] }
+  },
+  line: {
+    content: "inline+",
+    group: "inline",
+    inline: true,
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "line", getAttrs(node) { return getAttributes(node) }}],
+    toDOM(node) { return ["http://www.w3.org/2000/svg line", { ...node.attrs.originalAttributes }] }
   },
   svgText: {
     content: "inline*",
-    group: "block",
+    group: "inline",
+    inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "text", getAttrs(node) { return getAttributes(node) }}],
     toDOM(node) { return ["http://www.w3.org/2000/svg text", { ...node.attrs.originalAttributes }, 0] }
   },
   path: {
-    content: "block*",
-    group: "block",
+    content: "inline*",
+    group: "inline",
+    inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "path", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["http://www.w3.org/2000/svg path", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM(node) { return ["http://www.w3.org/2000/svg path", { ...node.attrs.originalAttributes }]; },
   },
   metadata: {
-    content: "block*",
-    group: "block",
+    content: "inline*",
+    group: "inline",
+    inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "metadata", getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return ["http://www.w3.org/2000/svg metadata", { ...node.attrs.originalAttributes }, 0]; },
   },
   tspan: {
-    content: "block*",
-    group: "block",
+    content: "inline*",
+    group: "inline",
+    inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "tspan", getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return ["http://www.w3.org/2000/svg tspan", { ...node.attrs.originalAttributes }, 0]; },
   },
   title: {
-    content: "block*",
-    group: "block",
+    content: "inline*",
+    group: "inline",
+    inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "title", getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return ["http://www.w3.org/2000/svg title", { ...node.attrs.originalAttributes }, 0]; },
   },
   defs: {
-    content: "block*",
-    group: "block",
+    content: "inline*",
+    group: "inline",
+    inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "defs", getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return ["http://www.w3.org/2000/svg defs", { ...node.attrs.originalAttributes }, 0]; },
   },
   marker: {
-    content: "block*",
-    group: "block",
+    content: "inline*",
+    group: "inline",
+    inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "marker", getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return ["http://www.w3.org/2000/svg marker", { ...node.attrs.originalAttributes }, 0]; },
