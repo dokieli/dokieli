@@ -2203,6 +2203,21 @@ font-style:normal;
 position:relative;
 color:#000 !important;
 cursor:pointer;
+z-index: 2147483646;
+}
+.do.robustlinks button::after {
+content: "";
+display: inline-block;
+width: 0;
+height: 0;
+margin-bottom:-0.025em;
+margin-left:-0.3em;
+border-left: 5px solid transparent;
+border-right: 5px solid transparent;
+border-top: 5px solid currentColor;
+}
+.do.robustlinks button:hover svg {
+fill:#080;
 }
 .do.robustlinks button span {
 display: inline-block;
@@ -2239,8 +2254,8 @@ margin-top:0.5em;
 .do.robustlinks.on > span {
 display: inline-block;
 position: absolute;
-top: 1.2em;
-right: -20em;
+top: 1.375em;
+right: -19.75em;
 z-index:2147483647;
 }
 
