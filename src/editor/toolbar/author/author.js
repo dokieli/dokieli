@@ -318,8 +318,8 @@ TODO:
     const endPos = getClosestSectionNodeEndPos(this.editorView)
   
     let node = DOMParser.fromSchema(schema).parse(fragment);
-  
-console.log(node)
+
+// console.log(node)
 
     let tr = state.tr.insert(endPos, node);
   
@@ -337,23 +337,22 @@ console.log(node)
       const { tr, selection } = this.editorView.state;
       const { $from, $to } = selection;
       const mark = schema.marks[markType];
-  
+
       // const result = toggleMark(schema.marks[markType])(this.editorView.state,dispatch)
       // console.log(result)
-  
       // console.log(tr.before.eq(state.doc))
-  
+
       if (!mark) return false;
   
       const hasMark = isMarkActive(state, schema.marks[markType]);
-  
+
       if (hasMark) {
         tr.removeMark($from.pos, $to.pos, mark);
         // if (dispatch) dispatch(tr);
       }
-  
+// console.log(attrs)
       tr.addMark($from.pos, $to.pos, mark.create({originalAttributes: attrs}));
-  
+
       if (dispatch) dispatch(tr);
       return true;
     }
