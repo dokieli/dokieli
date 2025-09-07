@@ -192,12 +192,12 @@ function getRandomIndex(length) {
 }
 
 function htmlEncode(str, options = { mode: 'text', attributeName: null }) {
-  str = String(str);
+  str = String(str).trim();
 
   if (options.mode === 'uri') {
     const isMulti = options.attributeName && Config.DOMNormalisation.multiTermAttributes.includes(options.attributeName);
     if (isMulti) {
-      return str.split(' ').map(term => encodeUriTerm(term)).join(' ');
+      return str.split(/[\t\n\r ]+/).map(term => encodeUriTerm(term)).join(' ');
     } else {
       return encodeUriTerm(str);
     }
@@ -274,14 +274,96 @@ function removeXmlns(htmlString, namespace = 'http://www.w3.org/1999/xhtml') {
 function domSanitize(strHTML, options = {}) {
   // console.log("DOMPurify in:", strHTML);
 
+  DOMPurify.addHook('uponSanitizeElement', function(node, data) {
+    if (node.nodeName.toLowerCase() === 'script') {
+      const src = node.getAttribute('src');
+      if (!Config.DOMNormalisation.allowedScriptSrcs.includes(src)) {
+        node.remove();
+      }
+    }
+  });
+
+  DOMPurify.addHook('uponSanitizeAttribute', function(node, data) {
+    const attrName = data.attrName;
+    const attrValue = data.attrValue?.trim().toLowerCase();
+
+    if (['href', 'src', 'data', 'xlink:href'].includes(attrName)) {
+      const lowerValue = attrValue.toLowerCase();
+
+      if (lowerValue.startsWith('javascript:') || lowerValue.startsWith('vbscript:')) {
+        data.keepAttr = false;
+        return;
+      }
+
+      if (lowerValue.startsWith('data:')) {
+        const mimeMatch = lowerValue.match(/^data:([^;,]+)[;,]/);
+        const mimeType = mimeMatch?.[1];
+
+        if (!mimeType || !Config.DOMNormalisation.allowedDataMimeTypes.includes(mimeType)) {
+          data.keepAttr = false;
+          return;
+        }
+
+        if (['image/svg+xml'].includes(mimeType)) {
+          const sanitizedUrl = sanitizeDataUrl(attrValue);
+          if (sanitizedUrl) {
+            data.attrValue = sanitizedUrl;
+          } else {
+            data.keepAttr = false;
+          }
+        }
+      }
+
+      //TODO blob:
+      // if (attrValue.startsWith('blob:')) {
+      //   const trustedBlobSources = [
+      //     'blob:https://dokie.li',
+
+      //   ];
+      //   const originMatch = attrValue.match(/^blob:(https?:\/\/[^\/]+)/);
+      //   if (!originMatch || !trustedBlobSources.includes(originMatch[0])) {
+      //     data.keepAttr = false;
+      //     return;
+      //   }
+      // }
+    }
+  });
+
   const cleanHTML = DOMPurify.sanitize(strHTML, {
     ALLOW_UNKNOWN_PROTOCOLS: options.ALLOW_UNKNOWN_PROTOCOLS !== false,
+    ADD_TAGS: ['script'],
     ADD_ATTR: [...Config.DOMNormalisation.rdfaAttributes, 'alttext', 'xml:lang', `xmlns:ev`, 'target'],
     ...options
   });
 
   // console.log("DOMPurify out:", cleanHTML);
   return cleanHTML;
+}
+
+function sanitizeDataUrl(dataUrl) {
+  const payload = extractDataPayload(dataUrl);
+  if (!payload) return null;
+
+  const { mimeType, decodedContent } = payload;
+
+  if (mimeType === 'text/html' || mimeType === 'image/svg+xml') {
+    const cleanContent = domSanitize(decodedContent);
+    const reEncoded = btoa(cleanContent);
+    return `data:${mimeType};base64,${reEncoded}`;
+  }
+
+  return dataUrl;
+}
+
+function extractDataPayload(dataUrl) {
+  const match = dataUrl.match(/^data:([^;,]+);base64,(.*)$/);
+  if (!match) return null;
+
+  const mimeType = match[1];
+  const base64Content = match[2];
+  const decodedContent = atob(base64Content);
+
+  return { mimeType, decodedContent };
 }
 
 function sanitizeObject(input, options = {}) {

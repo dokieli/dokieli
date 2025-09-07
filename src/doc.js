@@ -148,7 +148,7 @@ function dumpNode(node, options, noEsc = [false], indentLevel = 0, nextNodeShoul
       //Skip style blocks. But do we really want this?
       if (!(node.parentNode && node.parentNode.nodeName.toLowerCase() === 'style') &&
         //Skip data blocks
-        !(node.parentNode && node.parentNode.nodeName.toLowerCase() === 'script' && node.parentNode.getAttribute('type') && options.skipEscapingDataBlockTypes.includes(node.parentNode.getAttribute('type').trim()))) {
+        !(node.parentNode && node.parentNode.nodeName.toLowerCase() === 'script' && node.parentNode.getAttribute('type') && options.skipNodeDataBlockTypes.includes(node.parentNode.getAttribute('type').trim()))) {
         nl = nl.replace(/</g, '&lt;').replace(/>/g, '&gt;')
       }
     }

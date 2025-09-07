@@ -105,9 +105,12 @@ export default {
     'urlAttributes': ['href', 'src', 'data-versionurl', 'about', 'rel', 'rev', 'typeof', 'property', 'resource', 'datatype', 'vocab', 'xmlns', 'action', 'formaction', 'cite', 'data', 'poster', 'manifest', 'longdesc', 'profile', 'background', 'icon', 'usemap'],
     'multiTermAttributes': ['prefix', 'property', 'rel', 'resource', 'rev', 'typeof'],
     'sortAttributes': true,
+    'skipAttributes': ['contenteditable', 'data-placeholder', 'draggable', 'spellcheck', 'style'],
     'skipNodeWithClass': ['do', 'ProseMirror-trailingBreak'],
     'skipNodeComment': true,
     'skipNodeWithId': ['toc-nav'],
+    'skipClassWithValue': '',
+    'skipNodeDataBlockTypes': ['text/turtle', 'application/ld+json', 'application/activity+json', 'application/n-triples', 'application/trig', 'text/n3'],
     'classWithChildText': {
       'class': '.do.ref',
       'element': 'mark'
@@ -116,9 +119,9 @@ export default {
       'source': ['on-document-menu'],
       'target': ''
     },
-    'skipClassWithValue': '',
-    'skipEscapingDataBlockTypes': ['text/turtle', 'application/ld+json', 'application/activity+json', 'application/n-triples', 'application/trig', 'text/n3'],
-    'removeWrapperSelector': '.ProseMirror'
+    'removeWrapperSelector': '.ProseMirror',
+    'allowedScriptSrcs': ['https://www.w3.org/scripts/TR/2021/fixup.js'],
+    'allowedDataMimeTypes': [ 'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml', 'image/x-icon']
   },
 
   BeautifyOptions: {
