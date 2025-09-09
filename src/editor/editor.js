@@ -70,10 +70,12 @@ export class Editor {
     }
   }
 
+  //TODO: Maintain this list in config normalisation.
   storeRestrictedNodes() {
     const filterSelectors = ['#document-editor', '#review-changes', '.copy-to-clipboard', '.robustlinks', '.ref'];
     const notSelector = filterSelectors.map(selector => `:not(${selector})`).join('');
-    const selector = `.do${notSelector}`;
+    //TODO: toc-nav is W3C-specific. Move this into config normalisation
+    const selector = `.do${notSelector}, #toc-nav`;
     this.restrictedNodes = Array.from(document.body.querySelectorAll(selector));
   }
 
@@ -190,11 +192,9 @@ export class Editor {
   createEditor(options) {
     // TODO: think about a review mode of initializing and destroying editor
     this.storeRestrictedNodes();
-    
+
     this.restrictedNodes.forEach(node => {
-      if (node.parentNode) {
-        node.parentNode.removeChild(node);
-      }
+      node.remove();
     });
 
     const editorToolbarPlugin = new Plugin({

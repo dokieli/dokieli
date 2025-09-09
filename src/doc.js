@@ -60,7 +60,7 @@ function dumpNode(node, options, noEsc = [false], indentLevel = 0, nextNodeShoul
           )
         );
 
-      if (nextNodeShouldStartOnNewLine && !noEsc.includes(true)) {
+      if (node.parentNode?.nodeName.toLowerCase() === "head" ? true : (nextNodeShouldStartOnNewLine && !noEsc.includes(true) && !Config.DOMNormalisation.inlineElements.includes(node.nodeName.toLowerCase()))) {
         out += '\n' + '  '.repeat(indentLevel)
       }
 
@@ -71,9 +71,13 @@ function dumpNode(node, options, noEsc = [false], indentLevel = 0, nextNodeShoul
       for (let i = node.attributes.length - 1; i >= 0; i--) {
         var atn = node.attributes[i]
 
-        if (options.skipAttributes.includes(atn.name)) continue
+        if (options.skipAttributes.includes(atn.name)) {
+          continue;
+        }
 
-        if (/^\d+$/.test(atn.name)) continue
+        if (/^\d+$/.test(atn.name)) {
+          continue;
+        }
 
         if (atn.name === 'class' && 'replaceClassItemWith' in options) {
           atn.value.split(' ').forEach(function (aValue) {
@@ -84,17 +88,21 @@ function dumpNode(node, options, noEsc = [false], indentLevel = 0, nextNodeShoul
           })
         }
 
-        if ((atn.name === 'class' || atn.name === 'id') && atn.value.trim().length == 0) continue
-
-        if (!(atn.name === 'class' && 'skipClassWithValue' in options && options.skipClassWithValue === atn.value)) {
-          let htmlEncodeOptions = { 'mode': 'attribute', 'attributeName': atn.name };
-
-          if (Config.DOMNormalisation.urlAttributes.includes(atn.name)) {
-            htmlEncodeOptions['mode'] = 'uri';
-          }
-
-          attrList.push(atn.name + `="${htmlEncode(atn.value, htmlEncodeOptions)}"`)
+        if ((atn.name === 'class' || atn.name === 'id') && atn.value.trim().length == 0) {
+          continue;
         }
+
+        if (atn.name === 'class' && 'skipClassWithValue' in options && options.skipClassWithValue === atn.value) {
+          continue;
+        }
+
+        let htmlEncodeOptions = { 'mode': 'attribute', 'attributeName': atn.name };
+
+        if (Config.DOMNormalisation.urlAttributes.includes(atn.name)) {
+          htmlEncodeOptions['mode'] = 'uri';
+        }
+
+        attrList.push(atn.name + `="${htmlEncode(atn.value, htmlEncodeOptions)}"`)
       }
 
       if (attrList.length > 0) {
@@ -114,7 +122,7 @@ function dumpNode(node, options, noEsc = [false], indentLevel = 0, nextNodeShoul
         noEsc.push(ename === 'style' || ename === 'script' || ename === 'pre' || ename === 'code' || ename === 'samp');
 
         const nextNodeShouldStartOnNewLine = !allChildrenAreInlineOrText && !noEsc.includes(true) // /n < 
-        const newlineBeforeClosing = !allChildrenAreInlineOrText && !noEsc.includes(true) // /n </
+        const newlineBeforeClosing = !allChildrenAreInlineOrText && !noEsc.includes(true) && !Config.DOMNormalisation.inlineElements.includes(node.nodeName); // /n </
 
         for (var i = 0; i < node.childNodes.length; i++) {
           out += dumpNode(node.childNodes[i], options, noEsc, indentLevel + 1, nextNodeShouldStartOnNewLine)

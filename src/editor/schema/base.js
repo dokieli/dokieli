@@ -98,6 +98,24 @@ let customNodes = {
     parseDOM: [{ tag: "div", getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return ["div", { ...node.attrs.originalAttributes }, 0]; }
   },
+  style: {
+    content: "text*",
+    group: "block",
+    atom: true,
+    code: true,
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "style", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["style", { ...node.attrs.originalAttributes }, 0]; }
+  },
+  script: {
+    content: "text*",
+    group: "block",
+    atom: true,
+    code: true,
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "script", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["script", { ...node.attrs.originalAttributes }, 0]; }
+  },
   nav: {
     content: "block*",
     group: "block",
