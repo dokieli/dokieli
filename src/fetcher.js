@@ -96,17 +96,17 @@ function currentLocation(options = {}) {
   const url = new URL(window.location);
 
   // Default params to remove
-  const defaultParams = ['author', 'social', 'graph', 'open', 'style'];
+  const defaultParams = ['author', 'social', 'graph', 'graph-view', 'open', 'style'];
 
   // Use provided keys or fallback to default
   const keysToRemove = options.removeParams || defaultParams;
 
   // Remove by key only, ignoring values
-  keysToRemove.forEach(param => {
-    url.searchParams.delete(param);
-  });
+  keysToRemove.forEach(param => url.searchParams.delete(param));
 
-  return url.origin + url.pathname + (url.searchParams.toString() ? '?' + url.searchParams.toString() : '');
+  const origin = url.origin && url.origin !== 'null' ? url.origin : 'file://';
+
+  return origin + url.pathname + (url.searchParams.toString() ? '?' + url.searchParams.toString() : '');
 }
 
 /**

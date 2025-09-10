@@ -39,18 +39,23 @@ function getAbsoluteIRI(base, location) {
 }
 
 function getProxyableIRI(url, options = {}) {
-  var pIRI = stripFragmentFromString(url);
+  let pIRI = stripFragmentFromString(url);
 
   try {
-    pIRI = new URL(pIRI).href;
+    const origin = window.location.origin;
+    const base = origin !== 'null' ? origin : 'file://';
 
-    if ((typeof document !== 'undefined' && document.location.protocol === 'https:' && pIRI.slice(0, 5).toLowerCase() === 'http:') || 'forceProxy' in options) {
-      var proxyURL = getProxyURL(options);
-      pIRI = (proxyURL) ? proxyURL + encodeURIComponent(pIRI) : pIRI;
+    pIRI = new URL(pIRI, base).href;
+
+    if (
+      ('forceProxy' in options) ||
+      (typeof document !== 'undefined' && document.location.protocol === 'https:' && pIRI.startsWith('http:'))
+    ) {
+      const proxyURL = getProxyURL(options);
+      pIRI = proxyURL ? proxyURL + encodeURIComponent(pIRI) : pIRI;
     }
-  }
-  catch (error) {
-    throw new Error("Invalid URL provided: " + error);
+  } catch (error) {
+    throw new Error('Invalid URL provided: ' + error);
   }
 
   return pIRI;
@@ -94,7 +99,9 @@ function getUrlParams(name) {
 }
 
 function stripUrlParamsFromString(urlString, paramsToStrip = null, stripHash = false) {
-  const url = new URL(urlString, window.location.origin);
+  const origin = window.location.origin;
+  const base = origin && origin !== 'null' ? origin : undefined;
+  const url = new URL(urlString, base);
 
   if (Array.isArray(paramsToStrip) && paramsToStrip.length > 0) {
     paramsToStrip.forEach(param => url.searchParams.delete(param));
