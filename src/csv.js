@@ -1,6 +1,7 @@
 import Config from './config.js'
 import Papa from 'papaparse';
-import { domSanitize, generateUUID, getDateTimeISO, isPlainObject, sanitizeObject } from './util.js';
+import { generateUUID, getDateTimeISO, isPlainObject } from './util.js';
+import { sanitizeObject, domSanitize } from './utils/sanitization.js';
 import { createDateHTML, createLicenseHTML } from './doc.js';
 import uriTemplates from 'uri-templates';
 

@@ -7,11 +7,11 @@
  */
 
 import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource } from './fetcher.js'
-import { getDocument, getDocumentContentNode, showActionMessage, selectArticleNode, eventButtonNotificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getLanguageOptionsHTML, getLicenseOptionsHTML, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown, getReferenceLabel, createNoteDataHTML, hasNonWhitespaceText, eventButtonClose, eventButtonInfo, eventButtonSignIn, eventButtonSignOut, getDocumentNodeFromString, updateResourceInfos, accessModePossiblyAllowed, updateSupplementalInfo, processSupplementalInfoLinkHeaders } from './doc.js'
+import { getDocument, getDocumentContentNode, showActionMessage, selectArticleNode, eventButtonNotificationsToggle, showRobustLinksDecoration, getResourceInfo,  removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getLanguageOptionsHTML, getLicenseOptionsHTML, getNodeWithoutClasses, setCopyToClipboard, addMessageToLog, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown, getReferenceLabel, createNoteDataHTML, hasNonWhitespaceText, eventButtonClose, eventButtonInfo, eventButtonSignIn, eventButtonSignOut, getDocumentNodeFromString, updateResourceInfos, accessModePossiblyAllowed, updateSupplementalInfo, processSupplementalInfoLinkHeaders } from './doc.js'
 import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, generateDataURI, getMediaTypeURIs, isHttpOrHttpsProtocol, isFileProtocol, getUrlParams, stripUrlSearchHash, stripUrlParamsFromString } from './uri.js'
 import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes, filterQuads, getAgentTypeIndex, serializeData } from './graph.js'
 import { notifyInbox, sendNotifications } from './inbox.js'
-import { uniqueArray, fragmentFromString, generateAttributeId, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, isValidISBN, findPreviousDateTime, domSanitize, sanitizeObject, escapeRDFLiteral, tranformIconstoCSS, getIconsFromCurrentDocument, getHash, getDateTimeISOFromDate, htmlEncode } from './util.js'
+import { uniqueArray, fragmentFromString, generateAttributeId, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, isValidISBN, findPreviousDateTime, escapeRDFLiteral, tranformIconstoCSS, getIconsFromCurrentDocument, getHash, getDateTimeISOFromDate } from './util.js'
 import { generateGeoView } from './geo.js'
 import { getLocalStorageItem, updateLocalStorageProfile, enableAutoSave, disableAutoSave, updateLocalStorageItem, autoSave, removeLocalStorageDocumentFromCollection } from './storage.js'
 import { showUserSigninSignout, showUserIdentityInput, getSubjectInfo, restoreSession, afterSetUserInfo, setUserInfo, userInfoSignOut } from './auth.js'
@@ -28,6 +28,8 @@ import { Editor } from './editor/editor.js';
 import { initButtons, updateButtons } from './ui/buttons.js'
 import { csvStringToJson, jsonToHtmlTableString } from './csv.js'
 import { getMultipleResources } from './fetcher.js'
+import { domSanitize, sanitizeObject } from './utils/sanitization.js'
+import { htmlEncode } from './utils/html.js'
 
 const ns = Config.ns;
 let DO;
@@ -1177,8 +1179,12 @@ DO = {
       var requestURL = stripFragmentFromString(url);
       var documentURL = DO.C.DocumentURL;
 
-      var { skipNodeWithClass, ...restOptions } = DO.C.DOMNormalisation;
-      var optionsNormalisation = restOptions;
+      var optionsNormalisation = {
+        ...DO.C.DOMProcessing,
+        removeNodesWithSelector: [],
+        //TODO: You can always do it better!
+        normalize: true
+      }
 
       if (typeof data == 'string') {
         return getGraphFromData(data, options)
@@ -1782,12 +1788,7 @@ DO = {
           e.preventDefault();
           e.stopPropagation();
 
-          if (getDocumentContentNode(document).classList.contains('on-document-menu')) {
-            DO.U.hideDocumentMenu(e);
-          }
-          else {
-            DO.U.showDocumentMenu(e);
-          }
+          DO.U.showDocumentMenu(e);
         }
       });
     },
@@ -2509,7 +2510,6 @@ DO = {
 
       dMenuButton.parentNode.replaceChild(fragmentFromString(DO.C.Button.CloseMenu), dMenuButton);
       dMenu.classList.add('on');
-      // body.classList.add('on-document-menu');
 
       showUserSigninSignout(dUserInfo);
       DO.U.showDocumentDo(dInfo);
@@ -2518,7 +2518,6 @@ DO = {
       DO.U.showAboutDokieli(dInfo);
 
       var body = getDocumentContentNode(document);
-
       if(!body.classList.contains('on-slideshow')) {
         DO.U.showDocumentItems();
       }
@@ -2549,7 +2548,6 @@ DO = {
       if(buttonSigninUser) {
         dMenu.querySelector('button.signin-user').disabled = false;
       }
-      // body.classList.remove('on-document-menu');
 
       removeNodesWithIds(DO.C.DocumentDoItems);
     },
@@ -2741,7 +2739,6 @@ DO = {
           dMenuButton.parentNode.replaceChild(fragmentFromString(DO.C.Button.CloseMenu), dMenuButton);
 
           dMenu.classList.remove('on');
-          body.classList.remove('on-document-menu');
 
           var dMenuSections = dMenu.querySelectorAll('section');
           for (j = 0; j < dMenuSections.length; j++) {

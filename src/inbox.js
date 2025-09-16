@@ -4,7 +4,7 @@ import { getAbsoluteIRI, getPathURL, getProxyableIRI } from './uri.js';
 import { getMatchFromData, getLinkRelation, serializeDataToPreferredContentType, getGraphLicense, getGraphTypes } from './graph.js';
 import { getAcceptPostPreference, postResource } from './fetcher.js';
 import Config from './config.js';
-import { domSanitize } from './util.js';
+import { domSanitize } from './utils/sanitization.js';
 
 const ns = Config.ns;
 

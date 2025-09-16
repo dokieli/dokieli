@@ -1,7 +1,6 @@
-import DOMPurify from 'dompurify';
-import Config from './config.js'
 import { svgToDataURI } from './uri.js';
 import { Icon } from './ui/icons.js'
+import { domSanitize } from './utils/sanitization.js'
 
 function uniqueArray(a) {
   return Array.from(new Set(a));
@@ -191,214 +190,6 @@ function getRandomIndex(length) {
   return array[0] % length;
 }
 
-function htmlEncode(str, options = { mode: 'text', attributeName: null }) {
-  str = String(str).trim();
-
-  if (options.mode === 'uri') {
-    const isMulti = options.attributeName && Config.DOMNormalisation.multiTermAttributes.includes(options.attributeName);
-    if (isMulti) {
-      return str.split(/[\t\n\r ]+/).map(term => encodeUriTerm(term)).join(' ');
-    } else {
-      return encodeUriTerm(str);
-    }
-  }
-
-  if (options.mode === 'attribute') {
-    return str.replace(/([&<>"'])/g, (match, p1, offset, fullStr) => {
-      if (p1 === '&') {
-        const semicolonIndex = fullStr.indexOf(';', offset);
-        if (semicolonIndex > -1) {
-          const entity = fullStr.slice(offset, semicolonIndex + 1);
-          if (/^&(?:[a-zA-Z][a-zA-Z0-9]+|#\d+|#x[0-9a-fA-F]+);$/.test(entity)) {
-            return '&';
-          }
-        }
-      }
-      switch (p1) {
-        case '&': return '&amp;';
-        case '<': return '&lt;';
-        case '>': return '&gt;';
-        case '"': return '&quot;';
-        case "'": return '&#39;';
-        default: return p1;
-      }
-    });
-  }
-
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
-
-
-function encodeUriTerm(term) {
-  return term.replace(/%[0-9A-Fa-f]{2}|&|[^A-Za-z0-9\-._~:/?#\[\]@!$'()*+,;=%]/g, match => {
-    if (match === '&') return '&amp;';
-    if (/^%[0-9A-Fa-f]{2}$/.test(match)) return match;
-    switch (match) {
-      case ' ': return '%20';
-      case "'": return '%27';
-      case '"': return '%22';
-      case '<': return '%3C';
-      case '>': return '%3E';
-      default: return '%' + match.charCodeAt(0).toString(16).toUpperCase();
-    }
-  });
-}
-
-function fixDoubleEscapedEntities(string) {
-  return string.replace(/&amp;(lt|gt|apos|quot|amp);/g, "&$1;")
-}
-
-function fixBrokenHTML(html) {
-//  var pattern = new RegExp('<(' + Config.DOMNormalisation.voidElements.join('|') + ')([^>]*)></\\1>|<(' + Config.DOMNormalisation.voidElements.join('|') + ')([^>]*)/>', 'g');
-
-//Works
-// var pattern = new RegExp('<(' + Config.DOMNormalisation.voidElements.join('|') + ')([^<>]*?)?><\/\\1>', 'g');
-
-  var tagList = Config.DOMNormalisation.voidElements.concat(Config.DOMNormalisation.selfClosing);
-  var pattern = new RegExp('<(' + tagList.join('|') + ')([^<>]*?)?><\/\\1>', 'g');
-
-  var fixedHtml = html.replace(pattern, '<$1$2 />');
-
-  return fixedHtml;
-}
-
-function removeXmlns(htmlString, namespace = 'http://www.w3.org/1999/xhtml') {
-  const safeNamespace = escapeRegExp(namespace);
-  const xmlnsRegex = new RegExp(`\\sxmlns=(["'])${safeNamespace}\\1`, 'g');
-  return htmlString.replace(xmlnsRegex, '');
-}
-
-function domSanitize(strHTML, options = {}) {
-  // console.log("DOMPurify in:", strHTML);
-
-  DOMPurify.addHook('uponSanitizeElement', function(node, data) {
-    if (node.nodeName.toLowerCase() === 'script') {
-      const src = node.getAttribute('src');
-      if (!Config.DOMNormalisation.allowedScriptSrcs.includes(src)) {
-        node.remove();
-      }
-    }
-  });
-
-  DOMPurify.addHook('uponSanitizeAttribute', function(node, data) {
-    const attrName = data.attrName;
-    const attrValue = data.attrValue?.trim().toLowerCase();
-
-    if (['href', 'src', 'data', 'xlink:href'].includes(attrName)) {
-      const lowerValue = attrValue.toLowerCase();
-
-      if (lowerValue.startsWith('javascript:') || lowerValue.startsWith('vbscript:')) {
-        data.keepAttr = false;
-        return;
-      }
-
-      if (lowerValue.startsWith('data:')) {
-        const mimeMatch = lowerValue.match(/^data:([^;,]+)[;,]/);
-        const mimeType = mimeMatch?.[1];
-
-        if (!mimeType || !Config.DOMNormalisation.allowedDataMimeTypes.includes(mimeType)) {
-          data.keepAttr = false;
-          return;
-        }
-
-        if (['image/svg+xml'].includes(mimeType)) {
-          const sanitizedUrl = sanitizeDataUrl(attrValue);
-          if (sanitizedUrl) {
-            data.attrValue = sanitizedUrl;
-          } else {
-            data.keepAttr = false;
-          }
-        }
-      }
-
-      //TODO blob:
-      // if (attrValue.startsWith('blob:')) {
-      //   const trustedBlobSources = [
-      //     'blob:https://dokie.li',
-
-      //   ];
-      //   const originMatch = attrValue.match(/^blob:(https?:\/\/[^\/]+)/);
-      //   if (!originMatch || !trustedBlobSources.includes(originMatch[0])) {
-      //     data.keepAttr = false;
-      //     return;
-      //   }
-      // }
-    }
-  });
-
-  const cleanHTML = DOMPurify.sanitize(strHTML, {
-    ALLOW_UNKNOWN_PROTOCOLS: options.ALLOW_UNKNOWN_PROTOCOLS !== false,
-    ADD_TAGS: ['script'],
-    ADD_ATTR: [...Config.DOMNormalisation.rdfaAttributes, 'alttext', 'xml:lang', `xmlns:ev`, 'target'],
-    ...options
-  });
-
-  // console.log("DOMPurify out:", cleanHTML);
-  return cleanHTML;
-}
-
-function sanitizeDataUrl(dataUrl) {
-  const payload = extractDataPayload(dataUrl);
-  if (!payload) return null;
-
-  const { mimeType, decodedContent } = payload;
-
-  if (mimeType === 'text/html' || mimeType === 'image/svg+xml') {
-    const cleanContent = domSanitize(decodedContent);
-    const reEncoded = btoa(cleanContent);
-    return `data:${mimeType};base64,${reEncoded}`;
-  }
-
-  return dataUrl;
-}
-
-function extractDataPayload(dataUrl) {
-  const match = dataUrl.match(/^data:([^;,]+);base64,(.*)$/);
-  if (!match) return null;
-
-  const mimeType = match[1];
-  const base64Content = match[2];
-  const decodedContent = atob(base64Content);
-
-  return { mimeType, decodedContent };
-}
-
-function sanitizeObject(input, options = {}) {
-  if (typeof input !== 'object' || input === null) return input;
-
-  for (const key in input) {
-    if (!Object.hasOwn(input, key)) continue;
-
-    if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
-      delete input[key];
-      continue;
-    }
-
-    const value = input[key];
-
-    if (typeof value === 'string') {
-      input[key] = domSanitize(value);
-      if (options.htmlEncode) {
-        input[key] = htmlEncode(input[key]);
-      }
-    }
-    else if (Array.isArray(value)) {
-      input[key] = value.map(item =>
-        typeof item === 'object' && item !== null ? sanitizeObject(item, options) : item
-      );
-    }
-    else if (typeof value === 'object' && value !== null) {
-      input[key] = sanitizeObject(value, options);
-    }
-  }
-
-  return input;
-}
-
-
 function sortToLower(array, key) {
   return array.sort(function (a, b) {
     if (key) {
@@ -430,8 +221,6 @@ function isReDoSVulnerable(regex) {
 
   return false; 
 }
-
-
 
 function matchAllIndex(string, regexp) {
   // const matches = Array.from(string.matchAll(regexp));
@@ -561,12 +350,6 @@ export {
   getFormValues,
   kebabToCamel,
   parseISODuration,
-  htmlEncode,
-  fixDoubleEscapedEntities,
-  fixBrokenHTML,
-  removeXmlns,
-  domSanitize,
-  sanitizeObject,
   tranformIconstoCSS,
   getIconsFromCurrentDocument,
   isOnline,

@@ -11,7 +11,7 @@ import { addMessageToLog, getAgentHTML, insertDocumentLevelHTML, setDate, setEdi
 import { getAgentName, getGraphImage, getGraphInbox, getGraphTypes, getResourceGraph } from "../graph.js";
 import { fragmentFromString, generateAttributeId } from "../util.js";
 import { updateLocalStorageProfile } from "../storage.js";
-import { normaliseContent } from '../doc.js';
+import { normalizeContent } from '../doc.js';
 import rdf from 'rdf-ext';
 import { Icon } from "../ui/icons.js";
 import { updateButtons } from "../ui/buttons.js";
@@ -253,9 +253,9 @@ export class Editor {
       let normalisedContent;
 
       if (content.body) {
-        normalisedContent = normaliseContent(content.body);
+        normalisedContent = normalizeContent(content.body);
       } else {
-        normalisedContent = normaliseContent(content);
+        normalisedContent = normalizeContent(content);
       }
   
       // If normalisedContent includes a <body>, extract just its children

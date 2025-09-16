@@ -7,8 +7,9 @@ import { formHandlerA, formHandlerAnnotate, formHandlerBlockquote, formHandlerIm
 import { ToolbarView, annotateFormControls } from "../toolbar.js"
 import { getCitationOptionsHTML, getLanguageOptionsHTML } from "../../../doc.js"
 import { getResource } from "../../../fetcher.js"
-import { fragmentFromString, htmlEncode } from "../../../util.js"
+import { fragmentFromString } from "../../../util.js"
 import Config from "../../../config.js";
+import { htmlEncode } from "../../../utils/html.js";
 
 const ns = Config.ns;
 

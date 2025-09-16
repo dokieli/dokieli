@@ -95,7 +95,7 @@ export default {
     },
   },
 
-  DOMNormalisation: {
+  DOMProcessing: {
     'rdfaAttributes': ['about', 'content', 'datatype', 'href', 'inlist', 'prefix', 'property', 'rel', 'resource', 'rev', 'src', 'typeof', 'vocab'],
     'inlineElements': ['span', 'progress', 'del', 'ins', 'data', 'datalist', 'mark', 'cite', 'q', 'sup', 'sub', 'a', 'time', 'em', 'strong', 'b', 'i', 'u', 's', 'strike', 'dfn', 'abbr', 'var', 'samp', 'kbd', 'bdi', 'math', 'mrow', 'mi', 'mo', 'mfrac', 'embed', 'img', 'wbr', 'code', 'meta', 'link', 'button', 'svg', 'title', 'metadata', 'defs', 'marker', 'g', 'line', 'circle', 'path', 'tspan', 'text'],
     'proseMirrorMarks': ['del', 'ins', 'mark', 'cite', 'q', 'sup', 'sub', 'a', 'em', 'strong', 'dfn', 'abbr'],
@@ -104,23 +104,22 @@ export default {
     'urlAttributes': ['href', 'src', 'data-versionurl', 'about', 'rel', 'rev', 'typeof', 'property', 'resource', 'datatype', 'vocab', 'xmlns', 'action', 'formaction', 'cite', 'data', 'poster', 'manifest', 'longdesc', 'profile', 'background', 'icon', 'usemap'],
     'multiTermAttributes': ['prefix', 'property', 'rel', 'resource', 'rev', 'typeof'],
     'sortAttributes': true,
-    'skipAttributes': ['contenteditable', 'data-placeholder', 'draggable', 'spellcheck', 'style'],
-    'skipNodeWithClass': ['do', 'ProseMirror-trailingBreak'],
-    'skipNodeComment': true,
-    'skipNodeWithId': [],
-    'skipClassWithValue': '',
-    'skipNodeDataBlockTypes': ['text/turtle', 'application/ld+json', 'application/activity+json', 'application/n-triples', 'application/trig', 'text/n3'],
-    'classWithChildText': {
-      'class': '.do.ref',
-      'element': 'mark'
+    'removeAttributes': ['contenteditable', 'data-placeholder', 'draggable', 'spellcheck', 'style'],
+    'removeCommentNodes': true,
+    'removeNodesWithSelector': ['.do', '.ProseMirror-trailingBreak'],
+    'removeClassValues': [],
+    'removeWrapper': {
+      'wrapperSelector': '.do.ref',
+      'contentSelector': 'mark'
     },
-    'replaceClassItemWith': {
-      'source': ['on-document-menu'],
-      'target': ''
+    'allowedDataBlockTypes': ['text/turtle', 'application/ld+json', 'application/activity+json', 'application/n-triples', 'application/trig', 'text/n3'],
+    'allowedDataMimeTypes': [ 'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml', 'image/x-icon'],
+    'allowedScripts': {
+      'https://www.w3.org/scripts/TR/2021/fixup.js': {
+        'removeNodesWithSelector': [ '#toc-nav'],
+        'removeClassValues': ['toc-sidebar']
+      }
     },
-    'removeWrapperSelector': '.ProseMirror',
-    'allowedScriptSrcs': ['https://www.w3.org/scripts/TR/2021/fixup.js'],
-    'allowedDataMimeTypes': [ 'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml', 'image/x-icon']
   },
 
   BeautifyOptions: {

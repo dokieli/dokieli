@@ -5,7 +5,8 @@ import { RdfaParser } from "rdfa-streaming-parser";
 import { Readable } from "readable-stream";
 import Config from './config.js'
 import { stripFragmentFromString, getProxyableIRI, getBaseURL, getPathURL, getAbsoluteIRI, getParentURLPath } from './uri.js'
-import { domSanitize, escapeRegExp, uniqueArray } from './util.js'
+import { escapeRegExp, uniqueArray } from './util.js'
+import { domSanitize } from './utils/sanitization.js'
 import { parseMarkdown } from "./doc.js";
 import { setAcceptRDFTypes, getResource, getResourceHead, currentLocation } from './fetcher.js'
 import LinkHeader from "http-link-header";
