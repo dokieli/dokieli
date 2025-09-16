@@ -1,5 +1,5 @@
 import Config from './config.js'
-import { getDateTimeISO, fragmentFromString, generateAttributeId, uniqueArray, generateUUID, matchAllIndex, parseISODuration, domSanitize, getRandomIndex, getHash, htmlEncode, fixBrokenHTML, fixDoubleEscapedEntities, sanitizeObject } from './util.js'
+import { getDateTimeISO, fragmentFromString, generateAttributeId, uniqueArray, generateUUID, matchAllIndex, parseISODuration, getRandomIndex, getHash, fixDoubleEscapedEntities } from './util.js'
 import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath, getPrefixedNameFromIRI, generateDataURI, getProxyableIRI } from './uri.js'
 import { getResource, getResourceHead, deleteResource, processSave, patchResourceWithAcceptPatch } from './fetcher.js'
 import rdf from "rdf-ext";
@@ -11,6 +11,9 @@ import { gfmTagfilterHtml } from 'micromark-extension-gfm-tagfilter';
 import { Icon } from './ui/icons.js';
 import { showUserIdentityInput, signOut } from './auth.js'
 import { buttonIcons, getButtonHTML, updateButtons } from './ui/buttons.js'
+import { domSanitizeHTMLBody, domSanitize } from './utils/sanitization.js';
+import { cleanProseMirrorOutput, normalizeHTML } from './utils/normalization.js';
+import { formatHTML, getDoctype, htmlEncode } from './utils/html.js';
 
 const ns = Config.ns;
 
@@ -28,168 +31,6 @@ function getNodeWithoutClasses (node, classNames) {
   return clonedRootNode;
 }
 
-function domToString(node, options) {
-  options = options || Config.DOMNormalisation
-  // var voidElements = options.voidElements || []
-  // var skipAttributes = options.skipAttributes || []
-  // var noEsc = [false]
-
-  return fixBrokenHTML(dumpNode(node, options))
-}
-
-function dumpNode(node, options, noEsc = [false], indentLevel = 0, nextNodeShouldStartOnNewLine = false) {
-  options = options || Config.DOMNormalisation
-  var out = ''
-
-  if (typeof node.nodeType === 'undefined') return out
-
-  if (node.nodeType === 1) {
-    if (options.skipNodeWithId && node.hasAttribute('id') && options.skipNodeWithId.includes(node.id)) {
-      return out
-    }
-    else if (node.hasAttribute('class') && 'classWithChildText' in options && node.matches(options.classWithChildText.class)) {
-      out += node.querySelector(options.classWithChildText.element).textContent
-    } else if (!(options.skipNodeWithClass && node.matches('.' + options.skipNodeWithClass.join(',.')))) {
-      var ename = node.nodeName.toLowerCase()
-
-      const allChildrenAreInlineOrText = 
-        [...node.childNodes].every(child => 
-          child.nodeType === Node.TEXT_NODE 
-          || (child.nodeType === Node.ELEMENT_NODE 
-            && Config.DOMNormalisation.inlineElements.includes(child.nodeName.toLowerCase())
-          )
-        );
-
-      if (node.parentNode?.nodeName.toLowerCase() === "head" ? true : (nextNodeShouldStartOnNewLine && !noEsc.includes(true) && !Config.DOMNormalisation.inlineElements.includes(node.nodeName.toLowerCase()))) {
-        out += '\n' + '  '.repeat(indentLevel)
-      }
-
-      out += '<' + ename
-
-      var attrList = []
-
-      for (let i = node.attributes.length - 1; i >= 0; i--) {
-        var atn = node.attributes[i]
-
-        if (options.skipAttributes.includes(atn.name)) {
-          continue;
-        }
-
-        if (/^\d+$/.test(atn.name)) {
-          continue;
-        }
-
-        if (atn.name === 'class' && 'replaceClassItemWith' in options) {
-          atn.value.split(' ').forEach(function (aValue) {
-            if (options.replaceClassItemWith.source.includes(aValue)) {
-              var re = new RegExp(aValue, 'g')
-              atn.value = atn.value.replace(re, options.replaceClassItemWith.target).trim()
-            }
-          })
-        }
-
-        if ((atn.name === 'class' || atn.name === 'id') && atn.value.trim().length == 0) {
-          continue;
-        }
-
-        if (atn.name === 'class' && 'skipClassWithValue' in options && options.skipClassWithValue === atn.value) {
-          continue;
-        }
-
-        let htmlEncodeOptions = { 'mode': 'attribute', 'attributeName': atn.name };
-
-        if (Config.DOMNormalisation.urlAttributes.includes(atn.name)) {
-          htmlEncodeOptions['mode'] = 'uri';
-        }
-
-        attrList.push(atn.name + `="${htmlEncode(atn.value, htmlEncodeOptions)}"`)
-      }
-
-      if (attrList.length > 0) {
-        if ('sortAttributes' in options && options.sortAttributes) {
-          attrList.sort(function (a, b) {
-            return a.toLowerCase().localeCompare(b.toLowerCase())
-          })
-        }
-        out += ' ' + attrList.join(' ')
-      }
-
-      if (options.voidElements.includes(ename)) {
-        out += ' />'
-      } else {
-        out += '>'
-
-        noEsc.push(ename === 'style' || ename === 'script' || ename === 'pre' || ename === 'code' || ename === 'samp');
-
-        const nextNodeShouldStartOnNewLine = !allChildrenAreInlineOrText && !noEsc.includes(true) // /n < 
-        const newlineBeforeClosing = !allChildrenAreInlineOrText && !noEsc.includes(true) && !Config.DOMNormalisation.inlineElements.includes(node.nodeName); // /n </
-
-        for (var i = 0; i < node.childNodes.length; i++) {
-          out += dumpNode(node.childNodes[i], options, noEsc, indentLevel + 1, nextNodeShouldStartOnNewLine)
-        }
-
-        noEsc.pop()
-
-        if (newlineBeforeClosing) {
-          out += '\n' + '  '.repeat(indentLevel)
-        }
-
-        out += '</' + ename + '>'
-
-        out += (ename == 'html') ? '\n' : ''
-      }
-    }
-  } else if (node.nodeType === 8 && 'skipNodeComment' in options && !options.skipNodeComment) {
-    // FIXME: If comments are not tabbed in source, a new line is not prepended
-    out += '\n\
-<!--' + node.nodeValue + '-->'
-  } else if (node.nodeType === Node.TEXT_NODE || node.nodeType === Node.CDATA_SECTION_NODE) {
-    let nl = node.nodeValue
-
-    // XXX: Remove new lines which were added after DOM ready
-    // .replace(/\n+$/, '')
-
-    //FIXME: This section needs a lot of testing. If/when domToString is replaced with XML serializer and DOM sanitizer, this section can be removed.
-
-    nl = nl?.replace(/&/g, '&amp;')
-    if (noEsc.includes(true)) {
-      //Skip style blocks. But do we really want this?
-      if (!(node.parentNode && node.parentNode.nodeName.toLowerCase() === 'style') &&
-        //Skip data blocks
-        !(node.parentNode && node.parentNode.nodeName.toLowerCase() === 'script' && node.parentNode.getAttribute('type') && options.skipNodeDataBlockTypes.includes(node.parentNode.getAttribute('type').trim()))) {
-        nl = nl.replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      }
-    }
-    else { //node is not a child text node of style, script, pre, code, or samp, e.g. catches `<p> < > </p>`.
-      nl = nl.replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    }
-    //Clean double escaped entities, e.g., &amp;amp; -> &amp;, &amp;lt; -> &lt;
-    nl = fixDoubleEscapedEntities(nl)
-    out += nl
-  }
-  else {
-    console.warn('Warning; Cannot handle serialising nodes of type: ' + node.nodeType)
-  }
-
-  return out
-}
-
-function getDoctype() {
-  /* Get DOCTYPE from http://stackoverflow.com/a/10162353 */
-  var node = document.doctype
-  var doctype = ''
-
-  if (node !== null) {
-    doctype = '<!DOCTYPE ' +
-      node.name +
-      (node.publicId ? ' PUBLIC "' + node.publicId + '"' : '') +
-      (!node.publicId && node.systemId ? ' SYSTEM' : '') +
-      (node.systemId ? ' "' + node.systemId + '"' : '') +
-      '>'
-  }
-  return doctype
-}
-
 function getFragmentOfNodesChildren(node) {
   const fragment = document.createDocumentFragment();
   [...node.childNodes].forEach(child => fragment.appendChild(child));
@@ -197,7 +38,7 @@ function getFragmentOfNodesChildren(node) {
   return fragment;
 }
 
-function normaliseContent(node) {
+function normalizeContent(node) {
   let newContent = node;
 
   let element = document.createElement('div');
@@ -265,6 +106,7 @@ function normaliseContent(node) {
   return getFragmentOfNodesChildren(element);
 }
 
+//options = { sanitization: {}, normalization: {}, format: {} }
 function getDocument(cn, options) {
   let node = cn || document.documentElement;
 
@@ -274,26 +116,36 @@ function getDocument(cn, options) {
 
   node = node.cloneNode(true);
 
-  options = options || Config.DOMNormalisation;
-
-  //Literally normalising the HTML
-  node = normaliseContent(node);
-  // console.log(stringFromFragment(node.firstChild));
+  // TODO: review doing this before editor is initialized
+  node = cleanProseMirrorOutput(node);
 
   //In case `node` type is DocumentFragment
   const div = document.createElement('div');
   div.appendChild(node);
   // node = div.firstChild;
-  // console.log(node.outerHTML + '<-- node.outerHTML BE NO LINK BREAK HERE-->')
+
 
   let htmlString = div.getHTML();
   // console.log(htmlString);
 
-  //Sanitize body
-  const nodeDocument = domSanitizeHTMLBody(htmlString);
+  let nodeDocument = getDocumentNodeFromString(htmlString);
+
+  if (options.sanitization) {
+    nodeDocument = domSanitizeHTMLBody(nodeDocument, options); 
+  }
   // htmlString = nodeDocument.documentElement.outerHTML;
-  //Normalise and HTMLise
-  htmlString = domToString(nodeDocument.documentElement, options);
+
+  //Literally normalising the HTML
+  if (options.normalization) {
+    nodeDocument = normalizeHTML(nodeDocument);
+  }
+
+  if (options.format) {
+    htmlString = formatHTML(nodeDocument.documentElement, options);
+  }
+  else {
+    htmlString = nodeDocument.outerHTML;
+  }
 
   //Prepend doctype
   let doctype = (nodeDocument.constructor.name === 'SVGSVGElement') ? '<?xml version="1.0" encoding="utf-8"?>' : getDoctype();
@@ -302,30 +154,7 @@ function getDocument(cn, options) {
 
   // console.log(htmlString)
 
-  //Format
-  // htmlString = beautify.html(htmlString, Config.BeautifyOptions);
-
   return htmlString;
-}
-
-function domSanitizeHTMLBody(htmlString) {
-  const nodeDocument = getDocumentNodeFromString(htmlString);
-
-  //EXPERIMENTAL
-  // var nodeDocument = document.implementation.createHTMLDocument('template');
-  // nodeDocument.documentElement.setHTMLUnsafe(htmlString);
-
-  const bodyHTML = nodeDocument.body.getHTML();
-  // .trim();
-  // console.log(bodyHTML + '<--bodyHTML THERE SHOULD BE NO LINE BREAK BEFORE THIS-->');
-
-  const bodyChildrenSanitized = domSanitize(bodyHTML);
-  // .trim();
-  // console.log(bodyChildrenSanitized + '<--domSanitize(bodyHTML) THERE SHOULD BE NO LINE BREAK BEFORE THIS-->');
-
-  nodeDocument.body.setHTMLUnsafe(bodyChildrenSanitized);
-  // console.log(nodeDocument.documentElement.outerHTML + '<--bodyChildrenSanitized THERE SHOULD BE NO LINE BREAK BEFORE THIS-->');
-  return nodeDocument;
 }
 
 // function getDocumentNodeFromString(data, options = {}) {
@@ -488,7 +317,7 @@ function createFeedXML(feed, options) {
     });
     // console.log(description)
     
-    description = htmlEncode(fixBrokenHTML(description));
+    description = htmlEncode(formatHTML(description));
 
     var published = '';
     var updated = '';
@@ -3799,13 +3628,9 @@ function createRDFaHTML(r, mode) {
 
 export {
   getNodeWithoutClasses,
-  domToString,
-  dumpNode,
-  getDoctype,
   getFragmentOfNodesChildren,
-  normaliseContent,
+  normalizeContent,
   getDocument,
-  domSanitizeHTMLBody,
   getDocumentNodeFromString,
   getDocumentContentNode,
   createHTML,

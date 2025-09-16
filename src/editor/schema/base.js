@@ -629,7 +629,7 @@ let customNodes = {
   },
 };
 
-Config.DOMNormalisation.inlineElements.filter(el => !Config.DOMNormalisation.proseMirrorMarks.includes(el) && !Object.keys(customNodes).includes(el)).map((tagName) => {
+Config.DOMProcessing.inlineElements.filter(el => !Config.DOMProcessing.proseMirrorMarks.includes(el) && !Object.keys(customNodes).includes(el)).map((tagName) => {
   customNodes[tagName] = {
     inline: true,
     group: "inline",
@@ -642,7 +642,7 @@ Config.DOMNormalisation.inlineElements.filter(el => !Config.DOMNormalisation.pro
 
 const customMarks = {};
 
-Config.DOMNormalisation.proseMirrorMarks.forEach(tagName => {
+Config.DOMProcessing.proseMirrorMarks.forEach(tagName => {
   let namespace = '';
 
   customMarks[tagName] = {

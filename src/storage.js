@@ -2,7 +2,7 @@
 
 import Config from './config.js';
 import { getDateTimeISO, generateUUID, getHash, fragmentFromString, debounce } from './util.js';
-import { accessModeAllowed, getDocument, updateMutableResource } from './doc.js';
+import { getDocument, updateMutableResource } from './doc.js';
 
 
 // function initLocalStorage(key) {
@@ -35,7 +35,11 @@ import { accessModeAllowed, getDocument, updateMutableResource } from './doc.js'
 async function updateLocalStorageDocumentWithItem(key, data, options = {}) {
   if (!key) { Promise.resolve(); }
 
-  data = data || getDocument();
+  options['format'] = true;
+  options['sanitize'] = true;
+  options['normalize'] = true;
+
+  data = data || getDocument(null, options);
 
   var collection = await getLocalStorageItem(key);
   // console.log(collection);
@@ -92,7 +96,11 @@ async function updateLocalStorageItem(id, data) {
 //TODO removeLocalStorageDocumenItem
 
 function addLocalStorageDocumentItem(id, data, options = {}) {
-  data = data || getDocument();
+  options['format'] = true;
+  options['sanitize'] = true;
+  options['normalize'] = true;
+
+  data = data || getDocument(null, options);
 
   var datetime = options.datetime || getDateTimeISO();
 
@@ -128,6 +136,12 @@ function addLocalStorageDocumentItem(id, data, options = {}) {
 }
 
 function updateHTTPStorageDocument(url, data, options = {}) {
+  options['format'] = true;
+  options['sanitize'] = true;
+  options['normalize'] = true;
+
+  data = data || getDocument(null, options);
+
   data = data || getDocument();
 
   var datetime = getDateTimeISO();
@@ -163,7 +177,11 @@ async function autoSave(key, options) {
 
   // console.log(key, options);
 
-  const data = getDocument();
+  options['format'] = true;
+  options['sanitize'] = true;
+  options['normalize'] = true;
+
+  const data = getDocument(null, options);
   const hash = await getHash(data);
 
   // console.log(Config.AutoSave.Items[key]);
