@@ -2,8 +2,8 @@ import { escapeRegExp } from '../util.js'
 import Config from '../config.js'
 
 export function formatHTML(node, options, noEsc = [false], indentLevel = 0, nextNodeShouldStartOnNewLine = false) {
-  console.trace();
-  console.log(node.outerHTML)
+  // console.trace();
+  // console.log(node.outerHTML)
   options = options || Config.DOMProcessing;
   var out = '';
 
@@ -107,7 +107,7 @@ export function formatHTML(node, options, noEsc = [false], indentLevel = 0, next
   var tagList = Config.DOMProcessing.voidElements.concat(Config.DOMProcessing.selfClosing);
   var pattern = new RegExp('<(' + tagList.join('|') + ')([^<>]*?)?><\/\\1>', 'g');
   out = out.replace(pattern, '<$1$2 />');
-  console.log(out)
+  // console.log(out)
   return out
 }
 
