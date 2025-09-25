@@ -2,6 +2,8 @@ import { escapeRegExp } from '../util.js'
 import Config from '../config.js'
 
 export function formatHTML(node, options, noEsc = [false], indentLevel = 0, nextNodeShouldStartOnNewLine = false) {
+  console.trace();
+  console.log(node.outerHTML)
   options = options || Config.DOMProcessing;
   var out = '';
 
@@ -56,7 +58,7 @@ export function formatHTML(node, options, noEsc = [false], indentLevel = 0, next
 
       noEsc.push(ename === 'style' || ename === 'script' || ename === 'pre' || ename === 'code' || ename === 'samp');
 
-      const nextNodeShouldStartOnNewLine = !allChildrenAreInlineOrText && !noEsc.includes(true) // /n < 
+      const nextNodeShouldStartOnNewLine = !allChildrenAreInlineOrText && !noEsc.includes(true) // /n <
       const newlineBeforeClosing = !allChildrenAreInlineOrText && !noEsc.includes(true) && !Config.DOMProcessing.inlineElements.includes(node.nodeName); // /n </
 
       for (var i = 0; i < node.childNodes.length; i++) {
@@ -105,7 +107,7 @@ export function formatHTML(node, options, noEsc = [false], indentLevel = 0, next
   var tagList = Config.DOMProcessing.voidElements.concat(Config.DOMProcessing.selfClosing);
   var pattern = new RegExp('<(' + tagList.join('|') + ')([^<>]*?)?><\/\\1>', 'g');
   out = out.replace(pattern, '<$1$2 />');
-
+  console.log(out)
   return out
 }
 
@@ -189,4 +191,24 @@ export function getDoctype() {
       '>';
   }
   return doctype;
+}
+
+export function removeNodesWithSelector(node, selectors) {
+  const nodesToRemove = node.querySelectorAll(selectors.join(', '));
+
+  for (const n of nodesToRemove) {
+    n.remove();
+  }
+  return node;
+}
+
+export function removeClassValues(node, selector, values) {
+  const nodesWithClassValue = node.querySelectorAll(selector);
+
+  nodesWithClassValue.forEach(n => {
+    values.forEach(value => n.classList.remove(value));
+    if(n.classList.length === 0) { n.removeAttribute('class'); }
+  });
+
+  return node;
 }

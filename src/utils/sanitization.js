@@ -7,9 +7,13 @@ export function domSanitize(strHTML, options = {}) {
 
   DOMPurify.addHook('uponSanitizeElement', function(node, data) {
     if (node.nodeName.toLowerCase() === 'script') {
-      const src = node.getAttribute('src');
-      if (!Config.DOMProcessing.allowedScripts.includes(src)) {
-        node.remove();
+      let src = node.getAttribute('src');
+      if (src) {
+        src = src.trim();
+
+        if (!Object.keys(Config.DOMProcessing.allowedScripts).includes(src)) {
+          node.remove();
+        }
       }
     }
   });
@@ -134,15 +138,25 @@ export function domSanitizeHTMLBody(nodeDocument, options) {
   // var nodeDocument = document.implementation.createHTMLDocument('template');
   // nodeDocument.documentElement.setHTMLUnsafe(htmlString);
 
-  const bodyHTML = nodeDocument.body.getHTML();
-  // .trim();
-  // console.log(bodyHTML + '<--bodyHTML THERE SHOULD BE NO LINE BREAK BEFORE THIS-->');
+  let rootNode = '';
+  let html = '';
 
-  const bodyChildrenSanitized = domSanitize(bodyHTML, optio);
-  // .trim();
-  // console.log(bodyChildrenSanitized + '<--domSanitize(bodyHTML) THERE SHOULD BE NO LINE BREAK BEFORE THIS-->');
+  if (nodeDocument.constructor.name === 'HTMLDocument') {
+    rootNode = nodeDocument.body || undefined; // For HTML documents
+    html = rootNode ? rootNode.getHTML() : '';
+  } else if (nodeDocument.constructor.name === 'XMLDocument') {
+    rootNode = nodeDocument.documentElement || undefined; // For XML documents
+    html = rootNode ? rootNode.outerHTML : '';
+  }
 
-  nodeDocument.body.setHTMLUnsafe(bodyChildrenSanitized);
-  // console.log(nodeDocument.documentElement.outerHTML + '<--bodyChildrenSanitized THERE SHOULD BE NO LINE BREAK BEFORE THIS-->');
+  const sanitizedChildren = domSanitize(html, options);
+
+  if (nodeDocument.constructor.name === 'HTMLDocument') {
+    nodeDocument.body.setHTMLUnsafe(sanitizedChildren);
+  }
+  else {
+    nodeDocument.documentElement.setHTMLUnsafe(sanitizedChildren);
+  }
+
   return nodeDocument;
 }

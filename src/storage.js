@@ -35,11 +35,14 @@ import { getDocument, updateMutableResource } from './doc.js';
 async function updateLocalStorageDocumentWithItem(key, data, options = {}) {
   if (!key) { Promise.resolve(); }
 
-  options['format'] = true;
-  options['sanitize'] = true;
-  options['normalize'] = true;
+  const documentOptions = {
+    ...DO.C.DOMProcessing,
+    format: true,
+    sanitize: true,
+    normalize: true
+  };
 
-  data = data || getDocument(null, options);
+  data = data || getDocument(null, documentOptions);
 
   var collection = await getLocalStorageItem(key);
   // console.log(collection);
@@ -93,14 +96,15 @@ async function updateLocalStorageItem(id, data) {
   localStorage.setItem(id, JSON.stringify(item));
 }
 
-//TODO removeLocalStorageDocumenItem
-
 function addLocalStorageDocumentItem(id, data, options = {}) {
-  options['format'] = true;
-  options['sanitize'] = true;
-  options['normalize'] = true;
+  const documentOptions = {
+    ...DO.C.DOMProcessing,
+    format: true,
+    sanitize: true,
+    normalize: true
+  };
 
-  data = data || getDocument(null, options);
+  data = data || getDocument(null, documentOptions);
 
   var datetime = options.datetime || getDateTimeISO();
 
@@ -136,13 +140,14 @@ function addLocalStorageDocumentItem(id, data, options = {}) {
 }
 
 function updateHTTPStorageDocument(url, data, options = {}) {
-  options['format'] = true;
-  options['sanitize'] = true;
-  options['normalize'] = true;
+  const documentOptions = {
+    ...DO.C.DOMProcessing,
+    format: true,
+    sanitize: true,
+    normalize: true
+  };
 
-  data = data || getDocument(null, options);
-
-  data = data || getDocument();
+  data = data || getDocument(null, documentOptions);
 
   var datetime = getDateTimeISO();
 
@@ -176,12 +181,14 @@ async function autoSave(key, options) {
   if (!key) return;
 
   // console.log(key, options);
+  const documentOptions = {
+    ...DO.C.DOMProcessing,
+    format: true,
+    sanitize: true,
+    normalize: true
+  };
 
-  options['format'] = true;
-  options['sanitize'] = true;
-  options['normalize'] = true;
-
-  const data = getDocument(null, options);
+  const data = getDocument(null, documentOptions);
   const hash = await getHash(data);
 
   // console.log(Config.AutoSave.Items[key]);
@@ -196,7 +203,7 @@ async function autoSave(key, options) {
     options['digestSRI'] = hash;
 
     try {
-      await updateStorage(key, data, options);
+      updateStorage(key, data, options);
       Config.AutoSave.Items[key] ||= {};
       Config.AutoSave.Items[key][options.method] ||= {};
       Config.AutoSave.Items[key][options.method].digestSRI = hash;

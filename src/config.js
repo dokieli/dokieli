@@ -108,10 +108,10 @@ export default {
     'removeCommentNodes': true,
     'removeNodesWithSelector': ['.do', '.ProseMirror-trailingBreak'],
     'removeClassValues': [],
-    'removeWrapper': {
+    'removeWrapper': [{
       'wrapperSelector': '.do.ref',
       'contentSelector': 'mark'
-    },
+    }],
     'allowedDataBlockTypes': ['text/turtle', 'application/ld+json', 'application/activity+json', 'application/n-triples', 'application/trig', 'text/n3'],
     'allowedDataMimeTypes': [ 'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml', 'image/x-icon'],
     'allowedScripts': {

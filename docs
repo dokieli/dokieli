@@ -78,11 +78,12 @@
                   <p><a href="#roadmap">Roadmap</a></p>
                   <ol>
                     <li data-id="project-credibility-assessment"><a href="#project-credibility-assessment">Credibility assessment</a></li>
-                    <li data-id="project-web-browser-extension"><a href="#project-web-browser-extension">Web browser extension</a></li>
                     <li data-id="project-internationalization-localization"><a href="#project-internationalization-localization">Internationalization and localization</a></li>
-                    <li data-id="project-mobile-support"><a href="#project-mobile-support">Mobile support</a></li>
-                    <li data-id="project-end-to-end-encryption"><a href="#project-end-to-end-encryption">End-to-end encryption</a></li>
+                    <li data-id="project-web-browser-extension"><a href="#project-web-browser-extension">Web browser extension</a></li>
+                    <li data-id="project-modularization"><a href="#project-modularization">Modularization</a></li>
                     <li data-id="project-collaborative-editing"><a href="#project-collaborative-editing">Collaborative editing</a></li>
+                    <li data-id="project-end-to-end-encryption"><a href="#project-end-to-end-encryption">End-to-end encryption</a></li>
+                    <li data-id="project-mobile-support"><a href="#project-mobile-support">Mobile support</a></li>
                     <li data-id="project-knowledge-organisation"><a href="#project-knowledge-organisation">Knowledge organisation</a></li>
                   </ol>
                 </li>

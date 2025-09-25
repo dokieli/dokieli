@@ -846,7 +846,14 @@ DO = {
             filenameExtension: '.svg'
           }
 
-          svgNode = getDocument(svgNode.cloneNode(true));
+          const documentOptions = {
+            ...DO.C.DOMProcessing,
+            format: true,
+            sanitize: true,
+            normalize: true
+          };
+
+          svgNode = getDocument(svgNode.cloneNode(true), documentOptions);
 
           DO.U.exportAsDocument(svgNode, options);
         }
@@ -1179,10 +1186,11 @@ DO = {
       var requestURL = stripFragmentFromString(url);
       var documentURL = DO.C.DocumentURL;
 
-      var optionsNormalisation = {
+      const documentOptions = {
         ...DO.C.DOMProcessing,
         removeNodesWithSelector: [],
         //TODO: You can always do it better!
+        sanitize: true,
         normalize: true
       }
 
@@ -1200,7 +1208,7 @@ DO = {
           return DO.U.convertGraphToVisualisationGraph(requestURL, DO.C.Resource[documentURL].graph, options);
         }
         else {
-          data = getDocument(null, optionsNormalisation);
+          data = getDocument(null, documentOptions);
           return getGraphFromData(data, options)
             .then(g => {
               return DO.U.convertGraphToVisualisationGraph(requestURL, g, options);
@@ -1550,11 +1558,25 @@ DO = {
     },
 
     setDocumentString: function(node) {
-      DO.C.DocumentString = getDocument(node);
+      const documentOptions = {
+        ...DO.C.DOMProcessing,
+        format: true,
+        sanitize: true,
+        normalize: true
+      };
+
+      DO.C.DocumentString = getDocument(node, documentOptions);
     },
 
     setDocumentMode: async function(mode) {
       Config.Editor.mode = mode || Config.Editor.mode;
+
+      const documentOptions = {
+        ...DO.C.DOMProcessing,
+        removeNodesWithSelector: [],
+        sanitize: true,
+        normalize: true
+      };
 
       const paramStyle = getUrlParams('style');
       const paramOpen = getUrlParams('open');
@@ -1624,16 +1646,15 @@ DO = {
         }
 
         if (paramGraphView.length && paramGraphView[0] == 'true') {
-          DO.U.showVisualisationGraph(DO.C.DocumentURL, getDocument(), '#graph-view');
+          DO.U.showVisualisationGraph(DO.C.DocumentURL, getDocument(null, documentOptions), '#graph-view');
         }
 
         // stripUrlSearchHash();
       }
 
       if (paramGraphView.length && paramGraphView[0] == 'true' && paramOpen.length == 0) {
-        DO.U.showVisualisationGraph(DO.C.DocumentURL, getDocument(), '#graph-view');
+        DO.U.showVisualisationGraph(DO.C.DocumentURL, getDocument(null, documentOptions), '#graph-view');
       }
-
 
       var urls = paramGraph.map(url => {
         url = domSanitize(url);
@@ -1865,10 +1886,7 @@ DO = {
     enableRemoteSync: async function() {
       await updateLocalStorageItem(DO.C.DocumentURL, { autoSave: true });
 
-      // updateResourceInfos(DO.C.DocumentURL)
-      //   .then(() => {
-          DO.U.syncLocalRemoteResource();
-        // });
+      DO.U.syncLocalRemoteResource();
     },
 
     disableRemoteSync: async function() {
@@ -1939,6 +1957,13 @@ DO = {
     syncLocalRemoteResource: async function(options = {}) {
       // console.log('--- syncLocalRemoteResource');
 
+      const documentOptions = {
+        ...DO.C.DOMProcessing,
+        format: true,
+        sanitize: true,
+        normalize: true
+      };
+
       const localETag = DO.C.Resource[DO.C.DocumentURL]?.headers?.etag?.['field-value'];
       let localContentType = 'text/html';
       const headers = {
@@ -1990,7 +2015,7 @@ DO = {
       }
 
       //XXX: REVISIT THIS. This is  cheap way to reuse initial getDocument value. DocumenString is not currently used besides this.
-      localContent = DO.C.DocumentString || getDocument();
+      localContent = DO.C.DocumentString || getDocument(null, documentOptions);
       DO.C.DocumentString = null;
       let localHash = await getHash(localContent);
       let data;
@@ -2013,7 +2038,7 @@ DO = {
         data = await response.text();
 
         remoteContentNode = getDocumentNodeFromString(data);
-        remoteContent = getDocument(remoteContentNode.documentElement);
+        remoteContent = getDocument(remoteContentNode.documentElement, documentOptions);
         remoteContentNode = getDocumentNodeFromString(remoteContent);
 
         remoteHash = await getHash(remoteContent);
@@ -2023,6 +2048,7 @@ DO = {
           linkHeadersOptions['followLinkRelationTypes'] = ['describedby'];
         }
 
+        //Need to make sure to wait
         await updateResourceInfos(DO.C.DocumentURL, remoteContent, response, { storeHash: true });
         processSupplementalInfoLinkHeaders(DO.C.DocumentURL, linkHeadersOptions);
 
@@ -2173,7 +2199,7 @@ DO = {
           DO.Editor.replaceContent(DO.Editor.mode, remoteContentNode);
           DO.Editor.init(DO.Editor.mode, document.body);
           autoSave(DO.C.DocumentURL, { method: 'localStorage', published: remotePublishDate });
-          updateResourceInfos(DO.C.DocumentURL, getDocument(), response);
+          updateResourceInfos(DO.C.DocumentURL, null, response);
           return;
         }
       }
@@ -2236,7 +2262,7 @@ DO = {
             DO.Editor.replaceContent(DO.Editor.mode, remoteContentNode);
             DO.Editor.init(DO.Editor.mode, document.body);
             autoSave(DO.C.DocumentURL, { method: 'localStorage', published: remotePublishDate });
-            updateResourceInfos(DO.C.DocumentURL, getDocument(), response);
+            updateResourceInfos(DO.C.DocumentURL, null, response);
           }
           else {
             reviewOptions['message'] = `No local unpublished changes. Remote unchanged. Review changes.`;
@@ -2333,8 +2359,6 @@ DO = {
 
     showResourceReviewChanges: function(localContent, remoteContent, response, reviewOptions) {
       if (!localContent.length || !remoteContent.length) return;
-
-      // updateResourceInfos(DO.C.DocumentURL, getDocument(), response);
 
       // console.log(localContent, remoteContent);
 
@@ -2527,7 +2551,7 @@ DO = {
         options['followLinkRelationTypes'] = ['describedby'];
       }
 
-      updateResourceInfos(DO.C.DocumentURL, getDocument(), null, options);
+      updateResourceInfos(DO.C.DocumentURL, null, null, options);
     },
 
     hideDocumentMenu: function(e) {
@@ -3975,7 +3999,14 @@ console.log(reason);
     },
 
     exportAsDocument: function(data, options = {}) {
-      data = data || getDocument();
+      const documentOptions = {
+        ...DO.C.DOMProcessing,
+        format: true,
+        sanitize: true,
+        normalize: true
+      };
+
+      data = data || getDocument(null, documentOptions);
       var mediaType = options.mediaType || 'text/html';
       var url = options.subjectURI || DO.C.DocumentURL;
 
@@ -4633,6 +4664,13 @@ console.log(reason);
       var d = node.querySelector('#document-do');
       if (d) { return; }
 
+      const documentOptions = {
+        ...DO.C.DOMProcessing,
+        format: true,
+        sanitize: true,
+        normalize: true
+      };
+
       var buttonDisabled = '';
 
       const buttons = [
@@ -4742,7 +4780,7 @@ console.log(reason);
             mediaType: 'text/html',
             filenameExtension: '.html'
           }
-          DO.U.exportAsDocument(getDocument(), options);
+          DO.U.exportAsDocument(getDocument(null, documentOptions), options);
         }
 
         if (e.target.closest('.robustify-links')){
@@ -4918,8 +4956,15 @@ console.log(reason);
     },
 
     resourceSave: function(e, options) {
+      const documentOptions = {
+        ...DO.C.DOMProcessing,
+        format: true,
+        sanitize: true,
+        normalize: true
+      };
+
       var url = currentLocation();
-      var data = getDocument();
+      var data = getDocument(null, documentOptions);
       options = options || {};
 
       getResourceInfo(data, options).then(i => {
@@ -4942,6 +4987,13 @@ console.log(reason);
 
     replyToResource: function replyToResource (e, iri) {
       iri = iri || currentLocation()
+
+      const documentOptions = {
+        ...DO.C.DOMProcessing,
+        format: true,
+        sanitize: true,
+        normalize: true
+      };
 
       e.target.closest('button').disabled = true
 
@@ -5053,7 +5105,6 @@ console.log(reason);
         var data = createHTML('', note)
 
         putResource(noteIRI, data)
-
           .catch(error => {
             console.log('Could not save reply:')
             console.error(error)
@@ -5092,7 +5143,7 @@ console.log(reason);
               .querySelector('.response-message')
               .setHTMLUnsafe(domSanitize('<p class="success"><a href="' + response.url + '" rel="noopener" target="_blank">Reply saved!</a></p>'));
 
-            return getLinkRelation(ns.ldp.inbox.value, null, getDocument());
+            return getLinkRelation(ns.ldp.inbox.value, null, getDocument(null, documentOptions));
           })
 
           .then(inboxes => {
@@ -6798,6 +6849,12 @@ console.log('XXX: Cannot access effectiveACLResource', e);
       action = action || 'write';
       action = domSanitize(action);
 
+      const documentOptions = {
+        ...DO.C.DOMProcessing,
+        //sanitize: in this context, seems low risk.
+        normalize: true
+      };
+
       var createContainerButton = '';
       var createContainerDiv = '';
       if  (DO.C['Session']?.isActive) {
@@ -6867,7 +6924,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
         DO.U.initBrowse(baseUrl, input, browseButton, createButton, id, action);
       }
       else {
-        getLinkRelation(ns.oa.annotationService.value, null, getDocument()).then(
+        getLinkRelation(ns.oa.annotationService.value, null, getDocument(null, documentOptions)).then(
           function(storageUrl) {
             DO.U.initBrowse(storageUrl[0], input, browseButton, createButton, id, action);
           },
@@ -7492,6 +7549,13 @@ console.log('XXX: Cannot access effectiveACLResource', e);
         e.target.closest('button').disabled = true;
       }
 
+      const documentOptions = {
+        ...DO.C.DOMProcessing,
+        format: true,
+        sanitize: true,
+        normalize: true
+      };
+
       document.body.appendChild(fragmentFromString(`<aside id="save-as-document" class="do on">${DO.C.Button.Close}<h2>Save As ${DO.C.Button.Info.SaveAs}</h2><div class="info"></div></aside>`));
 
       var saveAsDocument = document.getElementById('save-as-document');
@@ -7608,7 +7672,6 @@ console.log('XXX: Cannot access effectiveACLResource', e);
         videoAccessibilityReport += '<li>Fail: Videos (<code>video</code>) without external timed text tracks (<code>track</code> or <code>track</code> with <code>kind</code> of text track.)</li>';
       }
 
-
       var audio = document.querySelectorAll('audio');
       var audioFailed = [];
       var audioPassed = [];
@@ -7689,7 +7752,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
         if (!DO.Editor['new']) {
           var dokielize = document.querySelector('#dokielize-resource')
           if (dokielize.checked) {
-            html = getDocument(html)
+            html = getDocument(html, documentOptions)
             html = await DO.U.spawnDokieli(document, html, 'text/html', storageIRI, {'init': false})
           }
 
@@ -7738,7 +7801,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
           nodes = DO.U.rewriteBaseURL(nodes, baseOptions)
         }
 
-        html = getDocument(html)
+        html = getDocument(html, documentOptions)
 
         var progress = saveAsDocument.querySelector('progress')
         if(progress) {
@@ -7899,12 +7962,20 @@ console.log('XXX: Cannot access effectiveACLResource', e);
         e.target.closest('button').disabled = true;
       }
 
+      const documentOptions = {
+        ...DO.C.DOMProcessing,
+        format: true,
+        // TODO: Revisit because the user should be informed (show dialog) whether they want to retain or include certain scripts.
+        // sanitize: true,
+        normalize: true
+      };
+
       var buttonDisabled = (document.location.protocol === 'file:') ? ' disabled="disabled"' : '';
 
       document.body.appendChild(fragmentFromString('<aside id="source-view" class="do on">' + DO.C.Button.Close + `<h2>Source ${DO.C.Button.Info.Source}</h2>` + '<div class="info"></div><textarea id="source-edit" rows="24" cols="80"></textarea><p><button class="update"'+ buttonDisabled + ' title="Update source">Update</button></p></aside>'));
       var sourceBox = document.getElementById('source-view');
       var input = document.getElementById('source-edit');
-      input.value = getDocument();
+      input.value = getDocument(null, documentOptions);
 
       sourceBox.addEventListener('click', (e) => {
         if (e.target.closest('button.update')) {
