@@ -106,6 +106,34 @@ function normalizeContent(node) {
   return getFragmentOfNodesChildren(element);
 }
 
+function getHTMLWithoutStructuralWhitespace(el) {
+  let clone = el.cloneNode(true);
+
+  // walk through and remove text nodes that are only whitespace
+  const walker = document.createTreeWalker(clone, NodeFilter.SHOW_TEXT, null);
+  let node;
+  let toRemove = [];
+
+  while ((node = walker.nextNode())) {
+    if (/^\s*$/.test(node.nodeValue)) {
+      // only whitespace
+      let prev = node.previousSibling;
+      let next = node.nextSibling;
+
+      // remove if it's between two elements (non-meaningful whitespace)
+      if ((prev && prev.nodeType === Node.ELEMENT_NODE) ||
+          (next && next.nodeType === Node.ELEMENT_NODE)) {
+        toRemove.push(node);
+      }
+    }
+  }
+
+  toRemove.forEach(n => n.remove());
+
+  return clone.innerHTML;
+}
+
+
 function getDocument(cn, options) {
   // console.trace();
   let node = cn || document.documentElement;
@@ -117,7 +145,7 @@ function getDocument(cn, options) {
   if (cn instanceof Document) {
     node = cn.documentElement;
   }
-
+// console.log(node.outerHTML)
   node = node.cloneNode(true);
 
   // TODO: review doing this before editor is initialized
@@ -127,10 +155,14 @@ function getDocument(cn, options) {
   const div = document.createElement('div');
   div.appendChild(node);
   // node = div.firstChild;
-  console.log(div.outerHTML)
+  // console.log(div.outerHTML)
 
-  let htmlString = div.getHTML();
-console.log(htmlString);
+  //XXX: DO THIS?
+  // div.normalize;
+
+  // let htmlString = div.getHTML();
+  let htmlString = getHTMLWithoutStructuralWhitespace(div);
+// console.log(htmlString);
 
   let nodeDocument = getDocumentNodeFromString(htmlString, nodeParseOptions);
   console.log(nodeDocument.documentElement.outerHTML)
@@ -145,13 +177,14 @@ console.log(htmlString);
     nodeDocument = normalizeHTML(nodeDocument);
     // console.log(nodeDocument.outerHTML)
   }
-
+console.log("pre-format", nodeDocument.documentElement.outerHTML)
   if (options.format) {
     htmlString = formatHTML(nodeDocument.documentElement, options);
   }
   else {
     htmlString = nodeDocument.documentElement.outerHTML;
   }
+  console.log("after format", htmlString)
 
 // console.log(htmlString)
 
@@ -163,61 +196,6 @@ console.log(htmlString);
   return htmlString;
 }
 
-// function getDocumentNodeFromString(data, options = {}) {
-//   options.contentType = options.contentType || 'text/html';
-
-//   if (options.contentType === 'text/xml') {
-//     data = data.replace(/<!DOCTYPE[^>]*>/i, '');
-//   }
-
-//   const parser = new DOMParser();
-//   const parsedDoc = parser.parseFromString(data, options.contentType);
-
-//   const isOnlyNewlineAndWhitespace = (text) => /^\s*$/.test(text);
-
-//   ['html', 'body'].forEach(tag => {
-//     const el = parsedDoc.getElementsByTagName(tag)[0];
-//     if (!el) return;
-//     const toRemove = [];
-
-//     const children = Array.from(el.childNodes);
-
-//     for (let i = 0; i < children.length; i++) {
-//       const node = children[i];
-//       const next = children[i + 1];
-
-//       if (
-//         node.nodeType === Node.TEXT_NODE &&
-//         isOnlyNewlineAndWhitespace(node.nodeValue)
-//       ) {
-//         const isLastBeforeClose =
-//           next === undefined &&
-//           el.nodeName.toLowerCase() === 'body' &&
-//           node.nodeValue === '\n';
-//         if (!isLastBeforeClose) {
-//           toRemove.push(node);
-//         }
-//       }
-//     }
-
-//     toRemove.forEach(n => el.removeChild(n));
-//   });
-//   return parsedDoc;
-// }
-
-// function getDocumentNodeFromString(data, options = {}) {
-//   options['contentType'] = options.contentType || 'text/html';
-
-//   if (options.contentType === 'text/xml') {
-//     data = data.replace(/<!DOCTYPE[^>]*>/i, '');
-//   }
-
-//   const parser = new DOMParser();
-//   const parsedDoc = parser.parseFromString(data, options.contentType);
-
-//   return parsedDoc;
-// }
-
 function getDocumentNodeFromString(data, options = {}) {
   options['contentType'] = options.contentType || 'text/html';
 
@@ -227,27 +205,27 @@ function getDocumentNodeFromString(data, options = {}) {
 
   const parser = new DOMParser();
   const parsedDoc = parser.parseFromString(data, options.contentType);
+// console.log(parsedDoc.documentElement.outerHTML)
+//   const walker = document.createTreeWalker(
+//     parsedDoc,
+//     NodeFilter.SHOW_TEXT,
+//     {
+//       acceptNode: (node) => {
+//         const tag = node.parentNode?.nodeName?.toLowerCase();
+//         if (['pre', 'code', 'textarea'].includes(tag)) return NodeFilter.FILTER_REJECT;
 
-  const walker = document.createTreeWalker(
-    parsedDoc,
-    NodeFilter.SHOW_TEXT,
-    {
-      acceptNode: (node) => {
-        const tag = node.parentNode?.nodeName?.toLowerCase();
-        if (['pre', 'code', 'textarea'].includes(tag)) return NodeFilter.FILTER_REJECT;
+//         if (/^[ \t\r\n]*\r?\n[ \t\r\n]*$/.test(node.nodeValue)) {
+//           return NodeFilter.FILTER_ACCEPT;
+//         }
 
-        if (/^[ \t\r\n]*\r?\n[ \t\r\n]*$/.test(node.nodeValue)) {
-          return NodeFilter.FILTER_ACCEPT;
-        }
+//         return NodeFilter.FILTER_REJECT;
+//       }
+//     }
+//   );
 
-        return NodeFilter.FILTER_REJECT;
-      }
-    }
-  );
-
-  const toRemove = [];
-  while (walker.nextNode()) toRemove.push(walker.currentNode);
-  toRemove.forEach(n => n.remove());
+//   const toRemove = [];
+//   while (walker.nextNode()) toRemove.push(walker.currentNode);
+//   toRemove.forEach(n => n.remove());
 
   return parsedDoc;
 }
