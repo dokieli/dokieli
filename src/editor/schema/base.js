@@ -40,14 +40,16 @@ let customNodes = {
     content: 'block+'
   },
   text: {
-    group: "inline"
+    group: "inline",
+    whitespace: "pre"
   },
   p: {
     content: "inline*",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
-    parseDOM: [{ tag: "p", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["p", { ...node.attrs.originalAttributes }, 0]; }
+    parseDOM: [{ tag: "p", preserveWhitespace: "full", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["p", { ...node.attrs.originalAttributes }, 0]; },
+    whitespace: "pre"
   },
   main: {
     content: "block*",
@@ -634,8 +636,9 @@ Config.DOMProcessing.inlineElements.filter(el => !Config.DOMProcessing.proseMirr
     inline: true,
     group: "inline",
     content: "inline*",
+    whitespace: "pre",
     attrs: { originalAttributes: { default: {} } },
-    parseDOM: [{ tag: tagName, getAttrs(node){ return getAttributes(node); }}],
+    parseDOM: [{ tag: tagName, preserveWhitespace: "full", getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return [tagName, { ...node.attrs.originalAttributes }, 0]; }
   }
 });
@@ -647,11 +650,12 @@ Config.DOMProcessing.proseMirrorMarks.forEach(tagName => {
 
   customMarks[tagName] = {
     attrs: { originalAttributes: { default: {} } },
-    parseDOM: [{ tag: tagName, getAttrs(node){ return getAttributes(node); }}],
+    parseDOM: [{ tag: tagName, preserveWhitespace: "full", getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return [namespace + tagName, { ...node.attrs.originalAttributes }, 0]; },
     inclusive: false,
     excludes: "",
-    group: "inline"
+    group: "inline",
+    whitespace: "pre"
   }
 
   switch(tagName) {

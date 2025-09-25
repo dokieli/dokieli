@@ -106,9 +106,13 @@ function normalizeContent(node) {
   return getFragmentOfNodesChildren(element);
 }
 
-//options = { sanitization: {}, normalization: {}, format: {} }
 function getDocument(cn, options) {
+  // console.trace();
   let node = cn || document.documentElement;
+
+  const nodeParseOptions = {
+    contentType: (node.nodeName.toLowerCase() === 'svg') ? 'image/svg+xml' : 'text/html'
+  };
 
   if (cn instanceof Document) {
     node = cn.documentElement;
@@ -123,36 +127,38 @@ function getDocument(cn, options) {
   const div = document.createElement('div');
   div.appendChild(node);
   // node = div.firstChild;
-
+  console.log(div.outerHTML)
 
   let htmlString = div.getHTML();
-  // console.log(htmlString);
+console.log(htmlString);
 
-  let nodeDocument = getDocumentNodeFromString(htmlString);
+  let nodeDocument = getDocumentNodeFromString(htmlString, nodeParseOptions);
+  console.log(nodeDocument.documentElement.outerHTML)
 
-  if (options.sanitization) {
-    nodeDocument = domSanitizeHTMLBody(nodeDocument, options); 
+  if (options.sanitize) {
+    nodeDocument = domSanitizeHTMLBody(nodeDocument, options);
   }
   // htmlString = nodeDocument.documentElement.outerHTML;
 
   //Literally normalising the HTML
-  if (options.normalization) {
+  if (options.normalize) {
     nodeDocument = normalizeHTML(nodeDocument);
+    // console.log(nodeDocument.outerHTML)
   }
 
   if (options.format) {
     htmlString = formatHTML(nodeDocument.documentElement, options);
   }
   else {
-    htmlString = nodeDocument.outerHTML;
+    htmlString = nodeDocument.documentElement.outerHTML;
   }
 
+// console.log(htmlString)
+
   //Prepend doctype
-  let doctype = (nodeDocument.constructor.name === 'SVGSVGElement') ? '<?xml version="1.0" encoding="utf-8"?>' : getDoctype();
+  let doctype = (nodeDocument.constructor.name === 'XMLDocument') ? '<?xml version="1.0" encoding="utf-8"?>' : getDoctype();
   doctype = (doctype.length > 0) ? doctype + '\n' : '';
   htmlString = doctype + htmlString;
-
-  // console.log(htmlString)
 
   return htmlString;
 }
@@ -215,7 +221,7 @@ function getDocument(cn, options) {
 function getDocumentNodeFromString(data, options = {}) {
   options['contentType'] = options.contentType || 'text/html';
 
-  if (options.contentType === 'text/xml') {
+  if (options.contentType === 'text/xml' || options.contentType === 'image/svg+xml') {
     data = data.replace(/<!DOCTYPE[^>]*>/i, '');
   }
 
@@ -1977,8 +1983,12 @@ function getGraphData(s, options) {
  */
 
 async function getResourceInfo(data, options) {
-  data = data || getDocument();
-  // data = domSanitize(data);
+  const documentOptions = {
+    ...DO.C.DOMProcessing,
+    normalize: true
+  };
+
+  data = data || getDocument(null, documentOptions);
 
   options = options || {};
   options['contentType'] = ('contentType' in options) ? options.contentType : 'text/html';
@@ -2094,7 +2104,11 @@ function getGraphFromDataBlock(data, options) {
 }
 
 async function updateResourceInfos(documentURL = DO.C.DocumentURL, data, response, options = {}) {
-  data = data || getDocument();
+  const documentOptions = {
+    ...DO.C.DOMProcessing,
+    normalize: true
+  }
+  data = data || getDocument(null, documentOptions);
 
   const storeHash = options.storeHash !== false;
 
@@ -2497,6 +2511,13 @@ function accessModePossiblyAllowed(documentURL, mode) {
 function createImmutableResource(url, data, options) {
   if (!url) return;
 
+  const documentOptions = {
+    ...DO.C.DOMProcessing,
+    format: true,
+    sanitize: true,
+    normalize: true
+  };
+
   var uuid = generateUUID();
   var containerIRI = url.substr(0, url.lastIndexOf('/') + 1);
   var immutableURL = containerIRI + uuid;
@@ -2542,7 +2563,7 @@ function createImmutableResource(url, data, options) {
   rootNode = setDocumentRelation(rootNode, [r], o);
 
   // Create URI-M
-  data = getDocument(rootNode);
+  data = getDocument(rootNode, documentOptions);
   processSave(containerIRI, uuid, data, options)
     .then((resolved) => handleActionMessage(resolved))
     .catch((rejected) => handleActionMessage(null, rejected))
@@ -2578,7 +2599,7 @@ function createImmutableResource(url, data, options) {
     setDocumentRelation(document, [r], o);
 
     // Create URI-R
-    data = getDocument();
+    data = getDocument(null, documenOptions);
     processSave(url, null, data, options)
       .then((resolved) => handleActionMessage(resolved))
       .catch((rejected) => handleActionMessage(null, rejected))
@@ -2598,6 +2619,13 @@ function createImmutableResource(url, data, options) {
 
 function createMutableResource(url, data, options) {
   if (!url) return;
+
+  const documentOptions = {
+    ...DO.C.DOMProcessing,
+    format: true,
+    sanitize: true,
+    normalize: true
+  };
 
   setDate(document, { 'id': 'document-created', 'property': 'schema:dateCreated', 'title': 'Created' });
 
@@ -2621,7 +2649,8 @@ function createMutableResource(url, data, options) {
     setDocumentRelation(document, [r], o);
   }
 
-  data = getDocument();
+  data = getDocument(null, documentOptions);
+
   processSave(containerIRI, uuid, data, options)
     .then((resolved) => handleActionMessage(resolved))
     .catch((rejected) => handleActionMessage(null, rejected))
@@ -2630,7 +2659,8 @@ function createMutableResource(url, data, options) {
   r = { 'rel': 'owl:sameAs', 'href': url };
   setDocumentRelation(document, [r], o);
 
-  data = getDocument();
+  data = getDocument(null, documentOptions);
+
   processSave(url, null, data, options)
     .then((resolved) => handleActionMessage(resolved))
     .catch((rejected) => handleActionMessage(null, rejected))
@@ -2643,6 +2673,13 @@ function updateMutableResource(url, data, options) {
   if (!url) return;
   options = options || {};
 
+  const documentOptions = {
+    ...DO.C.DOMProcessing,
+    format: true,
+    sanitize: true,
+    normalize: true
+  };
+
   var rootNode = (data) ? fragmentFromString(data).cloneNode(true) : document;
 
   if (!('datetime' in options)) {
@@ -2652,7 +2689,8 @@ function updateMutableResource(url, data, options) {
   setDate(rootNode, { 'id': 'document-modified', 'property': 'schema:dateModified', 'title': 'Modified', 'datetime': options.datetime });
   setEditSelections(options);
 
-  data = getDocument();
+  data = getDocument(null, documentOptions);
+
   processSave(url, null, data, options)
     .then((resolved) => handleActionMessage(resolved))
     .catch((rejected) => handleActionMessage(null, rejected))

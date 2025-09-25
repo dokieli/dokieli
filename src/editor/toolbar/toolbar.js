@@ -510,7 +510,13 @@ export class ToolbarView {
   }
 
   checkAnnotationServiceUpdateForm(action) {
-    getLinkRelation(ns.oa.annotationService.value, null, getDocument())
+    const documentOptions = {
+      ...DO.C.DOMProcessing,
+      //sanitize: in this context, seems low risk.
+      normalize: true
+    };
+
+    getLinkRelation(ns.oa.annotationService.value, null, getDocument(null, documentOptions))
       .then(url => {
         Config.AnnotationService = url[0];
         updateAnnotationServiceForm(action);
@@ -565,7 +571,7 @@ export class ToolbarView {
     // console.log(options)
     var containerNodeTextContent = containerNode.textContent;
       //XXX: Seems better?
-      // var containerNodeTextContent = fragmentFromString(getDocument(containerNode)).textContent.trim();
+      // var containerNodeTextContent = fragmentFromString(getDocument(containerNode, documentOptions)).textContent.trim();
     // console.log(containerNodeTextContent);
     options = options || {};
 

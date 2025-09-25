@@ -169,7 +169,7 @@ function serializeData (data, fromContentType, toContentType, options = {}) {
 
   return getGraphFromData(data, options)
     .then(g => {
-      options['contentType'] = toContentType;serializeData
+      options['contentType'] = toContentType;
 
       if (options.sanitize) {
         g = sanitizeGraph(g, options);

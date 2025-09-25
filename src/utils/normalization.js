@@ -1,10 +1,57 @@
 import Config from '../config.js'
 import { getFragmentOfNodesChildren } from "../doc.js";
+import { removeNodesWithSelector, removeClassValues } from './html.js';
 
 export function normalizeHTML(node, options) {
   options = {
     ...Config.DOMProcessing,
     ...options
+  }
+
+  // 'removeCommentNodes': false
+  if (options.removeCommentNodes) {
+    const walker = document.createTreeWalker(node, NodeFilter.SHOW_COMMENT);
+    let current;
+
+    while ((current = walker.nextNode())) {
+      current.remove();
+    }
+  }
+
+//http://localhost:3000/test.linked-research-decentralised-web
+
+  // 'removeWrapper': [{
+  //   'wrapperSelector': '.do.ref',
+  //   'contentSelector': 'mark'
+  // }],
+  if (options.removeWrapper && options.removeWrapper.length) {
+    options.removeWrapper.forEach(({ wrapperSelector, contentSelector }) => {
+// console.log(wrapperSelector) //.do.ref
+// console.log(contentSelector) //mark
+      const wrapperNodes = node.querySelectorAll(wrapperSelector);
+// console.log(wrapperNodes) // NodeList [] .. why?
+// console.log(node.querySelectorAll('.do')); // NodeList [] .. why?
+// console.log(node.querySelectorAll('.ref'));// NodeList [] .. why?
+
+      wrapperNodes.forEach(wrapperNode => {
+        const contentNode = wrapperNode.querySelector(contentSelector);
+        if (contentNode) {
+          while (contentNode.firstChild) {
+            wrapperNode.parentNode.insertBefore(contentNode.firstChild, wrapperNode);
+          }
+          wrapperNode.parentNode.removeChild(wrapperNode);
+        }
+      });
+    });
+  }
+
+  // 'removeNodesWithSelector': ['#id1', '.class', 'script']
+  if (options.removeNodesWithSelector?.length) {
+    const selectors = options.removeNodesWithSelector;
+
+    if (selectors.length > 0) {
+      removeNodesWithSelector(node, selectors);
+    }
   }
 
   // 'removeAttributes': ['contenteditable', 'data-placeholder', 'draggable', 'spellcheck', 'style']
@@ -20,78 +67,41 @@ export function normalizeHTML(node, options) {
     });
   }
 
-  // 'removeComments': true
-  if (options.removeCommentNodes) {
-    const walker = document.createTreeWalker(node, NodeFilter.SHOW_COMMENT);
-    let current;
-
-    while ((current = walker.nextNode())) {
-      current.remove();
-    }
-  }
-
-  // 'removeNodesWithSelector': ['#id1', '.class', 'script']
-  if (options.removeNodesWithSelector?.length) {
-    const scriptsSelectors = [];
-
-    if (options.allowedScripts) {
-      for (const script of options.allowedScripts) {
-        if (Object.hasOwnProperty.call(options.allowedScripts, script)) {
-          const selectors = options.allowedScripts[script]?.removeNode;
-
-          if (selectors?.length) {
-            scriptsSelectors.push(...selectors);
-          }
-        }
-      }
-    }
-
-    const allSelectors = options.removeNodesWithSelector.concat(scriptsSelectors);
-
-    if (allSelectors.length > 0) {
-      const nodesToRemove = node.querySelectorAll(allSelectors.join(', '));
-
-      for (const n of nodesToRemove) {
-        n.remove();
-      }
-    }
-  }
-
   // 'removeClassValues': ['classX'],
   if (options.removeClassValues && options.removeClassValues.length) {
     const values = options.removeClassValues;
 
     const selector = values.map(value => `.${value}`).join(', ');
-    const nodesWithClassValue = node.querySelectorAll(selector);
-  
-    nodesWithClassValue.forEach(n => {
-      values.forEach(value => n.classList.remove(value));
+    node = removeClassValues(node, selector, values);
+  }
+
+  if (options.allowedScripts) {
+    Object.entries(options.allowedScripts).forEach(([script, domNormalization]) => {
+      const nodesWithSelectors = domNormalization?.removeNodesWithSelector;
+      const classValues = domNormalization?.removeClassValues;
+
+      if (Array.isArray(nodesWithSelectors) && nodesWithSelectors.length) {
+        node = removeNodesWithSelector(node, nodesWithSelectors);
+      }
+
+      if (Array.isArray(classValues) && classValues.length) {
+        const selector = classValues.map(value => `.${value}`).join(', ');
+        node = removeClassValues(node, selector, classValues);
+      }
+
     });
   }
 
-  // 'removeWrapper': [{
-  //   'wrapperSelector': '.do.ref',
-  //   'contentSelector': 'mark'
-  // }],
+  //Removes p with only whitespace child node or no child node.
+  node.querySelectorAll('p').forEach(p => {
+    const onlyWhitespaceTextNodes = [...p.childNodes].every(node =>
+      node.nodeType === Node.TEXT_NODE && !node.textContent.trim()
+    );
 
-  if (options.removeWrapper && options.removeWrapper.length) {
-    options.removeWrapper.forEach(({ wrapperSelector, contentSelector }) => {
-      const wrapperNodes = node.querySelectorAll(wrapperSelector);
-  
-      wrapperNodes.forEach(wrapperNode => {
-        // if (contentSelector) {
-          const contentNode = wrapperNode.querySelector(contentSelector);
-    
-          if (contentNode) {
-            node.replaceChild(...contentNode.childNodes, wrapperNode);
-          }
-        // }
-        // else {
-        //   node.replaceChild(...wrapperNode.childNodes, wrapperNode);
-        // }
-      });
-    });
-  }
+    if (onlyWhitespaceTextNodes) {
+      p.remove();
+    }
+  });
 
   return node;
 }
@@ -119,7 +129,7 @@ export function cleanProseMirrorOutput(node) {
       }
     });
   });
-  
+
   // Remove the trailing breaks that ProseMirror adds for empty nodes
   element.querySelectorAll('.ProseMirror-trailingBreak').forEach(node => node.remove());
 
@@ -160,6 +170,8 @@ export function cleanProseMirrorOutput(node) {
       }
     }
   });
+
+  // remove empty <p>
 
   return getFragmentOfNodesChildren(element);
 }
