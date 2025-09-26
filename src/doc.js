@@ -134,6 +134,34 @@ function getHTMLWithoutStructuralWhitespace(el) {
 }
 
 
+function cleanWhitespace(root = document.body) {
+  const inlineTags = new Set(Config.DOMProcessing.inlineElements);
+
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false);
+
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    const parentTag = node.parentNode?.tagName.toLowerCase();
+
+    if (!parentTag) continue;
+
+    const isInline = inlineTags.has(parentTag);
+console.log(isInline, parentTag, node.nodeName);
+    if (isInline) {
+      // Collapse excessive whitespace but preserve single spaces
+      node.nodeValue = node.nodeValue.replace(/\s+/g, ' ');
+    } else {
+      // Remove whitespace-only text nodes between block elements
+      if (!/\S/.test(node.nodeValue)) {
+        node.parentNode.removeChild(node);
+      }
+    }
+  }
+
+  return root;
+}
+
+
 function getDocument(cn, options) {
   // console.trace();
   let node = cn || document.documentElement;
@@ -161,8 +189,9 @@ function getDocument(cn, options) {
   // div.normalize;
 
   // let htmlString = div.getHTML();
-  let htmlString = getHTMLWithoutStructuralWhitespace(div);
-// console.log(htmlString);
+  // let htmlString = getHTMLWithoutStructuralWhitespace(div);
+  let htmlString = cleanWhitespace(div).getHTML();
+console.log(htmlString);
 
   let nodeDocument = getDocumentNodeFromString(htmlString, nodeParseOptions);
   console.log(nodeDocument.documentElement.outerHTML)
