@@ -79,6 +79,7 @@ export default {
   GraphViewerAvailable: true,
   MathAvailable: (typeof MathJax !== 'undefined'),
   EditorEnabled: false,
+  EditorWasEnabled: false,
   ContentEditable: false,
   WebExtensionEnabled: ((window.chrome && chrome.runtime && chrome.runtime.id) || (typeof browser !== 'undefined' && browser.runtime && browser.runtime.id)),
   WebExtension: (typeof browser !== 'undefined') ? browser : window.chrome,

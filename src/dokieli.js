@@ -29,7 +29,7 @@ import { initButtons, updateButtons } from './ui/buttons.js'
 import { csvStringToJson, jsonToHtmlTableString } from './csv.js'
 import { getMultipleResources } from './fetcher.js'
 import { domSanitize, sanitizeObject } from './utils/sanitization.js'
-import { htmlEncode } from './utils/html.js'
+import { htmlEncode, tokenizeDOM } from './utils/html.js'
 
 const ns = Config.ns;
 let DO;
@@ -2015,8 +2015,10 @@ DO = {
       }
 
       //XXX: REVISIT THIS. This is  cheap way to reuse initial getDocument value. DocumenString is not currently used besides this.
-      localContent = DO.C.DocumentString || getDocument(null, documentOptions);
+      // localContent = DO.C.DocumentString || getDocument(null, documentOptions);
       DO.C.DocumentString = null;
+      localContent = getDocument(null, documentOptions);
+console.log(localContent)
       let localHash = await getHash(localContent);
       let data;
 
@@ -2208,8 +2210,6 @@ DO = {
         var tmplLocal = document.implementation.createHTMLDocument('template');
         tmplLocal.documentElement.setHTMLUnsafe(localContent);
         const localContentNode = tmplLocal.body;
-        DO.Editor.replaceContent(DO.Editor.mode, localContentNode);
-        DO.Editor.init(DO.Editor.mode, document.body);
 
         if (latestLocalDocumentItemObjectPublished.digestSRI !== remoteHash && status !== 304) {
           reviewOptions['message'] = `Remote content has changed since your last edit and you have local unpublished changes.`;
@@ -2254,6 +2254,8 @@ DO = {
             }
             else {
               reviewOptions['message'] = `Local unpublished changes. Remote changed. Review changes.`;
+              console.log(reviewOptions['message'])
+              console.log(localContent, remoteContent)
               DO.U.showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
             }
           }
@@ -2360,14 +2362,6 @@ DO = {
     showResourceReviewChanges: function(localContent, remoteContent, response, reviewOptions) {
       if (!localContent.length || !remoteContent.length) return;
 
-      // console.log(localContent, remoteContent);
-
-      const reviewChanges = document.getElementById('review-changes');
-
-      if (reviewChanges) {
-        reviewChanges.remove();
-      }
-
       var tmplLocal = document.implementation.createHTMLDocument('template');
       tmplLocal.documentElement.setHTMLUnsafe(localContent);
       const localContentNode = tmplLocal.body;
@@ -2377,6 +2371,38 @@ DO = {
       tmplRemote.documentElement.setHTMLUnsafe(remoteContent);
       // const remoteContentNode = tmplRemote.body;
       const remoteContentBody = tmplRemote.body.getHTML().trim();
+
+      // console.log(localContent, remoteContent);
+      const tokenizeHTML = (html) => {
+        return html.split(/(<[^>]+>)/g).filter(Boolean);
+      };
+
+      // function serializeToken(token) {
+      //   return JSON.stringify([
+      //     token.block,
+      //     token.text,
+      //     token.bold,
+      //     token.italic,
+      //     token.link
+      //   ]);
+      // }
+      
+      const localTokens = tokenizeHTML(localContentBody);
+      const remoteTokens = tokenizeHTML(remoteContentBody);
+
+      // const localSerialized = localTokens.map(serializeToken);
+      // const remoteSerialized = remoteTokens.map(serializeToken);
+      
+      const diff = diffArrays(remoteTokens, localTokens);
+      // const diff = diffArrays(remoteSerialized, localSerialized);
+
+      if (!diff.length) return;
+
+      const reviewChanges = document.getElementById('review-changes');
+
+      if (reviewChanges) {
+        reviewChanges.remove();
+      }
 
       // console.log(localContentBody + '/---')
       // console.log(remoteContentBody + '/---')
@@ -2388,14 +2414,6 @@ DO = {
 
       document.body.appendChild(fragmentFromString(`<aside id="review-changes" class="do on">${DO.C.Button.Close}<h2>Review Changes ${DO.C.Button.Info.ReviewChanges}</h2><div class="info">${message}</div></aside>`));
 
-      const tokenizeHTML = (html) => {
-        return html.split(/(<[^>]+>)/g).filter(Boolean);
-      };
-      
-      const localTokens = tokenizeHTML(localContentBody);
-      const remoteTokens = tokenizeHTML(remoteContentBody);
-      
-      const diff = diffArrays(remoteTokens, localTokens);
       let insCounter = 0;
       let delCounter = 0;
       
@@ -2413,6 +2431,33 @@ DO = {
         }
       });
       // console.log(`ins: ${insCounter}, del: ${delCounter}`);
+
+      // function renderToken(token) {
+      //   let content = token.text;
+      
+      //   if (token.bold) content = `<strong>${content}</strong>`;
+      //   if (token.italic) content = `<em>${content}</em>`;
+      //   if (token.link) content = `<a href="${token.link}">${content}</a>`;
+      
+      //   return `<${token.block}>${content}</${token.block}>`;
+      // }
+
+      // diff.forEach(part => {
+      //   let tag = null;
+      //   if (part.added) tag = "ins";
+      //   if (part.removed) tag = "del";
+
+      //   part.value.forEach(val => {
+      //     const token = JSON.parse(val); // back to object
+      //     const html = renderToken(token);
+
+      //     if (tag) {
+      //       diffHTML.push(`<${tag}>${html}</${tag}>`);
+      //     } else {
+      //       diffHTML.push(html);
+      //     }
+      //   });
+      // });
 
       let detailsInsDel = `
         <details>

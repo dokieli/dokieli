@@ -11,10 +11,10 @@ import { addMessageToLog, getAgentHTML, insertDocumentLevelHTML, setDate, setEdi
 import { getAgentName, getGraphImage, getGraphInbox, getGraphTypes, getResourceGraph } from "../graph.js";
 import { fragmentFromString, generateAttributeId } from "../util.js";
 import { updateLocalStorageProfile } from "../storage.js";
-import { normalizeContent } from '../doc.js';
 import rdf from 'rdf-ext';
 import { Icon } from "../ui/icons.js";
 import { updateButtons } from "../ui/buttons.js";
+import { cleanProseMirrorOutput } from "../utils/normalization.js";
 
 const ns = Config.ns;
 
@@ -109,6 +109,7 @@ export class Editor {
     this.init(mode, node);
     this.toggleModeMessageId = this.showEditorModeActionMessage(mode, this.toggleModeMessageId ? { clearId: this.toggleModeMessageId } : {});
     Config.EditorEnabled = (mode === 'author');
+    Config.EditorWasEnabled = true;
 
     updateButtons();
 
@@ -253,9 +254,9 @@ export class Editor {
       let normalisedContent;
 
       if (content.body) {
-        normalisedContent = normalizeContent(content.body);
+        normalisedContent = cleanProseMirrorOutput(content.body);
       } else {
-        normalisedContent = normalizeContent(content);
+        normalisedContent = cleanProseMirrorOutput(content);
       }
   
       // If normalisedContent includes a <body>, extract just its children
