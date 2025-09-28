@@ -38,123 +38,53 @@ function getFragmentOfNodesChildren(node) {
   return fragment;
 }
 
-function normalizeContent(node) {
-  let newContent = node;
+function normalizeWhitespace(root = document.documentElement) {
+  const inlineElements = new Set(Config.DOMProcessing.inlineElements);
 
-  let element = document.createElement('div');
-
-  if (newContent instanceof Document) {
-    element = newContent.documentElement;
-  } else {
-    element.appendChild(newContent.cloneNode(true));
-  }
-
-  const tags = ['li', 'dd', 'figcaption', 'td', 'th', 'video', 'audio', 'button', 'select', 'textarea'];
-
-  tags.forEach(tag => {
-    element.querySelectorAll(tag).forEach(el => {
-      if (el.children.length === 1 && el.firstElementChild.tagName.toLowerCase() === 'p') {
-        const p = el.firstElementChild;
-        // Move all children of <p> to <li>/<dd>
-        while (p.firstChild) el.insertBefore(p.firstChild, p);
-        p.remove(); // remove the now-empty <p>
-      }
-    });
-  });
-  
-  // Remove the trailing breaks that ProseMirror adds for empty nodes
-  element.querySelectorAll('.ProseMirror-trailingBreak').forEach(node => node.remove());
-
-  //Remove ProseMirror wrap
-  let pmNode = element.querySelector('.ProseMirror');
-
-  if (pmNode && pmNode.parentNode) {
-    // console.log(pmNode.parentNode.outerHTML + '<--pmNode.parentNode.outerHTML THERE SHOULD BE NO LINE BREAK BEFORE THIS-->');
-    pmNode.parentNode.replaceChild(getFragmentOfNodesChildren(pmNode), pmNode);
-    // let temp = element.querySelector('html');
-    // console.log(temp.outerHTML + '<--pmNode.parentNode.outerHTML THERE SHOULD BE NO LINE BREAK BEFORE THIS-->');
-  }
-
-  element.querySelectorAll('a').forEach(a => {
-    const next = a.nextElementSibling;
-    if (!next) return;
-
-    if (
-      next.tagName.toLowerCase() === 'span' &&
-      next.childElementCount === 1 &&
-      next.firstElementChild.tagName.toLowerCase() === 'a'
-    ) {
-      const innerA = next.firstElementChild;
-
-      const sameHref = a.getAttribute('href') === innerA.getAttribute('href');
-      const sameTitle = a.getAttribute('title') === innerA.getAttribute('title');
-
-      if (sameHref && sameTitle) {
-        const newSpan = document.createElement('span');
-
-        while (innerA.firstChild) {
-          newSpan.appendChild(innerA.firstChild);
+  const walker = document.createTreeWalker(
+    root,
+    NodeFilter.SHOW_TEXT,
+    {
+      acceptNode: (node) => {
+        const parentTag = node.parentNode?.nodeName?.toLowerCase();
+        //XXX: Revisit. This is a bit arbitrary.
+        if (['pre', 'code', 'samp', 'kbd', 'var', 'textarea'].includes(parentTag)) {
+          return NodeFilter.FILTER_REJECT;
         }
 
-        a.appendChild(newSpan);
+        if (/[\r\n\t]/.test(node.nodeValue)) {
+          return NodeFilter.FILTER_ACCEPT;
+        }
 
-        next.remove();
+        return NodeFilter.FILTER_REJECT;
       }
     }
-  });
+  );
 
-  return getFragmentOfNodesChildren(element);
-}
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
 
-function getHTMLWithoutStructuralWhitespace(el) {
-  let clone = el.cloneNode(true);
+  for (const node of nodes) {
+    const text = node.nodeValue;
+    const trimmed = text.replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim();
 
-  // walk through and remove text nodes that are only whitespace
-  const walker = document.createTreeWalker(clone, NodeFilter.SHOW_TEXT, null);
-  let node;
-  let toRemove = [];
+    const parentTag = node.parentNode.nodeName.toLowerCase();
 
-  while ((node = walker.nextNode())) {
-    if (/^\s*$/.test(node.nodeValue)) {
-      // only whitespace
-      let prev = node.previousSibling;
-      let next = node.nextSibling;
+    const prev = node.previousSibling;
+    const next = node.nextSibling;
 
-      // remove if it's between two elements (non-meaningful whitespace)
-      if ((prev && prev.nodeType === Node.ELEMENT_NODE) ||
-          (next && next.nodeType === Node.ELEMENT_NODE)) {
-        toRemove.push(node);
-      }
-    }
-  }
+    const prevIsInline = prev && prev.nodeType === 1 && inlineElements.has(prev.nodeName.toLowerCase());
+    const nextIsInline = next && next.nodeType === 1 && inlineElements.has(next.nodeName.toLowerCase());
 
-  toRemove.forEach(n => n.remove());
-
-  return clone.innerHTML;
-}
-
-
-function cleanWhitespace(root = document.body) {
-  const inlineTags = new Set(Config.DOMProcessing.inlineElements);
-
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false);
-
-  while (walker.nextNode()) {
-    const node = walker.currentNode;
-    const parentTag = node.parentNode?.tagName.toLowerCase();
-
-    if (!parentTag) continue;
-
-    const isInline = inlineTags.has(parentTag);
-console.log(isInline, parentTag, node.nodeName);
-    if (isInline) {
-      // Collapse excessive whitespace but preserve single spaces
-      node.nodeValue = node.nodeValue.replace(/\s+/g, ' ');
+    // If it's between inline elements, replace with single space
+    if (prevIsInline && nextIsInline && parentTag !== 'head') {
+      node.nodeValue = ' ';
+    } else if (trimmed === '') {
+      // Remove pure whitespace-only text nodes
+      node.remove();
     } else {
-      // Remove whitespace-only text nodes between block elements
-      if (!/\S/.test(node.nodeValue)) {
-        node.parentNode.removeChild(node);
-      }
+      // Otherwise, just collapse runs of whitespace
+      node.nodeValue = trimmed;
     }
   }
 
@@ -173,28 +103,23 @@ function getDocument(cn, options) {
   if (cn instanceof Document) {
     node = cn.documentElement;
   }
-// console.log(node.outerHTML)
+
   node = node.cloneNode(true);
 
-  // TODO: review doing this before editor is initialized
-  node = cleanProseMirrorOutput(node);
+  if (Config.EditorWasEnabled) {
+    node = cleanProseMirrorOutput(node);
+  }
 
   //In case `node` type is DocumentFragment
   const div = document.createElement('div');
   div.appendChild(node);
-  // node = div.firstChild;
-  // console.log(div.outerHTML)
 
   //XXX: DO THIS?
   // div.normalize;
 
-  // let htmlString = div.getHTML();
-  // let htmlString = getHTMLWithoutStructuralWhitespace(div);
-  let htmlString = cleanWhitespace(div).getHTML();
-console.log(htmlString);
+  let htmlString = normalizeWhitespace(div).getHTML();
 
   let nodeDocument = getDocumentNodeFromString(htmlString, nodeParseOptions);
-  console.log(nodeDocument.documentElement.outerHTML)
 
   if (options.sanitize) {
     nodeDocument = domSanitizeHTMLBody(nodeDocument, options);
@@ -204,18 +129,15 @@ console.log(htmlString);
   //Literally normalising the HTML
   if (options.normalize) {
     nodeDocument = normalizeHTML(nodeDocument);
-    // console.log(nodeDocument.outerHTML)
   }
-console.log("pre-format", nodeDocument.documentElement.outerHTML)
+
   if (options.format) {
     htmlString = formatHTML(nodeDocument.documentElement, options);
   }
   else {
     htmlString = nodeDocument.documentElement.outerHTML;
   }
-  console.log("after format", htmlString)
 
-// console.log(htmlString)
 
   //Prepend doctype
   let doctype = (nodeDocument.constructor.name === 'XMLDocument') ? '<?xml version="1.0" encoding="utf-8"?>' : getDoctype();
@@ -234,27 +156,6 @@ function getDocumentNodeFromString(data, options = {}) {
 
   const parser = new DOMParser();
   const parsedDoc = parser.parseFromString(data, options.contentType);
-// console.log(parsedDoc.documentElement.outerHTML)
-//   const walker = document.createTreeWalker(
-//     parsedDoc,
-//     NodeFilter.SHOW_TEXT,
-//     {
-//       acceptNode: (node) => {
-//         const tag = node.parentNode?.nodeName?.toLowerCase();
-//         if (['pre', 'code', 'textarea'].includes(tag)) return NodeFilter.FILTER_REJECT;
-
-//         if (/^[ \t\r\n]*\r?\n[ \t\r\n]*$/.test(node.nodeValue)) {
-//           return NodeFilter.FILTER_ACCEPT;
-//         }
-
-//         return NodeFilter.FILTER_REJECT;
-//       }
-//     }
-//   );
-
-//   const toRemove = [];
-//   while (walker.nextNode()) toRemove.push(walker.currentNode);
-//   toRemove.forEach(n => n.remove());
 
   return parsedDoc;
 }
@@ -3674,7 +3575,6 @@ function createRDFaHTML(r, mode) {
 export {
   getNodeWithoutClasses,
   getFragmentOfNodesChildren,
-  normalizeContent,
   getDocument,
   getDocumentNodeFromString,
   getDocumentContentNode,

@@ -41,15 +41,15 @@ let customNodes = {
   },
   text: {
     group: "inline",
-    whitespace: "pre"
+    // whitespace: "pre"
   },
   p: {
     content: "inline*",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
-    parseDOM: [{ tag: "p", preserveWhitespace: "full", getAttrs(node){ return getAttributes(node); }}],
+    parseDOM: [{ tag: "p", /*preserveWhitespace: "full", */getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return ["p", { ...node.attrs.originalAttributes }, 0]; },
-    whitespace: "pre"
+    // whitespace: "pre"
   },
   main: {
     content: "block*",
@@ -631,14 +631,15 @@ let customNodes = {
   },
 };
 
+//Make PM Nodes for all inlineElements except those that need to be Marks.
 Config.DOMProcessing.inlineElements.filter(el => !Config.DOMProcessing.proseMirrorMarks.includes(el) && !Object.keys(customNodes).includes(el)).map((tagName) => {
   customNodes[tagName] = {
     inline: true,
     group: "inline",
     content: "inline*",
-    whitespace: "pre",
+    // whitespace: "pre",
     attrs: { originalAttributes: { default: {} } },
-    parseDOM: [{ tag: tagName, preserveWhitespace: "full", getAttrs(node){ return getAttributes(node); }}],
+    parseDOM: [{ tag: tagName, /*preserveWhitespace: "full", */getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return [tagName, { ...node.attrs.originalAttributes }, 0]; }
   }
 });
@@ -650,12 +651,12 @@ Config.DOMProcessing.proseMirrorMarks.forEach(tagName => {
 
   customMarks[tagName] = {
     attrs: { originalAttributes: { default: {} } },
-    parseDOM: [{ tag: tagName, preserveWhitespace: "full", getAttrs(node){ return getAttributes(node); }}],
+    parseDOM: [{ tag: tagName, /*preserveWhitespace: "full", */getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return [namespace + tagName, { ...node.attrs.originalAttributes }, 0]; },
     inclusive: false,
     excludes: "",
     group: "inline",
-    whitespace: "pre"
+    // whitespace: "pre"
   }
 
   switch(tagName) {

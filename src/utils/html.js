@@ -1,6 +1,56 @@
 import { escapeRegExp } from '../util.js'
 import Config from '../config.js'
 
+export function tokenizeHTML(root) {
+  const tokens = [];
+
+  function walk(node, parentBlock, marks = {}) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.nodeValue;
+      if (text.trim()) {
+        tokens.push({
+          block: parentBlock,
+          text,
+          bold: !!marks.bold,
+          italic: !!marks.italic,
+          link: marks.link || null,
+        });
+      }
+      return;
+    }
+
+    if (node.nodeType !== Node.ELEMENT_NODE) return;
+
+    const tag = node.nodeName.toLowerCase();
+
+    // normalize <li><p>only child</p></li>
+    if (
+      tag === "p" &&
+      node.parentNode.nodeName.toLowerCase() === "li" &&
+      node.parentNode.childNodes.length === 1
+    ) {
+      node.childNodes.forEach((child) => walk(child, "li", marks));
+      return;
+    }
+
+    // block-level elements
+    const blockTags = ["p", "h1", "h2", "h3", "li", "blockquote"];
+    const isBlock = blockTags.includes(tag);
+    const currentBlock = isBlock ? tag : parentBlock;
+
+    // extend marks for inline elements
+    let newMarks = { ...marks };
+    if (tag === "strong" || tag === "b") newMarks.bold = true;
+    if (tag === "em" || tag === "i") newMarks.italic = true;
+    if (tag === "a") newMarks.link = node.getAttribute("href");
+
+    node.childNodes.forEach((child) => walk(child, currentBlock, newMarks));
+  }
+
+  walk(root, null, {});
+  return tokens;
+}
+
 export function formatHTML(node, options, noEsc = [false], indentLevel = 0, nextNodeShouldStartOnNewLine = false) {
   // console.trace();
   // console.log(node.outerHTML)

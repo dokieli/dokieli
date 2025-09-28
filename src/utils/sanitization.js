@@ -5,6 +5,8 @@ import { htmlEncode } from './html.js';
 export function domSanitize(strHTML, options = {}) {
   // console.log("DOMPurify in:", strHTML);
 
+  //TODO: Consider allowing meta, link, object
+
   DOMPurify.addHook('uponSanitizeElement', function(node, data) {
     if (node.nodeName.toLowerCase() === 'script') {
       let src = node.getAttribute('src');
