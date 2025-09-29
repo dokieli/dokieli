@@ -47,7 +47,7 @@ let customNodes = {
     content: "inline*",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
-    parseDOM: [{ tag: "p", /*preserveWhitespace: "full", */getAttrs(node){ return getAttributes(node); }}],
+    parseDOM: [{ tag: "p", preserveWhitespace: "full", getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return ["p", { ...node.attrs.originalAttributes }, 0]; },
     // whitespace: "pre"
   },
@@ -651,7 +651,7 @@ Config.DOMProcessing.proseMirrorMarks.forEach(tagName => {
 
   customMarks[tagName] = {
     attrs: { originalAttributes: { default: {} } },
-    parseDOM: [{ tag: tagName, /*preserveWhitespace: "full", */getAttrs(node){ return getAttributes(node); }}],
+    parseDOM: [{ tag: tagName, preserveWhitespace: true, getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return [namespace + tagName, { ...node.attrs.originalAttributes }, 0]; },
     inclusive: false,
     excludes: "",

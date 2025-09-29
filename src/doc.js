@@ -1,5 +1,5 @@
 import Config from './config.js'
-import { getDateTimeISO, fragmentFromString, generateAttributeId, uniqueArray, generateUUID, matchAllIndex, parseISODuration, getRandomIndex, getHash, fixDoubleEscapedEntities } from './util.js'
+import { getDateTimeISO, fragmentFromString, generateAttributeId, uniqueArray, generateUUID, matchAllIndex, parseISODuration, getRandomIndex, getHash, fixDoubleEscapedEntities, stringFromFragment } from './util.js'
 import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath, getPrefixedNameFromIRI, generateDataURI, getProxyableIRI } from './uri.js'
 import { getResource, getResourceHead, deleteResource, processSave, patchResourceWithAcceptPatch } from './fetcher.js'
 import rdf from "rdf-ext";
@@ -8,12 +8,14 @@ import LinkHeader from "http-link-header";
 import { micromark as marked } from 'micromark';
 import { gfm, gfmHtml } from 'micromark-extension-gfm';
 import { gfmTagfilterHtml } from 'micromark-extension-gfm-tagfilter';
+import { DOMSerializer, Fragment, DOMParser as PmDOMParser } from 'prosemirror-model';
 import { Icon } from './ui/icons.js';
 import { showUserIdentityInput, signOut } from './auth.js'
 import { buttonIcons, getButtonHTML, updateButtons } from './ui/buttons.js'
 import { domSanitizeHTMLBody, domSanitize } from './utils/sanitization.js';
 import { cleanProseMirrorOutput, normalizeHTML } from './utils/normalization.js';
 import { formatHTML, getDoctype, htmlEncode } from './utils/html.js';
+import { schema } from './editor/schema/base.js';
 
 const ns = Config.ns;
 
@@ -48,7 +50,7 @@ function normalizeWhitespace(root = document.documentElement) {
       acceptNode: (node) => {
         const parentTag = node.parentNode?.nodeName?.toLowerCase();
         //XXX: Revisit. This is a bit arbitrary.
-        if (['pre', 'code', 'samp', 'kbd', 'var', 'textarea'].includes(parentTag)) {
+        if (['pre', 'code', 'samp', 'kbd', 'var', 'textarea', 'p'].includes(parentTag)) {
           return NodeFilter.FILTER_REJECT;
         }
 
@@ -91,24 +93,36 @@ function normalizeWhitespace(root = document.documentElement) {
   return root;
 }
 
+function convertDocumentFragmentToDocument(fragment) {
+  const newDoc = document.implementation.createHTMLDocument("New Document");
+
+  while (fragment.firstChild) {
+    newDoc.body.appendChild(fragment.firstChild);
+  }
+
+  return newDoc;
+}
+
 
 function getDocument(cn, options) {
-  // console.trace();
-  let node = cn || document.documentElement;
+  let node = document.documentElement;
+
+  if (typeof cn === 'string') {
+    const parser = new DOMParser();
+    node = parser.parseFromString(cn, 'text/html');
+    node = node.documentElement;
+  }
+  else if (cn instanceof Document) {
+    node = cn.documentElement;
+  }
+
+console.log(node)
 
   const nodeParseOptions = {
     contentType: (node.nodeName.toLowerCase() === 'svg') ? 'image/svg+xml' : 'text/html'
   };
 
-  if (cn instanceof Document) {
-    node = cn.documentElement;
-  }
-
   node = node.cloneNode(true);
-
-  if (Config.EditorWasEnabled) {
-    node = cleanProseMirrorOutput(node);
-  }
 
   //In case `node` type is DocumentFragment
   const div = document.createElement('div');
@@ -121,12 +135,13 @@ function getDocument(cn, options) {
 
   let nodeDocument = getDocumentNodeFromString(htmlString, nodeParseOptions);
 
+  let fragment = cleanProseMirrorOutput(nodeDocument);
+  nodeDocument.documentElement.setHTMLUnsafe(stringFromFragment(fragment));
+
   if (options.sanitize) {
     nodeDocument = domSanitizeHTMLBody(nodeDocument, options);
   }
-  // htmlString = nodeDocument.documentElement.outerHTML;
 
-  //Literally normalising the HTML
   if (options.normalize) {
     nodeDocument = normalizeHTML(nodeDocument);
   }
@@ -138,11 +153,12 @@ function getDocument(cn, options) {
     htmlString = nodeDocument.documentElement.outerHTML;
   }
 
-
   //Prepend doctype
   let doctype = (nodeDocument.constructor.name === 'XMLDocument') ? '<?xml version="1.0" encoding="utf-8"?>' : getDoctype();
   doctype = (doctype.length > 0) ? doctype + '\n' : '';
   htmlString = doctype + htmlString;
+
+  // console.trace("format: ", options.format, "sanitize: ", options.sanitize, "normalize: ", options.normalize, "output:", htmlString);
 
   return htmlString;
 }
@@ -155,9 +171,16 @@ function getDocumentNodeFromString(data, options = {}) {
   }
 
   const parser = new DOMParser();
-  const parsedDoc = parser.parseFromString(data, options.contentType);
+  const node = parser.parseFromString(data, options.contentType);
+  const pmDocBody = PmDOMParser.fromSchema(schema).parse(node.body);
+  const parsedDoc = DOMSerializer.fromSchema(schema).serializeFragment(pmDocBody.content);
+  const body = stringFromFragment(parsedDoc);
 
-  return parsedDoc;
+  node.body.setHTMLUnsafe(body);
+
+  // console.log(parsedDoc, body, node)
+
+  return node;
 }
 
 function getDocumentContentNode(node) {
@@ -1893,6 +1916,8 @@ function getGraphData(s, options) {
 async function getResourceInfo(data, options) {
   const documentOptions = {
     ...DO.C.DOMProcessing,
+    format: true,
+    sanitize: true,
     normalize: true
   };
 
@@ -2014,8 +2039,11 @@ function getGraphFromDataBlock(data, options) {
 async function updateResourceInfos(documentURL = DO.C.DocumentURL, data, response, options = {}) {
   const documentOptions = {
     ...DO.C.DOMProcessing,
+    format: true,
+    sanitize: true,
     normalize: true
-  }
+  };
+
   data = data || getDocument(null, documentOptions);
 
   const storeHash = options.storeHash !== false;

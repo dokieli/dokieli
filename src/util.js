@@ -73,7 +73,7 @@ function stringFromFragment(fragment) {
 
   // return container.firstChild?.outerHTML || '';
 
-  return container.innerHTML;
+  return container.getHTML();
 }
 
 function generateUUID(inputString) {
