@@ -134,6 +134,9 @@ export function formatHTML(node, options, noEsc = [false], indentLevel = 0, next
     //FIXME: This section needs a lot of testing. If/when domToString is replaced with XML serializer and DOM sanitizer, this section can be removed.
 
     nl = nl?.replace(/&/g, '&amp;');
+    //This space between / / is un-HTML encoded non-breaking space (&nbsp;)
+    nl = nl.replace(/ /g, ' ');
+
     if (noEsc.includes(true)) {
       //Skip style blocks. But do we really want this?
       if (!(node.parentNode && node.parentNode.nodeName.toLowerCase() === 'style') &&

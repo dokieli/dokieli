@@ -2015,10 +2015,10 @@ DO = {
       }
 
       //XXX: REVISIT THIS. This is  cheap way to reuse initial getDocument value. DocumenString is not currently used besides this.
-      // localContent = DO.C.DocumentString || getDocument(null, documentOptions);
+      localContent = DO.C.DocumentString || getDocument(null, documentOptions);
       DO.C.DocumentString = null;
-      localContent = getDocument(null, documentOptions);
-console.log(localContent)
+
+// console.log(localContent)
       let localHash = await getHash(localContent);
       let data;
 
@@ -2039,8 +2039,10 @@ console.log(localContent)
 
         data = await response.text();
 
-        remoteContentNode = getDocumentNodeFromString(data);
-        remoteContent = getDocument(remoteContentNode.documentElement, documentOptions);
+        // remoteContentNode = getDocumentNodeFromString(data);
+        // remoteContent = getDocument(remoteContentNode.documentElement, documentOptions);
+        remoteContent = getDocument(data, documentOptions);
+console.log('remoteContent: ', remoteContent)
         remoteContentNode = getDocumentNodeFromString(remoteContent);
 
         remoteHash = await getHash(remoteContent);
@@ -2361,7 +2363,8 @@ console.log(localContent)
 
     showResourceReviewChanges: function(localContent, remoteContent, response, reviewOptions) {
       if (!localContent.length || !remoteContent.length) return;
-
+console.log("local", localContent)
+console.log("remote", remoteContent)
       var tmplLocal = document.implementation.createHTMLDocument('template');
       tmplLocal.documentElement.setHTMLUnsafe(localContent);
       const localContentNode = tmplLocal.body;
