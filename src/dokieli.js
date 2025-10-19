@@ -2042,7 +2042,7 @@ DO = {
         // remoteContentNode = getDocumentNodeFromString(data);
         // remoteContent = getDocument(remoteContentNode.documentElement, documentOptions);
         remoteContent = getDocument(data, documentOptions);
-console.log('remoteContent: ', remoteContent)
+// console.log('remoteContent: ', remoteContent)
         remoteContentNode = getDocumentNodeFromString(remoteContent);
 
         remoteHash = await getHash(remoteContent);
@@ -2398,6 +2398,8 @@ console.log("remote", remoteContent)
       
       const diff = diffArrays(remoteTokens, localTokens);
       // const diff = diffArrays(remoteSerialized, localSerialized);
+
+      console.log(diff)
 
       if (!diff.length) return;
 
