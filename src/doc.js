@@ -116,7 +116,7 @@ function getDocument(cn, options) {
     node = cn.documentElement;
   }
 
-console.log(node)
+// console.log(node)
 
   const nodeParseOptions = {
     contentType: (node.nodeName.toLowerCase() === 'svg') ? 'image/svg+xml' : 'text/html'
@@ -131,12 +131,15 @@ console.log(node)
   //XXX: DO THIS?
   // div.normalize;
 
-  let htmlString = normalizeWhitespace(div).getHTML();
+  let htmlString;
+  // let htmlString = normalizeWhitespace(div).getHTML();
+// console.log(htmlString)
 
-  let nodeDocument = getDocumentNodeFromString(htmlString, nodeParseOptions);
-
+  let nodeDocument = getDocumentNodeFromString(div.getHTML(), nodeParseOptions);
   let fragment = cleanProseMirrorOutput(nodeDocument);
   nodeDocument.documentElement.setHTMLUnsafe(stringFromFragment(fragment));
+  nodeDocument = normalizeWhitespace(nodeDocument);
+  console.log(nodeDocument.documentElement.outerHTML)
 
   if (options.sanitize) {
     nodeDocument = domSanitizeHTMLBody(nodeDocument, options);
