@@ -29,7 +29,10 @@ import { initButtons, updateButtons } from './ui/buttons.js'
 import { csvStringToJson, jsonToHtmlTableString } from './csv.js'
 import { getMultipleResources } from './fetcher.js'
 import { domSanitize, sanitizeObject } from './utils/sanitization.js'
-import { htmlEncode, tokenizeDOM } from './utils/html.js'
+import { formatHTML, htmlEncode, tokenizeDOM } from './utils/html.js'
+import { DOMParser, DOMSerializer } from 'prosemirror-model'
+import { cleanProseMirrorOutput, normalizeHTML } from './utils/normalization.js'
+import { schema } from './editor/schema/base.js'
 
 const ns = Config.ns;
 let DO;
@@ -2262,6 +2265,8 @@ DO = {
             }
           }
           else if (!etagsMatch || previousRemoteHash != remoteHash) {
+            console.log(previousRemoteHash)
+
             console.log(`Local unchaged. Remote changed. Update local.`);
             DO.Editor.replaceContent(DO.Editor.mode, remoteContentNode);
             DO.Editor.init(DO.Editor.mode, document.body);
@@ -2362,9 +2367,35 @@ DO = {
     },
 
     showResourceReviewChanges: function(localContent, remoteContent, response, reviewOptions) {
+
+      // TODO: move
+      function normalizeForDiff(node) {
+        const doc = DOMParser.fromSchema(schema).parse(node);
+      
+        let fragment = DOMSerializer.fromSchema(schema).serializeFragment(doc.content);
+      
+        const container = document.createElement('div');
+        container.appendChild(fragment);
+
+        const cleaned = cleanProseMirrorOutput(container);
+
+        const wrapper = document.createElement('div');
+        wrapper.appendChild(cleaned);
+
+        const normalizedNode = normalizeHTML(wrapper);
+      
+        const formattedHTML = formatHTML(normalizedNode);
+
+        const normalizedHTML = formattedHTML
+          .replace(/\s+/g, ' ') 
+          .replace(/>\s+</g, '><')  
+          .trim();
+
+          return normalizedHTML;
+      }
+
+      
       if (!localContent.length || !remoteContent.length) return;
-console.log("local", localContent)
-console.log("remote", remoteContent)
       var tmplLocal = document.implementation.createHTMLDocument('template');
       tmplLocal.documentElement.setHTMLUnsafe(localContent);
       const localContentNode = tmplLocal.body;
@@ -2374,6 +2405,7 @@ console.log("remote", remoteContent)
       tmplRemote.documentElement.setHTMLUnsafe(remoteContent);
       // const remoteContentNode = tmplRemote.body;
       const remoteContentBody = tmplRemote.body.getHTML().trim();
+      const remoteContentNode = tmplRemote.body;
 
       // console.log(localContent, remoteContent);
       const tokenizeHTML = (html) => {
@@ -2390,16 +2422,21 @@ console.log("remote", remoteContent)
       //   ]);
       // }
       
-      const localTokens = tokenizeHTML(localContentBody);
-      const remoteTokens = tokenizeHTML(remoteContentBody);
+      const localNormalized = normalizeForDiff(localContentNode);
+      const remoteNormalized = normalizeForDiff(remoteContentNode);
+
+      console.log("--- Local Normalized ---", localNormalized);
+      console.log("--- Remote Normalized ---", remoteNormalized);
+      
+      const localTokens = tokenizeHTML(localNormalized);
+      const remoteTokens = tokenizeHTML(remoteNormalized);
 
       // const localSerialized = localTokens.map(serializeToken);
       // const remoteSerialized = remoteTokens.map(serializeToken);
       
       const diff = diffArrays(remoteTokens, localTokens);
-      // const diff = diffArrays(remoteSerialized, localSerialized);
-
       console.log(diff)
+      // const diff = diffArrays(remoteSerialized, localSerialized);
 
       if (!diff.length) return;
 

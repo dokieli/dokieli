@@ -74,7 +74,7 @@ export function normalizeHTML(node, options) {
     const selector = values.map(value => `.${value}`).join(', ');
     node = removeClassValues(node, selector, values);
   }
-
+console.log(options.allowedScripts)
   if (options.allowedScripts) {
     Object.entries(options.allowedScripts).forEach(([script, domNormalization]) => {
       const nodesWithSelectors = domNormalization?.removeNodesWithSelector;
@@ -114,7 +114,8 @@ export function cleanProseMirrorOutput(node) {
   if (newContent instanceof Document) {
     element = newContent.documentElement;
   } else {
-    element.appendChild(newContent.cloneNode(true));
+    const clone = newContent.cloneNode(true);
+    element.append(...clone.childNodes); 
   }
 
   const tags = ['li', 'dd', 'figcaption', 'td', 'th', 'video', 'audio', 'button', 'select', 'textarea'];
@@ -130,8 +131,24 @@ export function cleanProseMirrorOutput(node) {
     });
   });
 
+    //Remove any trailing whitespace-only text nodes inside <p>
+    element.querySelectorAll('p').forEach(p => {
+      const last = p.lastChild;
+      if (last && last.nodeType === Node.TEXT_NODE && !last.textContent.trim()) {
+        p.removeChild(last);
+      }
+    });
+
   // Remove the trailing breaks that ProseMirror adds for empty nodes
   element.querySelectorAll('.ProseMirror-trailingBreak').forEach(node => node.remove());
+
+  //Remove any trailing whitespace-only text nodes inside <pre>
+  element.querySelectorAll('pre').forEach(pre => {
+    const last = pre.lastChild;
+    if (last && last.nodeType === Node.TEXT_NODE && !last.textContent.trim()) {
+      pre.removeChild(last);
+    }
+  });
 
   //Remove ProseMirror wrap
   let pmNode = element.querySelector('.ProseMirror');
