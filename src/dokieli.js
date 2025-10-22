@@ -28,7 +28,7 @@ import { Editor } from './editor/editor.js';
 import { initButtons, updateButtons } from './ui/buttons.js'
 import { csvStringToJson, jsonToHtmlTableString } from './csv.js'
 import { getMultipleResources } from './fetcher.js'
-import { domSanitize, sanitizeObject } from './utils/sanitization.js'
+import { domSanitize, domSanitizeHTMLBody, sanitizeObject } from './utils/sanitization.js'
 import { formatHTML, htmlEncode, tokenizeDOM } from './utils/html.js'
 import { DOMParser, DOMSerializer } from 'prosemirror-model'
 import { cleanProseMirrorOutput, normalizeHTML } from './utils/normalization.js'
@@ -2367,7 +2367,6 @@ DO = {
     },
 
     showResourceReviewChanges: function(localContent, remoteContent, response, reviewOptions) {
-
       // TODO: move
       function normalizeForDiff(node) {
         const doc = DOMParser.fromSchema(schema).parse(node);
@@ -2386,12 +2385,7 @@ DO = {
       
         const formattedHTML = formatHTML(normalizedNode);
 
-        const normalizedHTML = formattedHTML
-          .replace(/\s+/g, ' ') 
-          .replace(/>\s+</g, '><')  
-          .trim();
-
-          return normalizedHTML;
+        return formattedHTML;
       }
 
       
@@ -2403,6 +2397,7 @@ DO = {
 
       var tmplRemote = document.implementation.createHTMLDocument('template');
       tmplRemote.documentElement.setHTMLUnsafe(remoteContent);
+
       // const remoteContentNode = tmplRemote.body;
       const remoteContentBody = tmplRemote.body.getHTML().trim();
       const remoteContentNode = tmplRemote.body;
@@ -2425,8 +2420,8 @@ DO = {
       const localNormalized = normalizeForDiff(localContentNode);
       const remoteNormalized = normalizeForDiff(remoteContentNode);
 
-      console.log("--- Local Normalized ---", localNormalized);
-      console.log("--- Remote Normalized ---", remoteNormalized);
+      // console.log("--- Local Normalized ---", localNormalized);
+      // console.log("--- Remote Normalized ---", remoteNormalized);
       
       const localTokens = tokenizeHTML(localNormalized);
       const remoteTokens = tokenizeHTML(remoteNormalized);
@@ -2434,11 +2429,12 @@ DO = {
       // const localSerialized = localTokens.map(serializeToken);
       // const remoteSerialized = remoteTokens.map(serializeToken);
       
-      const diff = diffArrays(remoteTokens, localTokens);
-      console.log(diff)
+      // const diff = diffArrays(remoteTokens, localTokens).filter(d => d.added || d.removed);
+      const diff = diffArrays(remoteTokens, localTokens)
+      // console.log(diff)
       // const diff = diffArrays(remoteSerialized, localSerialized);
 
-      if (!diff.length) return;
+      if (!diff.length || !diff.filter(d => d.added || d.removed).length) return;
 
       const reviewChanges = document.getElementById('review-changes');
 

@@ -74,7 +74,7 @@ export function normalizeHTML(node, options) {
     const selector = values.map(value => `.${value}`).join(', ');
     node = removeClassValues(node, selector, values);
   }
-console.log(options.allowedScripts)
+
   if (options.allowedScripts) {
     Object.entries(options.allowedScripts).forEach(([script, domNormalization]) => {
       const nodesWithSelectors = domNormalization?.removeNodesWithSelector;

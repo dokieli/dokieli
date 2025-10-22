@@ -116,8 +116,6 @@ function getDocument(cn, options) {
     node = cn.documentElement;
   }
 
-// console.log(node)
-
   const nodeParseOptions = {
     contentType: (node.nodeName.toLowerCase() === 'svg') ? 'image/svg+xml' : 'text/html'
   };
@@ -136,10 +134,10 @@ function getDocument(cn, options) {
 // console.log(htmlString)
 
   let nodeDocument = getDocumentNodeFromString(div.getHTML(), nodeParseOptions);
+
   let fragment = cleanProseMirrorOutput(nodeDocument);
   nodeDocument.documentElement.setHTMLUnsafe(stringFromFragment(fragment));
   nodeDocument = normalizeWhitespace(nodeDocument);
-  console.log(nodeDocument.documentElement.outerHTML)
 
   if (options.sanitize) {
     nodeDocument = domSanitizeHTMLBody(nodeDocument, options);
@@ -175,14 +173,15 @@ function getDocumentNodeFromString(data, options = {}) {
 
   const parser = new DOMParser();
   const node = parser.parseFromString(data, options.contentType);
-  const pmDocBody = PmDOMParser.fromSchema(schema).parse(node.body);
-  const parsedDoc = DOMSerializer.fromSchema(schema).serializeFragment(pmDocBody.content);
-  const body = stringFromFragment(parsedDoc);
+  // TODO: I don't think we need to do this here anymore, it should happen after we clean the document so that we don't risk altering the structure and missing some elements that need to be removed
+  // const pmDocBody = PmDOMParser.fromSchema(schema).parse(node.body);
+  // const parsedDoc = DOMSerializer.fromSchema(schema).serializeFragment(pmDocBody.content);
+  // const body = stringFromFragment(parsedDoc);
 
-  node.body.setHTMLUnsafe(body);
+  // node.body.setHTMLUnsafe(body);
 
   // console.log(parsedDoc, body, node)
-
+// console.log(node)
   return node;
 }
 

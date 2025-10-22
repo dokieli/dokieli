@@ -25,6 +25,7 @@ export class Editor {
     // if body is used, take care to filter out do elements at this point
     // TODO: When choosing the editor node, we need to filter out these items from the content of the editor node. we also need to restore the body to its original form WITH the do elements.
     this.restrictedNodes = [];
+    this.allowedScriptElements = [];
     this.node = node || document.body;
     this.toggleModeMessageId = null;
 
@@ -75,8 +76,20 @@ export class Editor {
     const filterSelectors = ['#document-editor', '#review-changes', '.copy-to-clipboard', '.robustlinks', '.ref'];
     const notSelector = filterSelectors.map(selector => `:not(${selector})`).join('');
     //TODO: toc-nav is W3C-specific. Move this into config normalisation
+    const allowedScriptSelectors = Object.keys(DO.C.DOMProcessing.allowedScripts).map(src => `script[src="${src}"]`).join(', ');
+
+    const allowedScriptElements = Array.from(document.body.querySelectorAll('script'))
+    .filter(script => script.src && Object.keys(DO.C.DOMProcessing.allowedScripts).includes(script.src))
+    .filter((script, index, self) => self.findIndex(s => s.src === script.src) === index)
+    .map(script => script.cloneNode(true)); 
+  
+    // const selector = `.do${notSelector}, #toc-nav, ${allowedScriptSelectors}`;
     const selector = `.do${notSelector}, #toc-nav`;
+    this.allowedScriptElements = allowedScriptElements;
     this.restrictedNodes = Array.from(document.body.querySelectorAll(selector));
+    // this.restrictedNodes = Array.from(document.body.querySelectorAll(selector)).concat(allowedScriptElements);
+
+    // console.log(this.restrictedNodes)
   }
 
   showEditorModeActionMessage(mode, options = {}) {
@@ -239,6 +252,11 @@ export class Editor {
       } else {
         document.body.appendChild(node);
       }
+
+      this.allowedScriptElements.forEach(script => {
+        document.body.appendChild(script);
+      });
+
     });
 
     // console.log(this.editorView.state.doc)
