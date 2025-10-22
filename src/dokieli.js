@@ -31,7 +31,7 @@ import { getMultipleResources } from './fetcher.js'
 import { domSanitize, domSanitizeHTMLBody, sanitizeObject } from './utils/sanitization.js'
 import { formatHTML, htmlEncode, tokenizeDOM } from './utils/html.js'
 import { DOMParser, DOMSerializer } from 'prosemirror-model'
-import { cleanProseMirrorOutput, normalizeHTML } from './utils/normalization.js'
+import { cleanProseMirrorOutput, normalizeForDiff, normalizeHTML } from './utils/normalization.js'
 import { schema } from './editor/schema/base.js'
 
 const ns = Config.ns;
@@ -2366,29 +2366,7 @@ DO = {
       updateResourceInfos(DO.C.DocumentURL, content, response, { preserveHeaders: ['wac-allow'] });
     },
 
-    showResourceReviewChanges: function(localContent, remoteContent, response, reviewOptions) {
-      // TODO: move
-      function normalizeForDiff(node) {
-        const doc = DOMParser.fromSchema(schema).parse(node);
-      
-        let fragment = DOMSerializer.fromSchema(schema).serializeFragment(doc.content);
-      
-        const container = document.createElement('div');
-        container.appendChild(fragment);
-
-        const cleaned = cleanProseMirrorOutput(container);
-
-        const wrapper = document.createElement('div');
-        wrapper.appendChild(cleaned);
-
-        const normalizedNode = normalizeHTML(wrapper);
-      
-        const formattedHTML = formatHTML(normalizedNode);
-
-        return formattedHTML;
-      }
-
-      
+    showResourceReviewChanges: function(localContent, remoteContent, response, reviewOptions) {      
       if (!localContent.length || !remoteContent.length) return;
       var tmplLocal = document.implementation.createHTMLDocument('template');
       tmplLocal.documentElement.setHTMLUnsafe(localContent);
@@ -2431,7 +2409,7 @@ DO = {
       
       // const diff = diffArrays(remoteTokens, localTokens).filter(d => d.added || d.removed);
       const diff = diffArrays(remoteTokens, localTokens)
-      // console.log(diff)
+      console.log(diff)
       // const diff = diffArrays(remoteSerialized, localSerialized);
 
       if (!diff.length || !diff.filter(d => d.added || d.removed).length) return;
