@@ -176,8 +176,10 @@ let customNodes = {
     content: "block+",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
+    // parseDOM: [{ tag: "dd", preserveWhitespace: "full", getAttrs(node){ return getAttributes(node); }}],
+    // toDOM(node) { return ["dd", { ...node.attrs.originalAttributes }, 0]; },
     parseDOM: [{ tag: "dd", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["dd", { ...node.attrs.originalAttributes }, 0]; }
+    toDOM(node) { return ["dd", { ...node.attrs.originalAttributes }, 0]; },
   },
   ul: {
     content: "li+",

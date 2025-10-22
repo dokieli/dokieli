@@ -1,6 +1,29 @@
+import { DOMParser, DOMSerializer } from 'prosemirror-model';
 import Config from '../config.js'
 import { getFragmentOfNodesChildren } from "../doc.js";
-import { removeNodesWithSelector, removeClassValues } from './html.js';
+import { schema } from '../editor/schema/base.js';
+import { removeNodesWithSelector, removeClassValues, formatHTML } from './html.js';
+
+export function normalizeForDiff(node) {
+  const doc = DOMParser.fromSchema(schema).parse(node);
+
+  let fragment = DOMSerializer.fromSchema(schema).serializeFragment(doc.content);
+
+  const container = document.createElement('div');
+  container.appendChild(fragment);
+
+  const cleaned = cleanProseMirrorOutput(container);
+
+  const wrapper = document.createElement('div');
+  wrapper.appendChild(cleaned);
+
+  const normalizedNode = normalizeHTML(wrapper);
+
+  const formattedHTML = formatHTML(normalizedNode);
+
+  return formattedHTML;
+}
+
 
 export function normalizeHTML(node, options) {
   options = {

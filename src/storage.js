@@ -2,7 +2,8 @@
 
 import Config from './config.js';
 import { getDateTimeISO, generateUUID, getHash, fragmentFromString, debounce } from './util.js';
-import { getDocument, updateMutableResource } from './doc.js';
+import { getDocument, getDocumentNodeFromString, updateMutableResource } from './doc.js';
+import { normalizeForDiff } from './utils/normalization.js';
 
 
 // function initLocalStorage(key) {
@@ -178,6 +179,7 @@ function updateStorage(key, data, options = {}) {
 }
 
 async function autoSave(key, options) {
+  console.trace("called autosave wihth key:", key);
   if (!key) return;
 
   // console.log(key, options);
@@ -189,17 +191,18 @@ async function autoSave(key, options) {
   };
 
   const data = getDocument(null, documentOptions);
-  const hash = await getHash(data);
-
-  // console.log(Config.AutoSave.Items[key]);
+  let temp = getDocumentNodeFromString(data);
+  const normalizedData = normalizeForDiff(temp);
+  temp = getDocument(normalizedData, documentOptions);
+  const hash = await getHash(temp);
 
   const item = Config.AutoSave.Items[key]?.[options.method];
-  // console.log(item);
 
   const hasMatchingDigest = item?.digestSRI === hash;
-  // console.log(hasMatchingDigest);
 
   if (!hasMatchingDigest) {
+    console.log(item?.data)
+    console.log(data)
     options['digestSRI'] = hash;
 
     try {

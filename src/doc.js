@@ -40,7 +40,7 @@ function getFragmentOfNodesChildren(node) {
   return fragment;
 }
 
-function normalizeWhitespace(root = document.documentElement) {
+export function normalizeWhitespace(root = document.documentElement) {
   const inlineElements = new Set(Config.DOMProcessing.inlineElements);
 
   const walker = document.createTreeWalker(
@@ -50,7 +50,7 @@ function normalizeWhitespace(root = document.documentElement) {
       acceptNode: (node) => {
         const parentTag = node.parentNode?.nodeName?.toLowerCase();
         //XXX: Revisit. This is a bit arbitrary.
-        if (['pre', 'code', 'samp', 'kbd', 'var', 'textarea', 'p'].includes(parentTag)) {
+        if (['pre', 'code', 'samp', 'kbd', 'var', 'textarea', 'p', 'dd', 'style'].includes(parentTag)) {
           return NodeFilter.FILTER_REJECT;
         }
 
@@ -69,6 +69,8 @@ function normalizeWhitespace(root = document.documentElement) {
   for (const node of nodes) {
     const text = node.nodeValue;
     const trimmed = text.replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim();
+    const collapsed = text.replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ');
+
 
     const parentTag = node.parentNode.nodeName.toLowerCase();
 
@@ -78,15 +80,22 @@ function normalizeWhitespace(root = document.documentElement) {
     const prevIsInline = prev && prev.nodeType === 1 && inlineElements.has(prev.nodeName.toLowerCase());
     const nextIsInline = next && next.nodeType === 1 && inlineElements.has(next.nodeName.toLowerCase());
 
-    // If it's between inline elements, replace with single space
+    // // If it's between inline elements, replace with single space
+    // if (prevIsInline && nextIsInline && parentTag !== 'head') {
+    //   node.nodeValue = ' ';
+    // } else if (trimmed === '') {
+    //   // Remove pure whitespace-only text nodes
+    //   node.remove();
+    // } else {
+    //   // Otherwise, just collapse runs of whitespace
+    //   node.nodeValue = trimmed;
+    // }
     if (prevIsInline && nextIsInline && parentTag !== 'head') {
       node.nodeValue = ' ';
-    } else if (trimmed === '') {
-      // Remove pure whitespace-only text nodes
+    } else if (collapsed.trim() === '') {
       node.remove();
     } else {
-      // Otherwise, just collapse runs of whitespace
-      node.nodeValue = trimmed;
+      node.nodeValue = collapsed;
     }
   }
 
