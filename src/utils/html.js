@@ -248,10 +248,10 @@ export function getDoctype() {
 
 export function removeNodesWithSelector(node, selectors) {
   const nodesToRemove = node.querySelectorAll(selectors.join(', '));
-
   for (const n of nodesToRemove) {
     n.remove();
   }
+
   return node;
 }
 

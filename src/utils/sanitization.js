@@ -12,7 +12,6 @@ export function domSanitize(strHTML, options = {}) {
       let src = node.getAttribute('src');
       if (src) {
         src = src.trim();
-
         if (!Object.keys(Config.DOMProcessing.allowedScripts).includes(src)) {
           node.remove();
         }
