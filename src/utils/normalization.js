@@ -211,7 +211,15 @@ export function cleanProseMirrorOutput(node) {
     }
   });
 
-  // remove empty <p>
+  // remove empty <li> and <dd> elements that get added because of preserving whitespace somehow
+  element.querySelectorAll('li, dd').forEach(el => {
+    const hasMeaningfulContent = [...el.childNodes].some(n => {
+      if (n.nodeType === Node.TEXT_NODE) return n.textContent.trim().length > 0;
+      if (n.nodeType === Node.ELEMENT_NODE) return true;
+      return false;
+    });
+    if (!hasMeaningfulContent) el.remove();
+  });
 
   return getFragmentOfNodesChildren(element);
 }
