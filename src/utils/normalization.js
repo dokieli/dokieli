@@ -115,6 +115,19 @@ export function normalizeHTML(node, options) {
     });
   }
 
+  // remove empty/whitespace-only text nodes inside block elements
+  const blockTags = ['li', 'dd', 'figcaption', 'td', 'th', 'video', 'audio', 'button', 'select', 'textarea', 'ul', 'ol', 'pre', 'p'];
+
+  blockTags.forEach(tag => {
+    node.querySelectorAll(tag).forEach(el => {
+      [...el.childNodes].forEach(child => {
+        if (child.nodeType === Node.TEXT_NODE && !child.textContent.trim()) {
+          el.removeChild(child);
+        }
+      });
+    });
+  });
+
   //Removes p with only whitespace child node or no child node.
   node.querySelectorAll('p').forEach(p => {
     const onlyWhitespaceTextNodes = [...p.childNodes].every(node =>
