@@ -176,10 +176,11 @@ let customNodes = {
     content: "block+",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
-    // parseDOM: [{ tag: "dd", preserveWhitespace: "full", getAttrs(node){ return getAttributes(node); }}],
-    // toDOM(node) { return ["dd", { ...node.attrs.originalAttributes }, 0]; },
-    parseDOM: [{ tag: "dd", getAttrs(node){ return getAttributes(node); }}],
+    parseDOM: [{ tag: "dd", preserveWhitespace: "full", getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return ["dd", { ...node.attrs.originalAttributes }, 0]; },
+    // parseDOM: [{ tag: "dd", getAttrs(node){ return getAttributes(node); }}],
+    // toDOM(node) { return ["dd", { ...node.attrs.originalAttributes }, 0]; },
+    // whitespace: 'pre'
   },
   ul: {
     content: "li+",
@@ -199,11 +200,12 @@ let customNodes = {
     content: "block+",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
-    parseDOM: [{ tag: "li", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["li", { ...node.attrs.originalAttributes }, 0]; },
-    // parseDOM: [{ tag: "li", preserveWhitespace: "full", getAttrs(node){ return getAttributes(node); }}],
+    // parseDOM: [{ tag: "li", getAttrs(node){ return getAttributes(node); }}],
     // toDOM(node) { return ["li", { ...node.attrs.originalAttributes }, 0]; },
-    defining: true
+    parseDOM: [{ tag: "li", preserveWhitespace: "full", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["li", { ...node.attrs.originalAttributes }, 0]; },
+    defining: true,
+    // whitespace: 'pre'
   },
   pre: {
     content: "inline*",
