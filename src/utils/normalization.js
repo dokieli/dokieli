@@ -114,14 +114,15 @@ export function normalizeHTML(node, options) {
 
     });
   }
-
-  // remove empty/whitespace-only text nodes inside block elements
-  const blockTags = ['li', 'dd', 'figcaption', 'td', 'th', 'video', 'audio', 'button', 'select', 'textarea', 'ul', 'ol', 'pre', 'p'];
-
-  blockTags.forEach(tag => {
+  //Removes text nodes that are only newlines/indentation inside dd and li.
+  ['dd', 'li'].forEach(tag => {
     node.querySelectorAll(tag).forEach(el => {
       [...el.childNodes].forEach(child => {
-        if (child.nodeType === Node.TEXT_NODE && !child.textContent.trim()) {
+        if (
+          child.nodeType === Node.TEXT_NODE &&
+          /^[ \t\r\n]*[\r\n]+[ \t\r\n]*$/.test(child.textContent)
+        ) {
+          // Remove text nodes that are only newlines/indentation
           el.removeChild(child);
         }
       });
