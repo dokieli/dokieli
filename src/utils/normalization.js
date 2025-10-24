@@ -115,7 +115,7 @@ export function normalizeHTML(node, options) {
     });
   }
   //Removes text nodes that are only newlines/indentation inside dd and li.
-  ['dd', 'li'].forEach(tag => {
+  ['dd', 'li', 'ul', 'ol'].forEach(tag => {
     node.querySelectorAll(tag).forEach(el => {
       [...el.childNodes].forEach(child => {
         if (
@@ -178,14 +178,6 @@ export function cleanProseMirrorOutput(node) {
 
   // Remove the trailing breaks that ProseMirror adds for empty nodes
   element.querySelectorAll('.ProseMirror-trailingBreak').forEach(node => node.remove());
-
-  //Remove any trailing whitespace-only text nodes inside <pre>
-  element.querySelectorAll('pre').forEach(pre => {
-    const last = pre.lastChild;
-    if (last && last.nodeType === Node.TEXT_NODE && !last.textContent.trim()) {
-      pre.removeChild(last);
-    }
-  });
 
   //Remove ProseMirror wrap
   let pmNode = element.querySelector('.ProseMirror');

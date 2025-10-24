@@ -48,9 +48,16 @@ export function normalizeWhitespace(root = document.documentElement) {
     NodeFilter.SHOW_TEXT,
     {
       acceptNode: (node) => {
-        const parentTag = node.parentNode?.nodeName?.toLowerCase();
-        //XXX: Revisit. This is a bit arbitrary.
-        if (['pre', 'code', 'samp', 'kbd', 'var', 'textarea', 'p', 'dd', 'style'].includes(parentTag)) {
+        // reject if this text node is inside one of these
+        for (let p = node.parentNode; p; p = p.parentNode) {
+          const tag = p.nodeName?.toLowerCase?.();
+          if (['pre', 'code', 'samp', 'kbd', 'var', 'textarea', 'style'].includes(tag)) {
+            return NodeFilter.FILTER_REJECT;
+          }
+        }
+
+        const parentTag = node.parentNode?.nodeName?.toLowerCase?.();
+        if (['p', 'dd', 'li'].includes(parentTag)) {
           return NodeFilter.FILTER_REJECT;
         }
 
@@ -68,9 +75,7 @@ export function normalizeWhitespace(root = document.documentElement) {
 
   for (const node of nodes) {
     const text = node.nodeValue;
-    const trimmed = text.replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim();
     const collapsed = text.replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ');
-
 
     const parentTag = node.parentNode.nodeName.toLowerCase();
 
@@ -80,16 +85,6 @@ export function normalizeWhitespace(root = document.documentElement) {
     const prevIsInline = prev && prev.nodeType === 1 && inlineElements.has(prev.nodeName.toLowerCase());
     const nextIsInline = next && next.nodeType === 1 && inlineElements.has(next.nodeName.toLowerCase());
 
-    // // If it's between inline elements, replace with single space
-    // if (prevIsInline && nextIsInline && parentTag !== 'head') {
-    //   node.nodeValue = ' ';
-    // } else if (trimmed === '') {
-    //   // Remove pure whitespace-only text nodes
-    //   node.remove();
-    // } else {
-    //   // Otherwise, just collapse runs of whitespace
-    //   node.nodeValue = trimmed;
-    // }
     if (prevIsInline && nextIsInline && parentTag !== 'head') {
       node.nodeValue = ' ';
     } else if (collapsed.trim() === '') {
@@ -146,7 +141,9 @@ function getDocument(cn, options) {
 
   let fragment = cleanProseMirrorOutput(nodeDocument);
   nodeDocument.documentElement.setHTMLUnsafe(stringFromFragment(fragment));
+
   nodeDocument = normalizeWhitespace(nodeDocument);
+
 
   if (options.sanitize) {
     nodeDocument = domSanitizeHTMLBody(nodeDocument, options);
@@ -158,6 +155,7 @@ function getDocument(cn, options) {
 
   if (options.format) {
     htmlString = formatHTML(nodeDocument.documentElement, options);
+    // console.log('formatted htmlString:', htmlString);
   }
   else {
     htmlString = nodeDocument.documentElement.outerHTML;
@@ -179,7 +177,6 @@ function getDocumentNodeFromString(data, options = {}) {
   if (options.contentType === 'text/xml' || options.contentType === 'image/svg+xml') {
     data = data.replace(/<!DOCTYPE[^>]*>/i, '');
   }
-
   const parser = new DOMParser();
   const node = parser.parseFromString(data, options.contentType);
   // TODO: I don't think we need to do this here anymore, it should happen after we clean the document so that we don't risk altering the structure and missing some elements that need to be removed
@@ -190,7 +187,6 @@ function getDocumentNodeFromString(data, options = {}) {
   // node.body.setHTMLUnsafe(body);
 
   // console.log(parsedDoc, body, node)
-// console.log(node)
   return node;
 }
 

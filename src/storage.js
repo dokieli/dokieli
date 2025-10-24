@@ -179,7 +179,6 @@ function updateStorage(key, data, options = {}) {
 }
 
 async function autoSave(key, options) {
-  console.trace("called autosave wihth key:", key);
   if (!key) return;
 
   // console.log(key, options);
@@ -201,8 +200,6 @@ async function autoSave(key, options) {
   const hasMatchingDigest = item?.digestSRI === hash;
 
   if (!hasMatchingDigest) {
-    console.log(item?.data)
-    console.log(data)
     options['digestSRI'] = hash;
 
     try {
