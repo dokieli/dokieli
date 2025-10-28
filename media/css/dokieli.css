@@ -5,28 +5,97 @@
  * https://github.com/linkeddata/dokieli
  */
 
-@media print {
-.do {
-display:none !important;
-}
-span.do.ref {
-display:inline !important;
-}
-span.do.ref sup {
-display:none;
+ @media print {
+  @page {
+    size: A4 landscape;
+    margin: 1.5cm;
+  }
+
+  body {
+    background: #fff;
+    color: #000;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+  }
+
+  .slide {
+    page-break-before: always;
+    page-break-after: always;
+    padding: 2cm;
+    border: 1px solid #ccc;
+    border-radius: 1rem;
+    box-shadow: none;
+    background: #fff;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .slide h2 {
+    font-size: 24pt;
+    margin-bottom: 1em;
+    text-align: center;
+    font-weight: bold;
+  }
+
+  .slide .shout {
+    font-size: 48pt;
+    line-height: 1.2;
+    text-align: center;
+    margin: auto 0;
+  }
+
+  nav, .caption, details#document-details, header.caption > details {
+    display: none !important;
+  }
+
+  ul, ol, dl {
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+
+  figure, img, video, iframe {
+    max-width: 100%;
+    height: auto;
+    page-break-inside: avoid;
+  }
+
+  blockquote {
+    border-left: 4px solid #ccc;
+    padding-left: 1em;
+    margin-left: 0;
+    font-style: italic;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 11pt;
+  }
+
+  th, td {
+    border: 1px solid #ddd;
+    padding: 4px 6px;
+  }
+
+  footer {
+    font-size: 10pt;
+    color: #555;
+    margin-top: auto;
+    text-align: right;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  a[href^="http"]:after {
+    content: " (" attr(href) ")";
+    font-size: 9pt;
+  }
 }
 
-.tabs .selected {
-border:0 !important;
-padding:0 !important;
-}
-
-.tabs > div,
-.tabs > figure {
-display:block !important;
-margin-top:0 !important;
-}
-}
 
 @media screen and (min-width: 75em){
 aside.note article {
