@@ -7,7 +7,7 @@
 
  @media print {
   @page {
-    size: A4 landscape;
+    size: A4 landscape; 
     margin: 1cm;
   }
 
@@ -24,79 +24,97 @@
   }
 
   main {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.75cm;
+    display: block;
   }
 
   .slide {
-    flex: 0 0 calc(50% - 1cm); 
-    aspect-ratio: 16 / 9;
-    box-sizing: border-box;
+    background: #fff;
     border: 1px solid #ddd;
     border-radius: 6px;
-    padding: 0.8cm;
-    background: #fff;
-    overflow: hidden;
-    page-break-inside: avoid;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-
-  .slide {
-    page-break-before: always;
-    page-break-after: always;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: visible !important;
-    position: relative;
-
-    transform-origin: top left;
-    width: 100%;
-    height: auto;
-    aspect-ratio: 16 / 9; 
+    padding: 1.5cm;
+    margin-bottom: 1cm;
     box-sizing: border-box;
+    page-break-before: always;
+    page-break-inside: auto;
+    page-break-after: auto;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
   }
 
-  .slide > * {
-    transform: scale(var(--scale, 1));
-    transform-origin: top left;
+  .slide > div,
+  .slide > section,
+  .slide > article,
+  .slide > figure {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .shower {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  :root, html, body {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .slide h2 {
+    text-align: center;
+    font-size: 18pt;
+    margin-bottom: 0.6em;
   }
 
   .slide.shout h2,
   .slide h2.shout {
-    font-size: 20pt;
+    font-size: 28pt;
+    line-height: 1.2;
   }
 
-  ul, ol, p, dl {
-    font-size: 9pt;
-    line-height: 1.3;
+  ul, ol, p, dl, blockquote, table, figure {
+    font-size: 11pt;
+    line-height: 1.5;
   }
 
-  img, video, iframe {
+  img, video, iframe, figure {
     max-width: 100%;
     height: auto;
     page-break-inside: avoid;
+    object-fit: contain;
+  }
+
+  figure {
+    margin: 1em 0;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 4px 6px;
   }
 
   footer {
-    font-size: 8pt;
-    margin-top: auto;
-    text-align: right;
+    font-size: 9pt;
     color: #555;
+    margin-top: 1em;
+    text-align: right;
   }
 
   a {
     color: inherit;
-    text-decoration: none;
+    text-decoration: underline;
+    text-decoration-thickness: 0.5px;
+    text-underline-offset: 2px;
   }
 
   a[href^="http"]:after {
     content: " (" attr(href) ")";
-    font-size: 7pt;
+    font-size: 8pt;
+    color: #777;
   }
 }
 
