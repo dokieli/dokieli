@@ -6,117 +6,133 @@
  */
 
  @media print {
-  @page {
-    size: A4 portrait; 
-    margin: 1cm;
-  }
+   @page {
+     size: A4 portrait;
+   }
 
-  html, body {
-    background: #fff !important;
-    color: #000 !important;
-    font-family: "Helvetica Neue", Arial, sans-serif;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
+   html,
+   body {
+     background: #fff !important;
+     color: #000 !important;
+     font-family: "Helvetica Neue", Arial, sans-serif;
+     -webkit-print-color-adjust: exact;
+     print-color-adjust: exact;
+   }
 
-  .do, nav, header.caption, details#document-details, .caption {
-    display: none !important;
-  }
+   .do,
+   nav,
+   header.caption,
+   details#document-details,
+   .caption {
+     display: none !important;
+   }
 
-  main {
-    display: block;
-  }
+   main {
+     display: block;
+   }
 
-  .slide {
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    padding: 1.5cm;
-    margin-bottom: 1cm;
-    box-sizing: border-box;
-    page-break-before: always;
-    page-break-inside: auto;
-    page-break-after: auto;
-    height: auto !important;
-    max-height: none !important;
-    overflow: visible !important;
-  }
+   .shower,
+   .slides {
+     position: static !important;
+     height: auto !important;
+     width: auto !important;
+     overflow: visible !important;
+     display: block !important;
+   }
 
-  .slide > div,
-  .slide > section,
-  .slide > article,
-  .slide > figure {
-    height: auto !important;
-    max-height: none !important;
-    overflow: visible !important;
-  }
+   .slide {
+     position: static !important;
+     display: block !important;
+     width: auto !important;
+     height: auto !important;
+     top: auto !important;
+     left: auto !important;
+     right: auto !important;
+     bottom: auto !important;
+     page-break-before: always !important;
+     page-break-after: auto !important;
+     page-break-inside: avoid !important;
+     font-size: 10pt !important;
+   }
 
-  .shower {
-    height: auto !important;
-    overflow: visible !important;
-  }
+   .slide * {
+     position: static !important;
+   }
 
-  :root, html, body {
-    height: auto !important;
-    overflow: visible !important;
-  }
-  .slide h2 {
-    text-align: center;
-    font-size: 18pt;
-    margin-bottom: 0.6em;
-  }
+   .slide {
+     background-size: contain !important;
+     background-repeat: no-repeat !important;
+     background-position: center !important;
+   }
 
-  .slide.shout h2,
-  .slide h2.shout {
-    font-size: 28pt;
-    line-height: 1.2;
-  }
+   img,
+   video,
+   iframe,
+   figure {
+     position: relative !important;
+     max-width: 100%;
+     page-break-inside: avoid;
+     overflow: visible !important;
+   }
 
-  ul, ol, p, dl, blockquote, table, figure {
-    font-size: 11pt;
-    line-height: 1.5;
-  }
+   footer {
+     font-size: 8pt;
+     margin-top: auto;
+     text-align: right;
+     color: #555;
+   }
 
-  img, video, iframe, figure {
-    max-width: 100%;
-    height: auto;
-    page-break-inside: avoid;
-    object-fit: contain;
-  }
+   figure {
+     margin: 1em 0;
+   }
 
-  figure {
-    margin: 1em 0;
-  }
+   table {
+     width: 100% !important;
+     max-width: 100% !important;
+     table-layout: auto !important;
+     border-collapse: collapse !important;
+     word-break: break-word !important;
+     overflow: visible !important;
+     font-size: 9pt !important;
+   }
 
-  table {
-    border-collapse: collapse;
-    width: 100%;
-  }
-  th, td {
-    border: 1px solid #ccc;
-    padding: 4px 6px;
-  }
+   thead {
+     display: table-header-group !important;
+   }
 
-  footer {
-    font-size: 9pt;
-    color: #555;
-    margin-top: 1em;
-    text-align: right;
-  }
+   tfoot {
+     display: table-footer-group !important;
+   }
 
-  a {
-    color: inherit;
-    text-decoration: underline;
-    text-decoration-thickness: 0.5px;
-    text-underline-offset: 2px;
-  }
+   tr {
+     page-break-inside: avoid !important;
+     break-inside: avoid !important;
+   }
 
-  a[href^="http"]:after {
-    content: " (" attr(href) ")";
-    font-size: 8pt;
-    color: #777;
-  }
-}
+   th,
+   td {
+     white-space: normal !important;
+     word-wrap: break-word !important;
+     padding: 4px 6px !important;
+     border: 1px solid #ccc !important;
+     font-size: 9pt !important;
+   }
+
+
+
+   a {
+     color: inherit;
+     text-decoration: underline;
+     text-decoration-thickness: 0.5px;
+     text-underline-offset: 2px;
+   }
+
+   a[href^="http"]:after {
+     content: " (" attr(href) ")";
+     font-size: 10pt;
+     color: #777;
+   }
+ }
 
 @media screen and (min-width: 75em){
 aside.note article {
@@ -2165,6 +2181,14 @@ display:block;
 .on-slideshow aside:not([class~="do"]) {
 display:none;
 }
+.shower .slide thead tr:has(th[rowspan]) + tr th:first-child {
+  padding-left: 0;
+}
+ol[type="1"] { list-style-type: decimal; }
+ol[type="a"] { list-style-type: lower-alpha; }
+ol[type="A"] { list-style-type: upper-alpha; }
+ol[type="i"] { list-style-type: lower-roman; }
+ol[type="I"] { list-style-type: upper-roman; }
 
 .rfc2119 {
 text-transform:lowercase;
