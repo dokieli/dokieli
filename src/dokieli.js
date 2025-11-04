@@ -3141,7 +3141,7 @@ DO = {
         .then(graphs => {
 // console.log(graphs);
           graphs.forEach(g => {
-            if (g && g.out().terms.length){
+            if (g && !(g instanceof Error) && g.out().terms.length){
             // if (g) {
               var documentURL = g.term.value;
               g = rdf.grapoi({dataset: g.dataset})
@@ -3362,9 +3362,9 @@ DO = {
       if (!node) { return; }
 
       var disabledInput = '', s = [];
-      if (!DO.C.EditorEnabled) {
-        disabledInput = ' disabled="disabled"';
-      }
+      // if (!DO.C.EditorEnabled) {
+      //   disabledInput = ' disabled="disabled"';
+      // }
 
       Object.keys(DO.C.ListOfStuff).forEach(id => {
         var checkedInput = '';
@@ -3385,7 +3385,7 @@ DO = {
       if (s.length) {
         node.insertAdjacentHTML('beforeend', '<section id="list-of-stuff"><h2>List of Stuff</h2><ul>' + s.join('') + '</ul></section>');
 
-        if (DO.C.EditorEnabled) {
+        // if (DO.C.EditorEnabled) {
           document.getElementById('list-of-stuff').addEventListener('click', (e) => {
             if (e.target.closest('input')) {
               var id = e.target.id.slice(6);
@@ -3406,7 +3406,7 @@ DO = {
               }
             }
           });
-        }
+        // }
       }
     },
 
