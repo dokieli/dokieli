@@ -3,9 +3,9 @@ import { wrapInList, liftListItem } from "prosemirror-schema-list"
 import { DOMSerializer, DOMParser } from "prosemirror-model"
 import { TextSelection } from "prosemirror-state"
 import { schema, allowedEmptyAttributes } from "./../../schema/base.js"
-import { formHandlerA, formHandlerAnnotate, formHandlerBlockquote, formHandlerImg, formHandlerQ, formHandlerCitation, formHandlerSemantics } from "./handlers.js"
+import { formHandlerA, formHandlerAnnotate, formHandlerBlockquote, formHandlerImg, formHandlerQ, formHandlerCitation, formHandlerRequirement, formHandlerSemantics } from "./handlers.js"
 import { ToolbarView, annotateFormControls } from "../toolbar.js"
-import { getCitationOptionsHTML, getLanguageOptionsHTML } from "../../../doc.js"
+import { getCitationOptionsHTML, getLanguageOptionsHTML, getRequirementLevelOptionsHTML, getRequirementSubjectOptionsHTML } from "../../../doc.js"
 import { getResource } from "../../../fetcher.js"
 import { fragmentFromString } from "../../../util.js"
 import Config from "../../../config.js";
@@ -28,6 +28,7 @@ export class AuthorToolbar extends ToolbarView {
       img: [ { event: 'submit', callback: this.formHandlerImg }, { event: 'click', callback: (e) => this.formClickHandler(e, 'img') } ],
       semantics: [ { event: 'submit', callback: (e) => this.formHandlerSemantics(e, 'semantics') }, { event: 'click', callback: (e) => this.formClickHandler(e, 'semantics') } ],
       citation: [ { event: 'submit', callback: (e) => this.formHandlerCitation(e, 'citation') }, { event: 'click', callback: (e) => this.formClickHandler(e, 'citation') } ],
+      requirement: [ { event: 'submit', callback: (e) => this.formHandlerRequirement(e, 'requirement') }, { event: 'click', callback: (e) => this.formClickHandler(e, 'requirement') } ],
       note: [ { event: 'submit', callback: (e) => this.formHandlerAnnotate(e, 'note') }, { event: 'click', callback: (e) => this.formClickHandler(e, 'note') } ],
     }
   }
@@ -39,6 +40,7 @@ export class AuthorToolbar extends ToolbarView {
       { name: 'formHandlerBlockquote', fn: formHandlerBlockquote },
       { name: 'formHandlerImg', fn: formHandlerImg },
       { name: 'formHandlerCitation', fn: formHandlerCitation },
+      { name: 'formHandlerRequirement', fn: formHandlerRequirement },
       // { name: 'formHandlerSparkline', fn: formHandlerSparkline },
       { name: 'formHandlerSemantics', fn: formHandlerSemantics },
       { name: 'formHandlerAnnotate', fn: formHandlerAnnotate },
@@ -71,6 +73,7 @@ export class AuthorToolbar extends ToolbarView {
   getFormLegends() {
     return {
       note: 'Add note',
+      requirement: 'Add requirement'
     }
   }
 
@@ -145,6 +148,24 @@ export class AuthorToolbar extends ToolbarView {
           <button class="editor-form-submit" title="Save" type="submit">Save</button>
           <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
           <div class="specref-search-results"></div>
+        </fieldset>
+      `,
+
+      requirement: (options) => `
+        <fieldset>
+          <legend>${options.legend}</legend>
+          <label for="requirement-subject">Requirement Subject</label>
+          <select class="editor-form-select" id="requirement-subject" name="requirement-subject">${getRequirementSubjectOptionsHTML(options)}</select>
+          <label for="requirement-level">Requirement Level</label>
+          <select class="editor-form-select" id="requirement-level" name="requirement-level">${getRequirementLevelOptionsHTML(options)}</select>
+
+          <label for="requirement-consensus">Consensus source</label>
+          <input class="editor-form-input" id="requirement-consensus" name="requirement-consensus" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" type="url" value="" />
+
+          <label for="requirement-language">Language</label>
+          <select class="editor-form-select" id="requirement-language" name="requirement-language">${getLanguageOptionsHTML()}</select>
+          <button class="editor-form-submit" title="Save" type="submit">Save</button>
+          <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
         </fieldset>
       `,
 
@@ -410,6 +431,44 @@ TODO:
     });
   }
 
+  populateFormRequirement(button, node, state) {
+    console.log(button, node, state)
+    console.log(state.selection, state.selection.from, state.selection.to);
+
+    var selectedTextContent = state.doc.textBetween(state.selection.from, state.selection.to, "\n");
+    console.log(selectedTextContent);
+
+    const requirementSubject = document.querySelector('#requirement-subject');
+    if (requirementSubject) {
+      requirementSubject.querySelectorAll('option').forEach(option => {
+        if (selectedTextContent.includes(option.textContent.trim())) {
+          option.selected = true;
+        }
+      });
+    }
+
+    const requirementLevel = document.querySelector('#requirement-level');
+    if (requirementLevel) {
+      requirementLevel.querySelectorAll('option').forEach(option => {
+        if (selectedTextContent.includes(option.textContent.trim())) {
+          option.selected = true;
+        }
+      });
+    }
+
+    //XXX: If the selection already includes a link with relation cito:citesAsSourceDocument or spec:basedOnConsensus, use that to populate #requirement-consensus. Is this the best way:
+    const requirementConsensus = document.querySelector('#requirement-consensus');
+
+    state.doc.nodesBetween(state.selection.from, state.selection.to, node => {
+      node.marks.forEach(mark => {
+        console.log(mark)
+        if (mark.type.name === 'a' && ['cito:citesAsSourceDocument','spec:basedOnConsensus'].includes(mark.attrs.originalAttributes.rel)) {
+          requirementConsensus.value = mark.attrs.originalAttributes.href;
+        }
+      });
+    });
+  }
+
   populateFormCitation(button, node, state) {
     // const { selection } = state;
     // const { from, to } = selection;
@@ -520,7 +579,8 @@ TODO:
   getPopulateForms() {
     return {
       img: this.populateFormImg,
-      citation: this.populateFormCitation
+      citation: this.populateFormCitation,
+      requirement: this.populateFormRequirement
     }
   }
 

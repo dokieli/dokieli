@@ -1885,6 +1885,12 @@ function getGraphData(s, options) {
   }
 
   info['spec'] = {};
+
+  var classesOfProducts = s.out(ns.spec.classesOfProducts).values;
+  if (classesOfProducts.length && s.term.value == documentURL) {
+    info['spec']['classesOfProducts'] = getResourceInfoSpecClassesOfProducts(s);
+  }
+
   var requirement = s.out(ns.spec.requirement).values;
   if (requirement.length && s.term.value == documentURL) {
     info['spec']['requirement'] = getResourceInfoSpecRequirements(s);
@@ -2283,6 +2289,57 @@ function getResourceInfoODRLPolicies(s) {
 
   return info['odrl'];
 }
+
+function getResourceInfoSpecClassesOfProducts(s) {
+  var info = {}
+  info['spec'] = {};
+  info['spec']['classesOfProducts'] = {};
+
+  // console.trace();
+  s.out(ns.spec.classesOfProducts).values.forEach(classesOfProductsConceptSchemeIRI => {
+    info['spec']['classesOfProducts'] = {};
+    info['spec']['classesOfProducts'][classesOfProductsConceptSchemeIRI] = {};
+
+    var classesOfProductsGraph = s.node(rdf.namedNode(classesOfProductsConceptSchemeIRI));
+    info['spec']['classesOfProducts'][classesOfProductsConceptSchemeIRI]['skos'] = getResourceInfoSKOS(classesOfProductsGraph);
+    var conceptSchemes = info['spec']['classesOfProducts'][classesOfProductsConceptSchemeIRI]['skos'].data;
+    if (conceptSchemes) {
+      Object.keys(conceptSchemes).forEach(conceptScheme => {
+        var conceptIRIs = conceptSchemes[conceptScheme][ns.skos.hasTopConcept];
+        if (conceptIRIs) {
+          conceptIRIs.forEach(conceptIRI => {
+            var conceptGraph = s.node(rdf.namedNode(conceptIRI));
+            Config.Resource[conceptIRI] = {};
+            Config.Resource[conceptIRI]['graph'] = conceptGraph;
+            Config.Resource[conceptIRI]['skos'] = getResourceInfoSKOS(conceptGraph);
+          })
+        }
+      })
+    }
+  });
+
+  return info['spec']['classesOfProducts'];
+}
+
+//XXX: Should this be stored for cheaper reuse?
+function getClassesOfProductsConcepts() {
+  var concepts = [];
+
+  if (Config.Resource[DO.C.DocumentURL]?.spec?.classesOfProducts) {
+    var classesOfProducts = Config.Resource[DO.C.DocumentURL]?.spec?.classesOfProducts;
+
+    Object.keys(classesOfProducts).forEach(conceptSchemeIRI => {
+      var conceptScheme = classesOfProducts[conceptSchemeIRI].skos.data;
+      var hasTopConcepts = conceptScheme[conceptSchemeIRI][ns.skos.hasTopConcept];
+      if (hasTopConcepts) {
+        concepts = concepts.concat(hasTopConcepts);
+      }
+    })
+  }
+
+  return concepts;
+}
+
 
 //TODO: Review grapoi
 function getResourceInfoSpecRequirements(s) {
@@ -3286,6 +3343,54 @@ function getCitationOptionsHTML(type) {
   return s;
 }
 
+function getRequirementLevelOptionsHTML(type) {
+  type = type || 'MUST';
+
+  var s = '';
+  Object.keys(Config.RequirementLevel).forEach(iri => {
+    s += '<option value="' + iri + '">' + Config.RequirementLevel[iri] + '</option>';
+  })
+
+  return s;
+}
+
+function getRequirementSubjectOptionsHTML(options) {
+  options = options || {};
+  var s = '', selectedIRI = '';
+// console.trace();
+// console.log(options)
+
+  if ('selected' in options) {
+    selectedIRI = options.selected;
+    if (selectedIRI == '') {
+      s += '<option selected="selected" value="">Choose a requirement subject</option>';
+    }
+  }
+
+  const conceptIRIs = getClassesOfProductsConcepts();
+// console.log(concepts)
+  if (conceptIRIs.length) {
+    conceptIRIs.forEach(conceptIRI => {
+      var conceptData = Config.Resource[conceptIRI]?.skos?.data[conceptIRI];
+
+      if (conceptData) {
+        var conceptLabel = conceptData[ns.skos.prefLabel] || '';
+        var title = conceptData[ns.skos.definition] || '';
+        if (title) {
+          title = ` title="${htmlEncode(title)}"`;
+        }
+
+        var selected = (conceptIRI == selectedIRI) ? ' selected="selected"' : '';
+
+        s += '<option value="' + conceptIRI + '"' + selected + title + '>' + conceptLabel + '</option>';
+      }
+    })
+  }
+
+  return s;
+}
+
+
 function showGeneralMessages() {
   showResourceAudienceAgentOccupations();
 }
@@ -3647,6 +3752,7 @@ export {
   getResourceSupplementalInfo,
   processSupplementalInfoLinkHeaders,
   getResourceInfoODRLPolicies,
+  getResourceInfoSpecClassesOfProducts,
   getResourceInfoSpecRequirements,
   getResourceInfoSpecAdvisements,
   getResourceInfoSpecChanges,
@@ -3682,6 +3788,9 @@ export {
   getLanguageOptionsHTML,
   getLicenseOptionsHTML,
   getCitationOptionsHTML,
+  getClassesOfProductsConcepts,
+  getRequirementSubjectOptionsHTML,
+  getRequirementLevelOptionsHTML,
   getAccessModeOptionsHTML,
   showGeneralMessages,
   showResourceAudienceAgentOccupations,

@@ -2409,7 +2409,7 @@ DO = {
       
       // const diff = diffArrays(remoteTokens, localTokens).filter(d => d.added || d.removed);
       const diff = diffArrays(remoteTokens, localTokens)
-      console.log(diff)
+      // console.log(diff)
       // const diff = diffArrays(remoteSerialized, localSerialized);
 
       if (!diff.length || !diff.filter(d => d.added || d.removed).length) return;
