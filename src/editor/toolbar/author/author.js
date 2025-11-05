@@ -154,15 +154,16 @@ export class AuthorToolbar extends ToolbarView {
       requirement: (options) => `
         <fieldset>
           <legend>${options.legend}</legend>
-          <p id="requirement-preview">Preview: <samp id="requirement-preview-samp"></samp></p>
+          <dl id="requirement-preview">
+            <dt>Preview</dt>
+            <dd><samp id="requirement-preview-samp"></samp></dd>
+          </dl>
           <label for="requirement-subject">Requirement Subject</label>
           <select class="editor-form-select" id="requirement-subject" name="requirement-subject">${getRequirementSubjectOptionsHTML(options)}</select>
           <label for="requirement-level">Requirement Level</label>
           <select class="editor-form-select" id="requirement-level" name="requirement-level">${getRequirementLevelOptionsHTML(options)}</select>
-
           <label for="requirement-consensus">Consensus source</label>
           <input class="editor-form-input" id="requirement-consensus" name="requirement-consensus" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" type="url" value="" />
-
           <label for="requirement-language">Language</label>
           <select class="editor-form-select" id="requirement-language" name="requirement-language">${getLanguageOptionsHTML()}</select>
           <button class="editor-form-submit" title="Save" type="submit">Save</button>
@@ -448,7 +449,7 @@ TODO:
     if (requirementSubject) {
       requirementSubject.querySelectorAll('option').forEach(option => {
         var optionTextContent = option.textContent.trim();
-        if (selectedTextContent.includes(requirementSubjectLabel)) {
+        if (selectedTextContent.includes(optionTextContent)) {
           option.selected = true;
           requirementSubjectLabel = optionTextContent;
           requirementSubjectURI = option.value;
@@ -460,7 +461,7 @@ TODO:
     if (requirementLevel) {
       requirementLevel.querySelectorAll('option').forEach(option => {
         var optionTextContent = option.textContent.trim();
-        if (selectedTextContent.includes(option.textContent.trim())) {
+        if (selectedTextContent.includes(optionTextContent)) {
           option.selected = true;
           requirementLevelLabel = optionTextContent;
           requirementLevelURI = option.value;
@@ -484,8 +485,7 @@ TODO:
     r.subject = requirementSubjectURI;
     r.level = requirementLevelURI;
 
-
-    createRDFaHTMLRequirement(r, 'requirement')
+    var html = createRDFaHTMLRequirement(r, 'requirement')
 
     var preview = document.querySelector('#requirement-preview-samp');
     preview.appendChild(fragmentFromString(selectedTextContent));
@@ -497,7 +497,7 @@ TODO:
     const citationSpecRefSearch = document.querySelector('#citation-specref-search');
     // console.log(citationSpecRefSearch);
   
-    const citationUrl = document.querySelector('#citation-url');  
+    const citationUrl = document.querySelector('#citation-url');
     // console.log(citationUrl);
   
     citationSpecRefSearch.focus();

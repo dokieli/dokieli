@@ -3716,6 +3716,8 @@ function createRDFaHTML(r, mode) {
 
 
 function createRDFaHTMLRequirement(r, mode) {
+  console.log(r)
+
   var s = '', about = '', property = '', rel = '', resource = '', href = '', content = '', langDatatype = '', typeOf = '', idValue = '', id = '', subject = '', level = '', basedOnConsensus;
 
   var idValue = r.id || generateAttributeId();
