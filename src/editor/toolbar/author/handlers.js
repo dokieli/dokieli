@@ -259,7 +259,7 @@ export function formHandlerRequirement(e, action) {
     selectedParentElement,
     selectedContent: this.getSelectionAsHTML()
   };
-
+console.log(selectionData)
   processAction(action, formValues, selectionData);
 
   this.clearToolbarForm(e.target);

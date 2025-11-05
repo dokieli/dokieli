@@ -1,5 +1,5 @@
 import { fragmentFromString, generateUUID } from "./../../util.js";
-import { createRDFaHTML, tagsToBodyObjects } from "./../../doc.js";
+import { createRDFaHTML, createRDFaHTMLRequirement, tagsToBodyObjects } from "./../../doc.js";
 import { Icon } from "../../ui/icons.js";
 import Config from "../../config.js";
 import { generateDataURI } from "../../uri.js";
@@ -447,8 +447,8 @@ export function createNoteData(annotation) {
         textContent: selectionData.selectedContent
       };
 console.log('createNodeData::requirement', noteData);
-      ref = createRDFaHTML(noteData, 'expanded');
-
+      ref = createRDFaHTMLRequirement(noteData, 'requirement');
+console.log(ref)
       DO.Editor.replaceSelectionWithFragment(fragmentFromString(ref));
 
       break;

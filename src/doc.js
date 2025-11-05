@@ -1,6 +1,6 @@
 import Config from './config.js'
 import { getDateTimeISO, fragmentFromString, generateAttributeId, uniqueArray, generateUUID, matchAllIndex, parseISODuration, getRandomIndex, getHash, fixDoubleEscapedEntities, stringFromFragment } from './util.js'
-import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath, getPrefixedNameFromIRI, generateDataURI, getProxyableIRI } from './uri.js'
+import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath, getPrefixedNameFromIRI, generateDataURI, getProxyableIRI, getFragmentOrLastPath } from './uri.js'
 import { getResource, getResourceHead, deleteResource, processSave, patchResourceWithAcceptPatch } from './fetcher.js'
 import rdf from "rdf-ext";
 import { getResourceGraph, sortGraphTriples, getGraphContributors, getGraphAuthors, getGraphEditors, getGraphPerformers, getGraphPublishers, getGraphLabel, getGraphEmail, getGraphTitle, getGraphConceptLabel, getGraphPublished, getGraphUpdated, getGraphDescription, getGraphLicense, getGraphRights, getGraphFromData, getGraphAudience, getGraphTypes, getGraphLanguage, getGraphInbox, getUserLabelOrIRI, getGraphImage } from './graph.js'
@@ -3653,8 +3653,9 @@ function createRDFaMarkObject(r, mode) {
   return { element, attrs }
 }
 
+//mode value can be: exapanded or null
 function createRDFaHTML(r, mode) {
-  var s = '', about = '', property = '', rel = '', resource = '', href = '', content = '', langDatatype = '', typeOf = '', idValue = '', id = '', subject = '', level = '';
+  var s = '', about = '', property = '', rel = '', resource = '', href = '', content = '', langDatatype = '', typeOf = '', idValue = '', id = '';
 
   if ('rel' in r && r.rel != '') {
     rel = ' rel="' + r.rel + '"';
@@ -3708,14 +3709,67 @@ function createRDFaHTML(r, mode) {
   var element = ('datatype' in r && r.datatype == 'xsd:dateTime') ? 'time' : ((href == '') ? 'span' : 'a');
   var textContent = r.textContent || r.href || '';
 
-
-  //TODO subject, level
-  console.log(r.subject, r.level, r.lang);
-
   s = '<' + element + about + content + href + id + langDatatype + property + rel + resource + typeOf + '>' + textContent + '</' + element + '>';
 
   return s;
 }
+
+
+function createRDFaHTMLRequirement(r, mode) {
+  var s = '', about = '', property = '', rel = '', resource = '', href = '', content = '', langDatatype = '', typeOf = '', idValue = '', id = '', subject = '', level = '', basedOnConsensus;
+
+  var idValue = r.id || generateAttributeId();
+  id = ` id="${idValue}"`;
+
+  var aboutValue = ('about' in r && r.about != '') ? r.about : '';
+  about= ` about="${aboutValue}"`;
+
+  rel = ' rel="spec:requirement"';
+  resource = ' resource="#' + idValue + '"';
+
+  if ('lang' in r && r.lang != '') {
+    langDatatype = ' lang="' + r.lang + '" xml:lang="' + r.lang + '"';
+  }
+  else {
+    if ('datatype' in r && r.datatype != '') {
+      langDatatype = ' datatype="' + r.datatype + '"';
+    }
+  }
+
+  if ('typeOf' in r && r.typeOf != '') {
+    typeOf = ' typeof="' + r.typeOf + '"';
+  }
+
+  //TODO: Perhaps the value passed to this function should include both requirementSubjectURI and requirementSubjectLabel. For now this is URI and label is derived :( Same goes for requirement level.
+  var requirementSubjectURI = r.subject;
+  var requirementSubjectLabel = getFragmentOrLastPath(requirementSubjectURI);
+  var requirementLevelURI = r.level;
+  var requirementLevelLabel = getFragmentOrLastPath(requirementLevelURI);
+
+  var requirementSubject = `<span rel="spec:requirementSubject" resource="${requirementSubjectURI}">${requirementSubjectLabel}</span>`;
+  var requirementLevel = `<span rel="spec:requirementLevel" resource="${requirementLevelURI}">${requirementLevelLabel}</span>`;
+  var statement = `<span property="spec:statement">${requirementSubject}${requirementLevel}</span>`
+
+  //TODO: Do other things that match terms from HTTP-RDF.
+
+  //TODO: if selected text is the only content in parent, consider using `p`
+  var element = 'span';
+
+  //Input (with or without p):
+  //<p>Client <code>SHOULD</code> generate a Content-Type header field in a message that contains content. [<a href="https://example.org/consensus/1" rel="cito:citesAsSourceDocument">Source</a>]</p>
+
+
+  //span or p:
+  //<p about="" id="server-content-type-includes" rel="spec:requirement" resource="#server-content-type-includes"><span property="spec:statement"><span rel="spec:requirementSubject" resource="#Server">Server</span> <span rel="spec:requirementLevel" resource="spec:MUST">MUST</span> generate a <code>Content-Type</code> header field in a message that contains content.</span></p>
+
+  s = '<' + element + about + id + langDatatype + rel + resource + typeOf + '>' + statement + '</' + element + '>';
+
+  console.log(s)
+
+  return s;
+}
+
+
 
 export {
   getNodeWithoutClasses,
@@ -3808,6 +3862,7 @@ export {
   createNoteDataHTML,
   tagsToBodyObjects,
   createRDFaHTML,
+  createRDFaHTMLRequirement,
   createRDFaMarkObject,
   createDefinitionListHTML,
   hasNonWhitespaceText

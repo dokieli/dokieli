@@ -5,7 +5,7 @@ import { TextSelection } from "prosemirror-state"
 import { schema, allowedEmptyAttributes } from "./../../schema/base.js"
 import { formHandlerA, formHandlerAnnotate, formHandlerBlockquote, formHandlerImg, formHandlerQ, formHandlerCitation, formHandlerRequirement, formHandlerSemantics } from "./handlers.js"
 import { ToolbarView, annotateFormControls } from "../toolbar.js"
-import { getCitationOptionsHTML, getLanguageOptionsHTML, getRequirementLevelOptionsHTML, getRequirementSubjectOptionsHTML } from "../../../doc.js"
+import { createRDFaHTMLRequirement, getCitationOptionsHTML, getLanguageOptionsHTML, getRequirementLevelOptionsHTML, getRequirementSubjectOptionsHTML } from "../../../doc.js"
 import { getResource } from "../../../fetcher.js"
 import { fragmentFromString } from "../../../util.js"
 import Config from "../../../config.js";
@@ -154,6 +154,7 @@ export class AuthorToolbar extends ToolbarView {
       requirement: (options) => `
         <fieldset>
           <legend>${options.legend}</legend>
+          <p id="requirement-preview">Preview: <samp id="requirement-preview-samp"></samp></p>
           <label for="requirement-subject">Requirement Subject</label>
           <select class="editor-form-select" id="requirement-subject" name="requirement-subject">${getRequirementSubjectOptionsHTML(options)}</select>
           <label for="requirement-level">Requirement Level</label>
@@ -321,9 +322,12 @@ TODO:
 
 
   replaceSelectionWithFragment(fragment) {
+    console.log("replaceSelection - author")
     // console.log(fragment)
     const { state, dispatch } = this.editorView;
     const { selection, schema } = state;
+
+    console.log(selection)
     // parseSlice(fragment, { preserveWhitespace: true })
     let node = DOMParser.fromSchema(schema).parseSlice(fragment);
   
@@ -438,11 +442,16 @@ TODO:
     var selectedTextContent = state.doc.textBetween(state.selection.from, state.selection.to, "\n");
     console.log(selectedTextContent);
 
+    var requirementSubjectURI, requirementSubjectLabel, requirementLevelURI, requirementLevelLabel;
+
     const requirementSubject = document.querySelector('#requirement-subject');
     if (requirementSubject) {
       requirementSubject.querySelectorAll('option').forEach(option => {
-        if (selectedTextContent.includes(option.textContent.trim())) {
+        var optionTextContent = option.textContent.trim();
+        if (selectedTextContent.includes(requirementSubjectLabel)) {
           option.selected = true;
+          requirementSubjectLabel = optionTextContent;
+          requirementSubjectURI = option.value;
         }
       });
     }
@@ -450,8 +459,11 @@ TODO:
     const requirementLevel = document.querySelector('#requirement-level');
     if (requirementLevel) {
       requirementLevel.querySelectorAll('option').forEach(option => {
+        var optionTextContent = option.textContent.trim();
         if (selectedTextContent.includes(option.textContent.trim())) {
           option.selected = true;
+          requirementLevelLabel = optionTextContent;
+          requirementLevelURI = option.value;
         }
       });
     }
@@ -467,6 +479,16 @@ TODO:
         }
       });
     });
+
+    var r = {};
+    r.subject = requirementSubjectURI;
+    r.level = requirementLevelURI;
+
+
+    createRDFaHTMLRequirement(r, 'requirement')
+
+    var preview = document.querySelector('#requirement-preview-samp');
+    preview.appendChild(fragmentFromString(selectedTextContent));
   }
 
   populateFormCitation(button, node, state) {
