@@ -163,41 +163,6 @@ export function formHandlerAnnotate(e, action) {
 }
 
 
-//FIXME (was copied from formHandlerCitation)
-export function formHandlerRequirement(e, action) {
-  e.preventDefault();
-  e.stopPropagation();
-
-  restoreSelection(this.selection);
-  // TODO: use prosemirror selection
-  const selection = window.getSelection();
-
-  const range = selection.getRangeAt(0);
-  const selectedParentElement = getSelectedParentElement(range);
-
-  const formValues = getFormValues(e.target);
-
-console.log(formValues);
-
-  //TODO: Mark the selection after successful comment. Move out.
-  //TODO: Use node.textBetween to determine prefix, exact, suffix + parentnode with closest id
-  //Mark the selected content in the document
-  const selector = this.getTextQuoteSelector();
-
-  const selectionData = {
-    selection,
-    selector,
-    selectedParentElement,
-    selectedContent: this.getSelectionAsHTML()
-  };
-console.log(selectionData)
-  processAction(action, formValues, selectionData);
-
-  this.clearToolbarForm(e.target);
-  this.clearToolbarButton('requirement');
-}
-
-
 export function formHandlerCitation(e, action) {
   e.preventDefault();
   e.stopPropagation();
@@ -267,6 +232,40 @@ export function formHandlerSemantics(e, action) {
   this.clearToolbarForm(e.target);
   this.clearToolbarButton('semantics');
 }
+
+export function formHandlerRequirement(e, action) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  restoreSelection(this.selection);
+  // TODO: use prosemirror selection
+  const selection = window.getSelection();
+
+  const range = selection.getRangeAt(0);
+  const selectedParentElement = getSelectedParentElement(range);
+
+  const formValues = getFormValues(e.target);
+
+// console.log(formValues);
+
+  //TODO: Mark the selection after successful comment. Move out.
+  //TODO: Use node.textBetween to determine prefix, exact, suffix + parentnode with closest id
+  //Mark the selected content in the document
+  const selector = this.getTextQuoteSelector();
+
+  const selectionData = {
+    selection,
+    selector,
+    selectedParentElement,
+    selectedContent: this.getSelectionAsHTML()
+  };
+
+  processAction(action, formValues, selectionData);
+
+  this.clearToolbarForm(e.target);
+  this.clearToolbarButton('requirement');
+}
+
 
 export function processAction(action, formValues, selectionData) {
   const data = getFormActionData(action, formValues, selectionData);
@@ -408,13 +407,13 @@ export function processAction(action, formValues, selectionData) {
       }
       break;
 
-    // case 'semantics':
-    //   // console.log(data)
+    case 'requirement':
+      // console.log(data)
 
-    //   //This only updates the DOM. Nothing further. The 'id' is not used.
-    //   noteData = createNoteData(data);
+      //This only updates the DOM. Nothing further. The 'id' is not used.
+      noteData = createNoteData(data);
 
-    //   break;
+      break;
 
   }
 }

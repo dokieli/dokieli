@@ -282,16 +282,16 @@ TODO:
     // console.log(selectedParentElement)
 
     // var selectionState = MediumEditor.selection.exportSelection(selectedParentElement, this.document);
-    // var prefixStart = Math.max(0, start - Config.ContextLength);
+    var prefixStart = Math.max(0, from - Config.ContextLength);
     // console.log('pS ' + prefixStart);
     // var prefix = selectedParentElement.textContent.substr(prefixStart, start - prefixStart);
-    let prefix = doc.textBetween(from - contextLength, from)  // consider \n
+    let prefix = doc.textBetween(prefixStart, from)  // consider \n
     // console.log('-' + prefix + '-');
     prefix = htmlEncode(prefix);
     
-    // var suffixEnd = Math.min(selectedParentElement.textContent.length, end + Config.ContextLength);
+    var suffixEnd = Math.min(selectedParentElement.textContent.length, to + Config.ContextLength);
     // console.log('sE ' + suffixEnd);
-    let suffix =  doc.textBetween(to, to + contextLength)  // consider \n
+    let suffix =  doc.textBetween(to, suffixEnd)  // consider \n
     // console.log('-' + suffix + '-');
     suffix = htmlEncode(suffix);
 
@@ -461,7 +461,7 @@ TODO:
 
     state.doc.nodesBetween(state.selection.from, state.selection.to, node => {
       node.marks.forEach(mark => {
-        console.log(mark)
+        // console.log(mark)
         if (mark.type.name === 'a' && ['cito:citesAsSourceDocument','spec:basedOnConsensus'].includes(mark.attrs.originalAttributes.rel)) {
           requirementConsensus.value = mark.attrs.originalAttributes.href;
         }

@@ -2260,7 +2260,7 @@ DO = {
             else {
               reviewOptions['message'] = `Local unpublished changes. Remote changed. Review changes.`;
               console.log(reviewOptions['message'])
-              console.log(localContent, remoteContent)
+              // console.log(localContent, remoteContent)
               DO.U.showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
             }
           }

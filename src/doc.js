@@ -3625,6 +3625,7 @@ function getReferenceLabel(motivatedBy) {
 }
 
 function createRDFaMarkObject(r, mode) {
+  //Generic
   let about = r['about'];
   let resource = r['resource'];
   let typeOf = r['typeof'];
@@ -3653,7 +3654,7 @@ function createRDFaMarkObject(r, mode) {
 }
 
 function createRDFaHTML(r, mode) {
-  var s = '', about = '', property = '', rel = '', resource = '', href = '', content = '', langDatatype = '', typeOf = '', idValue = '', id = '';
+  var s = '', about = '', property = '', rel = '', resource = '', href = '', content = '', langDatatype = '', typeOf = '', idValue = '', id = '', subject = '', level = '';
 
   if ('rel' in r && r.rel != '') {
     rel = ' rel="' + r.rel + '"';
@@ -3706,6 +3707,10 @@ function createRDFaHTML(r, mode) {
 
   var element = ('datatype' in r && r.datatype == 'xsd:dateTime') ? 'time' : ((href == '') ? 'span' : 'a');
   var textContent = r.textContent || r.href || '';
+
+
+  //TODO subject, level
+  console.log(r.subject, r.level, r.lang);
 
   s = '<' + element + about + content + href + id + langDatatype + property + rel + resource + typeOf + '>' + textContent + '</' + element + '>';
 
