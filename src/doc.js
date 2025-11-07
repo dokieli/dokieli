@@ -16,6 +16,7 @@ import { domSanitizeHTMLBody, domSanitize } from './utils/sanitization.js';
 import { cleanProseMirrorOutput, normalizeHTML } from './utils/normalization.js';
 import { formatHTML, getDoctype, htmlEncode } from './utils/html.js';
 import { schema } from './editor/schema/base.js';
+import { select } from 'd3-selection';
 
 const ns = Config.ns;
 
@@ -3747,10 +3748,36 @@ function createRDFaHTMLRequirement(r, mode) {
   var requirementSubjectLabel = getFragmentOrLastPath(requirementSubjectURI);
   var requirementLevelURI = r.level;
   var requirementLevelLabel = getFragmentOrLastPath(requirementLevelURI);
+  var prevRequirementLevelLabel = r.prevLevelLabel || requirementLevelLabel;
+  var prevRequirementSubjectLabel = r.prevSubjectLabel || requirementSubjectLabel;
+  var selectedTextContent = r.selectedTextContent || '';
 
   var requirementSubject = `<span rel="spec:requirementSubject" resource="${requirementSubjectURI}">${requirementSubjectLabel}</span>`;
   var requirementLevel = `<span rel="spec:requirementLevel" resource="${requirementLevelURI}">${requirementLevelLabel}</span>`;
-  var statement = `<span property="spec:statement">${requirementSubject}${requirementLevel}</span>`
+
+  console.log('requirementSubject', requirementSubject);
+  console.log('requirementLevel', requirementLevel);
+  // var statement = `<span property="spec:statement">${requirementSubject}${requirementLevel}</span>`'
+  console.log(selectedTextContent);
+
+  const subjectLabel = prevRequirementSubjectLabel;
+  const levelLabel = prevRequirementLevelLabel;
+  
+  const subjIndex = selectedTextContent.indexOf(subjectLabel);
+  const levelIndex = selectedTextContent.indexOf(levelLabel);
+  
+  const replacements = [
+    { start: subjIndex, end: subjIndex + (subjectLabel||'').length, replacement: requirementSubject },
+    { start: levelIndex, end: levelIndex + (levelLabel||'').length, replacement: requirementLevel }
+  ]
+    .filter(r => r.start !== -1)
+    .sort((a,b) => b.start - a.start);
+  
+  let newTextContent = selectedTextContent;
+  for (const { start, end, replacement } of replacements) {
+    newTextContent = newTextContent.slice(0, start) + replacement + newTextContent.slice(end);
+  }
+  var statement = `<span property="spec:statement">${newTextContent}</span>`;
 
   //TODO: Do other things that match terms from HTTP-RDF.
 
@@ -3759,6 +3786,8 @@ function createRDFaHTMLRequirement(r, mode) {
 
   //Input (with or without p):
   //<p>Client <code>SHOULD</code> generate a Content-Type header field in a message that contains content. [<a href="https://example.org/consensus/1" rel="cito:citesAsSourceDocument">Source</a>]</p>
+
+  // position the markup according to previous subject and level labels positions
 
 
   //span or p:

@@ -411,6 +411,7 @@ export function processAction(action, formValues, selectionData) {
       // console.log(data)
 
       //This only updates the DOM. Nothing further. The 'id' is not used.
+      restoreSelection(this.selection);
       noteData = createNoteData(data);
 
       break;

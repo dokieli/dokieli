@@ -7,7 +7,7 @@ import { formHandlerA, formHandlerAnnotate, formHandlerBlockquote, formHandlerIm
 import { ToolbarView, annotateFormControls } from "../toolbar.js"
 import { createRDFaHTMLRequirement, getCitationOptionsHTML, getLanguageOptionsHTML, getRequirementLevelOptionsHTML, getRequirementSubjectOptionsHTML } from "../../../doc.js"
 import { getResource } from "../../../fetcher.js"
-import { fragmentFromString } from "../../../util.js"
+import { fragmentFromString, stringFromFragment } from "../../../util.js"
 import Config from "../../../config.js";
 import { htmlEncode } from "../../../utils/html.js";
 
@@ -322,16 +322,25 @@ TODO:
   }
 
 
+nodeToHTML(node, schema) {
+  const serializer = DOMSerializer.fromSchema(schema);
+  const fragment = serializer.serializeFragment(node.content);
+  const div = document.createElement('div');
+  div.appendChild(fragment);
+  return div.innerHTML;
+}
+
+
   replaceSelectionWithFragment(fragment) {
     console.log("replaceSelection - author")
     // console.log(fragment)
     const { state, dispatch } = this.editorView;
     const { selection, schema } = state;
-
+console.log(stringFromFragment(fragment))
     console.log(selection)
     // parseSlice(fragment, { preserveWhitespace: true })
     let node = DOMParser.fromSchema(schema).parseSlice(fragment);
-  
+    console.log(this.nodeToHTML(node, schema));
     let tr = state.tr.replaceSelection(node);
     // console.log(tr)
     dispatch(tr);
@@ -444,6 +453,7 @@ TODO:
     console.log(selectedTextContent);
 
     var requirementSubjectURI, requirementSubjectLabel, requirementLevelURI, requirementLevelLabel;
+    var prevRequirementSubjectLabel, prevRequirementLevelLabel;
 
     const requirementSubject = document.querySelector('#requirement-subject');
     if (requirementSubject) {
@@ -453,6 +463,7 @@ TODO:
           option.selected = true;
           requirementSubjectLabel = optionTextContent;
           requirementSubjectURI = option.value;
+          prevRequirementSubjectLabel = requirementSubjectLabel;
         }
       });
     }
@@ -465,6 +476,7 @@ TODO:
           option.selected = true;
           requirementLevelLabel = optionTextContent;
           requirementLevelURI = option.value;
+          prevRequirementLevelLabel = requirementLevelLabel;
         }
       });
     }
@@ -484,11 +496,16 @@ TODO:
     var r = {};
     r.subject = requirementSubjectURI;
     r.level = requirementLevelURI;
+    r.prevSubjectLabel = prevRequirementSubjectLabel;
+    r.prevLevelLabel = prevRequirementLevelLabel;
+    r.selectedTextContent = selectedTextContent;
 
     var html = createRDFaHTMLRequirement(r, 'requirement')
 
+    console.log(html)
+
     var preview = document.querySelector('#requirement-preview-samp');
-    preview.appendChild(fragmentFromString(selectedTextContent));
+    preview.appendChild(fragmentFromString(html));
   }
 
   populateFormCitation(button, node, state) {

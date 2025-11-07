@@ -447,7 +447,10 @@ export function createNoteData(annotation) {
         textContent: selectionData.selectedContent
       };
 console.log('createNodeData::requirement', noteData);
-      ref = createRDFaHTMLRequirement(noteData, 'requirement');
+      // ref = createRDFaHTMLRequirement(noteData, 'requirement');
+      var preview = document.querySelector('#requirement-preview-samp');
+      ref = preview.getHTML();
+
 console.log(ref)
       DO.Editor.replaceSelectionWithFragment(fragmentFromString(ref));
 
