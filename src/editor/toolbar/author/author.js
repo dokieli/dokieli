@@ -332,7 +332,7 @@ nodeToHTML(node, schema) {
 
 
   replaceSelectionWithFragment(fragment) {
-    console.log("replaceSelection - author")
+    console.trace("replaceSelection - author")
     // console.log(fragment)
     const { state, dispatch } = this.editorView;
     const { selection, schema } = state;
@@ -341,6 +341,8 @@ console.log(stringFromFragment(fragment))
     // parseSlice(fragment, { preserveWhitespace: true })
     let node = DOMParser.fromSchema(schema).parseSlice(fragment);
     console.log(this.nodeToHTML(node, schema));
+    const selText = state.doc.textBetween(selection.from, selection.to, " ");
+    console.log("Selected text:", JSON.stringify(selText));
     let tr = state.tr.replaceSelection(node);
     // console.log(tr)
     dispatch(tr);
@@ -619,7 +621,7 @@ console.log(stringFromFragment(fragment))
     return {
       img: this.populateFormImg,
       citation: this.populateFormCitation,
-      requirement: this.populateFormRequirement
+      requirement: this.populateFormRequirement,
     }
   }
 

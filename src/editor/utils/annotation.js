@@ -446,7 +446,7 @@ export function createNoteData(annotation) {
         lang: language,
         textContent: selectionData.selectedContent
       };
-console.log('createNodeData::requirement', noteData);
+// console.log('createNodeData::requirement', noteData);
       // ref = createRDFaHTMLRequirement(noteData, 'requirement');
       var preview = document.querySelector('#requirement-preview-samp');
       ref = preview.getHTML();

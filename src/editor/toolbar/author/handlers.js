@@ -240,6 +240,8 @@ export function formHandlerRequirement(e, action) {
   restoreSelection(this.selection);
   // TODO: use prosemirror selection
   const selection = window.getSelection();
+  // TODO: only use the one below?
+  const storedSelection = this.selection;
 
   const range = selection.getRangeAt(0);
   const selectedParentElement = getSelectedParentElement(range);
@@ -256,6 +258,7 @@ export function formHandlerRequirement(e, action) {
   const selectionData = {
     selection,
     selector,
+    storedSelection,
     selectedParentElement,
     selectedContent: this.getSelectionAsHTML()
   };
@@ -267,7 +270,7 @@ console.log(selectionData)
 }
 
 
-export function processAction(action, formValues, selectionData) {
+export function processAction(action, formValues, selectionData, storedSelection) {
   const data = getFormActionData(action, formValues, selectionData);
 // console.log(data);
   // const { annotationDistribution, ...otherFormData } = data;
@@ -278,10 +281,11 @@ export function processAction(action, formValues, selectionData) {
 
   var noteData, note, asideNote, asideNode, parentSection;
 
-  noteData = createNoteData(data);
+  // noteData = createNoteData(data);
 
   switch(action) {
     case 'note':
+      noteData = createNoteData(data);
       note = createNoteDataHTML(noteData);
       // var nES = selectedParentElement.nextElementSibling;
       asideNote = `
@@ -298,6 +302,7 @@ export function processAction(action, formValues, selectionData) {
       break;
 
     case 'citation': //footnote reference
+    noteData = createNoteData(data);
       let { 'ref-type': refType, url: citationUrl, relation: citationRelation, content: citationContent, language: citationLanguage } = formData;
 
       //TODO: Refactor this what's in positionInteraction
@@ -411,8 +416,13 @@ export function processAction(action, formValues, selectionData) {
       // console.log(data)
 
       //This only updates the DOM. Nothing further. The 'id' is not used.
-      restoreSelection(this.selection);
+      if (storedSelection) {
+        restoreSelection(storedSelection);
+      }
+
       noteData = createNoteData(data);
+
+      // clearSelection();
 
       break;
 
