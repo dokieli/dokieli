@@ -8,15 +8,12 @@ import LinkHeader from "http-link-header";
 import { micromark as marked } from 'micromark';
 import { gfm, gfmHtml } from 'micromark-extension-gfm';
 import { gfmTagfilterHtml } from 'micromark-extension-gfm-tagfilter';
-import { DOMSerializer, Fragment, DOMParser as PmDOMParser } from 'prosemirror-model';
 import { Icon } from './ui/icons.js';
 import { showUserIdentityInput, signOut } from './auth.js'
 import { buttonIcons, getButtonHTML, updateButtons } from './ui/buttons.js'
 import { domSanitizeHTMLBody, domSanitize } from './utils/sanitization.js';
 import { cleanProseMirrorOutput, normalizeHTML } from './utils/normalization.js';
 import { formatHTML, getDoctype, htmlEncode } from './utils/html.js';
-import { schema } from './editor/schema/base.js';
-import { select } from 'd3-selection';
 
 const ns = Config.ns;
 
@@ -2352,7 +2349,6 @@ function getResourceInfoSpecRequirements(s) {
     info['spec']['requirement'][requirementIRI] = {};
 
     var requirementGraph = s.node(rdf.namedNode(requirementIRI));
-
     info['spec']['requirement'][requirementIRI][ns.spec.statement.value] = requirementGraph.out(ns.spec.statement).values[0];
     info['spec']['requirement'][requirementIRI][ns.spec.requirementSubject.value] = requirementGraph.out(ns.spec.requirementSubject).values[0];
     info['spec']['requirement'][requirementIRI][ns.spec.requirementLevel.value] = requirementGraph.out(ns.spec.requirementLevel).values[0];
