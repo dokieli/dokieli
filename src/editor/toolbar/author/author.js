@@ -468,6 +468,16 @@ console.log(stringFromFragment(fragment))
           prevRequirementSubjectLabel = requirementSubjectLabel;
         }
       });
+
+      requirementSubject.addEventListener('change', e => {
+        var selectedOptionValue = e.target.value;
+        var selectedOptionTextContent = e.target.querySelector(`[value="${selectedOptionValue}"]`).textContent.trim();
+
+        var requirementSubjectCurrentNode = node.querySelector('#requirement-preview-samp [rel="spec:requirementSubject"]');
+
+        requirementSubjectCurrentNode.setAttribute('resource', selectedOptionValue);
+        requirementSubjectCurrentNode.textContent = selectedOptionTextContent;
+      });
     }
 
     const requirementLevel = document.querySelector('#requirement-level');
@@ -480,6 +490,16 @@ console.log(stringFromFragment(fragment))
           requirementLevelURI = option.value;
           prevRequirementLevelLabel = requirementLevelLabel;
         }
+      });
+
+      requirementLevel.addEventListener('change', e => {
+        var selectedOptionValue = e.target.value;
+        var selectedOptionTextContent = e.target.querySelector(`[value="${selectedOptionValue}"]`).textContent.trim();
+
+        var requirementLevelCurrentNode = node.querySelector('#requirement-preview-samp [rel="spec:requirementLevel"]');
+
+        requirementLevelCurrentNode.setAttribute('resource', selectedOptionValue);
+        requirementLevelCurrentNode.textContent = selectedOptionTextContent;
       });
     }
 
