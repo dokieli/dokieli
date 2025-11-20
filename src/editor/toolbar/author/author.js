@@ -162,14 +162,15 @@ export class AuthorToolbar extends ToolbarView {
           <select class="editor-form-select" id="requirement-subject" name="requirement-subject">${getRequirementSubjectOptionsHTML(options)}</select>
           <label for="requirement-level">Requirement Level</label>
           <select class="editor-form-select" id="requirement-level" name="requirement-level">${getRequirementLevelOptionsHTML(options)}</select>
-          <label for="requirement-consensus">Consensus source</label>
-          <input class="editor-form-input" id="requirement-consensus" name="requirement-consensus" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" type="url" value="" />
-          <label for="requirement-language">Language</label>
-          <select class="editor-form-select" id="requirement-language" name="requirement-language">${getLanguageOptionsHTML()}</select>
           <button class="editor-form-submit" title="Save" type="submit">Save</button>
           <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
         </fieldset>
       `,
+
+          // <label for="requirement-consensus">Consensus source</label>
+          // <input class="editor-form-input" id="requirement-consensus" name="requirement-consensus" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" type="url" value="" />
+          // <label for="requirement-language">Language</label>
+          // <select class="editor-form-select" id="requirement-language" name="requirement-language">${getLanguageOptionsHTML()}</select>
 
       semantics: (options) => `
         <fieldset>
@@ -332,18 +333,26 @@ nodeToHTML(node, schema) {
 
 
   replaceSelectionWithFragment(fragment) {
-    console.trace("replaceSelection - author")
     // console.log(fragment)
     const { state, dispatch } = this.editorView;
     const { selection, schema } = state;
-console.log(stringFromFragment(fragment))
     console.log(selection)
     // parseSlice(fragment, { preserveWhitespace: true })
     let node = DOMParser.fromSchema(schema).parseSlice(fragment);
-    console.log(this.nodeToHTML(node, schema));
     const selText = state.doc.textBetween(selection.from, selection.to, " ");
-    console.log("Selected text:", JSON.stringify(selText));
     let tr = state.tr.replaceSelection(node);
+    // console.log(tr)
+    dispatch(tr);
+  }
+
+  replaceSelectionWithNodeFromFragment(fragment) {
+    // console.log(fragment)
+    const { state, dispatch } = this.editorView;
+    const { selection, schema } = state;
+    // parseSlice(fragment, { preserveWhitespace: true })
+    let node = DOMParser.fromSchema(schema).parse(fragment);
+    const selText = state.doc.textBetween(selection.from, selection.to, " ");
+    let tr = state.tr.replaceSelectionWith(node);
     // console.log(tr)
     dispatch(tr);
   }
@@ -448,11 +457,7 @@ console.log(stringFromFragment(fragment))
   }
 
   populateFormRequirement(button, node, state) {
-    console.log(button, node, state)
-    console.log(state.selection, state.selection.from, state.selection.to);
-
     var selectedTextContent = state.doc.textBetween(state.selection.from, state.selection.to, "\n");
-    console.log(selectedTextContent);
 
     var requirementSubjectURI, requirementSubjectLabel, requirementLevelURI, requirementLevelLabel;
     var prevRequirementSubjectLabel, prevRequirementLevelLabel;
@@ -505,15 +510,30 @@ console.log(stringFromFragment(fragment))
 
     //XXX: If the selection already includes a link with relation cito:citesAsSourceDocument or spec:basedOnConsensus, use that to populate #requirement-consensus. Is this the best way:
     const requirementConsensus = document.querySelector('#requirement-consensus');
-
-    state.doc.nodesBetween(state.selection.from, state.selection.to, node => {
-      node.marks.forEach(mark => {
-        // console.log(mark)
-        if (mark.type.name === 'a' && ['cito:citesAsSourceDocument','spec:basedOnConsensus'].includes(mark.attrs.originalAttributes.rel)) {
-          requirementConsensus.value = mark.attrs.originalAttributes.href;
-        }
+    if (requirementConsensus) {
+      state.doc.nodesBetween(state.selection.from, state.selection.to, node => {
+        node.marks.forEach(mark => {
+          // console.log(mark)
+          if (mark.type.name === 'a' && ['cito:citesAsSourceDocument','spec:basedOnConsensus'].includes(mark.attrs.originalAttributes.rel)) {
+            requirementConsensus.value = mark.attrs.originalAttributes.href;
+          }
+        });
       });
-    });
+    }
+
+    let selectedLanguage = '';
+    const requirementLanguage = document.querySelector('#requirement-language');
+
+    if (requirementLanguage) {
+      requirementLanguage.addEventListener('change', e => {
+        selectedLanguage = e.target.value;
+
+        var requirementCurrentNode = node.querySelector('#requirement-preview-samp [rel="spec:requirement"]');
+
+        requirementCurrentNode.setAttribute('lang', selectedLanguage);
+        requirementCurrentNode.setAttribute('xml:lang', selectedLanguage);
+      });
+    }
 
     var r = {};
     r.subject = requirementSubjectURI;
@@ -521,13 +541,15 @@ console.log(stringFromFragment(fragment))
     r.prevSubjectLabel = prevRequirementSubjectLabel;
     r.prevLevelLabel = prevRequirementLevelLabel;
     r.selectedTextContent = selectedTextContent;
+    r.lang = selectedLanguage;
+    r.basedOnConsensus = requirementConsensus;
 
     var html = createRDFaHTMLRequirement(r, 'requirement')
 
-    console.log(html)
+    // console.log(html)
 
     var preview = document.querySelector('#requirement-preview-samp');
-    preview.appendChild(fragmentFromString(html));
+    preview.replaceChildren(fragmentFromString(html));
   }
 
   populateFormCitation(button, node, state) {

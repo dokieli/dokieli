@@ -1,5 +1,5 @@
 import { fragmentFromString, generateUUID } from "./../../util.js";
-import { createRDFaHTML, createRDFaHTMLRequirement, tagsToBodyObjects } from "./../../doc.js";
+import { tagsToBodyObjects } from "./../../doc.js";
 import { Icon } from "../../ui/icons.js";
 import Config from "../../config.js";
 import { generateDataURI } from "../../uri.js";
@@ -451,8 +451,11 @@ export function createNoteData(annotation) {
       var preview = document.querySelector('#requirement-preview-samp');
       ref = preview.getHTML();
 
-console.log(ref)
-      DO.Editor.replaceSelectionWithFragment(fragmentFromString(ref));
+// console.log(ref)
+// console.log(fragmentFromString(ref))
+
+      // DO.Editor.replaceSelectionWithFragment(fragmentFromString(ref));
+      DO.Editor.replaceSelectionWithNodeFromFragment(fragmentFromString(ref));
 
       break;
   }

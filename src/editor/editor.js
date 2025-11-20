@@ -188,6 +188,7 @@ export class Editor {
     return toolbarView?.showTextQuoteSelectorFromLocation();
   }
 
+  // Intended for inserting marks
   replaceSelectionWithFragment(fragment){
     // console.log(this)
     const toolbarView = this.authorToolbarView || this.socialToolbarView;
@@ -196,6 +197,16 @@ export class Editor {
     // console.log(toolbarView?.replaceSelectionWithFragment)
     return toolbarView?.replaceSelectionWithFragment(fragment)
   }
+
+  replaceSelectionWithNodeFromFragment(fragment){
+    // console.log(this)
+    const toolbarView = this.authorToolbarView || this.socialToolbarView;
+    // console.log('mode',this.mode)
+    // console.log('toolbar',toolbarView)
+    // console.log(toolbarView?.replaceSelectionWithFragment)
+    return toolbarView?.replaceSelectionWithNodeFromFragment(fragment)
+  }
+
 
   insertFragmentInNode(fragment, parentNode){
     const toolbarView = this.authorToolbarView || this.socialToolbarView;

@@ -3711,10 +3711,8 @@ function createRDFaHTML(r, mode) {
   return s;
 }
 
-
+//TODO: Work on HTML nodes instead of the selected text
 function createRDFaHTMLRequirement(r, mode) {
-  console.log(r)
-
   var s = '', about = '', property = '', rel = '', resource = '', href = '', content = '', langDatatype = '', typeOf = '', idValue = '', id = '', subject = '', level = '', basedOnConsensus;
 
   var idValue = r.id || generateAttributeId();
@@ -3740,6 +3738,8 @@ function createRDFaHTMLRequirement(r, mode) {
   }
 
   //TODO: Perhaps the value passed to this function should include both requirementSubjectURI and requirementSubjectLabel. For now this is URI and label is derived :( Same goes for requirement level.
+
+  //TODO: Handle undefined r.subject, level etc.
   var requirementSubjectURI = r.subject;
   var requirementSubjectLabel = getFragmentOrLastPath(requirementSubjectURI);
   var requirementLevelURI = r.level;
@@ -3751,10 +3751,8 @@ function createRDFaHTMLRequirement(r, mode) {
   var requirementSubject = `<span rel="spec:requirementSubject" resource="${requirementSubjectURI}">${requirementSubjectLabel}</span>`;
   var requirementLevel = `<span rel="spec:requirementLevel" resource="${requirementLevelURI}">${requirementLevelLabel}</span>`;
 
-  console.log('requirementSubject', requirementSubject);
-  console.log('requirementLevel', requirementLevel);
   // var statement = `<span property="spec:statement">${requirementSubject}${requirementLevel}</span>`'
-  console.log(selectedTextContent);
+  // console.log(selectedTextContent);
 
   const subjectLabel = prevRequirementSubjectLabel;
   const levelLabel = prevRequirementLevelLabel;
@@ -3791,7 +3789,7 @@ function createRDFaHTMLRequirement(r, mode) {
 
   s = '<' + element + about + id + langDatatype + rel + resource + typeOf + '>' + statement + '</' + element + '>';
 
-  console.log(s)
+  // console.log(s)
 
   return s;
 }

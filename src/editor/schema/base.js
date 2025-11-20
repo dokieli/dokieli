@@ -686,12 +686,6 @@ const schema = new Schema({
   marks: marks
 });
 
-console.log("Paragraph parseDOM rules:", schema.spec.nodes.get("p"));
-
-console.log("Span parseDOM rules:", schema.spec.nodes.get("span"));
-
-
-
 // console.log(schema);
 
 export { schema };

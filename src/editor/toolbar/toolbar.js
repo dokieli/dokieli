@@ -1,6 +1,6 @@
 import { schema } from "../schema/base.js"
 import { buttonIcons, getButtonHTML } from "../../ui/buttons.js"
-import { getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getDocument, getDocumentContentNode, getLanguageOptionsHTML, getLicenseOptionsHTML, getReferenceLabel } from "../../doc.js";
+import { getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getClassesOfProductsConcepts, getDocument, getDocumentContentNode, getLanguageOptionsHTML, getLicenseOptionsHTML, getReferenceLabel } from "../../doc.js";
 import { getTextQuoteHTML, cloneSelection, restoreSelection, setSelection, getSelectedParentElement } from "../utils/annotation.js";
 import { escapeRegExp, matchAllIndex, fragmentFromString } from "../../util.js";
 import { showUserIdentityInput } from "../../auth.js";
@@ -17,7 +17,18 @@ export class ToolbarView {
     this.toolbarPopups = this.getToolbarPopups()
     this.selection = null;
 
-    this.buttons = buttons.map(button => { return { button, command: this.toolbarCommands[button], dom: () => fragmentFromString(getButtonHTML({ button })).firstChild } })
+    this.buttons = buttons.map(button => { 
+      let buttonDisabled = false;
+
+      if (button === 'requirement' && !getClassesOfProductsConcepts().length) {
+        buttonDisabled = true;
+      }
+      return { 
+        button, 
+        command: this.toolbarCommands[button], 
+        dom: () => fragmentFromString(getButtonHTML({ button, buttonDisabled })).firstChild 
+      } 
+    })
 
     this.populateForms = this.getPopulateForms();
 
@@ -159,12 +170,16 @@ export class ToolbarView {
 
       const formContent = toolbarForm.querySelector(`textarea#${button}-content`);
       const formFirstInput = toolbarForm.querySelector('input');
+      const formFirstSelect = toolbarForm.querySelector('select');
 
       if (formContent) {
         formContent.focus();
       }
-      else {
+      else if (formFirstInput) {
         formFirstInput.focus();
+      } 
+      else if (formFirstSelect) {
+        formFirstSelect.focus();
       }
 
       const lastClickedButton = this.dom.querySelector(`#editor-button-${button}`);
