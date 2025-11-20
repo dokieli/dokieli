@@ -1,5 +1,5 @@
 import { fragmentFromString, generateUUID } from "./../../util.js";
-import { createRDFaHTML, tagsToBodyObjects } from "./../../doc.js";
+import { tagsToBodyObjects } from "./../../doc.js";
 import { Icon } from "../../ui/icons.js";
 import Config from "../../config.js";
 import { generateDataURI } from "../../uri.js";
@@ -167,7 +167,7 @@ export function createNoteData(annotation) {
   // console.log(annotation)
 
   const { tagging, content, language, license, ['ref-type']: refType, url,
-    about, resource, ['typeof']: typeOf, href, rel, property, datatype
+    about, resource, ['typeof']: typeOf, href, rel, property, datatype, subject, level
   } = formData;
 
   // console.log(formData)
@@ -437,25 +437,25 @@ export function createNoteData(annotation) {
 
       break;
 
-    case 'semantics':
+    case 'requirement':
       //TODO: inlist, prefix
       //TODO: lang/xmlllang
       noteData = {
-        about,
-        typeOf,
-        rel,
-        href,
-        resource,
-        property,
-        content,
-        datatype,
+        subject,
+        level,
         lang: language,
         textContent: selectionData.selectedContent
       };
+// console.log('createNodeData::requirement', noteData);
+      // ref = createRDFaHTMLRequirement(noteData, 'requirement');
+      var preview = document.querySelector('#requirement-preview-samp');
+      ref = preview.getHTML();
 
-      ref = createRDFaHTML(noteData, 'expanded');
+// console.log(ref)
+// console.log(fragmentFromString(ref))
 
-      DO.Editor.replaceSelectionWithFragment(fragmentFromString(ref));
+      // DO.Editor.replaceSelectionWithFragment(fragmentFromString(ref));
+      DO.Editor.replaceSelectionWithNodeFromFragment(fragmentFromString(ref));
 
       break;
   }

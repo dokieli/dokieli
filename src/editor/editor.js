@@ -188,6 +188,7 @@ export class Editor {
     return toolbarView?.showTextQuoteSelectorFromLocation();
   }
 
+  // Intended for inserting marks
   replaceSelectionWithFragment(fragment){
     // console.log(this)
     const toolbarView = this.authorToolbarView || this.socialToolbarView;
@@ -196,6 +197,16 @@ export class Editor {
     // console.log(toolbarView?.replaceSelectionWithFragment)
     return toolbarView?.replaceSelectionWithFragment(fragment)
   }
+
+  replaceSelectionWithNodeFromFragment(fragment){
+    // console.log(this)
+    const toolbarView = this.authorToolbarView || this.socialToolbarView;
+    // console.log('mode',this.mode)
+    // console.log('toolbar',toolbarView)
+    // console.log(toolbarView?.replaceSelectionWithFragment)
+    return toolbarView?.replaceSelectionWithNodeFromFragment(fragment)
+  }
+
 
   insertFragmentInNode(fragment, parentNode){
     const toolbarView = this.authorToolbarView || this.socialToolbarView;
@@ -219,7 +230,7 @@ export class Editor {
         // console.log(editorView);
 
         //TODO: 'math', 'sparkline',
-        this.authorToolbarView = new AuthorToolbar('author', ['p', 'h1', 'h2', 'h3', 'h4', 'em', 'strong', 'a', 'img', 'ol', 'ul', 'pre', 'code', 'blockquote', 'q', 'semantics', 'citation', 'note'], editorView);
+        this.authorToolbarView = new AuthorToolbar('author', ['p', 'h1', 'h2', 'h3', 'h4', 'em', 'strong', 'a', 'img', 'ol', 'ul', 'pre', 'code', 'blockquote', 'q', 'semantics', 'citation', 'requirement', 'note'], editorView);
 
         // Append DOM portion of toolbar to current editor.
         // editorView.dom.parentNode.appendChild(toolbarView.dom);

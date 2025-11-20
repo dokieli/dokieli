@@ -436,7 +436,7 @@ let customNodes = {
     inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "circle", getAttrs(node) { return getAttributes(node) }}],
-    toDOM(node) { return ["http://www.w3.org/2000/svg circle", { ...node.attrs.originalAttributes }] }
+    toDOM(node) { return ["http://www.w3.org/2000/svg circle", { ...node.attrs.originalAttributes }, 0]}
   },
   line: {
     content: "inline+",
@@ -444,7 +444,7 @@ let customNodes = {
     inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "line", getAttrs(node) { return getAttributes(node) }}],
-    toDOM(node) { return ["http://www.w3.org/2000/svg line", { ...node.attrs.originalAttributes }] }
+    toDOM(node) { return ["http://www.w3.org/2000/svg line", { ...node.attrs.originalAttributes }, 0] }
   },
   svgText: {
     content: "inline*",

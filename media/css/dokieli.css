@@ -2688,15 +2688,56 @@ border-color: transparent transparent transparent #009000 !important;
   }
   }
 
+#editor-form-requirement {
+left:15%;
+max-width:70%;
+}
 
-#editor-form-semantics fieldset {
+#editor-form-requirement fieldset{
   display: grid;
-  grid-template-columns: auto auto;
-  grid-auto-rows: auto;
+  grid-template-columns: auto 1fr 1fr 1fr;
+  grid-template-rows: auto auto auto auto auto auto;
   grid-gap: 0.5em;
   border: none;
   padding-block: 0;
+  
+  grid-template-areas: 
+    "legend legend legend legend"
+    "dl dl dl dl"
+    "label1 input1 . ."
+    "label2 input2 . ."
+    ". . button1 button2";
 
+  legend {
+    grid-area: legend;
+  }
+
+  dl {
+    grid-area: dl;
+  }
+
+  label:nth-of-type(1) {
+    grid-area: label1;
+  }
+  label:nth-of-type(2) {
+    grid-area: label2;
+  }
+  label:nth-of-type(3) {
+    grid-area: label3;
+  }
+  select:nth-of-type(1) {
+    grid-area: input1;
+  }
+  select:nth-of-type(2) {
+    grid-area: input2;
+  }
+
+  button:nth-of-type(1) {
+    grid-area: button1;
+  }
+  button:nth-of-type(2) {
+    grid-area: button2;
+  }
 }
 
 #editor-form-a fieldset{
@@ -3399,13 +3440,17 @@ height:auto;
     min-width: 50px;
     -webkit-transition: background-color .2s ease-in;
             transition: background-color .2s ease-in; }
-    .editor-toolbar li button:hover{
+    .editor-toolbar li button:not(:disabled):hover{
       background-color: #EEE;
       color: #080; }
-    .editor-toolbar li button.editor-button-active svg,
-    .editor-toolbar li button:hover svg, 
-    .editor-toolbar li button:focus {
+    .editor-toolbar li button:not(:disabled).editor-button-active svg,
+    .editor-toolbar li button:not(:disabled):hover svg, 
+    .editor-toolbar li button:not(:disabled):focus {
       fill: #080; }
+
+    .editor-toolbar li button:disabled {
+      cursor: default;
+    }
 
     .editor-toolbar li button:focus {
       border: 2px solid black;

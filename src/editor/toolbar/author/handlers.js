@@ -162,7 +162,7 @@ export function formHandlerAnnotate(e, action) {
   this.clearToolbarButton('note');
 }
 
-//TODO: 
+
 export function formHandlerCitation(e, action) {
   e.preventDefault();
   e.stopPropagation();
@@ -233,7 +233,46 @@ export function formHandlerSemantics(e, action) {
   this.clearToolbarButton('semantics');
 }
 
-export function processAction(action, formValues, selectionData) {
+export function formHandlerRequirement(e, action) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  restoreSelection(this.selection);
+  // TODO: use prosemirror selection
+  const selection = window.getSelection();
+  // TODO: only use the one below?
+  const storedSelection = this.selection;
+
+  const range = selection.getRangeAt(0);
+  const selectedParentElement = getSelectedParentElement(range);
+
+  const formValues = getFormValues(e.target);
+
+// console.log(formValues);
+
+  //TODO: Mark the selection after successful comment. Move out.
+  //TODO: Use node.textBetween to determine prefix, exact, suffix + parentnode with closest id
+  //Mark the selected content in the document
+  const selector = this.getTextQuoteSelector();
+
+  const selectionData = {
+    selection,
+    selector,
+    storedSelection,
+    selectedParentElement,
+    selectedContent: this.getSelectionAsHTML()
+  };
+
+  // console.log(selectionData)
+
+  processAction(action, formValues, selectionData);
+
+  this.clearToolbarForm(e.target);
+  this.clearToolbarButton('requirement');
+}
+
+
+export function processAction(action, formValues, selectionData, storedSelection) {
   const data = getFormActionData(action, formValues, selectionData);
 // console.log(data);
   // const { annotationDistribution, ...otherFormData } = data;
@@ -244,10 +283,11 @@ export function processAction(action, formValues, selectionData) {
 
   var noteData, note, asideNote, asideNode, parentSection;
 
-  noteData = createNoteData(data);
+  // noteData = createNoteData(data);
 
   switch(action) {
     case 'note':
+      noteData = createNoteData(data);
       note = createNoteDataHTML(noteData);
       // var nES = selectedParentElement.nextElementSibling;
       asideNote = `
@@ -264,6 +304,7 @@ export function processAction(action, formValues, selectionData) {
       break;
 
     case 'citation': //footnote reference
+    noteData = createNoteData(data);
       let { 'ref-type': refType, url: citationUrl, relation: citationRelation, content: citationContent, language: citationLanguage } = formData;
 
       //TODO: Refactor this what's in positionInteraction
@@ -373,13 +414,19 @@ export function processAction(action, formValues, selectionData) {
       }
       break;
 
-    // case 'semantics':
-    //   // console.log(data)
+    case 'requirement':
+      // console.log(data)
 
-    //   //This only updates the DOM. Nothing further. The 'id' is not used.
-    //   noteData = createNoteData(data);
+      //This only updates the DOM. Nothing further. The 'id' is not used.
+      if (storedSelection) {
+        restoreSelection(storedSelection);
+      }
 
-    //   break;
+      noteData = createNoteData(data);
+
+      // clearSelection();
+
+      break;
 
   }
 }

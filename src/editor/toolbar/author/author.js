@@ -3,11 +3,11 @@ import { wrapInList, liftListItem } from "prosemirror-schema-list"
 import { DOMSerializer, DOMParser } from "prosemirror-model"
 import { TextSelection } from "prosemirror-state"
 import { schema, allowedEmptyAttributes } from "./../../schema/base.js"
-import { formHandlerA, formHandlerAnnotate, formHandlerBlockquote, formHandlerImg, formHandlerQ, formHandlerCitation, formHandlerSemantics } from "./handlers.js"
+import { formHandlerA, formHandlerAnnotate, formHandlerBlockquote, formHandlerImg, formHandlerQ, formHandlerCitation, formHandlerRequirement, formHandlerSemantics } from "./handlers.js"
 import { ToolbarView, annotateFormControls } from "../toolbar.js"
-import { getCitationOptionsHTML, getLanguageOptionsHTML } from "../../../doc.js"
+import { createRDFaHTMLRequirement, getCitationOptionsHTML, getLanguageOptionsHTML, getRequirementLevelOptionsHTML, getRequirementSubjectOptionsHTML } from "../../../doc.js"
 import { getResource } from "../../../fetcher.js"
-import { fragmentFromString } from "../../../util.js"
+import { fragmentFromString, stringFromFragment } from "../../../util.js"
 import Config from "../../../config.js";
 import { htmlEncode } from "../../../utils/html.js";
 
@@ -28,6 +28,7 @@ export class AuthorToolbar extends ToolbarView {
       img: [ { event: 'submit', callback: this.formHandlerImg }, { event: 'click', callback: (e) => this.formClickHandler(e, 'img') } ],
       semantics: [ { event: 'submit', callback: (e) => this.formHandlerSemantics(e, 'semantics') }, { event: 'click', callback: (e) => this.formClickHandler(e, 'semantics') } ],
       citation: [ { event: 'submit', callback: (e) => this.formHandlerCitation(e, 'citation') }, { event: 'click', callback: (e) => this.formClickHandler(e, 'citation') } ],
+      requirement: [ { event: 'submit', callback: (e) => this.formHandlerRequirement(e, 'requirement') }, { event: 'click', callback: (e) => this.formClickHandler(e, 'requirement') } ],
       note: [ { event: 'submit', callback: (e) => this.formHandlerAnnotate(e, 'note') }, { event: 'click', callback: (e) => this.formClickHandler(e, 'note') } ],
     }
   }
@@ -39,6 +40,7 @@ export class AuthorToolbar extends ToolbarView {
       { name: 'formHandlerBlockquote', fn: formHandlerBlockquote },
       { name: 'formHandlerImg', fn: formHandlerImg },
       { name: 'formHandlerCitation', fn: formHandlerCitation },
+      { name: 'formHandlerRequirement', fn: formHandlerRequirement },
       // { name: 'formHandlerSparkline', fn: formHandlerSparkline },
       { name: 'formHandlerSemantics', fn: formHandlerSemantics },
       { name: 'formHandlerAnnotate', fn: formHandlerAnnotate },
@@ -71,6 +73,7 @@ export class AuthorToolbar extends ToolbarView {
   getFormLegends() {
     return {
       note: 'Add note',
+      requirement: 'Add requirement'
     }
   }
 
@@ -147,6 +150,27 @@ export class AuthorToolbar extends ToolbarView {
           <div class="specref-search-results"></div>
         </fieldset>
       `,
+
+      requirement: (options) => `
+        <fieldset>
+          <legend>${options.legend}</legend>
+          <dl id="requirement-preview">
+            <dt>Preview</dt>
+            <dd><samp id="requirement-preview-samp"></samp></dd>
+          </dl>
+          <label for="requirement-subject">Requirement Subject</label>
+          <select class="editor-form-select" id="requirement-subject" name="requirement-subject">${getRequirementSubjectOptionsHTML(options)}</select>
+          <label for="requirement-level">Requirement Level</label>
+          <select class="editor-form-select" id="requirement-level" name="requirement-level">${getRequirementLevelOptionsHTML(options)}</select>
+          <button class="editor-form-submit" title="Save" type="submit">Save</button>
+          <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
+        </fieldset>
+      `,
+
+          // <label for="requirement-consensus">Consensus source</label>
+          // <input class="editor-form-input" id="requirement-consensus" name="requirement-consensus" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" type="url" value="" />
+          // <label for="requirement-language">Language</label>
+          // <select class="editor-form-select" id="requirement-language" name="requirement-language">${getLanguageOptionsHTML()}</select>
 
       semantics: (options) => `
         <fieldset>
@@ -261,16 +285,16 @@ TODO:
     // console.log(selectedParentElement)
 
     // var selectionState = MediumEditor.selection.exportSelection(selectedParentElement, this.document);
-    // var prefixStart = Math.max(0, start - Config.ContextLength);
+    var prefixStart = Math.max(0, from - Config.ContextLength);
     // console.log('pS ' + prefixStart);
     // var prefix = selectedParentElement.textContent.substr(prefixStart, start - prefixStart);
-    let prefix = doc.textBetween(from - contextLength, from)  // consider \n
+    let prefix = doc.textBetween(prefixStart, from)  // consider \n
     // console.log('-' + prefix + '-');
     prefix = htmlEncode(prefix);
     
-    // var suffixEnd = Math.min(selectedParentElement.textContent.length, end + Config.ContextLength);
+    var suffixEnd = Math.min(selectedParentElement.textContent.length, to + Config.ContextLength);
     // console.log('sE ' + suffixEnd);
-    let suffix =  doc.textBetween(to, to + contextLength)  // consider \n
+    let suffix =  doc.textBetween(to, suffixEnd)  // consider \n
     // console.log('-' + suffix + '-');
     suffix = htmlEncode(suffix);
 
@@ -299,14 +323,36 @@ TODO:
   }
 
 
+nodeToHTML(node, schema) {
+  const serializer = DOMSerializer.fromSchema(schema);
+  const fragment = serializer.serializeFragment(node.content);
+  const div = document.createElement('div');
+  div.appendChild(fragment);
+  return div.innerHTML;
+}
+
+
   replaceSelectionWithFragment(fragment) {
     // console.log(fragment)
     const { state, dispatch } = this.editorView;
     const { selection, schema } = state;
+    console.log(selection)
     // parseSlice(fragment, { preserveWhitespace: true })
     let node = DOMParser.fromSchema(schema).parseSlice(fragment);
-  
+    const selText = state.doc.textBetween(selection.from, selection.to, " ");
     let tr = state.tr.replaceSelection(node);
+    // console.log(tr)
+    dispatch(tr);
+  }
+
+  replaceSelectionWithNodeFromFragment(fragment) {
+    // console.log(fragment)
+    const { state, dispatch } = this.editorView;
+    const { selection, schema } = state;
+    // parseSlice(fragment, { preserveWhitespace: true })
+    let node = DOMParser.fromSchema(schema).parse(fragment);
+    const selText = state.doc.textBetween(selection.from, selection.to, " ");
+    let tr = state.tr.replaceSelectionWith(node);
     // console.log(tr)
     dispatch(tr);
   }
@@ -410,13 +456,109 @@ TODO:
     });
   }
 
+  populateFormRequirement(button, node, state) {
+    var selectedTextContent = state.doc.textBetween(state.selection.from, state.selection.to, "\n");
+
+    var requirementSubjectURI, requirementSubjectLabel, requirementLevelURI, requirementLevelLabel;
+    var prevRequirementSubjectLabel, prevRequirementLevelLabel;
+
+    const requirementSubject = document.querySelector('#requirement-subject');
+    if (requirementSubject) {
+      requirementSubject.querySelectorAll('option').forEach(option => {
+        var optionTextContent = option.textContent.trim();
+        if (selectedTextContent.includes(optionTextContent)) {
+          option.selected = true;
+          requirementSubjectLabel = optionTextContent;
+          requirementSubjectURI = option.value;
+          prevRequirementSubjectLabel = requirementSubjectLabel;
+        }
+      });
+
+      requirementSubject.addEventListener('change', e => {
+        var selectedOptionValue = e.target.value;
+        var selectedOptionTextContent = e.target.querySelector(`[value="${selectedOptionValue}"]`).textContent.trim();
+
+        var requirementSubjectCurrentNode = node.querySelector('#requirement-preview-samp [rel="spec:requirementSubject"]');
+
+        requirementSubjectCurrentNode.setAttribute('resource', selectedOptionValue);
+        requirementSubjectCurrentNode.textContent = selectedOptionTextContent;
+      });
+    }
+
+    const requirementLevel = document.querySelector('#requirement-level');
+    if (requirementLevel) {
+      requirementLevel.querySelectorAll('option').forEach(option => {
+        var optionTextContent = option.textContent.trim();
+        if (selectedTextContent.includes(optionTextContent)) {
+          option.selected = true;
+          requirementLevelLabel = optionTextContent;
+          requirementLevelURI = option.value;
+          prevRequirementLevelLabel = requirementLevelLabel;
+        }
+      });
+
+      requirementLevel.addEventListener('change', e => {
+        var selectedOptionValue = e.target.value;
+        var selectedOptionTextContent = e.target.querySelector(`[value="${selectedOptionValue}"]`).textContent.trim();
+
+        var requirementLevelCurrentNode = node.querySelector('#requirement-preview-samp [rel="spec:requirementLevel"]');
+
+        requirementLevelCurrentNode.setAttribute('resource', selectedOptionValue);
+        requirementLevelCurrentNode.textContent = selectedOptionTextContent;
+      });
+    }
+
+    //XXX: If the selection already includes a link with relation cito:citesAsSourceDocument or spec:basedOnConsensus, use that to populate #requirement-consensus. Is this the best way:
+    const requirementConsensus = document.querySelector('#requirement-consensus');
+    if (requirementConsensus) {
+      state.doc.nodesBetween(state.selection.from, state.selection.to, node => {
+        node.marks.forEach(mark => {
+          // console.log(mark)
+          if (mark.type.name === 'a' && ['cito:citesAsSourceDocument','spec:basedOnConsensus'].includes(mark.attrs.originalAttributes.rel)) {
+            requirementConsensus.value = mark.attrs.originalAttributes.href;
+          }
+        });
+      });
+    }
+
+    let selectedLanguage = '';
+    const requirementLanguage = document.querySelector('#requirement-language');
+
+    if (requirementLanguage) {
+      requirementLanguage.addEventListener('change', e => {
+        selectedLanguage = e.target.value;
+
+        var requirementCurrentNode = node.querySelector('#requirement-preview-samp [rel="spec:requirement"]');
+
+        requirementCurrentNode.setAttribute('lang', selectedLanguage);
+        requirementCurrentNode.setAttribute('xml:lang', selectedLanguage);
+      });
+    }
+
+    var r = {};
+    r.subject = requirementSubjectURI;
+    r.level = requirementLevelURI;
+    r.prevSubjectLabel = prevRequirementSubjectLabel;
+    r.prevLevelLabel = prevRequirementLevelLabel;
+    r.selectedTextContent = selectedTextContent;
+    r.lang = selectedLanguage;
+    r.basedOnConsensus = requirementConsensus;
+
+    var html = createRDFaHTMLRequirement(r, 'requirement')
+
+    // console.log(html)
+
+    var preview = document.querySelector('#requirement-preview-samp');
+    preview.replaceChildren(fragmentFromString(html));
+  }
+
   populateFormCitation(button, node, state) {
     // const { selection } = state;
     // const { from, to } = selection;
     const citationSpecRefSearch = document.querySelector('#citation-specref-search');
     // console.log(citationSpecRefSearch);
   
-    const citationUrl = document.querySelector('#citation-url');  
+    const citationUrl = document.querySelector('#citation-url');
     // console.log(citationUrl);
   
     citationSpecRefSearch.focus();
@@ -520,7 +662,8 @@ TODO:
   getPopulateForms() {
     return {
       img: this.populateFormImg,
-      citation: this.populateFormCitation
+      citation: this.populateFormCitation,
+      requirement: this.populateFormRequirement,
     }
   }
 

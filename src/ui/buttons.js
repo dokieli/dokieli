@@ -153,6 +153,10 @@ export const buttonIcons = {
     title: 'note (internal)',
     icon: Icon['.fas.fa-sticky-note']
   },
+  requirement: {
+    title: 'requirement',
+    icon: Icon['.fas.fa-microchip']
+  },
   semantics: {
     title: 'semantics',
     icon: Icon['.fas.fa-rocket']

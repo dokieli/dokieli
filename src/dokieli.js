@@ -2260,7 +2260,7 @@ DO = {
             else {
               reviewOptions['message'] = `Local unpublished changes. Remote changed. Review changes.`;
               console.log(reviewOptions['message'])
-              console.log(localContent, remoteContent)
+              // console.log(localContent, remoteContent)
               DO.U.showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
             }
           }
@@ -2409,7 +2409,7 @@ DO = {
       
       // const diff = diffArrays(remoteTokens, localTokens).filter(d => d.added || d.removed);
       const diff = diffArrays(remoteTokens, localTokens)
-      console.log(diff)
+      // console.log(diff)
       // const diff = diffArrays(remoteSerialized, localSerialized);
 
       if (!diff.length || !diff.filter(d => d.added || d.removed).length) return;
@@ -3141,7 +3141,7 @@ DO = {
         .then(graphs => {
 // console.log(graphs);
           graphs.forEach(g => {
-            if (g && g.out().terms.length){
+            if (g && !(g instanceof Error) && g.out().terms.length){
             // if (g) {
               var documentURL = g.term.value;
               g = rdf.grapoi({dataset: g.dataset})
@@ -3249,7 +3249,7 @@ DO = {
                   cLabel = (cLabel.length) ? cLabel : [getFragmentOrLastPath(c)];
                   cLabel.forEach(cL => {
                     cL = cL.trim();
-                    console.log(cL)
+                    // console.log(cL)
                     s += '<li><a href="' + c + '">' + cL + '</a></li>';
                   });
                 });
@@ -3362,9 +3362,9 @@ DO = {
       if (!node) { return; }
 
       var disabledInput = '', s = [];
-      if (!DO.C.EditorEnabled) {
-        disabledInput = ' disabled="disabled"';
-      }
+      // if (!DO.C.EditorEnabled) {
+      //   disabledInput = ' disabled="disabled"';
+      // }
 
       Object.keys(DO.C.ListOfStuff).forEach(id => {
         var checkedInput = '';
@@ -3385,7 +3385,7 @@ DO = {
       if (s.length) {
         node.insertAdjacentHTML('beforeend', '<section id="list-of-stuff"><h2>List of Stuff</h2><ul>' + s.join('') + '</ul></section>');
 
-        if (DO.C.EditorEnabled) {
+        // if (DO.C.EditorEnabled) {
           document.getElementById('list-of-stuff').addEventListener('click', (e) => {
             if (e.target.closest('input')) {
               var id = e.target.id.slice(6);
@@ -3406,7 +3406,7 @@ DO = {
               }
             }
           });
-        }
+        // }
       }
     },
 

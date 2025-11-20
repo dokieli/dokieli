@@ -106,7 +106,7 @@ export default {
     'multiTermAttributes': ['prefix', 'property', 'rel', 'resource', 'rev', 'typeof'],
     'sortAttributes': true,
     'removeAttributes': ['contenteditable', 'data-placeholder', 'draggable', 'spellcheck', 'style'],
-    'removeCommentNodes': true,
+    'removeCommentNodes': false,
     'removeNodesWithSelector': ['.do', '.ProseMirror-trailingBreak'],
     'removeClassValues': [],
     'removeWrapper': [{
@@ -354,6 +354,20 @@ export default {
     'http://purl.org/spar/cito/usesConclusionsFrom': 'uses conclusions from',
     'http://purl.org/spar/cito/usesDataFrom': 'uses data from',
     'http://purl.org/spar/cito/usesMethodIn': 'uses method in'
+  },
+
+  RequirementLevel: {
+    'http://www.w3.org/ns/spec#MUST': 'MUST',
+    'http://www.w3.org/ns/spec#MUSTNOT': 'MUST NOT',
+    'http://www.w3.org/ns/spec#REQUIRED': 'REQUIRED',
+    'http://www.w3.org/ns/spec#SHALL': 'SHALL',
+    'http://www.w3.org/ns/spec#SHALLNOT': 'SHALL NOT',
+    'http://www.w3.org/ns/spec#SHOULD': 'SHOULD',
+    'http://www.w3.org/ns/spec#SHOULDNOT': 'SHOULD NOT',
+    'http://www.w3.org/ns/spec#RECOMMENDED': 'RECOMMENDED',
+    'http://www.w3.org/ns/spec#NOTRECOMMENDED': 'NOT RECOMMENDED',
+    'http://www.w3.org/ns/spec#MAY': 'MAY',
+    'http://www.w3.org/ns/spec#OPTIONAL': 'OPTIONAL'
   },
 
   SKOSClasses: {

@@ -1,6 +1,6 @@
 import Config from './config.js'
 import { getDateTimeISO, fragmentFromString, generateAttributeId, uniqueArray, generateUUID, matchAllIndex, parseISODuration, getRandomIndex, getHash, fixDoubleEscapedEntities, stringFromFragment } from './util.js'
-import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath, getPrefixedNameFromIRI, generateDataURI, getProxyableIRI } from './uri.js'
+import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath, getPrefixedNameFromIRI, generateDataURI, getProxyableIRI, getFragmentOrLastPath } from './uri.js'
 import { getResource, getResourceHead, deleteResource, processSave, patchResourceWithAcceptPatch } from './fetcher.js'
 import rdf from "rdf-ext";
 import { getResourceGraph, sortGraphTriples, getGraphContributors, getGraphAuthors, getGraphEditors, getGraphPerformers, getGraphPublishers, getGraphLabel, getGraphEmail, getGraphTitle, getGraphConceptLabel, getGraphPublished, getGraphUpdated, getGraphDescription, getGraphLicense, getGraphRights, getGraphFromData, getGraphAudience, getGraphTypes, getGraphLanguage, getGraphInbox, getUserLabelOrIRI, getGraphImage } from './graph.js'
@@ -8,14 +8,12 @@ import LinkHeader from "http-link-header";
 import { micromark as marked } from 'micromark';
 import { gfm, gfmHtml } from 'micromark-extension-gfm';
 import { gfmTagfilterHtml } from 'micromark-extension-gfm-tagfilter';
-import { DOMSerializer, Fragment, DOMParser as PmDOMParser } from 'prosemirror-model';
 import { Icon } from './ui/icons.js';
 import { showUserIdentityInput, signOut } from './auth.js'
 import { buttonIcons, getButtonHTML, updateButtons } from './ui/buttons.js'
 import { domSanitizeHTMLBody, domSanitize } from './utils/sanitization.js';
 import { cleanProseMirrorOutput, normalizeHTML } from './utils/normalization.js';
 import { formatHTML, getDoctype, htmlEncode } from './utils/html.js';
-import { schema } from './editor/schema/base.js';
 
 const ns = Config.ns;
 
@@ -1885,6 +1883,12 @@ function getGraphData(s, options) {
   }
 
   info['spec'] = {};
+
+  var classesOfProducts = s.out(ns.spec.classesOfProducts).values;
+  if (classesOfProducts.length && s.term.value == documentURL) {
+    info['spec']['classesOfProducts'] = getResourceInfoSpecClassesOfProducts(s);
+  }
+
   var requirement = s.out(ns.spec.requirement).values;
   if (requirement.length && s.term.value == documentURL) {
     info['spec']['requirement'] = getResourceInfoSpecRequirements(s);
@@ -2284,6 +2288,57 @@ function getResourceInfoODRLPolicies(s) {
   return info['odrl'];
 }
 
+function getResourceInfoSpecClassesOfProducts(s) {
+  var info = {}
+  info['spec'] = {};
+  info['spec']['classesOfProducts'] = {};
+
+  // console.trace();
+  s.out(ns.spec.classesOfProducts).values.forEach(classesOfProductsConceptSchemeIRI => {
+    info['spec']['classesOfProducts'] = {};
+    info['spec']['classesOfProducts'][classesOfProductsConceptSchemeIRI] = {};
+
+    var classesOfProductsGraph = s.node(rdf.namedNode(classesOfProductsConceptSchemeIRI));
+    info['spec']['classesOfProducts'][classesOfProductsConceptSchemeIRI]['skos'] = getResourceInfoSKOS(classesOfProductsGraph);
+    var conceptSchemes = info['spec']['classesOfProducts'][classesOfProductsConceptSchemeIRI]['skos'].data;
+    if (conceptSchemes) {
+      Object.keys(conceptSchemes).forEach(conceptScheme => {
+        var conceptIRIs = conceptSchemes[conceptScheme][ns.skos.hasTopConcept];
+        if (conceptIRIs) {
+          conceptIRIs.forEach(conceptIRI => {
+            var conceptGraph = s.node(rdf.namedNode(conceptIRI));
+            Config.Resource[conceptIRI] = {};
+            Config.Resource[conceptIRI]['graph'] = conceptGraph;
+            Config.Resource[conceptIRI]['skos'] = getResourceInfoSKOS(conceptGraph);
+          })
+        }
+      })
+    }
+  });
+
+  return info['spec']['classesOfProducts'];
+}
+
+//XXX: Should this be stored for cheaper reuse?
+function getClassesOfProductsConcepts() {
+  var concepts = [];
+
+  if (Config.Resource[DO.C.DocumentURL]?.spec?.classesOfProducts) {
+    var classesOfProducts = Config.Resource[DO.C.DocumentURL]?.spec?.classesOfProducts;
+
+    Object.keys(classesOfProducts).forEach(conceptSchemeIRI => {
+      var conceptScheme = classesOfProducts[conceptSchemeIRI].skos.data;
+      var hasTopConcepts = conceptScheme[conceptSchemeIRI][ns.skos.hasTopConcept];
+      if (hasTopConcepts) {
+        concepts = concepts.concat(hasTopConcepts);
+      }
+    })
+  }
+
+  return concepts;
+}
+
+
 //TODO: Review grapoi
 function getResourceInfoSpecRequirements(s) {
   var info = {}
@@ -2294,7 +2349,6 @@ function getResourceInfoSpecRequirements(s) {
     info['spec']['requirement'][requirementIRI] = {};
 
     var requirementGraph = s.node(rdf.namedNode(requirementIRI));
-
     info['spec']['requirement'][requirementIRI][ns.spec.statement.value] = requirementGraph.out(ns.spec.statement).values[0];
     info['spec']['requirement'][requirementIRI][ns.spec.requirementSubject.value] = requirementGraph.out(ns.spec.requirementSubject).values[0];
     info['spec']['requirement'][requirementIRI][ns.spec.requirementLevel.value] = requirementGraph.out(ns.spec.requirementLevel).values[0];
@@ -3286,6 +3340,54 @@ function getCitationOptionsHTML(type) {
   return s;
 }
 
+function getRequirementLevelOptionsHTML(type) {
+  type = type || 'MUST';
+
+  var s = '';
+  Object.keys(Config.RequirementLevel).forEach(iri => {
+    s += '<option value="' + iri + '">' + Config.RequirementLevel[iri] + '</option>';
+  })
+
+  return s;
+}
+
+function getRequirementSubjectOptionsHTML(options) {
+  options = options || {};
+  var s = '', selectedIRI = '';
+// console.trace();
+// console.log(options)
+
+  if ('selected' in options) {
+    selectedIRI = options.selected;
+    if (selectedIRI == '') {
+      s += '<option selected="selected" value="">Choose a requirement subject</option>';
+    }
+  }
+
+  const conceptIRIs = getClassesOfProductsConcepts();
+// console.log(concepts)
+  if (conceptIRIs.length) {
+    conceptIRIs.forEach(conceptIRI => {
+      var conceptData = Config.Resource[conceptIRI]?.skos?.data[conceptIRI];
+
+      if (conceptData) {
+        var conceptLabel = conceptData[ns.skos.prefLabel] || '';
+        var title = conceptData[ns.skos.definition] || '';
+        if (title) {
+          title = ` title="${htmlEncode(title)}"`;
+        }
+
+        var selected = (conceptIRI == selectedIRI) ? ' selected="selected"' : '';
+
+        s += '<option value="' + conceptIRI + '"' + selected + title + '>' + conceptLabel + '</option>';
+      }
+    })
+  }
+
+  return s;
+}
+
+
 function showGeneralMessages() {
   showResourceAudienceAgentOccupations();
 }
@@ -3520,6 +3622,7 @@ function getReferenceLabel(motivatedBy) {
 }
 
 function createRDFaMarkObject(r, mode) {
+  //Generic
   let about = r['about'];
   let resource = r['resource'];
   let typeOf = r['typeof'];
@@ -3547,6 +3650,7 @@ function createRDFaMarkObject(r, mode) {
   return { element, attrs }
 }
 
+//mode value can be: exapanded or null
 function createRDFaHTML(r, mode) {
   var s = '', about = '', property = '', rel = '', resource = '', href = '', content = '', langDatatype = '', typeOf = '', idValue = '', id = '';
 
@@ -3607,6 +3711,91 @@ function createRDFaHTML(r, mode) {
   return s;
 }
 
+//TODO: Work on HTML nodes instead of the selected text
+function createRDFaHTMLRequirement(r, mode) {
+  var s = '', about = '', property = '', rel = '', resource = '', href = '', content = '', langDatatype = '', typeOf = '', idValue = '', id = '', subject = '', level = '', basedOnConsensus;
+
+  var idValue = r.id || generateAttributeId();
+  id = ` id="${idValue}"`;
+
+  var aboutValue = ('about' in r && r.about != '') ? r.about : '';
+  about= ` about="${aboutValue}"`;
+
+  rel = ' rel="spec:requirement"';
+  resource = ' resource="#' + idValue + '"';
+
+  if ('lang' in r && r.lang != '') {
+    langDatatype = ' lang="' + r.lang + '" xml:lang="' + r.lang + '"';
+  }
+  else {
+    if ('datatype' in r && r.datatype != '') {
+      langDatatype = ' datatype="' + r.datatype + '"';
+    }
+  }
+
+  if ('typeOf' in r && r.typeOf != '') {
+    typeOf = ' typeof="' + r.typeOf + '"';
+  }
+
+  //TODO: Perhaps the value passed to this function should include both requirementSubjectURI and requirementSubjectLabel. For now this is URI and label is derived :( Same goes for requirement level.
+
+  //TODO: Handle undefined r.subject, level etc.
+  var requirementSubjectURI = r.subject;
+  var requirementSubjectLabel = getFragmentOrLastPath(requirementSubjectURI);
+  var requirementLevelURI = r.level;
+  var requirementLevelLabel = getFragmentOrLastPath(requirementLevelURI);
+  var prevRequirementLevelLabel = r.prevLevelLabel || requirementLevelLabel;
+  var prevRequirementSubjectLabel = r.prevSubjectLabel || requirementSubjectLabel;
+  var selectedTextContent = r.selectedTextContent || '';
+
+  var requirementSubject = `<span rel="spec:requirementSubject" resource="${requirementSubjectURI}">${requirementSubjectLabel}</span>`;
+  var requirementLevel = `<span rel="spec:requirementLevel" resource="${requirementLevelURI}">${requirementLevelLabel}</span>`;
+
+  // var statement = `<span property="spec:statement">${requirementSubject}${requirementLevel}</span>`'
+  // console.log(selectedTextContent);
+
+  const subjectLabel = prevRequirementSubjectLabel;
+  const levelLabel = prevRequirementLevelLabel;
+  
+  const subjIndex = selectedTextContent.indexOf(subjectLabel);
+  const levelIndex = selectedTextContent.indexOf(levelLabel);
+  
+  const replacements = [
+    { start: subjIndex, end: subjIndex + (subjectLabel||'').length, replacement: requirementSubject },
+    { start: levelIndex, end: levelIndex + (levelLabel||'').length, replacement: requirementLevel }
+  ]
+    .filter(r => r.start !== -1)
+    .sort((a,b) => b.start - a.start);
+  
+  let newTextContent = selectedTextContent;
+  for (const { start, end, replacement } of replacements) {
+    newTextContent = newTextContent.slice(0, start) + replacement + newTextContent.slice(end);
+  }
+  var statement = `<span property="spec:statement">${newTextContent}</span>`;
+
+  //TODO: Do other things that match terms from HTTP-RDF.
+
+  //TODO: if selected text is the only content in parent, consider using `p`
+  var element = 'span';
+
+  //Input (with or without p):
+  //<p>Client <code>SHOULD</code> generate a Content-Type header field in a message that contains content. [<a href="https://example.org/consensus/1" rel="cito:citesAsSourceDocument">Source</a>]</p>
+
+  // position the markup according to previous subject and level labels positions
+
+
+  //span or p:
+  //<p about="" id="server-content-type-includes" rel="spec:requirement" resource="#server-content-type-includes"><span property="spec:statement"><span rel="spec:requirementSubject" resource="#Server">Server</span> <span rel="spec:requirementLevel" resource="spec:MUST">MUST</span> generate a <code>Content-Type</code> header field in a message that contains content.</span></p>
+
+  s = '<' + element + about + id + langDatatype + rel + resource + typeOf + '>' + statement + '</' + element + '>';
+
+  // console.log(s)
+
+  return s;
+}
+
+
+
 export {
   getNodeWithoutClasses,
   getFragmentOfNodesChildren,
@@ -3647,6 +3836,7 @@ export {
   getResourceSupplementalInfo,
   processSupplementalInfoLinkHeaders,
   getResourceInfoODRLPolicies,
+  getResourceInfoSpecClassesOfProducts,
   getResourceInfoSpecRequirements,
   getResourceInfoSpecAdvisements,
   getResourceInfoSpecChanges,
@@ -3682,6 +3872,9 @@ export {
   getLanguageOptionsHTML,
   getLicenseOptionsHTML,
   getCitationOptionsHTML,
+  getClassesOfProductsConcepts,
+  getRequirementSubjectOptionsHTML,
+  getRequirementLevelOptionsHTML,
   getAccessModeOptionsHTML,
   showGeneralMessages,
   showResourceAudienceAgentOccupations,
@@ -3694,6 +3887,7 @@ export {
   createNoteDataHTML,
   tagsToBodyObjects,
   createRDFaHTML,
+  createRDFaHTMLRequirement,
   createRDFaMarkObject,
   createDefinitionListHTML,
   hasNonWhitespaceText
