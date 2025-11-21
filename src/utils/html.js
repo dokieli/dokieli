@@ -165,7 +165,7 @@ export function formatHTML(node, options, noEsc = [false], indentLevel = 0, next
 }
 
 export function htmlEncode(str, options = { mode: 'text', attributeName: null }) {
-  str = String(str).trim();
+  str = String(str);
 
   if (options.mode === 'uri') {
     const isMulti = options.attributeName && Config.DOMProcessing.multiTermAttributes.includes(options.attributeName);
