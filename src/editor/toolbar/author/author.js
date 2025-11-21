@@ -457,16 +457,58 @@ nodeToHTML(node, schema) {
   }
 
   populateFormRequirement(button, node, state) {
+    // clear previous errors - TODO maybe this should happen elsewhere
+    const previousErrors = node.querySelectorAll('.error');
+    if (previousErrors.length) {
+      previousErrors.forEach(error => error.remove());
+      node.querySelector('.editor-form-submit').disabled = false;
+    }
+
     var selectedTextContent = state.doc.textBetween(state.selection.from, state.selection.to, "\n");
 
     var requirementSubjectURI, requirementSubjectLabel, requirementLevelURI, requirementLevelLabel;
     var prevRequirementSubjectLabel, prevRequirementLevelLabel;
 
     const requirementSubject = document.querySelector('#requirement-subject');
+    const requirementLevel = document.querySelector('#requirement-level');
+
+    //Build error
+    const legend = node.querySelector('legend');
+
+    const requirementSubjectOptions = [...requirementSubject.querySelectorAll('option')];
+    const requirementLevelOptions = [...requirementLevel.querySelectorAll('option')];
+
+    const hasRequirementSubjectMatch = requirementSubjectOptions.some(option => selectedTextContent.toLowerCase().includes(option.textContent.trim().toLowerCase()));
+    const hasRequirementLevelMatch = requirementLevelOptions.some(option => selectedTextContent.toLowerCase().includes(option.textContent.trim().toLowerCase()));
+
+    const errorList = [];
+
+    if (!hasRequirementSubjectMatch || !hasRequirementLevelMatch) {
+      const classesOfProducts = requirementSubjectOptions.map(option => `<a href="${option.value}">${option.textContent}</a>`);
+      const requirementLevels = requirementLevelOptions.map(option => `<a href="${option.value}">${option.textContent}</a>`);
+
+      if (!hasRequirementSubjectMatch) {
+        errorList.push(`Selected text does not include a product class, i.e., the requirement's subject. Valid concepts include ${classesOfProducts.join(', ')}.`);
+      }
+
+      if (!hasRequirementLevelMatch) {
+        errorList.push(`Selected text does not include a normative keyword, i.e., the requirement's level. Valid concepts include ${requirementLevels.sort(() => Math.random() - 0.5).slice(0, 3).join(', ')}, etc.`);
+      }
+    }
+
+    if (errorList.length) {
+      let errorListItems = [];
+      errorList.forEach((errorMessage) => {
+        errorListItems.push(`<li>${errorMessage}</li>`);
+      })
+      legend.insertAdjacentHTML('afterend', `<ul class="error">${errorListItems.join('')}</ul>`);
+      node.querySelector('.editor-form-submit').disabled = true;
+    }
+
     if (requirementSubject) {
-      requirementSubject.querySelectorAll('option').forEach(option => {
+      requirementSubjectOptions.forEach(option => {
         var optionTextContent = option.textContent.trim();
-        if (selectedTextContent.includes(optionTextContent)) {
+        if (selectedTextContent.toLowerCase().includes(optionTextContent.toLowerCase())) {
           option.selected = true;
           requirementSubjectLabel = optionTextContent;
           requirementSubjectURI = option.value;
@@ -485,11 +527,11 @@ nodeToHTML(node, schema) {
       });
     }
 
-    const requirementLevel = document.querySelector('#requirement-level');
+
     if (requirementLevel) {
       requirementLevel.querySelectorAll('option').forEach(option => {
         var optionTextContent = option.textContent.trim();
-        if (selectedTextContent.includes(optionTextContent)) {
+        if (selectedTextContent.toLowerCase().includes(optionTextContent.toLowerCase())) {
           option.selected = true;
           requirementLevelLabel = optionTextContent;
           requirementLevelURI = option.value;

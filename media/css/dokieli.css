@@ -2113,7 +2113,8 @@ aside.do button:hover:not(.toggle),
 .editor-form:not(.editor-slashmenu) button:hover:not(.toggle)  {
 opacity: 0.8;
 }
-aside.do button[disabled]:not(:has(svg)) {
+aside.do button[disabled]:not(:has(svg)),
+.editor-form:not(.editor-slashmenu) button[disabled] {
   background-color: #555;
   cursor: not-allowed;
 }
@@ -2696,13 +2697,14 @@ max-width:70%;
 #editor-form-requirement fieldset{
   display: grid;
   grid-template-columns: auto 1fr 1fr 1fr;
-  grid-template-rows: auto auto auto auto auto auto;
+  grid-template-rows: auto auto auto auto auto auto auto;
   grid-gap: 0.5em;
   border: none;
   padding-block: 0;
   
   grid-template-areas: 
     "legend legend legend legend"
+    "error error error error"
     "dl dl dl dl"
     "label1 input1 . ."
     "label2 input2 . ."
@@ -2710,6 +2712,12 @@ max-width:70%;
 
   legend {
     grid-area: legend;
+  }
+
+  .error {
+    grid-area: error;
+    display: flex;
+    flex-direction: column;
   }
 
   dl {

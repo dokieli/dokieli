@@ -3741,9 +3741,9 @@ function createRDFaHTMLRequirement(r, mode) {
 
   //TODO: Handle undefined r.subject, level etc.
   var requirementSubjectURI = r.subject;
-  var requirementSubjectLabel = getFragmentOrLastPath(requirementSubjectURI);
+  var requirementSubjectLabel = requirementSubjectURI ? getFragmentOrLastPath(requirementSubjectURI) : '';
   var requirementLevelURI = r.level;
-  var requirementLevelLabel = getFragmentOrLastPath(requirementLevelURI);
+  var requirementLevelLabel = requirementLevelURI ? getFragmentOrLastPath(requirementLevelURI): '';
   var prevRequirementLevelLabel = r.prevLevelLabel || requirementLevelLabel;
   var prevRequirementSubjectLabel = r.prevSubjectLabel || requirementSubjectLabel;
   var selectedTextContent = r.selectedTextContent || '';
