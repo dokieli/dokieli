@@ -4547,7 +4547,7 @@ console.log(reason);
 
       var id = 'location-generate-feed';
       var action = 'write';
-      generateFeed.insertAdjacentHTML('beforeend', '<fieldset id="' + id + '-fieldset"><legend>Save to</legend></fieldset>');
+      generateFeed.insertAdjacentHTML('beforeend', '<form><fieldset id="' + id + '-fieldset"><legend>Save to</legend></fieldset></form>');
       fieldset = generateFeed.querySelector('fieldset#' + id + '-fieldset');
       DO.U.setupResourceBrowser(fieldset, id, action);
       var feedTitlePlaceholder = (DO.C.User.IRI && DO.C.User.Name) ? DO.C.User.Name + "'s" : "Example's";
@@ -4572,8 +4572,7 @@ console.log(reason);
 
         if (!isHttpOrHttpsProtocol(storageIRI) || !storageIRI.length) {
           generateFeed.insertAdjacentHTML('beforeend',
-            '<div class="response-message"><p class="error">' +
-            'Specify the location to generate the feed to.</p></div>'
+            '<div class="response-message"><p class="error">Specify the location where the feed should be saved.</p></div>'
           )
 
           return
@@ -6923,7 +6922,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
         createContainerDiv = '<div id="' + id + '-create-container"></div>';
       }
 
-      parent.insertAdjacentHTML('beforeend', '<div id="' + id + '"><label for="' + id +'-input">URL</label> <input type="text" id="' + id +'-input" name="' + id + '-input" placeholder="https://example.org/path/to/" /><button id="' + id +'-update" disabled="disabled" title="Browse location">Browse</button>' + createContainerButton+ '</div>' + createContainerDiv + '<div id="' + id + '-listing"></div>');
+      parent.insertAdjacentHTML('beforeend', '<div id="' + id + '"><label for="' + id +'-input">URL</label> <input type="text" id="' + id +'-input" name="' + id + '-input" required placeholder="https://example.org/path/to/" /><button id="' + id +'-update" disabled="disabled" title="Browse location">Browse</button>' + createContainerButton+ '</div>' + createContainerDiv + '<div id="' + id + '-listing"></div>');
 
       var inputBox = document.getElementById(id);
       var createContainer = document.getElementById(id + '-create-container');
@@ -7777,7 +7776,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
       var id = 'location-save-as';
       var action = 'write';
-      saveAsDocument.insertAdjacentHTML('beforeend', '<fieldset id="' + id + '-fieldset"><legend>Save to</legend></fieldset>');
+      saveAsDocument.insertAdjacentHTML('beforeend', '<form><fieldset id="' + id + '-fieldset"><legend>Save to</legend></fieldset></form>');
       fieldset = saveAsDocument.querySelector('fieldset#' + id + '-fieldset');
       DO.U.setupResourceBrowser(fieldset, id, action);
       fieldset.insertAdjacentHTML('beforeend', '<p id="' + id + '-samp' + '">Article will be saved at: <samp id="' + id + '-' + action + '"></samp></p>' + DO.U.getBaseURLSelection() + '<ul>' + dokielizeResource + derivationData + '</ul>' + accessibilityReport + '<button class="create" title="Save to destination" type="submit">Save</button>');
@@ -7800,8 +7799,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
         if (!storageIRI.length) {
           saveAsDocument.insertAdjacentHTML('beforeend',
-            '<div class="response-message"><p class="error">' +
-            'Specify the location to save the article to, and optionally set its <em>inbox</em> or <em>annotation service</em>.</p></div>'
+            '<div class="response-message"><p class="error">Specify the location where the article should be saved, and optionally set its <em>inbox</em> and <em>annotation service</em>.</p></div>'
           )
 
           return
