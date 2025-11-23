@@ -2567,6 +2567,13 @@ border-color: transparent transparent transparent #009000 !important;
   align-self: end;
 }
 
+button[type="submit"]:hover,
+button[type="submit"]:focus,
+button[type="button"]:hover,
+button[type="button"]:focus {
+  outline-color: #000;
+}
+
 /* Basic default for all fieldsets in forms  */
 .editor-form fieldset {
   display: flex;

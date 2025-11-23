@@ -86,7 +86,7 @@ function showUserIdentityInput () {
   }
 
   var webid = Config.User.WebIdDelegate ? Config.User.WebIdDelegate : "";
-  var code = `<aside id="user-identity-input" class="do on">${Config.Button.Close}<h2>Sign in ${Config.Button.Info.SignIn}</h2><div class="info"></div><p id="user-identity-input-webid"><label>WebID</label> <input id="webid" type="text" placeholder="https://csarven.ca/#i" value="${webid}" name="webid"/> <button class="signin">Sign in</button></p></aside>`;
+  var code = `<aside id="user-identity-input" class="do on">${Config.Button.Close}<h2>Sign in ${Config.Button.Info.SignIn}</h2><div class="info"></div><p id="user-identity-input-webid"><label>WebID</label> <input id="webid" type="text" placeholder="https://csarven.ca/#i" value="${webid}" name="webid"/> <button class="signin" type="button">Sign in</button></p></aside>`;
 
   document.body.appendChild(fragmentFromString(code))
 
@@ -386,7 +386,7 @@ function afterSetUserInfo () {
 
   for (let i = 0; i < user.length; i++) {
     var article = user[i].closest('article')
-    article.insertAdjacentHTML('afterbegin', '<button class="delete">' + Icon[".fas.fa-trash-alt"] + '</button>')
+    article.insertAdjacentHTML('afterbegin', '<button class="delete" type="button">' + Icon[".fas.fa-trash-alt"] + '</button>')
   }
 
   var buttonDelete = document.querySelectorAll('aside.do blockquote[cite] article button.delete')

@@ -838,7 +838,7 @@ DO = {
         .attr('typeof', 'http://purl.org/dc/dcmitype/Image')
 
       var graphView = document.querySelector(selector);
-      graphView.insertAdjacentHTML('beforeend', '<button class="export" title="Export graph as SVG">Export</button>');
+      graphView.insertAdjacentHTML('beforeend', '<button class="export" title="Export graph as SVG" type="button">Export</button>');
       graphView.addEventListener('click', (e) => {
         if (e.target.closest('button.export')) {
           var svgNode = graphView.querySelector('svg[typeof="http://purl.org/dc/dcmitype/Image"]');
@@ -2497,9 +2497,9 @@ DO = {
 
       node.insertAdjacentHTML('beforeend', `
         <div class="do-diff">${diffHTML.join('')}</div>
-        <button class="review-changes-save-local" title="Keep my edits">Keep my changes</button>
-        <button class="review-changes-save-remote" title="Discard my edits and use remote version">Overwrite my changes</button>
-        <button class="review-changes-submit" title="Edit changes and apply them to both local and remote">Save</button>
+        <button class="review-changes-save-local" title="Keep my edits" type="button">Keep my changes</button>
+        <button class="review-changes-save-remote" title="Discard my edits and use remote version" type="button">Overwrite my changes</button>
+        <button class="review-changes-submit" title="Edit changes and apply them to both local and remote" type="submit">Save</button>
       `);
 
       const diffNode = document.querySelector('#review-changes .do-diff');
@@ -2904,9 +2904,9 @@ DO = {
           <h2>Embed Data ${DO.C.Button.Info.EmbedData}</h2>
           <div class="info"></div>
           <nav><ul><li class="selected"><a href="#embed-data-turtle">Turtle</a></li><li><a href="#embed-data-json-ld">JSON-LD</a></li><li><a href="#embed-data-trig">TriG</a></li></ul></nav>
-          <div id="embed-data-turtle" class="selected"><textarea placeholder="Enter data in Turtle" name="meta-turtle" cols="80" rows="24">${(scriptCurrentData['meta-turtle'] ? scriptCurrentData['meta-turtle'].content : '')}</textarea><button class="save" title="Embed data into document">Save</button></div>
-          <div id="embed-data-json-ld"><textarea placeholder="Enter data in JSON-LD" name="meta-json-ld" cols="80" rows="24">${(scriptCurrentData['meta-json-ld'] ? scriptCurrentData['meta-json-ld'].content : '')}</textarea><button class="save" title="Embed data into document">Save</button></div>
-          <div id="embed-data-trig"><textarea placeholder="Enter data in TriG" name="meta-trig" cols="80" rows="24">${(scriptCurrentData['meta-trig'] ? scriptCurrentData['meta-trig'].content : '')}</textarea><button class="save" title="Embed data into document">Save</button></div>
+          <div id="embed-data-turtle" class="selected"><textarea placeholder="Enter data in Turtle" name="meta-turtle" cols="80" rows="24">${(scriptCurrentData['meta-turtle'] ? scriptCurrentData['meta-turtle'].content : '')}</textarea><button class="save" title="Embed data into document" type="submit">Save</button></div>
+          <div id="embed-data-json-ld"><textarea placeholder="Enter data in JSON-LD" name="meta-json-ld" cols="80" rows="24">${(scriptCurrentData['meta-json-ld'] ? scriptCurrentData['meta-json-ld'].content : '')}</textarea><button class="save" title="Embed data into document" type="submit">Save</button></div>
+          <div id="embed-data-trig"><textarea placeholder="Enter data in TriG" name="meta-trig" cols="80" rows="24">${(scriptCurrentData['meta-trig'] ? scriptCurrentData['meta-trig'].content : '')}</textarea><button class="save" title="Embed data into document type="submit"">Save</button></div>
         </aside>
         `;
 
@@ -3162,7 +3162,7 @@ DO = {
           });
 
           var id = 'list-of-additional-concepts';
-          html = '<section id="' + id + '"><h3>Additional Concepts</h3><div><button class="graph">View Graph</button><figure></figure>' + html.join('') + '</div></section>';
+          html = '<section id="' + id + '"><h3>Additional Concepts</h3><div><button class="graph" type="button">View Graph</button><figure></figure>' + html.join('') + '</div></section>';
 
           var aC = document.getElementById(id);
           if (aC) {
@@ -3507,7 +3507,7 @@ DO = {
               s += '<h2>' + label + '</h2>';
               var d = DO.C.Resource[documentURL].citations || [];
               if (d.length) {
-                s += '<div><p id="include-concepts"><button class="add">Include concepts</button> from <data value="' + d.length + '">' + d.length + '</data> external references.</p>';
+                s += '<div><p id="include-concepts"><button class="add" type="button">Include concepts</button> from <data value="' + d.length + '">' + d.length + '</data> external references.</p>';
               }
               s += '<dl>';
               break;
@@ -4092,7 +4092,7 @@ console.log(reason);
 
       var robustLinks = selector || document.querySelectorAll('cite > a[href^="http"][data-versionurl][data-versiondate]');
 
-      document.body.appendChild(fragmentFromString('<aside id="robustify-links" class="do on">' + DO.C.Button.Close + `<h2>Robustify Links  ${DO.C.Button.Info.RobustLinks}</h2>` + '<div class="info"></div><div id="robustify-links-input"><p><input id="robustify-links-select-all" type="checkbox" value="true"/><label for="robustify-links-select-all">Select all</label></p><p><input id="robustify-links-reuse" type="checkbox" value="true" checked="checked"/><label for="robustify-links-reuse">Reuse Robustifed</label></p><ul id="robustify-links-list"></ul></div><button class="robustify" title="Robustify Links">Robustify</button></aside>'));
+      document.body.appendChild(fragmentFromString('<aside id="robustify-links" class="do on">' + DO.C.Button.Close + `<h2>Robustify Links  ${DO.C.Button.Info.RobustLinks}</h2>` + '<div class="info"></div><div id="robustify-links-input"><p><input id="robustify-links-select-all" type="checkbox" value="true"/><label for="robustify-links-select-all">Select all</label></p><p><input id="robustify-links-reuse" type="checkbox" value="true" checked="checked"/><label for="robustify-links-reuse">Reuse Robustifed</label></p><ul id="robustify-links-list"></ul></div><button class="robustify" title="Robustify Links" type="submit">Robustify</button></aside>'));
 
       //TODO: Move unique list of existing RL's to DO.C.Resource?
       var robustLinksUnique = {};
@@ -4551,7 +4551,7 @@ console.log(reason);
       fieldset = generateFeed.querySelector('fieldset#' + id + '-fieldset');
       DO.U.setupResourceBrowser(fieldset, id, action);
       var feedTitlePlaceholder = (DO.C.User.IRI && DO.C.User.Name) ? DO.C.User.Name + "'s" : "Example's";
-      fieldset.insertAdjacentHTML('beforeend', '<p id="' + id + '-samp' + '">Feed will be generated at: <samp id="' + id + '-' + action + '"></samp></p><ul><li><label for="' + id + '-title">Title</label> <input type="text" placeholder="' + feedTitlePlaceholder + ' Web Feed" name="' + id + '-title" value=""></li><li><label for="' + id + '-language">Language</label> <select id="' + id + '-language" name="' + id + '-language">' + getLanguageOptionsHTML() + '</select></li><li><label for="' + id + '-license">License</label> <select id="' + id + '-license" name="' + id + '-license">' + getLicenseOptionsHTML() + '</select></li><li>' + DO.U.getFeedFormatSelection() + '</li></ul><button class="create" title="Save to destination">Generate</button>');
+      fieldset.insertAdjacentHTML('beforeend', '<p id="' + id + '-samp' + '">Feed will be generated at: <samp id="' + id + '-' + action + '"></samp></p><ul><li><label for="' + id + '-title">Title</label> <input type="text" placeholder="' + feedTitlePlaceholder + ' Web Feed" name="' + id + '-title" value=""></li><li><label for="' + id + '-language">Language</label> <select id="' + id + '-language" name="' + id + '-language">' + getLanguageOptionsHTML() + '</select></li><li><label for="' + id + '-license">License</label> <select id="' + id + '-license" name="' + id + '-license">' + getLicenseOptionsHTML() + '</select></li><li>' + DO.U.getFeedFormatSelection() + '</li></ul><button class="create" title="Save to destination" type="submit">Generate</button>');
       var bli = document.getElementById(id + '-input');
       bli.focus();
       bli.placeholder = 'https://example.org/path/to/feed.xml';
@@ -4901,7 +4901,7 @@ console.log(reason);
 
       e.target.closest('button').disabled = true
 
-      document.body.appendChild(fragmentFromString('<aside id="delete-document" class="do on">' + DO.C.Button.Close + `<h2>Delete ${DO.C.Button.Info.Delete}</h2>` + '<div class="info"></div><div><p>Are you sure you want to delete the following document?</p><p><code>' + url  +'</code></p></div><button class="cancel" title="Cancel delete">Cancel</button><button class="delete" title="Delete document">Delete</button></aside>'));
+      document.body.appendChild(fragmentFromString('<aside id="delete-document" class="do on">' + DO.C.Button.Close + `<h2>Delete ${DO.C.Button.Info.Delete}</h2>` + '<div class="info"></div><div><p>Are you sure you want to delete the following document?</p><p><code>' + url  +'</code></p></div><button class="cancel" title="Cancel delete" type="button">Cancel</button><button class="delete" title="Delete document" type="button">Delete</button></aside>'));
 
       document.querySelector('#delete-document').addEventListener('click', (e) => {
         if (e.target.closest('button.info')) { return; }
@@ -5082,7 +5082,7 @@ console.log(reason);
       var bli = document.getElementById(id + '-input')
       bli.focus()
       bli.placeholder = 'https://example.org/path/to/article'
-      replyToResource.insertAdjacentHTML('beforeend', '<button class="reply" title="Send your reply">Send</button>')
+      replyToResource.insertAdjacentHTML('beforeend', '<button class="reply" title="Send your reply" type="submit">Send</button>')
 
       replyToResource.addEventListener('click', e => {
         if (e.target.closest('button.close')) {
@@ -5320,7 +5320,7 @@ console.log(reason);
             <label for="share-resource-note">Note</label>
             <textarea id="share-resource-note" rows="3" cols="40" name="share-resource-note" placeholder="Check this out!"></textarea>
 
-            <button class="share" id="share-resource-agents-button" title="Share resource">Share</button>
+            <button class="share" id="share-resource-agents-button" title="Share resource" type="submit">Share</button>
           </div>
         </aside>
       `;
@@ -6788,7 +6788,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
         div.replaceChildren();
       }
 
-      div.insertAdjacentHTML('beforeend', '<label for="' + id + '-create-container-name">Container Name</label> <input id="' + id + '-create-container-name" name="' + id + '-create-container-name" type="text" placeholder="My Secret Stuff" /> <button class="insert" disabled="disabled">Create</button>');
+      div.insertAdjacentHTML('beforeend', '<label for="' + id + '-create-container-name">Container Name</label> <input id="' + id + '-create-container-name" name="' + id + '-create-container-name" type="text" placeholder="My Secret Stuff" /> <button class="insert" disabled="disabled" type="button">Create</button>');
 
       var label = div.querySelector('label');
       var input = div.querySelector('input');
@@ -7080,7 +7080,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
       var openDocument = document.getElementById('open-document');
       DO.U.setupResourceBrowser(openDocument , id, action);
       var idSamp = (typeof DO.C.User.Storage == 'undefined') ? '' : '<p><samp id="' + id + '-' + action + '">https://example.org/path/to/article</samp></p>';
-      openDocument.insertAdjacentHTML('beforeend', idSamp + '<button class="open" title="Open document">Open</button>');
+      openDocument.insertAdjacentHTML('beforeend', idSamp + '<button class="open" title="Open document" type="submit">Open</button>');
 
       openDocument.addEventListener('click', function (e) {
         if (e.target.closest('button.close')) {
@@ -7780,7 +7780,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
       saveAsDocument.insertAdjacentHTML('beforeend', '<fieldset id="' + id + '-fieldset"><legend>Save to</legend></fieldset>');
       fieldset = saveAsDocument.querySelector('fieldset#' + id + '-fieldset');
       DO.U.setupResourceBrowser(fieldset, id, action);
-      fieldset.insertAdjacentHTML('beforeend', '<p id="' + id + '-samp' + '">Article will be saved at: <samp id="' + id + '-' + action + '"></samp></p>' + DO.U.getBaseURLSelection() + '<ul>' + dokielizeResource + derivationData + '</ul>' + accessibilityReport + '<button class="create" title="Save to destination">Save</button>');
+      fieldset.insertAdjacentHTML('beforeend', '<p id="' + id + '-samp' + '">Article will be saved at: <samp id="' + id + '-' + action + '"></samp></p>' + DO.U.getBaseURLSelection() + '<ul>' + dokielizeResource + derivationData + '</ul>' + accessibilityReport + '<button class="create" title="Save to destination" type="submit">Save</button>');
       var bli = document.getElementById(id + '-input');
       bli.focus();
       bli.placeholder = 'https://example.org/path/to/article';
@@ -7927,7 +7927,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
             if (DO.C.User.IRI && linkHeaders && linkHeaders.has('rel', ns.ldp.inbox.value)){
               inboxURL = linkHeaders.rel(ns.ldp.inbox.value)[0].uri;
-              requestAccess = '<p><button class="request-access" data-inbox="' + inboxURL +'" data-target="' + storageIRI + '" title="Send an access request to resource inbox.">Request Access</button></p>'
+              requestAccess = '<p><button class="request-access" data-inbox="' + inboxURL +'" data-target="' + storageIRI + '" title="Send an access request to resource inbox." type="button">Request Access</button></p>'
             }
 
             switch (error.status) {
@@ -8033,7 +8033,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
       var buttonDisabled = (document.location.protocol === 'file:') ? ' disabled="disabled"' : '';
 
-      document.body.appendChild(fragmentFromString('<aside id="source-view" class="do on">' + DO.C.Button.Close + `<h2>Source ${DO.C.Button.Info.Source}</h2>` + '<div class="info"></div><textarea id="source-edit" rows="24" cols="80"></textarea><p><button class="update"'+ buttonDisabled + ' title="Update source">Update</button></p></aside>'));
+      document.body.appendChild(fragmentFromString('<aside id="source-view" class="do on">' + DO.C.Button.Close + `<h2>Source ${DO.C.Button.Info.Source}</h2>` + '<div class="info"></div><textarea id="source-edit" rows="24" cols="80"></textarea><p><button class="update"'+ buttonDisabled + ' title="Update source" type="submit">Update</button></p></aside>'));
       var sourceBox = document.getElementById('source-view');
       var input = document.getElementById('source-edit');
       input.value = getDocument(null, documentOptions);
