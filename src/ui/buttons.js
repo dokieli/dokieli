@@ -50,7 +50,7 @@ export function initButtons() {
       SaveAs: getButtonHTML({ button: 'save-as', buttonClass: 'resource-save-as', buttonTitle: 'Save as article', buttonTextContent: 'Save As', iconSize: 'fa-2x' }),
       Share: getButtonHTML({ button: 'share', buttonClass: 'resource-share', buttonTitle: 'Share resource', buttonTextContent: 'Share', iconSize: 'fa-2x' }),
       SignIn: getButtonHTML({ button: 'signin', buttonClass: 'signin-user', buttonTitle: 'Sign in to authenticate', buttonTextContent: 'Sign in', iconSize: 'fa-2x' }),
-      SignOut: getButtonHTML({ button: 'signout', buttonClass: 'signout-user', buttonTitle: 'Live long and prosper' }),
+      SignOut: getButtonHTML({ button: 'signout', buttonClass: 'signout-user' }),
       Source: getButtonHTML({ button: 'source', buttonClass: 'resource-source', buttonTitle: 'Edit article source code', buttonTextContent: 'Source', iconSize: 'fa-2x' }),
       Memento: getButtonHTML({ button: 'memento', buttonClass: 'resource-memento', buttonTitle: 'Memento article', buttonTextContent: 'Memento', iconSize: 'fa-2x', buttonDisabled: true }),
       MessageLog: getButtonHTML({ button: 'messages', buttonClass: 'message-log', buttonTitle: 'Show message log', buttonTextContent: 'Messages', iconSize: 'fa-2x' }),
@@ -243,7 +243,7 @@ export const buttonIcons = {
     icon: Icon['.fas.fa-i-cursor']
   }, 
   signout: {
-    title: 'Live long and prosper',
+    title: 'Sign out',
     icon: Icon['.far.fa-spock-hand']
   },
   signin: {
