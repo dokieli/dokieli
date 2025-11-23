@@ -1590,8 +1590,8 @@ color:#000 !important;
 background-color:#fff !important;
 display: block;
 margin: 0 auto;
-width: 100%;
-height: 100%;
+width: calc(100% - 4px);
+height: calc(100% - 4px);
 }
 
 #document-menu section button:not([disabled]):hover,
@@ -1603,6 +1603,13 @@ transition: color 0.3s;
 cursor:pointer !important;
 transition: fill 0.3s;
 fill: #080;
+}
+
+#document-menu section button:not([disabled]):hover svg,
+#document-menu section button:not([disabled]):focus svg {
+/* background-color:rgba(238, 255, 238, 0.1) !important;
+transition: background-color 0.3s; */
+transform: scale(1.05);
 }
 #document-menu section button[disabled] {
 color:#555 !important;
