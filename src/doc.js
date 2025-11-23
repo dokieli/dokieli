@@ -1,3 +1,11 @@
+
+
+
+
+
+
+
+
 import Config from './config.js'
 import { getDateTimeISO, fragmentFromString, generateAttributeId, uniqueArray, generateUUID, matchAllIndex, parseISODuration, getRandomIndex, getHash, fixDoubleEscapedEntities, stringFromFragment } from './util.js'
 import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath, getPrefixedNameFromIRI, generateDataURI, getProxyableIRI, getFragmentOrLastPath } from './uri.js'
@@ -3747,18 +3755,20 @@ function createRDFaHTMLRequirement(r, mode) {
   var prevRequirementLevelLabel = r.prevLevelLabel || requirementLevelLabel;
   var prevRequirementSubjectLabel = r.prevSubjectLabel || requirementSubjectLabel;
   var selectedTextContent = r.selectedTextContent || '';
+  var selectedHtmlString = r.selectedHtmlString || selectedTextContent;
 
   var requirementSubject = `<span rel="spec:requirementSubject" resource="${requirementSubjectURI}">${requirementSubjectLabel}</span>`;
   var requirementLevel = `<span rel="spec:requirementLevel" resource="${requirementLevelURI}">${requirementLevelLabel}</span>`;
 
-  // var statement = `<span property="spec:statement">${requirementSubject}${requirementLevel}</span>`'
   // console.log(selectedTextContent);
+
+  console.log("NODES: ", r.nodes)
 
   const subjectLabel = prevRequirementSubjectLabel;
   const levelLabel = prevRequirementLevelLabel;
   
-  const subjIndex = selectedTextContent.indexOf(subjectLabel);
-  const levelIndex = selectedTextContent.indexOf(levelLabel);
+  const subjIndex = selectedHtmlString.indexOf(subjectLabel);
+  const levelIndex = selectedHtmlString.indexOf(levelLabel);
   
   const replacements = [
     { start: subjIndex, end: subjIndex + (subjectLabel||'').length, replacement: requirementSubject },
@@ -3767,11 +3777,11 @@ function createRDFaHTMLRequirement(r, mode) {
     .filter(r => r.start !== -1)
     .sort((a,b) => b.start - a.start);
   
-  let newTextContent = selectedTextContent;
+  let newHtmlString = selectedHtmlString;
   for (const { start, end, replacement } of replacements) {
-    newTextContent = newTextContent.slice(0, start) + replacement + newTextContent.slice(end);
+    newHtmlString = newHtmlString.slice(0, start) + replacement + newHtmlString.slice(end);
   }
-  var statement = `<span property="spec:statement">${newTextContent}</span>`;
+  var statement = `<span property="spec:statement">${newHtmlString}</span>`;
 
   //TODO: Do other things that match terms from HTTP-RDF.
 

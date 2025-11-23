@@ -488,11 +488,11 @@ nodeToHTML(node, schema) {
       const requirementLevels = requirementLevelOptions.map(option => `<a href="${option.value}">${option.textContent}</a>`);
 
       if (!hasRequirementSubjectMatch) {
-        errorList.push(`Selected text does not include a product class, i.e., the requirement's subject. Valid concepts include ${classesOfProducts.join(', ')}.`);
+        errorList.push(`Selected text does not include a product class, i.e., the requirement's subject, such as ${classesOfProducts.join(', ')}.`);
       }
 
       if (!hasRequirementLevelMatch) {
-        errorList.push(`Selected text does not include a normative keyword, i.e., the requirement's level. Valid concepts include ${requirementLevels.sort(() => Math.random() - 0.5).slice(0, 3).join(', ')}, etc.`);
+        errorList.push(`Selected text does not include a normative keyword, i.e., the requirement's level, such as ${requirementLevels.sort(() => Math.random() - 0.5).slice(0, 3).join(', ')}, etc.`);
       }
     }
 
@@ -585,6 +585,25 @@ nodeToHTML(node, schema) {
     r.selectedTextContent = selectedTextContent;
     r.lang = selectedLanguage;
     r.basedOnConsensus = requirementConsensus;
+
+    console.log(state.selection.content())
+    const { $from, $to } = state.selection;
+
+    let depth = $from.depth;
+    while (depth >= 0 && $from.node(depth) !== $to.node(depth)) {
+      depth--;
+    }
+
+    const ancestorNode = $from.node(depth); 
+
+    const wrapper = document.createElement('div');
+    ancestorNode.content.forEach(child => {
+      wrapper.appendChild(DOMSerializer.fromSchema(schema).serializeNode(child));
+    });
+
+    const selectedHtmlString = wrapper.getHTML();
+    console.log(selectedHtmlString);
+    r.selectedHtmlString = selectedHtmlString;
 
     var html = createRDFaHTMLRequirement(r, 'requirement')
 
