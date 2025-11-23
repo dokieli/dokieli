@@ -4,7 +4,7 @@ import Config from "../config.js";
 import { isLocalhost } from "../uri.js";
 
 const ns = Config.ns;
-
+Config.Button.C
 const docsBaseURL = Config.WebExtensionEnabled ? Config.WebExtension.runtime.getURL('docs') : 'https://dokie.li/docs';
 
 export function initButtons() {

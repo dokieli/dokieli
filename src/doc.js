@@ -907,10 +907,12 @@ function showActionMessage(node, message, options = {}) {
 
   let aside = node.querySelector('#document-action-message');
   if (!aside) {
-    node.appendChild(fragmentFromString('<aside id="document-action-message" class="do on" role="status" tabindex="0">' + Config.Button.Close + '<h2>Messages</h2><ul role="log"></ul></aside>'));
+    var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Messages', buttonTitle: 'Close', iconSize: 'fa-2x' });
+
+    node.appendChild(fragmentFromString(`<aside aria-labelledby="document-action-message-label" id="document-action-message" class="do on" role="status" tabindex="0"><h2 id="document-action-message-label">Messages</h2>${buttonClose}<ul role="log"></ul></aside>`));
     aside = node.querySelector('#document-action-message');
   }
-  aside.querySelector('h2 + ul').insertAdjacentHTML('afterbegin', messageItem);
+  aside.querySelector('ul[role="log"]').insertAdjacentHTML('afterbegin', messageItem);
 
   let timerId = null;
 
@@ -1316,7 +1318,9 @@ function showTimeMap(node, url) {
       if (!node) {
         node = document.getElementById(elementId);
         if (!node) {
-          document.body.appendChild(fragmentFromString('<aside id="' + elementId + '" class="do on"><h2>Memento</h2>' + Config.Button.Close + '<dl><dt>TimeMap</dt><dd><a href="' + url + '">' + url + '</a></dd></dl></aside>'));
+          var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Memento Document', buttonTitle: 'Close', iconSize: 'fa-2x' });
+
+          document.body.appendChild(fragmentFromString(`<aside aria-labelledby="${elementId}-label" id="${elementId}" class="do on"><h2 id="${elementId}-label">Memento</h2>${buttonClose}<dl><dt>TimeMap</dt><dd><a href="${url}">${url}</a></dd></dl></aside>`));
           node = document.getElementById(elementId);
         }
       }

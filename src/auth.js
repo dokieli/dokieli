@@ -5,7 +5,7 @@ import { getAgentHTML, showActionMessage, showGeneralMessages, getResourceSupple
 import { Icon } from './ui/icons.js'
 import { getResourceGraph, getAgentName, getGraphImage, getAgentURL, getAgentPreferredProxy, getAgentPreferredPolicy, setPreferredPolicyInfo, getAgentDelegates, getAgentKnows, getAgentFollowing, getAgentStorage, getAgentOutbox, getAgentInbox, getAgentPreferencesFile, getAgentPublicTypeIndex, getAgentPrivateTypeIndex, getAgentTypeIndex, getAgentSupplementalInfo, getAgentSeeAlso, getAgentPreferencesInfo, getAgentLiked, getAgentOccupations, getAgentPublications, getAgentMade, getAgentOIDCIssuer } from './graph.js'
 import { removeLocalStorageAsSignOut, updateLocalStorageProfile } from './storage.js'
-import { updateButtons } from './ui/buttons.js';
+import { updateButtons, getButtonHTML } from './ui/buttons.js';
 import { Session } from '@uvdsl/solid-oidc-client-browser';
 
 const ns = Config.ns;
@@ -85,8 +85,10 @@ function showUserIdentityInput () {
     signInUser.disabled = true;
   }
 
+  var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Sign In', buttonTitle: 'Close', iconSize: 'fa-2x' });
+
   var webid = Config.User.WebIdDelegate ? Config.User.WebIdDelegate : "";
-  var code = `<aside id="user-identity-input" class="do on">${Config.Button.Close}<h2>Sign in ${Config.Button.Info.SignIn}</h2><div class="info"></div><p id="user-identity-input-webid"><label>WebID</label> <input id="webid" type="text" placeholder="https://csarven.ca/#i" value="${webid}" name="webid"/> <button class="signin" type="button">Sign in</button></p></aside>`;
+  var code = `<aside aria-labelledby="user-identity-input-label" id="user-identity-input" class="do on"><h2 id="user-identity-input-label">Sign in ${Config.Button.Info.SignIn}</h2>${buttonClose}<div class="info"></div><p id="user-identity-input-webid"><label>WebID</label> <input id="webid" type="text" placeholder="https://csarven.ca/#i" value="${webid}" name="webid"/> <button class="signin" type="button">Sign in</button></p></aside>`;
 
   document.body.appendChild(fragmentFromString(code))
 
