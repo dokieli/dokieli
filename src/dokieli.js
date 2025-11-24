@@ -2606,9 +2606,6 @@ DO = {
       DO.U.showAboutDokieli(dInfo);
 
       var body = getDocumentContentNode(document);
-      if(!body.classList.contains('on-slideshow')) {
-        DO.U.showDocumentInfo();
-      }
 
       var options = { 'reuse': true };
       if (document.location.protocol.startsWith('http')) {
@@ -3310,37 +3307,48 @@ DO = {
       waitUntil();
     },
 
-    showDocumentInfo: function() {
-      var documentItems = document.getElementById('document-info');
-      if (documentItems) {
-        documentItems.parentNode.removeChild(documentItems);
+    showDocumentInfo: function(e) {
+      var documentInfo = document.getElementById('document-info');
+      if (documentInfo) {
+        documentInfo.parentNode.removeChild(documentInfo);
       }
+
+      e.target.closest('button').disabled = true
 
       var documentMenu = document.getElementById('document-menu');
 
-      var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Document Items', buttonTitle: 'Close', iconSize: 'fa-2x' });
+      var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Document Info', buttonTitle: 'Close', iconSize: 'fa-2x' });
 
-      document.body.insertBefore(fragmentFromString(`<aside aria-labelledby="document-info-label" id="document-info" class="do on"><h2 id="document-info-label">Document Items</h2>${buttonClose}</aside>`), documentMenu.nextSibling);
-      documentItems = document.getElementById('document-info');
+      document.body.insertBefore(fragmentFromString(`<aside aria-labelledby="document-info-label" id="document-info" class="do on"><h2 id="document-info-label">Document Info</h2>${buttonClose}</aside>`), documentMenu.nextSibling);
+      var documentInfo = document.getElementById('document-info');
+
+      documentInfo.setAttribute('tabindex', '-1');
+      documentInfo.focus();
+
+      documentInfo.addEventListener('click', (e) => {
+        if (e.target.closest('button.close')) {
+          document.querySelector('#document-do .document-info').disabled = false;
+        }
+      });
 
       var articleNode = selectArticleNode(document);
       var sections = articleNode.querySelectorAll('section:not(section section):not([id^=table-of]):not([id^=list-of])');
 
-      DO.U.showListOfStuff(documentItems);
+      DO.U.showListOfStuff(documentInfo);
 
-      DO.U.showHighlightStructuredData(documentItems);
+      DO.U.showHighlightStructuredData(documentInfo);
 
       if (sections.length) {
-        DO.U.showTableOfContents(documentItems, sections)
+        DO.U.showTableOfContents(documentInfo, sections)
 
         if (DO.C.SortableList && DO.C.EditorEnabled) {
           DO.U.sortToC();
         }
       }
 
-      DO.U.showDocumentMetadata(documentItems);
+      DO.U.showDocumentMetadata(documentInfo);
 
-      DO.U.showDocumentCommunicationOptions(documentItems);
+      DO.U.showDocumentCommunicationOptions(documentInfo);
     },
 
     showHighlightStructuredData: function(node) {
@@ -4768,7 +4776,8 @@ console.log(reason);
         DO.C.Button.Menu.EmbedData,
         DO.C.Button.Menu.Print,
         DO.C.Button.Menu.Delete,
-        DO.C.Button.Menu.MessageLog
+        DO.C.Button.Menu.MessageLog,
+        DO.C.Button.Menu.DocumentInfo
       ]
 
       var s = `<section id="document-do"><h2>Do</h2><ul>${buttons.map(b => `<li>${b}</li>`).join('')}</ul></section>`;
@@ -4882,6 +4891,10 @@ console.log(reason);
 
         if (e.target.closest('.message-log')) {
           DO.U.showMessageLog(e);
+        }
+
+        if (e.target.closest('.document-info')) {
+          DO.U.showDocumentInfo(e);
         }
       });
     },

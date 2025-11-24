@@ -35,17 +35,18 @@ export function initButtons() {
     SignIn: getButtonHTML({ button: 'signin', buttonClass: 'signin-user', buttonTitle: 'Sign in to authenticate', buttonTextContent: 'Sign in' }),
     Menu: {
       Delete: getButtonHTML({ button: 'delete', buttonClass: 'resource-delete', buttonTitle: 'Delete article', buttonTextContent: 'Delete', iconSize: 'fa-2x', buttonDisabled: true }),
+      DocumentInfo: getButtonHTML({ button: 'document-info', buttonClass: 'document-info', buttonTitle: 'Document info', buttonTextContent: 'Info', iconSize: 'fa-2x', buttonDisabled: true }),
       EditEnable: getButtonHTML({ button: 'cursor', buttonClass: 'editor-enable', buttonTextContent: 'Edit', buttonTitle: 'Enable editor', iconSize: 'fa-2x' }),
       EditDisable: getButtonHTML({ button: 'cursor', buttonClass: 'editor-disable', buttonTextContent: 'Edit', buttonTitle: 'Disable editor', iconSize: 'fa-2x' }),
       EmbedData: getButtonHTML({ button: 'data-meta', buttonClass: 'embed-data-meta', buttonTitle: 'Embed structured data', buttonTextContent: 'Embed Data', iconSize: 'fa-2x' }),
       Export: getButtonHTML({ button: 'export', buttonClass: 'export-as-html', buttonTitle: 'Export and save to file', buttonTextContent: 'Export', iconSize: 'fa-2x' }),
       GenerateFeed: getButtonHTML({ button: 'feed', buttonClass: 'generate-feed', buttonTitle: 'Generate Web feed', buttonTextContent: 'Feed', iconSize: 'fa-2x' }),
       Immutable: getButtonHTML({ button: 'immutable', buttonClass: 'create-immutable', buttonTitle: 'Make this article immutable and version it', buttonTextContent: 'Immutable', iconSize: 'fa-2x', buttonDisabled: true }),
-      InternetArchive: getButtonHTML({ button: 'archive', buttonClass: 'snapshot-internet-archive', buttonTitle: 'Capture with Internet Archive', buttonTextContent: 'Internet Archive', iconSize: 'fa-2x' }),
+      InternetArchive: getButtonHTML({ button: 'archive', buttonClass: 'snapshot-internet-archive', buttonTitle: 'Capture with Internet Archive', buttonTextContent: 'Archive', iconSize: 'fa-2x' }),
       Open: getButtonHTML({ button: 'open', buttonClass: 'resource-open', buttonTitle: 'Open article', buttonTextContent: 'Open', iconSize: 'fa-2x' }),
       New: getButtonHTML({ button: 'new', buttonClass: 'resource-new', buttonTitle: 'Create new article', buttonTextContent: 'New', iconSize: 'fa-2x' }),
       Notifications: getButtonHTML({ button: 'activities', buttonClass: 'resource-notifications', buttonTitle: 'Show notifications', buttonTextContent: 'Notifications', iconSize: 'fa-2x' }),
-      RobustifyLinks: getButtonHTML({ button: 'robustify-links', buttonClass: 'robustify-links', buttonTitle: 'Robustify Links', buttonTextContent: 'Robustify Links', iconSize: 'fa-2x' }),
+      RobustifyLinks: getButtonHTML({ button: 'robustify-links', buttonClass: 'robustify-links', buttonTitle: 'Robustify Links', buttonTextContent: 'Robustify', iconSize: 'fa-2x' }),
       Save: getButtonHTML({ button: 'save', buttonClass: 'resource-save', buttonTitle: 'Save article', buttonTextContent: 'Save', iconSize: 'fa-2x', buttonDisabled: true }),
       SaveAs: getButtonHTML({ button: 'save-as', buttonClass: 'resource-save-as', buttonTitle: 'Save as article', buttonTextContent: 'Save As', iconSize: 'fa-2x' }),
       Share: getButtonHTML({ button: 'share', buttonClass: 'resource-share', buttonTitle: 'Share resource', buttonTextContent: 'Share', iconSize: 'fa-2x' }),
@@ -546,6 +547,15 @@ const buttonState = {
     if (info.odrl?.prohibitionActions &&
         info.odrl.prohibitionAssignee === Config.User.IRI &&
         info.odrl.prohibitionActions.includes(ns.odrl.modify.value)) {
+      return false;
+    }
+
+    return true;
+  },
+
+  '#document-do .document-info': ({ info, editorMode }) => {
+    //TODO: Consider moving on-slideshow to Config
+    if(document.body.classList.contains('on-slideshow')) {
       return false;
     }
 
