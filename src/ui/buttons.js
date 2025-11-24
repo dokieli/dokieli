@@ -385,6 +385,10 @@ export const buttonIcons = {
   'review-changes': {
     title: 'Review changes',
     icon: Icon[".fas.fa-microscope"]
+  },
+  'document-info': {
+    title: 'Document info',
+    icon: Icon[".fas.fa-atom"]
   }
 }
 
