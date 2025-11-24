@@ -1132,7 +1132,7 @@ table[typeof~="qb:DataSet"] tbody tr:not([typeof~="earl:Assertion"]) td {
   content: counter(s) "." counter(sub-s) "." counter(sub-sub-s) "." counter(sub-sub-sub-s);
 }
 
-#document-items .toc>li:not([data-id=abstract]):not([data-id=document-status]):not([data-id=keywords]):not([data-id=references]):not([data-id=categories-and-subject-descriptors]):not([data-id=general-terms]):not([data-id=appendix]):not([data-id=contact-us]):not([data-id=audience]):not([data-id=declaration]):not([data-id=acknowledgements]) li li li li:before {
+#document-info .toc>li:not([data-id=abstract]):not([data-id=document-status]):not([data-id=keywords]):not([data-id=references]):not([data-id=categories-and-subject-descriptors]):not([data-id=general-terms]):not([data-id=appendix]):not([data-id=contact-us]):not([data-id=audience]):not([data-id=declaration]):not([data-id=acknowledgements]) li li li li:before {
   content: counter(s) "." counter(sub-s) "." counter(sub-sub-s) "." counter(sub-sub-sub-s) "." counter(sub-sub-sub-sub-s);
 }
 

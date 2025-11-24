@@ -258,7 +258,7 @@ export class Editor {
      });
 
      this.restrictedNodes.forEach(node => {
-      if (node.id == 'document-menu' || node.id == 'document-items') {
+      if (node.id == 'document-menu' || node.id == 'document-info') {
         document.body.prepend(node);
       } else {
         document.body.appendChild(node);

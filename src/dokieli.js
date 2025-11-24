@@ -2556,7 +2556,7 @@ DO = {
       });
     },
 
-    showDocumentInfo: function() {
+    initDocumentMenu: function() {
       document.body.prepend(fragmentFromString(`<div class="do" id="document-menu">${DO.C.Button.OpenMenu}<div><section id="user-info"></section></div></div>`));
 
       var userInfo = document.getElementById('user-info');
@@ -2587,7 +2587,7 @@ DO = {
       var dMenu = document.querySelector('#document-menu.do');
 
       if (!dMenu) {
-        DO.U.showDocumentInfo();
+        DO.U.initDocumentMenu();
         DO.U.showDocumentMenu();
         return;
       }
@@ -2607,7 +2607,7 @@ DO = {
 
       var body = getDocumentContentNode(document);
       if(!body.classList.contains('on-slideshow')) {
-        DO.U.showDocumentItems();
+        DO.U.showDocumentInfo();
       }
 
       var options = { 'reuse': true };
@@ -3310,8 +3310,8 @@ DO = {
       waitUntil();
     },
 
-    showDocumentItems: function() {
-      var documentItems = document.getElementById('document-items');
+    showDocumentInfo: function() {
+      var documentItems = document.getElementById('document-info');
       if (documentItems) {
         documentItems.parentNode.removeChild(documentItems);
       }
@@ -3320,8 +3320,8 @@ DO = {
 
       var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Document Items', buttonTitle: 'Close', iconSize: 'fa-2x' });
 
-      document.body.insertBefore(fragmentFromString(`<aside aria-labelledby="document-items-label" id="document-items" class="do on"><h2 id="document-items-label">Document Items</h2>${buttonClose}</aside>`), documentMenu.nextSibling);
-      documentItems = document.getElementById('document-items');
+      document.body.insertBefore(fragmentFromString(`<aside aria-labelledby="document-info-label" id="document-info" class="do on"><h2 id="document-info-label">Document Items</h2>${buttonClose}</aside>`), documentMenu.nextSibling);
+      documentItems = document.getElementById('document-info');
 
       var articleNode = selectArticleNode(document);
       var sections = articleNode.querySelectorAll('section:not(section section):not([id^=table-of]):not([id^=list-of])');
@@ -7602,7 +7602,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
         tmplBody.setAttribute('prefix', prefixes);
 
         document.documentElement.replaceChild(tmplBody, document.body);
-        DO.U.showDocumentInfo();
+        DO.U.initDocumentMenu();
         DO.U.initEditor();
         DO.U.showFragment();
         DO.U.initCopyToClipboard();
@@ -8070,7 +8070,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
           var data = document.getElementById('source-edit').value;
           //FIXME: dokieli related stuff may be getting repainted / updated in the DOM
           document.documentElement.setHTMLUnsafe(domSanitize(data));
-          DO.U.showDocumentInfo();
+          DO.U.initDocumentMenu();
           DO.U.showDocumentMenu(e);
           DO.U.viewSource();
           document.querySelector('#document-do .resource-source').disabled = true;

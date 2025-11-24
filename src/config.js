@@ -21,7 +21,7 @@ export default {
       DO.U.highlightItems();
       DO.U.showAsTabs();
       DO.U.initDocumentActions();
-      DO.U.showDocumentInfo();
+      DO.U.initDocumentMenu();
       DO.U.setDocRefType();
       DO.U.initCurrentStylesheet();
       DO.U.showFragment();
@@ -205,7 +205,7 @@ export default {
 
   DocumentDoItems: [
     'create-new-document',
-    'document-items',
+    'document-info',
     'embed-data-entry',
     'generate-feed',
     'graph-view',
