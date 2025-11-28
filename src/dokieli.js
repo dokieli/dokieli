@@ -9541,6 +9541,76 @@ WHERE {\n\
       DO.U.showContactsActivities();
     },
 
+    showOhYeahPanel: async function(entities) {
+      DO.U.hideDocumentMenu();
+
+      const { people = [], organizations = [], places = [] } = entities;
+
+      // ---- Flatten into list with type labels ----c
+      entities = [
+        ...people.map(p => ({ text: p, type: "Person" })),
+        ...organizations.map(o => ({ text: o, type: "Organization" })),
+        ...places.map(p => ({ text: p, type: "Place" }))
+      ];
+
+      var aside = document.getElementById('document-ohyeah');
+
+      if(!aside) {
+        var buttonToggle = getButtonHTML({ button: 'toggle', buttonClass: 'toggle', buttonLabel: 'Show/Hide Notifications', buttonTitle: 'Show/Hide' })
+  
+        var aside = `<aside aria-labelledby="document-ohyeah-label" class="do" contenteditable="false" id="document-ohyeah"><h2 id="document-ohyeah-label">Oh Yeah?</h2>${buttonToggle}<div></div></aside>`;
+        document.body.insertAdjacentHTML('beforeend', aside);
+        aside = document.getElementById('document-ohyeah');
+        aside.classList.add('on');
+
+        var containerDiv = aside.querySelector('div');
+        for (const ent of entities) {
+          const container = document.createElement("div");
+          container.className = "entity-result";
+  
+          container.innerHTML = `
+            <div class="entity-title">${ent.text}
+              <span class="entity-type">(${ent.type})</span>
+            </div>
+            <div class="wikidata-results">Searching Wikidata…</div>
+          `;
+  
+          containerDiv.appendChild(container);
+          const wikidataDiv = container.querySelector(".wikidata-results");
+  
+          const api =
+            "https://www.wikidata.org/w/api.php?action=wbsearchentities&format=json&language=en&origin=*&search="
+            + encodeURIComponent(ent.text);
+  
+          const wdResp = await fetch(api);
+          const wdData = await wdResp.json();
+  
+          if (!wdData.search || wdData.search.length === 0) {
+            wikidataDiv.innerHTML = "<i>No Wikidata match found.</i>";
+            continue;
+          }
+  
+          wikidataDiv.innerHTML = wdData.search
+            .slice(0, 3)
+            .map(item => `
+              <div class="wikidata-item">
+                <b>${item.label}</b> — ${item.description || "No description"}
+                <div class="wikidata-link">
+                  <a href="https://www.wikidata.org/wiki/${item.id}" target="_blank">
+                    ${item.id}
+                  </a>
+                </div>
+              </div>
+            `)
+            .join("");
+        }
+  
+        return aside;
+      }
+
+      DO.U.showContactsActivities();
+    },
+
     initMath: function(config) {
       if (!DO.C.MathAvailable) { return; }
 

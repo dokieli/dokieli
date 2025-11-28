@@ -834,12 +834,14 @@ width:auto;
 position:static;
 }
 
-#document-notifications:not([class~="on"]) {
+#document-notifications:not([class~="on"]),
+#document-ohyeah:not([class~="on"]) {
 display:none;
 }
 
 @media (max-width: 768px) {
-#document-notifications {
+#document-notifications,
+#document-ohyeah {
 max-width:calc(100% - 3em);
 padding: 0;
 }
@@ -873,7 +875,8 @@ background-color: #fff;
 margin: 0;
 }
 
-#document-notifications {
+#document-notifications,
+#document-ohyeah {
 position: fixed;
 top: 0;
 right: 0;
@@ -884,11 +887,13 @@ max-height:100%;
 overflow: unset;
 font-size:1em;
 }
-#document-notifications h2 {
+#document-notifications h2,
+#document-ohyeah h2 {
 margin-top:1.5em;
 margin-bottom:0.5em;
 }
-#document-notifications button.toggle {
+#document-notifications button.toggle,
+#document-ohyeah button.toggle {
 justify-content: center;
 position: absolute;
 top: 1em;
@@ -903,7 +908,8 @@ transition: box-shadow 0.3s;
 font-size:1.2em;
 }
 
-#document-notifications button.toggle:hover {
+#document-notifications button.toggle:hover,
+#document-ohyeah button.toggle:hover {
 box-shadow: 0 0 1.2em rgba(33, 33, 33, 0.2);
 fill: #080 !important;
 transition: fill 0.3s;
@@ -926,7 +932,8 @@ font-size:1em;
 #document-notifications .count:after {
 content:':';
 }
-#document-notifications > div {
+#document-notifications > div,
+#document-ohyeah > div {
 display:flex;
 flex-direction: column;
 max-height: 90%;

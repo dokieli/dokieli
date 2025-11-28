@@ -44,8 +44,6 @@ export class ToolbarView {
     this.toolbarButtonEventListeners = this.getFormEventListeners();
     this.toolbarButtonClickHandlers = this.getToolbarButtonClickHandlers();
 
-    this.bindButtonHandlers();
-
     // for PM stuff
     this.editorView = editorView;
 
@@ -95,7 +93,6 @@ export class ToolbarView {
         this.updateButtonState(schema, buttonNode, button, this.editorView);
         this.setupPopup(button);
         this.attachButtonHandler(buttonNode, button, command);
-        this.bindButtonHandlers();
     });
   }
 
@@ -260,13 +257,6 @@ export class ToolbarView {
 
   getToolbarButtonClickHandlers() {
     return {};
-  }
-
-  bindButtonHandlers() {
-    const handlers = this.toolbarButtonClickHandlers;
-    Object.keys(handlers).forEach(handler => {
-      this[handler] = handlers[handler].bind(this);
-    });
   }
 
   getFormEventListeners() {
