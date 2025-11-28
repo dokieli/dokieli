@@ -1,4 +1,4 @@
-import { formHandlerAnnotate, shareButtonHandler } from "./handlers.js"
+import { formHandlerAnnotate, shareButtonHandler, ohYeahButtonHandler } from "./handlers.js"
 import { ToolbarView, annotateFormControls, updateAnnotationInboxForm } from "../toolbar.js"
 import Config from "../../../config.js";
 import { exportSelection, getSelectedParentElement, restoreSelection } from "../../utils/annotation.js";
@@ -24,7 +24,8 @@ export class SocialToolbar extends ToolbarView {
 
   getToolbarButtonClickHandlers() {
     return {
-      share: shareButtonHandler
+      share: shareButtonHandler,
+      ohyeah: ohYeahButtonHandler,
     }
   }
 

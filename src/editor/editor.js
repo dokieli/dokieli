@@ -332,7 +332,7 @@ export class Editor {
   createSocialToolbar() {
     // Create and initialize the SocialToolbar only when in social mode
     // console.log("creating social toolbar")
-    this.socialToolbarView = new SocialToolbar('social', ['share', 'approve', 'disapprove', 'specificity', 'bookmark', 'comment']);
+    this.socialToolbarView = new SocialToolbar('social', ['share', 'approve', 'disapprove', 'specificity', 'bookmark', 'comment', 'ohyeah']);
     document.body.appendChild(this.socialToolbarView.dom); // idk why this is needed? or is it not?
     // console.log("SocialToolbar created. Mode:", this.mode);
   }

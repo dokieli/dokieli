@@ -390,6 +390,10 @@ export const buttonIcons = {
   'document-info': {
     title: 'Document info',
     icon: Icon[".fas.fa-atom"]
+  },
+  'ohyeah': {
+    title: 'Oh yeah?',
+    icon: Icon[".fas.fa-dragon"]
   }
 }
 

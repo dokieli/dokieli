@@ -38,6 +38,10 @@ export function shareButtonHandler(e) {
   DO.U.shareResource(e)
 }
 
+export function ohYeahButtonHandler(e) {
+  ohYeah(e)
+}
+
 export function formHandlerAnnotate(e, action) {
   e.preventDefault();
   e.stopPropagation();
@@ -69,6 +73,39 @@ export function formHandlerAnnotate(e, action) {
   updateUserUI({ annotationInboxLocation, annotationLocationPersonalStorage, annotationLocationService }, formValues)
 
   processAction(action, formValues, selectionData);
+
+  this.cleanupToolbar();
+}
+
+export function ohYeah(e, action) {
+  e.preventDefault();
+  e.stopPropagation();
+console.log(this)
+  restoreSelection(this.selection);
+  const selection = window.getSelection();
+
+  const range = selection.getRangeAt(0);
+  const selectedParentElement = getSelectedParentElement(range);
+
+  //XXX: Not currently used
+  // const formValues = getFormValues(e.target);
+
+  //TODO: Mark the selection after successful comment. Move out.
+  //TODO: Use node.textBetween to determine prefix, exact, suffix + parentnode with closest id
+  //Mark the selected content in the document
+  const selector = this.getTextQuoteSelector();
+
+  const selectionData = {
+    selection,
+    selector,
+    selectedParentElement,
+    selectedContent: this.getSelectionAsHTML()
+  };
+
+  console.log(selectionData)
+
+  //XXX: Not currently used
+  // processAction(action, formValues, selectionData);
 
   this.cleanupToolbar();
 }
