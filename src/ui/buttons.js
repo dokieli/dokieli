@@ -192,8 +192,8 @@ export const buttonIcons = {
   },
 
   highlight: {
-    title: 'highlight',
-    icon: Icon['.fas.fa-anchor']
+    title: 'Highlight entities',
+    icon: Icon['.fas.fa-brush']
   },
   bookmark: {
     title: 'bookmark',

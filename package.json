@@ -43,6 +43,7 @@
     "@shower/core": "^3.3.0",
     "@uvdsl/solid-oidc-client-browser": "^0.0.10",
     "buffer": "^6.0.3",
+    "compromise": "^14.14.4",
     "d3-force": "^3.0.0",
     "d3-selection": "^3.0.0",
     "diff": "^7.0.0",

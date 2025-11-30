@@ -1,3 +1,4 @@
+import nlp from "compromise";
 import { schema } from "../../schema/base.js"
 import { getTextQuoteHTML, getSelectedParentElement, restoreSelection, getInboxOfClosestNodeWithSelector, createNoteData} from "../../utils/annotation.js";
 import { getFormValues, kebabToCamel, generateAttributeId, getDateTimeISO } from "../../../util.js"
@@ -38,6 +39,10 @@ export function shareButtonHandler(e) {
   DO.U.shareResource(e)
 }
 
+export function highlightButtonHandler(e) {
+  highlightEntitiesOnSelection();
+}
+
 export function formHandlerAnnotate(e, action) {
   e.preventDefault();
   e.stopPropagation();
@@ -73,6 +78,179 @@ export function formHandlerAnnotate(e, action) {
   this.cleanupToolbar();
 }
 
+
+function extractNamedEntitiesWithType(text) {
+  //TODO: move to Config
+  const lexicon = {
+    'dokieli': 'Organization',
+    'W3C': 'Organization'
+  }
+  let doc = nlp(text, lexicon);
+  doc.normalize();
+  const cleaned = doc.out("text");  // get cleaned text after normalization
+  doc = nlp(cleaned);
+
+  const entities = [];
+
+  doc.people().out('array').forEach(name => {
+    entities.push({ text: name, type: 'Person' });
+  });
+
+  doc.organizations().out('array').forEach(name => {
+    entities.push({ text: name, type: 'Organization' });
+  });
+
+  doc.places().out('array').forEach(name => {
+    entities.push({ text: name, type: 'Place' });
+  });
+
+  const acronyms = doc.acronyms().out('array');
+  acronyms.forEach(name => {
+    if (!entities.find(e => e.text === name))  // avoid duplicates with organizations
+    entities.push({ text: name, type: 'Acronym' });
+  });
+
+  return entities;
+}
+
+async function highlightEntitiesOnSelection() {
+  const selection = window.getSelection();
+  const range = selection.getRangeAt(0);
+
+  let selectedText = selection.toString().trim();
+  if (!selectedText) {
+    alert("Please select some text to highlight entities.");
+    return;
+  }
+  const entities = extractNamedEntitiesWithType(selectedText);
+  // console.log(entities);
+  entities.sort((a, b) => b.text.length - a.text.length);
+
+  function getColorByType(type) {
+    switch (type) {
+      case "Person":
+        return "magenta";
+      case "Organization":
+        return "lightblue";
+      case "Place":
+        return "orange";
+      case "Acronym":
+        return "lightgreen";
+      default:
+        return "mark";
+    }
+  }
+
+  for (const ent of entities) {
+    let cleanedText = ent.text;
+    cleanedText = ent.text.replace('.', '')
+    const regex = new RegExp(`\\b${cleanedText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, "g");
+
+    const api =
+      "https://www.wikidata.org/w/api.php?action=wbsearchentities&format=json&language=en&origin=*&search="
+      + encodeURIComponent(cleanedText);
+
+    const wdResp = await fetch(api);
+    const wdData = await wdResp.json();
+    let wikiResults;
+    const urls = wdData.search;
+
+    const lis = urls.map(async (item) => {
+      console.log(item)
+      const itemInfoUrl = 'https://www.wikidata.org/wiki/Special:EntityData/' + item.id + '.jsonld';
+      const itemInfo = await fetch(itemInfoUrl);
+      console.log(await itemInfo.json())
+      return `<li id="${item.concepturi}"><a href="${item.concepturi}" target="_blank">${item.label}</a> — <q cite="${item.concepturi}">${item.description}</q></li>`;
+    });
+
+    if (lis.length) {
+      wikiResults = `<ul>${lis.join('')}</ul>`;
+    } else {
+      wikiResults = `<p>No Wikidata match found.</p>`;
+    }
+
+    selectedText = selectedText.replace(
+      regex,
+      `<mark class="do highlight-match">${ent.text}</mark>`
+    );
+
+    let aside = `<aside class="do highlight-entities" id="${ent.text}-matches">${wikiResults}</aside>`;
+
+    document.body.insertAdjacentElement('beforeend', aside);
+  }
+
+  const wrapper = document.createElement("span");
+  wrapper.innerHTML = selectedText;
+
+  range.deleteContents();
+  range.insertNode(wrapper);
+
+  selection.removeAllRanges();
+
+  const marks = wrapper.querySelectorAll("mark");
+
+  marks.forEach(mark => {
+    const sup = mark.nextElementSibling;
+    const aside = sup && sup.nextElementSibling;
+
+    if (!aside) return;
+
+    aside.style.display = "none";
+    aside.style.position = "absolute";
+    aside.style.background = "#f9f9f9";
+    aside.style.border = "1px solid #ccc";
+    aside.style.padding = "8px";
+    aside.style.boxShadow = "0 2px 6px rgba(0,0,0,0.2)";
+    aside.style.width = "300px";
+    aside.style.zIndex = 1000;
+
+    let isHovering = false;
+
+    const showTooltip = () => {
+      const rect = mark.getBoundingClientRect();
+      aside.style.top = (rect.bottom + window.scrollY + 5) + "px";
+      aside.style.left = (rect.left + window.scrollX) + "px";
+      aside.style.display = "block";
+      isHovering = true;
+    };
+
+    const hideTooltip = () => {
+      setTimeout(() => {
+        if (!isHovering) aside.style.display = "none";
+      }, 100);
+    };
+
+    mark.addEventListener("mouseenter", showTooltip);
+    mark.addEventListener("mouseleave", () => { isHovering = false; hideTooltip(); });
+
+    sup.addEventListener("mouseenter", showTooltip);
+    sup.addEventListener("mouseleave", () => { isHovering = false; hideTooltip(); });
+
+    aside.addEventListener("mouseenter", () => { isHovering = true; });
+    aside.addEventListener("mouseleave", () => { isHovering = false; hideTooltip(); });
+    const lis = aside.querySelectorAll("li");
+    lis.forEach((li) => {
+      li.addEventListener("click", (e) => {
+        aside.style.display = "none";
+        isHovering = false;
+        const sup = aside.previousElementSibling;
+        const link = li.querySelector("a").getAttribute("href");
+
+        const mark = sup.previousElementSibling;
+
+        const a = document.createElement("a");
+        a.href = link;
+        a.target = "_blank";
+        a.textContent = mark.textContent;
+
+        mark.textContent = "";
+        mark.appendChild(a);
+
+      });
+    })
+  });
+
+}
 
 function updateUserUI(fields, formValues) {
   Object.entries(fields).forEach(([key, value]) => {

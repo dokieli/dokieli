@@ -1935,6 +1935,51 @@ margin-inline:0;
 font-weight:normal;
 }
 
+/* TODO: move this somewhere? */
+
+::highlight {
+  background-color: magenta;
+  color: white;
+}
+mark,
+mark+sup {
+  position: relative;
+  cursor: pointer;
+}
+
+mark+sup+aside {
+  display: none;
+  position: absolute;
+  background: #f9f9f9;
+  border: 1px solid #ccc;
+  padding: 8px;
+  margin-top: 5px;
+  width: 300px;
+  z-index: 1000;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+mark:hover+sup+aside,
+mark+sup:hover+aside {
+  display: block;
+}
+
+mark+sup+aside a {
+  text-decoration: none;
+  color: #0074cc;
+}
+
+mark+sup+aside li:hover {
+  background-color: mark;
+  cursor: pointer;
+}
+
+mark+sup+aside a:hover {
+  text-decoration: underline;
+}
+
 aside.do.on [id$="-listing"] {
 overflow-x:hidden;
 overflow-y:auto;
