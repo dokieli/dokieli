@@ -6,6 +6,7 @@ import { getAbsoluteIRI, stripFragmentFromString } from "../../../uri.js"
 import Config from "../../../config.js"
 import { notifyInbox, postActivity } from "../../../inbox.js"
 import { extractEntitiesFromText } from "../../../nlp.js";
+import { highlightEntities } from "../../utils/dom.js";
 
 const ns = Config.ns;
 
@@ -40,44 +41,53 @@ export function shareButtonHandler(e) {
 }
 
 export async function ohYeahButtonHandler(e, action) {
-    e.preventDefault();
-    e.stopPropagation();
-  console.log(this)
-    restoreSelection(this.selection);
-    const selection = window.getSelection();
-  
-    const range = selection.getRangeAt(0);
-    const selectedParentElement = getSelectedParentElement(range);
-  
-    //XXX: Not currently used
-    // const formValues = getFormValues(e.target);
-  
-    //TODO: Mark the selection after successful comment. Move out.
-    //TODO: Use node.textBetween to determine prefix, exact, suffix + parentnode with closest id
-    //Mark the selected content in the document
-    const selector = this.getTextQuoteSelector();
-  
-    const selectionData = {
-      selection,
-      selector,
-      selectedParentElement,
-      selectedContent: this.getSelectionAsHTML()
-    };
-  
-    console.log(selectionData)
-  
-    const selectedText = selection.toString();
-    //XXX: Not currently used
-    // processAction(action, formValues, selectionData);
+  e.preventDefault();
+  e.stopPropagation();
+// console.log(this)
+  restoreSelection(this.selection);
+  const selection = window.getSelection();
 
-    // TODO: this stuff will probably happen in the panel? 
-    const entities = extractEntitiesFromText(selectedText);
-    console.log(entities);
+  const range = selection.getRangeAt(0);
+  const selectedParentElement = getSelectedParentElement(range);
 
-    await DO.U.showOhYeahPanel(entities);
-  
-    this.cleanupToolbar();
-  }
+  //XXX: Not currently used
+  // const formValues = getFormValues(e.target);
+
+  //TODO: Mark the selection after successful comment. Move out.
+  //TODO: Use node.textBetween to determine prefix, exact, suffix + parentnode with closest id
+  //Mark the selected content in the document
+  const selector = this.getTextQuoteSelector();
+
+  const selectionData = {
+    selection,
+    selector,
+    selectedParentElement,
+    selectedContent: this.getSelectionAsHTML()
+  };
+
+  // console.log(selectionData)
+
+  const selectedText = selection.toString();
+  //XXX: Not currently used
+  // processAction(action, formValues, selectionData);
+
+  // TODO: this stuff will probably happen in the panel? 
+  const entities = extractEntitiesFromText(selectedText);
+
+  const { people = [], organizations = [], places = [], acronyms = [] } = entities;
+
+  console.log(entities)
+
+  Object.keys(entities).map((group) => {
+    highlightEntities(entities[group], group);
+  })
+
+  await DO.U.showOhYeahPanel(entities);
+
+  selection.removeAllRanges();
+
+  this.cleanupToolbar();
+}
 
 export function formHandlerAnnotate(e, action) {
   e.preventDefault();

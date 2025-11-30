@@ -188,6 +188,11 @@ export class Editor {
     return toolbarView?.showTextQuoteSelectorFromLocation();
   }
 
+  selectionUpdate() {
+    const toolbarView = this.authorToolbarView || this.socialToolbarView;
+    return toolbarView?.selectionUpdate(DO.Editor.view)
+  }
+
   // Intended for inserting marks
   replaceSelectionWithFragment(fragment){
     // console.log(this)

@@ -11,7 +11,7 @@ import { getDocument, getDocumentContentNode, showActionMessage, selectArticleNo
 import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, generateDataURI, getMediaTypeURIs, isHttpOrHttpsProtocol, isFileProtocol, getUrlParams, stripUrlSearchHash, stripUrlParamsFromString } from './uri.js'
 import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes, filterQuads, getAgentTypeIndex, serializeData } from './graph.js'
 import { notifyInbox, sendNotifications } from './inbox.js'
-import { uniqueArray, fragmentFromString, generateAttributeId, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, isValidISBN, findPreviousDateTime, escapeRDFLiteral, tranformIconstoCSS, getIconsFromCurrentDocument, getHash, getDateTimeISOFromDate } from './util.js'
+import { uniqueArray, fragmentFromString, generateAttributeId, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, isValidISBN, findPreviousDateTime, escapeRDFLiteral, tranformIconstoCSS, getIconsFromCurrentDocument, getHash, getDateTimeISOFromDate, removeChildren } from './util.js'
 import { generateGeoView } from './geo.js'
 import { getLocalStorageItem, updateLocalStorageProfile, enableAutoSave, disableAutoSave, updateLocalStorageItem, autoSave, removeLocalStorageDocumentFromCollection } from './storage.js'
 import { showUserSigninSignout, showUserIdentityInput, getSubjectInfo, restoreSession, afterSetUserInfo, setUserInfo, userInfoSignOut } from './auth.js'
@@ -33,6 +33,7 @@ import { formatHTML, htmlEncode, tokenizeDOM } from './utils/html.js'
 import { DOMParser, DOMSerializer } from 'prosemirror-model'
 import { cleanProseMirrorOutput, normalizeForDiff, normalizeHTML } from './utils/normalization.js'
 import { schema } from './editor/schema/base.js'
+import { highlightEntities } from './editor/utils/dom.js'
 
 const ns = Config.ns;
 let DO;
@@ -811,7 +812,8 @@ DO = {
         "15": { color: '#0088ee', label: 'Policy', type: 'rdf:Resource' },
         "16": { color: '#FFB900', label: 'Event', type: 'rdf:Resource' },
         "17": { color: '#009999', label: 'Slides', type: 'rdf:Resource' },
-        "18": { color: '#d1001c', label: 'Concepts', type: 'rdf:Resource' }
+        "18": { color: '#d1001c', label: 'Concepts', type: 'rdf:Resource' },
+        "19": { color: '#c8facc', label: 'Place', type: 'rdf:Resource'}
       }
       group = Object.assign(group, legendCategories);
 
@@ -1325,6 +1327,11 @@ DO = {
             // case ns.skos.Collection.value:
             //   sGroup = 18; //Assign Concepts colour to Collection?
             //   break;
+            case ns.schema.Place.value:
+            case ns.schema.PostalAddress.value:
+            case ns.wgs.Point.value:
+              sGroup = 19;
+              break;
           }
         }
 
@@ -1365,6 +1372,11 @@ DO = {
           case ns.skos.topConceptOf.value:
           case ns.schema.audience.value:
             oGroup = 18;
+            break;
+          case ns.schema.location.value:
+          case ns.schema.address.value:
+          case ns.schema.addressLocality.value:
+            oGroup = 19;
             break;
         }
 
@@ -9543,72 +9555,83 @@ WHERE {\n\
 
     showOhYeahPanel: async function(entities) {
       DO.U.hideDocumentMenu();
-
-      const { people = [], organizations = [], places = [] } = entities;
-
-      // ---- Flatten into list with type labels ----c
-      entities = [
-        ...people.map(p => ({ text: p, type: "Person" })),
-        ...organizations.map(o => ({ text: o, type: "Organization" })),
-        ...places.map(p => ({ text: p, type: "Place" }))
-      ];
+      // DO.Editor.selectionUpdate();
 
       var aside = document.getElementById('document-ohyeah');
 
-      if(!aside) {
-        var buttonToggle = getButtonHTML({ button: 'toggle', buttonClass: 'toggle', buttonLabel: 'Show/Hide Notifications', buttonTitle: 'Show/Hide' })
-  
-        var aside = `<aside aria-labelledby="document-ohyeah-label" class="do" contenteditable="false" id="document-ohyeah"><h2 id="document-ohyeah-label">Oh Yeah?</h2>${buttonToggle}<div></div></aside>`;
-        document.body.insertAdjacentHTML('beforeend', aside);
-        aside = document.getElementById('document-ohyeah');
-        aside.classList.add('on');
+      if (aside) {
+        removeChildren(aside.querySelector('div'));
+      }
+      else {
+        var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Oh yeah?', buttonTitle: 'Close', iconSize: 'fa-2x' });
 
-        var containerDiv = aside.querySelector('div');
-        for (const ent of entities) {
-          const container = document.createElement("div");
-          container.className = "entity-result";
-  
-          container.innerHTML = `
-            <div class="entity-title">${ent.text}
-              <span class="entity-type">(${ent.type})</span>
-            </div>
-            <div class="wikidata-results">Searching Wikidata…</div>
-          `;
-  
-          containerDiv.appendChild(container);
-          const wikidataDiv = container.querySelector(".wikidata-results");
-  
-          const api =
-            "https://www.wikidata.org/w/api.php?action=wbsearchentities&format=json&language=en&origin=*&search="
-            + encodeURIComponent(ent.text);
-  
-          const wdResp = await fetch(api);
-          const wdData = await wdResp.json();
-  
-          if (!wdData.search || wdData.search.length === 0) {
-            wikidataDiv.innerHTML = "<i>No Wikidata match found.</i>";
-            continue;
-          }
-  
-          wikidataDiv.innerHTML = wdData.search
-            .slice(0, 3)
-            .map(item => `
-              <div class="wikidata-item">
-                <b>${item.label}</b> — ${item.description || "No description"}
-                <div class="wikidata-link">
-                  <a href="https://www.wikidata.org/wiki/${item.id}" target="_blank">
-                    ${item.id}
-                  </a>
-                </div>
-              </div>
-            `)
-            .join("");
-        }
-  
-        return aside;
+        var aside = `<aside aria-labelledby="document-ohyeah-label" class="do" contenteditable="false" id="document-ohyeah"><h2 id="document-ohyeah-label">Oh yeah?</h2>${buttonClose}<div></div></aside>`;
+
+        document.body.insertAdjacentHTML('beforeend', aside);
       }
 
-      DO.U.showContactsActivities();
+      aside = document.getElementById('document-ohyeah');
+      aside.classList.add('on');
+
+      var containerDiv = aside.querySelector('div');
+
+
+      
+      //TODO: Move selection-entities container to its own function: showSelectionEntities(containerDiv)
+      const { people = [], organizations = [], places = [], acronyms = [] } = entities;
+
+      entities = [
+        ...people.map(p => ({ text: p, type: "Person" })),
+        ...organizations.map(o => ({ text: o, type: "Organization" })),
+        ...places.map(p => ({ text: p, type: "Place" })),
+        ...acronyms.map(p => ({ text: p, type: "Acronym" }))
+      ];
+
+      containerDiv.insertAdjacentHTML('beforeEnd', `<section id="selection-entities"><h3>Entities in selection</h3><div><p class="progress">Searching Wikidata…</p></div></section>`);
+
+      const selectionEntities = containerDiv.querySelector("#selection-entities");
+
+      for (const ent of entities) {
+        let entityUUID = generateAttributeId();
+
+        // <dl>
+        //   <dt about="${entityUUID}">${ent.text} (<span typeof="schema:${ent.type}">${ent.type}</span>)</dt>
+        // </dl>
+
+        //crossorigin=true ?
+        let wikidataSearchLanguage = 'en' //TODO: Config based on nearest or document lang? or user preferred lang?
+        const api =
+          `https://www.wikidata.org/w/api.php?action=wbsearchentities&type=item&format=json&language=${wikidataSearchLanguage}&origin=*&search=`
+          + encodeURIComponent(ent.text);
+
+        const wdResp = await fetch(api);
+        const wdData = await wdResp.json();
+
+        if (!wdData.search || wdData.search.length === 0) {
+          selectionEntities.querySelector('div').replaceChildren(fragmentFromString(`<p>No Wikidata match found.</p>`));
+          continue;
+        }
+
+        const progress = containerDiv.querySelector(".progress");
+        if (progress) {
+          progress.remove()
+        }
+
+        selectionEntities.querySelector('div').appendChild(fragmentFromString(`<dl>` + wdData.search
+          // .slice(0, 3)
+          .map(item => `
+            <dt><a href="https://www.wikidata.org/wiki/${item.id}" target="_blank">${item.label}</a></dt>
+            <dd>${item.description || "No description"}</dd>
+          `)
+          .join("") + `</dl>`));
+      }
+
+      let dl = selectionEntities.querySelector('dl');
+      if (!dl) {
+        selectionEntities.querySelector('div').replaceChildren(fragmentFromString(`<p>No Wikidata match found.</p>`));
+      }
+
+      return aside;
     },
 
     initMath: function(config) {

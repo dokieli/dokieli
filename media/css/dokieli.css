@@ -152,6 +152,13 @@ transition:opacity 1s ease-in-out;
 -moz-transition:opacity 1s ease-in-out;
 -webkit-transition:opacity 1s ease-in-out;
 }*/
+
+body:has(#document-notifications.on),
+body:has(#document-ohyeah.on) {
+  max-width:calc(100% - 30em);
+  position: absolute;
+  right: 30em;
+}
 }
 
 [contenteditable=true] {
@@ -597,7 +604,7 @@ border-bottom:1px solid #ccc;
 border-bottom-left-radius:0.5em;
 box-shadow:0.25em 0.25em 0.25em rgba(0,0,0,0.1);
 }
-aside.do.on:not([id="document-info"]):not([id="document-notifications"]) {
+aside.do.on:not([id="document-info"]):not([id="document-notifications"]):not([id="document-ohyeah"]){
 left:50%;
 transform:translate(-50%, 0);
 }
@@ -958,12 +965,12 @@ width: 50%;
 height:auto;
 }
 
-
 #document-notifications details video {
 max-width: 100%;
 }
 
-#document-notifications > div > ul.activities {
+#document-notifications > div > ul.activities,
+#document-ohyeah > div > section {
 overflow-y: auto;
 height: 100%;
 }
@@ -1266,12 +1273,16 @@ a.highlight,
 }
 .highlight-structure [typeof~="schema:Person"]:after,
 .highlight-structure [typeof~="foaf:Person"]:after,
-.highlight-structure [typeof~="schema:Organization"]:after,
-.highlight-structure [typeof~="foaf:Organization"]:after {
+::highlight(people-selection-highlights) {
   background-color:#900090;
   color:#fff;
 }
-
+.highlight-structure [typeof~="schema:Organization"]:after,
+.highlight-structure [typeof~="foaf:Organization"]:after,
+::highlight(organizations-selection-highlights) {
+  background-color:#e7e7ff;
+  color:#000;
+}
 .highlight-structure [typeof~="qb:DataSet"]:after {
   content:"DataSet";
   background-color:#ff7f00;
@@ -1316,8 +1327,16 @@ a.highlight,
 .highlight-structure [typeof~="wgs:Point"]:after,
 .highlight-structure [typeof~="schema:PostalAddress"]:after {
   content:"Location";
-  background-color:#fff;
+}
+.highlight-structure [typeof~="wgs:Point"]:after,
+.highlight-structure [typeof~="schema:PostalAddress"]:after,
+::highlight(places-selection-highlights) {
+  background-color:#c8facc;
   color:#000;
+}
+::highlight(acronyms-selection-highlights) {
+  background: #ffa07a;
+  color: #000;
 }
 
 
