@@ -9639,7 +9639,8 @@ WHERE {
         //   .map(r => r.title)
         //   .filter(t => /^Q\d+$/.test(t));
 
-        let wikidataSearchLimit = 1000;
+        let wikidataSearchLimit = 10;
+        let sparqlResultsLimit = 1000;
 
         let wikidataTypes = Config.WikiData[ent.type].join(' ');
 
@@ -9670,6 +9671,30 @@ WHERE {
 // }
 // `.trim();
 
+const typeFilter = ent.type === "organization" ? 
+`
+?id wdt:P31 ?type .
+
+VALUES ?baseType { wd:Q43229 }
+
+{
+  ?type wdt:P279 ?baseType .
+} UNION {
+  ?type wdt:P279 ?super1 .
+  ?super1 wdt:P279 ?baseType .
+} UNION {
+  ?type wdt:P279 ?super1 .
+  ?super1 wdt:P279 ?super2 .
+  ?super2 wdt:P279 ?baseType .
+}
+`
+:
+`
+?id wdt:P31 ?type .
+?type wdt:P279* ?baseType .
+VALUES ?baseType { ${wikidataTypes} }
+`
+
     let wikidataSparqlQuery = `
 PREFIX mwapi: <https://www.mediawiki.org/ontology#API/>
 PREFIX wd:    <http://www.wikidata.org/entity/>
@@ -9689,9 +9714,7 @@ WHERE {
     ?id wikibase:apiOutputItem mwapi:item .
   }
 
-  ?id wdt:P31 ?type .
-  ?type wdt:P279* ?baseType .
-  VALUES ?baseType { ${wikidataTypes} }
+  ${typeFilter}
 
   OPTIONAL {
     ?id ?labelProperty ?label .
@@ -9704,8 +9727,10 @@ WHERE {
   }
   OPTIONAL { ?id wdt:P18 ?image }
 }
-LIMIT ${wikidataSearchLimit}
+ORDER BY xsd:integer(SUBSTR(STRAFTER(STR(?id), "Q"), 1))
+LIMIT ${sparqlResultsLimit}
 `.trim();
+
 
 
 //https://www.wikidata.org/wiki/Property:P242 locator map image

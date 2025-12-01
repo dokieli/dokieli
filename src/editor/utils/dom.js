@@ -83,43 +83,43 @@ function getHighlightPriorityLevelByType(type) {
   return map[type];
 }
 
-export function highlightEntities(entities, type, baseOffset = 0) {
+export function highlightEntities(entities, type) {
   const sel = window.getSelection();
   if (!sel.rangeCount) return;
   const selectionRange = sel.getRangeAt(0);
   const textNodes = getTextNodesInRange(selectionRange);
 
   const ranges = [];
+  let baseOffset = 0;
 
-  textNodes.forEach(node => {
-    const nodeStart = baseOffset;
+  textNodes.forEach((node, idx) => {
     const text = node.textContent;
 
+    const nodeStartOffset = idx === 0 ? selectionRange.startOffset : 0;
+    const nodeEndOffset   = idx === textNodes.length - 1 ? selectionRange.endOffset : text.length;
+
     entities.forEach(ent => {
-      const absStart = ent.start;                 // absolute offset in selectedText
-      const absEnd = ent.end;
+      const absStart = ent.start - baseOffset;
+      const absEnd   = ent.end   - baseOffset;
 
-      // Map to node-local offsets
-      const localStart = absStart - nodeStart;
-      const localEnd   = absEnd   - nodeStart;
+      const localStart = Math.max(0, absStart);
+      const localEnd   = Math.min(nodeEndOffset - nodeStartOffset, absEnd);
 
-      // Only highlight if it fits in this node
-      if (localStart >= 0 && localEnd <= text.length) {
+      if (localStart < localEnd) {
         const r = document.createRange();
-        r.setStart(node, localStart);
-        r.setEnd(node, localEnd);
+        r.setStart(node, nodeStartOffset + localStart);
+        r.setEnd(node, nodeStartOffset + localEnd);
         ranges.push(r);
       }
     });
 
-    // advance offset according to node length
-    baseOffset += text.length;
+    baseOffset += nodeEndOffset - nodeStartOffset;
   });
 
   const priority = getHighlightPriorityLevelByType(type);
-
   const highlight = new Highlight(...ranges);
   highlight.priority = priority;
 
   CSS.highlights.set(`${type}-selection-highlights`, highlight);
 }
+
