@@ -83,13 +83,39 @@ function getHighlightPriorityLevelByType(type) {
   return map[type];
 }
 
-export function highlightEntities(terms, type) {
+export function highlightEntities(entities, type, baseOffset = 0) {
   const sel = window.getSelection();
   if (!sel.rangeCount) return;
   const selectionRange = sel.getRangeAt(0);
   const textNodes = getTextNodesInRange(selectionRange);
-  const ranges = findRangesForTerms(terms, textNodes);
-  // CSS.highlights.clear();
+
+  const ranges = [];
+
+  textNodes.forEach(node => {
+    const nodeStart = baseOffset;
+    const text = node.textContent;
+
+    entities.forEach(ent => {
+      const absStart = ent.start;                 // absolute offset in selectedText
+      const absEnd = ent.end;
+
+      // Map to node-local offsets
+      const localStart = absStart - nodeStart;
+      const localEnd   = absEnd   - nodeStart;
+
+      // Only highlight if it fits in this node
+      if (localStart >= 0 && localEnd <= text.length) {
+        const r = document.createRange();
+        r.setStart(node, localStart);
+        r.setEnd(node, localEnd);
+        ranges.push(r);
+      }
+    });
+
+    // advance offset according to node length
+    baseOffset += text.length;
+  });
+
   const priority = getHighlightPriorityLevelByType(type);
 
   const highlight = new Highlight(...ranges);

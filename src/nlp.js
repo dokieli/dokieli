@@ -13,21 +13,47 @@ const lexicon = {
 
 export function extractEntitiesFromText(text) {
   text = text.replace('.', '')
-  let doc = nlp(text, lexicon);
+  const doc = nlp(text, lexicon);
+  console.log(doc.topics())
   doc.normalize();
 
-  // Get named entities
-  const people = [...new Set(doc.people().out("array"))];
-  const organizations = [...new Set(doc.organizations().out("array"))];
-  const places = [...new Set(doc.places().out("array"))];
-  const acronyms = [...new Set(doc.acronyms().out("array"))].filter((item) => !organizations.includes(item));
+  function extractTypedMatches(type, selection) {
+    return selection.json({ offset: true }).map(entry => {
+      const t = entry.terms[0];
+      return {
+        type,
+        text: entry.text,
+        start: t.offset.start,
+        end: t.offset.start + t.offset.length,
+        length: t.offset.length,
+        tokenIndex: t.index[1],
+      };
+    });
+  }
 
-  // adj + noun
+  const people = extractTypedMatches("person", doc.people());
+  const places = extractTypedMatches("place",  doc.places());
+  const orgs = extractTypedMatches("organization", doc.organizations());
+  const acronymsRaw = doc.acronyms().json({ offset: true });
+  const acronyms = acronymsRaw
+    .map(entry => {
+      const t = entry.terms[0];
+      return {
+        type: "acronym",
+        text: entry.text,
+        start: t.offset.start,
+        end: t.offset.start + t.offset.length,
+        length: t.offset.length,
+        tokenIndex: t.index[1],
+      };
+    })
+    .filter(item => !orgs.some(o => o.text === item.text));
 
   return {
     people,
-    organizations,
+    organizations: orgs,
     places,
-    acronyms
+    acronyms,
+    all: [...people, ...orgs, ...places, ...acronyms]
   };
 }

@@ -2508,7 +2508,7 @@ DO = {
 
       var node = document.getElementById('review-changes');
 
-      node.querySelector('h2 + div.info').insertAdjacentHTML('beforeend', detailsInsDel);
+      node.querySelector('div.info').insertAdjacentHTML('beforeend', detailsInsDel);
 
       node.insertAdjacentHTML('beforeend', `
         <div class="do-diff">${diffHTML.join('')}</div>
@@ -9579,51 +9579,271 @@ WHERE {\n\
       
       //TODO: Move selection-entities container to its own function: showSelectionEntities(containerDiv)
       const { people = [], organizations = [], places = [], acronyms = [] } = entities;
-
-      entities = [
-        ...people.map(p => ({ text: p, type: "Person" })),
-        ...organizations.map(o => ({ text: o, type: "Organization" })),
-        ...places.map(p => ({ text: p, type: "Place" })),
-        ...acronyms.map(p => ({ text: p, type: "Acronym" }))
-      ];
+console.log(entities)
+      // entities = [
+      //   ...people.map(p => ({ text: p, type: "Person" })),
+      //   ...organizations.map(o => ({ text: o, type: "Organization" })),
+      //   ...places.map(p => ({ text: p, type: "Place" })),
+      //   ...acronyms.map(p => ({ text: p, type: "Acronym" }))
+      // ];
 
       containerDiv.insertAdjacentHTML('beforeEnd', `<section id="selection-entities"><h3>Entities in selection</h3><div><p class="progress">Searching Wikidata…</p></div></section>`);
 
       const selectionEntities = containerDiv.querySelector("#selection-entities");
 
-      for (const ent of entities) {
+      const { all } = entities;
+
+      for (const ent of all) {
         let entityUUID = generateAttributeId();
 
         // <dl>
         //   <dt about="${entityUUID}">${ent.text} (<span typeof="schema:${ent.type}">${ent.type}</span>)</dt>
         // </dl>
 
+
+//curl -H'Accept: text/turtle' "https://query.wikidata.org/sparql?query=CONSTRUCT%20%7B%0A%20%20%3Fplace%20%3Fp%20%3Fo%20.%0A%20%20%7D%0A%20%20WHERE%20%7B%0A%20%20%3Fplace%20rdfs%3Alabel%20%22Virginia%22%40en.%0A%20%20%3Fplace%20wdt%3AP31%20%3Ftype.%0A%20%20%3Fplace%20%3Fp%20%3Fo.%0A%20%20VALUES%20%3Ftype%20%7B%20wd%3AQ35657%20wd%3AQ515%20wd%3AQ486972%20wd%3AQ532%20wd%3AQ7930989%20%7D%20%0A%20%20SERVICE%20wikibase%3Alabel%20%7B%20bd%3AserviceParam%20wikibase%3Alanguage%20%22en%22.%20%7D%0A%7D%0A"
+
+//person: ["Q5"],
+//place: [wd:Q35657 wd:Q515 wd:Q486972" "wd:Q532", "wd:Q7930989"]
+
+/*
+CONSTRUCT {
+  ?s ?p ?o .
+}
+WHERE {
+  ?s rdfs:label "${ent.type}"@en.
+  ?s wdt:P31 ?type.
+  ?s ?p ?o.
+  FILTER(STRSTARTS(STR(?s), "http://www.wikidata.org/entity/Q"))
+  VALUES ?type { wd:Q35657 wd:Q515 wd:Q486972 wd:Q532 wd:Q7930989 } 
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+}
+*/
+
+
         //crossorigin=true ?
         let wikidataSearchLanguage = 'en' //TODO: Config based on nearest or document lang? or user preferred lang?
-        const api =
-          `https://www.wikidata.org/w/api.php?action=wbsearchentities&type=item&format=json&language=${wikidataSearchLanguage}&origin=*&search=`
-          + encodeURIComponent(ent.text);
+        // const query = `${ent.text} ${ent.type}`
 
-        const wdResp = await fetch(api);
-        const wdData = await wdResp.json();
+        // const fullSearchUrl =
+        // "https://www.wikidata.org/w/api.php" +
+        // `?action=query&list=search&format=json&origin=*` +
+        // `&srsearch=${encodeURIComponent(query)}`;
 
-        if (!wdData.search || wdData.search.length === 0) {
+        // const fullRes = await fetch(fullSearchUrl);
+        // const fullJson = await fullRes.json();
+      
+        // if (fullJson.query.search.length === 0) return [];
+      
+        // const qids = fullJson.query.search
+        //   .map(r => r.title)
+        //   .filter(t => /^Q\d+$/.test(t));
+
+        let wikidataSearchLimit = 1000;
+
+        let wikidataTypes = Config.WikiData[ent.type].join(' ');
+
+//         let wikidataSparqlQuery = `
+// CONSTRUCT {
+//   ?s rdfs:label ?label .
+//   ?s schema:description ?description .
+//   ?s wdt:P18 ?image .
+// }
+// WHERE {
+//   SERVICE wikibase:mwapi {
+//     bd:serviceParam
+//       wikibase:endpoint "www.wikidata.org" ;
+//       wikibase:api "EntitySearch" ;
+//       mwapi:search "${ent.text}" ;
+//       mwapi:language "${wikidataSearchLanguage}" ;
+//       mwapi:limit "${wikidataSearchLimit}" .
+//     ?person wikibase:apiOutputItem mwapi:item .
+//   }
+
+//   ?person wdt:P31 ?type .
+//   ?type wdt:P279* ?baseType .
+//   VALUES ?baseType { ${wikidataTypes} }
+
+//   OPTIONAL { ?s rdfs:label ?label . FILTER(LANG(?label)="${wikidataSearchLanguage}") }
+//   OPTIONAL { ?s schema:description ?description . FILTER(LANG(?description)="${wikidataSearchLanguage}") }
+//   OPTIONAL { ?s wdt:P18 ?image }
+// }
+// `.trim();
+
+    let wikidataSparqlQuery = `
+PREFIX mwapi: <https://www.mediawiki.org/ontology#API/>
+PREFIX wd:    <http://www.wikidata.org/entity/>
+PREFIX wdt:   <http://www.wikidata.org/prop/direct/>
+PREFIX schema: <http://schema.org/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT DISTINCT ?id ?label ?description ?image
+WHERE {
+  SERVICE wikibase:mwapi {
+    bd:serviceParam
+      wikibase:endpoint "www.wikidata.org" ;
+      wikibase:api "EntitySearch" ;
+      mwapi:search "${ent.text}" ;
+      mwapi:language "${wikidataSearchLanguage}" ;
+      mwapi:limit "${wikidataSearchLimit}" .
+    ?id wikibase:apiOutputItem mwapi:item .
+  }
+
+  ?id wdt:P31 ?type .
+  ?type wdt:P279* ?baseType .
+  VALUES ?baseType { ${wikidataTypes} }
+
+  OPTIONAL {
+    ?id ?labelProperty ?label .
+    VALUES ?labelProperty { rdfs:label schema:name }
+    FILTER(LANG(?label) = "" || LANG(?label) = "${wikidataSearchLanguage}" || LANG(?label) = "mul")
+  }
+  OPTIONAL {
+    ?id schema:description ?description .
+    FILTER(LANG(?description) = "" || LANG(?description) = "${wikidataSearchLanguage}" || LANG(?description) = "mul")
+  }
+  OPTIONAL { ?id wdt:P18 ?image }
+}
+LIMIT ${wikidataSearchLimit}
+`.trim();
+
+
+//https://www.wikidata.org/wiki/Property:P242 locator map image
+
+// TODO #1: what to do about acronyms? 
+// TODO #2: the above query returns results in any language (and also very weird)
+
+
+console.log(wikidataSparqlQuery)
+
+  const url = "https://query.wikidata.org/sparql?query=" + encodeURIComponent(wikidataSparqlQuery);
+
+    let options = {};
+    options['noCredentials'] = true;
+
+    let headers = { 'Accept': 'application/json' };
+    
+    const sparqlResultsGraph = await getResource(url, headers, options).then((res) => res.json())
+
+    console.log(sparqlResultsGraph)
+
+    const entities = sparqlResultsGraph.results.bindings;
+
+    // console.log(sparqlResultsGraph.dataset)
+
+  //   const graph = rdf.grapoi({ dataset: sparqlResultsGraph.dataset })
+  //   // const graph = sparqlResultsGraph;
+
+  //   const subjects = uniqueArray(Array.from(graph.out().quads()).map(quad => quad.subject.value))
+
+
+  //   // console.log(graph.quads().size)
+  //   // console.log(graph.out().terms)
+  //   // console.log(graph.out().entities)
+
+  //   // const itemSubjects = graph.out().terms.filter(subject => {
+  //   //   console.log(subject.value)
+  //   //   const node = sparqlResultsGraph.node(subject.value);
+  //   //   // console.log(node.out(ns.rdf.type).values)
+  //   //   return node.out(ns.rdf.type).values.some(o => o.equals(rdf.namedNode('http://wikiba.se/ontology#Item')));
+  //   // });
+
+  //   // console.log(subjects)
+
+  //   const entities = subjects.map((subject) => {
+  //     const node = graph.node(rdf.namedNode(subject));
+
+  //     // for (const quad of node.out().quads()) {
+  //     //   console.log(`\t${quad.predicate.value}: ${quad.object.value}`)
+  //     // }
+
+  //     const id = subject;
+  // //     console.log(ns.schema.description)
+  // // console.log(node.out(ns.schema.description))
+  //     const label = node.out(ns.rdfs.label).values[0];
+  //     const description = node.out(ns.schema.description).values[0];
+  
+  //     const image =
+  //       node.out(ns.schema.image).value ||
+  //       node.out(rdf.namedNode('http://www.wikidata.org/prop/direct/P18')).value ||
+  //       null;
+  
+  //     // const url =
+  //     //   node.out(ns.schema.url).value ||
+  //     //   node.out(ns.schema.about).value ||
+  //     //   null;
+  
+  //     return {
+  //       id,
+  //       label,
+  //       description,
+  //       image,
+  //       url: id,
+  //       type: ent.type
+  //     };
+  //   })
+
+  //   console.log(entities)
+      
+
+        // const api =
+        //   `https://www.wikidata.org/w/api.php?action=wbsearchentities&type=item&format=json&language=${wikidataSearchLanguage}&origin=*&search=`
+        //   + encodeURIComponent(`${ent.text}`);
+
+        
+
+    //     const api = "https://www.wikidata.org/w/api.php" +
+    // `?action=wbgetentities&format=json&origin=*` +
+    // `&languages=${wikidataSearchLanguage}` +
+    // `&ids=${qids.join("|")}`;
+
+    //     const wdResp = await fetch(api);
+    //     const wdData = await wdResp.json();
+
+
+        if (!entities || entities.length === 0) {
           selectionEntities.querySelector('div').replaceChildren(fragmentFromString(`<p>No Wikidata match found.</p>`));
           continue;
         }
+
+    //     const entitiesResults = Object.keys(wdData.entities).map((entity) => {
+    //       return {
+    //         id: entity,
+    //         description: wdData.entities[entity].descriptions[wikidataSearchLanguage].value,
+    //         label: wdData.entities[entity].labels ? wdData.entities[entity].labels[wikidataSearchLanguage]?.value : ''
+    //       }
+    //     })
 
         const progress = containerDiv.querySelector(".progress");
         if (progress) {
           progress.remove()
         }
 
-        selectionEntities.querySelector('div').appendChild(fragmentFromString(`<dl>` + wdData.search
-          // .slice(0, 3)
-          .map(item => `
-            <dt><a href="https://www.wikidata.org/wiki/${item.id}" target="_blank">${item.label}</a></dt>
-            <dd>${item.description || "No description"}</dd>
-          `)
-          .join("") + `</dl>`));
+        selectionEntities.querySelector('div').appendChild(
+          fragmentFromString(
+            `<dl>` +
+              entities
+                .map(item => {
+                  const imgHtml = item.image?.value
+                    ? `<img src="${item.image.value}" alt="Image of ${item.label?.value}" style="max-width:150px;display:block;margin:0.25em 0;">`
+                    : ``;
+
+                  return `
+                    <dt>
+                      <a href="${item.id?.value}" target="_blank" rel="noopener noreferrer">
+                        ${item.label?.value}
+                      </a>
+                    </dt>
+                    <dd>
+                      ${imgHtml}
+                      ${item.description?.value || "No description"}
+                    </dd>
+                  `;
+                })
+                .join("") +
+              `</dl>`
+          )
+        );
       }
 
       let dl = selectionEntities.querySelector('dl');

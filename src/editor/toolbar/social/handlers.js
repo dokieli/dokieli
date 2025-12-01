@@ -78,9 +78,10 @@ export async function ohYeahButtonHandler(e, action) {
 
   console.log(entities)
 
-  Object.keys(entities).map((group) => {
-    highlightEntities(entities[group], group);
-  })
+  Object.keys(entities).map(group => {
+    if (group === "all") return; 
+    highlightEntities(entities[group], group, 0);
+  });
 
   await DO.U.showOhYeahPanel(entities);
 
