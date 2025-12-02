@@ -156,6 +156,7 @@ function getDocument(cn, options) {
   }
 
   if (options.normalize) {
+    //XXX: Should call with options? normalizeHTML(nodeDocument, options)
     nodeDocument = normalizeHTML(nodeDocument);
   }
 

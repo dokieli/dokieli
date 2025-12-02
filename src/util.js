@@ -324,6 +324,26 @@ const isPlainObject = (object) => {
   return typeof object === 'object' && !Array.isArray(object) && object !== null;
 }
 
+function scoreMatch(search, label) {
+  const a = search.toLowerCase();
+  const b = label.toLowerCase();
+
+  if (a === b) return 1000000;
+
+  let i = 0, j = 0, matches = 0;
+
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) {
+      matches++;
+      i++; j++;
+    } else {
+      j++;
+    }
+  }
+
+  return matches;
+}
+
 export {
   debounce,
   uniqueArray,
@@ -353,5 +373,6 @@ export {
   tranformIconstoCSS,
   getIconsFromCurrentDocument,
   isOnline,
-  isPlainObject
+  isPlainObject,
+  scoreMatch
 };

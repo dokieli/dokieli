@@ -11,7 +11,7 @@ import { getDocument, getDocumentContentNode, showActionMessage, selectArticleNo
 import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, generateDataURI, getMediaTypeURIs, isHttpOrHttpsProtocol, isFileProtocol, getUrlParams, stripUrlSearchHash, stripUrlParamsFromString } from './uri.js'
 import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes, filterQuads, getAgentTypeIndex, serializeData } from './graph.js'
 import { notifyInbox, sendNotifications } from './inbox.js'
-import { uniqueArray, fragmentFromString, generateAttributeId, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, isValidISBN, findPreviousDateTime, escapeRDFLiteral, tranformIconstoCSS, getIconsFromCurrentDocument, getHash, getDateTimeISOFromDate, removeChildren } from './util.js'
+import { uniqueArray, fragmentFromString, generateAttributeId, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, isValidISBN, findPreviousDateTime, escapeRDFLiteral, tranformIconstoCSS, getIconsFromCurrentDocument, getHash, getDateTimeISOFromDate, removeChildren, scoreMatch } from './util.js'
 import { generateGeoView } from './geo.js'
 import { getLocalStorageItem, updateLocalStorageProfile, enableAutoSave, disableAutoSave, updateLocalStorageItem, autoSave, removeLocalStorageDocumentFromCollection } from './storage.js'
 import { showUserSigninSignout, showUserIdentityInput, getSubjectInfo, restoreSession, afterSetUserInfo, setUserInfo, userInfoSignOut } from './auth.js'
@@ -34,6 +34,7 @@ import { DOMParser, DOMSerializer } from 'prosemirror-model'
 import { cleanProseMirrorOutput, normalizeForDiff, normalizeHTML } from './utils/normalization.js'
 import { schema } from './editor/schema/base.js'
 import { highlightEntities } from './editor/utils/dom.js'
+import { entityNamesMap } from './nlp.js'
 
 const ns = Config.ns;
 let DO;
@@ -812,7 +813,7 @@ DO = {
         "15": { color: '#0088ee', label: 'Policy', type: 'rdf:Resource' },
         "16": { color: '#FFB900', label: 'Event', type: 'rdf:Resource' },
         "17": { color: '#009999', label: 'Slides', type: 'rdf:Resource' },
-        "18": { color: '#d1001c', label: 'Concepts', type: 'rdf:Resource' },
+        "18": { color: '#d1001c', label: 'Concept', type: 'rdf:Resource' },
         "19": { color: '#c8facc', label: 'Place', type: 'rdf:Resource'}
       }
       group = Object.assign(group, legendCategories);
@@ -858,6 +859,10 @@ DO = {
             sanitize: true,
             normalize: true
           };
+
+          // if (options.documentOptions something like that?) {
+            // removeNodesWithSelector:
+          // }
 
           svgNode = getDocument(svgNode.cloneNode(true), documentOptions);
 
@@ -9555,7 +9560,6 @@ WHERE {\n\
 
     showOhYeahPanel: async function(entities) {
       DO.U.hideDocumentMenu();
-      // DO.Editor.selectionUpdate();
 
       var aside = document.getElementById('document-ohyeah');
 
@@ -9575,163 +9579,115 @@ WHERE {\n\
 
       var containerDiv = aside.querySelector('div');
 
-
-      
       //TODO: Move selection-entities container to its own function: showSelectionEntities(containerDiv)
       const { people = [], organizations = [], places = [], acronyms = [] } = entities;
-console.log(entities)
-      // entities = [
-      //   ...people.map(p => ({ text: p, type: "Person" })),
-      //   ...organizations.map(o => ({ text: o, type: "Organization" })),
-      //   ...places.map(p => ({ text: p, type: "Place" })),
-      //   ...acronyms.map(p => ({ text: p, type: "Acronym" }))
-      // ];
 
-      containerDiv.insertAdjacentHTML('beforeEnd', `<section id="selection-entities"><h3>Entities in selection</h3><div><p class="progress">Searching Wikidata…</p></div></section>`);
+      console.log(entities)
 
-      const selectionEntities = containerDiv.querySelector("#selection-entities");
+      containerDiv.insertAdjacentHTML('beforeEnd', `
+        <section id="selection-entities">
+          <h3>Related entities</h3>
+          <div>
+            <dl class="entity-legend">
+              <dt>Legend</dt>
+              <dd>
+                <ul>
+                  <li class="entity-legend-people">People</li>
+                  <li class="entity-legend-places">Places</li>
+                  <li class="entity-legend-organizations">Organizations</li>
+                </ul>
+              </dd>
+            </dl>
+          </div>
+        </section>`);
 
-      const { all } = entities;
+      const selectionResults = containerDiv.querySelector("#selection-entities");
 
-      for (const ent of all) {
-        let entityUUID = generateAttributeId();
+      let wikidataSearchLanguage = 'en' //TODO: Config based on nearest or document lang? or user preferred lang?
+      let wikidataSearchLimit = 100;
 
-        // <dl>
-        //   <dt about="${entityUUID}">${ent.text} (<span typeof="schema:${ent.type}">${ent.type}</span>)</dt>
-        // </dl>
+      for (const groupKey of Object.keys(entities)) {
+        const group = entities[groupKey];
 
+        if (!group.length) { return; }
 
-//curl -H'Accept: text/turtle' "https://query.wikidata.org/sparql?query=CONSTRUCT%20%7B%0A%20%20%3Fplace%20%3Fp%20%3Fo%20.%0A%20%20%7D%0A%20%20WHERE%20%7B%0A%20%20%3Fplace%20rdfs%3Alabel%20%22Virginia%22%40en.%0A%20%20%3Fplace%20wdt%3AP31%20%3Ftype.%0A%20%20%3Fplace%20%3Fp%20%3Fo.%0A%20%20VALUES%20%3Ftype%20%7B%20wd%3AQ35657%20wd%3AQ515%20wd%3AQ486972%20wd%3AQ532%20wd%3AQ7930989%20%7D%20%0A%20%20SERVICE%20wikibase%3Alabel%20%7B%20bd%3AserviceParam%20wikibase%3Alanguage%20%22en%22.%20%7D%0A%7D%0A"
+        let entityType = group[0].type;
 
-//person: ["Q5"],
-//place: [wd:Q35657 wd:Q515 wd:Q486972" "wd:Q532", "wd:Q7930989"]
+        let outputHtml = '';
 
-/*
-CONSTRUCT {
-  ?s ?p ?o .
-}
-WHERE {
-  ?s rdfs:label "${ent.type}"@en.
-  ?s wdt:P31 ?type.
-  ?s ?p ?o.
-  FILTER(STRSTARTS(STR(?s), "http://www.wikidata.org/entity/Q"))
-  VALUES ?type { wd:Q35657 wd:Q515 wd:Q486972 wd:Q532 wd:Q7930989 } 
-  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
-}
-*/
+        for (const ent of group) {
+          let wikidataTypes = Config.WikiData[ent.type].join(' ');
 
-
-        //crossorigin=true ?
-        let wikidataSearchLanguage = 'en' //TODO: Config based on nearest or document lang? or user preferred lang?
-        // const query = `${ent.text} ${ent.type}`
-
-        // const fullSearchUrl =
-        // "https://www.wikidata.org/w/api.php" +
-        // `?action=query&list=search&format=json&origin=*` +
-        // `&srsearch=${encodeURIComponent(query)}`;
-
-        // const fullRes = await fetch(fullSearchUrl);
-        // const fullJson = await fullRes.json();
-      
-        // if (fullJson.query.search.length === 0) return [];
-      
-        // const qids = fullJson.query.search
-        //   .map(r => r.title)
-        //   .filter(t => /^Q\d+$/.test(t));
-
-        let wikidataSearchLimit = 10;
-        let sparqlResultsLimit = 1000;
-
-        let wikidataTypes = Config.WikiData[ent.type].join(' ');
-
-//         let wikidataSparqlQuery = `
-// CONSTRUCT {
-//   ?s rdfs:label ?label .
-//   ?s schema:description ?description .
-//   ?s wdt:P18 ?image .
-// }
-// WHERE {
-//   SERVICE wikibase:mwapi {
-//     bd:serviceParam
-//       wikibase:endpoint "www.wikidata.org" ;
-//       wikibase:api "EntitySearch" ;
-//       mwapi:search "${ent.text}" ;
-//       mwapi:language "${wikidataSearchLanguage}" ;
-//       mwapi:limit "${wikidataSearchLimit}" .
-//     ?person wikibase:apiOutputItem mwapi:item .
-//   }
-
-//   ?person wdt:P31 ?type .
-//   ?type wdt:P279* ?baseType .
-//   VALUES ?baseType { ${wikidataTypes} }
-
-//   OPTIONAL { ?s rdfs:label ?label . FILTER(LANG(?label)="${wikidataSearchLanguage}") }
-//   OPTIONAL { ?s schema:description ?description . FILTER(LANG(?description)="${wikidataSearchLanguage}") }
-//   OPTIONAL { ?s wdt:P18 ?image }
-// }
-// `.trim();
-
-const typeFilter = ent.type === "organization" ? 
+          const typeFilter = ent.type === "organization" ? 
 `
-?id wdt:P31 ?type .
-
-VALUES ?baseType { wd:Q43229 }
-
-{
-  ?type wdt:P279 ?baseType .
-} UNION {
-  ?type wdt:P279 ?super1 .
-  ?super1 wdt:P279 ?baseType .
-} UNION {
-  ?type wdt:P279 ?super1 .
-  ?super1 wdt:P279 ?super2 .
-  ?super2 wdt:P279 ?baseType .
-}
+  ?id wdt:P31 ?type .
+  VALUES ?baseType { ${wikidataTypes} }
+  {
+    ?type wdt:P279 ?baseType .
+  }
+  UNION {
+    ?type wdt:P279 ?super1 .
+    ?super1 wdt:P279 ?baseType .
+  }
+  UNION {
+    ?type wdt:P279 ?super1 .
+    ?super1 wdt:P279 ?super2 .
+    ?super2 wdt:P279 ?baseType .
+  }
 `
 :
 `
-?id wdt:P31 ?type .
-?type wdt:P279* ?baseType .
-VALUES ?baseType { ${wikidataTypes} }
+  ?id wdt:P31/wdt:P279* ?baseType .
+  VALUES ?baseType { ${wikidataTypes} }
 `
 
-    let wikidataSparqlQuery = `
+          let wikidataSparqlQuery = `
+PREFIX wikibase: <http://wikiba.se/ontology#>
 PREFIX mwapi: <https://www.mediawiki.org/ontology#API/>
-PREFIX wd:    <http://www.wikidata.org/entity/>
-PREFIX wdt:   <http://www.wikidata.org/prop/direct/>
+PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
 PREFIX schema: <http://schema.org/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
-SELECT DISTINCT ?id ?label ?description ?image
+SELECT DISTINCT ?id ?label ?description ?image ?url
 WHERE {
-  SERVICE wikibase:mwapi {
-    bd:serviceParam
-      wikibase:endpoint "www.wikidata.org" ;
-      wikibase:api "EntitySearch" ;
-      mwapi:search "${ent.text}" ;
-      mwapi:language "${wikidataSearchLanguage}" ;
-      mwapi:limit "${wikidataSearchLimit}" .
-    ?id wikibase:apiOutputItem mwapi:item .
+  {
+    SELECT DISTINCT ?id
+    WHERE {
+      SERVICE wikibase:mwapi {
+        bd:serviceParam
+          wikibase:endpoint "www.wikidata.org" ;
+          wikibase:api "EntitySearch" ;
+          mwapi:search "${ent.text}" ;
+          mwapi:language "${wikidataSearchLanguage}" ;
+          mwapi:limit "${wikidataSearchLimit}" .
+        ?id wikibase:apiOutputItem mwapi:item .
+      }
+      ${typeFilter}
+    }
   }
 
-  ${typeFilter}
+  OPTIONAL {
+    ?id rdfs:label ?labelStr .
+    FILTER(LANG(?labelStr) IN ("", "${wikidataSearchLanguage}", "mul"))
+    BIND(STR(?labelStr) AS ?label)
+  }
+  OPTIONAL {
+    ?id schema:description ?descriptionStr .
+    FILTER(LANG(?descriptionStr) IN ("", "${wikidataSearchLanguage}", "mul"))
+    BIND(STR(?descriptionStr) AS ?description)
+  }
 
-  OPTIONAL {
-    ?id ?labelProperty ?label .
-    VALUES ?labelProperty { rdfs:label schema:name }
-    FILTER(LANG(?label) = "" || LANG(?label) = "${wikidataSearchLanguage}" || LANG(?label) = "mul")
-  }
-  OPTIONAL {
-    ?id schema:description ?description .
-    FILTER(LANG(?description) = "" || LANG(?description) = "${wikidataSearchLanguage}" || LANG(?description) = "mul")
-  }
   OPTIONAL { ?id wdt:P18 ?image }
+
+  OPTIONAL {
+    ?url schema:about ?id ;
+            schema:isPartOf <https://${wikidataSearchLanguage}.wikipedia.org/> .
+  }
+
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "${wikidataSearchLanguage}". }
 }
-ORDER BY xsd:integer(SUBSTR(STRAFTER(STR(?id), "Q"), 1))
-LIMIT ${sparqlResultsLimit}
 `.trim();
-
-
 
 //https://www.wikidata.org/wiki/Property:P242 locator map image
 
@@ -9739,137 +9695,66 @@ LIMIT ${sparqlResultsLimit}
 // TODO #2: the above query returns results in any language (and also very weird)
 
 
-console.log(wikidataSparqlQuery)
+          // console.log(wikidataSparqlQuery)
 
-  const url = "https://query.wikidata.org/sparql?query=" + encodeURIComponent(wikidataSparqlQuery);
+          const url = "https://query.wikidata.org/sparql?query=" + encodeURIComponent(wikidataSparqlQuery);
 
-    let options = {};
-    options['noCredentials'] = true;
+          let options = {};
+          options['noCredentials'] = true;
 
-    let headers = { 'Accept': 'application/json' };
-    
-    const sparqlResultsGraph = await getResource(url, headers, options).then((res) => res.json())
+          let headers = { 'Accept': 'application/json' };
+          
+          const sparqlResultsResponse = await getResource(url, headers, options);
+          const sparqlResultsGraph = await sparqlResultsResponse.json();
 
-    console.log(sparqlResultsGraph)
+          // console.log(sparqlResultsGraph)
 
-    const entities = sparqlResultsGraph.results.bindings;
+          let results = sparqlResultsGraph.results.bindings;
 
-    // console.log(sparqlResultsGraph.dataset)
+          results = results.sort((itemA, itemB) => {
+            const labelA = itemA?.label?.value || "";
+            const labelB = itemB?.label?.value || "";
 
-  //   const graph = rdf.grapoi({ dataset: sparqlResultsGraph.dataset })
-  //   // const graph = sparqlResultsGraph;
+            const scoreA = scoreMatch(ent.text, labelA);
+            const scoreB = scoreMatch(ent.text, labelB);
 
-  //   const subjects = uniqueArray(Array.from(graph.out().quads()).map(quad => quad.subject.value))
+            return scoreB - scoreA;
+          });
 
+          // console.log(results)
 
-  //   // console.log(graph.quads().size)
-  //   // console.log(graph.out().terms)
-  //   // console.log(graph.out().entities)
+          outputHtml = results
+            .map(item => {
+              const imgHtml = item.image?.value
+                ? `<img alt="Image of ${item.label?.value}" rel="schema:image" src="${item.image.value}" width="48" />`
+                : ``;
 
-  //   // const itemSubjects = graph.out().terms.filter(subject => {
-  //   //   console.log(subject.value)
-  //   //   const node = sparqlResultsGraph.node(subject.value);
-  //   //   // console.log(node.out(ns.rdf.type).values)
-  //   //   return node.out(ns.rdf.type).values.some(o => o.equals(rdf.namedNode('http://wikiba.se/ontology#Item')));
-  //   // });
+              const descriptionHtml = item.description?.value
+                ? `<p property="schema:description">${item.description.value}</p>`
+                : ''
 
-  //   // console.log(subjects)
+              return `
+                <dt about="${item.id?.value}"><a href="${item.url ? item.url?.value : item.id?.value}" target="_blank" rel="noopener noreferrer schema:url" property="schema:name">${item.label?.value}</a></dt>
+                <dd about="${item.id?.value}">
+                  ${imgHtml}
+                  ${descriptionHtml}
+                </dd>
+              `;
+            })
+            .join("");
+        } //close inner for loop
 
-  //   const entities = subjects.map((subject) => {
-  //     const node = graph.node(rdf.namedNode(subject));
+        const entityTitle = entityNamesMap[entityType]
 
-  //     // for (const quad of node.out().quads()) {
-  //     //   console.log(`\t${quad.predicate.value}: ${quad.object.value}`)
-  //     // }
-
-  //     const id = subject;
-  // //     console.log(ns.schema.description)
-  // // console.log(node.out(ns.schema.description))
-  //     const label = node.out(ns.rdfs.label).values[0];
-  //     const description = node.out(ns.schema.description).values[0];
-  
-  //     const image =
-  //       node.out(ns.schema.image).value ||
-  //       node.out(rdf.namedNode('http://www.wikidata.org/prop/direct/P18')).value ||
-  //       null;
-  
-  //     // const url =
-  //     //   node.out(ns.schema.url).value ||
-  //     //   node.out(ns.schema.about).value ||
-  //     //   null;
-  
-  //     return {
-  //       id,
-  //       label,
-  //       description,
-  //       image,
-  //       url: id,
-  //       type: ent.type
-  //     };
-  //   })
-
-  //   console.log(entities)
-      
-
-        // const api =
-        //   `https://www.wikidata.org/w/api.php?action=wbsearchentities&type=item&format=json&language=${wikidataSearchLanguage}&origin=*&search=`
-        //   + encodeURIComponent(`${ent.text}`);
-
-        
-
-    //     const api = "https://www.wikidata.org/w/api.php" +
-    // `?action=wbgetentities&format=json&origin=*` +
-    // `&languages=${wikidataSearchLanguage}` +
-    // `&ids=${qids.join("|")}`;
-
-    //     const wdResp = await fetch(api);
-    //     const wdData = await wdResp.json();
-
-
-        if (!entities || entities.length === 0) {
-          selectionEntities.querySelector('div').replaceChildren(fragmentFromString(`<p>No Wikidata match found.</p>`));
-          continue;
+        if (outputHtml) {
+          selectionResults.querySelector('div').appendChild(
+            fragmentFromString(`
+              <h4>${entityTitle}</h4>
+              <dl class="entity-${entityTitle.toLowerCase()}" rel="cito:discusses">
+                ${outputHtml}
+              </dl>`));
         }
-
-    //     const entitiesResults = Object.keys(wdData.entities).map((entity) => {
-    //       return {
-    //         id: entity,
-    //         description: wdData.entities[entity].descriptions[wikidataSearchLanguage].value,
-    //         label: wdData.entities[entity].labels ? wdData.entities[entity].labels[wikidataSearchLanguage]?.value : ''
-    //       }
-    //     })
-
-        const progress = containerDiv.querySelector(".progress");
-        if (progress) {
-          progress.remove()
-        }
-
-        selectionEntities.querySelector('div').appendChild(
-          fragmentFromString(
-            `<dl>` +
-              entities
-                .map(item => {
-                  const imgHtml = item.image?.value
-                    ? `<img src="${item.image.value}" alt="Image of ${item.label?.value}" style="max-width:150px;display:block;margin:0.25em 0;">`
-                    : ``;
-
-                  return `
-                    <dt>
-                      <a href="${item.id?.value}" target="_blank" rel="noopener noreferrer">
-                        ${item.label?.value}
-                      </a>
-                    </dt>
-                    <dd>
-                      ${imgHtml}
-                      ${item.description?.value || "No description"}
-                    </dd>
-                  `;
-                })
-                .join("") +
-              `</dl>`
-          )
-        );
-      }
+      } //close outer for loop
 
       let dl = selectionEntities.querySelector('dl');
       if (!dl) {

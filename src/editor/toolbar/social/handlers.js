@@ -40,7 +40,7 @@ export function shareButtonHandler(e) {
   DO.U.shareResource(e)
 }
 
-export async function ohYeahButtonHandler(e, action) {
+export function ohYeahButtonHandler(e, action) {
   e.preventDefault();
   e.stopPropagation();
 // console.log(this)
@@ -71,7 +71,7 @@ export async function ohYeahButtonHandler(e, action) {
   //XXX: Not currently used
   // processAction(action, formValues, selectionData);
 
-  // TODO: this stuff will probably happen in the panel? 
+  // TODO: this stuff will probably happen in the panel?
   const entities = extractEntitiesFromText(selectedText);
 
   const { people = [], organizations = [], places = [], acronyms = [] } = entities;
@@ -79,11 +79,11 @@ export async function ohYeahButtonHandler(e, action) {
   console.log(entities)
 
   Object.keys(entities).map(group => {
-    if (group === "all") return; 
+    if (group === "all") return;
     highlightEntities(entities[group], group, 0);
   });
 
-  await DO.U.showOhYeahPanel(entities);
+  DO.U.showOhYeahPanel(entities);
 
   selection.removeAllRanges();
 

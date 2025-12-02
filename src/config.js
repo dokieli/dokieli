@@ -434,7 +434,8 @@ export default {
   WikiData: {
     "person": ["wd:Q5", "wd:Q6647660"],
     "place": ["wd:Q35657", "wd:Q515", "wd:Q486972", "wd:Q532", "wd:Q7930989", "wd:Q2221906"],
-    "organization": ["wd:Q43229"] // this is no good. we need all subclasses of this one
+    "organization": ["wd:Q43229"] // organizations + projects
+    // "organization": ["wd:Q43229", "wd:Q170584"] // organizations + projects
   },
 
   AccessContext: {

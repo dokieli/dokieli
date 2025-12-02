@@ -1434,6 +1434,48 @@ a.highlight,
   }
 }
 
+.entity-legend {
+  li:before {
+    content:"";
+    width:1em;
+    height:1em;
+    display:inline-block;
+    margin-right:0.5em;
+    margin-bottom:-0.1em;
+  }
+  li.entity-legend-people:before {
+    background-color:#900090;
+    color:#fff;
+  }
+  li.entity-legend-places:before {
+    background-color:#c8facc;
+    color:#000;
+  }
+  li.entity-legend-organizations:before {
+    background-color:#e7e7ff;
+    color:#000;
+  }
+}
+
+.entity-people,
+.entity-organizations,
+.entity-places {
+  dt {
+    margin-bottom:0.5em;
+  }
+  dd {
+    display: flex;
+    flex-direction: row;
+    margin-left: 0;
+  }
+  img {
+    border-radius:0.5em;
+    vertical-align:middle;
+    margin-right:0.25em;
+  }
+}
+
+
 #document-action-message {
   background-color: #000;
   color: #FFF;

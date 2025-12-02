@@ -83,10 +83,25 @@ function getHighlightPriorityLevelByType(type) {
   return map[type];
 }
 
+function getUnifiedSelectionRange(sel) {
+  if (sel.rangeCount === 0) return null;
+
+  let startRange = sel.getRangeAt(0).cloneRange();
+  let endRange   = sel.getRangeAt(sel.rangeCount - 1).cloneRange();
+
+  const unified = document.createRange();
+  unified.setStart(startRange.startContainer, startRange.startOffset);
+  unified.setEnd(endRange.endContainer, endRange.endOffset);
+
+  return unified;
+}
+
+
 export function highlightEntities(entities, type) {
+  // console.log("at highlight",entities)
   const sel = window.getSelection();
   if (!sel.rangeCount) return;
-  const selectionRange = sel.getRangeAt(0);
+  const selectionRange = getUnifiedSelectionRange(window.getSelection());
   const textNodes = getTextNodesInRange(selectionRange);
 
   const ranges = [];
@@ -96,7 +111,7 @@ export function highlightEntities(entities, type) {
     const text = node.textContent;
 
     const nodeStartOffset = idx === 0 ? selectionRange.startOffset : 0;
-    const nodeEndOffset   = idx === textNodes.length - 1 ? selectionRange.endOffset : text.length;
+    const nodeEndOffset   = selectionRange.endOffset + text.length;
 
     entities.forEach(ent => {
       const absStart = ent.start - baseOffset;
@@ -116,10 +131,10 @@ export function highlightEntities(entities, type) {
     baseOffset += nodeEndOffset - nodeStartOffset;
   });
 
+  // console.log(ranges)
   const priority = getHighlightPriorityLevelByType(type);
   const highlight = new Highlight(...ranges);
   highlight.priority = priority;
 
   CSS.highlights.set(`${type}-selection-highlights`, highlight);
 }
-
