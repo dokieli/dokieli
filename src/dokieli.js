@@ -9579,11 +9579,6 @@ WHERE {\n\
 
       var containerDiv = aside.querySelector('div');
 
-      //TODO: Move selection-entities container to its own function: showSelectionEntities(containerDiv)
-      const { people = [], organizations = [], places = [], acronyms = [] } = entities;
-
-      console.log(entities)
-
       containerDiv.insertAdjacentHTML('beforeEnd', `
         <section id="selection-entities">
           <h3>Related entities</h3>
@@ -9606,10 +9601,10 @@ WHERE {\n\
       let wikidataSearchLanguage = 'en' //TODO: Config based on nearest or document lang? or user preferred lang?
       let wikidataSearchLimit = 100;
 
-      for (const groupKey of Object.keys(entities)) {
+      for (const groupKey of ["people", "organizations", "places"]) {
         const group = entities[groupKey];
 
-        if (!group.length) { return; }
+        if (!group.length) { continue; }
 
         let entityType = group[0].type;
 
@@ -9756,9 +9751,9 @@ WHERE {
         }
       } //close outer for loop
 
-      let dl = selectionEntities.querySelector('dl');
+      let dl = selectionResults.querySelector('dl');
       if (!dl) {
-        selectionEntities.querySelector('div').replaceChildren(fragmentFromString(`<p>No Wikidata match found.</p>`));
+        selectionResults.querySelector('div').replaceChildren(fragmentFromString(`<p>No Wikidata match found.</p>`));
       }
 
       return aside;

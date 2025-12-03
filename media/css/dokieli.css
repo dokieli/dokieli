@@ -1468,10 +1468,11 @@ a.highlight,
     flex-direction: row;
     margin-left: 0;
   }
+  a.highlight,
   img {
     border-radius:0.5em;
     vertical-align:middle;
-    margin-right:0.25em;
+    margin-right:0.5em
   }
 }
 
