@@ -391,9 +391,13 @@ export const buttonIcons = {
     title: 'Document info',
     icon: Icon[".fas.fa-atom"]
   },
-  'ohyeah': {
+  ohyeah: {
     title: 'Oh yeah?',
     icon: Icon[".fas.fa-dragon"]
+  },
+  graph: {
+    title: 'Graph view',
+    icon: Icon[".fas.fa-circle-nodes"]
   }
 }
 

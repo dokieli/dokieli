@@ -9560,6 +9560,7 @@ WHERE {\n\
 
     showOhYeahPanel: async function(entities) {
       DO.U.hideDocumentMenu();
+      let options = {};
 
       var aside = document.getElementById('document-ohyeah');
 
@@ -9569,7 +9570,7 @@ WHERE {\n\
       else {
         var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Oh yeah?', buttonTitle: 'Close', iconSize: 'fa-2x' });
 
-        var aside = `<aside aria-labelledby="document-ohyeah-label" class="do" contenteditable="false" id="document-ohyeah"><h2 id="document-ohyeah-label">Oh yeah?</h2>${buttonClose}<div></div></aside>`;
+        var aside = `<aside aria-labelledby="document-ohyeah-label" class="do" contenteditable="false" id="document-ohyeah" rel="schema:hasPart" resource="#document-ohyeah"><h2 id="document-ohyeah-label" property="schema:name">Oh yeah?</h2>${buttonClose}<div datatype="rdf:HTML" property="schema:description"></div></aside>`;
 
         document.body.insertAdjacentHTML('beforeend', aside);
       }
@@ -9579,24 +9580,61 @@ WHERE {\n\
 
       var containerDiv = aside.querySelector('div');
 
-      containerDiv.insertAdjacentHTML('beforeEnd', `
-        <section id="selection-entities">
-          <h3>Related entities</h3>
-          <div>
-            <dl class="entity-legend">
-              <dt>Legend</dt>
-              <dd>
-                <ul>
-                  <li class="entity-legend-people">People</li>
-                  <li class="entity-legend-places">Places</li>
-                  <li class="entity-legend-organizations">Organizations</li>
-                </ul>
-              </dd>
-            </dl>
+      var buttonGraph = getButtonHTML({ button: 'graph', buttonClass: 'graph-view', buttonLabel: 'Graph view Oh yeah?', buttonTitle: 'Graph view', iconSize: 'fa-2x' });
+
+      containerDiv.insertAdjacentHTML('beforeend', `
+        ${buttonGraph}
+        <dl class="entity-legend">
+          <dt>Legend</dt>
+          <dd>
+            <ul>
+              <li class="entity-legend-people">People</li>
+              <li class="entity-legend-places">Places</li>
+              <li class="entity-legend-organizations">Organizations</li>
+            </ul>
+          </dd>
+        </dl>`);
+
+      containerDiv.addEventListener('click', (e) => {
+        var button = e.target.closest('button.graph');
+
+        if (button) {
+          button.parentNode?.removeChild(button);
+
+          const documentOptions = {
+            ...DO.C.DOMProcessing,
+            removeNodesWithSelector: [],
+            sanitize: true,
+            normalize: true
+          };
+
+          let options = {};
+          options['subjectURI'] = DO.C.DocumentURL + '#document-ohyeah';
+
+          getResourceInfo(null, options, documentOptions).then(resourceInfo => {
+            DO.U.showVisualisationGraph(options.subjectURI, resourceInfo.graph, '#graph-view');
+          })
+        }
+      })
+
+
+      DO.U.showSelectionWikidataResults(containerDiv, entities);
+      // DO.U.showSelectionNanopubResults(containerDiv, entities);
+      // DO.U.showSelectionClaimCheckResults(containerDiv, selection); claim checks on the selection (per selection, results will be 'needs check', 'prob does not need check', etc),
+      // DO.U.showSelectionNotificationsResults(containerDiv, selection); annotations and citedBy
+      // DO.U.showWhois();
+      // DO.U.showDocumentBackReferencesFRomSomeOtherPlaceBesidesInbox();
+    },
+
+    showSelectionWikidataResults: async function(node, entities) {
+      node.insertAdjacentHTML('beforeend', `
+        <section id="wikidata-results" rel="schema:hasPart" resource="#wikidata-results">
+          <h3 property="name">Wikidata Results</h3>
+          <div datatype="rdf:HTML" property="schema:description">
           </div>
         </section>`);
 
-      const selectionResults = containerDiv.querySelector("#selection-entities");
+      const wikidataResults = node.querySelector("#wikidata-results");
 
       let wikidataSearchLanguage = 'en' //TODO: Config based on nearest or document lang? or user preferred lang?
       let wikidataSearchLimit = 100;
@@ -9607,6 +9645,8 @@ WHERE {\n\
         if (!group.length) { continue; }
 
         let entityType = group[0].type;
+
+        let wikidataQueryUrl;
 
         let outputHtml = '';
 
@@ -9692,14 +9732,14 @@ WHERE {
 
           // console.log(wikidataSparqlQuery)
 
-          const url = "https://query.wikidata.org/sparql?query=" + encodeURIComponent(wikidataSparqlQuery);
+          wikidataQueryUrl = "https://query.wikidata.org/sparql?query=" + encodeURIComponent(wikidataSparqlQuery);
 
           let options = {};
           options['noCredentials'] = true;
 
           let headers = { 'Accept': 'application/json' };
           
-          const sparqlResultsResponse = await getResource(url, headers, options);
+          const sparqlResultsResponse = await getResource(wikidataQueryUrl, headers, options);
           const sparqlResultsGraph = await sparqlResultsResponse.json();
 
           // console.log(sparqlResultsGraph)
@@ -9739,24 +9779,35 @@ WHERE {
             .join("");
         } //close inner for loop
 
-        const entityTitle = entityNamesMap[entityType]
+        const entityTitle = entityNamesMap[entityType];
+
+        // const activityQuery = `#activity-query-${entityType}`;
+        const activityQuery = generateAttributeId();
 
         if (outputHtml) {
-          selectionResults.querySelector('div').appendChild(
+          wikidataResults.querySelector('div').appendChild(
             fragmentFromString(`
-              <h4>${entityTitle}</h4>
-              <dl class="entity-${entityTitle.toLowerCase()}" rel="cito:discusses">
-                ${outputHtml}
-              </dl>`));
+              <section id="${activityQuery}" rel="prov:activity" resource="#${activityQuery}" typeof="prov:Activity">
+                <h4 property="schema:name">${entityTitle}</h4>
+                <dl class="query-source">
+                  <dt>Source</dt>
+                  <dd><a href="https://wikidata.org/">Wikidata</a> (<a href="${wikidataQueryUrl}" rel="prov:used">query</a>)</dd>
+                </dl>
+                <details open="" rel="prov:generated" resource="#${activityQuery}-results">
+                  <summary>Matches</summary>
+                  <dl class="entity-${entityTitle.toLowerCase()}" rel="prov:hadMember">
+                    ${outputHtml}
+                  </dl>
+                </details>
+              </section>
+              `));
         }
       } //close outer for loop
 
-      let dl = selectionResults.querySelector('dl');
+      let dl = wikidataResults.querySelector('dl');
       if (!dl) {
-        selectionResults.querySelector('div').replaceChildren(fragmentFromString(`<p>No Wikidata match found.</p>`));
+        wikidataResults.querySelector('div').replaceChildren(fragmentFromString(`<p>No Wikidata match found.</p>`));
       }
-
-      return aside;
     },
 
     initMath: function(config) {

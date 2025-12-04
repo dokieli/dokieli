@@ -157,7 +157,7 @@ function getDocument(cn, options) {
 
   if (options.normalize) {
     //XXX: Should call with options? normalizeHTML(nodeDocument, options)
-    nodeDocument = normalizeHTML(nodeDocument);
+    nodeDocument = normalizeHTML(nodeDocument, options);
   }
 
   if (options.format) {
@@ -1937,8 +1937,8 @@ function getGraphData(s, options) {
  * @returns {Promise<Object>}
  */
 
-async function getResourceInfo(data, options) {
-  const documentOptions = {
+async function getResourceInfo(data, options, documentOptions) {
+  documentOptions = documentOptions || {
     ...DO.C.DOMProcessing,
     format: true,
     sanitize: true,
