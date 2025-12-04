@@ -9580,10 +9580,9 @@ WHERE {\n\
 
       var containerDiv = aside.querySelector('div');
 
-      var buttonGraph = getButtonHTML({ button: 'graph', buttonClass: 'graph-view', buttonLabel: 'Graph view Oh yeah?', buttonTitle: 'Graph view', iconSize: 'fa-2x' });
+      var buttonGraph = getButtonHTML({ button: 'graph', buttonClass: 'graph', buttonLabel: 'Graph view Oh yeah?', buttonTitle: 'Graph view', iconSize: 'fa-2x' });
 
       containerDiv.insertAdjacentHTML('beforeend', `
-        ${buttonGraph}
         <dl class="entity-legend">
           <dt>Legend</dt>
           <dd>
@@ -9593,7 +9592,8 @@ WHERE {\n\
               <li class="entity-legend-organizations">Organizations</li>
             </ul>
           </dd>
-        </dl>`);
+        </dl>
+        ${buttonGraph}`);
 
       containerDiv.addEventListener('click', (e) => {
         var button = e.target.closest('button.graph');
