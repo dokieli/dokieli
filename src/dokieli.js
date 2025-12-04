@@ -9599,7 +9599,9 @@ WHERE {\n\
         var button = e.target.closest('button.graph');
 
         if (button) {
-          button.parentNode?.removeChild(button);
+          // button.parentNode.removeChild(button);
+
+          button.disabled = true;
 
           const documentOptions = {
             ...DO.C.DOMProcessing,
@@ -9613,6 +9615,17 @@ WHERE {\n\
 
           getResourceInfo(null, options, documentOptions).then(resourceInfo => {
             DO.U.showVisualisationGraph(options.subjectURI, resourceInfo.graph, '#graph-view');
+
+
+            var graphView = document.getElementById('graph-view');
+            graphView.addEventListener('click', (e) => {
+              if (e.target.closest('button.close')) {
+                var rv = document.querySelector('#document-ohyeah .graph');
+                if (rv) {
+                  rv.disabled = false;
+                }
+              }
+            });
           })
         }
       })
