@@ -386,6 +386,23 @@ export default {
     'http://www.w3.org/2006/03/test-description#unreviewed': "the item has been proposed, but hasn't been reviewed (e.g. for completeness) yet"
   },
 
+  Entity: {
+    Type: {
+      Person: {
+        plural: 'People',
+        type: 'http://schema.org/Person',
+      },
+      Organization: {
+        plural: 'Organizations',
+        type: 'http://schema.org/Organization',
+      },
+      Place: {
+        plural: 'Places',
+        type: 'http://schema.org/Place',
+      }
+    }
+  },
+
   Actor: {
     Type: {
       "http://purl.org/dc/terms/Agent":"Agent",

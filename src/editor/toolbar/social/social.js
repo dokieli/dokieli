@@ -155,7 +155,6 @@ export class SocialToolbar extends ToolbarView {
       specificity: (options) => annotateFormControls(options),
       bookmark: (options) => annotateFormControls(options),
       comment: (options) => annotateFormControls(options),
-      // note: (options) => annotateFormControls(options), // FIXME: this actually belongs in the other one
     }
 
     return toolbarPopups;

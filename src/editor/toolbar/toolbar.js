@@ -697,17 +697,13 @@ export function annotateFormControls(options) {
 }
 
 export function updateAnnotationServiceForm(action) {
-  var annotationServices = document.querySelectorAll('.do.editor-toolbar .annotation-location-selection');
-  for (var i = 0; i < annotationServices.length; i++) {
-    annotationServices[i].replaceChildren(fragmentFromString(getAnnotationLocationHTML(action)));
-  }
+  var annotationServices = document.querySelector(`#editor-form-${action} .annotation-location-selection`);
+  annotationServices.replaceChildren(fragmentFromString(getAnnotationLocationHTML(action)));
 };
 
 export function updateAnnotationInboxForm(action) {
-  var annotationInbox = document.querySelectorAll('.do.editor-toolbar .annotation-inbox');
-  for (var i = 0; i < annotationInbox.length; i++) {
-    annotationInbox[i].replaceChildren(fragmentFromString(getAnnotationInboxLocationHTML(action)));
-  }
+  var annotationInbox = document.querySelector(`#editor-form-${action} .annotation-inbox`);
+  annotationInbox.replaceChildren(fragmentFromString(getAnnotationInboxLocationHTML(action)));
 };
 
 export function getTextQuoteSelectorFromLocation(location) {

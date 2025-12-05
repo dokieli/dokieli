@@ -34,7 +34,7 @@ import { DOMParser, DOMSerializer } from 'prosemirror-model'
 import { cleanProseMirrorOutput, normalizeForDiff, normalizeHTML } from './utils/normalization.js'
 import { schema } from './editor/schema/base.js'
 import { highlightEntities } from './editor/utils/dom.js'
-import { entityNamesMap } from './nlp.js'
+import { NanopubClient } from 'nanopub-js';
 
 const ns = Config.ns;
 let DO;
@@ -9583,6 +9583,7 @@ WHERE {\n\
       var buttonGraph = getButtonHTML({ button: 'graph', buttonClass: 'graph', buttonLabel: 'Graph view Oh yeah?', buttonTitle: 'Graph view', iconSize: 'fa-2x' });
 
       containerDiv.insertAdjacentHTML('beforeend', `
+        <div class="info">${buttonGraph}</div>
         <dl class="entity-legend">
           <dt>Legend</dt>
           <dd>
@@ -9592,8 +9593,7 @@ WHERE {\n\
               <li class="entity-legend-organizations">Organizations</li>
             </ul>
           </dd>
-        </dl>
-        ${buttonGraph}`);
+        </dl>`);
 
       containerDiv.addEventListener('click', (e) => {
         var button = e.target.closest('button.graph');
@@ -9632,11 +9632,29 @@ WHERE {\n\
 
 
       DO.U.showSelectionWikidataResults(containerDiv, entities);
+      DO.U.showNanopubResults(containerDiv, entities);
       // DO.U.showSelectionNanopubResults(containerDiv, entities);
       // DO.U.showSelectionClaimCheckResults(containerDiv, selection); claim checks on the selection (per selection, results will be 'needs check', 'prob does not need check', etc),
       // DO.U.showSelectionNotificationsResults(containerDiv, selection); annotations and citedBy
       // DO.U.showWhois();
       // DO.U.showDocumentBackReferencesFRomSomeOtherPlaceBesidesInbox();
+    },
+
+    showNanopubResults: async function(node, entities) {
+      const nanopubClient = new NanopubClient();
+      const { all } = entities;
+      const results = [];
+
+      for (const ent of all) {
+        for await (const item of nanopubClient.findNanopubsWithText(ent.text)) {
+          const nanopubResult = item;
+          const nanopub = await nanopubClient.fetchNanopub(item.np);
+          nanopubResult.nanopub = nanopub;
+          results.push(nanopubResult)
+        }
+      }
+
+      console.log("Query results by text for all entities: ", results)
     },
 
     showSelectionWikidataResults: async function(node, entities) {
@@ -9658,6 +9676,12 @@ WHERE {\n\
         if (!group.length) { continue; }
 
         let entityType = group[0].type;
+
+        const capitalizedEntityType = entityType.charAt(0).toUpperCase() + entityType.slice(1);
+
+        const entityTitle = Config.Entity.Type[capitalizedEntityType].plural;
+
+        let itemType = Config.Entity.Type[capitalizedEntityType].type;
 
         let wikidataQueryUrl;
 
@@ -9739,8 +9763,6 @@ WHERE {
 
 //https://www.wikidata.org/wiki/Property:P242 locator map image
 
-// TODO #1: what to do about acronyms? 
-// TODO #2: the above query returns results in any language (and also very weird)
 
 
           // console.log(wikidataSparqlQuery)
@@ -9782,7 +9804,7 @@ WHERE {
                 : ''
 
               return `
-                <dt about="${item.id?.value}"><a href="${item.url ? item.url?.value : item.id?.value}" target="_blank" rel="noopener noreferrer schema:url" property="schema:name">${item.label?.value}</a></dt>
+                <dt about="${item.id?.value}" typeof="${itemType}"><a href="${item.url ? item.url?.value : item.id?.value}" property="schema:name" rel="noopener noreferrer schema:url" target="_blank">${item.label?.value}</a></dt>
                 <dd about="${item.id?.value}">
                   ${imgHtml}
                   ${descriptionHtml}
@@ -9792,7 +9814,6 @@ WHERE {
             .join("");
         } //close inner for loop
 
-        const entityTitle = entityNamesMap[entityType];
 
         // const activityQuery = `#activity-query-${entityType}`;
         const activityQuery = generateAttributeId();

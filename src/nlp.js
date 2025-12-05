@@ -13,12 +13,6 @@ const lexicon = {
   "Wiesbaden": "Place"
 }
 
-export const entityNamesMap = {
-  "person": "People",
-  "organization": "Organizations",
-  "place": "Places"
-};
-
 export function extractEntitiesFromText(text) {
   text = text.replace('.', '')
   const doc = nlp(text, lexicon);

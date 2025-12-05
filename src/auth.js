@@ -371,14 +371,13 @@ function afterSetUserInfo () {
       //FIXME: This works but is it fugly? It is so that 1) we don't have double assignment of event handler on user-info's signOut and to also make sure that the user with a Session can actually signOut (removing children loses the event)
       if (uI && !Config['Session']?.isActive) {
         // uI.replaceChildren(fragmentFromString(DO.C.Button.Menu.SignOut))
-
-        removeChildren(node);
-        showUserSigninSignout(node);
+        removeChildren(uI);
+        showUserSigninSignout(uI);
       }
 
       showGeneralMessages();
 
-      return updateLocalStorageProfile(Config.User)
+      return updateLocalStorageProfile(Config.User);
     })
     .catch(e => {
       return Promise.resolve();

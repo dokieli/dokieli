@@ -114,9 +114,9 @@ export function formHandlerAnnotate(e, action) {
     selectedContent: this.getSelectionAsHTML()
   };
 
-  const annotationInboxLocation = formValues['annotation-inbox'];
-  const annotationLocationPersonalStorage = formValues['annotation-location-personal-storage'];
-  const annotationLocationService = formValues['annotation-location-service'];
+  const annotationInboxLocation = formValues[`${action}-annotation-inbox`];
+  const annotationLocationPersonalStorage = formValues[`${action}-annotation-location-personal-storage`];
+  const annotationLocationService = formValues[`${action}-annotation-location-service`];
 
   updateUserUI({ annotationInboxLocation, annotationLocationPersonalStorage, annotationLocationService }, formValues)
 
@@ -335,8 +335,8 @@ export function getAnnotationDistribution(action, data) {
   //This annotationInbox is about when the selected text is part of an existing Annotation, it gets that Annotation's own inbox which is used towards announcing the annotation that's about to be created. (This is not related to whether an inbox should be assigned to an annotation that's about to be created.)
   const annotationInbox =  getInboxOfClosestNodeWithSelector(selectedParentElement, '.do[typeof="oa:Annotation"]');
   //These are whether the user wants to send a copy of their annotation to a personal storage and/or to an annotation service.
-  const annotationLocationPersonalStorage = formData['annotation-location-personal-storage'];
-  const annotationLocationService = formData['annotation-location-service'];
+  const annotationLocationPersonalStorage = formData[`${action}-annotation-location-personal-storage`];
+  const annotationLocationService = formData[`${action}-annotation-location-service`];
 
   //Use if (activityIndex) when all action values are taken into account e.g., `note` in author mode
 

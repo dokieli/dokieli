@@ -1051,7 +1051,9 @@ function getAgentTypeIndex(s) {
 
             if (typeIndexes[typeIndexType][s]) {
               if (p == ns.solid.instance.value ||
-                  p == ns.solid.instanceContainer.value) {
+                  p == ns.solid.instanceContainer.value ||
+                  p == ns.rdfs.label.value ||
+                  p == ns.dcterms.subject.value) {
                 typeIndexes[typeIndexType][s][p] = o;
               }
             }

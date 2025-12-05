@@ -3205,11 +3205,32 @@ function createTestSuiteHTML(url, options = {}) {
 function getAnnotationInboxLocationHTML(action) {
   var s = '', inputs = [], checked = '';
 
-  if (Config.User.TypeIndex && Config.User.TypeIndex[ns.as.Announce.value]) {
-    if (Config.User.UI && Config.User.UI['annotationInboxLocation'] && Config.User.UI.annotationInboxLocation['checked']) {
-      checked = ' checked="checked"';
-    }
-    s = `<input type="checkbox" id="${action}-annotation-inbox" name="${action}-annotation-inbox"${checked} /><label for="annotation-inbox">Inbox</label>`;
+console.log(Config.User.TypeIndex)
+
+  if (Config.User.TypeIndex?.[ns.solid.publicTypeIndex.value]) {
+    let typeIndexes = Config.User.TypeIndex?.[ns.solid.publicTypeIndex.value];
+
+    Object.values(typeIndexes).forEach(typeRegistration => {
+      var forClass = typeRegistration[ns.solid.forClass.value];
+      var instanceContainer = typeRegistration[ns.solid.instanceContainer.value];
+      var label = typeRegistration[ns.rdfs.label.value] || 'Inbox';
+      var subject = typeRegistration[ns.dcterms.subject.value] || generateAttributeId();
+
+      //TODO: check if the thing that's being annotated (annotation or article) has its own inbox, and if so, add that as a potential input. decide whether the default for each action should be checked or not.
+
+      if (forClass == ns.as.Announce.value) {
+        //TODO: "No one is using this right now and no need to get into these details. When people start using it and complaining, then we can do this"
+        //   if (Config.User.UI && Config.User.UI['annotation-inbox'] && Config.User.UI['annotation-inbox']['checked']) {
+        //     checked = ' checked="checked"';
+        //   }
+
+        inputs.push(`<input id="${action}-annotation-inbox" name="${action}-annotation-inbox" type="checkbox" /><label for="${action}-annotation-inbox">${label}</label>`);
+      }
+    })
+  }
+
+  if (inputs.length) {
+    s = 'Inboxes: ' + inputs.join('');
   }
 
   return s;
@@ -3220,6 +3241,7 @@ function getAnnotationLocationHTML(action) {
 
   if (typeof Config.AnnotationService !== 'undefined') {
     if (Config.User.Storage && Config.User.Storage.length > 0 || Config.User.Outbox && Config.User.Outbox.length > 0) {
+      //TODO: "No one is using this right now and no need to get into these details. When people start using it and complaining, then we can do this"
       if (Config.User.UI && Config.User.UI['annotationLocationService'] && Config.User.UI.annotationLocationService['checked']) {
         checked = ' checked="checked"';
       }
@@ -3228,20 +3250,23 @@ function getAnnotationLocationHTML(action) {
       checked = ' checked="checked" disabled="disabled"';
     }
 
-    inputs.push(`<input type="checkbox" id="${action}-annotation-location-service" name="${action}-annotation-location-service"${checked} /><label for="annotation-location-service">Annotation service</label>`);
+    inputs.push(`<input id="${action}-annotation-location-service" name="${action}-annotation-location-service"${checked} type="checkbox" /><label for="${action}-annotation-location-service">Annotation service</label>`);
   }
 
   checked = ' checked="checked"';
 
   if (Config.User.Storage && Config.User.Storage.length > 0 || Config.User.Outbox && Config.User.Outbox.length > 0) {
+    //TODO: "No one is using this right now and no need to get into these details. When people start using it and complaining, then we can do this"
     if (Config.User.UI && Config.User.UI['annotationLocationPersonalStorage'] && !Config.User.UI.annotationLocationPersonalStorage['checked']) {
       checked = '';
     }
 
-    inputs.push(`<input type="checkbox" id="${action}-annotation-location-personal-storage" name="${action}-annotation-location-personal-storage"${checked} /><label for="annotation-location-personal-storage">Personal storage</label>`);
+    inputs.push(`<input id="${action}-annotation-location-personal-storage" name="${action}-annotation-location-personal-storage"${checked} type="checkbox" /><label for="${action}-annotation-location-personal-storage">Personal storage</label>`);
   }
 
-  s = 'Store at: ' + inputs.join('');
+  if (inputs.length) {
+    s = 'Store at: ' + inputs.join('');
+  }
 
   return s;
 }
