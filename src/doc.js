@@ -22,6 +22,7 @@ import { buttonIcons, getButtonHTML, updateButtons } from './ui/buttons.js'
 import { domSanitizeHTMLBody, domSanitize } from './utils/sanitization.js';
 import { cleanProseMirrorOutput, normalizeHTML } from './utils/normalization.js';
 import { formatHTML, getDoctype, htmlEncode } from './utils/html.js';
+import { getInboxOfClosestNodeWithSelector, getSelectedParentElement } from './editor/utils/annotation.js';
 
 const ns = Config.ns;
 
@@ -3203,10 +3204,13 @@ function createTestSuiteHTML(url, options = {}) {
 }
 
 function getAnnotationInboxLocationHTML(action) {
-  var s = '', inputs = [], checked = '';
+  const selection = window.getSelection();
+  var s = '', inboxes = [], checked = '';
+  let li = [];
 
-console.log(Config.User.TypeIndex)
+// console.log(Config.User.TypeIndex)
 
+  //TODO: "Include privateTypeIndex in the checkboxes with a lock thingy?" "yeah, in the future. Not for Tuesday"
   if (Config.User.TypeIndex?.[ns.solid.publicTypeIndex.value]) {
     let typeIndexes = Config.User.TypeIndex?.[ns.solid.publicTypeIndex.value];
 
@@ -3218,20 +3222,43 @@ console.log(Config.User.TypeIndex)
 
       //TODO: check if the thing that's being annotated (annotation or article) has its own inbox, and if so, add that as a potential input. decide whether the default for each action should be checked or not.
 
-      if (forClass == ns.as.Announce.value) {
+      if (forClass == ns.as.Announce.value && instanceContainer) {
         //TODO: "No one is using this right now and no need to get into these details. When people start using it and complaining, then we can do this"
         //   if (Config.User.UI && Config.User.UI['annotation-inbox'] && Config.User.UI['annotation-inbox']['checked']) {
         //     checked = ' checked="checked"';
         //   }
+        inboxes.push(instanceContainer);
 
-        inputs.push(`<input id="${action}-annotation-inbox" name="${action}-annotation-inbox" type="checkbox" /><label for="${action}-annotation-inbox">${label}</label>`);
+        li.push(`<li><input id="${action}-annotation-inbox" name="${action}-annotation-inbox" type="checkbox" value="${instanceContainer}" /><label for="${action}-annotation-inbox">${label}</label></li>`);
       }
     })
   }
+// console.log(selection)
+  if (selection && !selection.isCollapsed) {
+    var range = selection.getRangeAt(0);
+    const selectedParentNode = getSelectedParentElement(range);
 
-  if (inputs.length) {
-    s = 'Inboxes: ' + inputs.join('');
+    const targetAnnotationInbox = getInboxOfClosestNodeWithSelector(selectedParentNode, '.do[typeof="oa:Annotation"]');
+
+    if (targetAnnotationInbox) {
+      inboxes.push(targetAnnotationInbox);
+        li.push(`<li><input id="${action}-annotation-inbox" name="${action}-annotation-inbox" type="checkbox" value="${targetAnnotationInbox}" /><label for="${action}-annotation-inbox">Annotation</label></li>`);
+    }
   }
+
+
+  const documentInbox = DO.C.Resource[DO.C.DocumentURL]?.inbox;
+
+  if (documentInbox?.length) {
+    inboxes.push(documentInbox[0]);
+    li.push(`<li><input id="${action}-annotation-inbox" name="${action}-annotation-inbox" type="checkbox" value="${documentInbox[0]}" /><label for="${action}-annotation-inbox">Document</label></li>`);
+  }
+
+  s = `
+    <details open="">
+      <summary>Notify</summary>
+      <ul>${li.join('')}</ul>
+    </details>`;
 
   return s;
 }

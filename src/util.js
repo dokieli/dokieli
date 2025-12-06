@@ -150,13 +150,22 @@ function generateAttributeId(prefix, string, suffix) {
 
 function getFormValues(form) {
   const formData = new FormData(form);
+  const result = {};
 
-  const formValues = Object.fromEntries(
-    [...formData.entries()].map(([key, value]) => [key, typeof value === "string" ? domSanitize(value.trim()) : value])
-  );
+  for (const [key, value] of formData.entries()) {
+    const sanitized = typeof value === "string" ? domSanitize(value.trim()) : value;
 
-// console.log(formValues);
-  return formValues;
+    if (result.hasOwnProperty(key)) {
+      if (!Array.isArray(result[key])) {
+        result[key] = [result[key]];
+      }
+      result[key].push(sanitized);
+    } else {
+      result[key] = sanitized;
+    }
+  }
+
+  return result;
 }
 
 //SRI hash that's browser safe

@@ -701,7 +701,7 @@ export function updateAnnotationServiceForm(action) {
   annotationServices.replaceChildren(fragmentFromString(getAnnotationLocationHTML(action)));
 };
 
-export function updateAnnotationInboxForm(action) {
+export function updateAnnotationInboxForm(action, selection) {
   var annotationInbox = document.querySelector(`#editor-form-${action} .annotation-inbox`);
   annotationInbox.replaceChildren(fragmentFromString(getAnnotationInboxLocationHTML(action)));
 };

@@ -189,7 +189,7 @@ export class SocialToolbar extends ToolbarView {
   }
 
   populateFormAnnotate(action, node) {
-    updateAnnotationInboxForm(action);
+    updateAnnotationInboxForm(action, this.selection);
   }
 
   //TODO function getTransactionHistory()
