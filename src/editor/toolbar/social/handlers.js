@@ -155,7 +155,7 @@ export function processAction(action, formValues, selectionData) {
           ...otherFormData,
           ...annotationData
         };
-console.log(annotation)
+        // console.log(annotation)
         var noteData = createNoteData(annotation);
         annotation['motivatedByIRI'] = noteData['motivatedByIRI'];
 
@@ -565,7 +565,7 @@ export function positionActivity(annotation, options) {
 
 function sendNotification(annotation, options) {
   const documentURL = Config.DocumentURL;
-console.log(annotation)
+// console.log(annotation)
   if (!annotation['canonical']) {
     return Promise.resolve();
   }
@@ -590,7 +590,8 @@ console.log(annotation)
     .then(results => {
       // TODO: resourceIRI for getLinkRelation should be the
       // closest IRI (not necessarily the document).
-console.log(results)
+
+      // console.log(results)
 
         results.forEach(result => {
           var notificationData = createActivityData(annotation, { 'announce': true });
@@ -598,13 +599,12 @@ console.log(results)
           notificationData['inbox'] = result.value;
 
           // notificationData['type'] = ['as:Announce'];
-  // console.log(annotation)
-  // console.log(notificationData)
+          // console.log(annotation)
+          // console.log(notificationData)
           return notifyInbox(notificationData)
             .catch(error => {
               console.log('Error notifying the inbox:', error)
             })
         });
-
     })
 }
