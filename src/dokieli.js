@@ -9631,7 +9631,7 @@ WHERE {\n\
       })
 
 
-      DO.U.showSelectionWikidataResults(containerDiv, entities);
+      // DO.U.showSelectionWikidataResults(containerDiv, entities);
       DO.U.showNanopubResults(containerDiv, entities);
       // DO.U.showSelectionNanopubResults(containerDiv, entities);
       // DO.U.showSelectionClaimCheckResults(containerDiv, selection); claim checks on the selection (per selection, results will be 'needs check', 'prob does not need check', etc),
@@ -9640,21 +9640,210 @@ WHERE {\n\
       // DO.U.showDocumentBackReferencesFRomSomeOtherPlaceBesidesInbox();
     },
 
+    extractNanopubGraphs: function(jsonld) {
+      const head = jsonld.find(item =>
+        item["@graph"]?.some(node =>
+          node["@type"]?.includes("http://www.nanopub.org/nschema#Nanopublication")
+        )
+      );
+
+      if (!head) throw new Error("Nanopublication head not found");
+    
+      const headNode = head["@graph"].find(node =>
+        node["@type"]?.includes("http://www.nanopub.org/nschema#Nanopublication")
+      );
+
+      const assertionId  = headNode["http://www.nanopub.org/nschema#hasAssertion"][0]["@id"];
+      const provenanceId = headNode["http://www.nanopub.org/nschema#hasProvenance"][0]["@id"];
+      const pubinfoId    = headNode["http://www.nanopub.org/nschema#hasPublicationInfo"][0]["@id"];
+
+      const assertionGraph  = jsonld.find(item => item["@id"] === assertionId);
+      const provenanceGraph = jsonld.find(item => item["@id"] === provenanceId);
+      const pubinfoGraph    = jsonld.find(item => item["@id"] === pubinfoId);
+
+      return {
+        "http://www.nanopub.org/nschema#hasAssertion": assertionGraph,
+        "http://www.nanopub.org/nschema#hasProvenance": provenanceGraph,
+        "http://www.nanopub.org/nschema#hasPublicationInfo": pubinfoGraph,
+      };
+    },
+    
+
     showNanopubResults: async function(node, entities) {
       const nanopubClient = new NanopubClient();
       const { all } = entities;
       const results = [];
 
-      for (const ent of all) {
-        for await (const item of nanopubClient.findNanopubsWithText(ent.text)) {
-          const nanopubResult = item;
-          const nanopub = await nanopubClient.fetchNanopub(item.np);
-          nanopubResult.nanopub = nanopub;
+      const queryEntities = all.map((ent) => ent.text);
+
+      // console.log(queryEntities)
+
+      for (const ent of uniqueArray(queryEntities)) {
+        let nanopubQueryResults;
+        try {
+          nanopubQueryResults = nanopubClient.findNanopubsWithText(ent);
+        } catch (e){
+          console.log("Error querying nanopubs: ", e)
+          nanopubQueryResults = [];
+        }
+  
+        // query
+        for await (const item of nanopubQueryResults) {
+          const nanopubResult = item; // { label, date, np -> uri of the nanpub}
+          let nanopub;
+          try {
+            nanopub = await nanopubClient.fetchNanopub(item.np, 'jsonld'); // fetch the nanopub with the uri in item.np
+            nanopubResult.nanopub =  DO.U.extractNanopubGraphs(nanopub); // put it back in the result object
+          }
+          catch(e) {
+            console.log("Error fetching nanopub: ", e)
+            // we don't do anything here
+          }
           results.push(nanopubResult)
         }
       }
 
-      console.log("Query results by text for all entities: ", results)
+      // console.log("Query results: ", results)
+
+      node.insertAdjacentHTML('beforeend', `
+        <section id="nanopub-results" rel="schema:hasPart" resource="#nanopub-results">
+          <h3 property="name">Nanopub Results</h3>
+          <div datatype="rdf:HTML" property="schema:description">
+          </div>
+        </section>`);
+
+      const nanopubResults = node.querySelector("#nanopub-results");
+
+
+// const activityQuery = generateAttributeId();
+//         `
+//               <section id="${activityQuery}" rel="prov:activity" resource="#${activityQuery}" typeof="prov:Activity">
+//                 <h4 property="schema:name">Initial Nanopub lookup</h4>
+//                 <dl class="query-source">
+//                   <dt>Source</dt>
+//                   <dd><a href="https://nanopub.example/">Nanopub</a> (<a href="${nanpubQueryUrl}" rel="prov:used">query</a>)</dd>
+//                 </dl>
+//                 <details open="" rel="prov:generated" resource="#${activityQuery}-results">
+//                   <summary>Matches</summary>
+//                   <dl class="entity-${entityTitle.toLowerCase()}" rel="prov:hadMember">
+//                     ${outputHtml}
+//                   </dl>
+//                 </details>
+//               </section>
+// `   
+
+      let queryMatches = [];
+      const containerDiv = node.querySelector('div');
+
+      results.forEach((result) => {
+        const np = result.nanopub; // { head, assertion, provenance, pubinfo }
+
+        const graphsHtml = Object.entries(np)
+          .filter(([key]) => key !== "head") // skip head graph
+          .map(([key, graph]) => {
+            const triplesHtml = graph["@graph"]
+              .map((triple) => {
+                const subject = triple["@id"];
+                const predicates = Object.entries(triple)
+                .filter(([p]) => p !== "@id")
+                .map(([predicate, objects]) => {
+                  return objects
+                    .map((obj) => {
+                      const datatype = obj["@type"]; // xsd types are here
+                      const label = getFragmentOrLastPath(predicate);
+    
+                      if (obj["@id"]) {
+                        return `
+                          <dt>${label}</dt>
+                          <dd about="${subject}"><a href="${obj["@id"]}" rel="${predicate}">${obj["@id"]}</a></dd>
+                        `;
+                      }
+    
+                      const datatypeAttr = datatype
+                        ? ` datatype="${datatype}"`
+                        : "";
+    
+                      if (
+                        datatype === ns.xsd.dateTime.value ||
+                        datatype === ns.xsd.date.value
+                      ) {
+                        return `
+                          <dt>${label}</dt>
+                          <dd about="${subject}"><time${datatypeAttr} property="${predicate}">${obj["@value"]}</time></dd>
+                        `;
+                      }
+
+                      return `
+                        <dt>${label}</dt>
+                        <dd about="${subject}"${datatypeAttr} property="${predicate}">${obj["@value"]}</dd>
+                      `;
+                    })
+                    .join("");
+                })
+                .join("");
+    
+              return predicates;
+            })
+            .join("");
+
+            return `
+              <details rel="${key}" resource="${graph["@id"]}">
+                <summary property="rdfs:label">${getFragmentOrLastPath(key)}</summary>
+                <dl>${triplesHtml}</dl>
+              </details>
+            `;
+          })
+          .join("");
+
+        queryMatches.push(`
+          <li rel="prov:hadMember" resource="${result.np}">
+            <details open="">
+              <summary property="rdfs:label">${result.label}</summary>
+              <div>
+                <dl>
+                  <dt>Date</dt>
+                  <dd><time datatype="xsd:dateTime" property="dcterms:created">${result.date}</dd>
+
+                  <dt>Source</dt>
+                  <dd><a href="${result.np}">${getFragmentOrLastPath(result.np)}</a></dd>
+                </dl>
+
+                ${graphsHtml}
+              </div>
+            </details>
+          </li>
+        `);
+      });
+
+              // <h4 property="schema:name">${entityTitle}</h4>
+              // <dl class="query-source">
+              //   <dt>Source</dt>
+              //   <dd><a href="https://wikidata.org/">Wikidata</a> (<a href="${wikidataQueryUrl}" rel="prov:used">query</a>)</dd>
+              // </dl>
+              // <details open="" rel="prov:generated" resource="#${activityQuery}-results">
+              //   <summary>Matches</summary>
+              //   <dl class="entity-${entityTitle.toLowerCase()}" rel="prov:hadMember">
+              //     ${outputHtml}
+              //   </dl>
+              // </details>
+
+
+
+
+      let outputHtml = queryMatches.join('');
+
+      const activityQuery = generateAttributeId();
+
+      if (outputHtml) {
+        nanopubResults.querySelector('div').appendChild(
+          fragmentFromString(`
+            <section id="${activityQuery}" rel="prov:activity" resource="#${activityQuery}" typeof="prov:Activity">
+              <ul>${queryMatches.join('')}</ul>
+            </section>
+            `));
+      }
+
+      // console.log("Query results by text for all entities: ", results)
     },
 
     showSelectionWikidataResults: async function(node, entities) {

@@ -734,6 +734,15 @@ aside.do.on details li:last-child:after {
 margin-right: 0;
 content:"";
 }
+
+aside.do.on details details {
+margin-top:1em;
+margin-left:1em;
+}
+aside.do.on li + li:has(details) {
+margin-top:2em;
+}
+
 aside.do blockquote {
 padding-left: 1em;
 border-left: 0.25em solid #ccc;

@@ -10,6 +10,7 @@ module.exports = (env) => {
       alias: {
         'src': path.resolve(__dirname, 'src'),
       },
+      extensions: ['.js', '.json'],
       modules: ["node_modules", "src/"],
       fallback: {
         fs: false,
@@ -42,6 +43,9 @@ module.exports = (env) => {
         {
           test: /\.js$/,
           exclude: ["/src/__tests__/", "/node_modules/", "/__testUtils__/"],
+          resolve: {
+            fullySpecified: false
+          }
         },
       ],
     },
