@@ -28,12 +28,9 @@ import { Editor } from './editor/editor.js';
 import { getButtonHTML, initButtons, updateButtons } from './ui/buttons.js'
 import { csvStringToJson, jsonToHtmlTableString } from './csv.js'
 import { getMultipleResources } from './fetcher.js'
-import { domSanitize, domSanitizeHTMLBody, sanitizeObject } from './utils/sanitization.js'
-import { formatHTML, htmlEncode, tokenizeDOM } from './utils/html.js'
-import { DOMParser, DOMSerializer } from 'prosemirror-model'
-import { cleanProseMirrorOutput, normalizeForDiff, normalizeHTML } from './utils/normalization.js'
-import { schema } from './editor/schema/base.js'
-import { highlightEntities } from './editor/utils/dom.js'
+import { domSanitize, sanitizeObject } from './utils/sanitization.js'
+import { htmlEncode } from './utils/html.js'
+import { normalizeForDiff } from './utils/normalization.js'
 import { NanopubClient } from 'nanopub-js';
 
 const ns = Config.ns;
@@ -9631,13 +9628,109 @@ WHERE {\n\
       })
 
 
-      // DO.U.showSelectionWikidataResults(containerDiv, entities);
-      DO.U.showNanopubResults(containerDiv, entities);
-      // DO.U.showSelectionNanopubResults(containerDiv, entities);
-      // DO.U.showSelectionClaimCheckResults(containerDiv, selection); claim checks on the selection (per selection, results will be 'needs check', 'prob does not need check', etc),
+      DO.U.showSelectionClaimCheckResults(containerDiv); //claim checks on the selection (per selection, results will be 'needs check', 'prob does not need check', etc),
+      DO.U.showSelectionWikidataResults(containerDiv, entities);
+      DO.U.showSelectionNanopubResults(containerDiv, entities);
       // DO.U.showSelectionNotificationsResults(containerDiv, selection); annotations and citedBy
       // DO.U.showWhois();
       // DO.U.showDocumentBackReferencesFRomSomeOtherPlaceBesidesInbox();
+    },
+
+    showWhoIs: function() {
+
+
+    },
+
+    showSelectionClaimCheckResults: async function (node) {
+      const selection = window.getSelection();
+      const selectedText = selection.toString();
+
+      Config['Factcheck'] = 'http://localhost:8000/factcheck';
+
+      const claimCheckResponse = await fetch(Config.Factcheck, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          text: selectedText
+        })
+      })
+
+      const claimCheck = await claimCheckResponse.json();
+
+      // console.log(claimCheck);
+
+      const { sentences } = claimCheck;
+
+      const textQuoteSelector = DO.Editor.getTextQuoteSelector();
+
+      let li = [];
+
+      sentences.forEach(item => {
+        const activityQuery = generateAttributeId();
+        const annotationId = generateAttributeId();
+
+        li.push(`
+          <li id="${activityQuery}" rel="prov:activity" resource="#${activityQuery}" typeof="prov:Activity">
+            <dl class="query-source">
+              <dt>Source</dt>
+              <dd><a href="${Config.Factcheck}">ClaimCheck</a> (<a href="${Config.Factcheck}" rel="prov:used">query</a>)</dd>
+            </dl>
+
+            <div rel="prov:generated" resource="#${annotationId}" typeof="oa:Annotation">
+              <span rel="oa:motivatedBy" resource="oa:classifying"></span>
+
+              <span rel="oa:hasTarget" resource="#${annotationId}-target">
+                <span rel="oa:source" resource="${Config.DocumentURL}"></span>
+                <span rel="oa:selector" resource="#${annotationId}-selector" typeof="oa:TextQuoteSelector">
+                  <span content="${textQuoteSelector.prefix}" property="oa:prefix"></span>
+                  <span content="${textQuoteSelector.exact}" property="oa:exact"></span>
+                  <span content="${textQuoteSelector.suffix}" property="oa:suffix"></span>
+                </span>
+              </span>
+
+              <div rel="oa:hasBody" resource="#${annotationId}-note">
+                <div datatype="rdf:HTML" lang="en" property="rdf:value" resource="#${annotationId}-note" typeof="oa:TextualBody" xml:lang="en">
+                  <span about="#document-ohyeah" rel="schema:review" resource="#${annotationId}-note"></span>
+                  <dl resource="#${annotationId}-note" typeof="schema:ClaimReview">
+                    <dt>Sentence</dt>
+                    <dd property="schema:claimReviewed">${item.sentence}</dd>
+
+                    <dt>Fact check label</dt>
+                    <dd rel="http://example.org/factCheckLabel" resource="http://example.org/${encodeURIComponent(item.fact_check_label.trim())}">${item.fact_check_label}</dd>
+
+                    <dt>Confidence</dt>
+                    <dd datatype="xsd:decimal" property="http://example.org/confidence">${item.confidence}</dd>
+
+                    ${item.explanation && item.explanation.length > 0 ?
+                    `<dt>Explanation</dt>
+                      ${item.explanation.map(e => `<dd property="http://example.org/explanation">${e}</dd>`).join('')}`
+                    : ''}
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </li>`);
+      })
+
+      let outputHtml = li.join('');
+
+      if (outputHtml) {
+        node.insertAdjacentHTML('beforeend', `
+          <section id="claimcheck-results" rel="schema:hasPart" resource="#claimcheck-results">
+            <h3 property="name">Claim Check Results</h3>
+            <div datatype="rdf:HTML" property="schema:description">
+            </div>
+          </section>`);
+
+        const claimCheckresults = node.querySelector("#claimcheck-results");
+
+        claimCheckresults.querySelector('div').appendChild(
+          fragmentFromString(`
+              <ul>${outputHtml}</ul>
+            `));
+      }
     },
 
     extractNanopubGraphs: function(jsonld) {
@@ -9667,9 +9760,8 @@ WHERE {\n\
         "http://www.nanopub.org/nschema#hasPublicationInfo": pubinfoGraph,
       };
     },
-    
 
-    showNanopubResults: async function(node, entities) {
+    showSelectionNanopubResults: async function(node, entities) {
       const nanopubClient = new NanopubClient();
       const { all } = entities;
       const results = [];
@@ -9714,23 +9806,6 @@ WHERE {\n\
 
       const nanopubResults = node.querySelector("#nanopub-results");
 
-
-// const activityQuery = generateAttributeId();
-//         `
-//               <section id="${activityQuery}" rel="prov:activity" resource="#${activityQuery}" typeof="prov:Activity">
-//                 <h4 property="schema:name">Initial Nanopub lookup</h4>
-//                 <dl class="query-source">
-//                   <dt>Source</dt>
-//                   <dd><a href="https://nanopub.example/">Nanopub</a> (<a href="${nanpubQueryUrl}" rel="prov:used">query</a>)</dd>
-//                 </dl>
-//                 <details open="" rel="prov:generated" resource="#${activityQuery}-results">
-//                   <summary>Matches</summary>
-//                   <dl class="entity-${entityTitle.toLowerCase()}" rel="prov:hadMember">
-//                     ${outputHtml}
-//                   </dl>
-//                 </details>
-//               </section>
-// `   
 
       let queryMatches = [];
       const containerDiv = node.querySelector('div');
@@ -9814,20 +9889,6 @@ WHERE {\n\
           </li>
         `);
       });
-
-              // <h4 property="schema:name">${entityTitle}</h4>
-              // <dl class="query-source">
-              //   <dt>Source</dt>
-              //   <dd><a href="https://wikidata.org/">Wikidata</a> (<a href="${wikidataQueryUrl}" rel="prov:used">query</a>)</dd>
-              // </dl>
-              // <details open="" rel="prov:generated" resource="#${activityQuery}-results">
-              //   <summary>Matches</summary>
-              //   <dl class="entity-${entityTitle.toLowerCase()}" rel="prov:hadMember">
-              //     ${outputHtml}
-              //   </dl>
-              // </details>
-
-
 
 
       let outputHtml = queryMatches.join('');

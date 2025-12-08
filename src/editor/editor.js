@@ -177,10 +177,14 @@ export class Editor {
     */
   }
 
+  getTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, options) {
+    const toolbarView = this.authorToolbarView || this.socialToolbarView;
+    return toolbarView?.getTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, options)
+  }
 
   importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, options) {
     const toolbarView = this.authorToolbarView || this.socialToolbarView;
-    return toolbarView?.importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, options)
+    return toolbarView?.importTextQuoteSelector()
   }
 
   showTextQuoteSelectorFromLocation() {
