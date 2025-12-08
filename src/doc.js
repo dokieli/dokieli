@@ -3861,7 +3861,45 @@ function createRDFaHTMLRequirement(r, mode) {
   return s;
 }
 
+function getObjectAsHTML(obj) {
+  if (!obj || Object.keys(obj).length === 0) return '';
 
+  return `<dl>
+    ${Object.entries(obj).map(([key, value]) => {
+
+      // Convert null or undefined to string "null"
+      if (value === null || value === undefined) value = 'null';
+      if (value === '') return '';
+
+      if (Array.isArray(value)) {
+        return `
+        <dt>${key}</dt>
+        <dd>
+          <ul>
+            ${value.map(v => `<li>${v}</li>`).join('')}
+          </ul>
+        </dd>`;
+      }
+
+      if (typeof value === 'object') {
+        return `
+        <dt>${key}</dt>
+        <dd>
+          <ul>
+            ${Object.entries(value)
+              .map(([k, v]) => `<li>${k}: ${v}</li>`)
+              .join('')}
+          </ul>
+        </dd>`;
+      }
+
+      return `
+        <dt>${key}</dt>
+        <dd>${value}</dd>
+      `;
+    }).join('')}
+  </dl>`;
+}
 
 export {
   getNodeWithoutClasses,
@@ -3957,5 +3995,6 @@ export {
   createRDFaHTMLRequirement,
   createRDFaMarkObject,
   createDefinitionListHTML,
-  hasNonWhitespaceText
+  hasNonWhitespaceText,
+  getObjectAsHTML,
 }

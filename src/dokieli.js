@@ -7,8 +7,8 @@
  */
 
 import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource } from './fetcher.js'
-import { getDocument, getDocumentContentNode, showActionMessage, selectArticleNode, eventButtonNotificationsToggle, showRobustLinksDecoration, getResourceInfo,  removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getLanguageOptionsHTML, getLicenseOptionsHTML, getNodeWithoutClasses, setCopyToClipboard, addMessageToLog, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown, getReferenceLabel, createNoteDataHTML, hasNonWhitespaceText, eventButtonClose, eventButtonInfo, eventButtonSignIn, eventButtonSignOut, getDocumentNodeFromString, updateResourceInfos, accessModePossiblyAllowed, updateSupplementalInfo, processSupplementalInfoLinkHeaders } from './doc.js'
-import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, generateDataURI, getMediaTypeURIs, isHttpOrHttpsProtocol, isFileProtocol, getUrlParams, stripUrlSearchHash, stripUrlParamsFromString } from './uri.js'
+import { getDocument, getDocumentContentNode, showActionMessage, selectArticleNode, eventButtonNotificationsToggle, showRobustLinksDecoration, getResourceInfo,  removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getLanguageOptionsHTML, getLicenseOptionsHTML, getNodeWithoutClasses, setCopyToClipboard, addMessageToLog, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown, getReferenceLabel, createNoteDataHTML, hasNonWhitespaceText, eventButtonClose, eventButtonInfo, eventButtonSignIn, eventButtonSignOut, getDocumentNodeFromString, updateResourceInfos, accessModePossiblyAllowed, updateSupplementalInfo, processSupplementalInfoLinkHeaders, getObjectAsHTML } from './doc.js'
+import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, generateDataURI, getMediaTypeURIs, isHttpOrHttpsProtocol, isFileProtocol, getUrlParams, stripUrlSearchHash, stripUrlParamsFromString, isLocalhost } from './uri.js'
 import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes, filterQuads, getAgentTypeIndex, serializeData } from './graph.js'
 import { notifyInbox, sendNotifications } from './inbox.js'
 import { uniqueArray, fragmentFromString, generateAttributeId, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, isValidISBN, findPreviousDateTime, escapeRDFLiteral, tranformIconstoCSS, getIconsFromCurrentDocument, getHash, getDateTimeISOFromDate, removeChildren, scoreMatch } from './util.js'
@@ -9567,7 +9567,7 @@ WHERE {\n\
       else {
         var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Oh yeah?', buttonTitle: 'Close', iconSize: 'fa-2x' });
 
-        var aside = `<aside aria-labelledby="document-ohyeah-label" class="do" contenteditable="false" id="document-ohyeah" rel="schema:hasPart" resource="#document-ohyeah"><h2 id="document-ohyeah-label" property="schema:name">Oh yeah?</h2>${buttonClose}<div datatype="rdf:HTML" property="schema:description"></div></aside>`;
+        var aside = `<aside aria-labelledby="document-ohyeah-label" class="do tabs" contenteditable="false" id="document-ohyeah" rel="schema:hasPart" resource="#document-ohyeah"><h2 id="document-ohyeah-label" property="schema:name">Oh yeah?</h2>${buttonClose}<div datatype="rdf:HTML" property="schema:description"></div></aside>`;
 
         document.body.insertAdjacentHTML('beforeend', aside);
       }
@@ -9579,7 +9579,7 @@ WHERE {\n\
 
       var buttonGraph = getButtonHTML({ button: 'graph', buttonClass: 'graph', buttonLabel: 'Graph view Oh yeah?', buttonTitle: 'Graph view', iconSize: 'fa-2x' });
 
-      containerDiv.insertAdjacentHTML('beforeend', `
+      containerDiv.appendChild(fragmentFromString(`
         <div class="info">${buttonGraph}</div>
         <dl class="entity-legend">
           <dt>Legend</dt>
@@ -9588,9 +9588,55 @@ WHERE {\n\
               <li class="entity-legend-people">People</li>
               <li class="entity-legend-places">Places</li>
               <li class="entity-legend-organizations">Organizations</li>
+              <li class="entity-legend-acronyms">Acronyms</li>
             </ul>
           </dd>
-        </dl>`);
+        </dl>
+        <nav>
+          <ul>
+            <li class="selected"><a href="#claimcheck-results">Claim Check</a></li>
+            <li><a href="#wikidata-results">Wikidata</a></li>
+            <li><a href="#nanopub-results">Nanopub</a></li>
+            <li><a href="#whois-results">Whois</a></li>
+          </ul>
+        </nav>
+        <section class="selected" id="claimcheck-results" rel="schema:hasPart" resource="#claimcheck-results">
+          <h3 property="name">Claim Check Results</h3>
+          <div datatype="rdf:HTML" property="schema:description">
+          </div>
+        </section>
+        <section id="wikidata-results" rel="schema:hasPart" resource="#wikidata-results">
+          <h3 property="name">Wikidata Results</h3>
+          <div datatype="rdf:HTML" property="schema:description">
+          </div>
+        </section>
+        <section id="nanopub-results" rel="schema:hasPart" resource="#nanopub-results">
+          <h3 property="name">Nanopub Results</h3>
+          <div datatype="rdf:HTML" property="schema:description">
+          </div>
+        </section>
+        <section id="whois-results" rel="schema:hasPart" resource="#whois-results">
+          <h3 property="name">Whois Results</h3>
+          <div datatype="rdf:HTML" property="schema:description">
+          </div>
+        </section>`));
+
+      var a = document.querySelectorAll('#document-ohyeah nav a');
+      for (let i = 0; i < a.length; i++) {
+        a[i].addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          var li = e.target.parentNode;
+          if (!li.classList.contains('selected')) {
+            document.querySelector('#document-ohyeah nav li.selected').classList.remove('selected');
+            li.classList.add('selected');
+            document.querySelector('#document-ohyeah > div > section.selected').classList.remove('selected');
+            var d = document.querySelector('#document-ohyeah > div > section' + e.target.hash);
+            d.classList.add('selected');
+          }
+        });
+      }
 
       containerDiv.addEventListener('click', (e) => {
         var button = e.target.closest('button.graph');
@@ -9627,27 +9673,83 @@ WHERE {\n\
         }
       })
 
-
+      // Promise.allSettled(
+      //   [
+      //     DO.U.showSelectionClaimCheckResults(containerDiv),
+      //     DO.U.showSelectionWikidataResults(containerDiv, entities),
+      //     DO.U.showSelectionNanopubResults(containerDiv, entities),
+      //     DO.U.showWhoisResults(containerDiv)
+      //   ]
+      // );
       DO.U.showSelectionClaimCheckResults(containerDiv); //claim checks on the selection (per selection, results will be 'needs check', 'prob does not need check', etc),
       DO.U.showSelectionWikidataResults(containerDiv, entities);
       DO.U.showSelectionNanopubResults(containerDiv, entities);
       // DO.U.showSelectionNotificationsResults(containerDiv, selection); annotations and citedBy
-      // DO.U.showWhois();
-      // DO.U.showDocumentBackReferencesFRomSomeOtherPlaceBesidesInbox();
+      DO.U.showWhoisResults(containerDiv);
+      // DO.U.showDocumentBackReferencesFromSomeOtherPlaceBesidesInbox();
     },
 
-    showWhoIs: function() {
+    showWhoisResults: async function(node) {
+      Config.Endpoint['Whois'] = 'http://localhost:8000/whois';
 
+      let whois;
 
+      // if (isLocalhost(window.location.href) || isFileProtocol(window.location.href)) {
+      //   whois = { 'domain_name': 'localhost' }
+      // }
+      // else {
+        const res = await fetch(Config.Endpoint.Whois, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            //domain: window.location.host
+            domain: "virginiabalseiro.com"
+          })
+        })
+      // }
+
+      whois = await res.json();
+
+      // console.log(whois)
+
+      let whoisHtml = getObjectAsHTML(whois);
+
+      // console.log(whoisHtml)
+
+      const whoisResults = node.querySelector("#whois-results");
+
+      let outputHtml = '<p>No <a href="https://en.wikipedia.org/wiki/WHOIS" rel="noopener noreferrer" target="_blank">WHOIS</a> results.</p>';
+
+      let activityQuery = generateAttributeId();
+
+      if (whoisHtml) {
+        outputHtml = `
+          <div id="${activityQuery}" rel="prov:activity" resource="#${activityQuery}" typeof="prov:Activity">
+            <dl class="query-source">
+              <dt>Source</dt>
+              <dd><a href="${Config.Endpoint.Whois}">Whois</a> (<a href="${Config.Endpoint.Whois}" rel="prov:used">query</a>)</dd>
+            </dl>
+
+            <div rel="prov:generated" resource="#${activityQuery}-results">
+              <div datatype="rdf:HTML" property="schema:description">
+              ${whoisHtml}
+              </div>
+            </div>
+          </div>`;
+      }
+
+      whoisResults.querySelector('div').appendChild(fragmentFromString(outputHtml));
     },
 
     showSelectionClaimCheckResults: async function (node) {
       const selection = window.getSelection();
       const selectedText = selection.toString();
 
-      Config['Factcheck'] = 'http://localhost:8000/factcheck';
+      Config.Endpoint['Factcheck'] = 'http://localhost:8000/factcheck';
 
-      const claimCheckResponse = await fetch(Config.Factcheck, {
+      const claimCheckResponse = await fetch(Config.Endpoint.Factcheck, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -9675,7 +9777,7 @@ WHERE {\n\
           <li id="${activityQuery}" rel="prov:activity" resource="#${activityQuery}" typeof="prov:Activity">
             <dl class="query-source">
               <dt>Source</dt>
-              <dd><a href="${Config.Factcheck}">ClaimCheck</a> (<a href="${Config.Factcheck}" rel="prov:used">query</a>)</dd>
+              <dd><a href="${Config.Endpoint.Factcheck}">ClaimCheck</a> (<a href="${Config.Endpoint.Factcheck}" rel="prov:used">query</a>)</dd>
             </dl>
 
             <div rel="prov:generated" resource="#${annotationId}" typeof="oa:Annotation">
@@ -9717,204 +9819,16 @@ WHERE {\n\
       let outputHtml = li.join('');
 
       if (outputHtml) {
-        node.insertAdjacentHTML('beforeend', `
-          <section id="claimcheck-results" rel="schema:hasPart" resource="#claimcheck-results">
-            <h3 property="name">Claim Check Results</h3>
-            <div datatype="rdf:HTML" property="schema:description">
-            </div>
-          </section>`);
+        const claimCheckResults = node.querySelector("#claimcheck-results");
 
-        const claimCheckresults = node.querySelector("#claimcheck-results");
-
-        claimCheckresults.querySelector('div').appendChild(
+        claimCheckResults.querySelector('div').appendChild(
           fragmentFromString(`
               <ul>${outputHtml}</ul>
             `));
       }
     },
 
-    extractNanopubGraphs: function(jsonld) {
-      const head = jsonld.find(item =>
-        item["@graph"]?.some(node =>
-          node["@type"]?.includes("http://www.nanopub.org/nschema#Nanopublication")
-        )
-      );
-
-      if (!head) throw new Error("Nanopublication head not found");
-    
-      const headNode = head["@graph"].find(node =>
-        node["@type"]?.includes("http://www.nanopub.org/nschema#Nanopublication")
-      );
-
-      const assertionId  = headNode["http://www.nanopub.org/nschema#hasAssertion"][0]["@id"];
-      const provenanceId = headNode["http://www.nanopub.org/nschema#hasProvenance"][0]["@id"];
-      const pubinfoId    = headNode["http://www.nanopub.org/nschema#hasPublicationInfo"][0]["@id"];
-
-      const assertionGraph  = jsonld.find(item => item["@id"] === assertionId);
-      const provenanceGraph = jsonld.find(item => item["@id"] === provenanceId);
-      const pubinfoGraph    = jsonld.find(item => item["@id"] === pubinfoId);
-
-      return {
-        "http://www.nanopub.org/nschema#hasAssertion": assertionGraph,
-        "http://www.nanopub.org/nschema#hasProvenance": provenanceGraph,
-        "http://www.nanopub.org/nschema#hasPublicationInfo": pubinfoGraph,
-      };
-    },
-
-    showSelectionNanopubResults: async function(node, entities) {
-      const nanopubClient = new NanopubClient();
-      const { all } = entities;
-      const results = [];
-
-      const queryEntities = all.map((ent) => ent.text);
-
-      // console.log(queryEntities)
-
-      for (const ent of uniqueArray(queryEntities)) {
-        let nanopubQueryResults;
-        try {
-          nanopubQueryResults = nanopubClient.findNanopubsWithText(ent);
-        } catch (e){
-          console.log("Error querying nanopubs: ", e)
-          nanopubQueryResults = [];
-        }
-  
-        // query
-        for await (const item of nanopubQueryResults) {
-          const nanopubResult = item; // { label, date, np -> uri of the nanpub}
-          let nanopub;
-          try {
-            nanopub = await nanopubClient.fetchNanopub(item.np, 'jsonld'); // fetch the nanopub with the uri in item.np
-            nanopubResult.nanopub =  DO.U.extractNanopubGraphs(nanopub); // put it back in the result object
-          }
-          catch(e) {
-            console.log("Error fetching nanopub: ", e)
-            // we don't do anything here
-          }
-          results.push(nanopubResult)
-        }
-      }
-
-      // console.log("Query results: ", results)
-
-      node.insertAdjacentHTML('beforeend', `
-        <section id="nanopub-results" rel="schema:hasPart" resource="#nanopub-results">
-          <h3 property="name">Nanopub Results</h3>
-          <div datatype="rdf:HTML" property="schema:description">
-          </div>
-        </section>`);
-
-      const nanopubResults = node.querySelector("#nanopub-results");
-
-
-      let queryMatches = [];
-      const containerDiv = node.querySelector('div');
-
-      results.forEach((result) => {
-        const np = result.nanopub; // { head, assertion, provenance, pubinfo }
-
-        const graphsHtml = Object.entries(np)
-          .filter(([key]) => key !== "head") // skip head graph
-          .map(([key, graph]) => {
-            const triplesHtml = graph["@graph"]
-              .map((triple) => {
-                const subject = triple["@id"];
-                const predicates = Object.entries(triple)
-                .filter(([p]) => p !== "@id")
-                .map(([predicate, objects]) => {
-                  return objects
-                    .map((obj) => {
-                      const datatype = obj["@type"]; // xsd types are here
-                      const label = getFragmentOrLastPath(predicate);
-    
-                      if (obj["@id"]) {
-                        return `
-                          <dt>${label}</dt>
-                          <dd about="${subject}"><a href="${obj["@id"]}" rel="${predicate}">${obj["@id"]}</a></dd>
-                        `;
-                      }
-    
-                      const datatypeAttr = datatype
-                        ? ` datatype="${datatype}"`
-                        : "";
-    
-                      if (
-                        datatype === ns.xsd.dateTime.value ||
-                        datatype === ns.xsd.date.value
-                      ) {
-                        return `
-                          <dt>${label}</dt>
-                          <dd about="${subject}"><time${datatypeAttr} property="${predicate}">${obj["@value"]}</time></dd>
-                        `;
-                      }
-
-                      return `
-                        <dt>${label}</dt>
-                        <dd about="${subject}"${datatypeAttr} property="${predicate}">${obj["@value"]}</dd>
-                      `;
-                    })
-                    .join("");
-                })
-                .join("");
-    
-              return predicates;
-            })
-            .join("");
-
-            return `
-              <details rel="${key}" resource="${graph["@id"]}">
-                <summary property="rdfs:label">${getFragmentOrLastPath(key)}</summary>
-                <dl>${triplesHtml}</dl>
-              </details>
-            `;
-          })
-          .join("");
-
-        queryMatches.push(`
-          <li rel="prov:hadMember" resource="${result.np}">
-            <details open="">
-              <summary property="rdfs:label">${result.label}</summary>
-              <div>
-                <dl>
-                  <dt>Date</dt>
-                  <dd><time datatype="xsd:dateTime" property="dcterms:created">${result.date}</dd>
-
-                  <dt>Source</dt>
-                  <dd><a href="${result.np}">${getFragmentOrLastPath(result.np)}</a></dd>
-                </dl>
-
-                ${graphsHtml}
-              </div>
-            </details>
-          </li>
-        `);
-      });
-
-
-      let outputHtml = queryMatches.join('');
-
-      const activityQuery = generateAttributeId();
-
-      if (outputHtml) {
-        nanopubResults.querySelector('div').appendChild(
-          fragmentFromString(`
-            <section id="${activityQuery}" rel="prov:activity" resource="#${activityQuery}" typeof="prov:Activity">
-              <ul>${queryMatches.join('')}</ul>
-            </section>
-            `));
-      }
-
-      // console.log("Query results by text for all entities: ", results)
-    },
-
     showSelectionWikidataResults: async function(node, entities) {
-      node.insertAdjacentHTML('beforeend', `
-        <section id="wikidata-results" rel="schema:hasPart" resource="#wikidata-results">
-          <h3 property="name">Wikidata Results</h3>
-          <div datatype="rdf:HTML" property="schema:description">
-          </div>
-        </section>`);
-
       const wikidataResults = node.querySelector("#wikidata-results");
 
       let wikidataSearchLanguage = 'en' //TODO: Config based on nearest or document lang? or user preferred lang?
@@ -10093,6 +10007,187 @@ WHERE {
         wikidataResults.querySelector('div').replaceChildren(fragmentFromString(`<p>No Wikidata match found.</p>`));
       }
     },
+
+    extractNanopubGraphs: function(jsonld) {
+      const head = jsonld.find(item =>
+        item["@graph"]?.some(node =>
+          node["@type"]?.includes("http://www.nanopub.org/nschema#Nanopublication")
+        )
+      );
+
+      if (!head) throw new Error("Nanopublication head not found");
+    
+      const headNode = head["@graph"].find(node =>
+        node["@type"]?.includes("http://www.nanopub.org/nschema#Nanopublication")
+      );
+
+      const assertionId  = headNode["http://www.nanopub.org/nschema#hasAssertion"][0]["@id"];
+      const provenanceId = headNode["http://www.nanopub.org/nschema#hasProvenance"][0]["@id"];
+      const pubinfoId    = headNode["http://www.nanopub.org/nschema#hasPublicationInfo"][0]["@id"];
+
+      const assertionGraph  = jsonld.find(item => item["@id"] === assertionId);
+      const provenanceGraph = jsonld.find(item => item["@id"] === provenanceId);
+      const pubinfoGraph    = jsonld.find(item => item["@id"] === pubinfoId);
+
+      return {
+        "http://www.nanopub.org/nschema#hasAssertion": assertionGraph,
+        "http://www.nanopub.org/nschema#hasProvenance": provenanceGraph,
+        "http://www.nanopub.org/nschema#hasPublicationInfo": pubinfoGraph,
+      };
+    },
+
+    showSelectionNanopubResults: async function(node, entities) {
+      const nanopubClient = new NanopubClient();
+      const { people, organizations, places } = entities;
+      const all = [...people, ...organizations, ...places]
+      // const { all } = entities;
+      const results = [];
+
+      const queryEntities = all.map((ent) => ent.text);
+
+      // console.log(queryEntities)
+
+      for (const ent of uniqueArray(queryEntities)) {
+        let nanopubQueryResults;
+        try {
+          nanopubQueryResults = nanopubClient.findNanopubsWithText(ent);
+        } catch (e){
+          console.log("Error querying nanopubs: ", e)
+          nanopubQueryResults = [];
+        }
+  
+        // query
+        for await (const item of nanopubQueryResults) {
+          const nanopubResult = item; // { label, date, np -> uri of the nanpub}
+          let nanopub;
+          try {
+            // let pIRI = getProxyableIRI(item.np, { forceProxy: true });
+            let pIRI = item.np;
+
+            nanopub = await nanopubClient.fetchNanopub(pIRI, 'jsonld'); // fetch the nanopub with the uri in item.np
+            nanopubResult.nanopub =  DO.U.extractNanopubGraphs(nanopub); // put it back in the result object
+          }
+          catch(e) {
+            console.log("Error fetching nanopub: ", e)
+            // we don't do anything here
+          }
+          results.push(nanopubResult)
+        }
+      }
+
+      // console.log("Query results: ", results)
+
+      const nanopubResults = node.querySelector("#nanopub-results");
+
+      let queryMatches = [];
+      const containerDiv = node.querySelector('div');
+
+      if (!results.length) {
+        nanopubResults.querySelector('div').appendChild(fragmentFromString('<p>No nanopublications found for the selected text.</p>'))
+      }
+
+      results.forEach((result) => {
+        const np = result.nanopub; // { head, assertion, provenance, pubinfo }
+
+        if (!np) {
+          return;
+        }
+
+        const graphsHtml = Object.entries(np)
+          .filter(([key]) => key !== "head") // skip head graph
+          .map(([key, graph]) => {
+            const triplesHtml = graph["@graph"]
+              .map((triple) => {
+                const subject = triple["@id"];
+                const predicates = Object.entries(triple)
+                .filter(([p]) => p !== "@id")
+                .map(([predicate, objects]) => {
+                  return objects
+                    .map((obj) => {
+                      const datatype = obj["@type"]; // xsd types are here
+                      const label = URL.parse(predicate) ? getFragmentOrLastPath(predicate) : predicate;
+    
+                      if (obj["@id"]) {
+                        return `
+                          <dt>${label}</dt>
+                          <dd about="${subject}"><a href="${obj["@id"]}" rel="${predicate}">${obj["@id"]}</a></dd>
+                        `;
+                      }
+    
+                      const datatypeAttr = datatype
+                        ? ` datatype="${datatype}"`
+                        : "";
+    
+                      if (
+                        datatype === ns.xsd.dateTime.value ||
+                        datatype === ns.xsd.date.value
+                      ) {
+                        return `
+                          <dt>${label}</dt>
+                          <dd about="${subject}"><time${datatypeAttr} property="${predicate}">${obj["@value"]}</time></dd>
+                        `;
+                      }
+
+                      return `
+                        <dt>${label}</dt>
+                        <dd about="${subject}"${datatypeAttr} property="${predicate}">${obj["@value"]}</dd>
+                      `;
+                    })
+                    .join("");
+                })
+                .join("");
+    
+              return predicates;
+            })
+            .join("");
+
+            return `
+              <details rel="${key}" resource="${graph["@id"]}">
+                <summary property="rdfs:label">${getFragmentOrLastPath(key)}</summary>
+                <dl>${triplesHtml}</dl>
+              </details>
+            `;
+          })
+          .join("");
+
+        queryMatches.push(`
+          <li rel="prov:hadMember" resource="${result.np}">
+            <details open="">
+              <summary property="rdfs:label">${result.label}</summary>
+              <div>
+                <dl>
+                  <dt>Date</dt>
+                  <dd><time datatype="xsd:dateTime" property="dcterms:created">${result.date}</dd>
+
+                  <dt>Source</dt>
+                  <dd><a href="${result.np}">${getFragmentOrLastPath(result.np)}</a></dd>
+                </dl>
+
+                ${graphsHtml}
+              </div>
+            </details>
+          </li>
+        `);
+      });
+
+
+      let outputHtml = queryMatches.join('');
+
+      const activityQuery = generateAttributeId();
+
+      if (outputHtml) {
+        nanopubResults.querySelector('div').appendChild(
+          fragmentFromString(`
+            <section id="${activityQuery}" rel="prov:activity" resource="#${activityQuery}" typeof="prov:Activity">
+              <ul>${queryMatches.join('')}</ul>
+            </section>
+            `));
+      }
+
+      // console.log("Query results by text for all entities: ", results)
+    },
+
+
 
     initMath: function(config) {
       if (!DO.C.MathAvailable) { return; }

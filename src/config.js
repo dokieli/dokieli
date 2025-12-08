@@ -73,6 +73,8 @@ export default {
   MessageLog: [],
   AvatarSize: 48,
 
+  Endpoint: {},
+
   CDATAStart: '//<![CDATA[',
   CDATAEnd: '//]]>',
   SortableList: false,
@@ -399,6 +401,10 @@ export default {
       Place: {
         plural: 'Places',
         type: 'http://schema.org/Place',
+      },
+      Acronym: {
+        plural: 'Acronyms',
+        type: 'http://schema.org/DefinedTerm'
       }
     }
   },

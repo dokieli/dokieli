@@ -707,6 +707,18 @@ aside.do.on.tabs nav ul li {
 display:inline-block !important;
 }
 
+aside#document-ohyeah.do.on.tabs nav ul li a {
+padding-left:0.6em;
+padding-right:0.6em;
+}
+aside#document-ohyeah.do.tabs > div > section {
+padding:1em;
+width:calc(100% - 2em);
+border:2px solid #ccc;
+margin-top:-3px;
+}
+
+
 aside.do.on section {
 margin-top:1em;
 margin-bottom:2em;
@@ -1464,6 +1476,10 @@ a.highlight,
     background-color:#e7e7ff;
     color:#000;
   }
+  li.entity-legend-acronyms:before {
+    background: #ffa07a;
+    color: #000;
+  }
 }
 
 .entity-people,
@@ -1990,12 +2006,14 @@ background-color:#ffffff;
 border-bottom-color:inherit;
 }
 .tabs > div,
+.tabs > div > section,
 .tabs > figure {
 display:none;
 clear:both;
 margin-top:-2px;
 }
 .tabs > div.selected,
+.tabs > div > section.selected,
 .tabs > figure.selected {
 display:block;
 }
