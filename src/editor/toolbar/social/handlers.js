@@ -340,7 +340,12 @@ export function getAnnotationDistribution(action, data) {
 
   //Inboxes to send a notification to about the annotation.
   // console.log(formData[`annotation-inbox`])
-  const annotationInboxes = formData[`annotation-inbox`] || [];
+  let annotationInboxes = formData[`annotation-inbox`] || [];
+
+  // TODO: find a better way
+  if (!Array.isArray(annotationInboxes)) {
+    annotationInboxes = [annotationInboxes]
+  }
   //Send a copy of user annotation to a personal storage and/or to an annotation service.
   const annotationLocationPersonalStorage = formData[`annotation-location-personal-storage`];
   const annotationLocationService = formData[`annotation-location-service`];
