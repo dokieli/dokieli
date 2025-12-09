@@ -31,6 +31,7 @@ export class ToolbarView {
     })
 
     this.populateForms = this.getPopulateForms();
+    this.handlePopups = this.getPopupHandlers();
 
     // Default empty formHandlers, listeners (subclasses should override)
     this.formHandlers = this.getFormHandlers();
@@ -154,6 +155,10 @@ export class ToolbarView {
   }
 
   handlePopups(button) {
+      const selection = window.getSelection();
+      if (!selection) {
+        restoreSelection(this.selection);
+      }
       if (!this.toolbarPopups[button]) return;
 
       const toolbarForm = this.dom.querySelector(`#editor-form-${button}`);
@@ -163,7 +168,7 @@ export class ToolbarView {
         const state = this.editorView?.state;
         this.populateForms[button](button, toolbarForm, state);
       }
-      
+
       toolbarForm.classList.toggle('editor-form-active');
 
       this.positionPopup(toolbarForm);
@@ -208,6 +213,10 @@ export class ToolbarView {
       const toolbarHeight = this.dom.offsetHeight;
       const toolbarWidth = this.dom.offsetWidth;
       const selection = window.getSelection();
+
+      // if (selection.isCollapsed) {
+      //   restoreSelection(this.selection)
+      // }
       const range = selection.getRangeAt(0);
       const selectionPosition = range.getBoundingClientRect();
 
@@ -260,6 +269,10 @@ export class ToolbarView {
   }
 
   getFormEventListeners() {
+    return {};
+  }
+
+  getPopupHandlers() {
     return {};
   }
 

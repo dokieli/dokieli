@@ -708,8 +708,9 @@ display:inline-block !important;
 }
 
 aside#document-ohyeah.do.on.tabs nav ul li a {
-padding-left:0.6em;
-padding-right:0.6em;
+padding-left:0.45em;
+padding-right:0.45em;
+font-size:0.8em;
 }
 aside#document-ohyeah.do.tabs > div > section {
 padding:1em;
@@ -974,6 +975,7 @@ overflow-y: auto;
 max-height:max-content;
 }
 aside.do div.info:not(:empty) {
+margin-top:1em;
 margin-bottom: 1em;
 border-bottom: 1px solid #ccc;
 display: block;

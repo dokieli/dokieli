@@ -192,6 +192,11 @@ export class SocialToolbar extends ToolbarView {
     updateAnnotationInboxForm(action, this.selection);
   }
 
+  getPopupHandlers() {
+    return this.handlePopups;
+  }
+
+
   //TODO function getTransactionHistory()
   getPopulateForms() {
     return {

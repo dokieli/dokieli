@@ -393,11 +393,15 @@ export const buttonIcons = {
   },
   ohyeah: {
     title: 'Oh yeah?',
-    icon: Icon[".fas.fa-dragon"]
+    icon: Icon[".fas.fa-scale"]
   },
   graph: {
     title: 'Graph view',
     icon: Icon[".fas.fa-circle-nodes"]
+  },
+  'request-assessment': {
+    title: 'Request assessment',
+    icon: Icon[".fas.fa-bell-concierge"]
   }
 }
 

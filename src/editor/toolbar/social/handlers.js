@@ -77,7 +77,7 @@ export function ohYeahButtonHandler(e, action) {
 
   const { people = [], organizations = [], places = [], acronyms = [] } = entities;
 
-  console.log(entities)
+  // console.log(entities)
 
   Object.keys(entities).map(group => {
     if (group === "all") return;
@@ -336,10 +336,10 @@ export function getAnnotationDistribution(action, data) {
   const { selectedParentElement } = selectionData;
   //This annotationInbox is about when the selected text is part of an existing Annotation, it gets that Annotation's own inbox which is used towards announcing the annotation that's about to be created. (This is not related to whether an inbox should be assigned to an annotation that's about to be created.)
 
-console.log(action)
+// console.log(action)
 
   //Inboxes to send a notification to about the annotation.
-  console.log(formData[`annotation-inbox`])
+  // console.log(formData[`annotation-inbox`])
   const annotationInboxes = formData[`annotation-inbox`] || [];
   //Send a copy of user annotation to a personal storage and/or to an annotation service.
   const annotationLocationPersonalStorage = formData[`annotation-location-personal-storage`];

@@ -9579,8 +9579,14 @@ WHERE {\n\
 
       var buttonGraph = getButtonHTML({ button: 'graph', buttonClass: 'graph', buttonLabel: 'Graph view Oh yeah?', buttonTitle: 'Graph view', iconSize: 'fa-2x' });
 
+      var buttonRequestAssessment = getButtonHTML({ button: 'request-assessment', buttonClass: 'request-assessment', buttonLabel: 'Request assessment', buttonTitle: 'Request assessment', iconSize: 'fa-2x' });
+
+
       containerDiv.appendChild(fragmentFromString(`
-        <div class="info">${buttonGraph}</div>
+        <div class="info">
+          ${buttonGraph}
+          ${buttonRequestAssessment}
+        </div>
         <dl class="entity-legend">
           <dt>Legend</dt>
           <dd>
@@ -9597,6 +9603,7 @@ WHERE {\n\
             <li class="selected"><a href="#claimcheck-results">Claim Check</a></li>
             <li><a href="#wikidata-results">Wikidata</a></li>
             <li><a href="#nanopub-results">Nanopub</a></li>
+            <li><a href="#credentials-results">Credentials</a></li>
             <li><a href="#whois-results">Whois</a></li>
           </ul>
         </nav>
@@ -9612,6 +9619,11 @@ WHERE {\n\
         </section>
         <section id="nanopub-results" rel="schema:hasPart" resource="#nanopub-results">
           <h3 property="name">Nanopub Results</h3>
+          <div datatype="rdf:HTML" property="schema:description">
+          </div>
+        </section>
+        <section id="credentials-results" rel="schema:hasPart" resource="#credentials-results">
+          <h3 property="name">Credentials Results</h3>
           <div datatype="rdf:HTML" property="schema:description">
           </div>
         </section>
@@ -9637,6 +9649,26 @@ WHERE {\n\
           }
         });
       }
+
+      containerDiv.addEventListener('click', (e) => {
+        var button = e.target.closest('button.request-assessment');
+        // console.log(button)
+
+        if (button) {
+          const toolbar = DO.Editor.authorToolbarView || DO.Editor.socialToolbarView
+          toolbar.dom.classList.add("editor-form-active");
+          const buttonName = 'specificity';
+
+          if (toolbar.signInRequired(buttonName)) {
+            toolbar.checkAnnotationServiceUpdateForm(buttonName);
+          }
+
+          const command = toolbar.toolbarCommands[buttonName];
+
+          toolbar.toggleButtonState(button, buttonName, command);
+          toolbar.handlePopups(buttonName);
+        }
+      });
 
       containerDiv.addEventListener('click', (e) => {
         var button = e.target.closest('button.graph');
@@ -9684,9 +9716,40 @@ WHERE {\n\
       DO.U.showSelectionClaimCheckResults(containerDiv); //claim checks on the selection (per selection, results will be 'needs check', 'prob does not need check', etc),
       DO.U.showSelectionWikidataResults(containerDiv, entities);
       DO.U.showSelectionNanopubResults(containerDiv, entities);
+      DO.U.showSelectionCredentialsResults(containerDiv, entities);
       // DO.U.showSelectionNotificationsResults(containerDiv, selection); annotations and citedBy
       DO.U.showWhoisResults(containerDiv);
       // DO.U.showDocumentBackReferencesFromSomeOtherPlaceBesidesInbox();
+    },
+
+    showSelectionCredentialsResults: async function(node) {
+      const credentialsResults = node.querySelector("#credentials-results");
+
+      Config.Endpoint['Credentials'] = 'http://localhost:8000/credentials';
+
+      let activityQuery = generateAttributeId();
+
+      let outputHtml = '<p>No credentials found.</p>';
+
+      let credentialsHtml;
+
+      if (credentialsHtml) {
+        outputHtml = `
+          <div id="${activityQuery}" rel="prov:activity" resource="#${activityQuery}" typeof="prov:Activity">
+            <dl class="query-source">
+              <dt>Source</dt>
+              <dd><a href="${Config.Endpoint.Credentials}">Credentials</a> (<a href="${Config.Endpoint.Credentials}" rel="prov:used">query</a>)</dd>
+            </dl>
+
+            <div rel="prov:generated" resource="#${activityQuery}-results">
+              <div datatype="rdf:HTML" property="schema:description">
+              ${credentialsHtml}
+              </div>
+            </div>
+          </div>`;
+      }
+
+      credentialsResults.querySelector('div').appendChild(fragmentFromString(outputHtml));
     },
 
     showWhoisResults: async function(node) {
@@ -9705,7 +9768,7 @@ WHERE {\n\
           },
           body: JSON.stringify({
             //domain: window.location.host
-            domain: "virginiabalseiro.com"
+            domain: "w3.org"
           })
         })
       // }
@@ -9766,6 +9829,8 @@ WHERE {\n\
       const { sentences } = claimCheck;
 
       const textQuoteSelector = DO.Editor.getTextQuoteSelector();
+
+      selection.removeAllRanges();
 
       let li = [];
 

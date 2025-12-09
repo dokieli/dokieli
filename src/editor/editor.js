@@ -184,7 +184,7 @@ export class Editor {
 
   importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, options) {
     const toolbarView = this.authorToolbarView || this.socialToolbarView;
-    return toolbarView?.importTextQuoteSelector()
+    return toolbarView?.importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, options)
   }
 
   showTextQuoteSelectorFromLocation() {
