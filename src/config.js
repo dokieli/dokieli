@@ -1,6 +1,18 @@
 import rdf from 'rdf-ext';
 import DO from './dokieli.js';
 
+let client_id; 
+
+try {
+  const clientIdJson = await import('../clientid.json');
+  const clientIdUrl = clientIdJson.default.client_id;
+  if (clientIdUrl) {
+    client_id = clientIdUrl;
+  }
+} catch (err) {
+  console.warn('clientid.json not found or failed to load', err);
+}
+
 /**
  * Configuration
  */
@@ -32,6 +44,7 @@ export default {
       DO.U.monitorNetworkStatus();
     }
   },
+  client_id: client_id,
   DocumentAction: '',
   Button: {},
   DocumentURL: '',

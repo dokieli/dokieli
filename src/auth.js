@@ -9,10 +9,11 @@ import { updateButtons, getButtonHTML } from './ui/buttons.js';
 import { Session } from '@uvdsl/solid-oidc-client-browser';
 
 const ns = Config.ns;
-Config['Session'] = new Session();
+const clientid = (Config['client_id']) ? Config['client_id'] : null;
+Config['Session'] = clientid ? new Session({ client_id: clientid }) : new Session();
 
 export async function restoreSession() {
-  return Config['Session'].handleRedirectFromLogin();
+  await Config['Session'].handleRedirectFromLogin();
 }
 
 async function showUserSigninSignout (node) {

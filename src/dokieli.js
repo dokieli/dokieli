@@ -1510,8 +1510,8 @@ DO = {
     },
 
     init: function() {
-      DO.U.initAuth()
-        .then(() => DO.C.init());
+      DO.U.initAuth();
+      DO.C.init();
     },
 
     initAuth: async function() {
