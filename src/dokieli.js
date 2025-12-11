@@ -2496,7 +2496,7 @@ DO = {
 
       var node = document.getElementById('review-changes');
 
-      node.querySelector('h2 + div.info').insertAdjacentHTML('beforeend', detailsInsDel);
+      node.querySelector('div.info').insertAdjacentHTML('beforeend', detailsInsDel);
 
       node.insertAdjacentHTML('beforeend', `
         <div class="do-diff">${diffHTML.join('')}</div>
