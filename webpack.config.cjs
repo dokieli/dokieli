@@ -1,6 +1,9 @@
 const webpack = require("webpack");
 const path = require("path");
 const TerserPlugin = require("terser-webpack-plugin");
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 module.exports = (env) => {
   const minimize = !!(env && env.minimize);
@@ -75,6 +78,10 @@ module.exports = (env) => {
       new webpack.ProvidePlugin({
         Buffer: ["buffer", "Buffer"],
       }),
+      new webpack.DefinePlugin({
+        "process.env.CLIENT_ID": JSON.stringify(process.env.CLIENT_ID),
+        "process.env.DEV_CLIENT_ID": JSON.stringify(process.env.DEV_CLIENT_ID),
+      })
     ],
   };
 };
