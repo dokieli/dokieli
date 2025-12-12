@@ -7,7 +7,7 @@ const LDP_RESOURCE = '<http://www.w3.org/ns/ldp#Resource>; rel="type"'
 
 function authFetch(url, options) {
   const request = new Request(url, options);
-  return Config['Session'].authFetch(request)
+  return Config['Session']?.authFetch(request)
 }
 
 function setAcceptRDFTypes(options = {}) {
@@ -118,7 +118,7 @@ function currentLocation(options = {}) {
  * @returns {Promise<Response>}
  */
 function deleteResource (url, options = {}) {
-  const _fetch = Config['Session'].isActive ? authFetch : fetch;
+  const _fetch = Config['Session']?.isActive ? authFetch : fetch;
 
   if (!url) {
     return Promise.reject(new Error('Cannot DELETE resource - missing url'))
@@ -244,7 +244,7 @@ function getAcceptPutPreference (url) {
  * @returns {Promise<string>|Promise<ArrayBuffer>}
  */
 function getResource (url, headers = {}, options = {}) {
-  const _fetch = Config['Session'].isActive ? authFetch : fetch;
+  const _fetch = Config['Session']?.isActive ? authFetch : fetch;
 
   url = url || currentLocation()
 // console.log(url)
@@ -373,7 +373,7 @@ function getResourceHead (url, headers = {}, options = {}) {
  * @returns {Promise} Resolves with `{ headers: ... }` object
  */
 function getResourceOptions (url, options = {}) {
-  const _fetch = Config['Session'].isActive ? authFetch : fetch;
+  const _fetch = Config['Session']?.isActive ? authFetch : fetch;
 
   url = url || currentLocation()
 
@@ -504,7 +504,7 @@ function patchResourceGraph (url, patches, options = {}) {
 }
 
 function patchResource (url, data, options = {}) {
-  const _fetch = Config['Session'].isActive ? authFetch : fetch;
+  const _fetch = Config['Session']?.isActive ? authFetch : fetch;
 
   options.headers = options.headers || {}
 
@@ -535,7 +535,7 @@ function patchResource (url, data, options = {}) {
 }
 
 function postResource (url, slug, data, contentType, links, options = {}) {
-  const _fetch = Config['Session'].isActive ? authFetch : fetch;
+  const _fetch = Config['Session']?.isActive ? authFetch : fetch;
 
   if (!url) {
     return Promise.reject(new Error('Cannot POST resource - missing url'))
@@ -605,7 +605,7 @@ function postResource (url, slug, data, contentType, links, options = {}) {
  * @returns {Promise<Response>}
  */
 function putResource (url, data, contentType, links, options = {}) {
-  const _fetch = Config['Session'].isActive ? authFetch : fetch;
+  const _fetch = Config['Session']?.isActive ? authFetch : fetch;
 
   if (!url) {
     return Promise.reject(new Error('Cannot PUT resource - missing url'))

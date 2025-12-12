@@ -6,18 +6,22 @@ import { Icon } from './ui/icons.js'
 import { getResourceGraph, getAgentName, getGraphImage, getAgentURL, getAgentPreferredProxy, getAgentPreferredPolicy, setPreferredPolicyInfo, getAgentDelegates, getAgentKnows, getAgentFollowing, getAgentStorage, getAgentOutbox, getAgentInbox, getAgentPreferencesFile, getAgentPublicTypeIndex, getAgentPrivateTypeIndex, getAgentTypeIndex, getAgentSupplementalInfo, getAgentSeeAlso, getAgentPreferencesInfo, getAgentLiked, getAgentOccupations, getAgentPublications, getAgentMade, getAgentOIDCIssuer } from './graph.js'
 import { removeLocalStorageAsSignOut, updateLocalStorageProfile } from './storage.js'
 import { updateButtons, getButtonHTML } from './ui/buttons.js';
-import { Session } from '@uvdsl/solid-oidc-client-browser';
+import { SessionCore } from '@uvdsl/solid-oidc-client-browser/core';
+import { isLocalhost } from './uri.js';
 
 const ns = Config.ns;
-const clientid = (Config['client_id']) ? Config['client_id'] : null;
-Config['Session'] = clientid ? new Session({ client_id: clientid }) : new Session();
+
+Config.OIDC['client_id'] = isLocalhost(window.location) ? process.env.DEV_CLIENT_ID : process.env.CLIENT_ID;
+
+const clientid = (Config.OIDC['client_id']) ? Config.OIDC['client_id'] : null;
+Config['Session'] = (clientid && !Config['WebExtensionEnabled']) ? new SessionCore({ client_id: clientid }) : new SessionCore();
 
 export async function restoreSession() {
-  await Config['Session'].handleRedirectFromLogin();
+  await Config['Session']?.handleRedirectFromLogin();
 }
 
 async function showUserSigninSignout (node) {
-  var webId = Config['Session'].isActive ? Config['Session'].webId : null;
+  var webId = Config['Session']?.isActive ? Config['Session']?.webId : null;
 
   // was LoggedIn with new OIDC WebID
   if (webId && (webId != Config.User.IRI || !Config.User.IRI)) {
@@ -41,7 +45,7 @@ async function showUserSigninSignout (node) {
 async function signOut() {
   //Sign out for real
   if (Config['Session']?.isActive) {
-    await Config['Session'].logout();
+    await Config['Session']?.logout();
   }
 
   removeLocalStorageAsSignOut();
@@ -210,10 +214,14 @@ function submitSignIn (url) {
  async function signInWithOIDC() {
   const idp = Config.User.OIDCIssuer;
 
-  const redirect_uri = window.location.href.split('#')[0];
+  Config.OIDC['authStartLocation'] = Config.OIDC['client_id'] ? window.location.href.split('#')[0] : null;
+  localStorage.setItem('DO.C.OIDC', JSON.stringify(Config.OIDC));
+
+  const redirect_uri = Config.OIDC['client_id'] ? (window.location.origin + '/') :  window.location.href.split('#')[0];
+
 
   // Redirects away from dokieli :( but hopefully only briefly :)
-  Config['Session'].login(idp, redirect_uri)
+  Config['Session']?.login(idp, redirect_uri)
     .catch((e) => {
       const message = {
         'content': `Cannot sign in. Using information from profile to personalise the UI.`,

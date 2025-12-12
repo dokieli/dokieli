@@ -13,7 +13,7 @@ import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation,
 import { notifyInbox, sendNotifications } from './inbox.js'
 import { uniqueArray, fragmentFromString, generateAttributeId, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, isValidISBN, findPreviousDateTime, escapeRDFLiteral, tranformIconstoCSS, getIconsFromCurrentDocument, getHash, getDateTimeISOFromDate } from './util.js'
 import { generateGeoView } from './geo.js'
-import { getLocalStorageItem, updateLocalStorageProfile, enableAutoSave, disableAutoSave, updateLocalStorageItem, autoSave, removeLocalStorageDocumentFromCollection } from './storage.js'
+import { getLocalStorageItem, updateLocalStorageProfile, enableAutoSave, disableAutoSave, updateLocalStorageItem, autoSave, removeLocalStorageDocumentFromCollection, removeLocalStorageItem } from './storage.js'
 import { showUserSigninSignout, showUserIdentityInput, getSubjectInfo, restoreSession, afterSetUserInfo, setUserInfo, userInfoSignOut } from './auth.js'
 import { Icon } from './ui/icons.js'
 import * as d3Selection from 'd3-selection';
@@ -1511,7 +1511,12 @@ DO = {
 
     init: function() {
       DO.U.initAuth();
-      DO.C.init();
+
+      const params = new URLSearchParams(window.location.search);
+
+      if (!params.has('code') && !params.has('iss') && !params.has('state')) {
+        DO.C.init();
+      }
     },
 
     initAuth: async function() {
@@ -1522,6 +1527,14 @@ DO = {
         }
 
         console.log("Logged in: ", Config['Session'].webId);
+
+        getLocalStorageItem('DO.C.OIDC').then(OIDC => {
+          if (OIDC && 'authStartLocation' in OIDC) {
+            console.log(OIDC.authStartLocation)
+            window.location.replace(OIDC.authStartLocation)
+            removeLocalStorageItem('DO.C.OIDC');
+          }
+        });
       })
     },
 
@@ -6776,7 +6789,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
         DO.U.triggerBrowse(input.value, id, action);
       }, false);
 
-      if (DO.C['Session']?.isActive) {
+      if (Config['Session']?.isActive) {
         createButton.addEventListener('click', (e) => {
           DO.U.showCreateContainer(input.value, id, action, e);
         }, false);

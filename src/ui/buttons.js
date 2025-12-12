@@ -628,7 +628,7 @@ export function updateButtons(selectors) {
 
   const context = {
     info: Config.Resource[Config.DocumentURL],
-    authenticated: Config['Session'].isActive,
+    authenticated: Config['Session']?.isActive,
     online: navigator.onLine,
     localhost: isLocalhost(Config.DocumentURL),
     editorMode: DO.Editor.mode,
