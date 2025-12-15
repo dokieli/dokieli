@@ -1530,7 +1530,7 @@ DO = {
 
         getLocalStorageItem('DO.C.OIDC').then(OIDC => {
           if (OIDC && 'authStartLocation' in OIDC) {
-            console.log(OIDC.authStartLocation)
+            // console.log(OIDC.authStartLocation)
             window.location.replace(OIDC.authStartLocation)
             removeLocalStorageItem('DO.C.OIDC');
           }

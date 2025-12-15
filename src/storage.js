@@ -335,6 +335,7 @@ async function removeLocalStorageAsSignOut() {
   removeLocalStorageDocumentItems(DO.C.DocumentURL);
 
   removeLocalStorageItem('DO.C.User');
+  removeLocalStorageItem('DO.C.OIDC');
 }
 
 function getLocalStorageItem(key) {
