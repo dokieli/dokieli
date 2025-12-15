@@ -1508,13 +1508,49 @@ DO = {
         return DO.U.getItemsList(resources, options);
       }
     },
+    handleIncomingRedirect: async function() {
+      getLocalStorageItem('DO.C.OIDC').then(OIDC => {
+        if (OIDC && 'authStartLocation' in OIDC) {
+          // console.log(OIDC.authStartLocation)
+
+          if (OIDC.authStartLocation !== window.location.href.split('#')[0]) {
+            var urlsHtml = `<a href="${OIDC.authStartLocation}" rel="noopener" target="_blank">${OIDC.authStartLocation}</a>`
+            var message = `Hang on tight, redirecting you to where you want to be ${urlsHtml}`;
+            var actionMessage = `Redirecting to ${urlsHtml}`;
+
+            const messageObject = {
+              'content': actionMessage,
+              'type': 'info',
+              'timer': 10000
+            }
+
+            addMessageToLog({...messageObject, content: message}, Config.MessageLog);
+            const messageId = showActionMessage(document.body, messageObject);
+
+            removeLocalStorageItem('DO.C.OIDC');
+            window.location.replace(OIDC.authStartLocation);
+          }
+          else {
+            DO.U.initAuth();
+
+            DO.C.init();
+          }
+        }
+        else {
+          throw new Error('Original location not found in localstorage.')
+        }
+      });
+    },
 
     init: function() {
-      DO.U.initAuth();
-
       const params = new URLSearchParams(window.location.search);
 
-      if (!params.has('code') && !params.has('iss') && !params.has('state')) {
+      if (params.has('code') && params.has('iss') && params.has('state')) {
+        DO.U.handleIncomingRedirect();
+      }
+      else {
+        DO.U.initAuth();
+
         DO.C.init();
       }
     },
@@ -1527,14 +1563,6 @@ DO = {
         }
 
         console.log("Logged in: ", Config['Session'].webId);
-
-        getLocalStorageItem('DO.C.OIDC').then(OIDC => {
-          if (OIDC && 'authStartLocation' in OIDC) {
-            // console.log(OIDC.authStartLocation)
-            window.location.replace(OIDC.authStartLocation)
-            removeLocalStorageItem('DO.C.OIDC');
-          }
-        });
       })
     },
 

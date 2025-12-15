@@ -14,6 +14,7 @@ const ns = Config.ns;
 Config.OIDC['client_id'] = isLocalhost(window.location) ? process.env.DEV_CLIENT_ID : process.env.CLIENT_ID;
 
 const clientid = (Config.OIDC['client_id']) ? Config.OIDC['client_id'] : null;
+
 Config['Session'] = (clientid && !Config['WebExtensionEnabled']) ? new SessionCore({ client_id: clientid }) : new SessionCore();
 
 export async function restoreSession() {
@@ -217,8 +218,11 @@ function submitSignIn (url) {
   Config.OIDC['authStartLocation'] = Config.OIDC['client_id'] ? window.location.href.split('#')[0] : null;
   localStorage.setItem('DO.C.OIDC', JSON.stringify(Config.OIDC));
 
-  const redirect_uri = Config.OIDC['client_id'] ? (window.location.origin + '/') :  window.location.href.split('#')[0];
+  let redirect_uri = process.env.OIDC_REDIRECT_URI || (window.location.origin + '/') ;
 
+  // console.log("Redirect URI: ", redirect_uri)
+
+  redirect_uri = Config.OIDC['client_id'] ? redirect_uri :  window.location.href.split('#')[0];
 
   // Redirects away from dokieli :( but hopefully only briefly :)
   Config['Session']?.login(idp, redirect_uri)
