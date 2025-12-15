@@ -280,11 +280,14 @@ function isFileProtocol(urlString) {
 function isLocalhost(urlString) {
   try {
     const url = new URL(urlString);
-    if (url.hostname === 'localhost' ||
-        url.hostname.endsWith('.localhost') ||
-        url.hostname === '128.0.0.1') {
-      return true;
-    }
+    const h = url.hostname;
+
+    return (
+      h === 'localhost' ||
+      h.endsWith('.localhost') ||
+      h === '::1' ||
+      h.startsWith('127.')
+    );
   } catch {
     return false;
   }
