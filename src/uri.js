@@ -314,6 +314,16 @@ function svgToDataURI(svg, options = {}) {
   return `data:image/svg+xml,${svg}`;
 }
 
+function isCurrentScriptSameOrigin() {
+  const script = document.currentScript;
+  if (!script) return false;
+
+  const scriptUrl = new URL(script.src, document.baseURI);
+  const sameOrigin = scriptUrl.origin === window.location.origin;
+
+  return sameOrigin;
+}
+
 export {
   encodeString,
   decodeString,
@@ -340,5 +350,6 @@ export {
   isHttpsProtocol,
   isFileProtocol,
   isLocalhost,
-  svgToDataURI
+  svgToDataURI,
+  isCurrentScriptSameOrigin
 };
