@@ -1509,35 +1509,36 @@ DO = {
       }
     },
     handleIncomingRedirect: async function() {
+      const params = new URLSearchParams(window.location.search);
+
       getLocalStorageItem('DO.C.OIDC').then(OIDC => {
-        if (OIDC && 'authStartLocation' in OIDC) {
-          // console.log(OIDC.authStartLocation)
+        console.log(OIDC)
+        if (OIDC?.authStartLocation && OIDC.authStartLocation !== window.location.href.split('#')[0]) {
+          const redirectUrl = new URL(OIDC.authStartLocation);
+          if (params.has('code')) redirectUrl.searchParams.set('code', params.get('code'));
+          if (params.has('state')) redirectUrl.searchParams.set('state', params.get('state'));
+          if (params.has('iss')) redirectUrl.searchParams.set('iss', params.get('iss'));
 
-          if (OIDC.authStartLocation !== window.location.href.split('#')[0]) {
-            var urlsHtml = `<a href="${OIDC.authStartLocation}" rel="noopener" target="_blank">${OIDC.authStartLocation}</a>`
-            var message = `Hang on tight, redirecting you to where you want to be ${urlsHtml}`;
-            var actionMessage = `Redirecting to ${urlsHtml}`;
+          var urlsHtml = `<a href="${redirectUrl.href}" rel="noopener" target="_blank">${OIDC.authStartLocation}</a>`
+          var message = `Hang on tight, redirecting you to where you want to be ${urlsHtml}`;
+          var actionMessage = `Redirecting to ${urlsHtml}`;
 
-            const messageObject = {
-              'content': actionMessage,
-              'type': 'info',
-              'timer': 10000
-            }
-
-            addMessageToLog({...messageObject, content: message}, Config.MessageLog);
-            const messageId = showActionMessage(document.body, messageObject);
-
-            removeLocalStorageItem('DO.C.OIDC');
-            window.location.replace(OIDC.authStartLocation);
+          const messageObject = {
+            'content': actionMessage,
+            'type': 'info',
+            'timer': 10000
           }
-          else {
-            DO.U.initAuth();
 
-            DO.C.init();
-          }
+          addMessageToLog({...messageObject, content: message}, Config.MessageLog);
+          const messageId = showActionMessage(document.body, messageObject);
+
+          removeLocalStorageItem('DO.C.OIDC');
+          window.location.replace(redirectUrl.href);
         }
         else {
-          throw new Error('Original location not found in localstorage.')
+          DO.U.initAuth();
+
+          DO.C.init();
         }
       });
     },

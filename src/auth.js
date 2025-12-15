@@ -7,7 +7,7 @@ import { getResourceGraph, getAgentName, getGraphImage, getAgentURL, getAgentPre
 import { removeLocalStorageAsSignOut, updateLocalStorageProfile } from './storage.js'
 import { updateButtons, getButtonHTML } from './ui/buttons.js';
 import { SessionCore } from '@uvdsl/solid-oidc-client-browser/core';
-import { isLocalhost } from './uri.js';
+import { isCurrentScriptSameOrigin, isLocalhost } from './uri.js';
 
 const ns = Config.ns;
 
@@ -15,7 +15,9 @@ Config.OIDC['client_id'] = isLocalhost(window.location) ? process.env.DEV_CLIENT
 
 const clientid = (Config.OIDC['client_id']) ? Config.OIDC['client_id'] : null;
 
-Config['Session'] = (clientid && !Config['WebExtensionEnabled']) ? new SessionCore({ client_id: clientid }) : new SessionCore();
+const currentScriptSameOrigin = isCurrentScriptSameOrigin();
+
+Config['Session'] = (clientid && !Config['WebExtensionEnabled'] && currentScriptSameOrigin) ? new SessionCore({ client_id: clientid }) : new SessionCore();
 
 export async function restoreSession() {
   await Config['Session']?.handleRedirectFromLogin();
