@@ -1509,15 +1509,15 @@ DO = {
       }
     },
     handleIncomingRedirect: async function() {
-      const params = new URLSearchParams(window.location.search);
+      // const params = new URLSearchParams(window.location.search);
 
       getLocalStorageItem('DO.C.OIDC').then(OIDC => {
         console.log(OIDC)
         if (OIDC?.authStartLocation && OIDC.authStartLocation !== window.location.href.split('#')[0]) {
-          const redirectUrl = new URL(OIDC.authStartLocation);
-          if (params.has('code')) redirectUrl.searchParams.set('code', params.get('code'));
-          if (params.has('state')) redirectUrl.searchParams.set('state', params.get('state'));
-          if (params.has('iss')) redirectUrl.searchParams.set('iss', params.get('iss'));
+          // const redirectUrl = new URL(OIDC.authStartLocation);
+          // if (params.has('code')) { redirectUrl.searchParams.set('code', params.get('code')); }
+          // if (params.has('state')) { redirectUrl.searchParams.set('state', params.get('state')); }
+          // if (params.has('iss')) { redirectUrl.searchParams.set('iss', params.get('iss')); }
 
           var urlsHtml = `<a href="${redirectUrl.href}" rel="noopener" target="_blank">${OIDC.authStartLocation}</a>`
           var message = `Hang on tight, redirecting you to where you want to be ${urlsHtml}`;
@@ -1536,9 +1536,7 @@ DO = {
           window.location.replace(redirectUrl.href);
         }
         else {
-          DO.U.initAuth();
-
-          DO.C.init();
+          DO.U.initAuth().then(() => DO.C.init())
         }
       });
     },
@@ -1547,7 +1545,7 @@ DO = {
       const params = new URLSearchParams(window.location.search);
 
       if (params.has('code') && params.has('iss') && params.has('state')) {
-        DO.U.handleIncomingRedirect();
+        DO.U.initAuth().then(() => DO.U.handleIncomingRedirect())
       }
       else {
         DO.U.initAuth();
