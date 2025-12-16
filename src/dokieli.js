@@ -1514,12 +1514,7 @@ DO = {
       getLocalStorageItem('DO.C.OIDC').then(OIDC => {
         console.log(OIDC)
         if (OIDC?.authStartLocation && OIDC.authStartLocation !== window.location.href.split('#')[0]) {
-          // const redirectUrl = new URL(OIDC.authStartLocation);
-          // if (params.has('code')) { redirectUrl.searchParams.set('code', params.get('code')); }
-          // if (params.has('state')) { redirectUrl.searchParams.set('state', params.get('state')); }
-          // if (params.has('iss')) { redirectUrl.searchParams.set('iss', params.get('iss')); }
-
-          var urlsHtml = `<a href="${redirectUrl.href}" rel="noopener" target="_blank">${OIDC.authStartLocation}</a>`
+          var urlsHtml = `<a href="${OIDC.authStartLocation}" rel="noopener" target="_blank">${OIDC.authStartLocation}</a>`
           var message = `Hang on tight, redirecting you to where you want to be ${urlsHtml}`;
           var actionMessage = `Redirecting to ${urlsHtml}`;
 
@@ -1533,7 +1528,7 @@ DO = {
           const messageId = showActionMessage(document.body, messageObject);
 
           removeLocalStorageItem('DO.C.OIDC');
-          window.location.replace(redirectUrl.href);
+          window.location.replace(OIDC.authStartLocation);
         }
         else {
           DO.U.initAuth().then(() => DO.C.init())
