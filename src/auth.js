@@ -8,6 +8,7 @@ import { removeLocalStorageAsSignOut, updateLocalStorageProfile } from './storag
 import { updateButtons, getButtonHTML } from './ui/buttons.js';
 import { SessionCore } from '@uvdsl/solid-oidc-client-browser/core';
 import { isCurrentScriptSameOrigin, isLocalhost } from './uri.js';
+import { SessionIDB } from '@uvdsl/solid-oidc-client-browser';
 
 const ns = Config.ns;
 
@@ -17,10 +18,11 @@ const clientid = (Config.OIDC['client_id']) ? Config.OIDC['client_id'] : null;
 
 const currentScriptSameOrigin = isCurrentScriptSameOrigin();
 
-Config['Session'] = (clientid && !Config['WebExtensionEnabled'] && currentScriptSameOrigin) ? new SessionCore({ client_id: clientid }) : new SessionCore();
+Config['Session'] = (clientid && !Config['WebExtensionEnabled'] && currentScriptSameOrigin) ? new SessionCore({ client_id: clientid }, { database: new SessionIDB() }) : new SessionCore(undefined, { database: new SessionIDB() });
 
 export async function restoreSession() {
   await Config['Session']?.handleRedirectFromLogin();
+  await Config['Session']?.restore().catch(e => console.log(e.message));
 }
 
 async function showUserSigninSignout (node) {
