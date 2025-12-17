@@ -18,7 +18,9 @@ const clientid = (Config.OIDC['client_id']) ? Config.OIDC['client_id'] : null;
 
 const currentScriptSameOrigin = isCurrentScriptSameOrigin();
 
-Config['Session'] = (clientid && !Config['WebExtensionEnabled'] && currentScriptSameOrigin) ? new SessionCore({ client_id: clientid }, { database: new SessionIDB() }) : new SessionCore({ client_name: "dokieli" }, { database: new SessionIDB() });
+//Use static client registration if there is a Client ID Document URL and the dokieli script is on same origin as webpage and not Web Extension mode. Otherwise, use dynamic registration.
+// Manually configuring the database so that we can restore the session without using the refresher worker 
+Config['Session'] = (clientid && !Config['WebExtensionEnabled'] && currentScriptSameOrigin) ? new SessionCore({ client_id: clientid }, { database: new SessionIDB() }) : new SessionCore({ redirect_uris: [window.location.href], client_name: "dokieli" }, { database: new SessionIDB() });
 
 export async function restoreSession() {
   await Config['Session']?.handleRedirectFromLogin();
@@ -223,8 +225,6 @@ function submitSignIn (url) {
   localStorage.setItem('DO.C.OIDC', JSON.stringify(Config.OIDC));
 
   let redirect_uri = process.env.OIDC_REDIRECT_URI || (window.location.origin + '/') ;
-
-  // console.log("Redirect URI: ", redirect_uri)
 
   redirect_uri = Config.OIDC['client_id'] ? redirect_uri :  window.location.href.split('#')[0];
 
