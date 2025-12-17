@@ -2,29 +2,19 @@
   "name": "dokieli",
   "short_name": "dokieli",
   "description": "dokieli is a clientside editor for decentralised article publishing, annotations, and social interactions.",
-  "author":"dokieli team",
-  "homepage_url": "https://dokie.li/",
   "version": "0.3.1453",
-  "manifest_version": 2,
-  "minimum_chrome_version": "18",
-  "applications": {
-    "gecko": {
-      "id": "i@dokie.li"
-    }
-  },
+  "manifest_version": 3,
   "icons": {
     "16": "media/images/logo.png",
     "48": "media/images/logo.png",
-   "128": "media/images/logo.png"
-   },
-  "browser_action": {
+    "128": "media/images/logo.png"
+  },
+  "action": {
     "default_icon": "media/images/logo.png",
     "default_title": "Activate dokieli"
   },
   "background": {
-    "scripts": [
-      "extension-background.js"
-    ]
+    "service_worker": "extension-background.js"
   },
   "content_scripts": [
     {
@@ -39,9 +29,15 @@
   "permissions": [
     "activeTab",
     "storage",
+    "scripting"
+  ],
+  "host_permissions": [
     "<all_urls>"
   ],
   "web_accessible_resources": [
-    "media/css/*"
+    {
+      "resources": ["media/css/*"],
+      "matches": ["<all_urls>"]
+    }
   ]
 }
