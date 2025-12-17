@@ -18,7 +18,7 @@ const clientid = (Config.OIDC['client_id']) ? Config.OIDC['client_id'] : null;
 
 const currentScriptSameOrigin = isCurrentScriptSameOrigin();
 
-Config['Session'] = (clientid && !Config['WebExtensionEnabled'] && currentScriptSameOrigin) ? new SessionCore({ client_id: clientid }, { database: new SessionIDB() }) : new SessionCore(undefined, { database: new SessionIDB() });
+Config['Session'] = (clientid && !Config['WebExtensionEnabled'] && currentScriptSameOrigin) ? new SessionCore({ client_id: clientid }, { database: new SessionIDB() }) : new SessionCore({ client_name: "dokieli" }, { database: new SessionIDB() });
 
 export async function restoreSession() {
   await Config['Session']?.handleRedirectFromLogin();
