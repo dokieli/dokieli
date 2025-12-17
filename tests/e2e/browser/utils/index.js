@@ -93,5 +93,4 @@ export async function openMenu (page) {
   await page.locator("#document-menu button").click();
   const menu = page.locator("[id=document-menu]");
   await expect(menu).toBeVisible();
-  await expect(page.locator(".close")).toBeVisible();
 };

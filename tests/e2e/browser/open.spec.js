@@ -10,7 +10,6 @@ test("opens new document from URL", async ({ page }) => {
   await page.locator("#document-menu button").click();
   const menu = page.locator("[id=document-menu]");
   await expect(menu).toBeVisible();
-  await expect(page.locator(".close")).toBeVisible();
 
   const openBtn = page.locator("[class=resource-open]");
   await openBtn.click();
@@ -34,7 +33,6 @@ test("opens new document from local file", async ({ page }) => {
   await page.locator("#document-menu button").click();
   const menu = page.locator("[id=document-menu]");
   await expect(menu).toBeVisible();
-  await expect(page.locator(".close")).toBeVisible();
 
   const openBtw = page.locator("[class=resource-open]");
   await openBtw.click();
@@ -60,7 +58,6 @@ test("open modal should not have any automatically detectable WCAG A or AA viola
   await page.locator("#document-menu button").click();
   const menu = page.locator("[id=document-menu]");
   await expect(menu).toBeVisible();
-  await expect(page.locator(".close")).toBeVisible();
 
   const openBtw = page.locator("[class=resource-open]");
   await openBtw.click();
@@ -87,7 +84,6 @@ test("open modal should not have any automatically detectable WCAG AAA violation
   await page.locator("#document-menu button").click();
   const menu = page.locator("[id=document-menu]");
   await expect(menu).toBeVisible();
-  await expect(page.locator(".close")).toBeVisible();
 
   const openBtw = page.locator("[class=resource-open]");
   await openBtw.click();

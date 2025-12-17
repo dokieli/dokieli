@@ -4619,6 +4619,9 @@ console.log(reason);
           return
         }
 
+        e.preventDefault();
+        e.stopPropagation();
+
         var generateFeed = document.getElementById('generate-feed')
         var storageIRI = generateFeed.querySelector('#' + id + '-' + action).innerText.trim();
 
@@ -4754,7 +4757,9 @@ console.log(reason);
                   'Document saved at <a href="' + url + '" rel="noopener" target="_blank">' + url + '</a></p></div>'
                 )
 
-                window.open(url, '_blank')
+                setTimeout(() => {
+                  window.open(url, '_blank')
+                }, 3000)
               })
 
               //TODO: Reuse saveAsDocument's catch
@@ -7864,6 +7869,9 @@ console.log('XXX: Cannot access effectiveACLResource', e);
           return
         }
 
+        e.preventDefault();
+        e.stopPropagation();
+
         var saveAsDocument = document.getElementById('save-as-document')
         var storageIRI = saveAsDocument.querySelector('#' + id + '-' + action).innerText.trim()
 
@@ -7960,26 +7968,30 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
             DO.C.DocumentAction = 'save-as';
 
-            if (DO.Editor['new']) {
-              //XXX: Commenting this out for now, not sure what this was supposed to fix
-              // DO.Editor.replaceContent('author', fragmentFromString(html));
-              DO.Editor['new'] = false;
 
-              var urlObject = new URL(url);
-              var documentURLObject = new URL(DO.C.DocumentURL);
-
-              if (urlObject.origin === documentURLObject.origin) {
-                window.history.pushState({}, null, url);
-                DO.U.setDocumentURL(url);
-                DO.U.hideDocumentMenu();
+            setTimeout(() => {
+             
+              if (DO.Editor['new']) {
+                //XXX: Commenting this out for now, not sure what this was supposed to fix
+                // DO.Editor.replaceContent('author', fragmentFromString(html));
+                DO.Editor['new'] = false;
+  
+                var urlObject = new URL(url);
+                var documentURLObject = new URL(DO.C.DocumentURL);
+  
+                if (urlObject.origin === documentURLObject.origin) {
+                  window.history.pushState({}, null, url);
+                  DO.U.setDocumentURL(url);
+                  DO.U.hideDocumentMenu();
+                }
+                else {
+                  window.open(url + documentMode, '_blank');
+                }
               }
               else {
                 window.open(url + documentMode, '_blank');
               }
-            }
-            else {
-              window.open(url + documentMode, '_blank');
-            }
+            }, 3000)
           })
 
           .catch(error => {

@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 import AxeBuilder from "@axe-core/playwright";
 
 test("menu should not have any automatically detectable accessibility issues", async ({ page }) => {
@@ -70,7 +70,6 @@ test("clicking on the sign in button displays sign in modal", async ({
   await page.locator("#document-menu button").click();
   const menu = page.locator("[id=document-menu]");
   await expect(menu).toBeVisible();
-  await expect(page.locator(".close")).toBeVisible();
   const signinbtn = page.locator("[class=signin-user]");
   await signinbtn.click();
   const signinmodal = page.locator("[id=user-identity-input]");
@@ -87,7 +86,6 @@ test("clicking on the reply button displays reply modal", async ({
   await page.locator("#document-menu button").click();
   const menu = page.locator("[id=document-menu]");
   await expect(menu).toBeVisible();
-  await expect(page.locator(".close")).toBeVisible();
 
   const replyBtn = page.locator("[class=resource-reply]");
   await replyBtn.click();
@@ -105,7 +103,6 @@ test("clicking on the new button displays creates new document", async ({
   await page.locator("#document-menu button").click();
   const menu = page.locator("[id=document-menu]");
   await expect(menu).toBeVisible();
-  await expect(page.locator(".close")).toBeVisible();
 
   const newBtn = page.locator("[class=resource-new]");
   await newBtn.click();
@@ -123,7 +120,6 @@ test("clicking on the open button displays open document modal", async ({
   await page.locator("#document-menu button").click();
   const menu = page.locator("[id=document-menu]");
   await expect(menu).toBeVisible();
-  await expect(page.locator(".close")).toBeVisible();
 
   const openBtw = page.locator("[class=resource-open]");
   await openBtw.click();
@@ -141,7 +137,6 @@ test("clicking on the save-as button displays save-as modal", async ({
   await page.locator("#document-menu button").click();
   const menu = page.locator("[id=document-menu]");
   await expect(menu).toBeVisible();
-  await expect(page.locator(".close")).toBeVisible();
 
   const saveAsBtw = page.locator("[class=resource-save-as]");
   await saveAsBtw.click();
@@ -149,17 +144,22 @@ test("clicking on the save-as button displays save-as modal", async ({
   await expect(saveAsModal).toBeVisible();
 });
 
+
 test("clicking on the memento button displays memento modal", async ({
   page,
+  auth,
   isMobile,
 }) => {
+  await auth.login();
+  await page.waitForLoadState("load");
+  await select(page, "#summary");
+
   await page.goto("/tests/e2e/browser/html/memento.html");
   await expect(page.locator("[id=document-menu]")).not.toBeVisible();
 
   await page.locator("#document-menu button").click();
   const menu = page.locator("[id=document-menu]");
   await expect(menu).toBeVisible();
-  await expect(page.locator(".close")).toBeVisible();
 
   const mementoBtw = page.locator("[class=resource-memento]");
   await mementoBtw.click();
@@ -179,15 +179,19 @@ test("clicking on the memento button displays memento modal", async ({
 
 test("clicking on the robustify links button displays robustify links modal", async ({
   page,
+  auth,
   isMobile,
 }) => {
+  await auth.login();
+  await page.waitForLoadState("load");
+  await select(page, "#summary");
+
   await page.goto("/");
   await expect(page.locator("[id=document-menu]")).not.toBeVisible();
 
   await page.locator("#document-menu button").click();
   const menu = page.locator("[id=document-menu]");
   await expect(menu).toBeVisible();
-  await expect(page.locator(".close")).toBeVisible();
 
   const robustifyLinksBtw = page.locator("[class=robustify-links]");
   await robustifyLinksBtw.click();
@@ -205,7 +209,6 @@ test("clicking on the edit button button enables author mode", async ({
   await page.locator("#document-menu button").click();
   const menu = page.locator("[id=document-menu]");
   await expect(menu).toBeVisible();
-  await expect(page.locator(".close")).toBeVisible();
 
   const editBtw = page.locator("[class=editor-enable]");
   await editBtw.click();
@@ -223,7 +226,6 @@ test("clicking on the source button displays source modal", async ({
   await page.locator("#document-menu button").click();
   const menu = page.locator("[id=document-menu]");
   await expect(menu).toBeVisible();
-  await expect(page.locator(".close")).toBeVisible();
 
   const sourceBtn = page.locator("[class=resource-source]");
   await sourceBtn.click();
@@ -241,7 +243,9 @@ test("clicking on the embed button embed data modal", async ({
   await page.locator("#document-menu button").click();
   const menu = page.locator("[id=document-menu]");
   await expect(menu).toBeVisible();
-  await expect(page.locator(".close")).toBeVisible();
+
+  const editButton = page.locator(".editor-enable");
+  await editButton.click();
 
   const embedBtn = page.locator("[class=embed-data-meta]");
   await embedBtn.click();

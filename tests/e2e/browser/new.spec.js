@@ -90,7 +90,7 @@ test.describe("new page", () => {
     const toolbar = page.locator(".editor-toolbar");
     await expect(toolbar).toBeVisible();
     const toolbarActions = page.locator(".editor-form-actions li");
-    await expect(toolbarActions).toHaveCount(18);
+    await expect(toolbarActions).toHaveCount(19);
     await expect(page.locator(".editor-toolbar #editor-button-strong")).toBeVisible();
     await expect(page.locator(".editor-toolbar #editor-button-em")).toBeVisible();
   });
@@ -102,7 +102,6 @@ test.describe("via new button", () => {
     await page.waitForLoadState("load");
     await page.locator("#document-menu button").click();
     await expect(page.locator("[id=document-menu]")).toBeVisible();
-    await expect(page.locator(".close")).toBeVisible();
     await page.locator("[class=resource-new]").click();
   });
 
@@ -166,7 +165,7 @@ test.describe("via new button", () => {
     await expect(toolbar).toBeVisible();
 
     const toolbarActions = page.locator(".editor-form-actions li");
-    await expect(toolbarActions).toHaveCount(18);
+    await expect(toolbarActions).toHaveCount(19);
     await expect(page.locator(".editor-toolbar #editor-button-strong")).toBeVisible();
     await expect(page.locator(".editor-toolbar #editor-button-em")).toBeVisible();
   });

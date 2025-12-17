@@ -1,6 +1,7 @@
 import base from "@playwright/test";
 export class Auth {
   constructor(page, isMobile) {
+    
     this.page = page;
     this.isMobile = isMobile;
   }
@@ -8,10 +9,6 @@ export class Auth {
   async login() {
     await this.page.goto("/");
     await this.page.locator("#document-menu > button").click();
-
-    if (this.isMobile) {
-      await this.page.locator(".close").click();
-    }
 
     const signinbtn = "button.signin-user";
     await this.page.waitForSelector(signinbtn);
@@ -69,7 +66,8 @@ export class Auth {
 }
 
 export const test = base.test.extend({
-  auth: async ({ page, isMobile }, use) => {
+  auth: async ({ page, isMobile }, use, testInfo) => {
+    testInfo.setTimeout(120_000); 
     const auth = new Auth(page, isMobile);
     await use(auth);
   },

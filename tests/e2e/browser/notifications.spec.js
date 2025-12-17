@@ -23,8 +23,6 @@ test.beforeEach(async ({ auth, page }) => {
   const menu = page.locator("[id=document-menu]");
   await expect(menu).toBeVisible();
 
-  await expect(page.locator(".close")).toBeVisible();
-
   await expect(page.locator("button.signout-user")).toBeVisible();
 
   const notificationsBtn = page.locator("[class=resource-notifications]");
@@ -78,8 +76,6 @@ test("annotations are highlighted in the text", async ({ page }) => {
 
   const menu = page.locator("[id=document-menu]");
   await expect(menu).toBeVisible();
-
-  await expect(page.locator(".close")).toBeVisible();
 
   await expect(page.locator("button.signout-user")).toBeVisible();
 

@@ -18,7 +18,7 @@ async function cleanup(page, bookmark) {
 }
 
 test("should be able to bookmark a resource", async ({ page }) => {
-  // TODO: we should not need this here, login should be enough
+  // TODO: we should not need this here, login should be enough (potential fix is a spinner on login until redirect handling is done)
   // Listen for console messages to make sure we are logged in
   await page.on("console", async (msg) => {
     if (msg.text().includes(process.env.WEBID)) {

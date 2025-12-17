@@ -22,7 +22,7 @@ test("saveAs saves copy of document in selected storage location", async ({ page
 
   await documentMenuButton.click();
   await expect(page.locator("[id=document-menu]")).toBeVisible();
-  await expect(page.locator(".close")).toBeVisible();
+
   await expect(page.locator("button.signout-user")).toBeVisible();
 
   const saveAsBtn = page.locator("[class=resource-save-as]");
@@ -34,6 +34,12 @@ test("saveAs saves copy of document in selected storage location", async ({ page
 
   const saveButton = saveAsModal.locator('button:has-text("Save")');
   await saveButton.click();
+
+  const progress = page.locator("progress")
+
+  await expect(progress).toBeVisible();
+  await expect(progress).not.toBeVisible();
+
   const saveAsSuccess = page.locator("text=Document saved");
   await expect(saveAsSuccess).toBeVisible();
 
@@ -49,7 +55,7 @@ test("save-as modal should not have any automatically detectable WCAG A and AA",
 
   await documentMenuButton.click();
   await expect(page.locator("[id=document-menu]")).toBeVisible();
-  await expect(page.locator(".close")).toBeVisible();
+  
   await expect(page.locator("button.signout-user")).toBeVisible();
 
   const saveAsBtn = page.locator("[class=resource-save-as]");
@@ -80,7 +86,7 @@ test("save-as modal should not have any automatically detectable WCAG AAA violat
 
   await documentMenuButton.click();
   await expect(page.locator("[id=document-menu]")).toBeVisible();
-  await expect(page.locator(".close")).toBeVisible();
+  
   await expect(page.locator("button.signout-user")).toBeVisible();
 
   const saveAsBtn = page.locator("[class=resource-save-as]");
