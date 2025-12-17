@@ -1512,7 +1512,7 @@ DO = {
       // const params = new URLSearchParams(window.location.search);
 
       getLocalStorageItem('DO.C.OIDC').then(OIDC => {
-        console.log(OIDC)
+        // console.log(OIDC)
         if (OIDC?.authStartLocation && OIDC.authStartLocation !== window.location.href.split('#')[0]) {
           var urlsHtml = `<a href="${OIDC.authStartLocation}" rel="noopener" target="_blank">${OIDC.authStartLocation}</a>`
           var message = `Hang on tight, redirecting you to where you want to be ${urlsHtml}`;
