@@ -2,6 +2,7 @@ import { accessModePossiblyAllowed } from "../doc.js";
 import { Icon} from "./icons.js";
 import Config from "../config.js";
 import { isLocalhost } from "../uri.js";
+import i18next from "i18next";
 
 const ns = Config.ns;
 Config.Button.C
@@ -47,7 +48,7 @@ export function initButtons() {
       New: getButtonHTML({ button: 'new', buttonClass: 'resource-new', buttonTitle: 'Create new article', buttonTextContent: 'New', iconSize: 'fa-2x' }),
       Notifications: getButtonHTML({ button: 'activities', buttonClass: 'resource-notifications', buttonTitle: 'Show notifications', buttonTextContent: 'Notifications', iconSize: 'fa-2x' }),
       RobustifyLinks: getButtonHTML({ button: 'robustify-links', buttonClass: 'robustify-links', buttonTitle: 'Robustify Links', buttonTextContent: 'Robustify', iconSize: 'fa-2x' }),
-      Save: getButtonHTML({ button: 'save', buttonClass: 'resource-save', buttonTitle: 'Save article', buttonTextContent: 'Save', iconSize: 'fa-2x', buttonDisabled: true }),
+      Save: getButtonHTML({ button: 'save', buttonClass: 'resource-save', buttonTitle: 'Save article', buttonTextContent: i18next.t('save.textContent'), iconSize: 'fa-2x', buttonDisabled: true }),
       SaveAs: getButtonHTML({ button: 'save-as', buttonClass: 'resource-save-as', buttonTitle: 'Save as article', buttonTextContent: 'Save As', iconSize: 'fa-2x' }),
       Share: getButtonHTML({ button: 'share', buttonClass: 'resource-share', buttonTitle: 'Share resource', buttonTextContent: 'Share', iconSize: 'fa-2x' }),
       SignIn: getButtonHTML({ button: 'signin', buttonClass: 'signin-user', buttonTitle: 'Sign in to authenticate', buttonTextContent: 'Sign in', iconSize: 'fa-2x' }),
@@ -90,6 +91,7 @@ export function getButtonHTML({
   const rel = buttonRel ? ` rel="${buttonRel}"` : '';
   const resource = buttonResource ? ` resource="${buttonResource}"` : '';
   const type = buttonType ? ` type="${buttonType}"` : '';
+  const i18n = button ? ` data-i18n=${button}` : '';
 
   if (icon) {
     let parser = new DOMParser();
@@ -104,7 +106,7 @@ export function getButtonHTML({
 
   const buttonContent = (!icon && !textContent) ? button : `${icon ? icon : ''} ${textContent ? `<span>${textContent}</span>` : ''}`;
 
-  return `<button${ariaLabel}${className}${disabled}${rel}${resource}${title}${type}>${buttonContent}</button>`;
+  return `<button${ariaLabel}${className}${disabled}${rel}${resource}${title}${type}${i18n}>${buttonContent}</button>`;
 }
 
 

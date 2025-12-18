@@ -33,6 +33,8 @@ import { formatHTML, htmlEncode, tokenizeDOM } from './utils/html.js'
 import { DOMParser, DOMSerializer } from 'prosemirror-model'
 import { cleanProseMirrorOutput, normalizeForDiff, normalizeHTML } from './utils/normalization.js'
 import { schema } from './editor/schema/base.js'
+import { i18nextInit } from './i18n.js'
+import i18next from 'i18next';
 
 const ns = Config.ns;
 let DO;
@@ -1537,16 +1539,18 @@ DO = {
     },
 
     init: function() {
-      const params = new URLSearchParams(window.location.search);
+      i18nextInit().then(() => {
+        const params = new URLSearchParams(window.location.search);
 
-      if (params.has('code') && params.has('iss') && params.has('state')) {
-        DO.U.initAuth().then(() => DO.U.handleIncomingRedirect())
-      }
-      else {
-        DO.U.initAuth();
-
-        DO.C.init();
-      }
+        if (params.has('code') && params.has('iss') && params.has('state')) {
+          DO.U.initAuth().then(() => DO.U.handleIncomingRedirect())
+        }
+        else {
+          DO.U.initAuth();
+  
+          DO.C.init();
+        }
+      })
     },
 
     initAuth: async function() {
@@ -2638,6 +2642,7 @@ DO = {
       DO.U.showDocumentDo(dInfo);
       DO.U.showAutoSave(dInfo);
       DO.U.showViews(dInfo);
+      DO.U.showLanguages(dInfo)
       DO.U.showAboutDokieli(dInfo);
 
       var body = getDocumentContentNode(document);
@@ -2698,6 +2703,57 @@ DO = {
           await DO.U.disableRemoteSync();
         }
       });
+
+    },
+
+    showLanguages: function(node) {
+      const languages = i18next.languages;
+      let options = [];
+
+      const detectedLanguage = i18next.language; // detected or set language
+console.log(languages, detectedLanguage)
+      languages.forEach(lang => {
+        let selected = (lang == detectedLanguage) ? ' selected="selected"' : '';
+        options.push(`<option lang="${lang}"${selected} value="${lang}" xml:lang="${lang}">${Config.Languages[lang]}</option>`);
+      })
+
+      const html = `
+        <section id="ui-choose-language">
+          <h2>${i18next.t('languages.textContent')}</h2>
+          ${Icon['.fas.fa-language']}
+          <label for="choose-language">Change language</label>
+          <select id="choose-language">
+            <option value="">Choose a language</option>
+            ${options.join('')}
+          </select>
+        </section>`;
+
+      node.insertAdjacentHTML('beforeend', html);
+
+      const select = document.getElementById('ui-choose-language');
+      select.addEventListener('change', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        i18next.changeLanguage(e.target.value, (err, t) => {
+         if (err) return console.log('something went wrong loading', err);
+         document.querySelectorAll('[data-i18n]').forEach(el => {
+          const key = `${el.dataset.i18n}.textContent`;
+          el.textContent = i18next.t(key);
+          });
+        })
+      });
+
+        // // using Promises
+        // i18next
+        //   .changeLanguage('en')
+        //   .then((t) => {
+        //     root.querySelectorAll('[data-i18n]').forEach(el => {
+        //       const key = el.dataset.i18n;
+        //       el.textContent = i18next.t(key);
+        //     });
+        //   });
+
 
     },
 
