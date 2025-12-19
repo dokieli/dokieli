@@ -76,7 +76,97 @@
   "button.save.aria-label": "Save article",
   "button.save.textContent": "Save",
 
-  "save": "Save"
+  "save": "Save",
+  "close.graph.button.title": "Close",
+  "delete.button.title": "Delete",
+  "toggle.button.title": "Show/Hide",
+  "more.button.title": "Show more",
+  "clipboard.button.title": "Copy to clipboard",
+  "menu.open.button.title": "Open menu",
+  "menu.close.button.title": "Close menu",
+  "menu.resource-open.button.title": "Open article",
+  "menu.resource-open.button.textContent": "Open",
+  "menu.resource-save.button.title": "Save article",
+  "menu.resource-save.button.textContent": "Save",
+
+  "info.delete.button.title": "About Delete",
+  "info.embed-data.button.title": "About Embed Data",
+  "info.graph.button.title": "About Graph View",
+  "info.feed.button.title": "About Generate Feed",
+  "info.messages.button.title": "About Message Log",
+  "info.notifications.button.title": "About Notifications",
+  "info.open.button.title": "About Open",
+  "info.reply.button.title": "About Reply",
+  "info.review-changes.button.title": "About Review Changes",
+  "info.robustify-links.button.title": "About Robustify Links",
+  "info.save-as.button.title": "About Save As",
+  
+  "info.share.button.title": "About Share",
+  "info.signin.button.title": "About Sign In",
+  "info.source.button.title": "About Source",
+
+  "signin.button.title": "Sign in to authenticate",
+  "signin.button.textContent": "Sign in",
+
+  "menu.delete.button.title": "Delete article",
+  "menu.delete.button.textContent": "Delete",
+
+  "menu.document-info.button.title": "Document info",
+  "menu.document-info.button.textContent": "Info",
+
+  "menu.edit-enable.button.title": "Enable editor",
+  "menu.edit-enable.button.textContent": "Edit",
+
+  "menu.edit-disable.button.title": "Disable editor",
+  "menu.edit-disable.button.textContent": "Edit",
+
+  "menu.embed-data.button.title": "Embed structured data",
+  "menu.embed-data.button.textContent": "Embed Data",
+
+  "menu.export.button.title": "Export and save to file",
+  "menu.export.button.textContent": "Export",
+
+  "menu.feed.button.title": "Generate Web feed",
+  "menu.feed.button.textContent": "Feed",
+
+  "menu.immutable.button.title": "Make this article immutable and version it",
+  "menu.immutable.button.textContent": "Immutable",
+
+  "menu.archive.button.title": "Capture with Internet Archive",
+  "menu.archive.button.textContent": "Archive",
+
+  "menu.new.button.title": "Create new article",
+  "menu.new.button.textContent": "New",
+
+  "menu.notifications.button.title": "Show notifications",
+  "menu.notifications.button.textContent": "Notifications",
+
+  "menu.robustify-links.button.title": "Robustify Links",
+  "menu.robustify-links.button.textContent": "Robustify",
+
+  "menu.save-as.button.title": "Save as article",
+  "menu.save-as.button.textContent": "Save As",
+
+  "menu.share.button.title": "Share resource",
+  "menu.share.button.textContent": "Share",
+
+  "menu.source.button.title": "Edit article source code",
+  "menu.source.button.textContent": "Source",
+
+  "menu.memento.button.title": "Memento article",
+  "menu.memento.button.textContent": "Memento",
+
+  "menu.messages.button.title": "Show message log",
+  "menu.messages.button.textContent": "Messages",
+
+  "menu.print.button.title": "Print document",
+  "menu.print.button.textContent": "Print",
+
+  "menu.reply.button.title": "Reply",
+  "menu.reply.button.textContent": "Reply",
+
+  "menu.version.button.title": "Version this article",
+  "menu.version.button.textContent": "Version"
 }
 
 

@@ -13,7 +13,7 @@ const options = {
   ns: ['translations'],
   defaultNS: 'translations',
   fallbackNS: 'translations',
-  debug: true,
+  // debug: true,
   fallbackLng,
 }
 

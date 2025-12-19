@@ -16,55 +16,55 @@ const docsBaseURL = Config.WebExtensionEnabled ? Config.WebExtension.runtime.get
 
 export function initButtons() {
   Config.Button = {
-    Close: getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close', buttonTitle: 'Close', iconSize: 'fa-2x' }),
-    Delete: getButtonHTML({ button: 'delete', buttonClass: 'delete', buttonTitle: 'Delete' }),
-    Toggle: getButtonHTML({ button: 'toggle', buttonClass: 'toggle', buttonTitle: 'Show/Hide' }),
-    More: getButtonHTML({ button: 'more', buttonClass: 'more', buttonTitle: 'Show more' }),
-    Clipboard: getButtonHTML({ button: 'clipboard', buttonClass: 'do copy-to-clipboard', buttonTitle: 'Copy to clipboard' }),
-    OpenMenu: getButtonHTML({ button: 'bars', buttonClass: 'show', buttonTitle: 'Open menu' }),
-    CloseMenu: getButtonHTML({ button: 'minus', buttonClass: 'hide', buttonTitle: 'Close menu' }),
+    Close: getButtonHTML({ key: "close.graph.button", button: "close", buttonClass: "close", iconSize: "fa-2x" }),
+    Delete: getButtonHTML({ key: "delete.button", button: "delete", buttonClass: "delete" }),
+    Toggle: getButtonHTML({ key: "toggle.button", button: "toggle", buttonClass: "toggle" }),
+    More: getButtonHTML({ key: "more.button", button: "more", buttonClass: "more" }),
+    Clipboard: getButtonHTML({ key: "clipboard.button", button: "clipboard", buttonClass: "do copy-to-clipboard" }),
+    OpenMenu: getButtonHTML({ key: "menu.open.button", button: "bars", buttonClass: "show" }),
+    CloseMenu: getButtonHTML({ key: "menu.close.button", button: "minus", buttonClass: "hide" }),
     Info: {
-      Delete: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Delete', buttonRel: 'rel:help', buttonResource: `${docsBaseURL}#feature-delete` }),
-      EmbedData: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Embed Data', buttonRel: 'rel:help', buttonResource: `${docsBaseURL}#feature-embed-data` }),
-      GraphView: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Graph View', buttonRel: 'rel:help', buttonResource: `${docsBaseURL}#feature-graph-view` }),
-      GenerateFeeds: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Generate Feed', buttonRel: 'rel:help', buttonResource: `${docsBaseURL}#feature-generate-feed` }),
-      MessageLog: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Message Log', buttonRel: 'rel:help', buttonResource: `${docsBaseURL}#feature-message-log` }),
-      Notifications: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Notifications', buttonRel: 'rel:help', buttonResource: `${docsBaseURL}#feature-notifications` }),
-      Open: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Open', buttonRel: 'rel:help', buttonResource: `${docsBaseURL}#feature-open` }),
-      Reply: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Reply', buttonRel: 'rel:help', buttonResource: `${docsBaseURL}#feature-reply` }),
-      ReviewChanges: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Review Changes', buttonRel: 'rel:help', buttonResource: `${docsBaseURL}#feature-review-changes` }),
-      RobustLinks: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Robustify Links', buttonRel: 'rel:help', buttonResource: `${docsBaseURL}#feature-robustify-links` }),
-      SaveAs: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Save As', buttonRel: 'rel:help', buttonResource: `${docsBaseURL}#feature-save-as` }),
-      Share: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Share', buttonRel: 'rel:help', buttonResource: `${docsBaseURL}#feature-share` }),
-      SignIn: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Sign In', buttonRel: 'rel:help', buttonResource: `${docsBaseURL}#feature-sign-in` }),
-      Source: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Source', buttonRel: 'rel:help', buttonResource: `${docsBaseURL}#feature-source` })
+      Delete: getButtonHTML({ key: "info.delete.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-delete` }),
+      EmbedData: getButtonHTML({ key: "info.embed-data.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-embed-data` }),
+      GraphView: getButtonHTML({ key: "info.graph.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-graph-view` }),
+      GenerateFeeds: getButtonHTML({ key: "info.feed.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-generate-feed` }),
+      MessageLog: getButtonHTML({ key: "info.messages.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-message-log` }),
+      Notifications: getButtonHTML({ key: "info.notifications.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-notifications` }),
+      Open: getButtonHTML({ key: "info.open.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-open` }),
+      Reply: getButtonHTML({ key: "info.reply.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-reply` }),
+      ReviewChanges: getButtonHTML({ key: "info.review-changes.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-review-changes` }),
+      RobustLinks: getButtonHTML({ key: "info.robustify-links.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-robustify-links` }),
+      SaveAs: getButtonHTML({ key: "info.save-as.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-save-as` }),
+      Share: getButtonHTML({ key: "info.share.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-share` }),
+      SignIn: getButtonHTML({ key: "info.signin.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-sign-in` }),
+      Source: getButtonHTML({ key: "info.source.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-source` })
     },
-    SignIn: getButtonHTML({ button: 'signin', buttonClass: 'signin-user', buttonTitle: 'Sign in to authenticate', buttonTextContent: 'Sign in' }),
+    SignIn: getButtonHTML({ key: "signin.button", button: "signin", buttonClass: "signin-user" }),
     Menu: {
-      Delete: getButtonHTML({ button: 'delete', buttonClass: 'resource-delete', buttonTitle: 'Delete article', buttonTextContent: 'Delete', iconSize: 'fa-2x', buttonDisabled: true }),
-      DocumentInfo: getButtonHTML({ button: 'document-info', buttonClass: 'document-info', buttonTitle: 'Document info', buttonTextContent: 'Info', iconSize: 'fa-2x', buttonDisabled: true }),
-      EditEnable: getButtonHTML({ button: 'cursor', buttonClass: 'editor-enable', buttonTextContent: 'Edit', buttonTitle: 'Enable editor', iconSize: 'fa-2x' }),
-      EditDisable: getButtonHTML({ button: 'cursor', buttonClass: 'editor-disable', buttonTextContent: 'Edit', buttonTitle: 'Disable editor', iconSize: 'fa-2x' }),
-      EmbedData: getButtonHTML({ button: 'data-meta', buttonClass: 'embed-data-meta', buttonTitle: 'Embed structured data', buttonTextContent: 'Embed Data', iconSize: 'fa-2x' }),
-      Export: getButtonHTML({ button: 'export', buttonClass: 'export-as-html', buttonTitle: 'Export and save to file', buttonTextContent: 'Export', iconSize: 'fa-2x' }),
-      GenerateFeed: getButtonHTML({ button: 'feed', buttonClass: 'generate-feed', buttonTitle: 'Generate Web feed', buttonTextContent: 'Feed', iconSize: 'fa-2x' }),
-      Immutable: getButtonHTML({ button: 'immutable', buttonClass: 'create-immutable', buttonTitle: 'Make this article immutable and version it', buttonTextContent: 'Immutable', iconSize: 'fa-2x', buttonDisabled: true }),
-      InternetArchive: getButtonHTML({ button: 'archive', buttonClass: 'snapshot-internet-archive', buttonTitle: 'Capture with Internet Archive', buttonTextContent: 'Archive', iconSize: 'fa-2x' }),
-      Open: getButtonHTML({ button: 'open', buttonClass: 'resource-open', buttonTitle: 'Open article', buttonTextContent: 'Open', iconSize: 'fa-2x' }),
-      New: getButtonHTML({ button: 'new', buttonClass: 'resource-new', buttonTitle: 'Create new article', buttonTextContent: 'New', iconSize: 'fa-2x' }),
-      Notifications: getButtonHTML({ button: 'activities', buttonClass: 'resource-notifications', buttonTitle: 'Show notifications', buttonTextContent: 'Notifications', iconSize: 'fa-2x' }),
-      RobustifyLinks: getButtonHTML({ button: 'robustify-links', buttonClass: 'robustify-links', buttonTitle: 'Robustify Links', buttonTextContent: 'Robustify', iconSize: 'fa-2x' }),
-      Save: getButtonHTML({ button: 'save', buttonClass: 'resource-save', iconSize: 'fa-2x', buttonDisabled: true }),
-      SaveAs: getButtonHTML({ button: 'save-as', buttonClass: 'resource-save-as', buttonTitle: 'Save as article', buttonTextContent: 'Save As', iconSize: 'fa-2x' }),
-      Share: getButtonHTML({ button: 'share', buttonClass: 'resource-share', buttonTitle: 'Share resource', buttonTextContent: 'Share', iconSize: 'fa-2x' }),
-      SignIn: getButtonHTML({ button: 'signin', buttonClass: 'signin-user', buttonTitle: 'Sign in to authenticate', buttonTextContent: 'Sign in', iconSize: 'fa-2x' }),
-      SignOut: getButtonHTML({ button: 'signout', buttonClass: 'signout-user' }),
-      Source: getButtonHTML({ button: 'source', buttonClass: 'resource-source', buttonTitle: 'Edit article source code', buttonTextContent: 'Source', iconSize: 'fa-2x' }),
-      Memento: getButtonHTML({ button: 'memento', buttonClass: 'resource-memento', buttonTitle: 'Memento article', buttonTextContent: 'Memento', iconSize: 'fa-2x', buttonDisabled: true }),
-      MessageLog: getButtonHTML({ button: 'messages', buttonClass: 'message-log', buttonTitle: 'Show message log', buttonTextContent: 'Messages', iconSize: 'fa-2x' }),
-      Print: getButtonHTML({ button: 'print', buttonClass: 'resource-print', buttonTitle: 'Print document', buttonTextContent: 'Print', iconSize: 'fa-2x' }),
-      Reply: getButtonHTML({ button: 'in-reply-to', buttonClass: 'resource-reply', buttonTitle: 'Reply', buttonTextContent: 'Reply', iconSize: 'fa-2x' }),
-      Version: getButtonHTML({ button: 'version', buttonClass: 'create-version', buttonTitle: 'Version this article', buttonTextContent: 'Version', iconSize: 'fa-2x', buttonDisabled: true }),
+      Delete: getButtonHTML({ key: "menu.delete.button", button: "delete", buttonClass: "resource-delete", iconSize: "fa-2x", buttonDisabled: true }),
+      DocumentInfo: getButtonHTML({ key: "menu.document-info.button", button: "document-info", buttonClass: "document-info", iconSize: "fa-2x", buttonDisabled: true }),
+      EditEnable: getButtonHTML({ key: "menu.edit-enable.button", button: "cursor", buttonClass: "editor-enable", iconSize: "fa-2x" }),
+      EditDisable: getButtonHTML({ key: "menu.edit-disable.button", button: "cursor", buttonClass: "editor-disable", iconSize: "fa-2x" }),
+      EmbedData: getButtonHTML({ key: "menu.embed-data.button", button: "data-meta", buttonClass: "embed-data-meta", iconSize: "fa-2x" }),
+      Export: getButtonHTML({ key: "menu.export.button", button: "export", buttonClass: "export-as-html", iconSize: "fa-2x" }),
+      GenerateFeed: getButtonHTML({ key: "menu.feed.button", button: "feed", buttonClass: "generate-feed", iconSize: "fa-2x" }),
+      Immutable: getButtonHTML({ key: "menu.immutable.button", button: "immutable", buttonClass: "create-immutable", iconSize: "fa-2x", buttonDisabled: true }),
+      InternetArchive: getButtonHTML({ key: "menu.archive.button", button: "archive", buttonClass: "snapshot-internet-archive", iconSize: "fa-2x" }),
+      Open: getButtonHTML({ key: "menu.resource-open.button", button: "open", buttonClass: "resource-open", iconSize: "fa-2x" }),
+      New: getButtonHTML({ key: "menu.new.button", button: "new", buttonClass: "resource-new", iconSize: "fa-2x" }),
+      Notifications: getButtonHTML({ key: "menu.notifications.button", button: "activities", buttonClass: "resource-notifications", iconSize: "fa-2x" }),
+      RobustifyLinks: getButtonHTML({ key: "menu.robustify-links.button", button: "robustify-links", buttonClass: "robustify-links", iconSize: "fa-2x" }),
+      Save: getButtonHTML({ key: "menu.resource-save.button", button: "save", buttonClass: "resource-save", iconSize: "fa-2x", buttonDisabled: true }),
+      SaveAs: getButtonHTML({ key: "menu.save-as.button", button: "save-as", buttonClass: "resource-save-as", iconSize: "fa-2x" }),
+      Share: getButtonHTML({ key: "menu.share.button", button: "share", buttonClass: "resource-share", iconSize: "fa-2x" }),
+      SignIn: getButtonHTML({ key: "menu.signin.button", button: "signin", buttonClass: "signin-user", iconSize: "fa-2x" }),
+      SignOut: getButtonHTML({ key: "menu.signout.button", button: "signout", buttonClass: "signout-user" }),
+      Source: getButtonHTML({ key: "menu.source.button", button: "source", buttonClass: "resource-source", iconSize: "fa-2x" }),
+      Memento: getButtonHTML({ key: "menu.memento.button", button: "memento", buttonClass: "resource-memento", iconSize: "fa-2x", buttonDisabled: true }),
+      MessageLog: getButtonHTML({ key: "menu.messages.button", button: "messages", buttonClass: "message-log", iconSize: "fa-2x" }),
+      Print: getButtonHTML({ key: "menu.print.button", button: "print", buttonClass: "resource-print", iconSize: "fa-2x" }),
+      Reply: getButtonHTML({ key: "menu.reply.button", button: "in-reply-to", buttonClass: "resource-reply", iconSize: "fa-2x" }),
+      Version: getButtonHTML({ key: "menu.version.button", button: "version", buttonClass: "create-version", iconSize: "fa-2x", buttonDisabled: true }),
     }
   }
 }
@@ -74,27 +74,26 @@ export function getButtonHTML({
   button,
   key,
   buttonClass,
-  buttonLabel,
   buttonDisabled,
   buttonRel,
   buttonResource,
-  buttonTitle,
-  buttonTextContent,
   buttonType,
-  iconSize }) {
+  iconSize 
+}) {
 
   if (!button) {
       throw new Error('`button` identifier is required.');
   }
 
-  key = key || `button.${button}`
+  key = key || `button.${button}`;
+
   // const titleContent = buttonTitle || buttonIcons[button]?.title || button;
-  const titleContent = i18next.t(`${key}.title`)
+  const titleContent = i18next.t(`${key}.title`) === `${key}.title` ? buttonIcons[button]?.title || button : i18next.t(`${key}.title`);
   const title = ` title="${titleContent}"`;
   // const textContent = buttonTextContent || buttonIcons[button]?.textContent;
-  const textContent = i18next.t(`${key}.textContent`)
+  const textContent = i18next.t(`${key}.textContent`) === `${key}.textContent` ? null : i18next.t(`${key}.textContent`);
   // const label = buttonLabel || titleContent;
-  const label = i18next.t(`${key}.label`)
+  const label = i18next.t(`${key}.label`) === `${key}.label` ? null : i18next.t(`${key}.label`);
   const ariaLabel = (label && !textContent) ? ` aria-label="${label}"` : '';
   const className = buttonClass ? ` class="${buttonClass}"` : '';
   const disabled = buttonDisabled ? ` disabled=""` : '';
@@ -102,7 +101,7 @@ export function getButtonHTML({
   const rel = buttonRel ? ` rel="${buttonRel}"` : '';
   const resource = buttonResource ? ` resource="${buttonResource}"` : '';
   const type = buttonType ? ` type="${buttonType}"` : '';
-  const dataI18n = button ? ` data-i18n=${button}` : '';
+  const dataI18n = key ? ` data-i18n=${key}` : '';
 
   if (icon) {
     let parser = new DOMParser();
@@ -115,9 +114,9 @@ export function getButtonHTML({
     icon = new XMLSerializer().serializeToString(svgElement);
   }
 
-  const buttonContent = (!icon && !textContent) ? button : `${icon ? icon : ''} ${textContent ? `<span${dataI18n}>${textContent}</span>` : ''}`;
+  const buttonContent = (!icon && !textContent) ? button : `${icon ? icon : ''} ${textContent ? `<span>${textContent}</span>` : ''}`;
 
-  return `<button${ariaLabel}${className}${disabled}${rel}${resource}${title}${type}>${buttonContent}</button>`;
+  return `<button${dataI18n}${ariaLabel}${className}${disabled}${rel}${resource}${title}${type}>${buttonContent}</button>`;
 }
 
 
