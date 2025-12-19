@@ -8,6 +8,12 @@ const ns = Config.ns;
 Config.Button.C
 const docsBaseURL = Config.WebExtensionEnabled ? Config.WebExtension.runtime.getURL('docs') : 'https://dokie.li/docs';
 
+// function getButtonTextContent(key, buttonTextContent) {
+//   const textContentTranslation = i18next.t(key);
+//   const textContentStr = textContentTranslation.includes(key) ? buttonTextContent : textContentTranslation;
+//   return textContentStr;
+// }
+
 export function initButtons() {
   Config.Button = {
     Close: getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close', buttonTitle: 'Close', iconSize: 'fa-2x' }),
@@ -48,7 +54,7 @@ export function initButtons() {
       New: getButtonHTML({ button: 'new', buttonClass: 'resource-new', buttonTitle: 'Create new article', buttonTextContent: 'New', iconSize: 'fa-2x' }),
       Notifications: getButtonHTML({ button: 'activities', buttonClass: 'resource-notifications', buttonTitle: 'Show notifications', buttonTextContent: 'Notifications', iconSize: 'fa-2x' }),
       RobustifyLinks: getButtonHTML({ button: 'robustify-links', buttonClass: 'robustify-links', buttonTitle: 'Robustify Links', buttonTextContent: 'Robustify', iconSize: 'fa-2x' }),
-      Save: getButtonHTML({ button: 'save', buttonClass: 'resource-save', buttonTitle: 'Save article', buttonTextContent: i18next.t('save.textContent'), iconSize: 'fa-2x', buttonDisabled: true }),
+      Save: getButtonHTML({ button: 'save', buttonClass: 'resource-save', iconSize: 'fa-2x', buttonDisabled: true }),
       SaveAs: getButtonHTML({ button: 'save-as', buttonClass: 'resource-save-as', buttonTitle: 'Save as article', buttonTextContent: 'Save As', iconSize: 'fa-2x' }),
       Share: getButtonHTML({ button: 'share', buttonClass: 'resource-share', buttonTitle: 'Share resource', buttonTextContent: 'Share', iconSize: 'fa-2x' }),
       SignIn: getButtonHTML({ button: 'signin', buttonClass: 'signin-user', buttonTitle: 'Sign in to authenticate', buttonTextContent: 'Sign in', iconSize: 'fa-2x' }),
@@ -66,6 +72,7 @@ export function initButtons() {
 //Given a button action, generates an HTML string for the button including an icon and text.
 export function getButtonHTML({
   button,
+  key,
   buttonClass,
   buttonLabel,
   buttonDisabled,
@@ -80,10 +87,14 @@ export function getButtonHTML({
       throw new Error('`button` identifier is required.');
   }
 
-  const titleContent = buttonTitle || buttonIcons[button]?.title || button;
+  key = key || `button.${button}`
+  // const titleContent = buttonTitle || buttonIcons[button]?.title || button;
+  const titleContent = i18next.t(`${key}.title`)
   const title = ` title="${titleContent}"`;
-  const textContent = buttonTextContent || buttonIcons[button]?.textContent;
-  const label = buttonLabel || titleContent;
+  // const textContent = buttonTextContent || buttonIcons[button]?.textContent;
+  const textContent = i18next.t(`${key}.textContent`)
+  // const label = buttonLabel || titleContent;
+  const label = i18next.t(`${key}.label`)
   const ariaLabel = (label && !textContent) ? ` aria-label="${label}"` : '';
   const className = buttonClass ? ` class="${buttonClass}"` : '';
   const disabled = buttonDisabled ? ` disabled=""` : '';
@@ -91,7 +102,7 @@ export function getButtonHTML({
   const rel = buttonRel ? ` rel="${buttonRel}"` : '';
   const resource = buttonResource ? ` resource="${buttonResource}"` : '';
   const type = buttonType ? ` type="${buttonType}"` : '';
-  const i18n = button ? ` data-i18n=${button}` : '';
+  const dataI18n = button ? ` data-i18n=${button}` : '';
 
   if (icon) {
     let parser = new DOMParser();
@@ -104,9 +115,9 @@ export function getButtonHTML({
     icon = new XMLSerializer().serializeToString(svgElement);
   }
 
-  const buttonContent = (!icon && !textContent) ? button : `${icon ? icon : ''} ${textContent ? `<span>${textContent}</span>` : ''}`;
+  const buttonContent = (!icon && !textContent) ? button : `${icon ? icon : ''} ${textContent ? `<span${dataI18n}>${textContent}</span>` : ''}`;
 
-  return `<button${ariaLabel}${className}${disabled}${rel}${resource}${title}${type}${i18n}>${buttonContent}</button>`;
+  return `<button${ariaLabel}${className}${disabled}${rel}${resource}${title}${type}>${buttonContent}</button>`;
 }
 
 

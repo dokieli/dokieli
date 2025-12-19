@@ -2707,54 +2707,59 @@ DO = {
     },
 
     showLanguages: function(node) {
-      const languages = i18next.languages;
       let options = [];
 
-      const detectedLanguage = i18next.language; // detected or set language
-console.log(languages, detectedLanguage)
-      languages.forEach(lang => {
-        let selected = (lang == detectedLanguage) ? ' selected="selected"' : '';
-        options.push(`<option lang="${lang}"${selected} value="${lang}" xml:lang="${lang}">${Config.Languages[lang]}</option>`);
+      const currentLanguage = i18next.language; // detected or set language
+      console.log(i18next.languages, currentLanguage)
+
+      Config.Translations.forEach(lang => {
+        let selected = (lang == currentLanguage) ? ' selected="selected"' : '';
+
+        let label = Config.Languages[lang];
+
+        if (!label && lang.includes('-')) {
+          // Fallback to main tag
+          let mainTag = lang.split('-')[0];
+          label = Config.Languages[mainTag];
+        }
+
+        if (lang !== 'dev' && label) {
+          options.push(`<option lang="${lang}"${selected} value="${lang}" xml:lang="${lang}">${label}</option>`);
+        }
       })
 
       const html = `
-        <section id="ui-choose-language">
+        <section id="ui-language">
           <h2>${i18next.t('languages.textContent')}</h2>
           ${Icon['.fas.fa-language']}
-          <label for="choose-language">Change language</label>
-          <select id="choose-language">
-            <option value="">Choose a language</option>
+          <label for="ui-language-select">Change language</label>
+          <select id="ui-language-select">
             ${options.join('')}
           </select>
         </section>`;
 
       node.insertAdjacentHTML('beforeend', html);
 
-      const select = document.getElementById('ui-choose-language');
+      const select = document.getElementById('ui-language-select');
       select.addEventListener('change', (e) => {
         e.preventDefault();
         e.stopPropagation();
 
         i18next.changeLanguage(e.target.value, (err, t) => {
-         if (err) return console.log('something went wrong loading', err);
-         document.querySelectorAll('[data-i18n]').forEach(el => {
-          const key = `${el.dataset.i18n}.textContent`;
-          el.textContent = i18next.t(key);
+          if (err) return console.log('something went wrong loading', err);
+
+          document.querySelectorAll('[data-i18n]').forEach(el => {
+            Object.keys(el.dataset.i18n).forEach(k => {
+              //if i18n key has textContent, use it
+              //else some default
+
+              //if element has atttribute and i18n key has that attribute, use it
+console.log(k)
+
+            })
           });
         })
       });
-
-        // // using Promises
-        // i18next
-        //   .changeLanguage('en')
-        //   .then((t) => {
-        //     root.querySelectorAll('[data-i18n]').forEach(el => {
-        //       const key = el.dataset.i18n;
-        //       el.textContent = i18next.t(key);
-        //     });
-        //   });
-
-
     },
 
     showAboutDokieli: function(node) {
