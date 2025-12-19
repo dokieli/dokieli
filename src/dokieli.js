@@ -2707,10 +2707,12 @@ DO = {
     },
 
     showLanguages: function(node) {
+      if (document.getElementById('ui-language')) {
+        document.getElementById('ui-language').remove();
+      }
       let options = [];
 
       const currentLanguage = i18next.language; // detected or set language
-      console.log(i18next.languages, currentLanguage)
 
       Config.Translations.forEach(lang => {
         let selected = (lang == currentLanguage) ? ' selected="selected"' : '';
@@ -2749,14 +2751,47 @@ DO = {
           if (err) return console.log('something went wrong loading', err);
 
           document.querySelectorAll('[data-i18n]').forEach(el => {
-            Object.keys(el.dataset.i18n).forEach(k => {
-              //if i18n key has textContent, use it
-              //else some default
-
-              //if element has atttribute and i18n key has that attribute, use it
-console.log(k)
-
-            })
+            i18next.changeLanguage(e.target.value, (err) => {
+              if (err) return console.error(err);
+            
+              document.querySelectorAll("[data-i18n]").forEach(el => {
+                const baseKey = el.dataset.i18n;
+            
+                const textKey = `${baseKey}.textContent`;
+                const textValue = i18next.t(textKey);
+              
+                if (textValue !== textKey) {
+                  const span = el.querySelector(":scope > span");
+              
+                  if (span) {
+                    // preferred: replace span text only
+                    span.textContent = textValue;
+                  } else {
+                    // fallback: replace meaningful direct text nodes
+                    [...el.childNodes].forEach(node => {
+                      if (
+                        node.nodeType === Node.TEXT_NODE &&
+                        node.nodeValue.trim()
+                      ) {
+                        node.nodeValue = textValue;
+                      }
+                    });
+                  }
+                }
+              
+                [...el.attributes].forEach(attr => {
+                  if (attr.name === "data-i18n") return;
+            
+                  const attrKey = `${baseKey}.${attr.name}`;
+                  const value = i18next.t(attrKey);
+            
+                  if (value !== attrKey) {
+                    el.setAttribute(attr.name, value);
+                  }
+                });
+              });
+            });
+            
           });
         })
       });
