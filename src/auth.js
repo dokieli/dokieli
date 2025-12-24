@@ -9,6 +9,7 @@ import { updateButtons, getButtonHTML } from './ui/buttons.js';
 import { SessionCore } from '@uvdsl/solid-oidc-client-browser/core';
 import { isCurrentScriptSameOrigin, isLocalhost } from './uri.js';
 import { SessionIDB } from '@uvdsl/solid-oidc-client-browser';
+import i18next from 'i18next';
 
 const ns = Config.ns;
 
@@ -97,10 +98,10 @@ function showUserIdentityInput () {
     signInUser.disabled = true;
   }
 
-  var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Sign In', buttonTitle: 'Close', iconSize: 'fa-2x' });
+  var buttonClose = getButtonHTML({ key: 'dialog.signin.button.close', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
   var webid = Config.User.WebIdDelegate ? Config.User.WebIdDelegate : "";
-  var code = `<aside aria-labelledby="user-identity-input-label" id="user-identity-input" class="do on"><h2 id="user-identity-input-label">Sign in ${Config.Button.Info.SignIn}</h2>${buttonClose}<div class="info"></div><p id="user-identity-input-webid"><label>WebID</label> <input id="webid" type="text" placeholder="https://csarven.ca/#i" value="${webid}" name="webid"/> <button class="signin" type="button">Sign in</button></p></aside>`;
+  var code = `<aside aria-labelledby="user-identity-input-label" id="user-identity-input" class="do on"><h2 data-i18n="dialog.signin.h2" id="user-identity-input-label">${i18next.t('dialog.signin.h2.textContent')} ${Config.Button.Info.SignIn}</h2>${buttonClose}<div class="info"></div><p id="user-identity-input-webid"><label>WebID</label> <input id="webid" type="text" placeholder="https://csarven.ca/#i" value="${webid}" name="webid"/> <button data-i18n="dialog.signin.button.submit" class="signin" type="button">${i18next.t('dialog.signin.button.submit.textContent')}</button></p></aside>`;
 
   document.body.appendChild(fragmentFromString(code))
 

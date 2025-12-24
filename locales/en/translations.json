@@ -77,7 +77,7 @@
   "button.save.textContent": "Save",
 
   "save": "Save",
-  "close.graph.button.title": "Close",
+  "close.button.title": "Close",
   "delete.button.title": "Delete",
   "toggle.button.title": "Show/Hide",
   "more.button.title": "Show more",
@@ -104,9 +104,6 @@
   "info.share.button.title": "About Share",
   "info.signin.button.title": "About Sign In",
   "info.source.button.title": "About Source",
-
-  "signin.button.title": "Sign in to authenticate",
-  "signin.button.textContent": "Sign in",
 
   "menu.delete.button.title": "Delete article",
   "menu.delete.button.textContent": "Delete",
@@ -150,6 +147,11 @@
   "menu.share.button.title": "Share resource",
   "menu.share.button.textContent": "Share",
 
+  "menu.signin.button.title": "Sign in to authenticate",
+  "menu.signin.button.textContent": "Sign in",
+
+  "menu.signout.button.title": "Sign out",
+
   "menu.source.button.title": "Edit article source code",
   "menu.source.button.textContent": "Source",
 
@@ -166,7 +168,13 @@
   "menu.reply.button.textContent": "Reply",
 
   "menu.version.button.title": "Version this article",
-  "menu.version.button.textContent": "Version"
+  "menu.version.button.textContent": "Version",
+
+  "dialog.signin.h2.textContent": "Sign in",
+  "dialog.signin.button.close.title": "Close",
+  "dialog.signin.button.close.aria-label": "Close Sign in",
+  "dialog.signin.button.submit.textContent": "Sign in"
+
 }
 
 
