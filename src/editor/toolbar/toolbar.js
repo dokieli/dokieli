@@ -1,5 +1,5 @@
 import { schema } from "../schema/base.js"
-import { buttonIcons, getButtonHTML } from "../../ui/buttons.js"
+import { getButtonHTML } from "../../ui/buttons.js"
 import { getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getClassesOfProductsConcepts, getDocument, getDocumentContentNode, getLanguageOptionsHTML, getLicenseOptionsHTML, getReferenceLabel } from "../../doc.js";
 import { getTextQuoteHTML, cloneSelection, restoreSelection, setSelection, getSelectedParentElement } from "../utils/annotation.js";
 import { escapeRegExp, matchAllIndex, fragmentFromString } from "../../util.js";

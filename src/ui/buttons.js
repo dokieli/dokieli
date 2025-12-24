@@ -16,7 +16,7 @@ const docsBaseURL = Config.WebExtensionEnabled ? Config.WebExtension.runtime.get
 
 export function initButtons() {
   Config.Button = {
-    Close: getButtonHTML({ key: "close.graph.button", button: "close", buttonClass: "close", iconSize: "fa-2x" }),
+    Close: getButtonHTML({ key: "close.button", button: "close", buttonClass: "close", iconSize: "fa-2x" }),
     Delete: getButtonHTML({ key: "delete.button", button: "delete", buttonClass: "delete" }),
     Toggle: getButtonHTML({ key: "toggle.button", button: "toggle", buttonClass: "toggle" }),
     More: getButtonHTML({ key: "more.button", button: "more", buttonClass: "more" }),
@@ -39,7 +39,7 @@ export function initButtons() {
       SignIn: getButtonHTML({ key: "info.signin.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-sign-in` }),
       Source: getButtonHTML({ key: "info.source.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-source` })
     },
-    SignIn: getButtonHTML({ key: "signin.button", button: "signin", buttonClass: "signin-user" }),
+    SignIn: getButtonHTML({ key: "menu.signin.button", button: "signin", buttonClass: "signin-user" }),
     Menu: {
       Delete: getButtonHTML({ key: "menu.delete.button", button: "delete", buttonClass: "resource-delete", iconSize: "fa-2x", buttonDisabled: true }),
       DocumentInfo: getButtonHTML({ key: "menu.document-info.button", button: "document-info", buttonClass: "document-info", iconSize: "fa-2x", buttonDisabled: true }),
@@ -79,16 +79,16 @@ export function getButtonHTML({
   buttonResource,
   buttonType,
   iconSize 
-}) {
+  }) {
 
   if (!button) {
-      throw new Error('`button` identifier is required.');
+    throw new Error('`button` identifier is required.');
   }
 
   key = key || `button.${button}`;
 
   // const titleContent = buttonTitle || buttonIcons[button]?.title || button;
-  const titleContent = i18next.t(`${key}.title`) === `${key}.title` ? buttonIcons[button]?.title || button : i18next.t(`${key}.title`);
+  const titleContent = i18next.t(`${key}.title`) === `${key}.title` ? button : i18next.t(`${key}.title`);
   const title = ` title="${titleContent}"`;
   // const textContent = buttonTextContent || buttonIcons[button]?.textContent;
   const textContent = i18next.t(`${key}.textContent`) === `${key}.textContent` ? null : i18next.t(`${key}.textContent`);
@@ -122,23 +122,18 @@ export function getButtonHTML({
 
 export const buttonIcons = {
   p: {
-    title: 'paragraph',
     icon: Icon['.fas.fa-paragraph']
   },
   em: {
-    title:'emphasise',
     icon: Icon['.fas.fa-italic']
   },
   strong: {
-    title:'strongly emphasise',
     icon: Icon['.fas.fa-bold']
   },
   ol: {
-    title:'ordered list',
     icon: Icon['.fas.fa-link-ol']
   },
   ul: {
-    title:'unordered list',
     icon: Icon['.fas.fa-link-ul']
   },
   ...['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].reduce((acc, heading) => {
@@ -150,257 +145,194 @@ export const buttonIcons = {
     return acc;
   }, {}),
   a: {
-    title: 'link',
     icon: Icon['.fas.fa-link']
   },
   citation: {
-    title: 'citation',
     icon: Icon['.fas.fa-hashtag']
   },
   //TODO: Change annotate or note's icon
   comment: {
-    title: 'comment',
     icon: Icon['.fas.fa-comment']
   },
   note: {
-    title: 'note (internal)',
     icon: Icon['.fas.fa-sticky-note']
   },
   requirement: {
-    title: 'requirement',
     icon: Icon['.fas.fa-microchip']
   },
   semantics: {
-    title: 'semantics',
     icon: Icon['.fas.fa-rocket']
   },
   sparkline: {
-    title: 'sparkline',
     icon: Icon['.fas.fa-chart-line']
   },
   img: {
-    title: 'image',
     icon: Icon['.fas.fa-image']
   },
   pre: {
-    title: 'code (block)',
     icon: Icon['.fas.fa-terminal']
   },
   code: {
-    title: 'code (inline)',
     icon: Icon['.fas.fa-code']
   },
   blockquote: {
-    title: 'blockquote (with source)',
     icon: Icon['.fas.fa-angle-right']
   },
   q: {
-    title: 'quote (with source)',
     icon: Icon['.fas.fa-quote-right']
   },
   math: {
-    title: 'math',
     icon: Icon['.fas.fa-calculator']
   },
 
   highlight: {
-    title: 'highlight',
     icon: Icon['.fas.fa-anchor']
   },
   bookmark: {
-    title: 'bookmark',
     icon: Icon['.fas.fa-bookmark']
   },
   share: {
-    title: 'share',
     icon: Icon['.fas.fa-bullhorn']
   },
   approve: {
-    title: 'approve',
     icon: Icon['.fas.fa-thumbs-up']
   },
   disapprove: {
-    title: 'disapprove',
     icon: Icon['.fas.fa-thumbs-down']
   },
   specificity: {
-    title: 'specificity',
     icon: Icon['.fas.fa-crosshairs']
   },
   close: {
-    title: 'Close',
     icon: Icon['.fas.fa-times']
   },
   submit: {
-    title: 'Submit',
     icon: Icon['.fas.fa-check']
   },
   cancel: {
-    title: 'Cancel',
     icon: Icon['.fas.fa-times']
   },
   delete: {
-    title: 'Delete',
     icon: Icon['.fas.fa-trash-alt']
   },
   toggle: {
-    title: 'Show/Hide',
     icon: Icon['.fas.fa-angle-right']
   },
   more: {
-    title: 'Show more',
     icon: Icon['.fas.fa-rotate']
   },
   cursor: {
-    title: 'Cursor',
     icon: Icon['.fas.fa-i-cursor']
   }, 
   signout: {
-    title: 'Sign out',
     icon: Icon['.far.fa-spock-hand']
   },
   signin: {
-    title: 'Sign in',
     icon: Icon['.fas.fa-user-astronaut']
   },
   license: {
-    title: 'License',
     icon: Icon['.fas.fa-certificate']
   },
   language: {
-    title: 'Language',
     icon: Icon['.fas.fa-language']
   },
   'resource-type': {
-    title: 'Resource type',
     icon: Icon['.fas.fa-shape']
   },
   inbox: {
-    title: 'Inbox',
     icon: Icon['.fas.fa-inbox']
   },
   'in-reply-to': {
-    title: 'In reply to',
     icon: Icon['.fas.fa-reply']
   },
   'publication-status': {
-    title: 'Publication status',
     icon: Icon['.fas.fa-timeline']
   },
   activities: {
-    title: 'Activities',
     icon: Icon['.fas.fa-bolt']
   },
   new: {
-    title: 'New',
     icon: Icon['.far.fa-lightbulb']
   },
   open: {
-    title: 'Open',
     icon: Icon['.fas.fa-coffee']
   },
   save: {
-    title: 'Save',
     icon: Icon['.fas.fa-life-ring']
   },
   'save-as': {
-    title: 'Save As',
     icon: Icon['.far.fa-paper-plane']
   },
   messages: {
-    title: 'Messages',
     icon: Icon['.fas.fa-scroll']
   },
   print: {
-    title: 'Print document',
     icon: Icon[".fas.fa-print"] 
   },
   'data-meta': {
-    title: 'Embed structured data',
     icon: Icon [".fas.fa-table"]
   },
   table: {
-    title: 'table',
     icon: Icon [".fas.fa-table"]
   },
   source: {
-    title: 'Edit article source code',
     icon: Icon[".fas.fa-code"] 
   },
   memento: {
-    title: 'Memento article',
     icon: Icon[".far.fa-clock"] 
   },
   version: {
-    title: 'Create version',
     icon: Icon[".fas.fa-code-branch"]
   },
   immutable: {
-    title: 'Make immutable',
     icon: Icon[".far.fa-snowflake"] 
   },
   'robustify-links': {
-    title: 'Robustify Links',
     icon: Icon[".fas.fa-link"]
   },
   archive: {
-    title: 'Archive',
     icon: Icon[".fas.fa-archive"]
   },
   feed: {
-    title: 'Generate Web feed',
     icon: Icon[".fas.fa-rss"] 
   },
   export: {
-    title: 'export',
     icon: Icon[".fas.fa-external-link-alt"]
   },
   cursor: {
-    title: 'cursor',
     icon: Icon[".fas.fa-i-cursor"]
   },
   'local-storage': {
-    title: '',
     icon: Icon[".fas.fa-database"]
   },
   info: {
-    title: 'info',
     icon: Icon[".fas.fa-circle-info"]
   },
   success: {
-    title: 'success',
     icon: Icon[".fas.fa-check"]
   },
   error: {
-    title: 'error',
     icon: Icon[".fas.fa-triangle-exclamation"]
   },
   warning: {
-    title: 'warning',
     icon: Icon[".fas.fa-circle-exclamation"]
   },
   'test-suite': {
-    title: 'Test suite',
     icon: Icon[".fas.fa-vial-circle-check"]
   },
   clipboard: {
-    title: 'Copy to clipboard',
     icon: Icon[".fas.fa-copy"]
   },
   bars: {
-    title: 'Show',
     icon: Icon[".fas.fa-bars"]
   },
   minus: {
-    title: 'Hide',
     icon: Icon[".fas.fa-minus"]
   },
   'review-changes': {
-    title: 'Review changes',
     icon: Icon[".fas.fa-microscope"]
   },
   'document-info': {
-    title: 'Document info',
     icon: Icon[".fas.fa-atom"]
   }
 }
