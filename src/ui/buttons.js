@@ -78,7 +78,7 @@ export function getButtonHTML({
   buttonRel,
   buttonResource,
   buttonType,
-  iconSize 
+  iconSize
   }) {
 
   if (!button) {
@@ -93,8 +93,11 @@ export function getButtonHTML({
   // const textContent = buttonTextContent || buttonIcons[button]?.textContent;
   const textContent = i18next.t(`${key}.textContent`) === `${key}.textContent` ? null : i18next.t(`${key}.textContent`);
   // const label = buttonLabel || titleContent;
-  const label = i18next.t(`${key}.label`) === `${key}.label` ? null : i18next.t(`${key}.label`);
+  const label = i18next.t(`${key}.aria-label`) === `${key}.aria-label` ? null : i18next.t(`${key}.aria-label`);
   const ariaLabel = (label && !textContent) ? ` aria-label="${label}"` : '';
+  // console.log(i18next.t(`${key}.textContent`), `${key}.textContent`)
+  // console.log(i18next.t(`${key}.aria-label`), `${key}.aria-label`)
+  // console.log(label, !textContent)
   const className = buttonClass ? ` class="${buttonClass}"` : '';
   const disabled = buttonDisabled ? ` disabled=""` : '';
   let icon = buttonIcons[button]?.icon;
@@ -116,7 +119,7 @@ export function getButtonHTML({
 
   const buttonContent = (!icon && !textContent) ? button : `${icon ? icon : ''} ${textContent ? `<span>${textContent}</span>` : ''}`;
 
-  return `<button${dataI18n}${ariaLabel}${className}${disabled}${rel}${resource}${title}${type}>${buttonContent}</button>`;
+  return `<button${ariaLabel}${dataI18n}${className}${disabled}${rel}${resource}${title}${type}>${buttonContent}</button>`;
 }
 
 
