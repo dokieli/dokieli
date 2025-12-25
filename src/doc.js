@@ -22,6 +22,7 @@ import { buttonIcons, getButtonHTML, updateButtons } from './ui/buttons.js'
 import { domSanitizeHTMLBody, domSanitize } from './utils/sanitization.js';
 import { cleanProseMirrorOutput, normalizeHTML } from './utils/normalization.js';
 import { formatHTML, getDoctype, htmlEncode } from './utils/html.js';
+import i18next from 'i18next';
 
 const ns = Config.ns;
 
@@ -3291,12 +3292,12 @@ function getResourceTypeOptionsHTML(options) {
 
 function getLanguageOptionsHTML(options) {
   options = options || {};
-  var s = '', selectedLang = '';
+  var s = [], selectedLang = '';
 
   if ('selected' in options) {
     selectedLang = options.selected;
     if (selectedLang == '') {
-      s += '<option selected="selected" value="">Choose a language</option>';
+      s.push(`<option data-i18n="select.languages.choose" selected="selected" value="">${i18next.t('select.languages.choose.textContent')}</option>`);
     }
   }
   else if (typeof Config.User.UI.Language !== 'undefined') {
@@ -3308,10 +3309,10 @@ function getLanguageOptionsHTML(options) {
 
   Object.keys(Config.Languages).forEach(lang => {
     let selected = (lang == selectedLang) ? ' selected="selected"' : '';
-    s += '<option' + selected + ' value="' + lang + '">' + Config.Languages[lang] + '</option>';
+    s.push(`<option lang="${lang}"${selected} value="${lang}" xml:lang="${lang}">${Config.Languages[lang]}</option>`);
   });
 
-  return s;
+  return s.join('');
 }
 
 function getLicenseOptionsHTML(options) {

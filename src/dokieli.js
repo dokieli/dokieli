@@ -2734,7 +2734,7 @@ DO = {
         <section id="ui-language">
           <h2>${i18next.t('languages.textContent')}</h2>
           ${Icon['.fas.fa-language']}
-          <label for="ui-language-select">Change language</label>
+          <label for="ui-language-select" data-i18n="label.ui-language-select">${i18next.t('label.ui-language-select.textContent')}</label>
           <select id="ui-language-select">
             ${options.join('')}
           </select>
@@ -2743,57 +2743,50 @@ DO = {
       node.insertAdjacentHTML('beforeend', html);
 
       const select = document.getElementById('ui-language-select');
+
       select.addEventListener('change', (e) => {
         e.preventDefault();
         e.stopPropagation();
 
         i18next.changeLanguage(e.target.value, (err, t) => {
-          if (err) return console.log('something went wrong loading', err);
+          if (err) return console.error('Error loading language', err);
+
+          Config.User.UI['Language'] = e.target.value;
+
+          document.querySelectorAll('.editor-form select[name$="-language"]').forEach(el => {
+            el.value = e.target.value;
+          })
 
           document.querySelectorAll('[data-i18n]').forEach(el => {
-            i18next.changeLanguage(e.target.value, (err) => {
-              if (err) return console.error(err);
-            
-              document.querySelectorAll("[data-i18n]").forEach(el => {
-                const baseKey = el.dataset.i18n;
-            
-                const textKey = `${baseKey}.textContent`;
-                const textValue = i18next.t(textKey);
-              
-                if (textValue !== textKey) {
-                  const span = el.querySelector(":scope > span");
-              
-                  if (span) {
-                    // preferred: replace span text only
-                    span.textContent = textValue;
-                  } else {
-                    // fallback: replace meaningful direct text nodes
-                    [...el.childNodes].forEach(node => {
-                      if (
-                        node.nodeType === Node.TEXT_NODE &&
-                        node.nodeValue.trim()
-                      ) {
-                        node.nodeValue = textValue;
-                      }
-                    });
-                  }
-                }
-              
-                [...el.attributes].forEach(attr => {
-                  if (attr.name === "data-i18n") return;
-            
-                  const attrKey = `${baseKey}.${attr.name}`;
-                  const value = i18next.t(attrKey);
-            
-                  if (value !== attrKey) {
-                    el.setAttribute(attr.name, value);
+            const baseKey = el.dataset.i18n;
+
+            // Update textContent
+            const textKey = `${baseKey}.textContent`;
+            const textValue = i18next.t(textKey);
+            if (textValue !== textKey) {
+              const span = el.querySelector(':scope > span');
+              if (span) {
+                span.textContent = textValue;
+              } else {
+                [...el.childNodes].forEach(node => {
+                  if (node.nodeType === Node.TEXT_NODE && node.nodeValue.trim()) {
+                    node.nodeValue = textValue;
                   }
                 });
-              });
+              }
+            }
+
+            // Update attributes
+            [...el.attributes].forEach(attr => {
+              if (attr.name === 'data-i18n') return;
+              const attrKey = `${baseKey}.${attr.name}`;
+              const value = i18next.t(attrKey);
+              if (value !== attrKey) {
+                el.setAttribute(attr.name, value);
+              }
             });
-            
           });
-        })
+        });
       });
     },
 
@@ -4705,7 +4698,7 @@ console.log(reason);
       fieldset = generateFeed.querySelector('fieldset#' + id + '-fieldset');
       DO.U.setupResourceBrowser(fieldset, id, action);
       var feedTitlePlaceholder = (DO.C.User.IRI && DO.C.User.Name) ? DO.C.User.Name + "'s" : "Example's";
-      fieldset.insertAdjacentHTML('beforeend', '<p id="' + id + '-samp' + '">Feed will be generated at: <samp id="' + id + '-' + action + '"></samp></p><ul><li><label for="' + id + '-title">Title</label> <input type="text" placeholder="' + feedTitlePlaceholder + ' Web Feed" name="' + id + '-title" value=""></li><li><label for="' + id + '-language">Language</label> <select id="' + id + '-language" name="' + id + '-language">' + getLanguageOptionsHTML() + '</select></li><li><label for="' + id + '-license">License</label> <select id="' + id + '-license" name="' + id + '-license">' + getLicenseOptionsHTML() + '</select></li><li>' + DO.U.getFeedFormatSelection() + '</li></ul><button class="create" title="Save to destination" type="submit">Generate</button>');
+      fieldset.insertAdjacentHTML('beforeend', `<p id="${id}-samp">Feed will be generated at: <samp id="${id}-action"></samp></p><ul><li><label for="${id}-title">Title</label> <input type="text" placeholder="${feedTitlePlaceholder} Web Feed" name="${id}-title" value=""></li><li><label data-i18n="label.language" for="${id}-language">${i18next.t('this.label.language.textContent')}</label> <select id="${id}-language" name="${id}-language">${getLanguageOptionsHTML()}</select></li><li><label for="${id}-license">License</label> <select id="${id}-license" name="${id}-license">${getLicenseOptionsHTML()}</select></li><li>${DO.U.getFeedFormatSelection()}</li></ul><button class="create" title="Save to destination" type="submit">Generate</button>`);
       var bli = document.getElementById(id + '-input');
       bli.focus();
       bli.placeholder = 'https://example.org/path/to/feed.xml';
@@ -5226,7 +5219,7 @@ console.log(reason);
 
       var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Reply to Resource', buttonTitle: 'Close', iconSize: 'fa-2x' });
 
-      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="reply-to-resource-label" id="reply-to-resource" class="do on"><h2 id="reply-to-resource-label">Reply ${DO.C.Button.Info.Reply}</h2>${buttonClose}<div class="info"></div><div id="reply-to-resource-input"><p>Reply to <code>${iri}</code></p><ul><li><p><label for="reply-to-resource-note">Quick reply (plain text note)</label></p><p><textarea id="reply-to-resource-note" rows="10" cols="40" name="reply-to-resource-note" placeholder="Great article!"></textarea></p></li><li><label for="reply-to-resource-language">Language</label> <select id="reply-to-resource-language" name="reply-to-resource-language">${getLanguageOptionsHTML()}</select></li><li><label for="reply-to-resource-license">License</label> <select id="reply-to-resource-license" name="reply-to-resource-license">${getLicenseOptionsHTML()}</select></li></ul></div>`))
+      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="reply-to-resource-label" id="reply-to-resource" class="do on"><h2 id="reply-to-resource-label">Reply ${DO.C.Button.Info.Reply}</h2>${buttonClose}<div class="info"></div><div id="reply-to-resource-input"><p>Reply to <code>${iri}</code></p><ul><li><p><label for="reply-to-resource-note">Quick reply (plain text note)</label></p><p><textarea id="reply-to-resource-note" rows="10" cols="40" name="reply-to-resource-note" placeholder="Great article!"></textarea></p></li><li><label data-i18n="label.language" for="reply-to-resource-language">${i18next.t('label.language.textContent')}</label> <select id="reply-to-resource-language" name="reply-to-resource-language">${getLanguageOptionsHTML()}</select></li><li><label for="reply-to-resource-license">License</label> <select id="reply-to-resource-license" name="reply-to-resource-license">${getLicenseOptionsHTML()}</select></li></ul></div>`))
 
       // TODO: License
       // TODO: ACL - can choose whether to make this reply private (to self), visible only to article author(s), visible to own contacts, public

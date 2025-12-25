@@ -143,7 +143,7 @@ export class AuthorToolbar extends ToolbarView {
           <input class="editor-form-input" id="citation-url" name="citation-url" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" type="url" value="" />
           <label for="citation-content">Note</label>
           <textarea class="editor-form-textarea" cols="20" id="citation-content" name="citation-content" rows="1" placeholder="${options.placeholder ? options.placeholder : 'Describe the purpose or reason of citation.'}"></textarea>
-          <label for="citation-language">Language</label>
+          <label data-i18n="label.language" for="citation-language">${i18next.t('label.language.textContent')}</label>
           <select class="editor-form-select" id="citation-language" name="citation-language">${getLanguageOptionsHTML()}</select>
           <button class="editor-form-submit" title="Save" type="submit">Save</button>
           <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
@@ -169,7 +169,7 @@ export class AuthorToolbar extends ToolbarView {
 
           // <label for="requirement-consensus">Consensus source</label>
           // <input class="editor-form-input" id="requirement-consensus" name="requirement-consensus" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" type="url" value="" />
-          // <label for="requirement-language">Language</label>
+          // <label data-i18n="label.language" for="requirement-language">${i18next.t('label.language.textContent')}</label>
           // <select class="editor-form-select" id="requirement-language" name="requirement-language">${getLanguageOptionsHTML()}</select>
 
       semantics: (options) => `

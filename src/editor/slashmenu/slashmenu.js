@@ -150,7 +150,7 @@ export class SlashMenu {
     var html = `
       <fieldset>
         <legend>Add a language</legend>
-        <label for="set-language">Language</label> <select class="editor-form-select" id="set-language" name="language" required="">${getLanguageOptionsHTML({ 'selected': '' })}</select>
+        <label data-i18n="label.language" for="set-language">${i18next.t('label.language.textContent')}</label> <select class="editor-form-select" id="set-language" name="language" required="">${getLanguageOptionsHTML({ 'selected': '' })}</select>
         <div>
           <button class="editor-form-submit" title="Save" type="submit">Save</button>
           <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
