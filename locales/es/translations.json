@@ -173,5 +173,10 @@
   "dialog.signin.h2.textContent": "Iniciar sesión",
   "dialog.signin.button.close.title": "Cerrar",
   "dialog.signin.button.close.aria-label": "Cerrar Iniciar sesión",
-  "dialog.signin.button.submit.textContent": "Iniciar sesión"
+  "dialog.signin.button.submit.textContent": "Iniciar sesión",
+
+  "label.ui-language-select.textContent": "Cambiar idioma",
+
+  "label.language.textContent": "Idioma",
+  "select.languages.choose.textContent": "Elija un idioma"
 }

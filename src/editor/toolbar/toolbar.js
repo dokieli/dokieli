@@ -6,6 +6,7 @@ import { escapeRegExp, matchAllIndex, fragmentFromString } from "../../util.js";
 import { showUserIdentityInput } from "../../auth.js";
 import { getLinkRelation } from "../../graph.js";
 import Config from "../../config.js";
+import i18next from "i18next";
 
 const ns = Config.ns;
 
@@ -683,7 +684,7 @@ export function annotateFormControls(options) {
       <label for="${options.button}-content">Note</label>
       <textarea class="editor-form-textarea" cols="20" id="${options.button}-content" name="${options.button}-content" placeholder="${options.placeholder ? options.placeholder : 'What do you think?'}" required="" rows="5"></textarea>
       <label for="${options.button}-tagging">Tags</label> <input class="editor-form-input" id="${options.button}-tagging" name="${options.button}-tagging" placeholder="Separate tags with commas" />
-      <label for="${options.button}-language">Language</label>
+      <label data-i18n="label.language" for="${options.button}-language">${i18next.t('label.language.textContent')}</label>
       <select class="editor-form-select" id="${options.button}-language" name="${options.button}-language">${getLanguageOptionsHTML()}</select>
       <label for="${options.button}-license">License</label>
       <select class="editor-form-select" id="${options.button}-license" name="${options.button}-license">${getLicenseOptionsHTML()}</select>

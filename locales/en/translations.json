@@ -173,8 +173,12 @@
   "dialog.signin.h2.textContent": "Sign in",
   "dialog.signin.button.close.title": "Close",
   "dialog.signin.button.close.aria-label": "Close Sign in",
-  "dialog.signin.button.submit.textContent": "Sign in"
+  "dialog.signin.button.submit.textContent": "Sign in",
 
+  "label.ui-language-select.textContent": "Change language",
+
+  "label.language.textContent": "Language",
+  "select.languages.choose.textContent": "Choose a language"
 }
 
 
