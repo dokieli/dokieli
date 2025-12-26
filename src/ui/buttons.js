@@ -58,6 +58,7 @@ export function initButtons() {
       Print: getButtonHTML({ button: 'print', buttonClass: 'resource-print', buttonTitle: 'Print document', buttonTextContent: 'Print', iconSize: 'fa-2x' }),
       Reply: getButtonHTML({ button: 'in-reply-to', buttonClass: 'resource-reply', buttonTitle: 'Reply', buttonTextContent: 'Reply', iconSize: 'fa-2x' }),
       Version: getButtonHTML({ button: 'version', buttonClass: 'create-version', buttonTitle: 'Version this article', buttonTextContent: 'Version', iconSize: 'fa-2x', buttonDisabled: true }),
+      AIAnalyze: getButtonHTML({ button: 'ai-analyze', buttonClass: 'resource-ai-analyze', buttonTitle: 'Analyze with AI', buttonTextContent: 'AI Analyze', iconSize: 'fa-2x' }),
     }
   }
 }
@@ -153,6 +154,10 @@ export const buttonIcons = {
   note: {
     title: 'note (internal)',
     icon: Icon['.fas.fa-sticky-note']
+  },
+  'ai-analyze': {
+    title: 'AI Analyze',
+    icon: Icon['.fas.fa-robot']
   },
   requirement: {
     title: 'requirement',
