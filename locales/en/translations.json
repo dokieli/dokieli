@@ -76,12 +76,12 @@
   "button.save.aria-label": "Save article",
   "button.save.textContent": "Save",
 
-  "save": "Save",
   "close.button.title": "Close",
-  "delete.button.title": "Delete",
-  "toggle.button.title": "Show/Hide",
-  "more.button.title": "Show more",
   "clipboard.button.title": "Copy to clipboard",
+  "clipboard.button.aria-label": "Copy to clipboard",
+  "annotation.delete.button.title": "Delete",
+  "annotation.delete.button.aria-label": "Delete annotation",
+
   "menu.open.button.title": "Open menu",
   "menu.close.button.title": "Close menu",
   "menu.resource-open.button.title": "Open article",
@@ -170,15 +170,25 @@
   "menu.version.button.title": "Version this article",
   "menu.version.button.textContent": "Version",
 
-  "dialog.signin.h2.textContent": "Sign in",
-  "dialog.signin.button.close.title": "Close",
-  "dialog.signin.button.close.aria-label": "Close Sign in",
-  "dialog.signin.button.submit.textContent": "Sign in",
+  "menu.ui-language-select.label.textContent": "Change language",
 
-  "label.ui-language-select.textContent": "Change language",
+  "dialog.signin.h2.textContent": "Sign in",
+  "dialog.signin.close.button.title": "Close",
+  "dialog.signin.close.button.aria-label": "Close Sign in",
+  "dialog.signin.submit.button.textContent": "Sign in",
+
+  "dialog.delete.h2.textContent": "Delete",
+  "dialog.delete.close.button.title": "Close",
+  "dialog.delete.close.button.aria-label": "Close Delete",
+  "dialog.delete.confirmation.p.textContent": "Are you sure you want to delete the following document?",
+  "dialog.delete.cancel.button.textContent": "Cancel",
+  "dialog.delete.cancel.button.title": "Cancel Delete",
+  "dialog.delete.submit.button.textContent": "Delete",
+  "dialog.delete.submit.button.title": "Delete document",
+
+  "panel.notifications.more.button.title": "Show more",
+  "panel.notifications.more.button.aria-label": "Show more notifications",
 
   "label.language.textContent": "Language",
   "select.languages.choose.textContent": "Choose a language"
 }
-
-

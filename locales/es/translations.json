@@ -76,12 +76,12 @@
   "button.save.aria-label": "Guardar artículo",
   "button.save.textContent": "Guardar",
 
-  "save": "Guardar",
   "close.button.title": "Cerrar",
-  "delete.button.title": "Eliminar",
-  "toggle.button.title": "Mostrar/Ocultar",
-  "more.button.title": "Mostrar más",
   "clipboard.button.title": "Copiar al portapapeles",
+  "clipboard.button.aria-label": "Copiar al portapapeles",
+  "annotation.delete.button.title": "Eliminar",
+  "annotation.delete.button.aria-label": "Eliminar anotación",
+
   "menu.open.button.title": "Abrir menú",
   "menu.close.button.title": "Cerrar menú",
   "menu.resource-open.button.title": "Abrir artículo",
@@ -170,12 +170,24 @@
   "menu.version.button.title": "Versionar este artículo",
   "menu.version.button.textContent": "Versión",
 
-  "dialog.signin.h2.textContent": "Iniciar sesión",
-  "dialog.signin.button.close.title": "Cerrar",
-  "dialog.signin.button.close.aria-label": "Cerrar Iniciar sesión",
-  "dialog.signin.button.submit.textContent": "Iniciar sesión",
+  "menu.ui-language-select.label.textContent": "Cambiar idioma",
 
-  "label.ui-language-select.textContent": "Cambiar idioma",
+  "dialog.signin.h2.textContent": "Iniciar sesión",
+  "dialog.signin.close.button.title": "Cerrar",
+  "dialog.signin.close.button.aria-label": "Cerrar Iniciar sesión",
+  "dialog.signin.submit.button.textContent": "Iniciar sesión",
+
+  "dialog.delete.h2.textContent": "Eliminar",
+  "dialog.delete.close.button.title": "Cerrar",
+  "dialog.delete.close.button.aria-label": "Cerrar Eliminar",
+  "dialog.delete.confirmation.p.textContent": "¿Está seguro de que quiere borrar este documento?",
+  "dialog.delete.cancel.button.textContent": "Cancelar",
+  "dialog.delete.cancel.button.title": "Cancelar Eliminar",
+  "dialog.delete.submit.button.textContent": "Eliminar",
+  "dialog.delete.submit.button.title": "Eliminar documento",
+
+  "panel.notifications.more.button.title": "Mostrar más",
+  "panel.notifications.more.button.aria-label": "Mostrar más notificaciones",
 
   "label.language.textContent": "Idioma",
   "select.languages.choose.textContent": "Elija un idioma"
