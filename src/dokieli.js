@@ -1540,6 +1540,8 @@ DO = {
 
     init: function() {
       i18nextInit().then(() => {
+        DO.U.initUserLanguage();
+
         const params = new URLSearchParams(window.location.search);
 
         if (params.has('code') && params.has('iss') && params.has('state')) {
@@ -1577,6 +1579,17 @@ DO = {
           }
         }
       })
+    },
+
+    initUserLanguage: function() {
+      getLocalStorageItem('i18nextLng').then(lang => {
+        if (lang && Config.Languages[lang]) {
+          document.querySelectorAll('.editor-form select[name$="-language"]').forEach(el => {
+            Config.User.UI['Language'] = lang;
+            el.value = lang;
+          })
+        }
+      });
     },
 
     getContentNode: function(node) {
@@ -2596,7 +2609,7 @@ DO = {
     },
 
     initDocumentMenu: function() {
-      document.body.prepend(fragmentFromString(`<div class="do" id="document-menu">${DO.C.Button.OpenMenu}<div><section id="user-info"></section></div></div>`));
+      document.body.prepend(fragmentFromString(`<div class="do" id="document-menu">${DO.C.Button.Menu.OpenMenu}<div><section id="user-info"></section></div></div>`));
 
       var userInfo = document.getElementById('user-info');
 
@@ -2635,7 +2648,7 @@ DO = {
       var dUserInfo = dMenu.querySelector('#user-info');
       var dInfo = dMenu.querySelector('div');
 
-      dMenuButton.parentNode.replaceChild(fragmentFromString(DO.C.Button.CloseMenu), dMenuButton);
+      dMenuButton.parentNode.replaceChild(fragmentFromString(DO.C.Button.Menu.CloseMenu), dMenuButton);
       dMenu.classList.add('on');
 
       showUserSigninSignout(dUserInfo);
@@ -2660,7 +2673,7 @@ DO = {
 
       var dMenu = document.querySelector('#document-menu.do');
       var dMenuButton = dMenu.querySelector('button');
-      dMenuButton.parentNode.replaceChild(fragmentFromString(DO.C.Button.OpenMenu), dMenuButton);
+      dMenuButton.parentNode.replaceChild(fragmentFromString(DO.C.Button.Menu.OpenMenu), dMenuButton);
 
       dMenu.classList.remove('on');
       // var sections = dMenu.querySelectorAll('section');
@@ -2734,7 +2747,7 @@ DO = {
         <section id="ui-language">
           <h2>${i18next.t('languages.textContent')}</h2>
           ${Icon['.fas.fa-language']}
-          <label for="ui-language-select" data-i18n="label.ui-language-select">${i18next.t('label.ui-language-select.textContent')}</label>
+          <label for="ui-language-select" data-i18n="menu.ui-language-select.label">${i18next.t('menu.ui-language-select.label.textContent')}</label>
           <select id="ui-language-select">
             ${options.join('')}
           </select>
@@ -2764,16 +2777,16 @@ DO = {
             const textKey = `${baseKey}.textContent`;
             const textValue = i18next.t(textKey);
             if (textValue !== textKey) {
-              const span = el.querySelector(':scope > span');
-              if (span) {
-                span.textContent = textValue;
-              } else {
+              // const span = el.querySelector(':scope > span');
+              // if (span) {
+              //   span.textContent = textValue;
+              // } else {
                 [...el.childNodes].forEach(node => {
                   if (node.nodeType === Node.TEXT_NODE && node.nodeValue.trim()) {
                     node.nodeValue = textValue;
                   }
                 });
-              }
+              // }
             }
 
             // Update attributes
@@ -2947,7 +2960,7 @@ DO = {
 
         if(dMenu) {
           var dMenuButton = dMenu.querySelector('button');
-          dMenuButton.parentNode.replaceChild(fragmentFromString(DO.C.Button.CloseMenu), dMenuButton);
+          dMenuButton.parentNode.replaceChild(fragmentFromString(DO.C.Button.Menu.CloseMenu), dMenuButton);
 
           dMenu.classList.remove('on');
 
@@ -5058,9 +5071,9 @@ console.log(reason);
 
       e.target.closest('button').disabled = true
 
-      var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Delete Resource', buttonTitle: 'Close', iconSize: 'fa-2x' });
+      var buttonClose = getButtonHTML({ key: 'dialog.delete.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
-      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="delete-document-label" id="delete-document" class="do on"><h2 id="delete-document-label">Delete ${DO.C.Button.Info.Delete}</h2>${buttonClose}<div class="info"></div><div><p>Are you sure you want to delete the following document?</p><p><code>${url}</code></p></div><button class="cancel" title="Cancel delete" type="button">Cancel</button><button class="delete" title="Delete document" type="button">Delete</button></aside>`));
+      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="delete-document-label" id="delete-document" class="do on"><h2 data-i18n="dialog.delete.h2" id="delete-document-label">${i18next.t('dialog.delete.h2.textContent')} ${DO.C.Button.Info.Delete}</h2>${buttonClose}<div class="info"></div><div><p data-i18n="dialog.delete.confirmation.p">${i18next.t('dialog.delete.confirmation.p.textContent')}</p><p><code>${url}</code></p></div><button class="cancel" title="${i18next.t('dialog.delete.cancel.button.title')}" type="button">${i18next.t('dialog.delete.cancel.button.textContent')}</button><button class="delete" data-i18n="dialog.delete.submit.button" title="${i18next.t('dialog.delete.submit.button.title')}" type="button">${i18next.t('dialog.delete.submit.button.textContent')}</button></aside>`));
 
       document.querySelector('#delete-document').addEventListener('click', (e) => {
         if (e.target.closest('button.info')) { return; }
@@ -9583,7 +9596,7 @@ WHERE {\n\
     initializeButtonMore: function(node) {
       var info = node.querySelector('div.info');
       var progressOld = info.querySelector('.progress');
-      var progressNew = fragmentFromString('<div class="progress">' + DO.C.Button.More + ' See more interactions with this document</div>');
+      var progressNew = fragmentFromString('<div class="progress">' + DO.C.Button.Notifications.More + ' See more interactions with this document</div>');
 
       if (progressOld) {
         info.replaceChild(progressNew, progressOld)

@@ -17,12 +17,13 @@ const docsBaseURL = Config.WebExtensionEnabled ? Config.WebExtension.runtime.get
 export function initButtons() {
   Config.Button = {
     Close: getButtonHTML({ key: "close.button", button: "close", buttonClass: "close", iconSize: "fa-2x" }),
-    Delete: getButtonHTML({ key: "delete.button", button: "delete", buttonClass: "delete" }),
-    Toggle: getButtonHTML({ key: "toggle.button", button: "toggle", buttonClass: "toggle" }),
-    More: getButtonHTML({ key: "more.button", button: "more", buttonClass: "more" }),
     Clipboard: getButtonHTML({ key: "clipboard.button", button: "clipboard", buttonClass: "do copy-to-clipboard" }),
-    OpenMenu: getButtonHTML({ key: "menu.open.button", button: "bars", buttonClass: "show" }),
-    CloseMenu: getButtonHTML({ key: "menu.close.button", button: "minus", buttonClass: "hide" }),
+    Annotations: {
+      Delete: getButtonHTML({ key: "annotations.delete.button", button: "delete", buttonClass: "delete" }),
+    },
+    Notifications: {
+      More: getButtonHTML({ key: "panel.notifications.more.button", button: "more", buttonClass: "more" }),
+    },
     Info: {
       Delete: getButtonHTML({ key: "info.delete.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-delete` }),
       EmbedData: getButtonHTML({ key: "info.embed-data.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-embed-data` }),
@@ -41,6 +42,7 @@ export function initButtons() {
     },
     SignIn: getButtonHTML({ key: "menu.signin.button", button: "signin", buttonClass: "signin-user" }),
     Menu: {
+      CloseMenu: getButtonHTML({ key: "menu.close.button", button: "minus", buttonClass: "hide" }),
       Delete: getButtonHTML({ key: "menu.delete.button", button: "delete", buttonClass: "resource-delete", iconSize: "fa-2x", buttonDisabled: true }),
       DocumentInfo: getButtonHTML({ key: "menu.document-info.button", button: "document-info", buttonClass: "document-info", iconSize: "fa-2x", buttonDisabled: true }),
       EditEnable: getButtonHTML({ key: "menu.edit-enable.button", button: "cursor", buttonClass: "editor-enable", iconSize: "fa-2x" }),
@@ -50,9 +52,10 @@ export function initButtons() {
       GenerateFeed: getButtonHTML({ key: "menu.feed.button", button: "feed", buttonClass: "generate-feed", iconSize: "fa-2x" }),
       Immutable: getButtonHTML({ key: "menu.immutable.button", button: "immutable", buttonClass: "create-immutable", iconSize: "fa-2x", buttonDisabled: true }),
       InternetArchive: getButtonHTML({ key: "menu.archive.button", button: "archive", buttonClass: "snapshot-internet-archive", iconSize: "fa-2x" }),
-      Open: getButtonHTML({ key: "menu.resource-open.button", button: "open", buttonClass: "resource-open", iconSize: "fa-2x" }),
       New: getButtonHTML({ key: "menu.new.button", button: "new", buttonClass: "resource-new", iconSize: "fa-2x" }),
       Notifications: getButtonHTML({ key: "menu.notifications.button", button: "activities", buttonClass: "resource-notifications", iconSize: "fa-2x" }),
+      Open: getButtonHTML({ key: "menu.resource-open.button", button: "open", buttonClass: "resource-open", iconSize: "fa-2x" }),
+      OpenMenu: getButtonHTML({ key: "menu.open.button", button: "bars", buttonClass: "show" }),
       RobustifyLinks: getButtonHTML({ key: "menu.robustify-links.button", button: "robustify-links", buttonClass: "robustify-links", iconSize: "fa-2x" }),
       Save: getButtonHTML({ key: "menu.resource-save.button", button: "save", buttonClass: "resource-save", iconSize: "fa-2x", buttonDisabled: true }),
       SaveAs: getButtonHTML({ key: "menu.save-as.button", button: "save-as", buttonClass: "resource-save-as", iconSize: "fa-2x" }),
