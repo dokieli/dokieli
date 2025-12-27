@@ -5,6 +5,7 @@ import { getButtonHTML } from "../../ui/buttons.js";
 import { formHandlerLanguage, formHandlerLicense, formHandlerInbox, formHandlerInReplyTo, formHandlerPublicationStatus, formHandlerResourceType, formHandlerTestSuite } from "./handlers.js";
 import { TextSelection } from "prosemirror-state";
 import { DOMParser } from "prosemirror-model";
+import i18next from "i18next";
 
 export class SlashMenu {
   constructor(editorView) {
