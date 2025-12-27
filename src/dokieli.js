@@ -2745,7 +2745,7 @@ DO = {
 
       const html = `
         <section id="ui-language">
-          <h2>${i18next.t('languages.textContent')}</h2>
+          <h2 data-i18n="label.language">${i18next.t('label.language.textContent')}</h2>
           ${Icon['.fas.fa-language']}
           <label for="ui-language-select" data-i18n="menu.ui-language-select.label">${i18next.t('menu.ui-language-select.label.textContent')}</label>
           <select id="ui-language-select">
@@ -2773,20 +2773,22 @@ DO = {
           document.querySelectorAll('[data-i18n]').forEach(el => {
             const baseKey = el.dataset.i18n;
 
+            //TODO: Revisit updating text
+
             // Update textContent
             const textKey = `${baseKey}.textContent`;
             const textValue = i18next.t(textKey);
             if (textValue !== textKey) {
-              // const span = el.querySelector(':scope > span');
-              // if (span) {
-              //   span.textContent = textValue;
-              // } else {
+              const span = el.querySelector(':scope > span');
+              if (span) {
+                span.textContent = textValue;
+              } else {
                 [...el.childNodes].forEach(node => {
                   if (node.nodeType === Node.TEXT_NODE && node.nodeValue.trim()) {
                     node.nodeValue = textValue;
                   }
                 });
-              // }
+              }
             }
 
             // Update attributes
@@ -4711,7 +4713,7 @@ console.log(reason);
       fieldset = generateFeed.querySelector('fieldset#' + id + '-fieldset');
       DO.U.setupResourceBrowser(fieldset, id, action);
       var feedTitlePlaceholder = (DO.C.User.IRI && DO.C.User.Name) ? DO.C.User.Name + "'s" : "Example's";
-      fieldset.insertAdjacentHTML('beforeend', `<p id="${id}-samp">Feed will be generated at: <samp id="${id}-action"></samp></p><ul><li><label for="${id}-title">Title</label> <input type="text" placeholder="${feedTitlePlaceholder} Web Feed" name="${id}-title" value=""></li><li><label data-i18n="label.language" for="${id}-language">${i18next.t('this.label.language.textContent')}</label> <select id="${id}-language" name="${id}-language">${getLanguageOptionsHTML()}</select></li><li><label for="${id}-license">License</label> <select id="${id}-license" name="${id}-license">${getLicenseOptionsHTML()}</select></li><li>${DO.U.getFeedFormatSelection()}</li></ul><button class="create" title="Save to destination" type="submit">Generate</button>`);
+      fieldset.insertAdjacentHTML('beforeend', `<p id="${id}-samp">Feed will be generated at: <samp id="${id}-action"></samp></p><ul><li><label for="${id}-title">Title</label> <input type="text" placeholder="${feedTitlePlaceholder} Web Feed" name="${id}-title" value=""></li><li><label data-i18n="label.language" for="${id}-language">${i18next.t('label.language.textContent')}</label> <select id="${id}-language" name="${id}-language">${getLanguageOptionsHTML()}</select></li><li><label for="${id}-license">License</label> <select id="${id}-license" name="${id}-license">${getLicenseOptionsHTML()}</select></li><li>${DO.U.getFeedFormatSelection()}</li></ul><button class="create" title="Save to destination" type="submit">Generate</button>`);
       var bli = document.getElementById(id + '-input');
       bli.focus();
       bli.placeholder = 'https://example.org/path/to/feed.xml';

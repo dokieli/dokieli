@@ -10,6 +10,7 @@ import { getResource } from "../../../fetcher.js"
 import { fragmentFromString, stringFromFragment } from "../../../util.js"
 import Config from "../../../config.js";
 import { htmlEncode } from "../../../utils/html.js";
+import i18next from "i18next"
 
 const ns = Config.ns;
 
