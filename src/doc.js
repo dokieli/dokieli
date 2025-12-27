@@ -3413,12 +3413,13 @@ function getAccessModeOptionsHTML(options) {
   options['context'] = options['context'] || 'Share';
   var accessContext = Config.AccessContext[options.context] || 'Share';
 
-  var s = '<option value="">No access</option>';
+  var s = `<option data-i18n="dialog.share-resource.select-access-mode.no-access.option" value="">${i18next.t(`dialog.share-resource.select-access-mode.no-access.option.textContent`)}</option>`;
 
   var modes = Object.keys(accessContext);
   modes.forEach(mode => {
     var selected = (options.selected && (mode === options.selected)) ? ' selected="selected"' : '';
-    s += '<option' + selected + ' value="' + mode + '">' + accessContext[mode] + '</option>';
+    var modeName = accessContext[mode];
+    s += `<option data-i18n="dialog.share-resource.select-access-mode.acl-${modeName}.option"${selected} value="${mode}">${i18next.t(`dialog.share-resource.select-access-mode.acl-${modeName}.option.textContent`)}</option>`;
   });
 
   // console.log(s);

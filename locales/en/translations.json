@@ -186,6 +186,27 @@
   "dialog.delete.submit.button.textContent": "Delete",
   "dialog.delete.submit.button.title": "Delete document",
 
+  "dialog.share.h2.textContent": "Share",
+  "dialog.share-resource-share-url.h3.textContent": "Share URL",
+  "dialog.share-resource-clipboard.label.textContent": "Copy URL to clipboard",
+  "dialog.share-resource-agents.h3.textContent": "Share with contacts",
+  "dialog.share-resource-note.label.textContent": "Note",
+  "dialog.share-resource-note.textarea.placeholder": "Check this out!",
+  "dialog.share-resource-agents.button.textContent": "Share",
+  "dialog.share-resource-agents.button.title": "Share resource",
+  "dialog.share-resource-permissions.h3.textContent": "Permissions",
+  "dialog.share-resource-permissions.progress.textContent": "Checking access permissions.",
+  "dialog.share-resource-search-contacts.label.textContent": "Add contacts",
+  "dialog.share-resource-search-contacts.input.placeholder": "Search contacts or enter WebID",
+  "dialog.share-resource.select-access-mode.select.aria-label": "Change access permission",
+
+  "dialog.share-resource.select-access-mode.no-access.option.textContent": "No access",
+  "dialog.share-resource.select-access-mode.acl-read.option.textContent": "Viewer",
+  "dialog.share-resource.select-access-mode.acl-write.option.textContent": "Editor",
+  "dialog.share-resource.select-access-mode.acl-control.option.textContent": "Owner",
+
+
+
   "panel.notifications.more.button.title": "Show more",
   "panel.notifications.more.button.aria-label": "Show more notifications",
 

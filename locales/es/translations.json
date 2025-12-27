@@ -186,6 +186,26 @@
   "dialog.delete.submit.button.textContent": "Eliminar",
   "dialog.delete.submit.button.title": "Eliminar documento",
 
+
+  "dialog.share.h2.textContent": "Compartir",
+  "dialog.share-resource-share-url.h3.textContent": "Compartir URL",
+  "dialog.share-resource-clipboard.label.textContent": "Copiar URL al portapapeles",
+  "dialog.share-resource-agents.h3.textContent": "Compartir con contactos",
+  "dialog.share-resource-note.label.textContent": "Nota",
+  "dialog.share-resource-note.textarea.placeholder": "¡Mira esto!",
+  "dialog.share-resource-agents.button.textContent": "Compartir",
+  "dialog.share-resource-agents.button.title": "Compartir recurso",
+  "dialog.share-resource-permissions.h3.textContent": "Permisos",
+  "dialog.share-resource-permissions.progress.textContent": "Revisando permisos de acceso.",
+  "dialog.share-resource-search-contacts.label.textContent": "Agregar contactos",
+  "dialog.share-resource-search-contacts.input.placeholder": "Buscar contactos o ingresar WebID",
+  "dialog.share-resource.select-access-mode.select.aria-label": "Cambiar permisos de acceso",
+
+  "dialog.share-resource.select-access-mode.no-access.option.textContent": "Sin acceso",
+  "dialog.share-resource.select-access-mode.acl-read.option.textContent": "Lector",
+  "dialog.share-resource.select-access-mode.acl-write.option.textContent": "Editor",
+  "dialog.share-resource.select-access-mode.acl-control.option.textContent": "Propietario",
+
   "panel.notifications.more.button.title": "Mostrar más",
   "panel.notifications.more.button.aria-label": "Mostrar más notificaciones",
 

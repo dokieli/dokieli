@@ -430,9 +430,9 @@ export default {
 
   AccessContext: {
     Share: {
-      'http://www.w3.org/ns/auth/acl#Read': 'Viewer',
-      'http://www.w3.org/ns/auth/acl#Write': 'Editor',
-      'http://www.w3.org/ns/auth/acl#Control': 'Owner'
+      'http://www.w3.org/ns/auth/acl#Read': 'read',
+      'http://www.w3.org/ns/auth/acl#Write': 'write',
+      'http://www.w3.org/ns/auth/acl#Control': 'control'
     }
   },
 
