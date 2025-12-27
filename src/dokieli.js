@@ -5470,16 +5470,16 @@ console.log(reason);
 
       var shareResourceHTML = `
         <aside aria-labelledby="share-resource-label" id="share-resource" class="do on">
-          <h2 id="share-resource-label">Share ${DO.C.Button.Info.Share}</h2>
+          <h2 data-i18n="dialog.share.h2" id="share-resource-label">${i18next.t('dialog.share.h2.textContent')} ${DO.C.Button.Info.Share}</h2>
 
           ${buttonClose}
 
           <div class="info"></div>
 
           <div id="share-resource-share-url">
-            <h3>Share URL</h3>
+            <h3 data-i18n="dialog.share-resource-share-url.h3">${i18next.t('dialog.share-resource-share-url.h3.textContent')}</h3>
 
-            <label for="share-resource-clipboard">Copy URL to clipboard</label>
+            <label for="share-resource-clipboard">${i18next.t('dialog.share-resource-clipboard.label.textContent')}</label>
             <input id="share-resource-clipboard" name="share-resource-clipboard" readonly="readonly" type="text" value="${iri}" />
             ${DO.C.Button.Clipboard}
           </div>
@@ -5487,17 +5487,17 @@ console.log(reason);
           ${shareResourceLinkedResearch}
 
           <div id="share-resource-agents">
-            <h3>Share with contacts</h3>
+            <h3 data-i18n="dialog.share-resource-agents.h3">${i18next.t('dialog.share-resource-agents.h3.textContent')}</h3>
 
             <ul>
               <li id="share-resource-address-book">
               </li>
             </ul>
 
-            <label for="share-resource-note">Note</label>
-            <textarea id="share-resource-note" rows="3" cols="40" name="share-resource-note" placeholder="Check this out!"></textarea>
+            <label data-i18n="share-resource-note.label" for="share-resource-note">${i18next.t('dialog.share-resource-note.label.textContent')}</label>
+            <textarea data-i18n="dialog.share-resource-note.textarea" id="share-resource-note" rows="3" cols="40" name="share-resource-note" placeholder="${i18next.t('dialog.share-resource-note.textarea.placeholder')}"></textarea>
 
-            <button class="share" id="share-resource-agents-button" title="Share resource" type="submit">Share</button>
+            <button class="share" data-i18n="dialog.share-resource-agents.button" id="share-resource-agents-button" title="${i18next.t('dialog.share-resource-agents.button.title')}" type="submit">${i18next.t('dialog.share-resource-agents.button.textContent')}</button>
           </div>
         </aside>
       `;
@@ -5519,7 +5519,7 @@ console.log(reason);
       var li = document.getElementById('share-resource-address-book');
       li.insertAdjacentHTML('beforeend', Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]);
 
-        DO.U.selectContacts(li, DO.C.User.IRI);
+      DO.U.selectContacts(li, DO.C.User.IRI);
 
       var hasAccessModeControl = accessModeAllowed(documentURL, 'control');
       if (hasAccessModeControl) {
@@ -5527,16 +5527,16 @@ console.log(reason);
 
         var shareResourcePermissions = `
           <div id="share-resource-permissions">
-            <h3>Permissions</h3>
+            <h3 data-i18n="dialog.share-resource-permissions.h3">${i18next.t('dialog.share-resource-permissions.h3.textContent')}</h3>
 
-            <span class="progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]} Checking access permissions.</span>
+            <span class="progress" data-i18n="dialog.share-resource-permissions.progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]} ${i18next.t('dialog.share-resource-permissions.progress.textContent')}</span>
 
             <ul class="permissions">
             </ul>
 
             <div class="autocomplete">
-              <label for="share-resource-search-contacts">Add contacts</label>
-              <input id="share-resource-search-contacts" name="share-resource-search-contacts" placeholder="Search contacts or enter WebID" type="text" value="" />
+              <label data-i18n="dialog.share-resource-search-contacts.label" for="share-resource-search-contacts">${i18next.t('dialog.share-resource-search-contacts.label.textContent')}</label>
+              <input data-i18n="dialog.share-resource-search-contacts.input" id="share-resource-search-contacts" name="share-resource-search-contacts" placeholder="${i18next.t('dialog.share-resource-search-contacts.input.placeholder')}" type="text" value="" />
               <ul class="suggestions">
               </ul>
             </div>
@@ -5550,7 +5550,7 @@ console.log(reason);
           .catch(e => {
             accessPermissionsNode.removeChild(accessPermissionFetchingIndicator);
 
-console.log('XXX: Cannot access effectiveACLResource', e);
+            console.log('XXX: Cannot access effectiveACLResource', e);
           })
           .then(aclResourceGraph => {
             accessPermissionsNode.removeChild(accessPermissionFetchingIndicator);
@@ -5794,7 +5794,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
       const documentURL = currentLocation();
 
-      const selectNode = '<select aria-label="Change access permission" id="' + id + '">' + getAccessModeOptionsHTML({'context': options.accessContext, 'selected': options.selectedAccessMode }) + '</select>';
+      const selectNode = `<select aria-label="${i18next.t('dialog.select-access-mode.select.aria-label')}" data-i18n="dialog.select-access-mode.select" id="${id}">${getAccessModeOptionsHTML({'context': options.accessContext, 'selected': options.selectedAccessMode })}</select>`;
 
       node.insertAdjacentHTML('beforeend', selectNode);
 
