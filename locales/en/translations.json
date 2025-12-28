@@ -206,9 +206,33 @@
   "dialog.share-resource.select-access-mode.acl-write.option.textContent": "Editor",
   "dialog.share-resource.select-access-mode.acl-control.option.textContent": "Owner",
 
+  "dialog.reply-to-resource.h2.textContent": "Reply",
+  "dialog.reply-to-resource.close.button.title": "Close",
+  "dialog.reply-to-resource.close.button.aria-label": "Close Reply to Resource",
+  "dialog.reply-to-resource-input.p.innerHTML": "Reply to <code>{{iri}}</code>",
+  "dialog.reply-to-resource-note.label.textContent": "Short reply",
+  "dialog.reply-to-resource-note.textarea.placeholder": "Great article!",
+  "dialog.reply-to-resource.save-location-choose.p.textContent": "Choose a location to save your reply.",
+  "dialog.reply-to-resource.save-location.p.textContent": "Your reply will be saved at:",
+  "dialog.reply-to-resource.error.missing-note-or-location.p.textContent": "Need a note and a location to save it.",
+  "dialog.reply-to-resource.success.saved-at.p.textContent": "Reply saved at:",
+  "dialog.reply-to-resource.success.notification-sent.p.textContent": "Notification sent:",
+  "dialog.reply-to-resource.submit.button.title": "Send your reply",
+  "dialog.reply-to-resource.submit.button.textContent": "Send",
+
   "panel.notifications.more.button.title": "Show more",
   "panel.notifications.more.button.aria-label": "Show more notifications",
 
   "label.language.textContent": "Language",
-  "select.languages.choose.textContent": "Choose a language"
+  "select.languages.choose.option.textContent": "Choose a language",
+
+  "label.license.textContent": "License",
+  "select.licenses.choose.option.textContent": "Choose a licence",
+  "select.licenses.cc0-1.0.option.title": "Creative Commons CC0 1.0 Universal",
+  "select.licenses.cc-by-4.0.option.title": "Creative Commons Attribution 4.0 International",
+  "select.licenses.cc-by-sa-4.0.option.title": "Creative Commons Attribution-ShareAlike 4.0 International",
+  "select.licenses.cc-by-nc-4.0.option.title": "Creative Commons Attribution-NonCommercial 4.0 International",
+  "select.licenses.cc-by-nd-4.0.option.title": "Creative Commons Attribution-NoDerivatives 4.0 International",
+  "select.licenses.cc-by-nc-sa-4.0.option.title": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International",
+  "select.licenses.cc-by-nc-nd-4.0.option.title": "Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International"
 }

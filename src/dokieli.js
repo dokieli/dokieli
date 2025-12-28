@@ -8,7 +8,7 @@
 
 import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource } from './fetcher.js'
 import { getDocument, getDocumentContentNode, showActionMessage, selectArticleNode, eventButtonNotificationsToggle, showRobustLinksDecoration, getResourceInfo,  removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getLanguageOptionsHTML, getLicenseOptionsHTML, getNodeWithoutClasses, setCopyToClipboard, addMessageToLog, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown, getReferenceLabel, createNoteDataHTML, hasNonWhitespaceText, eventButtonClose, eventButtonInfo, eventButtonSignIn, eventButtonSignOut, getDocumentNodeFromString, updateResourceInfos, accessModePossiblyAllowed, updateSupplementalInfo, processSupplementalInfoLinkHeaders } from './doc.js'
-import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, generateDataURI, getMediaTypeURIs, isHttpOrHttpsProtocol, isFileProtocol, getUrlParams, stripUrlSearchHash, stripUrlParamsFromString } from './uri.js'
+import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, generateDataURI, getMediaTypeURIs, isHttpOrHttpsProtocol, isFileProtocol, getUrlParams, stripUrlSearchHash, stripUrlParamsFromString, getAbsoluteIRI } from './uri.js'
 import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes, filterQuads, getAgentTypeIndex, serializeData } from './graph.js'
 import { notifyInbox, sendNotifications } from './inbox.js'
 import { uniqueArray, fragmentFromString, generateAttributeId, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, isValidISBN, findPreviousDateTime, escapeRDFLiteral, tranformIconstoCSS, getIconsFromCurrentDocument, getHash, getDateTimeISOFromDate } from './util.js'
@@ -400,7 +400,7 @@ DO = {
 
     showActivities: function(url, options = {}) {
       if (DO.C.Activity[url] || DO.C.Notification[url]) {
-        return [];
+        return Promise.reject([]);
       }
 
       var documentURL = DO.C.DocumentURL;
@@ -410,7 +410,8 @@ DO = {
       return getResourceOnlyRDF(url)
         //TODO: Needs throws handled from functions calling showActivities
         // .catch(e => {
-        //   return [];
+        //   // return [];
+        //   throw e;
         // })
         .then(g => {
           // console.log(g)
@@ -2794,6 +2795,23 @@ DO = {
                   }
                 });
               }
+            }
+
+            // Update innerHTML
+            const htmlKey = `${baseKey}.innerHTML`;
+
+            // TODO: move to a standalone function - this takes the variable names from data-i18n- suffix and passes them as a vars object to the i18next.t fn
+            const vars = {};
+            Object.entries(el.dataset).forEach(([name, value]) => {
+              if (name !== 'i18n') {
+                vars[name.replace(/^i18n/, '').toLowerCase()] = value;
+              }
+            });
+
+            const translated = i18next.t(htmlKey, vars);
+
+            if (translated !== htmlKey) {
+              el.setHTMLUnsafe(domSanitize(translated));
             }
 
             // Update attributes
@@ -5237,9 +5255,28 @@ console.log(reason);
 
       e.target.closest('button').disabled = true
 
-      var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Reply to Resource', buttonTitle: 'Close', iconSize: 'fa-2x' });
+      var buttonClose = getButtonHTML({ key: 'dialog.reply-to-resource.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
-      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="reply-to-resource-label" class="do on" id="reply-to-resource" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 id="reply-to-resource-label">Reply ${DO.C.Button.Info.Reply}</h2>${buttonClose}<div class="info"></div><div id="reply-to-resource-input"><p>Reply to <code>${iri}</code></p><ul><li><p><label for="reply-to-resource-note">Quick reply (plain text note)</label></p><p><textarea id="reply-to-resource-note" rows="10" cols="40" name="reply-to-resource-note" placeholder="Great article!"></textarea></p></li><li><label data-i18n="label.language" for="reply-to-resource-language">${i18next.t('label.language.textContent')}</label> <select id="reply-to-resource-language" name="reply-to-resource-language">${getLanguageOptionsHTML()}</select></li><li><label for="reply-to-resource-license">License</label> <select id="reply-to-resource-license" name="reply-to-resource-license">${getLicenseOptionsHTML()}</select></li></ul></div>`))
+      document.body.appendChild(fragmentFromString(`
+        <aside aria-labelledby="reply-to-resource-label" class="do on" id="reply-to-resource" lang="${i18next.language}" xml:lang="${i18next.language}">
+          <h2 data-i18n="dialog.reply-to-resource.h2" id="reply-to-resource-label">${i18next.t('dialog.reply-to-resource.h2.textContent')} ${DO.C.Button.Info.Reply}</h2>
+          ${buttonClose}
+          <div class="info"></div>
+          <div id="reply-to-resource-input">
+            <p data-i18n="dialog.reply-to-resource-input.p" data-i18n-iri="${iri}">${domSanitize(i18next.t('dialog.reply-to-resource-input.p.innerHTML', { iri }))}</p>
+            <ul>
+              <li>
+                <p><label data-i18n="dialog.reply-to-resource-note.label" for="reply-to-resource-note">${i18next.t('dialog.reply-to-resource-note.label.textContent')}</label></p>
+                <p><textarea cols="40" data-i18n="dialog.reply-to-resource-note.textarea" id="reply-to-resource-note" rows="10" name="reply-to-resource-note" placeholder="${i18next.t('dialog.reply-to-resource-note.textarea.placeholder')}"></textarea></p>
+              </li>
+              <li>
+                <label data-i18n="label.language" for="reply-to-resource-language">${i18next.t('label.language.textContent')}</label> <select id="reply-to-resource-language" name="reply-to-resource-language">${getLanguageOptionsHTML()}</select></li>
+              <li>
+                <label data-i18n="label.license" for="reply-to-resource-license">${i18next.t('label.license.textContent')}</label> <select id="reply-to-resource-license" name="reply-to-resource-license">${getLicenseOptionsHTML()}</select>
+              </li>
+            </ul>
+          </div>
+        </aside>`))
 
       // TODO: License
       // TODO: ACL - can choose whether to make this reply private (to self), visible only to article author(s), visible to own contacts, public
@@ -5253,14 +5290,14 @@ console.log(reason);
       var noteIRI;
 
       DO.U.setupResourceBrowser(replyToResource, id, action)
-      document.getElementById(id).insertAdjacentHTML('afterbegin', '<p>Choose a location to save your reply.</p>')
+      document.getElementById(id).insertAdjacentHTML('afterbegin', `<p data-i18n="dialog.reply-to-resource.save-location-choose.p">${i18next.t('dialog.reply-to-resource.save-location-choose.p.textContent')}</p>`)
 
-      replyToResource.insertAdjacentHTML('beforeend', '<p>Your reply will be saved at <samp id="' + id +'-' + action + '"></samp></p>')
+      replyToResource.insertAdjacentHTML('beforeend', `<p data-i18n="dialog.reply-to-resource.save-location.p">${i18next.t('dialog.reply-to-resource.save-location.p.textContent')} <samp id="${id}-${action}"></samp></p>`)
 
       var bli = document.getElementById(id + '-input')
       bli.focus()
       bli.placeholder = 'https://example.org/path/to/article'
-      replyToResource.insertAdjacentHTML('beforeend', '<button class="reply" title="Send your reply" type="submit">Send</button>')
+      replyToResource.insertAdjacentHTML('beforeend', `<button class="reply" data-i18n="dialog.reply-to-resource.submit.button" title="${i18next.t('dialog.reply-to-resource.submit.button.title')}" type="submit">${i18next.t('dialog.reply-to-resource.submit.button.textContent')}</button>`)
 
       replyToResource.addEventListener('click', e => {
         if (e.target.closest('button.close')) {
@@ -5286,9 +5323,10 @@ console.log(reason);
             noteIRI = noteIRI; // Keep the original value if it's not a valid URL
           }
 
+          // TODO: this needs to be form validation instead
           if (!note || !noteIRI) {
             document.querySelector('#reply-to-resource .response-message')
-              .setHTMLUnsafe(domSanitize('<p class="error">Need a note and a location to save it.</p>'));
+              .setHTMLUnsafe(domSanitize(`<p class="error" data-i18n="dialog.reply-to-resource.error.missing-note-or-location.p">${i18n("dialog.reply-to-resource.error.missing-note-or-location.p.textContent")}</p>`));
             return;
           }
 
@@ -5380,7 +5418,7 @@ console.log(reason);
           .then(response => {
             replyToResource
               .querySelector('.response-message')
-              .setHTMLUnsafe(domSanitize('<p class="success"><a href="' + response.url + '" rel="noopener" target="_blank">Reply saved!</a></p>'));
+              .setHTMLUnsafe(domSanitize(`<p class="success" data-i18n="dialog.reply-to-resource.success.saved-at.p"><span>${i18next.t('dialog.reply-to-resource.success.saved-at.p.textContent')}</span> <a href="${response.url}" rel="noopener" target="_blank">${response.url}</a></p>`));
 
             return getLinkRelation(ns.ldp.inbox.value, null, getDocument(null, documentOptions));
           })
@@ -5392,6 +5430,7 @@ console.log(reason);
 
             var inboxURL = inboxes[0]
 
+            //TODO-i18n
             let notificationStatements = '    <dl about="' + noteIRI +
               '">\n<dt>Object type</dt><dd><a about="' +
               noteIRI + '" typeof="oa:Annotation" href="' +
@@ -5419,25 +5458,27 @@ console.log(reason);
           })
 
           .then(response => {  // Success!
-            var notificationSent = 'Notification sent'
+            var notificationSent = i18next.t('dialog.reply-to-resource.success.notification-sent.p.textContent');
             var location = response.headers.get('Location')
+            var notificationLink = '';
 
             if (location) {
-              notificationSent = '<a href="' + location.trim() + '" rel="noopener" "target="_blank">' + notificationSent + '</a>!'
+              let locationUrl = getAbsoluteIRI(response.url, location.trim());
+              notificationLink = `<a href="${locationUrl}" rel="noopener" "target="_blank">${locationUrl}</a>`;
             }
-            else {
-              notificationSent = notificationSent + ", but location unknown."
-            }
+            // else {
+            //   notificationSent = notificationSent + ", but location unknown."
+            // }
 
             var responseMessage = replyToResource.querySelector('.response-message');
-            responseMessage.setHTMLUnsafe(domSanitize(responseMessage.getHTML() + '<p class="success">' + notificationSent + '</p>'));
+            responseMessage.setHTMLUnsafe(domSanitize(responseMessage.getHTML() + `<p class="success" data-i18n="dialog.reply-to-resource.success.notification-sent.p"><span>${notificationSent}</span> ${notificationLink}</p>`));
           })
 
+          //TODO-i18n
           .catch(error => {
             // Catch-all error, actually notify the user
             var responseMessage = replyToResource.querySelector('.response-message');
             responseMessage.setHTMLUnsafe(domSanitize(responseMessage.getHTML() + '<p class="error">We could not save your reply:' + error.message + '</p>'));
-
           })
       }
     },
@@ -5455,17 +5496,11 @@ console.log(reason);
         button.disabled = true;
       }
 
-      var addContactsButtonDisable = '', noContactsText = '';
-      if (!DO.C.User.IRI && !(DO.C.User.Graph && ((DO.C.User.Knows && DO.C.User.Knows.length) || (DO.C.User.Graph.out(ns.owl.sameAs).values.length)))) {
-        addContactsButtonDisable = ' disabled="disabled"';
-        noContactsText = '<p>Sign in to select from your list of contacts, alternatively, enter contacts individually:</p>';
-      }
-
       var shareResourceLinkedResearch = '';
       if (DO.C.User.IRI && DO.C.OriginalResourceInfo['rdftype'] && DO.C.OriginalResourceInfo.rdftype.includes(ns.schema.ScholarlyArticle.value) || DO.C.OriginalResourceInfo.rdftype.includes(ns.schema.Thesis.value)) {
         shareResourceLinkedResearch = `
           <div id="share-resource-external">
-            <h3>Share with research community</h3>
+            <h3 data-i18n="dialog.share-resource-linked-research-h3">${i18next.t('dialog.share-resource-linked-research-h3.textContent')}</h3>
             <input id="share-resource-linked-research" type="checkbox" value="https://linkedresearch.org/cloud" />
             <label for="share-resource-linked-research"><a href="https://linkedresearch.org/cloud">Linked Open Research Cloud</a></label>
           </div>`;
