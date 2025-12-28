@@ -101,7 +101,7 @@ function showUserIdentityInput () {
   var buttonClose = getButtonHTML({ key: 'dialog.signin.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
   var webid = Config.User.WebIdDelegate ? Config.User.WebIdDelegate : "";
-  var code = `<aside aria-labelledby="user-identity-input-label" id="user-identity-input" class="do on"><h2 data-i18n="dialog.signin.h2" id="user-identity-input-label">${i18next.t('dialog.signin.h2.textContent')} ${Config.Button.Info.SignIn}</h2>${buttonClose}<div class="info"></div><p id="user-identity-input-webid"><label>WebID</label> <input id="webid" type="text" placeholder="https://csarven.ca/#i" value="${webid}" name="webid"/> <button data-i18n="dialog.signin.submit.button" class="signin" type="button">${i18next.t('dialog.signin.submit.button.textContent')}</button></p></aside>`;
+  var code = `<aside aria-labelledby="user-identity-input-label" class="do on" id="user-identity-input" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 data-i18n="dialog.signin.h2" id="user-identity-input-label">${i18next.t('dialog.signin.h2.textContent')} ${Config.Button.Info.SignIn}</h2>${buttonClose}<div class="info"></div><p id="user-identity-input-webid"><label>WebID</label> <input id="webid" type="text" placeholder="https://csarven.ca/#i" value="${webid}" name="webid"/> <button data-i18n="dialog.signin.submit.button" class="signin" type="button">${i18next.t('dialog.signin.submit.button.textContent')}</button></p></aside>`;
 
   document.body.appendChild(fragmentFromString(code))
 

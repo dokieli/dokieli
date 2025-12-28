@@ -826,7 +826,7 @@ DO = {
       var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Graph View', buttonTitle: 'Close', iconSize: 'fa-2x' });
 
       if (selector == '#graph-view' && !document.getElementById('graph-view')) {
-        document.body.appendChild(fragmentFromString(`<aside id="graph-view" class="do on"><h2>Graph view ${DO.C.Button.Info.GraphView}</h2>${buttonClose}<div class="info"></div></aside>`));
+        document.body.appendChild(fragmentFromString(`<aside class="do on" id="graph-view" lang="${i18next.language}" xml:lang="${i18next.language}"><h2>Graph view ${DO.C.Button.Info.GraphView}</h2>${buttonClose}<div class="info"></div></aside>`));
       }
 
       var svg = d3.select(selector).append('svg')
@@ -2483,7 +2483,7 @@ DO = {
 
       var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Review Changes', buttonTitle: 'Close', iconSize: 'fa-2x' });
 
-      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="review-changes-label" id="review-changes" class="do on"><h2 id="review-changes-label">Review Changes ${DO.C.Button.Info.ReviewChanges}</h2>${buttonClose}<div class="info">${message}</div></aside>`));
+      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="review-changes-label" class="do on" id="review-changes" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 id="review-changes-label">Review Changes ${DO.C.Button.Info.ReviewChanges}</h2>${buttonClose}<div class="info">${message}</div></aside>`));
 
       let insCounter = 0;
       let delCounter = 0;
@@ -2609,7 +2609,7 @@ DO = {
     },
 
     initDocumentMenu: function() {
-      document.body.prepend(fragmentFromString(`<div class="do" id="document-menu">${DO.C.Button.Menu.OpenMenu}<div><section id="user-info"></section></div></div>`));
+      document.body.prepend(fragmentFromString(`<div class="do" id="document-menu" lang="${i18next.language}" xml:lang="${i18next.language}">${DO.C.Button.Menu.OpenMenu}<div><section id="user-info"></section></div></div>`));
 
       var userInfo = document.getElementById('user-info');
 
@@ -2766,6 +2766,11 @@ DO = {
 
           Config.User.UI['Language'] = e.target.value;
 
+          document.querySelectorAll('.do[lang]').forEach(el => {
+            el.setAttribute('lang', e.target.value);
+            el.setAttribute('xml:lang', e.target.value);
+          })
+
           document.querySelectorAll('.editor-form select[name$="-language"]').forEach(el => {
             el.value = e.target.value;
           })
@@ -2894,7 +2899,7 @@ DO = {
 
             var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Graph View', buttonTitle: 'Close', iconSize: 'fa-2x' });
 
-            document.body.appendChild(fragmentFromString(`<aside aria-labelledby="graph-view-label" id="graph-view" class="do on"><h2 id="graph-view-label">Graph view ${DO.C.Button.Info.GraphView}</h2>${buttonClose}<div class="info"></div></aside>`));
+            document.body.appendChild(fragmentFromString(`<aside aria-labelledby="graph-view-label" class="do on" id="graph-view" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 id="graph-view-label">Graph view ${DO.C.Button.Info.GraphView}</h2>${buttonClose}<div class="info"></div></aside>`));
 
             var graphView = document.getElementById('graph-view');
             graphView.addEventListener('click', (e) => {
@@ -3043,7 +3048,7 @@ DO = {
         var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Embed Data Entry', buttonTitle: 'Close', iconSize: 'fa-2x' });
 
         var embedMenu = `
-        <aside aria-labelledby="embed-data-entry-label" id="embed-data-entry" class="do on tabs">
+        <aside aria-labelledby="embed-data-entry-label" class="do on tabs" id="embed-data-entry" lang="${i18next.language}" xml:lang="${i18next.language}">
           <h2 id="embed-data-entry-label">Embed Data ${DO.C.Button.Info.EmbedData}</h2>
           ${buttonClose}
           <div class="info"></div>
@@ -3458,7 +3463,7 @@ DO = {
 
       var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Document Info', buttonTitle: 'Close', iconSize: 'fa-2x' });
 
-      document.body.insertBefore(fragmentFromString(`<aside aria-labelledby="document-info-label" id="document-info" class="do on"><h2 id="document-info-label">Document Info</h2>${buttonClose}</aside>`), documentMenu.nextSibling);
+      document.body.insertBefore(fragmentFromString(`<aside aria-labelledby="document-info-label" class="do on" id="document-info" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 id="document-info-label">Document Info</h2>${buttonClose}</aside>`), documentMenu.nextSibling);
       var documentInfo = document.getElementById('document-info');
 
       documentInfo.setAttribute('tabindex', '-1');
@@ -4251,7 +4256,7 @@ console.log(reason);
 
       var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Robustify Links', buttonTitle: 'Close', iconSize: 'fa-2x' });
 
-      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="robustify-links-label" id="robustify-links" class="do on"><h2 id="robustify-links-label">Robustify Links  ${DO.C.Button.Info.RobustLinks}</h2>${buttonClose}<div class="info"></div><div id="robustify-links-input"><p><input id="robustify-links-select-all" type="checkbox" value="true"/><label for="robustify-links-select-all">Select all</label></p><p><input id="robustify-links-reuse" type="checkbox" value="true" checked="checked"/><label for="robustify-links-reuse">Reuse Robustifed</label></p><ul id="robustify-links-list"></ul></div><button class="robustify" title="Robustify Links" type="submit">Robustify</button></aside>`));
+      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="robustify-links-label" class="do on" id="robustify-links" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 id="robustify-links-label">Robustify Links ${DO.C.Button.Info.RobustLinks}</h2>${buttonClose}<div class="info"></div><div id="robustify-links-input"><p><input id="robustify-links-select-all" type="checkbox" value="true"/><label for="robustify-links-select-all">Select all</label></p><p><input id="robustify-links-reuse" type="checkbox" value="true" checked="checked"/><label for="robustify-links-reuse">Reuse Robustifed</label></p><ul id="robustify-links-list"></ul></div><button class="robustify" title="Robustify Links" type="submit">Robustify</button></aside>`));
 
       //TODO: Move unique list of existing RL's to DO.C.Resource?
       var robustLinksUnique = {};
@@ -4696,7 +4701,7 @@ console.log(reason);
 
       var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Generate Feed', buttonTitle: 'Close', iconSize: 'fa-2x' });
 
-      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="generate-feed-label" id="generate-feed" class="do on"><h2 id="generate-feed-label">Generate Feed ${DO.C.Button.Info.GenerateFeeds}</h2>${buttonClose}<div class="info"></div></aside>`));
+      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="generate-feed-label" class="do on" id="generate-feed" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 id="generate-feed-label">Generate Feed ${DO.C.Button.Info.GenerateFeeds}</h2>${buttonClose}<div class="info"></div></aside>`));
 
       var generateFeed = document.getElementById('generate-feed');
       generateFeed.addEventListener('click', (e) => {
@@ -5060,7 +5065,7 @@ console.log(reason);
       }
 
       var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Message Log', buttonTitle: 'Close', iconSize: 'fa-2x' });
-      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="message-log-label" id="message-log" class="do on"><h2 id="message-log-label">Message Log ${DO.C.Button.Info.MessageLog}</h2>${buttonClose}<div class="info"></div><div>${messageLog}</div></aside>`));
+      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="message-log-label" class="do on" id="message-log" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 id="message-log-label">Message Log ${DO.C.Button.Info.MessageLog}</h2>${buttonClose}<div class="info"></div><div>${messageLog}</div></aside>`));
 
       document.querySelector('#message-log button.close').addEventListener('click', (e) => {
         document.querySelector('button.message-log').removeAttribute('disabled');
@@ -5075,7 +5080,7 @@ console.log(reason);
 
       var buttonClose = getButtonHTML({ key: 'dialog.delete.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
-      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="delete-document-label" id="delete-document" class="do on"><h2 data-i18n="dialog.delete.h2" id="delete-document-label">${i18next.t('dialog.delete.h2.textContent')} ${DO.C.Button.Info.Delete}</h2>${buttonClose}<div class="info"></div><div><p data-i18n="dialog.delete.confirmation.p">${i18next.t('dialog.delete.confirmation.p.textContent')}</p><p><code>${url}</code></p></div><button class="cancel" title="${i18next.t('dialog.delete.cancel.button.title')}" type="button">${i18next.t('dialog.delete.cancel.button.textContent')}</button><button class="delete" data-i18n="dialog.delete.submit.button" title="${i18next.t('dialog.delete.submit.button.title')}" type="button">${i18next.t('dialog.delete.submit.button.textContent')}</button></aside>`));
+      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="delete-document-label" class="do on" id="delete-document" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 data-i18n="dialog.delete.h2" id="delete-document-label">${i18next.t('dialog.delete.h2.textContent')} ${DO.C.Button.Info.Delete}</h2>${buttonClose}<div class="info"></div><div><p data-i18n="dialog.delete.confirmation.p">${i18next.t('dialog.delete.confirmation.p.textContent')}</p><p><code>${url}</code></p></div><button class="cancel" title="${i18next.t('dialog.delete.cancel.button.title')}" type="button">${i18next.t('dialog.delete.cancel.button.textContent')}</button><button class="delete" data-i18n="dialog.delete.submit.button" title="${i18next.t('dialog.delete.submit.button.title')}" type="button">${i18next.t('dialog.delete.submit.button.textContent')}</button></aside>`));
 
       document.querySelector('#delete-document').addEventListener('click', (e) => {
         if (e.target.closest('button.info')) { return; }
@@ -5234,7 +5239,7 @@ console.log(reason);
 
       var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Reply to Resource', buttonTitle: 'Close', iconSize: 'fa-2x' });
 
-      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="reply-to-resource-label" id="reply-to-resource" class="do on"><h2 id="reply-to-resource-label">Reply ${DO.C.Button.Info.Reply}</h2>${buttonClose}<div class="info"></div><div id="reply-to-resource-input"><p>Reply to <code>${iri}</code></p><ul><li><p><label for="reply-to-resource-note">Quick reply (plain text note)</label></p><p><textarea id="reply-to-resource-note" rows="10" cols="40" name="reply-to-resource-note" placeholder="Great article!"></textarea></p></li><li><label data-i18n="label.language" for="reply-to-resource-language">${i18next.t('label.language.textContent')}</label> <select id="reply-to-resource-language" name="reply-to-resource-language">${getLanguageOptionsHTML()}</select></li><li><label for="reply-to-resource-license">License</label> <select id="reply-to-resource-license" name="reply-to-resource-license">${getLicenseOptionsHTML()}</select></li></ul></div>`))
+      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="reply-to-resource-label" class="do on" id="reply-to-resource" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 id="reply-to-resource-label">Reply ${DO.C.Button.Info.Reply}</h2>${buttonClose}<div class="info"></div><div id="reply-to-resource-input"><p>Reply to <code>${iri}</code></p><ul><li><p><label for="reply-to-resource-note">Quick reply (plain text note)</label></p><p><textarea id="reply-to-resource-note" rows="10" cols="40" name="reply-to-resource-note" placeholder="Great article!"></textarea></p></li><li><label data-i18n="label.language" for="reply-to-resource-language">${i18next.t('label.language.textContent')}</label> <select id="reply-to-resource-language" name="reply-to-resource-language">${getLanguageOptionsHTML()}</select></li><li><label for="reply-to-resource-license">License</label> <select id="reply-to-resource-license" name="reply-to-resource-license">${getLicenseOptionsHTML()}</select></li></ul></div>`))
 
       // TODO: License
       // TODO: ACL - can choose whether to make this reply private (to self), visible only to article author(s), visible to own contacts, public
@@ -5469,7 +5474,7 @@ console.log(reason);
       var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Share Resource', buttonTitle: 'Close', iconSize: 'fa-2x' });
 
       var shareResourceHTML = `
-        <aside aria-labelledby="share-resource-label" id="share-resource" class="do on">
+        <aside aria-labelledby="share-resource-label" class="do on" id="share-resource" lang="${i18next.language}" xml:lang="${i18next.language}">
           <h2 data-i18n="dialog.share.h2" id="share-resource-label">${i18next.t('dialog.share.h2.textContent')} ${DO.C.Button.Info.Share}</h2>
 
           ${buttonClose}
@@ -7192,7 +7197,7 @@ console.log(reason);
 
       var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Resource Browser', buttonTitle: 'Close', iconSize: 'fa-2x' });
 
-      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="resource-browser-label" id="resource-browser-${id}" class="do on"><h2 id="resource-browser-label">Resource Browser</h2>${buttonClose}</aside>`));
+      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="resource-browser-label" class="do on" id="resource-browser-${id}" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 id="resource-browser-label">Resource Browser</h2>${buttonClose}</aside>`));
 
       DO.U.setupResourceBrowser(document.getElementById('resource-browser-' + id), id, action);
       document.getElementById('resource-browser-' + id).insertAdjacentHTML('beforeend', '<p><samp id="' + id + '-' + action + '"></samp></p>');
@@ -7253,7 +7258,7 @@ console.log(reason);
 
       var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Open Document', buttonTitle: 'Close', iconSize: 'fa-2x' });
 
-      document.body.insertAdjacentHTML('beforeend', `<aside aria-labelledby="open-document-label" id="open-document" class="do on"><h2 id="open-document-label">Open Document ${DO.C.Button.Info.Open}</h2>${buttonClose}<div class="info"></div><p><label for="open-local-file">Open local file</label> <input type="file" id="open-local-file" name="open-local-file" multiple="" /></p></aside>`);
+      document.body.insertAdjacentHTML('beforeend', `<aside aria-labelledby="open-document-label" class="do on" id="open-document" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 id="open-document-label">Open Document ${DO.C.Button.Info.Open}</h2>${buttonClose}<div class="info"></div><p><label for="open-local-file">Open local file</label> <input type="file" id="open-local-file" name="open-local-file" multiple="" /></p></aside>`);
 
       var id = 'location-open-document';
       var action = 'read';
@@ -7800,7 +7805,7 @@ console.log(reason);
 
       var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Save As Document', buttonTitle: 'Close', iconSize: 'fa-2x' });
 
-      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="save-as-document-label" id="save-as-document" class="do on"><h2 id="save-as-document-label">Save As ${DO.C.Button.Info.SaveAs}</h2>${buttonClose}<div class="info"></div></aside>`));
+      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="save-as-document-label" class="do on" id="save-as-document" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 id="save-as-document-label">Save As ${DO.C.Button.Info.SaveAs}</h2>${buttonClose}<div class="info"></div></aside>`));
 
       var saveAsDocument = document.getElementById('save-as-document');
       saveAsDocument.addEventListener('click', (e) => {
@@ -8224,7 +8229,7 @@ console.log(reason);
 
       var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Source View', buttonTitle: 'Close', iconSize: 'fa-2x' });
 
-      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="source-view-label" id="source-view" class="do on"><h2 id="source-view-label">Source ${DO.C.Button.Info.Source}</h2>${buttonClose}<div class="info"></div><textarea id="source-edit" rows="24" cols="80"></textarea><p><button class="update"${buttonDisabled} title="Update source" type="submit">Update</button></p></aside>`));
+      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="source-view-label" class="do on" id="source-view" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 id="source-view-label">Source ${DO.C.Button.Info.Source}</h2>${buttonClose}<div class="info"></div><textarea id="source-edit" rows="24" cols="80"></textarea><p><button class="update"${buttonDisabled} title="Update source" type="submit">Update</button></p></aside>`));
       var sourceBox = document.getElementById('source-view');
       var input = document.getElementById('source-edit');
       input.value = getDocument(null, documentOptions);
@@ -9629,7 +9634,7 @@ WHERE {\n\
       var buttonToggle = getButtonHTML({ button: 'toggle', buttonClass: 'toggle', buttonLabel: 'Show/Hide Notifications', buttonTitle: 'Show/Hide' })
 
       //TEMP buttonRel/Resource
-      var aside = `<aside aria-labelledby="document-notifications-label" class="do" contenteditable="false" id="document-notifications"><h2 id="document-notifications-label">Notifications ${DO.C.Button.Info.Notifications}</h2>${buttonToggle}<div><div class="info"></div><ul class="activities"></ul></div></aside>`;
+      var aside = `<aside aria-labelledby="document-notifications-label" class="do" contenteditable="false" id="document-notifications" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 id="document-notifications-label">Notifications ${DO.C.Button.Info.Notifications}</h2>${buttonToggle}<div><div class="info"></div><ul class="activities"></ul></div></aside>`;
       document.body.insertAdjacentHTML('beforeend', aside);
       aside = document.getElementById('document-notifications');
 
