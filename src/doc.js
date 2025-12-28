@@ -3317,12 +3317,12 @@ function getLanguageOptionsHTML(options) {
 
 function getLicenseOptionsHTML(options) {
   options = options || {};
-  var s = '', selectedIRI = '';
+  var s = [], selectedIRI = '';
 
   if ('selected' in options) {
     selectedIRI = options.selected;
     if (selectedIRI == '') {
-      s += '<option selected="selected" value="">Choose a license</option>';
+      s.push(`<option data-i18n="select.licenses.choose" selected="selected" value="">${i18next.t('select.licenses.choose.textContent')}</option>`);
     }
   }
   else if (typeof Config.User.UI.License !== 'undefined') {
@@ -3335,11 +3335,11 @@ function getLicenseOptionsHTML(options) {
   Object.keys(Config.License).forEach(iri => {
     if (iri != 'NoLicense') {
       var selected = (iri == selectedIRI) ? ' selected="selected"' : '';
-      s += '<option value="' + iri + '" title="' + Config.License[iri].description + '"' + selected + '>' + Config.License[iri].name + '</option>';
+      s.push(`<option data-i18n="select.licenses.${Config.License[iri].code}.option" value="${iri}"${selected} title="${i18next.t('select.licenses.' + Config.License[iri].code + '.option.title')}">${Config.License[iri].name}</option>`);
     }
   })
 
-  return s;
+  return s.join('');
 }
 
 function getCitationOptionsHTML(type) {
