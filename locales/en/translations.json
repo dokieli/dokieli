@@ -220,6 +220,11 @@
   "dialog.reply-to-resource.submit.button.title": "Send your reply",
   "dialog.reply-to-resource.submit.button.textContent": "Send",
 
+  "browser.create-container.button.title": "Create container (folder)",
+  "browser.create-container.button.textContent": "Create container",
+  "browser.browse-location.button.title": "Browse location",
+  "browser.browse-location.button.textContent": "Browse",
+
   "panel.notifications.more.button.title": "Show more",
   "panel.notifications.more.button.aria-label": "Show more notifications",
 

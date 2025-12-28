@@ -601,7 +601,9 @@ DO = {
                       else {
                         return DO.U.showActivities(object, o)
                           .then(iri => iri)
-                          .catch(e => console.log(object + ': object is unreachable', e));
+                          .catch(e => {
+                            // console.log(object + ': object is unreachable', e)
+                          });
                       }
                     }
                   }
@@ -7135,14 +7137,14 @@ console.log(reason);
 
       var createContainerButton = '';
       var createContainerDiv = '';
-      if  (DO.C['Session']?.isActive) {
-        createContainerButton = ' <button id="' + id + '-create-container-button' + '" title="Create container (folder)">Create container</button>';
-        createContainerDiv = '<div id="' + id + '-create-container"></div>';
+      if (DO.C['Session']?.isActive) {
+        createContainerButton = ` <button data-i18n="browser.create-container.button" id="${id}-create-container-button" title="${i18next.t('browser.create-container.button.title')}">${i18next.t('browser.create-container.button.textContent')}</button>`;
+        createContainerDiv = `<div id="${id}-create-container"></div>`;
       }
 
-      parent.insertAdjacentHTML('beforeend', '<div id="' + id + '"><label for="' + id +'-input">URL</label> <input type="text" id="' + id +'-input" name="' + id + '-input" required placeholder="https://example.org/path/to/" /><button id="' + id +'-update" disabled="disabled" title="Browse location">Browse</button>' + createContainerButton+ '</div>' + createContainerDiv + '<div id="' + id + '-listing"></div>');
+      parent.insertAdjacentHTML('beforeend', `<div id="${id}"><label for="${id}-input">URL</label> <input type="text" id="${id}-input" name="${id}-input" required placeholder="https://example.org/path/to/" /><button data-i18n="browser.browse-location.button" id="${id}-update" disabled="disabled" title="${i18next.t('browser.browse-location.button.textContent')}">${i18next.t('browser.browse-location.button.textContent')}</button>${createContainerButton}</div>${createContainerDiv}<div id="${id}-listing"></div>`);
 
-      var inputBox = document.getElementById(id);
+      // var inputBox = document.getElementById(id);
       var createContainer = document.getElementById(id + '-create-container');
       var createButton = document.getElementById(id + '-create-container-button');
       var storageBox = document.getElementById(id + '-listing');

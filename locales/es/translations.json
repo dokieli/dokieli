@@ -220,6 +220,11 @@
   "dialog.reply-to-resource.submit.button.title": "Enviar respuesta",
   "dialog.reply-to-resource.submit.button.textContent": "Enviar",
 
+  "browser.create-container.button.title": "Crear carpeta",
+  "browser.create-container.button.textContent": "Crear carpeta",
+  "browser.browse-location.button.title": "Explorar ubicación",
+  "browser.browse-location.button.textContent": "Explorar",
+
   "panel.notifications.more.button.title": "Mostrar más",
   "panel.notifications.more.button.aria-label": "Mostrar más notificaciones",
 
