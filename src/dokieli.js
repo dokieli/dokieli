@@ -5715,7 +5715,7 @@ console.log(reason);
                 })
                 .then(g => {
                   var s;
-                  if (g) {
+                  if (g && g.node) {
                     s = g.node(rdf.namedNode(accessSubject));
                   }
                   showPermissions(s, accessSubject);
@@ -5774,7 +5774,7 @@ console.log(reason);
 
     //TODO: Revisit this function and addShareResourceContactInput to generalise.
     addAccessSubjectItem: function(node, s, url) {
-      var iri = s?.term.value || url;
+      var iri = s?.term?.value || url;
       iri = domSanitize(iri);
 
       var id = encodeURIComponent(iri);
