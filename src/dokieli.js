@@ -5484,7 +5484,7 @@ console.log(reason);
           <div id="share-resource-share-url">
             <h3 data-i18n="dialog.share-resource-share-url.h3">${i18next.t('dialog.share-resource-share-url.h3.textContent')}</h3>
 
-            <label for="share-resource-clipboard">${i18next.t('dialog.share-resource-clipboard.label.textContent')}</label>
+            <label data-i18n="dialog.share-resource-clipboard.label" for="share-resource-clipboard">${i18next.t('dialog.share-resource-clipboard.label.textContent')}</label>
             <input id="share-resource-clipboard" name="share-resource-clipboard" readonly="readonly" type="text" value="${iri}" />
             ${DO.C.Button.Clipboard}
           </div>
@@ -5499,7 +5499,7 @@ console.log(reason);
               </li>
             </ul>
 
-            <label data-i18n="share-resource-note.label" for="share-resource-note">${i18next.t('dialog.share-resource-note.label.textContent')}</label>
+            <label data-i18n="dialog.share-resource-note.label" for="share-resource-note">${i18next.t('dialog.share-resource-note.label.textContent')}</label>
             <textarea data-i18n="dialog.share-resource-note.textarea" id="share-resource-note" rows="3" cols="40" name="share-resource-note" placeholder="${i18next.t('dialog.share-resource-note.textarea.placeholder')}"></textarea>
 
             <button class="share" data-i18n="dialog.share-resource-agents.button" id="share-resource-agents-button" title="${i18next.t('dialog.share-resource-agents.button.title')}" type="submit">${i18next.t('dialog.share-resource-agents.button.textContent')}</button>
