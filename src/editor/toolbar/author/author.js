@@ -337,7 +337,7 @@ nodeToHTML(node, schema) {
     // console.log(fragment)
     const { state, dispatch } = this.editorView;
     const { selection, schema } = state;
-    console.log(selection)
+    // console.log(selection)
     // parseSlice(fragment, { preserveWhitespace: true })
     let node = DOMParser.fromSchema(schema).parseSlice(fragment);
     const selText = state.doc.textBetween(selection.from, selection.to, " ");

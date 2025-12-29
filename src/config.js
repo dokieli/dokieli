@@ -83,14 +83,7 @@ export default {
   Editor: {
     headings: ["h1", "h2", "h3", "h4", "h5", "h6"],
     regexEmptyHTMLTags: /<[^\/>][^>]*><\/[^>]+>/gim,
-    mode: 'social',
-    Placeholder: {
-      h1: 'Title',
-      h2: 'Section title',
-      h3: 'Sub-section title',
-      h4: 'Sub-sub-section title',
-      p: 'Cogito, ergo sum.'
-    },
+    mode: 'social'
   },
 
   DOMProcessing: {
