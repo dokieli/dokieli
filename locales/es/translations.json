@@ -229,10 +229,14 @@
   "browser.create-container-name.button.textContent": "Crear",
   "browser.create-container-name.input.placeholder": "Mis cosas super secretas",
 
+  "panel.notifications.toggle.button.title": "Mostrar/Ocultar",
+  "panel.notifications.toggle.button.aria-label": "Mostrar/Ocultar Notificaciones",
+
   "panel.notifications.more.button.title": "Mostrar más",
   "panel.notifications.more.button.aria-label": "Mostrar más notificaciones",
   "panel.notifications.progress.checking.textContent": "Comprobando actividades",
   "panel.notifications.progress.more.textContent": "Ver más interacciones con este documento",
+  "panel.notifications.h1.textContent": "Notificaciones",
 
   "label.language.textContent": "Idioma",
   "select.languages.choose.textContent": "Elija un idioma",

@@ -9669,15 +9669,15 @@ WHERE {\n\
     },
 
     initializeNotifications: function(options = {}) {
-      var contextNode = selectArticleNode(document);
+      // var contextNode = selectArticleNode(document);
       // <p class="count"><data about="" datatype="xsd:nonNegativeInteger" property="sioc:num_replies" value="' + interactionsCount + '">' + interactionsCount + '</data> interactions</p>
       //<progress min="0" max="100" value="0"></progress>
       //<div class="actions"><a href="/docs#resource-activities" rel="noopener" target="_blank">${Icon[".fas.fa-circle-info"]}</a></div>
 
-      var buttonToggle = getButtonHTML({ button: 'toggle', buttonClass: 'toggle', buttonLabel: 'Show/Hide Notifications', buttonTitle: 'Show/Hide' })
+      var buttonToggle = getButtonHTML({ key: 'panel.notifications.toggle.button', button: 'toggle', buttonClass: 'toggle' })
 
       //TEMP buttonRel/Resource
-      var aside = `<aside aria-labelledby="document-notifications-label" class="do" contenteditable="false" id="document-notifications" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 id="document-notifications-label">Notifications ${DO.C.Button.Info.Notifications}</h2>${buttonToggle}<div><div class="info"></div><ul class="activities"></ul></div></aside>`;
+      var aside = `<aside aria-labelledby="document-notifications-label" class="do" contenteditable="false" id="document-notifications" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 data-i18n="panel.notifications.h2" id="document-notifications-label">${i18next.t('panel.notifications.h2.textContent')} ${DO.C.Button.Info.Notifications}</h2>${buttonToggle}<div><div class="info"></div><ul class="activities"></ul></div></aside>`;
       document.body.insertAdjacentHTML('beforeend', aside);
       aside = document.getElementById('document-notifications');
 
