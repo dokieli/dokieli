@@ -220,10 +220,15 @@
   "dialog.reply-to-resource.submit.button.title": "Enviar respuesta",
   "dialog.reply-to-resource.submit.button.textContent": "Enviar",
 
-  "browser.create-container.button.title": "Crear carpeta",
-  "browser.create-container.button.textContent": "Crear carpeta",
   "browser.browse-location.button.title": "Explorar ubicación",
   "browser.browse-location.button.textContent": "Explorar",
+  "browser.create-container.button.title": "Crear carpeta",
+  "browser.create-container.button.textContent": "Crear carpeta",
+  "browser.create-container-name.label.textContent": "TODO:-i18n: Container name",
+  "browser.create-container-name.button.title": "TODO-i18n: Create container with this name",
+  "browser.create-container-name.button.textContent": "TODO-i18n: Create",
+  "browser.create-container-name.input.placeholder": "TODO-i18n: My Secret Stuff",
+
 
   "panel.notifications.more.button.title": "Mostrar más",
   "panel.notifications.more.button.aria-label": "Mostrar más notificaciones",

@@ -7013,7 +7013,7 @@ console.log(reason);
         div.replaceChildren();
       }
 
-      div.insertAdjacentHTML('beforeend', '<label for="' + id + '-create-container-name">Container Name</label> <input id="' + id + '-create-container-name" name="' + id + '-create-container-name" type="text" placeholder="My Secret Stuff" /> <button class="insert" disabled="disabled" type="button">Create</button>');
+      div.insertAdjacentHTML('beforeend', `<label data-18n="browser.create-container-name.label" for="${id}-create-container-name">${i18next.t('browser.create-container-name.label.textContent')}</label> <input data-i18n="browser.create-container-name.input" id="${id}-create-container-name" name="${id}-create-container-name" type="text" placeholder="${i18next.t('browser.create-container-name.input.placeholder')}" /> <button class="insert" data-i18n="browser.create-container-name.button" disabled="disabled" title="${i18next.t('browser.create-container-name.button.title')}" type="button">${i18next.t('browser.create-container-name.button.textContent')}</button>`);
 
       var label = div.querySelector('label');
       var input = div.querySelector('input');
