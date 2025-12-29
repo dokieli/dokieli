@@ -220,10 +220,14 @@
   "dialog.reply-to-resource.submit.button.title": "Send your reply",
   "dialog.reply-to-resource.submit.button.textContent": "Send",
 
-  "browser.create-container.button.title": "Create container (folder)",
-  "browser.create-container.button.textContent": "Create container",
   "browser.browse-location.button.title": "Browse location",
   "browser.browse-location.button.textContent": "Browse",
+  "browser.create-container.button.title": "Create container (folder)",
+  "browser.create-container.button.textContent": "Create container",
+  "browser.create-container-name.label.textContent": "Container name",
+  "browser.create-container-name.button.title": "Create container with this name",
+  "browser.create-container-name.button.textContent": "Create",
+  "browser.create-container-name.input.placeholder": "My Secret Stuff",
 
   "panel.notifications.more.button.title": "Show more",
   "panel.notifications.more.button.aria-label": "Show more notifications",
