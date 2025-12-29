@@ -2571,7 +2571,6 @@ border-color: transparent transparent transparent #009000 !important;
   display: flex;
   align-content: center;
   flex-wrap: wrap;
-  /* font-size: 0.7em; */
 }
 .editor-form fieldset button {
   justify-self: end;
@@ -3133,8 +3132,6 @@ vertical-align:top;
 }
 
 .editor-form label[for^="ref-"],
-.editor-form label[for^="annotation-location-"],
-.editor-form label[for^="annotation-inbox"],
 .editor-form label[for^="bookmark-"] {
 width:auto;
 font-size:1em;
