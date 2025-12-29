@@ -205,7 +205,7 @@ DO = {
       var showProgress = function() {
         var info = aside.querySelector('div.info');
         var progressOld = info.querySelector('.progress');
-        var progressNew = fragmentFromString(`<div class="progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"].replace(' fa-fw', '')} Checking activities</div>`);
+        var progressNew = fragmentFromString(`<div class="progress" data-i18n="panel.notifications.progress.checking">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"].replace(' fa-fw', '')} ${i18next.t('panel.notifications.progress.checking.textContent')}</div>`);
 
         if (progressOld) {
           info.replaceChild(progressNew, progressOld)
@@ -7050,7 +7050,7 @@ console.log(reason);
             DO.U.triggerBrowse(containerURL, id, action);
           },
           function(reason) {
-            var main = '<article about=""><dl id="document-title"><dt>Title</dt><dd property="dcterms:title">' + containerLabel + '</dd></dl></article>';
+            var main = `      <article about=""><dl id="document-title"><dt>Title</dt><dd property="dcterms:title">${containerLabel}</dd></dl></article>`;
             var o = {
               'omitLang': true,
               'prefixes': {
@@ -9646,7 +9646,7 @@ WHERE {\n\
     initializeButtonMore: function(node) {
       var info = node.querySelector('div.info');
       var progressOld = info.querySelector('.progress');
-      var progressNew = fragmentFromString('<div class="progress">' + DO.C.Button.Notifications.More + ' See more interactions with this document</div>');
+      var progressNew = fragmentFromString(`<div class="progress" data-i18n="panel.notifications.progress.more">${DO.C.Button.Notifications.More} ${i18next.t('panel.notifications.progress.more.textContent')}</div>`);
 
       if (progressOld) {
         info.replaceChild(progressNew, progressOld)
