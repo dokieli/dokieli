@@ -172,6 +172,13 @@
 
   "menu.ui-language-select.label.textContent": "Cambiar idioma",
 
+  "editor.new.h1.data-placeholder": "Título",
+  "editor.new.h2.data-placeholder": "Título de la sección",
+  "editor.new.h3.data-placeholder": "Título de la subsección",
+  "editor.new.h4.data-placeholder": "Título de la sub-subsección",
+  "editor.new.p.data-placeholder": "Cogito, ergo sum",
+  "editor.new.p.aria-label": "Agregue un título",
+
   "dialog.signin.h2.textContent": "Iniciar sesión",
   "dialog.signin.close.button.title": "Cerrar",
   "dialog.signin.close.button.aria-label": "Cerrar Iniciar sesión",
@@ -236,7 +243,7 @@
   "panel.notifications.more.button.aria-label": "Mostrar más notificaciones",
   "panel.notifications.progress.checking.textContent": "Comprobando actividades",
   "panel.notifications.progress.more.textContent": "Ver más interacciones con este documento",
-  "panel.notifications.h1.textContent": "Notificaciones",
+  "panel.notifications.h2.textContent": "Notificaciones",
 
   "label.language.textContent": "Idioma",
   "select.languages.choose.textContent": "Elija un idioma",
