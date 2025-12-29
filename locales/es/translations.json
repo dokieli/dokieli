@@ -224,11 +224,10 @@
   "browser.browse-location.button.textContent": "Explorar",
   "browser.create-container.button.title": "Crear carpeta",
   "browser.create-container.button.textContent": "Crear carpeta",
-  "browser.create-container-name.label.textContent": "TODO:-i18n: Container name",
-  "browser.create-container-name.button.title": "TODO-i18n: Create container with this name",
-  "browser.create-container-name.button.textContent": "TODO-i18n: Create",
-  "browser.create-container-name.input.placeholder": "TODO-i18n: My Secret Stuff",
-
+  "browser.create-container-name.label.textContent": "Nombre de la carpeta",
+  "browser.create-container-name.button.title": "Crear carpeta con este nombre",
+  "browser.create-container-name.button.textContent": "Crear",
+  "browser.create-container-name.input.placeholder": "Mis cosas super secretas",
 
   "panel.notifications.more.button.title": "Mostrar más",
   "panel.notifications.more.button.aria-label": "Mostrar más notificaciones",
