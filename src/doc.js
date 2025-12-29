@@ -3209,7 +3209,7 @@ function getAnnotationInboxLocationHTML(action) {
     if (Config.User.UI && Config.User.UI['annotationInboxLocation'] && Config.User.UI.annotationInboxLocation['checked']) {
       checked = ' checked="checked"';
     }
-    s = `<input type="checkbox" id="${action}-annotation-inbox" name="${action}-annotation-inbox"${checked} /><label for="annotation-inbox">Inbox</label>`;
+    s = `<input type="checkbox" id="${action}-annotation-inbox" name="${action}-annotation-inbox"${checked} /><label for="${action}-annotation-inbox">Inbox</label>`;
   }
 
   return s;
@@ -3228,7 +3228,7 @@ function getAnnotationLocationHTML(action) {
       checked = ' checked="checked" disabled="disabled"';
     }
 
-    inputs.push(`<input type="checkbox" id="${action}-annotation-location-service" name="${action}-annotation-location-service"${checked} /><label for="annotation-location-service">Annotation service</label>`);
+    inputs.push(`<input type="checkbox" id="${action}-annotation-location-service" name="${action}-annotation-location-service"${checked} /><label for="${action}-annotation-location-service">Annotation service</label>`);
   }
 
   checked = ' checked="checked"';
@@ -3238,7 +3238,7 @@ function getAnnotationLocationHTML(action) {
       checked = '';
     }
 
-    inputs.push(`<input type="checkbox" id="${action}-annotation-location-personal-storage" name="${action}-annotation-location-personal-storage"${checked} /><label for="annotation-location-personal-storage">Personal storage</label>`);
+    inputs.push(`<input type="checkbox" id="${action}-annotation-location-personal-storage" name="${action}-annotation-location-personal-storage"${checked} /><label for="${action}-annotation-location-personal-storage">Personal storage</label>`);
   }
 
   s = 'Store at: ' + inputs.join('');
