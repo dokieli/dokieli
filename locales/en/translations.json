@@ -231,6 +231,8 @@
 
   "panel.notifications.more.button.title": "Show more",
   "panel.notifications.more.button.aria-label": "Show more notifications",
+  "panel.notifications.progress.checking.textContent": "Checking activities",
+  "panel.notifications.progress.more.textContent": "See more interactions with this document",
 
   "label.language.textContent": "Language",
   "select.languages.choose.option.textContent": "Choose a language",

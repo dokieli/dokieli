@@ -231,6 +231,8 @@
 
   "panel.notifications.more.button.title": "Mostrar más",
   "panel.notifications.more.button.aria-label": "Mostrar más notificaciones",
+  "panel.notifications.progress.checking.textContent": "Comprobando actividades",
+  "panel.notifications.progress.more.textContent": "Ver más interacciones con este documento",
 
   "label.language.textContent": "Idioma",
   "select.languages.choose.textContent": "Elija un idioma",
