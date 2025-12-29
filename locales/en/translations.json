@@ -227,6 +227,14 @@
   "dialog.reply-to-resource.submit.button.title": "Send your reply",
   "dialog.reply-to-resource.submit.button.textContent": "Send",
 
+  "dialog.open-document.close.button.title": "Close",
+  "dialog.open-document.close.button.aria-label": "Close Open Document",
+  "dialog.open-document.h2.textContent": "Open Document",
+  "dialog.open-document.open-local-file.label.textContent": "Open local file",
+  "dialog.open-document.open.button.textContent": "Open",
+  "dialog.open-document.open.button.title": "Open",
+  "dialog.open-document.open.button.aria-label": "Open document",
+
   "browser.browse-location.button.title": "Browse location",
   "browser.browse-location.button.textContent": "Browse",
   "browser.create-container.button.title": "Create container (folder)",
