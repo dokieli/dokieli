@@ -7299,9 +7299,9 @@ console.log(reason);
         e.target.disabled = true;
       }
 
-      var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Open Document', buttonTitle: 'Close', iconSize: 'fa-2x' });
+      var buttonClose = getButtonHTML({ key: 'dialog.open-document.close', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
-      document.body.insertAdjacentHTML('beforeend', `<aside aria-labelledby="open-document-label" class="do on" id="open-document" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 id="open-document-label">Open Document ${DO.C.Button.Info.Open}</h2>${buttonClose}<div class="info"></div><p><label for="open-local-file">Open local file</label> <input type="file" id="open-local-file" name="open-local-file" multiple="" /></p></aside>`);
+      document.body.insertAdjacentHTML('beforeend', `<aside aria-labelledby="open-document-label" class="do on" id="open-document" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 data-i18n="dialog.open-document.h2" id="open-document-label">${i18next.t('dialog.open-document.h2.textContent')} ${DO.C.Button.Info.Open}</h2>${buttonClose}<div class="info"></div><p><label for="open-local-file">${i18next.t('dialog.open-document.open-local-file.label.textContent')}</label> <input type="file" id="open-local-file" name="open-local-file" multiple="" /></p></aside>`);
 
       var id = 'location-open-document';
       var action = 'read';
@@ -7309,7 +7309,7 @@ console.log(reason);
       var openDocument = document.getElementById('open-document');
       DO.U.setupResourceBrowser(openDocument , id, action);
       var idSamp = (typeof DO.C.User.Storage == 'undefined') ? '' : '<p><samp id="' + id + '-' + action + '">https://example.org/path/to/article</samp></p>';
-      openDocument.insertAdjacentHTML('beforeend', idSamp + '<button class="open" title="Open document" type="submit">Open</button>');
+      openDocument.insertAdjacentHTML('beforeend', `${idSamp}<button class="open" data-i18n="dialog.open-document.open.button" title="${i18next.t('dialog.open-document.open.button.title')}" type="submit">${i18next.t('dialog.open-document.open.button.textContent')}</button>`);
 
       openDocument.addEventListener('click', function (e) {
         if (e.target.closest('button.close')) {
