@@ -6959,11 +6959,17 @@ console.log(reason);
         });
 
       browseButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
         DO.U.triggerBrowse(input.value, id, action);
       }, false);
 
       if (Config['Session']?.isActive) {
         createButton.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
           DO.U.showCreateContainer(input.value, id, action, e);
         }, false);
       }
