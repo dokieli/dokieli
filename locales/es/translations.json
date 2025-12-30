@@ -172,6 +172,19 @@
 
   "menu.ui-language-select.label.textContent": "Cambiar idioma",
 
+  "editor.new.h1.data-placeholder": "Título",
+  "editor.new.h2.data-placeholder": "Título de la sección",
+  "editor.new.h3.data-placeholder": "Título de la subsección",
+  "editor.new.h4.data-placeholder": "Título de la sub-subsección",
+  "editor.new.p.data-placeholder": "Cogito, ergo sum",
+  "editor.new.p.aria-label": "Agregue un título",
+
+  "editor.toolbar.approve.fieldset.legend.textContent": "Aprobar",
+  "editor.toolbar.disapprove.fieldset.legend.textContent": "Desaprobar",
+  "editor.toolbar.specificity.fieldset.legend.textContent": "Especificidad",
+  "editor.toolbar.bookmark.fieldset.legend.textContent": "Agregar marcador",
+  "editor.toolbar.comment.fieldset.legend.textContent": "Comentar",
+
   "dialog.feed-format.label.textContent": "Formato",
   "dialog.base-url-selection.label.textContent": "Ubicación de recursos multimedia",
   "dialog.base-url-relative.option.textContent": "Copiar a su almacenamiento",
@@ -186,19 +199,6 @@
   "dialog.notification-subscriptions.topic.dt.textContent": "Tema",
   "dialog.notification-subscriptions.channel-type.dt.textContent": "Tipo de canal",
   "dialog.notification-subscriptions.features.dt.textContent": "Características",
-
-  "editor.new.h1.data-placeholder": "Título",
-  "editor.new.h2.data-placeholder": "Título de la sección",
-  "editor.new.h3.data-placeholder": "Título de la subsección",
-  "editor.new.h4.data-placeholder": "Título de la sub-subsección",
-  "editor.new.p.data-placeholder": "Cogito, ergo sum",
-  "editor.new.p.aria-label": "Agregue un título",
-
-  "editor.toolbar.approve.fieldset.legend.textContent": "Aprobar",
-  "editor.toolbar.disapprove.fieldset.legend.textContent": "Desaprobar",
-  "editor.toolbar.specificity.fieldset.legend.textContent": "Especificidad",
-  "editor.toolbar.bookmark.fieldset.legend.textContent": "Agregar marcador",
-  "editor.toolbar.comment.fieldset.legend.textContent": "Comentar",
 
   "dialog.signin.h2.textContent": "Iniciar sesión",
   "dialog.signin.close.button.title": "Cerrar",
