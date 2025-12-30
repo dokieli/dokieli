@@ -82,6 +82,8 @@
   "annotation.delete.button.title": "Delete",
   "annotation.delete.button.aria-label": "Delete annotation",
 
+  "annotation-location-selection.store-at.span.textContent": "Store at:",
+
   "menu.open.button.title": "Open menu",
   "menu.close.button.title": "Close menu",
   "menu.resource-open.button.title": "Open article",
@@ -104,6 +106,8 @@
   "info.share.button.title": "About Share",
   "info.signin.button.title": "About Sign in",
   "info.source.button.title": "About Source",
+
+  "info.required.textContent": "Required",
 
   "menu.delete.button.title": "Delete article",
   "menu.delete.button.textContent": "Delete",
@@ -176,14 +180,34 @@
   "editor.new.h2.data-placeholder": "Section title",
   "editor.new.h3.data-placeholder": "Sub-section title",
   "editor.new.h4.data-placeholder": "Sub-sub-section title",
-  "editor.new.p.data-placeholder": "Cogito, ergo sum",
+  "editor.new.p.data-placeholder": "Cogito, ergo sum.",
   "editor.new.p.aria-label": "Add a title",
 
-  "editor.toolbar.approve.fieldset.legend.textContent": "Approve",
-  "editor.toolbar.disapprove.fieldset.legend.textContent": "Disapprove",
-  "editor.toolbar.specificity.fieldset.legend.textContent": "Specificity",
-  "editor.toolbar.bookmark.fieldset.legend.textContent": "Bookmark",
-  "editor.toolbar.comment.fieldset.legend.textContent": "Comment",
+  "editor.toolbar.approve.form.legend.textContent": "Approve",
+  "editor.toolbar.disapprove.form.legend.textContent": "Disapprove",
+  "editor.toolbar.specificity.form.legend.textContent": "Specificity",
+  "editor.toolbar.bookmark.form.legend.textContent": "Bookmark",
+  "editor.toolbar.comment.form.legend.textContent": "Comment",
+  "editor.toolbar.note.form.legend.textContent": "Add a note",
+  "editor.toolbar.a.form.legend.textContent": "Add a link",
+  "editor.toolbar.blockquote.form.legend.textContent": "Add the source of the blockquote",
+  "editor.toolbar.q.form.legend.textContent": "Add the source of the quote",
+  "editor.toolbar.img.form.legend.textContent": "Add an image with a description",
+  "editor.toolbar.citation.form.legend.textContent": "Add a citation",
+  "editor.toolbar.semantics.form.legend.textContent": "Add semantics",
+
+  "editor.toolbar.note.form.label.textContent": "Note",
+  "editor.toolbar.approve.form.textarea.placeholder": "Strong point or a convincing argument.",
+  "editor.toolbar.disapprove.form.textarea.placeholder": "Weak point, an error, or inaccurate.",
+  "editor.toolbar.specificity.form.textarea.placeholder": "Citation or specificity is needed.",
+  "editor.toolbar.bookmark.form.textarea.placeholder": "For future reference…",
+  "editor.toolbar.comment.form.textarea.placeholder": "What do you think?",
+  "editor.toolbar.note.form.textarea.placeholder": "Explain or expand this.",
+  "editor.toolbar.citation.form.textarea.placeholder": "This explains everything.",
+
+  "editor.toolbar.form.post.button.textContent": "Post",
+  "editor.toolbar.form.save.button.textContent": "Save",
+  "editor.toolbar.form.cancel.button.textContent": "Cancel",
 
   "dialog.feed-format.label.textContent": "Format",
   "dialog.base-url-selection.label.textContent": "Location of media resources",
@@ -263,14 +287,6 @@
   "dialog.save-as-document.article-inbox.p.textContent": "Article's inbox will be set to:",
   "dialog.save-as-document.set-annotation-service.label.textContent": "Set Annotation Service",
   "dialog.save-as-document.article-annotation-service.p.textContent": "Article's annotation service will be set to:",
-
-  "dialog.accessibility-report.image-failed.li.innerHTML": "Fail: Images (<code>img</code>) without alternative text (<code>alt</code>).",
-  "dialog.accessibility-report.image-cant-tell.li.innerHTML": "Can't Tell: Images (<code>img</code>) without a non-empty alternative text (<code>alt</code>).",
-  "dialog.accessibility-report.video-failed.li.innerHTML": "Fail: Videos (<code>video</code>) without external timed text tracks (<code>track</code> or <code>track</code> with <code>kind</code> of text track.)",
-  "dialog.accessibility-report.audio-failed.li.innerHTML": "Fail: Audios (<code>audio</code>) without external timed text tracks (<code>track</code> or <code>track</code> with <code>kind</code> of text track.)",
-  "dialog.accessibility-report.warning.p.textContent": "This document contains some content, e.g., images, videos, audio, that is not accompanied with alternative text or an alternative text field without information. End users with disabilities will likely experience difficulty accessing the content. Please consider adding alternative text before continuing:",
-  "dialog.accessibility-report.success.p.textContent": "All content in this document includes alternative text. End users with disabilities will likely have a good experience with this document.",
-  "dialog.accessibility-report.summary.textContent": "Accessibility Report",
   "dialog.save-as-document.derivation-data.label.textContent": "Derivation data",
   "dialog.save-as-document.save-to.legend.textContent": "Save to",
   "dialog.save-as-document.save-location.p.textContent": "Article will be saved at:",
@@ -281,6 +297,14 @@
   "dialog.save-as-document.request-access.button.title": "Send an access request to resource inbox.",
   "dialog.save-as-document.request-access.button.textContent": "Request Access",
   "dialog.save-as-document.request-access.not-notified.span.textContent": "Unable to notify. Try later.",
+
+  "dialog.accessibility-report.image-failed.li.innerHTML": "Fail: Images (<code>img</code>) without alternative text (<code>alt</code>).",
+  "dialog.accessibility-report.image-cant-tell.li.innerHTML": "Can't Tell: Images (<code>img</code>) without a non-empty alternative text (<code>alt</code>).",
+  "dialog.accessibility-report.video-failed.li.innerHTML": "Fail: Videos (<code>video</code>) without external timed text tracks (<code>track</code> or <code>track</code> with <code>kind</code> of text track.)",
+  "dialog.accessibility-report.audio-failed.li.innerHTML": "Fail: Audios (<code>audio</code>) without external timed text tracks (<code>track</code> or <code>track</code> with <code>kind</code> of text track.)",
+  "dialog.accessibility-report.warning.p.textContent": "This document contains some content, e.g., images, videos, audio, that is not accompanied with alternative text or an alternative text field without information. End users with disabilities will likely experience difficulty accessing the content. Please consider adding alternative text before continuing:",
+  "dialog.accessibility-report.success.p.textContent": "All content in this document includes alternative text. End users with disabilities will likely have a good experience with this document.",
+  "dialog.accessibility-report.summary.textContent": "Accessibility Report",
 
   "browser.browse-location.button.title": "Browse location",
   "browser.browse-location.button.textContent": "Browse",
@@ -300,16 +324,23 @@
   "panel.notifications.progress.more.textContent": "See more interactions with this document",
   "panel.notifications.h2.textContent": "Notifications",
 
-  "label.language.textContent": "Language",
-  "select.languages.choose.option.textContent": "Choose a language",
+  "annotation-inbox.label.textContent": "Inbox",
+  "annotation-location.personal-storage.label.textContent": "Personal storage",
+  "annotation-location.annotation-service.label.textContent": "Annotation service",
 
-  "label.license.textContent": "License",
-  "select.licenses.choose.option.textContent": "Choose a licence",
-  "select.licenses.cc0-1.0.option.title": "Creative Commons CC0 1.0 Universal",
-  "select.licenses.cc-by-4.0.option.title": "Creative Commons Attribution 4.0 International",
-  "select.licenses.cc-by-sa-4.0.option.title": "Creative Commons Attribution-ShareAlike 4.0 International",
-  "select.licenses.cc-by-nc-4.0.option.title": "Creative Commons Attribution-NonCommercial 4.0 International",
-  "select.licenses.cc-by-nd-4.0.option.title": "Creative Commons Attribution-NoDerivatives 4.0 International",
-  "select.licenses.cc-by-nc-sa-4.0.option.title": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International",
-  "select.licenses.cc-by-nc-nd-4.0.option.title": "Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International"
+  "tags.label.textContent": "Tags",
+  "tags.input.placeholder": "Separate tags with commas",
+
+  "language.label.textContent": "Language",
+  "language.choose.option.textContent": "Choose a language",
+
+  "license.label.textContent": "License",
+  "license.choose.option.textContent": "Choose a licence",
+  "license.cc0-1.0.option.title": "Creative Commons CC0 1.0 Universal",
+  "license.cc-by-4.0.option.title": "Creative Commons Attribution 4.0 International",
+  "license.cc-by-sa-4.0.option.title": "Creative Commons Attribution-ShareAlike 4.0 International",
+  "license.cc-by-nc-4.0.option.title": "Creative Commons Attribution-NonCommercial 4.0 International",
+  "license.cc-by-nd-4.0.option.title": "Creative Commons Attribution-NoDerivatives 4.0 International",
+  "license.cc-by-nc-sa-4.0.option.title": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International",
+  "license.cc-by-nc-nd-4.0.option.title": "Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International"
 }

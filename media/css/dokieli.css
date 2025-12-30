@@ -3332,7 +3332,11 @@ h1 + div p:first-child {
       line-height: 1.33;
       margin: 0;
       padding: 15px;
-      text-decoration: none; }
+      text-decoration: none;
+      span {
+        font-size:1.25em;
+      }
+    }
       .editor-toolbar .editor-form-actions li button:focus {
         outline: none; }
     .editor-toolbar .editor-form-actions li .editor-action-underline {

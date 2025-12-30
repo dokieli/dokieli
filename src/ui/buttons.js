@@ -94,13 +94,13 @@ export function getButtonHTML({
   const titleContent = i18n.t(`${key}.title`) === `${key}.title` ? button : i18n.t(`${key}.title`);
   const title = ` title="${titleContent}"`;
   // const textContent = buttonTextContent || buttonIcons[button]?.textContent;
-  const textContent = i18n.t(`${key}.textContent`) === `${key}.textContent` ? null : i18n.t(`${key}.textContent`);
+  let textContent = i18n.t(`${key}.textContent`) === `${key}.textContent` ? null : i18n.t(`${key}.textContent`);
+  //Override textContent, useful for non-translations
+  textContent = buttonIcons[button].textContent ? buttonIcons[button].textContent : textContent;
   // const label = buttonLabel || titleContent;
   const label = i18n.t(`${key}.aria-label`) === `${key}.aria-label` ? null : i18n.t(`${key}.aria-label`);
   const ariaLabel = (label && !textContent) ? ` aria-label="${label}"` : '';
-  // console.log(i18n.t(`${key}.textContent`), `${key}.textContent`)
-  // console.log(i18n.t(`${key}.aria-label`), `${key}.aria-label`)
-  // console.log(label, !textContent)
+
   const className = buttonClass ? ` class="${buttonClass}"` : '';
   const disabled = buttonDisabled ? ` disabled=""` : '';
   let icon = buttonIcons[button]?.icon;
