@@ -27,6 +27,7 @@ export function i18nextInit() {
 
 export const i18n = {
   ...i18next,
+  language: () => i18next.language,
   t: function (key, vars = {}) {
     if (key.endsWith('.innerHTML')) {
       return domSanitize(i18next.t(key, vars));
