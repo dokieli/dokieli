@@ -6268,8 +6268,9 @@ console.log(reason);
               DO.U.subscribeToNotificationChannel(subscription, data)
               .then(i => {
                 if (DO.C.Subscription[data.topic] && 'Connection' in DO.C.Subscription[data.topic]) {
-                  button.textContent = 'Unsubscribe';
+                  button.textContent = i18n.t('dialog.notification-subscriptions.unsubscribe.button.textContent');
                   button.setAttribute('class', 'unsubscribe');
+                  button.setAttribute('data-i18n', 'dialog.notification-subscriptions.unsubscribe.button');
                 }
               }).catch(e => {
                 console.log(e);
@@ -6278,8 +6279,9 @@ console.log(reason);
             else {
               DO.C.Subscription[topicResource].Connection.close();
               DO.C.Subscription[topicResource] = {};
-              button.textContent = 'Subscribe';
+              button.textContent = i18n.t('dialog.notification-subscriptions.subscribe.button.textContent');
               button.setAttribute('class', 'subscribe');
+              button.setAttribute('data-i18n', 'dialog.notification-subscriptions.subscribe.button');
             }
           }
         });
@@ -6309,7 +6311,7 @@ console.log(reason);
             if (sD) {
               sD.replaceChildren();
             }
-            samp.insertAdjacentHTML('afterend', '<details id="' + id + '-storage-description-details"><summary>Storage details</summary></details>');
+            samp.insertAdjacentHTML('afterend', `<details id="${id}-storage-description-details"><summary data-i18n="dialog.storage-details.summary">${i18n.t('dialog.storage-details.summary.textContent')}</summary></details>`);
 
             sD = document.getElementById(id + '-storage-description-details');
 
@@ -6318,7 +6320,7 @@ console.log(reason);
                 var storageDescriptionNode = document.getElementById(id + '-storage-description');
 
                 if (!storageDescriptionNode) {
-                  var storageLocation = '<dl id="storage-location"><dt>Storage location</dt><dd><a href="' + storageUrl +'" rel="noopener" target="_blank">' + storageUrl + '</a></dd></dl>';
+                  var storageLocation = `<dl id="storage-location"><dt data-i18n="dialog.storage-location.dt">${i18n.t('dialog.storage-location.dt.textContent')}</dt><dd><a href="${storageUrl}" rel="noopener" target="_blank">${storageUrl}</a></dd></dl>`;
 
                   getResourceGraph(sDURL).then(g => {
                     if (g) {
@@ -6583,7 +6585,7 @@ console.log(reason);
       var nSHTML = [];
 
       if (notificationSubscriptions) {
-        nSHTML.push('<dl id="notification-subscriptions-' + subjectURI + '"><dt>Notification Subscriptions</dt>');
+        nSHTML.push(`<dl id="notification-subscriptions-${subjectURI}"><dt data-i18n="dialog.notification-subscriptions.dt">${i18n.t('dialog.notification-subscriptions.dt.textContent')}</dt>`);
 
         notificationSubscriptions.forEach(subscription => {
           var nS = g.node(rdf.namedNode(subscription));
@@ -6594,32 +6596,34 @@ console.log(reason);
           DO.C.Resource[subjectURI]['subscription'][subscription]['channelType'] = channelType;
           DO.C.Resource[subjectURI]['subscription'][subscription]['feature'] = features;
 
-          var buttonSubscribe = 'Subscribe';
+          var buttonSubscribe = i18n.t('dialog.notification-subscriptions.subscribe.button.textContent');
+          var buttonDataI18n = 'dialog.notification-subscriptions.subscribe.button';
           var buttonSubscribeClass = 'subscribe';
 
           var topicResource = subjectURI;
 
           if (DO.C.Subscription[topicResource] && DO.C.Subscription[topicResource].Connection) {
-            buttonSubscribe = 'Unsubscribe';
+            buttonSubscribe = i18n.t('dialog.notification-subscriptions.unsubscribe.button.textContent');
+            buttonDataI18n = 'dialog.notification-subscriptions.unsubscribe.button';
             buttonSubscribeClass = 'unsubscribe';
           }
 
-          nSHTML.push('<dd id="notification-subscription-' + subscription + '"><details><summary><a href="' + subscription + '" rel="noopener" target="_blank">' + subscription + '</a></summary>');
-          nSHTML.push('<dl rel="notify:subscription" resource="' + subscription + '">');
+          nSHTML.push(`<dd id="notification-subscription-${subscription}"><details><summary><a href="${subscription}" rel="noopener" target="_blank">${subscription}</a></summary>`);
+          nSHTML.push(`<dl rel="notify:subscription" resource="${subscription}">`);
           // nSHTML.push('<dt>Subscription</dt><dd><a href="' + subscription + '" rel="noopener" target="_blank">' + subscription + '</a></dd>');
 
           var topic = subjectURI;
 
           if (topic) {
-            nSHTML.push('<dt>Topic</dt><dd><a href="' + topic + '" rel="notify:topic nopener" target="_blank">' + topic + '</a> <button id="notification-subscription-' + subscription + '-button"' + ' class="' + buttonSubscribeClass + '">' + buttonSubscribe + '</button></dd>');
+            nSHTML.push(`<dt data-i18n="dialog.notification-subscriptions.topic">${i18n.t('dialog.notification-subscriptions.topic.dt.textContent')}</dt><dd><a href="${topic}" rel="notify:topic nopener" target="_blank">${topic}</a> <button data-i18n="${buttonDataI18n}" id="notification-subscription-${subscription}-button" class="${buttonSubscribeClass}">${buttonSubscribe}</button></dd>`);
           }
 
           if (channelType) {
-            nSHTML.push('<dt>Channel Type</dt><dd><a href="' + channelType + '" rel="notify:channelType noopener" target="_blank">' + channelType + '</a></dd>');
+            nSHTML.push(`<dt data-i18n="dialog.notification-subscriptions.channel-type">${i18n.t('dialog.notification-subscriptions.channel-type.dt.textContent')}</dt><dd><a href="${channelType}" rel="notify:channelType noopener" target="_blank">${channelType}</a></dd>`);
           }
 
           if (features) {
-            nSHTML.push('<dt>Features</dt><dd><ul rel="notify:feature">');
+            nSHTML.push(`<dt data-i18n="dialog.notification-subscriptions.features">${i18n.t('dialog.notification-subscriptions.features.dt.textContent')}</dt><dd><ul rel="notify:feature">`);
 
             var nF = [];
 

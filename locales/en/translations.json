@@ -190,6 +190,15 @@
   "dialog.base-url-relative.option.textContent": "Copy to your storage",
   "dialog.base-url-absolute.option.textContent": "Use references as is",
 
+  "dialog.storage-details.summary.textContent": "Storage details",
+  "dialog.storage-location.dt.textContent": "Storage location",
+
+  "dialog.notification-subscriptions.dt.textContent": "Notification Subscriptions",
+  "dialog.notification-subscriptions.subscribe.button.textContent": "Subscribe",
+  "dialog.notification-subscriptions.unsubscribe.button.textContent": "Unsubscribe",
+  "dialog.notification-subscriptions.topic.dt.textContent": "Topic",
+  "dialog.notification-subscriptions.channel-type.dt.textContent": "Channel Type",
+  "dialog.notification-subscriptions.features.dt.textContent": "Features",
 
   "dialog.signin.h2.textContent": "Sign in",
   "dialog.signin.close.button.title": "Close",
