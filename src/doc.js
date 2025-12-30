@@ -1,15 +1,7 @@
-
-
-
-
-
-
-
-
 import Config from './config.js'
-import { getDateTimeISO, fragmentFromString, generateAttributeId, uniqueArray, generateUUID, matchAllIndex, parseISODuration, getRandomIndex, getHash, fixDoubleEscapedEntities, stringFromFragment } from './util.js'
+import { getDateTimeISO, fragmentFromString, generateAttributeId, uniqueArray, generateUUID, matchAllIndex, parseISODuration, getRandomIndex, getHash, stringFromFragment } from './util.js'
 import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath, getPrefixedNameFromIRI, generateDataURI, getProxyableIRI, getFragmentOrLastPath } from './uri.js'
-import { getResource, getResourceHead, deleteResource, processSave, patchResourceWithAcceptPatch } from './fetcher.js'
+import { getResourceHead, deleteResource, processSave, patchResourceWithAcceptPatch } from './fetcher.js'
 import rdf from "rdf-ext";
 import { getResourceGraph, sortGraphTriples, getGraphContributors, getGraphAuthors, getGraphEditors, getGraphPerformers, getGraphPublishers, getGraphLabel, getGraphEmail, getGraphTitle, getGraphConceptLabel, getGraphPublished, getGraphUpdated, getGraphDescription, getGraphLicense, getGraphRights, getGraphFromData, getGraphAudience, getGraphTypes, getGraphLanguage, getGraphInbox, getUserLabelOrIRI, getGraphImage } from './graph.js'
 import LinkHeader from "http-link-header";
@@ -22,7 +14,7 @@ import { buttonIcons, getButtonHTML, updateButtons } from './ui/buttons.js'
 import { domSanitizeHTMLBody, domSanitize } from './utils/sanitization.js';
 import { cleanProseMirrorOutput, normalizeHTML } from './utils/normalization.js';
 import { formatHTML, getDoctype, htmlEncode } from './utils/html.js';
-import i18next from 'i18next';
+import { i18n } from './i18n.js';
 
 const ns = Config.ns;
 
@@ -910,7 +902,7 @@ function showActionMessage(node, message, options = {}) {
   if (!aside) {
     var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Messages', buttonTitle: 'Close', iconSize: 'fa-2x' });
 
-    node.appendChild(fragmentFromString(`<aside aria-labelledby="document-action-message-label" class="do on" id="document-action-message" lang="${i18next.language}" role="status" tabindex="0" xml:lang="${i18next.language}"><h2 id="document-action-message-label">Messages</h2>${buttonClose}<ul role="log"></ul></aside>`));
+    node.appendChild(fragmentFromString(`<aside aria-labelledby="document-action-message-label" class="do on" id="document-action-message" lang="${i18n.language}" role="status" tabindex="0" xml:lang="${i18n.language}"><h2 id="document-action-message-label">Messages</h2>${buttonClose}<ul role="log"></ul></aside>`));
     aside = node.querySelector('#document-action-message');
   }
   aside.querySelector('ul[role="log"]').insertAdjacentHTML('afterbegin', messageItem);
@@ -1321,7 +1313,7 @@ function showTimeMap(node, url) {
         if (!node) {
           var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Memento Document', buttonTitle: 'Close', iconSize: 'fa-2x' });
 
-          document.body.appendChild(fragmentFromString(`<aside aria-labelledby="${elementId}-label" class="do on" id="${elementId}" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 id="${elementId}-label">Memento</h2>${buttonClose}<dl><dt>TimeMap</dt><dd><a href="${url}">${url}</a></dd></dl></aside>`));
+          document.body.appendChild(fragmentFromString(`<aside aria-labelledby="${elementId}-label" class="do on" id="${elementId}" lang="${i18n.language}" xml:lang="${i18n.language}"><h2 id="${elementId}-label">Memento</h2>${buttonClose}<dl><dt>TimeMap</dt><dd><a href="${url}">${url}</a></dd></dl></aside>`));
           node = document.getElementById(elementId);
         }
       }
@@ -3297,7 +3289,7 @@ function getLanguageOptionsHTML(options) {
   if ('selected' in options) {
     selectedLang = options.selected;
     if (selectedLang == '') {
-      s.push(`<option data-i18n="select.languages.choose" selected="selected" value="">${i18next.t('select.languages.choose.textContent')}</option>`);
+      s.push(`<option data-i18n="select.languages.choose" selected="selected" value="">${i18n.t('select.languages.choose.textContent')}</option>`);
     }
   }
   else if (typeof Config.User.UI.Language !== 'undefined') {
@@ -3322,7 +3314,7 @@ function getLicenseOptionsHTML(options) {
   if ('selected' in options) {
     selectedIRI = options.selected;
     if (selectedIRI == '') {
-      s.push(`<option data-i18n="select.licenses.choose" selected="selected" value="">${i18next.t('select.licenses.choose.textContent')}</option>`);
+      s.push(`<option data-i18n="select.licenses.choose" selected="selected" value="">${i18n.t('select.licenses.choose.textContent')}</option>`);
     }
   }
   else if (typeof Config.User.UI.License !== 'undefined') {
@@ -3335,7 +3327,7 @@ function getLicenseOptionsHTML(options) {
   Object.keys(Config.License).forEach(iri => {
     if (iri != 'NoLicense') {
       var selected = (iri == selectedIRI) ? ' selected="selected"' : '';
-      s.push(`<option data-i18n="select.licenses.${Config.License[iri].code}.option" value="${iri}"${selected} title="${i18next.t('select.licenses.' + Config.License[iri].code + '.option.title')}">${Config.License[iri].name}</option>`);
+      s.push(`<option data-i18n="select.licenses.${Config.License[iri].code}.option" value="${iri}"${selected} title="${i18n.t('select.licenses.' + Config.License[iri].code + '.option.title')}">${Config.License[iri].name}</option>`);
     }
   })
 
@@ -3413,13 +3405,13 @@ function getAccessModeOptionsHTML(options) {
   options['context'] = options['context'] || 'Share';
   var accessContext = Config.AccessContext[options.context] || 'Share';
 
-  var s = `<option data-i18n="dialog.share-resource.select-access-mode.no-access.option" value="">${i18next.t(`dialog.share-resource.select-access-mode.no-access.option.textContent`)}</option>`;
+  var s = `<option data-i18n="dialog.share-resource.select-access-mode.no-access.option" value="">${i18n.t(`dialog.share-resource.select-access-mode.no-access.option.textContent`)}</option>`;
 
   var modes = Object.keys(accessContext);
   modes.forEach(mode => {
     var selected = (options.selected && (mode === options.selected)) ? ' selected="selected"' : '';
     var modeName = accessContext[mode];
-    s += `<option data-i18n="dialog.share-resource.select-access-mode.acl-${modeName}.option"${selected} value="${mode}">${i18next.t(`dialog.share-resource.select-access-mode.acl-${modeName}.option.textContent`)}</option>`;
+    s += `<option data-i18n="dialog.share-resource.select-access-mode.acl-${modeName}.option"${selected} value="${mode}">${i18n.t(`dialog.share-resource.select-access-mode.acl-${modeName}.option.textContent`)}</option>`;
   });
 
   // console.log(s);

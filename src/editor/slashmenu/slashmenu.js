@@ -1,11 +1,10 @@
 import { getLanguageOptionsHTML, getLicenseOptionsHTML, getPublicationStatusOptionsHTML, getResourceTypeOptionsHTML } from "../../doc.js";
-import { Icon } from "../../ui/icons.js";
 import { fragmentFromString } from "../../util.js";
 import { getButtonHTML } from "../../ui/buttons.js";
 import { formHandlerLanguage, formHandlerLicense, formHandlerInbox, formHandlerInReplyTo, formHandlerPublicationStatus, formHandlerResourceType, formHandlerTestSuite } from "./handlers.js";
 import { TextSelection } from "prosemirror-state";
 import { DOMParser } from "prosemirror-model";
-import i18next from "i18next";
+import { i18n } from "../../i18n.js";
 
 export class SlashMenu {
   constructor(editorView) {
@@ -151,7 +150,7 @@ export class SlashMenu {
     var html = `
       <fieldset>
         <legend>Add a language</legend>
-        <label data-i18n="label.language" for="set-language">${i18next.t('label.language.textContent')}</label> <select class="editor-form-select" id="set-language" name="language" required="">${getLanguageOptionsHTML({ 'selected': '' })}</select>
+        <label data-i18n="label.language" for="set-language">${i18n.t('label.language.textContent')}</label> <select class="editor-form-select" id="set-language" name="language" required="">${getLanguageOptionsHTML({ 'selected': '' })}</select>
         <div>
           <button class="editor-form-submit" title="Save" type="submit">Save</button>
           <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
