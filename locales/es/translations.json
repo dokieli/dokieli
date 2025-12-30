@@ -185,6 +185,12 @@
   "editor.new.p.data-placeholder": "Cogito, ergo sum",
   "editor.new.p.aria-label": "Agregue un título",
 
+  "editor.toolbar.approve.fieldset.legend.textContent": "Aprobar",
+  "editor.toolbar.disapprove.fieldset.legend.textContent": "Desaprobar",
+  "editor.toolbar.specificity.fieldset.legend.textContent": "Especificidad",
+  "editor.toolbar.bookmark.fieldset.legend.textContent": "Agregar marcador",
+  "editor.toolbar.comment.fieldset.legend.textContent": "Comentar",
+
   "dialog.signin.h2.textContent": "Iniciar sesión",
   "dialog.signin.close.button.title": "Cerrar",
   "dialog.signin.close.button.aria-label": "Cerrar Iniciar sesión",
