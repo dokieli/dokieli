@@ -7846,9 +7846,9 @@ console.log(reason);
         normalize: true
       };
 
-      var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Save As Document', buttonTitle: 'Close', iconSize: 'fa-2x' });
+      var buttonClose = getButtonHTML({ key: 'dialog.save-as-document.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
-      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="save-as-document-label" class="do on" id="save-as-document" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 id="save-as-document-label">Save As ${DO.C.Button.Info.SaveAs}</h2>${buttonClose}<div class="info"></div></aside>`));
+      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="save-as-document-label" class="do on" id="save-as-document" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 data-i18n="dialog.save-as-document.h2" id="save-as-document-label">${i18next.t('dialog.save-as-document.h2.textContent')} ${DO.C.Button.Info.SaveAs}</h2>${buttonClose}<div class="info"></div></aside>`));
 
       var saveAsDocument = document.getElementById('save-as-document');
       saveAsDocument.addEventListener('click', (e) => {
@@ -7861,7 +7861,7 @@ console.log(reason);
 
       var locationInboxId = 'location-inbox';
       var locationInboxAction = 'read';
-      saveAsDocument.insertAdjacentHTML('beforeend', '<div><input id="' + locationInboxId + '-set" name="' + locationInboxId + '-set" type="checkbox" /> <label for="' + locationInboxId + '-set">Set Inbox</label></div>');
+      saveAsDocument.insertAdjacentHTML('beforeend', `<div><input id="${locationInboxId}-set" name="${locationInboxId}-set" type="checkbox" /> <label data-i18n="dialog.save-as-document.set-inbox.label" for="${locationInboxId}-set">${i18next.t('dialog.save-as-document.set-inbox.label.textContent')}</label></div>`);
 
       saveAsDocument.addEventListener('click', (e) => {
         if (e.target.closest('input#' + locationInboxId + '-set')) {
@@ -7877,7 +7877,7 @@ console.log(reason);
             e.target.nextElementSibling.insertAdjacentHTML('afterend', '<fieldset id="' + locationInboxId + '-fieldset"></fieldset>');
             fieldset = saveAsDocument.querySelector('#' + locationInboxId + '-fieldset');
             DO.U.setupResourceBrowser(fieldset, locationInboxId, locationInboxAction);
-            fieldset.insertAdjacentHTML('beforeend', '<p>Article\'s <em>inbox</em> will be set to: <samp id="' + locationInboxId + '-' + locationInboxAction + '"></samp></p>');
+            fieldset.insertAdjacentHTML('beforeend', `<p data-i18n="dialog.save-as-document.article-inbox.p">${i18next.t('dialog.save-as-document.article-inbox.p.textContent')} <samp id="${locationInboxId}-${locationInboxAction}"></samp></p>`);
             var lii = document.getElementById(locationInboxId + '-input');
             lii.focus();
             lii.placeholder = 'https://example.org/path/to/inbox/';
@@ -7887,7 +7887,7 @@ console.log(reason);
 
       var locationAnnotationServiceId = 'location-annotation-service';
       var locationAnnotationServiceAction = 'read';
-      saveAsDocument.insertAdjacentHTML('beforeend', '<div><input id="' + locationAnnotationServiceId + '-set" name="' + locationAnnotationServiceId + '-set" type="checkbox" /> <label for="' + locationAnnotationServiceId + '-set">Set Annotation Service</label></div>');
+      saveAsDocument.insertAdjacentHTML('beforeend', `<div><input id="${locationAnnotationServiceId}-set" name="${locationAnnotationServiceId}-set" type="checkbox" /> <label data-i18n="dialog.save-as-document.set-annotation-service.label" for="${locationAnnotationServiceId}-set">${i18next.t('dialog.save-as-document.set-annotation-service.label.textContent')}</label></div>`);
 
       saveAsDocument.addEventListener('click', (e) => {
         if (e.target.closest('input#' + locationAnnotationServiceId + '-set')) {
@@ -7903,7 +7903,7 @@ console.log(reason);
             e.target.nextElementSibling.insertAdjacentHTML('afterend', '<fieldset id="' + locationAnnotationServiceId + '-fieldset"></fieldset>');
             fieldset = saveAsDocument.querySelector('#' + locationAnnotationServiceId + '-fieldset');
             DO.U.setupResourceBrowser(fieldset, locationAnnotationServiceId, locationAnnotationServiceAction);
-            fieldset.insertAdjacentHTML('beforeend', '<p>Article\'s <em>annotation service</em> will be set to: <samp id="' + locationAnnotationServiceId + '-' + locationAnnotationServiceAction + '"></samp></p>');
+            fieldset.insertAdjacentHTML('beforeend', `<p data-i18n="dialog.save-as-document.article-annotation-service.p">${i18next.t('dialog.save-as-document.article-annotation-service.p.textContent')} <samp id="${locationAnnotationServiceId}-${locationAnnotationServiceAction}"></samp></p>`);
             var lasi = document.getElementById(locationAnnotationServiceId + '-input');
             lasi.focus();
             lasi.placeholder = 'https://example.org/path/to/annotation/';
@@ -7914,7 +7914,7 @@ console.log(reason);
 
       //https://www.w3.org/TR/ATAG20/#gl_b31
       //TODO: Better tracking of fails so that author can correct.
-      var img = document.querySelectorAll('img');
+      var img = document.querySelectorAll('img:not(:is(.do *))');
       var imgFailed = [];
       var imgPassed = [];
       var imgCantTell = [];
@@ -7935,10 +7935,12 @@ console.log(reason);
           }
         });
       }
-      var imgAccessibilityReport = '';
-      if (imgFailed.length || imgCantTell.length) {
-        imgAccessibilityReport += (imgFailed.length) ? '<li>Fail: Images (<code>img</code>) without alternative text (<code>alt</code>).</li>' : '';
-        imgAccessibilityReport += (imgCantTell.length) ? '<li>Can\'t Tell: Images (<code>img</code>) without a non-empty alternative text (<code>alt</code>).</li>' : '';
+      var imgAccessibilityReport = [];
+      if (imgFailed.length) {
+        imgAccessibilityReport.push(`<li data-i18n="dialog.accessibility-report.image-failed.li">${i18next.t('dialog.accessibility-report.image-failed.li.textContent')}</li>`);
+      }
+      if (imgCantTell.length) {
+        imgAccessibilityReport.push(`<li data-i18n="dialog.accessibility-report.image-cant-tell.li">${i18next.t('dialog.accessibility-report.image-cant-tell.li.textContent')}</li>`);
       }
 
       var video = document.querySelectorAll('video');
@@ -7959,9 +7961,9 @@ console.log(reason);
           }
         });
       }
-      var videoAccessibilityReport = '';
+      var videoAccessibilityReport = [];
       if (videoFailed.length) {
-        videoAccessibilityReport += '<li>Fail: Videos (<code>video</code>) without external timed text tracks (<code>track</code> or <code>track</code> with <code>kind</code> of text track.)</li>';
+        videoAccessibilityReport.push(`<li data-i18n="dialog.accessibility-report.video-failed.li">${i18next.t('dialog.accessibility-report.video-failed.li.textContent')}</li>`);
       }
 
       var audio = document.querySelectorAll('audio');
@@ -7982,36 +7984,36 @@ console.log(reason);
           }
         });
       }
-      var audioAccessibilityReport = '';
+      var audioAccessibilityReport = [];
       if (audioFailed.length) {
-        audioAccessibilityReport += '<li>Fail: Audios (<code>audio</code>) without external timed text tracks (<code>track</code> or <code>track</code> with <code>kind</code> of text track.)</li>';
+        audioAccessibilityReport.push(`<li> data-i18n="dialog.accessibility-report.audio-failed.li">${i18next.t('dialog.accessibility-report.audio-failed.li.textContent')}</li>`);
       }
 
-      var aRWarning = '<p>This document contains some content, e.g., images, videos, audio, that is not accompanied with alternative text or an alternative text field without information. End users with disabilities will likely experience difficulty accessing the content. Please consider adding alternative text before continuing:</p>';
-      var aRSuccess = '<p>All content in this document includes alternative text. End users with disabilities will likely have a good experience with this document.</p>';
+      var aRWarning = `<p data-i18n="dialog.accessibility-report.warning.p">${i18next.t('dialog.accessibility-report.warning.p.textContent')}</p>`;
+      var aRSuccess = `<p data-i18n="dialog.accessibility-report.success.p">${i18next.t('dialog.accessibility-report.success.p.textContent')}</p>`;
       var accessibilityReport = '';
       if (imgAccessibilityReport.length || audioAccessibilityReport.length || videoAccessibilityReport.length) {
-        accessibilityReport += aRWarning + '<ul>' + imgAccessibilityReport + audioAccessibilityReport + videoAccessibilityReport + '</ul>';
+        accessibilityReport += aRWarning + '<ul>' + imgAccessibilityReport.join('') + audioAccessibilityReport.join('') + videoAccessibilityReport.join('') + '</ul>';
       }
       else {
         accessibilityReport += aRSuccess;
       }
-      accessibilityReport = '<details id="accessibility-report-save-as"><summary>Accessibility Report</summary>' + accessibilityReport + '</details>';
+      accessibilityReport = `<details id="accessibility-report-save-as"><summary data-i18n="dialog.accessibility-report.summary">${i18next.t('dialog.accessibility-report.summary.textContent')}</summary>${accessibilityReport}</details>`;
 
       let dokielizeResource = '';
       let derivationData = '';
       
       if (!DO.Editor['new']) {
         dokielizeResource = '<li><input type="checkbox" id="dokielize-resource" name="dokielize-resource" /><label for="dokielize-resource">dokielize</label></li>';
-        derivationData = '<li><input type="checkbox" id="derivation-data" name="derivation-data" checked="checked" /><label for="derivation-data">Derivation data</label></li>'
+        derivationData = `<li><input type="checkbox" id="derivation-data" name="derivation-data" checked="checked" /><label data-i18n="dialog.save-as-document.derivation-data.label" for="derivation-data">${i18next.t('dialog.save-as-document.derivation-data.label.textContent')}</label></li>`;
       }
 
       var id = 'location-save-as';
       var action = 'write';
-      saveAsDocument.insertAdjacentHTML('beforeend', '<form><fieldset id="' + id + '-fieldset"><legend>Save to</legend></fieldset></form>');
+      saveAsDocument.insertAdjacentHTML('beforeend', `<form><fieldset id="${id}-fieldset"><legend data-i18n="dialog.save-as-document.save-to.legend">${i18next.t('dialog.save-as-document.save-to.legend.textContent')}</legend></fieldset></form>`);
       fieldset = saveAsDocument.querySelector('fieldset#' + id + '-fieldset');
       DO.U.setupResourceBrowser(fieldset, id, action);
-      fieldset.insertAdjacentHTML('beforeend', '<p id="' + id + '-samp' + '">Article will be saved at: <samp id="' + id + '-' + action + '"></samp></p>' + DO.U.getBaseURLSelection() + '<ul>' + dokielizeResource + derivationData + '</ul>' + accessibilityReport + '<button class="create" title="Save to destination" type="submit">Save</button>');
+      fieldset.insertAdjacentHTML('beforeend', `<p data-i18n="dialog.save-as-document.save-location.p" id="${id}-samp">${i18next.t('dialog.save-as-document.save-location.p.textContent')} <samp id="${id}-${action}"></samp></p>${DO.U.getBaseURLSelection()}<ul>${dokielizeResource}${derivationData}</ul>${accessibilityReport}<button class="create" data-i18n="dialog.save-as-document.save.button" title="${i18next.t('dialog.save-as-document.submit.button.title')}" type="submit">${i18next.t('dialog.save-as-document.submit.button.textContent')}</button>`);
       var bli = document.getElementById(id + '-input');
       bli.focus();
       bli.placeholder = 'https://example.org/path/to/article';
@@ -8032,9 +8034,11 @@ console.log(reason);
           rm.parentNode.removeChild(rm)
         }
 
+
+          // TODO: this needs to be form validation instead
         if (!storageIRI.length) {
           saveAsDocument.insertAdjacentHTML('beforeend',
-            '<div class="response-message"><p class="error">Specify the location where the article should be saved, and optionally set its <em>inbox</em> and <em>annotation service</em>.</p></div>'
+            `<div class="response-message"><p class="error" data-i18n="dialog.save-as-document.error.missing-location.p">${i18next.t("dialog.save-as-document.error.missing-location.p.textContent")}</p></div>`
           )
 
           return
@@ -8114,15 +8118,12 @@ console.log(reason);
             // var documentMode = (DO.C.WebExtensionEnabled) ? '' : '#author=true'
 
             saveAsDocument.insertAdjacentHTML('beforeend',
-              '<div class="response-message"><p class="success">' +
-              'Document saved at <a href="' + url + '">' + url + '</a></p></div>'
+              `<div class="response-message"><p class="success" data-i18n="dialog.save-as-document.success.saved-at.p"><span>${i18next.t('dialog.save-as-document.success.saved-at.p.textContent')}</span> <a href="${url}">${url}</a></p></div>`
             )
 
             DO.C.DocumentAction = 'save-as';
 
-
             setTimeout(() => {
-             
               if (DO.Editor['new']) {
                 //XXX: Commenting this out for now, not sure what this was supposed to fix
                 // DO.Editor.replaceContent('author', fragmentFromString(html));
@@ -8164,7 +8165,7 @@ console.log(reason);
 
             if (DO.C.User.IRI && linkHeaders && linkHeaders.has('rel', ns.ldp.inbox.value)){
               inboxURL = linkHeaders.rel(ns.ldp.inbox.value)[0].uri;
-              requestAccess = '<p><button class="request-access" data-inbox="' + inboxURL +'" data-target="' + storageIRI + '" title="Send an access request to resource inbox." type="button">Request Access</button></p>'
+              requestAccess = `<p><button class="request-access" data-i18n="dialog.save-as-document.request-access.button" data-inbox="${inboxURL}" data-target="${storageIRI}" title="${i18next.t('dialog.save-as-document.request-access.button.title')}" type="button">${i18next.t('dialog.save-as-document.request-access.button.textContent')}</button></p>`;
             }
 
             switch (error.status) {
@@ -8189,10 +8190,10 @@ console.log(reason);
                 break
             }
 
+            //TODO:i18n
             saveAsDocument.insertAdjacentHTML('beforeend', domSanitize(
-              '<div class="response-message"><p class="error">' +
-              'Unable to save: ' + message + '</p>' + requestAccess + '</div>')
-            )
+              `<div class="response-message"><p class="error">Unable to save: ${message}</p>${requestAccess}</div>`
+            ));
 
             if (DO.C.User.IRI && requestAccess) {
               document.querySelector('#save-as-document .response-message .request-access').addEventListener('click', (e) => {
@@ -8205,8 +8206,8 @@ console.log(reason);
                 e.target.disabled = true;
                 var responseMessage = e.target.parentNode;
                 responseMessage.insertAdjacentHTML('beforeend', domSanitize(
-                  '<span class="progress" data-to="' + inboxURL +
-                  '">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + '</span>'))
+                  `<span class="progress" data-to="${inboxURL}">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]}</span>`
+                ))
 
                 var notificationStatements = `<dl about="` + objectId + `" prefix="acl: http://www.w3.org/ns/auth/acl#">
   <dt>Object type</dt><dd><a about="` + objectId + `" href="` + ns.acl.Authorization.value + `" typeof="acl:Authorization">Authorization</a></dd>
@@ -8231,17 +8232,15 @@ console.log(reason);
 
                     responseMessage
                       .querySelector('.progress[data-to="' + inboxURL + '"]')
-                      .setHTMLUnsafe(domSanitize(Icon[".fas.fa-times-circle.fa-fw"] + ' Unable to notify. Try later.'))
+                      .setHTMLUnsafe(domSanitize(`${Icon[".fas.fa-times-circle.fa-fw"]} <span data-i18n="dialog.save-as-document.request-access.not-notified.span">${i18next.t('dialog.save-as-document.request-access.not-notified.span.textContent')}</span>`))
                   })
                   .then(response => {
-                    var notificationSent = 'Notification sent';
+                    var notificationSent = Icon[".fas.fa-check-circle.fa-fw"];
                     var location = response.headers.get('Location');
 
                     if (location) {
-                      notificationSent = '<a href="' + location.trim() + '" rel="noopener" target="_blank">' + Icon[".fas.fa-check-circle.fa-fw"] + '</a>'
-                    }
-                    else {
-                      notificationSent = notificationSent + ", but location unknown."
+                      let locationUrl = getAbsoluteIRI(response.url, location.trim());
+                      notificationSent = `<a href="${locationUrl}" rel="noopener" "target="_blank">${Icon[".fas.fa-check-circle.fa-fw"]}</a>`;
                     }
 
                     responseMessage
