@@ -140,11 +140,21 @@ export class SocialToolbar extends ToolbarView {
 
   getFormLegends() {
     return {
-      approve: i18n.t('editor.toolbar.approve.fieldset.legend.textContent'),
-      disapprove: i18n.t('editor.toolbar.disapprove.fieldset.legend.textContent'),
-      specificity: i18n.t('editor.toolbar.specificity.fieldset.legend.textContent'),
-      bookmark: i18n.t('editor.toolbar.bookmark.fieldset.legend.textContent'),
-      comment: i18n.t('editor.toolbar.comment.fieldset.legend.textContent'),
+      approve: i18n.t('editor.toolbar.approve.form.legend.textContent'),
+      disapprove: i18n.t('editor.toolbar.disapprove.form.legend.textContent'),
+      specificity: i18n.t('editor.toolbar.specificity.form.legend.textContent'),
+      bookmark: i18n.t('editor.toolbar.bookmark.form.legend.textContent'),
+      comment: i18n.t('editor.toolbar.comment.form.legend.textContent'),
+    }
+  }
+
+  getFormPlaceholders() {
+    return {
+      approve: i18n.t('editor.toolbar.approve.form.textarea.placeholder'),
+      disapprove: i18n.t('editor.toolbar.disapprove.form.textarea.placeholder'),
+      specificity: i18n.t('editor.toolbar.specificity.form.textarea.placeholder'),
+      bookmark: i18n.t('editor.toolbar.bookmark.form.textarea.placeholder'),
+      comment: i18n.t('editor.toolbar.comment.form.textarea.placeholder'),
     }
   }
 

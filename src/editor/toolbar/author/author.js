@@ -73,8 +73,25 @@ export class AuthorToolbar extends ToolbarView {
 
   getFormLegends() {
     return {
-      note: 'Add note',
-      requirement: 'Add requirement'
+      note: i18n.t('editor.toolbar.note.form.legend.textContent'),
+      requirement: i18n.t('editor.toolbar.requirement.form.legend.textContent'),
+      a: i18n.t('editor.toolbar.a.form.legend.textContent'),
+      blockquote: i18n.t('editor.toolbar.blockquote.form.legend.textContent'),
+      q: i18n.t('editor.toolbar.q.form.legend.textContent'),
+      img: i18n.t('editor.toolbar.img.form.legend.textContent'),
+      citation: i18n.t('editor.toolbar.citation.form.legend.textContent'),
+    }
+  }
+
+  getFormPlaceholders() {
+    return {
+      note: i18n.t('editor.toolbar.note.form.textarea.placeholder'),
+      requirement: i18n.t('editor.toolbar.requirement.form.textarea.placeholder'),
+      a: i18n.t('editor.toolbar.a.form.textarea.placeholder'),
+      blockquote: i18n.t('editor.toolbar.blockquote.form.textarea.placeholder'),
+      q: i18n.t('editor.toolbar.q.form.textarea.placeholder'),
+      img: i18n.t('editor.toolbar.img.form.textarea.placeholder'),
+      citation: i18n.t('editor.toolbar.citation.form.textarea.placeholder'),
     }
   }
 
@@ -82,33 +99,33 @@ export class AuthorToolbar extends ToolbarView {
     const toolbarPopups = {
       a: (options) => `
         <fieldset>
-          <legend>Add a link</legend>
+          <legend data-i18n="editor.toolbar.a.form.legend">${options.legend}</legend>
           <dl class="info">
             <dt class="required">*</dt>
             <dd>Required field</dd>
           </dl>
           <label for="a-href">URL</label> <input class="editor-form-input" id="a-href" name="a-href" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" required="" type="url" value="" />
           <label for="a-title">Title</label> <input class="editor-form-input" id="a-title" name="a-title" placeholder="Add advisory information for the tooltip." type="text" />
-          <button class="editor-form-submit" title="Save" type="submit">Save</button>
-          <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
+          <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
+          <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
         </fieldset>
       `,
 
       blockquote: (options) => `
         <fieldset>
-          <legend>Add the source of the blockquote</legend>
+          <legend data-i18n="editor.toolbar.blockquote.form.legend">${options.legend}</legend>
           <label for="blockquote-cite">URL</label> <input class="editor-form-input" id="blockquote-cite" name="blockquote-cite" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" type="url" value="" />
-          <button class="editor-form-submit" title="Save" type="submit">Save</button>
-          <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
+          <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
+          <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
         </fieldset>
       `,
 
       q: (options) => `
         <fieldset>
-          <legend>Add the source of the quote</legend>
+          <legend data-i18n="editor.toolbar.q.form.legend">${options.legend}</legend>
           <label for="q-cite">URL</label> <input class="editor-form-input" id="q-cite" name="q-cite" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" type="url" value="" />
-          <button class="editor-form-submit" title="Save" type="submit">Save</button>
-          <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
+          <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
+          <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
         </fieldset>
       `,
 
@@ -116,14 +133,14 @@ export class AuthorToolbar extends ToolbarView {
       //TODO: browse storage
       img: (options) => `
         <fieldset>
-          <legend>Add an image with a description</legend>
+          <legend data-i18n="editor.toolbar.img.form.legend">${options.legend}</legend>
           <figure class="img-preview"></figure>
           <label for="img-file">Upload</label> <input class="editor-form-input" id="img-file" name="img-file" type="file" />
           <label for="img-src">URL</label> <input class="editor-form-input" id="img-src" name="img-src" type="url" value="" />
           <label for="img-alt">Description</label> <input class="editor-form-input" id="img-alt" name="img-alt" placeholder="Describe the image for people who are blind or have low vision." type="text" value="" />
           <label for="img-figcaption">Caption</label> <input class="editor-form-input" id="img-figcaption" name="img-figcaption" placeholder="A caption or legend for the figure." type="text" value="" />
-          <button class="editor-form-submit" title="Save" type="submit">Save</button>
-          <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
+          <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
+          <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
         </fieldset>
       `,
 
@@ -131,7 +148,7 @@ export class AuthorToolbar extends ToolbarView {
 
       citation: (options) => `
         <fieldset>
-          <legend>Add a citation</legend>
+          <legend data-i18n="editor.toolbar.citation.form.legend">${options.legend}</legend>
           <label for="citation-specref-search">Search <a href="https://www.specref.org/" rel="noopener" target="_blank">specref.org</a></label> <input class="editor-form-input" id="citation-specref-search" name="citation-specref-search" placeholder="Enter terms to search for specifications" type="text" value="" />
           <input id="citation-specref-search-submit" name="citation-specref-search-submit" type="submit" value="Search" />
           <span>
@@ -144,17 +161,17 @@ export class AuthorToolbar extends ToolbarView {
           <input class="editor-form-input" id="citation-url" name="citation-url" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" type="url" value="" />
           <label for="citation-content">Note</label>
           <textarea class="editor-form-textarea" cols="20" id="citation-content" name="citation-content" rows="1" placeholder="${options.placeholder ? options.placeholder : 'Describe the purpose or reason of citation.'}"></textarea>
-          <label data-i18n="label.language" for="citation-language">${i18n.t('label.language.textContent')}</label>
+          <label data-i18n="language.label" for="citation-language">${i18n.t('language.label.textContent')}</label>
           <select class="editor-form-select" id="citation-language" name="citation-language">${getLanguageOptionsHTML()}</select>
-          <button class="editor-form-submit" title="Save" type="submit">Save</button>
-          <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
+          <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
+          <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
           <div class="specref-search-results"></div>
         </fieldset>
       `,
 
       requirement: (options) => `
         <fieldset>
-          <legend>${options.legend}</legend>
+          <legend data-i18n="editor.toolbar.requirement.form.legend">${options.legend}</legend>
           <dl id="requirement-preview">
             <dt>Preview</dt>
             <dd><samp id="requirement-preview-samp"></samp></dd>
@@ -163,19 +180,19 @@ export class AuthorToolbar extends ToolbarView {
           <select class="editor-form-select" id="requirement-subject" name="requirement-subject">${getRequirementSubjectOptionsHTML(options)}</select>
           <label for="requirement-level">Requirement Level</label>
           <select class="editor-form-select" id="requirement-level" name="requirement-level">${getRequirementLevelOptionsHTML(options)}</select>
-          <button class="editor-form-submit" title="Save" type="submit">Save</button>
-          <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
+          <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
+          <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
         </fieldset>
       `,
 
           // <label for="requirement-consensus">Consensus source</label>
           // <input class="editor-form-input" id="requirement-consensus" name="requirement-consensus" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" type="url" value="" />
-          // <label data-i18n="label.language" for="requirement-language">${i18n.t('label.language.textContent')}</label>
+          // <label data-i18n="language.label" for="requirement-language">${i18n.t('language.label.textContent')}</label>
           // <select class="editor-form-select" id="requirement-language" name="requirement-language">${getLanguageOptionsHTML()}</select>
 
       semantics: (options) => `
         <fieldset>
-          <legend>Add semantics</legend>
+          <legend data-i18n="editor.toolbar.citation.form.legend">${options.legend}</legend>
           <label for="semantics-about">about</label> <input class="editor-form-input" id="semantics-about" name="semantics-about" placeholder="Enter URL, e.g., https://example.net/foo#bar" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URI')" type="url" value="" />
           <label for="semantics-resource">resource</label> <input class="editor-form-input" id="semantics-resource" name="semantics-resource" placeholder="Enter URL, e.g., https://example.net/foo#bar" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URI')" type="url" value="" />
           <label for="semantics-typeof">typeof</label> <input class="editor-form-input" id="semantics-typeof" name="semantics-typeof" placeholder="Enter URL, e.g., https://example.net/foo#Baz" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URI')" type="url" value="" />
@@ -185,8 +202,8 @@ export class AuthorToolbar extends ToolbarView {
           <label for="semantics-content">content</label> <input class="editor-form-input" id="semantics-content" name="semantics-content" placeholder="Enter content, e.g., 'Baz'" type="text" value="" />
           <label for="semantics-lang">lang</label> <input class="editor-form-input" name="semantics-lang" id="semantics-lang" placeholder="Enter language code, e.g., en" type="text" value="" />
           <label for="semantics-datatype">datatype</label> <input class="editor-form-input" name="semantics-datatype" id="semantics-datatype" placeholder="Enter URL, e.g., https://example.net/qux" type="text" value="" />
-          <button class="editor-form-submit" title="Save" type="submit">Save</button>
-          <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
+          <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
+          <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
         </fieldset>
       `
 

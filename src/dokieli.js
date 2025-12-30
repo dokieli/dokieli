@@ -2744,7 +2744,7 @@ DO = {
 
       const html = `
         <section id="ui-language">
-          <h2 data-i18n="label.language">${i18n.t('label.language.textContent')}</h2>
+          <h2 data-i18n="language.label">${i18n.t('language.label.textContent')}</h2>
           ${Icon['.fas.fa-language']}
           <label for="ui-language-select" data-i18n="menu.ui-language-select.label">${i18n.t('menu.ui-language-select.label.textContent')}</label>
           <select id="ui-language-select">
@@ -4734,7 +4734,7 @@ console.log(reason);
       fieldset = generateFeed.querySelector('fieldset#' + id + '-fieldset');
       DO.U.setupResourceBrowser(fieldset, id, action);
       var feedTitlePlaceholder = (DO.C.User.IRI && DO.C.User.Name) ? DO.C.User.Name + "'s" : "Example's";
-      fieldset.insertAdjacentHTML('beforeend', `<p id="${id}-samp">Feed will be generated at: <samp id="${id}-action"></samp></p><ul><li><label for="${id}-title">Title</label> <input type="text" placeholder="${feedTitlePlaceholder} Web Feed" name="${id}-title" value=""></li><li><label data-i18n="label.language" for="${id}-language">${i18n.t('label.language.textContent')}</label> <select id="${id}-language" name="${id}-language">${getLanguageOptionsHTML()}</select></li><li><label for="${id}-license">License</label> <select id="${id}-license" name="${id}-license">${getLicenseOptionsHTML()}</select></li><li>${DO.U.getFeedFormatSelection()}</li></ul><button class="create" title="Save to destination" type="submit">Generate</button>`);
+      fieldset.insertAdjacentHTML('beforeend', `<p id="${id}-samp">Feed will be generated at: <samp id="${id}-action"></samp></p><ul><li><label for="${id}-title">Title</label> <input type="text" placeholder="${feedTitlePlaceholder} Web Feed" name="${id}-title" value=""></li><li><label data-i18n="language.label" for="${id}-language">${i18n.t('language.label.textContent')}</label> <select id="${id}-language" name="${id}-language">${getLanguageOptionsHTML()}</select></li><li><label for="${id}-license">License</label> <select id="${id}-license" name="${id}-license">${getLicenseOptionsHTML()}</select></li><li>${DO.U.getFeedFormatSelection()}</li></ul><button class="create" title="Save to destination" type="submit">Generate</button>`);
       var bli = document.getElementById(id + '-input');
       bli.focus();
       bli.placeholder = 'https://example.org/path/to/feed.xml';
@@ -5268,9 +5268,9 @@ console.log(reason);
                 <p><textarea cols="40" data-i18n="dialog.reply-to-resource-note.textarea" id="reply-to-resource-note" rows="10" name="reply-to-resource-note" placeholder="${i18n.t('dialog.reply-to-resource-note.textarea.placeholder')}"></textarea></p>
               </li>
               <li>
-                <label data-i18n="label.language" for="reply-to-resource-language">${i18n.t('label.language.textContent')}</label> <select id="reply-to-resource-language" name="reply-to-resource-language">${getLanguageOptionsHTML()}</select></li>
+                <label data-i18n="language.label" for="reply-to-resource-language">${i18n.t('language.label.textContent')}</label> <select id="reply-to-resource-language" name="reply-to-resource-language">${getLanguageOptionsHTML()}</select></li>
               <li>
-                <label data-i18n="label.license" for="reply-to-resource-license">${i18n.t('label.license.textContent')}</label> <select id="reply-to-resource-license" name="reply-to-resource-license">${getLicenseOptionsHTML()}</select>
+                <label data-i18n="license.label" for="reply-to-resource-license">${i18n.t('license.label.textContent')}</label> <select id="reply-to-resource-license" name="reply-to-resource-license">${getLicenseOptionsHTML()}</select>
               </li>
             </ul>
           </div>

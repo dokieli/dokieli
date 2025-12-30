@@ -3201,7 +3201,7 @@ function getAnnotationInboxLocationHTML(action) {
     if (Config.User.UI && Config.User.UI['annotationInboxLocation'] && Config.User.UI.annotationInboxLocation['checked']) {
       checked = ' checked="checked"';
     }
-    s = `<input type="checkbox" id="${action}-annotation-inbox" name="${action}-annotation-inbox"${checked} /><label for="${action}-annotation-inbox">Inbox</label>`;
+    s = `<input type="checkbox" id="${action}-annotation-inbox" name="${action}-annotation-inbox"${checked} /><label data-i18n="annotation-inbox.label" for="${action}-annotation-inbox">${i18n.t('annotation-inbox.label.textContent')}</label>`;
   }
 
   return s;
@@ -3209,6 +3209,10 @@ function getAnnotationInboxLocationHTML(action) {
 
 function getAnnotationLocationHTML(action) {
   var s = '', inputs = [], checked = '';
+
+  if (DO.Editor.mode == 'author') {
+    return s;
+  }
 
   if (typeof Config.AnnotationService !== 'undefined') {
     if (Config.User.Storage && Config.User.Storage.length > 0 || Config.User.Outbox && Config.User.Outbox.length > 0) {
@@ -3220,7 +3224,7 @@ function getAnnotationLocationHTML(action) {
       checked = ' checked="checked" disabled="disabled"';
     }
 
-    inputs.push(`<input type="checkbox" id="${action}-annotation-location-service" name="${action}-annotation-location-service"${checked} /><label for="${action}-annotation-location-service">Annotation service</label>`);
+    inputs.push(`<input type="checkbox" id="${action}-annotation-location-service" name="${action}-annotation-location-service"${checked} /><label data-i18n="annotation-location.annotation-service.label" for="${action}-annotation-location-service">${i18n.t('annotation-location.annotation-service.label.textContent')}</label>`);
   }
 
   checked = ' checked="checked"';
@@ -3230,10 +3234,12 @@ function getAnnotationLocationHTML(action) {
       checked = '';
     }
 
-    inputs.push(`<input type="checkbox" id="${action}-annotation-location-personal-storage" name="${action}-annotation-location-personal-storage"${checked} /><label for="${action}-annotation-location-personal-storage">Personal storage</label>`);
+    inputs.push(`<input type="checkbox" id="${action}-annotation-location-personal-storage" name="${action}-annotation-location-personal-storage"${checked} /><label data-i18n="annotation-location.personal-storage.label" for="${action}-annotation-location-personal-storage">${i18n.t('annotation-location.personal-storage.label.textContent')}</label>`);
   }
 
-  s = 'Store at: ' + inputs.join('');
+  if (inputs.length) {
+    s = `<span data-i18n="annotation-location-selection.store-at.span">${i18n.t('annotation-location-selection.store-at.span.textContent')}</span>` + inputs.join('');
+  }
 
   return s;
 }
@@ -3289,7 +3295,7 @@ function getLanguageOptionsHTML(options) {
   if ('selected' in options) {
     selectedLang = options.selected;
     if (selectedLang == '') {
-      s.push(`<option data-i18n="select.languages.choose" selected="selected" value="">${i18n.t('select.languages.choose.textContent')}</option>`);
+      s.push(`<option data-i18n="language.choose" selected="selected" value="">${i18n.t('language.choose.textContent')}</option>`);
     }
   }
   else if (typeof Config.User.UI.Language !== 'undefined') {
@@ -3314,7 +3320,7 @@ function getLicenseOptionsHTML(options) {
   if ('selected' in options) {
     selectedIRI = options.selected;
     if (selectedIRI == '') {
-      s.push(`<option data-i18n="select.licenses.choose" selected="selected" value="">${i18n.t('select.licenses.choose.textContent')}</option>`);
+      s.push(`<option data-i18n="license.choose" selected="selected" value="">${i18n.t('license.choose.textContent')}</option>`);
     }
   }
   else if (typeof Config.User.UI.License !== 'undefined') {
@@ -3327,7 +3333,7 @@ function getLicenseOptionsHTML(options) {
   Object.keys(Config.License).forEach(iri => {
     if (iri != 'NoLicense') {
       var selected = (iri == selectedIRI) ? ' selected="selected"' : '';
-      s.push(`<option data-i18n="select.licenses.${Config.License[iri].code}.option" value="${iri}"${selected} title="${i18n.t('select.licenses.' + Config.License[iri].code + '.option.title')}">${Config.License[iri].name}</option>`);
+      s.push(`<option data-i18n="licenses.${Config.License[iri].code}.option" value="${iri}"${selected} title="${i18n.t('licenses.' + Config.License[iri].code + '.option.title')}">${Config.License[iri].name}</option>`);
     }
   })
 
