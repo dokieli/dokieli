@@ -678,7 +678,7 @@ export class ToolbarView {
 export function annotateFormControls(options) {
   return `
     <fieldset>
-      <legend>${options.legend}</legend>
+      <legend data-i18n="editor.toolbar.${options.button}.fieldset.legend">${options.legend}</legend>
       <dl class="info">
         <dt class="required">*</dt>
         <dd>Required field</dd>

@@ -3,6 +3,7 @@ import { ToolbarView, annotateFormControls, updateAnnotationInboxForm } from "..
 import Config from "../../../config.js";
 import { exportSelection, getSelectedParentElement, restoreSelection } from "../../utils/annotation.js";
 import { htmlEncode } from "../../../utils/html.js";
+import { i18n } from "../../../i18n.js";
 
 const ns = Config.ns;
 
@@ -139,11 +140,11 @@ export class SocialToolbar extends ToolbarView {
 
   getFormLegends() {
     return {
-      approve: 'Approve',
-      disapprove: 'Disapprove',
-      specificity:  'Specificity',
-      bookmark:  'Bookmark',
-      comment:  'Comment',
+      approve: i18n.t('editor.toolbar.approve.fieldset.legend.textContent'),
+      disapprove: i18n.t('editor.toolbar.disapprove.fieldset.legend.textContent'),
+      specificity: i18n.t('editor.toolbar.specificity.fieldset.legend.textContent'),
+      bookmark: i18n.t('editor.toolbar.bookmark.fieldset.legend.textContent'),
+      comment: i18n.t('editor.toolbar.comment.fieldset.legend.textContent'),
     }
   }
 

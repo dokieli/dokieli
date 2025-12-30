@@ -179,6 +179,12 @@
   "editor.new.p.data-placeholder": "Cogito, ergo sum",
   "editor.new.p.aria-label": "Add a title",
 
+  "editor.toolbar.approve.fieldset.legend.textContent": "Approve",
+  "editor.toolbar.disapprove.fieldset.legend.textContent": "Disapprove",
+  "editor.toolbar.specificity.fieldset.legend.textContent": "Specificity",
+  "editor.toolbar.bookmark.fieldset.legend.textContent": "Bookmark",
+  "editor.toolbar.comment.fieldset.legend.textContent": "Comment",
+
   "dialog.feed-format.label.textContent": "Format",
   "dialog.base-url-selection.label.textContent": "Location of media resources",
   "dialog.base-url-relative.option.textContent": "Copy to your storage",
