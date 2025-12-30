@@ -282,7 +282,6 @@
   "dialog.save-as-document.request-access.button.textContent": "Request Access",
   "dialog.save-as-document.request-access.not-notified.span.textContent": "Unable to notify. Try later.",
 
-
   "browser.browse-location.button.title": "Browse location",
   "browser.browse-location.button.textContent": "Browse",
   "browser.create-container.button.title": "Create container (folder)",
