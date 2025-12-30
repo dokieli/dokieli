@@ -177,6 +177,15 @@
   "dialog.base-url-relative.option.textContent": "Copiar a su almacenamiento",
   "dialog.base-url-absolute.option.textContent": "Usar referencias tal cual",
 
+  "dialog.storage-details.summary.textContent": "Detalles del almacenamiento",
+  "dialog.storage-location.dt.textContent": "Ubicación del almacenamiento",
+
+  "dialog.notification-subscriptions.dt.textContent": "Suscripciones a notificaciones",
+  "dialog.notification-subscriptions.subscribe.button.textContent": "Suscribirse",
+  "dialog.notification-subscriptions.unsubscribe.button.textContent": "Darse de baja",
+  "dialog.notification-subscriptions.topic.dt.textContent": "Tema",
+  "dialog.notification-subscriptions.channel-type.dt.textContent": "Tipo de canal",
+  "dialog.notification-subscriptions.features.dt.textContent": "Características",
 
   "editor.new.h1.data-placeholder": "Título",
   "editor.new.h2.data-placeholder": "Título de la sección",
