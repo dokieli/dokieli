@@ -172,6 +172,12 @@
 
   "menu.ui-language-select.label.textContent": "Cambiar idioma",
 
+  "dialog.feed-format.label.textContent": "Formato",
+  "dialog.base-url-selection.label.textContent": "Ubicación de recursos multimedia",
+  "dialog.base-url-relative.option.textContent": "Copiar a su almacenamiento",
+  "dialog.base-url-absolute.option.textContent": "Usar referencias tal cual",
+
+
   "editor.new.h1.data-placeholder": "Título",
   "editor.new.h2.data-placeholder": "Título de la sección",
   "editor.new.h3.data-placeholder": "Título de la subsección",

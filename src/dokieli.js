@@ -8292,10 +8292,10 @@ console.log(reason);
     getFeedFormatSelection: function() {
       return `
         <div id="feed-format-selection">
-          <label for="feed-format">Format:</label>
+          <label data-i18n="dialog.feed-format.label" for="feed-format">${i18n.t('dialog.feed-format.label.textContent')}</label>
           <select id="feed-format">
-            <option id="feed-format-atom" value="application/atom+xml">Atom</option>
-            <option id="feed-format-rss" value="application/rss+xml" selected="selected">RSS</option>
+            <option id="feed-format-atom" lang="en" value="application/atom+xml" xml:lang="en">Atom</option>
+            <option id="feed-format-rss" lang="en" value="application/rss+xml" selected="selected" xml:lang="en">RSS</option>
           </select>
         </div>
       `;
@@ -8304,10 +8304,10 @@ console.log(reason);
     getBaseURLSelection: function() {
       return `
         <div id="base-url-selection">
-          <label for="base-url">Location of media resources:</label>
+          <label data-i18n="dialog.base-url-selection.label" for="base-url">${i18n.t('dialog.base-url-selection.label.textContent')}</label>
           <select id="base-url">
-            <option id="base-url-relative" value="base-url-relative" selected="selected">Copy to your storage</option>
-            <option id="base-url-absolute" value="base-url-absolute">Use references as is</option>
+            <option data-i18n="dialog.base-url-relative.option" id="base-url-relative" value="base-url-relative" selected="selected">${i18n.t('dialog.base-url-relative.option.textContent')}</option>
+            <option data-i18n="dialog.base-url-absolute.option" id="base-url-absolute" value="base-url-absolute">${i18n.t('dialog.base-url-absolute.option.textContent')}</option>
           </select>
         </div>
       `;

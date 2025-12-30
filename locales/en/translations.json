@@ -179,6 +179,12 @@
   "editor.new.p.data-placeholder": "Cogito, ergo sum",
   "editor.new.p.aria-label": "Add a title",
 
+  "dialog.feed-format.label.textContent": "Format",
+  "dialog.base-url-selection.label.textContent": "Location of media resources",
+  "dialog.base-url-relative.option.textContent": "Copy to your storage",
+  "dialog.base-url-absolute.option.textContent": "Use references as is",
+
+
   "dialog.signin.h2.textContent": "Sign in",
   "dialog.signin.close.button.title": "Close",
   "dialog.signin.close.button.aria-label": "Close Sign in",
