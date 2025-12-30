@@ -2,14 +2,14 @@ import { accessModePossiblyAllowed } from "../doc.js";
 import { Icon} from "./icons.js";
 import Config from "../config.js";
 import { isLocalhost } from "../uri.js";
-import i18next from "i18next";
+import { i18n } from "../i18n.js";
 
 const ns = Config.ns;
 Config.Button.C
 const docsBaseURL = Config.WebExtensionEnabled ? Config.WebExtension.runtime.getURL('docs') : 'https://dokie.li/docs';
 
 // function getButtonTextContent(key, buttonTextContent) {
-//   const textContentTranslation = i18next.t(key);
+//   const textContentTranslation = i18n.t(key);
 //   const textContentStr = textContentTranslation.includes(key) ? buttonTextContent : textContentTranslation;
 //   return textContentStr;
 // }
@@ -91,15 +91,15 @@ export function getButtonHTML({
   key = key || `button.${button}`;
 
   // const titleContent = buttonTitle || buttonIcons[button]?.title || button;
-  const titleContent = i18next.t(`${key}.title`) === `${key}.title` ? button : i18next.t(`${key}.title`);
+  const titleContent = i18n.t(`${key}.title`) === `${key}.title` ? button : i18n.t(`${key}.title`);
   const title = ` title="${titleContent}"`;
   // const textContent = buttonTextContent || buttonIcons[button]?.textContent;
-  const textContent = i18next.t(`${key}.textContent`) === `${key}.textContent` ? null : i18next.t(`${key}.textContent`);
+  const textContent = i18n.t(`${key}.textContent`) === `${key}.textContent` ? null : i18n.t(`${key}.textContent`);
   // const label = buttonLabel || titleContent;
-  const label = i18next.t(`${key}.aria-label`) === `${key}.aria-label` ? null : i18next.t(`${key}.aria-label`);
+  const label = i18n.t(`${key}.aria-label`) === `${key}.aria-label` ? null : i18n.t(`${key}.aria-label`);
   const ariaLabel = (label && !textContent) ? ` aria-label="${label}"` : '';
-  // console.log(i18next.t(`${key}.textContent`), `${key}.textContent`)
-  // console.log(i18next.t(`${key}.aria-label`), `${key}.aria-label`)
+  // console.log(i18n.t(`${key}.textContent`), `${key}.textContent`)
+  // console.log(i18n.t(`${key}.aria-label`), `${key}.aria-label`)
   // console.log(label, !textContent)
   const className = buttonClass ? ` class="${buttonClass}"` : '';
   const disabled = buttonDisabled ? ` disabled=""` : '';

@@ -15,7 +15,7 @@ import rdf from 'rdf-ext';
 import { Icon } from "../ui/icons.js";
 import { updateButtons } from "../ui/buttons.js";
 import { cleanProseMirrorOutput } from "../utils/normalization.js";
-import i18next from "i18next";
+import { i18n } from "../i18n.js";
 
 const ns = Config.ns;
 
@@ -159,7 +159,7 @@ export class Editor {
 
     var documentMenu = document.getElementById('document-menu');
 
-    document.body.replaceChildren(fragmentFromString(`<main><article><h1 aria-label="${i18next.t('editor.new.h1.aria-label')}" data-i18n="editor.new.h1" data-placeholder="${i18next.t('editor.new.h1.data-placeholder')}" property="schema:name"></h1><div datatype="rdf:HTML" property="schema:description"><p data-i18n="editor.new.p" data-placeholder="${i18next.t('editor.new.p.data-placeholder')}"></p></div></article></main>`));
+    document.body.replaceChildren(fragmentFromString(`<main><article><h1 aria-label="${i18n.t('editor.new.h1.aria-label')}" data-i18n="editor.new.h1" data-placeholder="${i18n.t('editor.new.h1.data-placeholder')}" property="schema:name"></h1><div datatype="rdf:HTML" property="schema:description"><p data-i18n="editor.new.p" data-placeholder="${i18n.t('editor.new.p.data-placeholder')}"></p></div></article></main>`));
 
     document.body.prepend(documentMenu);
 

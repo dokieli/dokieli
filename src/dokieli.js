@@ -28,13 +28,9 @@ import { Editor } from './editor/editor.js';
 import { getButtonHTML, initButtons, updateButtons } from './ui/buttons.js'
 import { csvStringToJson, jsonToHtmlTableString } from './csv.js'
 import { getMultipleResources } from './fetcher.js'
-import { domSanitize, domSanitizeHTMLBody, sanitizeObject } from './utils/sanitization.js'
-import { formatHTML, htmlEncode, tokenizeDOM } from './utils/html.js'
-import { DOMParser, DOMSerializer } from 'prosemirror-model'
-import { cleanProseMirrorOutput, normalizeForDiff, normalizeHTML } from './utils/normalization.js'
-import { schema } from './editor/schema/base.js'
-import { i18nextInit } from './i18n.js'
-import i18next from 'i18next';
+import { domSanitize, sanitizeObject } from './utils/sanitization.js'
+import { normalizeForDiff } from './utils/normalization.js'
+import { i18n, i18nextInit } from './i18n.js'
 
 const ns = Config.ns;
 let DO;
@@ -205,7 +201,7 @@ DO = {
       var showProgress = function() {
         var info = aside.querySelector('div.info');
         var progressOld = info.querySelector('.progress');
-        var progressNew = fragmentFromString(`<div class="progress" data-i18n="panel.notifications.progress.checking">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"].replace(' fa-fw', '')} ${i18next.t('panel.notifications.progress.checking.textContent')}</div>`);
+        var progressNew = fragmentFromString(`<div class="progress" data-i18n="panel.notifications.progress.checking">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"].replace(' fa-fw', '')} ${i18n.t('panel.notifications.progress.checking.textContent')}</div>`);
 
         if (progressOld) {
           info.replaceChild(progressNew, progressOld)
@@ -829,7 +825,7 @@ DO = {
       var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Graph View', buttonTitle: 'Close', iconSize: 'fa-2x' });
 
       if (selector == '#graph-view' && !document.getElementById('graph-view')) {
-        document.body.appendChild(fragmentFromString(`<aside class="do on" id="graph-view" lang="${i18next.language}" xml:lang="${i18next.language}"><h2>Graph view ${DO.C.Button.Info.GraphView}</h2>${buttonClose}<div class="info"></div></aside>`));
+        document.body.appendChild(fragmentFromString(`<aside class="do on" id="graph-view" lang="${i18n.language}" xml:lang="${i18n.language}"><h2>Graph view ${DO.C.Button.Info.GraphView}</h2>${buttonClose}<div class="info"></div></aside>`));
       }
 
       var svg = d3.select(selector).append('svg')
@@ -2486,7 +2482,7 @@ DO = {
 
       var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Review Changes', buttonTitle: 'Close', iconSize: 'fa-2x' });
 
-      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="review-changes-label" class="do on" id="review-changes" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 id="review-changes-label">Review Changes ${DO.C.Button.Info.ReviewChanges}</h2>${buttonClose}<div class="info">${message}</div></aside>`));
+      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="review-changes-label" class="do on" id="review-changes" lang="${i18n.language}" xml:lang="${i18n.language}"><h2 id="review-changes-label">Review Changes ${DO.C.Button.Info.ReviewChanges}</h2>${buttonClose}<div class="info">${message}</div></aside>`));
 
       let insCounter = 0;
       let delCounter = 0;
@@ -2612,7 +2608,7 @@ DO = {
     },
 
     initDocumentMenu: function() {
-      document.body.prepend(fragmentFromString(`<div class="do" id="document-menu" lang="${i18next.language}" xml:lang="${i18next.language}">${DO.C.Button.Menu.OpenMenu}<div><section id="user-info"></section></div></div>`));
+      document.body.prepend(fragmentFromString(`<div class="do" id="document-menu" lang="${i18n.language}" xml:lang="${i18n.language}">${DO.C.Button.Menu.OpenMenu}<div><section id="user-info"></section></div></div>`));
 
       var userInfo = document.getElementById('user-info');
 
@@ -2728,7 +2724,7 @@ DO = {
       }
       let options = [];
 
-      const currentLanguage = i18next.language; // detected or set language
+      const currentLanguage = i18n.language; // detected or set language
 
       Config.Translations.forEach(lang => {
         let selected = (lang == currentLanguage) ? ' selected="selected"' : '';
@@ -2748,9 +2744,9 @@ DO = {
 
       const html = `
         <section id="ui-language">
-          <h2 data-i18n="label.language">${i18next.t('label.language.textContent')}</h2>
+          <h2 data-i18n="label.language">${i18n.t('label.language.textContent')}</h2>
           ${Icon['.fas.fa-language']}
-          <label for="ui-language-select" data-i18n="menu.ui-language-select.label">${i18next.t('menu.ui-language-select.label.textContent')}</label>
+          <label for="ui-language-select" data-i18n="menu.ui-language-select.label">${i18n.t('menu.ui-language-select.label.textContent')}</label>
           <select id="ui-language-select">
             ${options.join('')}
           </select>
@@ -2764,7 +2760,7 @@ DO = {
         e.preventDefault();
         e.stopPropagation();
 
-        i18next.changeLanguage(e.target.value, (err, t) => {
+        i18n.changeLanguage(e.target.value, (err, t) => {
           if (err) return console.error('Error loading language', err);
 
           Config.User.UI['Language'] = e.target.value;
@@ -2785,7 +2781,7 @@ DO = {
 
             // Update textContent
             const textKey = `${baseKey}.textContent`;
-            const textValue = i18next.t(textKey);
+            const textValue = i18n.t(textKey);
             if (textValue !== textKey) {
               const span = el.querySelector(':scope > span');
               if (span) {
@@ -2802,7 +2798,7 @@ DO = {
             // Update innerHTML
             const htmlKey = `${baseKey}.innerHTML`;
 
-            // TODO: move to a standalone function - this takes the variable names from data-i18n- suffix and passes them as a vars object to the i18next.t fn
+            // TODO: move to a standalone function - this takes the variable names from data-i18n- suffix and passes them as a vars object to the i18n fn
             const vars = {};
             Object.entries(el.dataset).forEach(([name, value]) => {
               if (name !== 'i18n') {
@@ -2810,7 +2806,7 @@ DO = {
               }
             });
 
-            const translated = i18next.t(htmlKey, vars);
+            const translated = i18n.t(htmlKey, vars);
 
             if (translated !== htmlKey) {
               el.setHTMLUnsafe(domSanitize(translated));
@@ -2820,7 +2816,7 @@ DO = {
             [...el.attributes].forEach(attr => {
               if (attr.name === 'data-i18n') return;
               const attrKey = `${baseKey}.${attr.name}`;
-              const value = i18next.t(attrKey);
+              const value = i18n.t(attrKey);
               if (value !== attrKey) {
                 el.setAttribute(attr.name, value);
               }
@@ -2919,7 +2915,7 @@ DO = {
 
             var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Graph View', buttonTitle: 'Close', iconSize: 'fa-2x' });
 
-            document.body.appendChild(fragmentFromString(`<aside aria-labelledby="graph-view-label" class="do on" id="graph-view" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 id="graph-view-label">Graph view ${DO.C.Button.Info.GraphView}</h2>${buttonClose}<div class="info"></div></aside>`));
+            document.body.appendChild(fragmentFromString(`<aside aria-labelledby="graph-view-label" class="do on" id="graph-view" lang="${i18n.language}" xml:lang="${i18n.language}"><h2 id="graph-view-label">Graph view ${DO.C.Button.Info.GraphView}</h2>${buttonClose}<div class="info"></div></aside>`));
 
             var graphView = document.getElementById('graph-view');
             graphView.addEventListener('click', (e) => {
@@ -3068,7 +3064,7 @@ DO = {
         var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Embed Data Entry', buttonTitle: 'Close', iconSize: 'fa-2x' });
 
         var embedMenu = `
-        <aside aria-labelledby="embed-data-entry-label" class="do on tabs" id="embed-data-entry" lang="${i18next.language}" xml:lang="${i18next.language}">
+        <aside aria-labelledby="embed-data-entry-label" class="do on tabs" id="embed-data-entry" lang="${i18n.language}" xml:lang="${i18n.language}">
           <h2 id="embed-data-entry-label">Embed Data ${DO.C.Button.Info.EmbedData}</h2>
           ${buttonClose}
           <div class="info"></div>
@@ -3483,7 +3479,7 @@ DO = {
 
       var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Document Info', buttonTitle: 'Close', iconSize: 'fa-2x' });
 
-      document.body.insertBefore(fragmentFromString(`<aside aria-labelledby="document-info-label" class="do on" id="document-info" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 id="document-info-label">Document Info</h2>${buttonClose}</aside>`), documentMenu.nextSibling);
+      document.body.insertBefore(fragmentFromString(`<aside aria-labelledby="document-info-label" class="do on" id="document-info" lang="${i18n.language}" xml:lang="${i18n.language}"><h2 id="document-info-label">Document Info</h2>${buttonClose}</aside>`), documentMenu.nextSibling);
       var documentInfo = document.getElementById('document-info');
 
       documentInfo.setAttribute('tabindex', '-1');
@@ -4276,7 +4272,7 @@ console.log(reason);
 
       var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Robustify Links', buttonTitle: 'Close', iconSize: 'fa-2x' });
 
-      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="robustify-links-label" class="do on" id="robustify-links" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 id="robustify-links-label">Robustify Links ${DO.C.Button.Info.RobustLinks}</h2>${buttonClose}<div class="info"></div><div id="robustify-links-input"><p><input id="robustify-links-select-all" type="checkbox" value="true"/><label for="robustify-links-select-all">Select all</label></p><p><input id="robustify-links-reuse" type="checkbox" value="true" checked="checked"/><label for="robustify-links-reuse">Reuse Robustifed</label></p><ul id="robustify-links-list"></ul></div><button class="robustify" title="Robustify Links" type="submit">Robustify</button></aside>`));
+      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="robustify-links-label" class="do on" id="robustify-links" lang="${i18n.language}" xml:lang="${i18n.language}"><h2 id="robustify-links-label">Robustify Links ${DO.C.Button.Info.RobustLinks}</h2>${buttonClose}<div class="info"></div><div id="robustify-links-input"><p><input id="robustify-links-select-all" type="checkbox" value="true"/><label for="robustify-links-select-all">Select all</label></p><p><input id="robustify-links-reuse" type="checkbox" value="true" checked="checked"/><label for="robustify-links-reuse">Reuse Robustifed</label></p><ul id="robustify-links-list"></ul></div><button class="robustify" title="Robustify Links" type="submit">Robustify</button></aside>`));
 
       //TODO: Move unique list of existing RL's to DO.C.Resource?
       var robustLinksUnique = {};
@@ -4721,7 +4717,7 @@ console.log(reason);
 
       var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Generate Feed', buttonTitle: 'Close', iconSize: 'fa-2x' });
 
-      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="generate-feed-label" class="do on" id="generate-feed" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 id="generate-feed-label">Generate Feed ${DO.C.Button.Info.GenerateFeeds}</h2>${buttonClose}<div class="info"></div></aside>`));
+      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="generate-feed-label" class="do on" id="generate-feed" lang="${i18n.language}" xml:lang="${i18n.language}"><h2 id="generate-feed-label">Generate Feed ${DO.C.Button.Info.GenerateFeeds}</h2>${buttonClose}<div class="info"></div></aside>`));
 
       var generateFeed = document.getElementById('generate-feed');
       generateFeed.addEventListener('click', (e) => {
@@ -4738,7 +4734,7 @@ console.log(reason);
       fieldset = generateFeed.querySelector('fieldset#' + id + '-fieldset');
       DO.U.setupResourceBrowser(fieldset, id, action);
       var feedTitlePlaceholder = (DO.C.User.IRI && DO.C.User.Name) ? DO.C.User.Name + "'s" : "Example's";
-      fieldset.insertAdjacentHTML('beforeend', `<p id="${id}-samp">Feed will be generated at: <samp id="${id}-action"></samp></p><ul><li><label for="${id}-title">Title</label> <input type="text" placeholder="${feedTitlePlaceholder} Web Feed" name="${id}-title" value=""></li><li><label data-i18n="label.language" for="${id}-language">${i18next.t('label.language.textContent')}</label> <select id="${id}-language" name="${id}-language">${getLanguageOptionsHTML()}</select></li><li><label for="${id}-license">License</label> <select id="${id}-license" name="${id}-license">${getLicenseOptionsHTML()}</select></li><li>${DO.U.getFeedFormatSelection()}</li></ul><button class="create" title="Save to destination" type="submit">Generate</button>`);
+      fieldset.insertAdjacentHTML('beforeend', `<p id="${id}-samp">Feed will be generated at: <samp id="${id}-action"></samp></p><ul><li><label for="${id}-title">Title</label> <input type="text" placeholder="${feedTitlePlaceholder} Web Feed" name="${id}-title" value=""></li><li><label data-i18n="label.language" for="${id}-language">${i18n.t('label.language.textContent')}</label> <select id="${id}-language" name="${id}-language">${getLanguageOptionsHTML()}</select></li><li><label for="${id}-license">License</label> <select id="${id}-license" name="${id}-license">${getLicenseOptionsHTML()}</select></li><li>${DO.U.getFeedFormatSelection()}</li></ul><button class="create" title="Save to destination" type="submit">Generate</button>`);
       var bli = document.getElementById(id + '-input');
       bli.focus();
       bli.placeholder = 'https://example.org/path/to/feed.xml';
@@ -5085,7 +5081,7 @@ console.log(reason);
       }
 
       var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Message Log', buttonTitle: 'Close', iconSize: 'fa-2x' });
-      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="message-log-label" class="do on" id="message-log" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 id="message-log-label">Message Log ${DO.C.Button.Info.MessageLog}</h2>${buttonClose}<div class="info"></div><div>${messageLog}</div></aside>`));
+      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="message-log-label" class="do on" id="message-log" lang="${i18n.language}" xml:lang="${i18n.language}"><h2 id="message-log-label">Message Log ${DO.C.Button.Info.MessageLog}</h2>${buttonClose}<div class="info"></div><div>${messageLog}</div></aside>`));
 
       document.querySelector('#message-log button.close').addEventListener('click', (e) => {
         document.querySelector('button.message-log').removeAttribute('disabled');
@@ -5100,7 +5096,7 @@ console.log(reason);
 
       var buttonClose = getButtonHTML({ key: 'dialog.delete.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
-      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="delete-document-label" class="do on" id="delete-document" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 data-i18n="dialog.delete.h2" id="delete-document-label">${i18next.t('dialog.delete.h2.textContent')} ${DO.C.Button.Info.Delete}</h2>${buttonClose}<div class="info"></div><div><p data-i18n="dialog.delete.confirmation.p">${i18next.t('dialog.delete.confirmation.p.textContent')}</p><p><code>${url}</code></p></div><button class="cancel" title="${i18next.t('dialog.delete.cancel.button.title')}" type="button">${i18next.t('dialog.delete.cancel.button.textContent')}</button><button class="delete" data-i18n="dialog.delete.submit.button" title="${i18next.t('dialog.delete.submit.button.title')}" type="button">${i18next.t('dialog.delete.submit.button.textContent')}</button></aside>`));
+      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="delete-document-label" class="do on" id="delete-document" lang="${i18n.language}" xml:lang="${i18n.language}"><h2 data-i18n="dialog.delete.h2" id="delete-document-label">${i18n.t('dialog.delete.h2.textContent')} ${DO.C.Button.Info.Delete}</h2>${buttonClose}<div class="info"></div><div><p data-i18n="dialog.delete.confirmation.p">${i18n.t('dialog.delete.confirmation.p.textContent')}</p><p><code>${url}</code></p></div><button class="cancel" title="${i18n.t('dialog.delete.cancel.button.title')}" type="button">${i18n.t('dialog.delete.cancel.button.textContent')}</button><button class="delete" data-i18n="dialog.delete.submit.button" title="${i18n.t('dialog.delete.submit.button.title')}" type="button">${i18n.t('dialog.delete.submit.button.textContent')}</button></aside>`));
 
       document.querySelector('#delete-document').addEventListener('click', (e) => {
         if (e.target.closest('button.info')) { return; }
@@ -5260,21 +5256,21 @@ console.log(reason);
       var buttonClose = getButtonHTML({ key: 'dialog.reply-to-resource.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
       document.body.appendChild(fragmentFromString(`
-        <aside aria-labelledby="reply-to-resource-label" class="do on" id="reply-to-resource" lang="${i18next.language}" xml:lang="${i18next.language}">
-          <h2 data-i18n="dialog.reply-to-resource.h2" id="reply-to-resource-label">${i18next.t('dialog.reply-to-resource.h2.textContent')} ${DO.C.Button.Info.Reply}</h2>
+        <aside aria-labelledby="reply-to-resource-label" class="do on" id="reply-to-resource" lang="${i18n.language}" xml:lang="${i18n.language}">
+          <h2 data-i18n="dialog.reply-to-resource.h2" id="reply-to-resource-label">${i18n.t('dialog.reply-to-resource.h2.textContent')} ${DO.C.Button.Info.Reply}</h2>
           ${buttonClose}
           <div class="info"></div>
           <div id="reply-to-resource-input">
-            <p data-i18n="dialog.reply-to-resource-input.p" data-i18n-iri="${iri}">${domSanitize(i18next.t('dialog.reply-to-resource-input.p.innerHTML', { iri }))}</p>
+            <p data-i18n="dialog.reply-to-resource-input.p" data-i18n-iri="${iri}">${i18n.t('dialog.reply-to-resource-input.p.innerHTML', { iri })}</p>
             <ul>
               <li>
-                <p><label data-i18n="dialog.reply-to-resource-note.label" for="reply-to-resource-note">${i18next.t('dialog.reply-to-resource-note.label.textContent')}</label></p>
-                <p><textarea cols="40" data-i18n="dialog.reply-to-resource-note.textarea" id="reply-to-resource-note" rows="10" name="reply-to-resource-note" placeholder="${i18next.t('dialog.reply-to-resource-note.textarea.placeholder')}"></textarea></p>
+                <p><label data-i18n="dialog.reply-to-resource-note.label" for="reply-to-resource-note">${i18n.t('dialog.reply-to-resource-note.label.textContent')}</label></p>
+                <p><textarea cols="40" data-i18n="dialog.reply-to-resource-note.textarea" id="reply-to-resource-note" rows="10" name="reply-to-resource-note" placeholder="${i18n.t('dialog.reply-to-resource-note.textarea.placeholder')}"></textarea></p>
               </li>
               <li>
-                <label data-i18n="label.language" for="reply-to-resource-language">${i18next.t('label.language.textContent')}</label> <select id="reply-to-resource-language" name="reply-to-resource-language">${getLanguageOptionsHTML()}</select></li>
+                <label data-i18n="label.language" for="reply-to-resource-language">${i18n.t('label.language.textContent')}</label> <select id="reply-to-resource-language" name="reply-to-resource-language">${getLanguageOptionsHTML()}</select></li>
               <li>
-                <label data-i18n="label.license" for="reply-to-resource-license">${i18next.t('label.license.textContent')}</label> <select id="reply-to-resource-license" name="reply-to-resource-license">${getLicenseOptionsHTML()}</select>
+                <label data-i18n="label.license" for="reply-to-resource-license">${i18n.t('label.license.textContent')}</label> <select id="reply-to-resource-license" name="reply-to-resource-license">${getLicenseOptionsHTML()}</select>
               </li>
             </ul>
           </div>
@@ -5292,14 +5288,14 @@ console.log(reason);
       var noteIRI;
 
       DO.U.setupResourceBrowser(replyToResource, id, action)
-      document.getElementById(id).insertAdjacentHTML('afterbegin', `<p data-i18n="dialog.reply-to-resource.save-location-choose.p">${i18next.t('dialog.reply-to-resource.save-location-choose.p.textContent')}</p>`)
+      document.getElementById(id).insertAdjacentHTML('afterbegin', `<p data-i18n="dialog.reply-to-resource.save-location-choose.p">${i18n.t('dialog.reply-to-resource.save-location-choose.p.textContent')}</p>`)
 
-      replyToResource.insertAdjacentHTML('beforeend', `<p data-i18n="dialog.reply-to-resource.save-location.p">${i18next.t('dialog.reply-to-resource.save-location.p.textContent')} <samp id="${id}-${action}"></samp></p>`)
+      replyToResource.insertAdjacentHTML('beforeend', `<p data-i18n="dialog.reply-to-resource.save-location.p">${i18n.t('dialog.reply-to-resource.save-location.p.textContent')} <samp id="${id}-${action}"></samp></p>`)
 
       var bli = document.getElementById(id + '-input')
       bli.focus()
       bli.placeholder = 'https://example.org/path/to/article'
-      replyToResource.insertAdjacentHTML('beforeend', `<button class="reply" data-i18n="dialog.reply-to-resource.submit.button" title="${i18next.t('dialog.reply-to-resource.submit.button.title')}" type="submit">${i18next.t('dialog.reply-to-resource.submit.button.textContent')}</button>`)
+      replyToResource.insertAdjacentHTML('beforeend', `<button class="reply" data-i18n="dialog.reply-to-resource.submit.button" title="${i18n.t('dialog.reply-to-resource.submit.button.title')}" type="submit">${i18n.t('dialog.reply-to-resource.submit.button.textContent')}</button>`)
 
       replyToResource.addEventListener('click', e => {
         if (e.target.closest('button.close')) {
@@ -5328,7 +5324,7 @@ console.log(reason);
           // TODO: this needs to be form validation instead
           if (!note || !noteIRI) {
             document.querySelector('#reply-to-resource .response-message')
-              .setHTMLUnsafe(domSanitize(`<p class="error" data-i18n="dialog.reply-to-resource.error.missing-note-or-location.p">${i18n("dialog.reply-to-resource.error.missing-note-or-location.p.textContent")}</p>`));
+              .setHTMLUnsafe(domSanitize(`<p class="error" data-i18n="dialog.reply-to-resource.error.missing-note-or-location.p">${i18n.t("dialog.reply-to-resource.error.missing-note-or-location.p.textContent")}</p>`));
             return;
           }
 
@@ -5420,7 +5416,7 @@ console.log(reason);
           .then(response => {
             replyToResource
               .querySelector('.response-message')
-              .setHTMLUnsafe(domSanitize(`<p class="success" data-i18n="dialog.reply-to-resource.success.saved-at.p"><span>${i18next.t('dialog.reply-to-resource.success.saved-at.p.textContent')}</span> <a href="${response.url}" rel="noopener" target="_blank">${response.url}</a></p>`));
+              .setHTMLUnsafe(domSanitize(`<p class="success" data-i18n="dialog.reply-to-resource.success.saved-at.p"><span>${i18n.t('dialog.reply-to-resource.success.saved-at.p.textContent')}</span> <a href="${response.url}" rel="noopener" target="_blank">${response.url}</a></p>`));
 
             return getLinkRelation(ns.ldp.inbox.value, null, getDocument(null, documentOptions));
           })
@@ -5460,7 +5456,7 @@ console.log(reason);
           })
 
           .then(response => {  // Success!
-            var notificationSent = i18next.t('dialog.reply-to-resource.success.notification-sent.p.textContent');
+            var notificationSent = i18n.t('dialog.reply-to-resource.success.notification-sent.p.textContent');
             var location = response.headers.get('Location')
             var notificationLink = '';
 
@@ -5502,7 +5498,7 @@ console.log(reason);
       if (DO.C.User.IRI && DO.C.OriginalResourceInfo['rdftype'] && DO.C.OriginalResourceInfo.rdftype.includes(ns.schema.ScholarlyArticle.value) || DO.C.OriginalResourceInfo.rdftype.includes(ns.schema.Thesis.value)) {
         shareResourceLinkedResearch = `
           <div id="share-resource-external">
-            <h3 data-i18n="dialog.share-resource-linked-research-h3">${i18next.t('dialog.share-resource-linked-research-h3.textContent')}</h3>
+            <h3 data-i18n="dialog.share-resource-linked-research-h3">${i18n.t('dialog.share-resource-linked-research-h3.textContent')}</h3>
             <input id="share-resource-linked-research" type="checkbox" value="https://linkedresearch.org/cloud" />
             <label for="share-resource-linked-research"><a href="https://linkedresearch.org/cloud">Linked Open Research Cloud</a></label>
           </div>`;
@@ -5511,17 +5507,17 @@ console.log(reason);
       var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Share Resource', buttonTitle: 'Close', iconSize: 'fa-2x' });
 
       var shareResourceHTML = `
-        <aside aria-labelledby="share-resource-label" class="do on" id="share-resource" lang="${i18next.language}" xml:lang="${i18next.language}">
-          <h2 data-i18n="dialog.share.h2" id="share-resource-label">${i18next.t('dialog.share.h2.textContent')} ${DO.C.Button.Info.Share}</h2>
+        <aside aria-labelledby="share-resource-label" class="do on" id="share-resource" lang="${i18n.language}" xml:lang="${i18n.language}">
+          <h2 data-i18n="dialog.share.h2" id="share-resource-label">${i18n.t('dialog.share.h2.textContent')} ${DO.C.Button.Info.Share}</h2>
 
           ${buttonClose}
 
           <div class="info"></div>
 
           <div id="share-resource-share-url">
-            <h3 data-i18n="dialog.share-resource-share-url.h3">${i18next.t('dialog.share-resource-share-url.h3.textContent')}</h3>
+            <h3 data-i18n="dialog.share-resource-share-url.h3">${i18n.t('dialog.share-resource-share-url.h3.textContent')}</h3>
 
-            <label data-i18n="dialog.share-resource-clipboard.label" for="share-resource-clipboard">${i18next.t('dialog.share-resource-clipboard.label.textContent')}</label>
+            <label data-i18n="dialog.share-resource-clipboard.label" for="share-resource-clipboard">${i18n.t('dialog.share-resource-clipboard.label.textContent')}</label>
             <input id="share-resource-clipboard" name="share-resource-clipboard" readonly="readonly" type="text" value="${iri}" />
             ${DO.C.Button.Clipboard}
           </div>
@@ -5529,17 +5525,17 @@ console.log(reason);
           ${shareResourceLinkedResearch}
 
           <div id="share-resource-agents">
-            <h3 data-i18n="dialog.share-resource-agents.h3">${i18next.t('dialog.share-resource-agents.h3.textContent')}</h3>
+            <h3 data-i18n="dialog.share-resource-agents.h3">${i18n.t('dialog.share-resource-agents.h3.textContent')}</h3>
 
             <ul>
               <li id="share-resource-address-book">
               </li>
             </ul>
 
-            <label data-i18n="dialog.share-resource-note.label" for="share-resource-note">${i18next.t('dialog.share-resource-note.label.textContent')}</label>
-            <textarea data-i18n="dialog.share-resource-note.textarea" id="share-resource-note" rows="3" cols="40" name="share-resource-note" placeholder="${i18next.t('dialog.share-resource-note.textarea.placeholder')}"></textarea>
+            <label data-i18n="dialog.share-resource-note.label" for="share-resource-note">${i18n.t('dialog.share-resource-note.label.textContent')}</label>
+            <textarea data-i18n="dialog.share-resource-note.textarea" id="share-resource-note" rows="3" cols="40" name="share-resource-note" placeholder="${i18n.t('dialog.share-resource-note.textarea.placeholder')}"></textarea>
 
-            <button class="share" data-i18n="dialog.share-resource-agents.button" id="share-resource-agents-button" title="${i18next.t('dialog.share-resource-agents.button.title')}" type="submit">${i18next.t('dialog.share-resource-agents.button.textContent')}</button>
+            <button class="share" data-i18n="dialog.share-resource-agents.button" id="share-resource-agents-button" title="${i18n.t('dialog.share-resource-agents.button.title')}" type="submit">${i18n.t('dialog.share-resource-agents.button.textContent')}</button>
           </div>
         </aside>
       `;
@@ -5569,16 +5565,16 @@ console.log(reason);
 
         var shareResourcePermissions = `
           <div id="share-resource-permissions">
-            <h3 data-i18n="dialog.share-resource-permissions.h3">${i18next.t('dialog.share-resource-permissions.h3.textContent')}</h3>
+            <h3 data-i18n="dialog.share-resource-permissions.h3">${i18n.t('dialog.share-resource-permissions.h3.textContent')}</h3>
 
-            <span class="progress" data-i18n="dialog.share-resource-permissions.progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]} ${i18next.t('dialog.share-resource-permissions.progress.textContent')}</span>
+            <span class="progress" data-i18n="dialog.share-resource-permissions.progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]} ${i18n.t('dialog.share-resource-permissions.progress.textContent')}</span>
 
             <ul class="permissions">
             </ul>
 
             <div class="autocomplete">
-              <label data-i18n="dialog.share-resource-search-contacts.label" for="share-resource-search-contacts">${i18next.t('dialog.share-resource-search-contacts.label.textContent')}</label>
-              <input data-i18n="dialog.share-resource-search-contacts.input" id="share-resource-search-contacts" name="share-resource-search-contacts" placeholder="${i18next.t('dialog.share-resource-search-contacts.input.placeholder')}" type="text" value="" />
+              <label data-i18n="dialog.share-resource-search-contacts.label" for="share-resource-search-contacts">${i18n.t('dialog.share-resource-search-contacts.label.textContent')}</label>
+              <input data-i18n="dialog.share-resource-search-contacts.input" id="share-resource-search-contacts" name="share-resource-search-contacts" placeholder="${i18n.t('dialog.share-resource-search-contacts.input.placeholder')}" type="text" value="" />
               <ul class="suggestions">
               </ul>
             </div>
@@ -5836,7 +5832,7 @@ console.log(reason);
 
       const documentURL = currentLocation();
 
-      const selectNode = `<select aria-label="${i18next.t('dialog.select-access-mode.select.aria-label')}" data-i18n="dialog.select-access-mode.select" id="${id}">${getAccessModeOptionsHTML({'context': options.accessContext, 'selected': options.selectedAccessMode })}</select>`;
+      const selectNode = `<select aria-label="${i18n.t('dialog.select-access-mode.select.aria-label')}" data-i18n="dialog.select-access-mode.select" id="${id}">${getAccessModeOptionsHTML({'context': options.accessContext, 'selected': options.selectedAccessMode })}</select>`;
 
       node.insertAdjacentHTML('beforeend', selectNode);
 
@@ -7013,7 +7009,7 @@ console.log(reason);
         div.replaceChildren();
       }
 
-      div.insertAdjacentHTML('beforeend', `<label data-18n="browser.create-container-name.label" for="${id}-create-container-name">${i18next.t('browser.create-container-name.label.textContent')}</label> <input data-i18n="browser.create-container-name.input" id="${id}-create-container-name" name="${id}-create-container-name" type="text" placeholder="${i18next.t('browser.create-container-name.input.placeholder')}" /> <button class="insert" data-i18n="browser.create-container-name.button" disabled="disabled" title="${i18next.t('browser.create-container-name.button.title')}" type="button">${i18next.t('browser.create-container-name.button.textContent')}</button>`);
+      div.insertAdjacentHTML('beforeend', `<label data-18n="browser.create-container-name.label" for="${id}-create-container-name">${i18n.t('browser.create-container-name.label.textContent')}</label> <input data-i18n="browser.create-container-name.input" id="${id}-create-container-name" name="${id}-create-container-name" type="text" placeholder="${i18n.t('browser.create-container-name.input.placeholder')}" /> <button class="insert" data-i18n="browser.create-container-name.button" disabled="disabled" title="${i18n.t('browser.create-container-name.button.title')}" type="button">${i18n.t('browser.create-container-name.button.textContent')}</button>`);
 
       var label = div.querySelector('label');
       var input = div.querySelector('input');
@@ -7144,11 +7140,11 @@ console.log(reason);
       var createContainerButton = '';
       var createContainerDiv = '';
       if (DO.C['Session']?.isActive) {
-        createContainerButton = ` <button data-i18n="browser.create-container.button" id="${id}-create-container-button" title="${i18next.t('browser.create-container.button.title')}">${i18next.t('browser.create-container.button.textContent')}</button>`;
+        createContainerButton = ` <button data-i18n="browser.create-container.button" id="${id}-create-container-button" title="${i18n.t('browser.create-container.button.title')}">${i18n.t('browser.create-container.button.textContent')}</button>`;
         createContainerDiv = `<div id="${id}-create-container"></div>`;
       }
 
-      parent.insertAdjacentHTML('beforeend', `<div id="${id}"><label for="${id}-input">URL</label> <input type="text" id="${id}-input" name="${id}-input" required placeholder="https://example.org/path/to/" /><button data-i18n="browser.browse-location.button" id="${id}-update" disabled="disabled" title="${i18next.t('browser.browse-location.button.textContent')}">${i18next.t('browser.browse-location.button.textContent')}</button>${createContainerButton}</div>${createContainerDiv}<div id="${id}-listing"></div>`);
+      parent.insertAdjacentHTML('beforeend', `<div id="${id}"><label for="${id}-input">URL</label> <input type="text" id="${id}-input" name="${id}-input" required placeholder="https://example.org/path/to/" /><button data-i18n="browser.browse-location.button" id="${id}-update" disabled="disabled" title="${i18n.t('browser.browse-location.button.textContent')}">${i18n.t('browser.browse-location.button.textContent')}</button>${createContainerButton}</div>${createContainerDiv}<div id="${id}-listing"></div>`);
 
       // var inputBox = document.getElementById(id);
       var createContainer = document.getElementById(id + '-create-container');
@@ -7240,7 +7236,7 @@ console.log(reason);
 
       var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Resource Browser', buttonTitle: 'Close', iconSize: 'fa-2x' });
 
-      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="resource-browser-label" class="do on" id="resource-browser-${id}" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 id="resource-browser-label">Resource Browser</h2>${buttonClose}</aside>`));
+      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="resource-browser-label" class="do on" id="resource-browser-${id}" lang="${i18n.language}" xml:lang="${i18n.language}"><h2 id="resource-browser-label">Resource Browser</h2>${buttonClose}</aside>`));
 
       DO.U.setupResourceBrowser(document.getElementById('resource-browser-' + id), id, action);
       document.getElementById('resource-browser-' + id).insertAdjacentHTML('beforeend', '<p><samp id="' + id + '-' + action + '"></samp></p>');
@@ -7301,7 +7297,7 @@ console.log(reason);
 
       var buttonClose = getButtonHTML({ key: 'dialog.open-document.close', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
-      document.body.insertAdjacentHTML('beforeend', `<aside aria-labelledby="open-document-label" class="do on" id="open-document" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 data-i18n="dialog.open-document.h2" id="open-document-label">${i18next.t('dialog.open-document.h2.textContent')} ${DO.C.Button.Info.Open}</h2>${buttonClose}<div class="info"></div><p><label data-i18n="dialog.open-document.open-local-file.label" for="open-local-file">${i18next.t('dialog.open-document.open-local-file.label.textContent')}</label> <input type="file" id="open-local-file" name="open-local-file" multiple="" /></p></aside>`);
+      document.body.insertAdjacentHTML('beforeend', `<aside aria-labelledby="open-document-label" class="do on" id="open-document" lang="${i18n.language}" xml:lang="${i18n.language}"><h2 data-i18n="dialog.open-document.h2" id="open-document-label">${i18n.t('dialog.open-document.h2.textContent')} ${DO.C.Button.Info.Open}</h2>${buttonClose}<div class="info"></div><p><label data-i18n="dialog.open-document.open-local-file.label" for="open-local-file">${i18n.t('dialog.open-document.open-local-file.label.textContent')}</label> <input type="file" id="open-local-file" name="open-local-file" multiple="" /></p></aside>`);
 
       var id = 'location-open-document';
       var action = 'read';
@@ -7309,7 +7305,7 @@ console.log(reason);
       var openDocument = document.getElementById('open-document');
       DO.U.setupResourceBrowser(openDocument , id, action);
       var idSamp = (typeof DO.C.User.Storage == 'undefined') ? '' : '<p><samp id="' + id + '-' + action + '">https://example.org/path/to/article</samp></p>';
-      openDocument.insertAdjacentHTML('beforeend', `${idSamp}<button class="open" data-i18n="dialog.open-document.open.button" title="${i18next.t('dialog.open-document.open.button.title')}" type="submit">${i18next.t('dialog.open-document.open.button.textContent')}</button>`);
+      openDocument.insertAdjacentHTML('beforeend', `${idSamp}<button class="open" data-i18n="dialog.open-document.open.button" title="${i18n.t('dialog.open-document.open.button.title')}" type="submit">${i18n.t('dialog.open-document.open.button.textContent')}</button>`);
 
       openDocument.addEventListener('click', function (e) {
         if (e.target.closest('button.close')) {
@@ -7848,7 +7844,7 @@ console.log(reason);
 
       var buttonClose = getButtonHTML({ key: 'dialog.save-as-document.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
-      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="save-as-document-label" class="do on" id="save-as-document" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 data-i18n="dialog.save-as-document.h2" id="save-as-document-label">${i18next.t('dialog.save-as-document.h2.textContent')} ${DO.C.Button.Info.SaveAs}</h2>${buttonClose}<div class="info"></div></aside>`));
+      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="save-as-document-label" class="do on" id="save-as-document" lang="${i18n.language}" xml:lang="${i18n.language}"><h2 data-i18n="dialog.save-as-document.h2" id="save-as-document-label">${i18n.t('dialog.save-as-document.h2.textContent')} ${DO.C.Button.Info.SaveAs}</h2>${buttonClose}<div class="info"></div></aside>`));
 
       var saveAsDocument = document.getElementById('save-as-document');
       saveAsDocument.addEventListener('click', (e) => {
@@ -7861,7 +7857,7 @@ console.log(reason);
 
       var locationInboxId = 'location-inbox';
       var locationInboxAction = 'read';
-      saveAsDocument.insertAdjacentHTML('beforeend', `<div><input id="${locationInboxId}-set" name="${locationInboxId}-set" type="checkbox" /> <label data-i18n="dialog.save-as-document.set-inbox.label" for="${locationInboxId}-set">${i18next.t('dialog.save-as-document.set-inbox.label.textContent')}</label></div>`);
+      saveAsDocument.insertAdjacentHTML('beforeend', `<div><input id="${locationInboxId}-set" name="${locationInboxId}-set" type="checkbox" /> <label data-i18n="dialog.save-as-document.set-inbox.label" for="${locationInboxId}-set">${i18n.t('dialog.save-as-document.set-inbox.label.textContent')}</label></div>`);
 
       saveAsDocument.addEventListener('click', (e) => {
         if (e.target.closest('input#' + locationInboxId + '-set')) {
@@ -7877,7 +7873,7 @@ console.log(reason);
             e.target.nextElementSibling.insertAdjacentHTML('afterend', '<fieldset id="' + locationInboxId + '-fieldset"></fieldset>');
             fieldset = saveAsDocument.querySelector('#' + locationInboxId + '-fieldset');
             DO.U.setupResourceBrowser(fieldset, locationInboxId, locationInboxAction);
-            fieldset.insertAdjacentHTML('beforeend', `<p data-i18n="dialog.save-as-document.article-inbox.p">${i18next.t('dialog.save-as-document.article-inbox.p.textContent')} <samp id="${locationInboxId}-${locationInboxAction}"></samp></p>`);
+            fieldset.insertAdjacentHTML('beforeend', `<p data-i18n="dialog.save-as-document.article-inbox.p">${i18n.t('dialog.save-as-document.article-inbox.p.textContent')} <samp id="${locationInboxId}-${locationInboxAction}"></samp></p>`);
             var lii = document.getElementById(locationInboxId + '-input');
             lii.focus();
             lii.placeholder = 'https://example.org/path/to/inbox/';
@@ -7887,7 +7883,7 @@ console.log(reason);
 
       var locationAnnotationServiceId = 'location-annotation-service';
       var locationAnnotationServiceAction = 'read';
-      saveAsDocument.insertAdjacentHTML('beforeend', `<div><input id="${locationAnnotationServiceId}-set" name="${locationAnnotationServiceId}-set" type="checkbox" /> <label data-i18n="dialog.save-as-document.set-annotation-service.label" for="${locationAnnotationServiceId}-set">${i18next.t('dialog.save-as-document.set-annotation-service.label.textContent')}</label></div>`);
+      saveAsDocument.insertAdjacentHTML('beforeend', `<div><input id="${locationAnnotationServiceId}-set" name="${locationAnnotationServiceId}-set" type="checkbox" /> <label data-i18n="dialog.save-as-document.set-annotation-service.label" for="${locationAnnotationServiceId}-set">${i18n.t('dialog.save-as-document.set-annotation-service.label.textContent')}</label></div>`);
 
       saveAsDocument.addEventListener('click', (e) => {
         if (e.target.closest('input#' + locationAnnotationServiceId + '-set')) {
@@ -7903,7 +7899,7 @@ console.log(reason);
             e.target.nextElementSibling.insertAdjacentHTML('afterend', '<fieldset id="' + locationAnnotationServiceId + '-fieldset"></fieldset>');
             fieldset = saveAsDocument.querySelector('#' + locationAnnotationServiceId + '-fieldset');
             DO.U.setupResourceBrowser(fieldset, locationAnnotationServiceId, locationAnnotationServiceAction);
-            fieldset.insertAdjacentHTML('beforeend', `<p data-i18n="dialog.save-as-document.article-annotation-service.p">${i18next.t('dialog.save-as-document.article-annotation-service.p.textContent')} <samp id="${locationAnnotationServiceId}-${locationAnnotationServiceAction}"></samp></p>`);
+            fieldset.insertAdjacentHTML('beforeend', `<p data-i18n="dialog.save-as-document.article-annotation-service.p">${i18n.t('dialog.save-as-document.article-annotation-service.p.textContent')} <samp id="${locationAnnotationServiceId}-${locationAnnotationServiceAction}"></samp></p>`);
             var lasi = document.getElementById(locationAnnotationServiceId + '-input');
             lasi.focus();
             lasi.placeholder = 'https://example.org/path/to/annotation/';
@@ -7937,10 +7933,10 @@ console.log(reason);
       }
       var imgAccessibilityReport = [];
       if (imgFailed.length) {
-        imgAccessibilityReport.push(`<li data-i18n="dialog.accessibility-report.image-failed.li">${i18next.t('dialog.accessibility-report.image-failed.li.textContent')}</li>`);
+        imgAccessibilityReport.push(`<li data-i18n="dialog.accessibility-report.image-failed.li">${i18n.t('dialog.accessibility-report.image-failed.li.innerHTML')}</li>`);
       }
       if (imgCantTell.length) {
-        imgAccessibilityReport.push(`<li data-i18n="dialog.accessibility-report.image-cant-tell.li">${i18next.t('dialog.accessibility-report.image-cant-tell.li.textContent')}</li>`);
+        imgAccessibilityReport.push(`<li data-i18n="dialog.accessibility-report.image-cant-tell.li">${i18n.t('dialog.accessibility-report.image-cant-tell.li.innerHTML')}</li>`);
       }
 
       var video = document.querySelectorAll('video');
@@ -7963,7 +7959,7 @@ console.log(reason);
       }
       var videoAccessibilityReport = [];
       if (videoFailed.length) {
-        videoAccessibilityReport.push(`<li data-i18n="dialog.accessibility-report.video-failed.li">${i18next.t('dialog.accessibility-report.video-failed.li.textContent')}</li>`);
+        videoAccessibilityReport.push(`<li data-i18n="dialog.accessibility-report.video-failed.li">${i18n.t('dialog.accessibility-report.video-failed.li.innerHTML')}</li>`);
       }
 
       var audio = document.querySelectorAll('audio');
@@ -7986,11 +7982,11 @@ console.log(reason);
       }
       var audioAccessibilityReport = [];
       if (audioFailed.length) {
-        audioAccessibilityReport.push(`<li> data-i18n="dialog.accessibility-report.audio-failed.li">${i18next.t('dialog.accessibility-report.audio-failed.li.textContent')}</li>`);
+        audioAccessibilityReport.push(`<li> data-i18n="dialog.accessibility-report.audio-failed.li">${i18n.t('dialog.accessibility-report.audio-failed.li.innerHTML')}</li>`);
       }
 
-      var aRWarning = `<p data-i18n="dialog.accessibility-report.warning.p">${i18next.t('dialog.accessibility-report.warning.p.textContent')}</p>`;
-      var aRSuccess = `<p data-i18n="dialog.accessibility-report.success.p">${i18next.t('dialog.accessibility-report.success.p.textContent')}</p>`;
+      var aRWarning = `<p data-i18n="dialog.accessibility-report.warning.p">${i18n.t('dialog.accessibility-report.warning.p.textContent')}</p>`;
+      var aRSuccess = `<p data-i18n="dialog.accessibility-report.success.p">${i18n.t('dialog.accessibility-report.success.p.textContent')}</p>`;
       var accessibilityReport = '';
       if (imgAccessibilityReport.length || audioAccessibilityReport.length || videoAccessibilityReport.length) {
         accessibilityReport += aRWarning + '<ul>' + imgAccessibilityReport.join('') + audioAccessibilityReport.join('') + videoAccessibilityReport.join('') + '</ul>';
@@ -7998,22 +7994,22 @@ console.log(reason);
       else {
         accessibilityReport += aRSuccess;
       }
-      accessibilityReport = `<details id="accessibility-report-save-as"><summary data-i18n="dialog.accessibility-report.summary">${i18next.t('dialog.accessibility-report.summary.textContent')}</summary>${accessibilityReport}</details>`;
+      accessibilityReport = `<details id="accessibility-report-save-as"><summary data-i18n="dialog.accessibility-report.summary">${i18n.t('dialog.accessibility-report.summary.textContent')}</summary>${accessibilityReport}</details>`;
 
       let dokielizeResource = '';
       let derivationData = '';
       
       if (!DO.Editor['new']) {
         dokielizeResource = '<li><input type="checkbox" id="dokielize-resource" name="dokielize-resource" /><label for="dokielize-resource">dokielize</label></li>';
-        derivationData = `<li><input type="checkbox" id="derivation-data" name="derivation-data" checked="checked" /><label data-i18n="dialog.save-as-document.derivation-data.label" for="derivation-data">${i18next.t('dialog.save-as-document.derivation-data.label.textContent')}</label></li>`;
+        derivationData = `<li><input type="checkbox" id="derivation-data" name="derivation-data" checked="checked" /><label data-i18n="dialog.save-as-document.derivation-data.label" for="derivation-data">${i18n.t('dialog.save-as-document.derivation-data.label.textContent')}</label></li>`;
       }
 
       var id = 'location-save-as';
       var action = 'write';
-      saveAsDocument.insertAdjacentHTML('beforeend', `<form><fieldset id="${id}-fieldset"><legend data-i18n="dialog.save-as-document.save-to.legend">${i18next.t('dialog.save-as-document.save-to.legend.textContent')}</legend></fieldset></form>`);
+      saveAsDocument.insertAdjacentHTML('beforeend', `<form><fieldset id="${id}-fieldset"><legend data-i18n="dialog.save-as-document.save-to.legend">${i18n.t('dialog.save-as-document.save-to.legend.textContent')}</legend></fieldset></form>`);
       fieldset = saveAsDocument.querySelector('fieldset#' + id + '-fieldset');
       DO.U.setupResourceBrowser(fieldset, id, action);
-      fieldset.insertAdjacentHTML('beforeend', `<p data-i18n="dialog.save-as-document.save-location.p" id="${id}-samp">${i18next.t('dialog.save-as-document.save-location.p.textContent')} <samp id="${id}-${action}"></samp></p>${DO.U.getBaseURLSelection()}<ul>${dokielizeResource}${derivationData}</ul>${accessibilityReport}<button class="create" data-i18n="dialog.save-as-document.save.button" title="${i18next.t('dialog.save-as-document.submit.button.title')}" type="submit">${i18next.t('dialog.save-as-document.submit.button.textContent')}</button>`);
+      fieldset.insertAdjacentHTML('beforeend', `<p data-i18n="dialog.save-as-document.save-location.p" id="${id}-samp">${i18n.t('dialog.save-as-document.save-location.p.textContent')} <samp id="${id}-${action}"></samp></p>${DO.U.getBaseURLSelection()}<ul>${dokielizeResource}${derivationData}</ul>${accessibilityReport}<button class="create" data-i18n="dialog.save-as-document.save.button" title="${i18n.t('dialog.save-as-document.submit.button.title')}" type="submit">${i18n.t('dialog.save-as-document.submit.button.textContent')}</button>`);
       var bli = document.getElementById(id + '-input');
       bli.focus();
       bli.placeholder = 'https://example.org/path/to/article';
@@ -8038,7 +8034,7 @@ console.log(reason);
           // TODO: this needs to be form validation instead
         if (!storageIRI.length) {
           saveAsDocument.insertAdjacentHTML('beforeend',
-            `<div class="response-message"><p class="error" data-i18n="dialog.save-as-document.error.missing-location.p">${i18next.t("dialog.save-as-document.error.missing-location.p.textContent")}</p></div>`
+            `<div class="response-message"><p class="error" data-i18n="dialog.save-as-document.error.missing-location.p">${i18n.t("dialog.save-as-document.error.missing-location.p.textContent")}</p></div>`
           )
 
           return
@@ -8118,7 +8114,7 @@ console.log(reason);
             // var documentMode = (DO.C.WebExtensionEnabled) ? '' : '#author=true'
 
             saveAsDocument.insertAdjacentHTML('beforeend',
-              `<div class="response-message"><p class="success" data-i18n="dialog.save-as-document.success.saved-at.p"><span>${i18next.t('dialog.save-as-document.success.saved-at.p.textContent')}</span> <a href="${url}">${url}</a></p></div>`
+              `<div class="response-message"><p class="success" data-i18n="dialog.save-as-document.success.saved-at.p"><span>${i18n.t('dialog.save-as-document.success.saved-at.p.textContent')}</span> <a href="${url}">${url}</a></p></div>`
             )
 
             DO.C.DocumentAction = 'save-as';
@@ -8165,7 +8161,7 @@ console.log(reason);
 
             if (DO.C.User.IRI && linkHeaders && linkHeaders.has('rel', ns.ldp.inbox.value)){
               inboxURL = linkHeaders.rel(ns.ldp.inbox.value)[0].uri;
-              requestAccess = `<p><button class="request-access" data-i18n="dialog.save-as-document.request-access.button" data-inbox="${inboxURL}" data-target="${storageIRI}" title="${i18next.t('dialog.save-as-document.request-access.button.title')}" type="button">${i18next.t('dialog.save-as-document.request-access.button.textContent')}</button></p>`;
+              requestAccess = `<p><button class="request-access" data-i18n="dialog.save-as-document.request-access.button" data-inbox="${inboxURL}" data-target="${storageIRI}" title="${i18n.t('dialog.save-as-document.request-access.button.title')}" type="button">${i18n.t('dialog.save-as-document.request-access.button.textContent')}</button></p>`;
             }
 
             switch (error.status) {
@@ -8232,7 +8228,7 @@ console.log(reason);
 
                     responseMessage
                       .querySelector('.progress[data-to="' + inboxURL + '"]')
-                      .setHTMLUnsafe(domSanitize(`${Icon[".fas.fa-times-circle.fa-fw"]} <span data-i18n="dialog.save-as-document.request-access.not-notified.span">${i18next.t('dialog.save-as-document.request-access.not-notified.span.textContent')}</span>`))
+                      .setHTMLUnsafe(domSanitize(`${Icon[".fas.fa-times-circle.fa-fw"]} <span data-i18n="dialog.save-as-document.request-access.not-notified.span">${i18n.t('dialog.save-as-document.request-access.not-notified.span.textContent')}</span>`))
                   })
                   .then(response => {
                     var notificationSent = Icon[".fas.fa-check-circle.fa-fw"];
@@ -8271,7 +8267,7 @@ console.log(reason);
 
       var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Source View', buttonTitle: 'Close', iconSize: 'fa-2x' });
 
-      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="source-view-label" class="do on" id="source-view" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 id="source-view-label">Source ${DO.C.Button.Info.Source}</h2>${buttonClose}<div class="info"></div><textarea id="source-edit" rows="24" cols="80"></textarea><p><button class="update"${buttonDisabled} title="Update source" type="submit">Update</button></p></aside>`));
+      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="source-view-label" class="do on" id="source-view" lang="${i18n.language}" xml:lang="${i18n.language}"><h2 id="source-view-label">Source ${DO.C.Button.Info.Source}</h2>${buttonClose}<div class="info"></div><textarea id="source-edit" rows="24" cols="80"></textarea><p><button class="update"${buttonDisabled} title="Update source" type="submit">Update</button></p></aside>`));
       var sourceBox = document.getElementById('source-view');
       var input = document.getElementById('source-edit');
       input.value = getDocument(null, documentOptions);
@@ -9645,7 +9641,7 @@ WHERE {\n\
     initializeButtonMore: function(node) {
       var info = node.querySelector('div.info');
       var progressOld = info.querySelector('.progress');
-      var progressNew = fragmentFromString(`<div class="progress" data-i18n="panel.notifications.progress.more">${DO.C.Button.Notifications.More} ${i18next.t('panel.notifications.progress.more.textContent')}</div>`);
+      var progressNew = fragmentFromString(`<div class="progress" data-i18n="panel.notifications.progress.more">${DO.C.Button.Notifications.More} ${i18n.t('panel.notifications.progress.more.textContent')}</div>`);
 
       if (progressOld) {
         info.replaceChild(progressNew, progressOld)
@@ -9676,7 +9672,7 @@ WHERE {\n\
       var buttonToggle = getButtonHTML({ key: 'panel.notifications.toggle.button', button: 'toggle', buttonClass: 'toggle' })
 
       //TEMP buttonRel/Resource
-      var aside = `<aside aria-labelledby="document-notifications-label" class="do" contenteditable="false" id="document-notifications" lang="${i18next.language}" xml:lang="${i18next.language}"><h2 data-i18n="panel.notifications.h2" id="document-notifications-label">${i18next.t('panel.notifications.h2.textContent')} ${DO.C.Button.Info.Notifications}</h2>${buttonToggle}<div><div class="info"></div><ul class="activities"></ul></div></aside>`;
+      var aside = `<aside aria-labelledby="document-notifications-label" class="do" contenteditable="false" id="document-notifications" lang="${i18n.language}" xml:lang="${i18n.language}"><h2 data-i18n="panel.notifications.h2" id="document-notifications-label">${i18n.t('panel.notifications.h2.textContent')} ${DO.C.Button.Info.Notifications}</h2>${buttonToggle}<div><div class="info"></div><ul class="activities"></ul></div></aside>`;
       document.body.insertAdjacentHTML('beforeend', aside);
       aside = document.getElementById('document-notifications');
 
