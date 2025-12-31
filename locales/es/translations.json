@@ -222,7 +222,7 @@
   "editor.toolbar.img.form.img-figcaption.input.placeholder": "Un pie de figura o leyenda para la imagen.",
 
   "editor.toolbar.citation.form.specref-search.label.textContent": "Buscar",
-  "editor.toolbar.citation.form.specref-search.input.placeholder": "Enter terms to search for specifications",
+  "editor.toolbar.citation.form.specref-search.input.placeholder": "Introduzca términos para buscar especificaciones",
   "editor.toolbar.citation.ref-footnote.form.label.textContent": "Nota al pie",
   "editor.toolbar.citation.ref-reference.form.label.textContent": "Referencia",
   "editor.toolbar.citation.form.citation-relation.label.textContent": "Relación",
@@ -323,6 +323,11 @@
   "dialog.accessibility-report.warning.p.textContent": "Este documento contiene contenido, por ejemplo, imágenes, vídeos o audio, que no está acompañado de texto alternativo o que incluye un campo de texto alternativo sin información. Es probable que los usuarios finales con discapacidades tengan dificultades para acceder al contenido. Por favor, considere añadir texto alternativo antes de continuar:",
   "dialog.accessibility-report.success.p.textContent": "Todo el contenido de este documento incluye texto alternativo. Es probable que los usuarios finales con discapacidades tengan una buena experiencia con este documento.",
   "dialog.accessibility-report.summary.textContent": "Informe de accesibilidad",
+
+  "dialog.source-view.h2.textContent": "Actualizar",
+  "dialog.source-view.close.button.title": "Cerrar",
+  "dialog.source-view.close.button.aria-label": "Cerrar Vista de Origen",
+  "dialog.source-view.update.button.textContent": "Actualizar",
 
   "browser.browse-location.button.title": "Explorar ubicación",
   "browser.browse-location.button.textContent": "Explorar",
