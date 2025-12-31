@@ -3298,7 +3298,7 @@ function getLanguageOptionsHTML(options) {
       s.push(`<option data-i18n="language.choose" selected="selected" value="">${i18n.t('language.choose.textContent')}</option>`);
     }
   }
-  else if (typeof Config.User.UI.Language !== 'undefined') {
+  else if (typeof Config.User.UI?.Language !== 'undefined') {
     selectedLang = Config.User.UI.Language;
   }
   else {

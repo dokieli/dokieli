@@ -2949,6 +2949,10 @@ span {
     text-align: left;
   }
 
+  label[for="citation-specref-search"] {
+    max-width: min-content;
+  }
+  
   span {
     grid-area: foot-ref;
     text-align: left;
@@ -2999,7 +3003,6 @@ span {
   }
   label:nth-of-type(1) {
     grid-area: label1;
-    max-width: min-content;
   }
 
   label:nth-of-type(2) {

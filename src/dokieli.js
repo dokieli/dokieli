@@ -1539,18 +1539,18 @@ DO = {
 
     init: function() {
       i18nextInit().then(() => {
-        DO.U.initUserLanguage();
+        DO.U.initUserLanguage().then(() => {
+          const params = new URLSearchParams(window.location.search);
 
-        const params = new URLSearchParams(window.location.search);
-
-        if (params.has('code') && params.has('iss') && params.has('state')) {
-          DO.U.initAuth().then(() => DO.U.handleIncomingRedirect())
-        }
-        else {
-          DO.U.initAuth();
-  
-          DO.C.init();
-        }
+          if (params.has('code') && params.has('iss') && params.has('state')) {
+            DO.U.initAuth().then(() => DO.U.handleIncomingRedirect())
+          }
+          else {
+            DO.U.initAuth();
+    
+            DO.C.init();
+          }
+        })
       })
     },
 
@@ -1581,12 +1581,10 @@ DO = {
     },
 
     initUserLanguage: function() {
-      getLocalStorageItem('i18nextLng').then(lang => {
+      return getLocalStorageItem('i18nextLng').then(lang => {
+        lang = lang?.split('-')[0];
         if (lang && Config.Languages[lang]) {
-          document.querySelectorAll('.editor-form select[name$="-language"]').forEach(el => {
-            Config.User.UI['Language'] = lang;
-            el.value = lang;
-          })
+          Config.User.UI['Language'] = lang;
         }
       });
     },
@@ -2720,8 +2718,9 @@ DO = {
 
     showLanguages: function(node) {
       if (document.getElementById('ui-language')) {
-        document.getElementById('ui-language').remove();
+        return;
       }
+
       let options = [];
 
       const currentLanguage = i18n.language(); // detected or set language
@@ -2752,7 +2751,7 @@ DO = {
           </select>
         </section>`;
 
-      node.insertAdjacentHTML('beforeend', html);
+      document.querySelector('#document-views').insertAdjacentHTML('afterend', html);
 
       const select = document.getElementById('ui-language-select');
 
