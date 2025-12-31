@@ -208,6 +208,23 @@
   "editor.toolbar.form.post.button.textContent": "Post",
   "editor.toolbar.form.save.button.textContent": "Save",
   "editor.toolbar.form.cancel.button.textContent": "Cancel",
+  "editor.toolbar.form.search.button.value": "Search",
+
+  "editor.toolbar.form.url.input.placeholder": "Paste or type a link (URL)",
+  "editor.toolbar.a.form.a-title.label.textContent": "Title",
+  "editor.toolbar.a.form.a-title.input.placeholder": "Add advisory information for the tooltip.",
+
+  "editor.toolbar.img.form.img-file.label.textContent": "Upload",
+  "editor.toolbar.img.form.img-alt.label.textContent": "Description",
+  "editor.toolbar.img.form.img-alt.input.placeholder": "Describe the image for people who are blind or have low vision.",
+  "editor.toolbar.img.form.img-figcaption.label.textContent": "Caption",
+  "editor.toolbar.img.form.img-figcaption.input.placeholder": "A caption or legend for the figure.",
+
+  "editor.toolbar.citation.form.specref-search.label.textContent": "Search",
+  "editor.toolbar.citation.form.specref-search.input.placeholder": "Enter terms to search for specifications",
+  "editor.toolbar.citation.ref-footnote.form.label.textContent": "Footnote",
+  "editor.toolbar.citation.ref-reference.form.label.textContent": "Reference",
+  "editor.toolbar.citation.form.citation-relation.label.textContent": "Relation",
 
   "dialog.feed-format.label.textContent": "Format",
   "dialog.base-url-selection.label.textContent": "Location of media resources",

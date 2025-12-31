@@ -209,6 +209,23 @@
   "editor.toolbar.form.post.button.textContent": "Publicar",
   "editor.toolbar.form.save.button.textContent": "Guardar",
   "editor.toolbar.form.cancel.button.textContent": "Cancelar",
+  "editor.toolbar.form.search.button.value": "Buscar",
+
+  "editor.toolbar.form.url.input.placeholder": "Pegue on ingrese un enlace (URL)",
+  "editor.toolbar.a.form.a-title.label.textContent": "Título",
+  "editor.toolbar.a.form.a-title.input.placeholder": "Añada información orientativa para el texto de ayuda del enlace.",
+
+  "editor.toolbar.img.form.img-file.label.textContent": "Subir",
+  "editor.toolbar.img.form.img-alt.label.textContent": "Descripción",
+  "editor.toolbar.img.form.img-alt.input.placeholder": "Describa la imagen para personas con discapacidad visual",
+  "editor.toolbar.img.form.img-figcaption.label.textContent": "Pie de figura",
+  "editor.toolbar.img.form.img-figcaption.input.placeholder": "Un pie de figura o leyenda para la imagen.",
+
+  "editor.toolbar.citation.form.specref-search.label.textContent": "Buscar",
+  "editor.toolbar.citation.form.specref-search.input.placeholder": "Enter terms to search for specifications",
+  "editor.toolbar.citation.ref-footnote.form.label.textContent": "Nota al pie",
+  "editor.toolbar.citation.ref-reference.form.label.textContent": "Referencia",
+  "editor.toolbar.citation.form.citation-relation.label.textContent": "Relación",
 
   "dialog.feed-format.label.textContent": "Formato",
   "dialog.base-url-selection.label.textContent": "Ubicación de recursos multimedia",

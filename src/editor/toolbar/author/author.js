@@ -80,17 +80,15 @@ export class AuthorToolbar extends ToolbarView {
       q: i18n.t('editor.toolbar.q.form.legend.textContent'),
       img: i18n.t('editor.toolbar.img.form.legend.textContent'),
       citation: i18n.t('editor.toolbar.citation.form.legend.textContent'),
+      semantics: i18n.t('editor.toolbar.semantics.form.legend.textContent'),
     }
   }
 
+  // TODO: this function returns only the textarea placeholders, but many popups in the author toolbar need more than one field. revisit.
   getFormPlaceholders() {
     return {
       note: i18n.t('editor.toolbar.note.form.textarea.placeholder'),
       requirement: i18n.t('editor.toolbar.requirement.form.textarea.placeholder'),
-      a: i18n.t('editor.toolbar.a.form.textarea.placeholder'),
-      blockquote: i18n.t('editor.toolbar.blockquote.form.textarea.placeholder'),
-      q: i18n.t('editor.toolbar.q.form.textarea.placeholder'),
-      img: i18n.t('editor.toolbar.img.form.textarea.placeholder'),
       citation: i18n.t('editor.toolbar.citation.form.textarea.placeholder'),
     }
   }
@@ -102,10 +100,10 @@ export class AuthorToolbar extends ToolbarView {
           <legend data-i18n="editor.toolbar.a.form.legend">${options.legend}</legend>
           <dl class="info">
             <dt class="required">*</dt>
-            <dd>Required field</dd>
+            <dd data-i18n="info.required">${i18n.t('info.required.textContent')}</dd>
           </dl>
-          <label for="a-href">URL</label> <input class="editor-form-input" id="a-href" name="a-href" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" required="" type="url" value="" />
-          <label for="a-title">Title</label> <input class="editor-form-input" id="a-title" name="a-title" placeholder="Add advisory information for the tooltip." type="text" />
+          <label for="a-href">URL</label> <input class="editor-form-input" data-i18n="editor.toolbar.form.url.input" id="a-href" name="a-href" pattern="https?://.+" placeholder="${i18n.t('editor.toolbar.form.url.input.placeholder')}" required="" type="url" value="" />
+          <label data-i18n="editor.toolbar.a.form.a-title.label" for="a-title">${i18n.t('editor.toolbar.a.form.a-title.label.textContent')}</label> <input class="editor-form-input" data-i18n="editor.toolbar.a.form.a-title.input" id="a-title" name="a-title" placeholder="${i18n.t('editor.toolbar.a.form.a-title.input.placeholder')}" type="text" />
           <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
           <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
         </fieldset>
@@ -114,7 +112,7 @@ export class AuthorToolbar extends ToolbarView {
       blockquote: (options) => `
         <fieldset>
           <legend data-i18n="editor.toolbar.blockquote.form.legend">${options.legend}</legend>
-          <label for="blockquote-cite">URL</label> <input class="editor-form-input" id="blockquote-cite" name="blockquote-cite" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" type="url" value="" />
+          <label for="blockquote-cite">URL</label> <input class="editor-form-input" data-i18n="editor.toolbar.form.url.input"  id="blockquote-cite" name="blockquote-cite" pattern="https?://.+" placeholder="${i18n.t('editor.toolbar.form.url.input.placeholder')}" type="url" value="" />
           <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
           <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
         </fieldset>
@@ -123,7 +121,7 @@ export class AuthorToolbar extends ToolbarView {
       q: (options) => `
         <fieldset>
           <legend data-i18n="editor.toolbar.q.form.legend">${options.legend}</legend>
-          <label for="q-cite">URL</label> <input class="editor-form-input" id="q-cite" name="q-cite" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" type="url" value="" />
+          <label for="q-cite">URL</label> <input class="editor-form-input" data-i18n="editor.toolbar.form.url.input" id="q-cite" name="q-cite" pattern="https?://.+" placeholder="${i18n.t('editor.toolbar.form.url.input.placeholder')}" type="url" value="" />
           <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
           <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
         </fieldset>
@@ -135,10 +133,10 @@ export class AuthorToolbar extends ToolbarView {
         <fieldset>
           <legend data-i18n="editor.toolbar.img.form.legend">${options.legend}</legend>
           <figure class="img-preview"></figure>
-          <label for="img-file">Upload</label> <input class="editor-form-input" id="img-file" name="img-file" type="file" />
+          <label data-i18n="editor.toolbar.img.form.img-file.label" for="img-file">${i18n.t('editor.toolbar.img.form.img-file.label.textContent')}</label> <input class="editor-form-input" id="img-file" name="img-file" type="file" />
           <label for="img-src">URL</label> <input class="editor-form-input" id="img-src" name="img-src" type="url" value="" />
-          <label for="img-alt">Description</label> <input class="editor-form-input" id="img-alt" name="img-alt" placeholder="Describe the image for people who are blind or have low vision." type="text" value="" />
-          <label for="img-figcaption">Caption</label> <input class="editor-form-input" id="img-figcaption" name="img-figcaption" placeholder="A caption or legend for the figure." type="text" value="" />
+          <label data-i18n="editor.toolbar.img.form.img-alt.label" for="img-alt">${i18n.t('editor.toolbar.img.form.img-alt.label.textContent')}</label> <input class="editor-form-input" data-i18n="editor.toolbar.img.form.img-alt.input" id="img-alt" name="img-alt" placeholder="${i18n.t('editor.toolbar.img.form.img-alt.input.placeholder')}" type="text" value="" />
+          <label data-i18n="editor.toolbar.img.form.img-figcaption.label" for="img-figcaption">${i18n.t('editor.toolbar.img.form.img-figcaption.label')}</label> <input class="editor-form-input" data-i18n="editor.toolbar.img.form.img-figcaption.input" id="img-figcaption" name="img-figcaption" placeholder="${i18n.t('editor.toolbar.img.form.img-alt.label.textContent')}" type="text" value="" />
           <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
           <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
         </fieldset>
@@ -149,18 +147,18 @@ export class AuthorToolbar extends ToolbarView {
       citation: (options) => `
         <fieldset>
           <legend data-i18n="editor.toolbar.citation.form.legend">${options.legend}</legend>
-          <label for="citation-specref-search">Search <a href="https://www.specref.org/" rel="noopener" target="_blank">specref.org</a></label> <input class="editor-form-input" id="citation-specref-search" name="citation-specref-search" placeholder="Enter terms to search for specifications" type="text" value="" />
-          <input id="citation-specref-search-submit" name="citation-specref-search-submit" type="submit" value="Search" />
+          <label data-i18n="editor.toolbar.citation.form.specref-search.label" for="citation-specref-search">${i18n.t('editor.toolbar.citation.form.specref-search.label.textContent')} <a href="https://www.specref.org/" rel="noopener" target="_blank">specref.org</a></label> <input class="editor-form-input" data-i18n="editor.toolbar.citation.form.specref-search.input" id="citation-specref-search" name="citation-specref-search" placeholder="${i18n.t('editor.toolbar.citation.form.specref-search.input.placeholder')}" type="text" value="" />
+          <input data-i18n="editor.toolbar.form.search.button" id="citation-specref-search-submit" name="citation-specref-search-submit" type="submit" value="${i18n.t('editor.toolbar.form.search.button.value')}" />
           <span>
-          <input id="ref-footnote" name="citation-ref-type" type="radio" value="ref-footnote" /> <label for="ref-footnote">Footnote</label>
-          <input id="ref-reference" name="citation-ref-type" type="radio" value="ref-reference" /> <label for="ref-reference">Reference</label>
+          <input id="ref-footnote" name="citation-ref-type" type="radio" value="ref-footnote" /> <label data-i18n="editor.toolbar.citation.ref-footnote.form.label" for="ref-footnote">${i18n.t('editor.toolbar.citation.ref-footnote.form.label.textContent')}</label>
+          <input id="ref-reference" name="citation-ref-type" type="radio" value="ref-reference" /> <label data-i18n="editor.toolbar.citation.ref-reference.form.label" for="ref-reference">${i18n.t('editor.toolbar.citation.ref-reference.form.label.textContent')}</label>
           </span>
-          <label for="citation-relation">Relation</label>
+          <label data-i18n="editor.toolbar.citation.form.citation-relation.label" for="citation-relation">${i18n.t('editor.toolbar.citation.form.citation-relation.label.textContent')}</label>
           <select class="editor-form-select" id="citation-relation" name="citation-relation">${getCitationOptionsHTML()}</select>
           <label for="citation-url">URL</label>
-          <input class="editor-form-input" id="citation-url" name="citation-url" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" type="url" value="" />
-          <label for="citation-content">Note</label>
-          <textarea class="editor-form-textarea" cols="20" id="citation-content" name="citation-content" rows="1" placeholder="${options.placeholder ? options.placeholder : 'Describe the purpose or reason of citation.'}"></textarea>
+          <input class="editor-form-input" data-i18n="editor.toolbar.form.url.input" id="citation-url" name="citation-url" pattern="https?://.+" placeholder="${i18n.t('editor.toolbar.form.url.input.placeholder')}" type="url" value="" />
+          <label data-i18n="editor.toolbar.note.form.label" for="citation-content">${i18n.t('editor.toolbar.note.form.label.textContent')}</label>
+          <textarea class="editor-form-textarea" cols="20" data-i18n="editor.toolbar.${options.button}.form.textarea" id="citation-content" name="citation-content" rows="1" placeholder="${options.placeholder}"></textarea>
           <label data-i18n="language.label" for="citation-language">${i18n.t('language.label.textContent')}</label>
           <select class="editor-form-select" id="citation-language" name="citation-language">${getLanguageOptionsHTML()}</select>
           <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
@@ -186,16 +184,16 @@ export class AuthorToolbar extends ToolbarView {
       `,
 
           // <label for="requirement-consensus">Consensus source</label>
-          // <input class="editor-form-input" id="requirement-consensus" name="requirement-consensus" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" type="url" value="" />
+          // <input class="editor-form-input" data-i18n="editor.toolbar.form.url.input" id="requirement-consensus" name="requirement-consensus" pattern="https?://.+" placeholder="${i18n.t('editor.toolbar.form.url.input.placeholder')}" )})" type="url" value="" />
           // <label data-i18n="language.label" for="requirement-language">${i18n.t('language.label.textContent')}</label>
           // <select class="editor-form-select" id="requirement-language" name="requirement-language">${getLanguageOptionsHTML()}</select>
 
       semantics: (options) => `
         <fieldset>
-          <legend data-i18n="editor.toolbar.citation.form.legend">${options.legend}</legend>
-          <label for="semantics-about">about</label> <input class="editor-form-input" id="semantics-about" name="semantics-about" placeholder="Enter URL, e.g., https://example.net/foo#bar" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URI')" type="url" value="" />
-          <label for="semantics-resource">resource</label> <input class="editor-form-input" id="semantics-resource" name="semantics-resource" placeholder="Enter URL, e.g., https://example.net/foo#bar" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URI')" type="url" value="" />
-          <label for="semantics-typeof">typeof</label> <input class="editor-form-input" id="semantics-typeof" name="semantics-typeof" placeholder="Enter URL, e.g., https://example.net/foo#Baz" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URI')" type="url" value="" />
+          <legend data-i18n="editor.toolbar.semantics.form.legend">${options.legend}</legend>
+          <label for="semantics-about">about</label> <input class="editor-form-input" id="semantics-about" name="semantics-about" placeholder="Enter URL, e.g., https://example.net/foo#bar" type="url" value="" />
+          <label for="semantics-resource">resource</label> <input class="editor-form-input" id="semantics-resource" name="semantics-resource" placeholder="Enter URL, e.g., https://example.net/foo#bar" type="url" value="" />
+          <label for="semantics-typeof">typeof</label> <input class="editor-form-input" id="semantics-typeof" name="semantics-typeof" placeholder="Enter URL, e.g., https://example.net/foo#Baz" type="url" value="" />
           <label for="semantics-rel">rel</label> <input class="editor-form-input" id="semantics-rel" name="semantics-rel" placeholder="schema:url" type="text" value="" />
           <label for="semantics-property">property</label> <input class="editor-form-input" name="semantics-property" id="semantics-property" placeholder="schema:name" type="text" value="" />
           <label for="semantics-href">href</label> <input class="editor-form-input" id="semantics-href" name="semantics-href" placeholder="Enter URL, e.g., https://example.net/foo" type="url" value="" />
