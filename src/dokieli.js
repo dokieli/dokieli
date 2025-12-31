@@ -6946,7 +6946,6 @@ console.log(reason);
 
     //TODO: Refactor, especially buttons.
     initBrowse: function(baseUrl, input, browseButton, createButton, id, action){
-      console.log(id + '-' + action)
       input.value = baseUrl;
       var headers;
       headers = {'Accept': 'text/turtle, application/ld+json'};

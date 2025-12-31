@@ -328,6 +328,9 @@
   "dialog.source-view.close.button.aria-label": "Close Source View",
   "dialog.source-view.update.button.textContent": "Update",
 
+  "dialog.memento-document.close.button.title": "Close",
+  "dialog.memento-document.close.button.aria-label": "Close Memento",
+
   "browser.browse-location.button.title": "Browse location",
   "browser.browse-location.button.textContent": "Browse",
   "browser.create-container.button.title": "Create container (folder)",

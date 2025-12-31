@@ -1311,7 +1311,7 @@ function showTimeMap(node, url) {
       if (!node) {
         node = document.getElementById(elementId);
         if (!node) {
-          var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Memento Document', buttonTitle: 'Close', iconSize: 'fa-2x' });
+          var buttonClose = getButtonHTML({ key: "dialog.memento-document.close.button", button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
           document.body.appendChild(fragmentFromString(`<aside aria-labelledby="${elementId}-label" class="do on" id="${elementId}" lang="${i18n.language()}" xml:lang="${i18n.language()}"><h2 id="${elementId}-label">Memento</h2>${buttonClose}<dl><dt>TimeMap</dt><dd><a href="${url}">${url}</a></dd></dl></aside>`));
           node = document.getElementById(elementId);
