@@ -8272,9 +8272,9 @@ console.log(reason);
 
       var buttonDisabled = (document.location.protocol === 'file:') ? ' disabled="disabled"' : '';
 
-      var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Source View', buttonTitle: 'Close', iconSize: 'fa-2x' });
+      var buttonClose = getButtonHTML({ key: "dialog.source-view.close.button", button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
-      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="source-view-label" class="do on" id="source-view" lang="${i18n.language()}" xml:lang="${i18n.language()}"><h2 id="source-view-label">Source ${DO.C.Button.Info.Source}</h2>${buttonClose}<div class="info"></div><textarea id="source-edit" rows="24" cols="80"></textarea><p><button class="update"${buttonDisabled} title="Update source" type="submit">Update</button></p></aside>`));
+      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="source-view-label" class="do on" id="source-view" lang="${i18n.language()}" xml:lang="${i18n.language()}"><h2 data-i18n="dialog.source-view.h2" id="source-view-label">${i18n.t('dialog.source-view.h2.textContent')} ${DO.C.Button.Info.Source}</h2>${buttonClose}<div class="info"></div><textarea id="source-edit" rows="24" cols="80"></textarea><p><button class="update" data-i18n="dialog.source-view.update.button"${buttonDisabled} title="Update source" type="submit">${i18n.t('dialog.source-view.update.button.textContent')}</button></p></aside>`));
       var sourceBox = document.getElementById('source-view');
       var input = document.getElementById('source-edit');
       input.value = getDocument(null, documentOptions);

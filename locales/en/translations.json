@@ -323,6 +323,11 @@
   "dialog.accessibility-report.success.p.textContent": "All content in this document includes alternative text. End users with disabilities will likely have a good experience with this document.",
   "dialog.accessibility-report.summary.textContent": "Accessibility Report",
 
+  "dialog.source-view.h2.textContent": "Update",
+  "dialog.source-view.close.button.title": "Close",
+  "dialog.source-view.close.button.aria-label": "Close Source View",
+  "dialog.source-view.update.button.textContent": "Update",
+
   "browser.browse-location.button.title": "Browse location",
   "browser.browse-location.button.textContent": "Browse",
   "browser.create-container.button.title": "Create container (folder)",
