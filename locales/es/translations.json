@@ -329,6 +329,9 @@
   "dialog.source-view.close.button.aria-label": "Cerrar Vista de Origen",
   "dialog.source-view.update.button.textContent": "Actualizar",
 
+  "dialog.memento-document.close.button.title": "Cerrar",
+  "dialog.memento-document.close.button.aria-label": "Close Memento",
+
   "browser.browse-location.button.title": "Explorar ubicación",
   "browser.browse-location.button.textContent": "Explorar",
   "browser.create-container.button.title": "Crear carpeta",
