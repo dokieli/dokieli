@@ -332,6 +332,16 @@
   "dialog.memento-document.close.button.title": "Cerrar",
   "dialog.memento-document.close.button.aria-label": "Close Memento",
 
+  "dialog.generate-feed.h2.textContent": "Generar Feed",
+  "dialog.generate-feed.close.button.title": "Cerrar",
+  "dialog.generate-feed.close.button.aria-label": "Cerrar Generación de Feed",
+  "dialog.generate-feed.save-to.legend.textContent": "Guardar en",
+  "dialog.generate-feed.generate-location.p.textContent": "El feed se generará en:",
+  "dialog.generate-feed.title.label.textContent": "Título",
+  "dialog.generate-feed.generate.button.title": "Guardar en el destino",
+  "dialog.generate-feed.generate.button.textContent": "Generar",
+  "dialog.generate-feed.success.saved-at.p.textContent": "Feed guardado en:",
+
   "browser.browse-location.button.title": "Explorar ubicación",
   "browser.browse-location.button.textContent": "Explorar",
   "browser.create-container.button.title": "Crear carpeta",
