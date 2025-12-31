@@ -322,7 +322,7 @@ function createFeedXML(feed, options) {
         let dateStr =
           feed.items[i].updated ? new Date(feed.items[i].updated) :
           feed.items[i].published ? new Date(feed.items[i].published) :
-          feed.items[i].headers?.date ? new Date(feed.items[i].headers.date) :
+          feed.items[i].headers?.date?.['field-value'] ? new Date(feed.items[i].headers.date['field-value']) :
           new Date();
 
         published = `<pubDate>${dateStr.toUTCString()}</pubDate>`;

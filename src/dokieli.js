@@ -4714,9 +4714,9 @@ console.log(reason);
     generateFeed: function generateFeed (e) {
       e.target.disabled = true;
 
-      var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Generate Feed', buttonTitle: 'Close', iconSize: 'fa-2x' });
+      var buttonClose = getButtonHTML({ key: "dialog.generate-feed.close.button", button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
-      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="generate-feed-label" class="do on" id="generate-feed" lang="${i18n.language()}" xml:lang="${i18n.language()}"><h2 id="generate-feed-label">Generate Feed ${DO.C.Button.Info.GenerateFeeds}</h2>${buttonClose}<div class="info"></div></aside>`));
+      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="generate-feed-label" class="do on" id="generate-feed" lang="${i18n.language()}" xml:lang="${i18n.language()}"><h2 data-i18n="dialog.generate-feed.h2" id="generate-feed-label">${i18n.t('dialog.generate-feed.h2.textContent')} ${DO.C.Button.Info.GenerateFeeds}</h2>${buttonClose}<div class="info"></div></aside>`));
 
       var generateFeed = document.getElementById('generate-feed');
       generateFeed.addEventListener('click', (e) => {
@@ -4729,11 +4729,11 @@ console.log(reason);
 
       var id = 'location-generate-feed';
       var action = 'write';
-      generateFeed.insertAdjacentHTML('beforeend', '<form><fieldset id="' + id + '-fieldset"><legend>Save to</legend></fieldset></form>');
+      generateFeed.insertAdjacentHTML('beforeend', `<form><fieldset id="${id}-fieldset"><legend data-i18n="dialog.generate-feed.save-to.legend">${i18n.t('dialog.generate-feed.save-to.legend.textContent')}</legend></fieldset></form>`);
       fieldset = generateFeed.querySelector('fieldset#' + id + '-fieldset');
       DO.U.setupResourceBrowser(fieldset, id, action);
-      var feedTitlePlaceholder = (DO.C.User.IRI && DO.C.User.Name) ? DO.C.User.Name + "'s" : "Example's";
-      fieldset.insertAdjacentHTML('beforeend', `<p id="${id}-samp">Feed will be generated at: <samp id="${id}-${action}"></samp></p><ul><li><label for="${id}-title">Title</label> <input type="text" placeholder="${feedTitlePlaceholder} Web Feed" name="${id}-title" value=""></li><li><label data-i18n="language.label" for="${id}-language">${i18n.t('language.label.textContent')}</label> <select id="${id}-language" name="${id}-language">${getLanguageOptionsHTML()}</select></li><li><label for="${id}-license">License</label> <select id="${id}-license" name="${id}-license">${getLicenseOptionsHTML()}</select></li><li>${DO.U.getFeedFormatSelection()}</li></ul><button class="create" title="Save to destination" type="submit">Generate</button>`);
+      var feedTitlePlaceholder = (DO.C.User.IRI && DO.C.User.Name) ? DO.C.User.Name + "'s" : "Foo's";
+      fieldset.insertAdjacentHTML('beforeend', `<p data-i18n="dialog.generate-feed.generate-location.p" id="${id}-samp">${i18n.t('dialog.generate-feed.generate-location.p.textContent')} <samp id="${id}-${action}"></samp></p><ul><li><label data-i18n="dialog.generate-feed.title.label" for="${id}-title">${i18n.t('dialog.generate-feed.title.label.textContent')}</label> <input type="text" placeholder="${feedTitlePlaceholder} Web Feed" name="${id}-title" value=""></li><li><label data-i18n="language.label" for="${id}-language">${i18n.t('language.label.textContent')}</label> <select id="${id}-language" name="${id}-language">${getLanguageOptionsHTML()}</select></li><li><label data-i18n="license.label" for="${id}-license">${i18n.t('license.label.textContent')}</label> <select id="${id}-license" name="${id}-license">${getLicenseOptionsHTML()}</select></li><li>${DO.U.getFeedFormatSelection()}</li></ul><button class="create" data-i18n="dialog.generate-feed.generate.button" title="${i18n.t('dialog.generate-feed.generate.button.title')}" type="submit">${i18n.t('dialog.generate-feed.generate.button.textContent')}</button>`);
       var bli = document.getElementById(id + '-input');
       bli.focus();
       bli.placeholder = 'https://example.org/path/to/feed.xml';
@@ -4755,6 +4755,7 @@ console.log(reason);
           rm.parentNode.removeChild(rm)
         }
 
+        // TODO: this needs to be form validation instead
         if (!isHttpOrHttpsProtocol(storageIRI) || !storageIRI.length) {
           generateFeed.insertAdjacentHTML('beforeend',
             '<div class="response-message"><p class="error">Specify the location where the feed should be saved.</p></div>'
@@ -4776,7 +4777,6 @@ console.log(reason);
 
         var feedLanguageSelected = generateFeed.querySelector('select[name="' + id + '-language"]').value
         var feedLicenseSelected = generateFeed.querySelector('select[name="' + id + '-license"]').value
-
 
         var feedURLSelection = [];
 
@@ -4872,13 +4872,13 @@ console.log(reason);
 
                 let url = response.url || storageIRI
 
+                // TODO: this needs to be form validation instead
                 if (!isHttpOrHttpsProtocol(url)) {
                   throw Error("Not a valid URL for value: ", url);
                 }
 
                 generateFeed.insertAdjacentHTML('beforeend',
-                  '<div class="response-message"><p class="success">' +
-                  'Document saved at <a href="' + url + '" rel="noopener" target="_blank">' + url + '</a></p></div>'
+                  `<div class="response-message"><p class="success" data-i18n="dialog.generate-feed.success.saved-at.p"><span>${i18n.t('dialog.generate-feed.success.saved-at.p.textContent')}</span> <a href="${url}" rel="noopener" target="_blank">${url}</a></p></div>`
                 )
 
                 setTimeout(() => {
@@ -8037,7 +8037,7 @@ console.log(reason);
         }
 
 
-          // TODO: this needs to be form validation instead
+        // TODO: this needs to be form validation instead
         if (!storageIRI.length) {
           saveAsDocument.insertAdjacentHTML('beforeend',
             `<div class="response-message"><p class="error" data-i18n="dialog.save-as-document.error.missing-location.p">${i18n.t("dialog.save-as-document.error.missing-location.p.textContent")}</p></div>`

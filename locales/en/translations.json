@@ -331,6 +331,16 @@
   "dialog.memento-document.close.button.title": "Close",
   "dialog.memento-document.close.button.aria-label": "Close Memento",
 
+  "dialog.generate-feed.h2.textContent": "Generate Feed",
+  "dialog.generate-feed.close.button.title": "Close",
+  "dialog.generate-feed.close.button.aria-label": "Close Generate Feed",
+  "dialog.generate-feed.save-to.legend.textContent": "Save to",
+  "dialog.generate-feed.generate-location.p.textContent": "Feed will be generated at:",
+  "dialog.generate-feed.title.label.textContent": "Title",
+  "dialog.generate-feed.generate.button.title": "Save to destination",
+  "dialog.generate-feed.generate.button.textContent": "Generate",
+  "dialog.generate-feed.success.saved-at.p.textContent": "Feed saved at:",
+
   "browser.browse-location.button.title": "Browse location",
   "browser.browse-location.button.textContent": "Browse",
   "browser.create-container.button.title": "Create container (folder)",
