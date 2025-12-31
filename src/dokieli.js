@@ -4733,7 +4733,7 @@ console.log(reason);
       fieldset = generateFeed.querySelector('fieldset#' + id + '-fieldset');
       DO.U.setupResourceBrowser(fieldset, id, action);
       var feedTitlePlaceholder = (DO.C.User.IRI && DO.C.User.Name) ? DO.C.User.Name + "'s" : "Example's";
-      fieldset.insertAdjacentHTML('beforeend', `<p id="${id}-samp">Feed will be generated at: <samp id="${id}-action"></samp></p><ul><li><label for="${id}-title">Title</label> <input type="text" placeholder="${feedTitlePlaceholder} Web Feed" name="${id}-title" value=""></li><li><label data-i18n="language.label" for="${id}-language">${i18n.t('language.label.textContent')}</label> <select id="${id}-language" name="${id}-language">${getLanguageOptionsHTML()}</select></li><li><label for="${id}-license">License</label> <select id="${id}-license" name="${id}-license">${getLicenseOptionsHTML()}</select></li><li>${DO.U.getFeedFormatSelection()}</li></ul><button class="create" title="Save to destination" type="submit">Generate</button>`);
+      fieldset.insertAdjacentHTML('beforeend', `<p id="${id}-samp">Feed will be generated at: <samp id="${id}-${action}"></samp></p><ul><li><label for="${id}-title">Title</label> <input type="text" placeholder="${feedTitlePlaceholder} Web Feed" name="${id}-title" value=""></li><li><label data-i18n="language.label" for="${id}-language">${i18n.t('language.label.textContent')}</label> <select id="${id}-language" name="${id}-language">${getLanguageOptionsHTML()}</select></li><li><label for="${id}-license">License</label> <select id="${id}-license" name="${id}-license">${getLicenseOptionsHTML()}</select></li><li>${DO.U.getFeedFormatSelection()}</li></ul><button class="create" title="Save to destination" type="submit">Generate</button>`);
       var bli = document.getElementById(id + '-input');
       bli.focus();
       bli.placeholder = 'https://example.org/path/to/feed.xml';
@@ -6946,6 +6946,7 @@ console.log(reason);
 
     //TODO: Refactor, especially buttons.
     initBrowse: function(baseUrl, input, browseButton, createButton, id, action){
+      console.log(id + '-' + action)
       input.value = baseUrl;
       var headers;
       headers = {'Accept': 'text/turtle, application/ld+json'};
