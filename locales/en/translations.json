@@ -204,6 +204,7 @@
   "editor.toolbar.bookmark.form.legend.textContent": "Bookmark",
   "editor.toolbar.comment.form.legend.textContent": "Comment",
   "editor.toolbar.note.form.legend.textContent": "Add a note",
+  "editor.toolbar.requirement.form.legend.textContent": "Add requirement",
   "editor.toolbar.a.form.legend.textContent": "Add a link",
   "editor.toolbar.blockquote.form.legend.textContent": "Add the source of the blockquote",
   "editor.toolbar.q.form.legend.textContent": "Add the source of the quote",
