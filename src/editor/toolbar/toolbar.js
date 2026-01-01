@@ -691,7 +691,7 @@ export function annotateFormControls(options) {
       </dl>
       <label data-i18n="editor.toolbar.note.form.label" for="${options.button}-content">${i18n.t('editor.toolbar.note.form.label.textContent')}</label>
       <textarea class="editor-form-textarea" cols="20" data-i18n="editor.toolbar.${options.button}.form.textarea" id="${options.button}-content" name="${options.button}-content" placeholder="${options.placeholder}" required="" rows="5"></textarea>
-      <label data-i18n="tags.label" for="${options.button}-tagging">${i18n.t('tags.label.textContent')}</label> <input class="editor-form-input" id="${options.button}-tagging" name="${options.button}-tagging" data-i18n="tags.input" placeholder="${i18n.t('tags.input.placeholder')}" />
+      <label data-i18n="tags.label" for="${options.button}-tagging">${i18n.t('tags.label.textContent')}</label> <input class="editor-form-input" id="${options.button}-tagging" name="${options.button}-tagging" data-i18n="tags.input" placeholder="${i18n.t('tags.input.placeholder')}" type="text" />
       <label data-i18n="language.label" for="${options.button}-language">${i18n.t('language.label.textContent')}</label>
       <select class="editor-form-select" id="${options.button}-language" name="${options.button}-language">${getLanguageOptionsHTML()}</select>
       <label data-i18n="license.label" for="${options.button}-license">${i18n.t('license.label.textContent')}</label>

@@ -91,6 +91,9 @@
   "menu.resource-save.button.title": "Save article",
   "menu.resource-save.button.textContent": "Save",
 
+  "menu.about-dokieli.dt.textContent": "About",
+  "menu.about-dokieli.dd.span.innerHTML": "<a href=\"https://dokie.li/\" rel=\"noopener\" target=\"_blank\">dokieli</a> is an <a href=\"https://git.dokie.li/\" rel=\"noopener\" target=\"_blank\">open source</a> project. There is <a href=\"https://dokie.li/docs\" rel=\"noopener\" target=\"_blank\">documentation</a> and a public <a href=\"https://matrix.to/#/%23dokieli:matrix.org\" rel=\"noopener\" target=\"_blank\">chat</a>. Made with fun.",
+
   "info.delete.button.title": "About Delete",
   "info.embed-data.button.title": "About Embed Data",
   "info.graph.button.title": "About Graph View",
@@ -175,6 +178,18 @@
   "menu.version.button.textContent": "Version",
 
   "menu.ui-language-select.label.textContent": "Change language",
+
+  "menu.autosave.h2.textContent": "Autosave",
+  "menu.autosave.label.span.textContent": "Autosave",
+  "menu.autosave.input.title": "Keep changes local or sync to remote storage",
+
+  "menu.document-views.h2.textContent": "Views",
+  "menu.document-views.graph.button.title": "Show Graph View",
+  "menu.document-views.graph.button.textContent": "Graph",
+  "menu.document-views.native.button.title": "Change to native/device browser view",
+  "menu.document-views.native.button.textContent": "Native",
+  "menu.document-views.change-style.button.title": "Change style to ‘{{view}}’",
+  "menu.document-views.current-style.button.title": "Current style",
 
   "editor.new.h1.data-placeholder": "Title",
   "editor.new.h2.data-placeholder": "Section title",
@@ -340,6 +355,12 @@
   "dialog.generate-feed.generate.button.title": "Save to destination",
   "dialog.generate-feed.generate.button.textContent": "Generate",
   "dialog.generate-feed.success.saved-at.p.textContent": "Feed saved at:",
+
+  "dialog.graph-view.close.button.title": "Close",
+  "dialog.graph-view.close.button.aria-label": "Close Graph View",
+  "dialog.graph-view.close.h2.textContent": "Graph View",
+  "dialog.graph-view.export.button.title": "Export graph as SVG",
+  "dialog.graph-view.export.button.textContent": "Export",
 
   "browser.browse-location.button.title": "Browse location",
   "browser.browse-location.button.textContent": "Browse",

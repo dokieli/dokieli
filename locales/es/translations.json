@@ -91,6 +91,9 @@
   "menu.resource-save.button.title": "Guardar artículo",
   "menu.resource-save.button.textContent": "Guardar",
 
+  "menu.about-dokieli.dt.textContent": "Acerca de",
+  "menu.about-dokieli.dd.span.innerHTML": "<a href=\"https://dokie.li/\" rel=\"noopener\" target=\"_blank\">dokieli</a> es un proyecto <span data-icon=\"fab.fa-osi\"></span> <a href=\"https://git.dokie.li/\" rel=\"noopener\" target=\"_blank\">de código abierto</a>. Hay <span data-icon=\"fas.fa-flask\"></span> <a href=\"https://dokie.li/docs\" rel=\"noopener\" target=\"_blank\">documentación</a> y un <span data-icon=\"fas.fa-comments\"></span> <a href=\"https://matrix.to/#/%23dokieli:matrix.org\" rel=\"noopener\" target=\"_blank\">chat</a> público. Hecho con diversión.",
+
   "info.delete.button.title": "Acerca de eliminar",
   "info.embed-data.button.title": "Acerca de Insertar datos",
   "info.graph.button.title": "Acerca de la vista de grafo",
@@ -175,6 +178,18 @@
   "menu.version.button.textContent": "Versión",
 
   "menu.ui-language-select.label.textContent": "Cambiar idioma",
+
+  "menu.autosave.h2.textContent": "Autoguardado",
+  "menu.autosave.label.span.textContent": "Autoguardado",
+  "menu.autosave.input.title": "Mantenga los cambios locales o sincronícelos con un almacenamiento remoto.",
+
+  "menu.document-views.h2.textContent": "Views",
+  "menu.document-views.graph.button.title": "Show Graph View",
+  "menu.document-views.graph.button.textContent": "Graph",
+  "menu.document-views.native.button.title": "Change to native/device browser view",
+  "menu.document-views.native.button.textContent": "Native",
+  "menu.document-views.change-style.button.title": "Change style to ‘{{view}}’",
+  "menu.document-views.current-style.button.title": "Current style",
 
   "editor.new.h1.data-placeholder": "Título",
   "editor.new.h2.data-placeholder": "Título de la sección",
@@ -341,6 +356,12 @@
   "dialog.generate-feed.generate.button.title": "Guardar en el destino",
   "dialog.generate-feed.generate.button.textContent": "Generar",
   "dialog.generate-feed.success.saved-at.p.textContent": "Feed guardado en:",
+
+  "dialog.graph-view.close.button.title": "Cerrar",
+  "dialog.graph-view.close.button.aria-label": "Cerrar vista de gráfico",
+  "dialog.graph-view.close.h2.textContent": "Vista de gráfico",
+  "dialog.graph-view.export.button.title": "Exportar gráfico como SVG",
+  "dialog.graph-view.export.button.textContent": "Exportar",
 
   "browser.browse-location.button.title": "Explorar ubicación",
   "browser.browse-location.button.textContent": "Explorar",

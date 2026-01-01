@@ -822,10 +822,10 @@ DO = {
       // });
       // getDocumentContentNode(document).insertAdjacentHTML('beforeend', a.join(''));
 
-      var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Graph View', buttonTitle: 'Close', iconSize: 'fa-2x' });
+      var buttonClose = getButtonHTML({ key:"dialog.graph-view.close.button", button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
       if (selector == '#graph-view' && !document.getElementById('graph-view')) {
-        document.body.appendChild(fragmentFromString(`<aside class="do on" id="graph-view" lang="${i18n.language()}" xml:lang="${i18n.language()}"><h2>Graph view ${DO.C.Button.Info.GraphView}</h2>${buttonClose}<div class="info"></div></aside>`));
+        document.body.appendChild(fragmentFromString(`<aside class="do on" id="graph-view" lang="${i18n.language()}" xml:lang="${i18n.language()}"><h2 data-i18n="dialog.graph-view.h2">${i18n.t('dialog.graph-view.h2.textContent')} ${DO.C.Button.Info.GraphView}</h2>${buttonClose}<div class="info"></div></aside>`));
       }
 
       var svg = d3.select(selector).append('svg')
@@ -840,7 +840,7 @@ DO = {
         .attr('typeof', 'http://purl.org/dc/dcmitype/Image')
 
       var graphView = document.querySelector(selector);
-      graphView.insertAdjacentHTML('beforeend', '<button class="export" title="Export graph as SVG" type="button">Export</button>');
+      graphView.insertAdjacentHTML('beforeend', `<button class="export" data-i18n="dialog.graph-view.export.button" title="${i18n.t('dialog.graph-view.export.button.title')}" type="button">${i18n.t('dialog.graph-view.export.button.textContent')}</button>`);
       graphView.addEventListener('click', (e) => {
         if (e.target.closest('button.export')) {
           var svgNode = graphView.querySelector('svg[typeof="http://purl.org/dc/dcmitype/Image"]');
@@ -2652,11 +2652,11 @@ DO = {
       dMenuButton.parentNode.replaceChild(fragmentFromString(DO.C.Button.Menu.CloseMenu), dMenuButton);
       dMenu.classList.add('on');
 
+      DO.U.showLanguages(dInfo)
       showUserSigninSignout(dUserInfo);
       DO.U.showDocumentDo(dInfo);
       DO.U.showAutoSave(dInfo);
       DO.U.showViews(dInfo);
-      DO.U.showLanguages(dInfo)
       DO.U.showAboutDokieli(dInfo);
 
       var body = getDocumentContentNode(document);
@@ -2701,9 +2701,10 @@ DO = {
       checked = (checked && hasAccessModeWrite) ? ' checked=""' : '';
 
       let html = `
-      <section id="document-autosave">
-        <h2>Autosave</h2>
-        <label for="autosave-remote">Autosave</label> <input${checked} id="autosave-remote" title="Keep changes local or sync to remote storage" type="checkbox" />
+      <section aria-labelledby="document-autosave-label" id="document-autosave">
+        <h2 data-i18n="menu.autosave.h2" id="document-autosave-label">${i18n.t('menu.autosave.h2.textContent')}</h2>
+        <input${checked} data-i18n="menu.autosave.input" id="autosave-remote" title="${i18n.t('menu.autosave.input.title')}" type="checkbox" />
+        <label data-i18n="menu.autosave.label" for="autosave-remote"><span data-i18n="menu.autosave.label.span">${i18n.t('menu.autosave.label.span.textContent')}</span></label> 
       </section>
       `;
 
@@ -2746,16 +2747,16 @@ DO = {
       })
 
       const html = `
-        <section id="ui-language">
-          <h2 data-i18n="language.label">${i18n.t('language.label.textContent')}</h2>
+        <section aria-labelledby="ui-language-label" id="ui-language">
+          <h2 data-i18n="language.label" id="ui-language-label">${i18n.t('language.label.textContent')}</h2>
           ${Icon['.fas.fa-language']}
-          <label for="ui-language-select" data-i18n="menu.ui-language-select.label">${i18n.t('menu.ui-language-select.label.textContent')}</label>
-          <select id="ui-language-select">
+          <label id="ui-language-select-label" for="ui-language-select" data-i18n="menu.ui-language-select.label">${i18n.t('menu.ui-language-select.label.textContent')}</label>
+          <select aria-labelledby="ui-language-select-label" id="ui-language-select">
             ${options.join('')}
           </select>
         </section>`;
 
-      document.querySelector('#document-views').insertAdjacentHTML('afterend', html);
+      node.insertAdjacentHTML('afterbegin', html);
 
       const select = document.getElementById('ui-language-select');
 
@@ -2835,8 +2836,8 @@ DO = {
       const html = `
       <section id="about-dokieli">
         <dl>
-          <dt>About</dt>
-          <dd><img alt="" height="16" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAn1BMVEUAAAAAjwAAkAAAjwAAjwAAjwAAjwAAjwAAkAAAdwAAjwAAjQAAcAAAjwAAjwAAiQAAjwAAjAAAjwAAjwAAjwAAjwAAkAAAjwAAjwAAjwAAjQAAjQAAhQAAhQAAkAAAkAAAkAAAjgAAjwAAiQAAhAAAkAAAjwAAjwAAkAAAjwAAjgAAjgAAjQAAjwAAjQAAjwAAkAAAjwAAjQAAiwAAkABp3EJyAAAANHRSTlMA+fH89enaabMF4iADxJ4SiSa+uXztyoNvQDcsDgvl3pRiXBcH1M+ppJlWUUpFMq6OdjwbMc1+ZgAABAhJREFUeNrt29nSmkAQBeAGZBMUxH3f993/vP+zJZVKVZKCRhibyc3/XVt6SimYPjPSt28Vmt5W/fu2T/9B9HIf7Tp+0RsgDC6DY6OLvzxJj8341DnsakgZUNUmo2XsORYYS6rOeugukhnyragiq56JIs5UEQ/FXKgidRTzompEKOhG1biioDFV44mCAqrGAQWtqRptA8VMqCpR6zpo9iy84VO1opWHPBZVb9QAzyQN/D1YNungJ+DMSYsbOFvSIwGjR3p0wGiQHkMw2qRHC4w76RGBcSA9NmAcSY8QjAdpYiFbTJoYyNYnTWrI1iFNusj2JE1sZBuQJtyE5pImc3Y21cRhZ1NNtsh2Ik127HCsSY8djjVpINuVhPnjVefobee2adXqu2S/6FyivABDEjQ9Lxo1pDlNd5wg24ikRK5ngKGhHhg1DSgZk4RrD6pa9LlRAnUBfWp6xCe+6EOvOT6yrmrigZaCZHPAp6b0gaiBFKvRd0/D1rr1OrvxDqiyoZmmPt9onib0t/VybyEXqdu0Cw16rUNVAfZFlzdjr5KOaoAUK6JsrgWGQapuBlIS4gy70gEmTrk1fuAgU40UxWXv6wvZAC2Dqfx0BfBK1z1H0aJ0WH7Ub4oG8JDlpBCgK1l5tSjHQSoAf0HVfMqxF+yqpzVk2ZGuAGdk8ijPHZlmpOCg0vh5cgE2JtN3qQSoU3lXpbKlLRegrzTpt+U2TNpKY2YiFiA0kS1Q6QccweZ/oinASm2B3RML0AGDNAU4qq3udmIXYVttD3YrFsBR24N1xG5EJpTeaiYWwILS5WRKBfChFsCSehpOwKi/yS0V4AsMWym3TWUFgMqIsRYL8AVOSDlaYgEitbZnDKll+UatchyJBSC1c3lDuQA2VHYAL3KneHpgLCjHSS7AHYyEciwh1g88wDB94rlyAVxwhsR7ygW4gRMTry8XwDdUDkXFgjVdD5wRsRaCAWJwPGI1Baval8Ie3Hqn8AjjhHbZr2DzrInumDTBGlCG8xy8QPY3MNLX4TiRP1q+BWs2pn9ECwu5+qTABc+80h++28UbTkjlTW3wrM6Ufrtu8d5J9Svg1Vch/RTcUYQdUHm+g1z1x2gSGyjGGVN5F7xjoTCjE0ndC3jJMzfCftmiciZ1lNGe3vCGufOWVMLIQHHehi3X1O8JJxR236SalUzninbu937BlwfV/I3k4KdGk2xm+MHuLa8Z0i9TC280qLRrF+8cw9RSjrOg8oIG8j2YgULsbGPomsgR0x9nsOzkOLh+kZr1owZGbfC2JJl78fIV0Wei/gxZDl85XWVtt++cxhuSEQ6bdfzLjlvM86PbaD4vQUjSglV8385My7CdXtO9+ZSyrLcf7nBN376V8gMpRztyq6RXYQAAAABJRU5ErkJggg==" width="16" /><a href="https://dokie.li/" rel="noopener" target="_blank">dokieli</a> is an ${Icon[".fab.fa-osi"]} <a href="https://git.dokie.li/" rel="noopener" target="_blank">open source</a> project. There is ${Icon[".fas.fa-flask"]} <a href="https://dokie.li/docs" rel="noopener" target="_blank">documentation</a> and public ${Icon[".fas.fa-comments"]} <a href="https://matrix.to/#/%23dokieli:matrix.org" rel="noopener" target="_blank">chat</a>. Made with fun.</dd>
+          <dt data-i18n="menu.about-dokieli.dt">${i18n.t('menu.about-dokieli.dt.textContent')}</dt>
+          <dd data-i18n="menu.about-dokieli.dd"><img alt="" height="16" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAn1BMVEUAAAAAjwAAkAAAjwAAjwAAjwAAjwAAjwAAkAAAdwAAjwAAjQAAcAAAjwAAjwAAiQAAjwAAjAAAjwAAjwAAjwAAjwAAkAAAjwAAjwAAjwAAjQAAjQAAhQAAhQAAkAAAkAAAkAAAjgAAjwAAiQAAhAAAkAAAjwAAjwAAkAAAjwAAjgAAjgAAjQAAjwAAjQAAjwAAkAAAjwAAjQAAiwAAkABp3EJyAAAANHRSTlMA+fH89enaabMF4iADxJ4SiSa+uXztyoNvQDcsDgvl3pRiXBcH1M+ppJlWUUpFMq6OdjwbMc1+ZgAABAhJREFUeNrt29nSmkAQBeAGZBMUxH3f993/vP+zJZVKVZKCRhibyc3/XVt6SimYPjPSt28Vmt5W/fu2T/9B9HIf7Tp+0RsgDC6DY6OLvzxJj8341DnsakgZUNUmo2XsORYYS6rOeugukhnyragiq56JIs5UEQ/FXKgidRTzompEKOhG1biioDFV44mCAqrGAQWtqRptA8VMqCpR6zpo9iy84VO1opWHPBZVb9QAzyQN/D1YNungJ+DMSYsbOFvSIwGjR3p0wGiQHkMw2qRHC4w76RGBcSA9NmAcSY8QjAdpYiFbTJoYyNYnTWrI1iFNusj2JE1sZBuQJtyE5pImc3Y21cRhZ1NNtsh2Ik127HCsSY8djjVpINuVhPnjVefobee2adXqu2S/6FyivABDEjQ9Lxo1pDlNd5wg24ikRK5ngKGhHhg1DSgZk4RrD6pa9LlRAnUBfWp6xCe+6EOvOT6yrmrigZaCZHPAp6b0gaiBFKvRd0/D1rr1OrvxDqiyoZmmPt9onib0t/VybyEXqdu0Cw16rUNVAfZFlzdjr5KOaoAUK6JsrgWGQapuBlIS4gy70gEmTrk1fuAgU40UxWXv6wvZAC2Dqfx0BfBK1z1H0aJ0WH7Ub4oG8JDlpBCgK1l5tSjHQSoAf0HVfMqxF+yqpzVk2ZGuAGdk8ijPHZlmpOCg0vh5cgE2JtN3qQSoU3lXpbKlLRegrzTpt+U2TNpKY2YiFiA0kS1Q6QccweZ/oinASm2B3RML0AGDNAU4qq3udmIXYVttD3YrFsBR24N1xG5EJpTeaiYWwILS5WRKBfChFsCSehpOwKi/yS0V4AsMWym3TWUFgMqIsRYL8AVOSDlaYgEitbZnDKll+UatchyJBSC1c3lDuQA2VHYAL3KneHpgLCjHSS7AHYyEciwh1g88wDB94rlyAVxwhsR7ygW4gRMTry8XwDdUDkXFgjVdD5wRsRaCAWJwPGI1Baval8Ie3Hqn8AjjhHbZr2DzrInumDTBGlCG8xy8QPY3MNLX4TiRP1q+BWs2pn9ECwu5+qTABc+80h++28UbTkjlTW3wrM6Ufrtu8d5J9Svg1Vch/RTcUYQdUHm+g1z1x2gSGyjGGVN5F7xjoTCjE0ndC3jJMzfCftmiciZ1lNGe3vCGufOWVMLIQHHehi3X1O8JJxR236SalUzninbu937BlwfV/I3k4KdGk2xm+MHuLa8Z0i9TC280qLRrF+8cw9RSjrOg8oIG8j2YgULsbGPomsgR0x9nsOzkOLh+kZr1owZGbfC2JJl78fIV0Wei/gxZDl85XWVtt++cxhuSEQ6bdfzLjlvM86PbaD4vQUjSglV8385My7CdXtO9+ZSyrLcf7nBN376V8gMpRztyq6RXYQAAAABJRU5ErkJggg==" width="16" /><span data-i18n="menu.about-dokieli.dd.span">${i18n.t("menu.about-dokieli.dd.span.innerHTML")}</span>
         </dl>
       </section>`;
 
@@ -2879,21 +2880,21 @@ DO = {
 
       var stylesheets = document.querySelectorAll('head link[rel~="stylesheet"][title]:not([href$="dokieli.css"])');
 
-      var s = '<section id="document-views"><h2>Views</h2>' + Icon[".fas.fa-magic"] + '<ul>';
+      var s = `<section aria-labelledby="document-views-label" id="document-views"><h2 data-i18n="menu.document-views.h2" id="document-views-label">${i18n.t('menu.document-views.h2.textContent')}</h2>${Icon[".fas.fa-magic"]}<ul>`;
       if (DO.C.GraphViewerAvailable) {
-        s += '<li><button class="resource-visualise" title="Change to graph view">Graph</button></li>';
+        s += `<li><button class="resource-visualise" data-i18n="menu.document-views.graph.button" title="${i18n.t('menu.document-views.graph.button.title')}">${i18n.t('menu.document-views.graph.button.textContent')}</button></li>`;
       }
-      s += '<li><button title="Change to native device/browser view">Native</button></li>';
+      s += `<li><button title="${i18n.t('menu.document-views.native.button.title')}">${i18n.t('menu.document-views.native.button.textContent')}</button></li>`;
 
       if (stylesheets.length) {
         for (var i = 0; i < stylesheets.length; i++) {
           var stylesheet = stylesheets[i];
           var view = stylesheet.getAttribute('title');
           if(stylesheet.closest('[rel~="alternate"]')) {
-            s += '<li><button title="Change to ‘' + view + '’ view">' + view + '</button></li>';
+            s += `<li><button data-i18n="menu.document-views.change-style.button" title="${i18n.t('menu.document-views.change-style.button.title', { view })}">${view}</button></li>`;
           }
           else {
-            s += '<li><button disabled="disabled" title="Current style">' + view + '</button></li>';
+            s += `<li><button data-i18n="menu.document-views.current-style.button" disabled="disabled" title="${i18n.t('menu.document-views.current-style.button.title')}">${view}</button></li>`;
           }
         }
       }
