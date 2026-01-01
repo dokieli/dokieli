@@ -1538,19 +1538,23 @@ DO = {
     },
 
     init: function() {
-      i18nextInit().then(() => {
+      document.addEventListener('i18n-ready', () => {
         DO.U.initUserLanguage().then(() => {
           const params = new URLSearchParams(window.location.search);
 
           if (params.has('code') && params.has('iss') && params.has('state')) {
-            DO.U.initAuth().then(() => DO.U.handleIncomingRedirect())
+            DO.U.initAuth().then(() => DO.U.handleIncomingRedirect());
           }
           else {
             DO.U.initAuth();
-    
+
             DO.C.init();
           }
         })
+      });
+
+      i18nextInit().then(() => {
+        document.dispatchEvent(new Event('i18n-ready'));
       })
     },
 
@@ -4900,7 +4904,6 @@ console.log(reason);
         if(b.disabled) { return; }
         else {
           b.disabled = true;
-          DO.C.ButtonStates['resource-memento'] = false;
         }
       }
 
@@ -5483,8 +5486,6 @@ console.log(reason);
     shareResource: function(listenerEvent, iri) {
       if (document.querySelector('#share-resource.do.on')) { return; }
 
-      // Config.ButtonStates['resource-share'] = false;
-
       iri = iri || currentLocation();
       const documentURL = stripFragmentFromString(iri);
 
@@ -5762,7 +5763,6 @@ console.log(reason);
 
       shareResource.addEventListener('click', function (e) {
         if (e.target.closest('button.close')) {
-          // Config.ButtonStates['resource-share'] = true;
           listenerEvent.target.closest('button').disabled = false;
         }
 
