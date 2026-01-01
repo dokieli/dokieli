@@ -5080,7 +5080,7 @@ console.log(reason);
         messageLog += '</tbody></table>';
       }
       else {
-        messageLog = '<p>No messages.</p>';
+        messageLog = `<p data-i18n="dialog.message-log.no-messages.p">${i18n.t('dialog.message-log.no-messages.p.textContent')}</p>`;
       }
 
       var buttonClose = getButtonHTML({ key: 'dialog.message-log.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
