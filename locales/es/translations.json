@@ -370,6 +370,7 @@
   "dialog.message-log.datetime.th.textContent": "Fecha/Hora",
   "dialog.message-log.message.th.textContent": "Mensaje",
   "dialog.message-log.type.th.textContent": "Tipo",
+  "dialog.message-log.no-messages.p.textContent": "No hay mensajes.",
 
   "browser.browse-location.button.title": "Explorar ubicación",
   "browser.browse-location.button.textContent": "Explorar",

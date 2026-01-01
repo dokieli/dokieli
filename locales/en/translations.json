@@ -378,6 +378,7 @@
   "dialog.message-log.datetime.th.textContent": "Date/Time",
   "dialog.message-log.message.th.textContent": "Message",
   "dialog.message-log.type.th.textContent": "Type",
+  "dialog.message-log.no-messages.p.textContent": "No messages.",
 
   "panel.notifications.toggle.button.title": "Show/Hide",
   "panel.notifications.toggle.button.aria-label": "Show/Hide Notifications",
