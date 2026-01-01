@@ -649,6 +649,7 @@ font-size: 1em;
 border: 2px solid #ccc;
 border-radius: 5px;
 padding: 0.75em;
+margin:0;
 }
 aside.do input[type="text"] {
 width: calc(100% - 14em);
@@ -1642,7 +1643,7 @@ margin:0 auto 0.5em auto;
 }
 
 #user-info {
-margin:0;
+margin-top:1em;
 display:inline-block;
 /*margin-left:0.75em;*/
 /*max-width:75%;*/
@@ -1776,7 +1777,8 @@ content:"";
 }
 
 #document-menu #about-dokieli {
-margin:2em 1em 1em;
+margin:0 auto;
+width:calc(100% - 2em);
 }
 
 #document-menu #about-dokieli img,
@@ -1793,6 +1795,7 @@ width: 33%;
 height: 5em;
 }
 #document-menu #user-info {
+margin-top:1em;
 min-height:5em;
 float: left !important;
 }
@@ -1813,6 +1816,13 @@ vertical-align:middle;
 float:none;
 }
 
+#document-menu #ui-language {
+margin-top:0.25em;
+}
+#document-menu #ui-language label {
+display:none;
+}
+
 #document-menu #document-views > svg.fas,
 #document-menu #ui-language > svg.fas {
 margin:0 1em 0 2.5em;
@@ -1824,56 +1834,75 @@ vertical-align: middle;
 background-color:#eee !important;
 }
 
-
 #document-menu #document-autosave {
-margin:2em 0 0 0;
+margin-top:1em;
+margin-left:1.5em;
+width:calc(100% - 1.5em);
 }
 
-#document-autosave input[type="checkbox"]{
-  height: 0;
-  width: 0;
-  visibility: hidden;
+#document-autosave input[type="checkbox"] {
+  display: none;
 }
 
 #document-autosave label {
-  margin-left:7em;
-  cursor: pointer;
-  text-indent: -5em;
+  display: inline-block;
   width: 3.5em;
   height: 1.75em;
   background: #777;
-  display: block;
   border-radius: 1em;
   position: relative;
+  cursor: pointer;
+  text-align: center;
+  font-weight: bold;
+  color: #fff;
+  user-select: none;
 }
 
-#document-autosave label:before {
+#document-autosave label::before {
+  content: "⭘";
+  position: absolute;
+  top: 1px;
+  left: 10px;
+  width: 100%;
+  height:1.75em;
+  text-align: center;
+  transition: 0.2s;
+  font-weight: bold;
+}
+
+#document-autosave label::after {
   content: '';
   position: absolute;
   top: 3px;
-  left: 3px;
-  width: 1.4em;
-  height: 1.4em;
+  left: 4px;
+  width: 1.35em;
+  height: 1.35em;
   background: #fff;
-  border-radius: 2em;
+  border-radius: 50%;
+  transition: 0.2s;
+  font-weight: bold;
 }
 
-#document-autosave label:has(+ input:checked) {
+#document-autosave input:checked + label {
   background: #080;
 }
 
-#document-autosave label:has(+ input:checked):before {
-  right: 5px;
-  left:auto;
+#document-autosave input:checked + label::before {
+  content: '⏽';
+  top: 1px;
+  left: -10px;
+  height:1.75em;
 }
 
-#document-autosave label:has(+ input:disabled):before,
-#document-autosave label:has(+ input:disabled) {
-  color:#777;
-  cursor:not-allowed;
+#document-autosave input:checked + label::after {
+  left: auto;
+  right: 3px;
 }
-#document-autosave label:has(+ input:disabled) {
-  background:#777;
+
+#document-autosave span {
+  position: absolute;
+  left: 4em;
+  color: #000;
 }
 
 .tabs nav {
@@ -2036,12 +2065,11 @@ color:#000;
 margin-top:0;
 }
 
-aside.do.on select {
-padding: 10px;
+.do select {
+padding: 0.75em;
 font-size: 16px;
 border: 2px solid #ccc;
 border-radius: 5px;
-margin: 0.5em 0;
 background: #fff;
 }
 
