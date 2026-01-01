@@ -3184,15 +3184,15 @@ DO = {
       advisements = (DO.C.Resource[documentURL].spec && DO.C.Resource[documentURL].spec['advisement']) ? Object.keys(DO.C.Resource[documentURL].spec['advisement']) : [];
       skos = (DO.C.Resource[documentURL].skos) ? DO.C.Resource[documentURL].skos : [];
 
-      citations = '<tr class="citations"><th>Citations</th><td>' + citationsTo.length + '</td></tr>';
-      requirements = '<tr class="requirements"><th>Requirements</th><td>' + requirements.length + '</td></tr>';
-      advisements = '<tr class="advisements"><th>Advisements</th><td>' + advisements.length + '</td></tr>';
+      citations = `<tr class="citations"><th data-i18n="panel.document-metadata.citations.th">${i18n.t('panel.document-metadata.citations.th.textContent')}</th><td>${citationsTo.length}</td></tr>`;
+      requirements = `<tr class="requirements"><th data-i18n="panel.document-metadata.requirements.th">${i18n.t('panel.document-metadata.requirements.th.textContent')}</th><td>${requirements.length}</td></tr>`;
+      advisements = `<tr class="advisements"><th data-i18n="panel.document-metadata.advisements.th">${i18n.t('panel.document-metadata.advisements.th.textContent')}</th><td>${advisements.length}</td></tr>`;
       var conceptsList = [];
       conceptsList = (skos.type && skos.type[ns.skos.Concept.value]) ? skos.type[ns.skos.Concept.value] : conceptsList;
 
-      var concepts = '<tr class="concepts"><th>Concepts</th><td>' + conceptsList.length + '</td></tr>';
+      var concepts = `<tr class="concepts"><th data-i18n="panel.document-metadata.concepts.th">${i18n.t('panel.document-metadata.concepts.th.textContent')}</th><td>${conceptsList.length}</td></tr>`;
       // TODO: Review grapoi . Check it matches expected
-      var statements = '<tr class="statements"><th>Statements</th><td>' + g.out().terms.length + '</td></tr>';
+      var statements = `<tr class="statements"><th data-i18n="panel.document-metadata.statements.th">${i18n.t('panel.document-metadata.statements.th.textContent')}</th><td>${g.out().terms.length}</td></tr>`;
 
       var graphEditors = getGraphEditors(g);
       var graphAuthors = getGraphAuthors(g);
@@ -3207,7 +3207,7 @@ DO = {
           editors.push(`<li>${name}</li>`);
         });
         if (editors.length){
-          editors = '<tr class="people"><th>Editors</th><td><ul class="editors">' + editors.join('') + '</ul></td></tr>';
+          editors = `<tr class="people"><th data-i18n="panel.document-metadata.editors.th">${i18n.t('panel.document-metadata.editors.th.textContent')}</th><td><ul class="editors">${editors.join('')}</ul></td></tr>`;
         }
       }
 
@@ -3219,7 +3219,7 @@ DO = {
           authors.push(`<li>${name}</li>`);
         });
         if (authors.length){
-          authors = '<tr class="people"><th>Authors</th><td><ul class="authors">' + authors.join('') + '</ul></td></tr>';
+          authors = `<tr class="people"><th data-i18n="panel.document-metadata.authors.th">${i18n.t('panel.document-metadata.authors.th.textContent')}</th><td><ul class="authors">${authors.join('')}</ul></td></tr>`;
         }
       }
 
@@ -3231,7 +3231,7 @@ DO = {
           contributors.push(`<li>${name}</li>`);
         });
         if (contributors.length){
-          contributors = '<tr class="people"><th>Contributors</th><td><ul class="contributors">' + contributors.join('') + '</ul></td></tr>';
+          contributors = `<tr class="people"><th data-i18n="panel.document-metadata.contributors.th">${i18n.t('panel.document-metadata.contributors.th.textContent')}</th><td><ul class="contributors">${contributors.join('')}</ul></td></tr>`;
         }
       }
 
@@ -3243,7 +3243,7 @@ DO = {
           performers.push(`<li>${name}</li>`);
         });
         if (performers.length){
-          performers = '<tr class="people"><th>Performers</th><td><ul class="performers">' + performers.join('') + '</ul></td></tr>';
+          performers = `<tr class="people"><th>Performers</th><td><ul class="performers">${performers.join('')}</ul></td></tr>`;
         }
       }
 
@@ -3252,16 +3252,19 @@ DO = {
           // <tr><th>Lines</th><td>' + count.lines + '</td></tr>\n\
           // <tr><th>A4 Pages</th><td>' + count.pages.A4 + '</td></tr>\n\
           // <tr><th>US Letter</th><td>' + count.pages.USLetter + '</td></tr>\n\
-      var html = '<section id="document-metadata"><table>\n\
-        <caption>Document Metadata</caption>\n\
-        <tbody>\n\
-          ' + data + '\n\
-          <tr><th>Reading time</th><td>' + count.readingTime + ' minutes</td></tr>\n\
-          <tr><th>Characters</th><td>' + count.chars + '</td></tr>\n\
-          <tr><th>Words</th><td>' + count.words + '</td></tr>\n\
-          <tr><th>Bytes</th><td>' + count.bytes + '</td></tr>\n\
-        </tbody>\n\
-      </table></section>';
+      var html = `
+      <section id="document-metadata">
+        <table>
+          <caption data-i18n="panel.document-metadata.caption">${i18n.t('panel.document-metadata.caption.textContent')}</caption>
+          <tbody>
+            ${data}
+            <tr><th data-i18n="panel.document-metadata.reading-time.th">${i18n.t('panel.document-metadata.reading-time.th.textContent')}</th><td>${count.readingTime} <span data-i18n="datetime.minutes.span">${i18n.t('datetime.minutes.span.textContent')}</span></td></tr>
+            <tr><th data-i18n="panel.document-metadata.characters.th">${i18n.t('panel.document-metadata.characters.th.textContent')}</th><td>${count.chars}</td></tr>
+            <tr><th data-i18n="panel.document-metadata.words.th">${i18n.t('panel.document-metadata.words.th.textContent')}</th><td>${count.words}</td></tr>
+            <tr><th data-i18n="panel.document-metadata.bytes.th">${i18n.t('panel.document-metadata.bytes.th.textContent')}</th><td>${count.bytes}</td></tr>
+          </tbody>
+        </table>
+      </section>`;
 
       node.insertAdjacentHTML('beforeend', domSanitize(html));
     },
@@ -3481,9 +3484,9 @@ DO = {
 
       var documentMenu = document.getElementById('document-menu');
 
-      var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Document Info', buttonTitle: 'Close', iconSize: 'fa-2x' });
+      var buttonClose = getButtonHTML({ key: 'panel.document-info.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
-      document.body.insertBefore(fragmentFromString(`<aside aria-labelledby="document-info-label" class="do on" id="document-info" lang="${i18n.language()}" xml:lang="${i18n.language()}"><h2 id="document-info-label">Document Info</h2>${buttonClose}</aside>`), documentMenu.nextSibling);
+      document.body.insertBefore(fragmentFromString(`<aside aria-labelledby="document-info-label" class="do on" id="document-info" lang="${i18n.language()}" xml:lang="${i18n.language()}"><h2 data-i88n="panel.document-info.h2" id="document-info-label">${i18n.t('panel.document-info.h2.textContent')}</h2>${buttonClose}</aside>`), documentMenu.nextSibling);
       var documentInfo = document.getElementById('document-info');
 
       documentInfo.setAttribute('tabindex', '-1');
@@ -3521,7 +3524,7 @@ DO = {
       var contextNode = selectArticleNode(document);
       var checked = (contextNode.classList.contains('highlight-structure')) ? 'checked="checked"' : '';
 
-      var html = `<section id="highlight-data"><h3>Highlight Data</h3><ul><li><input id="highlight-structured-data" name="highlight-structured-data" type="checkbox" ${checked}/> <label for="highlight-structured-data">Structure</label></li></ul></section>`;
+      var html = `<section id="highlight-data"><h3 data-i18n="panel.higlight-data.h3">${i18n.t('panel.higlight-data.h3.textContent')}</h3><ul><li><input id="highlight-structured-data" name="highlight-structured-data" type="checkbox" ${checked}/> <label data-i18n="panel.higlight-structured-data.label" for="highlight-structured-data">${i18n.t('panel.higlight-structured-data.label.textContent')}</label></li></ul></section>`;
 
       node.insertAdjacentHTML('beforeend', html);
 
@@ -3550,7 +3553,7 @@ DO = {
 
       Object.keys(DO.C.ListOfStuff).forEach(id => {
         var checkedInput = '';
-        var label = DO.C.ListOfStuff[id].label;
+        var label = i18n.t(`panel.list-of-stuff.${id}.label.textContent`);
         var selector = DO.C.ListOfStuff[id].selector;
 
         var item = document.getElementById(id);
@@ -3561,11 +3564,11 @@ DO = {
           // DO.U.buildListOfStuff(id);
         }
 
-        s.push('<li><input id="l-o-s-' + id +'" type="checkbox"' + disabledInput + checkedInput + '/><label for="l-o-s-' + id + '">' + label + '</label></li>');
+        s.push(`<li><input id="l-o-s-${id}" type="checkbox"${disabledInput}${checkedInput} /><label data-i18n="panel.list-of-stuff.${id}.label" for="l-o-s-${id}">${label}</label></li>`);
       });
 
       if (s.length) {
-        node.insertAdjacentHTML('beforeend', '<section id="list-of-stuff"><h3>List of Stuff</h3><ul>' + s.join('') + '</ul></section>');
+        node.insertAdjacentHTML('beforeend', `<section id="list-of-stuff"><h3 data-i18n="panel.list-of-stuff.h3">${i18n.t('panel.list-of-stuff.h3.textContent')}</h3><ul>${s.join('')}</ul></section>`);
 
         // if (DO.C.EditorEnabled) {
           document.getElementById('list-of-stuff').addEventListener('click', (e) => {
