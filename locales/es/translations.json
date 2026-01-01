@@ -363,6 +363,14 @@
   "dialog.graph-view.export.button.title": "Exportar gráfico como SVG",
   "dialog.graph-view.export.button.textContent": "Exportar",
 
+  "dialog.message-log.close.button.title": "Cerrar",
+  "dialog.message-log.close.button.aria-label": "Cerrar Registro de Mensajes",
+  "dialog.message-log.h2.textContent": "Registro de Mensajes",
+  "dialog.message-log.caption.textContent": "Mensajes",
+  "dialog.message-log.datetime.th.textContent": "Fecha/Hora",
+  "dialog.message-log.message.th.textContent": "Mensaje",
+  "dialog.message-log.type.th.textContent": "Tipo",
+
   "browser.browse-location.button.title": "Explorar ubicación",
   "browser.browse-location.button.textContent": "Explorar",
   "browser.create-container.button.title": "Crear carpeta",

@@ -371,6 +371,14 @@
   "browser.create-container-name.button.textContent": "Create",
   "browser.create-container-name.input.placeholder": "My Secret Stuff",
 
+  "dialog.message-log.close.button.title": "Close",
+  "dialog.message-log.close.button.aria-label": "Close Message Log",
+  "dialog.message-log.h2.textContent": "Message Log",
+  "dialog.message-log.caption.textContent": "Messages",
+  "dialog.message-log.datetime.th.textContent": "Date/Time",
+  "dialog.message-log.message.th.textContent": "Message",
+  "dialog.message-log.type.th.textContent": "Type",
+
   "panel.notifications.toggle.button.title": "Show/Hide",
   "panel.notifications.toggle.button.aria-label": "Show/Hide Notifications",
 
