@@ -390,6 +390,41 @@
   "panel.notifications.progress.more.textContent": "See more interactions with this document",
   "panel.notifications.h2.textContent": "Notifications",
 
+  "panel.document-info.close.button.title": "Close",
+  "panel.document-info.close.button.aria-label": "Close Document Info",
+
+  "panel.list-of-stuff.h3.textContent": "List of Stuff",
+  "panel.list-of-stuff.table-of-contents.label.textContent": "Contents",
+  "panel.list-of-stuff.list-of-figures.label.textContent": "Figures",
+  "panel.list-of-stuff.list-of-tables.label.textContent": "Tables",
+  "panel.list-of-stuff.list-of-abbreviations.label.textContent": "Abbreviations",
+  "panel.list-of-stuff.list-of-quotations.label.textContent": "Quotations",
+  "panel.list-of-stuff.list-of-concepts.label.textContent": "Concepts",
+  "panel.list-of-stuff.table-of-requirements.label.textContent": "Requirements",
+  "panel.list-of-stuff.table-of-advisements.label.textContent": "Advisements",
+  "panel.list-of-stuff.references.label.textContent": "References",
+
+  "panel.higlight-data.h3.textContent": "Highlight Data",
+  "panel.higlight-structured-data.label.textContent": "Structure",
+
+  "panel.document-metadata.caption.textContent": "Document Metadata",
+  "panel.document-metadata.citations.th.textContent": "Citations",
+  "panel.document-metadata.requirements.th.textContent": "Requirements",
+  "panel.document-metadata.advisements.th.textContent": "Advisements",
+  "panel.document-metadata.concepts.th.textContent": "Concepts",
+  "panel.document-metadata.statements.th.textContent": "Statements",
+
+  "panel.document-metadata.editors.th.textContent": "Editors",
+  "panel.document-metadata.authors.th.textContent": "Authors",
+  "panel.document-metadata.contributors.th.textContent": "Contributors",
+
+  "panel.document-metadata.reading-time.th.textContent": "Reading time",
+  "panel.document-metadata.characters.th.textContent": "Characters",
+  "panel.document-metadata.words.th.textContent": "Words",
+  "panel.document-metadata.bytes.th.textContent": "Bytes",
+
+  "datetime.minutes.span.textContent": "minutes",
+
   "annotation-inbox.label.textContent": "Inbox",
   "annotation-location.personal-storage.label.textContent": "Personal storage",
   "annotation-location.annotation-service.label.textContent": "Annotation service",

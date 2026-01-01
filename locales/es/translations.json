@@ -390,6 +390,41 @@
   "panel.notifications.progress.more.textContent": "Ver más interacciones con este documento",
   "panel.notifications.h2.textContent": "Notificaciones",
 
+  "panel.document-info.close.button.title": "Cerrar",
+  "panel.document-info.close.button.aria-label": "Cerrar información del documento",
+
+  "panel.list-of-stuff.h3.textContent": "Lista de elementos",
+  "panel.list-of-stuff.table-of-contents.label.textContent": "Contenido",
+  "panel.list-of-stuff.list-of-figures.label.textContent": "Figuras",
+  "panel.list-of-stuff.list-of-tables.label.textContent": "Tablas",
+  "panel.list-of-stuff.list-of-abbreviations.label.textContent": "Abreviaturas",
+  "panel.list-of-stuff.list-of-quotations.label.textContent": "Citas",
+  "panel.list-of-stuff.list-of-concepts.label.textContent": "Conceptos",
+  "panel.list-of-stuff.table-of-requirements.label.textContent": "Requisitos",
+  "panel.list-of-stuff.table-of-advisements.label.textContent": "Recomendaciones",
+  "panel.list-of-stuff.references.label.textContent": "Referencias",
+
+  "panel.higlight-data.h3.textContent": "Datos Resaltados",
+  "panel.higlight-structured-data.label.textContent": "Estructura",
+
+  "panel.document-metadata.caption.textContent": "Metadatos del Documento",
+  "panel.document-metadata.citations.th.textContent": "Citas",
+  "panel.document-metadata.requirements.th.textContent": "Requisitos",
+  "panel.document-metadata.advisements.th.textContent": "Recomendaciones",
+  "panel.document-metadata.concepts.th.textContent": "Conceptos",
+  "panel.document-metadata.statements.th.textContent": "Declaraciones",
+
+  "panel.document-metadata.editors.th.textContent": "Editores",
+  "panel.document-metadata.authors.th.textContent": "Autores",
+  "panel.document-metadata.contributors.th.textContent": "Colaboradores",
+
+  "panel.document-metadata.reading-time.th.textContent": "Tiempo de lectura",
+  "panel.document-metadata.characters.th.textContent": "Caracteres",
+  "panel.document-metadata.words.th.textContent": "Palabras",
+  "panel.document-metadata.bytes.th.textContent": "Bytes",
+
+  "datetime.minutes.span.textContent": "minutos",
+
   "annotation-inbox.label.textContent": "Bandeja de entrada",
   "annotation-location.personal-storage.label.textContent": "Almacenamiento personal",
   "annotation-location.annotation-service.label.textContent": "Servicio de anotaciones",
