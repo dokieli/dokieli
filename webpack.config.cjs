@@ -37,8 +37,9 @@ module.exports = (env) => {
     output: {
       path: path.join(__dirname, "/scripts/"),
       filename: "dokieli.js",
-      library: undefined, 
-      libraryExport: 'default', 
+      publicPath: "",
+      library: undefined,
+      libraryExport: 'default',
     },
     module: {
       rules: [
