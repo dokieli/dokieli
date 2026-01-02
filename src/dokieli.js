@@ -4766,7 +4766,7 @@ console.log(reason);
         // TODO: this needs to be form validation instead
         if (!isHttpOrHttpsProtocol(storageIRI) || !storageIRI.length) {
           generateFeed.insertAdjacentHTML('beforeend',
-            '<div class="response-message"><p class="error">Specify the location where the feed should be saved.</p></div>'
+            `<div class="response-message"><p class="error" data-i18n="dialog.generate-feed.error.missing-location.p">${i18n.t("dialog.generate-feed.error.missing-location.p.textContent")}</p></div>`
           )
 
           return
@@ -5482,7 +5482,7 @@ console.log(reason);
           .catch(error => {
             // Catch-all error, actually notify the user
             var responseMessage = replyToResource.querySelector('.response-message');
-            responseMessage.setHTMLUnsafe(domSanitize(responseMessage.getHTML() + '<p class="error">We could not save your reply:' + error.message + '</p>'));
+            responseMessage.setHTMLUnsafe(domSanitize(responseMessage.getHTML() + `<p data-i18n="dialog.reply-to-resource.error.save-error.p" class="error">${i18n.t('dialog.reply-to-resource.error.save-error.p.textContent', { message: error.message })}</p>`));
           })
       }
     },
@@ -6317,6 +6317,10 @@ console.log(reason);
             if (sD) {
               sD.replaceChildren();
             }
+            const details = document.getElementById(`${id}-storage-description-details`);
+            if (details) {
+              details.remove();
+            }
             samp.insertAdjacentHTML('afterend', `<details id="${id}-storage-description-details"><summary data-i18n="dialog.storage-details.summary">${i18n.t('dialog.storage-details.summary.textContent')}</summary></details>`);
 
             sD = document.getElementById(id + '-storage-description-details');
@@ -6958,7 +6962,7 @@ console.log(reason);
           DO.U.generateBrowserList(g, baseUrl, id, action)
             .then(i => {
               DO.U.showStorageDescription(g, id, baseUrl);
-            });
+            })
         })
         .then(i => {
           document.getElementById(id + '-' + action).textContent = (action == 'write') ? input.value + generateAttributeId() : input.value;
@@ -7003,7 +7007,7 @@ console.log(reason);
         });
       }
       else{
-        inputBox.insertAdjacentHTML('beforeend', '<div class="response-message"><p class="error">This is not a valid location.</p></div>');
+        inputBox.insertAdjacentHTML('beforeend', `<div class="response-message"><p class="error" data-i18n="browser.error.invalid-location.p">${i18n.t('browser.error.invalid-location.p.textContent')}</p></div>`);
       }
     },
 
@@ -7051,11 +7055,12 @@ console.log(reason);
 
         var options = { 'headers': { 'If-None-Match': '*' } };
 
+        var node = document.getElementById(id + '-create-container');
+
         patchResourceWithAcceptPatch(containerURL, patch, options).then(
           function(response){
             DO.U.triggerBrowse(containerURL, id, action);
-          },
-          function(reason) {
+
             var main = `      <article about=""><dl id="document-title"><dt>Title</dt><dd property="dcterms:title">${containerLabel}</dd></dl></article>`;
             var o = {
               'omitLang': true,
@@ -7064,18 +7069,21 @@ console.log(reason);
               }
             }
             var data = createHTML(containerLabel, main, o);
-// console.log(data);
+            // console.log(data);
 
             putResourceWithAcceptPut(containerURL, data, options).then(
               function(response){
                 DO.U.triggerBrowse(containerURL, id, action);
               },
               function(reason){
-// console.log(reason);
-                var node = document.getElementById(id + '-create-container');
+                // console.log(reason);
                 DO.U.showErrorResponseMessage(node, reason.response, 'createContainer');
               });
-          });
+          },
+          function(reason) {
+            DO.U.showErrorResponseMessage(node, reason.response, 'createContainer');
+          }
+        )
       });
     },
 
@@ -7083,7 +7091,7 @@ console.log(reason);
       var statusCode = ('status' in response) ? response.status : 0;
       statusCode = (typeof statusCode === 'string') ? parseInt(response.slice(-3)) : statusCode;
       // console.log(statusCode);
-      console.log(response);
+      // console.log(response);
 
       var msgs = node.querySelectorAll('.response-message');
       for(var i = 0; i < msgs.length; i++){
@@ -7100,39 +7108,44 @@ console.log(reason);
 
       var msg = '';
 
+      let errorKey = 'default';
+
       switch(statusCode) {
         default:
-          msg = 'Request unsuccessful ('+ statusText + ').';
           break;
         case 401:
-          var s = 'You are not authenticated with valid credentials.';
-          msg = (!DO.C.User.IRI) ? s + ' . Try signing in.' : s;
+          if (DO.C.User.IRI) {
+            errorKey = 'invalid-credentials';
+          } else {
+            errorKey = 'unauthenticated';
+          }
           break;
         case 403:
-          msg = 'This request is forbidden.';
+          errorKey = 'request-forbidden';
           break;
         case 404:
-          msg = 'Not found.';
+          errorKey = 'not-found';
           break;
         case 405:
-          msg = 'Request not supported on the target resource.';
+          errorKey = 'request-not-supported';
           break;
         case 409:
-          msg = 'Conflict with the current state of the target resource.';
+          errorKey = 'conflict';
           break;
         case 412:
-          msg = 'Precondition failed.';
+          errorKey = "precondition-failed";
           switch (context) {
             default:
               break;
             case 'createContainer':
-              msg += ' Use a different Container Name.';
+              errorKey = `${errorKey}-create-container-name`;
               break;
           }
-          break;
       }
 
-      node.insertAdjacentHTML('beforeend', '<div class="response-message"><p class="error">' + domSanitize(msg) + '</p></div>');
+      msg = i18n.t(`browser.error.${errorKey}.p.textContent`);
+
+      node.insertAdjacentHTML('beforeend', `<div class="response-message"><p class="error" data-i18n="browser.error.${errorKey}.p">${msg}</p></div>`);
     },
 
     setupResourceBrowser: function(parent, id, action){
@@ -8302,7 +8315,7 @@ console.log(reason);
     getFeedFormatSelection: function() {
       return `
         <div id="feed-format-selection">
-          <label data-i18n="dialog.feed-format.label" for="feed-format">${i18n.t('dialog.feed-format.label.textContent')}</label>
+          <label data-i18n="dialog.generate-feed.feed-format.label" for="feed-format">${i18n.t('dialog.generate-feed.feed-format.label.textContent')}</label>
           <select id="feed-format">
             <option id="feed-format-atom" lang="en" value="application/atom+xml" xml:lang="en">Atom</option>
             <option id="feed-format-rss" lang="en" value="application/rss+xml" selected="selected" xml:lang="en">RSS</option>
