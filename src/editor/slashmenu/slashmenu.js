@@ -15,19 +15,9 @@ export class SlashMenu {
     this.menuContainer.style.display = "none";
     this.menuContainer.style.position = "absolute";
 
-    const slashMenuButtonLabels = {
-      'language': 'Language',
-      'license': 'License',
-      'inbox': 'Inbox',
-      'in-reply-to': 'In reply to',
-      'publication-status': 'Status',
-      'resource-type': 'Type',
-      'test-suite': 'Test suite'
-    }
-
     this.slashMenuButtons = ['language', 'license', 'inbox', 'in-reply-to', 'publication-status', 'resource-type', 'test-suite'].map(button => ({
       button,
-      dom: () => fragmentFromString(getButtonHTML({ button, buttonTextContent: slashMenuButtonLabels[button]} )).firstChild,
+      dom: () => fragmentFromString(getButtonHTML({ button } )).firstChild,
     }));
 
     this.createMenuItems();

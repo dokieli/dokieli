@@ -900,9 +900,9 @@ function showActionMessage(node, message, options = {}) {
 
   let aside = node.querySelector('#document-action-message');
   if (!aside) {
-    var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close Messages', buttonTitle: 'Close', iconSize: 'fa-2x' });
+    var buttonClose = getButtonHTML({ key: 'dialog.document-action-message.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
-    node.appendChild(fragmentFromString(`<aside aria-labelledby="document-action-message-label" class="do on" id="document-action-message" lang="${i18n.language()}" role="status" tabindex="0" xml:lang="${i18n.language()}"><h2 id="document-action-message-label">Messages</h2>${buttonClose}<ul role="log"></ul></aside>`));
+    node.appendChild(fragmentFromString(`<aside aria-labelledby="document-action-message-label" class="do on" id="document-action-message" lang="${i18n.language()}" role="status" tabindex="0" xml:lang="${i18n.language()}"><h2 data-i18n="dialog.document-action-message.messages.h2" id="document-action-message-label">${i18n.t('dialog.document-action-message.messages.h2.textContent')}</h2>${buttonClose}<ul role="log"></ul></aside>`));
     aside = node.querySelector('#document-action-message');
   }
   aside.querySelector('ul[role="log"]').insertAdjacentHTML('afterbegin', messageItem);
@@ -2601,7 +2601,7 @@ function createImmutableResource(url, data, options) {
     setDocumentRelation(document, [r], o);
 
     // Create URI-R
-    data = getDocument(null, documenOptions);
+    data = getDocument(null, documentOptions);
     processSave(url, null, data, options)
       .then((resolved) => handleActionMessage(resolved))
       .catch((rejected) => handleActionMessage(null, rejected))
@@ -2896,7 +2896,7 @@ function showRobustLinksDecoration(node) {
 
     var originalurl = i.getAttribute('data-originalurl');
     originalurl = (originalurl) ? originalurl.trim() : undefined;
-    originalurl = (originalurl) ? '<span>Original</span><span><a href="' + originalurl + '" rel="noopener" target="_blank">' + originalurl + '</a></span>' : '';
+    originalurl = (originalurl) ? `<span data-i18n="popup.robustlinks.original.span">${i18n.t('popup.robustlinks.original.span.textContent')}</span><span><a href="${originalurl}" rel="noopener" target="_blank">${originalurl}</a></span>` : '';
 
     var versionurl = i.getAttribute('data-versionurl');
     versionurl = (versionurl) ? versionurl.trim() : undefined;
@@ -2906,13 +2906,13 @@ function showRobustLinksDecoration(node) {
     if (versiondate) {
       versiondate = versiondate.trim();
       nearlinkdateurl = 'http://timetravel.mementoweb.org/memento/' + versiondate.replace(/\D/g, '') + '/' + href;
-      nearlinkdateurl = '<span>Near Link Date</span><span><a href="' + nearlinkdateurl + '" rel="noopener" target="_blank">' + versiondate + '</a></span>'
+      nearlinkdateurl = `<span data-i18n="popup.robustlinks.near-link-date.span">${i18n.t('popup.robustlinks.near-link-date.span.textContent')}</span><span><a href="${nearlinkdateurl}" rel="noopener" target="_blank">${versiondate}</a></span>`;
     }
     else if (versionurl) {
       versiondate = versionurl;
     }
 
-    versionurl = (versionurl) ? '<span>Version</span><span><a href="' + versionurl + '" rel="noopener" target="_blank">' + versiondate + '</a></span>' : '';
+    versionurl = (versionurl) ? `<span data-i18n="popup.robustlinks.version.span">${i18n.t('popup.robustlinks.version.span.textContent')}</span><span><a href="${versionurl}" rel="noopener" target="_blank">${versiondate}</a></span>` : '';
 
     // var citations = Object.keys(Config.Citation).concat(ns.schema.citation);
 
@@ -2928,11 +2928,11 @@ function showRobustLinksDecoration(node) {
 
       if (citationLabels.length > 0) {
         citationType = citationLabels.join(', ');
-        citation = '<span>Citation Reason</span><span>' + citationType + '</span>';
+        citation = `<span data-i18n="popup.robustlinks.citation-reason.span">${i18n.t('popup.robustlinks.citation-reason.span.textContent')}</span><span>${citationType}</span>`;
       }
     }
 
-    i.insertAdjacentHTML('afterend', `<span class="do robustlinks">${getButtonHTML({ button: 'robustify-links', buttonTitle: 'Show Robust Links' })}<span>${citation}${originalurl}${versionurl}${nearlinkdateurl}</span></span>`);
+    i.insertAdjacentHTML('afterend', `<span class="do robustlinks">${getButtonHTML({ key: 'popup.robustlinks.show.button', button: 'robustify-links' })}<span>${citation}${originalurl}${versionurl}${nearlinkdateurl}</span></span>`);
   });
 
   document.querySelectorAll('.do.robustlinks').forEach(i => {
@@ -3295,7 +3295,7 @@ function getLanguageOptionsHTML(options) {
   if ('selected' in options) {
     selectedLang = options.selected;
     if (selectedLang == '') {
-      s.push(`<option data-i18n="language.choose" selected="selected" value="">${i18n.t('language.choose.textContent')}</option>`);
+      s.push(`<option data-i18n="language.choose.option" selected="selected" value="">${i18n.t('language.choose.option.textContent')}</option>`);
     }
   }
   else if (typeof Config.User.UI?.Language !== 'undefined') {
@@ -3320,7 +3320,7 @@ function getLicenseOptionsHTML(options) {
   if ('selected' in options) {
     selectedIRI = options.selected;
     if (selectedIRI == '') {
-      s.push(`<option data-i18n="license.choose" selected="selected" value="">${i18n.t('license.choose.textContent')}</option>`);
+      s.push(`<option data-i18n="license.choose.option" selected="selected" value="">${i18n.t('license.choose.option.textContent')}</option>`);
     }
   }
   else if (typeof Config.User.UI.License !== 'undefined') {
@@ -3463,7 +3463,7 @@ function showResourceAudienceAgentOccupations() {
         if (ul.length > 0) {
           ul = `<ul>${ul.join('')}</ul>`;
 
-          var message = `<span>This document's audience matches your profile:</span>${ul}`;
+          var message = `<span data-i18n="dialog.document-action-message.audience-occupation.span">${i18n.t("dialog.document-action-message.audience-occupation.span.textContent")}</span>${ul}`;
           message = {
             'content': message,
             'type': 'info',
@@ -3500,7 +3500,7 @@ function setCopyToClipboard(contentNode, triggerNode, options = {}) {
 
       navigator.clipboard.writeText(text)
         .then(() => {
-          var message = `Copied to clipboard.`;
+          var message = `<span data-i18n="dialog.document-action-message.clipboard-success.span">${i18n.t('dialog.document-action-message.clipboard-success.span.textContent')}</span>`;
           message = {
             'content': message,
             'type': 'info',
@@ -3510,7 +3510,7 @@ function setCopyToClipboard(contentNode, triggerNode, options = {}) {
           showActionMessage(document.body, message);
         })
         .catch(error => {
-          var message = `Failed to copy text to clipboard.`;
+          var message = `<span data-i18n="dialog.document-action-message.clipboard-fail.span">${i18n.t('dialog.document-action-message.clipboard-fail.span.textContent')}</span>`;
           message = {
             'content': message,
             'type': 'error',

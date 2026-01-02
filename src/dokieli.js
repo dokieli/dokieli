@@ -5078,7 +5078,7 @@ console.log(reason);
       if (DO.C.MessageLog && DO.C.MessageLog.length) {
         messageLog = `<table role="log"><caption data-i18n="dialog.message-log.caption">${i18n.t('dialog.message-log.caption.textContent')}</caption><thead><tr><th data-i18n="dialog.message-log.datetime.th">${i18n.t('dialog.message-log.datetime.th.textContent')}</th><th data-i18n="dialog.message-log.message.th">${i18n.t('dialog.message-log.message.th.textContent')}</th><th data-i18n="dialog.message-log.type.th">${i18n.t('dialog.message-log.type.th.textContent')}</th></tr></thead><tbody>`;
         Object.keys(DO.C.MessageLog).forEach(i => {
-          messageLog += '<tr><td><time>' + DO.C.MessageLog[i].dateTime + '</time></td><td>' + DO.C.MessageLog[i].content + '</td><td>' + DO.C.MessageLog[i].type + '</td></tr>';
+          messageLog += `<tr><td><time>${DO.C.MessageLog[i].dateTime}</time></td><td>${DO.C.MessageLog[i].content}</td><td data-i18n="dialog.message-log.${DO.C.MessageLog[i].type}.td">${i18n.t(`dialog.message-log.${DO.C.MessageLog[i].type}.td.textContent`)}</td></tr>`;
         });
         messageLog += '</tbody></table>';
       }
