@@ -8187,31 +8187,35 @@ console.log(reason);
               requestAccess = `<p><button class="request-access" data-i18n="dialog.save-as-document.request-access.button" data-inbox="${inboxURL}" data-target="${storageIRI}" title="${i18n.t('dialog.save-as-document.request-access.button.title')}" type="button">${i18n.t('dialog.save-as-document.request-access.button.textContent')}</button></p>`;
             }
 
+            let errorKey = 'default'
+
             switch (error.status) {
               case 0:
               case 405:
-                message = 'this location is not writable.'
+                errorKey = 'unwriteable-location';
                 break
               case 401:
-                message = 'you are not authorized.'
+                errorKey = 'invalid-credentials';
                 if(!DO.C.User.IRI){
-                  message += ' Try signing in.';
+                  errorKey = 'unauthenticated';
                 }
                 break
               case 403:
-                message = 'you do not have permission to write here.'
+                errorKey = 'unauthorized';
                 break
               case 406:
-                message = 'enter a name for your resource.'
+                errorKey = 'unacceptable';
                 break
               default:
-                message = error.message
+                // message = error.message // Could not save
                 break
             }
 
+            message = i18n(`dialog.save-as-document.error.${errorKey}.p.textContent`);
+
             //TODO:i18n
             saveAsDocument.insertAdjacentHTML('beforeend', domSanitize(
-              `<div class="response-message"><p class="error">Unable to save: ${message}</p>${requestAccess}</div>`
+              `<div class="response-message"><p class="error" data-i18n="dialog.save-as-document.error.${errorKey}.p">${message}</p>${requestAccess}</div>`
             ));
 
             if (DO.C.User.IRI && requestAccess) {

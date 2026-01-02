@@ -1463,7 +1463,7 @@ function handleDeleteNote(button) {
 
 //TODO: Inform the user that this information feature may fetch a resource from another origin, and ask whether they want to go ahead with it.
 function eventButtonInfo() {
-  const errorMessage = `<p class="error">Can't find the documentation. Try later.</p>`;
+  const errorMessage = `<p class="error" data-i18n="info.button-info.error.p">${i18n.t('info.button-info.error.p.textContent')}</p>`;
 
   document.addEventListener('click', e => {
     // console.log(e.target)
@@ -1573,12 +1573,12 @@ function eventButtonInfo() {
                 }
 
                 if (videoThumbnailUrl) {
-                  thumbnailUrl = ` (<a href="${videoThumbnailUrl}">poster</a>)`;
+                  thumbnailUrl = ` (<a data-i18n="info.button-info.poster.a" href="${videoThumbnailUrl}">${i18n.t('info.button-info.poster.a.textContent')}</a>)`;
                   videoPoster = ` poster="${videoThumbnailUrl}"`;
                 }
 
                 figcaption = `
-                  <figcaption><a href="${videoContentUrl}">Video</a>${thumbnailUrl} of in dokieli [${duration}${comma}${encodingFormat}]</figcaption>
+                  <figcaption><a href="${videoContentUrl}" data-i18n="info.button-info.video.a">${i18n.t('info.button-info.video.a.textContent')}</a>${thumbnailUrl} [${duration}${comma}${encodingFormat}]</figcaption>
                 `;
               }
 
@@ -1597,7 +1597,7 @@ function eventButtonInfo() {
 
               if (seeAlsos.length) {
                 seeAlso = `
-                  <dt>See also</dt><dd><ul>
+                  <dt data-i18n="info.button-info.see-also.dt">${i18n.t('info.button-info.see-also.dt.textContent')}</dt><dd><ul>
                   ${seeAlsos.map(seeAlsoIRI => {
                   const seeAlsoIRIG = g.node(rdf.namedNode(seeAlsoIRI));
                   const seeAlsoTitle = getGraphTitle(seeAlsoIRIG) || seeAlsoIRI;
@@ -1629,7 +1629,7 @@ function eventButtonInfo() {
 
               if (subjectItems.length) {
                 subject = `
-                  <dt>Subjects</dt><dd><dl>
+                  <dt data-i18n="info.button-info.subjects.dt">${i18n.t('info.button-info.subjects.dt.textContent')}</dt><dd><dl>
                   ${subjectItems.join('')}
                   </dl></dd>
                 `;
@@ -1638,14 +1638,14 @@ function eventButtonInfo() {
 
             details = `
               <details about="${resource}" open="">
-                <summary property="schema:name">About ${title}</summary>
+                <summary data-i18n="info.button-info.about.summary" property="schema:name">${i18n.t('info.button-info.about.summary.textContent')} ${title}</summary>
                 ${image}
                 <div datatype="rdf:HTML" property="schema:description">
                 ${description}
                 </div>
                 ${video}
                 <dl>
-                  <dt>Source</dt>
+                  <dt data-i18n="info.button-info.source.dt">${i18n.t('info.button-info.source.dt.textContent')}</dt>
                   <dd><a href="${resource}" rel="dcterms:source noopener" target="_blank">${resource}</a></dd>
                   ${subject}
                   ${seeAlso}

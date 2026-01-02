@@ -111,6 +111,13 @@
   "info.source.button.title": "Acerca del código fuente",
 
   "info.required.textContent": "Obligatorio",
+  "info.button-info.poster.a.textContent": "poster",
+  "info.button-info.video.a.textContent": "Video",
+  "info.button-info.see-also.dt.textContent": "Ver también",
+  "info.button-info.subjects.dt.textContent": "Temas",
+  "info.button-info.source.dt.textContent": "Fuente",
+
+  "info.button-info.error.p.textContent": "No se pudo encontrar la documentación. Intente nuevamente más tarde.",
 
   "menu.delete.button.title": "Eliminar artículo",
   "menu.delete.button.textContent": "Eliminar",
@@ -326,6 +333,13 @@
   "dialog.save-as-document.submit.button.title": "Guardar en el destino",
   "dialog.save-as-document.submit.button.textContent": "Guardar",
   "dialog.save-as-document.error.missing-location.p.textContent": "Especifique la ubicación donde debe guardarse el artículo.",
+  "dialog.save-as-document.error.default.p.textContent": "No se pudo guardar.",
+  "dialog.save-as-document.error.invalid-credentials.p.textContent": "No ha iniciado sesión con credenciales válidas.",
+  "dialog.save-as-document.unauthenticated.p.textContent": "No ha iniciado sesión. Por favor, intente iniciar sesión.",
+  "dialog.save-as-document.unauthorized.p.textContent": "No tiene permiso para guardar en esta ubicación.",
+  "dialog.save-as-document.unacceptable.p.textContent": "El formato de este recurso no es aceptado.",
+  "dialog.save-as-document.unwriteable-location.p.textContent": "No se puede escribir en esta ubicación.",
+
   "dialog.save-as-document.success.saved-at.p.textContent": "Documento guardado en:",
   "dialog.save-as-document.request-access.button.title": "Enviar una solicitud de acceso a la bandeja de entrada del recurso.",
   "dialog.save-as-document.request-access.button.textContent": "Solicitar acceso",
@@ -365,15 +379,6 @@
   "dialog.graph-view.export.button.title": "Exportar gráfico como SVG",
   "dialog.graph-view.export.button.textContent": "Exportar",
 
-  "dialog.message-log.close.button.title": "Cerrar",
-  "dialog.message-log.close.button.aria-label": "Cerrar Registro de Mensajes",
-  "dialog.message-log.h2.textContent": "Registro de Mensajes",
-  "dialog.message-log.caption.textContent": "Mensajes",
-  "dialog.message-log.datetime.th.textContent": "Fecha/Hora",
-  "dialog.message-log.message.th.textContent": "Mensaje",
-  "dialog.message-log.type.th.textContent": "Tipo",
-  "dialog.message-log.no-messages.p.textContent": "No hay mensajes.",
-
   "browser.browse-location.button.title": "Explorar ubicación",
   "browser.browse-location.button.textContent": "Explorar",
   "browser.create-container.button.title": "Crear carpeta",
@@ -390,8 +395,18 @@
   "browser.error.not-found.p.textContent": "No encontrado.",
   "browser.error.request-not-supported.p.textContent": "La solicitud no es compatible con el recurso solicitado.",
   "browser.error.conflict.p.textContent": "Conflicto con el estado actual del recurso solicitado.",
+  "browser.error.precondition-failed.p.textContent": "La precondición ha fallado.",
   "browser.error.precondition-failed-create-container-name.p.textContent": "No es posible usar ese nombre para la carpeta. Por favor, elija otro nombre.",
   "browser.error.load-error-name.p.textContent": "No se pudo cargar la ubicación seleccionada. Por favor, intente nuevamente.",
+
+  "dialog.message-log.close.button.title": "Cerrar",
+  "dialog.message-log.close.button.aria-label": "Cerrar Registro de Mensajes",
+  "dialog.message-log.h2.textContent": "Registro de Mensajes",
+  "dialog.message-log.caption.textContent": "Mensajes",
+  "dialog.message-log.datetime.th.textContent": "Fecha/Hora",
+  "dialog.message-log.message.th.textContent": "Mensaje",
+  "dialog.message-log.type.th.textContent": "Tipo",
+  "dialog.message-log.no-messages.p.textContent": "No hay mensajes.",
 
   "panel.notifications.toggle.button.title": "Mostrar/Ocultar",
   "panel.notifications.toggle.button.aria-label": "Mostrar/Ocultar Notificaciones",
