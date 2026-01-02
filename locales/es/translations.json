@@ -31,10 +31,14 @@
   "button.img.title": "imagen",
   "button.immutable.title": "Hacer inmutable",
   "button.in-reply-to.title": "En respuesta a",
+  "button.in-reply-to.textContent": "En respuesta a",
   "button.inbox.title": "Bandeja de entrada",
+  "button.inbox.textContent": "Bandeja de entrada",
   "button.info.title": "información",
   "button.language.title": "Idioma",
+  "button.language.textContent": "Idioma",
   "button.license.title": "Licencia",
+  "button.license.textContent": "Licencia",
   "button.local-storage.title": "",
   "button.math.title": "matemáticas",
   "button.memento.title": "Artículo memento",
@@ -49,9 +53,11 @@
   "button.pre.title": "código (bloque)",
   "button.print.title": "Imprimir documento",
   "button.publication-status.title": "Estado de publicación",
+  "button.publication-status.textContent": "Estado de publicación",
   "button.q.title": "cita (con fuente)",
   "button.requirement.title": "requisito",
   "button.resource-type.title": "Tipo de recurso",
+  "button.resource-type.textContent": "Tipo de recurso",
   "button.review-changes.title": "Revisar cambios",
   "button.robustify-links.title": "Robustecer enlaces",
   "button.save-as.title": "Guardar como",
@@ -68,6 +74,7 @@
   "button.success.title": "éxito",
   "button.table.title": "tabla",
   "button.test-suite.title": "Suite de pruebas",
+  "button.test-suite.textContent": "Suite de pruebas",
   "button.toggle.title": "Mostrar/Ocultar",
   "button.ul.title": "lista desordenada",
   "button.version.title": "Crear versión",
@@ -407,6 +414,16 @@
   "dialog.message-log.message.th.textContent": "Mensaje",
   "dialog.message-log.type.th.textContent": "Tipo",
   "dialog.message-log.no-messages.p.textContent": "No hay mensajes.",
+  "dialog.message-log.info.td.textContent": "info",
+  "dialog.message-log.success.td.textContent": "éxito",
+  "dialog.message-log.error.td.textContent": "error",
+
+  "dialog.document-action-message.close.button.title": "Cerrar",
+  "dialog.document-action-message.close.button.aria-label": "Cerrar Mensajes de Acciones",
+  "dialog.document-action-message.messages.h2.textContent": "Mensajes",
+  "dialog.document-action-message.audience-occupation.span.textContent": "La audiencia de este documento coincide con su perfil:",
+  "dialog.document-action-message.clipboard-success.span.textContent": "Copiado al portapapeles.",
+  "dialog.document-action-message.clipboard-fail.span.textContent": "No se pudo copiar el texto al portapapeles.",
 
   "panel.notifications.toggle.button.title": "Mostrar/Ocultar",
   "panel.notifications.toggle.button.aria-label": "Mostrar/Ocultar Notificaciones",
@@ -450,6 +467,11 @@
   "panel.document-metadata.words.th.textContent": "Palabras",
   "panel.document-metadata.bytes.th.textContent": "Bytes",
 
+  "popup.robustlinks.original.span.textContent": "Original",
+  "popup.robustlinks.near-link-date.span.textContent": "Fecha del enlace cercano",
+  "popup.robustlinks.version.span.textContent": "Versión",
+  "popup.robustlinks.citation-reason.span.textContent": "Motivo de la citación",
+
   "datetime.minutes.span.textContent": "minutos",
 
   "annotation-inbox.label.textContent": "Bandeja de entrada",
@@ -470,5 +492,5 @@
   "license.cc-by-nc-4.0.option.title": "Creative Commons Atribución/Reconocimiento-NoComercial 4.0 Internacional",
   "license.cc-by-nd-4.0.option.title": "Creative Commons Atribución/Reconocimiento-SinDerivados 4.0 Internacional",
   "license.cc-by-nc-sa-4.0.option.title": "Creative Commons Atribución/Reconocimiento-NoComercial-CompartirIgual 4.0 Internacional",
-  "license.cc-by-nc-nd-4.0.option.title": "Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International"
+  "license.cc-by-nc-nd-4.0.option.title": "Creative Commons Atribución/Reconocimiento-NoComercial-SinDerivados 4.0 Internacional"
 }
