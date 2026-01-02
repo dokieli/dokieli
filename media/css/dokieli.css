@@ -1844,6 +1844,20 @@ width:calc(100% - 1.5em);
   top:-0.5em;
   left:3em;
 }
+#document-autosave input:focus + label {
+  outline: 2px solid #080;
+  outline-offset: 5px;
+  transition: outline-offset .2s linear;
+}
+#document-autosave input + label:hover {
+outline:2px solid #080;
+outline-offset: 5px;
+}
+
+#document-autosave label:hover span,
+#document-autosave input[type="checkbox"]:focus + label span {
+  color:#080;
+}
 
 #document-autosave label {
   display: inline-block;
@@ -1908,6 +1922,8 @@ width:calc(100% - 1.5em);
   position: absolute;
   left: 4em;
   color: #000;
+  padding-left: 1em;
+  margin-left: -1em;
 }
 
 .tabs nav {
