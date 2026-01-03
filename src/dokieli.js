@@ -5392,33 +5392,36 @@ console.log(reason);
             console.log('Could not save reply:')
             console.error(error)
 
-            let message
+            let message;
+            let errorKey = 'default';
 
             switch (error.status) {
               case 0:
               case 405:
-                message = 'this location is not writable.'
+                errorKey = 'unwritable-location';
                 break
               case 401:
-                message = 'you are not authorized.'
+                errorKey = 'unauthorized';
                 if(!DO.C.User.IRI){
-                  message += ' Try signing in.';
+                  errorKey = 'unauthenticated';
                 }
                 break;
               case 403:
-                message = 'you do not have permission to write here.'
+                errorKey = 'forbidden';
                 break
               case 406:
-                message = 'enter a name for your resource.'
+                errorKey = 'unacceptable';
                 break
               default:
                 // some other reason
-                message = error.message
                 break
             }
 
+            message = `<span data-i18n="dialog.reply-to-resource.error.${errorKey}.p">${i18n.t(`dialog.reply-to-resource.error.${errorKey}.p.textContent`)}</span>`;
+
             // re-throw, to break out of the promise chain
-            throw new Error('Cannot save your reply: ', message)
+            
+            throw new Error('Cannot save your reply: ', i18n.t(`dialog.reply-to-resource.error.${errorKey}.p.textContent`));
           })
 
           .then(response => {
@@ -5484,7 +5487,7 @@ console.log(reason);
           .catch(error => {
             // Catch-all error, actually notify the user
             var responseMessage = replyToResource.querySelector('.response-message');
-            responseMessage.setHTMLUnsafe(domSanitize(responseMessage.getHTML() + `<p data-i18n="dialog.reply-to-resource.error.save-error.p" class="error">${i18n.t('dialog.reply-to-resource.error.save-error.p.textContent', { message: error.message })}</p>`));
+            responseMessage.setHTMLUnsafe(domSanitize(responseMessage.getHTML() + `<p class="error"><span data-i18n="dialog.reply-to-resource.error.save-error.p.span">${i18n.t('dialog.reply-to-resource.error.save-error.p.span.textContent')} </span> ${error.message}</p>`));
           })
       }
     },
@@ -8194,7 +8197,7 @@ console.log(reason);
             switch (error.status) {
               case 0:
               case 405:
-                errorKey = 'unwriteable-location';
+                errorKey = 'unwritable-location';
                 break
               case 401:
                 errorKey = 'invalid-credentials';
