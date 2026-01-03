@@ -440,6 +440,18 @@
   "dialog.document-action-message.clipboard-success.span.textContent": "Copied to clipboard.",
   "dialog.document-action-message.clipboard-fail.span.textContent": "Failed to copy text to clipboard.",
 
+  "dialog.remote-sync.error.default.span.textContent": "Could not sync changes to remote storage:",
+  "dialog.remote-sync.error.unauthenticated.span.textContent": "You are not signed in.",
+  "dialog.remote-sync.error.unauthenticated-action-message.span.textContent": "You are not signed in. {{button}} and try again.",
+  "dialog.remote-sync.error.unauthorized.p.textContent": "You do not have permission to update <code>{{url}}</code>.",
+  "dialog.remote-sync.error.unauthorized-action-message.span.textContent": "You do not have permission to update <code>{{url}}</code>. Try signing in with a different account.",
+  "dialog.remote-sync.error.forbidden.span.textContent": "You do not have permission to update <code>{{url}}</code>.",
+  "dialog.remote-sync.error.forbidden-action-message.span.textContent": "You do not have permission to update <code>{{url}}</code>. Try signing in with a different account or request access.",
+  
+  "dialog.show-resource-review-changes.message.etag-mismatch.span.textContent": "Cannot force due to missing or changed ETag. Show review",
+  "dialog.show-resource-review-changes.message.local-remote-changed.span.textContent": "Local unpublished changes. Remote changed. Review changes.",
+  "dialog.show-resource-review-changes.message.remote-changed.span.textContent": "No local unpublished changes. Remote unchanged. Review changes.",
+
   "panel.notifications.toggle.button.title": "Show/Hide",
   "panel.notifications.toggle.button.aria-label": "Show/Hide Notifications",
 

@@ -2136,43 +2136,45 @@ DO = {
 
         var message = '';
         var actionMessage = '';
-        var actionTerm = 'update';
+        let errorKey = 'default';
+        let actionMessageKey = 'default-action-message';
+        // var actionTerm = 'update';
         var url = DO.C.DocumentURL;
 
         if (status != 304 && status != 404) {
           console.log(e)
           switch (status) {
             default:
-              message = `Error (${status}).`;
-              actionMessage = `Error (${status}).`;
+              message = `<code>${status}, ${e.message}</code>`;
               break;
 
             case 401:
               if (DO.C.User.IRI) {
-                message = `You do not have permission to ${actionTerm} <code>${url}</code>.`;
-                //TODO: signoutShowSignIn()
-                actionMessage = `You do not have permission to ${actionTerm} <code>${url}</code>. Try signing in with a different account.`;
+                errorKey = 'unauthorized';
+                actionMessageKey = 'unauthorized-action-message';
               }
               else {
-                message = `You are not signed in.`;
-                actionMessage = `You are not signed in. ${DO.C.Button.SignIn} and try again.`;
+                errorKey = 'unauthenticated';
+                actionMessageKey = 'unauthenticated-action-message';
               }
 
               return;
 
             case 403:
               if (DO.C.User.IRI) {
-                message = `You do not have permission to ${actionTerm} <code>${url}</code>.`;
-                //TODO: signoutShowSignIn() requestAccess()
-                actionMessage = `You do not have permission to ${actionTerm} <code>${url}</code>. Try signing in with a different account or request access.`;
+                errorKey = 'forbidden';
+                actionMessageKey = 'forbidden-action-message';
               }
               else {
-                message = `You are not signed in.`;
-                actionMessage = `You are not signed in. ${DO.C.Button.SignIn} and try again.`;
+                errorKey = 'unauthenticated';
+                actionMessageKey = 'unauthenticated-action-message';
               }
 
               return;
           }
+
+          message = message + `<span data-i18n="dialog.remote-sync.error.${errorKey}.span">${i18n.t(`dialog.remote-sync.error.${errorKey}.span.textContent`),{url,button:DO.C.Button.SignIn}}</span>`;
+          
 
           let messageObject = {
             'content': actionMessage,
@@ -2209,7 +2211,8 @@ DO = {
 
       if (options.forceLocal || options.forceRemote) {
         if (etagWasUsed && !etagsMatch && !options.forceRemote && status !== 304) {
-          reviewOptions['message'] = `Cannot force due to missing or changed ETag. Show review.`;
+          // reviewOptions['message'] = `Cannot force due to missing or changed ETag. Show review.`;
+          reviewOptions['message'] = `<span data-i18n="dialog.show-resource-review-changes.message.etag-mismatch.span">${i18n.t('dialog.show-resource-review-changes.message.etag-mismatch.span.textContent')}</span>`;
           DO.U.showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
           return;
         }
@@ -2272,7 +2275,7 @@ DO = {
         const localContentNode = tmplLocal.body;
 
         if (latestLocalDocumentItemObjectPublished.digestSRI !== remoteHash && status !== 304) {
-          reviewOptions['message'] = `Remote content has changed since your last edit and you have local unpublished changes.`;
+          reviewOptions['message'] = `<span data-i18n="dialog.show-resource-review-changes.message.conflict.span">${i18n.t('dialog.show-resource-review-changes.message.conflict.span.textContent')}</span>`;
           DO.U.showResourceReviewChanges(localContent, remoteContent, DO.C.Resource[DO.C.DocumentURL].response, reviewOptions);
           return;
         }
@@ -2313,7 +2316,7 @@ DO = {
               };
             }
             else {
-              reviewOptions['message'] = `Local unpublished changes. Remote changed. Review changes.`;
+              reviewOptions['message'] = `<span data-i18n="dialog.show-resource-review-changes.message.local-remote-changed.span">${i18n.t('dialog.show-resource-review-changes.message.local-remote-changed.span.textContent')}</span>`;
               console.log(reviewOptions['message'])
               // console.log(localContent, remoteContent)
               DO.U.showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
@@ -2329,7 +2332,7 @@ DO = {
             updateResourceInfos(DO.C.DocumentURL, null, response);
           }
           else {
-            reviewOptions['message'] = `No local unpublished changes. Remote unchanged. Review changes.`;
+            reviewOptions['message'] = `<span data-i18n="dialog.show-resource-review-changes.message.remote-changed.span">${i18n.t('dialog.show-resource-review-changes.message.remote-changed.span.textContent')}</span>`;
             DO.U.syncLocalRemoteResource();
           }
 
