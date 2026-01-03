@@ -31,6 +31,7 @@ import { getMultipleResources } from './fetcher.js'
 import { domSanitize, sanitizeObject } from './utils/sanitization.js'
 import { normalizeForDiff } from './utils/normalization.js'
 import { i18n, i18nextInit } from './i18n.js'
+import { htmlEncode } from './utils/html.js'
 
 const ns = Config.ns;
 let DO;
@@ -5127,19 +5128,17 @@ console.log(reason);
             .then(response => {
               DO.Editor.toggleEditor('author', { template: 'new' });
 
-              var message = '';
+              var message = `<span data-i18n="dialog.delete.success.default.p">${i18n.t('dialog.delete.success.default.p.textContent', {url}) }</span>`;
               var actionMessage = '';
 
               switch(response.status) {
                 case 200: case 204: default:
-                  message = `Deleted <code>${url}</code>.`;
-                  actionMessage = `Deleted <code>${url}</code>.`;
-
+                  actionMessage = message;
                   break;
 
                 case 202:
-                  message = `Deleting <code>${url}</code> in progress.`;
-                  actionMessage = `Deleting <code>${url}</code> in progress.`;
+                  message = `<span data-i18n="dialog.delete.success.in-progress.p">${i18n.t('dialog.delete.success.default.p.textContent', {url}) }</span>`;
+                  actionMessage =  `<span data-i18n="dialog.delete.success.in-progress.p">${i18n.t('dialog.delete.success.default.p.textContent', {url}) }</span>`;
 
                   break;
               }
@@ -5163,45 +5162,48 @@ console.log(reason);
 
               var message = '';
               var actionMessage = '';
-              let actionTerm = 'delete';
+              // let actionTerm = 'delete';
+              var errorKey = 'default';
+              var actionMessageKey = 'default-action-message';
 
               if (error.status) {
                 switch(error.status) {
                   case 401:
                     if (DO.C.User.IRI) {
-                      message = `You do not have permission to ${actionTerm} <code>${url}</code>.`;
-                      //TODO: signoutShowSignIn()
-                      actionMessage = `You do not have permission to ${actionTerm} <code>${url}</code>. Try signing in with a different account.`;
+                      errorKey = 'unauthenticated';
                     }
                     else {
-                      message = `You are not signed in.`;
-                      actionMessage = `You are not signed in. ${DO.C.Button.SignIn} and try again.`;
+                      errorKey = 'unauthenticated';
+                      actionMessageKey = 'unauthenticated-action-message';
                     }
 
                     break;
 
                   case 403: default:
                     if (DO.C.User.IRI) {
-                      message = `You do not have permission to ${actionTerm} <code>${url}</code>.`;
-                      //TODO: signoutShowSignIn() requestAccess()
-                      actionMessage = `You do not have permission to ${actionTerm} <code>${url}</code>. Try signing in with a different account or request access.`;
+                      var errorKey = 'default';
+                      var actionMessageKey = 'default-action-message';
+
                     }
                     else {
-                      message += `You are not signed in.`;
-                      actionMessage = `You are not signed in. ${DO.C.Button.SignIn} and try again.`;
+                      errorKey = 'unauthenticated';
+                      actionMessageKey = 'unauthenticated-action-message';
                     }
 
                     break;
 
                   case 409:
                     //XXX: If/when there is more (structured) detail from the server, it can be processed and used here.
-
-                    message = `It was not possible to ${actionTerm} <code>${url}</code>.`;
-                    actionMessage = `It was not possible to ${actionTerm} <code>${url}</code> because something changed in the meantime. Please reload the document and try again later.`;
+                    errorKey = "conflict";
+                    actionMessageKey = "conflict-action-message";
 
                     break;
                 }
               }
+
+              message = `<span data-i18n="dialog.delete.error.${errorKey}.p">${i18n.t(`dialog.delete.error.${errorKey}.p.textContent`, {url})}</span>`
+              //TODO: signoutShowSignIn()
+              actionMessage = `<span data-i18n="dialog.delete.error.${actionMessageKey}.p">${i18n.t(`dialog.delete.error.${actionMessageKey}.p.textContent`, {url, button: DO.C.Button.SignIn})}</span>`;
 
               const messageObject = {
                 'content': actionMessage,
