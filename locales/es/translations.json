@@ -440,6 +440,18 @@
   "dialog.document-action-message.clipboard-success.span.textContent": "Copiado al portapapeles.",
   "dialog.document-action-message.clipboard-fail.span.textContent": "No se pudo copiar el texto al portapapeles.",
 
+  "dialog.remote-sync.error.default.span.textContent": "No se pudieron sincronizar los cambios con el almacenamiento remoto:",
+  "dialog.remote-sync.error.unauthenticated.span.textContent": "No ha iniciado sesión.",
+  "dialog.remote-sync.error.unauthenticated-action-message.span.textContent": "No ha iniciado sesión. {{button}} y vuelva a intentarlo.",
+  "dialog.remote-sync.error.unauthorized.p.textContent": "No tiene permiso para actualizar <code>{{url}}</code>.",
+  "dialog.remote-sync.error.unauthorized-action-message.span.textContent": "No tiene permiso para actualizar <code>{{url}}</code>. Intente iniciar sesión con otra cuenta.",
+  "dialog.remote-sync.error.forbidden.span.textContent": "No tiene permiso para actualizar <code>{{url}}</code>.",
+  "dialog.remote-sync.error.forbidden-action-message.span.textContent": "No tiene permiso para actualizar <code>{{url}}</code>. Intente iniciar sesión con otra cuenta o solicite acceso.",
+
+  "dialog.show-resource-review-changes.message.etag-mismatch.span.textContent": "No se puede forzar debido a un ETag faltante o cambiado. Mostrar revisión",
+  "dialog.show-resource-review-changes.message.local-remote-changed.span.textContent": "Existen cambios locales no publicados. El remoto ha cambiado. Revise los cambios.",
+  "dialog.show-resource-review-changes.message.remote-changed.span.textContent": "No hay cambios locales no publicados. El remoto no ha cambiado. Revise los cambios.",
+
   "panel.notifications.toggle.button.title": "Mostrar/Ocultar",
   "panel.notifications.toggle.button.aria-label": "Mostrar/Ocultar Notificaciones",
 
