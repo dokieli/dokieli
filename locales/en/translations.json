@@ -295,7 +295,7 @@
   "dialog.share.h2.textContent": "Share",
   "dialog.share-resource-share-url.h3.textContent": "Share URL",
   "dialog.share-resource-clipboard.label.textContent": "Copy URL to clipboard",
-  "dialog.share-resource-linked-research-h3":"Share with research community",
+  "dialog.share-resource-linked-research.h3.textContent":"Share with research community",
   "dialog.share-resource-agents.h3.textContent": "Share with contacts",
   "dialog.share-resource-note.label.textContent": "Note",
   "dialog.share-resource-note.textarea.placeholder": "Check this out!",

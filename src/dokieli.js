@@ -5507,7 +5507,7 @@ console.log(reason);
       if (DO.C.User.IRI && DO.C.OriginalResourceInfo['rdftype'] && DO.C.OriginalResourceInfo.rdftype.includes(ns.schema.ScholarlyArticle.value) || DO.C.OriginalResourceInfo.rdftype.includes(ns.schema.Thesis.value)) {
         shareResourceLinkedResearch = `
           <div id="share-resource-external">
-            <h3 data-i18n="dialog.share-resource-linked-research-h3">${i18n.t('dialog.share-resource-linked-research-h3.textContent')}</h3>
+            <h3 data-i18n="dialog.share-resource-linked-research.h3">${i18n.t('dialog.share-resource-linked-research.h3.textContent')}</h3>
             <input id="share-resource-linked-research" type="checkbox" value="https://linkedresearch.org/cloud" />
             <label for="share-resource-linked-research"><a href="https://linkedresearch.org/cloud">Linked Open Research Cloud</a></label>
           </div>`;
