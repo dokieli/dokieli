@@ -88,7 +88,6 @@ export class AuthorToolbar extends ToolbarView {
   getFormPlaceholders() {
     return {
       note: i18n.t('editor.toolbar.note.form.textarea.placeholder'),
-      requirement: i18n.t('editor.toolbar.requirement.form.textarea.placeholder'),
       citation: i18n.t('editor.toolbar.citation.form.textarea.placeholder'),
     }
   }
@@ -136,7 +135,7 @@ export class AuthorToolbar extends ToolbarView {
           <label data-i18n="editor.toolbar.img.form.img-file.label" for="img-file">${i18n.t('editor.toolbar.img.form.img-file.label.textContent')}</label> <input class="editor-form-input" id="img-file" name="img-file" type="file" />
           <label for="img-src">URL</label> <input class="editor-form-input" id="img-src" name="img-src" type="url" value="" />
           <label data-i18n="editor.toolbar.img.form.img-alt.label" for="img-alt">${i18n.t('editor.toolbar.img.form.img-alt.label.textContent')}</label> <input class="editor-form-input" data-i18n="editor.toolbar.img.form.img-alt.input" id="img-alt" name="img-alt" placeholder="${i18n.t('editor.toolbar.img.form.img-alt.input.placeholder')}" type="text" value="" />
-          <label data-i18n="editor.toolbar.img.form.img-figcaption.label" for="img-figcaption">${i18n.t('editor.toolbar.img.form.img-figcaption.label')}</label> <input class="editor-form-input" data-i18n="editor.toolbar.img.form.img-figcaption.input" id="img-figcaption" name="img-figcaption" placeholder="${i18n.t('editor.toolbar.img.form.img-alt.label.textContent')}" type="text" value="" />
+          <label data-i18n="editor.toolbar.img.form.img-figcaption" for="img-figcaption">${i18n.t('editor.toolbar.img.form.img-figcaption.label.textContent')}</label> <input class="editor-form-input" data-i18n="editor.toolbar.img.form.img-figcaption.input" id="img-figcaption" name="img-figcaption" placeholder="${i18n.t('editor.toolbar.img.form.img-alt.label.textContent')}" type="text" value="" />
           <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
           <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
         </fieldset>
@@ -150,11 +149,11 @@ export class AuthorToolbar extends ToolbarView {
           <label data-i18n="editor.toolbar.citation.form.specref-search.label" for="citation-specref-search">${i18n.t('editor.toolbar.citation.form.specref-search.label.textContent')} <a href="https://www.specref.org/" rel="noopener" target="_blank">specref.org</a></label> <input class="editor-form-input" data-i18n="editor.toolbar.citation.form.specref-search.input" id="citation-specref-search" name="citation-specref-search" placeholder="${i18n.t('editor.toolbar.citation.form.specref-search.input.placeholder')}" type="text" value="" />
           <input data-i18n="editor.toolbar.form.search.button" id="citation-specref-search-submit" name="citation-specref-search-submit" type="submit" value="${i18n.t('editor.toolbar.form.search.button.value')}" />
           <span>
-          <input id="ref-footnote" name="citation-ref-type" type="radio" value="ref-footnote" /> <label data-i18n="editor.toolbar.citation.ref-footnote.form.label" for="ref-footnote">${i18n.t('editor.toolbar.citation.ref-footnote.form.label.textContent')}</label>
-          <input id="ref-reference" name="citation-ref-type" type="radio" value="ref-reference" /> <label data-i18n="editor.toolbar.citation.ref-reference.form.label" for="ref-reference">${i18n.t('editor.toolbar.citation.ref-reference.form.label.textContent')}</label>
+          <input id="ref-footnote" name="citation-ref-type" type="radio" value="ref-footnote" /> <label data-i18n="editor.toolbar.citation.form.ref-footnote.form.label" for="ref-footnote">${i18n.t('editor.toolbar.citation.form.ref-footnote.label.textContent')}</label>
+          <input id="ref-reference" name="citation-ref-type" type="radio" value="ref-reference" /> <label data-i18n="editor.toolbar.citation.form.ref-reference.label" for="ref-reference">${i18n.t('editor.toolbar.citation.form.ref-reference.label.textContent')}</label>
           </span>
           <label data-i18n="editor.toolbar.citation.form.citation-relation.label" for="citation-relation">${i18n.t('editor.toolbar.citation.form.citation-relation.label.textContent')}</label>
-          <select class="editor-form-select" id="citation-relation" name="citation-relation">${getCitationOptionsHTML()}</select>
+          <select class="editor-form-select" id="citation-relation" name="citation-relation">${getCitationOptionsHTML({ 'selected': '' })}</select>
           <label for="citation-url">URL</label>
           <input class="editor-form-input" data-i18n="editor.toolbar.form.url.input" id="citation-url" name="citation-url" pattern="https?://.+" placeholder="${i18n.t('editor.toolbar.form.url.input.placeholder')}" type="url" value="" />
           <label data-i18n="editor.toolbar.note.form.label" for="citation-content">${i18n.t('editor.toolbar.note.form.label.textContent')}</label>
@@ -171,12 +170,12 @@ export class AuthorToolbar extends ToolbarView {
         <fieldset>
           <legend data-i18n="editor.toolbar.requirement.form.legend">${options.legend}</legend>
           <dl id="requirement-preview">
-            <dt>Preview</dt>
+            <dt data-i18n="editor.toolbar.requirement.form.preview.dt">${i18n.t('editor.toolbar.requirement.form.preview.dt.textContent')}</dt>
             <dd><samp id="requirement-preview-samp"></samp></dd>
           </dl>
-          <label for="requirement-subject">Requirement Subject</label>
+          <label data-i18n="editor.toolbar.requirement.form.subject.dt" for="requirement-subject">${i18n.t('editor.toolbar.requirement.form.subject.dt.textContent')}</label>
           <select class="editor-form-select" id="requirement-subject" name="requirement-subject">${getRequirementSubjectOptionsHTML(options)}</select>
-          <label for="requirement-level">Requirement Level</label>
+          <label data-i18n="editor.toolbar.requirement.form.level.dt" for="requirement-level">${i18n.t('editor.toolbar.requirement.form.level.dt.textContent')}</label>
           <select class="editor-form-select" id="requirement-level" name="requirement-level">${getRequirementLevelOptionsHTML(options)}</select>
           <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
           <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>

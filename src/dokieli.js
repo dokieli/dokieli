@@ -2768,7 +2768,7 @@ DO = {
         e.preventDefault();
         e.stopPropagation();
 
-        i18n.changeLanguage(e.target.value, (err, t) => {
+        i18n.changeLanguage(e.target.value, (err) => {
           if (err) return console.error('Error loading language', err);
 
           Config.User.UI['Language'] = e.target.value;
@@ -2778,7 +2778,7 @@ DO = {
             el.setAttribute('xml:lang', e.target.value);
           })
 
-          document.querySelectorAll('.editor-form select[name$="-language"]').forEach(el => {
+          document.querySelectorAll('.do select[name$="-language"]').forEach(el => {
             el.value = e.target.value;
           })
 
@@ -5490,7 +5490,7 @@ console.log(reason);
           .catch(error => {
             // Catch-all error, actually notify the user
             var responseMessage = replyToResource.querySelector('.response-message');
-            responseMessage.setHTMLUnsafe(domSanitize(responseMessage.getHTML() + `<p class="error"><span data-i18n="dialog.reply-to-resource.error.save-error.p.span">${i18n.t('dialog.reply-to-resource.error.save-error.p.span.textContent')} </span> ${error.message}</p>`));
+            responseMessage.setHTMLUnsafe(domSanitize(responseMessage.getHTML() + `<p class="error"><span data-i18n="dialog.reply-to-resource.error.save-error.span">${i18n.t('dialog.reply-to-resource.error.save-error.span.textContent')} </span> ${error.message}</p>`));
           })
       }
     },
@@ -5843,7 +5843,7 @@ console.log(reason);
 
       const documentURL = currentLocation();
 
-      const selectNode = `<select aria-label="${i18n.t('dialog.select-access-mode.select.aria-label')}" data-i18n="dialog.select-access-mode.select" id="${id}">${getAccessModeOptionsHTML({'context': options.accessContext, 'selected': options.selectedAccessMode })}</select>`;
+      const selectNode = `<select aria-label="${i18n.t('dialog.share-resource.select-access-mode.select.aria-label')}" data-i18n="dialog.share-resource.select-access-mode.select" id="${id}">${getAccessModeOptionsHTML({'context': options.accessContext, 'selected': options.selectedAccessMode })}</select>`;
 
       node.insertAdjacentHTML('beforeend', selectNode);
 
