@@ -2782,7 +2782,7 @@ DO = {
             el.value = e.target.value;
           })
 
-          document.querySelectorAll('[data-i18n]').forEach(el => {
+          document.querySelectorAll('[data-i18n]:not(.ProseMirror [data-i18n]').forEach(el => {
             const baseKey = el.dataset.i18n;
 
             //TODO: Revisit updating text
