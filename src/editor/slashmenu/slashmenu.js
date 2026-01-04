@@ -139,11 +139,11 @@ export class SlashMenu {
   createLanguageWidgetHTML() {
     var html = `
       <fieldset>
-        <legend>Add a language</legend>
-        <label data-i18n="language.label" for="set-language">${i18n.t('language.label.textContent')}</label> <select class="editor-form-select" id="set-language" name="language" required="">${getLanguageOptionsHTML({ 'selected': '' })}</select>
+        <legend data-i18n="editor.toolbar.language.form.legend">${i18n.t('editor.toolbar.language.form.legend.textContent')}</legend>
+        <label data-i18n="language.label" for="set-language">${i18n.t('language.label.textContent')}</label> <select class="editor-form-select" id="set-language" name="language" required="">${getLanguageOptionsHTML()}</select>
         <div>
-          <button class="editor-form-submit" title="Save" type="submit">Save</button>
-          <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
+          <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
+          <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
         </div>
       </fieldset>
     `;
@@ -154,11 +154,11 @@ export class SlashMenu {
   createLicenseWidgetHTML() {
     var html = `
       <fieldset>
-        <legend>Add a license</legend>
-        <label for="set-license">License</label> <select class="editor-form-select" id="set-language" name="license" required="">${getLicenseOptionsHTML({ 'selected': '' })}</select>
+        <legend data-i18n="editor.toolbar.license.form.legend">${i18n.t('editor.toolbar.license.form.legend.textContent')}</legend>
+        <label data-i18n="license.label" for="set-license">${i18n.t('license.label.textContent')}</label> <select class="editor-form-select" id="set-license" name="license" required="">${getLicenseOptionsHTML({ 'selected': '' })}</select>
         <div>
-          <button class="editor-form-submit" title="Save" type="submit">Save</button>
-          <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
+          <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
+          <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
         </div>
       </fieldset>
     `;
@@ -169,11 +169,11 @@ export class SlashMenu {
   createInboxWidgetHTML() {
     var html = `
       <fieldset>
-        <legend>Add an inbox</legend>
-        <label for="set-inbox">Inbox</label> <input class="editor-form-input" id="set-inbox" name="inbox" placeholder="https://example.net/inbox/" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" required="" type="url" value="" />
+        <legend data-i18n="editor.toolbar.inbox.form.legend">${i18n.t('editor.toolbar.inbox.form.legend.textContent')}</legend>
+        <label data-i18n="editor.toolbar.inbox.form.set-inbox.label" for="set-inbox">${i18n.t('editor.toolbar.inbox.form.set-inbox.label.textContent')}</label> <input class="editor-form-input" data-i18n="editor.toolbar.form.url.input" id="set-inbox" name="inbox" placeholder="https://example.net/inbox/" pattern="https?://.+" placeholder="${i18n.t('editor.toolbar.form.url.input.placeholder')}" required="" type="url" value="" />
         <div>
-          <button class="editor-form-submit" title="Save" type="submit">Save</button>
-          <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
+          <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
+          <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
         </div>
       </fieldset>
     `;
@@ -184,11 +184,11 @@ export class SlashMenu {
   createInReplyToWidgetHTML() {
     var html = `
       <fieldset>
-        <legend>Add an in reply to URL</legend>
-        <label for="set-in-reply-to">In reply to</label> <input class="editor-form-input" id="set-in-reply-to" name="in-reply-to" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" required="" type="url" value="" />
+        <legend data-i18n="editor.toolbar.in-reply-to.form.legend">${i18n.t('editor.toolbar.in-reply-to.form.legend.textContent')}</legend>
+         <label data-i18n="editor.toolbar.in-reply-to.label" for="set-in-reply-to">${i18n.t('editor.toolbar.in-reply-to.form.set-in-reply-to.label.textContent')}</label> <input class="editor-form-input" data-i18n="editor.toolbar.form.url.input" id="set-in-reply-to" name="in-reply-to" pattern="https?://.+" placeholder="${i18n.t('editor.toolbar.form.url.input.placeholder')}" required="" type="url" value="" />
         <div>
-          <button class="editor-form-submit" title="Save" type="submit">Save</button>
-          <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
+          <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
+          <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
         </div>
       </fieldset>
     `;
@@ -199,11 +199,11 @@ export class SlashMenu {
   createPublicationStatusWidgetHTML() {
     var html = `
       <fieldset>
-        <legend>Add a publication status</legend>
-        <label for="set-publication-status">Publication status</label> <select class="editor-form-select" id="set-publication-status" name="publication-status" required="">${getPublicationStatusOptionsHTML({ 'selected': '' })}</select>
+        <legend data-i18n="editor.toolbar.publication-status.form.legend">${i18n.t('editor.toolbar.publication-status.form.legend.textContent')}</legend>
+        <label data-i18n="editor.toolbar.publication-status.form.set-publication-status.label" for="set-publication-status">${i18n.t('editor.toolbar.publication-status.form.set-publication-status.label.textContent')}</label> <select class="editor-form-select" id="set-publication-status" name="publication-status" required="">${getPublicationStatusOptionsHTML({ 'selected': '' })}</select>
         <div>
-          <button class="editor-form-submit" title="Save" type="submit">Save</button>
-          <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
+          <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
+          <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
         </div>
       </fieldset>
     `;
@@ -214,11 +214,11 @@ export class SlashMenu {
   createResourceTypeWidgetHTML() {
     var html = `
       <fieldset>
-        <legend>Add a type</legend>
-        <label for="set-resource-type">Resource type</label> <select class="editor-form-select" id="set-resource-type" name="resource-type" required="">${getResourceTypeOptionsHTML({ 'selected': '' })}</select>
+        <legend data-i18n="editor.toolbar.resource-type.form.legend">${i18n.t('editor.toolbar.resource-type.form.legend.textContent')}</legend>
+        <label data-i18n="editor.toolbar.resource-type.form.set-resource-type.label" for="set-resource-type">${i18n.t('editor.toolbar.resource-type.form.set-resource-type.label.textContent')}</label> <select class="editor-form-select" id="set-resource-type" name="resource-type" required="">${getResourceTypeOptionsHTML({ 'selected': '' })}</select>
         <div>
-          <button class="editor-form-submit" title="Save" type="submit">Save</button>
-          <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
+          <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
+          <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
         </div>
       </fieldset>
     `;
@@ -229,11 +229,11 @@ export class SlashMenu {
   createTestSuiteWidgetHTML() {
     var html = `
       <fieldset>
-        <legend>Add a test suite</legend>
-        <label for="set-test-suite">Test suite</label> <input class="editor-form-input" id="set-test-suite" name="test-suite" placeholder="https://example.net/test-suite" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" required="" type="url" value="" />
+        <legend data-i18n="editor.toolbar.test-suite.form.legend">${i18n.t('editor.toolbar.test-suite.form.legend.textContent')}</legend>
+        <label data-i18n="editor.toolbar.test-suite.form.set-test-suite.label" for="set-test-suite">${i18n.t('editor.toolbar.test-suite.form.set-test-suite.label.textContent')}</label> <input class="editor-form-input" data-i18n="editor.toolbar.form.url.input" id="set-test-suite" name="test-suite" placeholder="https://example.net/test-suite" pattern="https?://.+" placeholder="${i18n.t('editor.toolbar.form.url.input.placeholder')}" required="" type="url" value="" />
         <div>
-          <button class="editor-form-submit" title="Save" type="submit">Save</button>
-          <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
+          <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
+          <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
         </div>
       </fieldset>
     `;

@@ -540,7 +540,7 @@ font-weight:bold !important;
 padding:0;
 }
 .do label {
-font-weight:normal !important;
+/* font-weight:normal !important; */
 padding:0;
 }
 
@@ -606,6 +606,7 @@ word-wrap:break-word;
 }
 aside.do.on label {
   color: #000;
+  font-weight:bold !important;
 }
 aside.do.on label[for]:has(~ input[disabled]),
 aside.do.on input[disabled] ~ label[for] {
@@ -680,6 +681,9 @@ font-family:inherit;
 }
 aside.do textarea {
 width:96% !important;
+}
+aside.do select {
+margin:0.25em 0;
 }
 
 
@@ -1868,7 +1872,7 @@ outline-offset: 5px;
   position: relative;
   cursor: pointer;
   text-align: center;
-  font-weight: bold;
+  /* font-weight: bold; */
   color: #fff;
   user-select: none;
 }
@@ -2003,6 +2007,7 @@ aside.do.on [id$="-listing"] ul label {
 display:block;
 padding:0.4em;
 cursor:pointer;
+font-weight:normal !important;
 }
 aside.do.on [id$="-listing"] ul input[type="checkbox"] + label {
 display:inline-block;

@@ -1038,6 +1038,8 @@ function createDateHTML(options) {
 
   var title = ('title' in options) ? options.title : 'Created';
 
+  const titleKey = title.toLowerCase().replace(/\s+/g, '-');
+
   var id = ('id' in options && options.id.length > 0) ? ' id="' + options.id + '"' : '';
 
   var c = ('class' in options && options.class.length > 0) ? ' class="' + options.class + '"' : '';
@@ -1049,11 +1051,11 @@ function createDateHTML(options) {
     ? '<time content="' + datetime + '" datatype="xsd:dateTime" datetime="' + datetime + '" property="' + options.property + '">' + datetimeLabel + '</time>'
     : '<time datetime="' + datetime + '">' + datetimeLabel + '</time>';
 
-  var date = '        <dl' + c + id + '>\n\
-      <dt>' + title + '</dt>\n\
-      <dd>' + time + '</dd>\n\
-    </dl>\n\
-';
+  var date = `        <dl${c}${id}>
+      <dt data-i18n="datetime.${titleKey}.dt">${i18n.t(`datetime.${titleKey}.dt.textContent`)}</dt>
+      <dd>${time}</dd>
+    </dl>
+`;
 
   return date;
 }
@@ -3032,14 +3034,17 @@ function createLicenseRightsHTML(iri, options = {}) {
   var title = '';
   var name = iri;
 
-  html = '<dl class="' + options.label.toLowerCase() + '"><dt>' + options.label + '</dt><dd>';
-  if ('name' in options) {
-    name = options.name;
-    title = ('description' in options) ? ' title="' + options.description + '"' : '';
-  }
-  else if (Config.License[iri]) {
+  const labelKey = options.label.toLowerCase().replace(/\s+/g, '-');
+
+  html = `<dl class="${labelKey}"><dt data-i18n="license.${labelKey}.dt">${i18n.t(`license.${labelKey}.dt.textContent`)}</dt><dd>`;
+  // if ('name' in options) {
+  //   name = options.name;
+  //   title = ('description' in options) ? ` title="${i18n.t(`license.${labelKey}.dt.title`)}"` : '';
+  // }
+  // else
+  if (Config.License[iri]) {
     name = Config.License[iri].name;
-    title = ' title="' + Config.License[iri].description + '"';
+    title = ` title="${i18n.t('licenses.' + Config.License[iri].code + '.option.title')}""`;
   }
 
   html += '<a href="' + iri + '" rel="' + options.rel + '"' + title + '>' + name + '</a>';
@@ -3157,7 +3162,7 @@ function createPublicationStatusHTML(url, options = {}) {
   if (!url) return '';
 
   options['class'] = options.class || 'publication-status';
-  var textContent = Config.PublicationStatus[url].name || url;
+  var textContent = Config.PublicationStatus[url] || url;
   options['title'] = 'Status';
 
   return createDefinitionListHTML(
@@ -3179,7 +3184,7 @@ function createResourceTypeHTML(url, options = {}) {
   if (!url) return '';
 
   options['class'] = options.class || 'resource-type';
-  var textContent = Config.ResourceType[url].name || url;
+  var textContent = Config.ResourceType[url] || url;
   options['title'] = 'Type';
 
   return createDefinitionListHTML([{ 'href': url, 'rel': 'rdf:type', textContent }], options);
@@ -3246,12 +3251,12 @@ function getAnnotationLocationHTML(action) {
 
 function getPublicationStatusOptionsHTML(options) {
   options = options || {};
-  var s = '', selectedIRI = '';
+  var s = [], selectedIRI = '';
 
   if ('selected' in options) {
     selectedIRI = options.selected;
     if (selectedIRI == '') {
-      s += '<option selected="selected" value="">Choose a publication status</option>';
+      s.push(`<option data-i18n="publication-status.choose.option" selected="selected" value="">${i18n.t('publication-status.choose.option.textContent')}</option>`);
     }
   }
   else {
@@ -3260,20 +3265,21 @@ function getPublicationStatusOptionsHTML(options) {
 
   Object.keys(Config.PublicationStatus).forEach(iri => {
     var selected = (iri == selectedIRI) ? ' selected="selected"' : '';
-    s += '<option value="' + iri + '" title="' + Config.PublicationStatus[iri].description + '"' + selected + '>' + Config.PublicationStatus[iri].name + '</option>';
+    const key = Config.PublicationStatus[iri].toLowerCase().replace(/\s+/g, '-');
+    s.push(`<option data-i18n="publication-status.${key}.option"${selected} title="${i18n.t(`publication-status.${key}.option.title`)}" value="${iri}">${i18n.t(`publication-status.${key}.option.textContent`)}</option>`);
   })
 
-  return s;
+  return s.join('');
 }
 
 function getResourceTypeOptionsHTML(options) {
   options = options || {};
-  var s = '', selectedType = '';
+  var s = [], selectedType = '';
 
   if ('selected' in options) {
     selectedType = options.selected;
     if (selectedType == '') {
-      s += '<option selected="selected" value="">Choose a resource type</option>';
+      s.push(`<option data-i18n="resource-type.choose.option" selected="selected" value="">${i18n.t('resource-type.choose.option.textContent')}</option>`);
     }
   }
   else {
@@ -3282,10 +3288,11 @@ function getResourceTypeOptionsHTML(options) {
 
   Object.keys(Config.ResourceType).forEach(iri => {
     var selected = (iri == selectedType) ? ' selected="selected"' : '';
-    s += '<option value="' + iri + '" title="' + Config.ResourceType[iri].description + '"' + selected + '>' + Config.ResourceType[iri].name + '</option>';
+    const key = Config.ResourceType[iri].toLowerCase().replace(/\s+/g, '-');
+    s.push(`<option data-i18n="${`resource-type.${key}.option`}"${selected} title="${i18n.t(`resource-type.${key}.option.title`)}" value="${iri}">${i18n.t(`resource-type.${key}.option.textContent`)}</option>`);
   });
 
-  return s;
+  return s.join('');
 }
 
 function getLanguageOptionsHTML(options) {
@@ -3333,22 +3340,30 @@ function getLicenseOptionsHTML(options) {
   Object.keys(Config.License).forEach(iri => {
     if (iri != 'NoLicense') {
       var selected = (iri == selectedIRI) ? ' selected="selected"' : '';
-      s.push(`<option data-i18n="licenses.${Config.License[iri].code}.option" value="${iri}"${selected} title="${i18n.t('licenses.' + Config.License[iri].code + '.option.title')}">${Config.License[iri].name}</option>`);
+      s.push(`<option data-i18n="license.${Config.License[iri].code}.option" value="${iri}"${selected} title="${i18n.t('license.' + Config.License[iri].code + '.option.title')}">${Config.License[iri].name}</option>`);
     }
   })
 
   return s.join('');
 }
 
-function getCitationOptionsHTML(type) {
-  type = type || 'cites';
+function getCitationOptionsHTML(options) {
+  options = options || {};
+  var s = [], selectedIRI = '';
 
-  var s = '';
+  if ('selected' in options) {
+    selectedIRI = options.selected;
+    if (selectedIRI == '') {
+      s.push(`<option data-i18n="citation.choose.option" selected="selected" value="">${i18n.t('citation.choose.option.textContent')}</option>`);
+    }
+  }
+
   Object.keys(Config.Citation).forEach(iri => {
-    s += '<option value="' + iri + '">' + Config.Citation[iri] + '</option>';
+    const key = Config.Citation[iri].toLowerCase().replace(/\s+/g, '-');
+    s.push(`<option data-i18n="${`citation.${key}.option`}" value="${iri}">${i18n.t(`citation.${key}.option.textContent`)}</option>`);
   })
 
-  return s;
+  return s.join('');
 }
 
 function getRequirementLevelOptionsHTML(type) {
