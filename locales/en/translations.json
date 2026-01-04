@@ -624,5 +624,13 @@
   "resource-type.thesis.option.textContent": "Thesis",
   "resource-type.thesis.option.title": "A thesis or dissertation document submitted in support of candidature for an academic degree or professional qualification.",
   "resource-type.trip.option.textContent": "Trip",
-  "resource-type.trip.option.title": "A trip or journey. An itinerary of visits to one or more places."
+  "resource-type.trip.option.title": "A trip or journey. An itinerary of visits to one or more places.",
+
+  "test-description-review-status.accepted.dd.textContent": "the item has gone through a first review, which shows it as valid for further processing",
+  "test-description-review-status.approved.dd.textContent": "the item has gone through the review process and was approved",
+  "test-description-review-status.assigned.dd.textContent": "a more specific review of the item has been assigned to someone",
+  "test-description-review-status.on-hold.dd.textContent": "the item had already gone through the review process, but the results of the review need to be re-assessed due to new input",
+  "test-description-review-status.rejected.dd.textContent": "the item has gone through the review process and was rejected",
+  "test-description-review-status.unreviewed.dd.textContent": "the item has been proposed, but hasn't been reviewed (e.g. for completeness) yet"
+
 }
