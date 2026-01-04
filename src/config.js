@@ -368,12 +368,12 @@ export default {
   },
 
   TestDescriptionReviewStatus: {
-    'http://www.w3.org/2006/03/test-description#accepted': "the item has gone through a first review, which shows it as valid for further processing",
-    'http://www.w3.org/2006/03/test-description#approved': "the item has gone through the review process and was approved",
-    'http://www.w3.org/2006/03/test-description#assigned': "a more specific review of the item has been assigned to someone",
-    'http://www.w3.org/2006/03/test-description#onhold': "the item had already gone through the review process, but the results of the review need to be re-assessed due to new input",
-    'http://www.w3.org/2006/03/test-description#rejected': "the item has gone through the review process and was rejected",
-    'http://www.w3.org/2006/03/test-description#unreviewed': "the item has been proposed, but hasn't been reviewed (e.g. for completeness) yet"
+    'http://www.w3.org/2006/03/test-description#accepted': "Accepted",
+    'http://www.w3.org/2006/03/test-description#approved': "Approved",
+    'http://www.w3.org/2006/03/test-description#assigned': "Assigned",
+    'http://www.w3.org/2006/03/test-description#onhold': "On hold",
+    'http://www.w3.org/2006/03/test-description#rejected': "Rejected",
+    'http://www.w3.org/2006/03/test-description#unreviewed': "Unreviewed"
   },
 
   Actor: {

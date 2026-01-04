@@ -624,5 +624,12 @@
   "resource-type.thesis.option.textContent": "Tesis",
   "resource-type.thesis.option.title": "Un documento de tesis o disertación presentado para optar a un título académico o calificación profesional.",
   "resource-type.trip.option.textContent": "Viaje",
-  "resource-type.trip.option.title": "Un viaje o recorrido. Un itinerario de visitas a uno o varios lugares."
+  "resource-type.trip.option.title": "Un viaje o recorrido. Un itinerario de visitas a uno o varios lugares.",
+
+  "test-description-review-status.accepted.dd.textContent": "El ítem ha pasado por una primera revisión, lo que indica que es válido para un procesamiento posterior",
+  "test-description-review-status.approved.dd.textContent": "El ítem ha pasado por el proceso de revisión y ha sido aprobado",
+  "test-description-review-status.assigned.dd.textContent": "Se ha asignado una revisión más específica del ítem a alguien",
+  "test-description-review-status.on-hold.dd.textContent": "El ítem ya había pasado por el proceso de revisión, pero los resultados deben ser reevaluados debido a nueva información",
+  "test-description-review-status.rejected.dd.textContent": "El ítem ha pasado por el proceso de revisión y fue rechazado",
+  "test-description-review-status.unreviewed.dd.textContent": "El ítem ha sido propuesto, pero aún no ha sido revisado (por ejemplo, para verificar su completitud)"
 }

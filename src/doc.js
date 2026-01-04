@@ -2977,8 +2977,9 @@ function getTestDescriptionReviewStatusHTML() {
   reviewStatusHTML.push('<dl id="test-description-review-statuses">');
 
   Object.keys(Config.TestDescriptionReviewStatus).forEach(i => {
+    const key = Config.TestDescriptionReviewStatus[i].toLowerCase().replace(/\s+/g, '-');
     reviewStatusHTML.push('<dt>' + getFragmentFromString(i) + '</dt>');
-    reviewStatusHTML.push('<dd>' + Config.TestDescriptionReviewStatus[i] + '</dd>');
+    reviewStatusHTML.push(`<dd data-i18n="test-description-review-status.${key}.dd">${i18n.t(`test-description-review-status.${key}.dd.textContent`)}</dd>`);
   })
 
   reviewStatusHTML.push('</dl>');
