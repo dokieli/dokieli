@@ -1,10 +1,19 @@
-/** dokieli
- *
- * Sarven Capadisli <info@csarven.ca> https://csarven.ca/#i
- * http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
- * https://dokie.li/
- * https://github.com/dokieli/dokieli
- */
+/*!
+Copyright 2012-2026 Sarven Capadisli <https://csarven.ca/>
+Copyright 2023-2026 Virginia Balseiro <https://virginiabalseiro.com/>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 
 import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource } from './fetcher.js'
 import { getDocument, getDocumentContentNode, showActionMessage, selectArticleNode, eventButtonNotificationsToggle, showRobustLinksDecoration, getResourceInfo,  removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getLanguageOptionsHTML, getLicenseOptionsHTML, getNodeWithoutClasses, setCopyToClipboard, addMessageToLog, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown, getReferenceLabel, createNoteDataHTML, hasNonWhitespaceText, eventButtonClose, eventButtonInfo, eventButtonSignIn, eventButtonSignOut, getDocumentNodeFromString, updateResourceInfos, accessModePossiblyAllowed, updateSupplementalInfo, processSupplementalInfoLinkHeaders } from './doc.js'
@@ -5962,7 +5971,7 @@ console.log(reason);
         }
       }
       else {
-        // eslint-disable-next-line no-undef
+         
         var updatedAuthorizations = structuredClone(authorizations);
         var authorizationsToDelete = [];
 
