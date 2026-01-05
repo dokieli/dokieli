@@ -8120,14 +8120,12 @@ console.log(reason);
           html = setDocumentRelation(html, [r], o);
         }
 
-        var baseURLSelectionChecked = saveAsDocument.querySelector('select[id="base-url"]')
+        var baseURLSelectionChecked = saveAsDocument.querySelector('select[id="base-url"]');
+        let baseURLType;
         if (baseURLSelectionChecked.length) {
-          var baseURLType = baseURLSelectionChecked.value
+          baseURLType = baseURLSelectionChecked.value
           var nodes = html.querySelectorAll('head link, [src], object[data]')
           var base = html.querySelector('head base[href]');
-          if (baseURLType == 'base-url-relative') {
-            DO.U.copyRelativeResources(storageIRI, nodes)
-          }
           var baseOptions = {'baseURLType': baseURLType};
           if (base) {
             baseOptions['iri'] = base.href;
@@ -8147,6 +8145,10 @@ console.log(reason);
         putResource(storageIRI, html, null, null, { 'progress': progress })
           .then(response => {
             progress.parentNode.removeChild(progress)
+
+            if (baseURLType == 'base-url-relative') {
+              DO.U.copyRelativeResources(storageIRI, nodes)
+            }
 
             let url = response.url || storageIRI
             url = domSanitize(url);
@@ -8174,17 +8176,17 @@ console.log(reason);
                   DO.U.hideDocumentMenu();
                 }
                 else {
-                  window.open(url + documentMode, '_blank');
+                  window.open(url, '_blank');
                 }
               }
               else {
-                window.open(url + documentMode, '_blank');
+                window.open(url, '_blank');
               }
             }, 3000)
           })
 
           .catch(error => {
-            console.log('Error saving document. Status: ' + error.status)
+            console.log('Error saving document: ' + error)
 
             progress.parentNode.removeChild(progress)
 
@@ -8193,8 +8195,7 @@ console.log(reason);
             var requestAccess = '';
             var linkHeaders;
             var inboxURL;
-            // TODO: error.response could be undefined, handle this case (error UI)
-            var link = error.response.headers.get('Link');
+            var link = error?.response?.headers?.get('Link');
             if (link) {
               linkHeaders = LinkHeader.parse(link);
             }
@@ -8228,7 +8229,7 @@ console.log(reason);
                 break
             }
 
-            message = i18n(`dialog.save-as-document.error.${errorKey}.p.textContent`);
+            message = i18n.t(`dialog.save-as-document.error.${errorKey}.p.textContent`);
 
             //TODO:i18n
             saveAsDocument.insertAdjacentHTML('beforeend', domSanitize(

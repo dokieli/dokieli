@@ -81,8 +81,9 @@ function copyResource (fromURL, toURL, options = {}) {
   return getResource(fromURL, headers, options)
     .then(response => {
       contentType = response.headers.get('Content-Type')
+      contentType = (contentType) ? contentType.split(';')[0].trim() : 'text/plain';
 
-      return (Config.MediaTypes.Binary.indexOf(contentType))
+      return (Config.MediaTypes.Binary.includes(contentType))
         ? response.arrayBuffer()
         : response.text()
     })
