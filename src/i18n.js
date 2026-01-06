@@ -18,9 +18,35 @@ limitations under the License.
 import i18next from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { domSanitize } from './utils/sanitization.js';
-//TODO: Load locales/*/*.json
-import en from '../locales/en/translations.json';
-import es from '../locales/es/translations.json';
+import Config from './config.js';
+
+const context = import.meta.webpackContext(
+  '../locales',
+  {
+    recursive: true,
+    regExp: /translations\.json$/,
+  }
+);
+
+const resources = {};
+
+for (const key of context.keys()) {
+  // key is ALWAYS like: "./en/translation.json"
+  const parts = key.split('/');
+
+  // ["." , "en", "translation.json"]
+  const lng = parts[1];
+  if (!lng) continue;
+
+
+  resources[lng] = {
+    translation: context(key),
+  };
+}
+
+Config['Translations'] = Object.keys(resources);
+
+// console.log(resources)
 
 const fallbackLng = {
   'de-CH': ['fr', 'it'], //French and Italian are also spoken in Switzerland
@@ -36,18 +62,7 @@ const options = {
   // fallbackNS: 'translations',
   // debug: true,
   fallbackLng,
-  resources: {
-    en: {
-      translation: {
-        ...en
-      }
-    },
-    es: {
-      translation: {
-        ...es
-      }
-    }
-  }
+  resources,
 }
 
 export function i18nextInit() {
