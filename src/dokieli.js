@@ -2899,7 +2899,7 @@ DO = {
       if (DO.C.GraphViewerAvailable) {
         s += `<li><button class="resource-visualise" data-i18n="menu.document-views.graph.button" title="${i18n.t('menu.document-views.graph.button.title')}">${i18n.t('menu.document-views.graph.button.textContent')}</button></li>`;
       }
-      s += `<li><button title="${i18n.t('menu.document-views.native.button.title')}">${i18n.t('menu.document-views.native.button.textContent')}</button></li>`;
+      s += `<li><button data-i18n="menu.document-views.native-style.button"  title="${i18n.t('menu.document-views.native-style.button.title')}">${i18n.t('menu.document-views.native-style.button.textContent')}</button></li>`;
 
       if (stylesheets.length) {
         for (var i = 0; i < stylesheets.length; i++) {
