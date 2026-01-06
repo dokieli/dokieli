@@ -2746,16 +2746,17 @@ DO = {
       Config.Translations.forEach(lang => {
         let selected = (lang == currentLanguage) ? ' selected="selected"' : '';
 
-        let label = Config.Languages[lang];
+        let sourceName = Config.Languages[lang].sourceName;
+        let name = Config.Languages[lang].name;
 
-        if (!label && lang.includes('-')) {
+        if (!sourceName && lang.includes('-')) {
           // Fallback to main tag
           let mainTag = lang.split('-')[0];
-          label = Config.Languages[mainTag];
+          sourceName = Config.Languages[mainTag].sourceName;
         }
 
-        if (lang !== 'dev' && label) {
-          options.push(`<option lang="${lang}"${selected} value="${lang}" xml:lang="${lang}">${label}</option>`);
+        if (lang !== 'dev' && sourceName) {
+          options.push(`<option data-i18n-name="${name}" dir="${Config.Languages[lang].dir}" lang="${lang}"${selected} value="${lang}" xml:lang="${lang}">${sourceName}</option>`);
         }
       })
 
@@ -2785,6 +2786,7 @@ DO = {
           document.querySelectorAll('.do[lang]').forEach(el => {
             el.setAttribute('lang', e.target.value);
             el.setAttribute('xml:lang', e.target.value);
+            el.setAttribute('dir', Config.Languages[e.target.value].dir);
           })
 
           document.querySelectorAll('.do select[name$="-language"]').forEach(el => {
