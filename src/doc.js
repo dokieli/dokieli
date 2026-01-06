@@ -1130,7 +1130,7 @@ function setEditSelections(options) {
       dl.removeAttribute('class');
       var dd = dLangS.closest('dd');
       dd.parentNode.removeChild(dd);
-      dd = '<dd><span content="' + languageValue + '" lang="" property="dcterms:language" xml:lang="">' + Config.Languages[languageValue] + '</span></dd>';
+      dd = '<dd><span content="' + languageValue + '" lang="" property="dcterms:language" xml:lang="">' + Config.Languages[languageValue].sourceName + '</span></dd>';
       dl.insertAdjacentHTML('beforeend', dd);
     }
   }
@@ -3135,7 +3135,7 @@ function createDefinitionListHTML(data, options = {}) {
 //   var id = (options.id) ? ` id="${options.id}"` : '';
 //   var property = options.language || 'dcterms:language';
 //   var label = options.label || 'Language';
-//   var name = Config.Languages[language] || language;
+//   var name = Config.Languages[language].sourceName || language;
 
 //   var html = `
 //     <dl class="${label.toLowerCase()}"${id}>
@@ -3152,7 +3152,7 @@ function createLanguageHTML(language, options = {}) {
 
   var property = options.property || 'dcterms:language';
   var content = language;
-  var textContent = Config.Languages[language] || language;
+  var textContent = Config.Languages[language].sourceName || language;
   options['title'] = options.label || 'Language';
 
   return createDefinitionListHTML([{ property, content, textContent, lang: '', xmlLang: '' }], options);
@@ -3332,7 +3332,7 @@ function getLanguageOptionsHTML(options) {
 
   Object.keys(Config.Languages).forEach(lang => {
     let selected = (lang == selectedLang) ? ' selected="selected"' : '';
-    s.push(`<option lang="${lang}"${selected} value="${lang}" xml:lang="${lang}">${Config.Languages[lang]}</option>`);
+    s.push(`<option dir="${Config.Languages[lang].dir}" lang="${lang}"${selected} value="${lang}" xml:lang="${lang}">${Config.Languages[lang].sourceName}</option>`);
   });
 
   return s.join('');
