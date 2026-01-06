@@ -23,6 +23,13 @@ See [additional
 resources](https://www.w3.org/about/positive-work-environment/#Education) for
 education and training to promote a positive work environment.
 
+## Licensing
+
+Contributions are made in a personal capacity. By contributing, you represent that you have the right to submit the work under:
+
+* Source code is licensed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
+* Unless otherwise noted, resources such as images and other media assets are licensed under the [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/).
+
 ## Development
 
 * General background in [dokieli documentation](https://dokie.li/docs).

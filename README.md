@@ -12,6 +12,11 @@ Welcome! Check out the:
 * [Security Policy](SECURITY.md)
 * [Roadmap](https://dokie.li/docs#roadmap)
 
+## License
+
+* Source code is licensed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
+* Unless otherwise noted, images and other media assets are licensed under the [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/).
+
 ## Use
 
 dokieli can be used as a:
@@ -61,11 +66,6 @@ npx serve
 ```
 
 For more details on our development process, including tests and code quality guidelines, see our [Contributing Guide](CONTRIBUTING.md)
-
-## License
-
-* Code: [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)
-* Content: [Creative Commons Attribution 4.0 Unported](https://creativecommons.org/licenses/by/4.0/)
 
 ## Documentation
 

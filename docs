@@ -41,7 +41,7 @@
           </dl>
           <dl id="document-license">
             <dt>License</dt>
-            <dd><a href="https://creativecommons.org/licenses/by/4.0/" rel="schema:license" title="Creative Commons Attribution 4.0 Unported">CC BY 4.0</a></dd>
+            <dd><a href="https://creativecommons.org/licenses/by/4.0/" rel="schema:license" title="Creative Commons Attribution 4.0 International">CC BY 4.0</a></dd>
           </dl>
           <dl id="document-language">
             <dt>Language</dt>
@@ -182,7 +182,7 @@
                 <div datatype="rdf:HTML" property="schema:description">
                   <p>Thank you for investing your time in contributing to the dokieli project! All kinds of contributions are welcome - code, ideas, feedback, and more.</p>
                   <p>The <a href="https://github.com/dokieli/dokieli/">dokieli repository</a> has the source, and there's a <a href="https://github.com/dokieli/dokieli/blob/main/CONTRIBUTING.md">contributing guide</a> to get started. Use dokieli. Test it. Report bugs or fix them. Improve docs. Write or translate articles and share them. Add to the examples. Join the chat for help or discussion. Share ideas or open issues for features you want to see. Every bit helps move the project forward.</p>
-                  <p id="illustrations-patrick-hochstenbach">Illustrations by <a href="https://patrickhochstenbach.net/">Patrick Hochstenbach</a>, <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 Unported</a>.</p>
+                  <p id="illustrations-patrick-hochstenbach">Illustrations by <a href="https://patrickhochstenbach.net/">Patrick Hochstenbach</a>, <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International</a>.</p>
                 </div>
               </section>
             </div>
