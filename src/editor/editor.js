@@ -109,7 +109,9 @@ export class Editor {
   }
 
   showEditorModeActionMessage(mode, options = {}) {
-    var message = `Activated <em>${mode}</em> mode.`;
+    const modeTranslation = i18n.t(`editor.mode.${mode}`)
+    var message = `<span data-i18n="editor.mode.span">${i18n.t('editor.mode.span.innerHTML', {mode: modeTranslation})}</span>`;
+
     message = {
       'content': message,
       'type': 'info'
