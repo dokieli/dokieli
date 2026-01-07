@@ -30,6 +30,20 @@ Contributions are made in a personal capacity. By contributing, you represent th
 * Source code is licensed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
 * Unless otherwise noted, resources such as images and other media assets are licensed under the [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/).
 
+## Quality Assurance
+
+dokieli follows a set of quality assurance principles to ensure code, translations, accessibility, and security meet expectations.
+
+**Code**: There is documentation for [tests](#tests) and [code quality](#code-quality). Code contributions are expected to be ultimately authored by humans, even if automated tools assist.
+
+**Internationalization**: Dokieli is committed to human-led, community-owned translations. Machine translation may be used temporarily to support development, but all translated content is ultimately expected to be reviewed, maintained by human contributors.
+
+**Accessibility**: dokieli has undergone an external accessibility review and uses automated accessibility tests (see [tests](#tests)) to help ensure the interface remains inclusive and usable.
+
+**Security**: Dokieli has a [Security Policy](SECURITY.md).
+
+**Standards**: Dokieli is committed to implementing recognised web standards and best practises.
+
 ## Development
 
 * General background in [dokieli documentation](https://dokie.li/docs).
