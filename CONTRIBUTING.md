@@ -36,7 +36,7 @@ dokieli follows a set of quality assurance principles to ensure code, translatio
 
 **Code**: There is documentation for [tests](#tests) and [code quality](#code-quality). Code contributions are expected to be ultimately authored by humans, even if automated tools assist.
 
-**Internationalization**: Dokieli is committed to human-led, community-owned translations. Machine translation may be used temporarily to support development, but all translated content is ultimately expected to be reviewed, maintained by human contributors.
+**Internationalization**: Dokieli is committed to human-led, community-owned translations. Automated translations may be used temporarily to support development, but all translated content is ultimately expected to be reviewed, maintained by human contributors. We plan to move soon to a community translation platform in 2026-Q1, which will eliminate the need for automated translations.
 
 **Accessibility**: dokieli has undergone an external accessibility review and uses automated accessibility tests (see [tests](#tests)) to help ensure the interface remains inclusive and usable.
 
