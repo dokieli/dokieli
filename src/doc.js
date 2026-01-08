@@ -919,7 +919,7 @@ function showActionMessage(node, message, options = {}) {
   if (!aside) {
     var buttonClose = getButtonHTML({ key: 'dialog.document-action-message.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
-    node.appendChild(fragmentFromString(`<aside aria-labelledby="document-action-message-label" class="do on" id="document-action-message" lang="${i18n.language()}" role="status" tabindex="0" xml:lang="${i18n.language()}"><h2 data-i18n="dialog.document-action-message.messages.h2" id="document-action-message-label">${i18n.t('dialog.document-action-message.messages.h2.textContent')}</h2>${buttonClose}<ul role="log"></ul></aside>`));
+    node.appendChild(fragmentFromString(`<aside aria-labelledby="document-action-message-label" class="do on" id="document-action-message" lang="${i18n.code()}" role="status" tabindex="0" xml:lang="${i18n.code()}"><h2 data-i18n="dialog.document-action-message.messages.h2" id="document-action-message-label">${i18n.t('dialog.document-action-message.messages.h2.textContent')}</h2>${buttonClose}<ul role="log"></ul></aside>`));
     aside = node.querySelector('#document-action-message');
   }
   aside.querySelector('ul[role="log"]').insertAdjacentHTML('afterbegin', messageItem);
@@ -1332,7 +1332,7 @@ function showTimeMap(node, url) {
         if (!node) {
           var buttonClose = getButtonHTML({ key: "dialog.memento-document.close.button", button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
-          document.body.appendChild(fragmentFromString(`<aside aria-labelledby="${elementId}-label" class="do on" id="${elementId}" lang="${i18n.language()}" xml:lang="${i18n.language()}"><h2 id="${elementId}-label">Memento</h2>${buttonClose}<dl><dt>TimeMap</dt><dd><a href="${url}">${url}</a></dd></dl></aside>`));
+          document.body.appendChild(fragmentFromString(`<aside aria-labelledby="${elementId}-label" class="do on" id="${elementId}" lang="${i18n.code()}" xml:lang="${i18n.code()}"><h2 id="${elementId}-label">Memento</h2>${buttonClose}<dl><dt>TimeMap</dt><dd><a href="${url}">${url}</a></dd></dl></aside>`));
           node = document.getElementById(elementId);
         }
       }

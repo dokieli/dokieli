@@ -72,9 +72,9 @@ export class ToolbarView {
     this.dom = document.createElement("div");
     this.dom.id = 'document-editor';
     this.dom.className = 'do editor-toolbar editor-form-view-transition';
-    this.dom.setAttribute('lang', i18n.language());
-    this.dom.setAttribute('xml:lang', i18n.language());
-    this.dom.setAttribute('dir', Config.Languages[i18n.language()].dir);
+    this.dom.setAttribute('lang', i18n.code());
+    this.dom.setAttribute('xml:lang', i18n.code());
+    this.dom.setAttribute('dir', Config.Languages[i18n.code()].dir);
 
     this.addToolbar();
 

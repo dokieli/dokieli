@@ -49,11 +49,13 @@ Config['Translations'] = Object.keys(resources);
 // console.log(resources)
 
 const fallbackLng = {
-  'de-CH': ['fr', 'it'], //French and Italian are also spoken in Switzerland
-  'zh-Hant': ['zh-Hans', 'en'],
-  'es-UY': ['es'],
-  'es-ES': ['es'],
-  'default': ['en']
+  'default': ['en'],
+
+  'de-CH': ['fr', 'it', 'rm'],
+
+  'es-AR': ['es'], 'es-BO': ['es'], 'es-CL': ['es'], 'es-CO': ['es'], 'es-CR': ['es'], 'es-CU': ['es'], 'es-DO': ['es'], 'es-EC': ['es'], 'es-SV': ['es'], 'es-GQ': ['es'], 'es-GT': ['es'], 'es-HN': ['es'], 'es-MX': ['es'], 'es-NI': ['es'], 'es-PA': ['es'], 'es-PY': ['es'], 'es-PE': ['es'], 'es-PR': ['es'], 'es-ES': ['es'], 'es-US': ['es'], 'es-UY': ['es'], 'es-VE': ['es'],
+
+  'zh-Hant': ['zh-Hans', 'en']
 }
 
 const options = {
@@ -81,4 +83,24 @@ export const i18n = {
     }
     return i18next.t(key, vars);
   },
+  code: function() {
+    const lang = i18n.language();
+
+    let fb = fallbackLng.default;
+
+    if (fallbackLng[lang]) {
+      fb = fallbackLng[lang];
+    }
+    else {
+      const segments = lang.split("-");
+
+      for (let i = segments.length - 1; i > -1; i--) {
+        if (Config.Translations.includes(segments[i])) {
+          fb = segments[i];
+        }
+      }
+    }
+
+    return fb;
+  }
 }
