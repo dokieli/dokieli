@@ -2560,7 +2560,7 @@ DO = {
             <tbody>
               <tr>
                 <td data-i18n="dialog.review-changes.added.td">${i18n.t('dialog.review-changes.added.td.textContent')}</td>
-                <td>12345</td>
+                <td>${insCounter}</td>
                 <td><ins data-i18n="dialog.review-changes.example-text.ins">${i18n.t('dialog.review-changes.example-text.ins.textContent')}</ins></td>
               </tr>
               <tr>
