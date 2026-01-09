@@ -100,5 +100,8 @@ export const i18n = {
     }
 
     return fb;
+  },
+  dir: function() {
+    return Config.Languages[i18n.code()].dir;
   }
 }
