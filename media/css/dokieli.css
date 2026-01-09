@@ -579,7 +579,6 @@ z-index:2147483647;
 }
 .do.on p {
 text-indent:0;
-text-align:left;
 font-size:inherit !important;
 margin:0 0 1em 0 !important;
 padding:0 !important;
@@ -652,9 +651,9 @@ vertical-align: middle;
 cursor: pointer;
 }
 aside.do input[type="text"],
+aside.do input[type="url"],
 .editor-form input[type="text"],
 .editor-form input[type="url"],
-.editor-form input[type="input"],
 .editor-form select {
 font-size: 1em;
 border: 2px solid #ccc;
@@ -662,7 +661,8 @@ border-radius: 5px;
 padding: 0.75em;
 margin:0;
 }
-aside.do input[type="text"] {
+aside.do input[type="text"],
+aside.do input[type="url"] {
 width: calc(100% - 14em);
 padding: 0.75em;
 margin: 0.5em;
@@ -703,7 +703,6 @@ padding:0;
 list-style: none;
 }
 aside.do.on li {
-text-align:left !important;
 display:list-item !important;
 padding:0 !important;
 }
@@ -750,6 +749,28 @@ margin: 0 0 1em 0;
 
 .do input[type="text"][contenteditable="false"] {
 width:35%;
+}
+
+/* A workaround for RTL placeholder issue if `dir=auto`: https://github.com/whatwg/html/issues/4903#issuecomment-2955354574 */
+[dir='rtl'] input[dir='auto'][type='text'],
+[dir='rtl'] input[dir='auto'][type='password'] {
+  &:placeholder-shown {
+    direction: rtl;
+  }
+}
+
+[dir="rtl"] [dir="auto"][placeholder]:placeholder-shown,
+[dir="rtl"] [dir="auto"][placeholder]:empty {
+  direction: rtl;
+}
+
+[dir="ltr"] [dir="auto"][placeholder]:placeholder-shown,
+[dir="ltr"] [dir="auto"][placeholder]:empty {
+  direction: ltr;
+}
+
+[dir="rtl"] table[dir="auto"] {
+  text-align: right;
 }
 
 #share-resource.do.on li {
@@ -1944,6 +1965,11 @@ outline-offset: 5px;
   padding-left: 1em;
   margin-left: -1em;
   width:max-content;
+}
+
+[dir="rtl"] #document-autosave span {
+  right:4em;
+  left:auto;
 }
 
 .tabs nav {
@@ -3178,7 +3204,7 @@ label:has(+ [required]):after {
 content: "*";
 color: #f00;
 font-weight:bold;
-margin-left:5px;
+margin-inline-start:5px;
 }
 
 .editor-form label a {

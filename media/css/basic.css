@@ -886,6 +886,9 @@ caption {
   text-align: left;
   padding: 0 0.25em 0.25em;
 }
+[dir="rtl"] caption {
+  text-align:right;
+}
 
 caption,
 tbody,
