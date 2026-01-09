@@ -187,7 +187,7 @@ export class SlashMenu {
     var html = `
       <fieldset>
         <legend data-i18n="editor.toolbar.inbox.form.legend">${i18n.t('editor.toolbar.inbox.form.legend.textContent')}</legend>
-        <label data-i18n="editor.toolbar.inbox.form.set-inbox.label" for="set-inbox">${i18n.t('editor.toolbar.inbox.form.set-inbox.label.textContent')}</label> <input class="editor-form-input" data-i18n="editor.toolbar.form.url.input" id="set-inbox" name="inbox" placeholder="https://example.net/inbox/" pattern="https?://.+" placeholder="${i18n.t('editor.toolbar.form.url.input.placeholder')}" required="" type="url" value="" />
+        <label data-i18n="editor.toolbar.inbox.form.set-inbox.label" for="set-inbox">${i18n.t('editor.toolbar.inbox.form.set-inbox.label.textContent')}</label> <input class="editor-form-input" data-i18n="editor.toolbar.form.url.input" dir="ltr" id="set-inbox" name="inbox" placeholder="https://example.net/inbox/" pattern="https?://.+" placeholder="${i18n.t('editor.toolbar.form.url.input.placeholder')}" required="" type="url" value="" />
         <div>
           <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
           <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
@@ -202,7 +202,7 @@ export class SlashMenu {
     var html = `
       <fieldset>
         <legend data-i18n="editor.toolbar.in-reply-to.form.legend">${i18n.t('editor.toolbar.in-reply-to.form.legend.textContent')}</legend>
-         <label data-i18n="editor.toolbar.in-reply-to.label" for="set-in-reply-to">${i18n.t('editor.toolbar.in-reply-to.form.set-in-reply-to.label.textContent')}</label> <input class="editor-form-input" data-i18n="editor.toolbar.form.url.input" id="set-in-reply-to" name="in-reply-to" pattern="https?://.+" placeholder="${i18n.t('editor.toolbar.form.url.input.placeholder')}" required="" type="url" value="" />
+         <label data-i18n="editor.toolbar.in-reply-to.label" for="set-in-reply-to">${i18n.t('editor.toolbar.in-reply-to.form.set-in-reply-to.label.textContent')}</label> <input class="editor-form-input" data-i18n="editor.toolbar.form.url.input" dir="ltr" id="set-in-reply-to" name="in-reply-to" pattern="https?://.+" placeholder="${i18n.t('editor.toolbar.form.url.input.placeholder')}" required="" type="url" value="" />
         <div>
           <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
           <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
@@ -247,7 +247,7 @@ export class SlashMenu {
     var html = `
       <fieldset>
         <legend data-i18n="editor.toolbar.test-suite.form.legend">${i18n.t('editor.toolbar.test-suite.form.legend.textContent')}</legend>
-        <label data-i18n="editor.toolbar.test-suite.form.set-test-suite.label" for="set-test-suite">${i18n.t('editor.toolbar.test-suite.form.set-test-suite.label.textContent')}</label> <input class="editor-form-input" data-i18n="editor.toolbar.form.url.input" id="set-test-suite" name="test-suite" placeholder="https://example.net/test-suite" pattern="https?://.+" placeholder="${i18n.t('editor.toolbar.form.url.input.placeholder')}" required="" type="url" value="" />
+        <label data-i18n="editor.toolbar.test-suite.form.set-test-suite.label" for="set-test-suite">${i18n.t('editor.toolbar.test-suite.form.set-test-suite.label.textContent')}</label> <input class="editor-form-input" data-i18n="editor.toolbar.form.url.input" dir="ltr" id="set-test-suite" name="test-suite" placeholder="https://example.net/test-suite" pattern="https?://.+" placeholder="${i18n.t('editor.toolbar.form.url.input.placeholder')}" required="" type="url" value="" />
         <div>
           <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
           <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>

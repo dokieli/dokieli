@@ -919,7 +919,7 @@ function showActionMessage(node, message, options = {}) {
   if (!aside) {
     var buttonClose = getButtonHTML({ key: 'dialog.document-action-message.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
-    node.appendChild(fragmentFromString(`<aside aria-labelledby="document-action-message-label" class="do on" id="document-action-message" lang="${i18n.code()}" role="status" tabindex="0" xml:lang="${i18n.code()}"><h2 data-i18n="dialog.document-action-message.messages.h2" id="document-action-message-label">${i18n.t('dialog.document-action-message.messages.h2.textContent')}</h2>${buttonClose}<ul role="log"></ul></aside>`));
+    node.appendChild(fragmentFromString(`<aside aria-labelledby="document-action-message-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="document-action-message" lang="${Config.User.UI.Language}" role="status" tabindex="0" xml:lang="${Config.User.UI.Language}"><h2 data-i18n="dialog.document-action-message.messages.h2" id="document-action-message-label">${i18n.t('dialog.document-action-message.messages.h2.textContent')}</h2>${buttonClose}<ul role="log"></ul></aside>`));
     aside = node.querySelector('#document-action-message');
   }
   aside.querySelector('ul[role="log"]').insertAdjacentHTML('afterbegin', messageItem);
@@ -1330,9 +1330,9 @@ function showTimeMap(node, url) {
       if (!node) {
         node = document.getElementById(elementId);
         if (!node) {
-          var buttonClose = getButtonHTML({ key: "dialog.memento-document.close.button", button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
+          var buttonClose = getButtonHTML({ key: 'dialog.memento-document.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
-          document.body.appendChild(fragmentFromString(`<aside aria-labelledby="${elementId}-label" class="do on" id="${elementId}" lang="${i18n.code()}" xml:lang="${i18n.code()}"><h2 id="${elementId}-label">Memento</h2>${buttonClose}<dl><dt>TimeMap</dt><dd><a href="${url}">${url}</a></dd></dl></aside>`));
+          document.body.appendChild(fragmentFromString(`<aside aria-labelledby="${elementId}-label" class="do on" id="${elementId}" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}" dir="${Config.User.UI.LanguageDir}"><h2 id="${elementId}-label">Memento</h2>${buttonClose}<dl><dt>TimeMap</dt><dd><a href="${url}">${url}</a></dd></dl></aside>`));
           node = document.getElementById(elementId);
         }
       }
@@ -1616,11 +1616,11 @@ function eventButtonInfo() {
 
               if (seeAlsos.length) {
                 seeAlso = `
-                  <dt data-i18n="info.button-info.see-also.dt">${i18n.t('info.button-info.see-also.dt.textContent')}</dt><dd><ul>
+                  <dt data-i18n="info.button-info.see-also.dt">${i18n.t('info.button-info.see-also.dt.textContent')}</dt><dd><ul dir="auto">
                   ${seeAlsos.map(seeAlsoIRI => {
                   const seeAlsoIRIG = g.node(rdf.namedNode(seeAlsoIRI));
                   const seeAlsoTitle = getGraphTitle(seeAlsoIRIG) || seeAlsoIRI;
-                  return `<li><a href="${seeAlsoIRI}" rel="rdfs:seeAlso noopener" target="_blank">${seeAlsoTitle}</a></li>`;
+                  return `<li dir="auto"><a href="${seeAlsoIRI}" rel="rdfs:seeAlso noopener" target="_blank">${seeAlsoTitle}</a></li>`;
                 }).join('')}
                   </ul></dd>
                 `;
@@ -1648,7 +1648,7 @@ function eventButtonInfo() {
 
               if (subjectItems.length) {
                 subject = `
-                  <dt data-i18n="info.button-info.subjects.dt">${i18n.t('info.button-info.subjects.dt.textContent')}</dt><dd><dl>
+                  <dt data-i18n="info.button-info.subjects.dt" dir="auto">${i18n.t('info.button-info.subjects.dt.textContent')}</dt><dd><dl dir="auto">
                   ${subjectItems.join('')}
                   </dl></dd>
                 `;
@@ -1656,16 +1656,16 @@ function eventButtonInfo() {
             }
 
             details = `
-              <details about="${resource}" open="">
-                <summary data-i18n="info.button-info.about.summary" property="schema:name">${i18n.t('info.button-info.about.summary.textContent')} ${title}</summary>
+              <details about="${resource}" open="" dir="auto">
+                <summary property="schema:name"><span data-i18n="info.button-info.about.summary">${i18n.t('info.button-info.about.summary.textContent')}</span> ${title}</summary>
                 ${image}
-                <div datatype="rdf:HTML" property="schema:description">
+                <div datatype="rdf:HTML" dir="auto" property="schema:description">
                 ${description}
                 </div>
                 ${video}
-                <dl>
+                <dl dir="auto">
                   <dt data-i18n="info.button-info.source.dt">${i18n.t('info.button-info.source.dt.textContent')}</dt>
-                  <dd><a href="${resource}" rel="dcterms:source noopener" target="_blank">${resource}</a></dd>
+                  <dd><a dir="ltr" href="${resource}" rel="dcterms:source noopener" target="_blank">${resource}</a></dd>
                   ${subject}
                   ${seeAlso}
                 </dl>
@@ -3345,7 +3345,7 @@ function getLicenseOptionsHTML(options) {
   if ('selected' in options) {
     selectedIRI = options.selected;
     if (selectedIRI == '') {
-      s.push(`<option data-i18n="license.choose.option" selected="selected" value="">${i18n.t('license.choose.option.textContent')}</option>`);
+      s.push(`<option dir="auto" data-i18n="license.choose.option" selected="selected" value="">${i18n.t('license.choose.option.textContent')}</option>`);
     }
   }
   else if (typeof Config.User.UI.License !== 'undefined') {
@@ -3358,7 +3358,7 @@ function getLicenseOptionsHTML(options) {
   Object.keys(Config.License).forEach(iri => {
     if (iri != 'NoLicense') {
       var selected = (iri == selectedIRI) ? ' selected="selected"' : '';
-      s.push(`<option data-i18n="license.${Config.License[iri].code}.option" value="${iri}"${selected} title="${i18n.t('license.' + Config.License[iri].code + '.option.title')}">${Config.License[iri].name}</option>`);
+      s.push(`<option dir="auto" data-i18n="license.${Config.License[iri].code}.option" value="${iri}"${selected} title="${i18n.t('license.' + Config.License[iri].code + '.option.title')}">${Config.License[iri].name}</option>`);
     }
   })
 

@@ -178,7 +178,7 @@ export class Editor {
 
     var documentMenu = document.getElementById('document-menu');
 
-    document.body.replaceChildren(fragmentFromString(`<main><article><h1 aria-label="${i18n.t('editor.new.h1.aria-label')}" data-i18n="editor.new.h1" data-placeholder="${i18n.t('editor.new.h1.data-placeholder')}" property="schema:name"></h1><div datatype="rdf:HTML" property="schema:description"><p data-i18n="editor.new.p" data-placeholder="${i18n.t('editor.new.p.data-placeholder')}"></p></div></article></main>`));
+    document.body.replaceChildren(fragmentFromString(`<main><article dir="auto"><h1 aria-label="${i18n.t('editor.new.h1.aria-label')}" data-i18n="editor.new.h1" data-placeholder="${i18n.t('editor.new.h1.data-placeholder')}" property="schema:name"></h1><div datatype="rdf:HTML" property="schema:description"><p data-i18n="editor.new.p" data-placeholder="${i18n.t('editor.new.p.data-placeholder')}"></p></div></article></main>`));
 
     document.body.prepend(documentMenu);
 
