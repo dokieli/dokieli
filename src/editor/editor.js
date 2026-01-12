@@ -164,6 +164,11 @@ export class Editor {
     //Start with empty body. Reuse <head>, <html> will have its lang/xml:lang, <body> will have prefix.
     // Add initial nodes h1, p with no content.
     // Update head > title to 'Untitled'. Make sure to have Save update head > title with h1 value (if specified).
+
+    document.documentElement.setAttribute("lang", `${Config.User.UI.Language}`);
+    document.documentElement.setAttribute("xml:lang", `${Config.User.UI.Language}`);
+    document.documentElement.setAttribute("dir", `${Config.User.UI.LanguageDir}`);
+
     const titleElement = document.querySelector('head title');
 
     if (titleElement) {
