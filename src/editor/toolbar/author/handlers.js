@@ -27,7 +27,6 @@ import { getGraphInbox } from "../../../graph.js";
 import { notifyInbox } from "../../../inbox.js";
 import rdf from 'rdf-ext';
 import Config from "../../../config.js";
-import { wrapIn } from "prosemirror-commands";
 
 export function formHandlerLanguage(e) {
   e.preventDefault();
