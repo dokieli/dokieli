@@ -94,7 +94,7 @@ export class AuthorToolbar extends ToolbarView {
     return {
       note: i18n.t('editor.toolbar.note.form.legend.textContent'),
       requirement: i18n.t('editor.toolbar.requirement.form.legend.textContent'),
-      language: i18n.t('editor.toolbar.lang.form.legend.textContent'),
+      language: i18n.t('editor.toolbar.language.form.legend.textContent'),
       a: i18n.t('editor.toolbar.a.form.legend.textContent'),
       blockquote: i18n.t('editor.toolbar.blockquote.form.legend.textContent'),
       q: i18n.t('editor.toolbar.q.form.legend.textContent'),
