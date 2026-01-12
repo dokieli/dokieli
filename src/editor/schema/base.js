@@ -32,6 +32,36 @@ export const allowedEmptyAttributes = ['open', 'alt'];
 
 const headings = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
 
+export const DIR_AUTO_TAGS = new Set([
+  // block
+  "p", "li", "dt", "dd", "figcaption", "blockquote", "pre", "summary",
+
+  // svg / text
+  "tspan", "text",
+
+  // inline
+  "del", "ins", "mark", "cite", "q", "sup", "sub", "a", "time",
+  "em", "strong", "b", "i", "u", "s", "strike",
+  "dfn", "abbr", "var", "samp", "kbd", "button",
+
+  // metadata-ish but text-bearing
+  "title", "metadata"
+]);
+
+export function toDOMWithAutoDir(tagName) {
+  return function (node) {
+    const attrs = node.attrs.originalAttributes || {};
+
+    if (DIR_AUTO_TAGS.has(tagName)) {
+      return [tagName, { dir: "auto", ...attrs }, 0];
+    }
+
+    return [tagName, attrs, 0];
+  };
+}
+
+
+
 function getAttributes (node) {
   const attrs = {};
 
@@ -60,13 +90,107 @@ let customNodes = {
     group: "inline",
     // whitespace: "pre"
   },
+  // dir-eligible nodes
   p: {
     content: "inline*",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "p", preserveWhitespace: "full", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["p", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM: toDOMWithAutoDir("p")
     // whitespace: "pre"
+  },
+  dt: {
+    content: "inline*",
+    group: "block",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "dt", getAttrs(node){ return getAttributes(node); }}],
+    toDOM: toDOMWithAutoDir("dt")
+  },
+  dd: {
+    content: "block+",
+    group: "block",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "dd", preserveWhitespace: "full", getAttrs(node){ return getAttributes(node); }}],
+    toDOM: toDOMWithAutoDir("dd")
+  },
+  li: {
+    content: "block+",
+    group: "block",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "li", preserveWhitespace: "full", getAttrs(node){ return getAttributes(node); }}],
+    toDOM: toDOMWithAutoDir("li"),
+    defining: true
+  },
+  pre: {
+    content: "inline*",
+    group: "block",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "pre", preserveWhitespace: "full", getAttrs(node){ return getAttributes(node); }}],
+    toDOM: toDOMWithAutoDir("pre"),
+    code: true,
+    defining: true
+  },
+  blockquote: {
+    content: "block*",
+    group: "block",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "blockquote", getAttrs(node){ return getAttributes(node); }}],
+    toDOM: toDOMWithAutoDir("blockquote"),
+    defining: true
+  },
+  summary: {
+    content: "inline*",
+    group: "block",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "summary", getAttrs(node){ return getAttributes(node); }}],
+    toDOM: toDOMWithAutoDir("summary")
+  },
+  figcaption: {
+    content: "block+",
+    group: "block",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "figcaption", getAttrs(node){ return getAttributes(node); }}],
+    toDOM: toDOMWithAutoDir("figcaption")
+  },
+  svgText: {
+    content: "inline*",
+    group: "inline",
+    inline: true,
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "text", getAttrs(node) { return getAttributes(node) }}],
+    toDOM: toDOMWithAutoDir("text")
+  },
+  tspan: {
+    content: "inline*",
+    group: "inline",
+    inline: true,
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "tspan", getAttrs(node){ return getAttributes(node); }}],
+    toDOM: toDOMWithAutoDir("tspan")
+  },
+  title: {
+    content: "inline*",
+    group: "inline",
+    inline: true,
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "title", getAttrs(node){ return getAttributes(node); }}],
+    toDOM: toDOMWithAutoDir("title")
+  },
+  metadata: {
+    content: "inline*",
+    group: "inline",
+    inline: true,
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "metadata", getAttrs(node){ return getAttributes(node); }}],
+    toDOM: toDOMWithAutoDir("metadata")
+  },
+  button: {
+    content: "inline*",
+    group: "inline",
+    inline: true,
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "button", getAttrs(node){ return getAttributes(node); }}],
+    toDOM: toDOMWithAutoDir("button")
   },
   main: {
     content: "block*",
@@ -182,23 +306,6 @@ let customNodes = {
     parseDOM: [{ tag: "dl", getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return ["dl", { ...node.attrs.originalAttributes }, 0]; }
   },
-  dt: {
-    content: "inline*",
-    group: "block",
-    attrs: { originalAttributes: { default: {} } },
-    parseDOM: [{ tag: "dt", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["dt", { ...node.attrs.originalAttributes }, 0]; }
-  },
-  dd: {
-    content: "block+",
-    group: "block",
-    attrs: { originalAttributes: { default: {} } },
-    parseDOM: [{ tag: "dd", preserveWhitespace: "full", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["dd", { ...node.attrs.originalAttributes }, 0]; },
-    // parseDOM: [{ tag: "dd", getAttrs(node){ return getAttributes(node); }}],
-    // toDOM(node) { return ["dd", { ...node.attrs.originalAttributes }, 0]; },
-    // whitespace: 'pre'
-  },
   ul: {
     content: "li+",
     group: "block",
@@ -220,18 +327,9 @@ let customNodes = {
     // parseDOM: [{ tag: "li", getAttrs(node){ return getAttributes(node); }}],
     // toDOM(node) { return ["li", { ...node.attrs.originalAttributes }, 0]; },
     parseDOM: [{ tag: "li", preserveWhitespace: "full", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["li", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM(node) { return ["li", { dir: "auto", ...node.attrs.originalAttributes }, 0]; },
     defining: true,
     // whitespace: 'pre'
-  },
-  pre: {
-    content: "inline*",
-    group: "block",
-    attrs: { originalAttributes: { default: {} } },
-    parseDOM: [{ tag: "pre", preserveWhitespace: "full", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["pre", { ...node.attrs.originalAttributes }, 0] },
-    code: true,
-    defining: true
   },
   code: {
     inline: true,
@@ -241,14 +339,6 @@ let customNodes = {
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "code", getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return ["code",  { ...node.attrs.originalAttributes }, 0]; }
-  },
-  blockquote: {
-    content: "block*",
-    group: "block",
-    attrs: { originalAttributes: { default: {} },  },
-    parseDOM: [{ tag: "blockquote", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["blockquote", { ...node.attrs.originalAttributes }, 0]; },
-    defining: true
   },
   video: {
     content: "block+",
@@ -285,26 +375,12 @@ let customNodes = {
     parseDOM: [{ tag: "figure", getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return ["figure", { ...node.attrs.originalAttributes }, 0]; },
   },
-  figcaption: {
-    content: "block+",
-    group: "block",
-    attrs: { originalAttributes: { default: {} } },
-    parseDOM: [{ tag: "figcaption", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["figcaption", { ...node.attrs.originalAttributes }, 0]; },
-  },
   details: {
     content: "block+",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "details", getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return ["details", { ...node.attrs.originalAttributes }, 0]; },
-  },
-  summary: {
-    content: "inline*",
-    group: "block",
-    attrs: { originalAttributes: { default: {} } },
-    parseDOM: [{ tag: "summary", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["summary", { ...node.attrs.originalAttributes }, 0]; },
   },
   hr: {
     group: "block",
@@ -463,14 +539,6 @@ let customNodes = {
     parseDOM: [{ tag: "line", getAttrs(node) { return getAttributes(node) }}],
     toDOM(node) { return ["http://www.w3.org/2000/svg line", { ...node.attrs.originalAttributes }, 0] }
   },
-  svgText: {
-    content: "inline*",
-    group: "inline",
-    inline: true,
-    attrs: { originalAttributes: { default: {} } },
-    parseDOM: [{ tag: "text", getAttrs(node) { return getAttributes(node) }}],
-    toDOM(node) { return ["http://www.w3.org/2000/svg text", { ...node.attrs.originalAttributes }, 0] }
-  },
   path: {
     content: "inline*",
     group: "inline",
@@ -478,30 +546,6 @@ let customNodes = {
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "path", getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return ["http://www.w3.org/2000/svg path", { ...node.attrs.originalAttributes }]; },
-  },
-  metadata: {
-    content: "inline*",
-    group: "inline",
-    inline: true,
-    attrs: { originalAttributes: { default: {} } },
-    parseDOM: [{ tag: "metadata", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["http://www.w3.org/2000/svg metadata", { ...node.attrs.originalAttributes }, 0]; },
-  },
-  tspan: {
-    content: "inline*",
-    group: "inline",
-    inline: true,
-    attrs: { originalAttributes: { default: {} } },
-    parseDOM: [{ tag: "tspan", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["http://www.w3.org/2000/svg tspan", { ...node.attrs.originalAttributes }, 0]; },
-  },
-  title: {
-    content: "inline*",
-    group: "inline",
-    inline: true,
-    attrs: { originalAttributes: { default: {} } },
-    parseDOM: [{ tag: "title", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["http://www.w3.org/2000/svg title", { ...node.attrs.originalAttributes }, 0]; },
   },
   defs: {
     content: "inline*",
@@ -518,15 +562,6 @@ let customNodes = {
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "marker", getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return ["http://www.w3.org/2000/svg marker", { ...node.attrs.originalAttributes }, 0]; },
-  },
-
-  button: {
-    content: "inline*",
-    group: "inline",
-    inline: true,
-    attrs: { originalAttributes: { default: {} } },
-    parseDOM: [{ tag: "button", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["button", { ...node.attrs.originalAttributes }, 0]; },
   },
   form: {
     content: "inline*",
@@ -672,10 +707,22 @@ const customMarks = {};
 Config.DOMProcessing.proseMirrorMarks.forEach(tagName => {
   let namespace = '';
 
+  const toDOM =
+    DIR_AUTO_TAGS.has(tagName)
+      ? toDOMWithAutoDir(tagName)
+      : function (node) {
+          return [
+            namespace + tagName,
+            { ...(node.attrs.originalAttributes || {}) },
+            0
+          ];
+        };
+
   customMarks[tagName] = {
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: tagName, preserveWhitespace: true, getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return [namespace + tagName, { ...node.attrs.originalAttributes }, 0]; },
+    // toDOM(node) { return [namespace + tagName, { ...node.attrs.originalAttributes }, 0]; },
+    toDOM,
     inclusive: false,
     excludes: "",
     group: "inline",

@@ -270,6 +270,7 @@ export class Editor {
       editable: () => true,
       attributes: {
         class: `${hasNonWhitespaceText(state.doc) ? '' : 'do-new'}`,
+        dir: "auto",
         // "data-placeholder": state.doc.childCount === 0 ? placeholderText : "",
         // "data-placeholder": `${hasNonWhitespaceText(state.doc) ? '' : 'Hello World'}`,
       }
