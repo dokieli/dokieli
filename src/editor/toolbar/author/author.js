@@ -121,7 +121,6 @@ export class AuthorToolbar extends ToolbarView {
           <select class="editor-form-select" id="language-language" name="language-language">${getLanguageOptionsHTML()}</select>
           <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
           <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
-          <div class="specref-search-results"></div>
         </fieldset>
       `,
 
