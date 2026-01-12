@@ -2758,8 +2758,8 @@ DO = {
       Config.Translations.forEach(lang => {
         let selected = (lang == effectiveLanguage) ? ' selected="selected"' : '';
 
-        let sourceName = Config.Languages[lang].sourceName;
-        let name = Config.Languages[lang].name;
+        let sourceName = Config.Languages[lang]?.sourceName;
+        let name = Config.Languages[lang]?.name;
 
         if (lang !== 'dev' && sourceName) {
           options.push(`<option dir="${Config.Languages[lang].dir}" lang="${lang}"${selected} title="${name}" value="${lang}" xml:lang="${lang}">${sourceName}</option>`);
