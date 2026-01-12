@@ -457,10 +457,9 @@ export class ToolbarView {
             return;
           }
           event.preventDefault(); 
-          const focusedButton = this.dom.querySelector('.edito          ive');
+          const focusedButton = this.dom.querySelector('.editor-form-active');
 
-          if
- (!focusedButton) {
+          if (!focusedButton) {
             firstButton?.focus();
           }
 

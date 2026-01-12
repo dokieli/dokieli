@@ -20,7 +20,7 @@ import { wrapInList, liftListItem } from "prosemirror-schema-list"
 import { DOMSerializer, DOMParser } from "prosemirror-model"
 import { TextSelection } from "prosemirror-state"
 import { schema, allowedEmptyAttributes } from "./../../schema/base.js"
-import { formHandlerA, formHandlerAnnotate, formHandlerBlockquote, formHandlerImg, formHandlerQ, formHandlerCitation, formHandlerRequirement, formHandlerSemantics } from "./handlers.js"
+import { formHandlerLanguage, formHandlerA, formHandlerAnnotate, formHandlerBlockquote, formHandlerImg, formHandlerQ, formHandlerCitation, formHandlerRequirement, formHandlerSemantics } from "./handlers.js"
 import { ToolbarView, annotateFormControls } from "../toolbar.js"
 import { createRDFaHTMLRequirement, getCitationOptionsHTML, getLanguageOptionsHTML, getRequirementLevelOptionsHTML, getRequirementSubjectOptionsHTML } from "../../../doc.js"
 import { getResource } from "../../../fetcher.js"
@@ -40,6 +40,7 @@ export class AuthorToolbar extends ToolbarView {
   //TODO: Create formValidationHandlers to handle `input` and `invalid` event handlers. Move oninput/oninvalid out of form's inline HTML
   getFormEventListeners() {
     return {
+      language: [ { event: 'submit', callback: this.formHandlerLanguage }, { event: 'click', callback: (e) => this.formClickHandler(e, 'language') } ],
       a: [ { event: 'submit', callback: this.formHandlerA }, { event: 'click', callback: (e) => this.formClickHandler(e, 'a') } ],
       q: [ { event: 'submit', callback: this.formHandlerQ }, { event: 'click', callback: (e) => this.formClickHandler(e, 'q') } ],
       blockquote: [ { event: 'submit', callback: this.formHandlerBlockquote }, { event: 'click', callback: (e) => this.formClickHandler(e, 'blockquote') } ],
@@ -53,6 +54,7 @@ export class AuthorToolbar extends ToolbarView {
 
   getFormHandlers() {
     return [
+      { name: 'formHandlerLanguage', fn: formHandlerLanguage },
       { name: 'formHandlerA', fn: formHandlerA },
       { name: 'formHandlerQ', fn: formHandlerQ },
       { name: 'formHandlerBlockquote', fn: formHandlerBlockquote },
@@ -92,6 +94,7 @@ export class AuthorToolbar extends ToolbarView {
     return {
       note: i18n.t('editor.toolbar.note.form.legend.textContent'),
       requirement: i18n.t('editor.toolbar.requirement.form.legend.textContent'),
+      language: i18n.t('editor.toolbar.lang.form.legend.textContent'),
       a: i18n.t('editor.toolbar.a.form.legend.textContent'),
       blockquote: i18n.t('editor.toolbar.blockquote.form.legend.textContent'),
       q: i18n.t('editor.toolbar.q.form.legend.textContent'),
@@ -111,6 +114,17 @@ export class AuthorToolbar extends ToolbarView {
 
   getToolbarPopups() {
     const toolbarPopups = {
+      language: (options) => `
+        <fieldset>
+          <legend data-i18n="editor.toolbar.language.form.legend">${options.legend}</legend>
+          <label data-i18n="language.label" for="language-language">${i18n.t('language.label.textContent')}</label>
+          <select class="editor-form-select" id="language-language" name="language-language">${getLanguageOptionsHTML()}</select>
+          <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
+          <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
+          <div class="specref-search-results"></div>
+        </fieldset>
+      `,
+
       a: (options) => `
         <fieldset>
           <legend data-i18n="editor.toolbar.a.form.legend">${options.legend}</legend>

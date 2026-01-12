@@ -28,6 +28,22 @@ import { notifyInbox } from "../../../inbox.js";
 import rdf from 'rdf-ext';
 import Config from "../../../config.js";
 
+export function formHandlerLanguage(e) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const formValues = getFormValues(e.target);
+  const lang = formValues['language-language'];
+
+  const attrs = { lang: lang, 'xml:lang': lang };
+  console.log(attrs)
+
+  this.updateMarkWithAttributes(schema, 'span', attrs)(this.editorView.state, this.editorView.dispatch);
+
+  this.clearToolbarForm(e.target);
+  this.clearToolbarButton('language');
+}
+
 export function formHandlerA(e) {
   e.preventDefault();
   e.stopPropagation();
@@ -49,11 +65,10 @@ export function formHandlerBlockquote(e) {
   e.stopPropagation();
 
   const formValues = getFormValues(e.target);
-console.log(formValues)
   const cite = formValues['blockquote-cite'];
 
   const attrs = { cite };
-console.log(attrs)
+
   toggleBlockquote(schema, attrs)(this.editorView.state, this.editorView.dispatch);
 
   this.clearToolbarForm(e.target);
