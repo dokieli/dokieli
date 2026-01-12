@@ -723,7 +723,7 @@ export default {
     kg: { name: "Kongo", sourceName: "Kikongo", dir: "ltr" },
     ko: { name: "Korean", sourceName: "한국어", dir: "ltr" },
     kj: { name: "Kwanyama", sourceName: "Oshikwanyama", dir: "ltr" },
-    ku: { name: "Kurdish", sourceName: "کوردی", dir: "ltr" },
+    ku: { name: "Kurdish", sourceName: "کوردی", dir: "rtl" },
     lo: { name: "Lao", sourceName: "ພາສາລາວ", dir: "ltr" },
     la: { name: "Latin", sourceName: "Latinum", dir: "ltr" },
     lv: { name: "Latvian", sourceName: "Latviešu", dir: "ltr" },
