@@ -354,7 +354,7 @@
   "editor.new.h3.data-placeholder": "Sub-section title",
   "editor.new.h4.data-placeholder": "Sub-sub-section title",
   "editor.new.p.data-placeholder": "Cogito, ergo sum.",
-  "editor.toolbar.lang.form.legend.textContent": "Specify language",
+  "editor.toolbar.language.form.legend.textContent": "Specify language",
   "editor.toolbar.a.form.a-title.input.placeholder": "Add advisory information for the tooltip.",
   "editor.toolbar.a.form.a-title.label.textContent": "Title",
   "editor.toolbar.a.form.legend.textContent": "Add a link",
