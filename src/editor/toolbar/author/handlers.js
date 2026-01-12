@@ -27,6 +27,7 @@ import { getGraphInbox } from "../../../graph.js";
 import { notifyInbox } from "../../../inbox.js";
 import rdf from 'rdf-ext';
 import Config from "../../../config.js";
+import { wrapIn } from "prosemirror-commands";
 
 export function formHandlerLanguage(e) {
   e.preventDefault();
@@ -34,15 +35,22 @@ export function formHandlerLanguage(e) {
 
   const formValues = getFormValues(e.target);
   const lang = formValues['language-language'];
+  const attrs = { lang, 'xml:lang': lang };
+  console.log(attrs);
 
-  const attrs = { lang: lang, 'xml:lang': lang };
-  console.log(attrs)
+  const { state, dispatch } = this.editorView;
+  const { from, to } = state.selection;
 
-  this.updateMarkWithAttributes(schema, 'span', attrs)(this.editorView.state, this.editorView.dispatch);
+  const content = state.doc.slice(from, to).content;
+
+  const spanNode = schema.nodes.span.create({ originalAttributes: attrs }, content);
+
+  dispatch(state.tr.replaceRangeWith(from, to, spanNode));
 
   this.clearToolbarForm(e.target);
   this.clearToolbarButton('language');
 }
+
 
 export function formHandlerA(e) {
   e.preventDefault();
