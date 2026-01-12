@@ -3598,7 +3598,19 @@ height:auto;
   .editor-toolbar .editor-form-actions li button.editor-button-active {
     background-color: #fff;
     color: #080; }
-    
+
+  .editor-toolbar:dir(rtl) .editor-form-actions li:first-child button {
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+  .editor-toolbar:dir(rtl) .editor-form-actions li:last-child button {
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
 
 .editor-form {
   background: #fff;
