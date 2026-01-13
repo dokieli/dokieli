@@ -2784,72 +2784,76 @@ DO = {
         e.preventDefault();
         e.stopPropagation();
 
-        i18n.changeLanguage(e.target.value, (err) => {
-          if (err) return console.error('Error loading language', err);
+        DO.U.updateUILanguage(e.target.value);
+      });
+    },
 
-          // re-run initButtons to update the buttons that are stored
-          initButtons();
+    updateUILanguage(lang) {
+      i18n.changeLanguage(lang, (err) => {
+        if (err) return console.error('Error loading language', err);
 
-          Config.User.UI['Language'] = e.target.value;
-          Config.User.UI['LanguageDir'] = i18n.dir(); 
+        // re-run initButtons to update the buttons that are stored
+        initButtons();
 
-          document.querySelectorAll('.do[lang]').forEach(el => {
-            el.setAttribute('lang', e.target.value);
-            el.setAttribute('xml:lang', e.target.value);
-            el.setAttribute('dir', Config.User.UI['LanguageDir']);
-          })
+        Config.User.UI['Language'] = lang;
+        Config.User.UI['LanguageDir'] = i18n.dir();
 
-          document.querySelectorAll('.do select[name$="-language"]').forEach(el => {
-            el.value = e.target.value;
-          })
+        document.querySelectorAll('.do[lang]').forEach(el => {
+          el.setAttribute('lang', lang);
+          el.setAttribute('xml:lang', lang);
+          el.setAttribute('dir', Config.User.UI['LanguageDir']);
+        })
 
-          document.querySelectorAll('[data-i18n]:not(.ProseMirror [data-i18n]').forEach(el => {
-            const baseKey = el.dataset.i18n;
+        document.querySelectorAll('.do select[name$="-language"], .do select#ui-language-select').forEach(el => {
+          el.value = lang;
+        })
 
-            //TODO: Revisit updating text
+        document.querySelectorAll('[data-i18n]:not(.ProseMirror [data-i18n]').forEach(el => {
+          const baseKey = el.dataset.i18n;
 
-            // Update textContent
-            const textKey = `${baseKey}.textContent`;
-            const textValue = i18n.t(textKey);
-            if (textValue !== textKey) {
-              const span = el.querySelector(':scope > span');
-              if (span) {
-                span.textContent = textValue;
-              } else {
-                [...el.childNodes].forEach(node => {
-                  if (node.nodeType === Node.TEXT_NODE && node.nodeValue.trim()) {
-                    node.nodeValue = textValue;
-                  }
-                });
-              }
+          //TODO: Revisit updating text
+
+          // Update textContent
+          const textKey = `${baseKey}.textContent`;
+          const textValue = i18n.t(textKey);
+          if (textValue !== textKey) {
+            const span = el.querySelector(':scope > span');
+            if (span) {
+              span.textContent = textValue;
+            } else {
+              [...el.childNodes].forEach(node => {
+                if (node.nodeType === Node.TEXT_NODE && node.nodeValue.trim()) {
+                  node.nodeValue = textValue;
+                }
+              });
             }
+          }
 
-            // Update innerHTML
-            const htmlKey = `${baseKey}.innerHTML`;
+          // Update innerHTML
+          const htmlKey = `${baseKey}.innerHTML`;
 
-            // TODO: move to a standalone function - this takes the variable names from data-i18n- suffix and passes them as a vars object to the i18n fn
-            const vars = {};
-            Object.entries(el.dataset).forEach(([name, value]) => {
-              if (name !== 'i18n') {
-                vars[name.replace(/^i18n/, '').toLowerCase()] = value;
-              }
-            });
-
-            const translated = i18n.t(htmlKey, vars);
-
-            if (translated !== htmlKey) {
-              el.setHTMLUnsafe(domSanitize(translated));
+          // TODO: move to a standalone function - this takes the variable names from data-i18n- suffix and passes them as a vars object to the i18n fn
+          const vars = {};
+          Object.entries(el.dataset).forEach(([name, value]) => {
+            if (name !== 'i18n') {
+              vars[name.replace(/^i18n/, '').toLowerCase()] = value;
             }
+          });
 
-            // Update attributes
-            [...el.attributes].forEach(attr => {
-              if (attr.name === 'data-i18n') return;
-              const attrKey = `${baseKey}.${attr.name}`;
-              const value = i18n.t(attrKey);
-              if (value !== attrKey) {
-                el.setAttribute(attr.name, value);
-              }
-            });
+          const translated = i18n.t(htmlKey, vars);
+
+          if (translated !== htmlKey) {
+            el.setHTMLUnsafe(domSanitize(translated));
+          }
+
+          // Update attributes
+          [...el.attributes].forEach(attr => {
+            if (attr.name === 'data-i18n') return;
+            const attrKey = `${baseKey}.${attr.name}`;
+            const value = i18n.t(attrKey);
+            if (value !== attrKey) {
+              el.setAttribute(attr.name, value);
+            }
           });
         });
       });
