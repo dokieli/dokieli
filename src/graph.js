@@ -830,12 +830,22 @@ function setPreferredPolicyInfo(g) {
 function setPreferredLanguagesInfo(g) {
   const preferredLanguages = getAgentPreferredLanguages(g);
 
-  const lang = preferredLanguages.find(lang => {
-    return Config.Translations.includes(lang);
+  let matchedLang;
+
+  preferredLanguages.find(lang => {
+    const segments = lang.split("-");
+
+    for (let i = segments.length - 1; i >= 0; i--) {
+      if (Config.Translations.includes(segments[i])) {
+        matchedLang = segments[i];
+        return true;
+      }
+    }
+    return false;
   });
 
-  if (lang) {
-    DO.U.updateUILanguage(lang);
+  if (matchedLang) {
+    DO.U.updateUILanguage(matchedLang);
   }
 }
 
@@ -1157,10 +1167,12 @@ function getAgentPreferredPolicy (s) {
 
 function getAgentPreferredLanguages (s) {
   var vcardLanguages = s.out(ns.vcard.language).values;
+  var knowsLanguages = s.out(ns.schema.knowsLanguage).values;
   var solidPreferredLanguages = s.out(ns.solid.preferredLanguage).values;
 
   return (
     vcardLanguages.length > 0 ? vcardLanguages :
+    knowsLanguages.length > 0 ? knowsLanguages :
     solidPreferredLanguages.length > 0 ? solidPreferredLanguages :
     undefined
   );

@@ -51,9 +51,7 @@ Config['Translations'] = Object.keys(resources);
 const fallbackLng = {
   'default': ['en'],
 
-  'de-CH': ['fr', 'it', 'rm'],
-
-  'zh-Hant': ['zh-Hans', 'en']
+  'de-CH': ['fr', 'it'/*, 'rm'*/],
 }
 
 const options = {
@@ -81,25 +79,22 @@ export const i18n = {
     }
     return i18next.t(key, vars);
   },
-  code: function() {
-    const lang = i18n.language();
-
-    let fb = fallbackLng.default;
-
+  code: function () {
+    const lang = i18n.language().toLowerCase();
+  
     if (fallbackLng[lang]) {
-      fb = fallbackLng[lang];
+      return fallbackLng[lang][0]; // default to first fallback
     }
-    else {
-      const segments = lang.split("-");
-
-      for (let i = segments.length - 1; i > -1; i--) {
-        if (Config.Translations.includes(segments[i])) {
-          fb = segments[i];
-        }
+  
+    const segments = lang.split("-");
+  
+    for (let i = segments.length - 1; i >= 0; i--) {
+      if (Config.Translations.includes(segments[i])) {
+        return segments[i];
       }
     }
-
-    return fb;
+  
+    return fallbackLng.default;
   },
   dir: function() {
     return Config.Languages[i18n.code()].dir;
