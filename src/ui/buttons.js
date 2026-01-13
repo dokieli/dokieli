@@ -256,6 +256,9 @@ export const buttonIcons = {
   license: {
     icon: Icon['.fas.fa-certificate']
   },
+  lang: {
+    icon: Icon['.fas.fa-language']
+  },
   language: {
     icon: Icon['.fas.fa-language']
   },

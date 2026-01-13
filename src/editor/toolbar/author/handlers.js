@@ -33,9 +33,8 @@ export function formHandlerLanguage(e) {
   e.stopPropagation();
 
   const formValues = getFormValues(e.target);
-  const lang = formValues['language-language'];
+  const lang = formValues['set-lang'];
   const attrs = { lang, 'xml:lang': lang };
-  console.log(attrs);
 
   const { state, dispatch } = this.editorView;
   const { from, to } = state.selection;
@@ -47,7 +46,7 @@ export function formHandlerLanguage(e) {
   dispatch(state.tr.replaceRangeWith(from, to, spanNode));
 
   this.clearToolbarForm(e.target);
-  this.clearToolbarButton('language');
+  this.clearToolbarButton('lang');
 }
 
 
