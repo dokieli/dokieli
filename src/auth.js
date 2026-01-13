@@ -20,7 +20,7 @@ import Config from './config.js'
 import { removeChildren, fragmentFromString } from './util.js'
 import { getAgentHTML, showActionMessage, showGeneralMessages, getResourceSupplementalInfo, handleDeleteNote, addMessageToLog } from './doc.js'
 import { Icon } from './ui/icons.js'
-import { getResourceGraph, getAgentName, getGraphImage, getAgentURL, getAgentPreferredProxy, getAgentPreferredPolicy, setPreferredPolicyInfo, getAgentDelegates, getAgentKnows, getAgentFollowing, getAgentStorage, getAgentOutbox, getAgentInbox, getAgentPreferencesFile, getAgentPublicTypeIndex, getAgentPrivateTypeIndex, getAgentTypeIndex, getAgentSupplementalInfo, getAgentSeeAlso, getAgentPreferencesInfo, getAgentLiked, getAgentOccupations, getAgentPublications, getAgentMade, getAgentOIDCIssuer } from './graph.js'
+import { getResourceGraph, getAgentName, getGraphImage, getAgentURL, getAgentPreferredProxy, getAgentPreferredPolicy, setPreferredPolicyInfo, getAgentDelegates, getAgentKnows, getAgentFollowing, getAgentStorage, getAgentOutbox, getAgentInbox, getAgentPreferencesFile, getAgentPublicTypeIndex, getAgentPrivateTypeIndex, getAgentTypeIndex, getAgentSupplementalInfo, getAgentSeeAlso, getAgentPreferencesInfo, getAgentLiked, getAgentOccupations, getAgentPublications, getAgentMade, getAgentOIDCIssuer, getAgentPreferredLanguages, setPreferredLanguagesInfo } from './graph.js'
 import { removeLocalStorageAsSignOut, updateLocalStorageProfile } from './storage.js'
 import { updateButtons, getButtonHTML } from './ui/buttons.js';
 import { SessionCore } from '@uvdsl/solid-oidc-client-browser/core';
@@ -332,6 +332,7 @@ function getSubjectInfo (subjectIRI, options = {}) {
         OIDCIssuer: getAgentOIDCIssuer(g),
         ProxyURL: getAgentPreferredProxy(g),
         PreferredPolicy: getAgentPreferredPolicy(g),
+        PreferredLanguages: getAgentPreferredLanguages(g),
         Delegates: getAgentDelegates(g),
         Contacts: {},
         Knows: getAgentKnows(g),
@@ -351,6 +352,13 @@ function getSubjectInfo (subjectIRI, options = {}) {
         Publications: getAgentPublications(g),
         Made: getAgentMade(g)
       }
+    })
+    .then(agent => {
+      if (!agent.Graph) return agent;
+
+      setPreferredLanguagesInfo(agent.Graph);
+
+      return agent;
     })
     .then(agent => {
       //XXX: Revisit what the retun should be, whether to be undefined, {}, or someting else. Is it useful to retain an agent object that doesn't have a Graph? (Probably better not.)
@@ -389,10 +397,12 @@ function afterSetUserInfo () {
       })
       .then(g => {
         setPreferredPolicyInfo(g);
+        setPreferredLanguagesInfo(g);
       })
       .catch(error => {
         var g = Config.User.Graph.node(rdf.namedNode(Config.User.IRI));
         setPreferredPolicyInfo(g);
+        setPreferredLanguagesInfo(g);
       }))
 
     promises.push(getAgentSupplementalInfo(Config.User.IRI))

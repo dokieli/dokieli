@@ -827,6 +827,18 @@ function setPreferredPolicyInfo(g) {
   Config.User['PreferredPolicyRule'] = getAgentPreferredPolicyRule(s);
 }
 
+function setPreferredLanguagesInfo(g) {
+  const preferredLanguages = getAgentPreferredLanguages(g);
+
+  const lang = preferredLanguages.find(lang => {
+    return Config.Translations.includes(lang);
+  });
+
+  if (lang) {
+    DO.U.updateUILanguage(lang);
+  }
+}
+
 //TODO: Review grapoi
 function getAgentSupplementalInfo(iri) {
   if (iri == Config.User.IRI) {
@@ -1141,6 +1153,17 @@ function getAgentPreferredProxy (s) {
 
 function getAgentPreferredPolicy (s) {
   return s.out(ns.solid.preferredPolicy).values[0] || undefined
+}
+
+function getAgentPreferredLanguages (s) {
+  var vcardLanguages = s.out(ns.vcard.language).values;
+  var solidPreferredLanguages = s.out(ns.solid.preferredLanguage).values;
+
+  return (
+    vcardLanguages.length > 0 ? vcardLanguages :
+    solidPreferredLanguages.length > 0 ? solidPreferredLanguages :
+    undefined
+  );
 }
 
 //TODO: undefined?
@@ -1725,6 +1748,7 @@ export {
   getAgentPreferencesInfo,
   getAgentPreferredPolicyRule,
   setPreferredPolicyInfo,
+  setPreferredLanguagesInfo,
   getAgentSeeAlso,
   getAgentSupplementalInfo,
   getUserContacts,
@@ -1732,6 +1756,7 @@ export {
   processSameAs,
   getAgentPreferredProxy,
   getAgentPreferredPolicy,
+  getAgentPreferredLanguages,
   getAgentOIDCIssuer,
   getAgentName,
   getAgentURL,
