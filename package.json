@@ -1,6 +1,6 @@
 {
   "name": "dokieli",
-  "version": "0.3.1455",
+  "version": "0.3.1456",
   "description": "dokieli is a clientside editor for decentralised article publishing, annotations, and social interactions.",
   "main": "./src/dokieli.js",
   "type": "module",
@@ -68,7 +68,7 @@
     "prosemirror-state": "^1.4.3",
     "prosemirror-view": "^1.37.2",
     "rdf-ext": "^2.5.2",
-    "rdfa-streaming-parser": "^3.0.1",
+    "rdfa-streaming-parser": "^3.0.2",
     "uri-templates": "^0.2.0"
   },
   "devDependencies": {
