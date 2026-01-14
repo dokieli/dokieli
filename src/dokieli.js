@@ -835,7 +835,12 @@ DO = {
       var buttonClose = getButtonHTML({ key:'dialog.graph-view.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
       if (selector == '#graph-view' && !document.getElementById('graph-view')) {
-        document.body.appendChild(fragmentFromString(`<aside class="do on" dir="${Config.User.UI.LanguageDir}" id="graph-view" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}"><h2 data-i18n="dialog.graph-view.h2">${i18n.t('dialog.graph-view.h2.textContent')} ${DO.C.Button.Info.GraphView}</h2>${buttonClose}<div class="info"></div></aside>`));
+        document.body.appendChild(fragmentFromString(`
+          <aside aria-labelledby="graph-view-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="graph-view" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#graph-view" xml:lang="${Config.User.UI.Language}">
+            <h2 data-i18n="dialog.graph-view.h2" id="graph-view-label" property="schema:name">${i18n.t('dialog.graph-view.h2.textContent')} ${DO.C.Button.Info.GraphView}</h2>
+            ${buttonClose}
+            <div class="info"></div>
+          </aside>`));
       }
 
       var svg = d3.select(selector).append('svg')
@@ -2498,7 +2503,12 @@ DO = {
 
       var buttonClose = getButtonHTML({ key: 'dialog.review-changes.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
-      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="review-changes-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="review-changes" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}"><h2 data-i18n="dialog.review-changes.h2" id="review-changes-label">${i18n.t('dialog.review-changes.h2.textContent')} ${DO.C.Button.Info.ReviewChanges}</h2>${buttonClose}<div class="info">${message}</div></aside>`));
+      document.body.appendChild(fragmentFromString(`
+        <aside aria-labelledby="review-changes-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="review-changes" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#review-changes" xml:lang="${Config.User.UI.Language}">
+          <h2 data-i18n="dialog.review-changes.h2" id="review-changes-label" property="schema:name">${i18n.t('dialog.review-changes.h2.textContent')} ${DO.C.Button.Info.ReviewChanges}</h2>
+          ${buttonClose}
+          <div class="info">${message}</div>
+        </aside>`));
 
       let insCounter = 0;
       let delCounter = 0;
@@ -2727,8 +2737,8 @@ DO = {
       checked = (checked && hasAccessModeWrite) ? ' checked=""' : '';
 
       let html = `
-      <section aria-labelledby="document-autosave-label" id="document-autosave">
-        <h2 data-i18n="menu.autosave.h2" id="document-autosave-label">${i18n.t('menu.autosave.h2.textContent')}</h2>
+      <section aria-labelledby="document-autosave-label" id="document-autosave" rel="schema:hasPart" resource="#document-autosave">
+        <h2 data-i18n="menu.autosave.h2" id="document-autosave-label" property="schema:name">${i18n.t('menu.autosave.h2.textContent')}</h2>
         <input${checked} data-i18n="menu.autosave.input" id="autosave-remote" title="${i18n.t('menu.autosave.input.title')}" type="checkbox" />
         <label data-i18n="menu.autosave.label" for="autosave-remote"><span data-i18n="menu.autosave.label.span">${i18n.t('menu.autosave.label.span.textContent')}</span></label> 
       </section>
@@ -2767,8 +2777,8 @@ DO = {
       })
 
       const html = `
-        <section aria-labelledby="ui-language-label" id="ui-language">
-          <h2 data-i18n="language.label" id="ui-language-label">${i18n.t('language.label.textContent')}</h2>
+        <section aria-labelledby="ui-language-label" id="ui-language" rel="schema:hasPart" resource="#ui-language">
+          <h2 data-i18n="language.label" id="ui-language-label" property="schema:name">${i18n.t('language.label.textContent')}</h2>
           ${Icon['.fas.fa-language']}
           <label id="ui-language-select-label" for="ui-language-select" data-i18n="menu.ui-language-select.label">${i18n.t('menu.ui-language-select.label.textContent')}</label>
           <select aria-labelledby="ui-language-select-label" id="ui-language-select">
@@ -2909,10 +2919,16 @@ DO = {
 
       var stylesheets = document.querySelectorAll('head link[rel~="stylesheet"][title]:not([href$="dokieli.css"])');
 
-      var s = `<section aria-labelledby="document-views-label" id="document-views"><h2 data-i18n="menu.document-views.h2" id="document-views-label">${i18n.t('menu.document-views.h2.textContent')}</h2>${Icon[".fas.fa-magic"]}<ul>`;
+      var s = `
+        <section aria-labelledby="document-views-label" id="document-views" rel="schema:hasPart" resource="#document-views">
+          <h2 data-i18n="menu.document-views.h2" id="document-views-label" property="schema:name">${i18n.t('menu.document-views.h2.textContent')}</h2>
+          ${Icon[".fas.fa-magic"]}
+          <ul>`;
+
       if (DO.C.GraphViewerAvailable) {
         s += `<li><button class="resource-visualise" data-i18n="menu.document-views.graph.button" title="${i18n.t('menu.document-views.graph.button.title')}">${i18n.t('menu.document-views.graph.button.textContent')}</button></li>`;
       }
+
       s += `<li><button data-i18n="menu.document-views.native-style.button"  title="${i18n.t('menu.document-views.native-style.button.title')}">${i18n.t('menu.document-views.native-style.button.textContent')}</button></li>`;
 
       if (stylesheets.length) {
@@ -2948,7 +2964,13 @@ DO = {
 
             var buttonClose = getButtonHTML({ key: 'dialog.graph-view.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
-            document.body.appendChild(fragmentFromString(`<aside aria-labelledby="graph-view-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="graph-view" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}"><h2 data-i18n="dialog.graph-view.h2" id="graph-view-label">${i18n.t('dialog.graph-view.h2.textContent')} ${DO.C.Button.Info.GraphView}</h2>${buttonClose}<div class="info"></div></aside>`));
+            document.body.appendChild(fragmentFromString(`
+              <aside aria-labelledby="graph-view-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="graph-view" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#graph-view" xml:lang="${Config.User.UI.Language}">
+                <h2 data-i18n="dialog.graph-view.h2" id="graph-view-label" property="schema:name">${i18n.t('dialog.graph-view.h2.textContent')} ${DO.C.Button.Info.GraphView}</h2>
+                ${buttonClose}
+                <div class="info"></div>
+              </aside>
+            `));
 
             var graphView = document.getElementById('graph-view');
             graphView.addEventListener('click', (e) => {
@@ -3097,8 +3119,8 @@ DO = {
         var buttonClose = getButtonHTML({ key: 'dialog.embed-data-entry.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
         var embedMenu = `
-        <aside aria-labelledby="embed-data-entry-label" class="do on tabs" dir="${Config.User.UI.LanguageDir}" id="embed-data-entry" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}">
-          <h2 data-i18n="dialog.embed-data-entry.h2" id="embed-data-entry-label">${i18n.t('dialog.embed-data-entry.h2.textContent')} ${DO.C.Button.Info.EmbedData}</h2>
+        <aside aria-labelledby="embed-data-entry-label" class="do on tabs" dir="${Config.User.UI.LanguageDir}" id="embed-data-entry" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#embed-data-entry" xml:lang="${Config.User.UI.Language}">
+          <h2 data-i18n="dialog.embed-data-entry.h2" id="embed-data-entry-label" property="schema:name">${i18n.t('dialog.embed-data-entry.h2.textContent')} ${DO.C.Button.Info.EmbedData}</h2>
           ${buttonClose}
           <div class="info"></div>
           <nav><ul><li class="selected"><a href="#embed-data-turtle">Turtle</a></li><li><a href="#embed-data-json-ld">JSON-LD</a></li><li><a href="#embed-data-trig">TriG</a></li></ul></nav>
@@ -3354,7 +3376,13 @@ DO = {
               DO.C.Resource[documentURL]['title'] = getGraphLabel(g) || documentURL;
 
               if (DO.C.Resource[documentURL]['skos']['graph'].out().terms.length) {
-                html.push('<section><h4><a href="' + documentURL + '">' + DO.C.Resource[documentURL]['title'] + '</a></h4><div><dl>' + DO.U.getDocumentConceptDefinitionsHTML(documentURL) + '</dl></div></section>');
+                html.push(`
+                  <section>
+                    <h4><a href="${documentURL}">${DO.C.Resource[documentURL]['title']}</a></h4>
+                    <div>
+                      <dl>${DO.U.getDocumentConceptDefinitionsHTML(documentURL)}</dl>
+                    </div>
+                  </section>`);
 
                 dataset.addAll(DO.C.Resource[documentURL]['skos']['graph'].dataset);
                 options['resources'].push(documentURL);
@@ -3363,7 +3391,13 @@ DO = {
           });
 
           var id = 'list-of-additional-concepts';
-          html = '<section id="' + id + '"><h3>Additional Concepts</h3><div><button class="graph" type="button">View Graph</button><figure></figure>' + html.join('') + '</div></section>';
+          html = `
+            <section id="${id}" rel="schema:hasPart" resource="#${id}">
+              <h3 property="schema:name">Additional Concepts</h3>
+              <div>
+                <button class="graph" type="button">View Graph</button>
+                <figure></figure>${html.join('')}</div>
+            </section>`;
 
           var aC = document.getElementById(id);
           if (aC) {
@@ -3515,7 +3549,12 @@ DO = {
 
       var buttonClose = getButtonHTML({ key: 'panel.document-info.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
-      document.body.insertBefore(fragmentFromString(`<aside aria-labelledby="document-info-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="document-info" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}"><h2 data-i88n="panel.document-info.h2" id="document-info-label">${i18n.t('panel.document-info.h2.textContent')}</h2>${buttonClose}</aside>`), documentMenu.nextSibling);
+      document.body.insertBefore(fragmentFromString(`
+        <aside aria-labelledby="document-info-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="document-info" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#document-info" xml:lang="${Config.User.UI.Language}">
+          <h2 data-i18n="panel.document-info.h2" id="document-info-label" property="schema:name">${i18n.t('panel.document-info.h2.textContent')}</h2>
+          ${buttonClose}
+        </aside>
+      `), documentMenu.nextSibling);
       var documentInfo = document.getElementById('document-info');
 
       documentInfo.setAttribute('tabindex', '-1');
@@ -3553,7 +3592,13 @@ DO = {
       var contextNode = selectArticleNode(document);
       var checked = (contextNode.classList.contains('highlight-structure')) ? 'checked="checked"' : '';
 
-      var html = `<section id="highlight-data"><h3 data-i18n="panel.higlight-data.h3">${i18n.t('panel.higlight-data.h3.textContent')}</h3><ul><li><input id="highlight-structured-data" name="highlight-structured-data" type="checkbox" ${checked}/> <label data-i18n="panel.higlight-structured-data.label" for="highlight-structured-data">${i18n.t('panel.higlight-structured-data.label.textContent')}</label></li></ul></section>`;
+      var html = `
+        <section id="highlight-data" rel="schema:hasPart" resource="#highligh-data">
+          <h3 data-i18n="panel.higlight-data.h3" property="schema:name">${i18n.t('panel.higlight-data.h3.textContent')}</h3>
+          <ul>
+            <li><input id="highlight-structured-data" name="highlight-structured-data" type="checkbox" ${checked}/> <label data-i18n="panel.higlight-structured-data.label" for="highlight-structured-data">${i18n.t('panel.higlight-structured-data.label.textContent')}</label></li>
+          </ul>
+        </section>`;
 
       node.insertAdjacentHTML('beforeend', html);
 
@@ -3583,7 +3628,7 @@ DO = {
       Object.keys(DO.C.ListOfStuff).forEach(id => {
         var checkedInput = '';
         var label = i18n.t(`panel.list-of-stuff.${id}.label.textContent`);
-        var selector = DO.C.ListOfStuff[id].selector;
+        // var selector = DO.C.ListOfStuff[id].selector;
 
         var item = document.getElementById(id);
 
@@ -3597,7 +3642,11 @@ DO = {
       });
 
       if (s.length) {
-        node.insertAdjacentHTML('beforeend', `<section id="list-of-stuff"><h3 data-i18n="panel.list-of-stuff.h3">${i18n.t('panel.list-of-stuff.h3.textContent')}</h3><ul>${s.join('')}</ul></section>`);
+        node.insertAdjacentHTML('beforeend', `
+          <section id="list-of-stuff" rel="schema:hasPart" resource="#list-of-stuff">
+            <h3 data-i18n="panel.list-of-stuff.h3" property="schema:name">${i18n.t('panel.list-of-stuff.h3.textContent')}</h3>
+            <ul>${s.join('')}</ul>
+          </section>`);
 
         // if (DO.C.EditorEnabled) {
           document.getElementById('list-of-stuff').addEventListener('click', (e) => {
@@ -3630,7 +3679,10 @@ DO = {
 
       if (!node) { return; }
 
-      var toc = '<section id="table-of-contents-i"' + sortable + '><h3>' + DO.C.ListOfStuff['table-of-contents'].label + '</h3><ol class="toc' + sortable + '">';
+      var toc = `
+      <section id="table-of-contents-i" rel="schema:hasPart" resource="#table-of-contents-i">
+        <h3 data-i18n="panel.list-of-stuff.table-of-contents.label" property="schema:name">${i18n.t(`panel.list-of-stuff.table-of-contents.label.textContent`)}</h3>
+        <ol class="toc${sortable}">`;
       toc += DO.U.getListOfSections(sections, {'sortable': DO.C.SortableList});
       toc += '</ol></section>';
 
@@ -3686,7 +3738,7 @@ DO = {
         buildReferences();
       }
       else {
-        var label = DO.C.ListOfStuff[id].label;
+        var label = i18n.t(`panel.list-of-stuff.${id}.label.textContent`);
         var selector = DO.C.ListOfStuff[id].selector;
         var titleSelector = DO.C.ListOfStuff[id].titleSelector;
 
@@ -3697,28 +3749,32 @@ DO = {
 
           if(tId) { tId.parentNode.removeChild(tId); }
 
+          let nav = `<nav id="${id}" rel="schema:hasPart" resource="#${id}">`;
+          let section = `<section id="${id}" rel="schema:hasPart" resource="#${id}">`;
+          let heading = `z data-i18n="panel.list-of-stuff.${id}.label" property="schema:name">${label}</h2>`;
+
           switch(id) {
             default:
-              s += '<nav id="' + id + '">';
-              s += '<h2>' + label + '</h2>';
+              s += `${nav}>`;
+              s += `${heading}`;
               s += '<div><ol class="toc">';
               break;
 
             case 'list-of-abbreviations':
-              s += '<section id="' + id + '">';
-              s += '<h2>' + label + '</h2>';
+              s += `${section}`;
+              s += `${heading}`;
               s += '<div><dl>';
               break;
 
             case 'list-of-quotations':
-              s += '<section id="' + id + '">';
-              s += '<h2>' + label + '</h2>';
+              s += `${section}`;
+              s += `${heading}`;
               s += '<div><ul>';
               break;
 
             case 'list-of-concepts':
-              s += '<section id="' + id + '">';
-              s += '<h2>' + label + '</h2>';
+              s += `${section}`;
+              s += `${heading}`;
               var d = DO.C.Resource[documentURL].citations || [];
               if (d.length) {
                 s += '<div><p id="include-concepts"><button class="add" type="button">Include concepts</button> from <data value="' + d.length + '">' + d.length + '</data> external references.</p>';
@@ -3727,14 +3783,14 @@ DO = {
               break;
 
             case 'table-of-requirements':
-              s += '<section id="' + id + '">';
-              s += '<h2>' + label + '</h2>';
+              s += `${section}`;
+              s += `${heading}`;
               s += '<div><table>';
               break;
 
             case 'table-of-advisements':
-              s += '<section id="' + id + '">';
-              s += '<h2>' + label + '</h2>';
+              s += `${section}`;
+              s += `${heading}`;
               s += '<div><table>';
               break;
           }
@@ -4308,7 +4364,19 @@ console.log(reason);
 
       var buttonClose = getButtonHTML({ key: 'dialog.robustify-links.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
-      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="robustify-links-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="robustify-links" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}"><h2 id="robustify-links-label">Robustify Links ${DO.C.Button.Info.RobustLinks}</h2>${buttonClose}<div class="info"></div><div id="robustify-links-input"><p><input id="robustify-links-select-all" type="checkbox" value="true"/><label data-i18n="dialog.robustify-links.select-all.label" for="robustify-links-select-all">${i18n.t('dialog.robustify-links.select-all.label.textContent')}</label></p><p><input id="robustify-links-reuse" type="checkbox" value="true" checked="checked"/><label data-i18n="dialog.robustify-links.reuse.label" for="robustify-links-reuse">${i18n.t('dialog.robustify-links.reuse.label.textContent')}</label></p><ul id="robustify-links-list"></ul></div><button class="robustify" title="Robustify Links" type="submit">Robustify</button></aside>`));
+      document.body.appendChild(fragmentFromString(`
+        <aside aria-labelledby="robustify-links-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="robustify-links" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#robustify-links" xml:lang="${Config.User.UI.Language}">
+          <h2 id="robustify-links-label" property="schema:name">Robustify Links ${DO.C.Button.Info.RobustLinks}</h2>
+          ${buttonClose}
+          <div class="info"></div>
+          <div id="robustify-links-input">
+            <p><input id="robustify-links-select-all" type="checkbox" value="true"/><label data-i18n="dialog.robustify-links.select-all.label" for="robustify-links-select-all">${i18n.t('dialog.robustify-links.select-all.label.textContent')}</label></p>
+            <p><input id="robustify-links-reuse" type="checkbox" value="true" checked="checked"/><label data-i18n="dialog.robustify-links.reuse.label" for="robustify-links-reuse">${i18n.t('dialog.robustify-links.reuse.label.textContent')}</label></p>
+            <ul id="robustify-links-list"></ul>
+          </div>
+          <button class="robustify" title="Robustify Links" type="submit">Robustify</button>
+        </aside>
+      `));
 
       //TODO: Move unique list of existing RL's to DO.C.Resource?
       var robustLinksUnique = {};
@@ -4753,7 +4821,13 @@ console.log(reason);
 
       var buttonClose = getButtonHTML({ key: "dialog.generate-feed.close.button", button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
-      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="generate-feed-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="generate-feed" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}"><h2 data-i18n="dialog.generate-feed.h2" id="generate-feed-label">${i18n.t('dialog.generate-feed.h2.textContent')} ${DO.C.Button.Info.GenerateFeeds}</h2>${buttonClose}<div class="info"></div></aside>`));
+      document.body.appendChild(fragmentFromString(`
+        <aside aria-labelledby="generate-feed-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="generate-feed" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#generate-feed" xml:lang="${Config.User.UI.Language}">
+          <h2 data-i18n="dialog.generate-feed.h2" id="generate-feed-label" property="schema:name">${i18n.t('dialog.generate-feed.h2.textContent')} ${DO.C.Button.Info.GenerateFeeds}</h2>
+          ${buttonClose}
+          <div class="info"></div>
+        </aside>
+      `));
 
       var generateFeed = document.getElementById('generate-feed');
       generateFeed.addEventListener('click', (e) => {
@@ -4980,7 +5054,11 @@ console.log(reason);
         DO.C.Button.Menu.DocumentInfo
       ]
 
-      var s = `<section id="document-do"><h2>Do</h2><ul>${buttons.map(b => `<li>${b}</li>`).join('')}</ul></section>`;
+      var s = `
+        <section aria-labelledby="document-do-label" id="document-do" rel="schema:hasPart" resource="#document-do">
+          <h2 id="document-do-label" property="schema:name">Do</h2>
+          <ul>${buttons.map(b => `<li>${b}</li>`).join('')}</ul>
+        </section>`;
 
       node.insertAdjacentHTML('beforeend', s);
 
@@ -5116,7 +5194,14 @@ console.log(reason);
       }
 
       var buttonClose = getButtonHTML({ key: 'dialog.message-log.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
-      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="message-log-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="message-log" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}"><h2 data-i18n="dialog.message-log.h2" id="message-log-label">${i18n.t('dialog.message-log.h2.textContent')} ${DO.C.Button.Info.MessageLog}</h2>${buttonClose}<div class="info"></div><div>${messageLog}</div></aside>`));
+      document.body.appendChild(fragmentFromString(`
+        <aside aria-labelledby="message-log-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="message-log" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#message-log" xml:lang="${Config.User.UI.Language}">
+          <h2 data-i18n="dialog.message-log.h2" id="message-log-label" property="schema:name">${i18n.t('dialog.message-log.h2.textContent')} ${DO.C.Button.Info.MessageLog}</h2>
+          ${buttonClose}
+          <div class="info"></div>
+          <div>${messageLog}</div>
+        </aside>
+      `));
 
       document.querySelector('#message-log button.close').addEventListener('click', (e) => {
         document.querySelector('button.message-log').removeAttribute('disabled');
@@ -5131,7 +5216,18 @@ console.log(reason);
 
       var buttonClose = getButtonHTML({ key: 'dialog.delete.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
-      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="delete-document-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="delete-document" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}"><h2 data-i18n="dialog.delete.h2" id="delete-document-label">${i18n.t('dialog.delete.h2.textContent')} ${DO.C.Button.Info.Delete}</h2>${buttonClose}<div class="info"></div><div><p data-i18n="dialog.delete.confirmation.p">${i18n.t('dialog.delete.confirmation.p.textContent')}</p><p><code>${url}</code></p></div><button class="cancel" title="${i18n.t('dialog.delete.cancel.button.title')}" type="button">${i18n.t('dialog.delete.cancel.button.textContent')}</button><button class="delete" data-i18n="dialog.delete.submit.button" title="${i18n.t('dialog.delete.submit.button.title')}" type="button">${i18n.t('dialog.delete.submit.button.textContent')}</button></aside>`));
+      document.body.appendChild(fragmentFromString(`
+        <aside aria-labelledby="delete-document-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="delete-document" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#delete-document" xml:lang="${Config.User.UI.Language}">
+          <h2 data-i18n="dialog.delete.h2" id="delete-document-label" property="schema:name">${i18n.t('dialog.delete.h2.textContent')} ${DO.C.Button.Info.Delete}</h2>
+          ${buttonClose}
+          <div class="info"></div>
+          <div>
+            <p data-i18n="dialog.delete.confirmation.p">${i18n.t('dialog.delete.confirmation.p.textContent')}</p><p><code>${url}</code></p>
+          </div>
+          <button class="cancel" title="${i18n.t('dialog.delete.cancel.button.title')}" type="button">${i18n.t('dialog.delete.cancel.button.textContent')}</button>
+          <button class="delete" data-i18n="dialog.delete.submit.button" title="${i18n.t('dialog.delete.submit.button.title')}" type="button">${i18n.t('dialog.delete.submit.button.textContent')}</button>
+        </aside>
+      `));
 
       document.querySelector('#delete-document').addEventListener('click', (e) => {
         if (e.target.closest('button.info')) { return; }
@@ -5292,8 +5388,8 @@ console.log(reason);
       var buttonClose = getButtonHTML({ key: 'dialog.reply-to-resource.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
       document.body.appendChild(fragmentFromString(`
-        <aside aria-labelledby="reply-to-resource-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="reply-to-resource" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}">
-          <h2 data-i18n="dialog.reply-to-resource.h2" id="reply-to-resource-label">${i18n.t('dialog.reply-to-resource.h2.textContent')} ${DO.C.Button.Info.Reply}</h2>
+        <aside aria-labelledby="reply-to-resource-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="reply-to-resource" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#reply-to-resource" xml:lang="${Config.User.UI.Language}">
+          <h2 data-i18n="dialog.reply-to-resource.h2" id="reply-to-resource-label" property="schema:name">${i18n.t('dialog.reply-to-resource.h2.textContent')} ${DO.C.Button.Info.Reply}</h2>
           ${buttonClose}
           <div class="info"></div>
           <div id="reply-to-resource-input">
@@ -5310,7 +5406,8 @@ console.log(reason);
               </li>
             </ul>
           </div>
-        </aside>`))
+        </aside>
+      `))
 
       // TODO: License
       // TODO: ACL - can choose whether to make this reply private (to self), visible only to article author(s), visible to own contacts, public
@@ -5534,8 +5631,8 @@ console.log(reason);
       var shareResourceLinkedResearch = '';
       if (DO.C.User.IRI && DO.C.OriginalResourceInfo['rdftype'] && DO.C.OriginalResourceInfo.rdftype.includes(ns.schema.ScholarlyArticle.value) || DO.C.OriginalResourceInfo.rdftype.includes(ns.schema.Thesis.value)) {
         shareResourceLinkedResearch = `
-          <div id="share-resource-external">
-            <h3 data-i18n="dialog.share-resource-linked-research.h3">${i18n.t('dialog.share-resource-linked-research.h3.textContent')}</h3>
+          <div id="share-resource-external" rel="schema:hasPart" resource="#share-resource-external">
+            <h3 data-i18n="dialog.share-resource-linked-research.h3" property="schema:name">${i18n.t('dialog.share-resource-linked-research.h3.textContent')}</h3>
             <input id="share-resource-linked-research" type="checkbox" value="https://linkedresearch.org/cloud" />
             <label for="share-resource-linked-research"><a href="https://linkedresearch.org/cloud">Linked Open Research Cloud</a></label>
           </div>`;
@@ -5544,15 +5641,15 @@ console.log(reason);
       var buttonClose = getButtonHTML({ key: 'dialog.share-resource.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
       var shareResourceHTML = `
-        <aside aria-labelledby="share-resource-label" class="do on" dir="${Config.User.UI.LanguageDir}" dir="${Config.User.UI.LanguageDir}" id="share-resource" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}">
-          <h2 data-i18n="dialog.share.h2" id="share-resource-label">${i18n.t('dialog.share.h2.textContent')} ${DO.C.Button.Info.Share}</h2>
+        <aside aria-labelledby="share-resource-label" class="do on" dir="${Config.User.UI.LanguageDir}" dir="${Config.User.UI.LanguageDir}" id="share-resource" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#share-resource" xml:lang="${Config.User.UI.Language}">
+          <h2 data-i18n="dialog.share.h2" id="share-resource-label" property="schema:name">${i18n.t('dialog.share.h2.textContent')} ${DO.C.Button.Info.Share}</h2>
 
           ${buttonClose}
 
           <div class="info"></div>
 
-          <div id="share-resource-share-url">
-            <h3 data-i18n="dialog.share-resource-share-url.h3">${i18n.t('dialog.share-resource-share-url.h3.textContent')}</h3>
+          <div id="share-resource-share-url" rel="schema:hasPart" resource="#share-resource-share-url">
+            <h3 data-i18n="dialog.share-resource-share-url.h3" property="schema:name">${i18n.t('dialog.share-resource-share-url.h3.textContent')}</h3>
 
             <label data-i18n="dialog.share-resource-clipboard.label" for="share-resource-clipboard">${i18n.t('dialog.share-resource-clipboard.label.textContent')}</label>
             <input dir="ltr" id="share-resource-clipboard" name="share-resource-clipboard" readonly="readonly" type="url" value="${iri}" />
@@ -5561,8 +5658,8 @@ console.log(reason);
 
           ${shareResourceLinkedResearch}
 
-          <div id="share-resource-agents">
-            <h3 data-i18n="dialog.share-resource-agents.h3">${i18n.t('dialog.share-resource-agents.h3.textContent')}</h3>
+          <div id="share-resource-agents" rel="schema:hasPart" resource="#share-resource-agents">
+            <h3 data-i18n="dialog.share-resource-agents.h3" property="schema:name">${i18n.t('dialog.share-resource-agents.h3.textContent')}</h3>
 
             <ul>
               <li id="share-resource-address-book">
@@ -5601,8 +5698,8 @@ console.log(reason);
         var info = document.querySelector('#share-resource > .info');
 
         var shareResourcePermissions = `
-          <div id="share-resource-permissions">
-            <h3 data-i18n="dialog.share-resource-permissions.h3">${i18n.t('dialog.share-resource-permissions.h3.textContent')}</h3>
+          <div id="share-resource-permissions" rel="schema:hasPart" resource="#share-resource-permissions">
+            <h3 data-i18n="dialog.share-resource-permissions.h3" property="schema:name">${i18n.t('dialog.share-resource-permissions.h3.textContent')}</h3>
 
             <span class="progress" data-i18n="dialog.share-resource-permissions.progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]} ${i18n.t('dialog.share-resource-permissions.progress.textContent')}</span>
 
@@ -7343,7 +7440,14 @@ console.log(reason);
 
       var buttonClose = getButtonHTML({ key: 'dialog.open-document.close', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
-      document.body.insertAdjacentHTML('beforeend', `<aside aria-labelledby="open-document-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="open-document" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}"><h2 data-i18n="dialog.open-document.h2" id="open-document-label">${i18n.t('dialog.open-document.h2.textContent')} ${DO.C.Button.Info.Open}</h2>${buttonClose}<div class="info"></div><p><label data-i18n="dialog.open-document.open-local-file.label" for="open-local-file">${i18n.t('dialog.open-document.open-local-file.label.textContent')}</label> <input type="file" id="open-local-file" name="open-local-file" multiple="" /></p></aside>`);
+      document.body.insertAdjacentHTML('beforeend', `
+        <aside aria-labelledby="open-document-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="open-document" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#open-document" xml:lang="${Config.User.UI.Language}">
+          <h2 data-i18n="dialog.open-document.h2" id="open-document-label" property="schema:name">${i18n.t('dialog.open-document.h2.textContent')} ${DO.C.Button.Info.Open}</h2>
+          ${buttonClose}
+          <div class="info"></div>
+          <p><label data-i18n="dialog.open-document.open-local-file.label" for="open-local-file">${i18n.t('dialog.open-document.open-local-file.label.textContent')}</label> <input type="file" id="open-local-file" name="open-local-file" multiple="" /></p>
+        </aside>
+      `);
 
       var id = 'location-open-document';
       var action = 'read';
@@ -7890,7 +7994,13 @@ console.log(reason);
 
       var buttonClose = getButtonHTML({ key: 'dialog.save-as-document.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
-      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="save-as-document-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="save-as-document" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}"><h2 data-i18n="dialog.save-as-document.h2" id="save-as-document-label">${i18n.t('dialog.save-as-document.h2.textContent')} ${DO.C.Button.Info.SaveAs}</h2>${buttonClose}<div class="info"></div></aside>`));
+      document.body.appendChild(fragmentFromString(`
+        <aside aria-labelledby="save-as-document-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="save-as-document" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#save-as-document" xml:lang="${Config.User.UI.Language}">
+          <h2 data-i18n="dialog.save-as-document.h2" id="save-as-document-label" property="schema:name">${i18n.t('dialog.save-as-document.h2.textContent')} ${DO.C.Button.Info.SaveAs}</h2>
+          ${buttonClose}
+          <div class="info"></div>
+        </aside>
+      `));
 
       var saveAsDocument = document.getElementById('save-as-document');
       saveAsDocument.addEventListener('click', (e) => {
@@ -8318,7 +8428,15 @@ console.log(reason);
 
       var buttonClose = getButtonHTML({ key: 'dialog.source-view.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
-      document.body.appendChild(fragmentFromString(`<aside aria-labelledby="source-view-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="source-view" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}"><h2 data-i18n="dialog.source-view.h2" id="source-view-label">${i18n.t('dialog.source-view.h2.textContent')} ${DO.C.Button.Info.Source}</h2>${buttonClose}<div class="info"></div><textarea dir="ltr id="source-edit"" rows="24" cols="80"></textarea><p><button class="update" data-i18n="dialog.source-view.update.button"${buttonDisabled} title="Update source" type="submit">${i18n.t('dialog.source-view.update.button.textContent')}</button></p></aside>`));
+      document.body.appendChild(fragmentFromString(`
+        <aside aria-labelledby="source-view-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="source-view" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#source-view" xml:lang="${Config.User.UI.Language}">
+          <h2 data-i18n="dialog.source-view.h2" id="source-view-label" property="schema:name">${i18n.t('dialog.source-view.h2.textContent')} ${DO.C.Button.Info.Source}</h2>
+          ${buttonClose}
+          <div class="info"></div>
+          <textarea dir="ltr id="source-edit" rows="24" cols="80"></textarea>
+          <p><button class="update" data-i18n="dialog.source-view.update.button"${buttonDisabled} title="Update source" type="submit">${i18n.t('dialog.source-view.update.button.textContent')}</button></p>
+        </aside>
+      `));
       var sourceBox = document.getElementById('source-view');
       var input = document.getElementById('source-edit');
       input.value = getDocument(null, documentOptions);
@@ -9723,7 +9841,15 @@ WHERE {\n\
       var buttonToggle = getButtonHTML({ key: 'panel.notifications.toggle.button', button: 'toggle', buttonClass: 'toggle' })
 
       //TEMP buttonRel/Resource
-      var aside = `<aside aria-labelledby="document-notifications-label" class="do" contenteditable="false" dir="${Config.User.UI.LanguageDir}" id="document-notifications" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}"><h2 data-i18n="panel.notifications.h2" id="document-notifications-label">${i18n.t('panel.notifications.h2.textContent')} ${DO.C.Button.Info.Notifications}</h2>${buttonToggle}<div><div class="info"></div><ul class="activities"></ul></div></aside>`;
+      var aside = `
+      <aside aria-labelledby="document-notifications-label" class="do" contenteditable="false" dir="${Config.User.UI.LanguageDir}" id="document-notifications" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#document-notifications" xml:lang="${Config.User.UI.Language}">
+        <h2 data-i18n="panel.notifications.h2" id="document-notifications-label" property="schema:name">${i18n.t('panel.notifications.h2.textContent')} ${DO.C.Button.Info.Notifications}</h2>
+        ${buttonToggle}
+        <div>
+          <div class="info"></div>
+          <ul class="activities"></ul>
+        </div>
+      </aside>`;
       document.body.insertAdjacentHTML('beforeend', aside);
       aside = document.getElementById('document-notifications');
 
