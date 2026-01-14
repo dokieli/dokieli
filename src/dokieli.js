@@ -6998,7 +6998,10 @@ console.log(reason);
             })
         })
         .then(i => {
-          document.getElementById(id + '-' + action).textContent = (action == 'write') ? input.value + generateAttributeId() : input.value;
+          let sampNode = document.getElementById(id + '-' + action);
+          if (sampNode) {
+            sampNode.textContent = (action == 'write') ? input.value + generateAttributeId() : input.value;
+          }
         });
 
       browseButton.addEventListener('click', (e) => {
