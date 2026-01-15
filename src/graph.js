@@ -828,7 +828,7 @@ function setPreferredPolicyInfo(g) {
 }
 
 function setPreferredLanguagesInfo(g) {
-  const preferredLanguages = getAgentPreferredLanguages(g);
+  const preferredLanguages = getAgentPreferredLanguages(g) || [];
 
   let matchedLang;
 
