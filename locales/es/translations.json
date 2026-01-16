@@ -159,6 +159,7 @@
   "datetime.minutes.span.textContent": "minutos",
   "datetime.modified.dt.textContent": "Modificado",
   "datetime.published.dt.textContent": "Publicado",
+  "datetime.time.textContent": "{{- val, datetime}}",
   "datetime.updated.dt.textContent": "Actualizado",
   "dialog.accessibility-report.audio-failed.li.innerHTML": "Error: Audios (<code>audio</code>) sin pistas de texto temporizadas externas (<code>track</code> o <code>track</code> con <code>kind</code> de pista de texto).",
   "dialog.accessibility-report.image-cant-tell.li.innerHTML": "No se puede determinar: Imágenes (<code>img</code>) sin un texto alternativo (<code>alt</code>) no vacío.",

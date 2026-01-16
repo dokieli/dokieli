@@ -159,6 +159,7 @@
   "datetime.minutes.span.textContent": "minutes",
   "datetime.modified.dt.textContent": "Modified",
   "datetime.published.dt.textContent": "Published",
+  "datetime.time.textContent": "{{- val, datetime}}",
   "datetime.updated.dt.textContent": "Updated",
   "dialog.accessibility-report.audio-failed.li.innerHTML": "Fail: Audios (<code>audio</code>) without external timed text tracks (<code>track</code> or <code>track</code> with <code>kind</code> of text track.)",
   "dialog.accessibility-report.image-cant-tell.li.innerHTML": "Can't Tell: Images (<code>img</code>) without a non-empty alternative text (<code>alt</code>).",

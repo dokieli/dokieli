@@ -158,6 +158,7 @@
   "datetime.modified.dt.textContent": "更新日",
   "datetime.published.dt.textContent": "公開日",
   "datetime.updated.dt.textContent": "更新日",
+  "datetime.time.textContent": "{{- val, datetime}}",
   "dialog.accessibility-report.audio-failed.li.innerHTML": "不合格: 外部タイムドテキストトラック（<code>track</code> または <code>kind</code> がテキストトラックの <code>track</code>）を持たない音声（<code>audio</code>）。",
   "dialog.accessibility-report.image-cant-tell.li.innerHTML": "判定不可: 空でない代替テキスト（<code>alt</code>）を持たない画像（<code>img</code>）。",
   "dialog.accessibility-report.image-failed.li.innerHTML": "不合格: 代替テキスト（<code>alt</code>）を持たない画像（<code>img</code>）。",

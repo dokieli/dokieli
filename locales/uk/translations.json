@@ -158,6 +158,7 @@
   "datetime.modified.dt.textContent": "Змінено",
   "datetime.published.dt.textContent": "Опубліковано",
   "datetime.updated.dt.textContent": "Оновлено",
+  "datetime.time.textContent": "{{- val, datetime}}",
   "dialog.accessibility-report.audio-failed.li.innerHTML": "Помилка: аудіо (<code>аудіо</code>) без зовнішніх синхронізованих текстових доріжок (<code>track</code> або <code>track</code> із <code>видом</code> текстової доріжки.)",
   "dialog.accessibility-report.image-cant-tell.li.innerHTML": "Не можу визначити: зображення (<code>img</code>) без непорожнього альтернативного тексту (<code>alt</code>).",
   "dialog.accessibility-report.image-failed.li.innerHTML": "Помилка: зображення (<code>img</code>) без альтернативного тексту (<code>alt</code>).",

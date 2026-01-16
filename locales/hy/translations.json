@@ -158,6 +158,7 @@
   "datetime.modified.dt.textContent": "Փոփոխված",
   "datetime.published.dt.textContent": "Հրատարակված",
   "datetime.updated.dt.textContent": "Թարմացված",
+  "datetime.time.textContent": "{{- val, datetime}}",
   "dialog.accessibility-report.audio-failed.li.innerHTML": "Ձախողում. Օդիո (<code>audio</code>)՝ առանց արտաքին ժամանակավորված տեքստային ուղիների (<code>track</code> կամ <code>track</code>՝ <code>kind</code> տեքստային ուղու տեսակով։)",
   "dialog.accessibility-report.image-cant-tell.li.innerHTML": "Չի պարզվում. Պատկերներ (<code>img</code>)՝ առանց դատարկ չլինող այլընտրանքային տեքստի (<code>alt</code>)։",
   "dialog.accessibility-report.image-failed.li.innerHTML": "Ձախողում. Պատկերներ (<code>img</code>)՝ առանց այլընտրանքային տեքստի (<code>alt</code>)։",

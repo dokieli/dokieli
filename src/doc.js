@@ -1064,15 +1064,17 @@ function createDateHTML(options) {
   var c = ('class' in options && options.class.length > 0) ? ' class="' + options.class + '"' : '';
 
   var datetime = ('datetime' in options) ? options.datetime.toISOString() : getDateTimeISO();
-  var datetimeLabel = datetime.substr(0, datetime.indexOf('T'));
+  // var datetimeLabel = datetime.substr(0, datetime.indexOf('T'));
+  const overrideOptions = document.documentElement.lang ? { lng: document.documentElement.lang } : {};
+  var datetimeLabel = i18n.t('datetime.time.textContent', { val: new Date(datetime), ...overrideOptions });
 
   var time = ('property' in options)
-    ? '<time content="' + datetime + '" datatype="xsd:dateTime" datetime="' + datetime + '" property="' + options.property + '">' + datetimeLabel + '</time>'
-    : '<time datetime="' + datetime + '">' + datetimeLabel + '</time>';
+    ? `<time content="${datetime}" datatype="xsd:dateTime" datetime="${datetime}" property="${options.property}">${datetimeLabel}</time>`
+    : `<time datetime="${datetime}">${datetimeLabel}</time>`;
 
   var date = `
     <dl${c}${id}>
-      <dt data-i18n="datetime.${titleKey}.dt">${i18n.t(`datetime.${titleKey}.dt.textContent`)}</dt>
+      <dt>${i18n.t(`datetime.${titleKey}.dt.textContent`, overrideOptions)}</dt>
       <dd>${time}</dd>
     </dl>`;
 
