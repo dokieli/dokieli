@@ -2825,7 +2825,9 @@ DO = {
 
           // Update textContent
           const textKey = `${baseKey}.textContent`;
-          const textValue = i18n.t(textKey);
+          const keyOptions = el.hasAttribute('datetime') ? { val: new Date(el.getAttribute('datetime')) } : {};
+
+          const textValue = i18n.t(textKey, keyOptions);
           if (textValue !== textKey) {
             const span = el.querySelector(':scope > span');
             if (span) {

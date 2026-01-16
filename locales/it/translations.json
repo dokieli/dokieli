@@ -158,6 +158,7 @@
   "datetime.modified.dt.textContent": "Modificato",
   "datetime.published.dt.textContent": "Pubblicato",
   "datetime.updated.dt.textContent": "Aggiornato",
+  "datetime.time.textContent": "{{- val, datetime}}",
   "dialog.accessibility-report.audio-failed.li.innerHTML": "Fallito: Audio (<code>audio</code>) senza tracce di testo temporizzate esterne (<code>track</code> o <code>track</code> con <code>kind</code> di traccia testuale.)",
   "dialog.accessibility-report.image-cant-tell.li.innerHTML": "Non determinabile: Immagini (<code>img</code>) senza testo alternativo non vuoto (<code>alt</code>).",
   "dialog.accessibility-report.image-failed.li.innerHTML": "Fallito: Immagini (<code>img</code>) senza testo alternativo (<code>alt</code>).",

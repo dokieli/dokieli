@@ -158,6 +158,7 @@
   "datetime.modified.dt.textContent": "수정일",
   "datetime.published.dt.textContent": "게시일",
   "datetime.updated.dt.textContent": "업데이트됨",
+  "datetime.time.textContent": "{{- val, datetime}}",
   "dialog.accessibility-report.audio-failed.li.innerHTML": "실패: 외부 타임드 텍스트 트랙(<code>track</code> 또는 <code>kind</code>가 텍스트 트랙인 <code>track</code>)이 없는 오디오(<code>audio</code>).",
   "dialog.accessibility-report.image-cant-tell.li.innerHTML": "판단 불가: 비어 있지 않은 대체 텍스트(<code>alt</code>)가 없는 이미지(<code>img</code>).",
   "dialog.accessibility-report.image-failed.li.innerHTML": "실패: 대체 텍스트(<code>alt</code>)가 없는 이미지(<code>img</code>).",
