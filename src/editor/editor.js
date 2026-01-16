@@ -498,7 +498,7 @@ export class Editor {
       var lastModified = Config.Resource[Config.DocumentURL]?.headers?.['last-modified']?.['field-value'];
       if(!modified && lastModified) {
         lastModified = new Date(lastModified);
-        setDate(document, { 'id': 'document-modified', 'property': 'schema:dateModified', 'title': 'Modified', 'datetime': lastModified } );
+        setDate(document, { 'id': 'document-modified', 'property': 'schema:dateModified', 'datetime': lastModified } );
       }
     }
     else if (e && e.target.closest('button.editor-disable')) {

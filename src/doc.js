@@ -125,7 +125,7 @@ function convertDocumentFragmentToDocument(fragment) {
 
 
 function getDocument(cn, options) {
-  let node = document.documentElement;
+  let node = cn || document.documentElement;
 
   if (typeof cn === 'string') {
     const parser = new DOMParser();
@@ -1032,9 +1032,7 @@ function setDate(rootNode, options) {
   rootNode = rootNode || document;
   options = options || {};
 
-  var title = ('title' in options) ? options.title : 'Created';
-
-  var id = (options.id) ? options.id : 'document-' + title.toLowerCase().replace(/\W/g, '-');
+  var id = (options.id) ? options.id : `document-created`;
 
   var node = ('property' in options) ? rootNode.querySelector('#' + id + ' [property="' + options.property + '"]') : rootNode.querySelector('#' + id + ' time');
 
@@ -1059,9 +1057,7 @@ function setDate(rootNode, options) {
 function createDateHTML(options) {
   options = options || {};
 
-  var title = ('title' in options) ? options.title : 'Created';
-
-  const titleKey = title.toLowerCase().replace(/\s+/g, '-');
+  var titleKey = ('id' in options) ? options.id.replace('document-', '') : 'created';
 
   var id = ('id' in options && options.id.length > 0) ? ' id="' + options.id + '"' : '';
 
@@ -1074,11 +1070,11 @@ function createDateHTML(options) {
     ? '<time content="' + datetime + '" datatype="xsd:dateTime" datetime="' + datetime + '" property="' + options.property + '">' + datetimeLabel + '</time>'
     : '<time datetime="' + datetime + '">' + datetimeLabel + '</time>';
 
-  var date = `        <dl${c}${id}>
+  var date = `
+    <dl${c}${id}>
       <dt data-i18n="datetime.${titleKey}.dt">${i18n.t(`datetime.${titleKey}.dt.textContent`)}</dt>
       <dd>${time}</dd>
-    </dl>
-`;
+    </dl>`;
 
   return date;
 }
@@ -1207,7 +1203,7 @@ function setEditSelections(options) {
       dl.insertAdjacentHTML('beforeend', dd);
 
       if (statusIRI == 'http://purl.org/spar/pso/published') {
-        setDate(document, { 'id': 'document-published', 'property': 'schema:datePublished', 'title': 'Published', 'datetime': options.datetime });
+        setDate(document, { 'id': 'document-published', 'property': 'schema:datePublished', 'datetime': options.datetime });
       }
     }
   }
@@ -2561,7 +2557,7 @@ function createImmutableResource(url, data, options) {
   var rootNode = document.documentElement.cloneNode(true);
 
   var date = new Date();
-  rootNode = setDate(rootNode, { 'id': 'document-created', 'property': 'schema:dateCreated', 'title': 'Created', 'datetime': date });
+  rootNode = setDate(rootNode, { 'id': 'document-created', 'property': 'schema:dateCreated', 'datetime': date });
 
   var resourceState = rootNode.querySelector('#' + 'document-resource-state');
   if (!resourceState) {
@@ -2612,7 +2608,7 @@ function createImmutableResource(url, data, options) {
 
   //Update URI-R
   if (Config.OriginalResourceInfo['state'] != ns.mem.Memento.value) {
-    setDate(document, { 'id': 'document-created', 'property': 'schema:dateCreated', 'title': 'Created', 'datetime': date });
+    setDate(document, { 'id': 'document-created', 'property': 'schema:dateCreated', 'datetime': date });
 
     o = { 'id': 'document-identifier', 'title': 'Identifier' };
     r = { 'rel': 'owl:sameAs', 'href': url };
@@ -2663,7 +2659,8 @@ function createMutableResource(url, data, options) {
     normalize: true
   };
 
-  setDate(document, { 'id': 'document-created', 'property': 'schema:dateCreated', 'title': 'Created' });
+  //TODO: Should this options include `datetime: new Date()` similar to createImmutableResource?
+  setDate(document, { 'id': 'document-created', 'property': 'schema:dateCreated' });
 
   var uuid = generateUUID();
   var containerIRI = url.substr(0, url.lastIndexOf('/') + 1);
@@ -2722,7 +2719,7 @@ function updateMutableResource(url, data, options) {
     options['datetime'] = new Date();
   }
 
-  setDate(rootNode, { 'id': 'document-modified', 'property': 'schema:dateModified', 'title': 'Modified', 'datetime': options.datetime });
+  setDate(rootNode, { 'id': 'document-modified', 'property': 'schema:dateModified', 'datetime': options.datetime });
   setEditSelections(options);
 
   data = getDocument(null, documentOptions);
