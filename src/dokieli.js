@@ -15,10 +15,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource } from './fetcher.js'
+import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource, patchResourceGraph } from './fetcher.js'
 import { getDocument, getDocumentContentNode, showActionMessage, selectArticleNode, eventButtonNotificationsToggle, showRobustLinksDecoration, getResourceInfo,  removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getLanguageOptionsHTML, getLicenseOptionsHTML, getNodeWithoutClasses, setCopyToClipboard, addMessageToLog, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown, getReferenceLabel, createNoteDataHTML, hasNonWhitespaceText, eventButtonClose, eventButtonInfo, eventButtonSignIn, eventButtonSignOut, getDocumentNodeFromString, updateResourceInfos, accessModePossiblyAllowed, updateSupplementalInfo, processSupplementalInfoLinkHeaders } from './doc.js'
 import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, generateDataURI, getMediaTypeURIs, isHttpOrHttpsProtocol, isFileProtocol, getUrlParams, stripUrlSearchHash, stripUrlParamsFromString, getAbsoluteIRI } from './uri.js'
-import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes, filterQuads, getAgentTypeIndex, serializeData } from './graph.js'
+import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes, filterQuads, getAgentTypeIndex, serializeData, serializeDataToPreferredContentType } from './graph.js'
 import { notifyInbox, sendNotifications } from './inbox.js'
 import { uniqueArray, fragmentFromString, generateAttributeId, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, isValidISBN, findPreviousDateTime, escapeRDFLiteral, tranformIconstoCSS, getIconsFromCurrentDocument, getHash, getDateTimeISOFromDate } from './util.js'
 import { generateGeoView } from './geo.js'
@@ -7087,8 +7087,7 @@ console.log(reason);
     //TODO: Refactor, especially buttons.
     initBrowse: function(baseUrl, input, browseButton, createButton, id, action){
       input.value = baseUrl;
-      var headers;
-      headers = {'Accept': 'text/turtle, application/ld+json'};
+      var headers = {'Accept': 'text/turtle, application/ld+json'};
       getResourceGraph(baseUrl, headers)
         .then(g => {
           DO.U.generateBrowserList(g, baseUrl, id, action)
@@ -7103,12 +7102,7 @@ console.log(reason);
           }
         });
 
-      browseButton.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
 
-        DO.U.triggerBrowse(input.value, id, action);
-      }, false);
 
       if (Config['Session']?.isActive) {
         createButton.addEventListener('click', (e) => {
@@ -7192,33 +7186,38 @@ console.log(reason);
 
         var node = document.getElementById(id + '-create-container');
 
-        patchResourceWithAcceptPatch(containerURL, patch, options).then(
-          function(response){
+        patchResourceWithAcceptPatch(containerURL, patch, options)
+          .then(response => {
             DO.U.triggerBrowse(containerURL, id, action);
+          })
+          .catch(reason => {
+            // console.log(reason);
 
             var main = `      <article about=""><dl id="document-title"><dt>Title</dt><dd property="dcterms:title">${containerLabel}</dd></dl></article>`;
+
             var o = {
               'omitLang': true,
               'prefixes': {
                 'dcterms': 'http://purl.org/dc/terms/'
               }
             }
+
             var data = createHTML(containerLabel, main, o);
+
             // console.log(data);
 
-            putResourceWithAcceptPut(containerURL, data, options).then(
-              function(response){
+            options.headers['Content-Type'] = 'text/html';
+
+            putResourceWithAcceptPut(containerURL, data, options)
+              .then(response => {
                 DO.U.triggerBrowse(containerURL, id, action);
-              },
-              function(reason){
-                // console.log(reason);
+              })
+              .catch(reason => {
+                // console.log(reason)
+
                 DO.U.showErrorResponseMessage(node, reason.response, 'createContainer');
-              });
-          },
-          function(reason) {
-            DO.U.showErrorResponseMessage(node, reason.response, 'createContainer');
-          }
-        )
+              })
+          })
       });
     },
 
@@ -7340,6 +7339,13 @@ console.log(reason);
         }
       }, false);
 
+      browseButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        DO.U.triggerBrowse(input.value, id, action);
+      }, false);
+
       var browserul = document.getElementById(id + '-ul');
       if(!browserul){
         browserul = document.createElement('ul');
@@ -7352,11 +7358,14 @@ console.log(reason);
 
       // TODO: Show and use storage, outbox, annotationService as opposed to first available.
 
-      if(DO.C.User.Storage && DO.C.User.Storage.length) {
+      if(DO.C.User.Storage?.length) {
         baseUrl = forceTrailingSlash(DO.C.User.Storage[0]);
       }
-      else if(DO.C.User.Outbox && DO.C.User.Outbox[0]) {
+      else if(DO.C.User.Outbox?.length) {
         baseUrl = forceTrailingSlash(DO.C.User.Outbox[0]);
+      }
+      else if(DO.C.Resource[DO.C.DocumentURL]?.annotationService?.length) {
+        baseUrl = forceTrailingSlash(DO.C.Resource[DO.C.DocumentURL].annotationService[0]);
       }
 
 
@@ -7364,25 +7373,27 @@ console.log(reason);
         DO.U.initBrowse(baseUrl, input, browseButton, createButton, id, action);
       }
       else {
-        getLinkRelation(ns.oa.annotationService.value, null, getDocument(null, documentOptions)).then(
-          function(storageUrl) {
+        getLinkRelation(ns.oa.annotationService.value, null, getDocument(null, documentOptions))
+          .then((storageUrl) => {
             DO.U.initBrowse(storageUrl[0], input, browseButton, createButton, id, action);
-          },
-          function(){
-            var input = document.getElementById(id + '-input');
+          })
+          .catch(() => {
+            baseUrl = getBaseURL(DO.C.DocumentURL);
+            DO.U.initBrowse(baseUrl, input, browseButton, createButton, id, action);
 
-            if (DO.C['Session']?.isActive) {
-              browseButton.addEventListener('click', () => {
-                createContainer.replaceChildren();
-                DO.U.triggerBrowse(input.value, id, action);
-              }, false);
+            // if (DO.C['Session']?.isActive) {
+            //   //Browsing removes whatever was for create container and restarts browse on new location
+            //   browseButton.addEventListener('click', () => {
+            //     createContainer.replaceChildren();
+            //     DO.U.triggerBrowse(input.value, id, action);
+            //   }, false);
 
-              createButton.addEventListener('click', (e) => {
-                DO.U.showCreateContainer(input.value, id, action, e);
-              }, false);
-            }
-          }
-        )
+            //   //Clicking on create container button shows the input
+            //   createButton.addEventListener('click', (e) => {
+            //     DO.U.showCreateContainer(input.value, id, action, e);
+            //   }, false);
+            // }
+          })
       }
     },
 
