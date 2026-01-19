@@ -510,7 +510,7 @@
   "popup.robustlinks.citation-reason.span.textContent": "Մեջբերման պատճառ",
   "popup.robustlinks.near-link-date.span.textContent": "Հղման մոտ ամսաթիվ",
   "popup.robustlinks.original.span.textContent": "Բնօրինակ",
-  "popup.robustlinks.show.button.textContent": "Ցույց տալ կայուն հղումները",
+  "popup.robustlinks.show.button.title": "Ցույց տալ կայուն հղումները",
   "popup.robustlinks.version.span.textContent": "Տարբերակ",
   "publication-status.choose.option.textContent": "Ընտրեք հրատարակության կարգավիճակ",
   "publication-status.draft.option.textContent": "Սևագիր",

@@ -510,7 +510,7 @@
   "popup.robustlinks.citation-reason.span.textContent": "引用理由",
   "popup.robustlinks.near-link-date.span.textContent": "リンク付近の日付",
   "popup.robustlinks.original.span.textContent": "オリジナル",
-  "popup.robustlinks.show.button.textContent": "ロバストリンクを表示",
+  "popup.robustlinks.show.button.title": "ロバストリンクを表示",
   "popup.robustlinks.version.span.textContent": "バージョン",
   "publication-status.choose.option.textContent": "公開状況を選択",
   "publication-status.draft.option.textContent": "ドラフト",

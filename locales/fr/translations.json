@@ -510,7 +510,7 @@
   "popup.robustlinks.citation-reason.span.textContent": "Raison de la citation",
   "popup.robustlinks.near-link-date.span.textContent": "Date proche du lien",
   "popup.robustlinks.original.span.textContent": "Original",
-  "popup.robustlinks.show.button.textContent": "Afficher les liens robustes",
+  "popup.robustlinks.show.button.title": "Afficher les liens robustes",
   "popup.robustlinks.version.span.textContent": "Version",
   "publication-status.choose.option.textContent": "Choisissez un statut de publication",
   "publication-status.draft.option.textContent": "Brouillon",

@@ -510,7 +510,7 @@
   "popup.robustlinks.citation-reason.span.textContent": "Причина цитування",
   "popup.robustlinks.near-link-date.span.textContent": "Близька дата посилання",
   "popup.robustlinks.original.span.textContent": "Оригінал",
-  "popup.robustlinks.show.button.textContent": "Показати надійні посилання",
+  "popup.robustlinks.show.button.title": "Показати надійні посилання",
   "popup.robustlinks.version.span.textContent": "Версія",
   "publication-status.choose.option.textContent": "Виберіть статус публікації",
   "publication-status.draft.option.textContent": "Чернетка",

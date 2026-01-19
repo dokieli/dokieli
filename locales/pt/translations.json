@@ -510,7 +510,7 @@
   "popup.robustlinks.citation-reason.span.textContent": "Motivo da citação",
   "popup.robustlinks.near-link-date.span.textContent": "Perto da data do link",
   "popup.robustlinks.original.span.textContent": "Original",
-  "popup.robustlinks.show.button.textContent": "Mostrar links robustos",
+  "popup.robustlinks.show.button.title": "Mostrar links robustos",
   "popup.robustlinks.version.span.textContent": "Versão",
   "publication-status.choose.option.textContent": "Escolha um status de publicação",
   "publication-status.draft.option.textContent": "Rascunho",

@@ -544,7 +544,7 @@
   "popup.robustlinks.citation-reason.span.textContent": "Citation Reason",
   "popup.robustlinks.near-link-date.span.textContent": "Near Link Date",
   "popup.robustlinks.original.span.textContent": "Original",
-  "popup.robustlinks.show.button.textContent": "Show Robust Links",
+  "popup.robustlinks.show.button.title": "Show Robust Links",
   "popup.robustlinks.version.span.textContent": "Version",
   "publication-status.choose.option.textContent": "Choose a publication status",
   "publication-status.draft.option.textContent": "Draft",

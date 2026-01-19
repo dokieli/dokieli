@@ -510,7 +510,7 @@
   "popup.robustlinks.citation-reason.span.textContent": "인용 이유",
   "popup.robustlinks.near-link-date.span.textContent": "링크 시점 근처 날짜",
   "popup.robustlinks.original.span.textContent": "원본",
-  "popup.robustlinks.show.button.textContent": "견고한 링크 표시",
+  "popup.robustlinks.show.button.title": "견고한 링크 표시",
   "popup.robustlinks.version.span.textContent": "버전",
   "publication-status.choose.option.textContent": "게시 상태 선택",
   "publication-status.draft.option.textContent": "초안",
