@@ -70,22 +70,23 @@ export function i18nextInit() {
     .init(options)
 }
 
-export const i18n = {
+const i18n = {
   ...i18next,
   language: () => i18next.language,
   t: function (key, vars = {}) {
     if (key.endsWith('.innerHTML')) {
       return domSanitize(i18next.t(key, vars));
     }
+
     return i18next.t(key, vars);
   },
   code: function () {
     const lang = i18n.language().toLowerCase();
-  
+
     if (fallbackLng[lang]) {
       return fallbackLng[lang][0]; // default to first fallback
     }
-  
+
     const segments = lang.split("-");
   
     for (let i = segments.length - 1; i >= 0; i--) {
@@ -93,10 +94,23 @@ export const i18n = {
         return segments[i];
       }
     }
-  
+
     return fallbackLng.default;
   },
   dir: function() {
     return Config.Languages[i18n.code()].dir;
   }
 }
+
+i18n['tDoc'] = function (key, vars = {}) {
+  const langOverride = document.documentElement.lang ? { lng: document.documentElement.lang } : {};
+
+  vars = {
+    ...vars,
+    ...langOverride,
+  }
+
+  return i18n.t(key, vars);
+}
+
+export { i18n };
