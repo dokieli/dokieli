@@ -7494,6 +7494,8 @@ console.log(reason);
           DO.U.openResource(iri, options);
         }
       });
+
+      openDocument.querySelector('#open-local-file').addEventListener('change', DO.U.openInputFile, false);
     },
 
     openResource: async function(iri, options) {
