@@ -538,7 +538,7 @@ export default {
   },
 
   MediaTypes: {
-    RDF: ['text/turtle', 'application/ld+json', 'application/activity+json', 'text/html', 'image/svg+xml', 'application/rdf+xml'],
+    RDF: ['text/turtle', 'application/ld+json', 'application/activity+json', 'text/html', 'application/rdf+xml', 'application/trig'],
 
     Binary: ['image/png', 'image/jpeg', 'image/gif', 'image/x-icon'],
 
