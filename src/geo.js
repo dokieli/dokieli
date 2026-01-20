@@ -22,20 +22,22 @@ const L = { ...leaflet, ...leafletGpx };
 import { fragmentFromString, generateAttributeId, convertToISO8601Duration } from './util.js'
 import { getAgentHTML, createDateHTML, selectArticleNode, setCopyToClipboard } from './doc.js'
 import { getResource } from './fetcher.js'
+import { i18n } from './i18n.js';
 
 let gpxTrkptDistance = 0;
 //FIXME: Update RDF properties, datatypes, and other information that's temporarily marked/being used with ex:FIXME- below in gpxtpx.
 //Extensions based on https://www8.garmin.com/xmlschemas/TrackPointExtensionv2.xsd
 const gpxtpx = {
-  'atemp': { 'label': 'Air temperature', 'unitLabel': 'degrees Celsius', 'property': 'ex:FIXME-atemp', 'datatype': 'xsd:double', 'xpathResultType': 'NUMBER_TYPE' },
-  'wtemp': { 'label': 'Water temperature', 'unitLabel': 'degrees Celsius', 'property': 'ex:FIXME-wtemp', 'datatype': 'xsd:double', 'xpathResultType': 'NUMBER_TYPE' },
-  'depth': { 'label': 'Depth', 'unitLabel': 'meters', 'property': 'qudt-unit:Meter', 'datatype': 'xsd:double', 'xpathResultType': 'NUMBER_TYPE' },
-  'hr': { 'label': 'Heart rate', 'unitLabel': 'beats per minute', 'property': 'qudt-unit:HeartBeatsPerMinute', 'datatype': 'xsd:unsignedByte', 'xpathResultType': 'NUMBER_TYPE' },
-  'cad': { 'label': 'Cadence', 'unitLabel': 'revolutions per minute', 'property': 'ex:FIXME-cadence', 'datatype': 'xsd:unsignedByte', 'xpathResultType': 'NUMBER_TYPE' },
-  'speed': { 'label': 'Speed', 'unitLabel': 'meters per second', 'property': 'schema:speed', 'datatype': 'xsd:double', 'xpathResultType': 'NUMBER_TYPE' },
-  'course': { 'label': 'Course', 'unitLabel': 'degrees', 'property': 'ex:FIXME-course', 'datatype': 'xsd:decimal', 'xpathResultType': 'NUMBER_TYPE' },
-  'bearing': { 'label': 'Bearing', 'unitLabel': 'degrees', 'property': 'ex:FIXME-bearing', 'datatype': 'xsd:decimal', 'xpathResultType': 'NUMBER_TYPE' },
+  'atemp': { 'label': 'measure.air-temperature.textContent', 'unitLabel': 'unit.degrees-celsius.textContent', 'property': 'ex:FIXME-atemp', 'datatype': 'xsd:double', 'xpathResultType': 'NUMBER_TYPE' },
+  'wtemp': { 'label': 'measure.water-temperature.textContent', 'unitLabel': 'unit.degrees-celsius.textContent', 'property': 'ex:FIXME-wtemp', 'datatype': 'xsd:double', 'xpathResultType': 'NUMBER_TYPE' },
+  'depth': { 'label': 'measure.depth.textContent', 'unitLabel': 'unit.meters.textContent', 'property': 'qudt-unit:Meter', 'datatype': 'xsd:double', 'xpathResultType': 'NUMBER_TYPE' },
+  'hr': { 'label': 'measure.heart-rate.textContent', 'unitLabel': 'unit.beats-per-minute.textContent', 'property': 'qudt-unit:HeartBeatsPerMinute', 'datatype': 'xsd:unsignedByte', 'xpathResultType': 'NUMBER_TYPE' },
+  'cad': { 'label': 'measure.cadence.textContent', 'unitLabel': 'unit.revolutions-per-minute.textContent', 'property': 'ex:FIXME-cadence', 'datatype': 'xsd:unsignedByte', 'xpathResultType': 'NUMBER_TYPE' },
+  'speed': { 'label': 'measure.speed.textContent', 'unitLabel': 'unit.meters-per-second.textContent', 'property': 'schema:speed', 'datatype': 'xsd:double', 'xpathResultType': 'NUMBER_TYPE' },
+  'course': { 'label': 'measure.course.textContent', 'unitLabel': 'unit.degrees-angle.textContent', 'property': 'ex:FIXME-course', 'datatype': 'xsd:decimal', 'xpathResultType': 'NUMBER_TYPE' },
+  'bearing': { 'label': 'measure.bearing.textContent', 'unitLabel': 'unit.degrees-angle.textContent', 'property': 'ex:FIXME-bearing', 'datatype': 'xsd:decimal', 'xpathResultType': 'NUMBER_TYPE' },
 }
+
 
 //FIXME: It should perhaps act more like an insert/append as opposed to replacing the body.
 function generateGeoView(data) {
@@ -89,7 +91,7 @@ function generateGeoView(data) {
   
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     subdomains: 'abc',
-    attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
+    attribution: `${i18n.tDoc('geo.map-data.textContent')} &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> ${i18n.tDoc('geo.contributors.textContent')}, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a>`
   }).addTo(map);
   // var nexrad = L.tileLayer.wms("http://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi", {
   //     layers: 'nexrad-n0r-900913',
@@ -136,12 +138,12 @@ function generateGeoView(data) {
         var utc = date.toUTCString();
         movingPace = utc.substr(utc.indexOf(':') - 2, 8)
         
-        dtdd.push('<dt>Average pace</dt><dd>' + movingPace + ' per km</dd>');
+        dtdd.push(`<dt>${i18n.tDoc('measure.average-pace.textContent')}</dt><dd>${movingPace} / <abbr title="${i18n.tDoc('unit.km.abbr.title')}">${i18n.tDoc('unit.km.abbr.textContent')}</abbr></dd>`);
       }
       
       var averageHR = gpx.get_average_hr();
       if (averageHR) {
-        dtdd.push('<dt>Average heart rate</dt><dd>' + averageHR + ' bpm</dd>');
+        dtdd.push(`<dt>${i18n.tDoc('measure.average-heart-rate.textContent')}</dt><dd>${averageHR} <abbr title="${i18n.tDoc('unit.bpm.abbr.title')}">${i18n.tDoc('unit.bpm.abbr.textContent')}</abbr></dd>`);
       }
       
       // var distance = gpx.get_distance();
@@ -155,13 +157,13 @@ function generateGeoView(data) {
       
       var elevationGain = gpx.get_elevation_gain();
       if (elevationGain) {
-        dtdd.push('<dt>Elevation gain</dt><dd>' + parseFloat(elevationGain.toFixed(2)) + ' m</dd>');
+        dtdd.push(`<dt>${i18n.tDoc('measure.elevation-gain.textContent')}</dt><dd>${parseFloat(elevationGain.toFixed(2))} <abbr title="${i18n.tDoc('unit.m.abbr.title')}">${i18n.tDoc('unit.m.abbr.textContent')}</abbr></dd>`);
       }
       var elevationLoss = gpx.get_elevation_loss();
       if (elevationLoss) {
-        dtdd.push('<dt>Elevation lost</dt><dd>' + parseFloat(elevationLoss.toFixed(2)) + ' m</dd>');
+        dtdd.push(`<dt>${i18n.tDoc('measure.elevation-lost.textContent')}</dt><dd>${parseFloat(elevationLoss.toFixed(2))} <abbr title="${i18n.tDoc('unit.m.abbr.title')}">${i18n.tDoc('unit.m.abbr.textContent')}</abbr></dd>`);
       }
-      document.querySelector('tfoot > tr > td [typeof="schema:ExerciseAction"]').insertAdjacentHTML('beforeend', '                  ' + dtdd.join('\n                  '));
+      document.querySelector('tfoot > tr > td [typeof="schema:ExerciseAction"]').insertAdjacentHTML('beforeend', dtdd.join(''));
     }).addTo(map);
   
   // var mapTrackStart = L.divIcon({className: 'map-track-start'});
@@ -241,8 +243,8 @@ function getGPXActivityHTML(rootNode, contextNode, options) {
       setTimeout(() => {
         document.querySelector('[typeof="schema:ExerciseAction"]')
           .appendChild(fragmentFromString(`
-                    <dt>Place</dt>
-                    <dd><a href="https://www.wikidata.org/entity/${response.details.extratags.wikidata}" rel="schema:exerciseCourse">${response.reverse.features[0].properties.name}</a> (<a about="https://www.wikidata.org/entity/${response.details.extratags.wikidata}" rel="schema:hasMap" href="${data.metadataBoundsURL}">map</a>)</dd>
+                    <dt>${i18n.tDoc('geo.place.dt.textContent')}</dt>
+                    <dd><a href="https://www.wikidata.org/entity/${response.details.extratags.wikidata}" rel="schema:exerciseCourse">${response.reverse.features[0].properties.name}</a> (<a about="https://www.wikidata.org/entity/${response.details.extratags.wikidata}" rel="schema:hasMap" href="${data.metadataBoundsURL}">${i18n.tDoc('geo.map.a.textContent')}</a>)</dd>
                   `))
       }, 3000);
     });
@@ -282,12 +284,12 @@ function getGPXActivityHTML(rootNode, contextNode, options) {
   if (data['datasetPublisher']) {
     datasetPublisher = `
           <dl>
-            <dt>Publisher</dt>
+            <dt>${i18n.tDoc('geo.publisher.dt.textContent')}</dt>
             <dd rel="dcterms:publisher">${getAgentHTML({'omitImage': true})}</dd>
           </dl>`;
   }
 
-  var datasetPublished = createDateHTML({ 'id': 'dataset-published', 'property': 'schema:datePublished', 'title': 'Published' });
+  var datasetPublished = createDateHTML({ 'id': 'dataset-published', 'property': 'schema:datePublished' });
 
   //XXX: The user is not necessarily the performer of this activity! Is there a way to automatically find out?
   //TODO: as:origin, as:target
@@ -295,7 +297,7 @@ function getGPXActivityHTML(rootNode, contextNode, options) {
   if (Config.User.IRI) {
     performedBy = `
           <dl rel="schema:hasPart" resource="#activity" typeof="as:Travel">
-            <dt>Actor</dt>
+            <dt>${i18n.tDoc('geo.actor.dt.textContent')}</dt>
             <dd rel="as:actor">${getAgentHTML()}</dd>
           </dl>`;
   }
@@ -306,12 +308,12 @@ function getGPXActivityHTML(rootNode, contextNode, options) {
   Object.keys(gpxtpx).forEach(element => {
     if (options['gpxtpx'][element]) {
       tfootColSpan++;
-      gpxtpxTH.push(`<th rel="qb:component" resource="#component/${data.dataset}/measure/${element}" typeof="qb:ComponentSpecification"><span rel="qb:componentProperty" resource="${gpxtpx[element].property}" typeof="qb:MeasureProperty"><span property="skos:prefLabel" rel="rdfs:subPropertyOf" resource="sdmx-measure:obsValue">${gpxtpx[element].label}</span></span></th>`);
+      gpxtpxTH.push(`<th rel="qb:component" resource="#component/${data.dataset}/measure/${element}" typeof="qb:ComponentSpecification"><span rel="qb:componentProperty" resource="${gpxtpx[element].property}" typeof="qb:MeasureProperty"><span property="skos:prefLabel" rel="rdfs:subPropertyOf" resource="sdmx-measure:obsValue">${i18n.tDoc(gpxtpx[element].label)}</span></span></th>`);
 
       var p = gpxtpx[element].property;
       var propertyURI = Config.Prefixes[p.split(':')[0]] + p.split(':')[1];
 
-      gpxtpxLI.push(`<li><a href="${propertyURI}">${gpxtpx[element].label}</a> (${gpxtpx[element].unitLabel})</li>`);
+      gpxtpxLI.push(`<li><a href="${propertyURI}">${i18n.tDoc(gpxtpx[element].label)}</a> (${i18n.tDoc(gpxtpx[element].unitLabel)})</li>`);
     }
   })
   gpxtpxTH = gpxtpxTH.join('');
@@ -320,18 +322,18 @@ function getGPXActivityHTML(rootNode, contextNode, options) {
   var mapId = generateAttributeId();
   html = `
     <figure id="geo" rel="schema:hasPart" resource="#geo">
-      <figcaption>Activity at <a href="${data.metadataBoundsURL}">${data.metadataBounds}</a> .</figcaption>
+      <figcaption>${i18n.tDoc('geo.activity-at.figcaption.textContent')} <a href="${data.metadataBoundsURL}">${data.metadataBounds}</a> .</figcaption>
       <div class="do" id="${mapId}" typeof="schema:Map"></div>
       <details>
-        <summary>More details about GPS and extension data</summary>
+        <summary>${i18n.tDoc('geo.gps-details.summary.textContent')}</summary>
         <table id="cube/${data.dataset}">
-          <caption>Activity data at <a href="${data.metadataBoundsURL}">${data.metadataBounds}</a> .</caption>
+          <caption>${i18n.tDoc('geo.activity-data-at.figcaption.textContent')} <a href="${data.metadataBoundsURL}">${data.metadataBounds}</a> .</caption>
           <thead id="structure/${data.dataset}" rel="schema:hasPart" resource="#structure/${data.dataset}" typeof="qb:DataStructureDefinition">
             <tr>
-              <th rel="qb:component" resource="#component/${data.dataset}/dimension/time" typeof="qb:ComponentSpecification"><span rel="qb:componentProperty" resource="sdmx-dimension:timePeriod" typeof="qb:DimensionProperty"><span property="skos:prefLabel">Time Period</span></span></th>
-              <th rel="qb:component" resource="#component/${data.dataset}/measure/latitude" typeof="qb:ComponentSpecification"><span rel="qb:componentProperty" resource="wgs:lat" typeof="qb:MeasureProperty"><span property="skos:prefLabel" rel="rdfs:subPropertyOf" resource="sdmx-measure:obsValue">Latitude</span></span></th>
-              <th rel="qb:component" resource="#component/${data.dataset}/measure/longitude" typeof="qb:ComponentSpecification"><span rel="qb:componentProperty" resource="wgs:lon" typeof="qb:MeasureProperty"><span property="skos:prefLabel" rel="rdfs:subPropertyOf" resource="sdmx-measure:obsValue">Longitude</span></span></th>
-              <th rel="qb:component" resource="#component/${data.dataset}/measure/altitude" typeof="qb:ComponentSpecification"><span rel="qb:componentProperty" resource="wgs:alt" typeof="qb:MeasureProperty"><span property="skos:prefLabel" rel="rdfs:subPropertyOf" resource="sdmx-measure:obsValue">Altitude</span></span></th>
+              <th rel="qb:component" resource="#component/${data.dataset}/dimension/time" typeof="qb:ComponentSpecification"><span rel="qb:componentProperty" resource="sdmx-dimension:timePeriod" typeof="qb:DimensionProperty"><span property="skos:prefLabel">${i18n.tDoc('geo.time.span.textContent')}</span></span></th>
+              <th rel="qb:component" resource="#component/${data.dataset}/measure/latitude" typeof="qb:ComponentSpecification"><span rel="qb:componentProperty" resource="wgs:lat" typeof="qb:MeasureProperty"><span property="skos:prefLabel" rel="rdfs:subPropertyOf" resource="sdmx-measure:obsValue">${i18n.tDoc('geo.latitude.span.textContent')}</span></span></th>
+              <th rel="qb:component" resource="#component/${data.dataset}/measure/longitude" typeof="qb:ComponentSpecification"><span rel="qb:componentProperty" resource="wgs:lon" typeof="qb:MeasureProperty"><span property="skos:prefLabel" rel="rdfs:subPropertyOf" resource="sdmx-measure:obsValue">${i18n.tDoc('geo.longitude.span.textContent')}</span></span></th>
+              <th rel="qb:component" resource="#component/${data.dataset}/measure/altitude" typeof="qb:ComponentSpecification"><span rel="qb:componentProperty" resource="wgs:alt" typeof="qb:MeasureProperty"><span property="skos:prefLabel" rel="rdfs:subPropertyOf" resource="sdmx-measure:obsValue">${i18n.tDoc('geo.altitude.span.textContent')}</span></span></th>
 ${gpxtpxTH}
             </tr>
           </thead>`;
@@ -350,17 +352,17 @@ html += `
           <tfoot>
             <tr>
               <td about="#dataset/${data.dataset}" colspan="2">
-                <p><a href="#dataset/${data.dataset}">Dataset</a> <a href="#structure/${data.dataset}">structure</a>:</p>
+                <p><a href="#dataset/${data.dataset}">${i18n.tDoc('geo.dataset.a.textContent')}</a> <a href="#structure/${data.dataset}">${i18n.tDoc('geo.structure.a.textContent')}</a>:</p>
 
                 <dl>
-                  <dt>Dimensions</dt>
-                  <dd><a href="http://purl.org/linked-data/sdmx/2009/dimension#timePeriod">Time</a> (ISO 8601)</dd>
-                  <dt>Measures</dt>
+                  <dt>${i18n.tDoc('geo.dimensions.dt.textContent')}</dt>
+                  <dd><a href="http://purl.org/linked-data/sdmx/2009/dimension#timePeriod">${i18n.tDoc('geo.time.a.textContent')}</a> (ISO 8601)</dd>
+                  <dt>${i18n.tDoc('geo.measures.dt.textContent')}</dt>
                   <dd>
                     <ul>
-                      <li><a href="http://www.w3.org/2003/01/geo/wgs84_pos#lat">Latitude</a> (decimal degrees)</li>
-                      <li><a href="http://www.w3.org/2003/01/geo/wgs84_pos#lon">Longitude</a> (decimal degrees)</li>
-                      <li><a href="http://www.w3.org/2003/01/geo/wgs84_pos#alt">Altitude</a> (meters)</li>
+                      <li><a href="http://www.w3.org/2003/01/geo/wgs84_pos#lat">${i18n.tDoc('measure.latitude.textContent')}</a> (${i18n.tDoc('unit.decimal-degrees.textContent')})</li>
+                      <li><a href="http://www.w3.org/2003/01/geo/wgs84_pos#lon">${i18n.tDoc('measure.longitude.textContent')}</a> (${i18n.tDoc('unit.decimal-degrees.textContent')})</li>
+                      <li><a href="http://www.w3.org/2003/01/geo/wgs84_pos#alt">${i18n.tDoc('measure.altitude.textContent')}</a> (${i18n.tDoc('unit.meters.textContent')})</li>
 ${gpxtpxLI}
                     </ul>
                   </dd>
@@ -369,9 +371,9 @@ ${gpxtpxLI}
               </td>
               <td colspan="${tfootColSpan - 2}">
                 <dl about="#activity/${data.dataset}" typeof="schema:ExerciseAction">
-                  <dt>Distance</dt>
-                  <dd property="schema:distance">${roundValue(gpxTrkptDistance / 1000, 2)} km</dd>
-                  <dt>Time</dt>
+                  <dt>${i18n.tDoc('geo.distance.dt.title')}</dt>
+                  <dd property="schema:distance">${roundValue(gpxTrkptDistance / 1000, 2)} <abbr title="${i18n.tDoc('unit.km.abbr.title')}">${i18n.tDoc('unit.km.abbr.textContent')}</abbr></dd>
+                  <dt>${i18n.tDoc('geo.time.dt.title')}</dt>
                   <dd><time datatype="xsd:duration" datetime="${convertToISO8601Duration(data.duration)}" property="schema:activityDuration">${data.duration}</time></dd>
                 </dl>
               </td>
@@ -413,8 +415,8 @@ function getGPXtrkptHTML(rootNode, contextNode, data, options) {
               <td rel="sdmx-dimension:timePeriod" resource="gi:${data.timePeriod}">${data.time}</td>
               <td datatype="xsd:decimal" property="wgs:lat">${data.lat}</td>
               <td datatype="xsd:decimal" property="wgs:lon">${data.lon}</td>
-              <td datatype="xsd:decimal" property="wgs:alt">${data.ele}</td>` +
-getGPXextensionsHTML(rootNode, xR, data, options) + `
+              <td datatype="xsd:decimal" property="wgs:alt">${data.ele}</td>
+${getGPXextensionsHTML(rootNode, xR, data, options)}
               <td rel="qb:dataSet" resource="#dataset/${data.dataset}"></td>
             </tr>`;
 
