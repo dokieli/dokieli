@@ -6292,10 +6292,11 @@ console.log(reason);
       //TODO: This should be part of refactoring.
       var inputType = (id == 'location-generate-feed') ? 'checkbox' : 'radio';
 
-      return new Promise((resolve, reject) => {
-        document.getElementById(id + '-input').value = url;
+      document.getElementById(id + '-input').value = url;
 
+      return new Promise((resolve, reject) => {
         var msgs = document.getElementById(id).querySelectorAll('.response-message');
+
         for(var i = 0; i < msgs.length; i++){
           msgs[i].parentNode.removeChild(msgs[i]);
         }
@@ -7473,10 +7474,6 @@ console.log(reason);
       openDocument.addEventListener('click', function (e) {
         if (e.target.closest('button.close')) {
           document.querySelector('#document-do .resource-open').disabled = false;
-        }
-
-        if (e.target.closest('#open-local-file')){
-          e.target.addEventListener('change', DO.U.openInputFile, false);
         }
 
         if (e.target.closest('button.open')) {
