@@ -1057,7 +1057,7 @@ function setDate(rootNode, options) {
 function createDateHTML(options) {
   options = options || {};
 
-  var titleKey = ('id' in options) ? options.id.replace('document-', '') : 'created';
+  var titleKey = ('id' in options) ? options.id.replace(/^(document|dataset)-/, '') : 'created';
 
   var id = ('id' in options && options.id.length > 0) ? ' id="' + options.id + '"' : '';
 
@@ -1065,8 +1065,7 @@ function createDateHTML(options) {
 
   var datetime = ('datetime' in options) ? options.datetime.toISOString() : getDateTimeISO();
   // var datetimeLabel = datetime.substr(0, datetime.indexOf('T'));
-  const overrideOptions = document.documentElement.lang ? { lng: document.documentElement.lang } : {};
-  var datetimeLabel = i18n.t('datetime.time.textContent', { val: new Date(datetime), ...overrideOptions });
+  var datetimeLabel = i18n.tDoc('datetime.time.textContent', { val: new Date(datetime) });
 
   var time = ('property' in options)
     ? `<time content="${datetime}" datatype="xsd:dateTime" datetime="${datetime}" property="${options.property}">${datetimeLabel}</time>`
@@ -1074,7 +1073,7 @@ function createDateHTML(options) {
 
   var date = `
     <dl${c}${id}>
-      <dt>${i18n.t(`datetime.${titleKey}.dt.textContent`, overrideOptions)}</dt>
+      <dt>${i18n.tDoc(`datetime.${titleKey}.dt.textContent`)}</dt>
       <dd>${time}</dd>
     </dl>`;
 
