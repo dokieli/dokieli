@@ -49,8 +49,8 @@ Config['Translations'] = Object.keys(resources);
 // console.log(resources)
 
 const fallbackLng = {
-  'default': ['en'],
-
+  'default': ['en-GB'],
+  'en': ['en-GB'],
   'de-CH': ['fr', 'it'/*, 'rm'*/],
 }
 
