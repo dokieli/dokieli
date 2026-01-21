@@ -673,6 +673,8 @@ export default {
     nl: { name: "Dutch", sourceName: "Nederlands", dir: "ltr" },
     dz: { name: "Dzongkha", sourceName: "རྫོང་ཁ་", dir: "ltr" },
     en: { name: "English", sourceName: "English", dir: "ltr" },
+    'en-GB': { name: "English (United Kingdom)", sourceName: "English (United Kingdom)", dir: "ltr" },
+    'en-US': { name: "English (United States)", sourceName: "English (United States)", dir: "ltr" },
     eo: { name: "Esperanto", sourceName: "Esperanto", dir: "ltr" },
     et: { name: "Estonian", sourceName: "Eesti keel", dir: "ltr" },
     ee: { name: "Ewe", sourceName: "Èʋegbe", dir: "ltr" },
