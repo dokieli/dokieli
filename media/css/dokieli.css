@@ -1667,7 +1667,7 @@ cursor:default !important;
 width:auto;
 height:auto;
 margin-left:1em;
-margin-top:1.25em;
+margin-top:0.75em;
 }
 
 #document-menu section button .fa,
@@ -1677,17 +1677,20 @@ display:block;
 margin:0 auto 0.5em auto;
 }
 
-#user-info {
-margin-top:1em;
+#document-menu #user-info {
 display:inline-block;
 /*margin-left:0.75em;*/
 /*max-width:75%;*/
 position:relative;
+border-top:1px solid #ccc !important;
+border-bottom:1px solid #ccc !important;
+padding:1em 0;
+margin:1em 0;
 }
 #user-info > span {
 float:left;
 margin-left: 1.75em;
-max-width:75%;
+width:75%;
 /* min-height: 5.5em; */
 /*width:calc(100% - 1.75em);*/
 }
@@ -1852,7 +1855,8 @@ float:none;
 }
 
 #document-menu #ui-language {
-margin-top:0.25em;
+margin-top:5em;
+margin-bottom:0.5em;
 }
 #document-menu #ui-language label {
 display:none;
@@ -1860,7 +1864,7 @@ display:none;
 
 #document-menu #document-views > svg.fas,
 #document-menu #ui-language > svg.fas {
-margin:0 1em 0 2.5em;
+margin:0 1.75em 0 2em;
 vertical-align: middle;
 }
 
