@@ -1674,6 +1674,10 @@ fill: #080;
 transition: background-color 0.3s; */
 transform: scale(1.05);
 }
+#document-menu[dir="rtl"] section button:not([disabled]):hover svg,
+#document-menu[dir="rtl"] section button:not([disabled]):focus svg {
+transform: scaleX(-1) scale(1.05);
+}
 #document-menu section button[disabled] {
 color:#555 !important;
 background-color:#fff !important;
@@ -2000,6 +2004,21 @@ outline-offset: 5px;
 [dir="rtl"] #document-autosave span {
   right:4em;
   left:auto;
+}
+
+/* There is some meaning to the direction but it is mostly presentational and does not interfere with the concept.*/
+[dir="rtl"] svg.fa-bullhorn,
+[dir="rtl"] svg.fa-reply,
+[dir="rtl"] svg.fa-paper-plane,
+[dir="rtl"] svg.fa-external-link-alt,
+[dir="rtl"] svg.fa-scroll,
+[dir="rtl"] svg.fa-magic,
+[dir="rtl"] svg.fa-thumbs-up,
+[dir="rtl"] svg.fa-thumbs-down,
+[dir="rtl"] svg.fa-comment,
+[dir="rtl"] svg.fa-rocket,
+[dir="rtl"] svg.fa-sticky-note {
+transform: scaleX(-1);
 }
 
 .tabs nav {

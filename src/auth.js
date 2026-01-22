@@ -83,7 +83,7 @@ async function signOut() {
 
   updateButtons();
 
-  updateUILanguage(navigator.languages);
+  DO.U.updateUILanguage(navigator.languages);
 }
 
 
