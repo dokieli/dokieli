@@ -82,6 +82,8 @@ async function signOut() {
   }
 
   updateButtons();
+
+  updateUILanguage(navigator.languages);
 }
 
 
