@@ -1682,9 +1682,6 @@ display:inline-block;
 /*margin-left:0.75em;*/
 /*max-width:75%;*/
 position:relative;
-border-top:1px solid #ccc !important;
-border-bottom:1px solid #ccc !important;
-padding:1em 0;
 margin:1em 0;
 }
 #user-info > span {
