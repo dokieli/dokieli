@@ -121,6 +121,7 @@ export function getButtonHTML({
   const className = buttonClass ? ` class="${buttonClass}"` : '';
   const disabled = buttonDisabled ? ` disabled=""` : '';
   let icon = buttonIcons[button]?.icon;
+  let buttonDir = buttonIcons[button]?.dir;
   const rel = buttonRel ? ` rel="${buttonRel}"` : '';
   const resource = buttonResource ? ` resource="${buttonResource}"` : '';
   const type = buttonType ? ` type="${buttonType}"` : '';
@@ -139,7 +140,9 @@ export function getButtonHTML({
 
   const buttonContent = (!icon && !textContent) ? button : `${icon ? icon : ''} ${textContent ? `<span>${textContent}</span>` : ''}`;
 
-  return `<button${ariaLabel}${dataI18n}${className}${disabled}${rel}${resource}${title}${type}>${buttonContent}</button>`;
+  buttonDir = buttonDir ? ` dir="${buttonDir}"` : '';
+
+  return `<button${ariaLabel}${dataI18n}${className}${disabled}${rel}${resource}${title}${type}${buttonDir}>${buttonContent}</button>`;
 }
 
 
@@ -163,7 +166,8 @@ export const buttonIcons = {
     acc[heading] = {
       title: `heading level ${heading[1]}`,
       icon: `${Icon['.fas.fa-header']}`,
-      textContent: heading[1]
+      textContent: heading[1],
+      dir: "ltr"
     };
     return acc;
   }, {}),
