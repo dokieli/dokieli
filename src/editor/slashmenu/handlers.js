@@ -29,6 +29,12 @@ export function formHandlerLanguage(e) {
 
   const htmlString = createLanguageHTML(language, options);
 
+  const html = document.documentElement;
+
+  html.setAttribute('lang', language);
+  html.setAttribute('xml:lang', language);
+  html.setAttribute('dir', Config.Language[language].dir);
+
   this.replaceSelectionWithFragment(fragmentFromString(htmlString));
   this.hideMenu()
 }
