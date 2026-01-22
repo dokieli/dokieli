@@ -1710,6 +1710,9 @@ width:75%;
 /* min-height: 5.5em; */
 /*width:calc(100% - 1.75em);*/
 }
+#document-menu[dir="rtl"] #user-info > span {
+float:right;
+}
 #user-info img {
 display:block;
 float:none !important;
@@ -1854,6 +1857,9 @@ float: left !important;
 }
 #document-menu #user-info button.signin-user {
 float:left;
+}
+#document-menu[dir="rtl"] #user-info button.signin-user {
+float:right;
 }
 
 #document-menu .timemap dd {
