@@ -1661,9 +1661,9 @@ height: calc(100% - 4px);
 #document-menu section button:not([disabled]):focus {
 /* background-color:rgba(238, 255, 238, 0.1) !important;
 transition: background-color 0.3s; */
+cursor:pointer !important;
 color: #080 !important;
 transition: color 0.3s;
-cursor:pointer !important;
 transition: fill 0.3s;
 fill: #080;
 }
@@ -1674,8 +1674,32 @@ fill: #080;
 transition: background-color 0.3s; */
 transform: scale(1.05);
 }
-#document-menu[dir="rtl"] section button:not([disabled]):hover svg,
-#document-menu[dir="rtl"] section button:not([disabled]):focus svg {
+/* There is some meaning to the direction but it is mostly presentational and does not interfere with the concept.*/
+[dir="rtl"] svg.fa-bullhorn,
+[dir="rtl"] svg.fa-reply,
+[dir="rtl"] svg.fa-paper-plane,
+[dir="rtl"] svg.fa-external-link-alt,
+[dir="rtl"] svg.fa-scroll,
+[dir="rtl"] svg.fa-magic,
+[dir="rtl"] svg.fa-thumbs-up,
+[dir="rtl"] svg.fa-thumbs-down,
+[dir="rtl"] svg.fa-comment,
+[dir="rtl"] svg.fa-rocket,
+[dir="rtl"] svg.fa-sticky-note {
+transform: scaleX(-1);
+}
+
+#document-menu[dir="rtl"] button:not([disabled]):hover svg.fa-bullhorn,
+#document-menu[dir="rtl"] button:not([disabled]):hover svg.fa-reply,
+#document-menu[dir="rtl"] button:not([disabled]):hover svg.fa-paper-plane,
+#document-menu[dir="rtl"] button:not([disabled]):hover svg.fa-external-link-alt,
+#document-menu[dir="rtl"] button:not([disabled]):hover svg.fa-scroll,
+#document-menu[dir="rtl"] button:not([disabled]):hover svg.fa-magic,
+#document-menu[dir="rtl"] button:not([disabled]):hover svg.fa-thumbs-up,
+#document-menu[dir="rtl"] button:not([disabled]):hover svg.fa-thumbs-down,
+#document-menu[dir="rtl"] button:not([disabled]):hover svg.fa-comment,
+#document-menu[dir="rtl"] button:not([disabled]):hover svg.fa-rocket,
+#document-menu[dir="rtl"] button:not([disabled]):hover svg.fa-sticky-note {
 transform: scaleX(-1) scale(1.05);
 }
 #document-menu section button[disabled] {
@@ -2004,21 +2028,6 @@ outline-offset: 5px;
 [dir="rtl"] #document-autosave span {
   right:4em;
   left:auto;
-}
-
-/* There is some meaning to the direction but it is mostly presentational and does not interfere with the concept.*/
-[dir="rtl"] svg.fa-bullhorn,
-[dir="rtl"] svg.fa-reply,
-[dir="rtl"] svg.fa-paper-plane,
-[dir="rtl"] svg.fa-external-link-alt,
-[dir="rtl"] svg.fa-scroll,
-[dir="rtl"] svg.fa-magic,
-[dir="rtl"] svg.fa-thumbs-up,
-[dir="rtl"] svg.fa-thumbs-down,
-[dir="rtl"] svg.fa-comment,
-[dir="rtl"] svg.fa-rocket,
-[dir="rtl"] svg.fa-sticky-note {
-transform: scaleX(-1);
 }
 
 .tabs nav {
