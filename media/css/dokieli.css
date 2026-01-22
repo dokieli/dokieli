@@ -1864,8 +1864,13 @@ display:none;
 
 #document-menu #document-views > svg.fas,
 #document-menu #ui-language > svg.fas {
-margin:0 1.75em 0 2em;
-vertical-align: middle;
+  vertical-align: middle;
+}
+#document-menu #ui-language > svg.fas {
+margin:0 0.5em 0 2.25em;
+}
+#document-menu #document-views > svg.fas {
+margin:0 1em 0 2.5em;
 }
 
 #document-menu .editor-disable,
