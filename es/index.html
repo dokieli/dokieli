@@ -1,0 +1,339 @@
+
+<!DOCTYPE html>
+<html lang="es" xml:lang="es" xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>dokieli</title>
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
+    <link href="media/css/basic.css" media="all" rel="stylesheet" title="Basic" />
+    <link href="media/css/dokieli.css" media="all" rel="stylesheet" />
+    <script src="scripts/dokieli.js"></script>
+  </head>
+  <body about="" class="do-site" id="home" prefix="rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns# rdfs: http://www.w3.org/2000/01/rdf-schema# owl: http://www.w3.org/2002/07/owl# xsd: http://www.w3.org/2001/XMLSchema# rdfa: http://www.w3.org/ns/rdfa# dcterms: http://purl.org/dc/terms/ dctypes: http://purl.org/dc/dcmitype/ foaf: http://xmlns.com/foaf/0.1/ pimspace: http://www.w3.org/ns/pim/space# skos: http://www.w3.org/2004/02/skos/core# prov: http://www.w3.org/ns/prov# mem: http://mementoweb.org/ns# qb: http://purl.org/linked-data/cube# schema: http://schema.org/ void: http://rdfs.org/ns/void# rsa: http://www.w3.org/ns/auth/rsa# cert: http://www.w3.org/ns/auth/cert# wgs: http://www.w3.org/2003/01/geo/wgs84_pos# bibo: http://purl.org/ontology/bibo/ sioc: http://rdfs.org/sioc/ns# doap: http://usefulinc.com/ns/doap# dbr: http://dbpedia.org/resource/ dbp: http://dbpedia.org/property/ sio: http://semanticscience.org/resource/ opmw: http://www.opmw.org/ontology/ deo: http://purl.org/spar/deo/ doco: http://purl.org/spar/doco/ cito: http://purl.org/spar/cito/ fabio: http://purl.org/spar/fabio/ oa: http://www.w3.org/ns/oa# as: https://www.w3.org/ns/activitystreams# ldp: http://www.w3.org/ns/ldp# solid: http://www.w3.org/ns/solid/terms# acl: http://www.w3.org/ns/auth/acl# earl: http://www.w3.org/ns/earl# spec: http://www.w3.org/ns/spec# odrl: http://www.w3.org/ns/odrl/2/ dio: https://w3id.org/dio# rel: https://www.w3.org/ns/iana/link-relations/relation#" typeof="schema:CreativeWork prov:Entity">
+    <header>
+      <address><a href="/"><img alt="dokieli logo" height="64" src="media/images/logo.png" width="64"><span>dokieli</span></a></address>
+      <nav>
+        <ul>
+          <li><a href="docs">Documentación</a></li>
+          <li><a href="https://git.dokie.li/">Fuente</a></li>
+        </ul>
+      </nav>
+    </header>
+    <main>
+      <article about="" typeof="schema:Article">
+        <h1 property="schema:name">dokieli</h1>
+        <div datatype="rdf:HTML" property="schema:description">
+          <p id="summary" property="schema:summary">dokieli es un editor del lado del cliente para la publicación descentralizada de artículos, anotaciones e interacciones sociales.</p>
+          <section id="introduction" inlist="" rel="schema:hasPart" resource="#introduction">
+            <h2 property="schema:name">Introducción</h2>
+            <div datatype="rdf:HTML" property="schema:description">
+              <p>dokieli permite a las personas y comunidades compartir, publicar y anotar artículos utilizando sus identidades y almacenamiento preferidos, todo bajo su control. Todo el contenido producido por dokieli se puede utilizar con otras aplicaciones que cumplan con los estándares, por lo que siempre tienes la libertad de cambiar a otra aplicación y llevarte tu contenido contigo.</p>
+              <p about="" rel="schema:potentialAction">Esta página web es un artículo de dokieli. <a href="#document-menu" typeof="schema:ActivateAction">¡Pruébelo ahora!</a></p>
+            </div>
+          </section>
+          <p class="do-callout">dokieli habilita la dimensión <em>de escritura</em> de la web de lectura y escritura.</p>
+          <section id="features" inlist="" rel="schema:hasPart" resource="#features">
+            <h2 property="schema:name">Características</h2>
+            <div datatype="rdf:HTML" property="schema:description">
+              <ul>
+                <li>
+                  <h3>Compartir</h3>
+                  <figure id="figure-dokieli-share" rel="schema:video" resource="#figure-dokieli-share">
+                    <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-share.jpg" preload="none" resource="#figure-dokieli-share" typeof="schema:VideoObject" width="800">
+                      <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-share.webm" type="video/webm" />
+                    </video>
+                    <figcaption><a href="https://dokie.li/media/video/dokieli-share.webm">Vídeo</a> de dokieli Compartir [<time datatype="xsd:duration" datetime="PT22S" property="schema:duration">22s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                  </figure>
+                  <p><a href="https://dokie.li/docs#feature-share">Comparte</a> artículos o partes específicas con tus contactos o grupos.</p>
+                </li>
+                <li>
+                  <h3>Anotaciones</h3>
+                  <figure id="figure-dokieli-annotation" rel="schema:video" resource="#figure-dokieli-annotation">
+                    <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-annotation.jpg" preload="none" resource="#figure-dokieli-annotation" typeof="schema:VideoObject" width="800">
+                      <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-annotation.webm" type="video/webm" />
+                    </video>
+                    <figcaption><a href="https://dokie.li/media/video/dokieli-annotation.webm">Vídeo</a> de dokieli Web Annotation [<time datatype="xsd:duration" datetime="PT29S" property="schema:duration">29s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                  </figure>
+                  <p><a href="https://dokie.li/docs#annotation">Anote</a> artículos con comentarios, marcadores, resaltados y mucho más.</p>
+                </li>
+                <li>
+                  <h3>Citas</h3>
+                  <figure id="figure-dokieli-citation" rel="schema:hasPart" resource="#figure-dokieli-citation">
+                    <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-citation.jpg" preload="none" resource="#figure-dokieli-citation" typeof="schema:VideoObject" width="800">
+                      <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-citation.webm" type="video/webm" />
+                    </video>
+                    <figcaption><a href="https://dokie.li/media/video/dokieli-citation.webm">Vídeo</a> de citas semánticas en línea y notificaciones en dokieli [<time datatype="xsd:duration" datetime="PT40S" property="schema:duration">40s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                  </figure>
+                  <p>Añada <a href="https://dokie.li/docs#feature-footnotes-citations">citas</a> contextuales sólidas y notifique a las entidades citadas.</p>
+                </li>
+                <li>
+                  <h3>Datos geográficos y estadísticos</h3>
+                  <figure id="figure-dokieli-geo-stats" rel="schema:video" resource="#figure-dokieli-geo-stats">
+                    <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-geo-stats.jpg" preload="none" resource="#figure-dokieli-geo-stats" typeof="schema:VideoObject" width="800">
+                      <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-geo-stats.webm" type="video/webm" />
+                    </video>
+                    <figcaption><a href="https://dokie.li/media/video/dokieli-geo-stats.webm">Vídeo</a> de importación y visualización de datos geográficos y estadísticos en dokieli [<time datatype="xsd:duration" datetime="PT14S" property="schema:duration">14s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                  </figure>
+                  <p>Mejora tus actividades al aire libre y tus historias importando y mostrando <a href="https://dokie.li/docs#geo-stats">mapas</a> con estadísticas detalladas de GPS, métricas de salud y otra información.</p>
+                </li>
+                <li>
+                  <h3>Gráficos en línea</h3>
+                  <figure id="figure-dokieli-sparqlines" rel="schema:video" resource="#figure-dokieli-sparqlines">
+                    <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-sparqlines.jpg" preload="none" resource="#figure-dokieli-sparqlines" typeof="schema:VideoObject" width="800">
+                      <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-sparqlines.webm" type="video/webm" />
+                    </video>
+                    <figcaption><a href="https://dokie.li/media/video/dokieli-sparqlines.webm">Vídeo</a> de la interacción de Sparqlines en dokieli [<time datatype="xsd:duration" datetime="PT25S" property="schema:duration">25s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                  </figure>
+                  <p>Busque datos estadísticos y muestre <a href="https://dokie.li/docs#feature-interactive-embeddable-objects">gráficos en línea</a> para respaldar argumentos sólidos y un periodismo de datos verificable.</p>
+                </li>
+                <li>
+                  <h3>Interacciones y actividades</h3>
+                  <figure id="figure-dokieli-notifications" rel="schema:video" resource="#figure-dokieli-notifications">
+                    <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-notifications.jpg" preload="none" resource="#figure-dokieli-notifications" typeof="schema:VideoObject" width="800">
+                      <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-notifications.webm" type="video/webm" />
+                    </video>
+                    <figcaption><a href="https://dokie.li/media/video/dokieli-notifications.webm">Vídeo</a> de en dokieli [<time datatype="xsd:duration" datetime="PT17S" property="schema:duration">15s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                  </figure>
+                  <p>Vea sus propias <a href="https://dokie.li/docs#feature-notifications">interacciones</a> y las de sus contactos <a href="https://dokie.li/docs#feature-notifications">en documentos</a>, como comentarios, anotaciones, reacciones y marcadores.</p>
+                </li>
+                <li>
+                  <h3>Enlaces archivados y robustos</h3>
+                  <figure id="figure-dokieli-robustify-links" rel="schema:video" resource="#figure-dokieli-robustify-links">
+                    <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-robustify-links.jpg" preload="none" resource="#figure-dokieli-robustify-links" typeof="schema:VideoObject" width="800">
+                      <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-robustify-links.webm" type="video/webm" />
+                    </video>
+                    <figcaption><a href="https://dokie.li/media/video/dokieli-robustify-links.webm">Vídeo</a> de enlaces robustify en dokieli [<time datatype="xsd:duration" datetime="PT19S" property="schema:duration">19s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                  </figure>
+                  <p><a href="https://dokie.li/docs#feature-robustify-links">Haga que los enlaces sean más resistentes</a> a los cambios y desapariciones, asegurándose de que conservan el contexto, el significado y la integridad del contenido.</p>
+                </li>
+                <li>
+                  <h3>Especificaciones técnicas</h3>
+                  <figure id="figure-dokieli-spec-conformance" rel="schema:video" resource="#figure-dokieli-spec-conformance">
+                    <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-spec-conformance.jpg" preload="none" resource="#figure-dokieli-spec-conformance" typeof="schema:VideoObject" width="800">
+                      <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-spec-conformance.webm" type="video/webm" />
+                    </video>
+                    <figcaption><a href="https://dokie.li/media/video/dokieli-spec-conformance.webm">Vídeo</a> de en dokieli [<time datatype="xsd:duration" datetime="PT19S" property="schema:duration">19s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                  </figure>
+                  <p>Redacta <a href="https://dokie.li/docs#feature-requirements">especificaciones</a> técnicas, consulta los requisitos de conformidad y comprueba la cobertura de las pruebas.</p>
+                </li>
+                <li>
+                  <h3>Derechos digitales</h3>
+                  <figure id="figure-dokieli-odrl-storage-description" rel="schema:video" resource="#figure-dokieli-odrl-storage-description">
+                    <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-odrl-storage-description.jpg" preload="none" resource="#figure-dokieli-odrl-storage-description" typeof="schema:VideoObject" width="800">
+                      <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-odrl-storage-description.webm" type="video/webm" />
+                    </video>
+                    <figcaption><a href="https://dokie.li/media/video/dokieli-odrl-storage-description.webm">Vídeo</a> de ODRL en dokieli [<time datatype="xsd:duration" datetime="PT12S" property="schema:duration">12s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                  </figure>
+                  <p>Compruebe la compatibilidad de <a href="https://dokie.li/docs#storage-details">las políticas</a> de datos de un almacenamiento con sus políticas preferidas.</p>
+                </li>
+                <li>
+                  <h3>Fuentes web</h3>
+                  <figure id="figure-dokieli-generate-feed" rel="schema:video" resource="#figure-dokieli-generate-feed">
+                    <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-generate-feed.jpg" preload="none" resource="#figure-dokieli-generate-feed" typeof="schema:VideoObject" width="800">
+                      <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-generate-feed.webm" type="video/webm" />
+                    </video>
+                    <figcaption><a href="https://dokie.li/media/video/dokieli-generate-feed.webm">Vídeo</a> de la generación y publicación de feeds web en dokieli [<time datatype="xsd:duration" datetime="PT9S" property="schema:duration">9s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                  </figure>
+                  <p>Genere y publique <a href="https://dokie.li/docs#feature-generate-feed">fuentes web</a> de sus artículos.</p>
+                </li>
+                <li>
+                  <h3>Solicitud de acceso</h3>
+                  <figure id="figure-dokieli-access-request" rel="schema:video" resource="#figure-dokieli-access-request">
+                    <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-access-request.jpg" preload="none" resource="#figure-dokieli-access-request" typeof="schema:VideoObject" width="800">
+                      <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-access-request.webm" type="video/webm" />
+                    </video>
+                    <figcaption><a href="https://dokie.li/media/video/dokieli-access-request.webm">Vídeo</a> de solicitud de acceso en dokieli [<time datatype="xsd:duration" datetime="PT30S" property="schema:duration">30s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                  </figure>
+                  <p>Solicite acceso a documentos y datos.</p>
+                </li>
+                <li>
+                  <h3>Ocupación de la audiencia</h3>
+                  <figure id="figure-dokieli-audience-occupation" rel="schema:video" resource="#figure-dokieli-audience-occupation">
+                    <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-audience-occupation.jpg" preload="none" resource="#figure-dokieli-audience-occupation" typeof="schema:VideoObject" width="800">
+                      <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-audience-occupation.webm" type="video/webm" />
+                    </video>
+                    <figcaption><a href="https://dokie.li/media/video/dokieli-audience-occupation.webm">Vídeo</a> de en dokieli [<time datatype="xsd:duration" datetime="PT17S" property="schema:duration">17s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                  </figure>
+                  <p>Empareje la audiencia de un artículo con las ocupaciones de su CV y reciba notificaciones sobre información de su interés.</p>
+                </li>
+              </ul>
+              <p>Véase también <a href="https://dokie.li/docs#features" rel="rdfs:seeAlso">características</a> y <a href="https://dokie.li/docs#roadmap" rel="rdfs:seeAlso">hoja de ruta</a>.</p>
+            </div>
+          </section>
+          <p class="do-callout">Crea, conecta y comparte tus ideas.</p>
+          <section id="for-everyone" inlist="" rel="schema:hasPart" resource="#for-everyone">
+            <h2 property="schema:name">Para todos</h2>
+            <div datatype="rdf:HTML" property="schema:description">
+              <ul rel="schema:audience">
+                <li>
+                  <h3>Lectores</h3>
+                  <p><svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><path d="M160 96a96 96 0 1 1 192 0A96 96 0 1 1 160 96zm80 152l0 264-48.4-24.2c-20.9-10.4-43.5-17-66.8-19.3l-96-9.6C12.5 457.2 0 443.5 0 427L0 224c0-17.7 14.3-32 32-32l30.3 0c63.6 0 125.6 19.6 177.7 56zm32 264l0-264c52.1-36.4 114.1-56 177.7-56l30.3 0c17.7 0 32 14.3 32 32l0 203c0 16.4-12.5 30.2-28.8 31.8l-96 9.6c-23.2 2.3-45.9 8.9-66.8 19.3L272 512z"></path></svg> Mejora tu experiencia de lectura en la web con herramientas como anotaciones, marcadores, interacciones sociales, comentarios y mucho más.</p>
+                </li>
+                <li>
+                  <h3>Investigadores</h3>
+                  <p><svg viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><path d="M288 0L160 0 128 0C110.3 0 96 14.3 96 32s14.3 32 32 32l0 132.8c0 11.8-3.3 23.5-9.5 33.5L10.3 406.2C3.6 417.2 0 429.7 0 442.6C0 480.9 31.1 512 69.4 512l309.2 0c38.3 0 69.4-31.1 69.4-69.4c0-12.8-3.6-25.4-10.3-36.4L329.5 230.4c-6.2-10.1-9.5-21.7-9.5-33.5L320 64c17.7 0 32-14.3 32-32s-14.3-32-32-32L288 0zM192 196.8L192 64l64 0 0 132.8c0 23.7 6.6 46.9 19 67.1L309.5 320l-171 0L173 263.9c12.4-20.2 19-43.4 19-67.1z"></path></svg> Utiliza herramientas de anotación y citación para apoyar la comunicación de la investigación, los datos científicos y los procesos de revisión.</p>
+                </li>
+                <li>
+                  <h3>Periodistas</h3>
+                  <p><svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><path d="M168 80c-13.3 0-24 10.7-24 24l0 304c0 8.4-1.4 16.5-4.1 24L440 432c13.3 0 24-10.7 24-24l0-304c0-13.3-10.7-24-24-24L168 80zM72 480c-39.8 0-72-32.2-72-72L0 112C0 98.7 10.7 88 24 88s24 10.7 24 24l0 296c0 13.3 10.7 24 24 24s24-10.7 24-24l0-304c0-39.8 32.2-72 72-72l272 0c39.8 0 72 32.2 72 72l0 304c0 39.8-32.2 72-72 72L72 480zM176 136c0-13.3 10.7-24 24-24l96 0c13.3 0 24 10.7 24 24l0 80c0 13.3-10.7 24-24 24l-96 0c-13.3 0-24-10.7-24-24l0-80zm200-24l32 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-32 0c-13.3 0-24-10.7-24-24s10.7-24 24-24zm0 80l32 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-32 0c-13.3 0-24-10.7-24-24s10.7-24 24-24zM200 272l208 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-208 0c-13.3 0-24-10.7-24-24s10.7-24 24-24zm0 80l208 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-208 0c-13.3 0-24-10.7-24-24s10.7-24 24-24z"></path></svg> Verifique datos, cite fuentes y archive instantáneas para realizar reportajes y referencias precisos y fiables.</p>
+                </li>
+                <li>
+                  <h3>Educadores y conferenciantes</h3>
+                  <p><svg viewbox="0 0 384 512" xmlns="http://www.w3.org/2000/svg"><path d="M192 0C139 0 96 43 96 96l0 160c0 53 43 96 96 96s96-43 96-96l0-160c0-53-43-96-96-96zM64 216c0-13.3-10.7-24-24-24s-24 10.7-24 24l0 40c0 89.1 66.2 162.7 152 174.4l0 33.6-48 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l72 0 72 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-48 0 0-33.6c85.8-11.7 152-85.3 152-174.4l0-40c0-13.3-10.7-24-24-24s-24 10.7-24 24l0 40c0 70.7-57.3 128-128 128s-128-57.3-128-128l0-40z"></path></svg> Crean materiales de aprendizaje interactivos y comparten recursos para una enseñanza eficaz.</p>
+                </li>
+                <li>
+                  <h3>Blogueros y creadores de contenido</h3>
+                  <p><svg viewbox="0 0 576 512" xmlns="http://www.w3.org/2000/svg"><path d="M64 64C28.7 64 0 92.7 0 128L0 384c0 35.3 28.7 64 64 64l448 0c35.3 0 64-28.7 64-64l0-256c0-35.3-28.7-64-64-64L64 64zm16 64l32 0c8.8 0 16 7.2 16 16l0 32c0 8.8-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16l0-32c0-8.8 7.2-16 16-16zM64 240c0-8.8 7.2-16 16-16l32 0c8.8 0 16 7.2 16 16l0 32c0 8.8-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16l0-32zm16 80l32 0c8.8 0 16 7.2 16 16l0 32c0 8.8-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16l0-32c0-8.8 7.2-16 16-16zm80-176c0-8.8 7.2-16 16-16l32 0c8.8 0 16 7.2 16 16l0 32c0 8.8-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16l0-32zm16 80l32 0c8.8 0 16 7.2 16 16l0 32c0 8.8-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16l0-32c0-8.8 7.2-16 16-16zM160 336c0-8.8 7.2-16 16-16l224 0c8.8 0 16 7.2 16 16l0 32c0 8.8-7.2 16-16 16l-224 0c-8.8 0-16-7.2-16-16l0-32zM272 128l32 0c8.8 0 16 7.2 16 16l0 32c0 8.8-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16l0-32c0-8.8 7.2-16 16-16zM256 240c0-8.8 7.2-16 16-16l32 0c8.8 0 16 7.2 16 16l0 32c0 8.8-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16l0-32zM368 128l32 0c8.8 0 16 7.2 16 16l0 32c0 8.8-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16l0-32c0-8.8 7.2-16 16-16zM352 240c0-8.8 7.2-16 16-16l32 0c8.8 0 16 7.2 16 16l0 32c0 8.8-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16l0-32zM464 128l32 0c8.8 0 16 7.2 16 16l0 32c0 8.8-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16l0-32c0-8.8 7.2-16 16-16zM448 240c0-8.8 7.2-16 16-16l32 0c8.8 0 16 7.2 16 16l0 32c0 8.8-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16l0-32zm16 80l32 0c8.8 0 16 7.2 16 16l0 32c0 8.8-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16l0-32c0-8.8 7.2-16 16-16z"></path></svg> Mejora las entradas de tu blog con citas fiables y contenido atractivo, como mapas, opiniones de expertos para tus reseñas, información nutricional para tus recetas, generación de feeds web y mucho más.</p>
+                </li>
+                <li>
+                  <h3>Autores técnicos</h3>
+                  <p><svg viewbox="0 0 384 512" xmlns="http://www.w3.org/2000/svg"><path d="M64 464c-8.8 0-16-7.2-16-16L48 64c0-8.8 7.2-16 16-16l160 0 0 80c0 17.7 14.3 32 32 32l80 0 0 288c0 8.8-7.2 16-16 16L64 464zM64 0C28.7 0 0 28.7 0 64L0 448c0 35.3 28.7 64 64 64l256 0c35.3 0 64-28.7 64-64l0-293.5c0-17-6.7-33.3-18.7-45.3L274.7 18.7C262.7 6.7 246.5 0 229.5 0L64 0zm97 289c9.4-9.4 9.4-24.6 0-33.9s-24.6-9.4-33.9 0L79 303c-9.4 9.4-9.4 24.6 0 33.9l48 48c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-31-31 31-31zM257 255c-9.4-9.4-24.6-9.4-33.9 0s-9.4 24.6 0 33.9l31 31-31 31c-9.4 9.4-9.4 24.6 0 33.9s24.6 9.4 33.9 0l48-48c9.4-9.4 9.4-24.6 0-33.9l-48-48z"></path></svg> Redactan especificaciones técnicas, revisan los requisitos de conformidad y comprueban la cobertura de las pruebas.</p>
+                </li>
+                <li>
+                  <h3>Desarrolladores y tecnólogos</h3>
+                  <p><svg viewbox="0 0 640 512" xmlns="http://www.w3.org/2000/svg"><path d="M392.8 1.2c-17-4.9-34.7 5-39.6 22l-128 448c-4.9 17 5 34.7 22 39.6s34.7-5 39.6-22l128-448c4.9-17-5-34.7-22-39.6zm80.6 120.1c-12.5 12.5-12.5 32.8 0 45.3L562.7 256l-89.4 89.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l112-112c12.5-12.5 12.5-32.8 0-45.3l-112-112c-12.5-12.5-32.8-12.5-45.3 0zm-306.7 0c-12.5-12.5-32.8-12.5-45.3 0l-112 112c-12.5 12.5-12.5 32.8 0 45.3l112 112c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L77.3 256l89.4-89.4c12.5-12.5 12.5-32.8 0-45.3z"></path></svg> Redactan documentación técnica, tutoriales y flujos de trabajo.</p>
+                </li>
+              </ul>
+            </div>
+          </section>
+          <p class="do-callout">dokieli es un proyecto de código abierto que utiliza estándares web abiertos.</p>
+          <section id="get-involved" inlist="" rel="schema:hasPart" resource="#get-involved">
+            <h2 property="schema:name">Participa</h2>
+            <div datatype="rdf:HTML" property="schema:description">
+              <ul>
+                <li>
+                  <h3>Comunidad</h3>
+                  <p><svg viewbox="0 0 640 512" xmlns="http://www.w3.org/2000/svg"><path d="M335.5 4l288 160c15.4 8.6 21 28.1 12.4 43.5s-28.1 21-43.5 12.4L320 68.6 47.5 220c-15.4 8.6-34.9 3-43.5-12.4s-3-34.9 12.4-43.5L304.5 4c9.7-5.4 21.4-5.4 31.1 0zM320 160a40 40 0 1 1 0 80 40 40 0 1 1 0-80zM144 256a40 40 0 1 1 0 80 40 40 0 1 1 0-80zm312 40a40 40 0 1 1 80 0 40 40 0 1 1 -80 0zM226.9 491.4L200 441.5l0 38.5c0 17.7-14.3 32-32 32l-48 0c-17.7 0-32-14.3-32-32l0-38.5L61.1 491.4c-6.3 11.7-20.8 16-32.5 9.8s-16-20.8-9.8-32.5l37.9-70.3c15.3-28.5 45.1-46.3 77.5-46.3l19.5 0c16.3 0 31.9 4.5 45.4 12.6l33.6-62.3c15.3-28.5 45.1-46.3 77.5-46.3l19.5 0c32.4 0 62.1 17.8 77.5 46.3l33.6 62.3c13.5-8.1 29.1-12.6 45.4-12.6l19.5 0c32.4 0 62.1 17.8 77.5 46.3l37.9 70.3c6.3 11.7 1.9 26.2-9.8 32.5s-26.2 1.9-32.5-9.8L552 441.5l0 38.5c0 17.7-14.3 32-32 32l-48 0c-17.7 0-32-14.3-32-32l0-38.5-26.9 49.9c-6.3 11.7-20.8 16-32.5 9.8s-16-20.8-9.8-32.5l36.3-67.5c-1.7-1.7-3.2-3.6-4.3-5.8L376 345.5l0 54.5c0 17.7-14.3 32-32 32l-48 0c-17.7 0-32-14.3-32-32l0-54.5-26.9 49.9c-1.2 2.2-2.6 4.1-4.3 5.8l36.3 67.5c6.3 11.7 1.9 26.2-9.8 32.5s-26.2 1.9-32.5-9.8z"></path></svg> ¡Únete a la diversión! Conectemos en <a href="https://matrix.to/#/%23dokieli:matrix.org">el chat</a> y colaboremos en <a href="https://git.dokie.li/">el código</a>.</p>
+                </li>
+                <li>
+                  <h3>Apoya el proyecto</h3>
+                  <p><svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><path d="M512 32c0 113.6-84.6 207.5-194.2 222c-7.1-53.4-30.6-101.6-65.3-139.3C290.8 46.3 364 0 448 0l32 0c17.7 0 32 14.3 32 32zM0 96C0 78.3 14.3 64 32 64l32 0c123.7 0 224 100.3 224 224l0 32 0 160c0 17.7-14.3 32-32 32s-32-14.3-32-32l0-160C100.3 320 0 219.7 0 96z"></path></svg> Ayuda a que el proyecto crezca patrocinándolo en <a href="https://opencollective.com/dokieli">Open Collective</a> o ponte en contacto con nosotros.</p>
+                </li>
+              </ul>
+            </div>
+          </section>
+          <section id="supporters" inlist="" rel="schema:hasPart" resource="#supporters">
+            <h2 property="schema:name">Colaboradores</h2>
+            <div datatype="rdf:HTML" property="schema:description">
+              <ul>
+                <li><a href="https://nlnet.nl/"><img alt="NLnet logo" height="64" src="media/images/nlnet.svg"><span>Fundación NLnet</span></a> <span><time>2024-02–presente</time></span></li>
+              </ul>
+            </div>
+          </section>
+        </div>
+      </article>
+    </main>
+    <footer>
+      <details>
+        <summary>Más detalles sobre el proyecto dokieli</summary>
+        <dl about="#i" id="i" typeof="doap:Project">
+          <dt>Nombre</dt>
+          <dd lang="" property="doap:name" xml:lang="">dokieli</dd>
+          <dt>Descripción</dt>
+          <dd property="doap:shortdesc">dokieli es un editor del lado del cliente para la publicación descentralizada de artículos, anotaciones e interacciones sociales.</dd>
+          <dt>Página web</dt>
+          <dd><a href="https://dokie.li/" rel="doap:homepage">https://dokie.li/</a></dd>
+          <dt>Documentación</dt>
+          <dd><a href="https://dokie.li/docs" rel="rdfs:seeAlso">https://dokie.li/docs</a></dd>
+          <dt id="categories">Categorías</dt>
+          <dd>
+            <ul rel="doap:category">
+              <li><a href="http://www.wikidata.org/entity/Q2463207">Sistema de autoría</a></li>
+              <li><a href="http://www.wikidata.org/entity/Q188961">Descentralización</a></li>
+              <li><a href="http://www.wikidata.org/entity/Q515701">Datos enlazados</a></li>
+              <li><a href="http://www.wikidata.org/entity/Q3962191">Sistema de notificaciones</a></li>
+              <li><a href="http://www.wikidata.org/entity/Q2724244">Web social</a></li>
+              <li><a href="http://www.wikidata.org/entity/Q7978558">Anotación web</a></li>
+              <li><a href="http://www.wikidata.org/entity/Q1153289">Estándares web</a></li>
+            </ul>
+          </dd>
+          <dt id="audience">Público</dt>
+          <dd>
+            <ul rel="schema:audience">
+              <li><a href="http://www.wikidata.org/entity/Q8246794">Blogueros</a></li>
+              <li><a href="http://www.wikidata.org/entity/Q109459317">Creadores de contenido</a></li>
+              <li><a href="http://www.wikidata.org/entity/Q183888">Desarrolladores</a></li>
+              <li><a href="http://www.wikidata.org/entity/Q37226">Educadores</a></li>
+              <li><a href="http://www.wikidata.org/entity/Q1930187">Periodistas</a></li>
+              <li><a href="http://www.wikidata.org/entity/Q26899865">Lectores</a></li>
+              <li><a href="http://www.wikidata.org/entity/Q1650915">Investigadores</a></li>
+              <li><a href="http://www.wikidata.org/entity/Q12859263">Ponentes</a></li>
+              <li><a href="http://www.wikidata.org/entity/Q1568338">Autores técnicos</a></li>
+              <li><a href="http://www.wikidata.org/entity/Q12376667">Tecnólogos</a></li>
+            </ul>
+          </dd>
+          <dt id="platform">Plataforma</dt>
+          <dd><a href="http://www.wikidata.org/entity/Q6368" rel="doap:platform">Navegador web</a></dd>
+          <dt id="licenses">Licencias</dt>
+          <dd>
+            <dl rel="doap:license">
+              <dt>Código</dt>
+              <dd><a href="http://www.apache.org/licenses/LICENSE-2.0">Licencia Apache, versión 2.0</a></dd>
+              <dt>Contenido</dt>
+              <dd><a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 Unported</a></dd>
+            </dl>
+          </dd>
+          <dt id="repository">Repositorio</dt>
+          <dd>
+            <dl rel="doap:repository" resource="#repository">
+              <dt>Tipo</dt>
+              <dd about="#repository" typeof="doap:GitRepository">Git</dd>
+              <dt>Ubicación</dt>
+              <dd><a href="https://github.com/dokieli/dokieli.git" rel="doap:location">https://github.com/dokieli/dokieli.git</a></dd>
+              <dt>Interfaz del navegador web</dt>
+              <dd><a href="https://git.dokie.li/" rel="doap:browse">https://git.dokie.li/</a></dd>
+              <dt>Problemas</dt>
+              <dd><a href="https://github.com/dokieli/dokieli/issues" rel="doap:bug-database">https://github.com/dokieli/dokieli/issues</a></dd>
+            </dl>
+          </dd>
+          <dt id="programming-languages">Lenguajes de programación</dt>
+          <dd>
+            <ul>
+              <li lang="" property="doap:programming-language" xml:lang="">HTML</li>
+              <li lang="" property="doap:programming-language" xml:lang="">CSS</li>
+              <li lang="" property="doap:programming-language" xml:lang="">JavaScript</li>
+              <li lang="" property="doap:programming-language" xml:lang="">RDF</li>
+              <li lang="" property="doap:programming-language" xml:lang="">SPARQL</li>
+            </ul>
+          </dd>
+          <dt id="implements">Implementa</dt>
+          <dd>
+            <ul rel="doap:implements">
+              <li><a href="https://www.w3.org/TR/activitystreams-vocabulary/" typeof="doap:Specification">Activity Vocabulary</a></li>
+              <li><a href="https://www.w3.org/TR/activitypub/" typeof="doap:Specification">ActivityPub</a></li>
+              <li><a href="https://creativecommons.org/" typeof="doap:Specification">Creative Commons</a></li>
+              <li><a href="https://www.w3.org/TR/annotation-html" typeof="doap:Specification">Embedding Web Annotations in HTML</a></li>
+              <li><a href="https://www.w3.org/TR/html/" typeof="doap:Specification">HTML</a></li>
+              <li><a href="https://www.w3.org/TR/json-ld/" typeof="doap:Specification">JSON-LD</a></li>
+              <li><a href="https://www.w3.org/TR/ldn/" typeof="doap:Specification">Linked Data Notifications</a></li>
+              <li><a href="https://www.w3.org/TR/ldp/" typeof="doap:Specification">Linked Data Platform</a></li>
+              <li><a href="https://tools.ietf.org/html/rfc7089" typeof="doap:Specification">Memento</a></li>
+              <li><a href="https://www.w3.org/TR/tabular-data-model/" typeof="doap:Specification">Model for Tabular Data and Metadata on the Web</a></li>
+              <li><a href="https://w3c.github.io/N3/spec/" typeof="doap:Specification">Notation3 Language</a></li>
+              <li><a href="https://www.w3.org/TR/odrl-model/" typeof="doap:Specification">ODRL Information Model</a></li>
+              <li><a href="https://www.w3.org/TR/odrl-vocab/" typeof="doap:Specification">ODRL Vocabularies &amp; Expression</a></li>
+              <li><a href="https://www.w3.org/TR/prov-o/" typeof="doap:Specification">PROV-O</a></li>
+              <li><a href="https://www.w3.org/TR/rdfa-core/" typeof="doap:Specification">RDFa</a></li>
+              <li><a href="https://robustlinks.mementoweb.org/spec/" typeof="doap:Specification">Robustifying Links</a></li>
+              <li><a href="http://www.sparontologies.net/" typeof="doap:Specification">SPAR Ontologies</a></li>
+              <li><a href="https://www.w3.org/TR/sparql11-query/" typeof="doap:Specification">SPARQL Query</a></li>
+              <li><a href="https://www.w3.org/TR/sparql11-update/" typeof="doap:Specification">SPARQL Update</a></li>
+              <li><a href="https://schema.org/" typeof="doap:Specification">schema.org</a></li>
+              <li><a href="https://www.w3.org/TR/selectors-states/" typeof="doap:Specification">Selectors and States</a></li>
+              <li><a href="https://solidproject.org/TR/notifications-protocol" typeof="doap:Specification">Solid Notifications Protocol</a></li>
+              <li><a href="https://solidproject.org/TR/protocol" typeof="doap:Specification">Solid Protocol</a></li>
+              <li><a href="https://www.w3.org/TR/trig/" typeof="doap:Specification">TriG</a></li>
+              <li><a href="https://www.w3.org/TR/turtle/" typeof="doap:Specification">Turtle</a></li>
+              <li><a href="https://solidproject.org/TR/wac" typeof="doap:Specification">Web Access Control</a></li>
+              <li><a href="https://www.w3.org/TR/annotation-model/" typeof="doap:Specification">Web Annotation Data Model</a></li>
+              <li><a href="https://www.w3.org/TR/annotation-vocab/" typeof="doap:Specification">Web Annotation Vocabulary</a></li>
+              <li><a href="https://www.w3.org/2005/Incubator/webid/spec/identity/" typeof="doap:Specification">WebID</a></li>
+            </ul>
+          </dd>
+          <dt id="screenshots">Capturas de pantalla</dt>
+          <dd><a href="https://dokie.li/docs#features" rel="doap:screenshots">https://dokie.li/docs#features</a></dd>
+        </dl>
+      </details>
+    </footer>
+  </body>
+</html>

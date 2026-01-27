@@ -1,0 +1,740 @@
+
+<!DOCTYPE html>
+<html lang="es" xml:lang="es" xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Documentación de Dokieli</title>
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
+    <link href="../media/css/basic.css" media="all" rel="stylesheet" title="Basic" />
+    <link href="../media/css/dokieli.css" media="all" rel="stylesheet" />
+    <script src="../scripts/dokieli.js"></script>
+  </head>
+  <body about="" class="do-site" prefix="rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns# rdfs: http://www.w3.org/2000/01/rdf-schema# owl: http://www.w3.org/2002/07/owl# xsd: http://www.w3.org/2001/XMLSchema# rdfa: http://www.w3.org/ns/rdfa# dcterms: http://purl.org/dc/terms/ dctypes: http://purl.org/dc/dcmitype/ foaf: http://xmlns.com/foaf/0.1/ pimspace: http://www.w3.org/ns/pim/space# skos: http://www.w3.org/2004/02/skos/core# prov: http://www.w3.org/ns/prov# mem: http://mementoweb.org/ns# qb: http://purl.org/linked-data/cube# schema: http://schema.org/ void: http://rdfs.org/ns/void# rsa: http://www.w3.org/ns/auth/rsa# cert: http://www.w3.org/ns/auth/cert# wgs: http://www.w3.org/2003/01/geo/wgs84_pos# bibo: http://purl.org/ontology/bibo/ sioc: http://rdfs.org/sioc/ns# doap: http://usefulinc.com/ns/doap# dbr: http://dbpedia.org/resource/ dbp: http://dbpedia.org/property/ sio: http://semanticscience.org/resource/ opmw: http://www.opmw.org/ontology/ deo: http://purl.org/spar/deo/ doco: http://purl.org/spar/doco/ cito: http://purl.org/spar/cito/ fabio: http://purl.org/spar/fabio/ oa: http://www.w3.org/ns/oa# as: https://www.w3.org/ns/activitystreams# ldp: http://www.w3.org/ns/ldp# solid: http://www.w3.org/ns/solid/terms# acl: http://www.w3.org/ns/auth/acl# earl: http://www.w3.org/ns/earl# spec: http://www.w3.org/ns/spec# odrl: http://www.w3.org/ns/odrl/2/ dio: https://w3id.org/dio# rel: https://www.w3.org/ns/iana/link-relations/relation#">
+    <header>
+      <address><a href="/"><img alt="dokieli logo" height="64" src="../media/images/logo.png" width="64"><span>dokieli</span></a></address>
+      <nav>
+        <ul>
+          <li><a href="docs">Documentación</a></li>
+          <li><a href="https://git.dokie.li/">Fuente</a></li>
+        </ul>
+      </nav>
+    </header>
+    <main>
+      <article about="">
+        <h1 property="schema:name">Documentación de dokieli</h1>
+        <details>
+          <summary>Más detalles sobre este documento</summary>
+          <dl id="document-identifier">
+            <dt>Identificador</dt>
+            <dd><a href="https://dokie.li/docs" rel="owl:sameAs">https://dokie.li/docs</a></dd>
+          </dl>
+          <dl id="document-published">
+            <dt>Publicado</dt>
+            <dd><time content="2017-07-15T00:00:00Z" datatype="xsd:dateTime" datetime="2017-07-15T00:00:00Z" property="schema:datePublished">15/07/2017</time></dd>
+          </dl>
+          <dl id="document-modified">
+            <dt>Modificado</dt>
+            <dd><time content="2025-05-07T00:00:00Z" datatype="xsd:dateTime" datetime="2025-05-29T00:00:00Z" property="schema:dateModified">29-05-2025</time></dd>
+          </dl>
+          <dl id="document-type">
+            <dt>Tipo de documento</dt>
+            <dd><a href="http://schema.org/Article" rel="rdf:type">Artículo</a></dd>
+          </dl>
+          <dl id="document-license">
+            <dt>Licencia</dt>
+            <dd><a href="https://creativecommons.org/licenses/by/4.0/" rel="schema:license" title="Creative Commons Attribution 4.0 International">CC BY 4.0</a></dd>
+          </dl>
+          <dl id="document-language">
+            <dt>Idioma</dt>
+            <dd><span content="en" lang="" property="dcterms:language" xml:lang="">Inglés</span></dd>
+          </dl>
+          <dl id="document-author">
+            <dt>Autores</dt>
+            <dd id="Sarven-Capadisli"><span about="" rel="schema:author"><span about="https://csarven.ca/#i" typeof="schema:Person"><a href="https://csarven.ca/" rel="schema:url"><span about="https://csarven.ca/#i" property="schema:name"><span property="schema:givenName">Sarven</span> <span property="schema:familyName">Capadisli</span></span></a></span></span></dd>
+          </dl>
+          <dl id="document-feedback">
+            <dt>Comentarios</dt>
+            <dd><a href="https://github.com/dokieli/dokieli" rel="doap:repository">GitHub dokieli/dokieli</a> (<a href="https://github.com/dokieli/dokieli/pulls">solicitudes de extracción</a>, <a href="https://github.com/dokieli/dokieli/issues/new">nuevos problemas</a>, <a href="https://github.com/dokieli/dokieli/issues" rel="doap:bug-database">problemas abiertos</a>)</dd>
+          </dl>
+          <nav id="table-of-contents">
+            <h2>Contenido</h2>
+            <div>
+              <ol class="toc">
+                <li data-id="abstract"><a href="#abstract">Resumen</a></li>
+                <li data-id="principles"><a href="#principles">Principios</a></li>
+                <li data-id="getting-started">
+                  <p><a href="#getting-started">Introducción</a></p>
+                  <ol>
+                    <li data-id="using-dokieli">
+                      <p><a href="#using-dokieli">Uso de dokieli</a></p>
+                      <ol>
+                        <li data-id="embeddable-web-application"><a href="#embeddable-web-application">Aplicación web incrustable</a></li>
+                        <li data-id="web-extension"><a href="#web-extension">Extensión web</a></li>
+                      </ol>
+                    </li>
+                    <li data-id="contributing"><a href="#contributing">Contribuir</a></li>
+                  </ol>
+                </li>
+                <li data-id="roadmap">
+                  <p><a href="#roadmap">Hoja de ruta</a></p>
+                  <ol>
+                    <li data-id="project-credibility-assessment"><a href="#project-credibility-assessment">Evaluación de la credibilidad</a></li>
+                    <li data-id="project-internationalization-localization"><a href="#project-internationalization-localization">Internacionalización y localización</a></li>
+                    <li data-id="project-web-browser-extension"><a href="#project-web-browser-extension">Extensión para navegadores web</a></li>
+                    <li data-id="project-modularization"><a href="#project-modularization">Modularización</a></li>
+                    <li data-id="project-collaborative-editing"><a href="#project-collaborative-editing">Edición colaborativa</a></li>
+                    <li data-id="project-end-to-end-encryption"><a href="#project-end-to-end-encryption">Cifrado de extremo a extremo</a></li>
+                    <li data-id="project-mobile-support"><a href="#project-mobile-support">Compatibilidad con dispositivos móviles</a></li>
+                    <li data-id="project-knowledge-organisation"><a href="#project-knowledge-organisation">Organización del conocimiento</a></li>
+                  </ol>
+                </li>
+                <li data-id="documents"><a href="#documents">Documentos</a></li>
+                <li data-id="storage"><a href="#storage">Almacenamiento</a></li>
+                <li data-id="user-interface">
+                  <p><a href="#user-interface">Interfaz de usuario</a></p>
+                  <ol>
+                    <li data-id="modes"><a href="#modes">Modos</a></li>
+                    <li data-id="menu"><a href="#menu">Menú</a></li>
+                    <li data-id="features"><a href="#features">Características</a></li>
+                    <li data-id="components"><a href="#components">Componentes</a></li>
+                  </ol>
+                </li>
+                <li data-id="accessibility-usability-inclusion">
+                  <p><a href="#accessibility-usability-inclusion">Accesibilidad, usabilidad e inclusión</a></p>
+                  <ol>
+                    <li data-id="accessibility-statement">
+                      <p><a href="#accessibility-statement">Declaración de accesibilidad</a></p>
+                      <ol>
+                        <li data-id="accessibility-measures-to-support-accessibility"><a href="#accessibility-measures-to-support-accessibility">Medidas para apoyar la accesibilidad</a></li>
+                        <li data-id="accessibility-conformance-status"><a href="#accessibility-conformance-status">Estado de conformidad</a></li>
+                        <li data-id="accessibility-feedback"><a href="#accessibility-feedback">Comentarios</a></li>
+                        <li data-id="accessibility-technical-specifications"><a href="#accessibility-technical-specifications">Especificaciones técnicas</a></li>
+                        <li data-id="accessibility-assessment-approach"><a href="#accessibility-assessment-approach">Enfoque de evaluación</a></li>
+                      </ol>
+                    </li>
+                    <li data-id="authoring-accessibility">
+                      <p><a href="#authoring-accessibility">Accesibilidad de la creación</a></p>
+                      <ol>
+                        <li data-id="authoring-tool-user-interface-accessibility"><a href="#authoring-tool-user-interface-accessibility">Accesibilidad de la interfaz de usuario de la herramienta de autoría</a></li>
+                        <li data-id="support-for-producing-accessible-content"><a href="#support-for-producing-accessible-content">Compatibilidad con la producción de contenido accesible</a></li>
+                      </ol>
+                    </li>
+                  </ol>
+                </li>
+              </ol>
+            </div>
+          </nav>
+        </details>
+        <div datatype="rdf:HTML" id="content" property="schema:description">
+          <section id="abstract">
+            <h2>Resumen</h2>
+            <div datatype="rdf:HTML" property="schema:abstract">
+              <p>La documentación de Dokieli abarca sus principios de diseño, arquitectura, declaraciones de accesibilidad, instrucciones de configuración y directrices de uso que pueden resultar útiles para autores y desarrolladores.</p>
+            </div>
+          </section>
+          <section id="principles" inlist="" rel="schema:hasPart" resource="#principles">
+            <h2 property="schema:name">Principios</h2>
+            <div datatype="rdf:HTML" property="schema:description">
+              <p>Dokieli es un editor del lado del cliente y una extensión del navegador para la publicación descentralizada de artículos, anotaciones e interacciones sociales, creado como un proyecto de código abierto utilizando estándares web abiertos. Los principios básicos de diseño de Dokieli son <em>la autonomía</em> y <em>el acceso universal</em>.</p>
+              <p>Como aplicación que se ejecuta en el navegador web, dokieli funciona independientemente de cualquier servidor o servicio específico. Todo el contenido producido por dokieli puede ser utilizado por otras aplicaciones que cumplan con los estándares. dokieli adopta un enfoque consciente de la privacidad al permitir a las personas elegir dónde almacenar su contenido y quién puede acceder a él. Dokieli no recopila ni comparte los datos de sus usuarios.</p>
+              <p>Creado con diversión.</p>
+            </div>
+          </section>
+          <section id="getting-started" inlist="" rel="schema:hasPart" resource="#getting-started">
+            <h2 property="schema:name">Introducción</h2>
+            <div datatype="rdf:HTML" property="schema:description">
+              <p>Así es como puedes utilizar dokieli y participar:</p>
+              <section id="using-dokieli" inlist="" rel="schema:hasPart" resource="using-dokieli">
+                <h3>Uso de dokieli</h3>
+                <div datatype="rdf:HTML" property="schema:description">
+                  <section id="embeddable-web-application" inlist="" rel="schema:hasPart" resource="#embeddable-web-application">
+                    <h4 property="schema:name">Aplicación web integrable</h4>
+                    <div datatype="rdf:HTML" property="schema:description">
+                      <p>Dokieli se puede integrar en cualquier documento HTML incluyendo su CSS y JavaScript en la sección <code>&lt;head&gt;</code> del documento. Una vez abierto el documento en cualquier navegador, dokieli ofrece funciones de creación, anotación y publicación.</p>
+                      <pre><code>&lt;link href="https://dokie.li/media/css/basic.css" media="all" rel="stylesheet" title="Basic" /&gt;</code>
+<code>&lt;link href="https://dokie.li/media/css/dokieli.css" media="all" rel="stylesheet" /&gt;</code>
+<code>&lt;script src="https://dokie.li/scripts/dokieli.js"&gt;&lt;/script&gt;</code></pre>
+                      <p>Dokieli también se puede incrustar en un <code>iframe</code> dentro de un documento HTML existente o dinámicamente como un <code>Blob</code> utilizando JavaScript. Esto permite funciones completas de edición y anotación directamente dentro del marco. Por ejemplo:</p>
+                      <pre><code>&lt;iframe height="720" src="https://dokie.li/new" width="1280"&gt;&lt;/iframe&gt;</code></pre>
+                    </div>
+                  </section>
+                  <section id="web-extension" inlist="" rel="schema:hasPart" resource="#web-extension">
+                    <h4 property="schema:name">Extensión web</h4>
+                    <div datatype="rdf:HTML" property="schema:description">
+                      <p>Dokieli también se puede utilizar como extensión del navegador, lo que proporciona una funcionalidad completa directamente en el navegador. La extensión funciona en Firefox y en los navegadores basados en Chromium, y ofrece una opción de barra de herramientas del navegador que permite las mismas funciones que la aplicación web independiente.</p>
+                      <p>Actualmente, la extensión funciona con los navegadores Firefox y Chromium. La extensión se puede utilizar de la siguiente manera:</p>
+                      <ol>
+                        <li>Clona el repositorio dokieli desde <a href="https://github.com/dokieli/dokieli">https://github.com/dokieli/dokieli</a> (o haz una bifurcación).</li>
+                        <li>
+                          <dl>
+                            <dt>Firefox</dt>
+                            <dd>En el menú «Complementos y temas», seleccione «Complementos de depuración» (o vaya a <code>about:debugging#/runtime/this-firefox</code> desde la barra de direcciones) e importe seleccionando cualquier archivo del directorio dokieli clonado (por ejemplo, <code>manifest.json</code>). Véase también <a href="https://developer.mozilla.org/en-US/Add-ons/WebExtensions/Temporary_Installation_in_Firefox">instalación temporal en Firefox</a>. Tenga en cuenta que si reinicia el navegador, tendrá que repetir este proceso.</dd>
+                            <dt>Chromium</dt>
+                            <dd>El proceso general para navegadores como Chrome, Brave, Vivaldi, <a href="https://en.wikipedia.org/wiki/Chromium_(web_browser)#Browsers_based_on_Chromium">etc.</a>, es el siguiente. En el menú «Extensiones» (o vaya a <code>chrome://extensions/</code>, <code>brave://extensions</code>, <code>vivaldi://extensions/</code> desde la barra de direcciones), marque la opción «modo desarrollador». Importe el directorio dokieli desde «Cargar sin empaquetar».</dd>
+                          </dl>
+                        </li>
+                      </ol>
+                    </div>
+                  </section>
+                </div>
+              </section>
+              <section id="contributing" inlist="" rel="schema:hasPart" resource="#contributing">
+                <h2 property="schema:name">Contribuir</h2>
+                <div datatype="rdf:HTML" property="schema:description">
+                  <p>¡Gracias por dedicar tu tiempo a contribuir al proyecto dokieli! Todas las contribuciones son bienvenidas: código, ideas, comentarios y mucho más.</p>
+                  <p><a href="https://github.com/dokieli/dokieli/">El repositorio de dokieli</a> contiene el código fuente y hay una <a href="https://github.com/dokieli/dokieli/blob/main/CONTRIBUTING.md">guía de contribución</a> para empezar. Utiliza dokieli. Pruébalo. Informa de errores o corrígelos. Mejora la documentación. Escribe o traduce artículos y compártelos. Añade ejemplos. Únete al chat para obtener ayuda o debatir. Comparte ideas o abre incidencias sobre las funciones que te gustaría ver. Cada pequeño gesto ayuda a que el proyecto avance.</p>
+                  <p id="illustrations-patrick-hochstenbach">Ilustraciones de <a href="https://patrickhochstenbach.net/">Patrick Hochstenbach</a>, <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International</a>.</p>
+                </div>
+              </section>
+            </div>
+          </section>
+          <section id="roadmap" inlist="" rel="schema:hasPart" resource="#roadmap">
+            <h2 property="schema:name">Hoja de ruta</h2>
+            <div datatype="rdf:HTML" property="schema:description">
+              <p>Estas son las características y mejoras de la hoja de ruta de dokieli. Todo lo que aquí se incluye está sujeto a cambios.</p>
+              <section id="project-credibility-assessment" inlist="" rel="schema:hasPart" resource="#project-credibility-assessment">
+                <h3 property="schema:name">Evaluación de la credibilidad</h3>
+                <div datatype="rdf:HTML" property="schema:description">
+                  <dl>
+                    <dt>Descripción</dt>
+                    <dd>Combatir la desinformación, mejorar la alfabetización digital y las habilidades de lectura crítica, y fomentar la publicación fiable mediante herramientas para el análisis de contenidos y la extracción de conocimientos, la validación de contenidos, la evaluación de fuentes y la verificación de datos.</dd>
+                    <dt>Previsto para</dt>
+                    <dd><time>Segundo trimestre de</time><time>2025-Primer trimestre de 2026</time></dd>
+                    <dt>Contribuir</dt>
+                    <dd><a href="https://opencollective.com/dokieli">Apoyo financiero</a>, <a href="https://github.com/dokieli/dokieli/milestone/20">código</a>.</dd>
+                  </dl>
+                </div>
+              </section>
+              <section id="project-internationalization-localization" inlist="" rel="schema:hasPart" resource="#project-internationalization-localization">
+                <h3 property="schema:name">Internacionalización y localización</h3>
+                <div datatype="rdf:HTML" property="schema:description">
+                  <dl>
+                    <dt>Descripción</dt>
+                    <dd>Añadir interfaz de usuario multilingüe y compatibilidad con contenidos específicos de cada región.</dd>
+                    <dt>Previsto para</dt>
+                    <dd><time>tercer trimestre</time>de<time>2025-cuarto trimestre</time><time>de</time><time>2025</time></dd>
+                    <dt>Contribuir</dt>
+                    <dd><a href="https://opencollective.com/dokieli">Apoyo financiero</a>, <a href="https://github.com/dokieli/dokieli/milestone/3">código</a>.</dd>
+                  </dl>
+                </div>
+              </section>
+              <section id="project-web-browser-extension" inlist="" rel="schema:hasPart" resource="#project-web-browser-extension">
+                <h3 property="schema:name">Extensión para navegadores web</h3>
+                <div datatype="rdf:HTML" property="schema:description">
+                  <dl>
+                    <dt>Descripción</dt>
+                    <dd>Reconstruir la extensión utilizando estándares modernos para mejorar la funcionalidad, la experiencia de usuario y la seguridad.</dd>
+                    <dt>Previsto para</dt>
+                    <dd><time>tercer trimestre</time>de<time>2025-cuarto trimestre</time><time>de</time><time>2025</time></dd>
+                    <dt>Contribuir</dt>
+                    <dd><a href="https://opencollective.com/dokieli">Apoyo financiero</a>, <a href="https://github.com/dokieli/dokieli/milestone/18">código</a>.</dd>
+                  </dl>
+                </div>
+              </section>
+              <section id="project-modularization" inlist="" rel="schema:hasPart" resource="#project-modularization">
+                <h3 property="schema:name">Modularización</h3>
+                <div datatype="rdf:HTML" property="schema:description">
+                  <dl>
+                    <dt>Descripción</dt>
+                    <dd>Reestructurar las partes principales de dokieli (anotaciones, notificaciones, uso compartido) en paquetes npm independientes.</dd>
+                    <dt>Previsto para</dt>
+                    <dd><time>2026-Q1–2026-Q2</time></dd>
+                    <dt>Contribuir</dt>
+                    <dd><a href="https://opencollective.com/dokieli">Apoyo financiero</a>, <a href="https://github.com/dokieli/dokieli/milestone/26">código</a>.</dd>
+                  </dl>
+                </div>
+              </section>
+              <section id="project-collaborative-editing" inlist="" rel="schema:hasPart" resource="#project-collaborative-editing">
+                <h3 property="schema:name">Edición colaborativa</h3>
+                <div datatype="rdf:HTML" property="schema:description">
+                  <dl>
+                    <dt>Descripción</dt>
+                    <dd>Permitir la edición de documentos en tiempo real por parte de múltiples usuarios.</dd>
+                    <dt>Previsto para</dt>
+                    <dd><time>2026-Q2–2026-Q2</time></dd>
+                    <dt>Contribuir</dt>
+                    <dd><a href="https://opencollective.com/dokieli">Apoyo financiero</a>, <a href="https://github.com/dokieli/dokieli/milestone/23">código</a>.</dd>
+                  </dl>
+                </div>
+              </section>
+              <section id="project-end-to-end-encryption" inlist="" rel="schema:hasPart" resource="#project-end-to-end-encryption">
+                <h3 property="schema:name">Cifrado de extremo a extremo</h3>
+                <div datatype="rdf:HTML" property="schema:description">
+                  <dl>
+                    <dt>Descripción</dt>
+                    <dd>Añadir cifrado del lado del cliente para todo el contenido compartido.</dd>
+                    <dt>Previsto para</dt>
+                    <dd><time>2026-Q2–2026-Q4</time></dd>
+                    <dt>Contribuir</dt>
+                    <dd><a href="https://opencollective.com/dokieli">Apoyo financiero</a>, <a href="https://github.com/dokieli/dokieli/milestone/22">código</a>.</dd>
+                  </dl>
+                </div>
+              </section>
+              <section id="project-mobile-support" inlist="" rel="schema:hasPart" resource="#project-mobile-support">
+                <h3 property="schema:name">Compatibilidad con dispositivos móviles</h3>
+                <div datatype="rdf:HTML" property="schema:description">
+                  <dl>
+                    <dt>Descripción</dt>
+                    <dd>Adaptar la interfaz para un uso fluido en dispositivos móviles.</dd>
+                    <dt>Previsto para</dt>
+                    <dd><time>2027-Q2–2027-Q4</time></dd>
+                    <dt>Contribuir</dt>
+                    <dd><a href="https://opencollective.com/dokieli">Apoyo financiero</a>, <a href="https://github.com/dokieli/dokieli/milestone/21">código</a>.</dd>
+                  </dl>
+                </div>
+              </section>
+              <section id="project-knowledge-organisation" inlist="" rel="schema:hasPart" resource="#project-knowledge-organisation">
+                <h3 property="schema:name">Organización del conocimiento</h3>
+                <div datatype="rdf:HTML" property="schema:description">
+                  <dl>
+                    <dt>Descripción</dt>
+                    <dd>Apoyo a la estructuración, búsqueda y vinculación del contenido de los documentos.</dd>
+                    <dt>Previsto para</dt>
+                    <dd><time>2027-Q4–2028-Q2</time></dd>
+                    <dt>Contribuir</dt>
+                    <dd><a href="https://opencollective.com/dokieli">Apoyo financiero</a>, <a href="https://github.com/dokieli/dokieli/milestone/24">código</a>.</dd>
+                  </dl>
+                </div>
+              </section>
+            </div>
+          </section>
+          <section id="documents" inlist="" rel="schema:hasPart" resource="#documents">
+            <h3 property="schema:name">Documentos</h3>
+            <div datatype="rdf:HTML" property="schema:description">
+              <p>Los artículos, las anotaciones y las notificaciones son los principales tipos de documentos que genera dokieli.</p>
+              <dl rel="dcterms:subject">
+                <dt about="#article" property="skos:prefLabel" typeof="skos:Concept">Artículo</dt>
+                <dd about="#article">
+                  <figure>
+                    <p><img alt="" height="267" rel="schema:image" src="../media/images/dokieli-illustration-publishing.jpg" width="469" /></p>
+                    <figcaption about="../media/images/dokieli-illustration-publishing.jpg"><a href="#illustrations-patrick-hochstenbach" title="Illustration by Patrick Hochstenbach, CC-BY 4.0."><i class="fab fa-creative-commons-by"></i></a></figcaption>
+                  </figure>
+                  <p property="skos:definition">Dokieli admite la creación de diversos tipos de artículos, como entradas de blog, descripciones de cursos, guías, artículos de noticias, recetas, reseñas, artículos académicos, presentaciones de diapositivas, especificaciones técnicas, tesis, relatos de viajes o cualquier cosa que sea simplemente un «artículo». Los artículos son legibles tanto por humanos como por máquinas, y pueden estar altamente estructurados, enlazados, versionados, anotados, compartidos, controlados en cuanto a su acceso y almacenados en diferentes <a href="#storage" rel="rdfs:seeAlso">lugares</a>. Las colecciones de artículos pueden sindicarse a través de fuentes web. Aunque <a href="#annotation" rel="rdfs:seeAlso">las anotaciones</a> y <a href="#notification" rel="rdfs:seeAlso">las notificaciones</a> difieren en su finalidad, comparten una estructura y una usabilidad similares.</p>
+                </dd>
+                <dt about="#annotation" id="annotation" property="skos:prefLabel" typeof="skos:Concept">Anotación</dt>
+                <dd about="#annotation">
+                  <figure>
+                    <p><img alt="" height="204" rel="schema:image" src="../media/images/dokieli-illustration-annotations.jpg" width="460" /></p>
+                    <figcaption about="../media/images/dokieli-illustration-annotations.jpg"><a href="#illustrations-patrick-hochstenbach" title="Illustration by Patrick Hochstenbach, CC-BY 4.0."><i class="fab fa-creative-commons-by"></i></a></figcaption>
+                  </figure>
+                  <p property="skos:definition">Una anotación es una pieza de información independiente sobre un <a href="#article" rel="rdfs:seeAlso">artículo</a> u otra anotación, o parte de ellos, con fines tales como evaluar (<a href="#feature-approve">aprobar</a>, <a href="#feature-disapprove">desaprobar</a>), <a href="#feature-bookmarking" rel="rdfs:seeAlso">marcar</a>, clasificar, <a href="#feature-commenting" rel="rdfs:seeAlso">comentar</a>, <a href="#feature-describing" rel="rdfs:seeAlso">describir</a>, enlazar, <a href="#feature-reply" rel="rdfs:seeAlso">responder</a>, <a href="#feature-specificity" rel="rdfs:seeAlso">cuestionar</a> o <a href="#feature-tagging" rel="rdfs:seeAlso">etiquetar</a>. Las anotaciones pueden almacenarse en lugares como <a href="#personal-storage" rel="rdfs:seeAlso">el almacenamiento personal</a> o un <a href="#annotation-service" rel="rdfs:seeAlso">servicio de anotaciones</a>, y cada una puede tener su propio <a href="#feature-language" rel="rdfs:seeAlso">idioma</a>, <a href="#feature-license" rel="rdfs:seeAlso">licencia</a> y bandeja de entrada para recibir <a href="#notification" rel="rdfs:seeAlso">notificaciones</a> relacionadas. Cuando se anota un artículo o una anotación con una bandeja de entrada, se envía automáticamente una notificación para permitir su descubrimiento. Aunque las anotaciones se pueden mostrar en el contexto de sus objetivos, siguen siendo recursos distintos y no se almacenan con el artículo.</p>
+                </dd>
+                <dt about="#notification" id="#notification" property="skos:prefLabel" typeof="skos:Concept">Notificación</dt>
+                <dd about="#notification">
+                  <figure>
+                    <p><img alt="" height="204" rel="schema:image" src="../media/images/dokieli-illustration-sharing.jpg" width="460" /></p>
+                    <figcaption about="../media/images/dokieli-illustration-sharing.jpg"><a href="#illustrations-patrick-hochstenbach" title="Illustration by Patrick Hochstenbach, CC-BY 4.0."><i class="fab fa-creative-commons-by"></i></a></figcaption>
+                  </figure>
+                  <p property="skos:definition">Una notificación describe una actividad, como una <a href="#annotation" rel="rdfs:seeAlso">anotación</a>, una <a href="#feature-footnotes-citations" rel="rdf:seeAlso">cita</a> o una acción compartida, y se envía a la bandeja de entrada del destino, por ejemplo, un <a href="#article" rel="rdfs:seeAlso">artículo</a>, una anotación, una persona o un grupo. Las notificaciones son breves e incluyen detalles clave sobre su procedencia, como quién realizó la acción, cuándo, dónde, la motivación, la licencia y el idioma, lo que ayuda a los consumidores a decidir si desean participar más. La notificación no incluye el contenido completo, por ejemplo, el cuerpo de una anotación, pero proporciona enlaces para obtenerlo. Las notificaciones ayudan a mostrar actividades relacionadas en su contexto y pueden apoyar flujos de trabajo como la colaboración, las comprobaciones de credibilidad o la revisión por pares.</p>
+                </dd>
+              </dl>
+            </div>
+          </section>
+          <section id="storage" inlist="" rel="schema:hasPart" resource="#storage" typeof="skos:ConceptScheme">
+            <h2 property="schema:name">Almacenamiento</h2>
+            <div datatype="rdf:HTML" property="schema:description">
+              <p property="skos:definition">Los artículos y las anotaciones se pueden almacenar en varios lugares, como el almacenamiento personal, el servicio de anotaciones o el almacenamiento local.</p>
+              <dl rel="skos:hasTopConcept">
+                <dt about="#personal-storage" property="skos:prefLabel" typeof="skos:Concept"><dfn id="personal-storage">Almacenamiento personal</dfn></dt>
+                <dd about="#personal-storage" property="skos:definition">Un almacenamiento personal es un lugar donde las personas o grupos pueden guardar su información personal, así como artículos, anotaciones y notificaciones. El almacenamiento suele tener control de acceso para leer o escribir datos.</dd>
+                <dt about="#annotation-service" property="skos:prefLabel" typeof="skos:Concept"><dfn id="annotation-service">Servicio de anotaciones</dfn></dt>
+                <dd about="#annotation-service" property="skos:definition">Un artículo o una anotación pueden ofrecer un <a href="#annotation-service">servicio de anotación</a> en el que se pueden almacenar sus respuestas. Un <a href="#annotation-service">servicio de anotación</a> puede tener o no control de acceso. <a href="#annotation-service">El servicio de anotación</a> también puede servir como lugar para almacenar una copia de la anotación almacenada en otro lugar.</dd>
+                <dt about="#local-storage" property="skos:prefLabel" typeof="skos:Concept"><dfn id="local-storage">Almacenamiento local</dfn></dt>
+                <dd about="#local-storage" property="skos:definition">El almacenamiento local en el navegador del usuario se utiliza para el autoguardado y el acceso sin conexión.</dd>
+              </dl>
+            </div>
+          </section>
+          <section id="user-interface" inlist="" rel="schema:hasPart" resource="#user-interface">
+            <h2 property="schema:name">Interfaz de usuario</h2>
+            <div datatype="rdf:HTML" property="schema:description">
+              <p>En esta sección repasamos la interfaz de usuario de dokieli: <a href="#modes">modos</a> de interfaz, <a href="#menu">menú</a> y <a href="#features">características</a>.</p>
+              <section id="modes" inlist="" rel="schema:hasPart" resource="#modes" typeof="skos:ConceptScheme">
+                <h3 property="schema:name skos:prefLabel">Modos</h3>
+                <div datatype="rdf:HTML" property="schema:description">
+                  <p property="skos:definition">La interfaz de usuario (<abbr title="User Interface">UI</abbr>) puede ser <cite>social</cite> o <cite>de autor</cite>. Los modos se pueden cambiar desde el <a href="#menu">menú</a> dokieli mediante la operación <a href="#feature-edit">Editar</a> de <i class="fas fa-i-cursor"></i>.</p>
+                  <dl rel="skos:hasTopConcept">
+                    <dt about="#mode-social" property="skos:prefLabel" typeof="skos:Concept"><dfn id="mode-social">Social</dfn></dt>
+                    <dd about="#mode-social" property="skos:definition">El modo social se centra en funciones que permiten a los usuarios ver, anotar y compartir contenido. Este es el modo predeterminado cuando el documento se carga sin directivas específicas.</dd>
+                    <dt about="#mode-author" property="skos:prefLabel" typeof="skos:Concept"><dfn id="mode-author">Autor</dfn></dt>
+                    <dd about="#mode-author" property="skos:definition">El modo autor se centra en funciones que permiten a los usuarios editar y publicar el artículo. Permite editar el contenido, la estructura y las anotaciones semánticas.</dd>
+                  </dl>
+                </div>
+              </section>
+              <section id="menu" inlist="" rel="schema:hasPart" resource="#menu">
+                <h3 property="schema:name">Menú</h3>
+                <div datatype="rdf:HTML" property="schema:description">
+                  <p about="" rel="schema:potentialAction">El <a href="#document-menu" typeof="schema:ActivateAction">menú «<i class="fas fa-bars"></i> »</a> proporciona acceso a <a href="#features">funciones</a> clave de primer nivel, como iniciar sesión, crear y publicar contenido, gestionar enlaces y datos, ver la estructura del documento y exportar o compartir el artículo.</p>
+                </div>
+              </section>
+              <section id="features" inlist="" rel="schema:hasPart" resource="#features" typeof="skos:ConceptScheme">
+                <h3 property="schema:name">Características</h3>
+                <div datatype="rdf:HTML" property="schema:description">
+                  <p property="sko:definition">Las funciones de dokieli permiten ver, crear y compartir contenido.</p>
+                  <dl rel="skos:hasTopConcept">
+                    <dt about="#feature-sign-in" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-user-astronaut"></i><dfn id="feature-sign-in">Iniciar sesión</dfn></dt>
+                    <dd about="#feature-sign-in" property="skos:definition">El <em>inicio de sesión</em> permite al usuario identificarse en dokieli utilizando su identificador personal en línea. dokieli recopila la información vinculada al perfil del usuario para adaptar la interfaz de usuario y personalizar las interacciones en función de sus preferencias.</dd>
+                    <dt about="#feature-share" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-bullhorn"></i><dfn id="feature-share">Compartir</dfn></dt>
+                    <dd about="#feature-share">
+                      <p property="skos:definition"><em>Compartir</em> permite notificar a personas y grupos específicos sobre un artículo o una parte específica del mismo. Los usuarios registrados que tengan permisos de propietario sobre un artículo pueden dar a otros el permiso para ver, editar o ser copropietarios. Los contactos que aparecen en la lista son los que se han descubierto a través del perfil del usuario registrado y que tienen la posibilidad de recibir notificaciones en sus bandejas de entrada. La notificación incluye información mínima sobre el artículo, como quién envió la notificación, cuándo se creó, su licencia y la motivación.</p>
+                      <figure id="figure-dokieli-share" rel="schema:video" resource="#figure-dokieli-share">
+                        <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-share.jpg" preload="none" resource="#figure-dokieli-share" typeof="schema:VideoObject" width="800">
+                          <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-share.webm" type="video/webm" />
+                        </video>
+                        <figcaption><a href="https://dokie.li/media/video/dokieli-share.webm">Vídeo</a> (<a href="https://dokie.li/media/images/dokieli-share.jpg" rel="schema:thumbnailUrl">póster</a>) de dokieli Compartir [<time datatype="xsd:duration" datetime="PT22S" property="schema:duration">22 s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                      </figure>
+                    </dd>
+                    <dt about="#feature-reply" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-reply"></i><dfn id="feature-reply">Responder</dfn></dt>
+                    <dd about="#feature-reply" property="skos:definition">Se puede responder a un artículo con una nota y tener su propio <a href="#feature-language" rel="rdfs:seeAlso">idioma</a> y <a href="#feature-license" rel="rdfs:seeAlso">licencia</a>. El usuario puede especificar dónde desea guardar su respuesta <a href="#feature-browser" rel="rdfs:seeAlso">navegando</a> hasta una ubicación en un <a href="#personal-storage" rel="rdfs:seeAlso">almacenamiento personal</a> o un <a href="#annotation-service" rel="rdfs:seeAlso">servicio de anotaciones</a>.</dd>
+                    <dt about="#feature-notifications" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-inbox"></i><dfn id="feature-notifications">Notificaciones</dfn></dt>
+                    <dd about="#feature-notifications">
+                      <p property="skos:definition">La función Notificaciones ayuda a ver tus propias interacciones y actividades en los documentos, así como las de tus contactos, como comentarios, anotaciones, reacciones y marcadores. <a href="#feature-sign-in" rel="rdfs:seeAlso">Inicia sesión</a> en dokieli para que pueda encontrar estas notificaciones.</p>
+                      <figure id="figure-dokieli-notifications" rel="schema:video" resource="#figure-dokieli-notifications">
+                        <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-notifications.jpg" preload="none" resource="#figure-dokieli-notifications" typeof="schema:VideoObject" width="800">
+                          <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-notifications.webm" type="video/webm" />
+                        </video>
+                        <figcaption><a href="https://dokie.li/media/video/dokieli-notifications.webm">Vídeo</a> (<a href="https://dokie.li/media/images/dokieli-notifications.jpg" rel="schema:thumbnailUrl">póster</a>) de las notificaciones en dokieli [<time datatype="xsd:duration" datetime="PT15S" property="schema:duration">15 s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                      </figure>
+                    </dd>
+                    <dt about="#feature-bookmarking" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-bookmark"></i><dfn id="feature-bookmarking">Marcadores</dfn></dt>
+                    <dd about="#feature-bookmarking" property="skos:definition">El documento o el texto seleccionado se pueden marcar con un marcador, donde el usuario puede incluir una nota y asignar <a href="#feature-tagging">etiquetas</a>.</dd>
+                    <dt about="#feature-commenting" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-comment"></i><dfn id="feature-commenting">Comentarios</dfn></dt>
+                    <dd about="#feature-commenting" property="skos:definition">Selección a nivel de nodo o de texto para una anotación que incluye una <a href="#feature-describing">descripción</a> y <a href="#feature-tagging">etiquetas</a>.</dd>
+                    <dt about="#feature-describing" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-sticky-note"></i><dfn id="feature-describing">Descripción</dfn></dt>
+                    <dd about="#feature-describing" property="skos:definition">Una nota para indicar una nota al pie. Se utiliza como parte del propósito de <a href="#feature-bookmarking">marcar</a> y <a href="#feature-commenting">comentar</a>.</dd>
+                    <dt about="#feature-highlighting" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-highlighter"></i><dfn id="feature-highlighting">Resaltar</dfn></dt>
+                    <dd about="#feature-highlighting" property="skos:definition">Selección a nivel de nodo o texto que proporciona al usuario un URI que puede utilizar para enlaces profundos y referencias.</dd>
+                    <dt about="#feature-tagging" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-tag"></i><dfn id="feature-tagging">Etiquetado</dfn></dt>
+                    <dd about="#feature-tagging" property="skos:definition">El usuario puede asociar etiquetas (texto en lenguaje natural) al texto seleccionado, que se utiliza como parte del propósito de las anotaciones, como <a href="#feature-bookmarking">marcar</a>, <a href="#feature-in-reply-to">responder</a> y <a href="#feature-commenting">comentar</a>.</dd>
+                    <dt about="#feature-approve" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-thumbs-up"></i><dfn id="feature-approve">Aprobar</dfn></dt>
+                    <dd about="#feature-approve" property="skos:definition">Acuerdo general con el texto seleccionado. Una nota opcional puede indicar por qué la selección es un punto fuerte o un argumento convincente.</dd>
+                    <dt about="#feature-disapprove" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-thumbs-down"></i><dfn id="feature-disapprove">Desaprobar</dfn></dt>
+                    <dd about="#feature-disapprove" property="skos:definition">Desacuerdo general con el texto seleccionado. Una nota opcional puede indicar por qué la selección es un punto débil, un error o inexacta.</dd>
+                    <dt about="#feature-specificity" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-crosshairs"></i><dfn id="feature-specificity">Especificidad</dfn></dt>
+                    <dd about="#feature-specificity" property="skos:definition">Solicitud de aumentar la especificidad del texto seleccionado. Una nota opcional puede indicar que se necesita una cita o más especificidad.</dd>
+                    <dt about="#feature-new" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-lightbulb"></i><dfn id="feature-new">Nuevo</dfn></dt>
+                    <dd about="#feature-new" property="skos:definition">Se puede crear temporalmente un <em>nuevo</em> artículo hasta que se almacene en <a href="#local-storage" rel="rdfs:seeAlso">el almacenamiento</a> <a href="#personal-storage" rel="rdfs:seeAlso">personal</a> o <a href="#local-storage" rel="rdfs:seeAlso">local</a>. Para conservar el artículo a largo plazo, el usuario puede <a href="#feature-save" rel="rdfs:seeAlso">Guardar</a> o <a href="#feature-save-as">Guardar como</a> el artículo.</dd>
+                    <dt about="#feature-open" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-coffee"></i><dfn id="feature-open">Abrir</dfn></dt>
+                    <dd about="#feature-open">
+                      <p property="skos:definition">Un documento se puede <em>abrir</em> (importar) desde un sistema de archivos local o especificando la URL del recurso en la web. <a href="#feature-browser" rel="rdfs:seeAlso">El navegador de recursos</a> se puede utilizar para navegar hasta el documento de interés en el <a href="#personal-storage" rel="rdfs:seeAlso">almacenamiento personal</a> o <a href="#annotation-service" rel="rdfs:seeAlso">el servicio de anotaciones</a>. Hay vistas personalizadas disponibles al importar algunos formatos de datos, como:</p>
+                      <dl rel="dcterms:subject">
+                        <dt about="#html-documents" property="skos:prefLabel" typeof="skos:Concept"><i class="fab fa-html5"></i><dfn id="html-documents">Documentos HTML</dfn></dt>
+                        <dd about="#html-documents" property="skos:definition">Al abrir un documento (X)HTML, solo se importa el contenido. CSS, JavaScript y otros elementos adicionales se excluyen por motivos de seguridad. Tras la importación, dokieli se puede utilizar como de costumbre con todas sus <a href="#features">funciones</a>.</dd>
+                        <dt about="#geo-stats" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-map"></i><dfn id="geo-stats">Geo y estadísticas</dfn></dt>
+                        <dd about="#geo-stats">
+                          <p property="skos:definition">El usuario puede ver un mapa (<a href="https://www.openstreetmap.org/">OpenStreetMap</a>) que incluye una ruta, junto con datos detallados <abbr title="Global Positioning System">de GPS</abbr> y extensión en una tabla. Estos datos incluyen el periodo de tiempo, la latitud, la longitud, la altitud, la frecuencia cardíaca, la cadencia, la velocidad, la temperatura del aire, la temperatura del agua y la profundidad. La tabla también proporciona un resumen de la fecha de publicación, el editor, el actor, la distancia total, el tiempo total, el ritmo medio, la frecuencia cardíaca media, el desnivel positivo y el desnivel negativo. Además, se identifica la ciudad más cercana a la ruta y se enlaza con <a href="https://www.wikidata.org/">Wikidata</a>.</p>
+                          <figure id="figure-dokieli-geo-stats" rel="schema:video" resource="#figure-dokieli-geo-stats">
+                            <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-geo-stats.jpg" preload="none" resource="#figure-dokieli-geo-stats" typeof="schema:VideoObject" width="800">
+                              <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-geo-stats.webm" type="video/webm" />
+                            </video>
+                            <figcaption><a href="https://dokie.li/media/video/dokieli-geo-stats.webm">Vídeo</a> (<a href="https://dokie.li/media/images/dokieli-geo-stats.jpg" rel="schema:thumbnailUrl">póster</a>) de la importación y visualización de datos geográficos y estadísticos en dokieli [<time datatype="xsd:duration" datetime="PT14S" property="schema:duration">14 s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                          </figure>
+                        </dd>
+                        <dt about="#activity-collection" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-bolt"></i><dfn id="activity-collection">Recopilación de actividades</dfn></dt>
+                        <dd about="#activity-collection" property="skos:definition">El usuario puede ver una lista cronológica de interacciones sociales y actividades relacionadas con el contenido, como publicar, dar me gusta, seguir y compartir, dentro de una recopilación.</dd>
+                        <dt about="#other-data" property="skos:prefLabel" typeof="skos:Concept"><dfn id="other-data">Otros datos</dfn></dt>
+                        <dd about="#other-data" property="skos:definition">Los datos en formatos no compatibles o no reconocidos se mostrarán tal cual, sin ningún tipo de procesamiento.</dd>
+                      </dl>
+                    </dd>
+                    <dt about="#feature-save" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-life-ring"></i><dfn id="feature-save">Guardar</dfn></dt>
+                    <dd about="#feature-save" property="skos:definition">Un artículo se puede <em>guardar</em> en su estado y ubicación actuales, lo que permite volver al mismo contenido y URL más tarde, cuando se disponga de acceso.</dd>
+                    <dt about="#feature-save-as" property="skos:prefLabel" typeof="skos:Concept"><i class="far fa-paper-plane"></i><dfn id="feature-save-as">Guardar como</dfn></dt>
+                    <dd about="#feature-save-as">
+                      <p property="skos:definition">Un artículo se puede <em>guardar</em> en su estado actual en una ubicación específica del <a href="#personal-storage" rel="rdfs:seeAlso">almacenamiento personal</a>. Esta función utiliza el <cite><a href="#feature-browser" rel="rdfs:seeAlso">navegador de recursos</a></cite> para navegar por las URL HTTP.</p>
+                      <dl rel="dcterms:subject">
+                        <dt about="#feature-set-inbox" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-set-inbox">Configurar bandeja de entrada</dfn></dt>
+                        <dd about="#feature-set-inbox" property="skos:definition">Se puede asignar una bandeja de entrada a un artículo o anotación especificando su ubicación mediante el <a href="#feature-browser" rel="rdfs:seeAlso">explorador de recursos</a>, de modo que se puedan compartir las notificaciones sobre el artículo o la anotación.</dd>
+                        <dt about="#feature-set-annotation" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-set-annotation">Establecer anotación</dfn></dt>
+                        <dd about="#feature-set-annotation" property="skos:definition">Se puede asignar <a href="#annotation-service">un servicio de anotación</a> a un artículo o anotación especificando su ubicación mediante el <a href="#feature-browser" rel="rdfs:seeAlso">explorador de recursos</a>, de modo que las anotaciones de otros usuarios se puedan copiar opcionalmente a esta ubicación.</dd>
+                        <dt about="#feature-dokielize" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-dokielize">dokielizar</dfn></dt>
+                        <dd about="#feature-dokielize" property="skos:definition">Normaliza el documento para que sea válido y normalizado, e incluye los scripts dokieli para que la aplicación se pueda utilizar en la versión derivada.</dd>
+                        <dt about="#feature-derivation-data" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-derivation-data">Datos de derivación</dfn></dt>
+                        <dd about="#feature-derivation-data" property="skos:definition">Cuando se comprueba la inclusión de <em>datos de derivación</em>, la información <a href="#html-document-derived-from-on">derivada y sobre</a> se incluye en el documento creado.</dd>
+                        <dt about="#feature-accessibility-report" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-accessibility-report">Informe de accesibilidad</dfn></dt>
+                        <dd about="#feature-accessibility-report" property="skos:definition">Proporciona información adicional sobre la accesibilidad del documento actual para que el autor pueda encontrar formas de mejorar la accesibilidad del contenido.</dd>
+                        <dt about="#storage-details" property="skos:prefLabel" typeof="skos:Concept"><dfn id="storage-details">Detalles de almacenamiento</dfn></dt>
+                        <dd about="#storage-details">
+                          <p property="skos:definition">El usuario puede examinar la información sobre el almacenamiento, como su ubicación, nombre, descripción, propietarios, política de persistencia de URI y políticas de derechos digitales, así como estar informado sobre cualquier conflicto con sus políticas preferidas, y las opciones de suscripción a notificaciones y suscripción a cambios en directo.</p>
+                          <figure id="figure-dokieli-odrl-storage-description" rel="schema:video" resource="#figure-dokieli-odrl-storage-description">
+                            <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-odrl-storage-description.jpg" preload="none" resource="#figure-dokieli-odrl-storage-description" typeof="schema:VideoObject" width="800">
+                              <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-odrl-storage-description.webm" type="video/webm" />
+                            </video>
+                            <figcaption><a href="https://dokie.li/media/video/dokieli-odrl-storage-description.webm">Vídeo</a> (<a href="https://dokie.li/media/images/dokieli-odrl-storage-description.jpg" rel="schema:thumbnailUrl">póster</a>) de ODRL en dokieli [<time datatype="xsd:duration" datetime="PT12S" property="schema:duration">12 s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                          </figure>
+                        </dd>
+                      </dl>
+                    </dd>
+                    <dt about="#feature-version" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-code-branch"></i><dfn id="feature-version">Versión</dfn></dt>
+                    <dd about="#feature-version" property="skos:definition">Genera una copia derivada del documento actual como un recurso mutable que incluye la procedencia.</dd>
+                    <dt about="#feature-immutable" property="skos:prefLabel" typeof="skos:Concept"><i class="far fa-snowflake"></i><dfn id="feature-immutable">Inmutable</dfn></dt>
+                    <dd about="#feature-immutable" property="skos:definition">Genera una copia derivada del documento actual como un recurso Memento inmutable o congelado, incluyendo la procedencia. Crea o actualiza un Memento TimeMap que incluye una referencia al recurso inmutable.</dd>
+                    <dt about="#feature-memento" property="skos:prefLabel" typeof="skos:Concept"><i class="far fa-clock"></i><dfn id="feature-memento">Memento</dfn></dt>
+                    <dd about="#feature-memento" property="skos:definition">El usuario puede acceder al memento (historial de versiones) de un documento.</dd>
+                    <dt about="#feature-robustify-links" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-link"></i><dfn id="feature-robustify-links">Enlaces robustos</dfn></dt>
+                    <dd about="#feature-robustify-links">
+                      <p property="skos:definition">Para ayudar a mitigar la deriva de contenido y la rotura de enlaces, estos se pueden mejorar con contexto adicional, como una URI de instantánea del <a href="https://archive.org/">Archivo de Internet</a>, una marca de tiempo de cuándo se creó el enlace y otros metadatos relevantes.</p>
+                      <figure id="figure-dokieli-robustify-links" rel="schema:video" resource="#figure-dokieli-robustify-links">
+                        <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-robustify-links.jpg" preload="none" resource="#figure-dokieli-robustify-links" typeof="schema:VideoObject" width="800">
+                          <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-robustify-links.webm" type="video/webm" />
+                        </video>
+                        <figcaption><a href="https://dokie.li/media/video/dokieli-robustify-links.webm">Vídeo</a> (<a href="https://dokie.li/media/images/dokieli-robustify-links.jpg" rel="schema:thumbnailUrl">póster</a>) de enlaces robustificados en dokieli [<time datatype="xsd:duration" datetime="PT19S" property="schema:duration">19 s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                      </figure>
+                    </dd>
+                    <dt about="#feature-archive" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-archive"></i><dfn id="feature-archive">Archivar</dfn></dt>
+                    <dd about="#feature-archive" property="skos:definition">Envía una solicitud de archivo del artículo actual a Internet Archive <a href="https://web.archive.org/">Wayback Machine</a>.</dd>
+                    <dt about="#feature-generate-feed" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-rss"></i><dfn id="feature-generate-feed">Generar feed</dfn></dt>
+                    <dd about="#feature-generate-feed">
+                      <p property="skos:definition">Permite la creación y publicación de una fuente web personalizada a partir de una lista seleccionada de documentos del <a href="#personal-storage" rel="rdfs:seeAlso">almacenamiento personal</a>, con opciones para establecer el título, <a href="#feature-language">el idioma</a>, <a href="#feature-license">la licencia</a> y el formato de la fuente, por ejemplo, RSS o Atom.</p>
+                      <figure id="figure-dokieli-generate-feed" rel="schema:video" resource="#figure-dokieli-generate-feed">
+                        <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-generate-feed.jpg" preload="none" resource="#figure-dokieli-generate-feed" typeof="schema:VideoObject" width="800">
+                          <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-generate-feed.webm" type="video/webm" />
+                        </video>
+                        <figcaption><a href="https://dokie.li/media/video/dokieli-generate-feed.webm">Vídeo</a> (<a href="https://dokie.li/media/images/dokieli-generate-feed.jpg" rel="schema:thumbnailUrl">póster</a>) de la generación y publicación de feeds web en dokieli [<time datatype="xsd:duration" datetime="PT9S" property="schema:duration">9 s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                      </figure>
+                    </dd>
+                    <dt about="#feature-export" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-external-link-alt"></i><dfn id="feature-export">Exportar</dfn></dt>
+                    <dd about="#feature-export" property="skos:definition">El usuario puede exportar el artículo como HTML y guardarlo en su sistema de archivos local.</dd>
+                    <dt about="#feature-print" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-print"></i><dfn id="feature-print">Imprimir</dfn></dt>
+                    <dd about="#feature-print" property="skos:definition">Activa el navegador para imprimir el documento actual.</dd>
+                    <dt about="#feature-edit" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-i-cursor"></i><dfn id="feature-edit">Editar</dfn></dt>
+                    <dd about="#feature-edit">
+                      <figure>
+                        <p><img alt="" height="255" rel="schema:image" src="../media/images/dokieli-illustration-authoring.jpg" width="256" /></p>
+                        <figcaption about="../media/images/dokieli-illustration-authoring.jpg"><a href="#illustrations-patrick-hochstenbach" title="Illustration by Patrick Hochstenbach, CC-BY 4.0."><i class="fab fa-creative-commons-by"></i></a></figcaption>
+                      </figure>
+                      <p property="skos:definition">La función Editar ofrece herramientas de autoría para dar formato, vincular y estructurar artículos. Las ediciones son locales, a menos que se habilite <a href="#feature-autosaving">el autoguardado</a> o se confirmen los cambios mediante <a href="#feature-save" rel="rdfs:seeAlso">Guardar</a>, <a href="#feature-save-as" rel="rdfs:seeAlso">Guardar como</a>, <a href="#feature-version" rel="rdfs:seeAlso">Versión</a> o <a href="#feature-immutable" rel="rdfs:seeAlso">Inmutable</a>. Las opciones de formato estándar incluyen encabezados, cursiva, negrita, listas ordenadas y sin ordenar, código en línea, texto preformateado, hipervínculos, citas en línea, imágenes y tablas. Entre las capacidades adicionales se incluyen:</p>
+                      <dl rel="dcterms:subject">
+                        <dt about="#feature-interactive-embeddable-objects" property="skos:prefLabel"><i class="fas fa-chart-line"></i><dfn id="feature-interactive-embeddable-objects">Objetos interactivos e incrustables</dfn></dt>
+                        <dd about="#feature-interactive-embeddable-objects">
+                          <p property="skos:definition">Se pueden incrustar gráficos y otros elementos visuales, como minigráficos, basados en datos estadísticos.</p>
+                          <figure id="figure-dokieli-sparqlines" rel="schema:video" resource="#figure-dokieli-sparqlines">
+                            <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-sparqlines.jpg" preload="none" resource="#figure-dokieli-sparqlines" typeof="schema:VideoObject" width="800">
+                              <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-sparqlines.webm" type="video/webm" />
+                            </video>
+                            <figcaption><a href="https://dokie.li/media/video/dokieli-sparqlines.webm">Vídeo</a> (<a href="https://dokie.li/media/images/dokieli-sparqlines.jpg" rel="schema:thumbnailUrl">póster</a>) de la interacción de Sparqlines en dokieli [<time datatype="xsd:duration" datetime="PT25S" property="schema:duration">25 s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                          </figure>
+                        </dd>
+                        <dt about="#feature-semantic-annotation" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-rocket"></i><dfn id="feature-semantic-annotation">Anotación semántica</dfn></dt>
+                        <dd about="#feature-semantic-annotation" property="skos:definition">El contenido se puede marcar semánticamente para mejorar la legibilidad por parte de las máquinas (RDFa), sin dejar de ser legible para los humanos.</dd>
+                        <dt about="#feature-footnotes-citations" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-hashtag"></i><dfn id="feature-footnotes-citations">Notas al pie y citas</dfn></dt>
+                        <dd about="#feature-footnotes-citations">
+                          <p property="skos:definition">Se pueden añadir notas al pie y citas al texto seleccionado, lo que proporciona referencias contextuales y sólidas. Se puede notificar a las entidades citadas para que hagan referencia a ellas. Las referencias pueden incluir ISBN o URL. En el caso de las citas contextuales, por ejemplo, una entidad citada (un argumento) puede hacer referencia a una entidad citada (resultados de observación) como prueba factual. También se admiten búsquedas bibliográficas de especificaciones técnicas con fines de cita.</p>
+                          <figure id="figure-dokieli-citation" rel="schema:hasPart" resource="#figure-dokieli-citation">
+                            <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-citation.jpg" preload="none" resource="#figure-dokieli-citation" typeof="schema:VideoObject" width="800">
+                              <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-citation.webm" type="video/webm" />
+                            </video>
+                            <figcaption><a href="https://dokie.li/media/video/dokieli-citation.webm">Vídeo</a> (<a href="https://dokie.li/media/images/dokieli-citation.jpg" rel="schema:thumbnailUrl">póster</a>) de citas semánticas en línea y notificaciones en dokieli [<time datatype="xsd:duration" datetime="PT40S" property="schema:duration">40 s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                          </figure>
+                        </dd>
+                        <dt about="#feature-authoring-widgets" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-authoring-widgets">Widgets de autoría</dfn></dt>
+                        <dd about="#feature-authoring-widgets" property="skos:definition">Las opciones de creación adicionales incluyen añadir colaboradores y notificarles, establecer el <a href="#feature-language">idioma</a> del documento, <a href="#feature-license">la licencia</a>, la bandeja de entrada, <a href="#feature-in-reply-to">la respuesta,</a> el estado, el tipo y el conjunto de pruebas.</dd>
+                      </dl>
+                    </dd>
+                    <dt about="#feature-autosaving" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-piggy-bank"></i><dfn id="feature-autosaving">Autoguardado</dfn></dt>
+                    <dd about="#feature-autosaving" property="skos:definition">Mientras el usuario <a href="#feature-edit">edita</a> su artículo, el documento se guarda automáticamente en el almacenamiento local. Cuando la opción de guardado automático está activada, los cambios se sincronizan con el recurso remoto.</dd>
+                    <dt about="#feature-source" property="skos:prefLabel"><i class="fas fa-code"></i><dfn id="feature-source">Fuente</dfn></dt>
+                    <dd about="#feature-source" property="skos:definition">Permite la edición directa del estado actual del artículo. La actualización es temporal hasta que se confirma mediante funciones como <a href="#feature-save" rel="rdfs:seeAlso">Guardar</a>, <a href="#feature-save-as" rel="rdfs:seeAlso">Guardar como</a>, <a href="#feature-version" rel="rdfs:seeAlso">Versión</a> o <a href="#feature-immutable" rel="rdfs:seeAlso">Inmutable</a>.</dd>
+                    <dt about="#feature-embed-data" property="skos:prefLabel"><i class="fas fa-table"></i><dfn id="feature-embed-data">Incrustar datos</dfn></dt>
+                    <dd about="#feature-embed-data" property="skos:definition">Permite incrustar y actualizar datos complementarios que se almacenarán con el artículo utilizando sintaxis RDF como Turtle, JSON-LD y TriG.</dd>
+                    <dt about="#feature-message-log" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-scroll"></i><dfn id="feature-message-log">Registro de mensajes</dfn></dt>
+                    <dd about="#feature-message-log" property="skos:definition">Muestra todos los mensajes generados por dokieli, por ejemplo, comentarios o notificaciones resultantes de acciones específicas.</dd>
+                    <dt about="#feature-delete" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-trash-alt"></i><dfn id="feature-delete">Eliminar</dfn></dt>
+                    <dd about="#feature-delete" property="skos:definition">Elimina el artículo o la anotación del <a href="#personal-storage" rel="rdfs:seeAlso">almacenamiento personal</a>, cuando se dispone de acceso.</dd>
+                    <dt about="#feature-views" property="skos:prefLabel"><i class="fas fa-magic"></i><dfn id="feature-views">Vistas</dfn></dt>
+                    <dd about="#feature-views" property="skos:definition">El <a href="#menu" rel="rdfs:seeAlso">menú</a> dokieli muestra las hojas de estilo principales y alternativas que se <a href="#html-css">detectan en el HTML</a>. <cite>La opción «Nativa»</cite> siempre está disponible y desactiva todas las demás hojas de estilo, lo que permite aplicar los estilos predeterminados del agente de usuario. Cuando se selecciona una vista, por ejemplo, <cite>«Básica»</cite> (que es la hoja de estilo principal actual para este artículo), esta se convierte en la hoja de estilo principal, mientras que las demás se establecen como alternativas y se desactivan.</dd>
+                    <dt about="#feature-graph-view" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-circle-nodes"></i><dfn id="feature-graph-view">Vista gráfica</dfn></dt>
+                    <dd about="#feature-graph-view" property="skos:definition">Muestra una visualización gráfica de la semántica subyacente del documento, incluyendo una lista de recursos, el número de declaraciones, nodos únicos, creador, licencia y una leyenda. La visualización se puede exportar como SVG.</dd>
+                    <dt about="#feature-review-changes" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-microscope"></i><dfn id="feature-review-changes">Revisar cambios</dfn></dt>
+                    <dd about="#feature-review-changes" property="skos:definition">La función de revisión de cambios permite comparar las versiones locales y remotas de un documento cuando ambas han cambiado, y elegir entre conservar las ediciones locales, descartarlas en favor de la versión remota o conciliar manualmente y aplicar los cambios a ambas.</dd>
+                    <dt about="#feature-list-of-stuff" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-list-of-stuff">Lista de elementos</dfn></dt>
+                    <dd about="#feature-list-of-stuff" property="skos:definition">
+                      <p>Opciones para generar e incluir varios tipos de contenido, como:</p>
+                      <dl rel="dcterms:subject">
+                        <dt about="#feature-contents" property="skos:prefLabel"><i class="fas fa-hand-pointer"></i><dfn id="feature-contents">Contenido</dfn></dt>
+                        <dd about="#feature-contents">Genera una tabla de contenidos.</dd>
+                        <dt about="#feature-figures" property="skos:prefLabel"><i class="fas fa-leaf"></i><dfn id="feature-figures">Figuras</dfn></dt>
+                        <dd about="#feature-figures">Enumera todas las figuras del documento con enlaces a cada una de ellas.</dd>
+                        <dt about="#feature-tables" property="skos:prefLabel"><i class="fas fa-table"></i><dfn id="feature-tables">Tablas</dfn></dt>
+                        <dd about="#feature-tables">Enumera todas las tablas del documento con enlaces a cada una de ellas.</dd>
+                        <dt about="#feature-abbreviations" property="skos:prefLabel"><i class="fas fa-font"></i><dfn id="feature-abbreviations">Abreviaturas</dfn></dt>
+                        <dd about="#feature-abbreviations">Enumera las abreviaturas del documento junto con sus definiciones.</dd>
+                        <dt about="#feature-quotations" property="skos:prefLabel"><i class="fas fa-quote-right"></i><dfn id="feature-quotations">Citas</dfn></dt>
+                        <dd about="#feature-quotations">Enumera todas las citas del documento con enlaces a cada una de ellas.</dd>
+                        <dt about="#feature-concepts" property="skos:prefLabel"><i class="fas fa-book-atlas"></i><dfn id="feature-concepts">Conceptos</dfn></dt>
+                        <dd about="#feature-concepts">Enumera los esquemas conceptuales y los conceptos del documento con enlaces. También se pueden incluir conceptos adicionales de recursos externos referenciados, junto con una visualización gráfica de los conceptos.</dd>
+                        <dt about="#feature-requirements" property="skos:prefLabel"><i class="fas fa-vial-circle-check"></i><dfn id="feature-requirements">Requisitos</dfn></dt>
+                        <dd about="#feature-requirements">
+                          <p property="skos:definition">Crea una tabla de requisitos de conformidad y cobertura de pruebas (para especificaciones técnicas), que muestra el tema del requisito, el nivel, la declaración y los casos de prueba relacionados con enlaces. Opcionalmente, muestra los cambios entre la versión actual y la anterior del documento, junto con los detalles del registro de cambios.</p>
+                          <figure id="figure-dokieli-spec-conformance" rel="schema:video" resource="#figure-dokieli-spec-conformance">
+                            <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-spec-conformance.jpg" preload="none" resource="#figure-dokieli-spec-conformance" typeof="schema:VideoObject" width="800">
+                              <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-spec-conformance.webm" type="video/webm" />
+                            </video>
+                            <figcaption><a href="https://dokie.li/media/video/dokieli-spec-conformance.webm">Vídeo</a> (<a href="https://dokie.li/media/images/dokieli-spec-conformance.jpg" rel="schema:thumbnailUrl">póster</a>) de dokieli [<time datatype="xsd:duration" datetime="PT19S" property="schema:duration">19 s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                          </figure>
+                        </dd>
+                        <dt about="#feature-advisements" property="skos:prefLabel"><i class="fas fa-hat-wizard"></i><dfn id="feature-advisements">Advertencias</dfn></dt>
+                        <dd about="#feature-advisements">Crea una tabla de advertencias (en especificaciones técnicas), incluyendo sus niveles, declaraciones y enlaces.</dd>
+                        <dt about="#feature-references" property="skos:prefLabel"><i class="fas fa-hashtag"></i><dfn id="feature-references">Referencias</dfn></dt>
+                        <dd about="#feature-references">Enumera las referencias del documento con enlaces a cada una de ellas.</dd>
+                      </dl>
+                    </dd>
+                    <dt about="#feature-document-metadata" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-jar-wheat"></i><dfn id="feature-document-metadata">Metadatos del documento</dfn></dt>
+                    <dd about="#feature-document-metadata" property="skos:definition">Basándose en los datos estructurados subyacentes del documento, muestra información sobre sus colaboradores, como editores y autores, número de citas, requisitos, avisos, conceptos, declaraciones, así como el tiempo estimado de lectura, el número de caracteres, palabras y bytes.</dd>
+                  </dl>
+                </div>
+              </section>
+              <section id="components" inlist="" rel="schema:hasPart" resource="#components">
+                <h3 property="schema:name">Componentes</h3>
+                <div datatype="rdf:HTML" property="schema:description">
+                  <p>Los artículos, las anotaciones y las notificaciones pueden incluir componentes comunes que proporcionan información o funcionalidades adicionales.</p>
+                  <dl>
+                    <dt about="#feature-license" property="skos:prefLabel" typeof="skos:Concept"><i class="fab fa-creative-commons"></i><dfn id="feature-license">Licencia</dfn></dt>
+                    <dd about="#feature-license" property="skos:definition">Las licencias y los derechos se pueden especificar para los artículos y las anotaciones a partir de una lista de opciones <a href="https://creativecommons.org/">de Creative Commons</a>, por ejemplo, CC BY 4.0. Las notificaciones, por defecto, utilizan la licencia <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0 1.0 Universal</a>.</dd>
+                    <dt about="#feature-language" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-language"></i><dfn id="feature-language">Idioma</dfn></dt>
+                    <dd about="#feature-language" property="skos:definition">El idioma de un artículo o anotación se puede establecer a partir de una lista (182 idiomas disponibles, por ejemplo, armenio). Alternativamente, el idioma se puede aplicar a selecciones de texto o nodos específicos utilizando el anotador semántico.</dd>
+                    <dt about="#feature-in-reply-to" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-reply"></i><dfn id="feature-in-reply-to">En respuesta a</dfn></dt>
+                    <dd about="#feature-in-reply-to" property="skos:definition">Identifica un recurso al que el recurso actual es una respuesta.</dd>
+                    <dt about="#feature-browser" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-folder-tree"></i><dfn id="feature-browser">Explorador de recursos</dfn></dt>
+                    <dd about="#feature-browser" property="skos:definition">El <em>explorador de recursos</em> forma parte de funciones como <a href="#feature-new" rel="rdfs:seeAlso">Nuevo</a>, <a href="#feature-open" rel="rdfs:seeAlso">Abrir</a>, <a href="#feature-save-as" rel="rdfs:seeAlso">Guardar como</a> y <a href="#feature-generate-feed" rel="rdfs:seeAlso">Generar fuente</a>, y le permite navegar por ubicaciones como un <a href="#personal-storage" rel="rdfs:seeAlso">almacenamiento personal</a>, <a href="#annotation-service" rel="rdfs:seeAlso">un servicio de anotación</a> o una <a href="#activity-collection" rel="rdfs:seeAlso">colección de actividades</a>. Si se conoce una ubicación de almacenamiento personal, se utiliza de forma predeterminada; de lo contrario, la ubicación de inicio puede basarse en un servicio de anotación al que hace referencia el artículo.</dd>
+                    <dt about="#feature-base-url-selection" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-igloo"></i><dfn id="feature-base-url-selection">Selección de la URL base</dfn></dt>
+                    <dd about="#feature-base-url-selection" property="skos:definition">Al crear o guardar documentos, los recursos multimedia (por ejemplo, <var>enlace principal</var>, <var>[src]</var>, <var>objeto[datos]</var>) se normalizan para utilizar la URL base del documento como su ruta absoluta (la opción <q>Usar referencias tal cual</q> ). Si se selecciona <q>Copiar al almacenamiento</q>, las URL relativas permanecen sin cambios, ya que el proceso <em title="the copy operation performs an HTTP GET to source and HTTP PUT to the target">de copia</em> reutiliza las mismas rutas de archivo.</dd>
+                    <dt about="#feature-clipboard" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-copy"></i><dfn id="feature-clipboard">Portapapeles</dfn></dt>
+                    <dd about="#feature-clipboard" property="skos:definition">Se puede copiar texto, código y tablas (en formato CSV) al portapapeles.</dd>
+                    <dt about="#feature-fragments" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-anchor"></i><dfn id="feature-fragments">Fragmentos</dfn></dt>
+                    <dd about="#feature-fragments" property="skos:definition">Hay fragmentos en los que se puede hacer clic para facilitar las referencias específicas dentro del documento.</dd>
+                    <dt about="#feature-tabs" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-bars-staggered"></i><dfn id="feature-tabs">Vista de pestañas</dfn></dt>
+                    <dd about="#feature-tabs" property="skos:definition">Los elementos de navegación se presentan en una vista con pestañas para facilitar el acceso.</dd>
+                  </dl>
+                </div>
+              </section>
+            </div>
+          </section>
+          <section id="accessibility-usability-inclusion" inlist="" rel="schema:hasPart" resource="#accessibility-usability-inclusion">
+            <h2 property="schema:name">Accesibilidad, usabilidad e inclusión</h2>
+            <div datatype="rdf:HTML" property="schema:description">
+              <section id="accessibility-statement" inlist="" rel="schema:hasPart" resource="#accessibility-statement">
+                <h3 property="schema:name">Declaración de accesibilidad</h3>
+                <div datatype="rdf:HTML" property="schema:description">
+                  <section id="accessibility-measures-to-support-accessibility" inlist="" rel="schema:hasPart" resource="#accessibility-measures-to-support-accessibility">
+                    <h4 property="schema:name">Medidas para apoyar la accesibilidad</h4>
+                    <div datatype="rdf:HTML" property="schema:description">
+                      <p>dokieli toma las siguientes medidas para garantizar la accesibilidad de dokieli:</p>
+                      <ul class="organizational-effort accessibility-measures">
+                        <li>Incluir la accesibilidad en todas nuestras políticas internas.</li>
+                        <li>Asignar objetivos y responsabilidades claros en materia de accesibilidad.</li>
+                        <li>Emplear métodos formales de garantía de calidad en materia de accesibilidad.</li>
+                      </ul>
+                    </div>
+                  </section>
+                  <section id="accessibility-conformance-status" inlist="" rel="schema:hasPart" resource="#accessibility-conformance-status">
+                    <h4 property="schema:name">Estado de conformidad</h4>
+                    <div datatype="rdf:HTML" property="schema:description">
+                      <p><a href="https://www.w3.org/WAI/standards-guidelines/wcag/">Las Pautas de Accesibilidad al Contenido en la Web (WCAG)</a> definen los requisitos que deben cumplir los diseñadores y desarrolladores para mejorar la accesibilidad de las personas con discapacidad. Definen tres niveles de conformidad: Nivel A, Nivel AA y Nivel AAA. dokieli es parcialmente conforme con el nivel AA de las WCAG 2.1. Parcialmente conforme significa que algunas partes del contenido no se ajustan completamente al estándar de accesibilidad.</p>
+                    </div>
+                  </section>
+                  <section id="accessibility-feedback" inlist="" rel="schema:hasPart" resource="#accessibility-feedback">
+                    <h4 property="schema:name">Comentarios</h4>
+                    <div datatype="rdf:HTML" property="schema:description">
+                      <p>Agradecemos sus comentarios sobre la accesibilidad de dokieli. Por favor, háganos saber si encuentra barreras de accesibilidad en <a href="https://github.com/dokieli/dokieli/issues">dokieli.</a></p>
+                    </div>
+                  </section>
+                  <section id="accessibility-technical-specifications" inlist="" rel="schema:hasPart" resource="#accessibility-technical-specifications">
+                    <h4 property="schema:name">Especificaciones técnicas</h4>
+                    <div datatype="rdf:HTML" property="schema:description">
+                      <p>La accesibilidad de dokieli se basa en las siguientes tecnologías para funcionar con la combinación particular de navegador web y cualquier tecnología de asistencia o complemento instalado en su ordenador:</p>
+                      <ul>
+                        <li>HTML</li>
+                      </ul>
+                      <p>Estas tecnologías son necesarias para cumplir con los estándares de accesibilidad utilizados.</p>
+                    </div>
+                  </section>
+                  <section id="accessibility-assessment-approach" inlist="" rel="schema:hasPart" resource="#accessibility-assessment-approach">
+                    <h4 property="schema:name">Enfoque de evaluación</h4>
+                    <div datatype="rdf:HTML" property="schema:description">
+                      <p>dokieli evaluó la accesibilidad de dokieli mediante los siguientes enfoques:</p>
+                      <ul>
+                        <li>Autoevaluación</li>
+                      </ul>
+                    </div>
+                  </section>
+                </div>
+              </section>
+              <section id="authoring-accessibility" inlist="" rel="schema:hasPart" resource="#authoring-accessibility">
+                <h3 property="schema:name">Accesibilidad de autoría</h3>
+                <div datatype="rdf:HTML" property="schema:description">
+                  <section id="authoring-tool-user-interface-accessibility" inlist="" rel="schema:hasPart" resource="#authoring-tool-user-interface-accessibility">
+                    <h4 property="schema:name">Accesibilidad de la interfaz de usuario de la herramienta de autoría</h4>
+                    <div datatype="rdf:HTML" property="schema:description">
+                      <dl>
+                        <dt>La funcionalidad basada en la web es accesible</dt>
+                        <dd>parcialmente</dd>
+                        <dt>La funcionalidad no basada en la web es accesible</dt>
+                        <dd>no aplicable</dd>
+                        <dt>Contenido alternativo disponible para los editores</dt>
+                        <dd>parcialmente</dd>
+                        <dt>Descripción</dt>
+                        <dd>Es posible añadir contenido alternativo a través de la función de editor de código fuente de dokieli. Las mejoras en la interfaz de usuario estarán disponibles en una versión futura.</dd>
+                        <dt>La presentación de la vista de edición se puede determinar mediante programación</dt>
+                        <dd>sí</dd>
+                        <dt>Funciona con el teclado</dt>
+                        <dd>Parcialmente</dd>
+                        <dt>Descripción</dt>
+                        <dd>Hay algunos puntos de referencia WAI-ARIA.</dd>
+                        <dt>Tiempo suficiente</dt>
+                        <dd>sí</dd>
+                        <dt>Contenido parpadeante opcional</dt>
+                        <dd>Sí</dd>
+                        <dt>Se puede navegar por el contenido según su estructura</dt>
+                        <dd>sí</dd>
+                        <dt>Contenido buscable</dt>
+                        <dd>no</dd>
+                        <dt>Admite preferencias de visualización</dt>
+                        <dd>sí</dd>
+                        <dt>Las vistas previas son accesibles</dt>
+                        <dd>no aplicable</dd>
+                        <dt>Ayuda al editor a prevenir y corregir errores</dt>
+                        <dd>sí</dd>
+                        <dt>(Accesibilidad) características documentadas</dt>
+                        <dd>parcialmente</dd>
+                      </dl>
+                    </div>
+                  </section>
+                  <section id="support-for-producing-accessible-content" inlist="" rel="schema:hasPart" resource="#support-for-producing-accessible-content">
+                    <h4 property="schema:name">Compatibilidad con la producción de contenido accesible</h4>
+                    <div datatype="rdf:HTML" property="schema:description">
+                      <dl>
+                        <dt>Genera marcas accesibles</dt>
+                        <dd>Sí</dd>
+                        <dt>Conserva la información de accesibilidad</dt>
+                        <dd>sí</dd>
+                        <dt>Es posible producir contenido accesible</dt>
+                        <dd>sí</dd>
+                        <dt>Editores guiados</dt>
+                        <dd>Parcialmente</dd>
+                        <dt>Se pueden gestionar alternativas de texto</dt>
+                        <dd>parcialmente</dd>
+                        <dt>Plantillas accesibles disponibles</dt>
+                        <dd>sí</dd>
+                        <dt>Componentes/complementos accesibles disponibles</dt>
+                        <dd>no</dd>
+                        <dt>Comprueba la accesibilidad automáticamente</dt>
+                        <dd>sí</dd>
+                        <dt>Proporciona sugerencias al editor de contenido sobre problemas de accesibilidad</dt>
+                        <dd>Parcialmente</dd>
+                        <dt>Descripción</dt>
+                        <dd>Hay un informe de accesibilidad en la función «Guardar como» que incluye una lista de problemas que puede corregir el editor de contenido.</dd>
+                        <dt>Las funciones de accesibilidad son destacadas.</dt>
+                        <dd>no</dd>
+                        <dt>La documentación promueve la accesibilidad</dt>
+                        <dd>No se proporciona</dd>
+                      </dl>
+                    </div>
+                  </section>
+                </div>
+              </section>
+            </div>
+          </section>
+        </div>
+      </article>
+    </main>
+  </body>
+</html>
