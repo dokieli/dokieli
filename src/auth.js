@@ -20,7 +20,7 @@ import Config from './config.js'
 import { removeChildren, fragmentFromString } from './util.js'
 import { getAgentHTML, showActionMessage, showGeneralMessages, getResourceSupplementalInfo, handleDeleteNote, addMessageToLog } from './doc.js'
 import { Icon } from './ui/icons.js'
-import { getResourceGraph, getAgentName, getGraphImage, getAgentURL, getAgentPreferredProxy, getAgentPreferredPolicy, setPreferredPolicyInfo, getAgentDelegates, getAgentKnows, getAgentFollowing, getAgentStorage, getAgentOutbox, getAgentInbox, getAgentPreferencesFile, getAgentPublicTypeIndex, getAgentPrivateTypeIndex, getAgentTypeIndex, getAgentSupplementalInfo, getAgentSeeAlso, getAgentPreferencesInfo, getAgentLiked, getAgentOccupations, getAgentPublications, getAgentMade, getAgentOIDCIssuer, getAgentPreferredLanguages, setPreferredLanguagesInfo } from './graph.js'
+import { getResourceGraph, getAgentName, getGraphImage, getAgentURL, getAgentPreferredProxy, getAgentPreferredPolicy, setPreferredPolicyInfo, getAgentDelegates, getAgentKnows, getAgentFollowing, getAgentStorage, getAgentOutbox, getAgentInbox, getAgentPreferencesFile, getAgentPublicTypeIndex, getAgentPrivateTypeIndex, getAgentTypeIndex, getAgentSupplementalInfo, getAgentSeeAlsoPrimaryTopicOf, getAgentPreferencesInfo, getAgentLiked, getAgentOccupations, getAgentPublications, getAgentMade, getAgentOIDCIssuer, getAgentPreferredLanguages, setPreferredLanguagesInfo } from './graph.js'
 import { removeLocalStorageAsSignOut, updateLocalStorageProfile } from './storage.js'
 import { updateButtons, getButtonHTML } from './ui/buttons.js';
 import { SessionCore } from '@uvdsl/solid-oidc-client-browser/core';
@@ -347,6 +347,7 @@ function getSubjectInfo (subjectIRI, options = {}) {
         Following: getAgentFollowing(g),
         SameAs: [],
         SeeAlso: [],
+        PrimaryTopicOf: [],
         Storage: getAgentStorage(g),
         Outbox: getAgentOutbox(g),
         Inbox: getAgentInbox(g),
@@ -414,7 +415,7 @@ function afterSetUserInfo () {
       }))
 
     promises.push(getAgentSupplementalInfo(Config.User.IRI))
-    promises.push(getAgentSeeAlso(Config.User.Graph))
+    promises.push(getAgentSeeAlsoPrimaryTopicOf(Config.User.Graph))
   }
 
   Promise.allSettled(promises)

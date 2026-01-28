@@ -920,7 +920,7 @@ function getAgentSupplementalInfo(iri) {
 
         return processSameAs(s, getAgentSupplementalInfo)
                 .then(() => {
-                  return getAgentSeeAlso(s)
+                  return getAgentSeeAlsoPrimaryTopicOf(s)
                 });
       },
       function(reason){
@@ -929,31 +929,44 @@ function getAgentSupplementalInfo(iri) {
   }
 }
 
-function getAgentSeeAlso(g, subjectURI) {
+function getAgentSeeAlsoPrimaryTopicOf(g, subjectURI) {
   if (!g) { return Promise.resolve([]); }
 
   subjectURI = subjectURI || g.term.value;
   var baseURI = stripFragmentFromString(subjectURI);
   var seeAlso = g.out(ns.rdfs.seeAlso).values;
+  var isPrimaryTopicOf = g.out(ns.foaf.isPrimaryTopicOf).values;
 
-  if (seeAlso.length) {
-    var iris = [];
+  if (seeAlso.length || isPrimaryTopicOf.length) {
     var promises = [];
 
     seeAlso.forEach(iri => {
-      if (!Config.User.SeeAlso.includes(iri) && (stripFragmentFromString(iri) != baseURI)) {
-        iris.push(iri);
-      }
+      if (
+        Config.User.SeeAlso.includes(iri) ||
+        Config.User.PrimaryTopicOf.includes(iri) ||
+        stripFragmentFromString(iri) === baseURI
+      ) return;
+
+      Config.User.SeeAlso.push(iri);
+
+      promises.push(getResourceGraph(iri));
     });
 
-    iris.forEach(iri => {
-      Config.User.SeeAlso = uniqueArray(Config.User.SeeAlso.concat(iri));
+    isPrimaryTopicOf.forEach(iri => {
+      if (
+        Config.User.SeeAlso.includes(iri) ||
+        Config.User.PrimaryTopicOf.includes(iri) ||
+        stripFragmentFromString(iri) === baseURI
+      ) return;
+
+      Config.User.PrimaryTopicOf.push(iri);
+
       promises.push(getResourceGraph(iri));
     });
 
     return Promise.allSettled(promises)
       .then(results => {
-        var promisesGetAgentSeeAlso = [];
+        var promisesGetAgentSeeAlsoPrimaryTopicOf = [];
 
         results.forEach(result => {
           var g = result.value;
@@ -997,11 +1010,11 @@ function getAgentSeeAlso(g, subjectURI) {
                 : made;
             }
 
-            promisesGetAgentSeeAlso.push(getAgentSeeAlso(g, subjectURI))
+            promisesGetAgentSeeAlsoPrimaryTopicOf.push(getAgentSeeAlsoPrimaryTopicOf(g, subjectURI))
           }
         })
 
-        return Promise.allSettled(promisesGetAgentSeeAlso)
+        return Promise.allSettled(promisesGetAgentSeeAlsoPrimaryTopicOf)
           .then(results => {
             return Promise.resolve([]);
           })
@@ -1761,7 +1774,7 @@ export {
   getAgentPreferredPolicyRule,
   setPreferredPolicyInfo,
   setPreferredLanguagesInfo,
-  getAgentSeeAlso,
+  getAgentSeeAlsoPrimaryTopicOf,
   getAgentSupplementalInfo,
   getUserContacts,
   getAgentTypeIndex,
