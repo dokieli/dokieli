@@ -5904,11 +5904,12 @@ console.log(reason);
 
         if (e.target.closest('button.share')) {
           var tos = [];
-          var resourceTo = document.querySelector('#share-resource #share-resource-to');
-          if (resourceTo) {
-            resourceTo = resourceTo.value.trim();
-            tos = (resourceTo.length) ? resourceTo.split(/\r\n|\r|\n/) : [];
-          }
+          //XXX: This is currently not in the UI. https://github.com/dokieli/dokieli/issues/532
+          // var resourceTo = document.querySelector('#share-resource #share-resource-to');
+          // if (resourceTo) {
+          //   resourceTo = domSanitize(resourceTo.value.trim());
+          //   tos = (resourceTo.length) ? resourceTo.split(/\r\n|\r|\n/) : [];
+          // }
 
           var note = document.querySelector('#share-resource #share-resource-note').value.trim();
 

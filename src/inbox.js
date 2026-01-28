@@ -57,6 +57,10 @@ function sendNotifications(tos, note, iri, shareResource) {
     }
 
     tos.forEach(to => {
+      to = domSanitize(to);
+
+      if (!isHttpOrHttpsProtocol(to)) return;
+
       notificationData['to'] = to;
 
       var toInput = shareResource.querySelector('[value="' + to + '"]') ||
@@ -67,7 +71,6 @@ function sendNotifications(tos, note, iri, shareResource) {
         '">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + '</span>');
 
       inboxResponse(to, toInput)
-
         .then(inboxURL => {
           notificationData['inbox'] = inboxURL;
 
