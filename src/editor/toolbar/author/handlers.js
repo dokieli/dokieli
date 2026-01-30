@@ -24,7 +24,7 @@ import { getFormActionData } from "../social/handlers.js";
 import { buildReferences, createNoteDataHTML, createRDFaMarkObject } from "../../../doc.js";
 import { stripFragmentFromString } from "../../../uri.js";
 import { getGraphInbox } from "../../../graph.js";
-import { notifyInbox } from "../../../inbox.js";
+import { notifyInbox } from "../../../activity.js";
 import rdf from 'rdf-ext';
 import Config from "../../../config.js";
 
@@ -336,7 +336,7 @@ export function processAction(action, formValues, selectionData, storedSelection
       asideNode = fragmentFromString(asideNote);
       // parentSection.appendChild(asideNode);
 
-      DO.Editor.insertFragmentInNode(asideNode);
+      Config.Editor.insertFragmentInNode(asideNode);
 
       DO.U.positionNote(refId, id);
       break;
@@ -357,7 +357,7 @@ export function processAction(action, formValues, selectionData, storedSelection
           `;
           asideNode = fragmentFromString(asideNote);
 
-          DO.Editor.insertFragmentInNode(asideNode);
+          Config.Editor.insertFragmentInNode(asideNode);
 
           DO.U.positionNote(refId, id);
           break;

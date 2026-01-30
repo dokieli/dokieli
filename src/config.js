@@ -16,35 +16,8 @@ limitations under the License.
 */
 
 import rdf from 'rdf-ext';
-import DO from './dokieli.js';
 
 export default {
-  init: function(url) {
-    DO.U.initServiceWorker();
-
-    var contentNode = DO.U?.getContentNode(document);
-    if (contentNode) {
-      DO.U.initButtons();
-      DO.U.setDocumentURL(url);
-      DO.U.setWebExtensionURL();
-      DO.U.setDocumentString();
-      DO.U.initUser();
-      DO.U.setDocumentMode();
-      DO.U.initLocalStorage();
-      DO.U.highlightItems();
-      DO.U.showAsTabs();
-      DO.U.initDocumentActions();
-      DO.U.initDocumentMenu();
-      DO.U.setDocRefType();
-      DO.U.initCurrentStylesheet();
-      DO.U.showFragment();
-      DO.U.initCopyToClipboard();
-      DO.U.initSlideshow();
-      DO.U.initEditor();
-      DO.U.initMath();
-      DO.U.monitorNetworkStatus();
-    }
-  },
   OIDC: {},
   DocumentAction: '',
   Button: {},
@@ -97,7 +70,8 @@ export default {
   ContentEditable: false,
   WebExtensionEnabled: ((window.chrome && chrome.runtime && chrome.runtime.id) || (typeof browser !== 'undefined' && browser.runtime && browser.runtime.id)),
   WebExtension: (typeof browser !== 'undefined') ? browser : window.chrome,
-  Editor: {
+  Editor: {},
+  EditorOptions: {
     headings: ["h1", "h2", "h3", "h4", "h5", "h6"],
     regexEmptyHTMLTags: /<[^\/>][^>]*><\/[^>]+>/gim,
     mode: 'social'

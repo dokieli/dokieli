@@ -118,7 +118,7 @@ export function formatHTML(node, options, noEsc = [false], indentLevel = 0, next
       out += ' ' + attrList.join(' ');
     }
 
-    if (options.voidElements.includes(ename)) {
+    if (options.voidElements?.includes(ename)) {
       out += ' />';
     } else {
       out += '>';

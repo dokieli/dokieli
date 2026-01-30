@@ -21,7 +21,7 @@ import { getFormValues, kebabToCamel, generateAttributeId, getDateTimeISO } from
 import { createActivityHTML, createHTML, createNoteDataHTML, getNodeLanguage, getReferenceLabel } from "../../../doc.js"
 import { getAbsoluteIRI, stripFragmentFromString } from "../../../uri.js"
 import Config from "../../../config.js"
-import { notifyInbox, postActivity } from "../../../inbox.js"
+import { notifyInbox, postActivity } from "../../../activity.js"
 
 const ns = Config.ns;
 

@@ -16,7 +16,7 @@ limitations under the License.
 */
 
 import { Schema } from "prosemirror-model";
-import Config from 'config';
+import Config from '../../config.js';
 
 // export const globalAttributes = ['class', 'dir', 'id', 'lang', 'title', 'translate', 'xml:lang', 'xmlns'];
 // export const markupAttributes = ['alt', 'cite', 'colspan', 'control', 'crossorigin', 'data-cite', 'data-datetime', 'data-event-keyup-enter', 'data-editor-id', 'data-dfn-type', 'data-lt', 'data-id', 'data-inbox', 'data-link-type', 'data-plurals', 'data-to', 'data-target', 'data-type', 'data-versiondate', 'data-versionurl', 'datetime', 'height', 'poster', 'preload', 'rowspan', 'style', 'type', 'width'];
@@ -688,7 +688,6 @@ let customNodes = {
     toDOM(node) { return ["canvas", { ...node.attrs.originalAttributes }, 0]; }
   },
 };
-
 //Make PM Nodes for all inlineElements except those that need to be Marks.
 Config.DOMProcessing.inlineElements.filter(el => !Config.DOMProcessing.proseMirrorMarks.includes(el) && !Object.keys(customNodes).includes(el)).map((tagName) => {
   customNodes[tagName] = {
@@ -704,7 +703,7 @@ Config.DOMProcessing.inlineElements.filter(el => !Config.DOMProcessing.proseMirr
 
 const customMarks = {};
 
-Config.DOMProcessing.proseMirrorMarks.forEach(tagName => {
+Config?.DOMProcessing.proseMirrorMarks.forEach(tagName => {
   let namespace = '';
 
   const toDOM =

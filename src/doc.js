@@ -17,7 +17,7 @@ limitations under the License.
 
 import Config from './config.js'
 import { getDateTimeISO, fragmentFromString, generateAttributeId, uniqueArray, generateUUID, matchAllIndex, parseISODuration, getRandomIndex, getHash, stringFromFragment } from './util.js'
-import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath, getPrefixedNameFromIRI, generateDataURI, getProxyableIRI, getFragmentOrLastPath } from './uri.js'
+import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath, getPrefixedNameFromIRI, generateDataURI, getProxyableIRI, getFragmentOrLastPath, isHttpOrHttpsProtocol, isFileProtocol } from './uri.js'
 import { getResourceHead, deleteResource, processSave, patchResourceWithAcceptPatch } from './fetcher.js'
 import rdf from "rdf-ext";
 import { getResourceGraph, sortGraphTriples, getGraphContributors, getGraphAuthors, getGraphEditors, getGraphPerformers, getGraphPublishers, getGraphLabel, getGraphEmail, getGraphTitle, getGraphConceptLabel, getGraphPublished, getGraphUpdated, getGraphDescription, getGraphLicense, getGraphRights, getGraphFromData, getGraphAudience, getGraphTypes, getGraphLanguage, getGraphInbox, getUserLabelOrIRI, getGraphImage } from './graph.js'
@@ -32,10 +32,16 @@ import { domSanitizeHTMLBody, domSanitize } from './utils/sanitization.js';
 import { cleanProseMirrorOutput, normalizeHTML } from './utils/normalization.js';
 import { formatHTML, getDoctype, htmlEncode } from './utils/html.js';
 import { i18n } from './i18n.js';
+import { positionNote } from './activity.js';
+import shower from '@shower/core';
+import { csvStringToJson, jsonToHtmlTableString } from './csv.js';
+import { generateGeoView } from './geo.js';
+import { hideDocumentMenu, initDocumentMenu } from './menu.js';
+import { initEditor } from './editor/initEditor.js';
 
 const ns = Config.ns;
 
-function getNodeWithoutClasses (node, classNames) {
+export function getNodeWithoutClasses (node, classNames) {
   classNames = Array.isArray(classNames) ? classNames : [classNames];
   const rootNode = node.nodeType === Node.DOCUMENT_NODE ? node.documentElement : node;
   const clonedRootNode = rootNode.cloneNode(true);
@@ -49,7 +55,7 @@ function getNodeWithoutClasses (node, classNames) {
   return clonedRootNode;
 }
 
-function getFragmentOfNodesChildren(node) {
+export function getFragmentOfNodesChildren(node) {
   const fragment = document.createDocumentFragment();
   [...node.childNodes].forEach(child => fragment.appendChild(child));
 
@@ -113,7 +119,7 @@ export function normalizeWhitespace(root = document.documentElement) {
   return root;
 }
 
-function convertDocumentFragmentToDocument(fragment) {
+export function convertDocumentFragmentToDocument(fragment) {
   const newDoc = document.implementation.createHTMLDocument("New Document");
 
   while (fragment.firstChild) {
@@ -123,8 +129,7 @@ function convertDocumentFragmentToDocument(fragment) {
   return newDoc;
 }
 
-
-function getDocument(cn, options) {
+export function getDocument(cn, options) {
   let node = cn || document.documentElement;
 
   if (typeof cn === 'string') {
@@ -151,7 +156,7 @@ function getDocument(cn, options) {
 
   let htmlString;
   // let htmlString = normalizeWhitespace(div).getHTML();
-// console.log(htmlString)
+  // console.log(htmlString)
 
   let nodeDocument = getDocumentNodeFromString(div.getHTML(), nodeParseOptions);
 
@@ -187,7 +192,7 @@ function getDocument(cn, options) {
   return htmlString;
 }
 
-function getDocumentNodeFromString(data, options = {}) {
+export function getDocumentNodeFromString(data, options = {}) {
   options['contentType'] = options.contentType || 'text/html';
 
   if (options.contentType === 'text/xml' || options.contentType === 'image/svg+xml') {
@@ -206,7 +211,7 @@ function getDocumentNodeFromString(data, options = {}) {
   return node;
 }
 
-function getDocumentContentNode(node) {
+export function getDocumentContentNode(node) {
   if (node instanceof Document) {
     return node.body || undefined; // For HTML documents
   } else if (node instanceof XMLDocument) {
@@ -220,7 +225,7 @@ function getDocumentContentNode(node) {
   }
 }
 
-function createHTML(title, main, options) {
+export function createHTML(title, main, options) {
   title = domSanitize(title) || '';
   main = domSanitize(main);
   options = options || {};
@@ -245,7 +250,7 @@ function createHTML(title, main, options) {
 ';
 }
 
-function createFeedXML(feed, options) {
+export function createFeedXML(feed, options) {
   options = options || {};
 
   var feedXML = '';
@@ -449,7 +454,7 @@ function createFeedXML(feed, options) {
   return feedXML;
 }
 
-function createActivityHTML(o) {
+export function createActivityHTML(o) {
   var prefixes = ' prefix="rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns# schema: http://schema.org/ oa: http://www.w3.org/ns/oa# as: https://www.w3.org/ns/activitystreams#"';
 
   var types = '<dt>Types</dt>'
@@ -538,8 +543,7 @@ function createActivityHTML(o) {
   return data
 }
 
-
-function createNoteDataHTML(n) {
+export function createNoteDataHTML(n) {
   // console.log(n);
   var created = '';
   var lang = '', xmlLang = '', language = '';
@@ -843,7 +847,7 @@ function createNoteDataHTML(n) {
   return note;
 }
 
-function tagsToBodyObjects(string) {
+export function tagsToBodyObjects(string) {
   var bodyObjects = [];
 
   let tagsArray = string
@@ -863,11 +867,11 @@ function tagsToBodyObjects(string) {
   return bodyObjects;
 }
 
-function getClosestSectionNode(node) {
+export function getClosestSectionNode(node) {
   return node.closest('section') || node.closest('div') || node.closest('article') || node.closest('main') || node.closest('body');
 }
 
-function removeSelectorFromNode(node, selector) {
+export function removeSelectorFromNode(node, selector) {
   var clone = node.cloneNode(true);
   var x = clone.querySelectorAll(selector);
 
@@ -878,20 +882,20 @@ function removeSelectorFromNode(node, selector) {
   return clone;
 }
 
-function getNodeLanguage(node) {
+export function getNodeLanguage(node) {
   node = node ?? getDocumentContentNode(document);
 
   const closestLangNode = node.closest('[lang], [xml\\:lang]');
   return closestLangNode?.getAttribute('lang') || closestLangNode?.getAttributeNS('', 'xml:lang') || '';
 }
 
-function addMessageToLog(message, log, options = {}) {
+export function addMessageToLog(message, log, options = {}) {
   const m = Object.assign({}, message);
   m['dateTime'] = getDateTimeISO();
   log.unshift(m);
 }
 
-function handleActionMessage(resolved, rejected) {
+export function handleActionMessage(resolved, rejected) {
   if (resolved) {
     const { response, message } = resolved;
     showActionMessage(document.body, message);
@@ -902,7 +906,7 @@ function handleActionMessage(resolved, rejected) {
   }
 }
 
-function showActionMessage(node, message, options = {}) {
+export function showActionMessage(node, message, options = {}) {
   if (!node || !message) return;
 
   if (options.clearId) {
@@ -971,16 +975,16 @@ function showActionMessage(node, message, options = {}) {
   return id;
 }
 
-function hasNonWhitespaceText(node) {
+export function hasNonWhitespaceText(node) {
   return !!node.textContent.trim();
 }
 
-function selectArticleNode(node) {
+export function selectArticleNode(node) {
   var x = node.querySelectorAll(Config.ArticleNodeSelectors.join(','));
   return (x && x.length > 0) ? x[x.length - 1] : getDocumentContentNode(document);
 }
 
-function insertDocumentLevelHTML(rootNode, h, options) {
+export function insertDocumentLevelHTML(rootNode, h, options) {
   rootNode = rootNode || document;
   options = options || {};
   h = domSanitize(h);
@@ -1028,7 +1032,7 @@ function insertDocumentLevelHTML(rootNode, h, options) {
   return rootNode;
 }
 
-function setDate(rootNode, options) {
+export function setDate(rootNode, options) {
   rootNode = rootNode || document;
   options = options || {};
 
@@ -1054,7 +1058,7 @@ function setDate(rootNode, options) {
   return rootNode;
 }
 
-function createDateHTML(options) {
+export function createDateHTML(options) {
   options = options || {};
 
   var titleKey = ('id' in options) ? options.id.replace(/^(document|dataset)-/, '') : 'created';
@@ -1080,7 +1084,7 @@ function createDateHTML(options) {
   return date;
 }
 
-function setEditSelections(options) {
+export function setEditSelections(options) {
   options = options || {};
 
   if (!('datetime' in options)) {
@@ -1275,12 +1279,12 @@ function setEditSelections(options) {
   getResourceInfo();
 }
 
-function getRDFaPrefixHTML(prefixes) {
+export function getRDFaPrefixHTML(prefixes) {
   return Object.keys(prefixes).map(i => { return i + ': ' + prefixes[i]; }).join(' ');
 }
 
 //TODO: Consider if/how setDocumentRelation and createDefinitionListHTML
-function setDocumentRelation(rootNode, data, options) {
+export function setDocumentRelation(rootNode, data, options) {
   rootNode = rootNode || document;
   if (!data || !options) { return; }
 
@@ -1321,7 +1325,7 @@ function setDocumentRelation(rootNode, data, options) {
   return rootNode;
 }
 
-function showTimeMap(node, url) {
+export function showTimeMap(node, url) {
   url = url || Config.OriginalResourceInfo['timemap']
   if (!url) { return; }
 
@@ -1383,7 +1387,7 @@ function showTimeMap(node, url) {
     });
 }
 
-function setDocumentStatus(rootNode, options) {
+export function setDocumentStatus(rootNode, options) {
   rootNode = rootNode || document;
   options = options || {};
 
@@ -1394,7 +1398,7 @@ function setDocumentStatus(rootNode, options) {
   return rootNode;
 }
 
-function getDocumentStatusHTML(rootNode, options) {
+export function getDocumentStatusHTML(rootNode, options) {
   rootNode = rootNode || document;
   options = options || {};
   options['mode'] = ('mode' in options) ? options.mode : '';
@@ -1465,7 +1469,7 @@ function getDocumentStatusHTML(rootNode, options) {
   return s;
 }
 
-function handleDeleteNote(button) {
+export function handleDeleteNote(button) {
   button.setAttribute("disabled", "disabled");
   var article = button.closest('article');
   var refId = 'r-' + article.id;
@@ -1493,7 +1497,7 @@ function handleDeleteNote(button) {
 }
 
 //TODO: Inform the user that this information feature may fetch a resource from another origin, and ask whether they want to go ahead with it.
-function eventButtonInfo() {
+export function eventButtonInfo() {
   const errorMessage = `<p class="error" data-i18n="info.button-info.error.p">${i18n.t('info.button-info.error.p.textContent')}</p>`;
 
   document.addEventListener('click', e => {
@@ -1701,7 +1705,7 @@ function eventButtonInfo() {
   });
 }
 
-function eventButtonClose() {
+export function eventButtonClose() {
   document.addEventListener('click', e => {
     var button = e.target.closest('button.close')
     if (button) {
@@ -1711,7 +1715,7 @@ function eventButtonClose() {
   });
 }
 
-function eventButtonSignIn() {
+export function eventButtonSignIn() {
   document.addEventListener('click', e => {
     var button = e.target.closest('button.signin-user');
     if (button) {
@@ -1721,7 +1725,7 @@ function eventButtonSignIn() {
   });
 }
 
-function eventButtonSignOut() {
+export function eventButtonSignOut() {
   document.addEventListener('click', async (e) => {
     var button = e.target.closest('button.signout-user');
     if (button) {
@@ -1731,7 +1735,7 @@ function eventButtonSignOut() {
   });
 }
 
-function eventButtonNotificationsToggle() {
+export function eventButtonNotificationsToggle() {
   document.addEventListener('click', e => {
     var button = e.target.closest('button.toggle');
     if (button) {
@@ -1743,7 +1747,7 @@ function eventButtonNotificationsToggle() {
   });
 }
 
-function getGraphContributorsRole(g, options) {
+export function getGraphContributorsRole(g, options) {
   options = options || {};
   options['sort'] = options['sort'] || false;
   options['role'] = options['role'] || 'contributor';
@@ -1812,7 +1816,7 @@ function getGraphContributorsRole(g, options) {
 }
 
 //TODO: Rename this to avoid confusion with graph.getGraphFromData
-function getGraphData(s, options) {
+export function getGraphData(s, options) {
   var documentURL = options['subjectURI'];
 
   var info = {
@@ -1960,9 +1964,9 @@ function getGraphData(s, options) {
  * @returns {Promise<Object>}
  */
 
-async function getResourceInfo(data, options) {
+export async function getResourceInfo(data, options) {
   const documentOptions = {
-    ...DO.C.DOMProcessing,
+    ...Config.DOMProcessing,
     format: true,
     sanitize: true,
     normalize: true
@@ -2016,7 +2020,7 @@ async function getResourceInfo(data, options) {
     });
 }
 
-function getGraphFromDataBlock(data, options) {
+export function getGraphFromDataBlock(data, options) {
   var documentURL = options['subjectURI'];
 
   if (Config.MediaTypes.Markup.includes(options.contentType)) {
@@ -2083,9 +2087,9 @@ function getGraphFromDataBlock(data, options) {
   }
 }
 
-async function updateResourceInfos(documentURL = DO.C.DocumentURL, data, response, options = {}) {
+export async function updateResourceInfos(documentURL = Config.DocumentURL, data, response, options = {}) {
   const documentOptions = {
-    ...DO.C.DOMProcessing,
+    ...Config.DOMProcessing,
     format: true,
     sanitize: true,
     normalize: true
@@ -2096,7 +2100,7 @@ async function updateResourceInfos(documentURL = DO.C.DocumentURL, data, respons
   const storeHash = options.storeHash !== false;
 
   await getResourceInfo(data, { storeHash }).then(resourceInfo => {
-    DO.C.Resource[documentURL] = { ...DO.C.Resource[documentURL], ...resourceInfo };
+    Config.Resource[documentURL] = { ...Config.Resource[documentURL], ...resourceInfo };
   });
 
   if (response) {
@@ -2109,7 +2113,7 @@ async function updateResourceInfos(documentURL = DO.C.DocumentURL, data, respons
   updateButtons();
 }
 
-function updateSupplementalInfo(response, options = {}) {
+export function updateSupplementalInfo(response, options = {}) {
   var checkHeaders = options?.checkHeaders ?? ['wac-allow', 'link', 'last-modified', 'etag', 'expires', 'date', 'allow'];
   var headers = response.headers;
   var documentURL = options?.documentURL || Config.DocumentURL;
@@ -2172,7 +2176,7 @@ function updateSupplementalInfo(response, options = {}) {
   })
 }
 
-function getResourceSupplementalInfo(documentURL, options) {
+export function getResourceSupplementalInfo(documentURL, options) {
   options = options || {};
   options['reuse'] = options['reuse'] === true ? true : false;
   options['followLinkRelationTypes'] = options['followLinkRelationTypes'] || [];
@@ -2204,7 +2208,7 @@ function getResourceSupplementalInfo(documentURL, options) {
   }
 }
 
-function processSupplementalInfoLinkHeaders(documentURL, options = {}) {
+export function processSupplementalInfoLinkHeaders(documentURL, options = {}) {
   var promises = [];
   var linkHeaders = Config['Resource'][documentURL]['headers']?.['linkHeaders'];
 
@@ -2236,7 +2240,7 @@ function processSupplementalInfoLinkHeaders(documentURL, options = {}) {
     });
 }
 
-function getResourceInfoCitations(g) {
+export function getResourceInfoCitations(g) {
   var documentURL = Config.DocumentURL;
   var citationProperties = Object.keys(Config.Citation).concat([ns.dcterms.references.value, ns.schema.citation.value]);
 
@@ -2259,7 +2263,7 @@ function getResourceInfoCitations(g) {
 }
 
 //TODO: Review grapoi
-function getResourceInfoODRLPolicies(s) {
+export function getResourceInfoODRLPolicies(s) {
   var info = {}
   info['odrl'] = {};
 
@@ -2324,7 +2328,7 @@ function getResourceInfoODRLPolicies(s) {
   return info['odrl'];
 }
 
-function getResourceInfoSpecClassesOfProducts(s) {
+export function getResourceInfoSpecClassesOfProducts(s) {
   var info = {}
   info['spec'] = {};
   info['spec']['classesOfProducts'] = {};
@@ -2356,11 +2360,11 @@ function getResourceInfoSpecClassesOfProducts(s) {
 }
 
 //XXX: Should this be stored for cheaper reuse?
-function getClassesOfProductsConcepts() {
+export function getClassesOfProductsConcepts() {
   var concepts = [];
 
-  if (Config.Resource[DO.C.DocumentURL]?.spec?.classesOfProducts) {
-    var classesOfProducts = Config.Resource[DO.C.DocumentURL]?.spec?.classesOfProducts;
+  if (Config.Resource[Config.DocumentURL]?.spec?.classesOfProducts) {
+    var classesOfProducts = Config.Resource[Config.DocumentURL]?.spec?.classesOfProducts;
 
     Object.keys(classesOfProducts).forEach(conceptSchemeIRI => {
       var conceptScheme = classesOfProducts[conceptSchemeIRI].skos.data;
@@ -2376,7 +2380,7 @@ function getClassesOfProductsConcepts() {
 
 
 //TODO: Review grapoi
-function getResourceInfoSpecRequirements(s) {
+export function getResourceInfoSpecRequirements(s) {
   var info = {}
   info['spec'] = {};
   info['spec']['requirement'] = {};
@@ -2409,7 +2413,7 @@ function getResourceInfoSpecRequirements(s) {
 }
 
 //TODO: Review grapoi
-function getResourceInfoSpecAdvisements(s) {
+export function getResourceInfoSpecAdvisements(s) {
   var info = {}
   info['spec'] = {};
   info['spec']['advisement'] = {};
@@ -2442,7 +2446,7 @@ function getResourceInfoSpecAdvisements(s) {
 }
 
 //TODO: Review grapoi
-function getResourceInfoSpecChanges(s) {
+export function getResourceInfoSpecChanges(s) {
   var info = {}
   info['change'] = {};
 
@@ -2460,7 +2464,7 @@ function getResourceInfoSpecChanges(s) {
 }
 
 //TODO: Review grapoi
-function getResourceInfoSKOS(g) {
+export function getResourceInfoSKOS(g) {
   var info = {};
   info['skos'] = { 'data': {}, 'type': {} };
 
@@ -2519,7 +2523,7 @@ function getResourceInfoSKOS(g) {
   return info['skos'];
 }
 
-function accessModeAllowed(documentURL, mode) {
+export function accessModeAllowed(documentURL, mode) {
   documentURL = documentURL || Config.DocumentURL;
 
   const wac = Config.Resource?.[documentURL]?.headers?.['wac-allow']?.permissionGroup;
@@ -2531,7 +2535,7 @@ function accessModeAllowed(documentURL, mode) {
   );
 }
 
-function accessModePossiblyAllowed(documentURL, mode) {
+export function accessModePossiblyAllowed(documentURL, mode) {
   documentURL = documentURL || Config.DocumentURL;
 
   const wac = Config.Resource?.[documentURL]?.headers?.['wac-allow']?.permissionGroup;
@@ -2541,11 +2545,11 @@ function accessModePossiblyAllowed(documentURL, mode) {
   return accessModeAllowed(documentURL, mode);
 }
 
-function createImmutableResource(url, data, options) {
+export function createImmutableResource(url, data, options) {
   if (!url) return;
 
   const documentOptions = {
-    ...DO.C.DOMProcessing,
+    ...Config.DOMProcessing,
     format: true,
     sanitize: true,
     normalize: true
@@ -2650,11 +2654,11 @@ function createImmutableResource(url, data, options) {
   });
 }
 
-function createMutableResource(url, data, options) {
+export function createMutableResource(url, data, options) {
   if (!url) return;
 
   const documentOptions = {
-    ...DO.C.DOMProcessing,
+    ...Config.DOMProcessing,
     format: true,
     sanitize: true,
     normalize: true
@@ -2703,12 +2707,12 @@ function createMutableResource(url, data, options) {
     });
 }
 
-function updateMutableResource(url, data, options) {
+export function updateMutableResource(url, data, options) {
   if (!url) return;
   options = options || {};
 
   const documentOptions = {
-    ...DO.C.DOMProcessing,
+    ...Config.DOMProcessing,
     format: true,
     sanitize: true,
     normalize: true
@@ -2733,7 +2737,7 @@ function updateMutableResource(url, data, options) {
     });
 }
 
-function removeNodesWithIds(ids) {
+export function removeNodesWithIds(ids) {
   if (typeof ids === 'undefined') { return }
 
   ids = (Array.isArray(ids)) ? ids : [ids];
@@ -2746,7 +2750,7 @@ function removeNodesWithIds(ids) {
   });
 }
 
-function removeReferences() {
+export function removeReferences() {
   var refs = document.querySelectorAll('body *:not([id="references"]) cite + .ref:not(.do)');
 
   refs.forEach(r => {
@@ -2755,7 +2759,7 @@ function removeReferences() {
 }
 
 
-function referenceItemHTML(referencesList, id, citation) {
+export function referenceItemHTML(referencesList, id, citation) {
   var referencesListNodeName = referencesList.nodeName.toLowerCase();
   var s = '';
 
@@ -2774,7 +2778,7 @@ function referenceItemHTML(referencesList, id, citation) {
 }
 
 
-function buildReferences(referencesList, id, citation) {
+export function buildReferences(referencesList, id, citation) {
   if (!referencesList) {
     var nodeInsertLocation = selectArticleNode(document);
     var section = '<section id="references"><h2>References</h2><div><ol></ol></div></section>';
@@ -2792,7 +2796,7 @@ function buildReferences(referencesList, id, citation) {
   }
 }
 
-function updateReferences(referencesList, options) {
+export function updateReferences(referencesList, options) {
   options = options || {};
   options['external'] = options.external || true;
   options['internal'] = options.internal || false;
@@ -2914,7 +2918,7 @@ function updateReferences(referencesList, options) {
   // })
 }
 
-function showRobustLinksDecoration(node) {
+export function showRobustLinksDecoration(node) {
   node = node || document;
   // console.log(node)
   var nodes = node.querySelectorAll('[data-versionurl], [data-originalurl]');
@@ -2977,7 +2981,7 @@ function showRobustLinksDecoration(node) {
   });
 }
 
-function getCitationLabelsFromTerms(rel, citations) {
+export function getCitationLabelsFromTerms(rel, citations) {
   citations = citations || Object.keys(Config.Citation);
 
   var citationLabels = [];
@@ -3001,7 +3005,7 @@ function getCitationLabelsFromTerms(rel, citations) {
   return citationLabels
 }
 
-function getTestDescriptionReviewStatusHTML() {
+export function getTestDescriptionReviewStatusHTML() {
   var reviewStatusHTML = [];
 
   reviewStatusHTML.push('<dl id="test-description-review-statuses">');
@@ -3017,7 +3021,7 @@ function getTestDescriptionReviewStatusHTML() {
   return reviewStatusHTML.join('');
 }
 
-function getAgentHTML(options = {}) {
+export function getAgentHTML(options = {}) {
   let userName = Config.SecretAgentNames[getRandomIndex(Config.SecretAgentNames.length)];
 
   if (Config.User.Name) {
@@ -3040,25 +3044,25 @@ function getAgentHTML(options = {}) {
   return user;
 }
 
-function getResourceImageHTML(resource, options = {}) {
+export function getResourceImageHTML(resource, options = {}) {
   var avatarSize = ('avatarSize' in options) ? options.avatarSize : Config['AvatarSize'];
 
   return `<img alt="" height="${avatarSize}" rel="schema:image" src="${resource}" width="${avatarSize}" />`;
 }
 
-function createLicenseHTML(iri, options = {}) {
+export function createLicenseHTML(iri, options = {}) {
   options['rel'] = options.rel ? options.rel : 'schema:license';
   options['label'] = options.label ? options.label : 'License';
   return createLicenseRightsHTML(iri, options);
 }
 
-function createRightsHTML(iri, options = {}) {
+export function createRightsHTML(iri, options = {}) {
   options['rel'] = options.rel ? options.rel : 'dcterms:rights';
   options['label'] = options.label ? options.label : 'Rights';
   return createLicenseRightsHTML(iri, options);
 }
 
-function createLicenseRightsHTML(iri, options = {}) {
+export function createLicenseRightsHTML(iri, options = {}) {
   if (!iri) return '';
 
   var html = '';
@@ -3086,7 +3090,7 @@ function createLicenseRightsHTML(iri, options = {}) {
 
 //TODO: Consider if/how setDocumentRelation and createDefinitionListHTML
 //TODO: Extend with data.resource, data.datatype
-function createDefinitionListHTML(data, options = {}) {
+export function createDefinitionListHTML(data, options = {}) {
   // console.log(data, options)
   if (!data || !options) { return; }
 
@@ -3160,7 +3164,7 @@ function createDefinitionListHTML(data, options = {}) {
 // }
 
 
-function createLanguageHTML(language, options = {}) {
+export function createLanguageHTML(language, options = {}) {
   if (!language) return '';
 
   var property = options.property || 'dcterms:language';
@@ -3171,7 +3175,7 @@ function createLanguageHTML(language, options = {}) {
   return createDefinitionListHTML([{ property, content, textContent, lang: '', xmlLang: '' }], options);
 }
 
-function createInboxHTML(url, options = {}) {
+export function createInboxHTML(url, options = {}) {
   if (!url) return '';
 
   options['class'] = options.class || 'inbox';
@@ -3180,7 +3184,7 @@ function createInboxHTML(url, options = {}) {
   return createDefinitionListHTML([{ 'href': url, 'rel': 'ldp:inbox' }], options);
 }
 
-function createInReplyToHTML(url, options = {}) {
+export function createInReplyToHTML(url, options = {}) {
   if (!url) return '';
 
   options['class'] = options.class || 'in-reply-to';
@@ -3189,7 +3193,7 @@ function createInReplyToHTML(url, options = {}) {
   return createDefinitionListHTML([{ 'href': url, 'rel': 'as:inReplyTo' }], options);
 }
 
-function createPublicationStatusHTML(url, options = {}) {
+export function createPublicationStatusHTML(url, options = {}) {
   if (!url) return '';
 
   options['class'] = options.class || 'publication-status';
@@ -3211,7 +3215,7 @@ function createPublicationStatusHTML(url, options = {}) {
   );
 }
 
-function createResourceTypeHTML(url, options = {}) {
+export function createResourceTypeHTML(url, options = {}) {
   if (!url) return '';
 
   options['class'] = options.class || 'resource-type';
@@ -3221,7 +3225,7 @@ function createResourceTypeHTML(url, options = {}) {
   return createDefinitionListHTML([{ 'href': url, 'rel': 'rdf:type', textContent }], options);
 }
 
-function createTestSuiteHTML(url, options = {}) {
+export function createTestSuiteHTML(url, options = {}) {
   if (!url) return '';
 
   options['class'] = options.class || 'test-suite';
@@ -3230,7 +3234,7 @@ function createTestSuiteHTML(url, options = {}) {
   return createDefinitionListHTML([{ 'href': url, 'rel': 'spec:testSuite' }], options);
 }
 
-function getAnnotationInboxLocationHTML(action) {
+export function getAnnotationInboxLocationHTML(action) {
   var s = '', inputs = [], checked = '';
 
   if (Config.User.TypeIndex && Config.User.TypeIndex[ns.as.Announce.value]) {
@@ -3243,10 +3247,10 @@ function getAnnotationInboxLocationHTML(action) {
   return s;
 }
 
-function getAnnotationLocationHTML(action) {
+export function getAnnotationLocationHTML(action) {
   var s = '', inputs = [], checked = '';
 
-  if (DO.Editor.mode == 'author') {
+  if (Config.Editor.mode == 'author') {
     return s;
   }
 
@@ -3280,7 +3284,7 @@ function getAnnotationLocationHTML(action) {
   return s;
 }
 
-function getPublicationStatusOptionsHTML(options) {
+export function getPublicationStatusOptionsHTML(options) {
   options = options || {};
   var s = [], selectedIRI = '';
 
@@ -3303,7 +3307,7 @@ function getPublicationStatusOptionsHTML(options) {
   return s.join('');
 }
 
-function getResourceTypeOptionsHTML(options) {
+export function getResourceTypeOptionsHTML(options) {
   options = options || {};
   var s = [], selectedType = '';
 
@@ -3326,7 +3330,7 @@ function getResourceTypeOptionsHTML(options) {
   return s.join('');
 }
 
-function getLanguageOptionsHTML(options) {
+export function getLanguageOptionsHTML(options) {
   options = options || {};
   var s = [], selectedLang = '';
 
@@ -3351,7 +3355,7 @@ function getLanguageOptionsHTML(options) {
   return s.join('');
 }
 
-function getLicenseOptionsHTML(options) {
+export function getLicenseOptionsHTML(options) {
   options = options || {};
   var s = [], selectedIRI = '';
 
@@ -3378,7 +3382,7 @@ function getLicenseOptionsHTML(options) {
   return s.join('');
 }
 
-function getCitationOptionsHTML(options) {
+export function getCitationOptionsHTML(options) {
   options = options || {};
   var s = [], selectedIRI = '';
 
@@ -3397,7 +3401,7 @@ function getCitationOptionsHTML(options) {
   return s.join('');
 }
 
-function getRequirementLevelOptionsHTML(type) {
+export function getRequirementLevelOptionsHTML(type) {
   type = type || 'MUST';
 
   var s = '';
@@ -3408,7 +3412,7 @@ function getRequirementLevelOptionsHTML(type) {
   return s;
 }
 
-function getRequirementSubjectOptionsHTML(options) {
+export function getRequirementSubjectOptionsHTML(options) {
   options = options || {};
   var s = '', selectedIRI = '';
 // console.trace();
@@ -3445,11 +3449,11 @@ function getRequirementSubjectOptionsHTML(options) {
 }
 
 
-function showGeneralMessages() {
+export function showGeneralMessages() {
   showResourceAudienceAgentOccupations();
 }
 
-function getAccessModeOptionsHTML(options) {
+export function getAccessModeOptionsHTML(options) {
   // id = encodeURIComponent(id);
   options = options || {};
   //Contextual access control modes and human-readable labels
@@ -3470,7 +3474,7 @@ function getAccessModeOptionsHTML(options) {
   return s;
 }
 
-function showResourceAudienceAgentOccupations() {
+export function showResourceAudienceAgentOccupations() {
   if (Config.User.Occupations && Config.User.Occupations.length > 0) {
     var matches = [];
 
@@ -3523,7 +3527,7 @@ function showResourceAudienceAgentOccupations() {
   }
 }
 
-function setCopyToClipboard(contentNode, triggerNode, options = {}) {
+export function setCopyToClipboard(contentNode, triggerNode, options = {}) {
   triggerNode.addEventListener('click', e => {
     if (e.target.closest('button.copy-to-clipboard')) {
       var text;
@@ -3569,7 +3573,7 @@ function setCopyToClipboard(contentNode, triggerNode, options = {}) {
   });
 }
 
-function serializeTableToText(table) {
+export function serializeTableToText(table) {
   //FIXME: Multiple tbody
 
   var thead = table.querySelector('thead');
@@ -3586,7 +3590,7 @@ function serializeTableToText(table) {
   return theadData + '\n' + tbodyData;
 }
 
-function serializeTableSectionToText(section) {
+export function serializeTableSectionToText(section) {
   //FIXME: Needs to handle rowspan/colspan and th/td combinations
   //TODO: Test with example tables:
   //https://csarven.ca/linked-research-decentralised-web#quality-attributes-dokieli
@@ -3635,7 +3639,7 @@ function serializeTableSectionToText(section) {
 }
 
 
-function focusNote() {
+export function focusNote() {
   document.addEventListener('click', e => {
     var ref = e.target.closest('span.ref.do sup a');
 
@@ -3654,7 +3658,7 @@ function focusNote() {
   });
 }
 
-function parseMarkdown(data, options) {
+export function parseMarkdown(data, options) {
   options = options || {};
   // console.log(data)
   var extensions = {
@@ -3671,7 +3675,7 @@ function parseMarkdown(data, options) {
   return html;
 }
 
-function getReferenceLabel(motivatedBy) {
+export function getReferenceLabel(motivatedBy) {
   motivatedBy = motivatedBy || '';
   //TODO: uriToPrefix
   motivatedBy = (motivatedBy.length && motivatedBy.slice(0, 4) == 'http' && motivatedBy.indexOf('#') > -1) ? 'oa:' + motivatedBy.substr(motivatedBy.lastIndexOf('#') + 1) : motivatedBy;
@@ -3679,7 +3683,7 @@ function getReferenceLabel(motivatedBy) {
   return Config.MotivationSign[motivatedBy] || '#';
 }
 
-function createRDFaMarkObject(r, mode) {
+export function createRDFaMarkObject(r, mode) {
   //Generic
   let about = r['about'];
   let resource = r['resource'];
@@ -3709,7 +3713,7 @@ function createRDFaMarkObject(r, mode) {
 }
 
 //mode value can be: exapanded or null
-function createRDFaHTML(r, mode) {
+export function createRDFaHTML(r, mode) {
   var s = '', about = '', property = '', rel = '', resource = '', href = '', content = '', langDatatype = '', typeOf = '', idValue = '', id = '';
 
   if ('rel' in r && r.rel != '') {
@@ -3770,7 +3774,7 @@ function createRDFaHTML(r, mode) {
 }
 
 //TODO: Work on HTML nodes instead of the selected text
-function createRDFaHTMLRequirement(r, mode) {
+export function createRDFaHTMLRequirement(r, mode) {
   var s = '', about = '', property = '', rel = '', resource = '', href = '', content = '', langDatatype = '', typeOf = '', idValue = '', id = '', subject = '', level = '', basedOnConsensus;
 
   var idValue = r.id || generateAttributeId();
@@ -3854,101 +3858,613 @@ function createRDFaHTMLRequirement(r, mode) {
   return s;
 }
 
+export function highlightItems() {
+  var highlights = getDocumentContentNode(document).querySelectorAll('*[class*="highlight-"]');
+  for (var i = 0; i < highlights.length; i++) {
+    highlights[i].addEventListener('mouseenter', (e) => {
+      var c = e.target.getAttribute('class').split(' ')
+                .filter(s => { return s.startsWith('highlight-'); });
+      var highlightsX = getDocumentContentNode(document).querySelectorAll('*[class~="'+ c[0] +'"]');
+      for (var j = 0; j < highlightsX.length; j++) {
+        highlightsX[j].classList.add('do', 'highlight');
+      }
+    });
 
-
-export {
-  getNodeWithoutClasses,
-  getFragmentOfNodesChildren,
-  getDocument,
-  getDocumentNodeFromString,
-  getDocumentContentNode,
-  createHTML,
-  createFeedXML,
-  createActivityHTML,
-  getClosestSectionNode,
-  removeSelectorFromNode,
-  removeNodesWithIds,
-  getNodeLanguage,
-  addMessageToLog,
-  showActionMessage,
-  handleActionMessage,
-  selectArticleNode,
-  insertDocumentLevelHTML,
-  setDate,
-  createDateHTML,
-  setEditSelections,
-  getRDFaPrefixHTML,
-  setDocumentRelation,
-  setDocumentStatus,
-  getDocumentStatusHTML,
-  eventButtonClose,
-  eventButtonInfo,
-  eventButtonSignIn,
-  eventButtonSignOut,
-  eventButtonNotificationsToggle,
-  showTimeMap,
-  getGraphContributorsRole,
-  getGraphData,
-  getResourceInfo,
-  getGraphFromDataBlock,
-  updateResourceInfos,
-  updateSupplementalInfo,
-  getResourceSupplementalInfo,
-  processSupplementalInfoLinkHeaders,
-  getResourceInfoODRLPolicies,
-  getResourceInfoSpecClassesOfProducts,
-  getResourceInfoSpecRequirements,
-  getResourceInfoSpecAdvisements,
-  getResourceInfoSpecChanges,
-  getResourceInfoSKOS,
-  getResourceInfoCitations,
-  handleDeleteNote,
-  accessModeAllowed,
-  accessModePossiblyAllowed,
-  createImmutableResource,
-  createMutableResource,
-  updateMutableResource,
-  removeReferences,
-  referenceItemHTML,
-  buildReferences,
-  updateReferences,
-  showRobustLinksDecoration,
-  getCitationLabelsFromTerms,
-  getTestDescriptionReviewStatusHTML,
-  getAgentHTML,
-  getResourceImageHTML,
-  createLanguageHTML,
-  createLicenseHTML,
-  createRightsHTML,
-  createPublicationStatusHTML,
-  createResourceTypeHTML,
-  createInboxHTML,
-  createInReplyToHTML,
-  createTestSuiteHTML,
-  getAnnotationInboxLocationHTML,
-  getAnnotationLocationHTML,
-  getResourceTypeOptionsHTML,
-  getPublicationStatusOptionsHTML,
-  getLanguageOptionsHTML,
-  getLicenseOptionsHTML,
-  getCitationOptionsHTML,
-  getClassesOfProductsConcepts,
-  getRequirementSubjectOptionsHTML,
-  getRequirementLevelOptionsHTML,
-  getAccessModeOptionsHTML,
-  showGeneralMessages,
-  showResourceAudienceAgentOccupations,
-  setCopyToClipboard,
-  serializeTableToText,
-  serializeTableSectionToText,
-  focusNote,
-  parseMarkdown,
-  getReferenceLabel,
-  createNoteDataHTML,
-  tagsToBodyObjects,
-  createRDFaHTML,
-  createRDFaHTMLRequirement,
-  createRDFaMarkObject,
-  createDefinitionListHTML,
-  hasNonWhitespaceText
+    highlights[i].addEventListener('mouseleave', (e) => {
+      var c = e.target.getAttribute('class');
+      c = e.target.getAttribute('class').split(' ')
+                .filter(s => { return s.startsWith('highlight-'); });
+      var highlightsX = getDocumentContentNode(document).querySelectorAll('*[class~="'+ c[0] +'"]');
+      for (var j = 0; j < highlightsX.length; j++) {
+        highlightsX[j].classList.remove('do', 'highlight');
+      }
+    });
+  }
 }
+
+export function showAsTabs(selector) {
+  selector = selector || '.tabs';
+  var nodes = document.querySelectorAll(selector);
+
+  nodes.forEach(node => {
+    var li = node.querySelectorAll('nav li.selected');
+    var figure = node.querySelectorAll('figure.selected');
+
+    if (li.length == 0 && figure.length == 0) {
+      node.querySelector('nav li').classList.add('selected');
+      node.querySelector('figure').classList.add('selected');
+    }
+
+    node.querySelector('nav').addEventListener('click', (e) => {
+      var a = e.target;
+      if (a.closest('a')) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        var li = a.parentNode;
+        if(!li.classList.contains('class')) {
+          var navLi = node.querySelectorAll('nav li');
+          for (var i = 0; i < navLi.length; i++) {
+            navLi[i].classList.remove('selected');
+          }
+          li.classList.add('selected');
+          var figures = node.querySelectorAll('figure');
+          for (let i = 0; i < figures.length; i++) {
+            figures[i].classList.remove('selected');
+          }
+          node.querySelector('figure' + a.hash).classList.add('selected');
+        }
+      }
+    });
+  })
+}
+
+export function showRefs() {
+  var refs = document.querySelectorAll('span.ref');
+  for (var i = 0; i < refs.length; i++) {
+    // console.log(this);
+    var ref = refs[i].querySelector('mark[id]');
+    // console.log(ref);
+    if (ref) {
+      var refId = ref.id;
+      // console.log(refId);
+      var refA = refs[i].querySelectorAll('[class*=ref-] a');
+      // console.log(refA);
+      for (var j = 0; j < refA.length; j++) {
+        //XXX: Assuming this is always an internal anchor?
+        var noteId = refA[j].getAttribute('href').substr(1);
+        // console.log(noteId);
+        var refLabel = refA[j].textContent;
+        // console.log(refLabel);
+
+        // console.log(refId + ' ' +  refLabel + ' ' + noteId);
+        positionNote(refId, noteId, refLabel);
+      }
+    }
+  }
+}
+
+export function showCitations(citation, g) {
+  // console.log('----- showCitations: ')
+  // console.log(citation);
+
+  var cEURL = stripFragmentFromString(citation.citingEntity);
+  // console.log(Config.Activity[cEURL]);
+
+  if (Config.Activity[cEURL]) {
+    if (Config.Activity[cEURL]['Graph']) {
+      addCitation(citation, Config.Activity[cEURL]['Graph']);
+    }
+    else {
+      // console.log('  Waiting...' + citation.citingEntity)
+      window.setTimeout(showCitations, 1000, citation, g);
+    }
+  }
+  else {
+    processCitationClaim(citation);
+  }
+}
+
+export function processCitationClaim(citation) {
+  // console.log('  processCitationClaim(' + citation.citingEntity + ')')
+  // var pIRI = getProxyableIRI(citation.citingEntity);
+  return getResourceGraph(citation.citingEntity)
+    .then(i => {
+        var cEURL = stripFragmentFromString(citation.citingEntity);
+        Config.Activity[cEURL] = {};
+        Config.Activity[cEURL]['Graph'] = i;
+        var s = i.node(rdf.namedNode(citation.citingEntity));
+        addCitation(citation, s);
+      }
+    );
+}
+
+export function addCitation(citation, s) {
+  // console.log('  addCitation(' + citation.citingEntity + ')')
+  var citingEntity = citation.citingEntity;
+  var citationCharacterization = citation.citationCharacterization;
+  var citedEntity = citation.citedEntity;
+
+  var documentURL = Config.DocumentURL;
+
+  //XXX: Important
+  s = s.node(rdf.namedNode(citingEntity));
+
+  //TODO: cito:Citation
+  // if rdftypes.indexOf(citoCitation)
+  //   note.citocitingEntity && note.citocitationCharacterization && note.citocitedEntity)
+
+  // else
+
+  // console.log("  " + citationCharacterization + "  " + citedEntity);
+  var citationCharacterizationLabel = Config.Citation[citationCharacterization] || citationCharacterization;
+
+  var id = generateUUID(citingEntity);
+  var refId;
+
+  var cEURL = stripFragmentFromString(citingEntity);
+  var citingEntityLabel = getGraphLabel(s);
+  if (!citingEntityLabel) {
+    var cEL = getGraphLabel(s.node(rdf.namedNode(cEURL)));
+    citingEntityLabel = cEL ? cEL : citingEntity;
+  }
+  citation['citingEntityLabel'] = citingEntityLabel;
+
+  var citedEntityLabel = getGraphLabel(Config.Resource[documentURL].graph.node(rdf.namedNode(citedEntity)));
+  if (!citedEntityLabel) {
+    cEL = Config.Resource[documentURL].graph(Config.Resource[documentURL].graph.node(rdf.namedNode(stripFragmentFromString(citedEntity))));
+    citedEntityLabel = cEL ? cEL : citedEntity;
+  }
+  citation['citedEntityLabel'] = citedEntityLabel;
+
+  var noteData = {
+    'id': id,
+    'iri': citingEntity,
+    'type': 'ref-citation',
+    'mode': 'read',
+    'citation': citation
+  }
+
+  // console.log(noteData)
+  var noteDataHTML = createNoteDataHTML(noteData);
+
+  var asideNote = `
+    <aside class="note do">
+      <blockquote cite="${citingEntity}">${noteDataHTML}</blockquote>
+    </aside>`;
+
+  // console.log(asideNote)
+  var asideNode = fragmentFromString(asideNote);
+
+  var fragment, fragmentNode;
+
+  // //FIXME: If containerNode is used.. the rest is buggy
+
+  fragment = getFragmentFromString(citedEntity);
+  // console.log("  fragment: " + fragment)
+  fragmentNode = document.querySelector('[id="' + fragment + '"]');
+
+  if (fragmentNode) {
+    // console.log(asideNote)
+    var containerNode = fragmentNode;
+    refId = fragment;
+    // console.log(fragment);
+    // console.log(fragmentNode);
+    containerNode.appendChild(asideNode);
+    positionNote(refId, id, citingEntityLabel);
+  }
+  else {
+    var dl;
+    var citingItem = '<li><a about="' + citingEntity + '" href="' + citingEntity + '" rel="' + citationCharacterization + '" resource="' + citedEntity + '">' + citingEntityLabel + '</a> (' + citationCharacterizationLabel + ')</li>';
+
+    var documentCitedBy = 'document-cited-by';
+    var citedBy = document.getElementById(documentCitedBy);
+
+    if(citedBy) {
+      var ul = citedBy.querySelector('ul');
+      var spo = ul.querySelector('[about="' + citingEntity + '"][rel="' + citationCharacterization + '"][resource="' + citedEntity + '"]');
+      if (!spo) {
+        ul.appendChild(fragmentFromString(citingItem));
+      }
+    }
+    else {
+      dl = '        <dl class="do" id="' + documentCitedBy + '"><dt>Cited By</dt><dd><ul>' + citingItem + '</ul></dl>';
+      insertDocumentLevelHTML(document, dl, { 'id': documentCitedBy });
+    }
+  }
+}
+
+export function updateSelectedStylesheets(stylesheets, selected) {
+  selected = selected.toLowerCase();
+
+  for (var j = 0; j < stylesheets.length; j++) {
+    (function(stylesheet) {
+      if (stylesheet.getAttribute('title').toLowerCase() != selected) {
+          stylesheet.disabled = true;
+          stylesheet.setAttribute('rel', 'stylesheet alternate');
+      }
+    })(stylesheets[j]);
+  }
+  for (let j = 0; j < stylesheets.length; j++) {
+    (function(stylesheet) {
+      if (stylesheet.getAttribute('title').toLowerCase() == selected) {
+          stylesheet.setAttribute('rel', 'stylesheet');
+          stylesheet.disabled = false;
+      }
+    })(stylesheets[j]);
+  }
+}
+
+export function initCurrentStylesheet(e) {
+  var currentStylesheet = getCurrentLinkStylesheet();
+  currentStylesheet = (currentStylesheet) ? currentStylesheet.getAttribute('title') : '';
+  var selected = (e && e.target) ? e.target.textContent.toLowerCase() : currentStylesheet.toLowerCase();
+  var stylesheets = document.querySelectorAll('head link[rel~="stylesheet"][title]:not([href$="dokieli.css"])');
+
+  updateSelectedStylesheets(stylesheets, selected);
+
+  var bd = document.querySelectorAll('#document-views button');
+  for(var j = 0; j < bd.length; j++) {
+    bd[j].disabled = (e && e.target && (e.target.textContent == bd[j].textContent)) ? true : false;
+  }
+
+  showRefs();
+
+  if (selected == 'shower') {
+    var slides = document.querySelectorAll('.slide');
+    for(j = 0; j < slides.length; j++) {
+      slides[j].classList.add('do');
+    }
+    getDocumentContentNode(document).classList.add('on-slideshow', 'list');
+    document.querySelector('head').insertAdjacentHTML('beforeend', '<meta content="width=792, user-scalable=no" name="viewport" />');
+
+    var body = getDocumentContentNode(document);
+    var dMenu = document.querySelector('#document-menu.do');
+
+    if(dMenu) {
+      var dMenuButton = dMenu.querySelector('button');
+      dMenuButton.parentNode.replaceChild(fragmentFromString(Config.Button.Menu.CloseMenu), dMenuButton);
+
+      dMenu.classList.remove('on');
+
+      var dMenuSections = dMenu.querySelectorAll('section');
+      for (j = 0; j < dMenuSections.length; j++) {
+        dMenuSections[j].parentNode.removeChild(dMenuSections[j]);
+      }
+    }
+
+    var toc = document.getElementById('table-of-contents');
+    toc = (toc) ? toc.parentNode.removeChild(toc) : false;
+
+    shower.initRun();
+  }
+
+  if (currentStylesheet.toLowerCase() == 'shower') {
+    slides = document.querySelectorAll('.slide');
+    for (var c = 0; c < slides.length; c++){
+      slides[c].classList.remove('do');
+    }
+    getDocumentContentNode(document).classList.remove('on-slideshow', 'list', 'full');
+    getDocumentContentNode(document).removeAttribute('style');
+    var mV = document.querySelector('head meta[name="viewport"][content="width=792, user-scalable=no"]');
+    mV = (mV) ? mV.parentNode.removeChild(mV) : false;
+
+    history.pushState(null, null, window.location.pathname);
+
+    shower.removeEvents();
+  }
+}
+
+export function getCurrentLinkStylesheet() {
+  return document.querySelector('head link[rel="stylesheet"][title]:not([href$="dokieli.css"]):not([disabled])');
+}
+
+export async function spawnDokieli(documentNode, data, contentType, iris, options = {}){
+  let iri =  Array.isArray(iris) ? iris[0] : iris;
+  iri = domSanitize(iri);
+  const isHttpIRI = isHttpOrHttpsProtocol(iri);
+  const isFileIRI = isFileProtocol(iri);
+  const prefixes = "rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns# rdfs: http://www.w3.org/2000/01/rdf-schema# owl: http://www.w3.org/2002/07/owl# xsd: http://www.w3.org/2001/XMLSchema# rdfa: http://www.w3.org/ns/rdfa# dcterms: http://purl.org/dc/terms/ dctypes: http://purl.org/dc/dcmitype/ foaf: http://xmlns.com/foaf/0.1/ pimspace: http://www.w3.org/ns/pim/space# skos: http://www.w3.org/2004/02/skos/core# prov: http://www.w3.org/ns/prov# mem: http://mementoweb.org/ns# qb: http://purl.org/linked-data/cube# schema: http://schema.org/ void: http://rdfs.org/ns/void# rsa: http://www.w3.org/ns/auth/rsa# cert: http://www.w3.org/ns/auth/cert# wgs: http://www.w3.org/2003/01/geo/wgs84_pos# bibo: http://purl.org/ontology/bibo/ sioc: http://rdfs.org/sioc/ns# doap: http://usefulinc.com/ns/doap# dbr: http://dbpedia.org/resource/ dbp: http://dbpedia.org/property/ sio: http://semanticscience.org/resource/ opmw: http://www.opmw.org/ontology/ deo: http://purl.org/spar/deo/ doco: http://purl.org/spar/doco/ cito: http://purl.org/spar/cito/ fabio: http://purl.org/spar/fabio/ oa: http://www.w3.org/ns/oa# as: https://www.w3.org/ns/activitystreams# ldp: http://www.w3.org/ns/ldp# solid: http://www.w3.org/ns/solid/terms# acl: http://www.w3.org/ns/auth/acl# earl: http://www.w3.org/ns/earl# spec: http://www.w3.org/ns/spec# odrl: http://www.w3.org/ns/odrl/2/ dio: https://w3id.org/dio# rel: https://www.w3.org/ns/iana/link-relations/relation# dcat: http://www.w3.org/ns/dcat csvw: http://www.w3.org/ns/csvw# dpv: https://w3id.org/dpv# risk: https://w3id.org/dpv/risk#";
+
+  if (!isHttpIRI && !isFileIRI) {
+    const message = `Cannot open, not valid URL or file location.`;
+    const messageObject = {
+      'content': message,
+      'type': 'error',
+      'timer': 3000,
+    }
+    addMessageToLog({...messageObject, content: message}, Config.MessageLog);
+    showActionMessage(document.body, messageObject);
+
+    throw new Error(message);
+  }
+
+  let files = Array.isArray(data) ? data : [{
+    name: iri,
+    type: contentType,
+    content: data
+  }];
+
+  var tmpl = document.implementation.createHTMLDocument('template');
+  const isCsv = !!files.find((f) => f.type == "text/csv");
+  // console.log(tmpl);
+  if (files.length > 1 && isCsv) {
+    // check if one of the files is a metadata.json
+    const metadataFiles = [];
+    const csvFiles = [];
+
+    files.map((file) => {
+      if (file.type == 'application/json' || file.type == 'application/ld+json') {
+        file['url'] = file.name;
+        metadataFiles.push(file);
+      }
+      if (file.type === 'text/csv') {
+        csvFiles.push(file)
+      }
+    })
+
+    // handle multiple csv
+    const jsonObjects = csvFiles.map(csvFile => {
+      let tmp = csvStringToJson(csvFile.content);
+      tmp['url'] = csvFile.name;
+      return tmp;
+    })
+
+    //TODO: multiple metadata files
+    let metadata = metadataFiles[0];
+    if (metadata && metadata.content) {
+      metadata.content = JSON.parse(metadataFiles[0].content);
+    }
+
+    const htmlString = jsonToHtmlTableString(jsonObjects, metadata);
+
+    // console.log(fragmentFromString(`<main><article>${htmlString}</article></main>`))
+    // this works for urls but not files
+    // document.body.appendChild(fragmentFromString(`<main><article>${htmlString}</article></main>`));
+
+    // and this replaces the whole content
+    tmpl.body.appendChild(fragmentFromString(`<main><article>${htmlString}</article></main>`));
+  }
+
+  else {
+    switch(contentType){
+      case 'text/html': case 'application/xhtml+xml':
+        // if multiple HTML files come in, just open the first for now
+        tmpl.documentElement.setHTMLUnsafe(files[0].content);
+        tmpl.body.setHTMLUnsafe(domSanitize(tmpl.body.getHTML()));
+        break;
+
+      case 'text/csv':
+        // console.error("Must provide a metadata file; single CSVs without metadata not supported yet");
+        // console.log("TODO: Single CSV case", iri, files);
+        let jsonObject = csvStringToJson(files[0].content); // we only have one for now
+        jsonObject['url'] = files[0].name;
+        jsonObject['name'] = files[0].name;
+        const htmlString = jsonToHtmlTableString([jsonObject], {});
+
+        tmpl.body.replaceChildren(fragmentFromString(`<main><article about="" typeof="schema:Article">${htmlString}</article></main>`));
+        break;
+
+      case 'application/gpx+xml':
+        // console.log(data)
+        tmpl = await generateGeoView(files[0].content)
+        // FIXME: Tested with generateGeoView returning a Promise but somehow
+          .then(i => {
+            var id = 'geo';
+            var metadataBounds = document.querySelector('#' + id + ' figcaption a');
+            if (metadataBounds) {
+              var message = `Opened geo data at <a href="${metadataBounds.href}">${metadataBounds.textContent}</a>`;
+              message = {
+                'content': message,
+                'type': 'info',
+                'timer': 3000,
+              }
+              addMessageToLog(message, Config.MessageLog);
+              showActionMessage(document.body, message);
+
+              var w = document.getElementById(id);
+              window.history.pushState(null, null, '#' + id);
+              w.scrollIntoView();
+            }
+
+            return i;
+          });
+
+        break;
+
+      default:
+        data = htmlEncode(files[0].content)
+        // console.log(data)
+        var iframe = document.createElement('iframe');
+        // <pre type=&quot;' + contentType + '&quot; -- nice but `type` is undefined attribute for `pre`.at the moment. Create issue in WHATWG for fun/profit?
+        iframe.srcdoc = '<pre>' + data + '</pre>';
+        iframe.width = '1280'; iframe.height = '720';
+
+        const dt = (isFileIRI) ? `<code>${iri.slice(5)}</code>` : `<a href="${iri}" rel="noopener" target="_blank">${iri}</a>`;
+
+        var main = fragmentFromString(`<main><article><dl><dt>${dt}</dt><dd></dd></dl></article></main>`);
+        main.querySelector('dd').appendChild(iframe);
+        tmpl.body.appendChild(main);
+        break;
+    }
+  }
+
+  if (options.defaultStylesheet) {
+    var documentCss = document.querySelectorAll('head link[rel~="stylesheet"][href]');
+
+    let hasDokieliCss = false;
+
+    documentCss.forEach(node => {
+      const href = node.href;
+      const isBasicCss = href === 'https://dokie.li/media/css/basic.css';
+      const isDokieliCss = href === 'https://dokie.li/media/css/dokieli.css';
+
+      node.setAttribute('href', href);
+
+      if (!isBasicCss && !isDokieliCss) {
+        node.setAttribute('disabled', 'disabled');
+        node.classList.add('do');
+      }
+      else {
+        node.setAttribute('rel', 'stylesheet');
+        hasDokieliCss = true;
+      }
+    });
+
+    if (!hasDokieliCss) {
+      document.querySelector('head').insertAdjacentHTML('beforeend', `
+        <link href="https://dokie.li/media/css/basic.css" media="all" rel="stylesheet" title="Basic" />
+        <link href="https://dokie.li/media/css/dokieli.css" media="all" rel="stylesheet" />`);
+    }
+  }
+
+  var documentScript = document.querySelectorAll('head script[src]');
+  documentScript.forEach(node => {
+    node.setAttribute('src', node.src);
+  })
+
+  if (options.init === true && isHttpIRI && contentType == 'text/html') {
+    var baseElements = document.querySelectorAll('head base');
+    baseElements.forEach(baseElement => {
+      baseElement.remove();
+    });
+
+    document.querySelector('head').insertAdjacentHTML('afterbegin', '<base href="' + iri + '" />');
+    //TODO: Setting the base URL with `base` seems to work correctly, i.e., link base is opened document's URL, and simpler than updating some of the elements' href/src/data attributes. Which approach may be better depends on actions afterwards, e.g., Save As (perhaps other features as well) may need to remove the base and go with the user selection.
+    // var nodes = tmpl.querySelectorAll('head link, [src], object[data]');
+    // nodes = DO.U.rewriteBaseURL(nodes, {'baseURLType': 'base-url-absolute', 'iri': iri});
+  }
+
+  if (contentType == 'application/gpx+xml') {
+    options['init'] = false;
+
+    //XXX: Should this be taken care by ufpdating the document.documentElement and then running init(iri) ? If I'm asking, then probably yes.
+    var asideOpenDocument = document.getElementById('open-document');
+    if (asideOpenDocument) {
+      asideOpenDocument.parentNode.removeChild(asideOpenDocument);
+    }
+    document.querySelector('#document-do .resource-open').disabled = false;
+    hideDocumentMenu();
+  }
+  else if (options.init === true) { // && !isFileIRI ?
+    // window.open(iri, '_blank');
+
+    //TODO: Which approach?
+    // var restrictedNodes = Array.from(document.body.querySelectorAll('.do:not(.copy-to-clipboard):not(.robustlinks):not(.ref):not(.delete):not(#document-action-message)'));
+    // var restrictedNodes = [document.getElementById('document-menu'), document.getElementById('document-editor'), document.getElementById('document-action-message')];
+    // restrictedNodes.forEach(node => {
+    //   tmpl.body.appendChild(node);
+    // });
+
+    const tmplBody = tmpl.body.cloneNode(true);
+    tmplBody.setAttribute('prefix', prefixes);
+
+    document.documentElement.replaceChild(tmplBody, document.body);
+    initDocumentMenu();
+    initEditor();
+    showFragment();
+    initCopyToClipboard();
+
+    // hideDocumentMenu();
+    return;
+  }
+
+  //XXX: This is used in cases options.init is false or undefined
+  return tmpl.documentElement.cloneNode(true);
+
+  // console.log('//TODO: Handle server returning wrong or unknown Response/Content-Type for the Request/Accept');
+}
+
+export function initCopyToClipboard() {
+  var elements = ['pre', 'table'];
+
+  elements.forEach(element => {
+    var nodes = selectArticleNode(document).querySelectorAll(element);
+    nodes.forEach(node => {
+      node.insertAdjacentHTML('afterend', Config.Button.Clipboard);
+      var button = node.nextElementSibling;
+      setCopyToClipboard(node, button);
+    });
+  })
+}
+
+export function showFragment(selector) {
+  var ids = (selector) ? document.querySelectorAll(selector) : document.querySelectorAll('main *[id]:not(input):not(textarea):not(select):not(#content):not(tr)');
+
+  for(var i = 0; i < ids.length; i++){
+    ids[i].addEventListener('mouseenter', (e) => {
+      var fragment = document.querySelector('*[id="' + e.target.id + '"] > .do.fragment');
+      if (!fragment && e.target.parentNode.nodeName.toLowerCase() != 'aside'){
+        const sign = getSelectorSign(e.target);
+
+        e.target.insertAdjacentHTML('afterbegin', '<span class="do fragment"><a href="#' + e.target.id + '">' + sign + '</a></span>');
+        fragment = document.querySelector('[id="' + e.target.id + '"] > .do.fragment');
+        var fragmentClientWidth = fragment.clientWidth;
+
+        var fragmentOffsetLeft = getOffset(e.target).left;
+        var bodyOffsetLeft = getOffset(getDocumentContentNode(document)).left;
+
+        var offsetLeft = 0;
+        if ((fragmentOffsetLeft - bodyOffsetLeft) > 200) {
+          offsetLeft = e.target.offsetLeft;
+        }
+
+        fragment.style.top = Math.ceil(e.target.offsetTop) + 'px';
+        fragment.style.left = (offsetLeft - fragmentClientWidth) + 'px';
+        fragment.style.height = e.target.clientHeight + 'px';
+        fragment.style.width = (fragmentClientWidth - 10) + 'px';
+      }
+    });
+
+    ids[i].addEventListener('mouseleave', (e) => {
+      var fragment = document.querySelector('[id="' + e.target.id + '"] > .do.fragment');
+      if (fragment && fragment.parentNode) {
+        fragment.parentNode.removeChild(fragment);
+      }
+    });
+  }
+}
+
+export function getOffset(el) {
+  var box = el.getBoundingClientRect();
+
+  return {
+    top: box.top + window.pageYOffset - document.documentElement.clientTop,
+    left: box.left + window.pageXOffset - document.documentElement.clientLeft
+  }
+}
+
+export function getSelectorSign(node) {
+  if(!node) {
+    return Config.SelectorSign["*"];
+  }
+
+  if (typeof node === 'object') {
+    var nodeName = node.nodeName.toLowerCase();
+    var nodeId = '';
+
+    if(node.id) {
+      switch(nodeName) {
+        default: break;
+        case 'section': case 'dl':
+          nodeId = '#' + node.id;
+          break;
+      }
+    }
+
+    return Config.SelectorSign[nodeName + nodeId] || Config.SelectorSign[nodeName] || Config.SelectorSign["*"];
+  }
+
+  return Config.SelectorSign["*"];
+}
+
+export function setDocRefType() {
+  var link = document.querySelector('head link[rel="stylesheet"][title]');
+  if (link) {
+    Config.DocRefType = link.getAttribute('title');
+  }
+  if (Object.keys(Config.RefType).indexOf(Config.DocRefType) == -1) {
+    Config.DocRefType = 'LNCS';
+  }
+}
+

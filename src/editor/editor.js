@@ -61,7 +61,7 @@ export class Editor {
 
 
     if (options?.template === 'new') {
-      DO.Editor['new'] = true;
+      Config.Editor['new'] = true;
       this.setTemplate(mode, options);
       this.node = this.node.querySelector('article');
     }
@@ -124,12 +124,12 @@ export class Editor {
   }
 
   toggleEditor(mode, options) {
-    DO.Editor['new'] = false;
+    Config.Editor['new'] = false;
 
     let node = document.body;
 
     if (options?.template === 'new') {
-      DO.Editor['new'] = true;
+      Config.Editor['new'] = true;
       this.setTemplate(mode, options);
       node = node.querySelector('article');
     }
