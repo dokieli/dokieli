@@ -27,6 +27,7 @@ import { SessionCore } from '@uvdsl/solid-oidc-client-browser/core';
 import { isCurrentScriptSameOrigin, isLocalhost } from './uri.js';
 import { SessionIDB } from '@uvdsl/solid-oidc-client-browser';
 import { i18n } from './i18n.js';
+import { updateUILanguage } from './menu.js';
 
 const ns = Config.ns;
 
@@ -83,7 +84,7 @@ async function signOut() {
 
   updateButtons();
 
-  DO.U.updateUILanguage(navigator.languages);
+  updateUILanguage(navigator.languages);
 }
 
 

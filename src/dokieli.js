@@ -15,32 +15,32 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource, patchResourceGraph } from './fetcher.js'
-import { getDocument, getDocumentContentNode, showActionMessage, selectArticleNode, eventButtonNotificationsToggle, showRobustLinksDecoration, getResourceInfo,  removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getLanguageOptionsHTML, getLicenseOptionsHTML, getNodeWithoutClasses, setCopyToClipboard, addMessageToLog, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown, getReferenceLabel, createNoteDataHTML, hasNonWhitespaceText, eventButtonClose, eventButtonInfo, eventButtonSignIn, eventButtonSignOut, getDocumentNodeFromString, updateResourceInfos, accessModePossiblyAllowed, updateSupplementalInfo, processSupplementalInfoLinkHeaders } from './doc.js'
-import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, generateDataURI, getMediaTypeURIs, isHttpOrHttpsProtocol, isFileProtocol, getUrlParams, stripUrlSearchHash, stripUrlParamsFromString, getAbsoluteIRI } from './uri.js'
-import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes, filterQuads, getAgentTypeIndex, serializeData, serializeDataToPreferredContentType } from './graph.js'
-import { notifyInbox, sendNotifications } from './inbox.js'
-import { uniqueArray, fragmentFromString, generateAttributeId, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, isValidISBN, findPreviousDateTime, escapeRDFLiteral, tranformIconstoCSS, getIconsFromCurrentDocument, getHash, getDateTimeISOFromDate } from './util.js'
+import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource } from './fetcher.js'
+import { getDocument, getDocumentContentNode, showActionMessage, selectArticleNode, showRobustLinksDecoration, getResourceInfo,  getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getLanguageOptionsHTML, getLicenseOptionsHTML, getNodeWithoutClasses, setCopyToClipboard, addMessageToLog, accessModeAllowed, getAccessModeOptionsHTML, parseMarkdown, createNoteDataHTML, hasNonWhitespaceText, updateSupplementalInfo, spawnDokieli } from './doc.js'
+import { getProxyableIRI, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, generateDataURI, isHttpOrHttpsProtocol, isFileProtocol, getUrlParams, stripUrlSearchHash, stripUrlParamsFromString, getAbsoluteIRI } from './uri.js'
+import { getResourceGraph, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphDate, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes, filterQuads, serializeData } from './graph.js'
+import { notifyInbox, sendNotifications } from './activity.js'
+import { uniqueArray, fragmentFromString, generateAttributeId, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, isValidISBN, escapeRDFLiteral, tranformIconstoCSS, getIconsFromCurrentDocument, setDocumentURL } from './util.js'
 import { generateGeoView } from './geo.js'
-import { getLocalStorageItem, updateLocalStorageProfile, enableAutoSave, disableAutoSave, updateLocalStorageItem, autoSave, removeLocalStorageDocumentFromCollection, removeLocalStorageItem } from './storage.js'
-import { showUserSigninSignout, showUserIdentityInput, getSubjectInfo, restoreSession, afterSetUserInfo, setUserInfo, userInfoSignOut } from './auth.js'
+import { getLocalStorageItem, updateLocalStorageProfile, enableAutoSave, disableAutoSave, removeLocalStorageItem } from './storage.js'
+import { getSubjectInfo, restoreSession } from './auth.js'
+import { hideDocumentMenu, initDocumentMenu } from './menu.js'
 import { Icon } from './ui/icons.js'
 import * as d3Selection from 'd3-selection';
 import * as d3Force from 'd3-force';
 const d3 = { ...d3Selection, ...d3Force };
-import shower from '@shower/core'
-import { diffChars, diffArrays } from 'diff'
+import { diffChars } from 'diff'
 import LinkHeader from 'http-link-header';
 import rdf from 'rdf-ext';
 import Config from './config.js';
 import { Editor } from './editor/editor.js';
-import { getButtonHTML, initButtons, updateButtons } from './ui/buttons.js'
+import { getButtonHTML, updateButtons } from './ui/buttons.js'
 import { csvStringToJson, jsonToHtmlTableString } from './csv.js'
 import { getMultipleResources } from './fetcher.js'
-import { domSanitize, sanitizeObject } from './utils/sanitization.js'
-import { normalizeForDiff } from './utils/normalization.js'
+import { domSanitize } from './utils/sanitization.js'
 import { i18n, i18nextInit } from './i18n.js'
 import { htmlEncode } from './utils/html.js'
+import { init } from './init.js'
 
 const ns = Config.ns;
 let DO;
@@ -51,1471 +51,6 @@ DO = {
   C: Config,
 
   U: {
-    initButtons: initButtons,
-
-    getItemsList: function(url, options) {
-      url = url || currentLocation();
-      options = options || {};
-      options['resourceItems'] = options.resourceItems || [];
-      options['headers'] = options.headers || {};
-      options['excludeMarkup'] = true;
-
-      DO.C['CollectionItems'] = DO.C['CollectionItems'] || {};
-      DO.C['CollectionPages'] = ('CollectionPages' in DO.C && DO.C.CollectionPages.length) ? DO.C.CollectionPages : [];
-      DO.C['Collections'] = ('Collections' in DO.C && DO.C.Collections.length) ? DO.C.Collections : [];
-
-      const mediaTypeURIPrefix = "http://www.w3.org/ns/iana/media-types/";
-      //TODO: Move this elsewhere (call from DO.C.init()?) where it runs once and stores it in e.g, DO.C.MediaTypeURIs
-      var mediaTypeURIs = getMediaTypeURIs(DO.C.MediaTypes.RDF);
-
-      // if (DO.C.Notification[url]) {
-      //   return Promise.resolve([]);
-      // }
-
-      return getResourceGraph(url, options.headers, options)
-        .then(
-          function(g) {
-            if (!g || g.resource) return [];
-
-            var s = g.node(rdf.namedNode(url));
-// console.log(s.toString());
-
-            var types = getGraphTypes(s);
-
-            if (types.includes(ns.ldp.Container.value) ||
-               types.includes(ns.as.Collection.value) ||
-               types.includes(ns.as.OrderedCollection.value)) {
-              DO.C.Collections.push(url);
-            }
-
-            if (!types.includes(ns.ldp.Container.value) &&
-               !types.includes(ns.as.Collection.value) &&
-               !types.includes(ns.as.OrderedCollection.value)) {
-              DO.C.CollectionPages.push(url);
-            }
-
-            var items = [s.out(ns.as.items).values, s.out(ns.as.orderedItems).values, s.out(ns.ldp.contains).values];
-
-            items.forEach(i => {
-              i.forEach(resource => {
-// console.log(resource)
-                var r = s.node(rdf.namedNode(resource));
-
-                if (r.out(ns.rdf.first).values.length || r.out(ns.rdf.rest).values.length) {
-                  options.resourceItems = options.resourceItems.concat(traverseRDFList(s, resource));
-                }
-                else {
-                  //FIXME: This may need to be processed outside of items? See also comment above about processing Collection and CollectionPages.
-                  var types = getGraphTypes(r);
-                  //Include only non-container/collection and items that's not from an RDFList
-                  if (!types.includes(ns.ldp.Container.value) &&
-                     !types.includes(ns.as.Collection.value) &&
-                     !types.includes(ns.as.CollectionPage.value) &&
-                     !types.includes(ns.as.OrderedCollection.value) &&
-                     !types.includes(ns.as.OrderedCollectionPage.value)) {
-                    //XXX: The following is not used at the moment:
-                    // DO.C.CollectionItems[resource] = s;
-
-                    const hasPrefix = types.some(url => url.startsWith(mediaTypeURIPrefix));
-                    const mediaTypeFound = hasPrefix && types.some(item => mediaTypeURIs.includes(item));
-                    
-                    if (mediaTypeFound || !hasPrefix) {
-                      options.resourceItems.push(resource);
-                    }
-                  }
-                }
-              });
-            });
-
-            var first = s.out(ns.as.first).values;
-            var next = s.out(ns.as.next).values;
-
-            if (first.length && !DO.C.CollectionPages.includes(first[0])) {
-              return DO.U.getItemsList(first[0], options);
-            }
-            else if (next.length && !DO.C.CollectionPages.includes(next[0])) {
-              return DO.U.getItemsList(next[0], options);
-            }
-            else {
-              return uniqueArray(options.resourceItems);
-            }
-          })
-        .catch (e => {
-          console.log(e)
-          return [];
-        })
-    },
-
-
-    getNotifications: function(url) {
-      url = url || currentLocation();
-      var notifications = [];
-
-      DO.C.Inbox[url] = {};
-      DO.C.Inbox[url]['Notifications'] = [];
-
-      return getResourceGraph(url)
-        .then(g => {
-          DO.C.Inbox[url]['Graph'] = g;
-
-          var s = g.node(rdf.namedNode(url));
-          s.out(ns.ldp.contains).values.forEach(resource => {
-// console.log(resource);
-            var types = getGraphTypes(s.node(rdf.namedNode(resource)));
-// console.log(types);
-            if(!types.includes(ns.ldp.Container.value)) {
-              notifications.push(resource);
-            }
-          });
-// console.log(notifications);
-          if (notifications.length) {
-            DO.C.Inbox[url]['Notifications'] = notifications;
-            return notifications;
-          }
-          else {
-            var reason = {"message": "There are no notifications."};
-            return Promise.reject(reason);
-          }
-        });
-    },
-
-    showInboxNotifications: function(url, data) {
-      //TODO: Consider checking multiple getLinkRelation, [ns.ldp.inbox.value, ns.as.inbox.value]
-      getLinkRelation(ns.ldp.inbox.value, url, data)
-        .then(i => {
-          i.forEach(inboxURL => {
-            if (!DO.C.Inbox[inboxURL]) {
-              DO.U.showNotificationSources(inboxURL);
-            }
-          });
-        });
-    },
-
-    showNotificationSources: function(url) {
-      DO.U.getNotifications(url).then(
-        function(notifications) {
-          notifications.forEach(notification => {
-            DO.U.showActivities(notification, { notification: true });
-           });
-        },
-        function(reason) {
-          console.log('No notifications');
-          return reason;
-        }
-      );
-    },
-
-    showContactsActivities: function() {
-      var aside = document.querySelector('#document-notifications');
-
-      var showProgress = function() {
-        var info = aside.querySelector('div.info');
-        var progressOld = info.querySelector('.progress');
-        var progressNew = fragmentFromString(`<div class="progress" data-i18n="panel.notifications.progress.checking">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"].replace(' fa-fw', '')} ${i18n.t('panel.notifications.progress.checking.textContent')}</div>`);
-
-        if (progressOld) {
-          info.replaceChild(progressNew, progressOld)
-        }
-        else {
-          info.appendChild(progressNew);
-        }
-      }
-
-      var removeProgress = function() {
-        var info = aside.querySelector('div.info');
-        var progressOld = info.querySelector('.progress');
-        info.removeChild(progressOld);
-        DO.U.initializeButtonMore(aside);
-      }
-
-      var promises = [];
-      promises.push(...DO.U.processAgentActivities(DO.C.User));
-
-      showProgress();
-
-      var processContacts = (contacts) => {
-        if (contacts.length) {
-          var contactsPromises = contacts.map((url) =>
-            getSubjectInfo(url, { 'fetchIndexes': true }).then((subject) => {
-              if (subject.Graph) {
-                DO.C.User['Contacts'] = DO.C.User['Contacts'] || {};
-                DO.C.User.Contacts[url] = subject;
-                return DO.U.processAgentActivities(subject); 
-              }
-              return [];
-            })
-          );
-
-          return Promise.allSettled(contactsPromises).then((allContactPromises) => {
-            promises.push(...allContactPromises.flat());
-          });
-        }
-        return Promise.resolve();
-      };
-
-      var processExistingContacts = (contacts) => {
-        var contactsPromises = Object.keys(contacts).map((iri) => {
-          var contact = DO.C.User.Contacts[iri];
-          if (contact.IRI) {
-            return DO.U.processAgentActivities(contact);
-          }
-          return [];
-        });
-    
-        return Promise.allSettled(contactsPromises).then((allContactPromises) => {
-          promises.push(...allContactPromises.flat());
-        });
-      };
-
-      function getContactsAndActivities() {
-        if (DO.C.User.Contacts && Object.keys(DO.C.User.Contacts).length) {
-          return processExistingContacts(DO.C.User.Contacts);
-        } else if (DO.C.User.IRI) {
-          return getUserContacts(DO.C.User.IRI).then(processContacts);
-        }
-        return Promise.resolve();
-      }
-
-      getContactsAndActivities()
-        .then(() => Promise.allSettled(promises))
-        .then(() => removeProgress())
-        .catch(() => removeProgress());
-    },
-
-    processAgentActivities: function(agent) {
-      // console.log(agent.IRI, agent.TypeIndex, agent.PublicTypeIndex, agent.PrivateTypeIndex)
-      if (agent.TypeIndex && Object.keys(agent.TypeIndex).length) {
-        return DO.U.processAgentTypeIndex(agent);
-      }
-      else if (agent.Graph && (agent.PublicTypeIndex?.length || agent.PrivateTypeIndex?.length)) {
-        return getAgentTypeIndex(agent.Graph)
-          .then(typeIndexes => {
-            Object.keys(typeIndexes).forEach(typeIndexType => {
-              agent.TypeIndex[typeIndexType] = typeIndexes[typeIndexType];
-            });
-
-            return processAgentActivities(agent);
-          });
-      }
-
-      return [Promise.resolve()];
-
-      //TODO: Need proper filtering of storage/outbox matching an object of interest
-      // else {
-      //   return DO.U.processAgentStorageOutbox(agent)
-      // }
-    },
-
-    processAgentTypeIndex: function(agent) {
-      var promises = [];
-      var documentTypes = DO.C.ActivitiesObjectTypes.concat(Object.keys(DO.C.ResourceType));
-
-      var publicTypeIndexes = agent.TypeIndex[ns.solid.publicTypeIndex.value] || {};
-      var privateTypeIndexes = agent.TypeIndex[ns.solid.privateTypeIndex.value] || {};
-      //XXX: Perhaps these shouldn't be merged and kept apart or have the UI clarify what's public/private, and additional engagements keep that context
-      var typeIndexes = Object.assign({}, publicTypeIndexes, privateTypeIndexes);
-
-      var recognisedTypes = [];
-
-      Object.values(typeIndexes).forEach(typeRegistration => {
-        var forClass = typeRegistration[ns.solid.forClass.value];
-        var instance = typeRegistration[ns.solid.instance.value];
-        var instanceContainer = typeRegistration[ns.solid.instanceContainer.value];
-
-        if (documentTypes.includes(forClass)) {
-          recognisedTypes.push(forClass);
-
-          if (instance) {
-            promises.push(DO.U.showActivities(instance, { excludeMarkup: true, agent: agent.IRI }));
-          }
-
-          if (instanceContainer) {
-            promises.push(DO.U.showActivitiesSources(instanceContainer, { activityType: 'instanceContainer', agent: agent.IRI }));
-          }
-        }
-      });
-
-//       TODO: Need proper filtering of storage/outbox matching an object of interest
-//       if (recognisedTypes.length == 0) {
-// console.log(agent, recognisedTypes);
-//         promises.push(DO.U.processAgentStorageOutbox(agent));
-//       }
-
-// console.log(promises)
-      return promises;
-    },
-
-    processAgentStorageOutbox: function(agent) {
-      var promises = [];
-      if (agent.Storage && agent.Storage.length) {
-        if (agent.Outbox && agent.Outbox.length) {
-          if (agent.Storage[0] === agent.Outbox[0]) {
-            promises.push(DO.U.showActivitiesSources(agent.Outbox[0]));
-          }
-          else {
-            promises.push(DO.U.showActivitiesSources(agent.Storage[0]));
-            promises.push(DO.U.showActivitiesSources(agent.Outbox[0]));
-          }
-        }
-        else {
-          promises.push(DO.U.showActivitiesSources(agent.Storage[0]))
-        }
-      }
-      else if (agent.Outbox && agent.Outbox.length) {
-        promises.push(DO.U.showActivitiesSources(agent.Outbox[0]));
-      }
-
-      return promises;
-    },
-
-    showActivitiesSources: function(url, options = {}) {
-      return DO.U.getItemsList(url).then(
-        function(items) {
-          var promises = [];
-
-          for (var i = 0; i < items.length && i < DO.C.CollectionItemsLimit; i++) {
-            var pI = function(iri) {
-              return DO.U.showActivities(iri, options);
-            }
-
-            promises.push(pI(items[i]));
-          }
-// console.log(promises)
-          return Promise.allSettled(promises);
-        },
-      ).catch((error) => {
-          console.log(error)
-          console.log(url + ' has no activities.');
-          // return error;
-      });
-    },
-
-    getActivities: function(url, options) {
-      url = url || currentLocation();
-      url = stripFragmentFromString(url);
-
-      switch (options['activityType']) {
-        default:
-        case 'instanceContainer':
-          // console.log(DO.U.getItemsList(url))
-          return DO.U.getItemsList(url);
-        case 'instance':
-          return DO.U.showActivities(url);
-      }
-    },
-
-    showActivities: function(url, options = {}) {
-      if (DO.C.Activity[url] || DO.C.Notification[url]) {
-        return Promise.reject([]);
-      }
-
-      var documentURL = DO.C.DocumentURL;
-
-      var documentTypes = DO.C.ActivitiesObjectTypes.concat(Object.keys(DO.C.ResourceType));
-
-      return getResourceOnlyRDF(url)
-        //TODO: Needs throws handled from functions calling showActivities
-        // .catch(e => {
-        //   // return [];
-        //   throw e;
-        // })
-        .then(g => {
-          // console.log(g)
-          if (!g || g.resource) return;
-
-          if (options.notification) {
-            DO.C.Notification[url] = {};
-            DO.C.Notification[url]['Activities'] = [];
-            DO.C.Notification[url]['Graph'] = g;
-          }
-          else {
-            DO.C.Activity[url] = {};
-            DO.C.Activity[url]['Graph'] = g;
-          }
-
-          var currentPathURL = currentLocation();
-
-          var subjectsReferences = [];
-          var subjects = [];
-          g.out().quads().forEach(t => {
-            subjects.push(t.subject.value);
-          });
-          subjects = uniqueArray(subjects);
-
-          subjects.forEach(i => {
-            var s = g.node(rdf.namedNode(i));
-            var types = getGraphTypes(s);
-
-            if (types.length) {
-              var resourceTypes = types;
-
-              var language = getGraphLanguage(s);
-              var license = getGraphLicense(s);
-              var rights = getGraphRights(s);
-
-              //XXX: May need to be handled in a similar way to to as:Anounce/Create?
-              if (resourceTypes.includes(ns.as.Like.value) ||
-                 resourceTypes.includes(ns.as.Dislike.value)){
-                var object = s.out(ns.as.object).values;
-                if (object.length && getPathURL(object.values[0]) == currentPathURL) {
-                  var context = s.out(ns.as.context).values;
-                  if (context.length) {
-                    subjectsReferences.push(context[0]);
-                    return DO.U.showActivities(context[0])
-                      .then(iri => iri)
-                      .catch(e => console.log(context[0] + ': context is unreachable', e));
-                  }
-                  else {
-                    var iri = s.term.value;
-                    var targetIRI = object[0];
-                    // var motivatedBy = 'oa:assessing';
-                    var id = generateUUID(iri);
-                    var refId = 'r-' + id;
-                    var refLabel = id;
-
-                    var bodyValue = (resourceTypes.includes(ns.as.Like.value)) ? 'Liked' : 'Disliked';
-                    var motivatedBy = bodyValue.slice(0, -1);
-
-                    var noteData = {
-                      "type": bodyValue === 'Liked' ? 'approve' : 'disapprove',
-                      "mode": "read",
-                      "motivatedByIRI": motivatedBy,
-                      "id": id,
-                      "refId": refId,
-                      "refLabel": refLabel,
-                      "iri": iri, //but don't pass this to createNoteDataHTML?
-                      "creator": {},
-                      "target": {
-                        "iri": targetIRI
-                      }
-                    };
-
-                    var bodyObject = {
-                      "value": bodyValue
-                    }
-
-                    if (language) {
-                      noteData["language"] = language;
-                      bodyObject["language"] = language;
-                    }
-                    if (license) {
-                      noteData["rights"] = noteData["license"] = license;
-                      bodyObject["rights"] = bodyObject["license"] = license;
-                    }
-
-                    noteData["body"] = [bodyObject];
-
-                    var actor = s.out(ns.as.actor).values;
-                    if (actor.length) {
-                      noteData['creator'] = {
-                        'iri': actor[0]
-                      }
-                      var a = g.node(rdf.namedNode(noteData['creator']['iri']));
-                      var actorName = getAgentName(a);
-                      var actorImage = getGraphImage(a);
-
-                      if (typeof actorName != 'undefined') {
-                        noteData['creator']['name'] = actorName;
-                      }
-                      if (typeof actorImage != 'undefined') {
-                        noteData['creator']['image'] = actorImage;
-                      }
-                    }
-                    else if (resourceTypes.includes(ns.as.Dislike.value)) {
-                      noteData['creator'] = {
-                        'name': 'Anonymous Coward'
-                      }
-                    }
-
-                    var datetime = getGraphDate(s);
-                    if (datetime){
-                      noteData['datetime'] = datetime;
-                    }
-
-                    DO.U.addNoteToNotifications(noteData);
-                  }
-                }
-              }
-              else if (resourceTypes.includes(ns.as.Relationship.value)) {
-                if (s.out(ns.as.subject).values.length && as.out(as.relationship).values.length && s.out(ns.as.object).values.length && getPathURL(s.out(ns.as.object).values[0]) == currentPathURL) {
-                  var subject = s.out(ns.as.subject).values[0];
-                  subjectsReferences.push(subject);
-                  return DO.U.showActivities(subject)
-                    .then(iri => iri)
-                    .catch(e => console.log(subject + ': subject is unreachable', e));
-                }
-              }
-              else if (resourceTypes.includes(ns.as.Announce.value) || resourceTypes.includes(ns.as.Create.value)) {
-                var o = {};
-
-                var object = s.out(ns.as.object).values.length ? s.out(ns.as.object).values[0] : undefined;
-                //TODO: if no object, leave.
-
-                var target = s.out(ns.as.target).values.length ? s.out(ns.as.target).values[0] : undefined;
-
-                var objectGraph = s.node(rdf.namedNode(object));
-                var inReplyTo = objectGraph.out(ns.as.inReplyTo).values.length && objectGraph.out(ns.as.inReplyTo).values[0];
-
-                if (object && (target || inReplyTo)) {
-                  var targetPathURL = getPathURL(target) || getPathURL(inReplyTo);
-
-                  if (targetPathURL == currentPathURL) {
-                    o['targetInOriginalResource'] = true;
-                  }
-                  else if (DO.C.Resource[documentURL].graph.out(ns.rel['latest-version']).values.length && targetPathURL == getPathURL(DO.C.Resource[documentURL].graph.out(ns.rel['latest-version']).values[0])) {
-                    o['targetInMemento'] = true;
-                  }
-                  else if (DO.C.Resource[documentURL].graph.out(ns.owl.sameAs).values.length && DO.C.Resource[documentURL].graph.out(ns.owl.sameAs).values[0] == targetPathURL) {
-                    o['targetInSameAs'] = true;
-                  }
-
-                  if (o['targetInOriginalResource'] || o['targetInMemento'] || o['targetInSameAs']) {
-                    subjectsReferences.push(object);
-
-                    if (options.notification) {
-                      DO.C.Notification[url]['Activities'].push(object);
-                    }
-
-                    if (object.startsWith(url)) {
-                      return DO.U.showAnnotation(object, s, o);
-                    }
-                    else {
-                      s = s.node(rdf.namedNode(object));
-                      var citation = {};
-
-                      // if (target.startsWith(currentPathURL)) {
-                        Object.keys(DO.C.Citation).forEach(citationCharacterization => {
-                          var citedEntity = s.out(rdf.namedNode(citationCharacterization)).values;
-                          // if(citedEntity) {
-                            citedEntity.forEach(cE => {
-                              if(cE.startsWith(currentPathURL)) {
-                                o['objectCitingEntity'] = true;
-                                citation = {
-                                  'citingEntity': object,
-                                  'citationCharacterization': citationCharacterization,
-                                  'citedEntity': target || inReplyTo
-                                }
-                              }
-                            })
-                          // }
-                        })
-                      // }
-
-                      if (o['objectCitingEntity']) {
-                        return DO.U.showCitations(citation, s);
-                      }
-                      else {
-                        return DO.U.showActivities(object, o)
-                          .then(iri => iri)
-                          .catch(e => {
-                            // console.log(object + ': object is unreachable', e)
-                          });
-                      }
-                    }
-                  }
-                }
-              }
-              // else if (resourceTypes.indexOf('http://purl.org/spar/cito/Citation')) {
-                //TODO:
-                // var iri = s.iri().toString();
-                // return DO.U.showCitations(iri, s)
-              // }
-              else if(resourceTypes.includes(ns.as.Add.value)) {
-                var object = s.out(ns.as.object).values.length ? s.out(ns.as.object).values[0] : undefined;
-                var target = s.out(ns.as.target).values.length ? s.out(ns.as.target).values[0] : undefined;
-                var origin = s.out(ns.as.origin).values.length ? s.out(ns.as.origin).values[0] : undefined;
-
-
-                if (object && (target || origin)) {
-                  var targetPathURL = getPathURL(target);
-                  var originPathURL = getPathURL(origin);
-// console.log('pathURLs: ', targetPathURL, originPathURL);
-                  if (targetPathURL == currentPathURL || originPathURL == currentPathURL) {
-                    subjectsReferences.push(object);
-// console.log('object:', object);
-// console.log('target:', target);
-// console.log('origin:', origin);
-
-                    if (object.startsWith(url)) {
-                      return DO.U.showAnnotation(object, s);
-                    }
-                    else {
-                      return DO.U.showActivities(object)
-                        .then(iri => iri)
-                        .catch(e => console.log(object + ': object is unreachable', e));
-                    }
-                  }
-                }
-              }
-              else if (resourceTypes.includes(ns.oa.Annotation.value) && getPathURL(s.out(ns.oa.hasTarget).values[0]) == currentPathURL && !subjectsReferences.includes(i)) {
-                return DO.U.showAnnotation(i, s);
-              }
-              else if (!subjectsReferences.includes(i) && documentTypes.some(item => resourceTypes.includes(item)) && s.out(ns.as.inReplyTo).values.length && s.out(ns.as.inReplyTo).values[0] && getPathURL(s.out(ns.as.inReplyTo).values[0]) == currentPathURL) {
-                  subjectsReferences.push(i);
-                return DO.U.showAnnotation(i, s);
-              }
-              else if (resourceTypes.includes(ns.bookmark.Bookmark.value) && s.out(ns.bookmark.recalls).values.length && getPathURL(s.out(ns.bookmark.recalls).values[0]) == currentPathURL ) {
-                var iri = s.term.value;
-                var targetIRI = s.out(ns.bookmark.recalls).values[0];
-                var motivatedBy = 'bookmark:Bookmark';
-                var id = generateUUID(iri);
-                var refId = 'r-' + id;
-                var refLabel = id;
-
-                var bodyValue = 'Bookmarked';
-
-                var noteData = {
-                  "type": 'bookmark',
-                  "mode": "read",
-                  "motivatedByIRI": motivatedBy,
-                  "id": id,
-                  "refId": refId,
-                  "refLabel": refLabel,
-                  "iri": iri, //but don't pass this to createNoteDataHTML?
-                  "creator": {},
-                  "target": {
-                    "iri": targetIRI
-                  },
-                  "body": [{ "value": bodyValue }]
-                };
-
-                var creator = options.agent;
-                //TODO: Move to graph.js?
-                Object.keys(DO.C.Actor.Property).some(key => {
-                  const { values } = s.out(rdf.namedNode(key));
-                  if (values.length) {
-                    creator = values[0];
-                    return true;
-                  }
-                })
-
-                if (creator){
-                  noteData['creator'] = {
-                    'iri': creator
-                  }
-                  var a = g.node(rdf.namedNode(noteData['creator']['iri']));
-                  var actorName = getAgentName(a);
-                  var actorImage = getGraphImage(a);
-
-                  if (typeof actorName != 'undefined') {
-                    noteData['creator']['name'] = actorName;
-                  }
-                  if (typeof actorImage != 'undefined') {
-                    noteData['creator']['image'] = actorImage;
-                  }
-                }
-
-                var datetime = getGraphDate(s);
-                if (datetime) {
-                  noteData['datetime'] = datetime;
-                }
-
-                if (license) {
-                  noteData['license'] = license;
-                }
-
-                if (rights) {
-                  noteData['rights'] = rights;
-                }
-
-                DO.U.addNoteToNotifications(noteData);
-              }
-              else {
-                // console.log(i + ' has unrecognised types: ' + resourceTypes);
-                // return Promise.reject({'message': 'Unrecognised types ' + resourceTypes});
-              }
-            }
-            else {
-              // console.log('Skipping ' + i + ': No type.');
-              // return Promise.reject({'message': 'Activity has no type. What to do?'});
-            }
-          });
-        }
-        // ,
-        // function(reason) {
-        //   console.log(url + ': is unreachable. ' + reason);
-        //   return reason;
-        // }
-      );
-    },
-
-    //Borrowed some of the d3 parts from https://bl.ocks.org/mbostock/4600693
-    showVisualisationGraph: function(url, data, selector, options) {
-      url = url || currentLocation();
-      url = stripUrlParamsFromString(url);
-      selector = selector || 'body';
-      options = options || {};
-      options['contentType'] = options.contentType || 'text/html';
-      options['subjectURI'] = options.subjectURI || url;
-      options['license'] = options.license || 'https://creativecommons.org/licenses/by/4.0/';
-      options['language'] = options.language || 'en';
-      options['creator'] = options.creator || 'https://dokie.li/#i';
-      var width = options.width || '100%';
-      var height = options.height || '100%';
-      var nodeRadius = 6;
-      var simulation;
-
-      var id = generateAttributeId();
-
-
-      function positionLink(d) {
-        return "M" + d[0].x + "," + d[0].y
-             + "S" + d[1].x + "," + d[1].y
-             + " " + d[2].x + "," + d[2].y;
-      }
-
-      function positionNode(d) {
-        return "translate(" + d.x + "," + d.y + ")";
-      }
-
-      // function dragstarted(d) {
-      //   if (!d3.event.active) simulation.alphaTarget(0.3).restart();
-      //   d.fx = d.x, d.fy = d.y;
-      // }
-
-      // function dragged(d) {
-      //   d.fx = d3.event.x, d.fy = d3.event.y;
-      // }
-
-      function dragended(d) {
-        if (!d3.event.active) simulation.alphaTarget(0);
-        d.fx = null, d.fy = null;
-      }
-
-      function runSimulation(graph, svgObject) {
-// console.log(graph)
-// console.log(svgObject)
-        simulation
-            .nodes(graph.nodes)
-            .on("tick", ticked);
-
-        simulation.force("link")
-            .links(graph.links);
-
-        function ticked() {
-          svgObject.link.attr("d", positionLink);
-          svgObject.node.attr("transform", positionNode);
-        }
-      }
-
-      // var color = d3.scaleOrdinal(d3.schemeCategory10);
-
-      //TODO: Structure of these objects should change to use the label as key, and move to config.js
-      var group = {
-        "0": { color: '#fff', label: '' },
-        "1": { color: '#000', label: '', type: 'rdf:Resource' },
-        "2": { color: '#777', label: '' },
-        "3": { color: '#551a8b', label: 'Visited', type: 'rdf:Resource' }
-      }
-      var legendCategories = {
-        "4": { color: '#ccc', label: 'Literal', type: 'rdfs:Literal' },
-        "5": { color: '#ff0', label: 'Root', type: 'rdf:Resource' },
-        "6": { color: '#ff2900', label: 'Type', type: 'rdf:Resource' },
-        "7": { color: '#002af7', label: 'External reference', type: 'rdf:Resource' },
-        "8": { color: '#00cc00', label: 'Internal reference', type: 'rdf:Resource' },
-        "9": { color: '#00ffff', label: 'Citation', type: 'rdf:Resource' },
-        "10": { color: '#900090', label: 'Social', type: 'rdf:Resource' },
-        "11": { color: '#ff7f00', label: 'Dataset', type: 'rdf:Resource' },
-        "12": { color: '#9a3a00', label: 'Requirement', type: 'rdf:Resource' },
-        "13": { color: '#9a6c00', label: 'Advisement', type: 'rdf:Resource' },
-        "14": { color: '#ff00ff', label: 'Specification', type: 'rdf:Resource' },
-        "15": { color: '#0088ee', label: 'Policy', type: 'rdf:Resource' },
-        "16": { color: '#FFB900', label: 'Event', type: 'rdf:Resource' },
-        "17": { color: '#009999', label: 'Slides', type: 'rdf:Resource' },
-        "18": { color: '#d1001c', label: 'Concepts', type: 'rdf:Resource' }
-      }
-      group = Object.assign(group, legendCategories);
-
-      // var a = [];
-      // Object.keys(group).forEach(i => {
-      //   a.push('<div style="background-color:' + group[i].color + '; width:5em; height:5em;">' + group[i].label + '</div>');
-      // });
-      // getDocumentContentNode(document).insertAdjacentHTML('beforeend', a.join(''));
-
-      var buttonClose = getButtonHTML({ key:'dialog.graph-view.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
-
-      if (selector == '#graph-view' && !document.getElementById('graph-view')) {
-        document.body.appendChild(fragmentFromString(`
-          <aside aria-labelledby="graph-view-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="graph-view" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#graph-view" xml:lang="${Config.User.UI.Language}">
-            <h2 data-i18n="dialog.graph-view.h2" id="graph-view-label" property="schema:name">${i18n.t('dialog.graph-view.h2.textContent')} ${DO.C.Button.Info.GraphView}</h2>
-            ${buttonClose}
-            <div class="info"></div>
-          </aside>`));
-      }
-
-      var svg = d3.select(selector).append('svg')
-        .attr('width', width)
-        .attr('height', height)
-        .attr('id', id)
-        // .attr('about', '#' + id)
-        // .attr('class', 'graph')
-        .attr('xmlns', 'http://www.w3.org/2000/svg')
-        .attr('xml:lang', options.language)
-        .attr('prefix', 'rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns# rdfs: http://www.w3.org/2000/01/rdf-schema# xsd: http://www.w3.org/2001/XMLSchema# dcterms: http://purl.org/dc/terms/')
-        .attr('typeof', 'http://purl.org/dc/dcmitype/Image')
-
-      var graphView = document.querySelector(selector);
-      graphView.insertAdjacentHTML('beforeend', `<button class="export" data-i18n="dialog.graph-view.export.button" title="${i18n.t('dialog.graph-view.export.button.title')}" type="button">${i18n.t('dialog.graph-view.export.button.textContent')}</button>`);
-      graphView.addEventListener('click', (e) => {
-        if (e.target.closest('button.export')) {
-          var svgNode = graphView.querySelector('svg[typeof="http://purl.org/dc/dcmitype/Image"]');
-
-          var options = {
-            subjectURI: 'http://example.org/' + svgNode.id,
-            mediaType: 'image/svg+xml',
-            filenameExtension: '.svg'
-          }
-
-          const documentOptions = {
-            ...DO.C.DOMProcessing,
-            format: true,
-            sanitize: true,
-            normalize: true
-          };
-
-          svgNode = getDocument(svgNode.cloneNode(true), documentOptions);
-
-          DO.U.exportAsDocument(svgNode, options);
-        }
-      });
-
-      var s = document.getElementById(id);
-      width = options.width || parseInt(s.ownerDocument.defaultView.getComputedStyle(s, null)["width"]);
-      height = options.height || parseInt(s.ownerDocument.defaultView.getComputedStyle(s, null)["height"]);
-
-      if ('title' in options) {
-        svg.append('title')
-          .attr('property', 'dcterms:title')
-          .text(options.title);
-      }
-
-      function addLegend(go) {
-// console.log(go)
-
-        var graphLegend = svg.append('g')
-          .attr('class', 'graph-legend');
-
-        var graphResources = graphLegend
-          .append("text")
-            .attr('class', 'graph-resources')
-            .attr("x", 0)
-            .attr("y", 20)
-            .text("Resources: ")
-
-        go.resources.forEach((i, index) => {
-          graphResources
-            .append('a')
-              .attr('fill', legendCategories[7].color)
-              .attr('href', i)
-              .attr('rel', 'dcterms:source')
-              .text(i)
-
-          if (index < go.resources.length - 1) {
-            graphResources
-              .append('tspan')
-              .text(', ');
-          }
-        })
-
-        graphLegend
-          .append("text")
-          .attr('class', 'graph-statements')
-          .attr("x", 0)
-          .attr("y", 45)
-          .text("Statements: " + go.bilinks.length);
-
-        graphLegend
-          .append("text")
-          .attr('class', 'graph-nodes-unique')
-          .attr("x", 0)
-          .attr("y", 70)
-          .text("Nodes: " + Object.keys(go.uniqueNodes).length + " (unique)");
-
-        graphLegend
-          .append("text")
-          .attr('class', 'graph-creator')
-          .attr("x", 0)
-          .attr("y", 95)
-          .text("Creator: ");
-        var graphCreator = graphLegend.select('g.graph-legend .graph-creator');
-        graphCreator
-          .append('a')
-          .attr('fill', legendCategories[7].color)
-          .attr('href', options.creator)
-          .attr('rel', 'dcterms:creator')
-          .text(options.creator)
-
-        graphLegend
-          .append("text")
-          .attr('class', 'graph-license')
-          .attr("x", 0)
-          .attr("y", 120)
-          .text("License: ");
-        var graphLicense = graphLegend.select('g.graph-legend .graph-license');
-        graphLicense
-          .append('a')
-          .attr('href', options.license)
-          .attr('rel', 'dcterms:license')
-          .attr('fill', legendCategories[7].color)
-          .text(DO.C.License[options.license].name)
-
-        const legendInfo = {};
-
-        Object.keys(legendCategories).forEach(group => {
-          legendInfo[group] = { ...legendCategories[group], count: 0 };
-        });
-
-        go.nodes.forEach(node => {
-          const group = node.group;
-          if (group && legendInfo.hasOwnProperty(group)) {
-            legendInfo[group].count++;
-          }
-        });
-        //TODO: Move foobarbazqux into graphLegend
-        //FIXME: Why doesn't select or selectAll("g.graph-legend") work? g.graph-legend is in the svg. foobarbazqux is a hack IIRC.
-        //Why is graphLegend.selectAll('foobarbazqux') necessary?
-        var legendGroups = Object.keys(legendInfo);
-        graphLegend.selectAll("foobarbazqux")
-          .data(legendGroups)
-          .enter()
-          .append("circle")
-            .attr("cx", 10)
-            .attr("cy", (d, i) => { return 150 + i*25 })
-            .attr("r", nodeRadius)
-            .attr("fill", (d) => { return legendInfo[d].color })
-
-        graphLegend.selectAll("foobarbazqux")
-          .data(legendGroups)
-          .enter()
-          .append("text")
-            .attr("x", 25)
-            .attr("y", (d, i) => { return 155 + i*25 })
-            .attr("fill", (d) => { return legendInfo[d].color })
-            .text((d) => { return legendInfo[d].label + ' (' + legendInfo[d].count + ')'} )
-      }
-
-      function handleResource (iri, headers, options) {
-        return getResource(iri, headers, options)
-//           .catch(error => {
-// // console.log(error)
-//             // if (error.status === 0) {
-//               // retry with proxied uri
-//               var pIRI = getProxyableIRI(options['subjectURI'], {'forceProxy': true});
-//               return handleResource(pIRI, headers, options);
-//             // }
-
-//             // throw error  // else, re-throw the error
-//           })
-          .then(response => {
-// console.log(response)
-            var cT = response.headers.get('Content-Type');
-            options['contentType'] = (cT) ? cT.split(';')[0].trim() : 'text/turtle';
-
-            return response.text().then(data => {
-              options['mergeGraph'] = true;
-              initiateVisualisation(options['subjectURI'], data, options);
-            });
-          })
-      }
-
-      function createSVGMarker() {
-        svg.append("defs")
-          .append("marker")
-            .attr("id", "end")
-            .attr("viewBox", "0 -5 10 10")
-            .attr("refX", 20)
-            .attr("refY", -1)
-            .attr("markerWidth", 6)
-            .attr("markerHeight", 6)
-            .attr("orient", "auto")
-            .attr("fill", group[2].color)
-          .append("path")
-            .attr("d", "M0,-5L10,0L0,5");
-      }
-
-      function buildGraphObject(graph, options) {
-        var graphObject = {};
-        var nodes = graph.nodes;
-        var nodeById = new Map();
-        nodes.forEach(n => {
-          nodeById.set(n.id, n);
-        })
-        var links = graph.links;
-        var bilinks = [];
-
-// console.log(graph)
-// console.log(nodeById)
-        var uniqueNodes = {};
-
-        links.forEach(link => {
-          var s = link.source = nodeById.get(link.source),
-              t = link.target = nodeById.get(link.target),
-              i = {}; // intermediate node
-              // linkValue = link.value
-
-          nodes.push(i);
-
-          if (uniqueNodes[s.id] > -1) {
-            s = uniqueNodes[s.id];
-          }
-          else {
-            uniqueNodes[s.id] = s;
-          }
-
-          if (uniqueNodes[t.id] > -1) {
-            t = uniqueNodes[t.id];
-          }
-          else {
-            uniqueNodes[t.id] = t;
-          }
-
-          links.push({source: s, target: i}, {source: i, target: t});
-          bilinks.push([s, i, t]);
-        });
-
-        graphObject = {
-          'nodes': nodes,
-          'links': links,
-          'bilinks': bilinks,
-          'uniqueNodes': uniqueNodes,
-          'resources': options.resources
-        };
-// console.log(graphObject)
-
-        return graphObject;
-      }
-
-      function buildSVGObject(go) {
-        var svgObject = {};
-
-        createSVGMarker();
-
-        svg.append('g')
-          .attr('class', 'graph-objects');
-
-        var graphObjects = svg.select('g.graph-objects');
-
-        var link = graphObjects.selectAll("path")
-          .data(go.bilinks)
-          .enter().append("path")
-            // .attr("class", "link")
-            .attr('fill', 'none')
-            .attr('stroke', group[4].color)
-            .attr("marker-end", "url(#end)");
-
-        // link.transition();
-
-        var node = graphObjects.selectAll("circle")
-          .data(go.nodes.filter(function(d) {
-            if (go.uniqueNodes[d.id] && go.uniqueNodes[d.id].index == d.index) {
-              return d.id;
-            }
-          }))
-          .enter()
-          .append('a')
-            .attr('href', function(d) {
-              if ('type' in group[d.group] && group[d.group].type !== 'rdfs:Literal' && !d.id.startsWith('http://example.com/.well-known/genid/')) {
-                return d.id
-              }
-              return null
-            })
-            .attr('rel', function(d) {
-              if (this.getAttribute('href') === null) { return null }
-              return 'dcterms:references'
-            })
-          .append('circle')
-            .attr('r', nodeRadius)
-            .attr('fill', function(d) { return group[d.group].color; })
-            .attr('stroke', function(d) {
-              if (d.visited) { return group[3].color }
-              else if (d.group == 4) { return group[2].color }
-              else { return group[7].color }})
-            .on('click', function(e, d) {
-              e.preventDefault();
-              e.stopPropagation();
-
-              var iri = d.id;
-              if ('type' in group[d.group] && group[d.group].type !== 'rdf:Literal' && !(d.id in DO.C.Graphs)) {
-                options = options || {};
-                options['subjectURI'] = iri;
-                //TODO: These values need not be set here. getResource(Graph) should take care of it. Refactor handleResource
-                var headers = { 'Accept': setAcceptRDFTypes() };
-                // var pIRI = getProxyableIRI(iri);
-                if (iri.slice(0, 5).toLowerCase() == 'http:') {
-                  options['noCredentials'] = true;
-                }
-
-                handleResource(iri, headers, options);
-              }
-            })
-
-        node.append('title')
-          .text(function(d) { return d.id; });
-
-            // .call(d3.drag()
-            //     .on("start", dragstarted)
-            //     .on("drag", dragged)
-            //     .on("end", dragended));
-
-        svgObject = {
-          'link': link,
-          'node': node
-        }
-
-        //Adding this now so that it is not selected with circles above.
-        addLegend(go);
-
-// console.log(svgObject)
-        return svgObject;
-      }
-
-      function initiateVisualisation(url, data, options) {
-        url = stripFragmentFromString(url);
-        options.resources = ('resources' in options) ? uniqueArray(options.resources.concat(url)) : [url];
-
-        return DO.U.getVisualisationGraphData(url, data, options).then(
-          function(graph){
-// console.log(graph);
-            var graphObject = buildGraphObject(graph, options);
-
-            simulation = d3.forceSimulation().nodes(graph.nodes)
-              .alphaDecay(0.025)
-              // .velocityDecay(0.1)
-              .force("link", d3.forceLink().distance(nodeRadius).strength(0.25))
-              .force('collide', d3.forceCollide().radius(nodeRadius * 2).strength(0.25))
-              // .force("charge", d3.forceManyBody().stength(-5))
-              .force("center", d3.forceCenter(width / 2, height / 2));
-
-            if ('mergeGraph' in options && options.mergeGraph) {
-              svg.selectAll("defs").remove();
-              svg.selectAll("g.graph-legend").remove();
-              svg.selectAll("g.graph-objects").remove();
-              simulation.restart();
-            }
-
-            var svgObject = buildSVGObject(graphObject);
-
-            runSimulation(graph, svgObject);
-          });
-      }
-
-      initiateVisualisation(url, data, options);
-    },
-
-    getVisualisationGraphData: function(url, data, options) {
-      var requestURL = stripFragmentFromString(url);
-      var documentURL = DO.C.DocumentURL;
-
-      const documentOptions = {
-        ...DO.C.DOMProcessing,
-        removeNodesWithSelector: [],
-        //TODO: You can always do it better!
-        sanitize: true,
-        normalize: true
-      }
-
-      if (typeof data == 'string') {
-        return getGraphFromData(data, options)
-          .then(g => {
-            return DO.U.convertGraphToVisualisationGraph(requestURL, g, options);
-          });
-      }
-      else if (typeof data == 'object') {
-        return DO.U.convertGraphToVisualisationGraph(requestURL, data, options);
-      }
-      else if (typeof data == 'undefined') {
-        if (DO.C.Resource[documentURL] && DO.C.Resource[documentURL].graph) {
-          return DO.U.convertGraphToVisualisationGraph(requestURL, DO.C.Resource[documentURL].graph, options);
-        }
-        else {
-          data = getDocument(null, documentOptions);
-          return getGraphFromData(data, options)
-            .then(g => {
-              return DO.U.convertGraphToVisualisationGraph(requestURL, g, options);
-            });
-        }
-      }
-    },
-
-    //TODO: Review grapoi
-    convertGraphToVisualisationGraph: function(url, g, options){
-// console.log(g);
-      DO.C['Graphs'] = DO.C['Graphs'] || {};
-
-      var dataGraph = rdf.grapoi({ dataset: rdf.dataset().addAll(g.dataset)});
-      var graphs = {};
-      graphs[options['subjectURI']] = g;
-
-      if ('mergeGraph' in options && options.mergeGraph) {
-        graphs = Object.assign(DO.C.Graphs, graphs);
-      }
-
-      DO.C['Graphs'][options['subjectURI']] = g;
-
-      Object.keys(graphs).forEach(i => {
-        dataGraph.dataset.addAll(graphs[i].dataset);
-      });
-
-      var graphData = {"nodes":[], "links": [], "resources": options.resources };
-      var graphNodes = [];
-
-      dataGraph.out().quads().forEach(t => {
-        if (
-          // t.predicate.value == 'http://www.w3.org/1999/02/22-rdf-syntax-ns#first' ||
-          // t.predicate.value == 'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest' ||
-          t.object.value == 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'
-          ) {
-          return;
-        }
-
-        var sGroup = 8;
-        var pGroup = 8;
-        var oGroup = 8;
-        var sVisited = false;
-        var oVisited = false;
-
-        switch(t.subject.termType) {
-          default: case 'NamedNode':
-            if (stripFragmentFromString(t.subject.value) != url) {
-              sGroup = 7;
-            }
-            break;
-          case 'BlankNode':
-            sGroup = 8;
-            break;
-        }
-
-        switch(t.object.termType) {
-          default: case 'NamedNode':
-            if (stripFragmentFromString(t.object.value) != url) {
-              oGroup = 7;
-            }
-            break;
-          case 'BlankNode':
-            oGroup = 8;
-            break;
-          case 'Literal':
-            oGroup = 4;
-            break;
-        }
-
-        if (t.subject.value.startsWith('http://example.com/.well-known/genid/')) {
-          sGroup = 8;
-        }
-        if (t.object.value.startsWith('http://example.com/.well-known/genid/')) {
-          oGroup = 8;
-        }
-
-        if (t.predicate.value == ns.rdf.type.value){
-          oGroup = 6;
-
-          if (isActorType(t.object.value)) {
-            sGroup = 10;
-          }
-
-          switch (t.object.value) {
-            case ns.qb.DataSet.value:
-              oGroup = 11;
-              break;
-            case ns.doap.Specification.value:
-              sGroup = 14;
-              break;
-            case ns.odrl.Agreement.value:
-            case ns.odrl.Assertion.value:
-            case ns.odrl.Offer.value:
-            case ns.odrl.Policy.value:
-            case ns.odrl.Privacy.value:
-            case ns.odrl.Request.value:
-            case ns.odrl.Set.value:
-            case ns.odrl.Ticket.value:
-              sGroup = 15;
-              break;
-            case ns.schema.Event.value:
-            case ns.bibo.Event.value:
-            case ns.bibo.Conference.value:
-              sGroup = 16;
-              break;
-            case ns.bibo.Slide.value:
-              sGroup = 17;
-              break;
-            // case ns.skos.Collection.value:
-            //   sGroup = 18; //Assign Concepts colour to Collection?
-            //   break;
-          }
-        }
-
-        if (t.subject.value == 'http://purl.org/ontology/bibo/presentedAt') {
-          oGroup = 16;
-        }
-        if (Config.Event.Property.hasOwnProperty(t.predicate.value)) {
-          sGroup = 16;
-        }
-
-        if (isActorProperty(t.predicate.value)) {
-          oGroup = 10;
-        }
-        if (t.predicate.value.startsWith('http://purl.org/spar/cito/')) {
-          oGroup = 9;
-        }
-        switch(t.predicate.value) {
-          case ns.foaf.knows.value:
-            sGroup = 10;
-            oGroup = 10;
-            break;
-          case ns.spec.requirement.value:
-          case ns.spec.requirementReference.value:
-            oGroup = 12;
-            break;
-          case ns.spec.advisement.value:
-            oGroup = 13;
-            break;
-          case ns.spec.testSuite.value:
-            oGroup = 11;
-            break;
-          case ns.odrl.hasPolicy.value:
-            oGroup = 15;
-            break;
-          case ns.skos.hasTopConcept.value:
-          case ns.skos.inScheme.value:
-          case ns.skos.semanticRelation.value:
-          case ns.skos.topConceptOf.value:
-          case ns.schema.audience.value:
-            oGroup = 18;
-            break;
-        }
-
-        if (DO.C.Graphs[t.subject.value]) {
-          // sGroup = 1;
-          sVisited = true;
-        }
-        if (DO.C.Graphs[t.object.value]) {
-          // oGroup = 1;
-          oVisited = true;
-        }
-
-        //Initial root node
-        if (t.subject.value == url) {
-          sGroup = 5;
-          sVisited = true;
-        }
-
-        if (t.object.value == url) {
-          oGroup = 5;
-          oVisited = true;
-        }
-
-        //FIXME: groups are set once - not updated.
-
-        var objectValue = t.object.value;
-        if (t.object.termType == 'Literal') {
-          //TODO: Revisit
-          // if(t.object.datatype.termType.value == 'http://www.w3.org/rdf/1999/02/22-rdf-syntax-ns#HTML') {
-          // }
-          // objectValue = htmlEncode(objectValue);
-          objectValue = domSanitize(objectValue);
-        }
-
-        //XXX: Don't remember why this if was included but it seems to be problematic since it skips adding nodes where the object doesn't have a type. So commenting it out for now. Seems to work as expected.
-        // if (!g.node(rdf.namedNode(t.object.value)).out(ns.rdf.type).values.length) {
-          if (!graphNodes.includes(t.subject.value)) {
-            graphNodes.push(t.subject.value);
-            graphData.nodes.push({"id": t.subject.value, "group": sGroup, "visited": sVisited });
-          }
-
-          if (!graphNodes.includes(t.object.value)) {
-            if (t.object.value in DO.C.Resource) {
-              // console.log(t.object.value)
-              DO.C.Resource[t.object.value].graph.out(ns.rdf.type).values.forEach(type => {
-                if (isActorType(type)) {
-                  // console.log(type)
-                  oGroup = 10
-                }
-              })
-            }
-
-            graphNodes.push(objectValue);
-            graphData.nodes.push({"id": objectValue, "group": oGroup, "visited": oVisited });
-          }
-        // }
-
-        graphData.links.push({"source": t.subject.value, "target": objectValue, "value": t.predicate.value});
-      });
-// console.log(graphNodes)
-
-      graphNodes = undefined;
-      return Promise.resolve(graphData);
-    },
-
-    showGraph: function(resources, selector, options){
-      if (!DO.C.GraphViewerAvailable) { return; }
-
-      options = options || {};
-      options['contentType'] = options.contentType || 'text/html';
-      options['subjectURI'] = options.subjectURI || location.href.split(location.search||location.hash||/[?#]/)[0];
-
-      if (Array.isArray(resources)) {
-        DO.U.showGraphResources(resources, selector, options);
-      }
-      else {
-        var property = (resources && 'filter' in options && 'predicates' in options.filter && options.filter.predicates.length) ? options.filter.predicates[0] : ns.ldp.inbox.value;
-        var iri = (resources) ? resources : location.href.split(location.search||location.hash||/[?#]/)[0];
-
-        getLinkRelation(property, iri).then(
-          function(resources) {
-            DO.U.showGraphResources(resources[0], selector, options);
-          },
-          function(reason) {
-            console.log(reason);
-          }
-        );
-      }
-    },
-
-    //TODO: Review grapoi
-    showGraphResources: function(resources, selector, options) {
-      selector = selector || getDocumentContentNode(document);
-      options = options || {};
-      if (Array.isArray(resources)) {
-        resources = uniqueArray(resources);
-      }
-
-      DO.U.processResources(resources, options)
-        .then(urls => {
-          var promises = [];
-          urls.forEach(url => {
-            // window.setTimeout(function () {
-              promises.push(getResourceGraph(url));
-            // }, 1000)
-          });
-
-          Promise.allSettled(promises)
-            .then(resolvedPromises => {
-              let dataset = rdf.dataset();
-        
-              resolvedPromises.forEach(response => {
-                if (response.value) {
-                  dataset.addAll(response.value.dataset);
-                }
-              })
-
-              if (options.filter) {
-                var g = rdf.grapoi({ dataset });
-
-                const quads = filterQuads(g.out().quads(), options);
-
-                dataset = rdf.dataset(quads);
-              }
-
-              options['contentType'] = 'text/turtle';
-              options['resources'] = resources;
-              // options['subjectURI'] = url;
-
-              //FIXME: For multiple graphs (fetched resources), options.subjectURI is the last item, so it is inaccurate
-              DO.U.showVisualisationGraph(options.subjectURI, dataset.toCanonical(), selector, options);
-            });
-      });
-    },
-
     processResources: function(resources, options) {
       if (Array.isArray(resources)) {
         return Promise.resolve(resources);
@@ -1527,7 +62,7 @@ DO = {
     handleIncomingRedirect: async function() {
       // const params = new URLSearchParams(window.location.search);
 
-      getLocalStorageItem('DO.C.OIDC').then(OIDC => {
+      getLocalStorageItem('Config.OIDC').then(OIDC => {
         // console.log(OIDC)
         if (OIDC?.authStartLocation && OIDC.authStartLocation !== window.location.href.split('#')[0]) {
           var urlsHtml = `<a href="${OIDC.authStartLocation}" rel="noopener" target="_blank">${OIDC.authStartLocation}</a>`
@@ -1543,16 +78,16 @@ DO = {
           addMessageToLog({...messageObject, content: message}, Config.MessageLog);
           const messageId = showActionMessage(document.body, messageObject);
 
-          removeLocalStorageItem('DO.C.OIDC');
+          removeLocalStorageItem('Config.OIDC');
           window.location.replace(OIDC.authStartLocation);
         }
         else {
-          DO.U.initAuth().then(() => DO.C.init())
+          DO.U.initAuth().then(() => init())
         }
       });
     },
 
-    init: function() {
+    load: function() {
       document.addEventListener('i18n-ready', () => {
         DO.U.initUserLanguage().then(() => {
           const params = new URLSearchParams(window.location.search);
@@ -1563,7 +98,7 @@ DO = {
           else {
             DO.U.initAuth();
 
-            DO.C.init();
+            init();
           }
         })
       });
@@ -1584,21 +119,6 @@ DO = {
       })
     },
 
-    initUser: function() {
-      getLocalStorageItem('DO.C.User').then(user => {
-        if (user && 'object' in user) {
-          // user.object.describes.Role = (DO.C.User.IRI && user.object.describes.Role) ? user.object.describes.Role : 'social';
-
-          DO.C['User'] = sanitizeObject(user.object.describes);
-
-          if (!Config.User.Graph) {
-            setUserInfo(Config.User.IRI)
-              .then(afterSetUserInfo);
-          }
-        }
-      })
-    },
-
     initUserLanguage: function() {
       return getLocalStorageItem('i18nextLng').then(lang => {
         lang = i18n.code();
@@ -1613,39 +133,11 @@ DO = {
       return getDocumentContentNode(document);
     },
 
-    initEditor: function(options = {}) {
-      DO['Editor'] = new Editor();
-      const tmpl = options.template || (Config.Editor.new ? 'new' : null);
-      options = tmpl ? { template: tmpl } : {};
-      DO.Editor.init(null, null, options);
-    },
-
-    setWebExtensionURL: function() {
-      DO.C['WebExtensionBaseURL'] = Config.WebExtensionEnabled ? Config.WebExtension.runtime.getURL('') : null;
-    },
-
-    setDocumentURL: function(url) {
-      url = url || currentLocation();
-
-      DO.C.DocumentURL = stripFragmentFromString(url);
-    },
-
-    setDocumentString: function(node) {
-      const documentOptions = {
-        ...DO.C.DOMProcessing,
-        format: true,
-        sanitize: true,
-        normalize: true
-      };
-
-      DO.C.DocumentString = getDocument(node, documentOptions);
-    },
-
     setDocumentMode: async function(mode) {
       Config.Editor.mode = mode || Config.Editor.mode;
 
       const documentOptions = {
-        ...DO.C.DOMProcessing,
+        ...Config.DOMProcessing,
         removeNodesWithSelector: [],
         sanitize: true,
         normalize: true
@@ -1702,7 +194,7 @@ DO = {
           spawnOptions['defaultStylesheet'] = false;
           spawnOptions['init'] = true;
 
-          await DO.U.spawnDokieli(
+          await spawnDokieli(
             document,
             results,
             contentType,
@@ -1719,14 +211,14 @@ DO = {
         }
 
         if (paramGraphView.length && paramGraphView[0] == 'true') {
-          DO.U.showVisualisationGraph(DO.C.DocumentURL, getDocument(null, documentOptions), '#graph-view');
+          DO.U.showVisualisationGraph(Config.DocumentURL, getDocument(null, documentOptions), '#graph-view');
         }
 
         // stripUrlSearchHash();
       }
 
       if (paramGraphView.length && paramGraphView[0] == 'true' && paramOpen.length == 0) {
-        DO.U.showVisualisationGraph(DO.C.DocumentURL, getDocument(null, documentOptions), '#graph-view');
+        DO.U.showVisualisationGraph(Config.DocumentURL, getDocument(null, documentOptions), '#graph-view');
       }
 
       var urls = paramGraph.map(url => {
@@ -1784,8 +276,8 @@ DO = {
       //   stripUrlSearchHash(['graph-view']);
       // }
 
-      //XXX: This else if works but current document needs to be processed for DO.C.Resource. See also config.js init and whether non text/html is ever the case (e.g., dokieli in SVG?)
-      // else if (DO.C.Resource[DO.C.DocumentURL].contentType == 'text/html') {
+      //XXX: This else if works but current document needs to be processed for Config.Resource. See also config.js init and whether non text/html is ever the case (e.g., dokieli in SVG?)
+      // else if (Config.Resource[Config.DocumentURL].contentType == 'text/html') {
         var node = selectArticleNode(document);
         var hasContent = hasNonWhitespaceText(node);
 
@@ -1794,97 +286,6 @@ DO = {
           Config.Editor.new = true;
         }
       // }
-    },
-
-    initServiceWorker: function () {
-      if ('serviceWorker' in navigator && !Config.WebExtensionEnabled) {
-        navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
-          .then(() => {
-            console.log('Service Worker registered');
-          })
-          .catch((err) => {
-            console.error('Service Worker registration failed:', err);
-          });
-      }
-    },
-
-    initLocalStorage: function() {
-      getLocalStorageItem(DO.C.DocumentURL).then(collection => {
-        if (!collection) {
-          autoSave(DO.C.DocumentURL, { method: 'localStorage' });
-        }
-        else if (collection.autoSave) {
-          DO.C.AutoSave.Items[DO.C.DocumentURL] ||= {};
-          DO.C.AutoSave.Items[DO.C.DocumentURL]['localStorage'] ||= {};
-          // DO.C.AutoSave.Items[DO.C.DocumentURL]['localStorage']['digestSRI'] = latestLocalDocumentItem.digestSRI;
-          DO.C.AutoSave.Items[DO.C.DocumentURL]['localStorage']['updated'] = collection.updated;
-        }
-      });
-    },
-
-    initDocumentActions: function() {
-      eventButtonClose();
-      eventButtonInfo();
-      eventButtonSignIn();
-      eventButtonSignOut();
-      eventButtonNotificationsToggle();
-      showRobustLinksDecoration();
-      focusNote();
-
-      var documentURL = DO.C.DocumentURL;
-
-      //Fugly
-      function checkResourceInfo() {
-// console.log(DO.C.Resource[documentURL])
-
-        if (documentURL in DO.C.Resource && 'state' in DO.C.Resource[documentURL]) {
-          DO.U.processPotentialAction(DO.C.Resource[documentURL]);
-
-          if (DO.C.Resource[documentURL].inbox?.length && !DO.C.Inbox[DO.C.Resource[documentURL].inbox[0]]) {
-            DO.U.showNotificationSources(DO.C.Resource[documentURL].inbox[0]);
-          }
-        }
-        else {
-          //XXX: syncLocalRemoteResource is also eventually calling getResourceInfo through updateResourceInfos (in try)
-          getResourceInfo(DO.C.DocumentString).then(resourceInfo => {
-            DO.U.processPotentialAction(resourceInfo);
-
-            if (DO.C.Resource[documentURL].inbox?.length && !DO.C.Inbox[DO.C.Resource[documentURL].inbox[0]]) {
-              DO.U.showNotificationSources(DO.C.Resource[documentURL].inbox[0]);
-            }
-          });
-
-          // var options = { reuse: true };
-          // var options = { init: true };
-          // var options = {};
-          // if (document.location.protocol.startsWith('http')) {
-          //   options['followLinkRelationTypes'] = ['describedby'];
-          // }
-
-          // getResourceSupplementalInfo(DO.C.DocumentURL, options).then(resourceInfo => {
-          //   updateButtons();
-
-            DO.U.syncLocalRemoteResource();
-          // });
-
-          // window.setTimeout(checkResourceInfo, 100);
-        }
-      }
-
-      checkResourceInfo();
-
-      DO.U.processActivateAction();
-    },
-
-    processActivateAction: function() {
-      document.addEventListener('click', (e) => {
-        if (e.target.closest('[about="#document-menu"][typeof="schema:ActivateAction"], [href="#document-menu"][typeof="schema:ActivateAction"], [resource="#document-menu"][typeof="schema:ActivateAction"]')) {
-          e.preventDefault();
-          e.stopPropagation();
-
-          DO.U.showDocumentMenu(e);
-        }
-      });
     },
 
     //XXX: Not applied because of ProseMirror schema issue when `select` ever becomes a child of something like `p`
@@ -1898,977 +299,6 @@ DO = {
       for (var i = 0; i < languageOptions.length; i++){
         languageOptions[i].parentNode.replaceChild(fragmentFromString('<label class="do" for="feature-language-options">Languages</label> <select class="do" id="feature-language-options">' + getLanguageOptionsHTML() + '</select>'), languageOptions[i]);
       }
-    },
-
-    //TODO: Review grapoi
-    processPotentialAction: function(resourceInfo) {
-      var g = resourceInfo.graph;
-      var triples = g.out().quads();
-      triples.forEach(t => {
-        var s = t.subject.value;
-        var p = t.predicate.value;
-        var o = t.object.value;
-
-        if (p == ns.schema.potentialAction.value) {
-          var action = o;
-          var documentOrigin = (document.location.origin === "null") ? "file://" : document.location.origin;
-          var originPathname = documentOrigin + document.location.pathname;
-// console.log(originPathname)
-// console.log(action.startsWith(originPathname + '#'))
-          if (action.startsWith(originPathname)) {
-            document.addEventListener('click', (e) => {
-              var fragment = action.substr(action.lastIndexOf('#'));
-// console.log(fragment)
-              if (fragment) {
-                var selector = '[about="' + fragment  + '"][typeof="schema:ViewAction"], [href="' + fragment  + '"][typeof="schema:ViewAction"], [resource="' + fragment  + '"][typeof="schema:ViewAction"]';
-// console.log(selector)
-                // var element = document.querySelectorAll(selector);
-                var element = e.target.closest(selector);
-// console.log(element)
-                if (element) {
-                  e.preventDefault();
-                  e.stopPropagation();
-
-                  var so = g.node(rdf.namedNode(action)).out(ns.schema.object).values;
-                  if (so.length) {
-                    selector = '#' + element.closest('[id]').id;
-
-                    var svgGraph = document.querySelector(selector + ' svg');
-                    if (svgGraph) {
-                      svgGraph.nextSibling.parentNode.removeChild(svgGraph.nextSibling);
-                      svgGraph.parentNode.removeChild(svgGraph);
-                    }
-                    else {
-                      // serializeGraph(g, { 'contentType': 'text/turtle' })
-                      //   .then(data => {
-                          var options = {};
-                          options['subjectURI'] = so[0];
-                          options['contentType'] = 'text/turtle';
-                          DO.U.showVisualisationGraph(options.subjectURI, g.dataset.toCanonical(), selector, options);
-                        // });
-                    }
-                  }
-                }
-              }
-            });
-          }
-        }
-      });
-    },
-
-    enableRemoteSync: async function() {
-      await updateLocalStorageItem(DO.C.DocumentURL, { autoSave: true });
-
-      DO.U.syncLocalRemoteResource();
-    },
-
-    disableRemoteSync: async function() {
-      updateButtons();
-
-      await updateLocalStorageItem(DO.C.DocumentURL, { autoSave: false });
-
-      await autoSave(DO.C.DocumentURL, { method: 'localStorage' });
-    },
-
-    monitorNetworkStatus: function() {
-      let messageId;
-
-      window.addEventListener('online', async () => {
-        console.log('online');
-        await DO.U.enableRemoteSync();
-
-        const storageObject = await getLocalStorageItem(DO.C.DocumentURL);
-
-        const remoteAutoSaveEnabled = (storageObject && storageObject.autoSave !== undefined) ? storageObject.autoSave : true;
-
-        let message;
-
-        if (remoteAutoSaveEnabled) {
-          message = "You are back online. Your changes will be synced with the remote server.";
-        } else {
-          message = "You are back online. Changes will be saved only locally because autosave is disabled. You can change this from the main menu.";
-        }
-
-        message = {
-          'content': message,
-          'type': 'info',
-        }
-        addMessageToLog(message, Config.MessageLog);
-
-        messageId = showActionMessage(document.body, message, messageId ? { clearId: messageId } : {});
-      });
-    
-
-      window.addEventListener('offline', async () => {
-        console.log('offline');
-
-        await DO.U.disableRemoteSync();
-
-        const storageObject = await getLocalStorageItem(DO.C.DocumentURL);
-
-        const remoteAutoSaveEnabled = (storageObject && storageObject.autoSave !== undefined) ? storageObject.autoSave : true;
-
-        let message;
-
-        if (remoteAutoSaveEnabled) {
-          message = "You are offline. Your changes will be saved locally and synced when you're back online.";
-        } else {
-          message = "You are offline. Changes will be saved only locally because autosave is disabled. You can change this from the main menu.";
-        }
-
-        message = {
-          'content': message,
-          'type': 'info',
-          'timer': null
-        }
-        addMessageToLog(message, Config.MessageLog);
-
-        messageId = showActionMessage(document.body, message, messageId ? { clearId: messageId } : {});
-      });
-    },
-
-    syncLocalRemoteResource: async function(options = {}) {
-      // console.log('--- syncLocalRemoteResource');
-
-      const documentOptions = {
-        ...DO.C.DOMProcessing,
-        format: true,
-        sanitize: true,
-        normalize: true
-      };
-
-      const localETag = DO.C.Resource[DO.C.DocumentURL]?.headers?.etag?.['field-value'];
-      let localContentType = 'text/html';
-      const headers = {
-        'Accept': localContentType
-      };
-
-      if (localETag) {
-        headers['If-None-Match'] = localETag;
-      }
-
-      let reviewOptions = {}
-
-      let storageObject;
-      let remoteHash;
-      let remoteContent;
-      let remoteContentNode;
-      let response;
-      let status;
-      let remoteETag;
-      let remoteLastModified;
-      let remoteDate;
-      const previousRemoteHash = DO.C.Resource[DO.C.DocumentURL]['digestSRI'];
-
-      const hasAccessModeWrite = accessModePossiblyAllowed(DO.C.DocumentURL, 'write');
-
-      storageObject = await getLocalStorageItem(DO.C.DocumentURL);
-
-      const remoteAutoSaveEnabled = (storageObject && storageObject.autoSave !== undefined) ? storageObject.autoSave : true;
-
-      // let latestLocalDocumentItemObject = (storageObject && storageObject.items?.length) ? await getLocalStorageItem(storageObject.items[0]) : null;
-
-      let localContent;
-      let latestLocalDocumentItemObjectPublished;
-      let latestLocalDocumentItemObjectUnpublished;
-
-      if (storageObject?.items?.length) {
-        for (const item of storageObject.items) {
-          const r = await getLocalStorageItem(item);
-          if (r?.published && !latestLocalDocumentItemObjectPublished) {
-            latestLocalDocumentItemObjectPublished = r;
-          }
-          if (!r?.published && !latestLocalDocumentItemObjectUnpublished) {
-            latestLocalDocumentItemObjectUnpublished = r;
-          }
-          if (latestLocalDocumentItemObjectPublished && latestLocalDocumentItemObjectUnpublished) {
-            break;
-          }
-        }
-      }
-
-      //XXX: REVISIT THIS. This is  cheap way to reuse initial getDocument value. DocumenString is not currently used besides this.
-      localContent = DO.C.DocumentString || getDocument(null, documentOptions);
-      DO.C.DocumentString = null;
-
-// console.log(localContent)
-      let localHash = await getHash(localContent);
-      let data;
-
-      if (latestLocalDocumentItemObjectUnpublished) {
-        const { digestSRI, mediaType, content } = latestLocalDocumentItemObjectUnpublished;
-        localContent = content;
-        localHash = digestSRI;
-        localContentType = mediaType;
-      }
-
-      //200
-      try {
-        response = await getResource(DO.C.DocumentURL, headers, {});
-        status = response.status;
-        remoteETag = response.headers.get('ETag');
-        remoteLastModified = response.headers.get('Last-Modified');
-        remoteDate = response.headers.get('Date');
-
-        data = await response.text();
-
-        // remoteContentNode = getDocumentNodeFromString(data);
-        // remoteContent = getDocument(remoteContentNode.documentElement, documentOptions);
-        remoteContent = getDocument(data, documentOptions);
-// console.log('remoteContent: ', remoteContent)
-        remoteContentNode = getDocumentNodeFromString(remoteContent);
-
-        remoteHash = await getHash(remoteContent);
-
-        let linkHeadersOptions = {};
-        if (!Config['Resource'][DO.C.DocumentURL]['headers']) {
-          linkHeadersOptions['followLinkRelationTypes'] = ['describedby'];
-        }
-
-        //Need to make sure to wait
-        await updateResourceInfos(DO.C.DocumentURL, remoteContent, response, { storeHash: true });
-        processSupplementalInfoLinkHeaders(DO.C.DocumentURL, linkHeadersOptions);
-
-        // DO.C.Resource[DO.C.DocumentURL]['digestSRI'] = remoteHash;
-      }
-      //304, 403, 404, 405
-      catch (e) {
-        // console.log(e);
-        // console.log(e.response)
-        status = e.status || 0;
-        response = e.response;
-        remoteETag = response?.headers.get('ETag');
-        remoteLastModified = response?.headers.get('Last-Modified');
-        remoteDate = response?.headers.get('Date');
-
-        remoteContent = DO.C.Resource[DO.C.DocumentURL].data;
-        remoteContentNode = getDocumentNodeFromString(remoteContent);
-        remoteHash = await getHash(remoteContent);
-
-        if (response) {
-          updateSupplementalInfo(response);
-        }
-
-        var message = '';
-        var actionMessage = '';
-        let errorKey = 'default';
-        let actionMessageKey = 'default-action-message';
-        // var actionTerm = 'update';
-        var url = DO.C.DocumentURL;
-
-        if (status != 304 && status != 404) {
-          console.log(e)
-          switch (status) {
-            default:
-              message = `<code>${status}, ${e.message}</code>`;
-              break;
-
-            case 401:
-              if (DO.C.User.IRI) {
-                errorKey = 'unauthorized';
-                actionMessageKey = 'unauthorized-action-message';
-              }
-              else {
-                errorKey = 'unauthenticated';
-                actionMessageKey = 'unauthenticated-action-message';
-              }
-
-              return;
-
-            case 403:
-              if (DO.C.User.IRI) {
-                errorKey = 'forbidden';
-                actionMessageKey = 'forbidden-action-message';
-              }
-              else {
-                errorKey = 'unauthenticated';
-                actionMessageKey = 'unauthenticated-action-message';
-              }
-
-              return;
-          }
-
-          message = message + `<span data-i18n="dialog.remote-sync.error.${errorKey}.span">${i18n.t(`dialog.remote-sync.error.${errorKey}.span.textContent`),{url,button:DO.C.Button.SignIn}}</span>`;
-          
-
-          let messageObject = {
-            'content': actionMessage,
-            'type': 'error',
-            'timer': null,
-            'code': status
-          }
-
-          addMessageToLog({...messageObject, content: message}, Config.MessageLog);
-          showActionMessage(document.body, messageObject);
-        }
-      }
-
-      // console.log(`localContent: ${localContent}`);
-      // console.log(`localHash: ${localHash}`);
-      // console.log('-------');
-      // console.log(`data: ${data}`);
-      // console.log(`dataHash: ${dataHash}`);
-      // console.log('-------');
-      // console.log(`remoteContent: ${remoteContent}`);
-      // console.log(`remoteHash: ${remoteHash}`);
-      // console.log(`previousRemoteHash: ${previousRemoteHash}`);
-
-      const remotePublishDate = getDateTimeISOFromDate(remoteLastModified) || getDateTimeISOFromDate(remoteDate) || getDateTimeISO();
-
-      const etagWasUsed = !!(headers['If-None-Match'] && remoteETag);
-      const etagsMatch = etagWasUsed && headers['If-None-Match'] === remoteETag;
-
-      const localRemoteHashMatch = localHash == remoteHash;
-
-      if (localHash && remoteHash && localRemoteHashMatch) {
-        return;
-      }
-
-      if (options.forceLocal || options.forceRemote) {
-        if (etagWasUsed && !etagsMatch && !options.forceRemote && status !== 304) {
-          // reviewOptions['message'] = `Cannot force due to missing or changed ETag. Show review.`;
-          reviewOptions['message'] = `<span data-i18n="dialog.review-changes.message.etag-mismatch.span">${i18n.t('dialog.review-changes.message.etag-mismatch.span.textContent')}</span>`;
-          DO.U.showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
-          return;
-        }
-
-        if (!etagWasUsed) {
-          console.log(`ETags were not used. Assume user intent is valid.`);
-        }
-
-        if (options.forceLocal) {
-          if (!hasAccessModeWrite) {
-            console.log(`No Write access.`);
-
-            //TODO: showModalSyncRemote()
-
-            return;
-          }
-
-          if (!remoteAutoSaveEnabled) {
-            console.log('Remote autoSave is disabled. Asking to enable autosave-remote');
-
-            //TODO: showModalEnableAutoSave()
-          }
-
-          console.log(`Force pushing local content.`);
-
-          const h = localETag ? { 'If-Match': localETag } : {};
-
-          try {
-            await DO.U.pushLocalContentToRemote(latestLocalDocumentItemObjectUnpublished, h);
-            return;
-          }
-          catch(error) {
-            if (error.status === 412) {
-              DO.U.syncLocalRemoteResource();
-            }
-            else {
-              throw new Error(`${error.status} Unhandled status ${error}`);
-            }
-          }
-
-          return;
-        }
-
-        if (options.forceRemote) {
-          console.log(`Force replacing with remote content.`);
-
-          removeLocalStorageDocumentFromCollection(DO.C.DocumentURL, latestLocalDocumentItemObjectUnpublished.id);
-
-          DO.Editor.replaceContent(DO.Editor.mode, remoteContentNode);
-          DO.Editor.init(DO.Editor.mode, document.body);
-          autoSave(DO.C.DocumentURL, { method: 'localStorage', published: remotePublishDate });
-          updateResourceInfos(DO.C.DocumentURL, null, response);
-          return;
-        }
-      }
-
-      if (latestLocalDocumentItemObjectUnpublished) {
-        var tmplLocal = document.implementation.createHTMLDocument('template');
-        tmplLocal.documentElement.setHTMLUnsafe(localContent);
-        const localContentNode = tmplLocal.body;
-
-        if (latestLocalDocumentItemObjectPublished.digestSRI !== remoteHash && status !== 304) {
-          reviewOptions['message'] = `<span data-i18n="dialog.review-changes.message.conflict.span">${i18n.t('dialog.review-changes.message.conflict.span.textContent')}</span>`;
-          DO.U.showResourceReviewChanges(localContent, remoteContent, DO.C.Resource[DO.C.DocumentURL].response, reviewOptions);
-          return;
-        }
-      }
-
-
-      switch(status) {
-        case 200:
-          console.log(`Local or remote changed.`);
-
-          if (latestLocalDocumentItemObjectUnpublished) {
-            if (etagsMatch || previousRemoteHash == remoteHash) {
-              console.log(`Local unpublished changes. Remote unchanged (200). Should update remote.`);
-
-              if (!remoteAutoSaveEnabled) {
-                console.log(`remoteAutoSave is disabled.`);
-                return;
-              }
-
-              if (!hasAccessModeWrite) {
-                console.log(`No Write access.`);
-                return;
-              }
-
-              const h = localETag ? { 'If-Match': localETag } : {};
-
-              try {
-                await DO.U.pushLocalContentToRemote(latestLocalDocumentItemObjectUnpublished, h);
-                return;
-              }
-              catch(error) {
-                if (error.status === 412) {
-                  DO.U.syncLocalRemoteResource();
-                }
-                else {
-                  throw new Error(`${error.status} Unhandled status ${error}`);
-                }
-              };
-            }
-            else {
-              reviewOptions['message'] = `<span data-i18n="dialog.review-changes.message.local-remote-changed.span">${i18n.t('dialog.review-changes.message.local-remote-changed.span.textContent')}</span>`;
-              console.log(reviewOptions['message'])
-              // console.log(localContent, remoteContent)
-              DO.U.showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
-            }
-          }
-          else if (!etagsMatch || previousRemoteHash != remoteHash) {
-            console.log(previousRemoteHash)
-
-            console.log(`Local unchaged. Remote changed. Update local.`);
-            DO.Editor.replaceContent(DO.Editor.mode, remoteContentNode);
-            DO.Editor.init(DO.Editor.mode, document.body);
-            autoSave(DO.C.DocumentURL, { method: 'localStorage', published: remotePublishDate });
-            updateResourceInfos(DO.C.DocumentURL, null, response);
-          }
-          else {
-            reviewOptions['message'] = `<span data-i18n="dialog.review-changes.message.remote-changed.span">${i18n.t('dialog.review-changes.message.remote-changed.span.textContent')}</span>`;
-            DO.U.syncLocalRemoteResource();
-          }
-
-          break;
-
-        //Because of GET If-None-Match: <etag>
-        case 304:
-          if (latestLocalDocumentItemObjectUnpublished) {
-            console.log(`Local unpublished changes. Remote unchanged (304). Should update remote.`);
-
-            if (!remoteAutoSaveEnabled) {
-              console.log(`remoteAutoSave is disabled.`);
-              return;
-            }
-
-            if (!hasAccessModeWrite) {
-              console.log(`No Write access.`);
-              return;
-            }
-
-            const h = localETag ? { 'If-Match': localETag } : {};
-
-            try {
-              await DO.U.pushLocalContentToRemote(latestLocalDocumentItemObjectUnpublished, h);
-              return;
-            }
-            catch(error) {
-              if (error.status === 412) {
-                DO.U.syncLocalRemoteResource();
-              }
-              else {
-                throw new Error(`${error.status} Unhandled status ${error}`);
-              }
-            };
-          }
-
-          break;
-
-        case 404:
-          console.log('Remote was deleted. Push local to remote.');
-
-          if (!remoteAutoSaveEnabled) {
-            console.log(`remoteAutoSave is disabled.`);
-            return;
-          }
-
-          if (!hasAccessModeWrite) {
-            console.log(`No Write access.`);
-            return;
-          }
-
-          try {
-            await DO.U.pushLocalContentToRemote(latestLocalDocumentItemObjectUnpublished, { 'If-None-Match': '*' });
-            return;
-          }
-          catch (error) {
-            if (error.status === 412) {
-              DO.U.syncLocalRemoteResource();
-            }
-            else {
-              throw new Error(`${error.status} Unhandled status ${error}`);
-            }
-          }
-
-          break;
-
-        case 403:
-          console.log(`TODO: ${status} Request access because you lost access. Keep working in local.`);
-          break;
-
-        default:
-          console.log(`TODO: ${status} Unhandled status code.`);
-          break;
-      }
-
-      return;
-    },
-
-    pushLocalContentToRemote: async function(localItem, headers) {
-      const { id, content, mediaType } = localItem;
-      // console.log(localItem, headers)
-
-      const response = await putResource(DO.C.DocumentURL, content, mediaType, null, { headers });
-
-      console.log(`Remote updated (${response.status}).`);
-
-      updateLocalStorageItem(id, { published: getDateTimeISO() });
-
-      updateResourceInfos(DO.C.DocumentURL, content, response, { preserveHeaders: ['wac-allow'] });
-    },
-
-    showResourceReviewChanges: function(localContent, remoteContent, response, reviewOptions) {
-      if (!localContent.length || !remoteContent.length) return;
-      var tmplLocal = document.implementation.createHTMLDocument('template');
-      tmplLocal.documentElement.setHTMLUnsafe(localContent);
-      const localContentNode = tmplLocal.body;
-      const localContentBody = localContentNode.getHTML().trim();
-
-      var tmplRemote = document.implementation.createHTMLDocument('template');
-      tmplRemote.documentElement.setHTMLUnsafe(remoteContent);
-
-      // const remoteContentNode = tmplRemote.body;
-      const remoteContentBody = tmplRemote.body.getHTML().trim();
-      const remoteContentNode = tmplRemote.body;
-
-      // console.log(localContent, remoteContent);
-      const tokenizeHTML = (html) => {
-        return html.split(/(<[^>]+>)/g).filter(Boolean);
-      };
-
-      // function serializeToken(token) {
-      //   return JSON.stringify([
-      //     token.block,
-      //     token.text,
-      //     token.bold,
-      //     token.italic,
-      //     token.link
-      //   ]);
-      // }
-      
-      const localNormalized = normalizeForDiff(localContentNode);
-      const remoteNormalized = normalizeForDiff(remoteContentNode);
-
-      // console.log("--- Local Normalized ---", localNormalized);
-      // console.log("--- Remote Normalized ---", remoteNormalized);
-      
-      const localTokens = tokenizeHTML(localNormalized);
-      const remoteTokens = tokenizeHTML(remoteNormalized);
-
-      // const localSerialized = localTokens.map(serializeToken);
-      // const remoteSerialized = remoteTokens.map(serializeToken);
-      
-      // const diff = diffArrays(remoteTokens, localTokens).filter(d => d.added || d.removed);
-      const diff = diffArrays(remoteTokens, localTokens)
-      // console.log(diff)
-      // const diff = diffArrays(remoteSerialized, localSerialized);
-
-      if (!diff.length || !diff.filter(d => d.added || d.removed).length) return;
-
-      const reviewChanges = document.getElementById('review-changes');
-
-      if (reviewChanges) {
-        reviewChanges.remove();
-      }
-
-      // console.log(localContentBody + '/---')
-      // console.log(remoteContentBody + '/---')
-
-      let message = '';
-      if (reviewOptions?.message) {
-        message = `<p>${reviewOptions?.message}</p>`;
-      }
-
-      var buttonClose = getButtonHTML({ key: 'dialog.review-changes.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
-
-      document.body.appendChild(fragmentFromString(`
-        <aside aria-labelledby="review-changes-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="review-changes" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#review-changes" xml:lang="${Config.User.UI.Language}">
-          <h2 data-i18n="dialog.review-changes.h2" id="review-changes-label" property="schema:name">${i18n.t('dialog.review-changes.h2.textContent')} ${DO.C.Button.Info.ReviewChanges}</h2>
-          ${buttonClose}
-          <div class="info">${message}</div>
-        </aside>`));
-
-      let insCounter = 0;
-      let delCounter = 0;
-      
-      let diffHTML = [];
-      diff.forEach(part => {
-        let eName;
-        if (part.added) eName = 'ins';
-        else if (part.removed) eName = 'del';
-      
-        const val = part.value.join('');
-        if (eName) {
-          diffHTML.push(`<${eName}>${val}</${eName}>`);
-        } else {
-          diffHTML.push(val);
-        }
-      });
-      // console.log(`ins: ${insCounter}, del: ${delCounter}`);
-
-      // function renderToken(token) {
-      //   let content = token.text;
-      
-      //   if (token.bold) content = `<strong>${content}</strong>`;
-      //   if (token.italic) content = `<em>${content}</em>`;
-      //   if (token.link) content = `<a href="${token.link}">${content}</a>`;
-      
-      //   return `<${token.block}>${content}</${token.block}>`;
-      // }
-
-      // diff.forEach(part => {
-      //   let tag = null;
-      //   if (part.added) tag = "ins";
-      //   if (part.removed) tag = "del";
-
-      //   part.value.forEach(val => {
-      //     const token = JSON.parse(val); // back to object
-      //     const html = renderToken(token);
-
-      //     if (tag) {
-      //       diffHTML.push(`<${tag}>${html}</${tag}>`);
-      //     } else {
-      //       diffHTML.push(html);
-      //     }
-      //   });
-      // });
-
-      let detailsInsDel = `
-        <details>
-          <summary data-i18n="dialog.review-changes.more-details.summary">${i18n.t('dialog.review-changes.more-details.summary.textContent')}</summary>
-          <table dir="auto">
-            <caption data-i18n="dialog.review-changes.difference.caption">${i18n.t('dialog.review-changes.difference.caption.textContent')}</caption>
-            <thead>
-              <tr>
-                <th data-i18n="dialog.review-changes.changes.th">${i18n.t('dialog.review-changes.changes.th.textContent')}</th>
-                <th data-i18n="dialog.review-changes.count.th">${i18n.t('dialog.review-changes.count.th.textContent')}</th>
-                <th data-i18n="dialog.review-changes.example.th">${i18n.t('dialog.review-changes.example.th.textContent')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td data-i18n="dialog.review-changes.added.td">${i18n.t('dialog.review-changes.added.td.textContent')}</td>
-                <td>${insCounter}</td>
-                <td><ins data-i18n="dialog.review-changes.example-text.ins">${i18n.t('dialog.review-changes.example-text.ins.textContent')}</ins></td>
-              </tr>
-              <tr>
-                <td data-i18n="dialog.review-changes.removed.td">${i18n.t('dialog.review-changes.removed.td.textContent')}</td>
-                <td>${delCounter}</td>
-                <td><del data-i18n="dialog.review-changes.example-text.del">${i18n.t('dialog.review-changes.example-text.del.textContent')}</del></td>
-              </tr>
-            </tbody>
-          </table>
-        </details>
-        `;
-
-      var node = document.getElementById('review-changes');
-
-      node.querySelector('div.info').insertAdjacentHTML('beforeend', detailsInsDel);
-
-      node.insertAdjacentHTML('beforeend', `
-        <div class="do-diff" dir="auto">${diffHTML.join('')}</div>
-        <button class="review-changes-save-local" data-i18n="dialog.review-changes.save-local.button" title="${i18n.t('dialog.review-changes.save-local.button.textContent')}" type="button">${i18n.t('dialog.review-changes.save-local.button.title')}</button>
-        <button class="review-changes-save-remote" data-i18n="dialog.review-changes.save-remote.button" title="${i18n.t('dialog.review-changes.save-remote.button.title')}" type="button">${i18n.t('dialog.review-changes.save-remote.button.textContent')}</button>
-        <button class="review-changes-submit" data-i18n="dialog.review-changes.save.button" title="${i18n.t('dialog.review-changes.save.button.title')}" type="submit">${i18n.t('dialog.review-changes.save.button.textContent')}</button>
-      `);
-
-      const diffNode = document.querySelector('#review-changes .do-diff');
-
-      DO.Editor.init("author", diffNode);
-
-      node.addEventListener('click', e => {
-        var button = e.target.closest('button');
-
-        if (button) {
-          //XXX: What's this for?
-          // DO.Editor.toggleMode();
-          if (button.classList.contains('close') || button.classList.contains('info')) {
-            return;
-          }
-
-          var diffedNode = node.querySelector('.do-diff');
-
-          //TODO: Progress
-
-          //TODO: update getResourceInfo somewhere
-
-          if (button.classList.contains('review-changes-save-local')) {
-            // keep editor area with current contents
-            // try to push but need to check latest before
-            // check if things are still up to date with remote
-            DO.U.syncLocalRemoteResource({ forceLocal: true });
-          }
-          else if (button.classList.contains('review-changes-save-remote')) {
-            DO.U.syncLocalRemoteResource({ forceRemote: true });
-          }
-          else if (button.classList.contains('review-changes-submit')) {
-            // same as first one but with contents of diff panel
-            diffedNode.querySelectorAll('del').forEach(el => el.remove());
-            diffedNode.querySelectorAll('ins').forEach(el => {
-              const parent = el.parentNode;
-              while (el.firstChild) parent.insertBefore(el.firstChild, el);
-              el.remove();
-            });
-            // update local content with the stuff in the diff editor view
-            DO.Editor.replaceContent(DO.Editor.mode, diffNode.querySelector('.ProseMirror'));
-            DO.Editor.init(DO.Editor.mode, document.body);
-            autoSave(DO.C.DocumentURL, { method: 'localStorage' });
-
-            DO.U.syncLocalRemoteResource({ forceLocal: true });
-          }
-
-          node.remove();
-        }
-
-      });
-    },
-
-    initDocumentMenu: function() {
-      document.body.prepend(fragmentFromString(`<div class="do" id="document-menu" dir="${Config.User.UI.LanguageDir}" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}">${DO.C.Button.Menu.OpenMenu}<div><section id="user-info"></section></div></div>`));
-
-      var userInfo = document.getElementById('user-info');
-
-      document.querySelector('#document-menu').addEventListener('click', (e) => {
-        var button = e.target.closest('button');
-
-        if (button) {
-          if (button.classList.contains('show')) {
-            DO.U.showDocumentMenu(e);
-          }
-          else if (button.classList.contains('hide')) {
-            DO.U.hideDocumentMenu(e);
-          }
-          else if (button.classList.contains('signout-user')) {
-            userInfoSignOut(userInfo);
-          }
-        }
-      });
-    },
-
-    showDocumentMenu: function (e) {
-      if (e) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-
-      var dMenu = document.querySelector('#document-menu.do');
-
-      if (!dMenu) {
-        DO.U.initDocumentMenu();
-        DO.U.showDocumentMenu();
-        return;
-      }
-
-      var dMenuButton = dMenu.querySelector('button');
-      var dUserInfo = dMenu.querySelector('#user-info');
-      var dInfo = dMenu.querySelector('div');
-
-      dMenuButton.parentNode.replaceChild(fragmentFromString(DO.C.Button.Menu.CloseMenu), dMenuButton);
-      dMenu.classList.add('on');
-
-      DO.U.showLanguages(dInfo)
-      showUserSigninSignout(dUserInfo);
-      DO.U.showDocumentDo(dInfo);
-      DO.U.showAutoSave(dInfo);
-      DO.U.showViews(dInfo);
-      DO.U.showAboutDokieli(dInfo);
-
-      var body = getDocumentContentNode(document);
-
-      var options = { 'reuse': true };
-      if (document.location.protocol.startsWith('http')) {
-        options['followLinkRelationTypes'] = ['describedby'];
-      }
-
-      updateResourceInfos(DO.C.DocumentURL, null, null, options);
-    },
-
-    hideDocumentMenu: function(e) {
-      // document.removeEventListener('click', DO.U.eventLeaveDocumentMenu);
-
-      var dMenu = document.querySelector('#document-menu.do');
-      var dMenuButton = dMenu.querySelector('button');
-      dMenuButton.parentNode.replaceChild(fragmentFromString(DO.C.Button.Menu.OpenMenu), dMenuButton);
-
-      dMenu.classList.remove('on');
-      // var sections = dMenu.querySelectorAll('section');
-      // for (var i = 0; i < sections.length; i++) {
-      //   if(sections[i].id != 'user-info' && !sections[i].querySelector('button.signin-user')) {
-      //     sections[i].parentNode.removeChild(sections[i]);
-      //   }
-      // };
-      var buttonSigninUser = dMenu.querySelector('button.signin-user');
-      if(buttonSigninUser) {
-        dMenu.querySelector('button.signin-user').disabled = false;
-      }
-
-      removeNodesWithIds(DO.C.DocumentDoItems);
-    },
-
-    showAutoSave: async function(node) {
-      if (node.querySelector('#document-autosave')) { return; }
-
-      const storageObject = await getLocalStorageItem(DO.C.DocumentURL);
-
-      const hasAccessModeWrite = accessModePossiblyAllowed(DO.C.DocumentURL, 'write');
-      let checked = storageObject?.autoSave !== undefined ? storageObject.autoSave : true;
-      checked = (checked && hasAccessModeWrite) ? ' checked=""' : '';
-
-      let html = `
-      <section aria-labelledby="document-autosave-label" id="document-autosave" rel="schema:hasPart" resource="#document-autosave">
-        <h2 data-i18n="menu.autosave.h2" id="document-autosave-label" property="schema:name">${i18n.t('menu.autosave.h2.textContent')}</h2>
-        <input${checked} data-i18n="menu.autosave.input" id="autosave-remote" title="${i18n.t('menu.autosave.input.title')}" type="checkbox" />
-        <label data-i18n="menu.autosave.label" for="autosave-remote"><span data-i18n="menu.autosave.label.span">${i18n.t('menu.autosave.label.span.textContent')}</span></label> 
-      </section>
-      `;
-
-      node.querySelector('#document-do').insertAdjacentHTML('afterend', html);
-
-      document.getElementById('document-autosave').addEventListener('change', async (e) => {
-        if (e.target.checked) {
-          await DO.U.enableRemoteSync();
-        }
-        else {
-          await DO.U.disableRemoteSync();
-        }
-      });
-
-    },
-
-    showLanguages: function(node) {
-      if (document.getElementById('ui-language')) {
-        return;
-      }
-
-      let options = [];
-      const effectiveLanguage = Config.User.UI.Language;
-
-      Config.Translations.forEach(lang => {
-        let selected = (lang == effectiveLanguage) ? ' selected="selected"' : '';
-
-        let sourceName = Config.Languages[lang]?.sourceName;
-        let name = Config.Languages[lang]?.name;
-
-        if (lang !== 'dev' && sourceName) {
-          options.push(`<option dir="${Config.Languages[lang].dir}" lang="${lang}"${selected} title="${name}" value="${lang}" xml:lang="${lang}">${sourceName}</option>`);
-        }
-      })
-
-      const html = `
-        <section aria-labelledby="ui-language-label" id="ui-language" rel="schema:hasPart" resource="#ui-language">
-          <h2 data-i18n="language.label" id="ui-language-label" property="schema:name">${i18n.t('language.label.textContent')}</h2>
-          ${Icon['.fas.fa-language']}
-          <label id="ui-language-select-label" for="ui-language-select" data-i18n="menu.ui-language-select.label">${i18n.t('menu.ui-language-select.label.textContent')}</label>
-          <select aria-labelledby="ui-language-select-label" id="ui-language-select">
-            ${options.join('')}
-          </select>
-        </section>`;
-
-      node.insertAdjacentHTML('afterbegin', html);
-
-      const select = document.getElementById('ui-language-select');
-
-      select.addEventListener('change', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        DO.U.updateUILanguage(e.target.value);
-      });
-    },
-
-    updateUILanguage(lang) {
-      i18n.changeLanguage(lang, (err) => {
-        if (err) return console.error('Error loading language', err);
-
-        // re-run initButtons to update the buttons that are stored
-        initButtons();
-
-        Config.User.UI['Language'] = lang;
-        Config.User.UI['LanguageDir'] = i18n.dir();
-
-        document.querySelectorAll('.do[lang]').forEach(el => {
-          el.setAttribute('lang', lang);
-          el.setAttribute('xml:lang', lang);
-          el.setAttribute('dir', Config.User.UI['LanguageDir']);
-        })
-
-        document.querySelectorAll('.do select[name$="-language"], .do select#ui-language-select').forEach(el => {
-          el.value = lang;
-        })
-
-        document.querySelectorAll('[data-i18n]:not(.ProseMirror [data-i18n]').forEach(el => {
-          const baseKey = el.dataset.i18n;
-
-          //TODO: Revisit updating text
-
-          // Update textContent
-          const textKey = `${baseKey}.textContent`;
-          const keyOptions = el.hasAttribute('datetime') ? { val: new Date(el.getAttribute('datetime')) } : {};
-
-          const textValue = i18n.t(textKey, keyOptions);
-          if (textValue !== textKey) {
-            const span = el.querySelector(':scope > span');
-            if (span) {
-              span.textContent = textValue;
-            } else {
-              [...el.childNodes].forEach(node => {
-                if (node.nodeType === Node.TEXT_NODE && node.nodeValue.trim()) {
-                  node.nodeValue = textValue;
-                }
-              });
-            }
-          }
-
-          // Update innerHTML
-          const htmlKey = `${baseKey}.innerHTML`;
-
-          // TODO: move to a standalone function - this takes the variable names from data-i18n- suffix and passes them as a vars object to the i18n fn
-          const vars = {};
-          Object.entries(el.dataset).forEach(([name, value]) => {
-            if (name !== 'i18n') {
-              vars[name.replace(/^i18n/, '').toLowerCase()] = value;
-            }
-          });
-
-          const translated = i18n.t(htmlKey, vars);
-
-          if (translated !== htmlKey) {
-            el.setHTMLUnsafe(domSanitize(translated));
-          }
-
-          // Update attributes
-          [...el.attributes].forEach(attr => {
-            if (attr.name === 'data-i18n') return;
-            const attrKey = `${baseKey}.${attr.name}`;
-            const value = i18n.t(attrKey);
-            if (value !== attrKey) {
-              el.setAttribute(attr.name, value);
-            }
-          });
-        });
-      });
     },
 
     showAboutDokieli: function(node) {
@@ -2896,24 +326,10 @@ DO = {
       }
     },
 
-    setDocRefType: function() {
-      var link = document.querySelector('head link[rel="stylesheet"][title]');
-      if (link) {
-        DO.C.DocRefType = link.getAttribute('title');
-      }
-      if (Object.keys(DO.C.RefType).indexOf(DO.C.DocRefType) == -1) {
-        DO.C.DocRefType = 'LNCS';
-      }
-    },
-
     generateCSSBasedOnCurrentDocumentIcons: function() {
       var icons = getIconsFromCurrentDocument();
       var css = tranformIconstoCSS(icons);
       console.log(css);
-    },
-
-    getCurrentLinkStylesheet: function() {
-      return document.querySelector('head link[rel="stylesheet"][title]:not([href$="dokieli.css"]):not([disabled])');
     },
 
     showViews: function(node) {
@@ -2927,7 +343,7 @@ DO = {
           ${Icon[".fas.fa-magic"]}
           <ul>`;
 
-      if (DO.C.GraphViewerAvailable) {
+      if (Config.GraphViewerAvailable) {
         s += `<li><button class="resource-visualise" data-i18n="menu.document-views.graph.button" title="${i18n.t('menu.document-views.graph.button.title')}">${i18n.t('menu.document-views.graph.button.textContent')}</button></li>`;
       }
 
@@ -2955,7 +371,7 @@ DO = {
         viewButtons[i].addEventListener('click', DO.U.initCurrentStylesheet);
       }
 
-      if(DO.C.GraphViewerAvailable) {
+      if(Config.GraphViewerAvailable) {
         document.querySelector('#document-views').addEventListener('click', (e) => {
           if (e.target.closest('.resource-visualise')) {
             if(document.querySelector('#graph-view')) { return; }
@@ -2968,7 +384,7 @@ DO = {
 
             document.body.appendChild(fragmentFromString(`
               <aside aria-labelledby="graph-view-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="graph-view" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#graph-view" xml:lang="${Config.User.UI.Language}">
-                <h2 data-i18n="dialog.graph-view.h2" id="graph-view-label" property="schema:name">${i18n.t('dialog.graph-view.h2.textContent')} ${DO.C.Button.Info.GraphView}</h2>
+                <h2 data-i18n="dialog.graph-view.h2" id="graph-view-label" property="schema:name">${i18n.t('dialog.graph-view.h2.textContent')} ${Config.Button.Info.GraphView}</h2>
                 ${buttonClose}
                 <div class="info"></div>
               </aside>
@@ -2984,90 +400,9 @@ DO = {
               }
             });
 
-            DO.U.showVisualisationGraph(DO.C.DocumentURL, undefined, '#graph-view');
+            DO.U.showVisualisationGraph(Config.DocumentURL, undefined, '#graph-view');
           }
         });
-      }
-    },
-
-    updateSelectedStylesheets: function(stylesheets, selected) {
-      selected = selected.toLowerCase();
-
-      for (var j = 0; j < stylesheets.length; j++) {
-        (function(stylesheet) {
-          if (stylesheet.getAttribute('title').toLowerCase() != selected) {
-              stylesheet.disabled = true;
-              stylesheet.setAttribute('rel', 'stylesheet alternate');
-          }
-        })(stylesheets[j]);
-      }
-      for (let j = 0; j < stylesheets.length; j++) {
-        (function(stylesheet) {
-          if (stylesheet.getAttribute('title').toLowerCase() == selected) {
-              stylesheet.setAttribute('rel', 'stylesheet');
-              stylesheet.disabled = false;
-          }
-        })(stylesheets[j]);
-      }
-    },
-
-    initCurrentStylesheet: function(e) {
-      var currentStylesheet = DO.U.getCurrentLinkStylesheet();
-      currentStylesheet = (currentStylesheet) ? currentStylesheet.getAttribute('title') : '';
-      var selected = (e && e.target) ? e.target.textContent.toLowerCase() : currentStylesheet.toLowerCase();
-      var stylesheets = document.querySelectorAll('head link[rel~="stylesheet"][title]:not([href$="dokieli.css"])');
-
-      DO.U.updateSelectedStylesheets(stylesheets, selected);
-
-      var bd = document.querySelectorAll('#document-views button');
-      for(var j = 0; j < bd.length; j++) {
-        bd[j].disabled = (e && e.target && (e.target.textContent == bd[j].textContent)) ? true : false;
-      }
-
-      DO.U.showRefs();
-
-      if (selected == 'shower') {
-        var slides = document.querySelectorAll('.slide');
-        for(j = 0; j < slides.length; j++) {
-          slides[j].classList.add('do');
-        }
-        getDocumentContentNode(document).classList.add('on-slideshow', 'list');
-        document.querySelector('head').insertAdjacentHTML('beforeend', '<meta content="width=792, user-scalable=no" name="viewport" />');
-
-
-        var body = getDocumentContentNode(document);
-        var dMenu = document.querySelector('#document-menu.do');
-
-        if(dMenu) {
-          var dMenuButton = dMenu.querySelector('button');
-          dMenuButton.parentNode.replaceChild(fragmentFromString(DO.C.Button.Menu.CloseMenu), dMenuButton);
-
-          dMenu.classList.remove('on');
-
-          var dMenuSections = dMenu.querySelectorAll('section');
-          for (j = 0; j < dMenuSections.length; j++) {
-            dMenuSections[j].parentNode.removeChild(dMenuSections[j]);
-          }
-        }
-
-        var toc = document.getElementById('table-of-contents');
-        toc = (toc) ? toc.parentNode.removeChild(toc) : false;
-
-        shower.initRun();
-      }
-      if (currentStylesheet.toLowerCase() == 'shower') {
-        slides = document.querySelectorAll('.slide');
-        for (var c = 0; c < slides.length; c++){
-          slides[c].classList.remove('do');
-        }
-        getDocumentContentNode(document).classList.remove('on-slideshow', 'list', 'full');
-        getDocumentContentNode(document).removeAttribute('style');
-        var mV = document.querySelector('head meta[name="viewport"][content="width=792, user-scalable=no"]');
-        mV = (mV) ? mV.parentNode.removeChild(mV) : false;
-
-        history.pushState(null, null, window.location.pathname);
-
-        shower.removeEvents();
       }
     },
 
@@ -3082,22 +417,22 @@ DO = {
           'meta-turtle': {
             mediaType: 'text/turtle',
             scriptStart: '<script id="meta-turtle" title="Turtle" type="text/turtle">',
-            cdataStart: '# ' + DO.C.CDATAStart + '\n',
-            cdataEnd: '\n# ' + DO.C.CDATAEnd,
+            cdataStart: '# ' + Config.CDATAStart + '\n',
+            cdataEnd: '\n# ' + Config.CDATAEnd,
             scriptEnd: '</script>'
           },
           'meta-json-ld': {
             mediaType: 'application/ld+json',
             scriptStart: '<script id="meta-json-ld" title="JSON-LD" type="application/ld+json">',
-            cdataStart: DO.C.CDATAStart + '\n',
-            cdataEnd: '\n' + DO.C.CDATAEnd,
+            cdataStart: Config.CDATAStart + '\n',
+            cdataEnd: '\n' + Config.CDATAEnd,
             scriptEnd: '</script>'
           },
           'meta-trig': {
             mediaType: 'application/trig',
             scriptStart: '<script id="meta-trig" title="TriG" type="application/trig">',
-            cdataStart: '# ' + DO.C.CDATAStart + '\n',
-            cdataEnd: '\n# ' + DO.C.CDATAEnd,
+            cdataStart: '# ' + Config.CDATAStart + '\n',
+            cdataEnd: '\n# ' + Config.CDATAEnd,
             scriptEnd: '</script>'
           }
         }
@@ -3122,7 +457,7 @@ DO = {
 
         var embedMenu = `
         <aside aria-labelledby="embed-data-entry-label" class="do on tabs" dir="${Config.User.UI.LanguageDir}" id="embed-data-entry" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#embed-data-entry" xml:lang="${Config.User.UI.Language}">
-          <h2 data-i18n="dialog.embed-data-entry.h2" id="embed-data-entry-label" property="schema:name">${i18n.t('dialog.embed-data-entry.h2.textContent')} ${DO.C.Button.Info.EmbedData}</h2>
+          <h2 data-i18n="dialog.embed-data-entry.h2" id="embed-data-entry-label" property="schema:name">${i18n.t('dialog.embed-data-entry.h2.textContent')} ${Config.Button.Info.EmbedData}</h2>
           ${buttonClose}
           <div class="info"></div>
           <nav><ul><li class="selected"><a href="#embed-data-turtle">Turtle</a></li><li><a href="#embed-data-json-ld">JSON-LD</a></li><li><a href="#embed-data-trig">TriG</a></li></ul></nav>
@@ -3204,7 +539,7 @@ DO = {
     showDocumentMetadata: function(node) {
       if(document.querySelector('#document-metadata')) { return; }
 
-      var documentURL = DO.C.DocumentURL;
+      var documentURL = Config.DocumentURL;
 
       var content = selectArticleNode(document);
       var count = DO.U.contentCount(content);
@@ -3217,8 +552,8 @@ DO = {
       // var subjectURI = currentLocation();
       // var options = {'contentType': 'text/html', 'subjectURI': subjectURI };
 // console.log(options)
-      var g = DO.C.Resource[documentURL].graph;
-      var citations = Object.keys(DO.C.Citation).concat([ns.dcterms.references.value, ns.schema.citation.value]);
+      var g = Config.Resource[documentURL].graph;
+      var citations = Object.keys(Config.Citation).concat([ns.dcterms.references.value, ns.schema.citation.value]);
       var triples = g.out().quads();
       // g.out().terms.length
       for (const t of triples) {
@@ -3227,15 +562,15 @@ DO = {
         var p = t.predicate.value;
         var o = t.object.value;
 
-        //TODO: Distinguish between external/internal for DO.C.Resource[documentURL].citations (right now it is external only), then use that for citations in showDocumentMetadata instead of using this triples.forEach
+        //TODO: Distinguish between external/internal for Config.Resource[documentURL].citations (right now it is external only), then use that for citations in showDocumentMetadata instead of using this triples.forEach
         if (citations.includes(p)) {
           citationsTo.push(t);
         }
       };
 
-      requirements = (DO.C.Resource[documentURL].spec && DO.C.Resource[documentURL].spec['requirement']) ? Object.keys(DO.C.Resource[documentURL].spec['requirement']) : [];
-      advisements = (DO.C.Resource[documentURL].spec && DO.C.Resource[documentURL].spec['advisement']) ? Object.keys(DO.C.Resource[documentURL].spec['advisement']) : [];
-      skos = (DO.C.Resource[documentURL].skos) ? DO.C.Resource[documentURL].skos : [];
+      requirements = (Config.Resource[documentURL].spec && Config.Resource[documentURL].spec['requirement']) ? Object.keys(Config.Resource[documentURL].spec['requirement']) : [];
+      advisements = (Config.Resource[documentURL].spec && Config.Resource[documentURL].spec['advisement']) ? Object.keys(Config.Resource[documentURL].spec['advisement']) : [];
+      skos = (Config.Resource[documentURL].skos) ? Config.Resource[documentURL].skos : [];
 
       citations = `<tr class="citations"><th data-i18n="panel.document-metadata.citations.th">${i18n.t('panel.document-metadata.citations.th.textContent')}</th><td>${citationsTo.length}</td></tr>`;
       requirements = `<tr class="requirements"><th data-i18n="panel.document-metadata.requirements.th">${i18n.t('panel.document-metadata.requirements.th.textContent')}</th><td>${requirements.length}</td></tr>`;
@@ -3345,8 +680,8 @@ DO = {
 
     //TODO: Review grapoi
     showExtendedConcepts: function() {
-      var documentURL = DO.C.DocumentURL;
-      var citationsList = DO.C.Resource[documentURL].citations;
+      var documentURL = Config.DocumentURL;
+      var citationsList = Config.Resource[documentURL].citations;
 
       var promises = [];
       citationsList.forEach(url => {
@@ -3372,21 +707,21 @@ DO = {
               g = rdf.grapoi({dataset: g.dataset})
 // console.log(documentURL)
 // console.log(g)
-              DO.C.Resource[documentURL] = DO.C.Resource[documentURL] || {};
-              DO.C.Resource[documentURL]['graph'] = g;
-              DO.C.Resource[documentURL]['skos'] = getResourceInfoSKOS(g);
-              DO.C.Resource[documentURL]['title'] = getGraphLabel(g) || documentURL;
+              Config.Resource[documentURL] = Config.Resource[documentURL] || {};
+              Config.Resource[documentURL]['graph'] = g;
+              Config.Resource[documentURL]['skos'] = getResourceInfoSKOS(g);
+              Config.Resource[documentURL]['title'] = getGraphLabel(g) || documentURL;
 
-              if (DO.C.Resource[documentURL]['skos']['graph'].out().terms.length) {
+              if (Config.Resource[documentURL]['skos']['graph'].out().terms.length) {
                 html.push(`
                   <section>
-                    <h4><a href="${documentURL}">${DO.C.Resource[documentURL]['title']}</a></h4>
+                    <h4><a href="${documentURL}">${Config.Resource[documentURL]['title']}</a></h4>
                     <div>
                       <dl>${DO.U.getDocumentConceptDefinitionsHTML(documentURL)}</dl>
                     </div>
                   </section>`);
 
-                dataset.addAll(DO.C.Resource[documentURL]['skos']['graph'].dataset);
+                dataset.addAll(Config.Resource[documentURL]['skos']['graph'].dataset);
                 options['resources'].push(documentURL);
               }
             }
@@ -3428,8 +763,8 @@ DO = {
 
               // serializeGraph(dataset, { 'contentType': 'text/turtle' })
               //   .then(data => {
-              ///FIXME: This DO.C.DocumentURL doesn't seem right other than what the visualisation's root node becomes?
-                  options['subjectURI'] = DO.C.DocumentURL;
+              ///FIXME: This Config.DocumentURL doesn't seem right other than what the visualisation's root node becomes?
+                  options['subjectURI'] = Config.DocumentURL;
                   options['contentType'] = 'text/turtle';
                   //FIXME: For multiple graphs (fetched resources), options.subjectURI is the last item, so it is inaccurate
                   DO.U.showVisualisationGraph(options.subjectURI, dataset.toCanonical(), selector, options);
@@ -3440,7 +775,7 @@ DO = {
 // console.log(dataGraph)
 
 
-// console.log(DO.C.Resource)
+// console.log(Config.Resource)
           return dataset;
         });
     },
@@ -3449,16 +784,16 @@ DO = {
     getDocumentConceptDefinitionsHTML: function(documentURL) {
 // console.log(documentURL)
       var s = '';
-      Object.keys(DO.C.Resource[documentURL]['skos']['type']).forEach(rdftype => {
+      Object.keys(Config.Resource[documentURL]['skos']['type']).forEach(rdftype => {
 // console.log(rdftype)
-        s += '<dt>' + DO.C.SKOSClasses[rdftype] + 's</dt>';
+        s += '<dt>' + Config.SKOSClasses[rdftype] + 's</dt>';
 
         if (rdftype == ns.skos.Concept.value) {
           s += '<dd><ul>';
         }
 
-        sortToLower(DO.C.Resource[documentURL]['skos']['type'][rdftype]).forEach(subject => {
-          var g = DO.C.Resource[documentURL]['graph'].node(rdf.namedNode(subject));
+        sortToLower(Config.Resource[documentURL]['skos']['type'][rdftype]).forEach(subject => {
+          var g = Config.Resource[documentURL]['graph'].node(rdf.namedNode(subject));
 
           var conceptLabel = sortToLower(getGraphConceptLabel(g));
 // console.log(conceptLabel)
@@ -3477,11 +812,11 @@ DO = {
             var hasConcepts = [ns.skos.hasTopConcept.value, ns.skos.member.value];
 
             hasConcepts.forEach(hasConcept => {
-              var concept = DO.C.Resource[documentURL]['skos']['data'][subject][hasConcept];
+              var concept = Config.Resource[documentURL]['skos']['data'][subject][hasConcept];
 
               if (concept?.length) {
                 sortToLower(concept).forEach(c => {
-                  var conceptGraph = DO.C.Resource[documentURL]['graph'].node(rdf.namedNode(c));
+                  var conceptGraph = Config.Resource[documentURL]['graph'].node(rdf.namedNode(c));
                   var cLabel = getGraphConceptLabel(conceptGraph);
                   cLabel = (cLabel.length) ? cLabel : [getFragmentOrLastPath(c)];
                   cLabel.forEach(cL => {
@@ -3508,22 +843,22 @@ DO = {
     showDocumentCommunicationOptions: function(node) {
       var communicationOptionsHTML = [];
 
-      var documentURL = DO.C.DocumentURL;
+      var documentURL = Config.DocumentURL;
 
       function waitUntil() {
-        if (!DO.C.Resource[documentURL].headers?.linkHeaders?.has('rel', 'describedby')) {
+        if (!Config.Resource[documentURL].headers?.linkHeaders?.has('rel', 'describedby')) {
           window.setTimeout(waitUntil, 250);
         }
         else {
-          var db = DO.C.Resource[documentURL].headers.linkHeaders.rel('describedby');
+          var db = Config.Resource[documentURL].headers.linkHeaders.rel('describedby');
 
-          if (!db.every(relationItem => DO.C.Resource[relationItem.uri]?.graph !== undefined)) {
+          if (!db.every(relationItem => Config.Resource[relationItem.uri]?.graph !== undefined)) {
             window.setTimeout(waitUntil, 250);
           }
           else {
             db.forEach(relationItem => {
-              if (DO.C.Resource[relationItem.uri]?.graph !== undefined) {
-                communicationOptionsHTML.push(DO.U.getCommunicationOptions(DO.C.Resource[relationItem.uri].graph, { 'subjectURI': documentURL }));
+              if (Config.Resource[relationItem.uri]?.graph !== undefined) {
+                communicationOptionsHTML.push(DO.U.getCommunicationOptions(Config.Resource[relationItem.uri].graph, { 'subjectURI': documentURL }));
               }
             });
 
@@ -3578,7 +913,7 @@ DO = {
       if (sections.length) {
         DO.U.showTableOfContents(documentInfo, sections)
 
-        if (DO.C.SortableList && DO.C.EditorEnabled) {
+        if (Config.SortableList && Config.EditorEnabled) {
           DO.U.sortToC();
         }
       }
@@ -3623,14 +958,14 @@ DO = {
       if (!node) { return; }
 
       var disabledInput = '', s = [];
-      // if (!DO.C.EditorEnabled) {
+      // if (!Config.EditorEnabled) {
       //   disabledInput = ' disabled="disabled"';
       // }
 
-      Object.keys(DO.C.ListOfStuff).forEach(id => {
+      Object.keys(Config.ListOfStuff).forEach(id => {
         var checkedInput = '';
         var label = i18n.t(`panel.list-of-stuff.${id}.label.textContent`);
-        // var selector = DO.C.ListOfStuff[id].selector;
+        // var selector = Config.ListOfStuff[id].selector;
 
         var item = document.getElementById(id);
 
@@ -3650,7 +985,7 @@ DO = {
             <ul>${s.join('')}</ul>
           </section>`);
 
-        // if (DO.C.EditorEnabled) {
+        // if (Config.EditorEnabled) {
           document.getElementById('list-of-stuff').addEventListener('click', (e) => {
             if (e.target.closest('input')) {
               var id = e.target.id.slice(6);
@@ -3677,7 +1012,7 @@ DO = {
 
     showTableOfContents: function(node, sections, options) {
       options = options || {}
-      var sortable = (DO.C.SortableList && DO.C.EditorEnabled) ? ' sortable' : '';
+      var sortable = (Config.SortableList && Config.EditorEnabled) ? ' sortable' : '';
 
       if (!node) { return; }
 
@@ -3685,7 +1020,7 @@ DO = {
       <section id="table-of-contents-i" rel="schema:hasPart" resource="#table-of-contents-i">
         <h3 data-i18n="panel.list-of-stuff.table-of-contents.label" property="schema:name">${i18n.t(`panel.list-of-stuff.table-of-contents.label.textContent`)}</h3>
         <ol class="toc${sortable}">`;
-      toc += DO.U.getListOfSections(sections, {'sortable': DO.C.SortableList});
+      toc += DO.U.getListOfSections(sections, {'sortable': Config.SortableList});
       toc += '</ol></section>';
 
       node.insertAdjacentHTML('beforeend', domSanitize(toc));
@@ -3732,7 +1067,7 @@ DO = {
     buildListOfStuff: function(id) {
       var s = '';
 
-      var documentURL = DO.C.DocumentURL;
+      var documentURL = Config.DocumentURL;
 
       var rootNode = selectArticleNode(document);
 
@@ -3741,8 +1076,8 @@ DO = {
       }
       else {
         var label = i18n.t(`panel.list-of-stuff.${id}.label.textContent`);
-        var selector = DO.C.ListOfStuff[id].selector;
-        var titleSelector = DO.C.ListOfStuff[id].titleSelector;
+        var selector = Config.ListOfStuff[id].selector;
+        var titleSelector = Config.ListOfStuff[id].titleSelector;
 
         var nodes = rootNode.querySelectorAll('*:not([class~="do"]) ' + selector);
 
@@ -3777,7 +1112,7 @@ DO = {
             case 'list-of-concepts':
               s += `${section}`;
               s += `${heading}`;
-              var d = DO.C.Resource[documentURL].citations || [];
+              var d = Config.Resource[documentURL].citations || [];
               if (d.length) {
                 s += '<div><p id="include-concepts"><button class="add" type="button">Include concepts</button> from <data value="' + d.length + '">' + d.length + '</data> external references.</p>';
               }
@@ -3810,9 +1145,9 @@ DO = {
               s += '<caption>Conformance Requirements and Test Coverage</caption>'
               s += '<thead><tr><th colspan="3">Requirement</th></tr><tr><th>Subject</th><th>Level</th><th>Statement</th></tr></thead>';
               s += '<tbody>';
-              Object.keys(DO.C.Resource[documentURL]['spec']['requirement']).forEach(i => {
-// console.log(DO.C.Resource[documentURL]['spec'][i])
-                var statement = DO.C.Resource[documentURL]['spec']['requirement'][i][ns.spec.statement.value] || i;
+              Object.keys(Config.Resource[documentURL]['spec']['requirement']).forEach(i => {
+// console.log(Config.Resource[documentURL]['spec'][i])
+                var statement = Config.Resource[documentURL]['spec']['requirement'][i][ns.spec.statement.value] || i;
                 //FIXME: This selector is brittle.
                 // var requirementIRI = document.querySelector('#document-identifier [rel="owl:sameAs"]');
                 var requirementIRI = document.querySelector('#document-latest-published-version [rel~="rel:latest-version"]');
@@ -3821,14 +1156,14 @@ DO = {
                 requirementIRI = i.replace(stripFragmentFromString(i), requirementIRI);
                 statement = '<a href="' + requirementIRI + '">' + statement + '</a>';
 
-                var requirementSubjectIRI = DO.C.Resource[documentURL]['spec']['requirement'][i][ns.spec.requirementSubject.value];
+                var requirementSubjectIRI = Config.Resource[documentURL]['spec']['requirement'][i][ns.spec.requirementSubject.value];
                 var requirementSubjectLabel = requirementSubjectIRI || '<span class="warning">?</span>';
                 if (requirementSubjectLabel.startsWith('http')) {
                   requirementSubjectLabel = getFragmentFromString(requirementSubjectIRI) || getURLLastPath(requirementSubjectIRI) || requirementSubjectLabel;
                 }
                 var requirementSubject = '<a href="' + requirementSubjectIRI + '">' + requirementSubjectLabel + '</a>';
 
-                var requirementLevelIRI = DO.C.Resource[documentURL]['spec']['requirement'][i][ns.spec.requirementLevel.value];
+                var requirementLevelIRI = Config.Resource[documentURL]['spec']['requirement'][i][ns.spec.requirementLevel.value];
                 var requirementLevelLabel = requirementLevelIRI || '<span class="warning">?</span>';
                 if (requirementLevelLabel.startsWith('http')) {
                   requirementLevelLabel = getFragmentFromString(requirementLevelIRI) || getURLLastPath(requirementLevelIRI) || requirementLevelLabel;
@@ -3849,9 +1184,9 @@ DO = {
               s += '<caption>Non-normative Advisements</caption>'
               s += '<thead><tr><th colspan="2">Advisement</th></tr><tr><th>Level</th><th>Statement</th></tr></thead>';
               s += '<tbody>';
-              Object.keys(DO.C.Resource[documentURL]['spec']['advisement']).forEach(i => {
-// console.log(DO.C.Resource[documentURL]['spec']['advisement'][i])
-                var statement = DO.C.Resource[documentURL]['spec']['advisement'][i][ns.spec.statement.value] || i;
+              Object.keys(Config.Resource[documentURL]['spec']['advisement']).forEach(i => {
+// console.log(Config.Resource[documentURL]['spec']['advisement'][i])
+                var statement = Config.Resource[documentURL]['spec']['advisement'][i][ns.spec.statement.value] || i;
                 //FIXME: This selector is brittle.
                 //TODO: Revisit this:
                 // var advisementIRI = document.querySelector('#document-identifier [rel="owl:sameAs"]');
@@ -3861,14 +1196,14 @@ DO = {
                 advisementIRI = i.replace(stripFragmentFromString(i), advisementIRI);
                 statement = '<a href="' + advisementIRI + '">' + statement + '</a>';
 
-                // var advisementSubjectIRI = DO.C.Resource[documentURL]['spec']['advisement'][i][ns.spec.advisementSubject.value];
+                // var advisementSubjectIRI = Config.Resource[documentURL]['spec']['advisement'][i][ns.spec.advisementSubject.value];
                 // var advisementSubjectLabel = advisementSubjectIRI || '<span class="warning">?</span>';
                 // if (advisementSubjectLabel.startsWith('http')) {
                 //   advisementSubjectLabel = getFragmentFromString(advisementSubjectIRI) || getURLLastPath(advisementSubjectIRI) || advisementSubjectLabel;
                 // }
                 // var advisementSubject = '<a href="' + advisementSubjectIRI + '">' + advisementSubjectLabel + '</a>';
 
-                var advisementLevelIRI = DO.C.Resource[documentURL]['spec']['advisement'][i][ns.spec.advisementLevel.value];
+                var advisementLevelIRI = Config.Resource[documentURL]['spec']['advisement'][i][ns.spec.advisementLevel.value];
                 var advisementLevelLabel = advisementLevelIRI || '<span class="warning">?</span>';
                 if (advisementLevelLabel.startsWith('http')) {
                   advisementLevelLabel = getFragmentFromString(advisementLevelIRI) || getURLLastPath(advisementLevelIRI) || advisementLevelLabel;
@@ -3901,7 +1236,7 @@ DO = {
               }
             }
             else if (id == 'list-of-concepts') {
-// console.log(DO.C.Resource[documentURL]['skos'])
+// console.log(Config.Resource[documentURL]['skos'])
               s += DO.U.getDocumentConceptDefinitionsHTML(documentURL);
             }
             //list-of-figures, list-of-tables, list-of-quotations, table-of-requirements
@@ -3977,7 +1312,7 @@ DO = {
       if (id == 'table-of-requirements') {
         var options = { noCredentials: true };
         // var options = {};
-        var testSuites = DO.C.Resource[documentURL].graph.out(ns.spec.testSuite).values;
+        var testSuites = Config.Resource[documentURL].graph.out(ns.spec.testSuite).values;
 // testSuites = [];
 // console.log(testSuites)
         if (testSuites.length) {
@@ -3996,12 +1331,12 @@ console.log(reason);
             });
         }
 
-        var predecessorVersion = DO.C.Resource[documentURL].graph.out(ns.rel['predecessor-version']).values;
+        var predecessorVersion = Config.Resource[documentURL].graph.out(ns.rel['predecessor-version']).values;
 // predecessorVersion = [];
         if (predecessorVersion.length) {
           url = predecessorVersion[0];
 
-          var sourceGraph = DO.C.Resource[documentURL].graph;
+          var sourceGraph = Config.Resource[documentURL].graph;
           var sourceGraphURI = sourceGraph.term.value;
 // console.log(sourceGraphURI)
           var buttonTextDiffRequirements = 'Diff requirements with the predecessor version';
@@ -4039,7 +1374,7 @@ console.log(reason);
                         var td = tr.querySelector('td:nth-child(3)');
                         sR = sR.replace(stripFragmentFromString(sR), sourceGraphURI);
                         var tR = targetGraphURI + '#' + getFragmentFromString(sR);
-                        td.setHTMLUnsafe(domSanitize(DO.C.Resource[sourceGraphURI].spec['requirement'][sR]['diff'][tR]['statement'])) || '';
+                        td.setHTMLUnsafe(domSanitize(Config.Resource[sourceGraphURI].spec['requirement'][sR]['diff'][tR]['statement'])) || '';
                       });
                     }
                     else if (button.classList.contains('remove')) {
@@ -4052,7 +1387,7 @@ console.log(reason);
                         var sR = tr.getAttribute('about');
                         var td = tr.querySelector('td:nth-child(3)');
                         var sourceRequirementURI = sourceGraphURI + '#' + getFragmentFromString(sR);
-                        var statement = DO.C.Resource[sourceGraphURI].spec['requirement'][sourceRequirementURI][ns.spec.statement.value] || sR;
+                        var statement = Config.Resource[sourceGraphURI].spec['requirement'][sourceRequirementURI][ns.spec.statement.value] || sR;
                         td.setHTMLUnsafe(domSanitize('<a href="' + sR + '">' + statement + '</a>'));
                       });
                     }
@@ -4077,22 +1412,22 @@ console.log(reason);
     },
 
     diffRequirements: function(sourceGraph, targetGraph) {
-      var documentURL = DO.C.DocumentURL;
+      var documentURL = Config.DocumentURL;
       var sourceGraphURI = sourceGraph.term.value;
       var targetGraphURI = targetGraph.term.value;
 // console.log(sourceGraphURI, targetGraphURI)
       var sourceRequirements = getResourceInfoSpecRequirements(sourceGraph);
       var targetRequirements = getResourceInfoSpecRequirements(targetGraph);
 // console.log(sourceRequirements, targetRequirements)
-      var changes = Object.values(DO.C.Resource[sourceGraphURI].spec.change);
+      var changes = Object.values(Config.Resource[sourceGraphURI].spec.change);
 // console.log(changes)
       Object.keys(sourceRequirements).forEach(sR => {
-        DO.C.Resource[sourceGraphURI].spec['requirement'][sR]['diff'] = {};
+        Config.Resource[sourceGraphURI].spec['requirement'][sR]['diff'] = {};
 
         var sRStatement = sourceRequirements[sR][ns.spec.statement.value] || '';
         var tR = targetGraphURI + '#' + getFragmentFromString(sR);
 
-        DO.C.Resource[sourceGraphURI].spec['requirement'][sR]['diff'][tR] = {};
+        Config.Resource[sourceGraphURI].spec['requirement'][sR]['diff'][tR] = {};
 
         var tRStatement = '';
 
@@ -4106,7 +1441,7 @@ console.log(reason);
           var changeClass = change[ns.spec.changeClass.value];
           var changeDescription = change[ns.spec.statement.value];
           if (changeClass) {
-            var changeClassValue = DO.C.ChangeClasses[changeClass] || changeClass;
+            var changeClassValue = Config.ChangeClasses[changeClass] || changeClass;
             if (changeDescription) {
               changeDescription = '<dt>Change Description</dt><dd>' + changeDescription + '</dd>';
             }
@@ -4129,7 +1464,7 @@ console.log(reason);
           diffHTML.push('<' + eName + '>' + part.value + '</' + eName + '>');
         });
 
-        DO.C.Resource[sourceGraphURI].spec['requirement'][sR]['diff'][tR]['statement'] = diffHTML.join('') + changeHTML;
+        Config.Resource[sourceGraphURI].spec['requirement'][sR]['diff'][tR]['statement'] = diffHTML.join('') + changeHTML;
       });
     },
 
@@ -4219,144 +1554,6 @@ console.log(reason);
       table.insertAdjacentHTML('beforeend', '<tfoot><tr>' + getTestDescriptionReviewStatusHTML() + '</tr></tfoot>')
     },
 
-    eventEscapeDocumentMenu: function(e) {
-      if (e.keyCode == 27) { // Escape
-        DO.U.hideDocumentMenu(e);
-      }
-    },
-
-    eventLeaveDocumentMenu: function(e) {
-      if (!e.target.closest('.do.on')) {
-        DO.U.hideDocumentMenu(e);
-      }
-    },
-
-    utf8Tob64: function(s) {
-      return window.btoa(encodeURIComponent(s));
-    },
-
-    b64Toutf8: function(s) {
-      return unescape(decodeURIComponent(window.atob(s)));
-    },
-
-    getSelectorSign: function(node) {
-      if(!node) {
-        return DO.C.SelectorSign["*"];
-      }
-
-      if (typeof node === 'object') {
-        var nodeName = node.nodeName.toLowerCase();
-        var nodeId = '';
-
-        if(node.id) {
-          switch(nodeName) {
-            default: break;
-            case 'section': case 'dl':
-              nodeId = '#' + node.id;
-              break;
-          }
-        }
-
-        return DO.C.SelectorSign[nodeName + nodeId] || DO.C.SelectorSign[nodeName] || DO.C.SelectorSign["*"];
-      }
-
-      return DO.C.SelectorSign["*"];
-    },
-
-    showFragment: function(selector) {
-      var ids = (selector) ? document.querySelectorAll(selector) : document.querySelectorAll('main *[id]:not(input):not(textarea):not(select):not(#content):not(tr)');
-
-      for(var i = 0; i < ids.length; i++){
-        ids[i].addEventListener('mouseenter', (e) => {
-          var fragment = document.querySelector('*[id="' + e.target.id + '"] > .do.fragment');
-          if (!fragment && e.target.parentNode.nodeName.toLowerCase() != 'aside'){
-            const sign = DO.U.getSelectorSign(e.target);
-
-            e.target.insertAdjacentHTML('afterbegin', '<span class="do fragment"><a href="#' + e.target.id + '">' + sign + '</a></span>');
-            fragment = document.querySelector('[id="' + e.target.id + '"] > .do.fragment');
-            var fragmentClientWidth = fragment.clientWidth;
-
-            var fragmentOffsetLeft = DO.U.getOffset(e.target).left;
-            var bodyOffsetLeft = DO.U.getOffset(getDocumentContentNode(document)).left;
-
-            var offsetLeft = 0;
-            if ((fragmentOffsetLeft - bodyOffsetLeft) > 200) {
-              offsetLeft = e.target.offsetLeft;
-            }
-
-            fragment.style.top = Math.ceil(e.target.offsetTop) + 'px';
-            fragment.style.left = (offsetLeft - fragmentClientWidth) + 'px';
-            fragment.style.height = e.target.clientHeight + 'px';
-            fragment.style.width = (fragmentClientWidth - 10) + 'px';
-          }
-        });
-
-        ids[i].addEventListener('mouseleave', (e) => {
-          var fragment = document.querySelector('[id="' + e.target.id + '"] > .do.fragment');
-          if (fragment && fragment.parentNode) {
-            fragment.parentNode.removeChild(fragment);
-          }
-        });
-      }
-    },
-
-    getOffset: function(el) {
-      var box = el.getBoundingClientRect();
-
-      return {
-        top: box.top + window.pageYOffset - document.documentElement.clientTop,
-        left: box.left + window.pageXOffset - document.documentElement.clientLeft
-      }
-    },
-
-    initCopyToClipboard: function() {
-      var elements = ['pre', 'table'];
-
-      elements.forEach(element => {
-        var nodes = selectArticleNode(document).querySelectorAll(element);
-        nodes.forEach(node => {
-          node.insertAdjacentHTML('afterend', DO.C.Button.Clipboard);
-          var button = node.nextElementSibling;
-          setCopyToClipboard(node, button);
-        });
-      })
-    },
-
-    generateFilename: function(url, options) {
-      url = url || DO.C.DocumentURL;
-      var fileName = getLastPathSegment(url);
-      var timestamp = getDateTimeISO().replace(/[^\w]+/ig, '') || "now";
-      var extension = options.filenameExtension || '.txt';
-      fileName = fileName + "." + timestamp + extension;
-      return fileName;
-    },
-
-    exportAsDocument: function(data, options = {}) {
-      const documentOptions = {
-        ...DO.C.DOMProcessing,
-        format: true,
-        sanitize: true,
-        normalize: true
-      };
-
-      data = data || getDocument(null, documentOptions);
-      var mediaType = options.mediaType || 'text/html';
-      var url = options.subjectURI || DO.C.DocumentURL;
-
-      //XXX: Encodes strings as UTF-8. Consider storing bytes instead?
-      var blob = new Blob([data], {type: mediaType + ';charset=utf-8'});
-
-      var a = document.createElement("a");
-      a.download = DO.U.generateFilename(url, options);
-
-      a.href = window.URL.createObjectURL(blob);
-      a.style.display = "none";
-      getDocumentContentNode(document).appendChild(a);
-      a.click();
-      getDocumentContentNode(document).removeChild(a);
-      window.URL.revokeObjectURL(a.href);
-    },
-
     showRobustLinks: function(e, selector) {
       if (e) {
         e.target.closest('button').disabled = true;
@@ -4368,7 +1565,7 @@ console.log(reason);
 
       document.body.appendChild(fragmentFromString(`
         <aside aria-labelledby="robustify-links-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="robustify-links" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#robustify-links" xml:lang="${Config.User.UI.Language}">
-          <h2 id="robustify-links-label" property="schema:name">Robustify Links ${DO.C.Button.Info.RobustLinks}</h2>
+          <h2 id="robustify-links-label" property="schema:name">Robustify Links ${Config.Button.Info.RobustLinks}</h2>
           ${buttonClose}
           <div class="info"></div>
           <div id="robustify-links-input">
@@ -4380,7 +1577,7 @@ console.log(reason);
         </aside>
       `));
 
-      //TODO: Move unique list of existing RL's to DO.C.Resource?
+      //TODO: Move unique list of existing RL's to Config.Resource?
       var robustLinksUnique = {};
       robustLinks.forEach(i => {
         if (!robustLinksUnique[i.href]) {
@@ -4681,7 +1878,7 @@ console.log(reason);
           var pIRI = endpoint + iri;
           // i = 'https://web.archive.org/save/https://example.org/';
 
-          pIRI = (DO.C.WebExtensionEnabled) ? pIRI : getProxyableIRI(pIRI, {'forceProxy': true});
+          pIRI = (Config.WebExtensionEnabled) ? pIRI : getProxyableIRI(pIRI, {'forceProxy': true});
           // pIRI = getProxyableIRI(pIRI, {'forceProxy': true})
 // console.log(pIRI)
           return getResource(pIRI, headers, options)
@@ -4749,18 +1946,18 @@ console.log(reason);
             }
           };
 
-          if (DO.C.User.IRI) {
+          if (Config.User.IRI) {
             noteData.annotation['creator'] = {};
-            noteData.annotation.creator["@id"] = DO.C.User.IRI;
+            noteData.annotation.creator["@id"] = Config.User.IRI;
           }
-          if (DO.C.User.Name) {
-            noteData.annotation.creator["http://schema.org/name"] = DO.C.User.Name;
+          if (Config.User.Name) {
+            noteData.annotation.creator["http://schema.org/name"] = Config.User.Name;
           }
-          if (DO.C.User.Image) {
-            noteData.annotation.creator["http://schema.org/image"] = DO.C.User.Image;
+          if (Config.User.Image) {
+            noteData.annotation.creator["http://schema.org/image"] = Config.User.Image;
           }
-          if (DO.C.User.URL) {
-            noteData.annotation.creator["http://schema.org/url"] = DO.C.User.URL;
+          if (Config.User.URL) {
+            noteData.annotation.creator["http://schema.org/url"] = Config.User.URL;
           }
 
           if(!('contentType' in options)){
@@ -4825,7 +2022,7 @@ console.log(reason);
 
       document.body.appendChild(fragmentFromString(`
         <aside aria-labelledby="generate-feed-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="generate-feed" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#generate-feed" xml:lang="${Config.User.UI.Language}">
-          <h2 data-i18n="dialog.generate-feed.h2" id="generate-feed-label" property="schema:name">${i18n.t('dialog.generate-feed.h2.textContent')} ${DO.C.Button.Info.GenerateFeeds}</h2>
+          <h2 data-i18n="dialog.generate-feed.h2" id="generate-feed-label" property="schema:name">${i18n.t('dialog.generate-feed.h2.textContent')} ${Config.Button.Info.GenerateFeeds}</h2>
           ${buttonClose}
           <div class="info"></div>
         </aside>
@@ -4845,7 +2042,7 @@ console.log(reason);
       generateFeed.insertAdjacentHTML('beforeend', `<form><fieldset id="${id}-fieldset"><legend data-i18n="dialog.generate-feed.save-to.legend">${i18n.t('dialog.generate-feed.save-to.legend.textContent')}</legend></fieldset></form>`);
       fieldset = generateFeed.querySelector('fieldset#' + id + '-fieldset');
       DO.U.setupResourceBrowser(fieldset, id, action);
-      var feedTitlePlaceholder = (DO.C.User.IRI && DO.C.User.Name) ? DO.C.User.Name + "'s" : "Foo's";
+      var feedTitlePlaceholder = (Config.User.IRI && Config.User.Name) ? Config.User.Name + "'s" : "Foo's";
       fieldset.insertAdjacentHTML('beforeend', `<p data-i18n="dialog.generate-feed.generate-location.p" id="${id}-samp">${i18n.t('dialog.generate-feed.generate-location.p.textContent')} <samp id="${id}-${action}"></samp></p><ul><li><label data-i18n="dialog.generate-feed.title.label" for="${id}-title">${i18n.t('dialog.generate-feed.title.label.textContent')}</label> <input type="text" placeholder="${feedTitlePlaceholder} Web Feed" name="${id}-title" value=""></li><li><label data-i18n="language.label" for="${id}-language">${i18n.t('language.label.textContent')}</label> <select id="${id}-language" name="${id}-language">${getLanguageOptionsHTML()}</select></li><li><label data-i18n="license.label" for="${id}-license">${i18n.t('license.label.textContent')}</label> <select id="${id}-license" name="${id}-license">${getLicenseOptionsHTML()}</select></li><li>${DO.U.getFeedFormatSelection()}</li></ul><button class="create" data-i18n="dialog.generate-feed.generate.button" title="${i18n.t('dialog.generate-feed.generate.button.title')}" type="submit">${i18n.t('dialog.generate-feed.generate.button.textContent')}</button>`);
       var bli = document.getElementById(id + '-input');
       bli.focus();
@@ -4878,10 +2075,10 @@ console.log(reason);
         }
 
         var options = {};
-        var feedFormat = DO.C.MediaTypes.Feed[0];
+        var feedFormat = Config.MediaTypes.Feed[0];
         var feedFormatSelectionChecked = generateFeed.querySelector('select[id="feed-format"]')
         if (feedFormatSelectionChecked.length) {
-          feedFormat = (DO.C.MediaTypes.Feed.indexOf(feedFormatSelectionChecked.value) > -1) ? feedFormatSelectionChecked.value : feedFormat;
+          feedFormat = (Config.MediaTypes.Feed.indexOf(feedFormatSelectionChecked.value) > -1) ? feedFormatSelectionChecked.value : feedFormat;
 
           options['contentType'] = feedFormat;
         }
@@ -4954,10 +2151,10 @@ console.log(reason);
               items: resourceData
             };
 
-            if (DO.C.User.IRI) {
-              feed['author']['uri'] = DO.C.User.IRI;
-              if (DO.C.User.Name) {
-                feed['author']['name'] = DO.C.User.Name;
+            if (Config.User.IRI) {
+              feed['author']['uri'] = Config.User.IRI;
+              if (Config.User.Name) {
+                feed['author']['name'] = Config.User.Name;
               }
             }
 
@@ -5024,7 +2221,7 @@ console.log(reason);
       if (d) { return; }
 
       const documentOptions = {
-        ...DO.C.DOMProcessing,
+        ...Config.DOMProcessing,
         format: true,
         sanitize: true,
         normalize: true
@@ -5033,27 +2230,27 @@ console.log(reason);
       var buttonDisabled = '';
 
       const buttons = [
-        DO.C.Button.Menu.Share,
-        DO.C.Button.Menu.Reply,
-        DO.C.Button.Menu.Notifications,
-        DO.C.Button.Menu.New,
-        DO.C.Button.Menu.EditEnable,
-        DO.C.Button.Menu.Open,
-        DO.C.Button.Menu.Save,
-        DO.C.Button.Menu.SaveAs,
-        DO.C.Button.Menu.Version,
-        DO.C.Button.Menu.Immutable,
-        DO.C.Button.Menu.Memento,
-        DO.C.Button.Menu.RobustifyLinks,
-        DO.C.Button.Menu.InternetArchive,
-        DO.C.Button.Menu.GenerateFeed,
-        DO.C.Button.Menu.Export,
-        DO.C.Button.Menu.Source,
-        DO.C.Button.Menu.EmbedData,
-        DO.C.Button.Menu.Print,
-        DO.C.Button.Menu.Delete,
-        DO.C.Button.Menu.MessageLog,
-        DO.C.Button.Menu.DocumentInfo
+        Config.Button.Menu.Share,
+        Config.Button.Menu.Reply,
+        Config.Button.Menu.Notifications,
+        Config.Button.Menu.New,
+        Config.Button.Menu.EditEnable,
+        Config.Button.Menu.Open,
+        Config.Button.Menu.Save,
+        Config.Button.Menu.SaveAs,
+        Config.Button.Menu.Version,
+        Config.Button.Menu.Immutable,
+        Config.Button.Menu.Memento,
+        Config.Button.Menu.RobustifyLinks,
+        Config.Button.Menu.InternetArchive,
+        Config.Button.Menu.GenerateFeed,
+        Config.Button.Menu.Export,
+        Config.Button.Menu.Source,
+        Config.Button.Menu.EmbedData,
+        Config.Button.Menu.Print,
+        Config.Button.Menu.Delete,
+        Config.Button.Menu.MessageLog,
+        Config.Button.Menu.DocumentInfo
       ]
 
       var s = `
@@ -5081,23 +2278,23 @@ console.log(reason);
 
         if (b) {
           var node = b.closest('li');
-          b.outerHTML = DO.C.Button.Menu.EditEnable;
+          b.outerHTML = Config.Button.Menu.EditEnable;
           DO.U.hideDocumentMenu();
-          DO.Editor.toggleEditor('social');
+          Config.Editor.toggleEditor('social');
           // hideAutoSaveStorage(node.querySelector('#autosave-items'), documentURL);
 
-          disableAutoSave(DO.C.DocumentURL, {'method': 'localStorage', saveSnapshot: true });
+          disableAutoSave(Config.DocumentURL, {'method': 'localStorage', saveSnapshot: true });
         }
         else {
           b = e.target.closest('button.editor-enable');
           if (b) {
             node = b.closest('li');
-            b.outerHTML = DO.C.Button.Menu.EditDisable;
+            b.outerHTML = Config.Button.Menu.EditDisable;
             DO.U.hideDocumentMenu();
-            DO.Editor.toggleEditor('author');
+            Config.Editor.toggleEditor('author');
             // showAutoSaveStorage(node, documentURL);
 
-            enableAutoSave(DO.C.DocumentURL, {'method': 'localStorage'});
+            enableAutoSave(Config.DocumentURL, {'method': 'localStorage'});
           }
         }
 
@@ -5140,7 +2337,7 @@ console.log(reason);
 
         if (e.target.closest('.export-as-html')) {
           var options = {
-            subjectURI: DO.C.DocumentURL,
+            subjectURI: Config.DocumentURL,
             mediaType: 'text/html',
             filenameExtension: '.html'
           }
@@ -5152,8 +2349,8 @@ console.log(reason);
         }
 
         if (e.target.closest('.snapshot-internet-archive')){
-          // DO.U.snapshotAtEndpoint(e, DO.C.DocumentURL, 'https://pragma.archivelab.org/', '', {'contentType': 'application/json'});
-          DO.U.snapshotAtEndpoint(e, DO.C.DocumentURL, 'https://web.archive.org/save/', '', {'Accept': '*/*', 'showActionMessage': true });
+          // DO.U.snapshotAtEndpoint(e, Config.DocumentURL, 'https://pragma.archivelab.org/', '', {'contentType': 'application/json'});
+          DO.U.snapshotAtEndpoint(e, Config.DocumentURL, 'https://web.archive.org/save/', '', {'Accept': '*/*', 'showActionMessage': true });
         }
 
         if (e.target.closest('.generate-feed')) {
@@ -5166,7 +2363,7 @@ console.log(reason);
         }
 
         if (e.target.closest('.resource-delete')){
-          DO.U.resourceDelete(e, DO.C.DocumentURL);
+          DO.U.resourceDelete(e, Config.DocumentURL);
         }
 
         if (e.target.closest('.message-log')) {
@@ -5184,10 +2381,10 @@ console.log(reason);
 
       var messageLog;
 
-      if (DO.C.MessageLog && DO.C.MessageLog.length) {
+      if (Config.MessageLog && Config.MessageLog.length) {
         messageLog = `<table role="log"><caption data-i18n="dialog.message-log.caption">${i18n.t('dialog.message-log.caption.textContent')}</caption><thead><tr><th data-i18n="dialog.message-log.datetime.th">${i18n.t('dialog.message-log.datetime.th.textContent')}</th><th data-i18n="dialog.message-log.message.th">${i18n.t('dialog.message-log.message.th.textContent')}</th><th data-i18n="dialog.message-log.type.th">${i18n.t('dialog.message-log.type.th.textContent')}</th></tr></thead><tbody>`;
-        Object.keys(DO.C.MessageLog).forEach(i => {
-          messageLog += `<tr><td><time>${DO.C.MessageLog[i].dateTime}</time></td><td>${DO.C.MessageLog[i].content}</td><td data-i18n="dialog.message-log.${DO.C.MessageLog[i].type}.td">${i18n.t(`dialog.message-log.${DO.C.MessageLog[i].type}.td.textContent`)}</td></tr>`;
+        Object.keys(Config.MessageLog).forEach(i => {
+          messageLog += `<tr><td><time>${Config.MessageLog[i].dateTime}</time></td><td>${Config.MessageLog[i].content}</td><td data-i18n="dialog.message-log.${Config.MessageLog[i].type}.td">${i18n.t(`dialog.message-log.${Config.MessageLog[i].type}.td.textContent`)}</td></tr>`;
         });
         messageLog += '</tbody></table>';
       }
@@ -5198,7 +2395,7 @@ console.log(reason);
       var buttonClose = getButtonHTML({ key: 'dialog.message-log.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
       document.body.appendChild(fragmentFromString(`
         <aside aria-labelledby="message-log-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="message-log" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#message-log" xml:lang="${Config.User.UI.Language}">
-          <h2 data-i18n="dialog.message-log.h2" id="message-log-label" property="schema:name">${i18n.t('dialog.message-log.h2.textContent')} ${DO.C.Button.Info.MessageLog}</h2>
+          <h2 data-i18n="dialog.message-log.h2" id="message-log-label" property="schema:name">${i18n.t('dialog.message-log.h2.textContent')} ${Config.Button.Info.MessageLog}</h2>
           ${buttonClose}
           <div class="info"></div>
           <div>${messageLog}</div>
@@ -5220,7 +2417,7 @@ console.log(reason);
 
       document.body.appendChild(fragmentFromString(`
         <aside aria-labelledby="delete-document-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="delete-document" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#delete-document" xml:lang="${Config.User.UI.Language}">
-          <h2 data-i18n="dialog.delete.h2" id="delete-document-label" property="schema:name">${i18n.t('dialog.delete.h2.textContent')} ${DO.C.Button.Info.Delete}</h2>
+          <h2 data-i18n="dialog.delete.h2" id="delete-document-label" property="schema:name">${i18n.t('dialog.delete.h2.textContent')} ${Config.Button.Info.Delete}</h2>
           ${buttonClose}
           <div class="info"></div>
           <div>
@@ -5252,7 +2449,7 @@ console.log(reason);
         else if (buttonDelete) {
           deleteResource(url)
             .then(response => {
-              DO.Editor.toggleEditor('author', { template: 'new' });
+              Config.Editor.toggleEditor('author', { template: 'new' });
 
               var message = `<span data-i18n="dialog.delete.success.default.p">${i18n.t('dialog.delete.success.default.p.textContent', {url}) }</span>`;
               var actionMessage = '';
@@ -5295,7 +2492,7 @@ console.log(reason);
               if (error.status) {
                 switch(error.status) {
                   case 401:
-                    if (DO.C.User.IRI) {
+                    if (Config.User.IRI) {
                       errorKey = 'unauthenticated';
                     }
                     else {
@@ -5306,7 +2503,7 @@ console.log(reason);
                     break;
 
                   case 403: default:
-                    if (DO.C.User.IRI) {
+                    if (Config.User.IRI) {
                       var errorKey = 'default';
                       var actionMessageKey = 'default-action-message';
 
@@ -5329,7 +2526,7 @@ console.log(reason);
 
               message = `<span data-i18n="dialog.delete.error.${errorKey}.p">${i18n.t(`dialog.delete.error.${errorKey}.p.textContent`, {url})}</span>`
               //TODO: signoutShowSignIn()
-              actionMessage = `<span data-i18n="dialog.delete.error.${actionMessageKey}.p">${i18n.t(`dialog.delete.error.${actionMessageKey}.p.textContent`, {url, button: DO.C.Button.SignIn})}</span>`;
+              actionMessage = `<span data-i18n="dialog.delete.error.${actionMessageKey}.p">${i18n.t(`dialog.delete.error.${actionMessageKey}.p.textContent`, {url, button: Config.Button.SignIn})}</span>`;
 
               const messageObject = {
                 'content': actionMessage,
@@ -5347,7 +2544,7 @@ console.log(reason);
 
     resourceSave: function(e, options) {
       const documentOptions = {
-        ...DO.C.DOMProcessing,
+        ...Config.DOMProcessing,
         format: true,
         sanitize: true,
         normalize: true
@@ -5358,7 +2555,7 @@ console.log(reason);
       options = options || {};
 
       getResourceInfo(data, options).then(i => {
-        if (DO.C.DocumentAction == 'new'|| DO.C.DocumentAction == 'open') {
+        if (Config.DocumentAction == 'new'|| Config.DocumentAction == 'open') {
           DO.U.saveAsDocument(e);
         }
         else {
@@ -5379,7 +2576,7 @@ console.log(reason);
       iri = iri || currentLocation()
 
       const documentOptions = {
-        ...DO.C.DOMProcessing,
+        ...Config.DOMProcessing,
         format: true,
         sanitize: true,
         normalize: true
@@ -5391,7 +2588,7 @@ console.log(reason);
 
       document.body.appendChild(fragmentFromString(`
         <aside aria-labelledby="reply-to-resource-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="reply-to-resource" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#reply-to-resource" xml:lang="${Config.User.UI.Language}">
-          <h2 data-i18n="dialog.reply-to-resource.h2" id="reply-to-resource-label" property="schema:name">${i18n.t('dialog.reply-to-resource.h2.textContent')} ${DO.C.Button.Info.Reply}</h2>
+          <h2 data-i18n="dialog.reply-to-resource.h2" id="reply-to-resource-label" property="schema:name">${i18n.t('dialog.reply-to-resource.h2.textContent')} ${Config.Button.Info.Reply}</h2>
           ${buttonClose}
           <div class="info"></div>
           <div id="reply-to-resource-input">
@@ -5485,17 +2682,17 @@ console.log(reason);
           },
           "body": [{ "value": note }],
         }
-        if (DO.C.User.IRI) {
-          noteData.creator["iri"] = DO.C.User.IRI
+        if (Config.User.IRI) {
+          noteData.creator["iri"] = Config.User.IRI
         }
-        if (DO.C.User.Name) {
-          noteData.creator["name"] = DO.C.User.Name
+        if (Config.User.Name) {
+          noteData.creator["name"] = Config.User.Name
         }
-        if (DO.C.User.Image) {
-          noteData.creator["image"] = DO.C.User.Image
+        if (Config.User.Image) {
+          noteData.creator["image"] = Config.User.Image
         }
-        if (DO.C.User.URL) {
-          noteData.creator["url"] = DO.C.User.URL
+        if (Config.User.URL) {
+          noteData.creator["url"] = Config.User.URL
         }
 
         var language = document.querySelector('#reply-to-resource-language')
@@ -5529,7 +2726,7 @@ console.log(reason);
                 break
               case 401:
                 errorKey = 'unauthorized';
-                if(!DO.C.User.IRI){
+                if(!Config.User.IRI){
                   errorKey = 'unauthenticated';
                 }
                 break;
@@ -5572,7 +2769,7 @@ console.log(reason);
               noteIRI + '" typeof="oa:Annotation" href="' +
               ns.oa.Annotation.value +
               '">Annotation</a></dd>\n<dt>Motivation</dt><dd><a href="' +
-              DO.C.Prefixes[motivatedBy.split(':')[0]] +
+              Config.Prefixes[motivatedBy.split(':')[0]] +
               motivatedBy.split(':')[1] + '" property="oa:motivation">' +
               motivatedBy.split(':')[1] + '</a></dd>\n</dl>\n'
 
@@ -5631,7 +2828,7 @@ console.log(reason);
       }
 
       var shareResourceLinkedResearch = '';
-      if (DO.C.User.IRI && DO.C.OriginalResourceInfo['rdftype'] && DO.C.OriginalResourceInfo.rdftype.includes(ns.schema.ScholarlyArticle.value) || DO.C.OriginalResourceInfo.rdftype.includes(ns.schema.Thesis.value)) {
+      if (Config.User.IRI && Config.OriginalResourceInfo['rdftype'] && Config.OriginalResourceInfo.rdftype.includes(ns.schema.ScholarlyArticle.value) || Config.OriginalResourceInfo.rdftype.includes(ns.schema.Thesis.value)) {
         shareResourceLinkedResearch = `
           <div id="share-resource-external" rel="schema:hasPart" resource="#share-resource-external">
             <h3 data-i18n="dialog.share-resource-linked-research.h3" property="schema:name">${i18n.t('dialog.share-resource-linked-research.h3.textContent')}</h3>
@@ -5644,7 +2841,7 @@ console.log(reason);
 
       var shareResourceHTML = `
         <aside aria-labelledby="share-resource-label" class="do on" dir="${Config.User.UI.LanguageDir}" dir="${Config.User.UI.LanguageDir}" id="share-resource" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#share-resource" xml:lang="${Config.User.UI.Language}">
-          <h2 data-i18n="dialog.share.h2" id="share-resource-label" property="schema:name">${i18n.t('dialog.share.h2.textContent')} ${DO.C.Button.Info.Share}</h2>
+          <h2 data-i18n="dialog.share.h2" id="share-resource-label" property="schema:name">${i18n.t('dialog.share.h2.textContent')} ${Config.Button.Info.Share}</h2>
 
           ${buttonClose}
 
@@ -5655,7 +2852,7 @@ console.log(reason);
 
             <label data-i18n="dialog.share-resource-clipboard.label" for="share-resource-clipboard">${i18n.t('dialog.share-resource-clipboard.label.textContent')}</label>
             <input dir="ltr" id="share-resource-clipboard" name="share-resource-clipboard" readonly="readonly" type="url" value="${iri}" />
-            ${DO.C.Button.Clipboard}
+            ${Config.Button.Clipboard}
           </div>
 
           ${shareResourceLinkedResearch}
@@ -5693,7 +2890,7 @@ console.log(reason);
       var li = document.getElementById('share-resource-address-book');
       li.insertAdjacentHTML('beforeend', Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]);
 
-      DO.U.selectContacts(li, DO.C.User.IRI);
+      DO.U.selectContacts(li, Config.User.IRI);
 
       var hasAccessModeControl = accessModeAllowed(documentURL, 'control');
       if (hasAccessModeControl) {
@@ -5729,7 +2926,7 @@ console.log(reason);
           .then(aclResourceGraph => {
             accessPermissionsNode.removeChild(accessPermissionFetchingIndicator);
 
-            const { defaultACLResource, effectiveACLResource, effectiveContainer } = DO.C.Resource[documentURL].acl;
+            const { defaultACLResource, effectiveACLResource, effectiveContainer } = Config.Resource[documentURL].acl;
             const hasOwnACLResource = defaultACLResource == effectiveACLResource;
 
             var matchers = {};
@@ -5761,16 +2958,16 @@ console.log(reason);
             });
 
             var getFilteredContacts = function(query = '') {
-              const contacts = Object.keys(DO.C.User.Contacts);
+              const contacts = Object.keys(Config.User.Contacts);
               const subjectsWithAccessKeys = new Set(Object.keys(subjectsWithAccess));
 
               return contacts.filter(contact => {
                 const matchesQuery = (
                   !query.length ||
                   contact.toLowerCase().includes(query) ||
-                  DO.C.User.Contacts[contact].Name?.toLowerCase().includes(query) ||
-                  DO.C.User.Contacts[contact].IRI?.toLowerCase().includes(query) ||
-                  DO.C.User.Contacts[contact].URL?.toLowerCase().includes(query)
+                  Config.User.Contacts[contact].Name?.toLowerCase().includes(query) ||
+                  Config.User.Contacts[contact].IRI?.toLowerCase().includes(query) ||
+                  Config.User.Contacts[contact].URL?.toLowerCase().includes(query)
                 );
 // console.log(matchesQuery)
                 return !subjectsWithAccessKeys.has(contact) && matchesQuery;
@@ -5783,8 +2980,8 @@ console.log(reason);
               filteredContacts.forEach(contact => {
                 const suggestion = document.createElement('li');
 
-                var name = DO.C.User.Contacts[contact].Name || contact;
-                var img = DO.C.User.Contacts[contact].Image;
+                var name = Config.User.Contacts[contact].Name || contact;
+                var img = Config.User.Contacts[contact].Image;
                 if (!(img && img.length)) {
                   img = generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
                 }
@@ -5795,7 +2992,7 @@ console.log(reason);
                 var ul = document.querySelector('#share-resource-permissions ul');
 
                 suggestion.addEventListener('click', () => {
-                  DO.U.addAccessSubjectItem(ul, DO.C.User.Contacts[contact].Graph, contact);
+                  DO.U.addAccessSubjectItem(ul, Config.User.Contacts[contact].Graph, contact);
                   var li = document.getElementById('share-resource-access-subject-' + encodeURIComponent(contact));
                   var options = {};
                   options['accessContext'] = 'Share';
@@ -5830,7 +3027,7 @@ console.log(reason);
 
 
             //Allowing only Share-related access modes.
-            var accessContext = DO.C.AccessContext['Share'];
+            var accessContext = Config.AccessContext['Share'];
 
             const accessContextModes = Object.keys(accessContext);
 
@@ -5838,7 +3035,7 @@ console.log(reason);
 
             var showPermissions = function(s, accessSubject) {
 // console.log(accessSubject)
-              if (accessSubject != DO.C.User.IRI) {
+              if (accessSubject != Config.User.IRI) {
                 DO.U.addAccessSubjectItem(ul, s, accessSubject);
 
                 //XXX: Relies on knowledge in addAcessSubjectItem where it inserts li with a particular id
@@ -5873,7 +3070,7 @@ console.log(reason);
             }
 
             Object.keys(subjectsWithAccess).forEach(accessSubject => {
-              if (accessSubject === ns.foaf.Agent.value || accessSubject === DO.C.User.IRI) {
+              if (accessSubject === ns.foaf.Agent.value || accessSubject === Config.User.IRI) {
                 return;
               }
 
@@ -5976,7 +3173,7 @@ console.log(reason);
       select.addEventListener('change', e => {
         var selectedMode = e.target.value;
 
-        if (DO.C.AccessContext[options.accessContext][selectedMode] || selectedMode == '') {
+        if (Config.AccessContext[options.accessContext][selectedMode] || selectedMode == '') {
           e.target.disabled = true;
           e.target.insertAdjacentHTML('afterend', `<span class="progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]}</span>`);
 
@@ -6014,11 +3211,11 @@ console.log(reason);
     updateAuthorization: function(accessContext, selectedMode, accessSubject, subjectType) {
       var documentURL = currentLocation();
 
-      const { defaultACLResource, effectiveACLResource, effectiveContainer } = DO.C.Resource[documentURL].acl;
+      const { defaultACLResource, effectiveACLResource, effectiveContainer } = Config.Resource[documentURL].acl;
       const hasOwnACLResource = defaultACLResource == effectiveACLResource;
       const patchACLResource = defaultACLResource;
 
-      var aclResourceGraph = DO.C.Resource[effectiveACLResource].graph;
+      var aclResourceGraph = Config.Resource[effectiveACLResource].graph;
 
       var matchers = {};
 
@@ -6158,10 +3355,10 @@ console.log(reason);
       node.setHTMLUnsafe(domSanitize('<ul id="share-resource-contacts"></ul>'));
       var shareResourceNode = document.getElementById('share-resource-contacts');
 
-      if (DO.C.User.Contacts && Object.keys(DO.C.User.Contacts).length){
-        Object.keys(DO.C.User.Contacts).forEach(iri => {
-          if (DO.C.User.Contacts[iri].Inbox && DO.C.User.IRI !== iri) {
-            DO.U.addShareResourceContactInput(shareResourceNode, DO.C.User.Contacts[iri]);
+      if (Config.User.Contacts && Object.keys(Config.User.Contacts).length){
+        Object.keys(Config.User.Contacts).forEach(iri => {
+          if (Config.User.Contacts[iri].Inbox && Config.User.IRI !== iri) {
+            DO.U.addShareResourceContactInput(shareResourceNode, Config.User.Contacts[iri]);
           }
         });
       }
@@ -6179,13 +3376,13 @@ console.log(reason);
             contacts.forEach(url => {
               getSubjectInfo(url)
                 .then(subject => {
-                  DO.C.User['Contacts'] = DO.C.User['Contacts'] || {};
-                  DO.C.User.Contacts[url] = subject;
+                  Config.User['Contacts'] = Config.User['Contacts'] || {};
+                  Config.User.Contacts[url] = subject;
 
                   DO.U.addShareResourceContactInput(node, subject);
 
                   //TODO: This should be called only once after processing all contacts. Refactor the loop to eventually use Promise.allSettled perhaps.
-                  updateLocalStorageProfile(DO.C.User);
+                  updateLocalStorageProfile(Config.User);
                 })
             });
 
@@ -6234,7 +3431,7 @@ console.log(reason);
       return checkInbox(s)
         .then(inboxes => {
           if (inboxes && inboxes.length) {
-            DO.C.User.Contacts[iri]['Inbox'] = inboxes;
+            Config.User.Contacts[iri]['Inbox'] = inboxes;
           }
         })
     },
@@ -6377,17 +3574,17 @@ console.log(reason);
             e.preventDefault();
             e.stopPropagation();
 
-            if (!(topicResource in DO.C.Subscription && 'Connection' in DO.C.Subscription[topicResource]) && button.classList.contains('subscribe')) {
+            if (!(topicResource in Config.Subscription && 'Connection' in Config.Subscription[topicResource]) && button.classList.contains('subscribe')) {
               var subscription = subNode.querySelector('[rel="notify:subscription"]').getAttribute('resource');
-              // console.log(DO.C.Resource[s.iri().toString()].subscription);
-              var channelType = DO.C.Resource[topicResource]['subscription'][subscription]['channelType'];
+              // console.log(Config.Resource[s.iri().toString()].subscription);
+              var channelType = Config.Resource[topicResource]['subscription'][subscription]['channelType'];
 
               var data = {
                 "type": channelType[0],
                 "topic": topicResource
               };
 
-              var features = DO.C.Resource[topicResource]['subscription'][subscription]['feature'];
+              var features = Config.Resource[topicResource]['subscription'][subscription]['feature'];
 
               if (features && features.length) {
                 var d = new Date();
@@ -6407,7 +3604,7 @@ console.log(reason);
 
               DO.U.subscribeToNotificationChannel(subscription, data)
               .then(i => {
-                if (DO.C.Subscription[data.topic] && 'Connection' in DO.C.Subscription[data.topic]) {
+                if (Config.Subscription[data.topic] && 'Connection' in Config.Subscription[data.topic]) {
                   button.textContent = i18n.t('dialog.notification-subscriptions.unsubscribe.button.textContent');
                   button.setAttribute('class', 'unsubscribe');
                   button.setAttribute('data-i18n', 'dialog.notification-subscriptions.unsubscribe.button');
@@ -6417,8 +3614,8 @@ console.log(reason);
               });
             }
             else {
-              DO.C.Subscription[topicResource].Connection.close();
-              DO.C.Subscription[topicResource] = {};
+              Config.Subscription[topicResource].Connection.close();
+              Config.Subscription[topicResource] = {};
               button.textContent = i18n.t('dialog.notification-subscriptions.subscribe.button.textContent');
               button.setAttribute('class', 'subscribe');
               button.setAttribute('data-i18n', 'dialog.notification-subscriptions.subscribe.button');
@@ -6443,8 +3640,8 @@ console.log(reason);
             if (sDURLs.length) {
               ///TODO: Handle multiple storage descriptions?
               var sDURL = sDURLs[0];
-              DO.C.Storages = DO.C.Storages || {};
-              DO.C.Storages[s.term.value] = {
+              Config.Storages = Config.Storages || {};
+              Config.Storages[s.term.value] = {
                 "storageDescription": sDURL
               };
             }
@@ -6494,7 +3691,7 @@ console.log(reason);
               }
             });
 
-// console.log(DO.C.Resource);
+// console.log(Config.Resource);
           })
           .catch(error => {
             // console.log('Error fetching solid:storageDescription endpoint:', error)
@@ -6512,12 +3709,12 @@ console.log(reason);
 
       storageName = (typeof storageName !== 'undefined') ? storageName : storageURL;
 
-      DO.C.Resource[storageURL] = DO.C.Resource[storageURL] || {};
-      DO.C.Resource[storageURL]['title'] = storageName;
-      DO.C.Resource[storageURL]['description'] = g.out(ns.schema.abstract).values[0] || g.out(ns.dcterms.description).values[0] || g.out(ns.rdf.value).values[0] || g.out(ns.as.summary).values[0] || g.out(ns.schema.description).values[0] || g.out(ns.as.content).values[0] || undefined;
+      Config.Resource[storageURL] = Config.Resource[storageURL] || {};
+      Config.Resource[storageURL]['title'] = storageName;
+      Config.Resource[storageURL]['description'] = g.out(ns.schema.abstract).values[0] || g.out(ns.dcterms.description).values[0] || g.out(ns.rdf.value).values[0] || g.out(ns.as.summary).values[0] || g.out(ns.schema.description).values[0] || g.out(ns.as.content).values[0] || undefined;
 
       var storageTitle = '<dt>Storage name</dt><dd><a href="' + storageURL + '">' + storageName + '</a></dd>';
-      var storageDescription = (DO.C.Resource[storageURL]['description']) ? '<dt>Storage description</dt><dd>' + DO.C.Resource[storageURL]['description'] + '</dd>' : '';
+      var storageDescription = (Config.Resource[storageURL]['description']) ? '<dt>Storage description</dt><dd>' + Config.Resource[storageURL]['description'] + '</dd>' : '';
 
       s = '<dl id="storage-self-description">' + storageTitle + storageDescription + '</dl>';
 
@@ -6532,11 +3729,11 @@ console.log(reason);
       if (persistencePolicy.length) {
         var pp = [];
 
-        DO.C.Resource[g.term.value] = DO.C.Resource[g.term.value] || {};
-        DO.C.Resource[g.term.value]['persistencePolicy'] = [];
+        Config.Resource[g.term.value] = Config.Resource[g.term.value] || {};
+        Config.Resource[g.term.value]['persistencePolicy'] = [];
 
         persistencePolicy.forEach(iri => {
-          DO.C.Resource[g.term.value]['persistencePolicy'].push(iri);
+          Config.Resource[g.term.value]['persistencePolicy'].push(iri);
 
           pp.push('<dd><a href="' + iri  + '" rel="noopener" target="_blank">' + iri + '</a></dd>');
         });
@@ -6643,7 +3840,7 @@ console.log(reason);
         var attributeTitle = '';
 
         //Get user's actions from preferred policy (prohibition) to check for conflicts with storage's policy (permission)
-        if (DO.C.User.PreferredPolicyRule && DO.C.User.PreferredPolicyRule.Prohibition && DO.C.User.PreferredPolicyRule.Prohibition.Actions.includes(iri)) {
+        if (Config.User.PreferredPolicyRule && Config.User.PreferredPolicyRule.Prohibition && Config.User.PreferredPolicyRule.Prohibition.Actions.includes(iri)) {
           warning = Icon[".fas.fa-circle-exclamation"] + ' ';
           attributeClass = ' class="warning"';
           attributeTitle = ' title="The action (' + label + ') is prohibited by preferred policy."';
@@ -6694,11 +3891,11 @@ console.log(reason);
       var solidOwner = g.out(ns.solid.owner).values;
 
       if (solidOwner.length) {
-        DO.C.Resource[g.term.value] = DO.C.Resource[g.term.value] || {};
-        DO.C.Resource[g.term.value]['owner'] = [];
+        Config.Resource[g.term.value] = Config.Resource[g.term.value] || {};
+        Config.Resource[g.term.value]['owner'] = [];
 
         solidOwner.forEach(iri => {
-          DO.C.Resource[g.term.value]['owner'].push(iri);
+          Config.Resource[g.term.value]['owner'].push(iri);
 
           resourceOwners.push('<dd><a href="' + iri + '" rel="noopener" target="_blank">' + iri + '</a></dd>');
         });
@@ -6716,14 +3913,14 @@ console.log(reason);
       var notificationSubscriptions = DO.U.getNotificationSubscriptions(g);
       var notificationChannels = DO.U.getNotificationChannels(g);
 
-      DO.C.Resource[subjectURI] = DO.C.Resource[subjectURI] || {};
+      Config.Resource[subjectURI] = Config.Resource[subjectURI] || {};
 
       if (notificationSubscriptions) {
-        DO.C.Resource[subjectURI]['subscription'] = DO.C.Resource[subjectURI]['subscription'] || {};
+        Config.Resource[subjectURI]['subscription'] = Config.Resource[subjectURI]['subscription'] || {};
       }
 
       if (notificationChannels) {
-        DO.C.Resource[subjectURI]['channel'] = DO.C.Resource[subjectURI]['channel'] || {};
+        Config.Resource[subjectURI]['channel'] = Config.Resource[subjectURI]['channel'] || {};
       }
 
       var nSHTML = [];
@@ -6736,9 +3933,9 @@ console.log(reason);
           var channelType = DO.U.getNotificationChannelTypes(nS);
           var features = DO.U.getNotificationFeatures(nS);
 
-          DO.C.Resource[subjectURI]['subscription'][subscription] = {};
-          DO.C.Resource[subjectURI]['subscription'][subscription]['channelType'] = channelType;
-          DO.C.Resource[subjectURI]['subscription'][subscription]['feature'] = features;
+          Config.Resource[subjectURI]['subscription'][subscription] = {};
+          Config.Resource[subjectURI]['subscription'][subscription]['channelType'] = channelType;
+          Config.Resource[subjectURI]['subscription'][subscription]['feature'] = features;
 
           var buttonSubscribe = i18n.t('dialog.notification-subscriptions.subscribe.button.textContent');
           var buttonDataI18n = 'dialog.notification-subscriptions.subscribe.button';
@@ -6746,7 +3943,7 @@ console.log(reason);
 
           var topicResource = subjectURI;
 
-          if (DO.C.Subscription[topicResource] && DO.C.Subscription[topicResource].Connection) {
+          if (Config.Subscription[topicResource] && Config.Subscription[topicResource].Connection) {
             buttonSubscribe = i18n.t('dialog.notification-subscriptions.unsubscribe.button.textContent');
             buttonDataI18n = 'dialog.notification-subscriptions.unsubscribe.button';
             buttonSubscribeClass = 'unsubscribe';
@@ -6865,14 +4062,14 @@ console.log(reason);
       }
 
 // d.topic = 'https://csarven.localhost:8443/foo.html';
-      if (DO.C.Subscription[d.topic] && DO.C.Subscription[d.topic]['Connection']) {
-        DO.C.Subscription[d.topic]['Connection'].close();
+      if (Config.Subscription[d.topic] && Config.Subscription[d.topic]['Connection']) {
+        Config.Subscription[d.topic]['Connection'].close();
       }
 
-      DO.C.Subscription[d.topic] = {};
-      DO.C.Subscription[d.topic]['Request'] = d;
+      Config.Subscription[d.topic] = {};
+      Config.Subscription[d.topic]['Request'] = d;
 
-// console.log(DO.C.Subscription)
+// console.log(Config.Subscription)
 
       return postResource(url, '', data, options.contentType, null, options)
         .then(response => {
@@ -6890,7 +4087,7 @@ console.log(reason);
                 break;
               case 401:
                 message = 'you are not authorized.'
-                if(!DO.C.User.IRI){
+                if(!Config.User.IRI){
                   message += ' Try signing in.';
                 }
                 break;
@@ -6918,16 +4115,16 @@ console.log(reason);
 //   'receiveFrom': 'wss://csarven.localhost:8443/'
 // }
 
-          if (!(data.topic in DO.C.Subscription)) {
-            console.log('DO.C.Subscription[' + data.topic + '] undefined.');
+          if (!(data.topic in Config.Subscription)) {
+            console.log('Config.Subscription[' + data.topic + '] undefined.');
           }
-          DO.C.Subscription[data.topic]['Response'] = data;
+          Config.Subscription[data.topic]['Response'] = data;
 
           switch (data.type) {
             case 'WebSocketChannel2023': case ns.notify.WebSocketChannel2023.value:
               data.type = ns.notify.WebSocketChannel2023.value;
               return DO.U.connectToWebSocket(data.receiveFrom, data).then(i => {
-                DO.C.Subscription[data.topic]['Connection'] = i;
+                Config.Subscription[data.topic]['Connection'] = i;
                 // return Promise.resolve();
               });
           }
@@ -6999,11 +4196,11 @@ console.log(reason);
           //TODO: See if createActivityHTML can be generalised/reusable.
 
 
-          DO.C.Subscription[data.object]['Notifications'] = DO.C.Subscription[data.object]['Notifications'] || {};
+          Config.Subscription[data.object]['Notifications'] = Config.Subscription[data.object]['Notifications'] || {};
           //TODO: Max notifications to store. FIFO
-          DO.C.Subscription[data.object]['Notifications'][data.id] = data;
-          // DO.C.Subscription[data.object]['Notifications'][data.id] = g;
-// console.log(DO.C.Subscription[data.object]['Notifications'])
+          Config.Subscription[data.object]['Notifications'][data.id] = data;
+          // Config.Subscription[data.object]['Notifications'][data.id] = g;
+// console.log(Config.Subscription[data.object]['Notifications'])
 
           var nTypes = (Array.isArray(data.type)) ? data.type : [data.type];
           var types = '';
@@ -7250,7 +4447,7 @@ console.log(reason);
         default:
           break;
         case 401:
-          if (DO.C.User.IRI) {
+          if (Config.User.IRI) {
             errorKey = 'invalid-credentials';
           } else {
             errorKey = 'unauthenticated';
@@ -7291,14 +4488,14 @@ console.log(reason);
       action = domSanitize(action);
 
       const documentOptions = {
-        ...DO.C.DOMProcessing,
+        ...Config.DOMProcessing,
         //sanitize: in this context, seems low risk.
         normalize: true
       };
 
       var createContainerButton = '';
       var createContainerDiv = '';
-      if (DO.C['Session']?.isActive) {
+      if (Config['Session']?.isActive) {
         createContainerButton = ` <button data-i18n="browser.create-container.button" id="${id}-create-container-button" title="${i18n.t('browser.create-container.button.title')}">${i18n.t('browser.create-container.button.textContent')}</button>`;
         createContainerDiv = `<div id="${id}-create-container"></div>`;
       }
@@ -7360,14 +4557,14 @@ console.log(reason);
 
       // TODO: Show and use storage, outbox, annotationService as opposed to first available.
 
-      if(DO.C.User.Storage?.length) {
-        baseUrl = forceTrailingSlash(DO.C.User.Storage[0]);
+      if(Config.User.Storage?.length) {
+        baseUrl = forceTrailingSlash(Config.User.Storage[0]);
       }
-      else if(DO.C.User.Outbox?.length) {
-        baseUrl = forceTrailingSlash(DO.C.User.Outbox[0]);
+      else if(Config.User.Outbox?.length) {
+        baseUrl = forceTrailingSlash(Config.User.Outbox[0]);
       }
-      else if(DO.C.Resource[DO.C.DocumentURL]?.annotationService?.length) {
-        baseUrl = forceTrailingSlash(DO.C.Resource[DO.C.DocumentURL].annotationService[0]);
+      else if(Config.Resource[Config.DocumentURL]?.annotationService?.length) {
+        baseUrl = forceTrailingSlash(Config.Resource[Config.DocumentURL].annotationService[0]);
       }
 
 
@@ -7380,10 +4577,10 @@ console.log(reason);
             DO.U.initBrowse(storageUrl[0], input, browseButton, createButton, id, action);
           })
           .catch(() => {
-            baseUrl = getBaseURL(DO.C.DocumentURL);
+            baseUrl = getBaseURL(Config.DocumentURL);
             DO.U.initBrowse(baseUrl, input, browseButton, createButton, id, action);
 
-            // if (DO.C['Session']?.isActive) {
+            // if (Config['Session']?.isActive) {
             //   //Browsing removes whatever was for create container and restarts browse on new location
             //   browseButton.addEventListener('click', () => {
             //     createContainer.replaceChildren();
@@ -7436,7 +4633,7 @@ console.log(reason);
         addMessageToLog({...messageObject, content: message}, Config.MessageLog);
         const messageId = showActionMessage(document.body, messageObject);
 
-        DO.U.spawnDokieli(
+        spawnDokieli(
           document,
           results, 
           contentType,
@@ -7457,7 +4654,7 @@ console.log(reason);
 
       document.body.insertAdjacentHTML('beforeend', `
         <aside aria-labelledby="open-document-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="open-document" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#open-document" xml:lang="${Config.User.UI.Language}">
-          <h2 data-i18n="dialog.open-document.h2" id="open-document-label" property="schema:name">${i18n.t('dialog.open-document.h2.textContent')} ${DO.C.Button.Info.Open}</h2>
+          <h2 data-i18n="dialog.open-document.h2" id="open-document-label" property="schema:name">${i18n.t('dialog.open-document.h2.textContent')} ${Config.Button.Info.Open}</h2>
           ${buttonClose}
           <div class="info"></div>
           <p><label data-i18n="dialog.open-document.open-local-file.label" for="open-local-file">${i18n.t('dialog.open-document.open-local-file.label.textContent')}</label> <input type="file" id="open-local-file" name="open-local-file" multiple="" /></p>
@@ -7469,7 +4666,7 @@ console.log(reason);
 
       var openDocument = document.getElementById('open-document');
       DO.U.setupResourceBrowser(openDocument , id, action);
-      var idSamp = (typeof DO.C.User.Storage == 'undefined') ? '' : '<p><samp id="' + id + '-' + action + '">https://example.org/path/to/article</samp></p>';
+      var idSamp = (typeof Config.User.Storage == 'undefined') ? '' : '<p><samp id="' + id + '-' + action + '">https://example.org/path/to/article</samp></p>';
       openDocument.insertAdjacentHTML('beforeend', `${idSamp}<button class="open" data-i18n="dialog.open-document.open.button" title="${i18n.t('dialog.open-document.open.button.title')}" type="submit">${i18n.t('dialog.open-document.open.button.textContent')}</button>`);
 
       openDocument.addEventListener('click', function (e) {
@@ -7558,9 +4755,9 @@ console.log(reason);
 
           let data = await response.text()
 
-          DO.U.setDocumentURL(iri);
-          var documentURL = DO.C.DocumentURL;
-          DO.C['Resource'][documentURL] = DO.C['Resource'][documentURL] || {};
+          setDocumentURL(iri);
+          var documentURL = Config.DocumentURL;
+          Config['Resource'][documentURL] = Config['Resource'][documentURL] || {};
 
           var spawnOptions = {};
 
@@ -7572,7 +4769,7 @@ console.log(reason);
             options.contentType = 'text/html';
           }
 
-          if (DO.C.MediaTypes.RDF.includes(options['contentType'])) {
+          if (Config.MediaTypes.RDF.includes(options['contentType'])) {
             options['storeHash'] = true;
             getResourceInfo(data, options);
           }
@@ -7582,9 +4779,9 @@ console.log(reason);
           spawnOptions['defaultStylesheet'] = ('defaultStylesheet' in o) ? o.defaultStylesheet : (('defaultStylesheet' in spawnOptions) ? spawnOptions['defaultStylesheet'] : false);
           spawnOptions['init'] = true;
 
-          var html = await DO.U.spawnDokieli(document, o.data, o.options['contentType'], o.options['subjectURI'], spawnOptions);
+          var html = await spawnDokieli(document, o.data, o.options['contentType'], o.options['subjectURI'], spawnOptions);
         }
-        DO.C.DocumentAction = 'open';
+        Config.DocumentAction = 'open';
 
         var rm = document.querySelector('#document-action-message')
         if (rm) {
@@ -7605,7 +4802,7 @@ console.log(reason);
 
     //XXX: Review grapoi
     buildResourceView: function(data, options) {
-      if (!DO.C.MediaTypes.RDF.includes(options['contentType'])) {
+      if (!Config.MediaTypes.RDF.includes(options['contentType'])) {
         return Promise.resolve({"data": data, "options": options});
       }
 
@@ -7765,230 +4962,14 @@ console.log(reason);
       return image + name + published + summary + tags;
     },
 
-    spawnDokieli: async function(documentNode, data, contentType, iris, options = {}){
-      let iri =  Array.isArray(iris) ? iris[0] : iris;
-      iri = domSanitize(iri);
-      const isHttpIRI = isHttpOrHttpsProtocol(iri);
-      const isFileIRI = isFileProtocol(iri);
-      const prefixes = "rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns# rdfs: http://www.w3.org/2000/01/rdf-schema# owl: http://www.w3.org/2002/07/owl# xsd: http://www.w3.org/2001/XMLSchema# rdfa: http://www.w3.org/ns/rdfa# dcterms: http://purl.org/dc/terms/ dctypes: http://purl.org/dc/dcmitype/ foaf: http://xmlns.com/foaf/0.1/ pimspace: http://www.w3.org/ns/pim/space# skos: http://www.w3.org/2004/02/skos/core# prov: http://www.w3.org/ns/prov# mem: http://mementoweb.org/ns# qb: http://purl.org/linked-data/cube# schema: http://schema.org/ void: http://rdfs.org/ns/void# rsa: http://www.w3.org/ns/auth/rsa# cert: http://www.w3.org/ns/auth/cert# wgs: http://www.w3.org/2003/01/geo/wgs84_pos# bibo: http://purl.org/ontology/bibo/ sioc: http://rdfs.org/sioc/ns# doap: http://usefulinc.com/ns/doap# dbr: http://dbpedia.org/resource/ dbp: http://dbpedia.org/property/ sio: http://semanticscience.org/resource/ opmw: http://www.opmw.org/ontology/ deo: http://purl.org/spar/deo/ doco: http://purl.org/spar/doco/ cito: http://purl.org/spar/cito/ fabio: http://purl.org/spar/fabio/ oa: http://www.w3.org/ns/oa# as: https://www.w3.org/ns/activitystreams# ldp: http://www.w3.org/ns/ldp# solid: http://www.w3.org/ns/solid/terms# acl: http://www.w3.org/ns/auth/acl# earl: http://www.w3.org/ns/earl# spec: http://www.w3.org/ns/spec# odrl: http://www.w3.org/ns/odrl/2/ dio: https://w3id.org/dio# rel: https://www.w3.org/ns/iana/link-relations/relation# dcat: http://www.w3.org/ns/dcat csvw: http://www.w3.org/ns/csvw# dpv: https://w3id.org/dpv# risk: https://w3id.org/dpv/risk#";
-
-      if (!isHttpIRI && !isFileIRI) {
-        const message = `Cannot open, not valid URL or file location.`;
-        const messageObject = {
-          'content': message,
-          'type': 'error',
-          'timer': 3000,
-        }
-        addMessageToLog({...messageObject, content: message}, Config.MessageLog);
-        showActionMessage(document.body, messageObject);
-
-        throw new Error(message);
-      }
-
-      let files = Array.isArray(data) ? data : [{
-        name: iri,
-        type: contentType,
-        content: data
-      }];
-
-      var tmpl = document.implementation.createHTMLDocument('template');
-      const isCsv = !!files.find((f) => f.type == "text/csv");
-      // console.log(tmpl);
-      if (files.length > 1 && isCsv) {
-        // check if one of the files is a metadata.json
-        const metadataFiles = [];
-        const csvFiles = [];
-
-        files.map((file) => {
-          if (file.type == 'application/json' || file.type == 'application/ld+json') {
-            file['url'] = file.name;
-            metadataFiles.push(file);
-          }
-          if (file.type === 'text/csv') {
-            csvFiles.push(file)
-          }
-        })
-
-        // handle multiple csv
-        const jsonObjects = csvFiles.map(csvFile => {
-          let tmp = csvStringToJson(csvFile.content);
-          tmp['url'] = csvFile.name;
-          return tmp;
-        })
-
-        //TODO: multiple metadata files
-        let metadata = metadataFiles[0];
-        if (metadata && metadata.content) {
-          metadata.content = JSON.parse(metadataFiles[0].content);
-        }
-
-        const htmlString = jsonToHtmlTableString(jsonObjects, metadata);
-
-        // console.log(fragmentFromString(`<main><article>${htmlString}</article></main>`))
-        // this works for urls but not files
-        // document.body.appendChild(fragmentFromString(`<main><article>${htmlString}</article></main>`));
-
-        // and this replaces the whole content
-        tmpl.body.appendChild(fragmentFromString(`<main><article>${htmlString}</article></main>`));
-      }
-
-      else {
-      switch(contentType){
-        case 'text/html': case 'application/xhtml+xml':
-          // if multiple HTML files come in, just open the first for now
-          tmpl.documentElement.setHTMLUnsafe(files[0].content);
-          tmpl.body.setHTMLUnsafe(domSanitize(tmpl.body.getHTML()));
-          break;
-
-        case 'text/csv':
-          // console.error("Must provide a metadata file; single CSVs without metadata not supported yet");
-          // console.log("TODO: Single CSV case", iri, files);
-          let jsonObject = csvStringToJson(files[0].content); // we only have one for now
-          jsonObject['url'] = files[0].name;
-          jsonObject['name'] = files[0].name;
-          const htmlString = jsonToHtmlTableString([jsonObject], {});
-
-          tmpl.body.replaceChildren(fragmentFromString('<main><article about="" typeof="schema:Article">' + htmlString + '</article></main>'));
-          break;
-
-        case 'application/gpx+xml':
-          // console.log(data)
-          tmpl = await generateGeoView(files[0].content)
-          // FIXME: Tested with generateGeoView returning a Promise but somehow
-            .then(i => {
-              var id = 'geo';
-              var metadataBounds = document.querySelector('#' + id + ' figcaption a');
-              if (metadataBounds) {
-                var message = `Opened geo data at <a href="${metadataBounds.href}">${metadataBounds.textContent}</a>`;
-                message = {
-                  'content': message,
-                  'type': 'info',
-                  'timer': 3000,
-                }
-                addMessageToLog(message, Config.MessageLog);
-                showActionMessage(document.body, message);
-
-                var w = document.getElementById(id);
-                window.history.pushState(null, null, '#' + id);
-                w.scrollIntoView();
-              }
-
-              return i;
-            });
-
-          break;
-
-        default:
-          data = htmlEncode(files[0].content)
-          // console.log(data)
-          var iframe = document.createElement('iframe');
-          // <pre type=&quot;' + contentType + '&quot; -- nice but `type` is undefined attribute for `pre`.at the moment. Create issue in WHATWG for fun/profit?
-          iframe.srcdoc = '<pre>' + data + '</pre>';
-          iframe.width = '1280'; iframe.height = '720';
-
-          const dt = (isFileIRI) ? `<code>${iri.slice(5)}</code>` : `<a href="${iri}" rel="noopener" target="_blank">${iri}</a>`;
-
-          var main = fragmentFromString(`<main><article><dl><dt>${dt}</dt><dd></dd></dl></article></main>`);
-          main.querySelector('dd').appendChild(iframe);
-          tmpl.body.appendChild(main);
-          break;
-      }
-    }
-
-      if (options.defaultStylesheet) {
-        var documentCss = document.querySelectorAll('head link[rel~="stylesheet"][href]');
-
-        let hasDokieliCss = false;
-
-        documentCss.forEach(node => {
-          const href = node.href;
-          const isBasicCss = href === 'https://dokie.li/media/css/basic.css';
-          const isDokieliCss = href === 'https://dokie.li/media/css/dokieli.css';
-
-          node.setAttribute('href', href);
-
-          if (!isBasicCss && !isDokieliCss) {
-            node.setAttribute('disabled', 'disabled');
-            node.classList.add('do');
-          }
-          else {
-            node.setAttribute('rel', 'stylesheet');
-            hasDokieliCss = true;
-          }
-        });
-
-        if (!hasDokieliCss) {
-          document.querySelector('head').insertAdjacentHTML('beforeend', `
-            <link href="https://dokie.li/media/css/basic.css" media="all" rel="stylesheet" title="Basic" />
-            <link href="https://dokie.li/media/css/dokieli.css" media="all" rel="stylesheet" />`);
-        }
-      }
-
-      var documentScript = document.querySelectorAll('head script[src]');
-      documentScript.forEach(node => {
-        node.setAttribute('src', node.src);
-      })
-
-      if (options.init === true && isHttpIRI && contentType == 'text/html') {
-        var baseElements = document.querySelectorAll('head base');
-        baseElements.forEach(baseElement => {
-          baseElement.remove();
-        });
-
-        document.querySelector('head').insertAdjacentHTML('afterbegin', '<base href="' + iri + '" />');
-        //TODO: Setting the base URL with `base` seems to work correctly, i.e., link base is opened document's URL, and simpler than updating some of the elements' href/src/data attributes. Which approach may be better depends on actions afterwards, e.g., Save As (perhaps other features as well) may need to remove the base and go with the user selection.
-        // var nodes = tmpl.querySelectorAll('head link, [src], object[data]');
-        // nodes = DO.U.rewriteBaseURL(nodes, {'baseURLType': 'base-url-absolute', 'iri': iri});
-      }
-
-      if (contentType == 'application/gpx+xml') {
-        options['init'] = false;
-
-        //XXX: Should this be taken care by ufpdating the document.documentElement and then running DO.C.init(iri) ? If I'm asking, then probably yes.
-        var asideOpenDocument = document.getElementById('open-document');
-        if (asideOpenDocument) {
-          asideOpenDocument.parentNode.removeChild(asideOpenDocument);
-        }
-        document.querySelector('#document-do .resource-open').disabled = false;
-        DO.U.hideDocumentMenu();
-      }
-      else if (options.init === true) { // && !isFileIRI ?
-        // window.open(iri, '_blank');
-
-        //TODO: Which approach?
-        // var restrictedNodes = Array.from(document.body.querySelectorAll('.do:not(.copy-to-clipboard):not(.robustlinks):not(.ref):not(.delete):not(#document-action-message)'));
-        // var restrictedNodes = [document.getElementById('document-menu'), document.getElementById('document-editor'), document.getElementById('document-action-message')];
-        // restrictedNodes.forEach(node => {
-        //   tmpl.body.appendChild(node);
-        // });
-
-        const tmplBody = tmpl.body.cloneNode(true);
-        tmplBody.setAttribute('prefix', prefixes);
-
-        document.documentElement.replaceChild(tmplBody, document.body);
-        DO.U.initDocumentMenu();
-        DO.U.initEditor();
-        DO.U.showFragment();
-        DO.U.initCopyToClipboard();
-
-        // DO.U.hideDocumentMenu();
-        return;
-      }
-
-      //XXX: This is used in cases options.init is false or undefined
-      return tmpl.documentElement.cloneNode(true);
-
-      // console.log('//TODO: Handle server returning wrong or unknown Response/Content-Type for the Request/Accept');
-    },
-
     createNewDocument: function(e) {
       DO.U.hideDocumentMenu();
 
-      DO.Editor.toggleEditor('author', { template: 'new' });
+      Config.Editor.toggleEditor('author', { template: 'new' });
 
-      DO.C.DocumentAction = 'new';
+      Config.DocumentAction = 'new';
 
-      disableAutoSave(DO.C.DocumentURL, {'method': 'localStorage'});
+      disableAutoSave(Config.DocumentURL, {'method': 'localStorage'});
 
       updateButtons();
     },
@@ -7999,7 +4980,7 @@ console.log(reason);
       }
 
       const documentOptions = {
-        ...DO.C.DOMProcessing,
+        ...Config.DOMProcessing,
         format: true,
         sanitize: true,
         normalize: true
@@ -8009,7 +4990,7 @@ console.log(reason);
 
       document.body.appendChild(fragmentFromString(`
         <aside aria-labelledby="save-as-document-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="save-as-document" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#save-as-document" xml:lang="${Config.User.UI.Language}">
-          <h2 data-i18n="dialog.save-as-document.h2" id="save-as-document-label" property="schema:name">${i18n.t('dialog.save-as-document.h2.textContent')} ${DO.C.Button.Info.SaveAs}</h2>
+          <h2 data-i18n="dialog.save-as-document.h2" id="save-as-document-label" property="schema:name">${i18n.t('dialog.save-as-document.h2.textContent')} ${Config.Button.Info.SaveAs}</h2>
           ${buttonClose}
           <div class="info"></div>
         </aside>
@@ -8168,7 +5149,7 @@ console.log(reason);
       let dokielizeResource = '';
       let derivationData = '';
       
-      if (!DO.Editor['new']) {
+      if (!Config.Editor['new']) {
         dokielizeResource = '<li><input type="checkbox" id="dokielize-resource" name="dokielize-resource" /><label for="dokielize-resource">dokielize</label></li>';
         derivationData = `<li><input type="checkbox" id="derivation-data" name="derivation-data" checked="checked" /><label data-i18n="dialog.save-as-document.derivation-data.label" for="derivation-data">${i18n.t('dialog.save-as-document.derivation-data.label.textContent')}</label></li>`;
       }
@@ -8212,17 +5193,17 @@ console.log(reason);
         var html = document.documentElement.cloneNode(true)
         var o, r
 
-        if (!DO.Editor['new']) {
+        if (!Config.Editor['new']) {
           var dokielize = document.querySelector('#dokielize-resource')
           if (dokielize.checked) {
             html = getDocument(html, documentOptions)
-            html = await DO.U.spawnDokieli(document, html, 'text/html', storageIRI, {'init': false})
+            html = await spawnDokieli(document, html, 'text/html', storageIRI, {'init': false})
           }
 
           var wasDerived = document.querySelector('#derivation-data')
           if (wasDerived.checked) {
             o = { 'id': 'document-derived-from', 'title': 'Derived From' };
-            r = { 'rel': 'prov:wasDerivedFrom', 'href': DO.C.DocumentURL };
+            r = { 'rel': 'prov:wasDerivedFrom', 'href': Config.DocumentURL };
             html = setDocumentRelation(html, [r], o);
 
             html = setDate(html, { 'id': 'document-derived-on', 'property': 'prov:generatedAtTime' });
@@ -8281,26 +5262,24 @@ console.log(reason);
             let url = response.url || storageIRI
             url = domSanitize(url);
 
-            // var documentMode = (DO.C.WebExtensionEnabled) ? '' : '#author=true'
-
             saveAsDocument.insertAdjacentHTML('beforeend',
               `<div class="response-message"><p class="success" data-i18n="dialog.save-as-document.success.saved-at.p"><span>${i18n.t('dialog.save-as-document.success.saved-at.p.textContent')}</span> <a href="${url}">${url}</a></p></div>`
             )
 
-            DO.C.DocumentAction = 'save-as';
+            Config.DocumentAction = 'save-as';
 
             setTimeout(() => {
-              if (DO.Editor['new']) {
+              if (Config.Editor['new']) {
                 //XXX: Commenting this out for now, not sure what this was supposed to fix
-                // DO.Editor.replaceContent('author', fragmentFromString(html));
-                DO.Editor['new'] = false;
+                // Config.Editor.replaceContent('author', fragmentFromString(html));
+                Config.Editor['new'] = false;
   
                 var urlObject = new URL(url);
-                var documentURLObject = new URL(DO.C.DocumentURL);
+                var documentURLObject = new URL(Config.DocumentURL);
   
                 if (urlObject.origin === documentURLObject.origin) {
                   window.history.pushState({}, null, url);
-                  DO.U.setDocumentURL(url);
+                  setDocumentURL(url);
                   DO.U.hideDocumentMenu();
                 }
                 else {
@@ -8328,7 +5307,7 @@ console.log(reason);
               linkHeaders = LinkHeader.parse(link);
             }
 
-            if (DO.C.User.IRI && linkHeaders && linkHeaders.has('rel', ns.ldp.inbox.value)){
+            if (Config.User.IRI && linkHeaders && linkHeaders.has('rel', ns.ldp.inbox.value)){
               inboxURL = linkHeaders.rel(ns.ldp.inbox.value)[0].uri;
               requestAccess = `<p><button class="request-access" data-i18n="dialog.save-as-document.request-access.button" data-inbox="${inboxURL}" data-target="${storageIRI}" title="${i18n.t('dialog.save-as-document.request-access.button.title')}" type="button">${i18n.t('dialog.save-as-document.request-access.button.textContent')}</button></p>`;
             }
@@ -8342,7 +5321,7 @@ console.log(reason);
                 break
               case 401:
                 errorKey = 'invalid-credentials';
-                if(!DO.C.User.IRI){
+                if(!Config.User.IRI){
                   errorKey = 'unauthenticated';
                 }
                 break
@@ -8364,13 +5343,13 @@ console.log(reason);
               `<div class="response-message"><p class="error" data-i18n="dialog.save-as-document.error.${errorKey}.p">${message}</p>${requestAccess}</div>`
             ));
 
-            if (DO.C.User.IRI && requestAccess) {
+            if (Config.User.IRI && requestAccess) {
               document.querySelector('#save-as-document .response-message .request-access').addEventListener('click', (e) => {
                 var objectId = '#' + generateUUID();
 
                 inboxURL = e.target.dataset.inbox;
                 var accessTo = e.target.dataset.target;
-                var agent = DO.C.User.IRI;
+                var agent = Config.User.IRI;
 
                 e.target.disabled = true;
                 var responseMessage = e.target.parentNode;
@@ -8429,7 +5408,7 @@ console.log(reason);
       }
 
       const documentOptions = {
-        ...DO.C.DOMProcessing,
+        ...Config.DOMProcessing,
         format: true,
         // TODO: Revisit because the user should be informed (show dialog) whether they want to retain or include certain scripts.
         // sanitize: true,
@@ -8442,7 +5421,7 @@ console.log(reason);
 
       document.body.appendChild(fragmentFromString(`
         <aside aria-labelledby="source-view-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="source-view" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#source-view" xml:lang="${Config.User.UI.Language}">
-          <h2 data-i18n="dialog.source-view.h2" id="source-view-label" property="schema:name">${i18n.t('dialog.source-view.h2.textContent')} ${DO.C.Button.Info.Source}</h2>
+          <h2 data-i18n="dialog.source-view.h2" id="source-view-label" property="schema:name">${i18n.t('dialog.source-view.h2.textContent')} ${Config.Button.Info.Source}</h2>
           ${buttonClose}
           <div class="info"></div>
           <textarea dir="ltr id="source-edit" rows="24" cols="80"></textarea>
@@ -8458,7 +5437,7 @@ console.log(reason);
           var data = document.getElementById('source-edit').value;
           //FIXME: dokieli related stuff may be getting repainted / updated in the DOM
           document.documentElement.setHTMLUnsafe(domSanitize(data));
-          DO.U.initDocumentMenu();
+          initDocumentMenu();
           DO.U.showDocumentMenu(e);
           DO.U.viewSource();
           document.querySelector('#document-do .resource-source').disabled = true;
@@ -8893,7 +5872,7 @@ console.log(reason);
 
       var content = ('content' in options && options.content.length) ? options.content + ', ' : '';
 
-      var citationReason = 'Reason: ' + DO.C.Citation[options.citationRelation];
+      var citationReason = 'Reason: ' + Config.Citation[options.citationRelation];
 
       var citationIdLabel = citationURI;
       var prefixCitationLink = '';
@@ -8911,13 +5890,13 @@ console.log(reason);
         citationIdLabel = citationURI;
       }
 
-      var citationHTML = authors + title + datePublished + content + prefixCitationLink + '<a about="#' + options.refId + '"' + dataVersionDate + dataVersionURL + ' href="' + citationURI + '" rel="schema:citation ' + options.citationRelation  + '" title="' + DO.C.Citation[options.citationRelation] + '">' + citationIdLabel + '</a> [' + dateAccessed + ', ' + citationReason + ']';
+      var citationHTML = authors + title + datePublished + content + prefixCitationLink + '<a about="#' + options.refId + '"' + dataVersionDate + dataVersionURL + ' href="' + citationURI + '" rel="schema:citation ' + options.citationRelation  + '" title="' + Config.Citation[options.citationRelation] + '">' + citationIdLabel + '</a> [' + dateAccessed + ', ' + citationReason + ']';
 //console.log(citationHTML);
       return citationHTML;
     },
 
     createRefName: function(familyName, givenName, refType) {
-      refType = refType || DO.C.DocRefType;
+      refType = refType || Config.DocRefType;
       switch(refType) {
         case 'LNCS': default:
           return familyName + ', ' + givenName.slice(0,1) + '.';
@@ -8925,30 +5904,6 @@ console.log(reason);
           return givenName.slice(0,1) + '. ' + familyName;
         case 'fullName':
           return givenName + ' ' + familyName;
-      }
-    },
-
-    highlightItems: function() {
-      var highlights = getDocumentContentNode(document).querySelectorAll('*[class*="highlight-"]');
-      for (var i = 0; i < highlights.length; i++) {
-        highlights[i].addEventListener('mouseenter', (e) => {
-          var c = e.target.getAttribute('class').split(' ')
-                    .filter(s => { return s.startsWith('highlight-'); });
-          var highlightsX = getDocumentContentNode(document).querySelectorAll('*[class~="'+ c[0] +'"]');
-          for (var j = 0; j < highlightsX.length; j++) {
-            highlightsX[j].classList.add('do', 'highlight');
-          }
-        });
-
-        highlights[i].addEventListener('mouseleave', (e) => {
-          var c = e.target.getAttribute('class');
-          c = e.target.getAttribute('class').split(' ')
-                    .filter(s => { return s.startsWith('highlight-'); });
-          var highlightsX = getDocumentContentNode(document).querySelectorAll('*[class~="'+ c[0] +'"]');
-          for (var j = 0; j < highlightsX.length; j++) {
-            highlightsX[j].classList.remove('do', 'highlight');
-          }
-        });
       }
     },
 
@@ -9160,44 +6115,6 @@ WHERE {\n\
       }
     },
 
-    showAsTabs: function(selector) {
-      selector = selector || '.tabs';
-      var nodes = document.querySelectorAll(selector);
-
-      nodes.forEach(node => {
-        var li = node.querySelectorAll('nav li.selected');
-        var figure = node.querySelectorAll('figure.selected');
-
-        if (li.length == 0 && figure.length == 0) {
-          node.querySelector('nav li').classList.add('selected');
-          node.querySelector('figure').classList.add('selected');
-        }
-
-        node.querySelector('nav').addEventListener('click', (e) => {
-          var a = e.target;
-          if (a.closest('a')) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            var li = a.parentNode;
-            if(!li.classList.contains('class')) {
-              var navLi = node.querySelectorAll('nav li');
-              for (var i = 0; i < navLi.length; i++) {
-                navLi[i].classList.remove('selected');
-              }
-              li.classList.add('selected');
-              var figures = node.querySelectorAll('figure');
-              for (let i = 0; i < figures.length; i++) {
-                figures[i].classList.remove('selected');
-              }
-              node.querySelector('figure' + a.hash).classList.add('selected');
-            }
-          }
-        });
-
-      })
-    },
-
     showRefs: function() {
       var refs = document.querySelectorAll('span.ref');
       for (var i = 0; i < refs.length; i++) {
@@ -9223,482 +6140,16 @@ WHERE {\n\
       }
     },
 
-    positionNote: function(refId, noteId, refLabel) {
-      var ref =  document.querySelector('[id="' + refId + '"]');
-      var note = document.querySelector('[id="' + noteId + '"]');
-      ref = (ref) ? ref : selectArticleNode(note);
-
-      if (note.hasAttribute('style')) {
-        note.removeAttribute('style');
-      }
-
-      //TODO: If there are articles already in the aside.note , the subsequent top values should come after one another
-      var style = [
-        'top: ' + Math.ceil(ref.parentNode.offsetTop) + 'px'
-      ].join('; ');
-      note.setAttribute('style', style);
-    },
-
-    //XXX: To be deprecated
-    positionInteraction: function(noteIRI, containerNode, options) {
-      containerNode = containerNode || getDocumentContentNode(document);
-
-      if (DO.C.Activity[noteIRI]) {
-        return Promise.reject();
-      }
-
-      DO.C.Activity[noteIRI] = {};
-
-      return getResourceGraph(noteIRI).then(
-        function(g){
-          //XXX: REVISIT
-          if (!g || g.resource) return;
-
-          DO.U.showAnnotation(noteIRI, g, containerNode, options);
-        });
-    },
-
-    showAnnotation: function(noteIRI, g, options) {
-      // containerNode = containerNode || getDocumentContentNode(document);
-      var containerNode = getDocumentContentNode(document);
-      options = options || {};
-
-      var documentURL = DO.C.DocumentURL;
-
-      var note = g.node(rdf.namedNode(noteIRI));
-      if (note.out(ns.as.object).values.length) {
-        note = g.node(rdf.namedNode(note.out(ns.as.object).values[0]));
-      }
-// console.log(noteIRI)
-// console.log(note.toString())
-// console.log(note)
-
-      var id = generateUUID(noteIRI);
-      var refId = 'r-' + id;
-      var refLabel = id;
-
-      var inboxIRI = note.out(ns.ldp.inbox).values.length ? note.out(ns.ldp.inbox).values[0] : undefined;
-      var asInboxIRI = note.out(ns.as.inbox).values.length ? note.out(ns.as.inbox).values[0] : undefined;
-      inboxIRI = inboxIRI || asInboxIRI;
-      if (inboxIRI) {
-        // console.log('inboxIRI:')
-        // console.log(inboxIRI)
-        // console.log('DO.C.Inbox:')
-        // console.log(DO.C.Inbox)
-        // console.log('DO.C.Notification:')
-        // console.log(DO.C.Notification)
-        // console.log('DO.C.Activity:')
-        // console.log(DO.C.Activity)
-        if (DO.C.Inbox[inboxIRI]) {
-          DO.C.Inbox[inboxIRI]['Notifications'].forEach(notification => {
-// console.log(notification)
-            if (DO.C.Notification[notification]) {
-              if (DO.C.Notification[notification]['Activities']) {
-                DO.C.Notification[notification]['Activities'].forEach(activity => {
-  // console.log('   ' + activity)
-                  if (!document.querySelector('[about="' + activity + '"]') && DO.C.Activity[activity] && DO.C.Activity[activity]['Graph']) {
-                    DO.U.showAnnotation(activity, DO.C.Activity[activity]['Graph']);
-                  }
-                })
-              }
-            }
-            else {
-              DO.U.showActivities(notification, { notification: true });
-            }
-          });
-        }
-        else {
-          DO.U.showNotificationSources(inboxIRI);
-        }
-      }
-
-      var datetime = getGraphDate(note);
-
-// console.log(datetime);
-      //TODO: Create a helper function to look for annotater, e.g., getGraphAnnotatedBy
-      var annotatedBy =
-        (note.out(ns.schema.creator).values.length) ? note.out(ns.schema.creator) :
-        (note.out(ns.dcterms.creator).values.length) ? note.out(ns.dcterms.creator) :
-        (note.out(ns.as.creator).values.length) ? note.out(ns.as.creator) :
-        undefined;
-
-      var annotatedByIRI;
-// console.log(annotatedBy);
-      if (annotatedBy) {
-        annotatedByIRI = annotatedBy.values[0];
-// console.log(annotatedByIRI);
-        annotatedBy = g.node(rdf.namedNode(annotatedByIRI));
-// console.log(annotatedBy);
-
-        var annotatedByName = getAgentName(annotatedBy);
-// console.log(annotatedByName);
-        var annotatedByImage = getGraphImage(annotatedBy);
-// console.log(annotatedByImage);
-        var annotatedByURL = annotatedBy.out(ns.schema.url).values[0];
-      }
-
-      var motivatedBy = 'oa:replying';
-
-      //XXX: Is this used? Probably. Fix bodyValue
-      var bodyValue = note.out(ns.schema.description).values[0] || note.out(ns.dcterms.description).values[0] || note.out(ns.as.content).values[0];
-
-      var types = getGraphTypes(note);
-// console.log(types);
-      var resourceTypes = [];
-      types.forEach(type => {
-        resourceTypes.push(type);
-// console.log(type);
-      });
-
-      if (resourceTypes.includes(ns.oa.Annotation.value)) {
-        bodyValue = note.out(ns.oa.bodyValue).values[0] || bodyValue;
-        var hasBody = note.out(ns.oa.hasBody).values;
-
-        if (hasBody.length) {
-          var noteLanguage = getGraphLanguage(note);
-          var noteLicense = getGraphLicense(note);
-          var noteRights = getGraphRights(note);
-
-          var bodyObjects = [];
-// console.log(note.oahasBody)
-// console.log(note.oahasBody._array)
-          hasBody.forEach(bodyIRI => {
-// console.log(bodyIRI);
-            var bodyObject = {
-              "id": bodyIRI
-            };
-
-            var body = g.node(rdf.namedNode(bodyIRI));
-
-            if (body) {
-// console.log(body.toString());
-
-              var bodyTypes = getGraphTypes(body);
-              if (bodyTypes.length) {
-                bodyObject['type'] = bodyTypes;
-              }
-
-              var rdfValue = body.out(ns.rdf.value).values;
-              if (rdfValue.length) {
-                bodyObject['value'] = rdfValue[0];
-              }
-
-              var hasPurpose = body.out(ns.oa.hasPurpose).values;
-              if (hasPurpose.length) {
-// console.log(body.oahasPurpose)
-                bodyObject['purpose'] = hasPurpose[0];
-              }
-
-              //TODO: Revisit format and language when there is a hasPurpose (e.g., describing, tagging)
-
-              var bodyFormat = body.out(ns.dcelements.format).values[0] || body.out(ns.dcterms.format).values[0];
-              if (bodyFormat) {
-                bodyObject['format'] = bodyFormat;
-              }
-
-              var bodyLanguage = getGraphLanguage(body) || noteLanguage;
-              if (bodyLanguage) {
-// console.log(bodyLanguage)
-                bodyObject['language'] = bodyLanguage;
-              }
-
-              var bodyLicense = getGraphLicense(body) || noteLicense;
-              if (bodyLicense) {
-// console.log(bodyLicense)
-                bodyObject['license'] = bodyLicense;
-              }
-
-              var bodyRights = getGraphRights(body) || noteRights;
-              if (bodyRights) {
-// console.log(bodyRights)
-                bodyObject['rights'] = bodyRights;
-              }
-            }
-            bodyObjects.push(bodyObject);
-          })
-// console.log(bodyObjects)
-        }
-
-// console.log(documentURL)
-        var hasTarget = note.out(ns.oa.hasTarget).values[0];
-        if (hasTarget && !(hasTarget.startsWith(documentURL) || 'targetInMemento' in options || 'targetInSameAs' in options)){
-          // return Promise.reject();
-          return;
-        }
-
-        var target = g.node(rdf.namedNode(hasTarget));
-        var targetIRI = target.term.value;
-// console.log(targetIRI);
-
-        var source = target.out(ns.oa.hasSource).values[0];
-// console.log(source);
-// console.log(note.oamotivatedBy);
-        var motivatedBy = note.out(ns.oa.motivatedBy).values[0];
-        if (motivatedBy) {
-          refLabel = getReferenceLabel(motivatedBy);
-        }
-
-        var exact, prefix, suffix;
-        var selector = target.out(ns.oa.hasSelector).values[0];
-        if (selector) {
-          selector = g.node(rdf.namedNode(selector));
-// console.log(selector);
-
-// console.log(selector.rdftype);
-// console.log(selector.out(ns.rdf.type).values);
-          //FIXME: This is taking the first rdf:type. There could be multiple.
-          var selectorTypes = getGraphTypes(selector)[0];
-// console.log(selectorTypes)
-// console.log(selectorTypes == 'http://www.w3.org/ns/oa#FragmentSelector');
-          if (selectorTypes == ns.oa.TextQuoteSelector.value) {
-            exact = selector.out(ns.oa.exact).values[0];
-            prefix = selector.out(ns.oa.prefix).values[0];
-            suffix = selector.out(ns.oa.suffix).values[0];
-          }
-          else if (selectorTypes == ns.oa.FragmentSelector.value) {
-            var refinedBy = selector.out(ns.oa.refinedBy).values[0];
-            refinedBy = refinedBy && selector.node(rdf.namedNode(refinedBy));
-// console.log(refinedBy)
-            exact = refinedBy && refinedBy.out(ns.oa.exact).values[0];
-            prefix = refinedBy && refinedBy.out(ns.oa.prefix).values[0];
-            suffix = refinedBy && refinedBy.out(ns.oa.suffix).values[0];
-// console.log(selector.rdfvalue)
-            if (selector.out(ns.rdf.value).values[0] && selector.out(ns.dcterms.conformsTo).values[0] && selector.out(ns.dcterms.conformsTo).values[0].endsWith('://tools.ietf.org/html/rfc3987')) {
-              var fragment = selector.out(ns.rdf.value).values[0];
-// console.log(fragment)
-              fragment = (fragment.indexOf('#') == 0) ? getFragmentFromString(fragment) : fragment;
-
-              if (fragment !== '') {
-                containerNode = document.getElementById(fragment) || getDocumentContentNode(document);
-              }
-            }
-          }
-        }
-// console.log(exact);
-// console.log(prefix);
-// console.log(suffix);
-// console.log('----')
-        var docRefType = '<sup class="ref-annotation"><a href="#' + id + '" rel="cito:hasReplyFrom" resource="' + noteIRI + '">' + refLabel + '</a></sup>';
-
-        var containerNodeTextContent = containerNode.textContent;
-        //XXX: Seems better?
-        // var containerNodeTextContent = fragmentFromString(getDocument(containerNode)).textContent.trim();
-
-//console.log(containerNodeTextContent);
-// console.log(prefix + exact + suffix);
-        var selectorIndex = containerNodeTextContent.indexOf(prefix + exact + suffix);
-// console.log(selectorIndex);
-        if (selectorIndex >= 0) {
-          selector =  {
-            "prefix": prefix,
-            "exact": exact,
-            "suffix": suffix
-          };
-
-          var selectedParentNode = DO.Editor.importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, { 'do': true });
-
-          var parentNodeWithId = selectedParentNode.closest('[id]');
-          targetIRI = (parentNodeWithId) ? documentURL + '#' + parentNodeWithId.id : documentURL;
-// console.log(parentNodeWithId, targetIRI)
-          var noteData = {
-            "type": 'comment',
-            "mode": "read",
-            "motivatedByIRI": motivatedBy,
-            "id": id,
-            "refId": refId,
-            "iri": noteIRI, //e.g., https://example.org/path/to/article
-            "creator": {},
-            "target": {
-              "iri": targetIRI,
-              "source": source,
-              "selector": {
-                "exact": exact,
-                "prefix": prefix,
-                "suffix": suffix
-              }
-              //TODO: state
-            }
-          }
-          if (bodyValue) {
-            noteData["bodyValue"] = bodyValue;
-          }
-          if (bodyObjects) {
-            noteData["body"] = bodyObjects;
-          }
-          if (annotatedByIRI) {
-            noteData.creator["iri"] = annotatedByIRI;
-          }
-          if (annotatedByName) {
-            noteData.creator["name"] = annotatedByName;
-          }
-          if (annotatedByImage) {
-            noteData.creator["image"] = annotatedByImage;
-          }
-          if (annotatedByURL) {
-            noteData.creator["url"] = annotatedByURL;
-          }
-          if (noteLanguage) {
-            noteData["language"] = noteLanguage;
-          }
-          if (noteLicense) {
-            noteData["license"] = noteLicense;
-          }
-          if (noteRights) {
-            noteData["rights"] = noteRights;
-          }
-          if (inboxIRI) {
-            noteData["inbox"] = inboxIRI;
-          }
-          if (datetime){
-            noteData["datetime"] = datetime;
-          }
-
-          DO.U.addNoteToNotifications(noteData);
-
-//           var asideNode = fragmentFromString(asideNote);
-//           var parentSection = getClosestSectionNode(selectedParentNode);
-//           parentSection.appendChild(asideNode);
-          //XXX: Keeping this comment around for emergency
-//                selectedParentNode.parentNode.insertBefore(asideNode, selectedParentNode.nextSibling);
-
-          if(DO.C.User.IRI) {
-            var buttonDelete = document.querySelector('aside.do blockquote[cite="' + noteIRI + '"] article button.delete');
-            if (buttonDelete) {
-              buttonDelete.addEventListener('click', (e) => {
-                var button = e.target.closest('button.delete');
-                handleDeleteNote(button);
-              });
-            }
-          }
-
-          //Perhaps return something more useful?
-          return noteIRI;
-        }
-
-        //XXX: Annotation without a selection
-        else {
-          noteData = {
-            "type": 'comment',
-            "mode": "read",
-            "motivatedByIRI": motivatedBy,
-            "id": id,
-            "refId": refId,
-            "refLabel": refLabel,
-            "iri": noteIRI,
-            "creator": {},
-            "target": {
-              "iri": targetIRI
-            }
-          };
-          if (bodyValue) {
-            noteData["bodyValue"] = bodyValue;
-          }
-          if (bodyObjects) {
-            noteData["body"] = bodyObjects;
-          }
-          if (annotatedByIRI) {
-            noteData.creator["iri"] = annotatedByIRI;
-          }
-          if (annotatedByName) {
-            noteData.creator["name"] = annotatedByName;
-          }
-          if (annotatedByImage) {
-            noteData.creator["image"] = annotatedByImage;
-          }
-          if (noteLanguage) {
-            noteData["language"] = noteLanguage;
-          }
-          if (noteLicense) {
-            noteData["license"] = noteLicense;
-          }
-          if (noteRights) {
-            noteData["rights"] = noteRights;
-          }
-          if (inboxIRI) {
-            noteData["inbox"] = inboxIRI;
-          }
-          if (datetime){
-            noteData["datetime"] = datetime;
-          }
-// console.log(noteData)
-          DO.U.addNoteToNotifications(noteData);
-        }
-      }
-      //TODO: Refactor
-      else if (note.out(ns.as.inReplyTo).values[0] || note.out(ns.sioc.replyof).values[0]) {
-        var inReplyTo, inReplyToRel;
-        if (note.out(ns.as.inReplyTo).values[0]) {
-          inReplyTo = note.out(ns.as.inReplyTo).values[0];
-          inReplyToRel = 'as:inReplyTo';
-        }
-        else if (note.out(ns.sioc.reply_of).values[0]) {
-          inReplyTo = note.out(ns.sioc.reply_of).values[0];
-          inReplyToRel = 'sioc:reply_of';
-        }
-
-        if (inReplyTo && inReplyTo.includes(currentLocation())) {
-          noteData = {
-            "type": 'comment',
-            "mode": "read",
-            "motivatedByIRI": motivatedBy,
-            "id": id,
-            "refId": refId,
-            "refLabel": refLabel,
-            "iri": noteIRI,
-            "creator": {},
-            "inReplyTo": {
-              'iri': inReplyTo,
-              'rel': inReplyToRel
-            }
-          };
-          if (bodyValue) {
-            noteData["bodyValue"] = bodyValue;
-          }
-          if (bodyObjects) {
-            noteData["body"] = bodyObjects;
-          }
-          if (annotatedByIRI) {
-            noteData.creator["iri"] = annotatedByIRI;
-          }
-          if (annotatedByName) {
-            noteData.creator["name"] = annotatedByName;
-          }
-          if (annotatedByImage) {
-            noteData.creator["image"] = annotatedByImage;
-          }
-          if (noteLanguage) {
-            noteData["language"] = noteLanguage;
-          }
-          if (noteLicense) {
-            noteData["license"] = noteLicense;
-          }
-          if (noteRights) {
-            noteData["rights"] = noteRights;
-          }
-          if (inboxIRI) {
-            noteData["inbox"] = inboxIRI;
-          }
-          if (datetime){
-            noteData["datetime"] = datetime;
-          }
-          DO.U.addNoteToNotifications(noteData);
-        }
-        else {
-          console.log(noteIRI + ' is not an oa:Annotation, as:inReplyTo, sioc:reply_of');
-        }
-      }
-    },
-
     showCitations: function(citation, g) {
 // console.log('----- showCitations: ')
 // console.log(citation);
 
       var cEURL = stripFragmentFromString(citation.citingEntity);
-// console.log(DO.C.Activity[cEURL]);
+// console.log(Config.Activity[cEURL]);
 
-      if (DO.C.Activity[cEURL]) {
-        if (DO.C.Activity[cEURL]['Graph']) {
-          DO.U.addCitation(citation, DO.C.Activity[cEURL]['Graph']);
+      if (Config.Activity[cEURL]) {
+        if (Config.Activity[cEURL]['Graph']) {
+          DO.U.addCitation(citation, Config.Activity[cEURL]['Graph']);
         }
         else {
 // console.log('  Waiting...' + citation.citingEntity)
@@ -9716,8 +6167,8 @@ WHERE {\n\
       return getResourceGraph(citation.citingEntity)
       .then(i => {
           var cEURL = stripFragmentFromString(citation.citingEntity);
-          DO.C.Activity[cEURL] = {};
-          DO.C.Activity[cEURL]['Graph'] = i;
+          Config.Activity[cEURL] = {};
+          Config.Activity[cEURL]['Graph'] = i;
           var s = i.node(rdf.namedNode(citation.citingEntity));
           DO.U.addCitation(citation, s);
         }
@@ -9730,7 +6181,7 @@ WHERE {\n\
       var citationCharacterization = citation.citationCharacterization;
       var citedEntity = citation.citedEntity;
 
-      var documentURL = DO.C.DocumentURL;
+      var documentURL = Config.DocumentURL;
 
       //XXX: Important
       s = s.node(rdf.namedNode(citingEntity));
@@ -9742,7 +6193,7 @@ WHERE {\n\
       // else
 
 // console.log("  " + citationCharacterization + "  " + citedEntity);
-      var citationCharacterizationLabel = DO.C.Citation[citationCharacterization] || citationCharacterization;
+      var citationCharacterizationLabel = Config.Citation[citationCharacterization] || citationCharacterization;
 
       var id = generateUUID(citingEntity);
       var refId;
@@ -9755,9 +6206,9 @@ WHERE {\n\
       }
       citation['citingEntityLabel'] = citingEntityLabel;
 
-      var citedEntityLabel = getGraphLabel(DO.C.Resource[documentURL].graph.node(rdf.namedNode(citedEntity)));
+      var citedEntityLabel = getGraphLabel(Config.Resource[documentURL].graph.node(rdf.namedNode(citedEntity)));
       if (!citedEntityLabel) {
-        cEL = DO.C.Resource[documentURL].graph(DO.C.Resource[documentURL].graph.node(rdf.namedNode(stripFragmentFromString(citedEntity))));
+        cEL = Config.Resource[documentURL].graph(Config.Resource[documentURL].graph.node(rdf.namedNode(stripFragmentFromString(citedEntity))));
         citedEntityLabel = cEL ? cEL : citedEntity;
       }
       citation['citedEntityLabel'] = citedEntityLabel;
@@ -9817,174 +6268,16 @@ WHERE {\n\
           insertDocumentLevelHTML(document, dl, { 'id': documentCitedBy });
         }
       }
-    },
-
-    initializeButtonMore: function(node) {
-      var info = node.querySelector('div.info');
-      var progressOld = info.querySelector('.progress');
-      var progressNew = fragmentFromString(`<div class="progress" data-i18n="panel.notifications.progress.more">${DO.C.Button.Notifications.More} ${i18n.t('panel.notifications.progress.more.textContent')}</div>`);
-
-      if (progressOld) {
-        info.replaceChild(progressNew, progressOld)
-      }
-      else {
-        info.appendChild(progressNew);
-      }
-
-      node = document.getElementById('document-notifications');
-
-      var buttonMore = node.querySelector('div.info button.more');
-      buttonMore.addEventListener('click', () => {
-        if (!DO.C.User.IRI) {
-          showUserIdentityInput();
-        }
-        else {
-          DO.U.showContactsActivities();
-        }
-      });
-    },
-
-    initializeNotifications: function(options = {}) {
-      // var contextNode = selectArticleNode(document);
-      // <p class="count"><data about="" datatype="xsd:nonNegativeInteger" property="sioc:num_replies" value="' + interactionsCount + '">' + interactionsCount + '</data> interactions</p>
-      //<progress min="0" max="100" value="0"></progress>
-      //<div class="actions"><a href="/docs#resource-activities" rel="noopener" target="_blank">${Icon[".fas.fa-circle-info"]}</a></div>
-
-      var buttonToggle = getButtonHTML({ key: 'panel.notifications.toggle.button', button: 'toggle', buttonClass: 'toggle' })
-
-      //TEMP buttonRel/Resource
-      var aside = `
-      <aside aria-labelledby="document-notifications-label" class="do" contenteditable="false" dir="${Config.User.UI.LanguageDir}" id="document-notifications" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#document-notifications" xml:lang="${Config.User.UI.Language}">
-        <h2 data-i18n="panel.notifications.h2" id="document-notifications-label" property="schema:name">${i18n.t('panel.notifications.h2.textContent')} ${DO.C.Button.Info.Notifications}</h2>
-        ${buttonToggle}
-        <div>
-          <div class="info"></div>
-          <ul class="activities"></ul>
-        </div>
-      </aside>`;
-      document.body.insertAdjacentHTML('beforeend', aside);
-      aside = document.getElementById('document-notifications');
-
-      if (options.includeButtonMore) {
-        DO.U.initializeButtonMore(aside);
-      }
-
-      return aside;
-    },
-
-    addNoteToNotifications: function (noteData) {
-      var id = document.getElementById(noteData.id);
-      if (id) return;
-
-      var noteDataIRI = noteData.iri;
-      
-// console.log(noteData)
-      var note = createNoteDataHTML(noteData);
-
-      var datetime = noteData.datetime ? noteData.datetime : '1900-01-01T00:00:00.000Z';
-
-      var li = domSanitize('<li data-datetime="' + datetime + '"><blockquote cite="' + noteDataIRI + '">'+ note + '</blockquote></li>');
-// console.log(li);
-      var aside = document.getElementById('document-notifications');
-
-      if(!aside) {
-        aside = DO.U.initializeNotifications({includeButtonMore: true});
-      }
-
-      var notifications = document.querySelector('#document-notifications > div > ul');
-      var timesNodes = aside.querySelectorAll('div > ul > li[data-datetime]');
-      var previousElement = null;
-
-      //Maintain reverse chronological order
-      if (timesNodes.length) {
-        var times = Array.from(timesNodes).map(element => element.getAttribute("data-datetime"));
-        var sortedTimes = times.sort().reverse();
-        var previousDateTime = findPreviousDateTime(sortedTimes, noteData.datetime);
-        previousElement = Array.from(timesNodes).find((element) => previousDateTime && previousDateTime === element.getAttribute("data-datetime") ? element : null);
-      }
-
-      if (previousElement) {
-        previousElement.insertAdjacentHTML('beforebegin', li);
-      }
-      else {
-        notifications.insertAdjacentHTML('beforeend', li);
-      }
-    },
-
-    showNotifications: function() {
-      DO.U.hideDocumentMenu();
-
-      var aside = document.getElementById('document-notifications');
-
-      if(!aside) {
-        aside = DO.U.initializeNotifications();
-      }
-      aside.classList.add('on');
-
-      DO.U.showContactsActivities();
-    },
-
-    initMath: function(config) {
-      if (!DO.C.MathAvailable) { return; }
-
-      config = config || {
-        skipTags: ["script","noscript","style","textarea","pre","code", "math"],
-        ignoreClass: "equation",
-        MathML: {
-          useMathMLspacing: true
-        },
-        tex2jax: {
-          inlineMath: [["$","$"],["\\(","\\)"]],
-          processEscapes: true
-        },
-        asciimath2jax: {
-          delimiters: [['$','$'], ['`','`']]
-        }
-      }
-
-      window.MathJax.Hub.Config(config);
-
-      window.MathJax.Hub.Register.StartupHook("End Jax",function () {
-        var BROWSER = window.MathJax.Hub.Browser;
-        var jax = "SVG";
-        if (BROWSER.isMSIE && BROWSER.hasMathPlayer) jax = "NativeMML";
-        if (BROWSER.isFirefox) jax = "NativeMML";
-        if (BROWSER.isSafari && BROWSER.versionAtLeast("5.0")) jax = "NativeMML";
-
-        window.MathJax.Hub.setRenderer(jax);
-      });
-    },
-
-    initSlideshow: function(options) {
-      options = options || {};
-      options.progress = options.progress || true;
-
-      //TODO: .shower can be anywhere?
-      //TODO: check for rdf:type bibo:Slideshow or schema:PresentationDigitalDocument
-      if (getDocumentContentNode(document).classList.contains('shower')) {
-        //TODO: Check if .shower.list or .shower.full. pick a default in a dokieli or leave default to shower (list)?
-
-        //TODO: Check if .bibo:Slide, and if there is no .slide, add .slide
-
-        if (!getDocumentContentNode(document).querySelector('.progress') && options.progress) {
-          getDocumentContentNode(document).appendChild(fragmentFromString('<div class="progress"></progress>'));
-        }
-
-        var shwr = new shower();
-        shwr.start();
-      }
-    },
-
-
+    }
   } //DO.U
 }; //DO
 
 if (document.readyState === "loading") {
-  document.addEventListener('DOMContentLoaded', () => { DO.U.init(); });
+  document.addEventListener('DOMContentLoaded', () => { DO.U.load(); });
 }
 else {
   window.addEventListener("load", () => { 
-    DO.U.init(); });
+    DO.U.load(); });
 }
 
 }

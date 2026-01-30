@@ -22,7 +22,6 @@ import { isLocalhost } from "../uri.js";
 import { i18n } from "../i18n.js";
 
 const ns = Config.ns;
-Config.Button.C
 const docsBaseURL = Config.WebExtensionEnabled ? Config.WebExtension.runtime.getURL('docs') : 'https://dokie.li/docs';
 
 // function getButtonTextContent(key, buttonTextContent) {
@@ -605,7 +604,7 @@ export function updateButtons(selectors) {
     authenticated: Config['Session']?.isActive,
     online: navigator.onLine,
     localhost: isLocalhost(Config.DocumentURL),
-    editorMode: DO.Editor.mode,
+    editorMode: Config.Editor.mode,
     documentAction: Config.DocumentAction
   }
 

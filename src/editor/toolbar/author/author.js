@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { toggleMark, setBlockType, wrapIn } from "prosemirror-commands"
+import { toggleMark, setBlockType } from "prosemirror-commands"
 import { wrapInList, liftListItem } from "prosemirror-schema-list"
 import { DOMSerializer, DOMParser } from "prosemirror-model"
 import { TextSelection } from "prosemirror-state"
@@ -24,7 +24,7 @@ import { formHandlerLanguage, formHandlerA, formHandlerAnnotate, formHandlerBloc
 import { ToolbarView, annotateFormControls } from "../toolbar.js"
 import { createRDFaHTMLRequirement, getCitationOptionsHTML, getLanguageOptionsHTML, getRequirementLevelOptionsHTML, getRequirementSubjectOptionsHTML } from "../../../doc.js"
 import { getResource } from "../../../fetcher.js"
-import { fragmentFromString, stringFromFragment } from "../../../util.js"
+import { fragmentFromString } from "../../../util.js"
 import Config from "../../../config.js";
 import { htmlEncode } from "../../../utils/html.js";
 import { i18n } from "../../../i18n.js"
@@ -875,7 +875,7 @@ TODO: Heading sectioning
                 var parentSectionHeading = '';
                 for (var i = 0; i < parentSection.childNodes.length; i++) {
                   parentSectionHeading = parentSection.childNodes[i].nodeName.toLowerCase();
-                  if(DO.C.Editor.headings.indexOf(parentSectionHeading) > 0) {
+                  if(Config.EditorOptions.headings.indexOf(parentSectionHeading) > 0) {
 // console.log(parentSectionHeading);
                     break;
                   }

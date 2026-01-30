@@ -405,7 +405,7 @@ export function createNoteData(annotation) {
       }
 
       ref = getTextQuoteHTML(refId, motivatedBy, selectionData.selectedContent, docRefType);
-      DO.Editor.replaceSelectionWithFragment(fragmentFromString(ref));
+      Config.Editor.replaceSelectionWithFragment(fragmentFromString(ref));
       break;
 
     case 'citation': //footnote reference
@@ -450,7 +450,7 @@ export function createNoteData(annotation) {
 
       ref = getTextQuoteHTML(refId, motivatedBy, selectionData.selectedContent, docRefType);
 
-      DO.Editor.replaceSelectionWithFragment(fragmentFromString(ref));
+      Config.Editor.replaceSelectionWithFragment(fragmentFromString(ref));
 
       break;
 
@@ -471,8 +471,8 @@ export function createNoteData(annotation) {
 // console.log(ref)
 // console.log(fragmentFromString(ref))
 
-      // DO.Editor.replaceSelectionWithFragment(fragmentFromString(ref));
-      DO.Editor.replaceSelectionWithNodeFromFragment(fragmentFromString(ref));
+      // Config.Editor.replaceSelectionWithFragment(fragmentFromString(ref));
+      Config.Editor.replaceSelectionWithNodeFromFragment(fragmentFromString(ref));
 
       break;
   }
@@ -481,7 +481,7 @@ export function createNoteData(annotation) {
   // if (ref) {
   //   // console.log(this.mode)
   //   console.log(DO.Editor)
-  //   DO.Editor.replaceSelectionWithFragment(fragmentFromString(ref));
+  //   Config.Editor.replaceSelectionWithFragment(fragmentFromString(ref));
   // }
 
   return noteData;

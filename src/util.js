@@ -15,20 +15,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { svgToDataURI } from './uri.js';
+import { getLastPathSegment, stripFragmentFromString, svgToDataURI } from './uri.js';
 import { Icon } from './ui/icons.js'
 import { domSanitize } from './utils/sanitization.js'
+import { currentLocation } from './fetcher.js';
+import Config from './config.js';
+import { getDocument } from './doc.js';
 
-function uniqueArray(a) {
+export function uniqueArray(a) {
   return Array.from(new Set(a));
 }
 
-function getDateTimeISO() {
+export function getDateTimeISO() {
   var date = new Date();
   return date.toISOString();
 }
 
-function getDateTimeISOFromMDY(s) {
+export function getDateTimeISOFromMDY(s) {
   let date = new Date(s);
 
   let year = date.getFullYear();
@@ -38,13 +41,13 @@ function getDateTimeISOFromMDY(s) {
   return `${year}-${month}-${day}`;
 }
 
-function convertToISO8601Duration(timeValue) {
+export function convertToISO8601Duration(timeValue) {
   const [hours, minutes, seconds] = timeValue.split(':').map(Number);
   const formattedDuration = `PT${hours}H${minutes}M${seconds}S`;
   return formattedDuration;
 }
 
-function getDateTimeISOFromDate(dateHeader) {
+export function getDateTimeISOFromDate(dateHeader) {
   if (!dateHeader) {
     return;
   }
@@ -52,7 +55,7 @@ function getDateTimeISOFromDate(dateHeader) {
   return new Date(dateHeader).toISOString();
 }
 
-function debounce(func, delay) {
+export function debounce(func, delay) {
   let timer;
   return function (...args) {
     clearTimeout(timer);
@@ -62,29 +65,29 @@ function debounce(func, delay) {
   };
 }
 
-function removeChildren(node) {
+export function removeChildren(node) {
   while (node.firstChild) {
     node.removeChild(node.firstChild);
   }
 }
 
-function escapeRegExp(string) {
+export function escapeRegExp(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function escapeRDFLiteral(str) {
+export function escapeRDFLiteral(str) {
   return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
-function sleep(ms) {
+export function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function fragmentFromString(strHTML) {
+export function fragmentFromString(strHTML) {
   return document.createRange().createContextualFragment(domSanitize(strHTML));
 }
 
-function stringFromFragment(fragment) {
+export function stringFromFragment(fragment) {
   const container = document.createElement('div');
   container.appendChild(fragment.cloneNode(true));
 
@@ -93,7 +96,7 @@ function stringFromFragment(fragment) {
   return container.getHTML();
 }
 
-function generateUUID(inputString) {
+export function generateUUID(inputString) {
   // Simple FNV-1a hash function to generate a deterministic 32-bit integer hash for each part
   function fnv1aHash(str, seed = 2166136261) {
     let hash = seed;
@@ -140,7 +143,7 @@ function generateUUID(inputString) {
   }
 }
 
-function generateId(prefix, string, suffix) {
+export function generateId(prefix, string, suffix) {
   prefix = prefix || "";
 
   if (string) {
@@ -157,7 +160,7 @@ function generateId(prefix, string, suffix) {
   }
 }
 
-function generateAttributeId(prefix, string, suffix) {
+export function generateAttributeId(prefix, string, suffix) {
   const id = generateId(prefix, string, suffix);
   if (/^\d/.test(id)) {
     return generateAttributeId(prefix, string, suffix);
@@ -165,7 +168,7 @@ function generateAttributeId(prefix, string, suffix) {
   return id;
 }
 
-function getFormValues(form) {
+export function getFormValues(form) {
   const formData = new FormData(form);
 
   const formValues = Object.fromEntries(
@@ -177,7 +180,7 @@ function getFormValues(form) {
 }
 
 //SRI hash that's browser safe
-async function getHash(message, algo = 'SHA-512') {
+export async function getHash(message, algo = 'SHA-512') {
   if (!['SHA-256', 'SHA-384', 'SHA-512'].includes(algo)) {
     throw new Error('Unsupported SRI algorithm');
   }
@@ -190,7 +193,7 @@ async function getHash(message, algo = 'SHA-512') {
   return `${algo.replace('-', '').toLowerCase()}-${base64}`;
 }
 
-function hashCode(s) {
+export function hashCode(s) {
   var hash = 0;
   if (s.length == 0) return hash;
   for (var i = 0; i < s.length; i++) {
@@ -201,13 +204,13 @@ function hashCode(s) {
   return hash;
 }
 
-function getRandomIndex(length) {
+export function getRandomIndex(length) {
   const array = new Uint32Array(1);
   crypto.getRandomValues(array);
   return array[0] % length;
 }
 
-function sortToLower(array, key) {
+export function sortToLower(array, key) {
   return array.sort(function (a, b) {
     if (key) {
       a = a[key];
@@ -217,7 +220,8 @@ function sortToLower(array, key) {
   });
 }
 
-function kebabToCamel(str) {
+//DO NOT DELETE. See top management.
+export function kebabToCamel(str) {
   return str.replace(/-([a-z])/g, (_, char) => char.toUpperCase());
 }
 
@@ -239,7 +243,7 @@ function isReDoSVulnerable(regex) {
   return false; 
 }
 
-function matchAllIndex(string, regexp) {
+export function matchAllIndex(string, regexp) {
   // const matches = Array.from(string.matchAll(regexp));
   // return matches.map(match => ({ match: match[0], index: match.index }));
 
@@ -264,13 +268,13 @@ function matchAllIndex(string, regexp) {
   return matches.length ? matches : null;
 }
 
-function isValidISBN (str) {
+export function isValidISBN (str) {
   const regex = /^(?=(?:[^0-9]*[0-9]){10}(?:(?:[^0-9]*[0-9]){3})?$)[\d-]+$/;
   const pattern = new RegExp(regex);
   return pattern.test(str);
 }
 
-function findPreviousDateTime(times, checkTime) {
+export function findPreviousDateTime(times, checkTime) {
   const sortedTimes = uniqueArray(times).sort().reverse();
 
   let previousDateTime = null;
@@ -285,7 +289,7 @@ function findPreviousDateTime(times, checkTime) {
 }
 
 //TODO: Check browser support for Temporal.Duration, in particular `PT`, e.g., PT17S
-function parseISODuration(duration) {
+export function parseISODuration(duration) {
   if (!/^P(?:\d+[YMD])*(?:T(?:\d+[HMS])*)?$/.test(duration)) {
     throw new Error('Invalid ISO 8601 duration format');
   }
@@ -305,7 +309,7 @@ function parseISODuration(duration) {
   return parts.length ? parts.join(', ') : '0s';
 }
 
-function tranformIconstoCSS(icons) {
+export function tranformIconstoCSS(icons) {
   let cssOutput = '';
 
   Object.entries(icons).forEach(([key, svg]) => {
@@ -315,7 +319,7 @@ function tranformIconstoCSS(icons) {
   return cssOutput;
 }
 
-function getIconsFromCurrentDocument() {
+export function getIconsFromCurrentDocument() {
   var usedIcons = Array.from(document.querySelectorAll('i[class*="fa-"]'))
     .flatMap(el => Array.from(el.classList))
     .filter(cls => cls.startsWith('fa-'));
@@ -333,42 +337,48 @@ function getIconsFromCurrentDocument() {
   return newIcons;
 }
 
-function isOnline() {
+export function isOnline() {
   return navigator.onLine;
 }
 
-const isPlainObject = (object) => {
+export function isPlainObject(object) {
   return typeof object === 'object' && !Array.isArray(object) && object !== null;
 }
 
-export {
-  debounce,
-  uniqueArray,
-  getDateTimeISO,
-  getDateTimeISOFromMDY,
-  convertToISO8601Duration,
-  getDateTimeISOFromDate,
-  removeChildren,
-  escapeRegExp,
-  escapeRDFLiteral,
-  sleep,
-  fragmentFromString,
-  stringFromFragment,
-  generateUUID,
-  generateAttributeId,
-  generateId,
-  getHash,
-  getRandomIndex,
-  hashCode,
-  sortToLower,
-  matchAllIndex,
-  isValidISBN,
-  findPreviousDateTime,
-  getFormValues,
-  kebabToCamel,
-  parseISODuration,
-  tranformIconstoCSS,
-  getIconsFromCurrentDocument,
-  isOnline,
-  isPlainObject
-};
+export function setDocumentURL(url) {
+  url = url || currentLocation();
+
+  Config.DocumentURL = stripFragmentFromString(url);
+}
+
+export function setWebExtensionURL() {
+  Config['WebExtensionBaseURL'] = Config.WebExtensionEnabled ? Config.WebExtension.runtime.getURL('') : null;
+}
+
+export function setDocumentString(node) {
+  const documentOptions = {
+    ...Config.DOMProcessing,
+    format: true,
+    sanitize: true,
+    normalize: true
+  };
+
+  Config.DocumentString = getDocument(node, documentOptions);
+}
+
+export function utf8Tob64(s) {
+  return window.btoa(encodeURIComponent(s));
+}
+
+export function b64Toutf8(s) {
+  return unescape(decodeURIComponent(window.atob(s)));
+}
+
+export function generateFilename(url, options) {
+  url = url || Config.DocumentURL;
+  var fileName = getLastPathSegment(url);
+  var timestamp = getDateTimeISO().replace(/[^\w]+/ig, '') || "now";
+  var extension = options.filenameExtension || '.txt';
+  fileName = fileName + "." + timestamp + extension;
+  return fileName;
+}

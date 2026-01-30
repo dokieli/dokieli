@@ -16,16 +16,14 @@ limitations under the License.
 */
 
 import Config from './config.js';
-import { getDateTimeISO, generateUUID, getHash, fragmentFromString, debounce } from './util.js';
-import { getDocument, getDocumentNodeFromString, updateMutableResource } from './doc.js';
+import { getDateTimeISO, generateUUID, getHash, fragmentFromString, debounce, getDateTimeISOFromDate } from './util.js';
+import { getDocument, getDocumentNodeFromString, updateMutableResource, accessModePossiblyAllowed, updateResourceInfos, addMessageToLog, showActionMessage, processSupplementalInfoLinkHeaders, updateSupplementalInfo } from './doc.js';
 import { normalizeForDiff } from './utils/normalization.js';
+import { putResource } from './fetcher.js';
+import { showResourceReviewChanges } from './dialog.js';
+import { i18n } from './i18n.js'
 
-
-// function initLocalStorage(key) {
-//   if (typeof window.localStorage != 'undefined') {
-//     enableLocalStorage(key);
-//   }
-// }
+console.log("storage.js",Config)
 
 // function enableLocalStorage(key) {
 //   Config.UseLocalStorage = true;
@@ -47,12 +45,11 @@ import { normalizeForDiff } from './utils/normalization.js';
 //   console.log(getDateTimeISO() + ': ' + key + ' storage disabled.');
 // }
 
-
 async function updateLocalStorageDocumentWithItem(key, data, options = {}) {
   if (!key) { Promise.resolve(); }
 
   const documentOptions = {
-    ...DO.C.DOMProcessing,
+    ...Config.DOMProcessing,
     format: true,
     sanitize: true,
     normalize: true
@@ -88,7 +85,7 @@ async function updateLocalStorageDocumentWithItem(key, data, options = {}) {
   collection.items.unshift(id);
   options.collectionKey = key;
 
-  //TODO: Reconsider this key (which is essentially DO.C.DocumentURL) because there is a possibility that some other thing on that page will use the same key? We don't want to conflict with that. Perhaps the key in storage should be something unique, e.g., UUID, digestSRI, or something dokieli-specific? Probably dokieli-specific because we need to have a deterministic way of recalling it. Even if it is just `do-${DO.C.DocumentURL}` which would be sufficient.. or even digestSRI(DO.C.DocumentURL)
+  //TODO: Reconsider this key (which is essentially Config.DocumentURL) because there is a possibility that some other thing on that page will use the same key? We don't want to conflict with that. Perhaps the key in storage should be something unique, e.g., UUID, digestSRI, or something dokieli-specific? Probably dokieli-specific because we need to have a deterministic way of recalling it. Even if it is just `do-${Config.DocumentURL}` which would be sufficient.. or even digestSRI(Config.DocumentURL)
   localStorage.setItem(key, JSON.stringify(collection));
 
   Config.AutoSave.Items[options.collectionKey] ||= {};
@@ -99,7 +96,7 @@ async function updateLocalStorageDocumentWithItem(key, data, options = {}) {
   addLocalStorageDocumentItem(id, data, options);
 }
 
-async function updateLocalStorageItem(id, data) {
+export async function updateLocalStorageItem(id, data) {
   let item = await getLocalStorageItem(id);
 
   if (!item) { return; }
@@ -112,9 +109,9 @@ async function updateLocalStorageItem(id, data) {
   localStorage.setItem(id, JSON.stringify(item));
 }
 
-function addLocalStorageDocumentItem(id, data, options = {}) {
+export function addLocalStorageDocumentItem(id, data, options = {}) {
   const documentOptions = {
-    ...DO.C.DOMProcessing,
+    ...Config.DOMProcessing,
     format: true,
     sanitize: true,
     normalize: true
@@ -142,8 +139,8 @@ function addLocalStorageDocumentItem(id, data, options = {}) {
     item['published'] = options['published'] || datetime;
   }
 
-  if (DO.C.User) {
-    item['actor'] = DO.C.User.IRI;
+  if (Config.User) {
+    item['actor'] = Config.User.IRI;
   }
 
   localStorage.setItem(id, JSON.stringify(item));
@@ -155,9 +152,9 @@ function addLocalStorageDocumentItem(id, data, options = {}) {
   console.log(datetime + `: ${id} saved.`);
 }
 
-function updateHTTPStorageDocument(url, data, options = {}) {
+export function updateHTTPStorageDocument(url, data, options = {}) {
   const documentOptions = {
-    ...DO.C.DOMProcessing,
+    ...Config.DOMProcessing,
     format: true,
     sanitize: true,
     normalize: true
@@ -193,12 +190,12 @@ function updateStorage(key, data, options = {}) {
   }
 }
 
-async function autoSave(key, options) {
+export async function autoSave(key, options) {
   if (!key) return;
 
   // console.log(key, options);
   const documentOptions = {
-    ...DO.C.DOMProcessing,
+    ...Config?.DOMProcessing,
     format: true,
     sanitize: true,
     normalize: true
@@ -228,7 +225,7 @@ async function autoSave(key, options) {
   }
 }
 
-async function enableAutoSave(key, options = {}) {
+export async function enableAutoSave(key, options = {}) {
   if (!key) return;
 
   options['method'] = ('method' in options) ? options.method : 'localStorage';
@@ -250,11 +247,11 @@ async function enableAutoSave(key, options = {}) {
     const sync = async (key, options) => {
       await autoSave(key, options);
 
-      const storageObject = await getLocalStorageItem(DO.C.DocumentURL);
+      const storageObject = await getLocalStorageItem(Config.DocumentURL);
       const remoteAutoSaveEnabled = (storageObject && storageObject.autoSave !== undefined) ? storageObject.autoSave : true;
 
       if (remoteAutoSaveEnabled) {
-        DO.U.syncLocalRemoteResource();
+        syncLocalRemoteResource();
       }
     }
 
@@ -273,7 +270,7 @@ async function enableAutoSave(key, options = {}) {
   document.addEventListener('paste', handleInputPaste);
 }
 
-async function disableAutoSave(key, options = {}) {
+export async function disableAutoSave(key, options = {}) {
   if (!Config.AutoSave.Items[key]) { return; }
 
   options['method'] = ('method' in options) ? options.method : 'localStorage';
@@ -297,7 +294,7 @@ async function disableAutoSave(key, options = {}) {
   }
 }
 
-function removeLocalStorageItem(key) {
+export function removeLocalStorageItem(key) {
   if (!key) { Promise.resolve(); }
 
   console.log(getDateTimeISO() + ': ' + key + ' removed from local storage.')
@@ -315,7 +312,7 @@ function removeLocalStorageItem(key) {
   }
 }
 
-async function removeLocalStorageDocumentFromCollection(collectionKey, itemKey) {
+export async function removeLocalStorageDocumentFromCollection(collectionKey, itemKey) {
   if (!itemKey) return Promise.resolve();
 
   const collection = await getLocalStorageItem(collectionKey);
@@ -330,7 +327,7 @@ async function removeLocalStorageDocumentFromCollection(collectionKey, itemKey) 
   }
 }
 
-async function removeLocalStorageDocumentItems(key) {
+export async function removeLocalStorageDocumentItems(key) {
   if (!key) return Promise.resolve();
 
   const collection = await getLocalStorageItem(key);
@@ -346,15 +343,15 @@ async function removeLocalStorageDocumentItems(key) {
   await removeLocalStorageItem(key);
 }
 
-async function removeLocalStorageAsSignOut() {
-  removeLocalStorageDocumentItems(DO.C.DocumentURL);
+export async function removeLocalStorageAsSignOut() {
+  removeLocalStorageDocumentItems(Config.DocumentURL);
 
-  removeLocalStorageItem('DO.C.User');
-  removeLocalStorageItem('DO.C.OIDC');
+  removeLocalStorageItem('Config.User');
+  removeLocalStorageItem('Config.OIDC');
   removeLocalStorageItem('i18nextLng');
 }
 
-function getLocalStorageItem(key) {
+export function getLocalStorageItem(key) {
   if (!key) { Promise.resolve(); }
 
   if (Config.WebExtensionEnabled) {
@@ -390,11 +387,11 @@ function getLocalStorageItem(key) {
   }
 }
 
-function updateLocalStorageProfile(User) {
+export function updateLocalStorageProfile(User) {
   if (!User.IRI) { return Promise.resolve({ 'message': 'User.IRI is not set' }); }
 
   var U = { ...User };
-  var key = 'DO.C.User'
+  var key = 'Config.User'
 
   var id = generateUUID();
   var datetime = getDateTimeISO();
@@ -502,23 +499,484 @@ function updateLocalStorageProfile(User) {
 //   }
 // }
 
+export async function enableRemoteSync() {
+  await updateLocalStorageItem(Config.DocumentURL, { autoSave: true });
 
-export {
-  // initLocalStorage,
-  // enableLocalStorage,
-  // disableLocalStorage,
-  updateHTTPStorageDocument,
-  enableAutoSave,
-  disableAutoSave,
-  autoSave,
-  updateLocalStorageItem,
-  addLocalStorageDocumentItem,
-  getLocalStorageItem,
-  removeLocalStorageDocumentFromCollection,
-  removeLocalStorageItem,
-  removeLocalStorageDocumentItems,
-  removeLocalStorageAsSignOut,
-  updateLocalStorageProfile,
-  // showAutoSaveStorage,
-  // hideAutoSaveStorage
+  syncLocalRemoteResource();
+}
+
+export async function disableRemoteSync() {
+  updateButtons();
+
+  await updateLocalStorageItem(Config.DocumentURL, { autoSave: false });
+
+  await autoSave(Config.DocumentURL, { method: 'localStorage' });
+}
+
+export function monitorNetworkStatus() {
+  let messageId;
+
+  window.addEventListener('online', async () => {
+    console.log('online');
+    await DO.U.enableRemoteSync();
+
+    const storageObject = await getLocalStorageItem(Config.DocumentURL);
+
+    const remoteAutoSaveEnabled = (storageObject && storageObject.autoSave !== undefined) ? storageObject.autoSave : true;
+
+    let message;
+
+    if (remoteAutoSaveEnabled) {
+      message = "You are back online. Your changes will be synced with the remote server.";
+    } else {
+      message = "You are back online. Changes will be saved only locally because autosave is disabled. You can change this from the main menu.";
+    }
+
+    message = {
+      'content': message,
+      'type': 'info',
+    }
+    addMessageToLog(message, Config.MessageLog);
+
+    messageId = showActionMessage(document.body, message, messageId ? { clearId: messageId } : {});
+  });
+
+
+  window.addEventListener('offline', async () => {
+    console.log('offline');
+
+    await DO.U.disableRemoteSync();
+
+    const storageObject = await getLocalStorageItem(Config.DocumentURL);
+
+    const remoteAutoSaveEnabled = (storageObject && storageObject.autoSave !== undefined) ? storageObject.autoSave : true;
+
+    let message;
+
+    if (remoteAutoSaveEnabled) {
+      message = "You are offline. Your changes will be saved locally and synced when you're back online.";
+    } else {
+      message = "You are offline. Changes will be saved only locally because autosave is disabled. You can change this from the main menu.";
+    }
+
+    message = {
+      'content': message,
+      'type': 'info',
+      'timer': null
+    }
+    addMessageToLog(message, Config.MessageLog);
+
+    messageId = showActionMessage(document.body, message, messageId ? { clearId: messageId } : {});
+  });
+}
+
+export async function syncLocalRemoteResource(options = {}) {
+  // console.log('--- syncLocalRemoteResource');
+
+  const documentOptions = {
+    ...Config.DOMProcessing,
+    format: true,
+    sanitize: true,
+    normalize: true
+  };
+
+  const localETag = Config.Resource[Config.DocumentURL]?.headers?.etag?.['field-value'];
+  let localContentType = 'text/html';
+  const headers = {
+    'Accept': localContentType
+  };
+
+  if (localETag) {
+    headers['If-None-Match'] = localETag;
+  }
+
+  let reviewOptions = {}
+
+  let storageObject;
+  let remoteHash;
+  let remoteContent;
+  let remoteContentNode;
+  let response;
+  let status;
+  let remoteETag;
+  let remoteLastModified;
+  let remoteDate;
+  const previousRemoteHash = Config.Resource[Config.DocumentURL]['digestSRI'];
+
+  const hasAccessModeWrite = accessModePossiblyAllowed(Config.DocumentURL, 'write');
+
+  storageObject = await getLocalStorageItem(Config.DocumentURL);
+
+  const remoteAutoSaveEnabled = (storageObject && storageObject.autoSave !== undefined) ? storageObject.autoSave : true;
+
+  // let latestLocalDocumentItemObject = (storageObject && storageObject.items?.length) ? await getLocalStorageItem(storageObject.items[0]) : null;
+
+  let localContent;
+  let latestLocalDocumentItemObjectPublished;
+  let latestLocalDocumentItemObjectUnpublished;
+
+  if (storageObject?.items?.length) {
+    for (const item of storageObject.items) {
+      const r = await getLocalStorageItem(item);
+      if (r?.published && !latestLocalDocumentItemObjectPublished) {
+        latestLocalDocumentItemObjectPublished = r;
+      }
+      if (!r?.published && !latestLocalDocumentItemObjectUnpublished) {
+        latestLocalDocumentItemObjectUnpublished = r;
+      }
+      if (latestLocalDocumentItemObjectPublished && latestLocalDocumentItemObjectUnpublished) {
+        break;
+      }
+    }
+  }
+
+  //XXX: REVISIT THIS. This is  cheap way to reuse initial getDocument value. DocumenString is not currently used besides this.
+  localContent = Config.DocumentString || getDocument(null, documentOptions);
+  Config.DocumentString = null;
+
+// console.log(localContent)
+  let localHash = await getHash(localContent);
+  let data;
+
+  if (latestLocalDocumentItemObjectUnpublished) {
+    const { digestSRI, mediaType, content } = latestLocalDocumentItemObjectUnpublished;
+    localContent = content;
+    localHash = digestSRI;
+    localContentType = mediaType;
+  }
+
+  //200
+  try {
+    response = await getResource(Config.DocumentURL, headers, {});
+    status = response.status;
+    remoteETag = response.headers.get('ETag');
+    remoteLastModified = response.headers.get('Last-Modified');
+    remoteDate = response.headers.get('Date');
+
+    data = await response.text();
+
+    // remoteContentNode = getDocumentNodeFromString(data);
+    // remoteContent = getDocument(remoteContentNode.documentElement, documentOptions);
+    remoteContent = getDocument(data, documentOptions);
+// console.log('remoteContent: ', remoteContent)
+    remoteContentNode = getDocumentNodeFromString(remoteContent);
+
+    remoteHash = await getHash(remoteContent);
+
+    let linkHeadersOptions = {};
+    if (!Config['Resource'][Config.DocumentURL]['headers']) {
+      linkHeadersOptions['followLinkRelationTypes'] = ['describedby'];
+    }
+
+    //Need to make sure to wait
+    await updateResourceInfos(Config.DocumentURL, remoteContent, response, { storeHash: true });
+    processSupplementalInfoLinkHeaders(Config.DocumentURL, linkHeadersOptions);
+
+    // Config.Resource[Config.DocumentURL]['digestSRI'] = remoteHash;
+  }
+  //304, 403, 404, 405
+  catch (e) {
+    // console.log(e);
+    // console.log(e.response)
+    status = e.status || 0;
+    response = e.response;
+    remoteETag = response?.headers.get('ETag');
+    remoteLastModified = response?.headers.get('Last-Modified');
+    remoteDate = response?.headers.get('Date');
+
+    remoteContent = Config.Resource[Config.DocumentURL].data;
+    remoteContentNode = getDocumentNodeFromString(remoteContent);
+    remoteHash = await getHash(remoteContent);
+
+    if (response) {
+      updateSupplementalInfo(response);
+    }
+
+    var message = '';
+    var actionMessage = '';
+    let errorKey = 'default';
+    let actionMessageKey = 'default-action-message';
+    // var actionTerm = 'update';
+    var url = Config.DocumentURL;
+
+    if (status != 304 && status != 404) {
+      console.log(e)
+      switch (status) {
+        default:
+          message = `<code>${status}, ${e.message}</code>`;
+          break;
+
+        case 401:
+          if (Config.User.IRI) {
+            errorKey = 'unauthorized';
+            actionMessageKey = 'unauthorized-action-message';
+          }
+          else {
+            errorKey = 'unauthenticated';
+            actionMessageKey = 'unauthenticated-action-message';
+          }
+
+          return;
+
+        case 403:
+          if (Config.User.IRI) {
+            errorKey = 'forbidden';
+            actionMessageKey = 'forbidden-action-message';
+          }
+          else {
+            errorKey = 'unauthenticated';
+            actionMessageKey = 'unauthenticated-action-message';
+          }
+
+          return;
+      }
+
+      message = message + `<span data-i18n="dialog.remote-sync.error.${errorKey}.span">${i18n.t(`dialog.remote-sync.error.${errorKey}.span.textContent`),{url,button:Config.Button.SignIn}}</span>`;
+      
+
+      let messageObject = {
+        'content': actionMessage,
+        'type': 'error',
+        'timer': null,
+        'code': status
+      }
+
+      addMessageToLog({...messageObject, content: message}, Config.MessageLog);
+      showActionMessage(document.body, messageObject);
+    }
+  }
+
+  // console.log(`localContent: ${localContent}`);
+  // console.log(`localHash: ${localHash}`);
+  // console.log('-------');
+  // console.log(`data: ${data}`);
+  // console.log(`dataHash: ${dataHash}`);
+  // console.log('-------');
+  // console.log(`remoteContent: ${remoteContent}`);
+  // console.log(`remoteHash: ${remoteHash}`);
+  // console.log(`previousRemoteHash: ${previousRemoteHash}`);
+
+  const remotePublishDate = getDateTimeISOFromDate(remoteLastModified) || getDateTimeISOFromDate(remoteDate) || getDateTimeISO();
+
+  const etagWasUsed = !!(headers['If-None-Match'] && remoteETag);
+  const etagsMatch = etagWasUsed && headers['If-None-Match'] === remoteETag;
+
+  const localRemoteHashMatch = localHash == remoteHash;
+
+  if (localHash && remoteHash && localRemoteHashMatch) {
+    return;
+  }
+
+  if (options.forceLocal || options.forceRemote) {
+    if (etagWasUsed && !etagsMatch && !options.forceRemote && status !== 304) {
+      // reviewOptions['message'] = `Cannot force due to missing or changed ETag. Show review.`;
+      reviewOptions['message'] = `<span data-i18n="dialog.review-changes.message.etag-mismatch.span">${i18n.t('dialog.review-changes.message.etag-mismatch.span.textContent')}</span>`;
+      showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
+      return;
+    }
+
+    if (!etagWasUsed) {
+      console.log(`ETags were not used. Assume user intent is valid.`);
+    }
+
+    if (options.forceLocal) {
+      if (!hasAccessModeWrite) {
+        console.log(`No Write access.`);
+
+        //TODO: showModalSyncRemote()
+
+        return;
+      }
+
+      if (!remoteAutoSaveEnabled) {
+        console.log('Remote autoSave is disabled. Asking to enable autosave-remote');
+
+        //TODO: showModalEnableAutoSave()
+      }
+
+      console.log(`Force pushing local content.`);
+
+      const h = localETag ? { 'If-Match': localETag } : {};
+
+      try {
+        await pushLocalContentToRemote(latestLocalDocumentItemObjectUnpublished, h);
+        return;
+      }
+      catch(error) {
+        if (error.status === 412) {
+          syncLocalRemoteResource();
+        }
+        else {
+          throw new Error(`${error.status} Unhandled status ${error}`);
+        }
+      }
+
+      return;
+    }
+
+    if (options.forceRemote) {
+      console.log(`Force replacing with remote content.`);
+
+      removeLocalStorageDocumentFromCollection(Config.DocumentURL, latestLocalDocumentItemObjectUnpublished.id);
+
+      Config.Editor.replaceContent(Config.Editor.mode, remoteContentNode);
+      Config.Editor.init(Config.Editor.mode, document.body);
+      autoSave(Config.DocumentURL, { method: 'localStorage', published: remotePublishDate });
+      updateResourceInfos(Config.DocumentURL, null, response);
+      return;
+    }
+  }
+
+  if (latestLocalDocumentItemObjectUnpublished) {
+    var tmplLocal = document.implementation.createHTMLDocument('template');
+    tmplLocal.documentElement.setHTMLUnsafe(localContent);
+    const localContentNode = tmplLocal.body;
+
+    if (latestLocalDocumentItemObjectPublished.digestSRI !== remoteHash && status !== 304) {
+      reviewOptions['message'] = `<span data-i18n="dialog.review-changes.message.conflict.span">${i18n.t('dialog.review-changes.message.conflict.span.textContent')}</span>`;
+      showResourceReviewChanges(localContent, remoteContent, Config.Resource[Config.DocumentURL].response, reviewOptions);
+      return;
+    }
+  }
+
+  switch(status) {
+    case 200:
+      console.log(`Local or remote changed.`);
+
+      if (latestLocalDocumentItemObjectUnpublished) {
+        if (etagsMatch || previousRemoteHash == remoteHash) {
+          console.log(`Local unpublished changes. Remote unchanged (200). Should update remote.`);
+
+          if (!remoteAutoSaveEnabled) {
+            console.log(`remoteAutoSave is disabled.`);
+            return;
+          }
+
+          if (!hasAccessModeWrite) {
+            console.log(`No Write access.`);
+            return;
+          }
+
+          const h = localETag ? { 'If-Match': localETag } : {};
+
+          try {
+            await pushLocalContentToRemote(latestLocalDocumentItemObjectUnpublished, h);
+            return;
+          }
+          catch(error) {
+            if (error.status === 412) {
+              syncLocalRemoteResource();
+            }
+            else {
+              throw new Error(`${error.status} Unhandled status ${error}`);
+            }
+          };
+        }
+        else {
+          reviewOptions['message'] = `<span data-i18n="dialog.review-changes.message.local-remote-changed.span">${i18n.t('dialog.review-changes.message.local-remote-changed.span.textContent')}</span>`;
+          console.log(reviewOptions['message'])
+          // console.log(localContent, remoteContent)
+          DO.U.showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
+        }
+      }
+      else if (!etagsMatch || previousRemoteHash != remoteHash) {
+        console.log(previousRemoteHash)
+
+        console.log(`Local unchaged. Remote changed. Update local.`);
+        Config.Editor.replaceContent(Config.Editor.mode, remoteContentNode);
+        Config.Editor.init(Config.Editor.mode, document.body);
+        autoSave(Config.DocumentURL, { method: 'localStorage', published: remotePublishDate });
+        updateResourceInfos(Config.DocumentURL, null, response);
+      }
+      else {
+        reviewOptions['message'] = `<span data-i18n="dialog.review-changes.message.remote-changed.span">${i18n.t('dialog.review-changes.message.remote-changed.span.textContent')}</span>`;
+        syncLocalRemoteResource();
+      }
+
+      break;
+
+    //Because of GET If-None-Match: <etag>
+    case 304:
+      if (latestLocalDocumentItemObjectUnpublished) {
+        console.log(`Local unpublished changes. Remote unchanged (304). Should update remote.`);
+
+        if (!remoteAutoSaveEnabled) {
+          console.log(`remoteAutoSave is disabled.`);
+          return;
+        }
+
+        if (!hasAccessModeWrite) {
+          console.log(`No Write access.`);
+          return;
+        }
+
+        const h = localETag ? { 'If-Match': localETag } : {};
+
+        try {
+          await pushLocalContentToRemote(latestLocalDocumentItemObjectUnpublished, h);
+          return;
+        }
+        catch(error) {
+          if (error.status === 412) {
+            syncLocalRemoteResource();
+          }
+          else {
+            throw new Error(`${error.status} Unhandled status ${error}`);
+          }
+        };
+      }
+
+      break;
+
+    case 404:
+      console.log('Remote was deleted. Push local to remote.');
+
+      if (!remoteAutoSaveEnabled) {
+        console.log(`remoteAutoSave is disabled.`);
+        return;
+      }
+
+      if (!hasAccessModeWrite) {
+        console.log(`No Write access.`);
+        return;
+      }
+
+      try {
+        await pushLocalContentToRemote(latestLocalDocumentItemObjectUnpublished, { 'If-None-Match': '*' });
+        return;
+      }
+      catch (error) {
+        if (error.status === 412) {
+          syncLocalRemoteResource();
+        }
+        else {
+          throw new Error(`${error.status} Unhandled status ${error}`);
+        }
+      }
+
+      break;
+
+    case 403:
+      console.log(`TODO: ${status} Request access because you lost access. Keep working in local.`);
+      break;
+
+    default:
+      console.log(`TODO: ${status} Unhandled status code.`);
+      break;
+  }
+
+  return;
+}
+
+export async function pushLocalContentToRemote(localItem, headers) {
+  const { id, content, mediaType } = localItem;
+  // console.log(localItem, headers)
+
+  const response = await putResource(Config.DocumentURL, content, mediaType, null, { headers });
+
+  console.log(`Remote updated (${response.status}).`);
+
+  updateLocalStorageItem(id, { published: getDateTimeISO() });
+
+  updateResourceInfos(Config.DocumentURL, content, response, { preserveHeaders: ['wac-allow'] });
 }

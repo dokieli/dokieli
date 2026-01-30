@@ -25,8 +25,9 @@ import { domSanitize } from './utils/sanitization.js'
 import { parseMarkdown } from "./doc.js";
 import { setAcceptRDFTypes, getResource, getResourceHead, currentLocation } from './fetcher.js'
 import LinkHeader from "http-link-header";
+import { updateUILanguage } from "./menu.js";
 
-const ns = Config.ns;
+const ns = Config?.ns;
 const localhostUUID = 'http://localhost/d79351f4-cdb8-4228-b24f-3e9ac74a840d';
 
 //https://github.com/rdfjs-base/io
@@ -845,7 +846,7 @@ function setPreferredLanguagesInfo(g) {
   });
 
   if (matchedLang) {
-    DO.U.updateUILanguage(matchedLang);
+    updateUILanguage(matchedLang);
   }
 }
 
