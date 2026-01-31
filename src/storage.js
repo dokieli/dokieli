@@ -19,7 +19,7 @@ import Config from './config.js';
 import { getDateTimeISO, generateUUID, getHash, fragmentFromString, debounce, getDateTimeISOFromDate } from './util.js';
 import { getDocument, getDocumentNodeFromString, updateMutableResource, accessModePossiblyAllowed, updateResourceInfos, addMessageToLog, showActionMessage, processSupplementalInfoLinkHeaders, updateSupplementalInfo } from './doc.js';
 import { normalizeForDiff } from './utils/normalization.js';
-import { putResource } from './fetcher.js';
+import { getResource, putResource } from './fetcher.js';
 import { showResourceReviewChanges } from './dialog.js';
 import { i18n } from './i18n.js'
 

@@ -16,10 +16,10 @@ limitations under the License.
 */
 
 import Config from './config.js';
-import { getDocumentContentNode, highlightItems, updateSelectedStylesheets, initCurrentStylesheet, selectArticleNode, hasNonWhitespaceText, showActionMessage, addMessageToLog, initCopyToClipboard, showFragment, setDocRefType, initEditor, eventButtonClose, eventButtonInfo, eventButtonSignIn, eventButtonSignOut, eventButtonNotificationsToggle, showRobustLinksDecoration, focusNote, showAsTabs, getResourceInfo } from './doc.js';
+import { getDocumentContentNode, highlightItems, updateSelectedStylesheets, initCurrentStylesheet, selectArticleNode, hasNonWhitespaceText, showActionMessage, addMessageToLog, initCopyToClipboard, showFragment, setDocRefType, eventButtonClose, eventButtonInfo, eventButtonSignIn, eventButtonSignOut, eventButtonNotificationsToggle, showRobustLinksDecoration, focusNote, showAsTabs, getResourceInfo } from './doc.js';
 import { initButtons } from './ui/buttons.js'
 import { setDocumentURL, setWebExtensionURL, setDocumentString } from './util.js';
-import { getLocalStorageItem, autoSave, syncLocalRemoteResource } from './storage.js';
+import { getLocalStorageItem, autoSave, syncLocalRemoteResource, monitorNetworkStatus } from './storage.js';
 import { domSanitize, sanitizeObject } from './utils/sanitization.js';
 import { setUserInfo } from './auth.js';
 import { initDocumentMenu } from './menu.js';
@@ -28,6 +28,7 @@ import { showNotificationSources } from './activity.js';
 import { getProxyableIRI, getUrlParams, stripUrlSearchHash } from './uri.js';
 import { getMultipleResources } from './fetcher.js';
 import shower from '@shower/core';
+import { initEditor } from './editor/initEditor.js';
 
 export function init (url) {
   initServiceWorker();
