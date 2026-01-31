@@ -16,12 +16,14 @@ limitations under the License.
 */
 
 import { fragmentFromString } from './util.js';
-import { userInfoSignOut } from './auth.js';
+import { showUserSigninSignout, userInfoSignOut } from './auth.js';
 import { updateResourceInfos, getDocumentContentNode, accessModePossiblyAllowed } from './doc.js';
 import { i18n } from './i18n.js';
 import { getLocalStorageItem, enableRemoteSync, disableRemoteSync } from './storage.js';
 import { initButtons } from './ui/buttons.js';
 import Config from './config.js';
+import { Icon } from './ui/icons.js';
+import { shareResource } from './dialog.js';
 
 export function initDocumentMenu() {
   document.body.prepend(fragmentFromString(`<div class="do" id="document-menu" dir="${Config.User.UI.LanguageDir}" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}">${Config.Button.Menu.OpenMenu}<div><section id="user-info"></section></div></div>`));
@@ -256,6 +258,166 @@ export async function showAutoSave(node) {
     }
     else {
       await disableRemoteSync();
+    }
+  });
+}
+
+function showDocumentDo(node) {
+  var d = node.querySelector('#document-do');
+  if (d) { return; }
+
+  const documentOptions = {
+    ...Config.DOMProcessing,
+    format: true,
+    sanitize: true,
+    normalize: true
+  };
+
+  var buttonDisabled = '';
+
+  const buttons = [
+    Config.Button.Menu.Share,
+    Config.Button.Menu.Reply,
+    Config.Button.Menu.Notifications,
+    Config.Button.Menu.New,
+    Config.Button.Menu.EditEnable,
+    Config.Button.Menu.Open,
+    Config.Button.Menu.Save,
+    Config.Button.Menu.SaveAs,
+    Config.Button.Menu.Version,
+    Config.Button.Menu.Immutable,
+    Config.Button.Menu.Memento,
+    Config.Button.Menu.RobustifyLinks,
+    Config.Button.Menu.InternetArchive,
+    Config.Button.Menu.GenerateFeed,
+    Config.Button.Menu.Export,
+    Config.Button.Menu.Source,
+    Config.Button.Menu.EmbedData,
+    Config.Button.Menu.Print,
+    Config.Button.Menu.Delete,
+    Config.Button.Menu.MessageLog,
+    Config.Button.Menu.DocumentInfo
+  ]
+
+  var s = `
+    <section aria-labelledby="document-do-label" id="document-do" rel="schema:hasPart" resource="#document-do">
+      <h2 id="document-do-label" property="schema:name">Do</h2>
+      <ul>${buttons.map(b => `<li>${b}</li>`).join('')}</ul>
+    </section>`;
+
+  node.insertAdjacentHTML('beforeend', s);
+
+  var dd = document.getElementById('document-do');
+
+  dd.addEventListener('click', e => {
+    if (e.target.closest('.resource-share')) {
+      shareResource(e);
+    }
+
+    if (e.target.closest('.resource-reply')) {
+      DO.U.replyToResource(e);
+    }
+
+    var b;
+
+    b = e.target.closest('button.editor-disable');
+
+    if (b) {
+      var node = b.closest('li');
+      b.outerHTML = Config.Button.Menu.EditEnable;
+      hideDocumentMenu();
+      Config.Editor.toggleEditor('social');
+      // hideAutoSaveStorage(node.querySelector('#autosave-items'), documentURL);
+
+      disableAutoSave(Config.DocumentURL, {'method': 'localStorage', saveSnapshot: true });
+    }
+    else {
+      b = e.target.closest('button.editor-enable');
+      if (b) {
+        node = b.closest('li');
+        b.outerHTML = Config.Button.Menu.EditDisable;
+        DO.U.hideDocumentMenu();
+        Config.Editor.toggleEditor('author');
+        // showAutoSaveStorage(node, documentURL);
+
+        enableAutoSave(Config.DocumentURL, {'method': 'localStorage'});
+      }
+    }
+
+    if (e.target.closest('.resource-notifications')) {
+      DO.U.showNotifications(e);
+    }
+
+    if (e.target.closest('.resource-new')) {
+      DO.U.createNewDocument(e);
+    }
+
+    if (e.target.closest('.resource-open')) {
+      DO.U.openDocument(e);
+    }
+
+    if (e.target.closest('.resource-source')) {
+      DO.U.viewSource(e);
+    }
+
+    if (e.target.closest('.embed-data-meta')) {
+      DO.U.showEmbedData(e);
+    }
+
+    if (e.target.closest('.resource-save')){
+      DO.U.resourceSave(e);
+    }
+
+    if (e.target.closest('.resource-save-as')) {
+      DO.U.saveAsDocument(e);
+    }
+
+    if (e.target.closest('.resource-memento')) {
+      DO.U.mementoDocument(e);
+    }
+
+    if (e.target.closest('.create-version') ||
+        e.target.closest('.create-immutable')) {
+      DO.U.resourceSave(e);
+    }
+
+    if (e.target.closest('.export-as-html')) {
+      var options = {
+        subjectURI: Config.DocumentURL,
+        mediaType: 'text/html',
+        filenameExtension: '.html'
+      }
+      DO.U.exportAsDocument(getDocument(null, documentOptions), options);
+    }
+
+    if (e.target.closest('.robustify-links')){
+      DO.U.showRobustLinks(e);
+    }
+
+    if (e.target.closest('.snapshot-internet-archive')){
+      // DO.U.snapshotAtEndpoint(e, Config.DocumentURL, 'https://pragma.archivelab.org/', '', {'contentType': 'application/json'});
+      DO.U.snapshotAtEndpoint(e, Config.DocumentURL, 'https://web.archive.org/save/', '', {'Accept': '*/*', 'showActionMessage': true });
+    }
+
+    if (e.target.closest('.generate-feed')) {
+      DO.U.generateFeed(e);
+    }
+
+    if (e.target.closest('.resource-print')) {
+      window.print();
+      return false;
+    }
+
+    if (e.target.closest('.resource-delete')){
+      DO.U.resourceDelete(e, Config.DocumentURL);
+    }
+
+    if (e.target.closest('.message-log')) {
+      DO.U.showMessageLog(e);
+    }
+
+    if (e.target.closest('.document-info')) {
+      DO.U.showDocumentInfo(e);
     }
   });
 }
