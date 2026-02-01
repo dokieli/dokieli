@@ -16,11 +16,11 @@ limitations under the License.
 */
 
 import Config from './config.js'
-import { getDateTimeISO, fragmentFromString, generateAttributeId, uniqueArray, generateUUID, matchAllIndex, parseISODuration, getRandomIndex, getHash, stringFromFragment } from './util.js'
+import { getDateTimeISO, fragmentFromString, generateAttributeId, uniqueArray, generateUUID, matchAllIndex, parseISODuration, getRandomIndex, getHash, stringFromFragment, isValidISBN, getDateTimeISOFromMDY } from './util.js'
 import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath, getPrefixedNameFromIRI, generateDataURI, getProxyableIRI, getFragmentOrLastPath, isHttpOrHttpsProtocol, isFileProtocol } from './uri.js'
-import { getResourceHead, deleteResource, processSave, patchResourceWithAcceptPatch, copyResource } from './fetcher.js'
+import { getResourceHead, deleteResource, processSave, patchResourceWithAcceptPatch, copyResource, getResource } from './fetcher.js'
 import rdf from "rdf-ext";
-import { getResourceGraph, sortGraphTriples, getGraphContributors, getGraphAuthors, getGraphEditors, getGraphPerformers, getGraphPublishers, getGraphLabel, getGraphEmail, getGraphTitle, getGraphConceptLabel, getGraphPublished, getGraphUpdated, getGraphDescription, getGraphLicense, getGraphRights, getGraphFromData, getGraphAudience, getGraphTypes, getGraphLanguage, getGraphInbox, getUserLabelOrIRI, getGraphImage } from './graph.js'
+import { getResourceGraph, sortGraphTriples, getGraphContributors, getGraphAuthors, getGraphEditors, getGraphPerformers, getGraphPublishers, getGraphLabel, getGraphEmail, getGraphTitle, getGraphConceptLabel, getGraphPublished, getGraphUpdated, getGraphDescription, getGraphLicense, getGraphRights, getGraphFromData, getGraphAudience, getGraphTypes, getGraphLanguage, getGraphInbox, getUserLabelOrIRI, getGraphImage, getGraphDate } from './graph.js'
 import LinkHeader from "http-link-header";
 import { micromark as marked } from 'micromark';
 import { gfm, gfmHtml } from 'micromark-extension-gfm';
@@ -39,6 +39,7 @@ import { generateGeoView } from './geo.js';
 import { hideDocumentMenu, initDocumentMenu } from './menu.js';
 import { initEditor } from './editor/initEditor.js';
 import { diffChars } from 'diff';
+import { showVisualisationGraph } from './viz.js';
 
 const ns = Config.ns;
 
@@ -453,6 +454,18 @@ export function createFeedXML(feed, options) {
   }
 
   return feedXML;
+}
+
+export function getFeedFormatSelection() {
+  return `
+    <div id="feed-format-selection">
+      <label data-i18n="dialog.generate-feed.feed-format.label" for="feed-format">${i18n.t('dialog.generate-feed.feed-format.label.textContent')}</label>
+      <select id="feed-format">
+        <option id="feed-format-atom" lang="en" value="application/atom+xml" xml:lang="en">Atom</option>
+        <option id="feed-format-rss" lang="en" value="application/rss+xml" selected="selected" xml:lang="en">RSS</option>
+      </select>
+    </div>
+  `;
 }
 
 export function createActivityHTML(o) {
@@ -4558,7 +4571,7 @@ export function rewriteBaseURL(nodes, options) {
 
       var s = url.split(':')[0];
       if (s != 'http' && s != 'https' && s != 'file' && s != 'data' && s != 'urn' && document.location.protocol != 'file:') {
-        url = DO.U.setBaseURL(url, options);
+        url = setBaseURL(url, options);
       }
       else if (url.startsWith('http:') && node.tagName.toLowerCase()) {
         url = getProxyableIRI(url)
@@ -4668,7 +4681,7 @@ export function buildResourceView(data, options) {
 }
 
 
-function diffRequirements(sourceGraph, targetGraph) {
+export function diffRequirements(sourceGraph, targetGraph) {
   var documentURL = Config.DocumentURL;
   var sourceGraphURI = sourceGraph.term.value;
   var targetGraphURI = targetGraph.term.value;
@@ -4824,5 +4837,736 @@ export function copyRelativeResources(storageIRI, relativeNodes) {
 
       copyResource(fromURL, toURL);
     }
+  }
+}
+
+//TODO: Review grapoi
+export function showExtendedConcepts() {
+  var documentURL = Config.DocumentURL;
+  var citationsList = Config.Resource[documentURL].citations;
+
+  var promises = [];
+  citationsList.forEach(url => {
+    // console.log(u);
+    // window.setTimeout(function () {
+      // var pIRI = getProxyableIRI(u);
+      promises.push(getResourceGraph(url));
+    // }, 1000)
+  });
+
+  var dataset = rdf.dataset();
+  var html = [];
+  var options = { 'resources': [] };
+
+  return Promise.allSettled(promises)
+    .then(results => results.filter(r => r.status === 'fulfilled' && r.value).map(r => r.value))
+    .then(graphs => {
+// console.log(graphs);
+      graphs.forEach(g => {
+        if (g && !(g instanceof Error) && g.out().terms.length){
+        // if (g) {
+          var documentURL = g.term.value;
+          g = rdf.grapoi({dataset: g.dataset})
+// console.log(documentURL)
+// console.log(g)
+          Config.Resource[documentURL] = Config.Resource[documentURL] || {};
+          Config.Resource[documentURL]['graph'] = g;
+          Config.Resource[documentURL]['skos'] = getResourceInfoSKOS(g);
+          Config.Resource[documentURL]['title'] = getGraphLabel(g) || documentURL;
+
+          if (Config.Resource[documentURL]['skos']['graph'].out().terms.length) {
+            html.push(`
+              <section>
+                <h4><a href="${documentURL}">${Config.Resource[documentURL]['title']}</a></h4>
+                <div>
+                  <dl>${getDocumentConceptDefinitionsHTML(documentURL)}</dl>
+                </div>
+              </section>`);
+
+            dataset.addAll(Config.Resource[documentURL]['skos']['graph'].dataset);
+            options['resources'].push(documentURL);
+          }
+        }
+      });
+
+      var id = 'list-of-additional-concepts';
+      html = `
+        <section id="${id}" rel="schema:hasPart" resource="#${id}">
+          <h3 property="schema:name">Additional Concepts</h3>
+          <div>
+            <button class="graph" type="button">View Graph</button>
+            <figure></figure>${html.join('')}</div>
+        </section>`;
+
+      var aC = document.getElementById(id);
+      if (aC) {
+        aC.parentNode.removeChild(aC);
+      }
+
+      var loC = document.getElementById('list-of-concepts');
+
+      var ic = loC.querySelector('#include-concepts');
+      if (ic) { ic.parentNode.removeChild(ic); }
+
+      loC.querySelector('div').insertAdjacentHTML('beforeend', domSanitize(html));
+
+      // insertDocumentLevelHTML(document, html, { 'id': id });
+
+      aC = document.getElementById(id);
+      window.history.replaceState(null, null, '#' + id);
+      aC.scrollIntoView();
+
+      var selector = '#' + id + ' figure';
+
+      aC.addEventListener('click', (e) => {
+        var button = e.target.closest('button.graph');
+        if (button) {
+          button.parentNode.removeChild(button);
+
+          // serializeGraph(dataset, { 'contentType': 'text/turtle' })
+          //   .then(data => {
+          ///FIXME: This Config.DocumentURL doesn't seem right other than what the visualisation's root node becomes?
+              options['subjectURI'] = Config.DocumentURL;
+              options['contentType'] = 'text/turtle';
+              //FIXME: For multiple graphs (fetched resources), options.subjectURI is the last item, so it is inaccurate
+              showVisualisationGraph(options.subjectURI, dataset.toCanonical(), selector, options);
+            // });
+        }
+      })
+
+// console.log(dataGraph)
+
+
+// console.log(Config.Resource)
+      return dataset;
+    });
+}
+
+//TODO: Review grapoi
+export function getDocumentConceptDefinitionsHTML(documentURL) {
+// console.log(documentURL)
+  var s = '';
+  Object.keys(Config.Resource[documentURL]['skos']['type']).forEach(rdftype => {
+// console.log(rdftype)
+    s += '<dt>' + Config.SKOSClasses[rdftype] + 's</dt>';
+
+    if (rdftype == ns.skos.Concept.value) {
+      s += '<dd><ul>';
+    }
+
+    sortToLower(Config.Resource[documentURL]['skos']['type'][rdftype]).forEach(subject => {
+      var g = Config.Resource[documentURL]['graph'].node(rdf.namedNode(subject));
+
+      var conceptLabel = sortToLower(getGraphConceptLabel(g));
+// console.log(conceptLabel)
+      conceptLabel = (conceptLabel.length) ? conceptLabel.join(' / ') : getFragmentOrLastPath(subject);
+      conceptLabel = conceptLabel.trim();
+      conceptLabel = '<a href="' + subject + '">' + conceptLabel + '</a>';
+
+      if (rdftype == ns.skos.Concept.value) {
+        s += '<li>' + conceptLabel + '</li>';
+      }
+      else {
+        s += '<dd>';
+        s += '<dl>';
+        s += '<dt>' + conceptLabel + '</dt><dd><ul>';
+
+        var hasConcepts = [ns.skos.hasTopConcept.value, ns.skos.member.value];
+
+        hasConcepts.forEach(hasConcept => {
+          var concept = Config.Resource[documentURL]['skos']['data'][subject][hasConcept];
+
+          if (concept?.length) {
+            sortToLower(concept).forEach(c => {
+              var conceptGraph = Config.Resource[documentURL]['graph'].node(rdf.namedNode(c));
+              var cLabel = getGraphConceptLabel(conceptGraph);
+              cLabel = (cLabel.length) ? cLabel : [getFragmentOrLastPath(c)];
+              cLabel.forEach(cL => {
+                cL = cL.trim();
+                // console.log(cL)
+                s += '<li><a href="' + c + '">' + cL + '</a></li>';
+              });
+            });
+          }
+        });
+        s += '</ul></dd></dl>';
+        s += '</dd>';
+      }
+    })
+
+    if (rdftype == ns.skos.Concept.value) {
+      s += '</ul></dd>';
+    }
+  });
+
+  return s;
+}
+
+// ?spec spec:requirement ?requirement .
+// ?spec spec:implementationReport ?implementationReport .
+// ?spec spec:testSuite ?testSuite .
+// ?testSuite ldp:contains ?testCase .
+// ?testCase spec:requirementReference ?requirement .
+export function insertTestCoverageToTable(id, testSuiteGraph) {
+  var table = document.getElementById(id);
+  var thead = table.querySelector('thead');
+  thead.querySelector('tr:first-child').insertAdjacentHTML('beforeend', '<th colspan="2">Coverage</th>');
+  thead.querySelector('tr:nth-child(2)').insertAdjacentHTML('beforeend', '<th>Test Case (Review Status)</th>');
+
+  var subjects = [];
+  testSuiteGraph  = rdf.grapoi({ dataset: testSuiteGraph.dataset });
+// console.log(testSuiteGraph)
+  testSuiteGraph.out().quads().forEach(t => {
+// console.log(t)
+    subjects.push(t.subject.value);
+  });
+  subjects = uniqueArray(subjects);
+
+  var testCases = [];
+
+  //FIXME: Brittle selector
+  var specificationReferenceBase = document.querySelector('#document-latest-published-version [rel~="rel:latest-version"]').href;
+// console.log(specificationReferenceBase)
+
+  subjects.forEach(i => {
+    var s = testSuiteGraph.node(rdf.namedNode(i));
+    var testCaseIRI = s.term.value;
+    var types = getGraphTypes(s);
+
+    if (types.length) {
+      if (types.includes(ns['test-description'].TestCase.value)) {
+        var requirementReference = s.out(ns.spec.requirementReference).values[0];
+        if (requirementReference && requirementReference.startsWith(specificationReferenceBase)) {
+          testCases[testCaseIRI] = {};
+          testCases[testCaseIRI][ns.spec.requirementReference.value] = requirementReference;
+          testCases[testCaseIRI][ns['test-description'].reviewStatus.value] = s.out(ns['test-description'].reviewStatus).values[0];
+          testCases[testCaseIRI][ns.dcterms.title.value] = s.out(ns.dcterms.title).values[0];
+        }
+      }
+    }
+  });
+
+// console.log(testCases);
+
+  table.querySelectorAll('tbody tr').forEach(tr => {
+    var requirement = tr.querySelector('td:nth-child(3) a').href;
+
+    Object.keys(testCases).forEach(testCaseIRI => {
+      if (testCases[testCaseIRI][ns.spec.requirementReference.value] == requirement) {
+        var testCaseLabel = testCases[testCaseIRI][ns.dcterms.title.value] || testCaseIRI;
+
+        var testCaseHTML = '<a href="'+ testCaseIRI + '">' + testCaseLabel + '</a>';
+
+        if (testCases[testCaseIRI][ns['test-description'].reviewStatus.value]) {
+          var reviewStatusIRI = testCases[testCaseIRI][ns['test-description'].reviewStatus.value];
+          var reviewStatusLabel = getFragmentFromString(reviewStatusIRI) || getURLLastPath(reviewStatusIRI) || reviewStatusIRI;
+
+          var reviewStatusHTML = ' (<a href="'+ reviewStatusIRI + '">' + reviewStatusLabel + '</a>)';
+
+          testCaseHTML = testCaseHTML + reviewStatusHTML;
+        }
+
+        testCaseHTML = '<li>' + testCaseHTML + '</li>';
+
+        var tdTestCase = tr.querySelector('td:nth-child(4)');
+
+        if (tdTestCase) {
+          tdTestCase.querySelector('ul').insertAdjacentHTML('beforeend', testCaseHTML);
+        }
+        else {
+          tr.insertAdjacentHTML('beforeend', '<td><ul>' + testCaseHTML + '</ul></td>');
+        }
+      }
+    })
+
+    var tC = tr.querySelector('td:nth-child(4)');
+    if (!tC) {
+      tr.insertAdjacentHTML('beforeend', '<td><span class="warning">?</span></td>');
+    }
+  });
+
+  table.insertAdjacentHTML('beforeend', '<tfoot><tr>' + getTestDescriptionReviewStatusHTML() + '</tr></tfoot>')
+}
+
+export function getStorageSelfDescription(g) {
+  var s = '';
+
+  var storageName = getGraphLabel(g);
+  
+  var storageURL = g.term.value;
+
+  storageName = (typeof storageName !== 'undefined') ? storageName : storageURL;
+
+  Config.Resource[storageURL] = Config.Resource[storageURL] || {};
+  Config.Resource[storageURL]['title'] = storageName;
+  Config.Resource[storageURL]['description'] = g.out(ns.schema.abstract).values[0] || g.out(ns.dcterms.description).values[0] || g.out(ns.rdf.value).values[0] || g.out(ns.as.summary).values[0] || g.out(ns.schema.description).values[0] || g.out(ns.as.content).values[0] || undefined;
+
+  var storageTitle = '<dt>Storage name</dt><dd><a href="' + storageURL + '">' + storageName + '</a></dd>';
+  var storageDescription = (Config.Resource[storageURL]['description']) ? '<dt>Storage description</dt><dd>' + Config.Resource[storageURL]['description'] + '</dd>' : '';
+
+  s = '<dl id="storage-self-description">' + storageTitle + storageDescription + '</dl>';
+
+  return s;
+}
+
+export function getPersistencePolicy(g) {
+  var s = '';
+
+  var persistencePolicy = g.out(ns.pim.persistencePolicy).values;
+
+  if (persistencePolicy.length) {
+    var pp = [];
+
+    Config.Resource[g.term.value] = Config.Resource[g.term.value] || {};
+    Config.Resource[g.term.value]['persistencePolicy'] = [];
+
+    persistencePolicy.forEach(iri => {
+      Config.Resource[g.term.value]['persistencePolicy'].push(iri);
+
+      pp.push('<dd><a href="' + iri  + '" rel="noopener" target="_blank">' + iri + '</a></dd>');
+    });
+
+    s = '<dl id="storage-persistence-policy"><dt>URI persistence policy</dt>' + pp.join('') + '</dl>'
+  }
+
+  return s;
+}
+
+export function getODRLPolicies(g) {
+  var s = '';
+  var odrlPolicies = [];
+
+  var hasPolicy = g.out(ns.odrl.hasPolicy).values;
+
+  if (hasPolicy.length) {
+    hasPolicy.forEach(iri => {
+      var policy = g.node(rdf.namedNode(iri));
+      var policyDetails = [];
+
+      var types = getGraphTypes(policy);
+
+      var indexPolicy = types.findIndex(t => 
+        t === ns.odrl.Offer.value || t === ns.odrl.Agreement.value
+      );
+
+      if (indexPolicy >= 0) {
+        var rule = types[indexPolicy];
+        //XXX: Label derived from URI.
+        var ruleLabel = rule.substr(rule.lastIndexOf('/') + 1);
+
+        policyDetails.push('<dt>Rule<dt><dd><a href="' + rule + '" rel="noopener" target="_blank">' + ruleLabel + '</a></dd>');
+      }
+
+      //TODO: odrl:Set
+
+      var uid = policy.out(ns.odrl.uid).values[0];
+      if (uid) {
+        policyDetails.push('<dt>Unique identifier<dt><dd><a href="' + uid + '" rel="noopener" target="_blank">' + uid + '</a></dd>');
+      }
+
+      var target = policy.out(ns.odrl.target).values[0];
+      if (target) {
+        policyDetails.push('<dt>Target<dt><dd><a href="' + target + '" rel="noopener" target="_blank">' + target + '</a></dd>');
+      }
+
+      var permission = policy.out(ns.odrl.permission).values[0];
+      if (permission) {
+        var ruleG = g.node(rdf.namedNode(permission));
+
+        policyDetails.push(getODRLRuleActions(ruleG));
+        policyDetails.push(getODRLRuleAssigners(ruleG));
+        policyDetails.push(getODRLRuleAssignees(ruleG));
+      }
+      var prohibition = policy.out(ns.odrl.prohibition).values[0];
+      if (prohibition) {
+        ruleG = g.node(rdf.namedNode(prohibition));
+
+        policyDetails.push(getODRLRuleActions(ruleG));
+        policyDetails.push(getODRLRuleAssigners(ruleG));
+        policyDetails.push(getODRLRuleAssignees(ruleG));
+      }
+
+      var detail = '<dl>' + policyDetails.join('') + '</dl>';
+
+      odrlPolicies.push('<dd><details><summary><a href="' + iri + '" rel="noopener" target="_blank">' + iri + '</a></summary>' + detail + '</details></dd>');
+    });
+
+    s = '<dl id="odrl-policies"><dt>Policies</dt>' + odrlPolicies.join('') + '</dl>';
+  }
+
+  return s;
+}
+
+export function getODRLRuleActions(g) {
+// console.log(r.odrlaction)
+  var actions = [];
+
+  var actionsIRIs = g.out(ns.odrl.action).values;
+
+  actionsIRIs.forEach(iri => {
+    //FIXME: Label derived from URI.
+    var label = iri;
+    var href = iri;
+
+    if (iri.startsWith('http://www.w3.org/ns/odrl/2/')) {
+      label = iri.substr(iri.lastIndexOf('/') + 1);
+      href = 'https://www.w3.org/TR/odrl-vocab/#term-' + label;
+    }
+    else if (iri.startsWith('http://creativecommons.org/ns#')) {
+      label = iri.substr(iri.lastIndexOf('#') + 1);
+      href = 'https://www.w3.org/TR/odrl-vocab/#term-' + label;
+    }
+    else if (iri.lastIndexOf('#')) {
+      label = iri.substr(iri.lastIndexOf('#') + 1);
+    }
+    else if (iri.lastIndexOf('/')) {
+      label = iri.substr(iri.lastIndexOf('/') + 1);
+    }
+
+    var warning = '';
+    var attributeClass = '';
+    var attributeTitle = '';
+
+    //Get user's actions from preferred policy (prohibition) to check for conflicts with storage's policy (permission)
+    if (Config.User.PreferredPolicyRule && Config.User.PreferredPolicyRule.Prohibition && Config.User.PreferredPolicyRule.Prohibition.Actions.includes(iri)) {
+      warning = Icon[".fas.fa-circle-exclamation"] + ' ';
+      attributeClass = ' class="warning"';
+      attributeTitle = ' title="The action (' + label + ') is prohibited by preferred policy."';
+    }
+
+    actions.push('<li' + attributeTitle + '>' + warning + '<a' + attributeClass + ' href="' + href + '" resource="' + iri + '">' + label + '</a></li>')
+  });
+
+  actions = '<dt>Actions</dt><dd><ul rel="odrl:action">' + actions.join('') + '</ul></dd>';
+
+  return actions;
+}
+
+export function getODRLRuleAssigners(g) {
+  var s = '';
+  var a = [];
+
+  var assigners = g.out(ns.odrl.assigner).values;
+
+  assigners.forEach(iri => {
+    a.push('<dd><a href="' + iri + '" rel="noopener" target="_blank">' + iri + '</a></dd>');
+  });
+
+  s = '<dt>Assigners</dt>' + a.join('');
+
+  return s;
+}
+
+export function getODRLRuleAssignees(g) {
+  var s = '';
+  var a = [];
+
+  var assignees = g.out(ns.odrl.assignees).values;
+
+  assignees.forEach(iri => {
+    a.push('<dd><a href="' + iri + '" rel="noopener" target="_blank">' + iri + '</a></dd>');
+  });
+
+  s = '<dt>Assignees</dt>' + a.join('');
+
+  return s;
+}
+
+export function getContactInformation(g) {
+  var s = '';
+  var resourceOwners = [];
+
+  var solidOwner = g.out(ns.solid.owner).values;
+
+  if (solidOwner.length) {
+    Config.Resource[g.term.value] = Config.Resource[g.term.value] || {};
+    Config.Resource[g.term.value]['owner'] = [];
+
+    solidOwner.forEach(iri => {
+      Config.Resource[g.term.value]['owner'].push(iri);
+
+      resourceOwners.push('<dd><a href="' + iri + '" rel="noopener" target="_blank">' + iri + '</a></dd>');
+    });
+
+    s = '<dl id="resource-owners"><dt>Owners</dt>' + resourceOwners.join('') + '</dl>';
+  }
+
+  return s;
+}
+
+//TODO: Review grapoi
+export function getCitation(i, options) {
+  // console.log(i)
+  // console.log(options)
+  options = options || {};
+  options['noCredentials'] = true;
+  var url;
+
+  if (isValidISBN(i)) {
+    url = 'https://openlibrary.org/isbn/' + i;
+    var headers = {'Accept': 'application/json'};
+    var wikidataHeaders = {'Accept': 'application/ld+json'};
+
+    var isbnData = rdf.grapoi({ dataset: rdf.dataset() }).node(rdf.namedNode(url));
+
+    return getResource(url, headers, options)
+      .then(response => {
+        // console.log(response)
+        return response.text();
+      }).then(data => {
+        //TODO: try/catch?
+        data = JSON.parse(data);
+        // console.log(data)
+        //data.identifiers.librarything data.identifiers.goodreads
+
+        var promises = [];
+
+        if (data.title) {
+          // console.log(data.title)
+          isbnData.addOut(ns.schema.name, data.title);
+        }
+
+        //Unused
+        // if (data.subtitle) {
+        //   console.log(data.subtitle)
+        // }
+
+        if (data.publish_date) {
+          // console.log(data.publish_date)
+          isbnData.addOut(schemadatePublished, getDateTimeISOFromMDY(data.publish_date));
+        }
+
+        if (data.covers) {
+          // console.log(data.covers)
+          isbnData.addOut(ns.schema.image, rdf.namedNode('https://covers.openlibrary.org/b/id/' + data.covers[0] + '-S.jpg'));
+          // document.body.insertAdjacentHTML('afterbegin', '<img src="' + img + '"/>');
+
+          //   async function fetchImage(url) {
+          //     const img = new Image();
+          //     return new Promise((res, rej) => {
+          //         img.onload = () => res(img);
+          //         img.onerror = e => rej(e);
+          //         img.src = url;
+          //     });
+          // }
+          // const img = await fetchImage('https://covers.openlibrary.org/b/id/12547191-L.jpg');
+          // const w = img.width;
+          // const h = img.height;
+        }
+
+        if (data.authors && Array.isArray(data.authors) && data.authors.length && data.authors[0].key) {
+          var a = 'https://openlibrary.org' + data.authors[0].key;
+          // console.log(a)
+          promises.push(getResource(a, headers, options)
+            .then(response => {
+              // console.log(response)
+              return response.text();
+            })
+            .then(data => {
+              //TODO: try/catch?
+              data = JSON.parse(data);
+              // console.log(data)
+
+              var authorURL = 'http://example.com/.well-known/genid/' + generateUUID();
+              if (data.links && Array.isArray(data.links) && data.links.length) {
+                // console.log(data.links[0].url)
+                authorURL = data.links[0].url;
+              }
+              isbnData.addOut(ns.schema.author, rdf.namedNode(authorURL), authorName => {
+                if (data.name) {
+                  authorName.addOut(ns.schema.name, data.name);
+                }
+              });
+
+              return isbnData;
+
+              // XXX: Working but unused:
+              // if (data.remote_ids && data.remote_ids.wikidata) {
+              //   wE has a few redirects to wW
+              //   var wE = 'https://www.wikidata.org/entity/' + data.remote_ids.wikidata;
+              //   var wW = 'https://www.wikidata.org/wiki/Special:EntityData/' + data.remote_ids.wikidata + '.jsonld';
+              //   promises.push(getResourceGraph(wW, wikidataHeaders, options)
+              //     .then(g => {
+              //       console.log(g)
+              //       console.log(g.iri().toString())
+              //       var s = g.match(wE.replace(/^https:/, 'http:'))
+              //         console.log(s.toString());
+
+              //       console.log(isbnData)
+              //       console.log(isbnData.toString())
+
+              //       return isbnData;
+              //     }));
+              // }
+
+            }));
+        }
+
+        // XXX: Working but unused:
+        // if (data.identifiers?.wikidata && Array.isArray(data.identifiers.wikidata) && data.identifiers.wikidata.length) {
+        //   var w = 'https://www.wikidata.org/entity/' + data.identifiers.wikidata[0];
+        //   promises.push(getResourceGraph(w, wikidataHeaders, options).then(g => {
+        //     console.log(g);
+        //     console.log(g.toString());
+        //   }));
+        // }
+
+        return Promise.allSettled(promises)
+          .then(results => {
+            var items = [];
+            results.forEach(result => {
+              // console.log(result)
+              items.push(result.value);
+            })
+
+            //For now just [0]
+            return items[0];
+          });
+
+      })
+  }
+  else {
+    if (i.match(/^10\.\d+\//)) {
+      url= 'https://doi.org/' + i;
+    }
+    else {
+      url = i.replace(/https?:\/\/dx\.doi\.org\//i, 'https://doi.org/');
+    }
+
+    return getResourceGraph(url, null, options);
+  }
+}
+
+export function getCitationHTML(citationGraph, citationURI, options) {
+  if (!citationGraph) { return; }
+  options = options || {};
+  // var citationId = ('citationId' in options) ? options.citationId : citationURI;
+  var subject = citationGraph.node(rdf.namedNode(citationURI));
+  // console.log(citationGraph);
+  // console.log('citationGraph.iri().toString(): ' + citationGraph.iri().toString());
+  // console.log('citationGraph.toString(): ' + citationGraph.toString());
+  // console.log('options.citationId: ' + options.citationId);
+  // console.log('citationURI: ' + citationURI);
+  // console.log('subject.iri().toString(): ' + subject.iri().toString());
+
+  var title = getGraphLabel(subject);
+  //FIXME: This is a hack that was related to SimpleRDF's RDFa parser not setting the base properly. May no longer be needed.
+  if(typeof title == 'undefined') {
+    subject = citationGraph.node(rdf.namedNode(options.citationId));
+
+    title = getGraphLabel(subject) || '';
+  }
+  title = htmlEncode(title);
+  title = (title.length) ? '<cite>' + title + '</cite>, ' : '';
+  var datePublished = getGraphDate(subject) || '';
+  var dateVersion = subject.out(ns.schema.dateModified).values[0] || datePublished;
+  datePublished = (datePublished) ? datePublished.substr(0,4) + ', ' : '';
+  var dateAccessed = 'Accessed: ' + getDateTimeISO();
+  var authors = [], authorList = [];
+  // console.log(subject);
+  // console.log(subject.biboauthorList);
+  // console.log(subject.schemaauthor);
+  // console.log(subject.dctermscreator);
+
+  //   XXX: FIXME: Putting this off for now because SimpleRDF is not finding the bnode for some reason in citationGraph.child(item), or at least authorItem.rdffirst (undefined)
+  //   TODO: Revisit using grapoi
+  //       if (subject.biboauthorList) {
+  // TODO: Just use/test something like: authorList = authorList.concat(traverseRDFList(citationGraph, subject.biboauthorList));
+  //       }
+  //       else
+
+  var schemaAuthor = subject.out(ns.schema.author).values;
+  var dctermsCreator = subject.out(ns.dcterms.creator).values;
+  var asActor = subject.out(ns.as.actor).values;
+  if (schemaAuthor.length) {
+    schemaAuthor.forEach(a => {
+      authorList.push(a);
+    });
+  }
+  else if (dctermsCreator.length) {
+    dctermsCreator.forEach(a => {
+      authorList.push(a);
+    });
+  }
+  else if (asActor.length) {
+    asActor.forEach(a => {
+      authorList.push(a);
+    });
+  }
+  // console.log(authorList);
+
+  if (authorList.length) {
+    authorList.forEach(authorIRI => {
+      var s = subject.node(rdf.namedNode(authorIRI));
+      var author = getAgentName(s);
+      var schemafamilyName = s.out(ns.schema.familyName).values;
+      var schemagivenName = s.out(ns.schema.givenName).values;
+      var foaffamilyName = s.out(ns.foaf.familyName).values;
+      var foafgivenName = s.out(ns.foaf.givenName).values;
+
+      if (schemafamilyName.length && schemagivenName.length) {
+        author = createRefName(schemafamilyName[0], schemagivenName[0]);
+      }
+      else if (foaffamilyName.length && foafgivenName.length) {
+        author = createRefName(foaffamilyName[0], foafgivenName[0]);
+      }
+
+      if (author) {
+        authors.push(author);
+      }
+      else {
+        authors.push(authorIRI);
+      }
+    });
+    authors = authors.join(', ') + ': ';
+  }
+
+  var dataVersionURL;
+  var memento = subject.out(ns.mem.memento).values;
+  var latestVersion = subject.out(ns.rel['latest-version']).values;
+  if (memento.length) {
+    dataVersionURL = memento;
+  }
+  else if (latestVersion.length) {
+    dataVersionURL = latestVersion;
+  }
+  dataVersionURL = (dataVersionURL) ? ' data-versionurl="' + dataVersionURL + '"' : '';
+
+  var dataVersionDate = (dateVersion) ? ' data-versiondate="' + dateVersion + '"' : '';
+
+  var content = ('content' in options && options.content.length) ? options.content + ', ' : '';
+
+  var citationReason = 'Reason: ' + Config.Citation[options.citationRelation];
+
+  var citationIdLabel = citationURI;
+  var prefixCitationLink = '';
+
+  if (isValidISBN(options.citationId)) {
+    citationIdLabel = options.citationId;
+    prefixCitationLink = ', ISBN: ';
+  }
+  else if (options.citationId.match(/^10\.\d+\//)) {
+    citationURI = 'https://doi.org/' + options.citationId;
+    citationIdLabel = citationURI;
+  }
+  else {
+    citationURI = citationURI.replace(/https?:\/\/dx\.doi\.org\//i, 'https://doi.org/');
+    citationIdLabel = citationURI;
+  }
+
+  var citationHTML = authors + title + datePublished + content + prefixCitationLink + '<a about="#' + options.refId + '"' + dataVersionDate + dataVersionURL + ' href="' + citationURI + '" rel="schema:citation ' + options.citationRelation  + '" title="' + Config.Citation[options.citationRelation] + '">' + citationIdLabel + '</a> [' + dateAccessed + ', ' + citationReason + ']';
+  //console.log(citationHTML);
+  return citationHTML;
+}
+
+export function createRefName(familyName, givenName, refType) {
+  refType = refType || Config.DocRefType;
+  switch(refType) {
+    case 'LNCS': default:
+      return familyName + ', ' + givenName.slice(0,1) + '.';
+    case 'ACM':
+      return givenName.slice(0,1) + '. ' + familyName;
+    case 'fullName':
+      return givenName + ' ' + familyName;
   }
 }

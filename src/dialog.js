@@ -18,20 +18,21 @@ limitations under the License.
 import { diffArrays } from 'diff';
 import { i18n } from './i18n.js';
 import { normalizeForDiff } from './utils/normalization.js'
-import { getButtonHTML } from './ui/buttons.js';
-import { showUserIdentityInput } from './auth.js';
-import { accessModeAllowed, addMessageToLog, buildResourceView, copyRelativeResources, createNoteDataHTML, getAccessModeOptionsHTML, getBaseURLSelection, getDocument, getLanguageOptionsHTML, getLicenseOptionsHTML, parseMarkdown, setCopyToClipboard, showActionMessage, spawnDokieli } from './doc.js';
+import { getButtonHTML, updateButtons } from './ui/buttons.js';
+import { getSubjectInfo, showUserIdentityInput } from './auth.js';
+import { accessModeAllowed, addMessageToLog, buildResourceView, copyRelativeResources, createFeedXML, createHTML, createImmutableResource, createMutableResource, createNoteDataHTML, getAccessModeOptionsHTML, getBaseURLSelection, getDocument, getFeedFormatSelection, getLanguageOptionsHTML, getLicenseOptionsHTML, getNodeWithoutClasses, getResourceInfo, parseMarkdown, rewriteBaseURL, setCopyToClipboard, setDocumentRelation, showActionMessage, showRobustLinksDecoration, showTimeMap, spawnDokieli, updateMutableResource, buildReferences, getDocumentConceptDefinitionsHTML, removeSelectorFromNode, insertDocumentLevelHTML, insertTestCoverageToTable, diffRequirements, showExtendedConcepts, selectArticleNode, removeReferences, getStorageSelfDescription, getContactInformation, getPersistencePolicy, getODRLPolicies } from './doc.js';
 import { domSanitize } from './utils/sanitization.js';
 import { hideDocumentMenu, initDocumentMenu, showDocumentMenu } from './menu.js';
-import { findPreviousDateTime, fragmentFromString, generateAttributeId, generateFilename, generateUUID, setDocumentURL } from './util.js';
-import { currentLocation, getResource, patchResourceWithAcceptPatch, putResource, putResourceWithAcceptPut, setAcceptRDFTypes } from './fetcher.js';
-import { forceTrailingSlash, generateDataURI, getAbsoluteIRI, getBaseURL, stripFragmentFromString } from './uri.js';
-import { getAccessSubjects, getACLResourceGraph, getAgentName, getAuthorizationsMatching, getGraphImage, getGraphTypes, getLinkRelation, getResourceGraph } from './graph.js';
-import { notifyInbox, sendNotifications } from './activity.js';
+import { escapeRDFLiteral, findPreviousDateTime, fragmentFromString, generateAttributeId, generateFilename, generateUUID, setDocumentURL } from './util.js';
+import { currentLocation, deleteResource, getResource, patchResourceWithAcceptPatch, postResource, putResource, putResourceWithAcceptPut, setAcceptRDFTypes } from './fetcher.js';
+import { forceTrailingSlash, generateDataURI, getAbsoluteIRI, getBaseURL, isHttpOrHttpsProtocol, stripFragmentFromString, getFragmentFromString, getURLLastPath } from './uri.js';
+import { getAccessSubjects, getACLResourceGraph, getAgentInbox, getAgentName, getAuthorizationsMatching, getGraphAuthors, getGraphContributors, getGraphEditors, getGraphImage, getGraphLabelOrIRI, getGraphPerformers, getGraphTypes, getLinkRelation, getLinkRelationFromHead, getResourceGraph, getUserContacts, getUserLabelOrIRI, serializeData } from './graph.js';
+import { notifyInbox, sendNotifications, showContactsActivities } from './activity.js';
 import Config from './config.js';
 const ns = Config.ns;
 import { Icon } from './ui/icons.js';
 import rdf from 'rdf-ext';
+import { autoSave, disableAutoSave, syncLocalRemoteResource, updateLocalStorageProfile } from './storage.js';
 
 export function showResourceReviewChanges(localContent, remoteContent, response, reviewOptions) {
   if (!localContent.length || !remoteContent.length) return;
@@ -99,7 +100,7 @@ export function showResourceReviewChanges(localContent, remoteContent, response,
 
   document.body.appendChild(fragmentFromString(`
     <aside aria-labelledby="review-changes-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="review-changes" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#review-changes" xml:lang="${Config.User.UI.Language}">
-      <h2 data-i18n="dialog.review-changes.h2" id="review-changes-label" property="schema:name">${i18n.t('dialog.review-changes.h2.textContent')} ${DO.C.Button.Info.ReviewChanges}</h2>
+      <h2 data-i18n="dialog.review-changes.h2" id="review-changes-label" property="schema:name">${i18n.t('dialog.review-changes.h2.textContent')} ${Config.Button.Info.ReviewChanges}</h2>
       ${buttonClose}
       <div class="info">${message}</div>
     </aside>`));
@@ -228,21 +229,20 @@ export function showResourceReviewChanges(localContent, remoteContent, response,
         // update local content with the stuff in the diff editor view
         Config.Editor.replaceContent(Config.Editor.mode, diffNode.querySelector('.ProseMirror'));
         Config.Editor.init(Config.Editor.mode, document.body);
-        autoSave(DO.C.DocumentURL, { method: 'localStorage' });
+        autoSave(Config.DocumentURL, { method: 'localStorage' });
 
         syncLocalRemoteResource({ forceLocal: true });
       }
 
       node.remove();
     }
-
   });
 }
 
 export function initializeButtonMore(node) {
   var info = node.querySelector('div.info');
   var progressOld = info.querySelector('.progress');
-  var progressNew = fragmentFromString(`<div class="progress" data-i18n="panel.notifications.progress.more">${DO.C.Button.Notifications.More} ${i18n.t('panel.notifications.progress.more.textContent')}</div>`);
+  var progressNew = fragmentFromString(`<div class="progress" data-i18n="panel.notifications.progress.more">${Config.Button.Notifications.More} ${i18n.t('panel.notifications.progress.more.textContent')}</div>`);
 
   if (progressOld) {
     info.replaceChild(progressNew, progressOld)
@@ -255,11 +255,11 @@ export function initializeButtonMore(node) {
 
   var buttonMore = node.querySelector('div.info button.more');
   buttonMore.addEventListener('click', () => {
-    if (!DO.C.User.IRI) {
+    if (!Config.User.IRI) {
       showUserIdentityInput();
     }
     else {
-      DO.U.showContactsActivities();
+      showContactsActivities();
     }
   });
 }
@@ -275,7 +275,7 @@ export function initializeNotifications(options = {}) {
   //TEMP buttonRel/Resource
   var aside = `
   <aside aria-labelledby="document-notifications-label" class="do" contenteditable="false" dir="${Config.User.UI.LanguageDir}" id="document-notifications" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#document-notifications" xml:lang="${Config.User.UI.Language}">
-    <h2 data-i18n="panel.notifications.h2" id="document-notifications-label" property="schema:name">${i18n.t('panel.notifications.h2.textContent')} ${DO.C.Button.Info.Notifications}</h2>
+    <h2 data-i18n="panel.notifications.h2" id="document-notifications-label" property="schema:name">${i18n.t('panel.notifications.h2.textContent')} ${Config.Button.Info.Notifications}</h2>
     ${buttonToggle}
     <div>
       <div class="info"></div>
@@ -444,7 +444,7 @@ export function shareResource(listenerEvent, iri) {
   var li = document.getElementById('share-resource-address-book');
   li.insertAdjacentHTML('beforeend', Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]);
 
-  DO.U.selectContacts(li, Config.User.IRI);
+  selectContacts(li, Config.User.IRI);
 
   var hasAccessModeControl = accessModeAllowed(documentURL, 'control');
   if (hasAccessModeControl) {
@@ -689,6 +689,91 @@ export function shareResource(listenerEvent, iri) {
       return sendNotifications(tos, note, iri, shareResource)
     }
   });
+}
+
+export function selectContacts(node, url) {
+  node.setHTMLUnsafe(domSanitize('<ul id="share-resource-contacts"></ul>'));
+  var shareResourceNode = document.getElementById('share-resource-contacts');
+
+  if (Config.User.Contacts && Object.keys(Config.User.Contacts).length){
+    Object.keys(Config.User.Contacts).forEach(iri => {
+      if (Config.User.Contacts[iri].Inbox && Config.User.IRI !== iri) {
+        addShareResourceContactInput(shareResourceNode, Config.User.Contacts[iri]);
+      }
+    });
+  }
+  else {
+    updateContactsInfo(url, shareResourceNode);
+  }
+}
+
+export function updateContactsInfo(url, node, options) {
+  options = options || {};
+
+  return getUserContacts(url)
+    .then(contacts => {
+      if (contacts.length) {
+        contacts.forEach(url => {
+          getSubjectInfo(url)
+            .then(subject => {
+              Config.User['Contacts'] = Config.User['Contacts'] || {};
+              Config.User.Contacts[url] = subject;
+
+              addShareResourceContactInput(node, subject);
+
+              //TODO: This should be called only once after processing all contacts. Refactor the loop to eventually use Promise.allSettled perhaps.
+              updateLocalStorageProfile(Config.User);
+            })
+        });
+
+        // return Promise.all(promises)
+      }
+      //TODO: This feature used to exist where user was able to enter WebIDs in a textarea (one per line? comma-separated).
+      // else {
+      //   node.setHTMLUnsafe(domSanitize('No contacts with ' + Icon[".fas.fa-inbox"] + ' inbox found in your profile, but you can enter contacts individually:'));
+      // }
+
+      return Promise.resolve();
+    });
+}
+
+export function addShareResourceContactInput(node, agent) {
+  var iri = agent.IRI
+  var inbox = agent.Inbox;
+
+  if (inbox && inbox.length) {
+    var id = encodeURIComponent(iri);
+    var name = agent.Name || iri;
+    var img = agent.Image;
+    if (!(img && img.length)) {
+      img = generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
+    }
+    img = '<img alt="" height="32" src="' + img + '" width="32" />';
+
+    var input = '<li><input id="share-resource-contact-' + id + '" type="checkbox" value="' + iri + '" /><label for="share-resource-contact-' + id + '">' + img + '<a href="' + iri + '" rel="noopener" target="_blank">' + name + '</a></label></li>';
+
+    node.insertAdjacentHTML('beforeend', input);
+  }
+}
+
+export function updateContactsInbox(iri, s) {
+  var checkInbox = function(s) {
+    var aI = getAgentInbox(s);
+
+    if (aI) {
+      return Promise.resolve(aI);
+    }
+    else {
+      return getLinkRelationFromHead(ns.ldp.inbox.value, iri);
+    }
+  }
+
+  return checkInbox(s)
+    .then(inboxes => {
+      if (inboxes && inboxes.length) {
+        Config.User.Contacts[iri]['Inbox'] = inboxes;
+      }
+    })
 }
 
 //TODO: Revisit this function and addShareResourceContactInput to generalise.
@@ -1249,12 +1334,12 @@ function setupResourceBrowser(parent, id, action){
         //   //Browsing removes whatever was for create container and restarts browse on new location
         //   browseButton.addEventListener('click', () => {
         //     createContainer.replaceChildren();
-        //     DO.U.triggerBrowse(input.value, id, action);
+        //     triggerBrowse(input.value, id, action);
         //   }, false);
 
         //   //Clicking on create container button shows the input
         //   createButton.addEventListener('click', (e) => {
-        //     DO.U.showCreateContainer(input.value, id, action, e);
+        //     showCreateContainer(input.value, id, action, e);
         //   }, false);
         // }
       })
@@ -1631,11 +1716,11 @@ function showStorageDescription(s, id, storageUrl, checkAgain) {
                   var primaryTopic = g.out(ns.foaf.primaryTopic).values;
                   g = (primaryTopic.length) ? g.node(rdf.namedNode(primaryTopic[0])) : g.node(rdf.namedNode(storageUrl));
 
-                  var selfDescription = DO.U.getStorageSelfDescription(g);
-                  var contactInformation = DO.U.getContactInformation(g);
-                  var persistencePolicy = DO.U.getPersistencePolicy(g);
-                  var odrlPolicies = DO.U.getODRLPolicies(g);
-                  var communicationOptions = DO.U.getCommunicationOptions(g);
+                  var selfDescription = getStorageSelfDescription(g);
+                  var contactInformation = getContactInformation(g);
+                  var persistencePolicy = getPersistencePolicy(g);
+                  var odrlPolicies = getODRLPolicies(g);
+                  var communicationOptions = getCommunicationOptions(g);
 
                   sD.insertAdjacentHTML('beforeend', domSanitize('<div id="' + id + '-storage-description">' + storageLocation + selfDescription + contactInformation + persistencePolicy + odrlPolicies + communicationOptions + '</div>'));
 
@@ -1643,7 +1728,7 @@ function showStorageDescription(s, id, storageUrl, checkAgain) {
                   var topicResource = s.term.value;
 
                   var nodes = document.querySelectorAll('[id="' + id + '-storage-description"] [id^="notification-subscriptions-"]');
-                  DO.U.buttonSubscribeNotificationChannel(nodes, topicResource);
+                  buttonSubscribeNotificationChannel(nodes, topicResource);
                 }
                 else {
                   // TODO: var status = (g.status) ? g.status
@@ -1816,7 +1901,7 @@ export function openDocument(e) {
     }
   });
 
-  openDocument.querySelector('#open-local-file').addEventListener('change', DO.U.openInputFile, false);
+  openDocument.querySelector('#open-local-file').addEventListener('change', openInputFile, false);
 }
 
 export function viewSource(e) {
@@ -1841,7 +1926,7 @@ export function viewSource(e) {
       <h2 data-i18n="dialog.source-view.h2" id="source-view-label" property="schema:name">${i18n.t('dialog.source-view.h2.textContent')} ${Config.Button.Info.Source}</h2>
       ${buttonClose}
       <div class="info"></div>
-      <textarea dir="ltr id="source-edit" rows="24" cols="80"></textarea>
+      <textarea dir="ltr" id="source-edit" rows="24" cols="80"></textarea>
       <p><button class="update" data-i18n="dialog.source-view.update.button"${buttonDisabled} title="Update source" type="submit">${i18n.t('dialog.source-view.update.button.textContent')}</button></p>
     </aside>
   `));
@@ -2292,4 +2377,2203 @@ export async function saveAsDocument(e) {
         }
       })
   })
+}
+
+export function createNewDocument(e) {
+  hideDocumentMenu();
+
+  Config.Editor.toggleEditor('author', { template: 'new' });
+
+  Config.DocumentAction = 'new';
+
+  disableAutoSave(Config.DocumentURL, {'method': 'localStorage'});
+
+  updateButtons();
+}
+
+export function showEmbedData(e) {
+  if(document.querySelector('#embed-data-in-html')) { return; }
+
+  // var eventEmbedData = function(e) {
+    e.target.setAttribute('disabled', 'disabled');
+    var scriptCurrent = document.querySelectorAll('head script[id^="meta-"]');
+
+    var scriptType = {
+      'meta-turtle': {
+        mediaType: 'text/turtle',
+        scriptStart: '<script id="meta-turtle" title="Turtle" type="text/turtle">',
+        cdataStart: '# ' + Config.CDATAStart + '\n',
+        cdataEnd: '\n# ' + Config.CDATAEnd,
+        scriptEnd: '</script>'
+      },
+      'meta-json-ld': {
+        mediaType: 'application/ld+json',
+        scriptStart: '<script id="meta-json-ld" title="JSON-LD" type="application/ld+json">',
+        cdataStart: Config.CDATAStart + '\n',
+        cdataEnd: '\n' + Config.CDATAEnd,
+        scriptEnd: '</script>'
+      },
+      'meta-trig': {
+        mediaType: 'application/trig',
+        scriptStart: '<script id="meta-trig" title="TriG" type="application/trig">',
+        cdataStart: '# ' + Config.CDATAStart + '\n',
+        cdataEnd: '\n# ' + Config.CDATAEnd,
+        scriptEnd: '</script>'
+      }
+    }
+
+    var scriptCurrentData = {};
+    if (scriptCurrent.length) {
+      for(var i = 0; i < scriptCurrent.length; i++) {
+        var v = scriptCurrent[i];
+        var id = v.id;
+        scriptCurrentData[id] = v.getHTML().split(/\r\n|\r|\n/);
+        scriptCurrentData[id].shift();
+        scriptCurrentData[id].pop();
+        scriptCurrentData[id] = {
+          'type': v.getAttribute('type') || '',
+          'title': v.getAttribute('title') || '',
+          'content' : scriptCurrentData[id].join('\n')
+        };
+      }
+    }
+
+    var buttonClose = getButtonHTML({ key: 'dialog.embed-data-entry.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
+
+    var embedMenu = `
+    <aside aria-labelledby="embed-data-entry-label" class="do on tabs" dir="${Config.User.UI.LanguageDir}" id="embed-data-entry" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#embed-data-entry" xml:lang="${Config.User.UI.Language}">
+      <h2 data-i18n="dialog.embed-data-entry.h2" id="embed-data-entry-label" property="schema:name">${i18n.t('dialog.embed-data-entry.h2.textContent')} ${Config.Button.Info.EmbedData}</h2>
+      ${buttonClose}
+      <div class="info"></div>
+      <nav><ul><li class="selected"><a href="#embed-data-turtle">Turtle</a></li><li><a href="#embed-data-json-ld">JSON-LD</a></li><li><a href="#embed-data-trig">TriG</a></li></ul></nav>
+      <div id="embed-data-turtle" class="selected"><textarea dir="ltr" placeholder="Enter data in Turtle" name="meta-turtle" cols="80" rows="24">${(scriptCurrentData['meta-turtle'] ? scriptCurrentData['meta-turtle'].content : '')}</textarea><button class="save" data-i18n="dialog.embed-data-entry.submit.button" title="${i18n.t('dialog.embed-data-entry.submit.button.title')}" type="submit">${i18n.t('dialog.embed-data-entry.submit.button.textContent')}</button></div>
+      <div id="embed-data-json-ld"><textarea dir="ltr" placeholder="Enter data in JSON-LD" name="meta-json-ld" cols="80" rows="24">${(scriptCurrentData['meta-json-ld'] ? scriptCurrentData['meta-json-ld'].content : '')}</textarea><button class="save" data-i18n="dialog.embed-data-entry.submit.button" title="${i18n.t('dialog.embed-data-entry.submit.button.title')}" type="submit">${i18n.t('dialog.embed-data-entry.submit.button.textContent')}</button></div>
+      <div id="embed-data-trig"><textarea dir="ltr" placeholder="Enter data in TriG" name="meta-trig" cols="80" rows="24">${(scriptCurrentData['meta-trig'] ? scriptCurrentData['meta-trig'].content : '')}</textarea><button class="save" data-i18n="dialog.embed-data-entry.submit.button" title="${i18n.t('dialog.embed-data-entry.submit.button.title')}" type="submit">${i18n.t('dialog.embed-data-entry.submit.button.textContent')}</button></div>
+    </aside>
+    `;
+
+    document.body.appendChild(fragmentFromString(embedMenu));
+    document.querySelector('#embed-data-turtle textarea').focus();
+    var a = document.querySelectorAll('#embed-data-entry nav a');
+    for(let i = 0; i < a.length; i++) {
+      a[i].addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        var li = e.target.parentNode;
+        if(!li.classList.contains('selected')) {
+          document.querySelector('#embed-data-entry nav li.selected').classList.remove('selected');
+          li.classList.add('selected');
+          document.querySelector('#embed-data-entry > div.selected').classList.remove('selected');
+          var d = document.querySelector('#embed-data-entry > div' + e.target.hash);
+          d.classList.add('selected');
+          d.querySelector('textarea').focus();
+        }
+      });
+    }
+
+    document.querySelector('#embed-data-entry button.close').addEventListener('click', (e) => {
+      document.querySelector('button.embed-data-meta').removeAttribute('disabled');
+    });
+
+    var buttonSave = document.querySelectorAll('#embed-data-entry button.save');
+    for (let i = 0; i < buttonSave.length; i++) {
+      buttonSave[i].addEventListener('click', (e) => {
+        var textarea = e.target.closest('.selected').querySelector('textarea');
+        var name = textarea.getAttribute('name');
+        var data = textarea.value.trim();
+
+        var script = document.getElementById(name);
+        if (scriptType[name] && data.length) {
+          //If there was a script already
+
+          serializeData(data, scriptType[name].mediaType, scriptType[name].mediaType, { sanitize: true })
+            .then(scriptEntry => {
+              if (script) {
+                script.textContent = scriptType[name].cdataStart + scriptEntry + scriptType[name].cdataEnd;
+              }
+              else {
+                document.querySelector('head').insertAdjacentHTML('beforeend',
+                  scriptType[name].scriptStart +
+                  scriptType[name].cdataStart +
+                  scriptEntry +
+                  scriptType[name].cdataEnd +
+                  scriptType[name].scriptEnd
+                );
+              }
+            })
+        }
+        else {
+          //Remove if no longer used
+          script.parentNode.removeChild(script);
+        }
+
+        var ede = document.getElementById('embed-data-entry');
+        ede.parentNode.removeChild(ede);
+        document.querySelector('.embed-data-meta').removeAttribute('disabled');
+      });
+    }
+  // };
+
+  // var edih = document.querySelector('button.embed-data-meta');
+  // edih.removeEventListener('click', eventEmbedData);
+  // edih.addEventListener('click', eventEmbedData);
+}
+
+//TODO: Review grapoi
+export function showDocumentMetadata(node) {
+  if(document.querySelector('#document-metadata')) { return; }
+
+  var documentURL = Config.DocumentURL;
+
+  var content = selectArticleNode(document);
+  var count = contentCount(content);
+  var authors = [], contributors = [], editors = [], performers = [];
+  var citationsTo = [];
+  var requirements = [];
+  var advisements = [];
+  var skos = [];
+
+  // var subjectURI = currentLocation();
+  // var options = {'contentType': 'text/html', 'subjectURI': subjectURI };
+// console.log(options)
+  var g = Config.Resource[documentURL].graph;
+  var citations = Object.keys(Config.Citation).concat([ns.dcterms.references.value, ns.schema.citation.value]);
+  var triples = g.out().quads();
+  // g.out().terms.length
+  for (const t of triples) {
+// console.log(t)
+    var s = t.subject.value;
+    var p = t.predicate.value;
+    var o = t.object.value;
+
+    //TODO: Distinguish between external/internal for Config.Resource[documentURL].citations (right now it is external only), then use that for citations in showDocumentMetadata instead of using this triples.forEach
+    if (citations.includes(p)) {
+      citationsTo.push(t);
+    }
+  };
+
+  requirements = (Config.Resource[documentURL].spec && Config.Resource[documentURL].spec['requirement']) ? Object.keys(Config.Resource[documentURL].spec['requirement']) : [];
+  advisements = (Config.Resource[documentURL].spec && Config.Resource[documentURL].spec['advisement']) ? Object.keys(Config.Resource[documentURL].spec['advisement']) : [];
+  skos = (Config.Resource[documentURL].skos) ? Config.Resource[documentURL].skos : [];
+
+  citations = `<tr class="citations"><th data-i18n="panel.document-metadata.citations.th">${i18n.t('panel.document-metadata.citations.th.textContent')}</th><td>${citationsTo.length}</td></tr>`;
+  requirements = `<tr class="requirements"><th data-i18n="panel.document-metadata.requirements.th">${i18n.t('panel.document-metadata.requirements.th.textContent')}</th><td>${requirements.length}</td></tr>`;
+  advisements = `<tr class="advisements"><th data-i18n="panel.document-metadata.advisements.th">${i18n.t('panel.document-metadata.advisements.th.textContent')}</th><td>${advisements.length}</td></tr>`;
+  var conceptsList = [];
+  conceptsList = (skos.type && skos.type[ns.skos.Concept.value]) ? skos.type[ns.skos.Concept.value] : conceptsList;
+
+  var concepts = `<tr class="concepts"><th data-i18n="panel.document-metadata.concepts.th">${i18n.t('panel.document-metadata.concepts.th.textContent')}</th><td>${conceptsList.length}</td></tr>`;
+  // TODO: Review grapoi . Check it matches expected
+  var statements = `<tr class="statements"><th data-i18n="panel.document-metadata.statements.th">${i18n.t('panel.document-metadata.statements.th.textContent')}</th><td>${g.out().terms.length}</td></tr>`;
+
+  var graphEditors = getGraphEditors(g);
+  var graphAuthors = getGraphAuthors(g);
+  var graphContributors = getGraphContributors(g);
+  var graphPerformers = getGraphPerformers(g);
+
+  if (graphEditors) {
+    graphEditors.forEach(i => {
+      var go = g.node(rdf.namedNode(i));
+      let name = getGraphLabelOrIRI(go);
+      name = (name === i) ? getUserLabelOrIRI(i) : name;
+      editors.push(`<li>${name}</li>`);
+    });
+    if (editors.length){
+      editors = `<tr class="people"><th data-i18n="panel.document-metadata.editors.th">${i18n.t('panel.document-metadata.editors.th.textContent')}</th><td><ul class="editors">${editors.join('')}</ul></td></tr>`;
+    }
+  }
+
+  if (graphAuthors) {
+    graphAuthors.forEach(i => {
+      var go = g.node(rdf.namedNode(i));
+      let name = getGraphLabelOrIRI(go);
+      name = (name === i) ? getUserLabelOrIRI(i) : name;
+      authors.push(`<li>${name}</li>`);
+    });
+    if (authors.length){
+      authors = `<tr class="people"><th data-i18n="panel.document-metadata.authors.th">${i18n.t('panel.document-metadata.authors.th.textContent')}</th><td><ul class="authors">${authors.join('')}</ul></td></tr>`;
+    }
+  }
+
+  if (graphContributors) {
+    graphContributors.forEach(i => {
+      var go = g.node(rdf.namedNode(i));
+      let name = getGraphLabelOrIRI(go);
+      name = (name === i) ? getUserLabelOrIRI(i) : name;
+      contributors.push(`<li>${name}</li>`);
+    });
+    if (contributors.length){
+      contributors = `<tr class="people"><th data-i18n="panel.document-metadata.contributors.th">${i18n.t('panel.document-metadata.contributors.th.textContent')}</th><td><ul class="contributors">${contributors.join('')}</ul></td></tr>`;
+    }
+  }
+
+  if (graphPerformers) {
+    graphPerformers.forEach(i => {
+      var go = g.node(rdf.namedNode(i));
+      let name = getGraphLabelOrIRI(go);
+      name = (name === i) ? getUserLabelOrIRI(i) : name;
+      performers.push(`<li>${name}</li>`);
+    });
+    if (performers.length){
+      performers = `<tr class="people"><th>Performers</th><td><ul class="performers">${performers.join('')}</ul></td></tr>`;
+    }
+  }
+
+  var data = authors + editors + contributors + performers + citations + requirements + advisements + concepts + statements;
+
+      // <tr><th>Lines</th><td>' + count.lines + '</td></tr>\n\
+      // <tr><th>A4 Pages</th><td>' + count.pages.A4 + '</td></tr>\n\
+      // <tr><th>US Letter</th><td>' + count.pages.USLetter + '</td></tr>\n\
+  var html = `
+  <section id="document-metadata">
+    <table>
+      <caption data-i18n="panel.document-metadata.caption">${i18n.t('panel.document-metadata.caption.textContent')}</caption>
+      <tbody>
+        ${data}
+        <tr><th data-i18n="panel.document-metadata.reading-time.th">${i18n.t('panel.document-metadata.reading-time.th.textContent')}</th><td>${count.readingTime} <span data-i18n="datetime.minutes.span">${i18n.t('datetime.minutes.span.textContent')}</span></td></tr>
+        <tr><th data-i18n="panel.document-metadata.characters.th">${i18n.t('panel.document-metadata.characters.th.textContent')}</th><td>${count.chars}</td></tr>
+        <tr><th data-i18n="panel.document-metadata.words.th">${i18n.t('panel.document-metadata.words.th.textContent')}</th><td>${count.words}</td></tr>
+        <tr><th data-i18n="panel.document-metadata.bytes.th">${i18n.t('panel.document-metadata.bytes.th.textContent')}</th><td>${count.bytes}</td></tr>
+      </tbody>
+    </table>
+  </section>`;
+
+  node.insertAdjacentHTML('beforeend', domSanitize(html));
+}
+
+export function contentCount(node) {
+  node = node || selectArticleNode(document);
+  node = getNodeWithoutClasses(node, 'do');
+  var doctype = (node instanceof Element && node.tagName.toLowerCase() === 'html') ? getDoctype() : '';
+  var content = node.textContent.trim();
+  var contentCount = { readingTime:1, words:0, chars:0, lines:0, pages:{A4:1, USLetter:1}, bytes:0 };
+  if (content.length) {
+    var lineHeight = node.ownerDocument.defaultView.getComputedStyle(node, null)["line-height"];
+    var linesCount = Math.ceil(node.clientHeight / parseInt(lineHeight));
+    contentCount = {
+      readingTime: Math.ceil(content.split(' ').length / 200),
+      words: content.match(/\S+/g).length,
+      chars: content.length,
+      lines: linesCount,
+      pages: { A4: Math.ceil(linesCount / 47), USLetter: Math.ceil(linesCount / 63) },
+      bytes: encodeURI(doctype + node.outerHTML).split(/%..|./).length - 1
+    };
+  }
+  return contentCount;
+}
+
+export function resourceSave(e, options) {
+  const documentOptions = {
+    ...Config.DOMProcessing,
+    format: true,
+    sanitize: true,
+    normalize: true
+  };
+
+  var url = currentLocation();
+  var data = getDocument(null, documentOptions);
+  options = options || {};
+
+  getResourceInfo(data, options).then(i => {
+    if (Config.DocumentAction == 'new'|| Config.DocumentAction == 'open') {
+      saveAsDocument(e);
+    }
+    else {
+      if (e.target.closest('.create-version')) {
+        createMutableResource(url);
+      }
+      else if (e.target.closest('.create-immutable')) {
+        createImmutableResource(url);
+      }
+      else if (e.target.closest('.resource-save')) {
+        updateMutableResource(url);
+      }
+    }
+  });
+}
+
+export function mementoDocument(e) {
+  if(typeof e !== 'undefined') {
+    var b = e.target.closest('button');
+    if(b.disabled) { return; }
+    else {
+      b.disabled = true;
+    }
+  }
+
+  showTimeMap();
+}
+
+
+export function showRobustLinks(e, selector) {
+  if (e) {
+    e.target.closest('button').disabled = true;
+  }
+
+  var robustLinks = selector || document.querySelectorAll('cite > a[href^="http"][data-versionurl][data-versiondate]');
+
+  var buttonClose = getButtonHTML({ key: 'dialog.robustify-links.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
+
+  document.body.appendChild(fragmentFromString(`
+    <aside aria-labelledby="robustify-links-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="robustify-links" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#robustify-links" xml:lang="${Config.User.UI.Language}">
+      <h2 id="robustify-links-label" property="schema:name">Robustify Links ${Config.Button.Info.RobustLinks}</h2>
+      ${buttonClose}
+      <div class="info"></div>
+      <div id="robustify-links-input">
+        <p><input id="robustify-links-select-all" type="checkbox" value="true"/><label data-i18n="dialog.robustify-links.select-all.label" for="robustify-links-select-all">${i18n.t('dialog.robustify-links.select-all.label.textContent')}</label></p>
+        <p><input id="robustify-links-reuse" type="checkbox" value="true" checked="checked"/><label data-i18n="dialog.robustify-links.reuse.label" for="robustify-links-reuse">${i18n.t('dialog.robustify-links.reuse.label.textContent')}</label></p>
+        <ul id="robustify-links-list"></ul>
+      </div>
+      <button class="robustify" title="Robustify Links" type="submit">Robustify</button>
+    </aside>
+  `));
+
+  //TODO: Move unique list of existing RL's to Config.Resource?
+  var robustLinksUnique = {};
+  robustLinks.forEach(i => {
+    if (!robustLinksUnique[i.href]) {
+      robustLinksUnique[i.href] = {
+        "node": i,
+        "data-versionurl": i.getAttribute("data-versionurl"),
+        "data-versiondate": i.getAttribute("data-versiondate")
+      };
+    }
+    else {
+      // console.log(i);
+    }
+  });
+
+  // console.log('robustLinks: ' + robustLinks.length);
+  // console.log(robustLinksUnique)
+  // console.log('<robustLinksUnique:  ' + Object.keys(robustLinksUnique).length);
+
+  var rlCandidates = document.querySelectorAll('cite > a[href^="http"]:not([data-versionurl]):not([data-versiondate])');
+  // console.log(rlCandidates)
+  var rlInput = document.querySelector('#robustify-links-input');
+
+  rlInput.insertAdjacentHTML('afterbegin', '<p class="count"><data>' + rlCandidates.length + '</data> candidates.</p>');
+
+  var rlUL = document.querySelector('#robustify-links-list');
+  rlCandidates.forEach(i => {
+    var html = '<li><input id="' + i.href + '" type="checkbox" value="' + i.href + '" /> <label for="' + i.href + '"><a dir="ltr" href="' + i.href + '" rel="noopener" target="_blank" title="' + i.textContent + '">' + i.href + '</a></label>';
+
+    // TODO: addEventListener
+    //   if(robustLinksUnique[i.href]) {
+    //     console.log('Reuse Robust Link? ' + robustLinksUnique[i.href]["data-versionurl"]);
+    //     html += '<button class="robustlinks-reuse" title="' + robustLinksUnique[i.href]["data-versionurl"] + '">' + Icon[".fas.fa-recycle"] + '</button>';
+    //   }
+
+    html += '</li>';
+    rlUL.insertAdjacentHTML('beforeend', html);
+  });
+
+
+  var robustifyLinks = document.getElementById('robustify-links');
+  robustifyLinks.addEventListener('click', function (e) {
+    if (e.target.closest('button.close')) {
+      var rs = document.querySelector('#document-do .robustify-links');
+      if (rs) {
+        rs.disabled = false;
+      }
+    }
+
+    if (e.target.closest('button.robustify')) {
+      e.target.disabled = true;
+
+      var rlChecked = document.querySelectorAll('#robustify-links-list input:checked');
+
+      // var promises = [];
+
+      rlChecked.forEach(i => {
+        // console.log('Robustifying: ' + i.value)
+        // console.log(i);
+
+        var options = {};
+        options['showRobustLinksDecoration'] = false;
+        options['showActionMessage'] = false;
+        var node = document.querySelector('cite > a[href="' + i.value + '"]:not([data-versionurl]):not([data-versiondate])');
+
+        // console.log(node);
+
+        i.parentNode.insertAdjacentHTML('beforeend', '<span class="progress" data-to="' + i.value + '">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + '</span>')
+
+        // window.setTimeout(function () {
+        // console.log(i.value);
+
+        var progress = document.querySelector('#robustify-links-list .progress[data-to="' + i.value + '"]');
+
+        var robustLinkFound = false;
+
+        var robustifyLinksReuse = document.querySelector('#robustify-links-reuse');
+        if (robustifyLinksReuse.checked) {
+          Object.keys(robustLinksUnique).forEach(url => {
+            if (i.value == url) {
+              // console.log(robustLinksUnique[url])
+              progress.setHTMLUnsafe(domSanitize('<a href="' + robustLinksUnique[url]["data-versionurl"] + '" rel="noopener" target="_blank">' + Icon[".fas.fa-archive"] + '</a>'));
+              // console.log(node)
+              node.setAttribute("data-versionurl", robustLinksUnique[url]["data-versionurl"]);
+              node.setAttribute("data-versiondate", robustLinksUnique[url]["data-versiondate"]);
+
+              showRobustLinksDecoration(node.closest('cite'));
+
+              robustLinkFound = true;
+            }
+          });
+        }
+
+        if (!robustLinkFound) {
+          createRobustLink(i.value, node, options).then(
+            function(rl){
+              var versionURL = ("data-versionurl" in rl) ? rl["data-versionurl"] : rl.href;
+
+              if ("data-versionurl" in rl && "data-versiondate" in rl) {
+                robustLinksUnique[i.value] = {
+                  "node": node,
+                  "data-versionurl": rl["data-versionurl"],
+                  "data-versiondate": rl["data-versiondate"]
+                }
+                // console.log('Add    robustLinksUnique: ' + Object.keys(robustLinksUnique).length);
+              }
+
+              progress.setHTMLUnsafe(domSanitize('<a href="' + versionURL + '" rel="noopener" target="_blank">' + Icon[".fas.fa-archive"] + '</a>'));
+
+              showRobustLinksDecoration(node.closest('cite'));
+            })
+            .catch(r => {
+              progress.setHTMLUnsafe(domSanitize(Icon[".fas.fa-times-circle"] + ' Unable to archive. Try later.'));
+            });
+        }
+        // console.log('</robustLinksUnique: ' + Object.keys(robustLinksUnique).length);
+        e.target.disabled = false;
+      });
+    }
+
+    if (e.target.closest('#robustify-links-select-all')) {
+      var rlInput = document.querySelectorAll('#robustify-links-list input');
+      // console.log(rlInput.value)
+      // console.log(e.target.checked)
+      if (e.target.checked) {
+        rlInput.forEach(i => {
+          i.setAttribute('checked', 'checked');
+          i.checked = true;
+        });
+      }
+      else {
+        rlInput.forEach(i => {
+          i.removeAttribute('checked');
+          i.checked = false;
+        });
+      }
+    }
+
+    if (e.target.closest('#robustify-links-list input')) {
+      // console.log(e.target)
+      if(e.target.getAttribute('checked')) {
+        e.target.removeAttribute('checked');
+      }
+      else {
+        e.target.setAttribute('checked', 'checked');
+      }
+      // console.log(e.target);
+    }
+  });
+}
+
+export function createRobustLink(uri, node, options){
+  return snapshotAtEndpoint(undefined, uri, 'https://web.archive.org/save/', '', {'Accept': '*/*', 'showActionMessage': false })
+    .then(r => {
+      // console.log(r)
+      //FIXME TODO: Doesn't handle relative URLs in Content-Location from w3.org or something. Getting Overview.html but base is lost.
+      if (r) {
+        var o = {
+          "href": uri
+        };
+        var versionURL = r.location;
+
+        if (typeof versionURL === 'string') {
+          var vD = versionURL.split('/')[4];
+          if (vD) {
+            var versionDate = vD.substr(0,4) + '-' + vD.substr(4,2) + '-' + vD.substr(6,2) + 'T' + vD.substr(8,2) + ':' + vD.substr(10,2) + ':' + vD.substr(12,2) + 'Z';
+
+            node.setAttribute('data-versionurl', versionURL);
+            node.setAttribute('data-versiondate', versionDate);
+
+            o["data-versionurl"] = versionURL;
+            o["data-versiondate"] = versionDate;
+          }
+        }
+
+        options['showActionMessage'] = ('showActionMessage' in options) ? options.showActionMessage : true;
+
+        if (options.showActionMessage) {
+          var message = `Archived <a href="${uri}">${uri}</a> at <a href="${versionURL}">${versionURL}</a> and created RobustLink.`;
+
+          message = {
+            'content': message,
+            'type': 'success'
+          }
+
+          addMessageToLog(message, Config.MessageLog);
+          showActionMessage(document.body, message);
+        }
+
+        if (options.showRobustLinksDecoration) {
+          showRobustLinksDecoration();
+        }
+
+        return o;
+      }
+      else {
+        return Promise.reject();
+      }
+    });
+}
+
+export function snapshotAtEndpoint(e, iri, endpoint, noteData, options = {}) {
+  iri = iri || currentLocation();
+  endpoint = endpoint || 'https://pragma.archivelab.org/';
+  options.noCredentials = true
+
+  var progress, svgFail, messageArchivedAt;
+  options['showActionMessage'] = ('showActionMessage' in options) ? options.showActionMessage : true;
+
+  //TODO: Move to Config?
+  svgFail = Icon[".fas.fa-times-circle.fa-fw"];
+
+  messageArchivedAt = Icon[".fas.fa-archive"] + ' Archived at ';
+
+  var responseMessages = {
+    "403": svgFail + ' Archive unavailable. Please try later.',
+    "504": svgFail + ' Archive timeout. Please try later.'
+  }
+
+  // if(note.length) {
+  //   noteData.annotation["message"] = note;
+  // }
+
+  if (options.showActionMessage) {
+    var button = e.target.closest('button');
+
+    if (typeof e !== 'undefined' && button) {
+      if (button.disabled) { return; }
+      else { button.disabled = true; }
+
+      var archiveNode = button.parentNode;
+      var message = 'Archiving in progress.';
+      message = {
+        'content': message,
+        'type': 'info'
+      }
+      addMessageToLog(message, Config.MessageLog);
+      archiveNode.insertAdjacentHTML('beforeend', ' <span class="progress">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + ' ' + message.content + '</span>');
+    }
+
+    progress = archiveNode.querySelector('.progress');
+  }
+
+  var handleError = function(response) {
+    if (options.showActionMessage) {
+      var message = responseMessages[response.status];
+      message = {
+        'content': message,
+        'type': 'error',
+        'timer': 3000
+      }
+      addMessageToLog(message, Config.MessageLog);
+      progress.setHTMLUnsafe(domSanitize(responseMessages[response.status]));
+    }
+
+    return Promise.reject(responseMessages[response.status]);
+  }
+
+  var handleSuccess = function(o) {
+// console.log(o)
+    if (options.showActionMessage) {
+      var message = messageArchivedAt + '<a rel="noopener" target="_blank" href="' + o.location + '">' + o.location + '</a>';
+      message = {
+        'content': message,
+        'type': 'success'
+      }
+      addMessageToLog(message, Config.MessageLog);
+      progress.setHTMLUnsafe(domSanitize(message.content));
+    }
+
+    return Promise.resolve(o);
+  }
+
+  var checkLinkHeader = function(response) {
+    var link = response.headers.get('Link');
+
+    if (link && link.length) {
+      var rels = LinkHeader.parse(link);
+      if (rels.has('rel', 'memento')) {
+        var o = {
+          "response": response,
+          "location": rels.rel('memento')[0].uri
+        }
+        return handleSuccess(o);
+      }
+    }
+
+    return handleError(response);
+  }
+
+  //TODO: See also https://archive.org/help/wayback_api.php
+
+  switch (endpoint) {
+    case 'https://web.archive.org/save/':
+      var headers = { 'Accept': '*/*' };
+      // options['mode'] = 'no-cors';
+      var pIRI = endpoint + iri;
+      // i = 'https://web.archive.org/save/https://example.org/';
+
+      pIRI = (Config.WebExtensionEnabled) ? pIRI : getProxyableIRI(pIRI, {'forceProxy': true});
+      // pIRI = getProxyableIRI(pIRI, {'forceProxy': true})
+      // console.log(pIRI)
+      return getResource(pIRI, headers, options)
+        .then(response => {
+          // console.log(response)
+          // for(var key of response.headers.keys()) {
+          //   console.log(key + ': ' + response.headers.get(key))
+          // }
+
+          let location = response.headers.get('Content-Location');
+          // console.log(location)
+          if (location && location.length) {
+            //XXX: Scrape Internet Archive's HTML
+            if (location.startsWith('/web/')) {
+              var o = {
+                "response": response,
+                "location": 'https://web.archive.org' + location
+              }
+              return handleSuccess(o);
+            }
+            else {
+              return response.text()
+                .then(data => {
+                  // console.log(data)
+                  // ALLOW_UNKNOWN_PROTOCOLS is needed for namespaced attribute values that DOMPurify mistakenly interpret as an unknown protocol protocol; it will allow mailto: but strip out others it does not recognize
+                  data = domSanitize(data);
+
+                  var regexp = /var redirUrl = "([^"]*)";/;
+                  var match = data.match(regexp);
+                  // console.log(match)
+                  if (match && match[1].startsWith('/web/')) {
+                    var o = {
+                      "response": response,
+                      "location": 'https://web.archive.org' + match[1]
+                    }
+                    return handleSuccess(o);
+                  }
+                  else {
+                    return checkLinkHeader(response);
+                  }
+                })
+            }
+          }
+          else {
+            // response.text().then(data => { console.log(data) })
+
+            return checkLinkHeader(response);
+          }
+        })
+        .catch(response => {
+          // console.log(response)
+          return handleError(response);
+        })
+
+    case 'https://pragma.archivelab.org/':
+    default:
+      noteData = noteData || {
+        "url": iri,
+        "annotation": {
+          "@context": "http://www.w3.org/ns/anno.jsonld",
+          "@type": "Annotation",
+          "motivation": "linking",
+          "target": iri,
+          "rights": "https://creativecommons.org/publicdomain/zero/1.0/"
+        }
+      };
+
+      if (Config.User.IRI) {
+        noteData.annotation['creator'] = {};
+        noteData.annotation.creator["@id"] = Config.User.IRI;
+      }
+      if (Config.User.Name) {
+        noteData.annotation.creator["http://schema.org/name"] = Config.User.Name;
+      }
+      if (Config.User.Image) {
+        noteData.annotation.creator["http://schema.org/image"] = Config.User.Image;
+      }
+      if (Config.User.URL) {
+        noteData.annotation.creator["http://schema.org/url"] = Config.User.URL;
+      }
+
+      if(!('contentType' in options)){
+        options['contentType'] = 'application/json';
+      }
+
+      return postResource(endpoint, '', JSON.stringify(noteData), options.contentType, null, options)
+
+      .then(response => response.json())
+
+      .then(response => {
+        if (response['wayback_id']) {
+          var message;
+          let location = 'https://web.archive.org' + response.wayback_id
+
+          if (options.showActionMessage) {
+            message = messageArchivedAt + '<a href="' + location + '" rel="noopener" target="_blank">' + location + '</a>';
+            message = {
+              'content': message,
+              'type': 'info'
+            }
+            addMessageToLog(message, Config.MessageLog);
+            progress.setHTMLUnsafe(domSanitize(message.content));
+          }
+
+          return { "response": response, "location": location };
+        }
+        else {
+          if (options.showActionMessage) {
+            message = responseMessages[response.status];
+            message = {
+              'content': message,
+              'type': 'error'
+            }
+            addMessageToLog(message, Config.MessageLog);
+            progress.setHTMLUnsafe(domSanitize(message.content));
+          }
+
+          return Promise.reject(responseMessages[response.status])
+        }
+      })
+
+      .catch((err) => {
+        if (options.showActionMessage) {
+          var message = responseMessages[err.response.status];
+          message = {
+            'content': message,
+            'type': 'error'
+          }
+          addMessageToLog(message, Config.MessageLog);
+          progress.setHTMLUnsafe(domSanitize(message.content));
+        }
+      })
+  }
+}
+
+//Derived from saveAsDocument
+export function generateFeed(e) {
+  e.target.disabled = true;
+
+  var buttonClose = getButtonHTML({ key: "dialog.generate-feed.close.button", button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
+
+  document.body.appendChild(fragmentFromString(`
+    <aside aria-labelledby="generate-feed-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="generate-feed" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#generate-feed" xml:lang="${Config.User.UI.Language}">
+      <h2 data-i18n="dialog.generate-feed.h2" id="generate-feed-label" property="schema:name">${i18n.t('dialog.generate-feed.h2.textContent')} ${Config.Button.Info.GenerateFeeds}</h2>
+      ${buttonClose}
+      <div class="info"></div>
+    </aside>
+  `));
+
+  var generateFeed = document.getElementById('generate-feed');
+  generateFeed.addEventListener('click', (e) => {
+    if (e.target.closest('button.close')) {
+      document.querySelector('#document-do .generate-feed').disabled = false;
+    }
+  });
+
+  var fieldset = '';
+
+  var id = 'location-generate-feed';
+  var action = 'write';
+  generateFeed.insertAdjacentHTML('beforeend', `<form><fieldset id="${id}-fieldset"><legend data-i18n="dialog.generate-feed.save-to.legend">${i18n.t('dialog.generate-feed.save-to.legend.textContent')}</legend></fieldset></form>`);
+  fieldset = generateFeed.querySelector('fieldset#' + id + '-fieldset');
+  setupResourceBrowser(fieldset, id, action);
+  var feedTitlePlaceholder = (Config.User.IRI && Config.User.Name) ? Config.User.Name + "'s" : "Foo's";
+  fieldset.insertAdjacentHTML('beforeend', `<p data-i18n="dialog.generate-feed.generate-location.p" id="${id}-samp">${i18n.t('dialog.generate-feed.generate-location.p.textContent')} <samp id="${id}-${action}"></samp></p><ul><li><label data-i18n="dialog.generate-feed.title.label" for="${id}-title">${i18n.t('dialog.generate-feed.title.label.textContent')}</label> <input type="text" placeholder="${feedTitlePlaceholder} Web Feed" name="${id}-title" value=""></li><li><label data-i18n="language.label" for="${id}-language">${i18n.t('language.label.textContent')}</label> <select id="${id}-language" name="${id}-language">${getLanguageOptionsHTML()}</select></li><li><label data-i18n="license.label" for="${id}-license">${i18n.t('license.label.textContent')}</label> <select id="${id}-license" name="${id}-license">${getLicenseOptionsHTML()}</select></li><li>${getFeedFormatSelection()}</li></ul><button class="create" data-i18n="dialog.generate-feed.generate.button" title="${i18n.t('dialog.generate-feed.generate.button.title')}" type="submit">${i18n.t('dialog.generate-feed.generate.button.textContent')}</button>`);
+  var bli = document.getElementById(id + '-input');
+  bli.focus();
+  bli.placeholder = 'https://example.org/path/to/feed.xml';
+
+  generateFeed.addEventListener('click', e => {
+    if (!e.target.closest('button.create')) {
+      return
+    }
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    var generateFeed = document.getElementById('generate-feed')
+    var storageIRI = generateFeed.querySelector('#' + id + '-' + action).innerText.trim();
+
+    // console.log('storageIRI: ' + storageIRI)
+    var rm = generateFeed.querySelector('.response-message')
+    if (rm) {
+      rm.parentNode.removeChild(rm)
+    }
+
+    // TODO: this needs to be form validation instead
+    if (!isHttpOrHttpsProtocol(storageIRI) || !storageIRI.length) {
+      generateFeed.insertAdjacentHTML('beforeend',
+        `<div class="response-message"><p class="error" data-i18n="dialog.generate-feed.error.missing-location.p">${i18n.t("dialog.generate-feed.error.missing-location.p.textContent")}</p></div>`
+      )
+
+      return
+    }
+
+    var options = {};
+    var feedFormat = Config.MediaTypes.Feed[0];
+    var feedFormatSelectionChecked = generateFeed.querySelector('select[id="feed-format"]')
+    if (feedFormatSelectionChecked.length) {
+      feedFormat = (Config.MediaTypes.Feed.indexOf(feedFormatSelectionChecked.value) > -1) ? feedFormatSelectionChecked.value : feedFormat;
+
+      options['contentType'] = feedFormat;
+    }
+
+    var feedTitle = generateFeed.querySelector('input[name="' + id + '-title"]').value || storageIRI
+
+    var feedLanguageSelected = generateFeed.querySelector('select[name="' + id + '-language"]').value
+    var feedLicenseSelected = generateFeed.querySelector('select[name="' + id + '-license"]').value
+
+    var feedURLSelection = [];
+
+    var checkedInput = generateFeed.querySelectorAll('#' + id + '-ul' + ' input[type="checkbox"]:checked')
+    checkedInput = Array.from(checkedInput)
+    if (checkedInput.length) {
+      feedURLSelection = checkedInput.map((el) => el.value);
+    }
+// console.log(feedURLSelection)
+
+    function getFeedData(urls) {
+      var promises = [];
+      var resourceData = {};
+
+      //TODO: update setAcceptTypes to give higher q-value to Config.MediaTypes.Markup than the rest of Config.MediaTypes.RDF
+      // const headers = {'Accept': 'text/html, application/xhtml+xml, image/svg+xml, text/turtle;q=0.9, application/ld+json;q=0.9'};
+      const headers = {};
+      urls.forEach(function (url) {
+        // var pIRI = getProxyableIRI(u);
+        promises.push(
+          getResource(url, headers)
+            .then(response => {
+              var cT = response.headers.get('Content-Type');
+              var options = {};
+              options['contentType'] = (cT) ? cT.split(';')[0].toLowerCase().trim() : 'text/turtle';
+              options['subjectURI'] = response.url;
+              options['storeHash'] = true;
+
+              return response.text()
+                .then(data => {
+                  return getResourceInfo(data, options)
+                  .then(d => ({ response, result: d }))
+                })
+                .catch(function (error) {
+                  console.error(`Error fetching ${url}:`, error.message);
+                  return Promise.resolve(); 
+                });
+            })
+            .then(({response, result}) => {
+              Config.Resource[url] = result;
+              updateSupplementalInfo(response, { documentURL: url });
+              resourceData[url] = Config.Resource[url];
+            })
+        );
+      });
+
+      return Promise.all(promises).then(() => resourceData);
+    }
+
+    getFeedData(feedURLSelection)
+      .then(resourceData => {
+        var feed = {
+          self: storageIRI,
+          title: feedTitle,
+          // description: 'TODO: User Input',
+          language: feedLanguageSelected,
+          license: feedLicenseSelected,
+          // copyright: 'TODO: User Input',
+          // rights: 'TODO: User Input',
+          author: {},
+          origin: new URL(storageIRI).origin,
+          items: resourceData
+        };
+
+        if (Config.User.IRI) {
+          feed['author']['uri'] = Config.User.IRI;
+          if (Config.User.Name) {
+            feed['author']['name'] = Config.User.Name;
+          }
+        }
+
+// console.log(feed)
+// console.log(options)
+
+        feed = createFeedXML(feed, options);
+// console.log(feed);
+        return feed;
+      })
+      .then(feedData => {
+        var progress = generateFeed.querySelector('progress')
+        if(progress) {
+          progress.parentNode.removeChild(progress)
+        }
+        e.target.insertAdjacentHTML('afterend', '<progress min="0" max="100" value="0"></progress>')
+        progress = generateFeed.querySelector('progress')
+
+// console.log(feedData)
+// console.log(storageIRI)
+// console.log(options);
+        putResource(storageIRI, feedData, options.contentType, null, { 'progress': progress })
+          .then(response => {
+            progress.parentNode.removeChild(progress)
+
+            let url = response.url || storageIRI
+
+            // TODO: this needs to be form validation instead
+            if (!isHttpOrHttpsProtocol(url)) {
+              throw Error("Not a valid URL for value: ", url);
+            }
+
+            generateFeed.insertAdjacentHTML('beforeend',
+              `<div class="response-message"><p class="success" data-i18n="dialog.generate-feed.success.saved-at.p"><span>${i18n.t('dialog.generate-feed.success.saved-at.p.textContent')}</span> <a href="${url}" rel="noopener" target="_blank">${url}</a></p></div>`
+            )
+
+            setTimeout(() => {
+              window.open(url, '_blank')
+            }, 3000)
+          })
+
+          //TODO: Reuse saveAsDocument's catch
+          .catch(error => {
+            console.log('Error saving document. Status: ' + error.status)
+          })
+      })
+  })
+}
+
+export function showMessageLog(e, options) {
+  e.target.closest('button').disabled = true
+
+  var messageLog;
+
+  if (Config.MessageLog && Config.MessageLog.length) {
+    messageLog = `<table role="log"><caption data-i18n="dialog.message-log.caption">${i18n.t('dialog.message-log.caption.textContent')}</caption><thead><tr><th data-i18n="dialog.message-log.datetime.th">${i18n.t('dialog.message-log.datetime.th.textContent')}</th><th data-i18n="dialog.message-log.message.th">${i18n.t('dialog.message-log.message.th.textContent')}</th><th data-i18n="dialog.message-log.type.th">${i18n.t('dialog.message-log.type.th.textContent')}</th></tr></thead><tbody>`;
+    Object.keys(Config.MessageLog).forEach(i => {
+      messageLog += `<tr><td><time>${Config.MessageLog[i].dateTime}</time></td><td>${Config.MessageLog[i].content}</td><td data-i18n="dialog.message-log.${Config.MessageLog[i].type}.td">${i18n.t(`dialog.message-log.${Config.MessageLog[i].type}.td.textContent`)}</td></tr>`;
+    });
+    messageLog += '</tbody></table>';
+  }
+  else {
+    messageLog = `<p data-i18n="dialog.message-log.no-messages.p">${i18n.t('dialog.message-log.no-messages.p.textContent')}</p>`;
+  }
+
+  var buttonClose = getButtonHTML({ key: 'dialog.message-log.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
+  document.body.appendChild(fragmentFromString(`
+    <aside aria-labelledby="message-log-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="message-log" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#message-log" xml:lang="${Config.User.UI.Language}">
+      <h2 data-i18n="dialog.message-log.h2" id="message-log-label" property="schema:name">${i18n.t('dialog.message-log.h2.textContent')} ${Config.Button.Info.MessageLog}</h2>
+      ${buttonClose}
+      <div class="info"></div>
+      <div>${messageLog}</div>
+    </aside>
+  `));
+
+  document.querySelector('#message-log button.close').addEventListener('click', (e) => {
+    document.querySelector('button.message-log').removeAttribute('disabled');
+  });
+}
+
+//TODO: Minor refactoring to delete any URL, e.g., annotation (already implemented)
+export function resourceDelete(e, url, options) {
+  if (!url) { return; }
+
+  e.target.closest('button').disabled = true
+
+  var buttonClose = getButtonHTML({ key: 'dialog.delete.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
+
+  document.body.appendChild(fragmentFromString(`
+    <aside aria-labelledby="delete-document-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="delete-document" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#delete-document" xml:lang="${Config.User.UI.Language}">
+      <h2 data-i18n="dialog.delete.h2" id="delete-document-label" property="schema:name">${i18n.t('dialog.delete.h2.textContent')} ${Config.Button.Info.Delete}</h2>
+      ${buttonClose}
+      <div class="info"></div>
+      <div>
+        <p data-i18n="dialog.delete.confirmation.p">${i18n.t('dialog.delete.confirmation.p.textContent')}</p><p><code>${url}</code></p>
+      </div>
+      <button class="cancel" title="${i18n.t('dialog.delete.cancel.button.title')}" type="button">${i18n.t('dialog.delete.cancel.button.textContent')}</button>
+      <button class="delete" data-i18n="dialog.delete.submit.button" title="${i18n.t('dialog.delete.submit.button.title')}" type="button">${i18n.t('dialog.delete.submit.button.textContent')}</button>
+    </aside>
+  `));
+
+  document.querySelector('#delete-document').addEventListener('click', (e) => {
+    if (e.target.closest('button.info')) { return; }
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    var buttonCC = e.target.closest('button.close') || e.target.closest('button.cancel');
+    var buttonDelete = e.target.closest('button.delete');
+
+    if (buttonCC) {
+      var parent = buttonCC.parentNode;
+      parent.parentNode.removeChild(parent);
+
+      var rd = document.querySelector('#document-do .resource-delete');
+      if (rd) {
+        rd.disabled = false;
+      }
+    }
+    else if (buttonDelete) {
+      deleteResource(url)
+        .then(response => {
+          Config.Editor.toggleEditor('author', { template: 'new' });
+
+          var message = `<span data-i18n="dialog.delete.success.default.p">${i18n.t('dialog.delete.success.default.p.textContent', {url}) }</span>`;
+          var actionMessage = '';
+
+          switch(response.status) {
+            case 200: case 204: default:
+              actionMessage = message;
+              break;
+
+            case 202:
+              message = `<span data-i18n="dialog.delete.success.in-progress.p">${i18n.t('dialog.delete.success.default.p.textContent', {url}) }</span>`;
+              actionMessage =  `<span data-i18n="dialog.delete.success.in-progress.p">${i18n.t('dialog.delete.success.default.p.textContent', {url}) }</span>`;
+
+              break;
+          }
+
+          const messageObject = {
+            'content': actionMessage,
+            'type': 'success',
+            'timer': 3000,
+            'code': response.status
+          }
+
+          addMessageToLog({...messageObject, content: message}, Config.MessageLog);
+          showActionMessage(document.body, messageObject);
+        })
+        .catch((error) => {
+          // console.log(error)
+          // console.log(error.status)
+          // console.log(error.response)
+
+          //TODO: Reuse saveAsDocument's catch to request access by checking the Link header.
+
+          var message = '';
+          var actionMessage = '';
+          // let actionTerm = 'delete';
+          var errorKey = 'default';
+          var actionMessageKey = 'default-action-message';
+
+          if (error.status) {
+            switch(error.status) {
+              case 401:
+                if (Config.User.IRI) {
+                  errorKey = 'unauthenticated';
+                }
+                else {
+                  errorKey = 'unauthenticated';
+                  actionMessageKey = 'unauthenticated-action-message';
+                }
+
+                break;
+
+              case 403: default:
+                if (Config.User.IRI) {
+                  var errorKey = 'default';
+                  var actionMessageKey = 'default-action-message';
+
+                }
+                else {
+                  errorKey = 'unauthenticated';
+                  actionMessageKey = 'unauthenticated-action-message';
+                }
+
+                break;
+
+              case 409:
+                //XXX: If/when there is more (structured) detail from the server, it can be processed and used here.
+                errorKey = "conflict";
+                actionMessageKey = "conflict-action-message";
+
+                break;
+            }
+          }
+
+          message = `<span data-i18n="dialog.delete.error.${errorKey}.p">${i18n.t(`dialog.delete.error.${errorKey}.p.textContent`, {url})}</span>`
+          //TODO: signoutShowSignIn()
+          actionMessage = `<span data-i18n="dialog.delete.error.${actionMessageKey}.p">${i18n.t(`dialog.delete.error.${actionMessageKey}.p.textContent`, {url, button: Config.Button.SignIn})}</span>`;
+
+          const messageObject = {
+            'content': actionMessage,
+            'type': 'error',
+            'timer': null,
+            'code': error.status
+          }
+
+          addMessageToLog({...messageObject, content: message}, Config.MessageLog);
+          showActionMessage(document.body, messageObject);
+        })
+      }
+  });
+}
+
+export function showDocumentCommunicationOptions(node) {
+  var communicationOptionsHTML = [];
+
+  var documentURL = Config.DocumentURL;
+
+  function waitUntil() {
+    if (!Config.Resource[documentURL].headers?.linkHeaders?.has('rel', 'describedby')) {
+      window.setTimeout(waitUntil, 250);
+    }
+    else {
+      var db = Config.Resource[documentURL].headers.linkHeaders.rel('describedby');
+
+      if (!db.every(relationItem => Config.Resource[relationItem.uri]?.graph !== undefined)) {
+        window.setTimeout(waitUntil, 250);
+      }
+      else {
+        db.forEach(relationItem => {
+          if (Config.Resource[relationItem.uri]?.graph !== undefined) {
+            communicationOptionsHTML.push(getCommunicationOptions(Config.Resource[relationItem.uri].graph, { 'subjectURI': documentURL }));
+          }
+        });
+
+        communicationOptionsHTML.forEach(html => {
+          node.insertAdjacentHTML('beforeend', domSanitize(html));
+          var nodes = document.querySelectorAll('#' + node.id + ' [id^="notification-subscriptions-"]');
+          buttonSubscribeNotificationChannel(nodes, documentURL);
+        });
+      }
+    }
+  }
+
+  waitUntil();
+}
+
+export function buttonSubscribeNotificationChannel(nodes, topicResource) {
+  //TODO: Consider using typeof selector instead and make sure it is in the markup
+  nodes.forEach(subNode => {
+    subNode.addEventListener('click', (e) => {
+      var button = e.target.closest('button');
+
+      if (button && (button.classList.contains('subscribe') || button.classList.contains('unsubscribe'))) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!(topicResource in Config.Subscription && 'Connection' in Config.Subscription[topicResource]) && button.classList.contains('subscribe')) {
+          var subscription = subNode.querySelector('[rel="notify:subscription"]').getAttribute('resource');
+          // console.log(Config.Resource[s.iri().toString()].subscription);
+          var channelType = Config.Resource[topicResource]['subscription'][subscription]['channelType'];
+
+          var data = {
+            "type": channelType[0],
+            "topic": topicResource
+          };
+
+          var features = Config.Resource[topicResource]['subscription'][subscription]['feature'];
+
+          if (features && features.length) {
+            var d = new Date();
+            var startAt = new Date(d.getTime() + 1000);
+            var endAt = new Date(startAt.getTime() + 3600000);
+
+            if (features.includes(ns.notify.startAt.value)) {
+              data['startAt'] = startAt.toISOString();
+            }
+            if (features.includes(ns.notify.endAt.value)) {
+              data['endAt'] = endAt.toISOString();
+            }
+            if (features.includes(ns.notify.rate.value)) {
+              data['rate'] = "PT10S";
+            }
+          }
+
+          subscribeToNotificationChannel(subscription, data)
+            .then(i => {
+              if (Config.Subscription[data.topic] && 'Connection' in Config.Subscription[data.topic]) {
+                button.textContent = i18n.t('dialog.notification-subscriptions.unsubscribe.button.textContent');
+                button.setAttribute('class', 'unsubscribe');
+                button.setAttribute('data-i18n', 'dialog.notification-subscriptions.unsubscribe.button');
+              }
+            }).catch(e => {
+              console.log(e);
+            });
+        }
+        else {
+          Config.Subscription[topicResource].Connection.close();
+          Config.Subscription[topicResource] = {};
+          button.textContent = i18n.t('dialog.notification-subscriptions.subscribe.button.textContent');
+          button.setAttribute('class', 'subscribe');
+          button.setAttribute('data-i18n', 'dialog.notification-subscriptions.subscribe.button');
+        }
+      }
+    });
+  });
+}
+
+export function showDocumentInfo(e) {
+  var documentInfo = document.getElementById('document-info');
+  if (documentInfo) {
+    documentInfo.parentNode.removeChild(documentInfo);
+  }
+
+  e.target.closest('button').disabled = true
+
+  var documentMenu = document.getElementById('document-menu');
+
+  var buttonClose = getButtonHTML({ key: 'panel.document-info.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
+
+  document.body.insertBefore(fragmentFromString(`
+    <aside aria-labelledby="document-info-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="document-info" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#document-info" xml:lang="${Config.User.UI.Language}">
+      <h2 data-i18n="panel.document-info.h2" id="document-info-label" property="schema:name">${i18n.t('panel.document-info.h2.textContent')}</h2>
+      ${buttonClose}
+    </aside>
+  `), documentMenu.nextSibling);
+  var documentInfo = document.getElementById('document-info');
+
+  documentInfo.setAttribute('tabindex', '-1');
+  documentInfo.focus();
+
+  documentInfo.addEventListener('click', (e) => {
+    if (e.target.closest('button.close')) {
+      document.querySelector('#document-do .document-info').disabled = false;
+    }
+  });
+
+  var articleNode = selectArticleNode(document);
+  var sections = articleNode.querySelectorAll('section:not(section section):not([id^=table-of]):not([id^=list-of])');
+
+  showListOfStuff(documentInfo);
+
+  showHighlightStructuredData(documentInfo);
+
+  if (sections.length) {
+    showTableOfContents(documentInfo, sections)
+
+    if (Config.SortableList && Config.EditorEnabled) {
+      sortToC();
+    }
+  }
+
+  showDocumentMetadata(documentInfo);
+
+  showDocumentCommunicationOptions(documentInfo);
+}
+
+export function getCommunicationOptions(g, options = {}) {
+  var subjectURI = options.subjectURI || g.term.value;
+  g = g.node(rdf.namedNode(subjectURI));
+// console.log(subjectURI)
+  var notificationSubscriptions = getNotificationSubscriptions(g);
+  var notificationChannels = getNotificationChannels(g);
+
+  Config.Resource[subjectURI] = Config.Resource[subjectURI] || {};
+
+  if (notificationSubscriptions) {
+    Config.Resource[subjectURI]['subscription'] = Config.Resource[subjectURI]['subscription'] || {};
+  }
+
+  if (notificationChannels) {
+    Config.Resource[subjectURI]['channel'] = Config.Resource[subjectURI]['channel'] || {};
+  }
+
+  var nSHTML = [];
+
+  if (notificationSubscriptions) {
+    nSHTML.push(`<dl id="notification-subscriptions-${subjectURI}"><dt data-i18n="dialog.notification-subscriptions.dt">${i18n.t('dialog.notification-subscriptions.dt.textContent')}</dt>`);
+
+    notificationSubscriptions.forEach(subscription => {
+      var nS = g.node(rdf.namedNode(subscription));
+      var channelType = getNotificationChannelTypes(nS);
+      var features = getNotificationFeatures(nS);
+
+      Config.Resource[subjectURI]['subscription'][subscription] = {};
+      Config.Resource[subjectURI]['subscription'][subscription]['channelType'] = channelType;
+      Config.Resource[subjectURI]['subscription'][subscription]['feature'] = features;
+
+      var buttonSubscribe = i18n.t('dialog.notification-subscriptions.subscribe.button.textContent');
+      var buttonDataI18n = 'dialog.notification-subscriptions.subscribe.button';
+      var buttonSubscribeClass = 'subscribe';
+
+      var topicResource = subjectURI;
+
+      if (Config.Subscription[topicResource] && Config.Subscription[topicResource].Connection) {
+        buttonSubscribe = i18n.t('dialog.notification-subscriptions.unsubscribe.button.textContent');
+        buttonDataI18n = 'dialog.notification-subscriptions.unsubscribe.button';
+        buttonSubscribeClass = 'unsubscribe';
+      }
+
+      nSHTML.push(`<dd id="notification-subscription-${subscription}"><details><summary><a href="${subscription}" rel="noopener" target="_blank">${subscription}</a></summary>`);
+      nSHTML.push(`<dl rel="notify:subscription" resource="${subscription}">`);
+      // nSHTML.push('<dt>Subscription</dt><dd><a href="' + subscription + '" rel="noopener" target="_blank">' + subscription + '</a></dd>');
+
+      var topic = subjectURI;
+
+      if (topic) {
+        nSHTML.push(`<dt data-i18n="dialog.notification-subscriptions.topic">${i18n.t('dialog.notification-subscriptions.topic.dt.textContent')}</dt><dd><a href="${topic}" rel="notify:topic nopener" target="_blank">${topic}</a> <button data-i18n="${buttonDataI18n}" id="notification-subscription-${subscription}-button" class="${buttonSubscribeClass}">${buttonSubscribe}</button></dd>`);
+      }
+
+      if (channelType) {
+        nSHTML.push(`<dt data-i18n="dialog.notification-subscriptions.channel-type">${i18n.t('dialog.notification-subscriptions.channel-type.dt.textContent')}</dt><dd><a href="${channelType}" rel="notify:channelType noopener" target="_blank">${channelType}</a></dd>`);
+      }
+
+      if (features) {
+        nSHTML.push(`<dt data-i18n="dialog.notification-subscriptions.features">${i18n.t('dialog.notification-subscriptions.features.dt.textContent')}</dt><dd><ul rel="notify:feature">`);
+
+        var nF = [];
+
+        features.forEach(iri => {
+          var label, href = iri;
+
+          switch (iri) {
+            case ns.notify.startAt.value:
+            case ns.notify.endAt.value:
+            case ns.notify.state.value:
+            case ns.notify.rate.value:
+            case ns.notify.accept.value:
+              label = getFragmentFromString(iri);
+              href = 'https://solidproject.org/TR/2022/notifications-protocol-20221231#notify-' + label;
+              break;
+
+            default:
+              break;
+          }
+
+          nSHTML.push('<li><a href="' + href + '" resource="' + iri + '" rel="noopener" target="_blank">' + label + '</a></li>');
+        });
+
+        nSHTML.push('</ul></dd>');
+      }
+
+      nSHTML.push('</dl></details></dd>');
+    })
+
+    nSHTML.push('</dl>');
+  }
+
+  return nSHTML.join('');
+}
+
+//https://solidproject.org/TR/notifications-protocol#discovery
+export function getNotificationSubscriptions(g) {
+  var notifysubscription = g.out(ns.notify.subscription).values;
+  return (notifysubscription.length)
+    ? notifysubscription
+    : undefined
+}
+
+export function getNotificationChannels(g) {
+  var notifychannel = g.out(ns.notify.channel).values;
+  return (notifychannel.length)
+    ? notifychannel
+    : undefined
+}
+
+export function getNotificationChannelTypes(g) {
+  var notifychannelType = g.out(ns.notify.channelType).values;
+  return (notifychannelType)
+    ? notifychannelType
+    : undefined
+}
+
+export function getNotificationFeatures(g) {
+  var notifyfeature = g.out(ns.notify.feature).values;
+  return (notifyfeature.length)
+    ? notifyfeature
+    : undefined
+}
+
+//doap:implements <https://solidproject.org/TR/2022/notification-protocol-20221231#subscription-client-subscription-request>
+export function subscribeToNotificationChannel(url, data) {
+  switch(data.type){
+    //doap:implements <https://solidproject.org/TR/websocket-channel-2023>
+    case ns.notify.WebSocketChannel2023.value:
+      return subscribeToWebSocketChannel(url, data);
+  }
+}
+
+//doap:implements <https://solidproject.org/TR/2022/notification-protocol-20221231#notification-channel-data-model>
+export function subscribeToWebSocketChannel(url, d, options = {}) {
+  if (!url || !d.type || !d.topic) { return Promise.reject(); }
+
+  options['contentType'] = options.contentType || 'application/ld+json';
+
+  var data;
+
+  switch (options.contentType) {
+    case 'text/turtle':
+      data = '<> a <' + d.type  + '> ;\n\
+<http://www.w3.org/ns/solid/notifications#topic> <' + d.topic + '> .';
+      break;
+
+    default:
+    case 'application/ld+json':
+      d['@context'] = d['@context'] || ["https://www.w3.org/ns/solid/notification/v1"];
+      // d['id'] = d['id'] || '';
+      // data['feature'] = '';
+      data = JSON.stringify(d);
+      break;
+  }
+
+// d.topic = 'https://csarven.localhost:8443/foo.html';
+  if (Config.Subscription[d.topic] && Config.Subscription[d.topic]['Connection']) {
+    Config.Subscription[d.topic]['Connection'].close();
+  }
+
+  Config.Subscription[d.topic] = {};
+  Config.Subscription[d.topic]['Request'] = d;
+
+// console.log(Config.Subscription)
+
+  return postResource(url, '', data, options.contentType, null, options)
+    .then(response => {
+      return processNotificationSubscriptionResponse(response, d);
+    })
+    .catch(error => {
+        console.error(error);
+
+        let message;
+
+        switch (error.status) {
+          case 0:
+          case 405:
+            message = 'subscription request not allowed.';
+            break;
+          case 401:
+            message = 'you are not authorized.'
+            if(!Config.User.IRI){
+              message += ' Try signing in.';
+            }
+            break;
+          case 403:
+            message = 'you do not have permission to request a subscription.';
+            break;
+          case 406:
+            message = 'representation not acceptable to the user agent.';
+            break;
+          default:
+            // some other reason
+            message = error.message;
+            break;
+        }
+
+        // re-throw, to break out of the promise chain
+        throw new Error('Cannot subscribe: ', message);
+    })
+    .then(data => {
+// console.log(data);
+// data = {
+//   '@context': ['https://www.w3.org/ns/solid/notifications/v1'],
+//   'type': 'WebSocketChannel2023',
+//   'topic': 'https://csarven.localhost:8443/foo.html',
+//   'receiveFrom': 'wss://csarven.localhost:8443/'
+// }
+
+      if (!(data.topic in Config.Subscription)) {
+        console.log('Config.Subscription[' + data.topic + '] undefined.');
+      }
+      Config.Subscription[data.topic]['Response'] = data;
+
+      switch (data.type) {
+        case 'WebSocketChannel2023': case ns.notify.WebSocketChannel2023.value:
+          data.type = ns.notify.WebSocketChannel2023.value;
+          return connectToWebSocket(data.receiveFrom, data).then(i => {
+            Config.Subscription[data.topic]['Connection'] = i;
+            // return Promise.resolve();
+          });
+      }
+    });
+}
+
+export function processNotificationSubscriptionResponse(response, d) {
+  var cT = response.headers.get('Content-Type');
+  var contentType = cT.split(';')[0].trim();
+
+  var rD = (contentType == 'application/ld+json') ? response.json() : response.text();
+
+  return rD.then(data => {
+// console.log(data)
+    // return getGraphFromData(data, options).then
+    switch (contentType) {
+      case 'text/turtle':
+        return Promise.reject({'message': 'TODO text/turtle', 'data': data});
+
+      case 'application/ld+json':
+        if (data['@context'] && data.type && data.topic) {
+          if (d.topic != data.topic) {
+            console.log('TODO: topic requested != response');
+          }
+// console.log(d.type, data)
+          //TODO d.type == 'LDNChannel2023' && data.sender
+          if ((d.type == 'WebSocketChannel2023' || d.type == ns.notify.WebSocketChannel2023.value) && data.receiveFrom) {
+            return Promise.resolve(data);
+          }
+        }
+        else {
+          return Promise.reject({'message': 'Missing @context, type, topic(, receiveFrom)', 'data': data})
+        }
+        break;
+
+      default:
+      case 'text/plain':
+        return Promise.reject({'message': 'TODO text/plain?', 'data': data});
+    }
+  });
+}
+
+export function processNotificationChannelMessage(data, options) {
+// console.log(data);
+// console.log(options);
+// data = {
+//   "@context": [
+//     "https://www.w3.org/ns/activitystreams",
+//     "https://www.w3.org/ns/solid/notification/v1"
+//   ],
+//   "id": "urn:uuid:" + generateUUID(),
+//   "type": "Update",
+//   "object": "https://csarven.localhost:8443/foo.html",
+//   "state": "128f-MtYev",
+//   "published": "2021-08-05T01:01:49.550Z"
+// }
+
+  //TODO: Only process ns/solid/notifications/v1 JSON-LD context.
+  // return getGraphFromData(data, options).then(
+
+  if (data['@context'] && data.id && data.type && data.object && data.published) {
+    if (options.subjectURI != data.object) {
+      console.log('TODO: topic requested != message object ');
+    }
+
+    // if (data.type.startsWith('https://www.w3.org/ns/activitystreams#')) {
+      //TODO: Move this UI somewhere else
+
+      //TODO: See if createActivityHTML can be generalised/reusable.
+
+
+      Config.Subscription[data.object]['Notifications'] = Config.Subscription[data.object]['Notifications'] || {};
+      //TODO: Max notifications to store. FIFO
+      Config.Subscription[data.object]['Notifications'][data.id] = data;
+      // Config.Subscription[data.object]['Notifications'][data.id] = g;
+// console.log(Config.Subscription[data.object]['Notifications'])
+
+      var nTypes = (Array.isArray(data.type)) ? data.type : [data.type];
+      var types = '';
+      nTypes.forEach(t => {
+        types += types + '<dd><a href="' + t + '">' + t + '</a></dd>';
+      })
+
+      var message = [];
+      message.push('<details>');
+      message.push('<summary>Notification Received</summary>');
+      message.push('<dl>');
+      message.push('<dt>Identifier</dt><dd><a href="' + data.id  + '">' + data.id + '</a></dd>');
+      message.push('<dt>Types</dt>' + types);
+      message.push('<dt>Object</dt><dd><a href="' + data.object  + '">' + data.object + '</a></dd>');
+      message.push('<dt>Published</dt><dd><time>' + data.published + '</time></dd>');
+      message.push('</dl>');
+      message.push('</details>');
+      message = message.join('');
+
+      message = {
+        'content': message,
+        'type': 'info',
+        'timer': 3000
+      }
+      addMessageToLog(message, Config.MessageLog);
+      showActionMessage(document.body, message);
+
+      // return Promise.resolve(data);
+    // }
+  }
+}
+
+export function connectToWebSocket(url, data) {
+  function connect() {
+    return new Promise((resolve, reject) => {
+// console.log(data)
+      var protocols = [data.type];
+// protocols = ['solid-0.1'];
+// console.log(url, protocols)
+      var ws = new WebSocket(url);
+      var message;
+
+      ws.onopen = function() {
+        message = {'message': 'Connected to ' + url + ' (' + data.type + ').'};
+        console.log(message);
+// ws.send('sub ' + data.topic);
+
+        // ws.send(JSON.stringify({
+        // }));
+        resolve(ws);
+      };
+
+      ws.onclose = function(e) {
+        message = {'message': 'Socket to ' + url + ' is closed.'};
+        //TODO: Separate reconnect on connection dropping from intentional close.
+        // setTimeout(() => { connect(); }, 1000);
+        // var timeout = 250;
+        // setTimeout(connect, Math.min(10000,timeout+=timeout));
+
+        console.log(message, e.reason);
+      };
+
+      ws.onerror = function(err) {
+        console.error('Socket encountered error: ', err.message, 'Closing socket');
+        ws.close();
+
+        reject(err);
+      };
+
+      ws.onmessage = function(msg) {
+// console.log(msg)
+        var options = { 'subjectURI': data.topic }
+        processNotificationChannelMessage(msg.data, options);
+      };
+    });
+  }
+
+  return connect().then().catch((err) => {
+    console.log(err)
+  });
+}
+
+export function showHighlightStructuredData(node) {
+  if (!node) { return; }
+
+  var contextNode = selectArticleNode(document);
+  var checked = (contextNode.classList.contains('highlight-structure')) ? 'checked="checked"' : '';
+
+  var html = `
+    <section id="highlight-data" rel="schema:hasPart" resource="#highligh-data">
+      <h3 data-i18n="panel.higlight-data.h3" property="schema:name">${i18n.t('panel.higlight-data.h3.textContent')}</h3>
+      <ul>
+        <li><input id="highlight-structured-data" name="highlight-structured-data" type="checkbox" ${checked}/> <label data-i18n="panel.higlight-structured-data.label" for="highlight-structured-data">${i18n.t('panel.higlight-structured-data.label.textContent')}</label></li>
+      </ul>
+    </section>`;
+
+  node.insertAdjacentHTML('beforeend', html);
+
+  var structuredData = document.querySelector('#highlight-data')
+
+  structuredData.addEventListener('change', (e) => {
+    var input = e.target.closest('#highlight-structured-data');
+    if (input) {
+      if (input.checked) {
+        contextNode.classList.add('highlight-structure');
+      }
+      else {
+        contextNode.classList.remove('highlight-structure');
+      }
+    }
+  });
+}
+
+export function showListOfStuff(node) {
+  if (!node) { return; }
+
+  var disabledInput = '', s = [];
+  // if (!Config.EditorEnabled) {
+  //   disabledInput = ' disabled="disabled"';
+  // }
+
+  Object.keys(Config.ListOfStuff).forEach(id => {
+    var checkedInput = '';
+    var label = i18n.t(`panel.list-of-stuff.${id}.label.textContent`);
+    // var selector = Config.ListOfStuff[id].selector;
+
+    var item = document.getElementById(id);
+
+    if(item) {
+      checkedInput = ' checked="checked"';
+
+      // buildListOfStuff(id);
+    }
+
+    s.push(`<li><input id="l-o-s-${id}" type="checkbox"${disabledInput}${checkedInput} /><label data-i18n="panel.list-of-stuff.${id}.label" for="l-o-s-${id}">${label}</label></li>`);
+  });
+
+  if (s.length) {
+    node.insertAdjacentHTML('beforeend', `
+      <section id="list-of-stuff" rel="schema:hasPart" resource="#list-of-stuff">
+        <h3 data-i18n="panel.list-of-stuff.h3" property="schema:name">${i18n.t('panel.list-of-stuff.h3.textContent')}</h3>
+        <ul>${s.join('')}</ul>
+      </section>`);
+
+    // if (Config.EditorEnabled) {
+      document.getElementById('list-of-stuff').addEventListener('click', (e) => {
+        if (e.target.closest('input')) {
+          var id = e.target.id.slice(6);
+          if(!e.target.getAttribute('checked')) {
+            buildListOfStuff(id);
+            e.target.setAttribute('checked', 'checked');
+            window.location.hash = '#' + id;
+          }
+          else {
+            var tol = document.getElementById(id);
+            if(tol) {
+              tol.parentNode.removeChild(tol);
+
+              removeReferences();
+            }
+            e.target.removeAttribute('checked');
+            window.history.replaceState(null, null, window.location.pathname);
+          }
+        }
+      });
+    // }
+  }
+}
+
+export function showTableOfContents(node, sections, options) {
+  options = options || {}
+  var sortable = (Config.SortableList && Config.EditorEnabled) ? ' sortable' : '';
+
+  if (!node) { return; }
+
+  var toc = `
+  <section id="table-of-contents-i" rel="schema:hasPart" resource="#table-of-contents-i">
+    <h3 data-i18n="panel.list-of-stuff.table-of-contents.label" property="schema:name">${i18n.t(`panel.list-of-stuff.table-of-contents.label.textContent`)}</h3>
+    <ol class="toc${sortable}">`;
+  toc += getListOfSections(sections, {'sortable': Config.SortableList});
+  toc += '</ol></section>';
+
+  node.insertAdjacentHTML('beforeend', domSanitize(toc));
+}
+
+
+export function sortToC() {
+}
+
+export function getListOfSections(sections, options) {
+  options = options || {};
+  var s = '', attributeClass = '';
+  if (options.sortable == true) { attributeClass = ' class="sortable"'; }
+
+  for (var i = 0; i < sections.length; i++) {
+    var section = sections[i];
+    if(section.id) {
+      var heading = section.querySelector('h1, h2, h3, h4, h5, h6, header h1, header h2, header h3, header h4, header h5, header h6') || { 'textContent': section.id };
+      var currentHash = '';
+      var dataId = ' data-id="' + section.id +'"';
+
+      if (!options.raw) {
+        currentHash = (document.location.hash == '#' + section.id) ? ' class="selected"' : '';
+        attributeClass = '';
+      }
+
+      if (heading) {
+        s += '<li' + currentHash + dataId + '><a href="#' + section.id + '">' + heading.textContent + '</a>';
+        var subsections = section.parentNode.querySelectorAll('[id="' + section.id + '"] > div > section[rel*="hasPart"]:not([class~="slide"]), [id="' + section.id + '"] > section[rel*="hasPart"]:not([class~="slide"])');
+
+        if (subsections.length) {
+          s += '<ol'+ attributeClass +'>';
+          s += getListOfSections(subsections, options);
+          s += '</ol>';
+        }
+        s += '</li>';
+      }
+    }
+  }
+
+  return s;
+}
+
+export function buildListOfStuff(id) {
+  var s = '';
+
+  var documentURL = Config.DocumentURL;
+
+  var rootNode = selectArticleNode(document);
+
+  if(id == 'references'){
+    buildReferences();
+  }
+  else {
+    var label = i18n.t(`panel.list-of-stuff.${id}.label.textContent`);
+    var selector = Config.ListOfStuff[id].selector;
+    var titleSelector = Config.ListOfStuff[id].titleSelector;
+
+    var nodes = rootNode.querySelectorAll('*:not([class~="do"]) ' + selector);
+
+    if (id == 'table-of-contents' || id == 'list-of-concepts' || nodes.length) {
+      var tId = document.getElementById(id);
+
+      if(tId) { tId.parentNode.removeChild(tId); }
+
+      let nav = `<nav id="${id}" rel="schema:hasPart" resource="#${id}">`;
+      let section = `<section id="${id}" rel="schema:hasPart" resource="#${id}">`;
+      let heading = `<h2 data-i18n="panel.list-of-stuff.${id}.label" property="schema:name">${label}</h2>`;
+
+      switch(id) {
+        default:
+          s += `${nav}`;
+          s += `${heading}`;
+          s += '<div><ol class="toc">';
+          break;
+
+        case 'list-of-abbreviations':
+          s += `${section}`;
+          s += `${heading}`;
+          s += '<div><dl>';
+          break;
+
+        case 'list-of-quotations':
+          s += `${section}`;
+          s += `${heading}`;
+          s += '<div><ul>';
+          break;
+
+        case 'list-of-concepts':
+          s += `${section}`;
+          s += `${heading}`;
+          var d = Config.Resource[documentURL].citations || [];
+          if (d.length) {
+            s += '<div><p id="include-concepts"><button class="add" type="button">Include concepts</button> from <data value="' + d.length + '">' + d.length + '</data> external references.</p>';
+          }
+          s += '<dl>';
+          break;
+
+        case 'table-of-requirements':
+          s += `${section}`;
+          s += `${heading}`;
+          s += '<div><table>';
+          break;
+
+        case 'table-of-advisements':
+          s += `${section}`;
+          s += `${heading}`;
+          s += '<div><table>';
+          break;
+      }
+
+      if (id == 'table-of-contents') {
+        var articleNode = selectArticleNode(document);
+        s += getListOfSections(articleNode.querySelectorAll('section:not(section section)'), {'raw': true});
+      }
+      else {
+        //TODO: Perhaps table-of-requirements and table-of-advisements could be consolidated / generalised.
+
+        if (id == 'table-of-requirements') {
+//TODO: Sort by requirementSubject then requirementLevel? or offer controls on the table.
+
+          s += '<caption>Conformance Requirements and Test Coverage</caption>'
+          s += '<thead><tr><th colspan="3">Requirement</th></tr><tr><th>Subject</th><th>Level</th><th>Statement</th></tr></thead>';
+          s += '<tbody>';
+          Object.keys(Config.Resource[documentURL]['spec']['requirement']).forEach(i => {
+// console.log(Config.Resource[documentURL]['spec'][i])
+            var statement = Config.Resource[documentURL]['spec']['requirement'][i][ns.spec.statement.value] || i;
+            //FIXME: This selector is brittle.
+            // var requirementIRI = document.querySelector('#document-identifier [rel="owl:sameAs"]');
+            var requirementIRI = document.querySelector('#document-latest-published-version [rel~="rel:latest-version"]');
+            requirementIRI = (requirementIRI) ? requirementIRI.href : i;
+
+            requirementIRI = i.replace(stripFragmentFromString(i), requirementIRI);
+            statement = '<a href="' + requirementIRI + '">' + statement + '</a>';
+
+            var requirementSubjectIRI = Config.Resource[documentURL]['spec']['requirement'][i][ns.spec.requirementSubject.value];
+            var requirementSubjectLabel = requirementSubjectIRI || '<span class="warning">?</span>';
+            if (requirementSubjectLabel.startsWith('http')) {
+              requirementSubjectLabel = getFragmentFromString(requirementSubjectIRI) || getURLLastPath(requirementSubjectIRI) || requirementSubjectLabel;
+            }
+            var requirementSubject = '<a href="' + requirementSubjectIRI + '">' + requirementSubjectLabel + '</a>';
+
+            var requirementLevelIRI = Config.Resource[documentURL]['spec']['requirement'][i][ns.spec.requirementLevel.value];
+            var requirementLevelLabel = requirementLevelIRI || '<span class="warning">?</span>';
+            if (requirementLevelLabel.startsWith('http')) {
+              requirementLevelLabel = getFragmentFromString(requirementLevelIRI) || getURLLastPath(requirementLevelIRI) || requirementLevelLabel;
+            }
+            var requirementLevel = '<a href="' + requirementLevelIRI + '">' + requirementLevelLabel + '</a>';
+
+            s += '<tr about="' + requirementIRI + '">';
+            s += '<td>' + requirementSubject + '</td>';
+            s += '<td>' + requirementLevel + '</td>';
+            s += '<td>' + statement + '</td>';
+            s += '</tr>'
+          });
+          s += '</tbody>';
+        }
+        else if (id == 'table-of-advisements') {
+//TODO: Sort by advisementSubject then advisementLevel? or offer controls on the table.
+
+          s += '<caption>Non-normative Advisements</caption>'
+          s += '<thead><tr><th colspan="2">Advisement</th></tr><tr><th>Level</th><th>Statement</th></tr></thead>';
+          s += '<tbody>';
+          Object.keys(Config.Resource[documentURL]['spec']['advisement']).forEach(i => {
+// console.log(Config.Resource[documentURL]['spec']['advisement'][i])
+            var statement = Config.Resource[documentURL]['spec']['advisement'][i][ns.spec.statement.value] || i;
+            //FIXME: This selector is brittle.
+            //TODO: Revisit this:
+            // var advisementIRI = document.querySelector('#document-identifier [rel="owl:sameAs"]');
+            var advisementIRI = document.querySelector('#document-latest-published-version [rel~="rel:latest-version"]');
+            advisementIRI = (advisementIRI) ? advisementIRI.href : i;
+
+            advisementIRI = i.replace(stripFragmentFromString(i), advisementIRI);
+            statement = '<a href="' + advisementIRI + '">' + statement + '</a>';
+
+            // var advisementSubjectIRI = Config.Resource[documentURL]['spec']['advisement'][i][ns.spec.advisementSubject.value];
+            // var advisementSubjectLabel = advisementSubjectIRI || '<span class="warning">?</span>';
+            // if (advisementSubjectLabel.startsWith('http')) {
+            //   advisementSubjectLabel = getFragmentFromString(advisementSubjectIRI) || getURLLastPath(advisementSubjectIRI) || advisementSubjectLabel;
+            // }
+            // var advisementSubject = '<a href="' + advisementSubjectIRI + '">' + advisementSubjectLabel + '</a>';
+
+            var advisementLevelIRI = Config.Resource[documentURL]['spec']['advisement'][i][ns.spec.advisementLevel.value];
+            var advisementLevelLabel = advisementLevelIRI || '<span class="warning">?</span>';
+            if (advisementLevelLabel.startsWith('http')) {
+              advisementLevelLabel = getFragmentFromString(advisementLevelIRI) || getURLLastPath(advisementLevelIRI) || advisementLevelLabel;
+            }
+            var advisementLevel = '<a href="' + advisementLevelIRI + '">' + advisementLevelLabel + '</a>';
+
+            s += '<tr about="' + advisementIRI + '">';
+            // s += '<td>' + advisementSubject + '</td>';
+            s += '<td>' + advisementLevel + '</td>';
+            s += '<td>' + statement + '</td>';
+            s += '</tr>'
+          });
+          s += '</tbody>';
+        }
+        else if (id == 'list-of-abbreviations') {
+          if (nodes.length) {
+            nodes = [].slice.call(nodes);
+            nodes.sort((a, b) => {
+              return a.textContent.toLowerCase().localeCompare(b.textContent.toLowerCase());
+            });
+          }
+
+          var processed = [];
+          for (var i = 0; i < nodes.length; i++) {
+            if (!processed.includes(nodes[i].textContent)) {
+              s += '<dt>' + nodes[i].textContent + '</dt>';
+              s += '<dd>' + nodes[i].getAttribute(titleSelector) + '</dd>';
+              processed.push(nodes[i].textContent);
+            }
+          }
+        }
+        else if (id == 'list-of-concepts') {
+// console.log(Config.Resource[documentURL]['skos'])
+          s += getDocumentConceptDefinitionsHTML(documentURL);
+        }
+        //list-of-figures, list-of-tables, list-of-quotations, table-of-requirements
+        else {
+          processed = [];
+          for (let i = 0; i < nodes.length; i++) {
+            var title, textContent;
+
+            if (id == 'list-of-quotations') {
+              title = nodes[i].getAttribute(titleSelector);
+            }
+            else {
+              title = nodes[i].querySelector(titleSelector);
+            }
+
+            if (title) {
+              if (id == 'list-of-quotations') {
+                textContent = removeSelectorFromNode(nodes[i], '.do').textContent;
+              }
+              else {
+                textContent = removeSelectorFromNode(title, '.do').textContent;
+              }
+
+              if (processed.indexOf(textContent) < 0) {
+                if (id == 'list-of-quotations') {
+                  s += '<li><q>' + textContent + '</q>, <a href="' + title + '">' + title + '</a></li>';
+                }
+                else if(nodes[i].id){
+                  s += '<li><a href="#' + nodes[i].id +'">' + textContent +'</a></li>';
+                }
+                else {
+                  s += '<li>' + textContent +'</li>';
+                }
+
+                processed.push(textContent);
+              }
+            }
+          }
+        }
+      }
+
+      switch(id) {
+        default:
+          s += '</ol></div>';
+          s += '</nav>';
+          break;
+
+        case 'list-of-abbreviations':
+          s += '</dl></div>';
+          s += '</section>';
+          break;
+
+        case 'list-of-quotations':
+          s += '</ul></div>';
+          s += '</section>';
+          break;
+
+        case 'list-of-concepts':
+          s += '</dl></div>';
+          s += '</section>';
+          break;
+
+        case 'table-of-requirements':
+          s += '</table></div>';
+          s += '</section>';
+          break;
+      }
+    }
+  }
+
+  insertDocumentLevelHTML(document, s, { id });
+
+  if (id == 'table-of-requirements') {
+    var options = { noCredentials: true };
+    // var options = {};
+    var testSuites = Config.Resource[documentURL].graph.out(ns.spec.testSuite).values;
+// testSuites = [];
+// console.log(testSuites)
+    if (testSuites.length) {
+      //TODO: Process all spec:testSuites
+      var url = testSuites[0];
+
+      getResourceGraph(url, null, options)
+        .then(g => {
+// console.log(g.out().values)
+          if (g) {
+            insertTestCoverageToTable(id, g);
+          }
+        })
+        .catch(reason => {
+console.log(reason);
+        });
+    }
+
+    var predecessorVersion = Config.Resource[documentURL].graph.out(ns.rel['predecessor-version']).values;
+// predecessorVersion = [];
+    if (predecessorVersion.length) {
+      url = predecessorVersion[0];
+
+      var sourceGraph = Config.Resource[documentURL].graph;
+      var sourceGraphURI = sourceGraph.term.value;
+// console.log(sourceGraphURI)
+      var buttonTextDiffRequirements = 'Diff requirements with the predecessor version';
+
+      var table = document.getElementById(id);
+      var thead = table.querySelector('thead');
+      thead.querySelector('tr > th').insertAdjacentHTML('beforeend', '<button id="include-diff-requirements" class="do add" disabled="disabled" title="' + buttonTextDiffRequirements + '">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + '</button>');
+
+      getResourceGraph(url, null, options)
+        .then(targetGraph => {
+          if (targetGraph) {
+            var targetGraphURI = targetGraph.term.value;
+// console.log(targetGraphURI)
+
+            var buttonRD = document.getElementById('include-diff-requirements');
+            buttonRD.setHTMLUnsafe(domSanitize(Icon[".fas.fa-plus-minus"]));
+            buttonRD.disabled = false;
+
+            buttonRD.addEventListener('click', (e) => {
+              var button = e.target.closest('button');
+              if (button){
+                if (button.classList.contains('add')) {
+                  button.classList.remove('add');
+                  button.classList.add('remove');
+                  button.setAttribute('title', "Show requirements");
+                  button.setHTMLUnsafe(domSanitize(Icon[".fas.fa-list-check"]));
+
+                  if (!button.classList.contains('checked')) {
+                    diffRequirements(sourceGraph, targetGraph);
+                    button.classList.add('checked');
+                  }
+
+                  table.querySelectorAll('tbody tr').forEach(tr => {
+                    var sR = tr.getAttribute('about');
+                    var td = tr.querySelector('td:nth-child(3)');
+                    sR = sR.replace(stripFragmentFromString(sR), sourceGraphURI);
+                    var tR = targetGraphURI + '#' + getFragmentFromString(sR);
+                    td.setHTMLUnsafe(domSanitize(Config.Resource[sourceGraphURI].spec['requirement'][sR]['diff'][tR]['statement'])) || '';
+                  });
+                }
+                else if (button.classList.contains('remove')) {
+                  button.classList.remove('remove');
+                  button.classList.add('add');
+                  button.setAttribute('title', buttonTextDiffRequirements);
+                  button.setHTMLUnsafe(domSanitize(Icon[".fas.fa-plus-minus"]));
+
+                  table.querySelectorAll('tbody tr').forEach(tr => {
+                    var sR = tr.getAttribute('about');
+                    var td = tr.querySelector('td:nth-child(3)');
+                    var sourceRequirementURI = sourceGraphURI + '#' + getFragmentFromString(sR);
+                    var statement = Config.Resource[sourceGraphURI].spec['requirement'][sourceRequirementURI][ns.spec.statement.value] || sR;
+                    td.setHTMLUnsafe(domSanitize('<a href="' + sR + '">' + statement + '</a>'));
+                  });
+                }
+              }
+            });
+          }
+        });
+    }
+  }
+
+  if (id == 'list-of-concepts') {
+    document.getElementById(id).addEventListener('click', (e) => {
+      var button = e.target.closest('button.add');
+      if (button) {
+        button.disabled = true;
+        button.insertAdjacentHTML('beforeend', Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]);
+
+        showExtendedConcepts();
+      }
+    })
+  }
+}
+
+export function openInputFile(e) {
+  let files = Array.from(e.target.files); 
+  let options = { 'init': true };
+
+  let readers = files.map(file => {
+    return new Promise((resolve, reject) => {
+      let reader = new FileReader();
+      reader.onload = () => {
+        resolve({
+          name: file.name,
+          type: file.type,
+          content: reader.result
+        });
+      };
+      reader.onerror = reject;
+      reader.readAsText(file);
+    });
+  });
+
+  Promise.all(readers).then(results => {
+    let contentType = results.length === 1 ? results[0].type : "application/octet-stream";
+    let iris = results.map(r => 'file:' + r.name)
+
+    let filesUrls = iris.map((url) => `<a href="${url} rel="noopener" target="_blank">${url}</a>`);
+    let urlsHtml = filesUrls.join(', ');
+    var message = `Opening ${urlsHtml}`;
+    var actionMessage = `Opening ${urlsHtml}`;
+
+    const messageObject = {
+      'content': actionMessage,
+      'type': 'info',
+      'timer': 10000
+    }
+
+    addMessageToLog({...messageObject, content: message}, Config.MessageLog);
+    const messageId = showActionMessage(document.body, messageObject);
+
+    spawnDokieli(
+      document,
+      results, 
+      contentType,
+      iris,
+      options
+    );
+  }).catch(err => {
+    console.error("Error reading files:", err);
+  });
 }

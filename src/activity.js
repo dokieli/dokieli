@@ -22,9 +22,11 @@ import { getLinkRelation, serializeDataToPreferredContentType, getGraphLanguage,
 import { currentLocation, getAcceptPostPreference, postResource } from './fetcher.js';
 import Config from './config.js';
 import { domSanitize } from './utils/sanitization.js';
-import { generateUUID, uniqueArray } from './util.js';
+import { fragmentFromString, generateUUID, uniqueArray } from './util.js';
 import { addNoteToNotifications, initializeButtonMore } from './dialog.js';
 import { getSubjectInfo } from './auth.js';
+import { i18n } from './i18n.js';
+import rdf from 'rdf-ext';
 
 const ns = Config?.ns;
 

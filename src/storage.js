@@ -22,6 +22,7 @@ import { normalizeForDiff } from './utils/normalization.js';
 import { getResource, putResource } from './fetcher.js';
 import { showResourceReviewChanges } from './dialog.js';
 import { i18n } from './i18n.js'
+import { updateButtons } from './ui/buttons.js';
 
 // function enableLocalStorage(key) {
 //   Config.UseLocalStorage = true;

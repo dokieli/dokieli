@@ -25,6 +25,7 @@ import { domSanitize } from './utils/sanitization.js'
 import { parseMarkdown } from "./doc.js";
 import { setAcceptRDFTypes, getResource, getResourceHead, currentLocation } from './fetcher.js'
 import LinkHeader from "http-link-header";
+import { getItemsList } from "./activity.js";
 
 const ns = Config?.ns;
 const localhostUUID = 'http://localhost/d79351f4-cdb8-4228-b24f-3e9ac74a840d';

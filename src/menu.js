@@ -17,13 +17,13 @@ limitations under the License.
 
 import { fragmentFromString } from './util.js';
 import { showUserSigninSignout, userInfoSignOut } from './auth.js';
-import { updateResourceInfos, getDocumentContentNode, accessModePossiblyAllowed, removeNodesWithIds } from './doc.js';
+import { updateResourceInfos, getDocumentContentNode, accessModePossiblyAllowed, removeNodesWithIds, initCurrentStylesheet } from './doc.js';
 import { i18n } from './i18n.js';
-import { getLocalStorageItem, enableRemoteSync, disableRemoteSync } from './storage.js';
+import { getLocalStorageItem, enableRemoteSync, disableRemoteSync, enableAutoSave, disableAutoSave } from './storage.js';
 import { getButtonHTML, initButtons } from './ui/buttons.js';
 import Config from './config.js';
 import { Icon } from './ui/icons.js';
-import { openDocument, replyToResource, saveAsDocument, shareResource, viewSource } from './dialog.js';
+import { createNewDocument, exportAsDocument, generateFeed, mementoDocument, openDocument, replyToResource, resourceDelete, resourceSave, saveAsDocument, shareResource, showDocumentInfo, showMessageLog, showNotifications, showRobustLinks, snapshotAtEndpoint, viewSource } from './dialog.js';
 import { domSanitize } from './utils/sanitization.js';
 import { showVisualisationGraph } from './viz.js';
 import { getAgentPreferredLanguages } from './graph.js';
@@ -273,9 +273,9 @@ function showLanguages(node) {
 export async function showAutoSave(node) {
   if (node.querySelector('#document-autosave')) { return; }
 
-  const storageObject = await getLocalStorageItem(DO.C.DocumentURL);
+  const storageObject = await getLocalStorageItem(Config.DocumentURL);
 
-  const hasAccessModeWrite = accessModePossiblyAllowed(DO.C.DocumentURL, 'write');
+  const hasAccessModeWrite = accessModePossiblyAllowed(Config.DocumentURL, 'write');
   let checked = storageObject?.autoSave !== undefined ? storageObject.autoSave : true;
   checked = (checked && hasAccessModeWrite) ? ' checked=""' : '';
 
@@ -373,7 +373,7 @@ function showDocumentDo(node) {
       if (b) {
         node = b.closest('li');
         b.outerHTML = Config.Button.Menu.EditDisable;
-        DO.U.hideDocumentMenu();
+        hideDocumentMenu();
         Config.Editor.toggleEditor('author');
         // showAutoSaveStorage(node, documentURL);
 
@@ -382,11 +382,11 @@ function showDocumentDo(node) {
     }
 
     if (e.target.closest('.resource-notifications')) {
-      DO.U.showNotifications(e);
+      showNotifications(e);
     }
 
     if (e.target.closest('.resource-new')) {
-      DO.U.createNewDocument(e);
+      createNewDocument(e);
     }
 
     if (e.target.closest('.resource-open')) {
@@ -398,11 +398,11 @@ function showDocumentDo(node) {
     }
 
     if (e.target.closest('.embed-data-meta')) {
-      DO.U.showEmbedData(e);
+      showEmbedData(e);
     }
 
     if (e.target.closest('.resource-save')){
-      DO.U.resourceSave(e);
+      resourceSave(e);
     }
 
     if (e.target.closest('.resource-save-as')) {
@@ -410,12 +410,12 @@ function showDocumentDo(node) {
     }
 
     if (e.target.closest('.resource-memento')) {
-      DO.U.mementoDocument(e);
+      mementoDocument(e);
     }
 
     if (e.target.closest('.create-version') ||
         e.target.closest('.create-immutable')) {
-      DO.U.resourceSave(e);
+      resourceSave(e);
     }
 
     if (e.target.closest('.export-as-html')) {
@@ -424,20 +424,20 @@ function showDocumentDo(node) {
         mediaType: 'text/html',
         filenameExtension: '.html'
       }
-      DO.U.exportAsDocument(getDocument(null, documentOptions), options);
+      exportAsDocument(getDocument(null, documentOptions), options);
     }
 
     if (e.target.closest('.robustify-links')){
-      DO.U.showRobustLinks(e);
+      showRobustLinks(e);
     }
 
     if (e.target.closest('.snapshot-internet-archive')){
-      // DO.U.snapshotAtEndpoint(e, Config.DocumentURL, 'https://pragma.archivelab.org/', '', {'contentType': 'application/json'});
-      DO.U.snapshotAtEndpoint(e, Config.DocumentURL, 'https://web.archive.org/save/', '', {'Accept': '*/*', 'showActionMessage': true });
+      // snapshotAtEndpoint(e, Config.DocumentURL, 'https://pragma.archivelab.org/', '', {'contentType': 'application/json'});
+      snapshotAtEndpoint(e, Config.DocumentURL, 'https://web.archive.org/save/', '', {'Accept': '*/*', 'showActionMessage': true });
     }
 
     if (e.target.closest('.generate-feed')) {
-      DO.U.generateFeed(e);
+      generateFeed(e);
     }
 
     if (e.target.closest('.resource-print')) {
@@ -446,15 +446,15 @@ function showDocumentDo(node) {
     }
 
     if (e.target.closest('.resource-delete')){
-      DO.U.resourceDelete(e, Config.DocumentURL);
+      resourceDelete(e, Config.DocumentURL);
     }
 
     if (e.target.closest('.message-log')) {
-      DO.U.showMessageLog(e);
+      showMessageLog(e);
     }
 
     if (e.target.closest('.document-info')) {
-      DO.U.showDocumentInfo(e);
+      showDocumentInfo(e);
     }
   });
 }
@@ -494,8 +494,8 @@ function showViews(node) {
 
   var viewButtons = document.querySelectorAll('#document-views button:not([class~="resource-visualise"])');
   for (let i = 0; i < viewButtons.length; i++) {
-    viewButtons[i].removeEventListener('click', DO.U.initCurrentStylesheet);
-    viewButtons[i].addEventListener('click', DO.U.initCurrentStylesheet);
+    viewButtons[i].removeEventListener('click', initCurrentStylesheet);
+    viewButtons[i].addEventListener('click', initCurrentStylesheet);
   }
 
   if(Config.GraphViewerAvailable) {
