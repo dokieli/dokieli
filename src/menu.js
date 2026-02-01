@@ -17,13 +17,16 @@ limitations under the License.
 
 import { fragmentFromString } from './util.js';
 import { showUserSigninSignout, userInfoSignOut } from './auth.js';
-import { updateResourceInfos, getDocumentContentNode, accessModePossiblyAllowed } from './doc.js';
+import { updateResourceInfos, getDocumentContentNode, accessModePossiblyAllowed, removeNodesWithIds } from './doc.js';
 import { i18n } from './i18n.js';
 import { getLocalStorageItem, enableRemoteSync, disableRemoteSync } from './storage.js';
-import { initButtons } from './ui/buttons.js';
+import { getButtonHTML, initButtons } from './ui/buttons.js';
 import Config from './config.js';
 import { Icon } from './ui/icons.js';
-import { shareResource } from './dialog.js';
+import { openDocument, replyToResource, saveAsDocument, shareResource, viewSource } from './dialog.js';
+import { domSanitize } from './utils/sanitization.js';
+import { showVisualisationGraph } from './viz.js';
+import { getAgentPreferredLanguages } from './graph.js';
 
 export function initDocumentMenu() {
   document.body.prepend(fragmentFromString(`<div class="do" id="document-menu" dir="${Config.User.UI.LanguageDir}" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}">${Config.Button.Menu.OpenMenu}<div><section id="user-info"></section></div></div>`));
@@ -70,12 +73,12 @@ export function showDocumentMenu(e) {
 
   showLanguages(dInfo)
   showUserSigninSignout(dUserInfo);
-  DO.U.showDocumentDo(dInfo);
-  DO.U.showAutoSave(dInfo);
-  DO.U.showViews(dInfo);
-  DO.U.showAboutDokieli(dInfo);
+  showDocumentDo(dInfo);
+  showAutoSave(dInfo);
+  showViews(dInfo);
+  showAboutDokieli(dInfo);
 
-  var body = getDocumentContentNode(document);
+  // var body = getDocumentContentNode(document);
 
   var options = { 'reuse': true };
   if (document.location.protocol.startsWith('http')) {
@@ -116,6 +119,40 @@ export function eventEscapeDocumentMenu(e) {
 export function eventLeaveDocumentMenu(e) {
   if (!e.target.closest('.do.on')) {
     hideDocumentMenu(e);
+  }
+}
+
+export function setPreferredLanguagesInfo(g) {
+  let preferredLanguages = navigator.languages;
+
+  if (Array.isArray(g)) {
+    preferredLanguages = g;
+  }
+  else if (g && typeof g === 'object') {
+    preferredLanguages = getAgentPreferredLanguages(g) || [];
+  }
+
+  let matchedLang;
+  let found = false;
+
+  for (const lang of preferredLanguages) {
+    const segments = lang.split("-");
+
+    for (let len = segments.length; len > 0; len--) {
+      const candidate = segments.slice(0, len).join("-");
+
+      if (Config.Translations.includes(candidate)) {
+        matchedLang = candidate;
+        found = true;
+        break;
+      }
+    }
+
+    if (found) break;
+  }
+
+  if (matchedLang) {
+    updateUILanguage(matchedLang);
   }
 }
 
@@ -315,7 +352,7 @@ function showDocumentDo(node) {
     }
 
     if (e.target.closest('.resource-reply')) {
-      DO.U.replyToResource(e);
+      replyToResource(e);
     }
 
     var b;
@@ -353,11 +390,11 @@ function showDocumentDo(node) {
     }
 
     if (e.target.closest('.resource-open')) {
-      DO.U.openDocument(e);
+      openDocument(e);
     }
 
     if (e.target.closest('.resource-source')) {
-      DO.U.viewSource(e);
+      viewSource(e);
     }
 
     if (e.target.closest('.embed-data-meta')) {
@@ -369,7 +406,7 @@ function showDocumentDo(node) {
     }
 
     if (e.target.closest('.resource-save-as')) {
-      DO.U.saveAsDocument(e);
+      saveAsDocument(e);
     }
 
     if (e.target.closest('.resource-memento')) {
@@ -421,3 +458,93 @@ function showDocumentDo(node) {
     }
   });
 }
+
+function showViews(node) {
+  if(document.querySelector('#document-views')) { return; }
+
+  var stylesheets = document.querySelectorAll('head link[rel~="stylesheet"][title]:not([href$="dokieli.css"])');
+
+  var s = `
+    <section aria-labelledby="document-views-label" id="document-views" rel="schema:hasPart" resource="#document-views">
+      <h2 data-i18n="menu.document-views.h2" id="document-views-label" property="schema:name">${i18n.t('menu.document-views.h2.textContent')}</h2>
+      ${Icon[".fas.fa-magic"]}
+      <ul>`;
+
+  if (Config.GraphViewerAvailable) {
+    s += `<li><button class="resource-visualise" data-i18n="menu.document-views.graph.button" title="${i18n.t('menu.document-views.graph.button.title')}">${i18n.t('menu.document-views.graph.button.textContent')}</button></li>`;
+  }
+
+  s += `<li><button data-i18n="menu.document-views.native-style.button"  title="${i18n.t('menu.document-views.native-style.button.title')}">${i18n.t('menu.document-views.native-style.button.textContent')}</button></li>`;
+
+  if (stylesheets.length) {
+    for (var i = 0; i < stylesheets.length; i++) {
+      var stylesheet = stylesheets[i];
+      var view = stylesheet.getAttribute('title');
+      if(stylesheet.closest('[rel~="alternate"]')) {
+        s += `<li><button data-i18n="menu.document-views.change-style.button" title="${i18n.t('menu.document-views.change-style.button.title', { view })}">${view}</button></li>`;
+      }
+      else {
+        s += `<li><button data-i18n="menu.document-views.current-style.button" disabled="disabled" title="${i18n.t('menu.document-views.current-style.button.title')}">${view}</button></li>`;
+      }
+    }
+  }
+
+  s += '</ul></section>';
+  node.insertAdjacentHTML('beforeend', domSanitize(s));
+
+  var viewButtons = document.querySelectorAll('#document-views button:not([class~="resource-visualise"])');
+  for (let i = 0; i < viewButtons.length; i++) {
+    viewButtons[i].removeEventListener('click', DO.U.initCurrentStylesheet);
+    viewButtons[i].addEventListener('click', DO.U.initCurrentStylesheet);
+  }
+
+  if(Config.GraphViewerAvailable) {
+    document.querySelector('#document-views').addEventListener('click', (e) => {
+      if (e.target.closest('.resource-visualise')) {
+        if(document.querySelector('#graph-view')) { return; }
+
+        if (e) {
+          e.target.disabled = true;
+        }
+
+        var buttonClose = getButtonHTML({ key: 'dialog.graph-view.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
+
+        document.body.appendChild(fragmentFromString(`
+          <aside aria-labelledby="graph-view-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="graph-view" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#graph-view" xml:lang="${Config.User.UI.Language}">
+            <h2 data-i18n="dialog.graph-view.h2" id="graph-view-label" property="schema:name">${i18n.t('dialog.graph-view.h2.textContent')} ${Config.Button.Info.GraphView}</h2>
+            ${buttonClose}
+            <div class="info"></div>
+          </aside>
+        `));
+
+        var graphView = document.getElementById('graph-view');
+        graphView.addEventListener('click', (e) => {
+          if (e.target.closest('button.close')) {
+            var rv = document.querySelector('#document-views .resource-visualise');
+            if (rv) {
+              rv.disabled = false;
+            }
+          }
+        });
+
+        showVisualisationGraph(Config.DocumentURL, undefined, '#graph-view');
+      }
+    });
+  }
+}
+
+
+function showAboutDokieli(node) {
+  if (document.querySelector('#about-dokieli')) { return; }
+
+  const html = `
+  <section id="about-dokieli">
+    <dl>
+      <dt data-i18n="menu.about-dokieli.dt">${i18n.t('menu.about-dokieli.dt.textContent')}</dt>
+      <dd data-i18n="menu.about-dokieli.dd"><img alt="" height="16" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAn1BMVEUAAAAAjwAAkAAAjwAAjwAAjwAAjwAAjwAAkAAAdwAAjwAAjQAAcAAAjwAAjwAAiQAAjwAAjAAAjwAAjwAAjwAAjwAAkAAAjwAAjwAAjwAAjQAAjQAAhQAAhQAAkAAAkAAAkAAAjgAAjwAAiQAAhAAAkAAAjwAAjwAAkAAAjwAAjgAAjgAAjQAAjwAAjQAAjwAAkAAAjwAAjQAAiwAAkABp3EJyAAAANHRSTlMA+fH89enaabMF4iADxJ4SiSa+uXztyoNvQDcsDgvl3pRiXBcH1M+ppJlWUUpFMq6OdjwbMc1+ZgAABAhJREFUeNrt29nSmkAQBeAGZBMUxH3f993/vP+zJZVKVZKCRhibyc3/XVt6SimYPjPSt28Vmt5W/fu2T/9B9HIf7Tp+0RsgDC6DY6OLvzxJj8341DnsakgZUNUmo2XsORYYS6rOeugukhnyragiq56JIs5UEQ/FXKgidRTzompEKOhG1biioDFV44mCAqrGAQWtqRptA8VMqCpR6zpo9iy84VO1opWHPBZVb9QAzyQN/D1YNungJ+DMSYsbOFvSIwGjR3p0wGiQHkMw2qRHC4w76RGBcSA9NmAcSY8QjAdpYiFbTJoYyNYnTWrI1iFNusj2JE1sZBuQJtyE5pImc3Y21cRhZ1NNtsh2Ik127HCsSY8djjVpINuVhPnjVefobee2adXqu2S/6FyivABDEjQ9Lxo1pDlNd5wg24ikRK5ngKGhHhg1DSgZk4RrD6pa9LlRAnUBfWp6xCe+6EOvOT6yrmrigZaCZHPAp6b0gaiBFKvRd0/D1rr1OrvxDqiyoZmmPt9onib0t/VybyEXqdu0Cw16rUNVAfZFlzdjr5KOaoAUK6JsrgWGQapuBlIS4gy70gEmTrk1fuAgU40UxWXv6wvZAC2Dqfx0BfBK1z1H0aJ0WH7Ub4oG8JDlpBCgK1l5tSjHQSoAf0HVfMqxF+yqpzVk2ZGuAGdk8ijPHZlmpOCg0vh5cgE2JtN3qQSoU3lXpbKlLRegrzTpt+U2TNpKY2YiFiA0kS1Q6QccweZ/oinASm2B3RML0AGDNAU4qq3udmIXYVttD3YrFsBR24N1xG5EJpTeaiYWwILS5WRKBfChFsCSehpOwKi/yS0V4AsMWym3TWUFgMqIsRYL8AVOSDlaYgEitbZnDKll+UatchyJBSC1c3lDuQA2VHYAL3KneHpgLCjHSS7AHYyEciwh1g88wDB94rlyAVxwhsR7ygW4gRMTry8XwDdUDkXFgjVdD5wRsRaCAWJwPGI1Baval8Ie3Hqn8AjjhHbZr2DzrInumDTBGlCG8xy8QPY3MNLX4TiRP1q+BWs2pn9ECwu5+qTABc+80h++28UbTkjlTW3wrM6Ufrtu8d5J9Svg1Vch/RTcUYQdUHm+g1z1x2gSGyjGGVN5F7xjoTCjE0ndC3jJMzfCftmiciZ1lNGe3vCGufOWVMLIQHHehi3X1O8JJxR236SalUzninbu937BlwfV/I3k4KdGk2xm+MHuLa8Z0i9TC280qLRrF+8cw9RSjrOg8oIG8j2YgULsbGPomsgR0x9nsOzkOLh+kZr1owZGbfC2JJl78fIV0Wei/gxZDl85XWVtt++cxhuSEQ6bdfzLjlvM86PbaD4vQUjSglV8385My7CdXtO9+ZSyrLcf7nBN376V8gMpRztyq6RXYQAAAABJRU5ErkJggg==" width="16" /><span data-i18n="menu.about-dokieli.dd.span">${i18n.t("menu.about-dokieli.dd.span.innerHTML")}</span>
+    </dl>
+  </section>`;
+
+  node.insertAdjacentHTML('beforeend', html);
+}
+

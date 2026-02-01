@@ -15,12 +15,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { exportAsDocument } from "./dialog";
-import { getDocument } from "./doc";
-import { currentLocation, getResource } from "./fetcher";
-import { getButtonHTML } from "./ui/buttons";
-import { stripUrlParamsFromString } from "./uri";
-import { fragmentFromString, generateAttributeId } from "./util";
+import { processResources } from "./activity.js";
+import { exportAsDocument } from "./dialog.js";
+import { getDocument } from "./doc.js";
+import { currentLocation, getResource, setAcceptRDFTypes } from "./fetcher.js";
+import { getButtonHTML } from "./ui/buttons.js";
+import { stripFragmentFromString, stripUrlParamsFromString } from "./uri.js";
+import { fragmentFromString, generateAttributeId, uniqueArray } from "./util.js";
+import Config from "./config.js";
+const ns = Config.ns;
+import { filterQuads, getGraphFromData, getResourceGraph, isActorProperty, isActorType } from "./graph.js";
+import rdf from 'rdf-ext';
+import * as d3Selection from 'd3-selection';
+import * as d3Force from 'd3-force';
+const d3 = { ...d3Selection, ...d3Force };
+import { i18n } from "./i18n.js";
+import { domSanitize } from "./utils/sanitization.js";
 
 //Borrowed some of the d3 parts from https://bl.ocks.org/mbostock/4600693
 export function showVisualisationGraph(url, data, selector, options) {

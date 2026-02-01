@@ -662,6 +662,15 @@ export function getItemsList(url, options) {
     })
 }
 
+export function processResources(resources, options) {
+  if (Array.isArray(resources)) {
+    return Promise.resolve(resources);
+  }
+  else {
+    return getItemsList(resources, options);
+  }
+}
+
 export function showContactsActivities() {
   var aside = document.querySelector('#document-notifications');
 
@@ -803,6 +812,7 @@ export function processAgentTypeIndex(agent) {
 
 export function processAgentStorageOutbox(agent) {
   var promises = [];
+
   if (agent.Storage && agent.Storage.length) {
     if (agent.Outbox && agent.Outbox.length) {
       if (agent.Storage[0] === agent.Outbox[0]) {
@@ -867,9 +877,9 @@ export function showAnnotation(noteIRI, g, options) {
   if (note.out(ns.as.object).values.length) {
     note = g.node(rdf.namedNode(note.out(ns.as.object).values[0]));
   }
-// console.log(noteIRI)
-// console.log(note.toString())
-// console.log(note)
+  // console.log(noteIRI)
+  // console.log(note.toString())
+  // console.log(note)
 
   var id = generateUUID(noteIRI);
   var refId = 'r-' + id;
@@ -889,11 +899,11 @@ export function showAnnotation(noteIRI, g, options) {
     // console.log(Config.Activity)
     if (Config.Inbox[inboxIRI]) {
       Config.Inbox[inboxIRI]['Notifications'].forEach(notification => {
-// console.log(notification)
+        // console.log(notification)
         if (Config.Notification[notification]) {
           if (Config.Notification[notification]['Activities']) {
             Config.Notification[notification]['Activities'].forEach(activity => {
-// console.log('   ' + activity)
+              // console.log('   ' + activity)
               if (!document.querySelector('[about="' + activity + '"]') && Config.Activity[activity] && Config.Activity[activity]['Graph']) {
                 showAnnotation(activity, Config.Activity[activity]['Graph']);
               }
@@ -912,7 +922,7 @@ export function showAnnotation(noteIRI, g, options) {
 
   var datetime = getGraphDate(note);
 
-// console.log(datetime);
+  // console.log(datetime);
   //TODO: Create a helper function to look for annotater, e.g., getGraphAnnotatedBy
   var annotatedBy =
     (note.out(ns.schema.creator).values.length) ? note.out(ns.schema.creator) :
@@ -921,17 +931,17 @@ export function showAnnotation(noteIRI, g, options) {
     undefined;
 
   var annotatedByIRI;
-// console.log(annotatedBy);
+  // console.log(annotatedBy);
   if (annotatedBy) {
     annotatedByIRI = annotatedBy.values[0];
-// console.log(annotatedByIRI);
+    // console.log(annotatedByIRI);
     annotatedBy = g.node(rdf.namedNode(annotatedByIRI));
-// console.log(annotatedBy);
+    // console.log(annotatedBy);
 
     var annotatedByName = getAgentName(annotatedBy);
-// console.log(annotatedByName);
+    // console.log(annotatedByName);
     var annotatedByImage = getGraphImage(annotatedBy);
-// console.log(annotatedByImage);
+    // console.log(annotatedByImage);
     var annotatedByURL = annotatedBy.out(ns.schema.url).values[0];
   }
 
@@ -941,11 +951,11 @@ export function showAnnotation(noteIRI, g, options) {
   var bodyValue = note.out(ns.schema.description).values[0] || note.out(ns.dcterms.description).values[0] || note.out(ns.as.content).values[0];
 
   var types = getGraphTypes(note);
-// console.log(types);
+  // console.log(types);
   var resourceTypes = [];
   types.forEach(type => {
     resourceTypes.push(type);
-// console.log(type);
+    // console.log(type);
   });
 
   if (resourceTypes.includes(ns.oa.Annotation.value)) {
@@ -958,10 +968,10 @@ export function showAnnotation(noteIRI, g, options) {
       var noteRights = getGraphRights(note);
 
       var bodyObjects = [];
-// console.log(note.oahasBody)
-// console.log(note.oahasBody._array)
+      // console.log(note.oahasBody)
+      // console.log(note.oahasBody._array)
       hasBody.forEach(bodyIRI => {
-// console.log(bodyIRI);
+        // console.log(bodyIRI);
         var bodyObject = {
           "id": bodyIRI
         };
@@ -969,7 +979,7 @@ export function showAnnotation(noteIRI, g, options) {
         var body = g.node(rdf.namedNode(bodyIRI));
 
         if (body) {
-// console.log(body.toString());
+          // console.log(body.toString());
 
           var bodyTypes = getGraphTypes(body);
           if (bodyTypes.length) {
@@ -983,7 +993,7 @@ export function showAnnotation(noteIRI, g, options) {
 
           var hasPurpose = body.out(ns.oa.hasPurpose).values;
           if (hasPurpose.length) {
-// console.log(body.oahasPurpose)
+            // console.log(body.oahasPurpose)
             bodyObject['purpose'] = hasPurpose[0];
           }
 
@@ -996,28 +1006,28 @@ export function showAnnotation(noteIRI, g, options) {
 
           var bodyLanguage = getGraphLanguage(body) || noteLanguage;
           if (bodyLanguage) {
-// console.log(bodyLanguage)
+            // console.log(bodyLanguage)
             bodyObject['language'] = bodyLanguage;
           }
 
           var bodyLicense = getGraphLicense(body) || noteLicense;
           if (bodyLicense) {
-// console.log(bodyLicense)
+            // console.log(bodyLicense)
             bodyObject['license'] = bodyLicense;
           }
 
           var bodyRights = getGraphRights(body) || noteRights;
           if (bodyRights) {
-// console.log(bodyRights)
+          // console.log(bodyRights)
             bodyObject['rights'] = bodyRights;
           }
         }
         bodyObjects.push(bodyObject);
       })
-// console.log(bodyObjects)
+      // console.log(bodyObjects)
     }
 
-// console.log(documentURL)
+    // console.log(documentURL)
     var hasTarget = note.out(ns.oa.hasTarget).values[0];
     if (hasTarget && !(hasTarget.startsWith(documentURL) || 'targetInMemento' in options || 'targetInSameAs' in options)){
       // return Promise.reject();
@@ -1026,11 +1036,11 @@ export function showAnnotation(noteIRI, g, options) {
 
     var target = g.node(rdf.namedNode(hasTarget));
     var targetIRI = target.term.value;
-// console.log(targetIRI);
+    // console.log(targetIRI);
 
     var source = target.out(ns.oa.hasSource).values[0];
-// console.log(source);
-// console.log(note.oamotivatedBy);
+    // console.log(source);
+    // console.log(note.oamotivatedBy);
     var motivatedBy = note.out(ns.oa.motivatedBy).values[0];
     if (motivatedBy) {
       refLabel = getReferenceLabel(motivatedBy);
@@ -1040,14 +1050,14 @@ export function showAnnotation(noteIRI, g, options) {
     var selector = target.out(ns.oa.hasSelector).values[0];
     if (selector) {
       selector = g.node(rdf.namedNode(selector));
-// console.log(selector);
+      // console.log(selector);
 
-// console.log(selector.rdftype);
-// console.log(selector.out(ns.rdf.type).values);
+      // console.log(selector.rdftype);
+      // console.log(selector.out(ns.rdf.type).values);
       //FIXME: This is taking the first rdf:type. There could be multiple.
       var selectorTypes = getGraphTypes(selector)[0];
-// console.log(selectorTypes)
-// console.log(selectorTypes == 'http://www.w3.org/ns/oa#FragmentSelector');
+      // console.log(selectorTypes)
+      // console.log(selectorTypes == 'http://www.w3.org/ns/oa#FragmentSelector');
       if (selectorTypes == ns.oa.TextQuoteSelector.value) {
         exact = selector.out(ns.oa.exact).values[0];
         prefix = selector.out(ns.oa.prefix).values[0];
@@ -1056,14 +1066,14 @@ export function showAnnotation(noteIRI, g, options) {
       else if (selectorTypes == ns.oa.FragmentSelector.value) {
         var refinedBy = selector.out(ns.oa.refinedBy).values[0];
         refinedBy = refinedBy && selector.node(rdf.namedNode(refinedBy));
-// console.log(refinedBy)
+        // console.log(refinedBy)
         exact = refinedBy && refinedBy.out(ns.oa.exact).values[0];
         prefix = refinedBy && refinedBy.out(ns.oa.prefix).values[0];
         suffix = refinedBy && refinedBy.out(ns.oa.suffix).values[0];
-// console.log(selector.rdfvalue)
+        // console.log(selector.rdfvalue)
         if (selector.out(ns.rdf.value).values[0] && selector.out(ns.dcterms.conformsTo).values[0] && selector.out(ns.dcterms.conformsTo).values[0].endsWith('://tools.ietf.org/html/rfc3987')) {
           var fragment = selector.out(ns.rdf.value).values[0];
-// console.log(fragment)
+          // console.log(fragment)
           fragment = (fragment.indexOf('#') == 0) ? getFragmentFromString(fragment) : fragment;
 
           if (fragment !== '') {
@@ -1072,20 +1082,20 @@ export function showAnnotation(noteIRI, g, options) {
         }
       }
     }
-// console.log(exact);
-// console.log(prefix);
-// console.log(suffix);
-// console.log('----')
+    // console.log(exact);
+    // console.log(prefix);
+    // console.log(suffix);
+    // console.log('----')
     var docRefType = '<sup class="ref-annotation"><a href="#' + id + '" rel="cito:hasReplyFrom" resource="' + noteIRI + '">' + refLabel + '</a></sup>';
 
     var containerNodeTextContent = containerNode.textContent;
     //XXX: Seems better?
     // var containerNodeTextContent = fragmentFromString(getDocument(containerNode)).textContent.trim();
 
-//console.log(containerNodeTextContent);
-// console.log(prefix + exact + suffix);
+    // console.log(containerNodeTextContent);
+    // console.log(prefix + exact + suffix);
     var selectorIndex = containerNodeTextContent.indexOf(prefix + exact + suffix);
-// console.log(selectorIndex);
+    // console.log(selectorIndex);
     if (selectorIndex >= 0) {
       selector =  {
         "prefix": prefix,
@@ -1097,7 +1107,7 @@ export function showAnnotation(noteIRI, g, options) {
 
       var parentNodeWithId = selectedParentNode.closest('[id]');
       targetIRI = (parentNodeWithId) ? documentURL + '#' + parentNodeWithId.id : documentURL;
-// console.log(parentNodeWithId, targetIRI)
+      // console.log(parentNodeWithId, targetIRI)
       var noteData = {
         "type": 'comment',
         "mode": "read",
@@ -1153,11 +1163,11 @@ export function showAnnotation(noteIRI, g, options) {
 
       addNoteToNotifications(noteData);
 
-//           var asideNode = fragmentFromString(asideNote);
-//           var parentSection = getClosestSectionNode(selectedParentNode);
-//           parentSection.appendChild(asideNode);
-      //XXX: Keeping this comment around for emergency
-//                selectedParentNode.parentNode.insertBefore(asideNode, selectedParentNode.nextSibling);
+      // var asideNode = fragmentFromString(asideNote);
+      // var parentSection = getClosestSectionNode(selectedParentNode);
+      // parentSection.appendChild(asideNode);
+      // XXX: Keeping this comment around for emergency
+      // selectedParentNode.parentNode.insertBefore(asideNode, selectedParentNode.nextSibling);
 
       if(Config.User.IRI) {
         var buttonDelete = document.querySelector('aside.do blockquote[cite="' + noteIRI + '"] article button.delete');
@@ -1218,7 +1228,7 @@ export function showAnnotation(noteIRI, g, options) {
       if (datetime){
         noteData["datetime"] = datetime;
       }
-// console.log(noteData)
+      // console.log(noteData)
       addNoteToNotifications(noteData);
     }
   }
