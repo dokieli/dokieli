@@ -15,6 +15,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import Config from "../config.js";
+import { Editor } from "./editor.js";
+
 export function initEditor(options = {}) {
   Config['Editor'] = new Editor();
   const tmpl = options.template || (Config.Editor.new ? 'new' : null);

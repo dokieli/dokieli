@@ -25,7 +25,6 @@ import { domSanitize } from './utils/sanitization.js'
 import { parseMarkdown } from "./doc.js";
 import { setAcceptRDFTypes, getResource, getResourceHead, currentLocation } from './fetcher.js'
 import LinkHeader from "http-link-header";
-import { updateUILanguage } from "./menu.js";
 
 const ns = Config?.ns;
 const localhostUUID = 'http://localhost/d79351f4-cdb8-4228-b24f-3e9ac74a840d';
@@ -828,28 +827,6 @@ function setPreferredPolicyInfo(g) {
   Config.User['PreferredPolicyRule'] = getAgentPreferredPolicyRule(s);
 }
 
-function setPreferredLanguagesInfo(g) {
-  const preferredLanguages = getAgentPreferredLanguages(g) || [];
-
-  let matchedLang;
-
-  preferredLanguages.find(lang => {
-    const segments = lang.split("-");
-
-    for (let i = segments.length - 1; i >= 0; i--) {
-      if (Config.Translations.includes(segments[i])) {
-        matchedLang = segments[i];
-        return true;
-      }
-    }
-    return false;
-  });
-
-  if (matchedLang) {
-    updateUILanguage(matchedLang);
-  }
-}
-
 //TODO: Review grapoi
 function getAgentSupplementalInfo(iri) {
   if (iri == Config.User.IRI) {
@@ -1286,7 +1263,7 @@ function getAgentFollowing (s) {
       headers: {'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams", application/activity+json, text/turtle'},
       noCredentials: true
     };
-    return DO.U.getItemsList(following[0], options)
+    return getItemsList(following[0], options)
       .then(items => {
   // console.log(following);
         return (items.length) ? items : undefined;
@@ -1774,7 +1751,6 @@ export {
   getAgentPreferencesInfo,
   getAgentPreferredPolicyRule,
   setPreferredPolicyInfo,
-  setPreferredLanguagesInfo,
   getAgentSeeAlsoPrimaryTopicOf,
   getAgentSupplementalInfo,
   getUserContacts,

@@ -20,27 +20,31 @@ import { i18n } from './i18n.js';
 import { normalizeForDiff } from './utils/normalization.js'
 import { getButtonHTML } from './ui/buttons.js';
 import { showUserIdentityInput } from './auth.js';
-import { accessModeAllowed, createNoteDataHTML, getAccessModeOptionsHTML, getDocument, setCopyToClipboard } from './doc.js';
+import { accessModeAllowed, addMessageToLog, buildResourceView, copyRelativeResources, createNoteDataHTML, getAccessModeOptionsHTML, getBaseURLSelection, getDocument, getLanguageOptionsHTML, getLicenseOptionsHTML, parseMarkdown, setCopyToClipboard, showActionMessage, spawnDokieli } from './doc.js';
 import { domSanitize } from './utils/sanitization.js';
-import { hideDocumentMenu } from './menu.js';
-import { findPreviousDateTime, fragmentFromString, generateAttributeId, generateFilename } from './util.js';
-import { currentLocation, patchResourceWithAcceptPatch, putResourceWithAcceptPut } from './fetcher.js';
-import { forceTrailingSlash, generateDataURI, getBaseURL, stripFragmentFromString } from './uri.js';
-import { getAccessSubjects, getACLResourceGraph, getAgentName, getAuthorizationsMatching, getGraphImage, getLinkRelation, getResourceGraph } from './graph.js';
-import { sendNotifications } from './activity.js';
+import { hideDocumentMenu, initDocumentMenu, showDocumentMenu } from './menu.js';
+import { findPreviousDateTime, fragmentFromString, generateAttributeId, generateFilename, generateUUID, setDocumentURL } from './util.js';
+import { currentLocation, getResource, patchResourceWithAcceptPatch, putResource, putResourceWithAcceptPut, setAcceptRDFTypes } from './fetcher.js';
+import { forceTrailingSlash, generateDataURI, getAbsoluteIRI, getBaseURL, stripFragmentFromString } from './uri.js';
+import { getAccessSubjects, getACLResourceGraph, getAgentName, getAuthorizationsMatching, getGraphImage, getGraphTypes, getLinkRelation, getResourceGraph } from './graph.js';
+import { notifyInbox, sendNotifications } from './activity.js';
+import Config from './config.js';
+const ns = Config.ns;
+import { Icon } from './ui/icons.js';
+import rdf from 'rdf-ext';
 
 export function showResourceReviewChanges(localContent, remoteContent, response, reviewOptions) {
   if (!localContent.length || !remoteContent.length) return;
   var tmplLocal = document.implementation.createHTMLDocument('template');
   tmplLocal.documentElement.setHTMLUnsafe(localContent);
   const localContentNode = tmplLocal.body;
-  const localContentBody = localContentNode.getHTML().trim();
+  // const localContentBody = localContentNode.getHTML().trim();
 
   var tmplRemote = document.implementation.createHTMLDocument('template');
   tmplRemote.documentElement.setHTMLUnsafe(remoteContent);
 
   // const remoteContentNode = tmplRemote.body;
-  const remoteContentBody = tmplRemote.body.getHTML().trim();
+  // const remoteContentBody = tmplRemote.body.getHTML().trim();
   const remoteContentNode = tmplRemote.body;
 
   // console.log(localContent, remoteContent);
@@ -547,13 +551,13 @@ export function shareResource(listenerEvent, iri) {
               var options = {};
               options['accessContext'] = 'Share';
               options['selectedAccessMode'] = ns.acl.Read.value;
-              DO.U.showAccessModeSelection(li, '', contact, 'agent', options);
+              showAccessModeSelection(li, '', contact, 'agent', options);
 
               var select = document.querySelector('[id="' + li.id + '"] select');
               select.disabled = true;
               select.insertAdjacentHTML('afterend', `<span class="progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]}</span>`);
 
-              DO.U.updateAuthorization(options.accessContext, options.selectedAccessMode, contact, 'agent')
+              updateAuthorization(options.accessContext, options.selectedAccessMode, contact, 'agent')
                 .catch(error => {
                   console.log(error)
                 })
@@ -574,7 +578,6 @@ export function shareResource(listenerEvent, iri) {
             suggestions.appendChild(suggestion);
           })
         }
-
 
         //Allowing only Share-related access modes.
         var accessContext = Config.AccessContext['Share'];
@@ -899,7 +902,7 @@ function removeProgressIndicator(node) {
   node.parentNode.removeChild(progress);
 }
 
-function replyToResource replyToResource (e, iri) {
+export function replyToResource(e, iri) {
   iri = iri || currentLocation()
 
   const documentOptions = {
@@ -1276,7 +1279,7 @@ function triggerBrowse(url, id, action){
     function(reason){
       var node = document.getElementById(id + '-ul');
 
-      DO.U.showErrorResponseMessage(node, reason.response);
+      showErrorResponseMessage(node, reason.response);
     });
   }
   else{
@@ -1359,7 +1362,7 @@ function showCreateContainer(baseURL, id, action, e) {
           .catch(reason => {
             // console.log(reason)
 
-            DO.U.showErrorResponseMessage(node, reason.response, 'createContainer');
+            showErrorResponseMessage(node, reason.response, 'createContainer');
           })
       })
   });
@@ -1527,12 +1530,62 @@ function generateBrowserList(g, url, id, action) {
       //TODO: Find a better way than checking specific ids.
       if (!(id == 'location-generate-feed' && !buttonParent.classList.contains('container'))) {
         var nextUrl = buttonInput.value;
-        DO.U.nextLevelButton(buttons[i], nextUrl, id, action);
+        nextLevelButton(buttons[i], nextUrl, id, action);
       }
     }
 
     return resolve(list);
   });
+}
+
+function nextLevelButton(button, url, id, action) {
+  url = domSanitize(url);
+  id = domSanitize(id);
+  action = domSanitize(action);
+
+  //Action is for features that need to show a samp URL, e.g., save as URL (before submitting). The open feature doesn't have samp.
+  var actionNode = document.getElementById(id + '-' + action);
+
+  //TODO: Some refactoring needed because it is radio only. For now this function is not called for inputType=checkbox
+  var inputType = (id == 'location-generate-feed') ? 'checkbox' : 'radio';
+
+  button.addEventListener('click', () => {
+    if(button.parentNode.classList.contains('container')){
+      var headers;
+      headers = {'Accept': 'text/turtle, application/ld+json'};
+      getResourceGraph(url, headers).then(g => {
+          if (actionNode) {
+            actionNode.textContent = (action == 'write') ? url + generateAttributeId() : url;
+          }
+          return generateBrowserList(g, url, id, action);
+        },
+        function(reason){
+          var node = document.getElementById(id);
+
+          showErrorResponseMessage(node, reason.response);
+        }
+      );
+    }
+    else {
+      document.getElementById(id + '-input').value = url;
+      var alreadyChecked = button.parentNode.querySelector('input[type="radio"]').checked;
+      var radios = button.parentNode.parentNode.querySelectorAll('input[checked="true"]');
+
+      if (actionNode) {
+        actionNode.textContent =  url;
+      }
+
+      for(var i = 0; i < radios.length; i++){
+        radios[i].removeAttribute('checked');
+      }
+      if(alreadyChecked){
+        button.parentNode.querySelector('input[type="radio"]').removeAttribute('checked');
+      }
+      else{
+        button.parentNode.querySelector('input[type="radio"]').setAttribute('checked', 'true');
+      }
+    }
+  }, false);
 }
 
 function showStorageDescription(s, id, storageUrl, checkAgain) {
@@ -1601,11 +1654,642 @@ function showStorageDescription(s, id, storageUrl, checkAgain) {
           }
         });
 
-// console.log(Config.Resource);
+        // console.log(Config.Resource);
       })
       .catch(error => {
         // console.log('Error fetching solid:storageDescription endpoint:', error)
         // throw error
       });
   }
-},
+}
+
+export async function openResource(iri, options) {
+  options = options || {};
+  var headers = { 'Accept': setAcceptRDFTypes() };
+  // var pIRI = getProxyableIRI(iri);
+  // if (pIRI.slice(0, 5).toLowerCase() == 'http:') {
+  // }
+
+  // options['noCredentials'] = true;
+
+  var handleResource = async function handleResource(iri, headers, options) {
+    var message = `Opening <a href="${iri} rel="noopener" target="_blank">${iri}</a>.`;
+    var actionMessage = `Opening <a href="${iri}" rel="noopener" target="_blank">${iri}</a>`;
+
+    const messageObject = {
+      'content': actionMessage,
+      'type': 'info',
+      'timer': 10000
+    }
+
+    addMessageToLog({...messageObject, content: message}, Config.MessageLog);
+    const messageId = showActionMessage(document.body, messageObject);
+    let response;
+    let error;
+
+    try {
+      response = await getResource(iri, headers, options);
+    } catch(e) {
+      error = e;
+      // console.log(error)
+      // console.log(error.status)
+      // console.log(error.response)
+
+      //XXX: It was either a CORS related issue or 4xx/5xx.
+
+      document.getElementById(messageId).remove();
+
+      var message = `Unable to open <a href="${iri}" rel="noopener" target="_blank">${iri}</a>.`;
+      var actionMessage = `Unable to open <a href="${iri}" rel="noopener" target="_blank">${iri}</a>.`;
+
+      const messageObject = {
+        'content': actionMessage,
+        'type': 'error',
+        'timer': 5000,
+        'code': error.status
+      }
+
+      addMessageToLog({...messageObject, content: message}, Config.MessageLog);
+      showActionMessage(document.body, messageObject);
+
+      throw error
+    }
+
+    if (response) {
+      // console.log(response)
+      iri = encodeURI(iri)
+      var cT = response.headers.get('Content-Type');
+      var options = {};
+      options['contentType'] = (cT) ? cT.split(';')[0].toLowerCase().trim() : 'text/turtle';
+      options['subjectURI'] = iri;
+
+      let data = await response.text()
+
+      setDocumentURL(iri);
+      var documentURL = Config.DocumentURL;
+      Config['Resource'][documentURL] = Config['Resource'][documentURL] || {};
+
+      var spawnOptions = {};
+
+      var checkMarkdownInMediaTypes = ['text/markdown', 'text/plain'];
+      if  (checkMarkdownInMediaTypes.includes(options['contentType'])) {
+        data = parseMarkdown(data, {createDocument: true});
+        spawnOptions['defaultStylesheet'] = true;
+        //XXX: Perhaps okay for text/markdown but not text/plain?
+        options.contentType = 'text/html';
+      }
+
+      if (Config.MediaTypes.RDF.includes(options['contentType'])) {
+        options['storeHash'] = true;
+        getResourceInfo(data, options);
+      }
+
+      const o = await buildResourceView(data, options)
+      // console.log(o)
+      spawnOptions['defaultStylesheet'] = ('defaultStylesheet' in o) ? o.defaultStylesheet : (('defaultStylesheet' in spawnOptions) ? spawnOptions['defaultStylesheet'] : false);
+      spawnOptions['init'] = true;
+
+      var html = await spawnDokieli(document, o.data, o.options['contentType'], o.options['subjectURI'], spawnOptions);
+    }
+
+    Config.DocumentAction = 'open';
+
+    var rm = document.querySelector('#document-action-message')
+    if (rm) {
+      rm.parentNode.removeChild(rm)
+    }
+    var message = `Opened <a href="${iri}" rel="noopener" target="_blank">${iri}</a>.`;
+    message = {
+      'content': message,
+      'type': 'success',
+      'timer': 3000
+    }
+    addMessageToLog(message, Config.MessageLog);
+    showActionMessage(document.body, message);
+  }
+
+  await handleResource(iri, headers, options);
+}
+
+export function openDocument(e) {
+  if(typeof e !== 'undefined') {
+    e.target.disabled = true;
+  }
+
+  var buttonClose = getButtonHTML({ key: 'dialog.open-document.close', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
+
+  document.body.insertAdjacentHTML('beforeend', `
+    <aside aria-labelledby="open-document-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="open-document" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#open-document" xml:lang="${Config.User.UI.Language}">
+      <h2 data-i18n="dialog.open-document.h2" id="open-document-label" property="schema:name">${i18n.t('dialog.open-document.h2.textContent')} ${Config.Button.Info.Open}</h2>
+      ${buttonClose}
+      <div class="info"></div>
+      <p><label data-i18n="dialog.open-document.open-local-file.label" for="open-local-file">${i18n.t('dialog.open-document.open-local-file.label.textContent')}</label> <input type="file" id="open-local-file" name="open-local-file" multiple="" /></p>
+    </aside>
+  `);
+
+  var id = 'location-open-document';
+  var action = 'read';
+
+  var openDocument = document.getElementById('open-document');
+  setupResourceBrowser(openDocument , id, action);
+  var idSamp = (typeof Config.User.Storage == 'undefined') ? '' : '<p><samp id="' + id + '-' + action + '">https://example.org/path/to/article</samp></p>';
+  openDocument.insertAdjacentHTML('beforeend', `${idSamp}<button class="open" data-i18n="dialog.open-document.open.button" title="${i18n.t('dialog.open-document.open.button.title')}" type="submit">${i18n.t('dialog.open-document.open.button.textContent')}</button>`);
+
+  openDocument.addEventListener('click', function (e) {
+    if (e.target.closest('button.close')) {
+      document.querySelector('#document-do .resource-open').disabled = false;
+    }
+
+    if (e.target.closest('button.open')) {
+      var openDocument = document.getElementById('open-document');
+      var rm = openDocument.querySelector('.response-message');
+      if (rm) {
+        rm.parentNode.removeChild(rm);
+      }
+
+      var bli = document.getElementById(id + '-input');
+      var iri = bli.value;
+
+      var options = {};
+
+      openResource(iri, options);
+    }
+  });
+
+  openDocument.querySelector('#open-local-file').addEventListener('change', DO.U.openInputFile, false);
+}
+
+export function viewSource(e) {
+  if (e) {
+    e.target.closest('button').disabled = true;
+  }
+
+  const documentOptions = {
+    ...Config.DOMProcessing,
+    format: true,
+    // TODO: Revisit because the user should be informed (show dialog) whether they want to retain or include certain scripts.
+    // sanitize: true,
+    normalize: true
+  };
+
+  var buttonDisabled = (document.location.protocol === 'file:') ? ' disabled="disabled"' : '';
+
+  var buttonClose = getButtonHTML({ key: 'dialog.source-view.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
+
+  document.body.appendChild(fragmentFromString(`
+    <aside aria-labelledby="source-view-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="source-view" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#source-view" xml:lang="${Config.User.UI.Language}">
+      <h2 data-i18n="dialog.source-view.h2" id="source-view-label" property="schema:name">${i18n.t('dialog.source-view.h2.textContent')} ${Config.Button.Info.Source}</h2>
+      ${buttonClose}
+      <div class="info"></div>
+      <textarea dir="ltr id="source-edit" rows="24" cols="80"></textarea>
+      <p><button class="update" data-i18n="dialog.source-view.update.button"${buttonDisabled} title="Update source" type="submit">${i18n.t('dialog.source-view.update.button.textContent')}</button></p>
+    </aside>
+  `));
+  var sourceBox = document.getElementById('source-view');
+  var input = document.getElementById('source-edit');
+  input.value = getDocument(null, documentOptions);
+
+  sourceBox.addEventListener('click', (e) => {
+    if (e.target.closest('button.update')) {
+      var data = document.getElementById('source-edit').value;
+      //FIXME: dokieli related stuff may be getting repainted / updated in the DOM
+      document.documentElement.setHTMLUnsafe(domSanitize(data));
+      initDocumentMenu();
+      showDocumentMenu(e);
+      viewSource();
+      document.querySelector('#document-do .resource-source').disabled = true;
+    }
+
+    if (e.target.closest('button.close')) {
+      document.querySelector('#document-do .resource-source').disabled = false;
+    }
+  });
+}
+
+
+export async function saveAsDocument(e) {
+  if (e) {
+    e.target.closest('button').disabled = true;
+  }
+
+  const documentOptions = {
+    ...Config.DOMProcessing,
+    format: true,
+    sanitize: true,
+    normalize: true
+  };
+
+  var buttonClose = getButtonHTML({ key: 'dialog.save-as-document.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
+
+  document.body.appendChild(fragmentFromString(`
+    <aside aria-labelledby="save-as-document-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="save-as-document" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#save-as-document" xml:lang="${Config.User.UI.Language}">
+      <h2 data-i18n="dialog.save-as-document.h2" id="save-as-document-label" property="schema:name">${i18n.t('dialog.save-as-document.h2.textContent')} ${Config.Button.Info.SaveAs}</h2>
+      ${buttonClose}
+      <div class="info"></div>
+    </aside>
+  `));
+
+  var saveAsDocument = document.getElementById('save-as-document');
+  saveAsDocument.addEventListener('click', (e) => {
+    if (e.target.closest('button.close')) {
+      document.querySelector('#document-do .resource-save-as').disabled = false;
+    }
+  });
+
+  var fieldset = '';
+
+  var locationInboxId = 'location-inbox';
+  var locationInboxAction = 'read';
+  saveAsDocument.insertAdjacentHTML('beforeend', `<div><input id="${locationInboxId}-set" name="${locationInboxId}-set" type="checkbox" /> <label data-i18n="dialog.save-as-document.set-inbox.label" for="${locationInboxId}-set">${i18n.t('dialog.save-as-document.set-inbox.label.textContent')}</label></div>`);
+
+  saveAsDocument.addEventListener('click', (e) => {
+    if (e.target.closest('input#' + locationInboxId + '-set')) {
+      if (e.target.getAttribute('checked')) {
+        e.target.removeAttribute('checked');
+
+        fieldset = saveAsDocument.querySelector('#' + locationInboxId + '-fieldset');
+        fieldset.parentNode.removeChild(fieldset);
+      }
+      else {
+        e.target.setAttribute('checked', 'checked');
+
+        e.target.nextElementSibling.insertAdjacentHTML('afterend', '<fieldset id="' + locationInboxId + '-fieldset"></fieldset>');
+        fieldset = saveAsDocument.querySelector('#' + locationInboxId + '-fieldset');
+        setupResourceBrowser(fieldset, locationInboxId, locationInboxAction);
+        fieldset.insertAdjacentHTML('beforeend', `<p data-i18n="dialog.save-as-document.article-inbox.p">${i18n.t('dialog.save-as-document.article-inbox.p.textContent')} <samp id="${locationInboxId}-${locationInboxAction}"></samp></p>`);
+        var lii = document.getElementById(locationInboxId + '-input');
+        lii.focus();
+        lii.placeholder = 'https://example.org/path/to/inbox/';
+      }
+    }
+  });
+
+  var locationAnnotationServiceId = 'location-annotation-service';
+  var locationAnnotationServiceAction = 'read';
+  saveAsDocument.insertAdjacentHTML('beforeend', `<div><input id="${locationAnnotationServiceId}-set" name="${locationAnnotationServiceId}-set" type="checkbox" /> <label data-i18n="dialog.save-as-document.set-annotation-service.label" for="${locationAnnotationServiceId}-set">${i18n.t('dialog.save-as-document.set-annotation-service.label.textContent')}</label></div>`);
+
+  saveAsDocument.addEventListener('click', (e) => {
+    if (e.target.closest('input#' + locationAnnotationServiceId + '-set')) {
+      if (e.target.getAttribute('checked')) {
+        e.target.removeAttribute('checked');
+
+        fieldset = saveAsDocument.querySelector('#' + locationAnnotationServiceId + '-fieldset');
+        fieldset.parentNode.removeChild(fieldset);
+      }
+      else {
+        e.target.setAttribute('checked', 'checked');
+
+        e.target.nextElementSibling.insertAdjacentHTML('afterend', '<fieldset id="' + locationAnnotationServiceId + '-fieldset"></fieldset>');
+        fieldset = saveAsDocument.querySelector('#' + locationAnnotationServiceId + '-fieldset');
+        setupResourceBrowser(fieldset, locationAnnotationServiceId, locationAnnotationServiceAction);
+        fieldset.insertAdjacentHTML('beforeend', `<p data-i18n="dialog.save-as-document.article-annotation-service.p">${i18n.t('dialog.save-as-document.article-annotation-service.p.textContent')} <samp id="${locationAnnotationServiceId}-${locationAnnotationServiceAction}"></samp></p>`);
+        var lasi = document.getElementById(locationAnnotationServiceId + '-input');
+        lasi.focus();
+        lasi.placeholder = 'https://example.org/path/to/annotation/';
+      }
+    }
+  });
+
+  //https://www.w3.org/TR/ATAG20/#gl_b31
+  //TODO: Better tracking of fails so that author can correct.
+  var img = document.querySelectorAll('img:not(:is(.do *))');
+  var imgFailed = [];
+  var imgPassed = [];
+  var imgCantTell = [];
+  var imgTestResult;
+  if (img.length == 0) {
+    imgTestResult = 'earl:inapplicable';
+  }
+  else {
+    img.forEach(i => {
+      if (i.hasAttribute('alt')) {
+        if(i.alt.trim() === '') {
+          imgCantTell.push(i);
+        }
+        imgPassed.push(i);
+      }
+      else {
+        imgFailed.push(i);
+      }
+    });
+  }
+  var imgAccessibilityReport = [];
+  if (imgFailed.length) {
+    imgAccessibilityReport.push(`<li data-i18n="dialog.accessibility-report.image-failed.li">${i18n.t('dialog.accessibility-report.image-failed.li.innerHTML')}</li>`);
+  }
+  if (imgCantTell.length) {
+    imgAccessibilityReport.push(`<li data-i18n="dialog.accessibility-report.image-cant-tell.li">${i18n.t('dialog.accessibility-report.image-cant-tell.li.innerHTML')}</li>`);
+  }
+
+  var video = document.querySelectorAll('video');
+  var videoFailed = [];
+  var videoPassed = [];
+  var videoCantTell = [];
+  var videoTestResult = 'earl:untested';
+  if (video.length == 0) {
+    videoTestResult = 'earl:inapplicable';
+  }
+  else {
+    video.forEach(i => {
+      if (i.querySelector('track') && i.hasAttribute('kind')) {
+        videoPassed.push(i);
+      }
+      else {
+        videoFailed.push(i);
+      }
+    });
+  }
+  var videoAccessibilityReport = [];
+  if (videoFailed.length) {
+    videoAccessibilityReport.push(`<li data-i18n="dialog.accessibility-report.video-failed.li">${i18n.t('dialog.accessibility-report.video-failed.li.innerHTML')}</li>`);
+  }
+
+  var audio = document.querySelectorAll('audio');
+  var audioFailed = [];
+  var audioPassed = [];
+  var audioCantTell = [];
+  var audioTestResult = 'earl:untested';
+  if (audio.length == 0) {
+    audioTestResult = 'earl:inapplicable';
+  }
+  else {
+    audio.forEach(i => {
+      if (i.querySelector('track') && i.hasAttribute('kind')) {
+        audioPassed.push(i);
+      }
+      else {
+        audioFailed.push(i);
+      }
+    });
+  }
+  var audioAccessibilityReport = [];
+  if (audioFailed.length) {
+    audioAccessibilityReport.push(`<li> data-i18n="dialog.accessibility-report.audio-failed.li">${i18n.t('dialog.accessibility-report.audio-failed.li.innerHTML')}</li>`);
+  }
+
+  var aRWarning = `<p data-i18n="dialog.accessibility-report.warning.p">${i18n.t('dialog.accessibility-report.warning.p.textContent')}</p>`;
+  var aRSuccess = `<p data-i18n="dialog.accessibility-report.success.p">${i18n.t('dialog.accessibility-report.success.p.textContent')}</p>`;
+  var accessibilityReport = '';
+  if (imgAccessibilityReport.length || audioAccessibilityReport.length || videoAccessibilityReport.length) {
+    accessibilityReport += aRWarning + '<ul>' + imgAccessibilityReport.join('') + audioAccessibilityReport.join('') + videoAccessibilityReport.join('') + '</ul>';
+  }
+  else {
+    accessibilityReport += aRSuccess;
+  }
+  accessibilityReport = `<details id="accessibility-report-save-as"><summary data-i18n="dialog.accessibility-report.summary">${i18n.t('dialog.accessibility-report.summary.textContent')}</summary>${accessibilityReport}</details>`;
+
+  let dokielizeResource = '';
+  let derivationData = '';
+  
+  if (!Config.Editor['new']) {
+    dokielizeResource = '<li><input type="checkbox" id="dokielize-resource" name="dokielize-resource" /><label for="dokielize-resource">dokielize</label></li>';
+    derivationData = `<li><input type="checkbox" id="derivation-data" name="derivation-data" checked="checked" /><label data-i18n="dialog.save-as-document.derivation-data.label" for="derivation-data">${i18n.t('dialog.save-as-document.derivation-data.label.textContent')}</label></li>`;
+  }
+
+  var id = 'location-save-as';
+  var action = 'write';
+  saveAsDocument.insertAdjacentHTML('beforeend', `<form><fieldset id="${id}-fieldset"><legend data-i18n="dialog.save-as-document.save-to.legend">${i18n.t('dialog.save-as-document.save-to.legend.textContent')}</legend></fieldset></form>`);
+  fieldset = saveAsDocument.querySelector('fieldset#' + id + '-fieldset');
+  setupResourceBrowser(fieldset, id, action);
+  fieldset.insertAdjacentHTML('beforeend', `<p data-i18n="dialog.save-as-document.save-location.p" id="${id}-samp">${i18n.t('dialog.save-as-document.save-location.p.textContent')} <samp id="${id}-${action}"></samp></p>${getBaseURLSelection()}<ul>${dokielizeResource}${derivationData}</ul>${accessibilityReport}<button class="create" data-i18n="dialog.save-as-document.save.button" title="${i18n.t('dialog.save-as-document.save.button.title')}" type="submit">${i18n.t('dialog.save-as-document.save.button.textContent')}</button>`);
+  var bli = document.getElementById(id + '-input');
+  bli.focus();
+  bli.placeholder = 'https://example.org/path/to/article';
+
+  saveAsDocument.addEventListener('click', async (e) => {
+    if (!e.target.closest('button.create')) {
+      return
+    }
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    var saveAsDocument = document.getElementById('save-as-document')
+    var storageIRI = saveAsDocument.querySelector('#' + id + '-' + action).innerText.trim()
+
+    var rm = saveAsDocument.querySelector('.response-message')
+    if (rm) {
+      rm.parentNode.removeChild(rm)
+    }
+
+
+    // TODO: this needs to be form validation instead
+    if (!storageIRI.length) {
+      saveAsDocument.insertAdjacentHTML('beforeend',
+        `<div class="response-message"><p class="error" data-i18n="dialog.save-as-document.error.missing-location.p">${i18n.t("dialog.save-as-document.error.missing-location.p.textContent")}</p></div>`
+      )
+
+      return
+    }
+
+    var html = document.documentElement.cloneNode(true)
+    var o, r
+
+    if (!Config.Editor['new']) {
+      var dokielize = document.querySelector('#dokielize-resource')
+      if (dokielize.checked) {
+        html = getDocument(html, documentOptions)
+        html = await spawnDokieli(document, html, 'text/html', storageIRI, {'init': false})
+      }
+
+      var wasDerived = document.querySelector('#derivation-data')
+      if (wasDerived.checked) {
+        o = { 'id': 'document-derived-from', 'title': 'Derived From' };
+        r = { 'rel': 'prov:wasDerivedFrom', 'href': Config.DocumentURL };
+        html = setDocumentRelation(html, [r], o);
+
+        html = setDate(html, { 'id': 'document-derived-on', 'property': 'prov:generatedAtTime' });
+        o = { 'id': 'document-identifier', 'title': 'Identifier' };
+        r = { 'rel': 'owl:sameAs', 'href': storageIRI };
+        html = setDocumentRelation(html, [r], o);
+      }
+    }
+
+    var inboxLocation = saveAsDocument.querySelector('#' + locationInboxId + '-' + locationInboxAction);
+    if (inboxLocation) {
+      inboxLocation = inboxLocation.innerText.trim();
+      o = { 'id': 'document-inbox', 'title': 'Notifications Inbox' };
+      r = { 'rel': 'ldp:inbox', 'href': inboxLocation };
+      html = setDocumentRelation(html, [r], o);
+    }
+
+    var annotationServiceLocation = saveAsDocument.querySelector('#' + locationAnnotationServiceId + '-' + locationAnnotationServiceAction)
+    if (annotationServiceLocation) {
+      annotationServiceLocation = annotationServiceLocation.innerText.trim();
+      o = { 'id': 'document-annotation-service', 'title': 'Annotation Service' };
+      r = { 'rel': 'oa:annotationService', 'href': annotationServiceLocation };
+      html = setDocumentRelation(html, [r], o);
+    }
+
+    var baseURLSelectionChecked = saveAsDocument.querySelector('select[id="base-url"]');
+    let baseURLType;
+    if (baseURLSelectionChecked.length) {
+      baseURLType = baseURLSelectionChecked.value
+      var nodes = html.querySelectorAll('head link, [src], object[data]')
+      var base = html.querySelector('head base[href]');
+      var baseOptions = {'baseURLType': baseURLType};
+      if (base) {
+        baseOptions['iri'] = base.href;
+      }
+      nodes = rewriteBaseURL(nodes, baseOptions)
+    }
+
+    html = getDocument(html, documentOptions)
+
+    var progress = saveAsDocument.querySelector('progress')
+    if(progress) {
+      progress.parentNode.removeChild(progress)
+    }
+    e.target.insertAdjacentHTML('afterend', '<progress min="0" max="100" value="0"></progress>')
+    progress = saveAsDocument.querySelector('progress')
+
+    putResource(storageIRI, html, null, null, { 'progress': progress })
+      .then(response => {
+        progress.parentNode.removeChild(progress)
+
+        if (baseURLType == 'base-url-relative') {
+          copyRelativeResources(storageIRI, nodes)
+        }
+
+        let url = response.url || storageIRI
+        url = domSanitize(url);
+
+        saveAsDocument.insertAdjacentHTML('beforeend',
+          `<div class="response-message"><p class="success" data-i18n="dialog.save-as-document.success.saved-at.p"><span>${i18n.t('dialog.save-as-document.success.saved-at.p.textContent')}</span> <a href="${url}">${url}</a></p></div>`
+        )
+
+        Config.DocumentAction = 'save-as';
+
+        setTimeout(() => {
+          if (Config.Editor['new']) {
+            //XXX: Commenting this out for now, not sure what this was supposed to fix
+            // Config.Editor.replaceContent('author', fragmentFromString(html));
+            Config.Editor['new'] = false;
+
+            var urlObject = new URL(url);
+            var documentURLObject = new URL(Config.DocumentURL);
+
+            if (urlObject.origin === documentURLObject.origin) {
+              window.history.pushState({}, null, url);
+              setDocumentURL(url);
+              hideDocumentMenu();
+            }
+            else {
+              window.open(url, '_blank');
+            }
+          }
+          else {
+            window.open(url, '_blank');
+          }
+        }, 3000)
+      })
+
+      .catch(error => {
+        console.log('Error saving document: ' + error)
+
+        progress.parentNode.removeChild(progress)
+
+        let message
+
+        var requestAccess = '';
+        var linkHeaders;
+        var inboxURL;
+        var link = error?.response?.headers?.get('Link');
+        if (link) {
+          linkHeaders = LinkHeader.parse(link);
+        }
+
+        if (Config.User.IRI && linkHeaders && linkHeaders.has('rel', ns.ldp.inbox.value)){
+          inboxURL = linkHeaders.rel(ns.ldp.inbox.value)[0].uri;
+          requestAccess = `<p><button class="request-access" data-i18n="dialog.save-as-document.request-access.button" data-inbox="${inboxURL}" data-target="${storageIRI}" title="${i18n.t('dialog.save-as-document.request-access.button.title')}" type="button">${i18n.t('dialog.save-as-document.request-access.button.textContent')}</button></p>`;
+        }
+
+        let errorKey = 'default'
+
+        switch (error.status) {
+          case 0:
+          case 405:
+            errorKey = 'unwritable-location';
+            break
+          case 401:
+            errorKey = 'invalid-credentials';
+            if(!Config.User.IRI){
+              errorKey = 'unauthenticated';
+            }
+            break
+          case 403:
+            errorKey = 'unauthorized';
+            break
+          case 406:
+            errorKey = 'unacceptable';
+            break
+          default:
+            // message = error.message // Could not save
+            break
+        }
+
+        message = i18n.t(`dialog.save-as-document.error.${errorKey}.p.textContent`);
+
+        //TODO:i18n
+        saveAsDocument.insertAdjacentHTML('beforeend', domSanitize(
+          `<div class="response-message"><p class="error" data-i18n="dialog.save-as-document.error.${errorKey}.p">${message}</p>${requestAccess}</div>`
+        ));
+
+        if (Config.User.IRI && requestAccess) {
+          document.querySelector('#save-as-document .response-message .request-access').addEventListener('click', (e) => {
+            var objectId = '#' + generateUUID();
+
+            inboxURL = e.target.dataset.inbox;
+            var accessTo = e.target.dataset.target;
+            var agent = Config.User.IRI;
+
+            e.target.disabled = true;
+            var responseMessage = e.target.parentNode;
+            responseMessage.insertAdjacentHTML('beforeend', domSanitize(
+              `<span class="progress" data-to="${inboxURL}">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]}</span>`
+            ))
+
+            var notificationStatements = `<dl about="` + objectId + `" prefix="acl: http://www.w3.org/ns/auth/acl#">
+<dt>Object type</dt><dd><a about="` + objectId + `" href="` + ns.acl.Authorization.value + `" typeof="acl:Authorization">Authorization</a></dd>
+<dt>Agents</dt><dd><a href="` + agent + `" property="acl:agent">` + agent + `</a></dd>
+<dt>Access to</dt><dd><a href="` + accessTo + `" property="acl:accessTo">` + accessTo + `</a></dd>
+<dt>Modes</dt><dd><a href="` + ns.acl.Read.value + `" property="acl:mode">Read</a></dd><dd><a href="` + ns.acl.Write.value + `" property="acl:mode">Write</a></dd>
+</dl>
+`;
+
+            var notificationData = {
+              "type": ['as:Request'],
+              "inbox": inboxURL,
+              "object": objectId,
+              "statements": notificationStatements
+            };
+
+            responseMessage = document.querySelector('#save-as-document .response-message');
+
+            return notifyInbox(notificationData)
+              .catch(error => {
+                console.log('Error notifying the inbox:', error)
+
+                responseMessage
+                  .querySelector('.progress[data-to="' + inboxURL + '"]')
+                  .setHTMLUnsafe(domSanitize(`${Icon[".fas.fa-times-circle.fa-fw"]} <span data-i18n="dialog.save-as-document.request-access.not-notified.span">${i18n.t('dialog.save-as-document.request-access.not-notified.span.textContent')}</span>`))
+              })
+              .then(response => {
+                var notificationSent = Icon[".fas.fa-check-circle.fa-fw"];
+                var location = response.headers.get('Location');
+
+                if (location) {
+                  let locationUrl = getAbsoluteIRI(response.url, location.trim());
+                  notificationSent = `<a href="${locationUrl}" rel="noopener" "target="_blank">${Icon[".fas.fa-check-circle.fa-fw"]}</a>`;
+                }
+
+                responseMessage
+                  .querySelector('.progress[data-to="' + inboxURL + '"]')
+                  .setHTMLUnsafe(domSanitize(notificationSent))
+              })
+
+          })
+        }
+      })
+  })
+}

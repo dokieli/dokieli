@@ -18,7 +18,7 @@ limitations under the License.
 import Config from './config.js'
 import { getDateTimeISO, fragmentFromString, generateAttributeId, uniqueArray, generateUUID, matchAllIndex, parseISODuration, getRandomIndex, getHash, stringFromFragment } from './util.js'
 import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath, getPrefixedNameFromIRI, generateDataURI, getProxyableIRI, getFragmentOrLastPath, isHttpOrHttpsProtocol, isFileProtocol } from './uri.js'
-import { getResourceHead, deleteResource, processSave, patchResourceWithAcceptPatch } from './fetcher.js'
+import { getResourceHead, deleteResource, processSave, patchResourceWithAcceptPatch, copyResource } from './fetcher.js'
 import rdf from "rdf-ext";
 import { getResourceGraph, sortGraphTriples, getGraphContributors, getGraphAuthors, getGraphEditors, getGraphPerformers, getGraphPublishers, getGraphLabel, getGraphEmail, getGraphTitle, getGraphConceptLabel, getGraphPublished, getGraphUpdated, getGraphDescription, getGraphLicense, getGraphRights, getGraphFromData, getGraphAudience, getGraphTypes, getGraphLanguage, getGraphInbox, getUserLabelOrIRI, getGraphImage } from './graph.js'
 import LinkHeader from "http-link-header";
@@ -32,12 +32,13 @@ import { domSanitizeHTMLBody, domSanitize } from './utils/sanitization.js';
 import { cleanProseMirrorOutput, normalizeHTML } from './utils/normalization.js';
 import { formatHTML, getDoctype, htmlEncode } from './utils/html.js';
 import { i18n } from './i18n.js';
-import { positionNote } from './activity.js';
+import { positionNote, processResources } from './activity.js';
 import shower from '@shower/core';
 import { csvStringToJson, jsonToHtmlTableString } from './csv.js';
 import { generateGeoView } from './geo.js';
 import { hideDocumentMenu, initDocumentMenu } from './menu.js';
 import { initEditor } from './editor/initEditor.js';
+import { diffChars } from 'diff';
 
 const ns = Config.ns;
 
@@ -4332,7 +4333,7 @@ export async function spawnDokieli(documentNode, data, contentType, iris, option
     document.querySelector('head').insertAdjacentHTML('afterbegin', '<base href="' + iri + '" />');
     //TODO: Setting the base URL with `base` seems to work correctly, i.e., link base is opened document's URL, and simpler than updating some of the elements' href/src/data attributes. Which approach may be better depends on actions afterwards, e.g., Save As (perhaps other features as well) may need to remove the base and go with the user selection.
     // var nodes = tmpl.querySelectorAll('head link, [src], object[data]');
-    // nodes = DO.U.rewriteBaseURL(nodes, {'baseURLType': 'base-url-absolute', 'iri': iri});
+    // nodes = rewriteBaseURL(nodes, {'baseURLType': 'base-url-absolute', 'iri': iri});
   }
 
   if (contentType == 'application/gpx+xml') {
@@ -4468,3 +4469,360 @@ export function setDocRefType() {
   }
 }
 
+export function generateIndexItemHTML(g, options) {
+  if (typeof g.iri === 'undefined') return;
+
+  // console.log(graph);
+  options = options || {};
+  var image = '';
+  var name = '';
+  var published = '';
+  var summary = '';
+  var tags = '';
+
+  image = getGraphImage(g) || '';
+  if (image) {
+    image = getResourceImageHTML(image) + ' ';
+  }
+
+  name = getGraphLabel(g) || g.term.value;
+  name = '<a href="' + g.term.value + '" property="schema:name" rel="schema:url">' + name + '</a>';
+
+  //XXX: Is this what's really intended with getValues? Should it return array?
+  function getValues(g, properties) {
+    let result;
+    properties.forEach(p => {
+      result = g.out(p).values;
+    })
+    return result;
+  } 
+
+  var properties = [ns.schema.datePublished, ns.dcterms.issued, ns.dcterms.date, ns.as.published, ns.schema.dateCreated, ns.dcterms.created, ns.prov.generatedAtTime, ns.dcterms.modified, ns.as.updated];
+  var datePublished = getValues(g, properties)[0] || '';
+
+  if (datePublished) {
+    published = ', <time content="' + datePublished + '" datetime="' + datePublished + '" property="schema:dataPublished">' + datePublished.substr(0,10) + '</time>';
+  }
+
+  if (g.out(ns.oa.hasBody).values.length) {
+    summary = g.node(rdf.namedNode(summary)).out(ns.rdf.value).values[0];
+  }
+  else {
+    summary = getValues(g, [ns.schema.abstract, ns.dcterms.description, ns.rdf.value, ns.as.summary, ns.schema.description, ns.as.content])[0] || '';
+  }
+
+  if (summary) {
+    summary = '<div datatype="rdf:HTML" property="schema:description">' + summary + '</div>';
+  }
+
+  if (g.out(ns.as.tag).values.length) {
+    tags = [];
+    g.out(ns.as.tag).values.forEach(tagURL => {
+      var t = g.node(g.namedNode(tagURL));
+      var tagName = getFragmentOrLastPath(tagURL);
+
+      if (t.out(ns.as.href).values.length) {
+        tagURL = t.out(ns.as.href).values[0];
+      }
+      if (t.out(ns.as.name).values.length) {
+        tagName = t.out(ns.as.name).values[0];
+      }
+      tags.push('<li><a href="' + tagURL + '" rel="schema:about">' + tagName + '</a></li>');
+    })
+    tags = '<ul>' + tags.join('') + '</ul>';
+  }
+
+  return image + name + published + summary + tags;
+}
+
+export function rewriteBaseURL(nodes, options) {
+  options = options || {};
+  if (typeof nodes === 'object' && nodes.length) {
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      var url, ref;
+      switch(node.tagName.toLowerCase()) {
+        default:
+          url = node.getAttribute('src');
+          ref = 'src';
+          break;
+        case 'link':
+          url = node.getAttribute('href');
+          ref = 'href';
+          break;
+        case 'object':
+          url = node.getAttribute('data');
+          ref = 'data';
+          break;
+      }
+
+      var s = url.split(':')[0];
+      if (s != 'http' && s != 'https' && s != 'file' && s != 'data' && s != 'urn' && document.location.protocol != 'file:') {
+        url = DO.U.setBaseURL(url, options);
+      }
+      else if (url.startsWith('http:') && node.tagName.toLowerCase()) {
+        url = getProxyableIRI(url)
+      }
+      node.setAttribute(ref, url);
+    }
+  }
+
+  return nodes;
+}
+
+
+export function buildResourceView(data, options) {
+  if (!Config.MediaTypes.RDF.includes(options['contentType'])) {
+    return Promise.resolve({"data": data, "options": options});
+  }
+
+  return getGraphFromData(data, options).then(
+    function(g){
+      // console.log(g)
+      var title = getGraphLabel(g) || options.subjectURI;
+      var h1 = '<a href="' +  options.subjectURI + '">' + title + '</a>';
+
+      var types = getGraphTypes(g);
+      // console.log(types)
+      if(types.includes(ns.ldp.Container.value) ||
+          types.includes(ns.as.Collection.value) ||
+          types.includes(ns.as.OrderedCollection.value)) {
+
+        return processResources(options['subjectURI'], options).then(
+          function(urls) {
+            var promises = [];
+            urls.forEach(url => {
+              // console.log(u);
+              // window.setTimeout(function () {
+
+              // var pIRI = getProxyableIRI(u);
+              promises.push(getResourceGraph(url));
+              // }, 1000)
+            });
+
+            // return Promise.all(promises.map(p => p.catch(e => e)))
+            return Promise.allSettled(promises)
+              .then(results => {
+                var items = [];
+                // graphs.filter(result => !(result instanceof Error));
+
+                //TODO: Refactor if/else based on getResourceGraph
+                results.forEach(result => {
+                  // console.log(result.value)
+
+                  //XXX: Not sure about htis.
+                  if (result.value instanceof Error) {
+                    // TODO: decide how to handle
+                  }
+                  //FIXME: This is not actually useful yet. getResourceGraph should return the iri in which its content had no triples or failed to parse perhaps.
+                  else if (typeof result.value === 'undefined') {
+                    //   items.push('<a href="' + result.value + '">' + result.value + '</a>');
+                  }
+                  else if ('resource' in result.value) {
+                    items.push('<li rel="schema:hasPart" resource="' + result.value.resource + '"><a href="' + result.value.resource + '">' + result.value.resource + '</a></li>');
+                  }
+                  else {
+                    var html = generateIndexItemHTML(result.value);
+                    if (typeof html === 'string' && html !== '') {
+                      items.push('<li rel="schema:hasPart" resource="' + result.value.term.value + '">' + html + '</li>');
+                    }
+                  }
+                })
+
+                //TODO: Show createNewDocument button.
+                var createNewDocument = '';
+
+                var listItems = '';
+
+                if (items.length) {
+                  listItems = "<ul>" + items.join('') + "</ul>";
+                }
+
+                var html = `      <article about="" typeof="as:Collection">
+    <h1 property="schema:name">` + h1 + `</h1>
+    <div datatype="rdf:HTML" property="schema:description">
+      <section>` + createNewDocument + listItems + `
+      </section>
+    </div>
+  </article>`;
+
+                return {
+                  'data': createHTML('Collection: ' + options.subjectURI, html),
+                  'options': {
+                    'subjectURI': options.subjectURI,
+                    'contentType': 'text/html'
+                  },
+                  'defaultStylesheet': true
+                };
+              })
+              .catch(e => {
+                // console.log(e)
+              });
+          });
+      }
+      else {
+        return {"data": data, "options": options};
+      }
+
+    });
+}
+
+
+function diffRequirements(sourceGraph, targetGraph) {
+  var documentURL = Config.DocumentURL;
+  var sourceGraphURI = sourceGraph.term.value;
+  var targetGraphURI = targetGraph.term.value;
+// console.log(sourceGraphURI, targetGraphURI)
+  var sourceRequirements = getResourceInfoSpecRequirements(sourceGraph);
+  var targetRequirements = getResourceInfoSpecRequirements(targetGraph);
+// console.log(sourceRequirements, targetRequirements)
+  var changes = Object.values(Config.Resource[sourceGraphURI].spec.change);
+// console.log(changes)
+  Object.keys(sourceRequirements).forEach(sR => {
+    Config.Resource[sourceGraphURI].spec['requirement'][sR]['diff'] = {};
+
+    var sRStatement = sourceRequirements[sR][ns.spec.statement.value] || '';
+    var tR = targetGraphURI + '#' + getFragmentFromString(sR);
+
+    Config.Resource[sourceGraphURI].spec['requirement'][sR]['diff'][tR] = {};
+
+    var tRStatement = '';
+
+    if (targetRequirements[tR]) {
+      tRStatement = targetRequirements[tR][ns.spec.statement.value] || '';
+    }
+
+    var change = changes.filter(change => change[ns.spec.changeSubject.value] == sR)[0];
+    var changeHTML = '';
+    if (change) {
+      var changeClass = change[ns.spec.changeClass.value];
+      var changeDescription = change[ns.spec.statement.value];
+      if (changeClass) {
+        var changeClassValue = Config.ChangeClasses[changeClass] || changeClass;
+        if (changeDescription) {
+          changeDescription = '<dt>Change Description</dt><dd>' + changeDescription + '</dd>';
+        }
+        changeHTML = '<details><summary>Changelog</summary><dl><dt>Change Class</dt><dd><a href="' + changeClass + '">' + changeClassValue + '</a></dd>' + changeDescription + '</dl></details>';
+      }
+    }
+
+    var diff = diffChars(tRStatement, sRStatement);
+    var diffHTML = [];
+    diff.forEach((part) => {
+      var eName = 'span';
+
+      if (part.added) {
+        eName = 'ins';
+      }
+      else if (part.removed) {
+        eName = 'del';
+      }
+
+      diffHTML.push('<' + eName + '>' + part.value + '</' + eName + '>');
+    });
+
+    Config.Resource[sourceGraphURI].spec['requirement'][sR]['diff'][tR]['statement'] = diffHTML.join('') + changeHTML;
+  });
+}
+
+export function getBaseURLSelection() {
+  return `
+    <div id="base-url-selection">
+      <label data-i18n="dialog.base-url-selection.label" for="base-url">${i18n.t('dialog.base-url-selection.label.textContent')}</label>
+      <select id="base-url">
+        <option data-i18n="dialog.base-url-relative.option" id="base-url-relative" value="base-url-relative" selected="selected">${i18n.t('dialog.base-url-relative.option.textContent')}</option>
+        <option data-i18n="dialog.base-url-absolute.option" id="base-url-absolute" value="base-url-absolute">${i18n.t('dialog.base-url-absolute.option.textContent')}</option>
+      </select>
+    </div>
+  `;
+}
+
+export function setBaseURL(url, options) {
+  options = options || {};
+  var urlType = ('baseURLType' in options) ? options.baseURLType : 'base-url-absolute';
+// console.log(url)
+// console.log(options)
+// console.log(urlType)
+  var matches = [];
+  var regexp = /(https?:\/\/([^\/]*)\/|file:\/\/\/|data:|urn:|\/\/)?(.*)/;
+
+  matches = url.match(regexp);
+
+  if (matches) {
+    switch(urlType) {
+      case 'base-url-absolute': default:
+        if(matches[1] == '//' && 'iri' in options){
+          url = options.iri.split(':')[0] + ':' + url;
+        }
+        else {
+          let href = ('iri' in options) ? getProxyableIRI(options.iri) : document.location.href;
+          url = getBaseURL(href);
+// console.log(url)
+          //TODO: Move/Refactor in uri.js
+          //TODO: "./"
+          if (matches[3].startsWith('../')) {
+            var parts = matches[3].split('../');
+            for (var i = 0; i < parts.length - 1; i++) {
+              url = getParentURLPath(url) || url;
+            }
+            url += parts[parts.length - 1];
+          }
+          else {
+            url += matches[3].replace(/^\//g, '');
+          }
+// console.log(href)
+// console.log(url)
+        }
+        break;
+      case 'base-url-relative':
+        url = matches[3].replace(/^\//g, '');
+// console.log(url)
+        break;
+    }
+  }
+
+  return url;
+}
+
+export function copyRelativeResources(storageIRI, relativeNodes) {
+  var ref = '';
+  var baseURL = getBaseURL(storageIRI);
+
+  for (var i = 0; i < relativeNodes.length; i++) {
+    var node = relativeNodes[i];
+    switch(node.tagName.toLowerCase()) {
+      default:
+        ref = 'src';
+        break;
+      case 'link':
+        ref = 'href';
+        break;
+      case 'object':
+        ref = 'data';
+        break;
+    }
+
+    var fromURL = node.getAttribute(ref).trim();
+    var pathToFile = '';
+    var s = fromURL.split(':')[0];
+
+    if (s != 'http' && s != 'https' && s != 'file' && s != 'data' && s != 'urn' && s != 'urn') {
+      if (fromURL.startsWith('//')) {
+        fromURL = document.location.protocol + fromURL
+        var toURL = baseURL + fromURL.substr(2)
+      }
+      else if (fromURL.startsWith('/')) {
+        pathToFile = setBaseURL(fromURL, {'baseURLType': 'base-url-relative'});
+        fromURL = document.location.origin + fromURL
+        toURL = baseURL + pathToFile
+      }
+      else {
+        pathToFile = setBaseURL(fromURL, {'baseURLType': 'base-url-relative'});
+        fromURL = getBaseURL(document.location.href) + fromURL
+        toURL = baseURL + pathToFile
+      }
+
+      copyResource(fromURL, toURL);
+    }
+  }
+}

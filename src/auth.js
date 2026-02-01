@@ -20,14 +20,14 @@ import Config from './config.js'
 import { removeChildren, fragmentFromString } from './util.js'
 import { getAgentHTML, showActionMessage, showGeneralMessages, getResourceSupplementalInfo, handleDeleteNote, addMessageToLog } from './doc.js'
 import { Icon } from './ui/icons.js'
-import { getResourceGraph, getAgentName, getGraphImage, getAgentURL, getAgentPreferredProxy, getAgentPreferredPolicy, setPreferredPolicyInfo, getAgentDelegates, getAgentKnows, getAgentFollowing, getAgentStorage, getAgentOutbox, getAgentInbox, getAgentPreferencesFile, getAgentPublicTypeIndex, getAgentPrivateTypeIndex, getAgentTypeIndex, getAgentSupplementalInfo, getAgentSeeAlsoPrimaryTopicOf, getAgentPreferencesInfo, getAgentLiked, getAgentOccupations, getAgentPublications, getAgentMade, getAgentOIDCIssuer, getAgentPreferredLanguages, setPreferredLanguagesInfo } from './graph.js'
+import { getResourceGraph, getAgentName, getGraphImage, getAgentURL, getAgentPreferredProxy, getAgentPreferredPolicy, setPreferredPolicyInfo, getAgentDelegates, getAgentKnows, getAgentFollowing, getAgentStorage, getAgentOutbox, getAgentInbox, getAgentPreferencesFile, getAgentPublicTypeIndex, getAgentPrivateTypeIndex, getAgentTypeIndex, getAgentSupplementalInfo, getAgentSeeAlsoPrimaryTopicOf, getAgentPreferencesInfo, getAgentLiked, getAgentOccupations, getAgentPublications, getAgentMade, getAgentOIDCIssuer, getAgentPreferredLanguages } from './graph.js'
 import { removeLocalStorageAsSignOut, updateLocalStorageProfile } from './storage.js'
 import { updateButtons, getButtonHTML } from './ui/buttons.js';
 import { SessionCore } from '@uvdsl/solid-oidc-client-browser/core';
 import { isCurrentScriptSameOrigin, isLocalhost } from './uri.js';
 import { SessionIDB } from '@uvdsl/solid-oidc-client-browser';
 import { i18n } from './i18n.js';
-import { updateUILanguage } from './menu.js';
+import { setPreferredLanguagesInfo } from './menu.js';
 
 const ns = Config.ns;
 
@@ -84,7 +84,7 @@ async function signOut() {
 
   updateButtons();
 
-  updateUILanguage(navigator.languages);
+  setPreferredLanguagesInfo();
 }
 
 

@@ -16,19 +16,22 @@ limitations under the License.
 */
 
 import Config from './config.js';
-import { getDocumentContentNode, highlightItems, updateSelectedStylesheets, initCurrentStylesheet, selectArticleNode, hasNonWhitespaceText, showActionMessage, addMessageToLog, initCopyToClipboard, showFragment, setDocRefType, eventButtonClose, eventButtonInfo, eventButtonSignIn, eventButtonSignOut, eventButtonNotificationsToggle, showRobustLinksDecoration, focusNote, showAsTabs, getResourceInfo } from './doc.js';
+import { getDocumentContentNode, highlightItems, updateSelectedStylesheets, initCurrentStylesheet, selectArticleNode, hasNonWhitespaceText, showActionMessage, addMessageToLog, initCopyToClipboard, showFragment, setDocRefType, eventButtonClose, eventButtonInfo, eventButtonSignIn, eventButtonSignOut, eventButtonNotificationsToggle, showRobustLinksDecoration, focusNote, showAsTabs, getResourceInfo, spawnDokieli } from './doc.js';
 import { initButtons } from './ui/buttons.js'
 import { setDocumentURL, setWebExtensionURL, setDocumentString } from './util.js';
 import { getLocalStorageItem, autoSave, syncLocalRemoteResource, monitorNetworkStatus } from './storage.js';
 import { domSanitize, sanitizeObject } from './utils/sanitization.js';
-import { setUserInfo } from './auth.js';
+import { afterSetUserInfo, setUserInfo } from './auth.js';
 import { initDocumentMenu } from './menu.js';
 import { processActivateAction, processPotentialAction } from './actions.js';
 import { showNotificationSources } from './activity.js';
-import { getProxyableIRI, getUrlParams, stripUrlSearchHash } from './uri.js';
+import { getProxyableIRI, getUrlParams, stripFragmentFromString, stripUrlSearchHash } from './uri.js';
 import { getMultipleResources } from './fetcher.js';
 import shower from '@shower/core';
 import { initEditor } from './editor/initEditor.js';
+import { showGraph, showVisualisationGraph } from './viz.js';
+import { openResource } from './dialog.js';
+import { Icon } from './ui/icons.js';
 
 export function init (url) {
   initServiceWorker();
@@ -211,7 +214,7 @@ export async function setDocumentMode(mode) {
       spawnOptions['defaultStylesheet'] = false;
       spawnOptions['init'] = true;
 
-      await DO.U.spawnDokieli(
+      await spawnDokieli(
         document,
         results,
         contentType,
@@ -220,22 +223,21 @@ export async function setDocumentMode(mode) {
       );
     } else {
       open = openResources[0];
-
       open = domSanitize(open);
       open = decodeURIComponent(open);
 
-      await DO.U.openResource(open);
+      await openResource(open);
     }
 
     if (paramGraphView.length && paramGraphView[0] == 'true') {
-      DO.U.showVisualisationGraph(DO.C.DocumentURL, getDocument(null, documentOptions), '#graph-view');
+      showVisualisationGraph(DO.C.DocumentURL, getDocument(null, documentOptions), '#graph-view');
     }
 
     // stripUrlSearchHash();
   }
 
   if (paramGraphView.length && paramGraphView[0] == 'true' && paramOpen.length == 0) {
-    DO.U.showVisualisationGraph(DO.C.DocumentURL, getDocument(null, documentOptions), '#graph-view');
+    showVisualisationGraph(DO.C.DocumentURL, getDocument(null, documentOptions), '#graph-view');
   }
 
   var urls = paramGraph.map(url => {
@@ -275,7 +277,7 @@ export async function setDocumentMode(mode) {
     addMessageToLog({...messageObject, content: message}, Config.MessageLog);
     showActionMessage(document.body, messageObject);
 
-    DO.U.showGraph(urls, '#graph-view', options);
+    showGraph(urls, '#graph-view', options);
 
     // stripUrlSearchHash();
   }

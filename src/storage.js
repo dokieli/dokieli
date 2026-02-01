@@ -23,8 +23,6 @@ import { getResource, putResource } from './fetcher.js';
 import { showResourceReviewChanges } from './dialog.js';
 import { i18n } from './i18n.js'
 
-console.log("storage.js",Config)
-
 // function enableLocalStorage(key) {
 //   Config.UseLocalStorage = true;
 //   var o = localStorage.getItem(key);
@@ -391,7 +389,7 @@ export function updateLocalStorageProfile(User) {
   if (!User.IRI) { return Promise.resolve({ 'message': 'User.IRI is not set' }); }
 
   var U = { ...User };
-  var key = 'Config.User'
+  var key = 'Config.User';
 
   var id = generateUUID();
   var datetime = getDateTimeISO();
@@ -518,7 +516,7 @@ export function monitorNetworkStatus() {
 
   window.addEventListener('online', async () => {
     console.log('online');
-    await DO.U.enableRemoteSync();
+    await enableRemoteSync();
 
     const storageObject = await getLocalStorageItem(Config.DocumentURL);
 
@@ -545,7 +543,7 @@ export function monitorNetworkStatus() {
   window.addEventListener('offline', async () => {
     console.log('offline');
 
-    await DO.U.disableRemoteSync();
+    await disableRemoteSync();
 
     const storageObject = await getLocalStorageItem(Config.DocumentURL);
 
@@ -876,7 +874,7 @@ export async function syncLocalRemoteResource(options = {}) {
           reviewOptions['message'] = `<span data-i18n="dialog.review-changes.message.local-remote-changed.span">${i18n.t('dialog.review-changes.message.local-remote-changed.span.textContent')}</span>`;
           console.log(reviewOptions['message'])
           // console.log(localContent, remoteContent)
-          DO.U.showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
+          showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
         }
       }
       else if (!etagsMatch || previousRemoteHash != remoteHash) {
