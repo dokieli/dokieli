@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { uniqueArray, getDateTimeISO, removeChildren, escapeRegExp, generateUUID, generateAttributeId, hashCode, fragmentFromString, getHash, findPreviousDateTime, isValidISBN, parseISODuration, matchAllIndex } from "../../src/util";
+import { uniqueArray, getDateTimeISO, escapeRegExp, generateUUID, generateAttributeId, hashCode, getHash, findPreviousDateTime, isValidISBN, parseISODuration, matchAllIndex } from "../../src/util";
 
 describe("util", () => {
   describe("uniqueArray", () => {
@@ -32,17 +32,6 @@ describe("util", () => {
     it("returns a date string", () => {
       const result = getDateTimeISO();
       expect(result).toBe("2022-04-25T02:00:00.000Z");
-    });
-  });
-
-  describe("removeChildren", () => {
-    it("removes first child", () => {
-      const node = `<div id='wrapper'><span>test</span></div>`;
-      document.body.innerHTML = node;
-      removeChildren(document.getElementById("wrapper"));
-      expect(document.body.innerHTML.toString()).toMatchInlineSnapshot(
-        `"<div id="wrapper"></div>"`
-      );
     });
   });
 
@@ -96,25 +85,6 @@ describe("util", () => {
     it("retuns a number for a given string", () => {
       const result = hashCode("example string");
       expect(result).toEqual(168766343);
-    });
-  });
-
-  describe("fragmentFromString", () => {
-    it("creates a document fragment from a string", () => {
-      const result = fragmentFromString(
-        '<div id="wrapper"><span>test</span></div>'
-      );
-      expect(result).toMatchInlineSnapshot(`
-      <DocumentFragment>
-        <div
-          id="wrapper"
-        >
-          <span>
-            test
-          </span>
-        </div>
-      </DocumentFragment>
-      `);
     });
   });
 

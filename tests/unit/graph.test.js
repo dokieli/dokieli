@@ -32,7 +32,6 @@ import { Session } from "@uvdsl/solid-oidc-client-browser";
 const localhostUUID = 'http://localhost/d79351f4-cdb8-4228-b24f-3e9ac74a840d';
 
 const ns = Config.ns;
-Config["Session"] = new Session();
 
 vi.mock('stream', () => ({
   Readable: {
