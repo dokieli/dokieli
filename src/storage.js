@@ -22,7 +22,7 @@ import { normalizeForDiff } from './utils/normalization.js';
 import { updateButtons } from './ui/buttons.js';
 import { getDocumentNodeFromString } from "./utils/html.js";
 
-async function updateLocalStorageDocumentWithItem(key, data, options = {}) {
+export async function updateLocalStorageDocumentWithItem(key, data, options = {}) {
   if (!key) { Promise.resolve(); }
 
   const documentOptions = {
