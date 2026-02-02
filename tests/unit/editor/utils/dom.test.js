@@ -18,7 +18,7 @@ limitations under the License.
 import { DOMParser } from 'prosemirror-model';
 import { docSelectionToHtml } from 'src/editor/utils/dom.js'; 
 import { schema } from 'src/editor/schema/base.js'; 
-import { fragmentFromString } from 'src/util.js';
+import { fragmentFromString } from '../../../../src/utils/html';
 
 // Note: this function is not actually used anywhere anymore so perhaps we should remove
 describe('docSelectionToHtml', () => {

@@ -15,19 +15,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { sendNotifications } from 'src/inbox.js';  
+import { sendNotifications } from 'src/activity.js';  
 import { setupMockFetch, resetMockFetch } from '../utils/mockFetch';  
 import Config from '../../src/config';
-import { Session } from "@uvdsl/solid-oidc-client-browser";
 import MockGrapoi from '../utils/mockGrapoi';
-
-Config['Session'] = new Session();
 
 describe('sendNotifications', () => {
   beforeEach(() => {
     resetMockFetch();
   });
 
+  // TODO: times out
   test.skip('should handle inboxResponse and send notification successfully', async () => {
     const tos = ['https://example.com/inbox', 'https://example.com/inbox1'];
     const note = 'Test notification';

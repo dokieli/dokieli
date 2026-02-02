@@ -26,8 +26,6 @@ import { setupMockFetch, resetMockFetch, mockFetch } from "../utils/mockFetch";
 import { Session } from "@uvdsl/solid-oidc-client-browser";
 import Config from "src/config";
 
-Config['Session'] = new Session();
-
 describe("fetcher", () => {
   beforeEach(() => {
     vi.spyOn(global, "fetch").mockImplementation(mockFetch);

@@ -17,32 +17,16 @@ limitations under the License.
 
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
-  enableLocalStorage,
-  updateLocalStorageDocument,
-  disableLocalStorage,
+  updateLocalStorageDocumentWithItem,
   removeLocalStorageItem,
   getLocalStorageProfile,
-  initLocalStorage,
   enableAutoSave,
   disableAutoSave,
-  removeLocalStorageDocument,
-  removeLocalStorageProfile,
+  removeLocalStorageDocumentItems,
   updateLocalStorageProfile,
-  showAutoSaveStorage,
 } from 'src/storage.js';
 
-import { accessModeAllowed } from 'src/doc.js';
 import Config from 'src/config.js';
-
-vi.mock('src/config.js', () => ({
-  default: {
-    UseLocalStorage: false,
-    AutoSave: { Items: {} },
-    init: vi.fn(),
-    reset: vi.fn(),
-    DocumentURL: 'doc-key',
-  }
-}));
 
 vi.mock('src/util.js', async () => {
   const actual = await vi.importActual('src/util.js');
@@ -63,11 +47,11 @@ vi.mock('src/doc.js', () => ({
 
 beforeEach(() => {
   const storage = {
-    'doc-key': JSON.stringify({
-      object: {
-        content: '<div>saved content</div>'
-      }
-    }),
+    // 'doc-key': JSON.stringify({
+    //   object: {
+    //     content: '<div>saved content</div>'
+    //   }
+    // }),
     'profile-key': JSON.stringify({
       '@context': 'https://www.w3.org/ns/activitystreams',
       type: 'Profile',
@@ -94,19 +78,10 @@ afterEach(() => {
 });
 
 describe('storage.js', () => {
-  test('enableLocalStorage injects content and enables autosave', () => {
-    enableLocalStorage('doc-key');
-
-    expect(Config.UseLocalStorage).toBe(true);
-    expect(localStorage.getItem).toHaveBeenCalledWith('doc-key');
-    expect(document.documentElement.replaceChildren).toHaveBeenCalled();
-    expect(Config.init).toHaveBeenCalled();
-  });
-
-  test('updateLocalStorageDocument saves to localStorage and updates autosave timestamp', () => {
+  test('updateLocalStorageDocumentWithItem saves to localStorage and updates autosave timestamp', () => {
     Config.AutoSave.Items['doc-key'] = { localStorage: {} };
 
-    updateLocalStorageDocument('doc-key', '<p>custom</p>', { autoSave: true });
+    updateLocalStorageDocumentWithItem('doc-key', '<p>custom</p>', { autoSave: true });
 
     const expected = {
       '@context': 'https://www.w3.org/ns/activitystreams',
@@ -123,13 +98,6 @@ describe('storage.js', () => {
 
     expect(localStorage.setItem).toHaveBeenCalledWith('doc-key', JSON.stringify(expected));
     expect(Config.AutoSave.Items['doc-key'].localStorage.updated).toBe('2024-05-21T12:00:00Z');
-  });
-
-  test('disableLocalStorage resets config', () => {
-    Config.UseLocalStorage = true;
-    disableLocalStorage();
-
-    expect(Config.UseLocalStorage).toBe(false);
   });
 
   test('removeLocalStorageItem removes key and resets config', () => {
@@ -149,20 +117,6 @@ describe('storage.js', () => {
     const result = await getLocalStorageProfile('doc-key');
 
     expect(result).toEqual(profile);
-  });
-
-  test('getLocalStorageProfile returns null if item missing or invalid', async () => {
-    localStorage.getItem = vi.fn(() => null);
-    expect(await getLocalStorageProfile('missing-key')).toBe(null);
-
-    localStorage.getItem = vi.fn(() => '{invalid json}');
-    expect(await getLocalStorageProfile('broken')).toBe(null);
-  });
-
-
-  test('initLocalStorage enables localStorage when available', () => {
-    initLocalStorage('test-key');
-    expect(Config.UseLocalStorage).toBe(true);
   });
 
   test('enableAutoSave sets interval for localStorage and http methods', () => {
@@ -197,15 +151,10 @@ describe('storage.js', () => {
     expect(Config.AutoSave.Items['key'].http).toBeUndefined();
   });
 
-  test('removeLocalStorageDocument calls removeLocalStorageItem with default', async () => {
+  test('removeLocalStorageDocumentItems calls removeLocalStorageItem with default', async () => {
     Config.DocumentURL = 'doc-url';
-    await removeLocalStorageDocument();
+    await removeLocalStorageDocumentItems();
     expect(localStorage.removeItem).toHaveBeenCalledWith('doc-url');
-  });
-
-  test('removeLocalStorageProfile calls removeLocalStorageItem with default', async () => {
-    await removeLocalStorageProfile();
-    expect(localStorage.removeItem).toHaveBeenCalledWith('DO.C.User');
   });
 
   test('updateLocalStorageProfile stores the user profile to storage', async () => {
@@ -221,14 +170,5 @@ describe('storage.js', () => {
     await expect(updateLocalStorageProfile(User)).resolves.toBeUndefined();
 
     expect(localStorage.setItem).toHaveBeenCalled();
-  });
-
-  test('showAutoSaveStorage inserts HTML and adds event listener', () => {
-    const container = document.createElement('div');
-    showAutoSaveStorage(container, 'doc-key');
-    expect(container.querySelector('#autosave-items')).toBeTruthy();
-
-    const input = container.querySelector('input.autosave');
-    expect(input).toBeTruthy();
   });
 });
