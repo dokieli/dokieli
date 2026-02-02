@@ -20,30 +20,51 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import { domSanitize } from './utils/sanitization.js';
 import Config from './config.js';
 
-const context = import.meta.webpackContext(
-  '../locales',
-  {
-    recursive: true,
-    regExp: /translations\.json$/,
+let resources = {};
+
+// webpack (needed until we migrate to vite)
+if (typeof __webpack_require__ !== 'undefined') {
+  const context = import.meta.webpackContext(
+    '../locales',
+    {
+      recursive: true,
+      regExp: /translations\.json$/,
+    }
+  );
+
+  for (const key of context.keys()) {
+    // "./en/translations.json"
+    const parts = key.split('/');
+    const lng = parts[1];
+    if (!lng) continue;
+
+    resources[lng] = {
+      translation: context(key),
+    };
   }
-);
-
-const resources = {};
-
-for (const key of context.keys()) {
-  // key is ALWAYS like: "./en/translation.json"
-  const parts = key.split('/');
-
-  // ["." , "en", "translation.json"]
-  const lng = parts[1];
-  if (!lng) continue;
-
-
-  resources[lng] = {
-    translation: context(key),
-  };
 }
 
+// vite (for tests only now, will only use this in future when we migrate from webpack)
+else {
+  const modules = import.meta.glob(
+    '../locales/**/translations.json',
+    { eager: true }
+  );
+
+  for (const path in modules) {
+    // "../locales/en/translations.json"
+    const match = path.match(/\/locales\/([^/]+)\/translations\.json$/);
+    if (!match) continue;
+
+    const lng = match[1];
+
+    resources[lng] = {
+      translation: modules[path],
+    };
+  }
+}
+
+Config.Translations = Object.keys(resources);
 Config['Translations'] = Object.keys(resources);
 
 // console.log(resources)
