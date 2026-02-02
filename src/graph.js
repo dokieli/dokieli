@@ -19,19 +19,28 @@ import rdf from "rdf-ext";
 import { RdfaParser } from "rdfa-streaming-parser";
 import { Readable } from "readable-stream";
 import Config from './config.js'
-import { stripFragmentFromString, getProxyableIRI, getBaseURL, getPathURL, getAbsoluteIRI, getParentURLPath } from './uri.js'
+import { stripFragmentFromString, getBaseURL, getPathURL, getAbsoluteIRI, getParentURLPath, currentLocation, getMediaTypeURIs } from './uri.js'
 import { escapeRegExp, uniqueArray } from './util.js'
 import { domSanitize } from './utils/sanitization.js'
-import { parseMarkdown } from "./doc.js";
-import { setAcceptRDFTypes, getResource, getResourceHead, currentLocation } from './fetcher.js'
+import { parseMarkdown } from "./utils/html.js";
+import { setAcceptRDFTypes, getResource, getResourceHead } from './fetcher.js'
 import LinkHeader from "http-link-header";
-import { getItemsList } from "./activity.js";
+import { setPreferredLanguagesInfo } from "./actions.js";
 
 const ns = Config?.ns;
 const localhostUUID = 'http://localhost/d79351f4-cdb8-4228-b24f-3e9ac74a840d';
 
 //https://github.com/rdfjs-base/io
 // https://github.com/rdfjs-base/formats/
+
+export function processResources(resources, options) {
+  if (Array.isArray(resources)) {
+    return Promise.resolve(resources);
+  }
+  else {
+    return getItemsList(resources, options);
+  }
+}
 
 function getGraphFromData (data, options = {}) {
   options['contentType'] = options.contentType || 'text/turtle';
@@ -134,6 +143,84 @@ function getRDFParser(baseIRI, contentType) {
     return rdf.formats.parsers.get(contentType);
   }
 }
+
+function getSubjectInfo (subjectIRI, options = {}) {
+  if (!subjectIRI) {
+    return Promise.reject(new Error('Could not set subject info - no subjectIRI'));
+  }
+  else if (!subjectIRI.toLowerCase().startsWith('http:') && !(subjectIRI.toLowerCase().startsWith('https:'))) {
+    return Promise.reject(new Error('Could not set subject info - subjectIRI is not `http(s):`'));
+  }
+
+  var headers = {};
+  options['noCredentials'] = !!options['noCredentials'];
+  options['noStore'] = !!options['noStore'];
+
+  return getResourceGraph(subjectIRI, headers, options)
+    .then(g => {
+      //TODO: Consider whether to construct an empty graph (useful to work only with their IRI);
+
+      if (!isGraphValid(g)) {
+        // console.warn('Invalid graph object:', g);
+        return {}
+      }
+
+      g = g.node(rdf.namedNode(subjectIRI));
+
+      return {
+        Graph: g,
+        IRI: subjectIRI,
+        Name: getAgentName(g),
+        Image: getGraphImage(g),
+        URL: getAgentURL(g),
+        Role: options.role,
+        UI: options.ui,
+        OIDCIssuer: getAgentOIDCIssuer(g),
+        ProxyURL: getAgentPreferredProxy(g),
+        PreferredPolicy: getAgentPreferredPolicy(g),
+        PreferredLanguages: getAgentPreferredLanguages(g),
+        Delegates: getAgentDelegates(g),
+        Contacts: {},
+        Knows: getAgentKnows(g),
+        Following: getAgentFollowing(g),
+        SameAs: [],
+        SeeAlso: [],
+        PrimaryTopicOf: [],
+        Storage: getAgentStorage(g),
+        Outbox: getAgentOutbox(g),
+        Inbox: getAgentInbox(g),
+        TypeIndex: {},
+        Preferences: {},
+        PreferencesFile: getAgentPreferencesFile(g),
+        PublicTypeIndex: getAgentPublicTypeIndex(g),
+        PrivateTypeIndex: getAgentPrivateTypeIndex(g),
+        Liked: getAgentLiked(g),
+        Occupations: getAgentOccupations(g),
+        Publications: getAgentPublications(g),
+        Made: getAgentMade(g)
+      }
+    })
+    .then(agent => {
+      if (!agent.Graph) return agent;
+
+      setPreferredLanguagesInfo(agent.Graph);
+
+      return agent;
+    })
+    .then(agent => {
+      //XXX: Revisit what the retun should be, whether to be undefined, {}, or someting else. Is it useful to retain an agent object that doesn't have a Graph? (Probably better not.)
+      if (!agent.Graph || !options.fetchIndexes) return agent;
+
+      return getAgentTypeIndex(agent.Graph)
+        .then(typeIndexes => {
+          Object.keys(typeIndexes).forEach(typeIndexType => {
+            agent.TypeIndex[typeIndexType] = typeIndexes[typeIndexType];
+          });
+
+          return agent;
+        })
+    });
+  }
 
 function getMatchFromData (data, spo = {}, options = {}) {
   if (!data) { return Promise.resolve({}) }
@@ -392,6 +479,14 @@ function XXXOLDserializeData (data, fromContentType, toContentType, options) {
     })
 }
 
+function isGraphValid(g) {
+  if (!g) return false;
+  if (g.resource || g.cause) return false;
+  if (g.status?.toString().startsWith('4') || g.status?.toString().startsWith('5')) return false;
+  if (typeof g.out !== 'function') return false;
+  if (!Array.from(g.out().quads()).length) return false;
+  return true;
+}
 
 function streamToString (stream) {
   const chunks = [];
@@ -1729,6 +1824,99 @@ function getAuthorizationsMatching (g, matchers) {
   return authorizations;
 }
 
+function getItemsList(url, options) {
+  url = url || currentLocation();
+  options = options || {};
+  options['resourceItems'] = options.resourceItems || [];
+  options['headers'] = options.headers || {};
+  options['excludeMarkup'] = true;
+
+  Config['CollectionItems'] = Config['CollectionItems'] || {};
+  Config['CollectionPages'] = ('CollectionPages' in Config && Config.CollectionPages.length) ? Config.CollectionPages : [];
+  Config['Collections'] = ('Collections' in Config && Config.Collections.length) ? Config.Collections : [];
+
+  const mediaTypeURIPrefix = "http://www.w3.org/ns/iana/media-types/";
+  //TODO: Move this elsewhere (call from Config.init()?) where it runs once and stores it in e.g, Config.MediaTypeURIs
+  var mediaTypeURIs = getMediaTypeURIs(Config.MediaTypes.RDF);
+
+  // if (Config.Notification[url]) {
+  //   return Promise.resolve([]);
+  // }
+
+  return getResourceGraph(url, options.headers, options)
+    .then(
+      function(g) {
+        if (!g || g.resource) return [];
+
+        var s = g.node(rdf.namedNode(url));
+        // console.log(s.toString());
+
+        var types = getGraphTypes(s);
+
+        if (types.includes(ns.ldp.Container.value) ||
+            types.includes(ns.as.Collection.value) ||
+            types.includes(ns.as.OrderedCollection.value)) {
+          Config.Collections.push(url);
+        }
+
+        if (!types.includes(ns.ldp.Container.value) &&
+            !types.includes(ns.as.Collection.value) &&
+            !types.includes(ns.as.OrderedCollection.value)) {
+          Config.CollectionPages.push(url);
+        }
+
+        var items = [s.out(ns.as.items).values, s.out(ns.as.orderedItems).values, s.out(ns.ldp.contains).values];
+
+        items.forEach(i => {
+          i.forEach(resource => {
+            // console.log(resource)
+            var r = s.node(rdf.namedNode(resource));
+
+            if (r.out(ns.rdf.first).values.length || r.out(ns.rdf.rest).values.length) {
+              options.resourceItems = options.resourceItems.concat(traverseRDFList(s, resource));
+            }
+            else {
+              //FIXME: This may need to be processed outside of items? See also comment above about processing Collection and CollectionPages.
+              var types = getGraphTypes(r);
+              //Include only non-container/collection and items that's not from an RDFList
+              if (!types.includes(ns.ldp.Container.value) &&
+                  !types.includes(ns.as.Collection.value) &&
+                  !types.includes(ns.as.CollectionPage.value) &&
+                  !types.includes(ns.as.OrderedCollection.value) &&
+                  !types.includes(ns.as.OrderedCollectionPage.value)) {
+                //XXX: The following is not used at the moment:
+                // Config.CollectionItems[resource] = s;
+
+                const hasPrefix = types.some(url => url.startsWith(mediaTypeURIPrefix));
+                const mediaTypeFound = hasPrefix && types.some(item => mediaTypeURIs.includes(item));
+                
+                if (mediaTypeFound || !hasPrefix) {
+                  options.resourceItems.push(resource);
+                }
+              }
+            }
+          });
+        });
+
+        var first = s.out(ns.as.first).values;
+        var next = s.out(ns.as.next).values;
+
+        if (first.length && !Config.CollectionPages.includes(first[0])) {
+          return getItemsList(first[0], options);
+        }
+        else if (next.length && !Config.CollectionPages.includes(next[0])) {
+          return getItemsList(next[0], options);
+        }
+        else {
+          return uniqueArray(options.resourceItems);
+        }
+      })
+    .catch (e => {
+      console.log(e)
+      return [];
+    })
+}
+
 export {
   getGraphFromData,
   getMatchFromData,
@@ -1804,5 +1992,8 @@ export {
   getAuthorizationsMatching,
   getUserLabelOrIRI,
   getRDFParser,
-  filterQuads
+  filterQuads,
+  getSubjectInfo,
+  getItemsList,
+  isGraphValid
 }

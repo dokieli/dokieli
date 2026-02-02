@@ -19,8 +19,9 @@ import Config from './config.js';
 import leaflet from 'leaflet';
 import * as leafletGpx from 'leaflet-gpx';
 const L = { ...leaflet, ...leafletGpx };
-import { fragmentFromString, generateAttributeId, convertToISO8601Duration } from './util.js'
-import { getAgentHTML, createDateHTML, selectArticleNode, setCopyToClipboard } from './doc.js'
+import { generateAttributeId, convertToISO8601Duration } from './util.js'
+import { getAgentHTML, createDateHTML, setCopyToClipboard } from './doc.js'
+import { fragmentFromString, selectArticleNode } from "./utils/html.js";
 import { getResource } from './fetcher.js'
 import { i18n } from './i18n.js';
 

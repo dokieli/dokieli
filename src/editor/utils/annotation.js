@@ -15,8 +15,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { fragmentFromString, generateUUID } from "./../../util.js";
+import { generateUUID } from "./../../util.js";
 import { tagsToBodyObjects } from "./../../doc.js";
+import { fragmentFromString } from "../../utils/html.js";
 import { Icon } from "../../ui/icons.js";
 import Config from "../../config.js";
 import { generateDataURI } from "../../uri.js";
@@ -339,7 +340,7 @@ export function createNoteData(annotation) {
         noteData.creator["url"] = Config.User.URL;
       }
 
-      // note = DO.U.createNoteDataHTML(noteData);
+      // note = createNoteDataHTML(noteData);
       ref = getTextQuoteHTML(refId, motivatedBy, selectionData.selectedContent, docRefType, { 'do': true });
 
       break;

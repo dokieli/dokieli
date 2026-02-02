@@ -16,7 +16,8 @@ limitations under the License.
 */
 
 import { createLanguageHTML, createLicenseHTML, createInboxHTML, createInReplyToHTML, createPublicationStatusHTML, createResourceTypeHTML, createTestSuiteHTML } from "../../doc.js";
-import { getFormValues, fragmentFromString } from "../../util.js";
+import { fragmentFromString } from "../../utils/html.js";
+import { getFormValues } from "../../utils/html.js";
 
 export function formHandlerLanguage(e) {
   e.preventDefault();

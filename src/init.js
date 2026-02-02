@@ -15,23 +15,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import shower from '@shower/core';
 import Config from './config.js';
-import { getDocumentContentNode, highlightItems, updateSelectedStylesheets, initCurrentStylesheet, selectArticleNode, hasNonWhitespaceText, showActionMessage, addMessageToLog, initCopyToClipboard, showFragment, setDocRefType, eventButtonClose, eventButtonInfo, eventButtonSignIn, eventButtonSignOut, eventButtonNotificationsToggle, showRobustLinksDecoration, focusNote, showAsTabs, getResourceInfo, spawnDokieli } from './doc.js';
+const ns = Config.ns;
+import { highlightItems, updateSelectedStylesheets, initCurrentStylesheet, showActionMessage, addMessageToLog, initCopyToClipboard, showFragment, setDocRefType, showRobustLinksDecoration, focusNote, showAsTabs, getResourceInfo, setDocumentString } from './doc.js';
 import { initButtons } from './ui/buttons.js'
-import { setDocumentURL, setWebExtensionURL, setDocumentString } from './util.js';
-import { getLocalStorageItem, autoSave, syncLocalRemoteResource, monitorNetworkStatus } from './storage.js';
+import { setDocumentURL, setWebExtensionURL } from './util.js';
+import { getLocalStorageItem, autoSave, monitorNetworkStatus } from './storage.js';
+import { syncLocalRemoteResource } from './sync.js';
 import { domSanitize, sanitizeObject } from './utils/sanitization.js';
 import { afterSetUserInfo, setUserInfo } from './auth.js';
-import { initDocumentMenu } from './menu.js';
-import { processActivateAction, processPotentialAction } from './actions.js';
 import { showNotificationSources } from './activity.js';
 import { getProxyableIRI, getUrlParams, stripFragmentFromString, stripUrlSearchHash } from './uri.js';
 import { getMultipleResources } from './fetcher.js';
-import shower from '@shower/core';
 import { initEditor } from './editor/initEditor.js';
 import { showGraph, showVisualisationGraph } from './viz.js';
-import { openResource } from './dialog.js';
+import { openResource, initDocumentMenu, spawnDokieli } from './dialog.js';
 import { Icon } from './ui/icons.js';
+import { eventButtonClose, eventButtonSignIn, eventButtonSignOut, eventButtonNotificationsToggle, eventButtonInfo } from './events.js';
+import { getDocumentNodeFromString, hasNonWhitespaceText, getDocumentContentNode, selectArticleNode } from "./utils/html.js";
 
 export function init (url) {
   initServiceWorker();
@@ -260,7 +262,7 @@ export async function setDocumentMode(mode) {
     // var options = {'license': 'https://creativecommons.org/publicdomain/zero/1.0/', 'filter': { 'subjects': [docURI, iri] }, 'title': iri };
     var options = {'subjectURI': urls[0], 'license': 'https://creativecommons.org/publicdomain/zero/1.0/', 'title': urls[0] };
 
-    // DO.U.showGraphResources([docURI], '#graph-view', options);
+    // showGraphResources([docURI], '#graph-view', options);
     // console.log(options);
 
     var anchors = urls.map(url => `<a href="${url}" rel="noopener" target="_blank">${url}</a>`).join(', ');
@@ -325,6 +327,73 @@ function initSlideshow(options) {
     var shwr = new shower();
     shwr.start();
   }
+}
+
+//TODO: Review grapoi
+function processPotentialAction(resourceInfo) {
+  var g = resourceInfo.graph;
+  var triples = g.out().quads();
+  triples.forEach(t => {
+    var s = t.subject.value;
+    var p = t.predicate.value;
+    var o = t.object.value;
+
+    if (p == ns.schema.potentialAction.value) {
+      var action = o;
+      var documentOrigin = (document.location.origin === "null") ? "file://" : document.location.origin;
+      var originPathname = documentOrigin + document.location.pathname;
+// console.log(originPathname)
+// console.log(action.startsWith(originPathname + '#'))
+      if (action.startsWith(originPathname)) {
+        document.addEventListener('click', (e) => {
+          var fragment = action.substr(action.lastIndexOf('#'));
+// console.log(fragment)
+          if (fragment) {
+            var selector = '[about="' + fragment  + '"][typeof="schema:ViewAction"], [href="' + fragment  + '"][typeof="schema:ViewAction"], [resource="' + fragment  + '"][typeof="schema:ViewAction"]';
+// console.log(selector)
+            // var element = document.querySelectorAll(selector);
+            var element = e.target.closest(selector);
+// console.log(element)
+            if (element) {
+              e.preventDefault();
+              e.stopPropagation();
+
+              var so = g.node(rdf.namedNode(action)).out(ns.schema.object).values;
+              if (so.length) {
+                selector = '#' + element.closest('[id]').id;
+
+                var svgGraph = document.querySelector(selector + ' svg');
+                if (svgGraph) {
+                  svgGraph.nextSibling.parentNode.removeChild(svgGraph.nextSibling);
+                  svgGraph.parentNode.removeChild(svgGraph);
+                }
+                else {
+                  // serializeGraph(g, { 'contentType': 'text/turtle' })
+                  //   .then(data => {
+                      var options = {};
+                      options['subjectURI'] = so[0];
+                      options['contentType'] = 'text/turtle';
+                      showVisualisationGraph(options.subjectURI, g.dataset.toCanonical(), selector, options);
+                    // });
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+  });
+}
+
+function processActivateAction() {
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('[about="#document-menu"][typeof="schema:ActivateAction"], [href="#document-menu"][typeof="schema:ActivateAction"], [resource="#document-menu"][typeof="schema:ActivateAction"]')) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      showDocumentMenu(e);
+    }
+  });
 }
 
 // function initMath(config) {

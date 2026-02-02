@@ -16,12 +16,12 @@ limitations under the License.
 */
 
 import { getLanguageOptionsHTML, getLicenseOptionsHTML, getPublicationStatusOptionsHTML, getResourceTypeOptionsHTML } from "../../doc.js";
-import { fragmentFromString } from "../../util.js";
 import { getButtonHTML } from "../../ui/buttons.js";
 import { formHandlerLanguage, formHandlerLicense, formHandlerInbox, formHandlerInReplyTo, formHandlerPublicationStatus, formHandlerResourceType, formHandlerTestSuite } from "./handlers.js";
 import { TextSelection } from "prosemirror-state";
 import { DOMParser } from "prosemirror-model";
 import { i18n } from "../../i18n.js";
+import { fragmentFromString } from "../../utils/html.js";
 
 export class SlashMenu {
   constructor(editorView) {

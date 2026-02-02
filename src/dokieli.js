@@ -15,30 +15,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource } from './fetcher.js'
-import { getDocument, getDocumentContentNode, showActionMessage, selectArticleNode, showRobustLinksDecoration, getResourceInfo,  getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getLanguageOptionsHTML, getLicenseOptionsHTML, getNodeWithoutClasses, setCopyToClipboard, addMessageToLog, accessModeAllowed, getAccessModeOptionsHTML, parseMarkdown, createNoteDataHTML, hasNonWhitespaceText, updateSupplementalInfo, spawnDokieli, rewriteBaseURL, generateIndexItemHTML } from './doc.js'
-import { getProxyableIRI, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, generateDataURI, isHttpOrHttpsProtocol, isFileProtocol, getUrlParams, stripUrlSearchHash, stripUrlParamsFromString, getAbsoluteIRI } from './uri.js'
-import { getResourceGraph, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphDate, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes, filterQuads, serializeData } from './graph.js'
-import { notifyInbox, sendNotifications } from './activity.js'
-import { uniqueArray, fragmentFromString, generateAttributeId, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, isValidISBN, escapeRDFLiteral, tranformIconstoCSS, getIconsFromCurrentDocument, setDocumentURL } from './util.js'
-import { generateGeoView } from './geo.js'
-import { getLocalStorageItem, updateLocalStorageProfile, enableAutoSave, disableAutoSave, removeLocalStorageItem } from './storage.js'
-import { getSubjectInfo, restoreSession } from './auth.js'
-import { hideDocumentMenu, initDocumentMenu } from './menu.js'
-import { Icon } from './ui/icons.js'
-import LinkHeader from 'http-link-header';
 import rdf from 'rdf-ext';
+import { showActionMessage, insertDocumentLevelHTML, getLanguageOptionsHTML, getLicenseOptionsHTML, addMessageToLog, createNoteDataHTML } from './doc.js'
+import { stripFragmentFromString, getFragmentFromString, encodeString } from './uri.js'
+import { getResourceGraph, getGraphLabel } from './graph.js'
+import { generateUUID, tranformIconstoCSS } from './util.js'
+import { getLocalStorageItem, removeLocalStorageItem } from './storage.js'
+import { restoreSession } from './auth.js'
 import Config from './config.js';
-import { getButtonHTML, updateButtons } from './ui/buttons.js'
-import { csvStringToJson, jsonToHtmlTableString } from './csv.js'
-import { getMultipleResources } from './fetcher.js'
-import { domSanitize } from './utils/sanitization.js'
 import { i18n, i18nextInit } from './i18n.js'
-import { htmlEncode } from './utils/html.js'
 import { init } from './init.js'
-import { openResource } from './dialog.js'
+import { getDocumentContentNode, fragmentFromString, getIconsFromCurrentDocument } from './utils/html.js';
 
-const ns = Config.ns;
 let DO;
 
 if (typeof window.DO === 'undefined'){
@@ -132,17 +120,6 @@ DO = {
       var languageOptions = document.querySelectorAll('[about="#feature-language-options"][typeof="schema:ChooseAction"], [href="#feature-language-options"][typeof="schema:ChooseAction"], [resource="#feature-language-options"][typeof="schema:ChooseAction"]');
       for (var i = 0; i < languageOptions.length; i++){
         languageOptions[i].parentNode.replaceChild(fragmentFromString('<label class="do" for="feature-language-options">Languages</label> <select class="do" id="feature-language-options">' + getLanguageOptionsHTML() + '</select>'), languageOptions[i]);
-      }
-    },
-
-    showXHRProgressHTML: function(http, options) {
-      if ('progress' in options) {
-        http.upload.onprogress = function(e) {
-          if (e.lengthComputable) {
-            options.progress.value = (e.loaded / e.total) * 100;
-            options.progress.textContent = options.progress.value; // Fallback for unsupported browsers.
-          }
-        };
       }
     },
 
@@ -359,161 +336,6 @@ WHERE {\n\
           return '<select' + elementLabel + elementId + elementName + '>' + items + '</select>';
       }
     },
-
-    showRefs: function() {
-      var refs = document.querySelectorAll('span.ref');
-      for (var i = 0; i < refs.length; i++) {
-// console.log(this);
-        var ref = refs[i].querySelector('mark[id]');
-// console.log(ref);
-        if (ref) {
-          var refId = ref.id;
-// console.log(refId);
-          var refA = refs[i].querySelectorAll('[class*=ref-] a');
-// console.log(refA);
-          for (var j = 0; j < refA.length; j++) {
-            //XXX: Assuming this is always an internal anchor?
-            var noteId = refA[j].getAttribute('href').substr(1);
-// console.log(noteId);
-            var refLabel = refA[j].textContent;
-// console.log(refLabel);
-
-// console.log(refId + ' ' +  refLabel + ' ' + noteId);
-            DO.U.positionNote(refId, noteId, refLabel);
-          }
-        }
-      }
-    },
-
-    showCitations: function(citation, g) {
-// console.log('----- showCitations: ')
-// console.log(citation);
-
-      var cEURL = stripFragmentFromString(citation.citingEntity);
-// console.log(Config.Activity[cEURL]);
-
-      if (Config.Activity[cEURL]) {
-        if (Config.Activity[cEURL]['Graph']) {
-          DO.U.addCitation(citation, Config.Activity[cEURL]['Graph']);
-        }
-        else {
-// console.log('  Waiting...' + citation.citingEntity)
-          window.setTimeout(DO.U.showCitations, 1000, citation, g);
-        }
-      }
-      else {
-        DO.U.processCitationClaim(citation);
-      }
-    },
-
-    processCitationClaim: function(citation) {
-// console.log('  processCitationClaim(' + citation.citingEntity + ')')
-      // var pIRI = getProxyableIRI(citation.citingEntity);
-      return getResourceGraph(citation.citingEntity)
-      .then(i => {
-          var cEURL = stripFragmentFromString(citation.citingEntity);
-          Config.Activity[cEURL] = {};
-          Config.Activity[cEURL]['Graph'] = i;
-          var s = i.node(rdf.namedNode(citation.citingEntity));
-          DO.U.addCitation(citation, s);
-        }
-      );
-    },
-
-    addCitation: function(citation, s) {
-// console.log('  addCitation(' + citation.citingEntity + ')')
-      var citingEntity = citation.citingEntity;
-      var citationCharacterization = citation.citationCharacterization;
-      var citedEntity = citation.citedEntity;
-
-      var documentURL = Config.DocumentURL;
-
-      //XXX: Important
-      s = s.node(rdf.namedNode(citingEntity));
-
-      //TODO: cito:Citation
-      // if rdftypes.indexOf(citoCitation)
-      //   note.citocitingEntity && note.citocitationCharacterization && note.citocitedEntity)
-
-      // else
-
-// console.log("  " + citationCharacterization + "  " + citedEntity);
-      var citationCharacterizationLabel = Config.Citation[citationCharacterization] || citationCharacterization;
-
-      var id = generateUUID(citingEntity);
-      var refId;
-
-      var cEURL = stripFragmentFromString(citingEntity);
-      var citingEntityLabel = getGraphLabel(s);
-      if (!citingEntityLabel) {
-        var cEL = getGraphLabel(s.node(rdf.namedNode(cEURL)));
-        citingEntityLabel = cEL ? cEL : citingEntity;
-      }
-      citation['citingEntityLabel'] = citingEntityLabel;
-
-      var citedEntityLabel = getGraphLabel(Config.Resource[documentURL].graph.node(rdf.namedNode(citedEntity)));
-      if (!citedEntityLabel) {
-        cEL = Config.Resource[documentURL].graph(Config.Resource[documentURL].graph.node(rdf.namedNode(stripFragmentFromString(citedEntity))));
-        citedEntityLabel = cEL ? cEL : citedEntity;
-      }
-      citation['citedEntityLabel'] = citedEntityLabel;
-
-      var noteData = {
-        'id': id,
-        'iri': citingEntity,
-        'type': 'ref-citation',
-        'mode': 'read',
-        'citation': citation
-      }
-
-// console.log(noteData)
-      var noteDataHTML = createNoteDataHTML(noteData);
-
-      var asideNote = '\n\
-<aside class="note do">\n\
-<blockquote cite="' + citingEntity + '">'+ noteDataHTML + '</blockquote>\n\
-</aside>\n\
-';
-// console.log(asideNote)
-      var asideNode = fragmentFromString(asideNote);
-
-      var fragment, fragmentNode;
-
-// //FIXME: If containerNode is used.. the rest is buggy
-
-      fragment = getFragmentFromString(citedEntity);
-// console.log("  fragment: " + fragment)
-      fragmentNode = document.querySelector('[id="' + fragment + '"]');
-
-      if (fragmentNode) {
-// console.log(asideNote)
-        var containerNode = fragmentNode;
-        refId = fragment;
-// console.log(fragment);
-// console.log(fragmentNode);
-        containerNode.appendChild(asideNode);
-        DO.U.positionNote(refId, id, citingEntityLabel);
-      }
-      else {
-        var dl;
-        var citingItem = '<li><a about="' + citingEntity + '" href="' + citingEntity + '" rel="' + citationCharacterization + '" resource="' + citedEntity + '">' + citingEntityLabel + '</a> (' + citationCharacterizationLabel + ')</li>';
-
-        var documentCitedBy = 'document-cited-by';
-        var citedBy = document.getElementById(documentCitedBy);
-
-        if(citedBy) {
-          var ul = citedBy.querySelector('ul');
-          var spo = ul.querySelector('[about="' + citingEntity + '"][rel="' + citationCharacterization + '"][resource="' + citedEntity + '"]');
-          if (!spo) {
-            ul.appendChild(fragmentFromString(citingItem));
-          }
-        }
-        else {
-          dl = '        <dl class="do" id="' + documentCitedBy + '"><dt>Cited By</dt><dd><ul>' + citingItem + '</ul></dl>';
-          insertDocumentLevelHTML(document, dl, { 'id': documentCitedBy });
-        }
-      }
-    }
   } //DO.U
 }; //DO
 

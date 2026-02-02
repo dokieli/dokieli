@@ -18,15 +18,16 @@ limitations under the License.
 import { schema } from "../../schema/base.js"
 import { createNoteData, getSelectedParentElement, restoreSelection } from "../../utils/annotation.js";
 import { toggleBlockquote } from "../../utils/dom.js";
-import { getFormValues, isValidISBN } from "../../../util.js"
-import { fragmentFromString } from "../../../util.js"
+import { isValidISBN } from "../../../util.js"
 import { getFormActionData } from "../social/handlers.js";
-import { buildReferences, createNoteDataHTML, createRDFaMarkObject } from "../../../doc.js";
+import { buildReferences, createNoteDataHTML, createRDFaMarkObject, getCitation, getCitationHTML, positionNote } from "../../../doc.js";
 import { stripFragmentFromString } from "../../../uri.js";
 import { getGraphInbox } from "../../../graph.js";
 import { notifyInbox } from "../../../activity.js";
 import rdf from 'rdf-ext';
 import Config from "../../../config.js";
+import { getFormValues } from "../../../utils/html.js";
+
 
 export function formHandlerLanguage(e) {
   e.preventDefault();
@@ -338,7 +339,7 @@ export function processAction(action, formValues, selectionData, storedSelection
 
       Config.Editor.insertFragmentInNode(asideNode);
 
-      DO.U.positionNote(refId, id);
+      positionNote(refId, id);
       break;
 
     case 'citation': //footnote reference
@@ -359,7 +360,7 @@ export function processAction(action, formValues, selectionData, storedSelection
 
           Config.Editor.insertFragmentInNode(asideNode);
 
-          DO.U.positionNote(refId, id);
+          positionNote(refId, id);
           break;
 
         case 'ref-reference':
@@ -371,7 +372,7 @@ export function processAction(action, formValues, selectionData, storedSelection
 
           //TODO: offline mode
           //TODO Move getCitation
-          DO.U.getCitation(citationUrl, options)
+          getCitation(citationUrl, options)
             .then(citationGraph => {
               var citationURI = citationUrl;
               // console.log(citationGraph)
@@ -395,7 +396,7 @@ export function processAction(action, formValues, selectionData, storedSelection
               //   citationURI = currentLocation();
               // }
 
-              var citation = DO.U.getCitationHTML(citationGraph, citationURI, options);
+              var citation = getCitationHTML(citationGraph, citationURI, options);
 
               //TODO: references nodes, e.g., references, normative-references, informative-references
               var references = document.querySelector('#references');
@@ -407,7 +408,7 @@ export function processAction(action, formValues, selectionData, storedSelection
 
               // var node = document.querySelector('[id="' + id + '"] a[about]');
 
-              // var robustLink = DO.U.createRobustLink(citationURI, node, options);
+              // var robustLink = createRobustLink(citationURI, node, options);
 
               // console.log(citationURI, citation, options)
               var s = citationGraph.node(rdf.namedNode(citationURI));
@@ -550,7 +551,7 @@ export function processAction(action, formValues, selectionData, storedSelection
 //   };
 //   options.optional = { prefLabels: ["dcterms:title"] };
 
-//   var queryURL = DO.U.SPARQLQueryURL.getResourcesOfTypeWithLabel(sparqlEndpoint, resourceType, textInputA.toLowerCase(), options);
+//   var queryURL = SPARQLQueryURL.getResourcesOfTypeWithLabel(sparqlEndpoint, resourceType, textInputA.toLowerCase(), options);
 
 //   queryURL = getProxyableIRI(queryURL);
 
@@ -561,7 +562,7 @@ export function processAction(action, formValues, selectionData, storedSelection
 //     .then(g => {
 //       sG.removeAttribute('class');
 //       var triples = sortGraphTriples(g, { sortBy: 'object' });
-//       return DO.U.getListHTMLFromTriples(triples, {element: 'select', elementId: resultContainerId});
+//       return getListHTMLFromTriples(triples, {element: 'select', elementId: resultContainerId});
 //     })
 //     .then(listHTML => {
 //       listHTML = `<label for="${resultContainerId}">Datasets</label>${listHTML}`;
@@ -592,7 +593,7 @@ export function processAction(action, formValues, selectionData, storedSelection
 
 // // console.log(dataset);
 // // console.log(refArea);
-//         var queryURL = DO.U.SPARQLQueryURL.getObservationsWithDimension(sparqlEndpoint, dataset, paramDimension);
+//         var queryURL = SPARQLQueryURL.getObservationsWithDimension(sparqlEndpoint, dataset, paramDimension);
 // // console.log(queryURL);
 //         queryURL = getProxyableIRI(queryURL);
 
@@ -626,7 +627,7 @@ export function processAction(action, formValues, selectionData, storedSelection
 //                 url: dataset,
 //                 title: title
 //               };
-//               var sparkline = DO.U.getSparkline(list, options);
+//               var sparkline = getSparkline(list, options);
 //               sG.insertAdjacentHTML('beforeend', '<span class="sparkline">' + sparkline + '</span> <span class="sparkline-info">' + triples.length + ' observations</span>');
 //                 form.removeChild(form.querySelector('.fas.fa-circle-notch.fa-spin.fa-fw'));
 //             }

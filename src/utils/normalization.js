@@ -16,10 +16,9 @@ limitations under the License.
 */
 
 import { DOMParser, DOMSerializer } from 'prosemirror-model';
-import Config from '../config.js'
-import { getFragmentOfNodesChildren } from "../doc.js";
+import Config from '../config.js';
 import { schema } from '../editor/schema/base.js';
-import { removeNodesWithSelector, removeClassValues, formatHTML } from './html.js';
+import { removeNodesWithSelector, removeClassValues, formatHTML, getFragmentOfNodesChildren } from './html.js';
 
 export function normalizeForDiff(node) {
   const doc = DOMParser.fromSchema(schema).parse(node);
@@ -245,4 +244,61 @@ export function cleanProseMirrorOutput(node) {
   });
 
   return getFragmentOfNodesChildren(element);
+}
+
+export function normalizeWhitespace(root = document.documentElement) {
+  const inlineElements = new Set(Config.DOMProcessing.inlineElements);
+
+  const walker = document.createTreeWalker(
+    root,
+    NodeFilter.SHOW_TEXT,
+    {
+      acceptNode: (node) => {
+        // reject if this text node is inside one of these
+        for (let p = node.parentNode; p; p = p.parentNode) {
+          const tag = p.nodeName?.toLowerCase?.();
+          if (['pre', 'code', 'samp', 'kbd', 'var', 'textarea', 'style'].includes(tag)) {
+            return NodeFilter.FILTER_REJECT;
+          }
+        }
+
+        const parentTag = node.parentNode?.nodeName?.toLowerCase?.();
+        if (['p', 'dd', 'li'].includes(parentTag)) {
+          return NodeFilter.FILTER_REJECT;
+        }
+
+        if (/[\r\n\t]/.test(node.nodeValue)) {
+          return NodeFilter.FILTER_ACCEPT;
+        }
+
+        return NodeFilter.FILTER_REJECT;
+      }
+    }
+  );
+
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+
+  for (const node of nodes) {
+    const text = node.nodeValue;
+    const collapsed = text.replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ');
+
+    const parentTag = node.parentNode.nodeName.toLowerCase();
+
+    const prev = node.previousSibling;
+    const next = node.nextSibling;
+
+    const prevIsInline = prev && prev.nodeType === 1 && inlineElements.has(prev.nodeName.toLowerCase());
+    const nextIsInline = next && next.nodeType === 1 && inlineElements.has(next.nodeName.toLowerCase());
+
+    if (prevIsInline && nextIsInline && parentTag !== 'head') {
+      node.nodeValue = ' ';
+    } else if (collapsed.trim() === '') {
+      node.remove();
+    } else {
+      node.nodeValue = collapsed;
+    }
+  }
+
+  return root;
 }

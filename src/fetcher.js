@@ -17,7 +17,7 @@ limitations under the License.
 
 import Config from './config.js'
 import { generateUUID } from './util.js'
-import { getProxyableIRI } from './uri.js'
+import { getProxyableIRI, currentLocation } from './uri.js'
 
 const DEFAULT_CONTENT_TYPE = 'text/html; charset=utf-8'
 const LDP_RESOURCE = '<http://www.w3.org/ns/ldp#Resource>; rel="type"'
@@ -100,31 +100,6 @@ function copyResource (fromURL, toURL, options = {}) {
           throw error  // re-throw error
         })
     })
-}
-
-/**
- * currentLocation
- * 
- * Returns the current URL after removing specified or default query paramaters and values
- *
- * @param {object} options
- * @returns {string}
- */
-function currentLocation(options = {}) {
-  const url = new URL(window.location);
-
-  // Default params to remove
-  const defaultParams = ['author', 'social', 'graph', 'graph-view', 'open', 'style'];
-
-  // Use provided keys or fallback to default
-  const keysToRemove = options.removeParams || defaultParams;
-
-  // Remove by key only, ignoring values
-  keysToRemove.forEach(param => url.searchParams.delete(param));
-
-  const origin = url.origin && url.origin !== 'null' ? url.origin : 'file://';
-
-  return origin + url.pathname + (url.searchParams.toString() ? '?' + url.searchParams.toString() : '');
 }
 
 /**

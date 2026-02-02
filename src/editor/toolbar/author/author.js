@@ -24,9 +24,9 @@ import { formHandlerLanguage, formHandlerA, formHandlerAnnotate, formHandlerBloc
 import { ToolbarView, annotateFormControls } from "../toolbar.js"
 import { createRDFaHTMLRequirement, getCitationOptionsHTML, getLanguageOptionsHTML, getRequirementLevelOptionsHTML, getRequirementSubjectOptionsHTML } from "../../../doc.js"
 import { getResource } from "../../../fetcher.js"
-import { fragmentFromString } from "../../../util.js"
 import Config from "../../../config.js";
-import { htmlEncode } from "../../../utils/html.js";
+import { fragmentFromString } from "../../../utils/html.js";
+import { htmlEncode } from "../../../util.js";
 import { i18n } from "../../../i18n.js"
 
 const ns = Config.ns;

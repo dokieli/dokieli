@@ -17,17 +17,17 @@ limitations under the License.
 
 import rdf from 'rdf-ext';
 import Config from './config.js'
-import { removeChildren, fragmentFromString } from './util.js'
-import { getAgentHTML, showActionMessage, showGeneralMessages, getResourceSupplementalInfo, handleDeleteNote, addMessageToLog } from './doc.js'
-import { Icon } from './ui/icons.js'
-import { getResourceGraph, getAgentName, getGraphImage, getAgentURL, getAgentPreferredProxy, getAgentPreferredPolicy, setPreferredPolicyInfo, getAgentDelegates, getAgentKnows, getAgentFollowing, getAgentStorage, getAgentOutbox, getAgentInbox, getAgentPreferencesFile, getAgentPublicTypeIndex, getAgentPrivateTypeIndex, getAgentTypeIndex, getAgentSupplementalInfo, getAgentSeeAlsoPrimaryTopicOf, getAgentPreferencesInfo, getAgentLiked, getAgentOccupations, getAgentPublications, getAgentMade, getAgentOIDCIssuer, getAgentPreferredLanguages } from './graph.js'
-import { removeLocalStorageAsSignOut, updateLocalStorageProfile } from './storage.js'
+import { fragmentFromString, removeChildren } from "./utils/html.js";
+import { getAgentHTML, showActionMessage, getResourceSupplementalInfo, handleDeleteNote, addMessageToLog } from './doc.js';
+import { Icon } from './ui/icons.js';
+import { setPreferredPolicyInfo, getAgentTypeIndex, getAgentSupplementalInfo, getAgentSeeAlsoPrimaryTopicOf, getAgentPreferencesInfo, getSubjectInfo } from './graph.js';
+import { removeLocalStorageAsSignOut, updateLocalStorageProfile } from './storage.js';
 import { updateButtons, getButtonHTML } from './ui/buttons.js';
 import { SessionCore } from '@uvdsl/solid-oidc-client-browser/core';
 import { isCurrentScriptSameOrigin, isLocalhost } from './uri.js';
 import { SessionIDB } from '@uvdsl/solid-oidc-client-browser';
 import { i18n } from './i18n.js';
-import { setPreferredLanguagesInfo } from './menu.js';
+import { showGeneralMessages, setPreferredLanguagesInfo } from './actions.js';
 
 const ns = Config.ns;
 
@@ -292,14 +292,6 @@ function setContactInfo(subjectIRI, options = {}) {
   });
 }
 
-function isGraphValid(g) {
-  if (!g) return false;
-  if (g.resource || g.cause) return false;
-  if (g.status?.toString().startsWith('4') || g.status?.toString().startsWith('5')) return false;
-  if (typeof g.out !== 'function') return false;
-  if (!Array.from(g.out().quads()).length) return false;
-  return true;
-}
 
 //TODO: Review grapoi
 /**
@@ -307,83 +299,6 @@ function isGraphValid(g) {
  *
  * @returns {Promise}
  */
-function getSubjectInfo (subjectIRI, options = {}) {
-  if (!subjectIRI) {
-    return Promise.reject(new Error('Could not set subject info - no subjectIRI'));
-  }
-  else if (!subjectIRI.toLowerCase().startsWith('http:') && !(subjectIRI.toLowerCase().startsWith('https:'))) {
-    return Promise.reject(new Error('Could not set subject info - subjectIRI is not `http(s):`'));
-  }
-
-  var headers = {};
-  options['noCredentials'] = !!options['noCredentials'];
-  options['noStore'] = !!options['noStore'];
-
-  return getResourceGraph(subjectIRI, headers, options)
-    .then(g => {
-      //TODO: Consider whether to construct an empty graph (useful to work only with their IRI);
-
-      if (!isGraphValid(g)) {
-        // console.warn('Invalid graph object:', g);
-        return {}
-      }
-
-      g = g.node(rdf.namedNode(subjectIRI));
-
-      return {
-        Graph: g,
-        IRI: subjectIRI,
-        Name: getAgentName(g),
-        Image: getGraphImage(g),
-        URL: getAgentURL(g),
-        Role: options.role,
-        UI: options.ui,
-        OIDCIssuer: getAgentOIDCIssuer(g),
-        ProxyURL: getAgentPreferredProxy(g),
-        PreferredPolicy: getAgentPreferredPolicy(g),
-        PreferredLanguages: getAgentPreferredLanguages(g),
-        Delegates: getAgentDelegates(g),
-        Contacts: {},
-        Knows: getAgentKnows(g),
-        Following: getAgentFollowing(g),
-        SameAs: [],
-        SeeAlso: [],
-        PrimaryTopicOf: [],
-        Storage: getAgentStorage(g),
-        Outbox: getAgentOutbox(g),
-        Inbox: getAgentInbox(g),
-        TypeIndex: {},
-        Preferences: {},
-        PreferencesFile: getAgentPreferencesFile(g),
-        PublicTypeIndex: getAgentPublicTypeIndex(g),
-        PrivateTypeIndex: getAgentPrivateTypeIndex(g),
-        Liked: getAgentLiked(g),
-        Occupations: getAgentOccupations(g),
-        Publications: getAgentPublications(g),
-        Made: getAgentMade(g)
-      }
-    })
-    .then(agent => {
-      if (!agent.Graph) return agent;
-
-      setPreferredLanguagesInfo(agent.Graph);
-
-      return agent;
-    })
-    .then(agent => {
-      //XXX: Revisit what the retun should be, whether to be undefined, {}, or someting else. Is it useful to retain an agent object that doesn't have a Graph? (Probably better not.)
-      if (!agent.Graph || !options.fetchIndexes) return agent;
-
-      return getAgentTypeIndex(agent.Graph)
-        .then(typeIndexes => {
-          Object.keys(typeIndexes).forEach(typeIndexType => {
-            agent.TypeIndex[typeIndexType] = typeIndexes[typeIndexType];
-          });
-
-          return agent;
-        })
-    });
-  }
 
 //TODO: Review grapoi
 function afterSetUserInfo () {
