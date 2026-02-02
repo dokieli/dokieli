@@ -23,10 +23,12 @@ import { schema } from "./schema/base.js"
 import { keymapPlugin } from "./toolbar/author/keymap.js";
 import { AuthorToolbar } from "./toolbar/author/author.js";
 import { SocialToolbar } from "./toolbar/social/social.js";
+import { SlashMenu } from "./slashmenu/slashmenu.js";
 import Config from "./../config.js";
-import { addMessageToLog, getAgentHTML, insertDocumentLevelHTML, setDate, setEditSelections, showActionMessage, hasNonWhitespaceText } from "../doc.js";
+import { addMessageToLog, getAgentHTML, insertDocumentLevelHTML, setDate, showActionMessage } from "../doc.js";
+import { fragmentFromString, hasNonWhitespaceText } from "./../utils/html.js";
 import { getAgentName, getGraphImage, getResourceGraph } from "../graph.js";
-import { fragmentFromString, generateAttributeId } from "../util.js";
+import { generateAttributeId } from "../util.js";
 import { updateLocalStorageProfile } from "../storage.js";
 import rdf from 'rdf-ext';
 import { Icon } from "../ui/icons.js";
@@ -46,6 +48,7 @@ export class Editor {
     this.allowedScriptElements = [];
     this.node = node || document.body;
     this.toggleModeMessageId = null;
+    this.slashMenu = null;
 
     this.editorView = null;
     this.socialToolbarView = null;
@@ -292,6 +295,8 @@ export class Editor {
         document.body.appendChild(script);
       });
 
+      this.slashMenu = new SlashMenu(this.editorView);
+
     });
 
     // console.log(this.editorView.state.doc)
@@ -379,130 +384,130 @@ export class Editor {
   }
 
   //TODO: Port Contributor and Modified to slashmenu widget
-  setEditorDataItems(e) {
-    if (e && e.target.closest('button.editor-enable')) {
-      this.updateDocumentTitle();
-      var documentURL = Config.DocumentURL;
+  // setEditorDataItems(e) {
+  //   if (e && e.target.closest('button.editor-enable')) {
+  //     this.updateDocumentTitle();
+  //     var documentURL = Config.DocumentURL;
 
-      var s = Config.Resource[documentURL].graph.node(rdf.namedNode(documentURL));
+  //     var s = Config.Resource[documentURL].graph.node(rdf.namedNode(documentURL));
 
-      Config.ContributorRoles.forEach(contributorRole => {
-      // console.log(contributorRole)
-        var contributorNodeId = 'document-' + contributorRole + 's';
-        var contributorNode = document.getElementById(contributorNodeId);
-        if (!contributorNode) {
-          var contributorTitle = contributorRole.charAt(0).toUpperCase() + contributorRole.slice(1) + 's';
-          contributorNode = '        <dl id="' + contributorNodeId + '"><dt>' + contributorTitle + '</dt></dl>';
-          insertDocumentLevelHTML(document, contributorNode, { 'id': contributorNodeId })
-          contributorNode = document.getElementById(contributorNodeId);
-        }
+  //     Config.ContributorRoles.forEach(contributorRole => {
+  //     // console.log(contributorRole)
+  //       var contributorNodeId = 'document-' + contributorRole + 's';
+  //       var contributorNode = document.getElementById(contributorNodeId);
+  //       if (!contributorNode) {
+  //         var contributorTitle = contributorRole.charAt(0).toUpperCase() + contributorRole.slice(1) + 's';
+  //         contributorNode = '        <dl id="' + contributorNodeId + '"><dt>' + contributorTitle + '</dt></dl>';
+  //         insertDocumentLevelHTML(document, contributorNode, { 'id': contributorNodeId })
+  //         contributorNode = document.getElementById(contributorNodeId);
+  //       }
 
-        //User can add themselves as a contributor
-        if (Config.User.IRI && !s.out(ns.schema[contributorRole]).values.includes(Config.User.IRI)){
-          var contributorId;
-          var contributorName = Config.User.Name || Config.User.IRI;
-          if (Config.User.Name) {
-            contributorId = generateAttributeId(null, Config.User.Name);
-            if (document.getElementById(contributorId)) {
-              contributorId = generateAttributeId(null, Config.User.Name, contributorRole);
-            }
-          }
-          else {
-            contributorId = generateAttributeId(null, Config.User.IRI);
-          }
-          contributorId = ' id="' + contributorId + '"';
+  //       //User can add themselves as a contributor
+  //       if (Config.User.IRI && !s.out(ns.schema[contributorRole]).values.includes(Config.User.IRI)){
+  //         var contributorId;
+  //         var contributorName = Config.User.Name || Config.User.IRI;
+  //         if (Config.User.Name) {
+  //           contributorId = generateAttributeId(null, Config.User.Name);
+  //           if (document.getElementById(contributorId)) {
+  //             contributorId = generateAttributeId(null, Config.User.Name, contributorRole);
+  //           }
+  //         }
+  //         else {
+  //           contributorId = generateAttributeId(null, Config.User.IRI);
+  //         }
+  //         contributorId = ' id="' + contributorId + '"';
 
-          var contributorInList = (Config.Resource[documentURL].rdftype.includes(ns.schema.ScholarlyArticle.value)) ?
-            ' inlist="" rel="bibo:' + contributorRole + 'List" resource="' + Config.User.IRI + '"' : '';
+  //         var contributorInList = (Config.Resource[documentURL].rdftype.includes(ns.schema.ScholarlyArticle.value)) ?
+  //           ' inlist="" rel="bibo:' + contributorRole + 'List" resource="' + Config.User.IRI + '"' : '';
 
-          var userHTML = '<dd class="do"' + contributorId + contributorInList + '><span about="" rel="schema:' + contributorRole + '">' + getAgentHTML({'avatarSize': 32}) + '</span><button class="add-' + contributorRole + '" contenteditable="false" title="Add ' + contributorName + ' as ' + contributorRole + '">' + Icon[".fas.fa-plus"] + '</button></dd>';
+  //         var userHTML = '<dd class="do"' + contributorId + contributorInList + '><span about="" rel="schema:' + contributorRole + '">' + getAgentHTML({'avatarSize': 32}) + '</span><button class="add-' + contributorRole + '" contenteditable="false" title="Add ' + contributorName + ' as ' + contributorRole + '">' + Icon[".fas.fa-plus"] + '</button></dd>';
 
-          contributorNode.insertAdjacentHTML('beforeend', userHTML);
-        }
+  //         contributorNode.insertAdjacentHTML('beforeend', userHTML);
+  //       }
 
-        //User can enter a contributor's WebID
-        contributorNode.insertAdjacentHTML('beforeend', '<dd class="do"><button class="enter-' + contributorRole + '" contenteditable="false" title="Enter ' + contributorRole +'">' + Icon[".fas.fa-user-plus"] + '</button></dd>');
+  //       //User can enter a contributor's WebID
+  //       contributorNode.insertAdjacentHTML('beforeend', '<dd class="do"><button class="enter-' + contributorRole + '" contenteditable="false" title="Enter ' + contributorRole +'">' + Icon[".fas.fa-user-plus"] + '</button></dd>');
 
-        //User can invite a contributor from their contacts
-        contributorNode.insertAdjacentHTML('beforeend', '<dd class="do"><button class="invite-' + contributorRole + '" contenteditable="false" title="Invite ' + contributorRole +'">' + Icon[".fas.fa-bullhorn"] + '</button></dd>');
+  //       //User can invite a contributor from their contacts
+  //       contributorNode.insertAdjacentHTML('beforeend', '<dd class="do"><button class="invite-' + contributorRole + '" contenteditable="false" title="Invite ' + contributorRole +'">' + Icon[".fas.fa-bullhorn"] + '</button></dd>');
 
-        contributorNode = document.getElementById(contributorNodeId);
-        contributorNode.addEventListener('click', (e) => {
-          var button = e.target.closest('button.add-' + contributorRole);
-          if (button){
-            var n = e.target.closest('.do');
-            if (n) {
-              n.classList.add('selected');
-            }
-            button.parentNode.removeChild(button);
-          }
+  //       contributorNode = document.getElementById(contributorNodeId);
+  //       contributorNode.addEventListener('click', (e) => {
+  //         var button = e.target.closest('button.add-' + contributorRole);
+  //         if (button){
+  //           var n = e.target.closest('.do');
+  //           if (n) {
+  //             n.classList.add('selected');
+  //           }
+  //           button.parentNode.removeChild(button);
+  //         }
 
-          button = e.target.closest('button.enter-' + contributorRole);
-          //TODO: This input field can behave like the one in js showUserIdentityInput for enableDisableButton to button.commit
-          if (button){
-            n = e.target.closest('.do');
-            n.insertAdjacentHTML('beforebegin', '<dd class="do" contenteditable="false"><input contenteditable="false" name="enter-' + contributorRole + '" placeholder="https://csarven.ca/#i" type="text" value="" /> <button class="commit-' + contributorRole + '" contenteditable="false" title="Commit ' + contributorRole + '">' + Icon[".fas.fa-plus"] + '</button></dd>');
-          }
+  //         button = e.target.closest('button.enter-' + contributorRole);
+  //         //TODO: This input field can behave like the one in js showUserIdentityInput for enableDisableButton to button.commit
+  //         if (button){
+  //           n = e.target.closest('.do');
+  //           n.insertAdjacentHTML('beforebegin', '<dd class="do" contenteditable="false"><input contenteditable="false" name="enter-' + contributorRole + '" placeholder="https://csarven.ca/#i" type="text" value="" /> <button class="commit-' + contributorRole + '" contenteditable="false" title="Commit ' + contributorRole + '">' + Icon[".fas.fa-plus"] + '</button></dd>');
+  //         }
 
-          button = e.target.closest('button.commit-' + contributorRole);
-          if (button){
-            n = e.target.closest('.do');
-            if (n) {
-              n.classList.add('selected');
+  //         button = e.target.closest('button.commit-' + contributorRole);
+  //         if (button){
+  //           n = e.target.closest('.do');
+  //           if (n) {
+  //             n.classList.add('selected');
 
-              var input = n.querySelector('input');
-              var iri = input.value.trim();
+  //             var input = n.querySelector('input');
+  //             var iri = input.value.trim();
 
-              //TODO:
-              // button.disabled = true;
-              // button.parentNode.disabled = true;
-              // button.querySelector('svg').classList.add('fa-spin');
+  //             //TODO:
+  //             // button.disabled = true;
+  //             // button.parentNode.disabled = true;
+  //             // button.querySelector('svg').classList.add('fa-spin');
 
-              if (iri.startsWith('http')) {
-                //TODO: Refactor. There is overlap with addShareResourceContactInput and getAgentHTML
-                getResourceGraph(iri).then(s => {
-                  // var iri = s.iri().toString();
-                  // var id = encodeURIComponent(iri);
+  //             if (iri.startsWith('http')) {
+  //               //TODO: Refactor. There is overlap with addShareResourceContactInput and getAgentHTML
+  //               getResourceGraph(iri).then(s => {
+  //                 // var iri = s.iri().toString();
+  //                 // var id = encodeURIComponent(iri);
 
-                  var name = getAgentName(s) || iri;
-                  var img = getGraphImage(s);
+  //                 var name = getAgentName(s) || iri;
+  //                 var img = getGraphImage(s);
 
-                  img = (img && img.length) ? '<img alt="" height="32" rel="schema:image" src="' + img + '" width="32" /> ' : '';
-                  var userHTML = fragmentFromString('<span about="" rel="schema:' + contributorRole + '"><span about="' + iri + '" typeof="schema:Person">' + img + '<a href="' + iri + '" rel="schema:url">' + name + '</a></span></span>');
+  //                 img = (img && img.length) ? '<img alt="" height="32" rel="schema:image" src="' + img + '" width="32" /> ' : '';
+  //                 var userHTML = fragmentFromString('<span about="" rel="schema:' + contributorRole + '"><span about="' + iri + '" typeof="schema:Person">' + img + '<a href="' + iri + '" rel="schema:url">' + name + '</a></span></span>');
 
-                  n.replaceChild(userHTML, input);
-                  button.parentNode.removeChild(button);
-                });
-              }
-              else {
-                input.focus();
-              }
-            }
-          }
+  //                 n.replaceChild(userHTML, input);
+  //                 button.parentNode.removeChild(button);
+  //               });
+  //             }
+  //             else {
+  //               input.focus();
+  //             }
+  //           }
+  //         }
 
-          if (e.target.closest('button.invite-' + contributorRole)) {
-            //TODO: Temporarily disabled. Below is the intended place. Bring it back when shareResource (and related stuff) is moved from DO.U. to editor.js or related file.
-            // DO.U.shareResource(e);
-            console.log("TODO: Temporarily disabled. Check 'button.invite-' + contributorRole")
-            e.target.removeAttribute('disabled');
-          }
-        });
+  //         if (e.target.closest('button.invite-' + contributorRole)) {
+  //           //TODO: Temporarily disabled. Below is the intended place. Bring it back when shareResource (and related stuff) is moved from DO .U. to editor.js or related file.
+  //           // shareResource(e);
+  //           console.log("TODO: Temporarily disabled. Check 'button.invite-' + contributorRole")
+  //           e.target.removeAttribute('disabled');
+  //         }
+  //       });
 
-        //TODO: Show 'Remove' button for selected contributor (before exiting edit mode).
+  //       //TODO: Show 'Remove' button for selected contributor (before exiting edit mode).
 
-        //TODO: Update getResourceInfo() so that Config.Resource[documentURL] can be used to check other contributors while still in edit.
-      })
+  //       //TODO: Update getResourceInfo() so that Config.Resource[documentURL] can be used to check other contributors while still in edit.
+  //     })
 
-      var documentModified = 'document-modified';
-      var modified = document.getElementById(documentModified);
-      var lastModified = Config.Resource[Config.DocumentURL]?.headers?.['last-modified']?.['field-value'];
-      if(!modified && lastModified) {
-        lastModified = new Date(lastModified);
-        setDate(document, { 'id': 'document-modified', 'property': 'schema:dateModified', 'datetime': lastModified } );
-      }
-    }
-    else if (e && e.target.closest('button.editor-disable')) {
-      setEditSelections();
-    }
-  }
+  //     var documentModified = 'document-modified';
+  //     var modified = document.getElementById(documentModified);
+  //     var lastModified = Config.Resource[Config.DocumentURL]?.headers?.['last-modified']?.['field-value'];
+  //     if(!modified && lastModified) {
+  //       lastModified = new Date(lastModified);
+  //       setDate(document, { 'id': 'document-modified', 'property': 'schema:dateModified', 'datetime': lastModified } );
+  //     }
+  //   }
+  //   else if (e && e.target.closest('button.editor-disable')) {
+  //     setEditSelections();
+  //   }
+  // }
 }

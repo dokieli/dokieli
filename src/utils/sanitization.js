@@ -17,7 +17,7 @@ limitations under the License.
 
 import Config from '../config.js'
 import DOMPurify from 'dompurify';
-import { htmlEncode } from './html.js';
+import { htmlEncode } from '../util.js';
 
 export function domSanitize(strHTML, options = {}) {
   // console.log("DOMPurify in:", strHTML);

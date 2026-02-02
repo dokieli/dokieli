@@ -15,7 +15,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { escapeRegExp } from '../util.js'
+import { micromark as marked } from 'micromark';
+import { gfm, gfmHtml } from 'micromark-extension-gfm';
+import { gfmTagfilterHtml } from 'micromark-extension-gfm-tagfilter';
+import { escapeRegExp, htmlEncode } from '../util.js'
+import { domSanitize } from '../utils/sanitization.js';
 import Config from '../config.js'
 
 export function tokenizeHTML(root) {
@@ -181,62 +185,6 @@ export function formatHTML(node, options, noEsc = [false], indentLevel = 0, next
   return out
 }
 
-export function htmlEncode(str, options = { mode: 'text', attributeName: null }) {
-  str = String(str);
-
-  if (options.mode === 'uri') {
-    const isMulti = options.attributeName && Config.DOMProcessing.multiTermAttributes.includes(options.attributeName);
-    if (isMulti) {
-      return str.split(/[\t\n\r ]+/).map(term => encodeUriTerm(term)).join(' ');
-    } else {
-      return encodeUriTerm(str);
-    }
-  }
-
-  if (options.mode === 'attribute') {
-    return str.replace(/([&<>"'])/g, (match, p1, offset, fullStr) => {
-      if (p1 === '&') {
-        const semicolonIndex = fullStr.indexOf(';', offset);
-        if (semicolonIndex > -1) {
-          const entity = fullStr.slice(offset, semicolonIndex + 1);
-          if (/^&(?:[a-zA-Z][a-zA-Z0-9]+|#\d+|#x[0-9a-fA-F]+);$/.test(entity)) {
-            return '&';
-          }
-        }
-      }
-      switch (p1) {
-        case '&': return '&amp;';
-        case '<': return '&lt;';
-        case '>': return '&gt;';
-        case '"': return '&quot;';
-        case "'": return '&#39;';
-        default: return p1;
-      }
-    });
-  }
-
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
-
-
-export function encodeUriTerm(term) {
-  return term.replace(/%[0-9A-Fa-f]{2}|&|[^A-Za-z0-9\-._~:/?#\[\]@!$'()*+,;=%]/g, match => {
-    if (match === '&') return '&amp;';
-    if (/^%[0-9A-Fa-f]{2}$/.test(match)) return match;
-    switch (match) {
-      case ' ': return '%20';
-      case "'": return '%27';
-      case '"': return '%22';
-      case '<': return '%3C';
-      case '>': return '%3E';
-      default: return '%' + match.charCodeAt(0).toString(16).toUpperCase();
-    }
-  });
-}
-
 export function fixDoubleEscapedEntities(string) {
   return string.replace(/&amp;(lt|gt|apos|quot|amp);/g, "&$1;")
 }
@@ -281,4 +229,215 @@ export function removeClassValues(node, selector, values) {
   });
 
   return node;
+}
+
+export function removeChildren(node) {
+  while (node.firstChild) {
+    node.removeChild(node.firstChild);
+  }
+}
+
+export function getFormValues(form) {
+  const formData = new FormData(form);
+
+  const formValues = Object.fromEntries(
+    [...formData.entries()].map(([key, value]) => [key, typeof value === "string" ? domSanitize(value.trim()) : value])
+  );
+
+// console.log(formValues);
+  return formValues;
+}
+
+export function getIconsFromCurrentDocument() {
+  var usedIcons = Array.from(document.querySelectorAll('i[class*="fa-"]'))
+    .flatMap(el => Array.from(el.classList))
+    .filter(cls => cls.startsWith('fa-'));
+
+  var uniqueClasses = [...new Set(usedIcons)];
+
+  var filteredEntries = Object.entries(Icon).filter(([cls]) =>
+    uniqueClasses.some(usedCls => cls.includes(usedCls))
+  );
+
+  var sortedEntries = filteredEntries.sort(([a], [b]) => a.localeCompare(b));
+
+  var newIcons = Object.fromEntries(sortedEntries);
+
+  return newIcons;
+}
+
+export function getNodeWithoutClasses (node, classNames) {
+  classNames = Array.isArray(classNames) ? classNames : [classNames];
+  const rootNode = node.nodeType === Node.DOCUMENT_NODE ? node.documentElement : node;
+  const clonedRootNode = rootNode.cloneNode(true);
+  const selector = classNames.map(className => `.${className}`).join(',');
+  const descendantsWithClass = clonedRootNode.querySelectorAll(selector);
+
+  descendantsWithClass.forEach(descendant => {
+    descendant.parentNode.removeChild(descendant);
+  });
+
+  return clonedRootNode;
+}
+
+export function getFragmentOfNodesChildren(node) {
+  const fragment = document.createDocumentFragment();
+  [...node.childNodes].forEach(child => fragment.appendChild(child));
+
+  return fragment;
+}
+
+export function convertDocumentFragmentToDocument(fragment) {
+  const newDoc = document.implementation.createHTMLDocument("New Document");
+
+  while (fragment.firstChild) {
+    newDoc.body.appendChild(fragment.firstChild);
+  }
+
+  return newDoc;
+}
+
+export function getDocumentNodeFromString(data, options = {}) {
+  options['contentType'] = options.contentType || 'text/html';
+
+  if (options.contentType === 'text/xml' || options.contentType === 'image/svg+xml') {
+    data = data.replace(/<!DOCTYPE[^>]*>/i, '');
+  }
+  const parser = new DOMParser();
+  const node = parser.parseFromString(data, options.contentType);
+  // TODO: I don't think we need to do this here anymore, it should happen after we clean the document so that we don't risk altering the structure and missing some elements that need to be removed
+  // const pmDocBody = PmDOMParser.fromSchema(schema).parse(node.body);
+  // const parsedDoc = DOMSerializer.fromSchema(schema).serializeFragment(pmDocBody.content);
+  // const body = stringFromFragment(parsedDoc);
+
+  // node.body.setHTMLUnsafe(body);
+
+  // console.log(parsedDoc, body, node)
+  return node;
+}
+
+export function getDocumentContentNode(node) {
+  if (node instanceof Document) {
+    return node.body || undefined; // For HTML documents
+  } else if (node instanceof XMLDocument) {
+    return node.documentElement || undefined; // For XML documents
+  } else if (node instanceof DocumentFragment) {
+    return node.firstChild || undefined; // For DocumentFragment
+  } else if (node instanceof ShadowRoot) {
+    return getDocumentContentNode(node.host); // Recursively check the host element's content
+  } else {
+    return undefined; // Unknown document type
+  }
+}
+
+export function getClosestSectionNode(node) {
+  return node.closest('section') || node.closest('div') || node.closest('article') || node.closest('main') || node.closest('body');
+}
+
+export function removeSelectorFromNode(node, selector) {
+  var clone = node.cloneNode(true);
+  var x = clone.querySelectorAll(selector);
+
+  x.forEach(i => {
+    i.parentNode.removeChild(i);
+  })
+
+  return clone;
+}
+
+export function getNodeLanguage(node) {
+  node = node ?? getDocumentContentNode(document);
+
+  const closestLangNode = node.closest('[lang], [xml\\:lang]');
+  return closestLangNode?.getAttribute('lang') || closestLangNode?.getAttributeNS('', 'xml:lang') || '';
+}
+
+export function hasNonWhitespaceText(node) {
+  return !!node.textContent.trim();
+}
+
+export function selectArticleNode(node) {
+  var x = node.querySelectorAll(Config.ArticleNodeSelectors.join(','));
+  return (x && x.length > 0) ? x[x.length - 1] : getDocumentContentNode(document);
+}
+
+export function getRDFaPrefixHTML(prefixes) {
+  return Object.keys(prefixes).map(i => { return i + ': ' + prefixes[i]; }).join(' ');
+}
+
+export function removeNodesWithIds(ids) {
+  if (typeof ids === 'undefined') { return }
+
+  ids = (Array.isArray(ids)) ? ids : [ids];
+
+  ids.forEach(id => {
+    var node = document.getElementById(id);
+    if (node) {
+      node.parentNode.removeChild(node);
+    }
+  });
+}
+
+export function fragmentFromString(strHTML) {
+  return document.createRange().createContextualFragment(domSanitize(strHTML));
+}
+
+export function getOffset(el) {
+  var box = el.getBoundingClientRect();
+
+  return {
+    top: box.top + window.pageYOffset - document.documentElement.clientTop,
+    left: box.left + window.pageXOffset - document.documentElement.clientLeft
+  }
+}
+
+export function stringFromFragment(fragment) {
+  const container = document.createElement('div');
+  container.appendChild(fragment.cloneNode(true));
+
+  // return container.firstChild?.outerHTML || '';
+
+  return container.getHTML();
+}
+
+export function parseMarkdown(data, options) {
+  options = options || {};
+  // console.log(data)
+  var extensions = {
+    extensions: [gfm()],
+    allowDangerousHtml: true,
+    htmlExtensions: [gfmHtml(), gfmTagfilterHtml()]
+  };
+  var html = marked(data, extensions);
+  // console.log(parsed)
+  if (options.createDocument) {
+    html = createHTML('', '<article>' + html + '</article>');
+  }
+  // console.log(html);
+  return html;
+}
+
+export function createHTML(title, main, options) {
+  title = domSanitize(title) || '';
+  main = domSanitize(main);
+  options = options || {};
+  var prefix = ('prefixes' in options && Object.keys(options.prefixes).length > 0) ? ' prefix="' + getRDFaPrefixHTML(options.prefixes) + '"' : '';
+  var lang = options.lang || 'en';
+  lang = ' lang="' + lang + '" xml:lang="' + lang + '"';
+  lang = ('omitLang' in options) ? '' : lang;
+  lang = domSanitize(lang);
+
+  return '<!DOCTYPE html>\n\
+<html' + lang + ' xmlns="http://www.w3.org/1999/xhtml">\n\
+  <head>\n\
+    <meta charset="utf-8" />\n\
+    <title>' + title + '</title>\n\
+  </head>\n\
+  <body' + prefix + '>\n\
+    <main>\n\
+' + main + '\n\
+    </main>\n\
+  </body>\n\
+</html>\n\
+';
 }

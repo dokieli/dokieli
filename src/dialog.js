@@ -15,253 +15,438 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { diffArrays } from 'diff';
+import rdf from 'rdf-ext';
 import { i18n } from './i18n.js';
-import { normalizeForDiff } from './utils/normalization.js'
 import { getButtonHTML, updateButtons } from './ui/buttons.js';
-import { getSubjectInfo, showUserIdentityInput } from './auth.js';
-import { accessModeAllowed, addMessageToLog, buildResourceView, copyRelativeResources, createFeedXML, createHTML, createImmutableResource, createMutableResource, createNoteDataHTML, getAccessModeOptionsHTML, getBaseURLSelection, getDocument, getFeedFormatSelection, getLanguageOptionsHTML, getLicenseOptionsHTML, getNodeWithoutClasses, getResourceInfo, parseMarkdown, rewriteBaseURL, setCopyToClipboard, setDocumentRelation, showActionMessage, showRobustLinksDecoration, showTimeMap, spawnDokieli, updateMutableResource, buildReferences, getDocumentConceptDefinitionsHTML, removeSelectorFromNode, insertDocumentLevelHTML, insertTestCoverageToTable, diffRequirements, showExtendedConcepts, selectArticleNode, removeReferences, getStorageSelfDescription, getContactInformation, getPersistencePolicy, getODRLPolicies } from './doc.js';
+import { addMessageToLog, buildResourceView, copyRelativeResources, createFeedXML, createImmutableResource, createMutableResource, createNoteDataHTML, getAccessModeOptionsHTML, getBaseURLSelection, getDocument, getFeedFormatSelection, getLanguageOptionsHTML, getLicenseOptionsHTML, getResourceInfo, rewriteBaseURL, setCopyToClipboard, setDocumentRelation, showActionMessage, showRobustLinksDecoration, showTimeMap, updateMutableResource, buildReferences, getDocumentConceptDefinitionsHTML, insertDocumentLevelHTML, insertTestCoverageToTable, diffRequirements, removeReferences, getStorageSelfDescription, getContactInformation, getPersistencePolicy, getODRLPolicies, updateResourceInfos, initCurrentStylesheet, setDate } from './doc.js';
+import { removeNodesWithIds, createHTML } from './utils/html.js';
+import { accessModeAllowed, accessModePossiblyAllowed } from './access.js';
 import { domSanitize } from './utils/sanitization.js';
-import { hideDocumentMenu, initDocumentMenu, showDocumentMenu } from './menu.js';
-import { escapeRDFLiteral, findPreviousDateTime, fragmentFromString, generateAttributeId, generateFilename, generateUUID, setDocumentURL } from './util.js';
-import { currentLocation, deleteResource, getResource, patchResourceWithAcceptPatch, postResource, putResource, putResourceWithAcceptPut, setAcceptRDFTypes } from './fetcher.js';
-import { forceTrailingSlash, generateDataURI, getAbsoluteIRI, getBaseURL, isHttpOrHttpsProtocol, stripFragmentFromString, getFragmentFromString, getURLLastPath } from './uri.js';
-import { getAccessSubjects, getACLResourceGraph, getAgentInbox, getAgentName, getAuthorizationsMatching, getGraphAuthors, getGraphContributors, getGraphEditors, getGraphImage, getGraphLabelOrIRI, getGraphPerformers, getGraphTypes, getLinkRelation, getLinkRelationFromHead, getResourceGraph, getUserContacts, getUserLabelOrIRI, serializeData } from './graph.js';
+import { escapeRDFLiteral, generateAttributeId, generateUUID, htmlEncode, setDocumentURL } from './util.js';
+import { deleteResource, getResource, patchResourceWithAcceptPatch, postResource, putResource, putResourceWithAcceptPut, setAcceptRDFTypes } from './fetcher.js';
+import { forceTrailingSlash, generateDataURI, getAbsoluteIRI, getBaseURL, isHttpOrHttpsProtocol, stripFragmentFromString, getFragmentFromString, getURLLastPath, currentLocation } from './uri.js';
+import { getAccessSubjects, getACLResourceGraph, getAgentInbox, getAgentName, getAuthorizationsMatching, getGraphAuthors, getGraphContributors, getGraphEditors, getGraphImage, getGraphLabelOrIRI, getGraphPerformers, getGraphTypes, getLinkRelation, getLinkRelationFromHead, getResourceGraph, getUserContacts, getUserLabelOrIRI, serializeData, getSubjectInfo } from './graph.js';
 import { notifyInbox, sendNotifications, showContactsActivities } from './activity.js';
 import Config from './config.js';
 const ns = Config.ns;
 import { Icon } from './ui/icons.js';
-import rdf from 'rdf-ext';
-import { autoSave, disableAutoSave, syncLocalRemoteResource, updateLocalStorageProfile } from './storage.js';
+import { disableAutoSave, updateLocalStorageProfile, getLocalStorageItem, enableRemoteSync, disableRemoteSync, enableAutoSave } from './storage.js';
+import { showVisualisationGraph } from './viz.js';
+import { updateUILanguage } from './actions.js';
+import { parseMarkdown, fragmentFromString, removeSelectorFromNode, selectArticleNode, getNodeWithoutClasses } from "./utils/html.js";
+import { showUserSigninSignout, userInfoSignOut } from './auth.js';
 
-export function showResourceReviewChanges(localContent, remoteContent, response, reviewOptions) {
-  if (!localContent.length || !remoteContent.length) return;
-  var tmplLocal = document.implementation.createHTMLDocument('template');
-  tmplLocal.documentElement.setHTMLUnsafe(localContent);
-  const localContentNode = tmplLocal.body;
-  // const localContentBody = localContentNode.getHTML().trim();
+export function initDocumentMenu() {
+  document.body.prepend(fragmentFromString(`<div class="do" id="document-menu" dir="${Config.User.UI.LanguageDir}" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}">${Config.Button.Menu.OpenMenu}<div><section id="user-info"></section></div></div>`));
 
-  var tmplRemote = document.implementation.createHTMLDocument('template');
-  tmplRemote.documentElement.setHTMLUnsafe(remoteContent);
+  var userInfo = document.getElementById('user-info');
 
-  // const remoteContentNode = tmplRemote.body;
-  // const remoteContentBody = tmplRemote.body.getHTML().trim();
-  const remoteContentNode = tmplRemote.body;
-
-  // console.log(localContent, remoteContent);
-  const tokenizeHTML = (html) => {
-    return html.split(/(<[^>]+>)/g).filter(Boolean);
-  };
-
-  // function serializeToken(token) {
-  //   return JSON.stringify([
-  //     token.block,
-  //     token.text,
-  //     token.bold,
-  //     token.italic,
-  //     token.link
-  //   ]);
-  // }
-  
-  const localNormalized = normalizeForDiff(localContentNode);
-  const remoteNormalized = normalizeForDiff(remoteContentNode);
-
-  // console.log("--- Local Normalized ---", localNormalized);
-  // console.log("--- Remote Normalized ---", remoteNormalized);
-  
-  const localTokens = tokenizeHTML(localNormalized);
-  const remoteTokens = tokenizeHTML(remoteNormalized);
-
-  // const localSerialized = localTokens.map(serializeToken);
-  // const remoteSerialized = remoteTokens.map(serializeToken);
-  
-  // const diff = diffArrays(remoteTokens, localTokens).filter(d => d.added || d.removed);
-  const diff = diffArrays(remoteTokens, localTokens)
-  // console.log(diff)
-  // const diff = diffArrays(remoteSerialized, localSerialized);
-
-  if (!diff.length || !diff.filter(d => d.added || d.removed).length) return;
-
-  const reviewChanges = document.getElementById('review-changes');
-
-  if (reviewChanges) {
-    reviewChanges.remove();
-  }
-
-  // console.log(localContentBody + '/---')
-  // console.log(remoteContentBody + '/---')
-
-  let message = '';
-  if (reviewOptions?.message) {
-    message = `<p>${reviewOptions?.message}</p>`;
-  }
-
-  var buttonClose = getButtonHTML({ key: 'dialog.review-changes.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
-
-  document.body.appendChild(fragmentFromString(`
-    <aside aria-labelledby="review-changes-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="review-changes" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#review-changes" xml:lang="${Config.User.UI.Language}">
-      <h2 data-i18n="dialog.review-changes.h2" id="review-changes-label" property="schema:name">${i18n.t('dialog.review-changes.h2.textContent')} ${Config.Button.Info.ReviewChanges}</h2>
-      ${buttonClose}
-      <div class="info">${message}</div>
-    </aside>`));
-
-  let insCounter = 0;
-  let delCounter = 0;
-  
-  let diffHTML = [];
-  diff.forEach(part => {
-    let eName;
-    if (part.added) eName = 'ins';
-    else if (part.removed) eName = 'del';
-  
-    const val = part.value.join('');
-    if (eName) {
-      diffHTML.push(`<${eName}>${val}</${eName}>`);
-    } else {
-      diffHTML.push(val);
-    }
-  });
-  // console.log(`ins: ${insCounter}, del: ${delCounter}`);
-
-  // function renderToken(token) {
-  //   let content = token.text;
-  
-  //   if (token.bold) content = `<strong>${content}</strong>`;
-  //   if (token.italic) content = `<em>${content}</em>`;
-  //   if (token.link) content = `<a href="${token.link}">${content}</a>`;
-  
-  //   return `<${token.block}>${content}</${token.block}>`;
-  // }
-
-  // diff.forEach(part => {
-  //   let tag = null;
-  //   if (part.added) tag = "ins";
-  //   if (part.removed) tag = "del";
-
-  //   part.value.forEach(val => {
-  //     const token = JSON.parse(val); // back to object
-  //     const html = renderToken(token);
-
-  //     if (tag) {
-  //       diffHTML.push(`<${tag}>${html}</${tag}>`);
-  //     } else {
-  //       diffHTML.push(html);
-  //     }
-  //   });
-  // });
-
-  let detailsInsDel = `
-    <details>
-      <summary data-i18n="dialog.review-changes.more-details.summary">${i18n.t('dialog.review-changes.more-details.summary.textContent')}</summary>
-      <table dir="auto">
-        <caption data-i18n="dialog.review-changes.difference.caption">${i18n.t('dialog.review-changes.difference.caption.textContent')}</caption>
-        <thead>
-          <tr>
-            <th data-i18n="dialog.review-changes.changes.th">${i18n.t('dialog.review-changes.changes.th.textContent')}</th>
-            <th data-i18n="dialog.review-changes.count.th">${i18n.t('dialog.review-changes.count.th.textContent')}</th>
-            <th data-i18n="dialog.review-changes.example.th">${i18n.t('dialog.review-changes.example.th.textContent')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td data-i18n="dialog.review-changes.added.td">${i18n.t('dialog.review-changes.added.td.textContent')}</td>
-            <td>${insCounter}</td>
-            <td><ins data-i18n="dialog.review-changes.example-text.ins">${i18n.t('dialog.review-changes.example-text.ins.textContent')}</ins></td>
-          </tr>
-          <tr>
-            <td data-i18n="dialog.review-changes.removed.td">${i18n.t('dialog.review-changes.removed.td.textContent')}</td>
-            <td>${delCounter}</td>
-            <td><del data-i18n="dialog.review-changes.example-text.del">${i18n.t('dialog.review-changes.example-text.del.textContent')}</del></td>
-          </tr>
-        </tbody>
-      </table>
-    </details>
-    `;
-
-  var node = document.getElementById('review-changes');
-
-  node.querySelector('div.info').insertAdjacentHTML('beforeend', detailsInsDel);
-
-  node.insertAdjacentHTML('beforeend', `
-    <div class="do-diff" dir="auto">${diffHTML.join('')}</div>
-    <button class="review-changes-save-local" data-i18n="dialog.review-changes.save-local.button" title="${i18n.t('dialog.review-changes.save-local.button.textContent')}" type="button">${i18n.t('dialog.review-changes.save-local.button.title')}</button>
-    <button class="review-changes-save-remote" data-i18n="dialog.review-changes.save-remote.button" title="${i18n.t('dialog.review-changes.save-remote.button.title')}" type="button">${i18n.t('dialog.review-changes.save-remote.button.textContent')}</button>
-    <button class="review-changes-submit" data-i18n="dialog.review-changes.save.button" title="${i18n.t('dialog.review-changes.save.button.title')}" type="submit">${i18n.t('dialog.review-changes.save.button.textContent')}</button>
-  `);
-
-  const diffNode = document.querySelector('#review-changes .do-diff');
-
-  Config.Editor.init("author", diffNode);
-
-  node.addEventListener('click', e => {
+  document.querySelector('#document-menu').addEventListener('click', (e) => {
     var button = e.target.closest('button');
 
     if (button) {
-      //XXX: What's this for?
-      // Config.Editor.toggleMode();
-      if (button.classList.contains('close') || button.classList.contains('info')) {
-        return;
+      if (button.classList.contains('show')) {
+        showDocumentMenu(e);
       }
-
-      var diffedNode = node.querySelector('.do-diff');
-
-      //TODO: Progress
-
-      //TODO: update getResourceInfo somewhere
-
-      if (button.classList.contains('review-changes-save-local')) {
-        // keep editor area with current contents
-        // try to push but need to check latest before
-        // check if things are still up to date with remote
-        syncLocalRemoteResource({ forceLocal: true });
+      else if (button.classList.contains('hide')) {
+        hideDocumentMenu(e);
       }
-      else if (button.classList.contains('review-changes-save-remote')) {
-        syncLocalRemoteResource({ forceRemote: true });
+      else if (button.classList.contains('signout-user')) {
+        userInfoSignOut(userInfo);
       }
-      else if (button.classList.contains('review-changes-submit')) {
-        // same as first one but with contents of diff panel
-        diffedNode.querySelectorAll('del').forEach(el => el.remove());
-        diffedNode.querySelectorAll('ins').forEach(el => {
-          const parent = el.parentNode;
-          while (el.firstChild) parent.insertBefore(el.firstChild, el);
-          el.remove();
-        });
-        // update local content with the stuff in the diff editor view
-        Config.Editor.replaceContent(Config.Editor.mode, diffNode.querySelector('.ProseMirror'));
-        Config.Editor.init(Config.Editor.mode, document.body);
-        autoSave(Config.DocumentURL, { method: 'localStorage' });
-
-        syncLocalRemoteResource({ forceLocal: true });
-      }
-
-      node.remove();
     }
   });
 }
 
-export function initializeButtonMore(node) {
-  var info = node.querySelector('div.info');
-  var progressOld = info.querySelector('.progress');
-  var progressNew = fragmentFromString(`<div class="progress" data-i18n="panel.notifications.progress.more">${Config.Button.Notifications.More} ${i18n.t('panel.notifications.progress.more.textContent')}</div>`);
-
-  if (progressOld) {
-    info.replaceChild(progressNew, progressOld)
-  }
-  else {
-    info.appendChild(progressNew);
+export function showDocumentMenu(e) {
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
   }
 
-  node = document.getElementById('document-notifications');
+  var dMenu = document.querySelector('#document-menu.do');
 
-  var buttonMore = node.querySelector('div.info button.more');
-  buttonMore.addEventListener('click', () => {
-    if (!Config.User.IRI) {
-      showUserIdentityInput();
+  if (!dMenu) {
+    initDocumentMenu();
+    showDocumentMenu();
+    return;
+  }
+
+  var dMenuButton = dMenu.querySelector('button');
+  var dUserInfo = dMenu.querySelector('#user-info');
+  var dInfo = dMenu.querySelector('div');
+
+  dMenuButton.parentNode.replaceChild(fragmentFromString(Config.Button.Menu.CloseMenu), dMenuButton);
+  dMenu.classList.add('on');
+
+  showLanguages(dInfo)
+  showUserSigninSignout(dUserInfo);
+  showDocumentDo(dInfo);
+  showAutoSave(dInfo);
+  showViews(dInfo);
+  showAboutDokieli(dInfo);
+
+  // var body = getDocumentContentNode(document);
+
+  var options = { 'reuse': true };
+  if (document.location.protocol.startsWith('http')) {
+    options['followLinkRelationTypes'] = ['describedby'];
+  }
+
+  updateResourceInfos(Config.DocumentURL, null, null, options);
+}
+
+export function hideDocumentMenu(e) {
+  // document.removeEventListener('click', eventLeaveDocumentMenu);
+
+  var dMenu = document.querySelector('#document-menu.do');
+  var dMenuButton = dMenu.querySelector('button');
+  dMenuButton.parentNode.replaceChild(fragmentFromString(Config.Button.Menu.OpenMenu), dMenuButton);
+
+  dMenu.classList.remove('on');
+  // var sections = dMenu.querySelectorAll('section');
+  // for (var i = 0; i < sections.length; i++) {
+  //   if(sections[i].id != 'user-info' && !sections[i].querySelector('button.signin-user')) {
+  //     sections[i].parentNode.removeChild(sections[i]);
+  //   }
+  // };
+  var buttonSigninUser = dMenu.querySelector('button.signin-user');
+  if(buttonSigninUser) {
+    dMenu.querySelector('button.signin-user').disabled = false;
+  }
+
+  removeNodesWithIds(Config.DocumentDoItems);
+}
+
+export function eventEscapeDocumentMenu(e) {
+  if (e.keyCode == 27) { // Escape
+    hideDocumentMenu(e);
+  }
+}
+
+export function eventLeaveDocumentMenu(e) {
+  if (!e.target.closest('.do.on')) {
+    hideDocumentMenu(e);
+  }
+}
+
+function showLanguages(node) {
+  if (document.getElementById('ui-language')) {
+    return;
+  }
+
+  let options = [];
+  const effectiveLanguage = Config.User.UI.Language;
+
+  Config.Translations.forEach(lang => {
+    let selected = (lang == effectiveLanguage) ? ' selected="selected"' : '';
+
+    let sourceName = Config.Languages[lang]?.sourceName;
+    let name = Config.Languages[lang]?.name;
+
+    if (lang !== 'dev' && sourceName) {
+      options.push(`<option dir="${Config.Languages[lang].dir}" lang="${lang}"${selected} title="${name}" value="${lang}" xml:lang="${lang}">${sourceName}</option>`);
+    }
+  })
+
+  const html = `
+    <section aria-labelledby="ui-language-label" id="ui-language" rel="schema:hasPart" resource="#ui-language">
+      <h2 data-i18n="language.label" id="ui-language-label" property="schema:name">${i18n.t('language.label.textContent')}</h2>
+      ${Icon['.fas.fa-language']}
+      <label id="ui-language-select-label" for="ui-language-select" data-i18n="menu.ui-language-select.label">${i18n.t('menu.ui-language-select.label.textContent')}</label>
+      <select aria-labelledby="ui-language-select-label" id="ui-language-select">
+        ${options.join('')}
+      </select>
+    </section>`;
+
+  node.insertAdjacentHTML('afterbegin', html);
+
+  const select = document.getElementById('ui-language-select');
+
+  select.addEventListener('change', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    updateUILanguage(e.target.value);
+  });
+}
+
+export async function showAutoSave(node) {
+  if (node.querySelector('#document-autosave')) { return; }
+
+  const storageObject = await getLocalStorageItem(Config.DocumentURL);
+
+  const hasAccessModeWrite = accessModePossiblyAllowed(Config.DocumentURL, 'write');
+  let checked = storageObject?.autoSave !== undefined ? storageObject.autoSave : true;
+  checked = (checked && hasAccessModeWrite) ? ' checked=""' : '';
+
+  let html = `
+  <section aria-labelledby="document-autosave-label" id="document-autosave" rel="schema:hasPart" resource="#document-autosave">
+    <h2 data-i18n="menu.autosave.h2" id="document-autosave-label" property="schema:name">${i18n.t('menu.autosave.h2.textContent')}</h2>
+    <input${checked} data-i18n="menu.autosave.input" id="autosave-remote" title="${i18n.t('menu.autosave.input.title')}" type="checkbox" />
+    <label data-i18n="menu.autosave.label" for="autosave-remote"><span data-i18n="menu.autosave.label.span">${i18n.t('menu.autosave.label.span.textContent')}</span></label> 
+  </section>
+  `;
+
+  node.querySelector('#document-do').insertAdjacentHTML('afterend', html);
+
+  document.getElementById('document-autosave').addEventListener('change', async (e) => {
+    if (e.target.checked) {
+      await enableRemoteSync();
     }
     else {
-      showContactsActivities();
+      await disableRemoteSync();
     }
   });
+}
+
+function showDocumentDo(node) {
+  var d = node.querySelector('#document-do');
+  if (d) { return; }
+
+  const documentOptions = {
+    ...Config.DOMProcessing,
+    format: true,
+    sanitize: true,
+    normalize: true
+  };
+
+  var buttonDisabled = '';
+
+  const buttons = [
+    Config.Button.Menu.Share,
+    Config.Button.Menu.Reply,
+    Config.Button.Menu.Notifications,
+    Config.Button.Menu.New,
+    Config.Button.Menu.EditEnable,
+    Config.Button.Menu.Open,
+    Config.Button.Menu.Save,
+    Config.Button.Menu.SaveAs,
+    Config.Button.Menu.Version,
+    Config.Button.Menu.Immutable,
+    Config.Button.Menu.Memento,
+    Config.Button.Menu.RobustifyLinks,
+    Config.Button.Menu.InternetArchive,
+    Config.Button.Menu.GenerateFeed,
+    Config.Button.Menu.Export,
+    Config.Button.Menu.Source,
+    Config.Button.Menu.EmbedData,
+    Config.Button.Menu.Print,
+    Config.Button.Menu.Delete,
+    Config.Button.Menu.MessageLog,
+    Config.Button.Menu.DocumentInfo
+  ]
+
+  var s = `
+    <section aria-labelledby="document-do-label" id="document-do" rel="schema:hasPart" resource="#document-do">
+      <h2 id="document-do-label" property="schema:name">Do</h2>
+      <ul>${buttons.map(b => `<li>${b}</li>`).join('')}</ul>
+    </section>`;
+
+  node.insertAdjacentHTML('beforeend', s);
+
+  var dd = document.getElementById('document-do');
+
+  dd.addEventListener('click', e => {
+    if (e.target.closest('.resource-share')) {
+      shareResource(e);
+    }
+
+    if (e.target.closest('.resource-reply')) {
+      replyToResource(e);
+    }
+
+    var b;
+
+    b = e.target.closest('button.editor-disable');
+
+    if (b) {
+      var node = b.closest('li');
+      b.outerHTML = Config.Button.Menu.EditEnable;
+      hideDocumentMenu();
+      Config.Editor.toggleEditor('social');
+      // hideAutoSaveStorage(node.querySelector('#autosave-items'), documentURL);
+
+      disableAutoSave(Config.DocumentURL, {'method': 'localStorage', saveSnapshot: true });
+    }
+    else {
+      b = e.target.closest('button.editor-enable');
+      if (b) {
+        node = b.closest('li');
+        b.outerHTML = Config.Button.Menu.EditDisable;
+        hideDocumentMenu();
+        Config.Editor.toggleEditor('author');
+        // showAutoSaveStorage(node, documentURL);
+
+        enableAutoSave(Config.DocumentURL, {'method': 'localStorage'});
+      }
+    }
+
+    if (e.target.closest('.resource-notifications')) {
+      showNotifications(e);
+    }
+
+    if (e.target.closest('.resource-new')) {
+      createNewDocument(e);
+    }
+
+    if (e.target.closest('.resource-open')) {
+      openDocument(e);
+    }
+
+    if (e.target.closest('.resource-source')) {
+      viewSource(e);
+    }
+
+    if (e.target.closest('.embed-data-meta')) {
+      showEmbedData(e);
+    }
+
+    if (e.target.closest('.resource-save')){
+      resourceSave(e);
+    }
+
+    if (e.target.closest('.resource-save-as')) {
+      saveAsDocument(e);
+    }
+
+    if (e.target.closest('.resource-memento')) {
+      mementoDocument(e);
+    }
+
+    if (e.target.closest('.create-version') ||
+        e.target.closest('.create-immutable')) {
+      resourceSave(e);
+    }
+
+    if (e.target.closest('.export-as-html')) {
+      var options = {
+        subjectURI: Config.DocumentURL,
+        mediaType: 'text/html',
+        filenameExtension: '.html'
+      }
+      exportAsDocument(getDocument(null, documentOptions), options);
+    }
+
+    if (e.target.closest('.robustify-links')){
+      showRobustLinks(e);
+    }
+
+    if (e.target.closest('.snapshot-internet-archive')){
+      // snapshotAtEndpoint(e, Config.DocumentURL, 'https://pragma.archivelab.org/', '', {'contentType': 'application/json'});
+      snapshotAtEndpoint(e, Config.DocumentURL, 'https://web.archive.org/save/', '', {'Accept': '*/*', 'showActionMessage': true });
+    }
+
+    if (e.target.closest('.generate-feed')) {
+      generateFeed(e);
+    }
+
+    if (e.target.closest('.resource-print')) {
+      window.print();
+      return false;
+    }
+
+    if (e.target.closest('.resource-delete')){
+      resourceDelete(e, Config.DocumentURL);
+    }
+
+    if (e.target.closest('.message-log')) {
+      showMessageLog(e);
+    }
+
+    if (e.target.closest('.document-info')) {
+      showDocumentInfo(e);
+    }
+  });
+}
+
+function showViews(node) {
+  if(document.querySelector('#document-views')) { return; }
+
+  var stylesheets = document.querySelectorAll('head link[rel~="stylesheet"][title]:not([href$="dokieli.css"])');
+
+  var s = `
+    <section aria-labelledby="document-views-label" id="document-views" rel="schema:hasPart" resource="#document-views">
+      <h2 data-i18n="menu.document-views.h2" id="document-views-label" property="schema:name">${i18n.t('menu.document-views.h2.textContent')}</h2>
+      ${Icon[".fas.fa-magic"]}
+      <ul>`;
+
+  if (Config.GraphViewerAvailable) {
+    s += `<li><button class="resource-visualise" data-i18n="menu.document-views.graph.button" title="${i18n.t('menu.document-views.graph.button.title')}">${i18n.t('menu.document-views.graph.button.textContent')}</button></li>`;
+  }
+
+  s += `<li><button data-i18n="menu.document-views.native-style.button"  title="${i18n.t('menu.document-views.native-style.button.title')}">${i18n.t('menu.document-views.native-style.button.textContent')}</button></li>`;
+
+  if (stylesheets.length) {
+    for (var i = 0; i < stylesheets.length; i++) {
+      var stylesheet = stylesheets[i];
+      var view = stylesheet.getAttribute('title');
+      if(stylesheet.closest('[rel~="alternate"]')) {
+        s += `<li><button data-i18n="menu.document-views.change-style.button" title="${i18n.t('menu.document-views.change-style.button.title', { view })}">${view}</button></li>`;
+      }
+      else {
+        s += `<li><button data-i18n="menu.document-views.current-style.button" disabled="disabled" title="${i18n.t('menu.document-views.current-style.button.title')}">${view}</button></li>`;
+      }
+    }
+  }
+
+  s += '</ul></section>';
+  node.insertAdjacentHTML('beforeend', domSanitize(s));
+
+  var viewButtons = document.querySelectorAll('#document-views button:not([class~="resource-visualise"])');
+  for (let i = 0; i < viewButtons.length; i++) {
+    viewButtons[i].removeEventListener('click', initCurrentStylesheet);
+    viewButtons[i].addEventListener('click', initCurrentStylesheet);
+  }
+
+  if(Config.GraphViewerAvailable) {
+    document.querySelector('#document-views').addEventListener('click', (e) => {
+      if (e.target.closest('.resource-visualise')) {
+        if(document.querySelector('#graph-view')) { return; }
+
+        if (e) {
+          e.target.disabled = true;
+        }
+
+        var buttonClose = getButtonHTML({ key: 'dialog.graph-view.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
+
+        document.body.appendChild(fragmentFromString(`
+          <aside aria-labelledby="graph-view-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="graph-view" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#graph-view" xml:lang="${Config.User.UI.Language}">
+            <h2 data-i18n="dialog.graph-view.h2" id="graph-view-label" property="schema:name">${i18n.t('dialog.graph-view.h2.textContent')} ${Config.Button.Info.GraphView}</h2>
+            ${buttonClose}
+            <div class="info"></div>
+          </aside>
+        `));
+
+        var graphView = document.getElementById('graph-view');
+        graphView.addEventListener('click', (e) => {
+          if (e.target.closest('button.close')) {
+            var rv = document.querySelector('#document-views .resource-visualise');
+            if (rv) {
+              rv.disabled = false;
+            }
+          }
+        });
+
+        showVisualisationGraph(Config.DocumentURL, undefined, '#graph-view');
+      }
+    });
+  }
+}
+
+
+function showAboutDokieli(node) {
+  if (document.querySelector('#about-dokieli')) { return; }
+
+  const html = `
+  <section id="about-dokieli">
+    <dl>
+      <dt data-i18n="menu.about-dokieli.dt">${i18n.t('menu.about-dokieli.dt.textContent')}</dt>
+      <dd data-i18n="menu.about-dokieli.dd"><img alt="" height="16" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAn1BMVEUAAAAAjwAAkAAAjwAAjwAAjwAAjwAAjwAAkAAAdwAAjwAAjQAAcAAAjwAAjwAAiQAAjwAAjAAAjwAAjwAAjwAAjwAAkAAAjwAAjwAAjwAAjQAAjQAAhQAAhQAAkAAAkAAAkAAAjgAAjwAAiQAAhAAAkAAAjwAAjwAAkAAAjwAAjgAAjgAAjQAAjwAAjQAAjwAAkAAAjwAAjQAAiwAAkABp3EJyAAAANHRSTlMA+fH89enaabMF4iADxJ4SiSa+uXztyoNvQDcsDgvl3pRiXBcH1M+ppJlWUUpFMq6OdjwbMc1+ZgAABAhJREFUeNrt29nSmkAQBeAGZBMUxH3f993/vP+zJZVKVZKCRhibyc3/XVt6SimYPjPSt28Vmt5W/fu2T/9B9HIf7Tp+0RsgDC6DY6OLvzxJj8341DnsakgZUNUmo2XsORYYS6rOeugukhnyragiq56JIs5UEQ/FXKgidRTzompEKOhG1biioDFV44mCAqrGAQWtqRptA8VMqCpR6zpo9iy84VO1opWHPBZVb9QAzyQN/D1YNungJ+DMSYsbOFvSIwGjR3p0wGiQHkMw2qRHC4w76RGBcSA9NmAcSY8QjAdpYiFbTJoYyNYnTWrI1iFNusj2JE1sZBuQJtyE5pImc3Y21cRhZ1NNtsh2Ik127HCsSY8djjVpINuVhPnjVefobee2adXqu2S/6FyivABDEjQ9Lxo1pDlNd5wg24ikRK5ngKGhHhg1DSgZk4RrD6pa9LlRAnUBfWp6xCe+6EOvOT6yrmrigZaCZHPAp6b0gaiBFKvRd0/D1rr1OrvxDqiyoZmmPt9onib0t/VybyEXqdu0Cw16rUNVAfZFlzdjr5KOaoAUK6JsrgWGQapuBlIS4gy70gEmTrk1fuAgU40UxWXv6wvZAC2Dqfx0BfBK1z1H0aJ0WH7Ub4oG8JDlpBCgK1l5tSjHQSoAf0HVfMqxF+yqpzVk2ZGuAGdk8ijPHZlmpOCg0vh5cgE2JtN3qQSoU3lXpbKlLRegrzTpt+U2TNpKY2YiFiA0kS1Q6QccweZ/oinASm2B3RML0AGDNAU4qq3udmIXYVttD3YrFsBR24N1xG5EJpTeaiYWwILS5WRKBfChFsCSehpOwKi/yS0V4AsMWym3TWUFgMqIsRYL8AVOSDlaYgEitbZnDKll+UatchyJBSC1c3lDuQA2VHYAL3KneHpgLCjHSS7AHYyEciwh1g88wDB94rlyAVxwhsR7ygW4gRMTry8XwDdUDkXFgjVdD5wRsRaCAWJwPGI1Baval8Ie3Hqn8AjjhHbZr2DzrInumDTBGlCG8xy8QPY3MNLX4TiRP1q+BWs2pn9ECwu5+qTABc+80h++28UbTkjlTW3wrM6Ufrtu8d5J9Svg1Vch/RTcUYQdUHm+g1z1x2gSGyjGGVN5F7xjoTCjE0ndC3jJMzfCftmiciZ1lNGe3vCGufOWVMLIQHHehi3X1O8JJxR236SalUzninbu937BlwfV/I3k4KdGk2xm+MHuLa8Z0i9TC280qLRrF+8cw9RSjrOg8oIG8j2YgULsbGPomsgR0x9nsOzkOLh+kZr1owZGbfC2JJl78fIV0Wei/gxZDl85XWVtt++cxhuSEQ6bdfzLjlvM86PbaD4vQUjSglV8385My7CdXtO9+ZSyrLcf7nBN376V8gMpRztyq6RXYQAAAABJRU5ErkJggg==" width="16" /><span data-i18n="menu.about-dokieli.dd.span">${i18n.t("menu.about-dokieli.dd.span.innerHTML")}</span>
+    </dl>
+  </section>`;
+
+  node.insertAdjacentHTML('beforeend', html);
 }
 
 export function initializeNotifications(options = {}) {
@@ -292,45 +477,6 @@ export function initializeNotifications(options = {}) {
   return aside;
 }
 
-export function addNoteToNotifications(noteData) {
-  var id = document.getElementById(noteData.id);
-  if (id) return;
-
-  var noteDataIRI = noteData.iri;
-  
-// console.log(noteData)
-  var note = createNoteDataHTML(noteData);
-
-  var datetime = noteData.datetime ? noteData.datetime : '1900-01-01T00:00:00.000Z';
-
-  var li = domSanitize('<li data-datetime="' + datetime + '"><blockquote cite="' + noteDataIRI + '">'+ note + '</blockquote></li>');
-// console.log(li);
-  var aside = document.getElementById('document-notifications');
-
-  if(!aside) {
-    aside = initializeNotifications({includeButtonMore: true});
-  }
-
-  var notifications = document.querySelector('#document-notifications > div > ul');
-  var timesNodes = aside.querySelectorAll('div > ul > li[data-datetime]');
-  var previousElement = null;
-
-  //Maintain reverse chronological order
-  if (timesNodes.length) {
-    var times = Array.from(timesNodes).map(element => element.getAttribute("data-datetime"));
-    var sortedTimes = times.sort().reverse();
-    var previousDateTime = findPreviousDateTime(sortedTimes, noteData.datetime);
-    previousElement = Array.from(timesNodes).find((element) => previousDateTime && previousDateTime === element.getAttribute("data-datetime") ? element : null);
-  }
-
-  if (previousElement) {
-    previousElement.insertAdjacentHTML('beforebegin', li);
-  }
-  else {
-    notifications.insertAdjacentHTML('beforeend', li);
-  }
-}
-
 export function showNotifications() {
   hideDocumentMenu();
 
@@ -342,32 +488,6 @@ export function showNotifications() {
   aside.classList.add('on');
 
   showContactsActivities();
-}
-
-export function exportAsDocument(data, options = {}) {
-  const documentOptions = {
-    ...Config.DOMProcessing,
-    format: true,
-    sanitize: true,
-    normalize: true
-  };
-
-  data = data || getDocument(null, documentOptions);
-  var mediaType = options.mediaType || 'text/html';
-  var url = options.subjectURI || Config.DocumentURL;
-
-  //XXX: Encodes strings as UTF-8. Consider storing bytes instead?
-  var blob = new Blob([data], {type: mediaType + ';charset=utf-8'});
-
-  var a = document.createElement("a");
-  a.download = generateFilename(url, options);
-
-  a.href = window.URL.createObjectURL(blob);
-  a.style.display = "none";
-  getDocumentContentNode(document).appendChild(a);
-  a.click();
-  getDocumentContentNode(document).removeChild(a);
-  window.URL.revokeObjectURL(a.href);
 }
 
 export function shareResource(listenerEvent, iri) {
@@ -4529,6 +4649,109 @@ console.log(reason);
   }
 }
 
+//TODO: Review grapoi
+export function showExtendedConcepts() {
+  var documentURL = Config.DocumentURL;
+  var citationsList = Config.Resource[documentURL].citations;
+
+  var promises = [];
+  citationsList.forEach(url => {
+    // console.log(u);
+    // window.setTimeout(function () {
+      // var pIRI = getProxyableIRI(u);
+      promises.push(getResourceGraph(url));
+    // }, 1000)
+  });
+
+  var dataset = rdf.dataset();
+  var html = [];
+  var options = { 'resources': [] };
+
+  return Promise.allSettled(promises)
+    .then(results => results.filter(r => r.status === 'fulfilled' && r.value).map(r => r.value))
+    .then(graphs => {
+// console.log(graphs);
+      graphs.forEach(g => {
+        if (g && !(g instanceof Error) && g.out().terms.length){
+        // if (g) {
+          var documentURL = g.term.value;
+          g = rdf.grapoi({dataset: g.dataset})
+// console.log(documentURL)
+// console.log(g)
+          Config.Resource[documentURL] = Config.Resource[documentURL] || {};
+          Config.Resource[documentURL]['graph'] = g;
+          Config.Resource[documentURL]['skos'] = getResourceInfoSKOS(g);
+          Config.Resource[documentURL]['title'] = getGraphLabel(g) || documentURL;
+
+          if (Config.Resource[documentURL]['skos']['graph'].out().terms.length) {
+            html.push(`
+              <section>
+                <h4><a href="${documentURL}">${Config.Resource[documentURL]['title']}</a></h4>
+                <div>
+                  <dl>${getDocumentConceptDefinitionsHTML(documentURL)}</dl>
+                </div>
+              </section>`);
+
+            dataset.addAll(Config.Resource[documentURL]['skos']['graph'].dataset);
+            options['resources'].push(documentURL);
+          }
+        }
+      });
+
+      var id = 'list-of-additional-concepts';
+      html = `
+        <section id="${id}" rel="schema:hasPart" resource="#${id}">
+          <h3 property="schema:name">Additional Concepts</h3>
+          <div>
+            <button class="graph" type="button">View Graph</button>
+            <figure></figure>${html.join('')}</div>
+        </section>`;
+
+      var aC = document.getElementById(id);
+      if (aC) {
+        aC.parentNode.removeChild(aC);
+      }
+
+      var loC = document.getElementById('list-of-concepts');
+
+      var ic = loC.querySelector('#include-concepts');
+      if (ic) { ic.parentNode.removeChild(ic); }
+
+      loC.querySelector('div').insertAdjacentHTML('beforeend', domSanitize(html));
+
+      // insertDocumentLevelHTML(document, html, { 'id': id });
+
+      aC = document.getElementById(id);
+      window.history.replaceState(null, null, '#' + id);
+      aC.scrollIntoView();
+
+      var selector = '#' + id + ' figure';
+
+      aC.addEventListener('click', (e) => {
+        var button = e.target.closest('button.graph');
+        if (button) {
+          button.parentNode.removeChild(button);
+
+          // serializeGraph(dataset, { 'contentType': 'text/turtle' })
+          //   .then(data => {
+          ///FIXME: This Config.DocumentURL doesn't seem right other than what the visualisation's root node becomes?
+              options['subjectURI'] = Config.DocumentURL;
+              options['contentType'] = 'text/turtle';
+              //FIXME: For multiple graphs (fetched resources), options.subjectURI is the last item, so it is inaccurate
+              showVisualisationGraph(options.subjectURI, dataset.toCanonical(), selector, options);
+            // });
+        }
+      })
+
+// console.log(dataGraph)
+
+
+// console.log(Config.Resource)
+      return dataset;
+    });
+}
+
+
 export function openInputFile(e) {
   let files = Array.from(e.target.files); 
   let options = { 'init': true };
@@ -4576,4 +4799,220 @@ export function openInputFile(e) {
   }).catch(err => {
     console.error("Error reading files:", err);
   });
+}
+
+export async function spawnDokieli(documentNode, data, contentType, iris, options = {}){
+  let iri =  Array.isArray(iris) ? iris[0] : iris;
+  iri = domSanitize(iri);
+  const isHttpIRI = isHttpOrHttpsProtocol(iri);
+  const isFileIRI = isFileProtocol(iri);
+  const prefixes = "rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns# rdfs: http://www.w3.org/2000/01/rdf-schema# owl: http://www.w3.org/2002/07/owl# xsd: http://www.w3.org/2001/XMLSchema# rdfa: http://www.w3.org/ns/rdfa# dcterms: http://purl.org/dc/terms/ dctypes: http://purl.org/dc/dcmitype/ foaf: http://xmlns.com/foaf/0.1/ pimspace: http://www.w3.org/ns/pim/space# skos: http://www.w3.org/2004/02/skos/core# prov: http://www.w3.org/ns/prov# mem: http://mementoweb.org/ns# qb: http://purl.org/linked-data/cube# schema: http://schema.org/ void: http://rdfs.org/ns/void# rsa: http://www.w3.org/ns/auth/rsa# cert: http://www.w3.org/ns/auth/cert# wgs: http://www.w3.org/2003/01/geo/wgs84_pos# bibo: http://purl.org/ontology/bibo/ sioc: http://rdfs.org/sioc/ns# doap: http://usefulinc.com/ns/doap# dbr: http://dbpedia.org/resource/ dbp: http://dbpedia.org/property/ sio: http://semanticscience.org/resource/ opmw: http://www.opmw.org/ontology/ deo: http://purl.org/spar/deo/ doco: http://purl.org/spar/doco/ cito: http://purl.org/spar/cito/ fabio: http://purl.org/spar/fabio/ oa: http://www.w3.org/ns/oa# as: https://www.w3.org/ns/activitystreams# ldp: http://www.w3.org/ns/ldp# solid: http://www.w3.org/ns/solid/terms# acl: http://www.w3.org/ns/auth/acl# earl: http://www.w3.org/ns/earl# spec: http://www.w3.org/ns/spec# odrl: http://www.w3.org/ns/odrl/2/ dio: https://w3id.org/dio# rel: https://www.w3.org/ns/iana/link-relations/relation# dcat: http://www.w3.org/ns/dcat csvw: http://www.w3.org/ns/csvw# dpv: https://w3id.org/dpv# risk: https://w3id.org/dpv/risk#";
+
+  if (!isHttpIRI && !isFileIRI) {
+    const message = `Cannot open, not valid URL or file location.`;
+    const messageObject = {
+      'content': message,
+      'type': 'error',
+      'timer': 3000,
+    }
+    addMessageToLog({...messageObject, content: message}, Config.MessageLog);
+    showActionMessage(document.body, messageObject);
+
+    throw new Error(message);
+  }
+
+  let files = Array.isArray(data) ? data : [{
+    name: iri,
+    type: contentType,
+    content: data
+  }];
+
+  var tmpl = document.implementation.createHTMLDocument('template');
+  const isCsv = !!files.find((f) => f.type == "text/csv");
+  // console.log(tmpl);
+  if (files.length > 1 && isCsv) {
+    // check if one of the files is a metadata.json
+    const metadataFiles = [];
+    const csvFiles = [];
+
+    files.map((file) => {
+      if (file.type == 'application/json' || file.type == 'application/ld+json') {
+        file['url'] = file.name;
+        metadataFiles.push(file);
+      }
+      if (file.type === 'text/csv') {
+        csvFiles.push(file)
+      }
+    })
+
+    // handle multiple csv
+    const jsonObjects = csvFiles.map(csvFile => {
+      let tmp = csvStringToJson(csvFile.content);
+      tmp['url'] = csvFile.name;
+      return tmp;
+    })
+
+    //TODO: multiple metadata files
+    let metadata = metadataFiles[0];
+    if (metadata && metadata.content) {
+      metadata.content = JSON.parse(metadataFiles[0].content);
+    }
+
+    const htmlString = jsonToHtmlTableString(jsonObjects, metadata);
+
+    // console.log(fragmentFromString(`<main><article>${htmlString}</article></main>`))
+    // this works for urls but not files
+    // document.body.appendChild(fragmentFromString(`<main><article>${htmlString}</article></main>`));
+
+    // and this replaces the whole content
+    tmpl.body.appendChild(fragmentFromString(`<main><article>${htmlString}</article></main>`));
+  }
+
+  else {
+    switch(contentType){
+      case 'text/html': case 'application/xhtml+xml':
+        // if multiple HTML files come in, just open the first for now
+        tmpl.documentElement.setHTMLUnsafe(files[0].content);
+        tmpl.body.setHTMLUnsafe(domSanitize(tmpl.body.getHTML()));
+        break;
+
+      case 'text/csv':
+        // console.error("Must provide a metadata file; single CSVs without metadata not supported yet");
+        // console.log("TODO: Single CSV case", iri, files);
+        let jsonObject = csvStringToJson(files[0].content); // we only have one for now
+        jsonObject['url'] = files[0].name;
+        jsonObject['name'] = files[0].name;
+        const htmlString = jsonToHtmlTableString([jsonObject], {});
+
+        tmpl.body.replaceChildren(fragmentFromString(`<main><article about="" typeof="schema:Article">${htmlString}</article></main>`));
+        break;
+
+      case 'application/gpx+xml':
+        // console.log(data)
+        tmpl = await generateGeoView(files[0].content)
+        // FIXME: Tested with generateGeoView returning a Promise but somehow
+          .then(i => {
+            var id = 'geo';
+            var metadataBounds = document.querySelector('#' + id + ' figcaption a');
+            if (metadataBounds) {
+              var message = `Opened geo data at <a href="${metadataBounds.href}">${metadataBounds.textContent}</a>`;
+              message = {
+                'content': message,
+                'type': 'info',
+                'timer': 3000,
+              }
+              addMessageToLog(message, Config.MessageLog);
+              showActionMessage(document.body, message);
+
+              var w = document.getElementById(id);
+              window.history.pushState(null, null, '#' + id);
+              w.scrollIntoView();
+            }
+
+            return i;
+          });
+
+        break;
+
+      default:
+        data = htmlEncode(files[0].content)
+        // console.log(data)
+        var iframe = document.createElement('iframe');
+        // <pre type=&quot;' + contentType + '&quot; -- nice but `type` is undefined attribute for `pre`.at the moment. Create issue in WHATWG for fun/profit?
+        iframe.srcdoc = '<pre>' + data + '</pre>';
+        iframe.width = '1280'; iframe.height = '720';
+
+        const dt = (isFileIRI) ? `<code>${iri.slice(5)}</code>` : `<a href="${iri}" rel="noopener" target="_blank">${iri}</a>`;
+
+        var main = fragmentFromString(`<main><article><dl><dt>${dt}</dt><dd></dd></dl></article></main>`);
+        main.querySelector('dd').appendChild(iframe);
+        tmpl.body.appendChild(main);
+        break;
+    }
+  }
+
+  if (options.defaultStylesheet) {
+    var documentCss = document.querySelectorAll('head link[rel~="stylesheet"][href]');
+
+    let hasDokieliCss = false;
+
+    documentCss.forEach(node => {
+      const href = node.href;
+      const isBasicCss = href === 'https://dokie.li/media/css/basic.css';
+      const isDokieliCss = href === 'https://dokie.li/media/css/dokieli.css';
+
+      node.setAttribute('href', href);
+
+      if (!isBasicCss && !isDokieliCss) {
+        node.setAttribute('disabled', 'disabled');
+        node.classList.add('do');
+      }
+      else {
+        node.setAttribute('rel', 'stylesheet');
+        hasDokieliCss = true;
+      }
+    });
+
+    if (!hasDokieliCss) {
+      document.querySelector('head').insertAdjacentHTML('beforeend', `
+        <link href="https://dokie.li/media/css/basic.css" media="all" rel="stylesheet" title="Basic" />
+        <link href="https://dokie.li/media/css/dokieli.css" media="all" rel="stylesheet" />`);
+    }
+  }
+
+  var documentScript = document.querySelectorAll('head script[src]');
+  documentScript.forEach(node => {
+    node.setAttribute('src', node.src);
+  })
+
+  if (options.init === true && isHttpIRI && contentType == 'text/html') {
+    var baseElements = document.querySelectorAll('head base');
+    baseElements.forEach(baseElement => {
+      baseElement.remove();
+    });
+
+    document.querySelector('head').insertAdjacentHTML('afterbegin', '<base href="' + iri + '" />');
+    //TODO: Setting the base URL with `base` seems to work correctly, i.e., link base is opened document's URL, and simpler than updating some of the elements' href/src/data attributes. Which approach may be better depends on actions afterwards, e.g., Save As (perhaps other features as well) may need to remove the base and go with the user selection.
+    // var nodes = tmpl.querySelectorAll('head link, [src], object[data]');
+    // nodes = rewriteBaseURL(nodes, {'baseURLType': 'base-url-absolute', 'iri': iri});
+  }
+
+  if (contentType == 'application/gpx+xml') {
+    options['init'] = false;
+
+    //XXX: Should this be taken care by ufpdating the document.documentElement and then running init(iri) ? If I'm asking, then probably yes.
+    var asideOpenDocument = document.getElementById('open-document');
+    if (asideOpenDocument) {
+      asideOpenDocument.parentNode.removeChild(asideOpenDocument);
+    }
+    document.querySelector('#document-do .resource-open').disabled = false;
+    hideDocumentMenu();
+  }
+  else if (options.init === true) { // && !isFileIRI ?
+    // window.open(iri, '_blank');
+
+    //TODO: Which approach?
+    // var restrictedNodes = Array.from(document.body.querySelectorAll('.do:not(.copy-to-clipboard):not(.robustlinks):not(.ref):not(.delete):not(#document-action-message)'));
+    // var restrictedNodes = [document.getElementById('document-menu'), document.getElementById('document-editor'), document.getElementById('document-action-message')];
+    // restrictedNodes.forEach(node => {
+    //   tmpl.body.appendChild(node);
+    // });
+
+    const tmplBody = tmpl.body.cloneNode(true);
+    tmplBody.setAttribute('prefix', prefixes);
+
+    document.documentElement.replaceChild(tmplBody, document.body);
+    initDocumentMenu();
+    initEditor();
+    showFragment();
+    initCopyToClipboard();
+
+    // hideDocumentMenu();
+    return;
+  }
+
+  //XXX: This is used in cases options.init is false or undefined
+  return tmpl.documentElement.cloneNode(true);
+
+  // console.log('//TODO: Handle server returning wrong or unknown Response/Content-Type for the Request/Accept');
 }

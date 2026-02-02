@@ -17,7 +17,6 @@ limitations under the License.
 
 import { deleteSelection, splitBlock, newlineInCode, joinBackward } from "prosemirror-commands";
 import { keymap } from "prosemirror-keymap";
-import { SlashMenu } from "../../slashmenu/slashmenu.js";
 import { TextSelection } from "prosemirror-state";
 import { undo, redo } from "prosemirror-history";
 
@@ -91,7 +90,8 @@ function checkForSlashCommand(view) {
   const { selection } = view.state;
   const { $from } = selection;
 
-  Slash = new SlashMenu(view);
+  // Slash = new SlashMenu(view);
+  Slash = Config.Editor.slashMenu;
 
   const textBefore = $from.parent.textBetween(0, $from.parentOffset, null, "\n");
 

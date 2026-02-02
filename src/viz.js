@@ -15,16 +15,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { processResources } from "./activity.js";
-import { exportAsDocument } from "./dialog.js";
+import { exportAsDocument } from "./actions.js";
 import { getDocument } from "./doc.js";
-import { currentLocation, getResource, setAcceptRDFTypes } from "./fetcher.js";
+import { fragmentFromString, getDocumentContentNode } from "./utils/html.js";
+import { getResource, setAcceptRDFTypes } from "./fetcher.js";
 import { getButtonHTML } from "./ui/buttons.js";
-import { stripFragmentFromString, stripUrlParamsFromString } from "./uri.js";
-import { fragmentFromString, generateAttributeId, uniqueArray } from "./util.js";
+import { stripFragmentFromString, stripUrlParamsFromString, currentLocation } from "./uri.js";
+import { generateAttributeId, uniqueArray } from "./util.js";
 import Config from "./config.js";
 const ns = Config.ns;
-import { filterQuads, getGraphFromData, getResourceGraph, isActorProperty, isActorType } from "./graph.js";
+import { filterQuads, getGraphFromData, getResourceGraph, isActorProperty, isActorType, processResources } from "./graph.js";
 import rdf from 'rdf-ext';
 import * as d3Selection from 'd3-selection';
 import * as d3Force from 'd3-force';

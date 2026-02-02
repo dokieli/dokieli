@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { accessModePossiblyAllowed } from "../doc.js";
+import { accessModePossiblyAllowed } from "../access.js";
 import { Icon} from "./icons.js";
 import Config from "../config.js";
 import { isLocalhost } from "../uri.js";

@@ -17,7 +17,7 @@ limitations under the License.
 
 import Config from './config.js'
 import Papa from 'papaparse';
-import { generateUUID, getDateTimeISO, isPlainObject } from './util.js';
+import { generateUUID, getDateTimeISO } from './util.js';
 import { sanitizeObject, domSanitize } from './utils/sanitization.js';
 import { createDateHTML, createLicenseHTML } from './doc.js';
 import uriTemplates from 'uri-templates';
@@ -395,4 +395,8 @@ function JSONLDArrayToDL(arr, title, property) {
   ).join('');
 
   return `<dl><dt>${title}</dt>${items}</dl>`;
+}
+
+function isPlainObject(object) {
+  return typeof object === 'object' && !Array.isArray(object) && object !== null;
 }

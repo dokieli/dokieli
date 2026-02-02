@@ -17,7 +17,7 @@ limitations under the License.
 
 import Config from './config.js';
 
-function encodeString(string) {
+export function encodeString(string) {
   return encodeURIComponent(string).replace(/'/g, '%27').replace(/"/g, '%22');
 }
 
@@ -28,11 +28,36 @@ function encodeString(string) {
  *
  * @returns {string}
  */
-function decodeString(string) {
+export function decodeString(string) {
   return decodeURIComponent(string.replace(/\+/g, ' '));
 }
 
-function getAbsoluteIRI(base, location) {
+/**
+ * currentLocation
+ * 
+ * Returns the current URL after removing specified or default query paramaters and values
+ *
+ * @param {object} options
+ * @returns {string}
+ */
+export function currentLocation(options = {}) {
+  const url = new URL(window.location);
+
+  // Default params to remove
+  const defaultParams = ['author', 'social', 'graph', 'graph-view', 'open', 'style'];
+
+  // Use provided keys or fallback to default
+  const keysToRemove = options.removeParams || defaultParams;
+
+  // Remove by key only, ignoring values
+  keysToRemove.forEach(param => url.searchParams.delete(param));
+
+  const origin = url.origin && url.origin !== 'null' ? url.origin : 'file://';
+
+  return origin + url.pathname + (url.searchParams.toString() ? '?' + url.searchParams.toString() : '');
+}
+
+export function getAbsoluteIRI(base, location) {
   var iri = location;
 
   if (!location.toLowerCase().startsWith('http:') && !location.toLowerCase().startsWith('https:')) {
@@ -53,7 +78,7 @@ function getAbsoluteIRI(base, location) {
   return iri;
 }
 
-function getProxyableIRI(url, options = {}) {
+export function getProxyableIRI(url, options = {}) {
   let pIRI = stripFragmentFromString(url);
 
   try {
@@ -76,7 +101,7 @@ function getProxyableIRI(url, options = {}) {
   return pIRI;
 }
 
-function getProxyURL(options) {
+export function getProxyURL(options) {
   return (typeof options !== 'undefined' && 'proxyURL' in options)
     ? options.proxyURL
     : (Config.User.ProxyURL)
@@ -84,7 +109,7 @@ function getProxyURL(options) {
       : undefined;
 }
 
-function stripFragmentFromString(string) {
+export function stripFragmentFromString(string) {
   if (typeof string === 'string') {
     let stringIndexFragment = string.indexOf('#');
 
@@ -95,7 +120,7 @@ function stripFragmentFromString(string) {
   return string;
 }
 
-function getFragmentFromString(string) {
+export function getFragmentFromString(string) {
   if (typeof string === 'string') {
     let match = string.split('#')[1];
 
@@ -104,7 +129,7 @@ function getFragmentFromString(string) {
   return string;
 }
 
-function getUrlParams(name) {
+export function getUrlParams(name) {
   const rawParams = window.location.hash.startsWith('#')
     ? window.location.hash.slice(1)
     : window.location.search.slice(1);
@@ -113,7 +138,7 @@ function getUrlParams(name) {
   return searchParams.getAll(name);
 }
 
-function stripUrlParamsFromString(urlString, paramsToStrip = null, stripHash = false) {
+export function stripUrlParamsFromString(urlString, paramsToStrip = null, stripHash = false) {
   const origin = window.location.origin;
   const base = origin && origin !== 'null' ? origin : undefined;
   const url = new URL(urlString, base);
@@ -131,12 +156,12 @@ function stripUrlParamsFromString(urlString, paramsToStrip = null, stripHash = f
 }
 
 // Side-effect function: updates the browser’s current URL in history
-function stripUrlSearchHash(paramsToStrip = null) {
+export function stripUrlSearchHash(paramsToStrip = null) {
   const newUrl = stripUrlParamsFromString(window.location.href, paramsToStrip, true);
   window.history.replaceState({}, '', newUrl);
 }
 
-function getBaseURL(url) {
+export function getBaseURL(url) {
   if (typeof url === 'string') {
     url = url.substr(0, url.lastIndexOf('/') + 1);
   }
@@ -144,7 +169,7 @@ function getBaseURL(url) {
   return url;
 }
 
-function getPathURL(url) {
+export function getPathURL(url) {
   if (typeof url === 'string') {
     const u = new URL(url);
     return u.origin + u.pathname;
@@ -153,7 +178,7 @@ function getPathURL(url) {
   return url;
 }
 
-function getURLLastPath(url) {
+export function getURLLastPath(url) {
   if (typeof url === 'string') {
     url = getPathURL(url);
     url = url.substr(url.lastIndexOf('/') + 1);
@@ -162,7 +187,7 @@ function getURLLastPath(url) {
   return url;
 }
 
-function getParentURLPath(url) {
+export function getParentURLPath(url) {
   if (typeof url === 'string') {
     var u = new URL(url);
     var pathname = u.pathname;
@@ -180,12 +205,12 @@ function getParentURLPath(url) {
   return url;
 }
 
-function forceTrailingSlash(string) {
+export function forceTrailingSlash(string) {
   if (string.slice(-1) == '/') return string;
   return string + '/';
 }
 
-function getFragmentOrLastPath(string) {
+export function getFragmentOrLastPath(string) {
   var s = getFragmentFromString(string);
   if (s.length == 0) {
     s = getURLLastPath(string);
@@ -193,7 +218,7 @@ function getFragmentOrLastPath(string) {
   return s;
 }
 
-function getLastPathSegment(url) {
+export function getLastPathSegment(url) {
   var parsedUrl = new URL(url);
   var pathname = parsedUrl.pathname;
   var segments = pathname.split('/');
@@ -203,7 +228,7 @@ function getLastPathSegment(url) {
   return segments.pop() || parsedUrl.hostname;
 }
 
-function generateDataURI(mediaType, encoding, data) {
+export function generateDataURI(mediaType, encoding, data) {
   var mediaTypeEncoding = 'text/plain;charset=US-ASCII';
   var encodedData = encodeURIComponent(data);
 
@@ -220,7 +245,7 @@ function generateDataURI(mediaType, encoding, data) {
 }
 
 
-function getPrefixedNameFromIRI(iri) {
+export function getPrefixedNameFromIRI(iri) {
   const hashIndex = iri.lastIndexOf('#');
   const slashIndex = iri.lastIndexOf('/');
   const sepIndex = Math.max(hashIndex, slashIndex);
@@ -243,7 +268,7 @@ function getPrefixedNameFromIRI(iri) {
   return iri;
 } 
 
-function getIRIFromPrefix(qname) {
+export function getIRIFromPrefix(qname) {
   const qnameParts = qname.slice(':');
 
   if (qnameParts.length == 2) {
@@ -259,13 +284,13 @@ function getIRIFromPrefix(qname) {
 }
 
 
-function getMediaTypeURIs(mediaTypes) {
+export function getMediaTypeURIs(mediaTypes) {
   mediaTypes = Array.isArray(mediaTypes) ? mediaTypes : [mediaTypes];
 
   return mediaTypes.map(mediaType => { return `http://www.w3.org/ns/iana/media-types/${mediaType}#Resource` });
 }
 
-function isHttpOrHttpsProtocol(urlString) {
+export function isHttpOrHttpsProtocol(urlString) {
   try {
     const url = new URL(urlString);
     return url.protocol === 'http:' || url.protocol === 'https:';
@@ -274,7 +299,7 @@ function isHttpOrHttpsProtocol(urlString) {
   }
 }
 
-function isHttpsProtocol(urlString) {
+export function isHttpsProtocol(urlString) {
   try {
     const url = new URL(urlString);
     return url.protocol === 'https:';
@@ -283,7 +308,7 @@ function isHttpsProtocol(urlString) {
   }
 }
 
-function isFileProtocol(urlString) {
+export function isFileProtocol(urlString) {
   try {
     const url = new URL(urlString);
     return url.protocol === 'file:';
@@ -292,7 +317,7 @@ function isFileProtocol(urlString) {
   }
 }
 
-function isLocalhost(urlString) {
+export function isLocalhost(urlString) {
   try {
     const url = new URL(urlString);
     const h = url.hostname;
@@ -308,7 +333,7 @@ function isLocalhost(urlString) {
   }
 }
 
-function svgToDataURI(svg, options = {}) {
+export function svgToDataURI(svg, options = {}) {
   svg = svg
     .replace(/ class="[^"]*"/g, '')
     .replace(/ fill="[^"]*"/g, '')
@@ -329,7 +354,7 @@ function svgToDataURI(svg, options = {}) {
   return `data:image/svg+xml,${svg}`;
 }
 
-function isCurrentScriptSameOrigin() {
+export function isCurrentScriptSameOrigin() {
   const script = document.currentScript;
   if (!script) return false;
 
@@ -338,33 +363,3 @@ function isCurrentScriptSameOrigin() {
 
   return sameOrigin;
 }
-
-export {
-  encodeString,
-  decodeString,
-  getAbsoluteIRI,
-  getProxyableIRI,
-  getProxyURL,
-  stripFragmentFromString,
-  getFragmentFromString,
-  getUrlParams,
-  stripUrlParamsFromString,
-  stripUrlSearchHash,
-  getBaseURL,
-  getPathURL,
-  getURLLastPath,
-  getParentURLPath,
-  forceTrailingSlash,
-  getFragmentOrLastPath,
-  getLastPathSegment,
-  generateDataURI,
-  getPrefixedNameFromIRI,
-  getIRIFromPrefix,
-  getMediaTypeURIs,
-  isHttpOrHttpsProtocol,
-  isHttpsProtocol,
-  isFileProtocol,
-  isLocalhost,
-  svgToDataURI,
-  isCurrentScriptSameOrigin
-};

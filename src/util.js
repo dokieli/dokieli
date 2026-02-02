@@ -15,12 +15,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { getLastPathSegment, stripFragmentFromString, svgToDataURI } from './uri.js';
-import { Icon } from './ui/icons.js'
-import { domSanitize } from './utils/sanitization.js'
-import { currentLocation } from './fetcher.js';
+import { getLastPathSegment, stripFragmentFromString, svgToDataURI, currentLocation } from './uri.js';
 import Config from './config.js';
-import { getDocument } from './doc.js';
 
 export function uniqueArray(a) {
   return Array.from(new Set(a));
@@ -65,11 +61,6 @@ export function debounce(func, delay) {
   };
 }
 
-export function removeChildren(node) {
-  while (node.firstChild) {
-    node.removeChild(node.firstChild);
-  }
-}
 
 export function escapeRegExp(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -81,19 +72,6 @@ export function escapeRDFLiteral(str) {
 
 export function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-export function fragmentFromString(strHTML) {
-  return document.createRange().createContextualFragment(domSanitize(strHTML));
-}
-
-export function stringFromFragment(fragment) {
-  const container = document.createElement('div');
-  container.appendChild(fragment.cloneNode(true));
-
-  // return container.firstChild?.outerHTML || '';
-
-  return container.getHTML();
 }
 
 export function generateUUID(inputString) {
@@ -166,17 +144,6 @@ export function generateAttributeId(prefix, string, suffix) {
     return generateAttributeId(prefix, string, suffix);
   }
   return id;
-}
-
-export function getFormValues(form) {
-  const formData = new FormData(form);
-
-  const formValues = Object.fromEntries(
-    [...formData.entries()].map(([key, value]) => [key, typeof value === "string" ? domSanitize(value.trim()) : value])
-  );
-
-// console.log(formValues);
-  return formValues;
 }
 
 //SRI hash that's browser safe
@@ -319,32 +286,6 @@ export function tranformIconstoCSS(icons) {
   return cssOutput;
 }
 
-export function getIconsFromCurrentDocument() {
-  var usedIcons = Array.from(document.querySelectorAll('i[class*="fa-"]'))
-    .flatMap(el => Array.from(el.classList))
-    .filter(cls => cls.startsWith('fa-'));
-
-  var uniqueClasses = [...new Set(usedIcons)];
-
-  var filteredEntries = Object.entries(Icon).filter(([cls]) =>
-    uniqueClasses.some(usedCls => cls.includes(usedCls))
-  );
-
-  var sortedEntries = filteredEntries.sort(([a], [b]) => a.localeCompare(b));
-
-  var newIcons = Object.fromEntries(sortedEntries);
-
-  return newIcons;
-}
-
-export function isOnline() {
-  return navigator.onLine;
-}
-
-export function isPlainObject(object) {
-  return typeof object === 'object' && !Array.isArray(object) && object !== null;
-}
-
 export function setDocumentURL(url) {
   url = url || currentLocation();
 
@@ -353,17 +294,6 @@ export function setDocumentURL(url) {
 
 export function setWebExtensionURL() {
   Config['WebExtensionBaseURL'] = Config.WebExtensionEnabled ? Config.WebExtension.runtime.getURL('') : null;
-}
-
-export function setDocumentString(node) {
-  const documentOptions = {
-    ...Config.DOMProcessing,
-    format: true,
-    sanitize: true,
-    normalize: true
-  };
-
-  Config.DocumentString = getDocument(node, documentOptions);
 }
 
 export function utf8Tob64(s) {
@@ -381,4 +311,59 @@ export function generateFilename(url, options) {
   var extension = options.filenameExtension || '.txt';
   fileName = fileName + "." + timestamp + extension;
   return fileName;
+}
+
+export function encodeUriTerm(term) {
+  return term.replace(/%[0-9A-Fa-f]{2}|&|[^A-Za-z0-9\-._~:/?#\[\]@!$'()*+,;=%]/g, match => {
+    if (match === '&') return '&amp;';
+    if (/^%[0-9A-Fa-f]{2}$/.test(match)) return match;
+    switch (match) {
+      case ' ': return '%20';
+      case "'": return '%27';
+      case '"': return '%22';
+      case '<': return '%3C';
+      case '>': return '%3E';
+      default: return '%' + match.charCodeAt(0).toString(16).toUpperCase();
+    }
+  });
+}
+
+export function htmlEncode(str, options = { mode: 'text', attributeName: null }) {
+  str = String(str);
+
+  if (options.mode === 'uri') {
+    const isMulti = options.attributeName && Config.DOMProcessing.multiTermAttributes.includes(options.attributeName);
+    if (isMulti) {
+      return str.split(/[\t\n\r ]+/).map(term => encodeUriTerm(term)).join(' ');
+    } else {
+      return encodeUriTerm(str);
+    }
+  }
+
+  if (options.mode === 'attribute') {
+    return str.replace(/([&<>"'])/g, (match, p1, offset, fullStr) => {
+      if (p1 === '&') {
+        const semicolonIndex = fullStr.indexOf(';', offset);
+        if (semicolonIndex > -1) {
+          const entity = fullStr.slice(offset, semicolonIndex + 1);
+          if (/^&(?:[a-zA-Z][a-zA-Z0-9]+|#\d+|#x[0-9a-fA-F]+);$/.test(entity)) {
+            return '&';
+          }
+        }
+      }
+      switch (p1) {
+        case '&': return '&amp;';
+        case '<': return '&lt;';
+        case '>': return '&gt;';
+        case '"': return '&quot;';
+        case "'": return '&#39;';
+        default: return p1;
+      }
+    });
+  }
+
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }

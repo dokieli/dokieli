@@ -17,9 +17,10 @@ limitations under the License.
 
 import { schema } from "../schema/base.js"
 import { getButtonHTML } from "../../ui/buttons.js"
-import { getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getClassesOfProductsConcepts, getDocument, getDocumentContentNode, getLanguageOptionsHTML, getLicenseOptionsHTML, getReferenceLabel } from "../../doc.js";
+import { getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getClassesOfProductsConcepts, getDocument, getLanguageOptionsHTML, getLicenseOptionsHTML, getReferenceLabel } from "../../doc.js";
 import { getTextQuoteHTML, cloneSelection, setSelection, getSelectedParentElement } from "../utils/annotation.js";
-import { escapeRegExp, matchAllIndex, fragmentFromString } from "../../util.js";
+import { escapeRegExp, matchAllIndex } from "../../util.js";
+import { fragmentFromString, getDocumentContentNode } from "../../utils/html.js";
 import { showUserIdentityInput } from "../../auth.js";
 import { getLinkRelation } from "../../graph.js";
 import Config from "../../config.js";

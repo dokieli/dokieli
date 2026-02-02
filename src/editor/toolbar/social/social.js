@@ -19,7 +19,7 @@ import { formHandlerAnnotate, shareButtonHandler } from "./handlers.js"
 import { ToolbarView, annotateFormControls, updateAnnotationInboxForm } from "../toolbar.js"
 import Config from "../../../config.js";
 import { exportSelection, getSelectedParentElement, restoreSelection } from "../../utils/annotation.js";
-import { htmlEncode } from "../../../utils/html.js";
+import { htmlEncode } from "../../../util.js";
 import { i18n } from "../../../i18n.js";
 
 const ns = Config.ns;

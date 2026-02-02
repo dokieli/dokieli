@@ -15,16 +15,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { createActivityHTML, createHTML, getDocumentContentNode, selectArticleNode, showCitations } from './doc.js';
+import { createActivityHTML, showCitations, getReferenceLabel } from './doc.js';
+import { selectArticleNode, createHTML } from './utils/html.js';
 import { Icon } from './ui/icons.js'
-import { getAbsoluteIRI, getMediaTypeURIs, getPathURL, isHttpOrHttpsProtocol, mediaTypeURIs, stripFragmentFromString } from './uri.js';
-import { getLinkRelation, serializeDataToPreferredContentType, getGraphLanguage, getGraphLicense, getGraphRights, getGraphTypes, getGraphDate, getGraphImage, getResourceGraph, traverseRDFList, getResourceOnlyRDF, getAgentTypeIndex, getUserContacts, getAgentName } from './graph.js';
-import { currentLocation, getAcceptPostPreference, postResource } from './fetcher.js';
+import { getAbsoluteIRI, getPathURL, isHttpOrHttpsProtocol, stripFragmentFromString, currentLocation } from './uri.js';
+import { getLinkRelation, serializeDataToPreferredContentType, getGraphLanguage, getGraphLicense, getGraphRights, getGraphTypes, getGraphDate, getGraphImage, getResourceGraph, getResourceOnlyRDF, getAgentTypeIndex, getUserContacts, getAgentName, getSubjectInfo, getItemsList } from './graph.js';
+import { getAcceptPostPreference, postResource } from './fetcher.js';
 import Config from './config.js';
 import { domSanitize } from './utils/sanitization.js';
-import { fragmentFromString, generateUUID, uniqueArray } from './util.js';
-import { addNoteToNotifications, initializeButtonMore } from './dialog.js';
-import { getSubjectInfo } from './auth.js';
+import { generateUUID, uniqueArray } from './util.js';
+import { addNoteToNotifications, initializeButtonMore } from './actions.js';
+import { fragmentFromString, getDocumentContentNode } from "./utils/html.js";
 import { i18n } from './i18n.js';
 import rdf from 'rdf-ext';
 
@@ -571,107 +572,6 @@ export async function showActivities(url, options = {}) {
   });
 }
 
-export function getItemsList(url, options) {
-  url = url || currentLocation();
-  options = options || {};
-  options['resourceItems'] = options.resourceItems || [];
-  options['headers'] = options.headers || {};
-  options['excludeMarkup'] = true;
-
-  Config['CollectionItems'] = Config['CollectionItems'] || {};
-  Config['CollectionPages'] = ('CollectionPages' in Config && Config.CollectionPages.length) ? Config.CollectionPages : [];
-  Config['Collections'] = ('Collections' in Config && Config.Collections.length) ? Config.Collections : [];
-
-  const mediaTypeURIPrefix = "http://www.w3.org/ns/iana/media-types/";
-  //TODO: Move this elsewhere (call from Config.init()?) where it runs once and stores it in e.g, Config.MediaTypeURIs
-  var mediaTypeURIs = getMediaTypeURIs(Config.MediaTypes.RDF);
-
-  // if (Config.Notification[url]) {
-  //   return Promise.resolve([]);
-  // }
-
-  return getResourceGraph(url, options.headers, options)
-    .then(
-      function(g) {
-        if (!g || g.resource) return [];
-
-        var s = g.node(rdf.namedNode(url));
-        // console.log(s.toString());
-
-        var types = getGraphTypes(s);
-
-        if (types.includes(ns.ldp.Container.value) ||
-            types.includes(ns.as.Collection.value) ||
-            types.includes(ns.as.OrderedCollection.value)) {
-          Config.Collections.push(url);
-        }
-
-        if (!types.includes(ns.ldp.Container.value) &&
-            !types.includes(ns.as.Collection.value) &&
-            !types.includes(ns.as.OrderedCollection.value)) {
-          Config.CollectionPages.push(url);
-        }
-
-        var items = [s.out(ns.as.items).values, s.out(ns.as.orderedItems).values, s.out(ns.ldp.contains).values];
-
-        items.forEach(i => {
-          i.forEach(resource => {
-            // console.log(resource)
-            var r = s.node(rdf.namedNode(resource));
-
-            if (r.out(ns.rdf.first).values.length || r.out(ns.rdf.rest).values.length) {
-              options.resourceItems = options.resourceItems.concat(traverseRDFList(s, resource));
-            }
-            else {
-              //FIXME: This may need to be processed outside of items? See also comment above about processing Collection and CollectionPages.
-              var types = getGraphTypes(r);
-              //Include only non-container/collection and items that's not from an RDFList
-              if (!types.includes(ns.ldp.Container.value) &&
-                  !types.includes(ns.as.Collection.value) &&
-                  !types.includes(ns.as.CollectionPage.value) &&
-                  !types.includes(ns.as.OrderedCollection.value) &&
-                  !types.includes(ns.as.OrderedCollectionPage.value)) {
-                //XXX: The following is not used at the moment:
-                // Config.CollectionItems[resource] = s;
-
-                const hasPrefix = types.some(url => url.startsWith(mediaTypeURIPrefix));
-                const mediaTypeFound = hasPrefix && types.some(item => mediaTypeURIs.includes(item));
-                
-                if (mediaTypeFound || !hasPrefix) {
-                  options.resourceItems.push(resource);
-                }
-              }
-            }
-          });
-        });
-
-        var first = s.out(ns.as.first).values;
-        var next = s.out(ns.as.next).values;
-
-        if (first.length && !Config.CollectionPages.includes(first[0])) {
-          return getItemsList(first[0], options);
-        }
-        else if (next.length && !Config.CollectionPages.includes(next[0])) {
-          return getItemsList(next[0], options);
-        }
-        else {
-          return uniqueArray(options.resourceItems);
-        }
-      })
-    .catch (e => {
-      console.log(e)
-      return [];
-    })
-}
-
-export function processResources(resources, options) {
-  if (Array.isArray(resources)) {
-    return Promise.resolve(resources);
-  }
-  else {
-    return getItemsList(resources, options);
-  }
-}
 
 export function showContactsActivities() {
   var aside = document.querySelector('#document-notifications');
@@ -834,22 +734,6 @@ export function processAgentStorageOutbox(agent) {
   }
 
   return promises;
-}
-
-export function positionNote(refId, noteId, refLabel) {
-  var ref =  document.querySelector('[id="' + refId + '"]');
-  var note = document.querySelector('[id="' + noteId + '"]');
-  ref = (ref) ? ref : selectArticleNode(note);
-
-  if (note.hasAttribute('style')) {
-    note.removeAttribute('style');
-  }
-
-  //TODO: If there are articles already in the aside.note , the subsequent top values should come after one another
-  var style = [
-    'top: ' + Math.ceil(ref.parentNode.offsetTop) + 'px'
-  ].join('; ');
-  note.setAttribute('style', style);
 }
 
 //XXX: To be deprecated

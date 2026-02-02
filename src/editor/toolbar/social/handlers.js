@@ -15,13 +15,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { schema } from "../../schema/base.js"
-import { getTextQuoteHTML, getSelectedParentElement, restoreSelection, getInboxOfClosestNodeWithSelector, createNoteData} from "../../utils/annotation.js";
-import { getFormValues, kebabToCamel, generateAttributeId, getDateTimeISO } from "../../../util.js"
-import { createActivityHTML, createHTML, createNoteDataHTML, getNodeLanguage, getReferenceLabel } from "../../../doc.js"
+import { getSelectedParentElement, restoreSelection, getInboxOfClosestNodeWithSelector, createNoteData} from "../../utils/annotation.js";
+import { generateAttributeId, getDateTimeISO } from "../../../util.js"
+import { getNodeLanguage, getFormValues, createHTML } from "../../../utils/html.js";
+import { getReferenceLabel, createActivityHTML, createNoteDataHTML, } from "../../../doc.js";
 import { getAbsoluteIRI, stripFragmentFromString } from "../../../uri.js"
 import Config from "../../../config.js"
-import { notifyInbox, postActivity } from "../../../activity.js"
+import { notifyInbox, postActivity, showActivities } from "../../../activity.js"
+import { shareResource } from "../../../dialog.js";
 
 const ns = Config.ns;
 
@@ -52,7 +53,7 @@ const ns = Config.ns;
 //actions = ['note'] //Author
 
 export function shareButtonHandler(e) {
-  DO.U.shareResource(e)
+  shareResource(e)
 }
 
 export function formHandlerAnnotate(e, action) {
@@ -504,7 +505,7 @@ export function positionActivity(annotation, options) {
   }
 
   if ('profile' in annotation && annotation.profile == 'https://www.w3.org/ns/activitystreams') {
-    return DO.U.showActivities(annotation['noteIRI'])
+    return showActivities(annotation['noteIRI'])
       .catch((error) => {
         console.log('Error showing activities:', error)
         return Promise.resolve()
@@ -512,7 +513,7 @@ export function positionActivity(annotation, options) {
   }
   else {
 // console.log(options)
-    return DO.U.showActivities(annotation[ 'noteIRI' ], options)
+    return showActivities(annotation[ 'noteIRI' ], options)
       .catch((error) => {
         console.log('Error showing activities:', error)
         return Promise.resolve()
