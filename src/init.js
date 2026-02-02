@@ -86,7 +86,7 @@ function initUser() {
   })
 }
 
-function initLocalStorage() {
+export function initLocalStorage() {
   getLocalStorageItem(Config.DocumentURL).then(collection => {
     if (!collection) {
       autoSave(Config.DocumentURL, { method: 'localStorage' });
