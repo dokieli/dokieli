@@ -651,7 +651,7 @@ function putResource (url, data, contentType, links, options = {}) {
  */
 function putResourceACL (accessToURL, aclURL, acl) {
   if (!Config.User.IRI) {
-    console.log('Go through sign-in or do: DO.C.User.IRI = "https://example.org/#i";')
+    console.log('Go through sign-in or do: Config.User.IRI = "https://example.org/#i";')
     return Promise.resolve(null)
   }
 

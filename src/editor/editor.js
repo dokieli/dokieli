@@ -25,13 +25,9 @@ import { AuthorToolbar } from "./toolbar/author/author.js";
 import { SocialToolbar } from "./toolbar/social/social.js";
 import { SlashMenu } from "./slashmenu/slashmenu.js";
 import Config from "./../config.js";
-import { addMessageToLog, getAgentHTML, insertDocumentLevelHTML, setDate, showActionMessage } from "../doc.js";
+import { addMessageToLog, showActionMessage } from "../doc.js";
 import { fragmentFromString, hasNonWhitespaceText } from "./../utils/html.js";
-import { getAgentName, getGraphImage, getResourceGraph } from "../graph.js";
-import { generateAttributeId } from "../util.js";
 import { updateLocalStorageProfile } from "../storage.js";
-import rdf from 'rdf-ext';
-import { Icon } from "../ui/icons.js";
 import { updateButtons } from "../ui/buttons.js";
 import { cleanProseMirrorOutput } from "../utils/normalization.js";
 import { i18n } from "../i18n.js";
@@ -95,10 +91,10 @@ export class Editor {
     const filterSelectors = ['#document-editor', '#review-changes', '.copy-to-clipboard', '.robustlinks', '.ref'];
     const notSelector = filterSelectors.map(selector => `:not(${selector})`).join('');
     //TODO: toc-nav is W3C-specific. Move this into config normalisation
-    const allowedScriptSelectors = Object.keys(DO.C.DOMProcessing.allowedScripts).map(src => `script[src="${src}"]`).join(', ');
+    const allowedScriptSelectors = Object.keys(Config.DOMProcessing.allowedScripts).map(src => `script[src="${src}"]`).join(', ');
 
     const allowedScriptElements = Array.from(document.body.querySelectorAll('script'))
-    .filter(script => script.src && Object.keys(DO.C.DOMProcessing.allowedScripts).includes(script.src))
+    .filter(script => script.src && Object.keys(Config.DOMProcessing.allowedScripts).includes(script.src))
     .filter((script, index, self) => self.findIndex(s => s.src === script.src) === index)
     .map(script => script.cloneNode(true)); 
   
@@ -294,13 +290,11 @@ export class Editor {
       this.allowedScriptElements.forEach(script => {
         document.body.appendChild(script);
       });
-
-      this.slashMenu = new SlashMenu(this.editorView);
-
     });
 
     // console.log(this.editorView.state.doc)
     // console.log(hasNonWhitespaceText(state.doc))
+    this.slashMenu = new SlashMenu(this.editorView);
     console.log("Editor created. Mode:", this.mode);
   }
 

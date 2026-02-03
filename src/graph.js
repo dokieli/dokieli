@@ -25,7 +25,6 @@ import { domSanitize } from './utils/sanitization.js'
 import { parseMarkdown } from "./utils/html.js";
 import { setAcceptRDFTypes, getResource, getResourceHead } from './fetcher.js'
 import LinkHeader from "http-link-header";
-import { setPreferredLanguagesInfo } from "./actions.js";
 
 const ns = Config?.ns;
 const localhostUUID = 'http://localhost/d79351f4-cdb8-4228-b24f-3e9ac74a840d';
@@ -200,26 +199,6 @@ function getSubjectInfo (subjectIRI, options = {}) {
         Made: getAgentMade(g)
       }
     })
-    .then(agent => {
-      if (!agent.Graph) return agent;
-
-      setPreferredLanguagesInfo(agent.Graph);
-
-      return agent;
-    })
-    .then(agent => {
-      //XXX: Revisit what the retun should be, whether to be undefined, {}, or someting else. Is it useful to retain an agent object that doesn't have a Graph? (Probably better not.)
-      if (!agent.Graph || !options.fetchIndexes) return agent;
-
-      return getAgentTypeIndex(agent.Graph)
-        .then(typeIndexes => {
-          Object.keys(typeIndexes).forEach(typeIndexType => {
-            agent.TypeIndex[typeIndexType] = typeIndexes[typeIndexType];
-          });
-
-          return agent;
-        })
-    });
   }
 
 function getMatchFromData (data, spo = {}, options = {}) {
@@ -775,7 +754,7 @@ function getResourceOnlyRDF(url) {
       var options = {};
       options['contentType'] = (cT) ? cT.split(';')[0].toLowerCase().trim() : '';
 
-      if (DO.C.MediaTypes.RDF.includes(options['contentType'])) {
+      if (Config.MediaTypes.RDF.includes(options['contentType'])) {
         var headers = { 'Accept': setAcceptRDFTypes() };
         return getResourceGraph(url, headers);
       } 

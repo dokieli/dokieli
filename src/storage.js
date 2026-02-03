@@ -323,8 +323,8 @@ export async function removeLocalStorageDocumentItems(key) {
 export async function removeLocalStorageAsSignOut() {
   removeLocalStorageDocumentItems(Config.DocumentURL);
 
-  removeLocalStorageItem('Config.User');
-  removeLocalStorageItem('Config.OIDC');
+  removeLocalStorageItem('DO.Config.User');
+  removeLocalStorageItem('DO.Config.OIDC');
   removeLocalStorageItem('i18nextLng');
 }
 
@@ -368,7 +368,7 @@ export function updateLocalStorageProfile(User) {
   if (!User.IRI) { return Promise.resolve({ 'message': 'User.IRI is not set' }); }
 
   var U = { ...User };
-  var key = 'Config.User';
+  var key = 'DO.Config.User';
 
   var id = generateUUID();
   var datetime = getDateTimeISO();

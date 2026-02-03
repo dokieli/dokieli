@@ -251,7 +251,7 @@ export function getFormActionData(action, formValues, selectionData) {
   data.refId = 'r-' + data.id;
   data.targetIRI = (data.parentNodeWithId) ? data.resourceIRI + '#' + data.parentNodeWithId.id : data.resourceIRI;
 
-  data.latestVersion = DO.C.Resource[data.resourceIRI].graph.out(ns.rel['latest-version']).values[0];
+  data.latestVersion = Config.Resource[data.resourceIRI].graph.out(ns.rel['latest-version']).values[0];
 
   if (data.latestVersion) {
     data.resourceIRI = data.latestVersion;
@@ -452,7 +452,7 @@ export function createActivityData(annotation, options = {}) {
 
   var notificationStatements = '    <dl about="' + noteIRI + '">\n\
 <dt>Object type</dt><dd><a about="' + noteIRI + '" typeof="oa:Annotation" href="' + ns.oa.Annotation.value + '">Annotation</a></dd>\n\
-<dt>Motivation</dt><dd><a href="' + DO.C.Prefixes[annotation.motivatedByIRI.split(':')[0]] + annotation.motivatedByIRI.split(':')[1] + '" property="oa:motivation">' + annotation.motivatedByIRI.split(':')[1] + '</a></dd>\n\
+<dt>Motivation</dt><dd><a href="' + Config.Prefixes[annotation.motivatedByIRI.split(':')[0]] + annotation.motivatedByIRI.split(':')[1] + '" property="oa:motivation">' + annotation.motivatedByIRI.split(':')[1] + '</a></dd>\n\
 </dl>\n\
 ';
 
@@ -536,8 +536,8 @@ function sendNotification(annotation, options) {
     inboxPromise = Promise.resolve([annotation.annotationInbox])
   }
   else {
-    if ('inbox' in DO.C.Resource[documentURL] && DO.C.Resource[documentURL].inbox.length) {
-      inboxPromise = Promise.resolve(DO.C.Resource[documentURL].inbox)
+    if ('inbox' in Config.Resource[documentURL] && Config.Resource[documentURL].inbox.length) {
+      inboxPromise = Promise.resolve(Config.Resource[documentURL].inbox)
     }
     else {
       inboxPromise =

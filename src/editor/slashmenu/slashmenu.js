@@ -63,6 +63,7 @@ export class SlashMenu {
   }
 
   showMenu(cursorX, cursorY) {
+    this.createMenuItems();
     this.menuContainer.style.display = "block";
     
     this.menuContainer.style.left = `${cursorX}px`;
@@ -117,7 +118,7 @@ export class SlashMenu {
     this.slashMenuButtons.forEach(({ button, dom }) => {
       const menuItem = this.createMenuItem(button, dom);
       ul.appendChild(menuItem);
-      
+
       menuItem.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -132,7 +133,6 @@ export class SlashMenu {
     const buttonNode = domFunction();
     buttonNode.id = "editor-button-" + button;
 
-    const labelNode = document.createElement("span");
     const menuItem = document.createElement("li");
     menuItem.appendChild(buttonNode);
     return menuItem;

@@ -249,7 +249,7 @@ function submitSignIn (url) {
   const idp = Config.User.OIDCIssuer;
 
   Config.OIDC['authStartLocation'] = Config.OIDC['client_id'] ? window.location.href.split('#')[0] : null;
-  localStorage.setItem('DO.C.OIDC', JSON.stringify(Config.OIDC));
+  localStorage.setItem('DO.Config.OIDC', JSON.stringify(Config.OIDC));
 
   let redirect_uri = process.env.OIDC_REDIRECT_URI || (window.location.origin + '/') ;
 
@@ -278,6 +278,8 @@ function setUserInfo (subjectIRI, options = {}) {
     Object.keys(subject).forEach((key) => {
       Config.User[key] = subject[key];
     })
+
+    setPreferredLanguagesInfo(subject.Graph);
 
     updateLocalStorageProfile(subject);
   });
@@ -340,7 +342,7 @@ function afterSetUserInfo () {
 
       //FIXME: This works but is it fugly? It is so that 1) we don't have double assignment of event handler on user-info's signOut and to also make sure that the user with a Session can actually signOut (removing children loses the event)
       if (uI && !Config['Session']?.isActive) {
-        // uI.replaceChildren(fragmentFromString(DO.C.Button.Menu.SignOut))
+        // uI.replaceChildren(fragmentFromString(DO.Config.Button.Menu.SignOut))
 
         removeChildren(node);
         showUserSigninSignout(node);

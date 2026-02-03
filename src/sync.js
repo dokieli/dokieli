@@ -21,7 +21,7 @@ import { addMessageToLog, getDocument, processSupplementalInfoLinkHeaders, showA
 import { getResource } from "./fetcher.js";
 import { autoSave, getLocalStorageItem, updateLocalStorageItem } from "./storage.js";
 import { getDateTimeISO, getDateTimeISOFromDate, getHash } from "./util.js";
-import { getDocumentNodeFromString } from "./utils/html.js";
+import { fragmentFromString, getDocumentNodeFromString } from "./utils/html.js";
 import { normalizeForDiff } from "./utils/normalization.js";
 import { getButtonHTML } from "./ui/buttons.js";
 import Config from "./config.js";

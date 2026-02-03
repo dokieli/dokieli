@@ -36,7 +36,7 @@ DO = {
     handleIncomingRedirect: async function() {
       // const params = new URLSearchParams(window.location.search);
 
-      getLocalStorageItem('Config.OIDC').then(OIDC => {
+      getLocalStorageItem('DO.Config.OIDC').then(OIDC => {
         // console.log(OIDC)
         if (OIDC?.authStartLocation && OIDC.authStartLocation !== window.location.href.split('#')[0]) {
           var urlsHtml = `<a href="${OIDC.authStartLocation}" rel="noopener" target="_blank">${OIDC.authStartLocation}</a>`
@@ -52,7 +52,7 @@ DO = {
           addMessageToLog({...messageObject, content: message}, Config.MessageLog);
           const messageId = showActionMessage(document.body, messageObject);
 
-          removeLocalStorageItem('Config.OIDC');
+          removeLocalStorageItem('DO.Config.OIDC');
           window.location.replace(OIDC.authStartLocation);
         }
         else {
