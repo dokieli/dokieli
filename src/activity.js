@@ -108,7 +108,6 @@ export function sendNotifications(tos, note, iri, shareResource) {
 export function inboxResponse(to, toInput) {
   return getLinkRelation(ns.ldp.inbox.value, to)
     .then(inboxes => {
-      console.log(inboxes)
       return inboxes[0]
     })
 
