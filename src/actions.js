@@ -55,69 +55,6 @@ export function showGeneralMessages() {
   showResourceAudienceAgentOccupations();
 }
 
-export function addNoteToNotifications(noteData) {
-  var id = document.getElementById(noteData.id);
-  if (id) return;
-
-  var noteDataIRI = noteData.iri;
-  
-// console.log(noteData)
-  var note = createNoteDataHTML(noteData);
-
-  var datetime = noteData.datetime ? noteData.datetime : '1900-01-01T00:00:00.000Z';
-
-  var li = domSanitize('<li data-datetime="' + datetime + '"><blockquote cite="' + noteDataIRI + '">'+ note + '</blockquote></li>');
-// console.log(li);
-  var aside = document.getElementById('document-notifications');
-
-  if(!aside) {
-    aside = initializeNotifications({includeButtonMore: true});
-  }
-
-  var notifications = document.querySelector('#document-notifications > div > ul');
-  var timesNodes = aside.querySelectorAll('div > ul > li[data-datetime]');
-  var previousElement = null;
-
-  //Maintain reverse chronological order
-  if (timesNodes.length) {
-    var times = Array.from(timesNodes).map(element => element.getAttribute("data-datetime"));
-    var sortedTimes = times.sort().reverse();
-    var previousDateTime = findPreviousDateTime(sortedTimes, noteData.datetime);
-    previousElement = Array.from(timesNodes).find((element) => previousDateTime && previousDateTime === element.getAttribute("data-datetime") ? element : null);
-  }
-
-  if (previousElement) {
-    previousElement.insertAdjacentHTML('beforebegin', li);
-  }
-  else {
-    notifications.insertAdjacentHTML('beforeend', li);
-  }
-}
-
-export function initializeButtonMore(node) {
-  var info = node.querySelector('div.info');
-  var progressOld = info.querySelector('.progress');
-  var progressNew = fragmentFromString(`<div class="progress" data-i18n="panel.notifications.progress.more">${Config.Button.Notifications.More} ${i18n.t('panel.notifications.progress.more.textContent')}</div>`);
-
-  if (progressOld) {
-    info.replaceChild(progressNew, progressOld)
-  }
-  else {
-    info.appendChild(progressNew);
-  }
-
-  node = document.getElementById('document-notifications');
-
-  var buttonMore = node.querySelector('div.info button.more');
-  buttonMore.addEventListener('click', () => {
-    if (!Config.User.IRI) {
-      showUserIdentityInput();
-    }
-    else {
-      showContactsActivities();
-    }
-  });
-}
 
 export function showResourceAudienceAgentOccupations() {
   if (Config.User.Occupations && Config.User.Occupations.length > 0) {

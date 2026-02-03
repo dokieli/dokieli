@@ -108,6 +108,7 @@ export function processAction(action, formValues, selectionData) {
   //TODO:
 
   const data = getFormActionData(action, formValues, selectionData);
+
   const { annotationDistribution, ...otherFormData } = data;
 
   let noteHTML, note;
@@ -123,6 +124,7 @@ export function processAction(action, formValues, selectionData) {
         };
 
         var noteData = createNoteData(annotation);
+
         annotation['motivatedByIRI'] = noteData['motivatedByIRI'];
 
         if ('profile' in annotation && annotation.profile == 'https://www.w3.org/ns/activitystreams') {
@@ -253,6 +255,7 @@ export function getFormActionData(action, formValues, selectionData) {
 
   data.latestVersion = Config.Resource[data.resourceIRI].graph.out(ns.rel['latest-version']).values[0];
 
+  //XXX: This needs to be revisited. Perhaps showAnnotations is not checking the latestVersion?
   if (data.latestVersion) {
     data.resourceIRI = data.latestVersion;
     data.targetIRI = (data.parentNodeWithId) ? data.latestVersion + '#' + data.parentNodeWithId.id : data.latestVersion;
