@@ -19,7 +19,6 @@ import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   updateLocalStorageDocumentWithItem,
   removeLocalStorageItem,
-  getLocalStorageProfile,
   enableAutoSave,
   disableAutoSave,
   removeLocalStorageDocumentItems,
@@ -103,19 +102,6 @@ describe('storage.js', () => {
     removeLocalStorageItem('doc-key');
 
     expect(localStorage.removeItem).toHaveBeenCalledWith('doc-key');
-  });
-
-  test('getLocalStorageProfile returns parsed profile if exists', async () => {
-    const profile = {
-      '@context': 'https://www.w3.org/ns/activitystreams',
-      type: 'Profile',
-      name: 'Test User'
-    };
-    localStorage.getItem = vi.fn(() => JSON.stringify(profile));
-
-    const result = await getLocalStorageProfile('doc-key');
-
-    expect(result).toEqual(profile);
   });
 
   test('enableAutoSave sets interval for localStorage and http methods', () => {

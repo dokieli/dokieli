@@ -1918,6 +1918,98 @@ function getItemsList(url, options) {
     })
 }
 
+export function getSPARQLResourcesOfTypeWithLabel(sparqlEndpoint, resourceType, textInput, options) {
+  options = options || {};
+  var labelsPattern = '', resourcePattern = '';
+
+  if(!('lang' in options)) {
+    options['lang'] = 'en';
+  }
+
+  if ('filter' in options) {
+    if(resourceType == '<http://purl.org/linked-data/cube#DataSet>' || resourceType == 'qb:DataSet'
+      && 'dimensionRefAreaNotation' in options.filter) {
+        var dimensionPattern, dimensionDefault = '';
+        var dataSetPattern = "\n\
+    [] qb:dataSet ?resource";
+      if ('dimensionProperty' in options.filter) {
+        dimensionPattern = " ; " + options.filter.dimensionProperty;
+      }
+      else {
+        dimensionDefault = " .\n\
+  { SELECT DISTINCT ?propertyRefArea WHERE { ?propertyRefArea rdfs:subPropertyOf* sdmx-dimension:refArea . } }";
+        dimensionPattern = " ; ?propertyRefArea ";
+
+      }
+      var notationPattern = " [ skos:notation '" + options.filter.dimensionRefAreaNotation.toUpperCase() + "' ] ."
+    }
+    resourcePattern = dimensionDefault + dataSetPattern + dimensionPattern + notationPattern;
+  }
+
+  labelsPattern = "\n\
+  ";
+
+  if ('optional' in options) {
+    if('prefLabels' in options.optional) {
+      if (options.optional.prefLabels.length == 1) {
+        labelsPattern += "  ?resource " + options.optional.prefLabels[0] + " ?prefLabel .";
+      }
+      else {
+        labelsPattern += "  VALUES ?labelProperty {";
+        options.optional.prefLabels.forEach(property => {
+          labelsPattern += ' ' + property;
+        });
+        labelsPattern += " } ?resource ?labelProperty ?prefLabel .";
+      }
+    }
+  }
+  else {
+    labelsPattern += "  ?resource rdfs:label ?prefLabel .";
+  }
+
+//  FILTER (!STRSTARTS(STR(?resource), 'http://purl.org/linked-data/sdmx/'))\n\
+  var query = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n\
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>\n\
+PREFIX dcterms: <http://purl.org/dc/terms/>\n\
+PREFIX qb: <http://purl.org/linked-data/cube#>\n\
+PREFIX sdmx-dimension: <http://purl.org/linked-data/sdmx/2009/dimension#>\n\
+PREFIX sdmx-measure: <http://purl.org/linked-data/sdmx/2009/measure#>\n\
+CONSTRUCT {\n\
+  ?resource skos:prefLabel ?prefLabel .\n\
+}\n\
+WHERE {\n\
+  ?resource a " + resourceType + " ."
++ labelsPattern + "\n\
+  FILTER (CONTAINS(LCASE(?prefLabel), '" + textInput + "') && (LANG(?prefLabel) = '' || LANGMATCHES(LANG(?prefLabel), '" + options.lang + "')))"
++ resourcePattern + "\n\
+}";
+  return sparqlEndpoint + "?query=" + encodeString(query);
+}
+
+export function getObservationsWithDimension(sparqlEndpoint, dataset, paramDimension, options) {
+  var query = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n\
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>\n\
+PREFIX dcterms: <http://purl.org/dc/terms/>\n\
+PREFIX qb: <http://purl.org/linked-data/cube#>\n\
+PREFIX sdmx-dimension: <http://purl.org/linked-data/sdmx/2009/dimension#>\n\
+PREFIX sdmx-measure: <http://purl.org/linked-data/sdmx/2009/measure#>\n\
+CONSTRUCT {\n\
+  ?observation sdmx-dimension:refPeriod ?refPeriod .\n\
+  ?observation sdmx-measure:obsValue ?obsValue .\n\
+}\n\
+WHERE {\n\
+  ?observation qb:dataSet <" + dataset + "> .\n\
+  " + paramDimension + "\n\
+  ?propertyRefPeriod rdfs:subPropertyOf* sdmx-dimension:refPeriod .\n\
+  ?observation ?propertyRefPeriod ?refPeriod .\n\
+  ?propertyMeasure rdfs:subPropertyOf* sdmx-measure:obsValue .\n\
+  ?observation ?propertyMeasure ?obsValue .\n\
+}";
+
+  return sparqlEndpoint + "?query=" + encodeString(query);
+}
+
+
 export {
   getGraphFromData,
   getMatchFromData,

@@ -4696,3 +4696,122 @@ export function setDocumentString(node) {
 
   Config.DocumentString = getDocument(node, documentOptions);
 }
+
+
+//XXX: Unused
+// export function getListHTMLFromTriples(triples, options) {
+//   options = options || {element: 'ul'};
+//   var elementId = ('elementId' in options) ? ' id="' + options.elementId + '"' : '';
+//   var elementName = ('elementName' in options) ? ' name="' + options.elementName + '"' : '';
+//   var elementLabel = ('elementLabel' in options) ? ' aria-label="' + options.elementLabel + '"': '';
+//   var elementTitle = ('elementTitle' in options) ? options.elementTitle : '';
+//   var items = '';
+//   triples.forEach(t => {
+//     var s = t.subject.value;
+//     var o = t.object.value;
+//     switch(options.element) {
+//       case 'ol': case 'ul': default:
+//         items += '<li><a href="' + s + '">' + o + '</a></li>';
+//         break;
+//       case 'dl':
+//         items += '<dd><a href="' + s + '">' + o + '</a></dd>';
+//         break;
+//       case 'select':
+//         items += '<option value="' +   s + '">' + o + '</option>';
+//         break;
+//     }
+//   });
+
+//   switch(options.element) {
+//     case 'ul': default:
+//       return '<ul' + elementId + '>' + items + '</ul>';
+//     case 'ol':
+//       return '<ol' + elementId + '>' + items + '</ol>';
+//     case 'dl':
+//       return '<dl' + elementId + '><dt>' + elementTitle + '</dt>' + items + '</dl>';
+//     case 'select':
+//       return '<select' + elementLabel + elementId + elementName + '>' + items + '</select>';
+//   }
+// }
+
+
+//Unused until there is UI
+// export function getSparkline(data, options) {
+//   options = options || {};
+//   if(!('cssStroke' in options)) {
+//     options['cssStroke'] = '#000';
+//   }
+// 
+//   var svg = '<svg height="100%" prefix="rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns# rdfs: http://www.w3.org/2000/01/rdf-schema# xsd: http://www.w3.org/2001/XMLSchema# qb: http://purl.org/linked-data/cube# prov: http://www.w3.org/ns/prov# schema: http://schema.org/" width="100%" xmlns="http://www.w3.org/2000/svg">';
+// 
+//   svg += drawSparklineGraph(data, options);
+//   svg += '</svg>';
+// 
+//   return svg;
+// }
+// 
+// export function drawSparklineGraph(data, options) {
+//   options = options || {};
+//   if(!('cssStroke' in options)) {
+//     options['cssStroke'] = '#000';
+//   }
+//   var svg= '';
+// 
+//   var obsValue = 'http://purl.org/linked-data/sdmx/2009/measure#obsValue';
+//   var observation = 'http://purl.org/linked-data/cube#Observation';
+// 
+//   var dotSize = 1;
+//   var values = data.map(n => { return n[obsValue]; }),
+//     min = Math.min.apply(null, values),
+//     max = Math.max.apply(null, values);
+// 
+//   var new_max = 98;
+//   var new_min = 0;
+//   var range = new_max - new_min;
+// 
+//   var parts = values.map(function (v) {
+//     return (new_max - new_min) / (max - min) * (v - min) + new_min || 0;
+//   });
+// 
+//   var div = 100 / parts.length;
+//   var x1 = 0, y1 = 0, x2 = div / 2, y2 = range - parts[0];
+// 
+//   var lines = '';
+//   for (var i=0; i < parts.length; i++) {
+//     x1 = x2; y1 = y2;
+//     x2 = range * (i / parts.length) + (div / 2);
+//     y2 = range - parts[i];
+// 
+//     lines += '<a href="' + data[i][observation] + '" rel="rdfs:seeAlso noopener" resource="' + data[i][observation] + '" target="_blank"><line' +
+//       ' x1="' + x1 + '%"' +
+//       ' x2="' + x2 + '%"' +
+//       ' y1="' + y1 + '%"' +
+//       ' y2="' + y2 + '%"' +
+//       ' stroke="' + options.cssStroke + '"' +
+//       ' /></a>';
+// 
+//     //Last data item
+//     if(i+1 === parts.length) {
+//       lines += '<a href="' + data[i][observation] + '" rel="noopener" target="_blank"><circle' +
+//         ' cx="' + x2 + '%"' +
+//         ' cy="' + y2 + '%"' +
+//         ' r="' + dotSize + '"' +
+//         ' stroke="#f00"' +
+//         ' fill:#f00' +
+//         ' /></a>';
+//     }
+//   }
+// 
+//   var wasDerivedFrom = '';
+//   if(options && 'url' in options) {
+//     wasDerivedFrom = ' rel="prov:wasDerivedFrom" resource="' + options.url + '"';
+//   }
+//   svg += '<g' + wasDerivedFrom + '>';
+//   svg += '<metadata rel="schema:license" resource="https://creativecommons.org/publicdomain/zero/1.0/"></metadata>';
+//   if (options && 'title' in options) {
+//     svg += '<title property="schema:name">' + options['title'] + '</title>';
+//   }
+//   svg += lines + '</g>';
+// 
+//   return svg;
+// }

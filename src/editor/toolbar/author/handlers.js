@@ -551,7 +551,7 @@ export function processAction(action, formValues, selectionData, storedSelection
 //   };
 //   options.optional = { prefLabels: ["dcterms:title"] };
 
-//   var queryURL = SPARQLQueryURL.getResourcesOfTypeWithLabel(sparqlEndpoint, resourceType, textInputA.toLowerCase(), options);
+//   var queryURL = getSPARQLResourcesOfTypeWithLabel(sparqlEndpoint, resourceType, textInputA.toLowerCase(), options);
 
 //   queryURL = getProxyableIRI(queryURL);
 
@@ -593,7 +593,7 @@ export function processAction(action, formValues, selectionData, storedSelection
 
 // // console.log(dataset);
 // // console.log(refArea);
-//         var queryURL = SPARQLQueryURL.getObservationsWithDimension(sparqlEndpoint, dataset, paramDimension);
+//         var queryURL = getSPARQLObservationsWithDimension(sparqlEndpoint, dataset, paramDimension);
 // // console.log(queryURL);
 //         queryURL = getProxyableIRI(queryURL);
 

@@ -276,15 +276,21 @@ export function parseISODuration(duration) {
   return parts.length ? parts.join(', ') : '0s';
 }
 
-export function tranformIconstoCSS(icons) {
-  let cssOutput = '';
+// export function tranformIconstoCSS(icons) {
+//   let cssOutput = '';
 
-  Object.entries(icons).forEach(([key, svg]) => {
-    cssOutput += `i${key} { background-image: url("${svgToDataURI(svg)}"); }\n`;
-  });
+//   Object.entries(icons).forEach(([key, svg]) => {
+//     cssOutput += `i${key} { background-image: url("${svgToDataURI(svg)}"); }\n`;
+//   });
 
-  return cssOutput;
-}
+//   return cssOutput;
+// }
+
+// export function generateCSSBasedOnCurrentDocumentIcons() {
+//   var icons = getIconsFromCurrentDocument();
+//   var css = tranformIconstoCSS(icons);
+//   console.log(css);
+// }
 
 export function setDocumentURL(url) {
   url = url || currentLocation();
