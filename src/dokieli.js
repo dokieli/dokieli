@@ -15,11 +15,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import rdf from 'rdf-ext';
-import { showActionMessage, insertDocumentLevelHTML, getLanguageOptionsHTML, getLicenseOptionsHTML, addMessageToLog, createNoteDataHTML } from './doc.js'
-import { stripFragmentFromString, getFragmentFromString, encodeString } from './uri.js'
-import { getResourceGraph, getGraphLabel } from './graph.js'
-import { generateUUID, tranformIconstoCSS } from './util.js'
+import { showActionMessage, getLanguageOptionsHTML, getLicenseOptionsHTML, addMessageToLog } from './doc.js'
+import { encodeString } from './uri.js'
+import { tranformIconstoCSS } from './util.js'
 import { getLocalStorageItem, removeLocalStorageItem } from './storage.js'
 import { restoreSession } from './auth.js'
 import Config from './config.js';

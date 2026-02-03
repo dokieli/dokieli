@@ -24,9 +24,8 @@ import {
   disableAutoSave,
   removeLocalStorageDocumentItems,
   updateLocalStorageProfile,
-} from 'src/storage.js';
-
-import Config from 'src/config.js';
+} from '../../src/storage.js';
+import Config from '../../src/config.js';
 
 vi.mock('src/util.js', async () => {
   const actual = await vi.importActual('src/util.js');
@@ -39,7 +38,7 @@ vi.mock('src/util.js', async () => {
   };
 });
 
-vi.mock('src/doc.js', () => ({
+vi.mock('../../src/access.js', () => ({
   getDocument: vi.fn(() => '<p>fake content</p>'),
   updateMutableResource: vi.fn(),
   accessModeAllowed: vi.fn(() => true),

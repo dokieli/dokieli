@@ -24,13 +24,13 @@ export function toggleBlockquote(schema, attrs) {
     const { nodes } = schema;
     const { $from } = state.selection;
     const nodeType = nodes.blockquote;
-console.log(attrs)
+    // console.log(attrs)
     if ($from.node().type === nodeType) {
-console.log(nodes.p)
+      // console.log(nodes.p)
       return wrapIn(nodes.p, attrs)(state, dispatch);
     }
     else {
-console.log(nodeType)
+      // console.log(nodeType)
       return wrapIn(nodeType, attrs)(state, dispatch);
     }
   };
