@@ -22,12 +22,9 @@ import Config from './config.js';
 import { i18n, i18nextInit } from './i18n.js'
 import { init } from './init.js'
 import { getDocumentContentNode } from './utils/html.js';
+import { showDocumentMenu } from './dialog.js';
 
-let DO;
-
-if (typeof window.DO === 'undefined'){
-
-DO = {
+const DO = window.DO ?? {
   C: Config,
 
   U: {
@@ -102,9 +99,15 @@ DO = {
       });
     },
 
+    // WebExtension aliases
     getContentNode: function(node) {
       return getDocumentContentNode(document);
+    },
+
+    showDocumentMenu: function() {
+      return showDocumentMenu();
     }
+
   } //DO.U
 }; //DO
 
@@ -112,10 +115,7 @@ if (document.readyState === "loading") {
   document.addEventListener('DOMContentLoaded', () => { DO.U.load(); });
 }
 else {
-  window.addEventListener("load", () => { 
-    DO.U.load(); });
-}
-
+  window.addEventListener("load", () => { DO.U.load(); });
 }
 
 window.DO = DO;

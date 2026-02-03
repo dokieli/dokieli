@@ -562,9 +562,10 @@ export function shareResource(listenerEvent, iri) {
   });
 
   var li = document.getElementById('share-resource-address-book');
-  li.insertAdjacentHTML('beforeend', Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]);
-
-  selectContacts(li, Config.User.IRI);
+  if (li && Config.User.IRI) {
+    li.insertAdjacentHTML('beforeend', Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]);
+    selectContacts(li, Config.User.IRI);
+  }
 
   var hasAccessModeControl = accessModeAllowed(documentURL, 'control');
   if (hasAccessModeControl) {
@@ -765,7 +766,7 @@ export function shareResource(listenerEvent, iri) {
 
   var shareResource = document.getElementById('share-resource');
 
-  shareResource.querySelector('#share-resource-note').focus();
+  shareResource.querySelector('#share-resource-note')?.focus();
 
   shareResource.addEventListener('click', function (e) {
     if (e.target.closest('button.close')) {
