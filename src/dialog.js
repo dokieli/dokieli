@@ -32,7 +32,7 @@ const ns = Config.ns;
 import { Icon } from './ui/icons.js';
 import { disableAutoSave, updateLocalStorageProfile, getLocalStorageItem, enableRemoteSync, disableRemoteSync, enableAutoSave } from './storage.js';
 import { showVisualisationGraph } from './viz.js';
-import { updateUILanguage } from './actions.js';
+import { exportAsDocument, updateUILanguage } from './actions.js';
 import { parseMarkdown, fragmentFromString, removeSelectorFromNode, selectArticleNode, getNodeWithoutClasses } from "./utils/html.js";
 import { showUserSigninSignout, userInfoSignOut } from './auth.js';
 
