@@ -15,21 +15,114 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { createActivityHTML, showCitations, getReferenceLabel } from './doc.js';
-import { selectArticleNode, createHTML } from './utils/html.js';
+import rdf from 'rdf-ext';
+import { createActivityHTML, showCitations, getReferenceLabel, createNoteDataHTML } from './doc.js';
+import { createHTML } from './utils/html.js';
 import { Icon } from './ui/icons.js'
+import { getButtonHTML } from './ui/buttons.js'
 import { getAbsoluteIRI, getPathURL, isHttpOrHttpsProtocol, stripFragmentFromString, currentLocation } from './uri.js';
 import { getLinkRelation, serializeDataToPreferredContentType, getGraphLanguage, getGraphLicense, getGraphRights, getGraphTypes, getGraphDate, getGraphImage, getResourceGraph, getResourceOnlyRDF, getAgentTypeIndex, getUserContacts, getAgentName, getSubjectInfo, getItemsList } from './graph.js';
 import { getAcceptPostPreference, postResource } from './fetcher.js';
 import Config from './config.js';
 import { domSanitize } from './utils/sanitization.js';
 import { generateUUID, uniqueArray } from './util.js';
-import { addNoteToNotifications, initializeButtonMore } from './actions.js';
 import { fragmentFromString, getDocumentContentNode } from "./utils/html.js";
 import { i18n } from './i18n.js';
-import rdf from 'rdf-ext';
+import { showUserIdentityInput } from './auth.js';
 
 const ns = Config?.ns;
+
+export function initializeNotifications(options = {}) {
+  // var contextNode = selectArticleNode(document);
+  // <p class="count"><data about="" datatype="xsd:nonNegativeInteger" property="sioc:num_replies" value="' + interactionsCount + '">' + interactionsCount + '</data> interactions</p>
+  //<progress min="0" max="100" value="0"></progress>
+  //<div class="actions"><a href="/docs#resource-activities" rel="noopener" target="_blank">${Icon[".fas.fa-circle-info"]}</a></div>
+
+  var buttonToggle = getButtonHTML({ key: 'panel.notifications.toggle.button', button: 'toggle', buttonClass: 'toggle' })
+
+  //TEMP buttonRel/Resource
+  var aside = `
+  <aside aria-labelledby="document-notifications-label" class="do" contenteditable="false" dir="${Config.User.UI.LanguageDir}" id="document-notifications" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#document-notifications" xml:lang="${Config.User.UI.Language}">
+    <h2 data-i18n="panel.notifications.h2" id="document-notifications-label" property="schema:name">${i18n.t('panel.notifications.h2.textContent')} ${Config.Button.Info.Notifications}</h2>
+    ${buttonToggle}
+    <div>
+      <div class="info"></div>
+      <ul class="activities"></ul>
+    </div>
+  </aside>`;
+  document.body.insertAdjacentHTML('beforeend', aside);
+  aside = document.getElementById('document-notifications');
+
+  if (options.includeButtonMore) {
+    initializeButtonMore(aside);
+  }
+
+  return aside;
+}
+
+export function initializeButtonMore(node) {
+  var info = node.querySelector('div.info');
+  var progressOld = info.querySelector('.progress');
+  var progressNew = fragmentFromString(`<div class="progress" data-i18n="panel.notifications.progress.more">${Config.Button.Notifications.More} ${i18n.t('panel.notifications.progress.more.textContent')}</div>`);
+
+  if (progressOld) {
+    info.replaceChild(progressNew, progressOld)
+  }
+  else {
+    info.appendChild(progressNew);
+  }
+
+  node = document.getElementById('document-notifications');
+
+  var buttonMore = node.querySelector('div.info button.more');
+  buttonMore.addEventListener('click', () => {
+    if (!Config.User.IRI) {
+      showUserIdentityInput();
+    }
+    else {
+      showContactsActivities();
+    }
+  });
+}
+
+export function addNoteToNotifications(noteData) {
+  var id = document.getElementById(noteData.id);
+  if (id) return;
+
+  var noteDataIRI = noteData.iri;
+  
+// console.log(noteData)
+  var note = createNoteDataHTML(noteData);
+
+  var datetime = noteData.datetime ? noteData.datetime : '1900-01-01T00:00:00.000Z';
+
+  var li = domSanitize('<li data-datetime="' + datetime + '"><blockquote cite="' + noteDataIRI + '">'+ note + '</blockquote></li>');
+// console.log(li);
+  var aside = document.getElementById('document-notifications');
+
+  if(!aside) {
+    aside = initializeNotifications({includeButtonMore: true});
+  }
+
+  var notifications = document.querySelector('#document-notifications > div > ul');
+  var timesNodes = aside.querySelectorAll('div > ul > li[data-datetime]');
+  var previousElement = null;
+
+  //Maintain reverse chronological order
+  if (timesNodes.length) {
+    var times = Array.from(timesNodes).map(element => element.getAttribute("data-datetime"));
+    var sortedTimes = times.sort().reverse();
+    var previousDateTime = findPreviousDateTime(sortedTimes, noteData.datetime);
+    previousElement = Array.from(timesNodes).find((element) => previousDateTime && previousDateTime === element.getAttribute("data-datetime") ? element : null);
+  }
+
+  if (previousElement) {
+    previousElement.insertAdjacentHTML('beforebegin', li);
+  }
+  else {
+    notifications.insertAdjacentHTML('beforeend', li);
+  }
+}
 
 export function sendNotifications(tos, note, iri, shareResource) {
   return new Promise((resolve, reject) => {
@@ -243,21 +336,21 @@ export async function showActivitiesSources(url, options = {}) {
     });
 }
 
-export function getActivities(url, options) {
-  url = url || currentLocation();
-  url = stripFragmentFromString(url);
+// export function getActivities(url, options) {
+//   url = url || currentLocation();
+//   url = stripFragmentFromString(url);
 
-  switch (options['activityType']) {
-    default:
-    case 'instanceContainer':
-      // console.log(getItemsList(url))
-      return getItemsList(url);
-    case 'instance':
-      return showActivities(url);
-  }
-}
+//   switch (options['activityType']) {
+//     default:
+//     case 'instanceContainer':
+//       // console.log(getItemsList(url))
+//       return getItemsList(url);
+//     case 'instance':
+//       return showActivities(url);
+//   }
+// }
 
-export async function showActivities(url, options = {}) {
+export function showActivities(url, options = {}) {
   if (Config.Activity[url] || Config.Notification[url]) {
     return Promise.reject([]);
   }
@@ -266,96 +359,289 @@ export async function showActivities(url, options = {}) {
 
   var documentTypes = Config.ActivitiesObjectTypes.concat(Object.keys(Config.ResourceType));
 
-  const g = await getResourceOnlyRDF(url);
-  // console.log(g)
-  if (!g || g.resource) return;
-  if (options.notification) {
-    Config.Notification[url] = {};
-    Config.Notification[url]['Activities'] = [];
-    Config.Notification[url]['Graph'] = g;
-  }
-  else {
-    Config.Activity[url] = {};
-    Config.Activity[url]['Graph'] = g;
-  }
-  var currentPathURL = currentLocation();
-  var subjectsReferences = [];
-  var subjects = [];
-  g.out().quads().forEach(t => {
-    subjects.push(t.subject.value);
-  });
-  subjects = uniqueArray(subjects);
-  subjects.forEach(i => {
-    var s = g.node(rdf.namedNode(i));
-    var types = getGraphTypes(s);
+  return getResourceOnlyRDF(url)
+    //TODO: Needs throws handled from functions calling showActivities
+    // .catch(e => {
+    //   // return [];
+    //   throw e;
+    // })
+    .then(g => {
+      // console.log(g)
+      if (!g || g.resource) return;
 
-    if (types.length) {
-      var resourceTypes = types;
+      if (options.notification) {
+        Config.Notification[url] = {};
+        Config.Notification[url]['Activities'] = [];
+        Config.Notification[url]['Graph'] = g;
+      }
+      else {
+        Config.Activity[url] = {};
+        Config.Activity[url]['Graph'] = g;
+      }
 
-      var language = getGraphLanguage(s);
-      var license = getGraphLicense(s);
-      var rights = getGraphRights(s);
+      var currentPathURL = currentLocation();
 
-      //XXX: May need to be handled in a similar way to to as:Anounce/Create?
-      if (resourceTypes.includes(ns.as.Like.value) ||
-        resourceTypes.includes(ns.as.Dislike.value)) {
-        var object = s.out(ns.as.object).values;
-        if (object.length && getPathURL(object.values[0]) == currentPathURL) {
-          var context = s.out(ns.as.context).values;
-          if (context.length) {
-            subjectsReferences.push(context[0]);
-            return showActivities(context[0])
-              .then(iri => iri)
-              .catch(e => console.log(context[0] + ': context is unreachable', e));
+      var subjectsReferences = [];
+      var subjects = [];
+      g.out().quads().forEach(t => {
+        subjects.push(t.subject.value);
+      });
+      subjects = uniqueArray(subjects);
+
+      subjects.forEach(i => {
+        var s = g.node(rdf.namedNode(i));
+        var types = getGraphTypes(s);
+
+        if (types.length) {
+          var resourceTypes = types;
+
+          var language = getGraphLanguage(s);
+          var license = getGraphLicense(s);
+          var rights = getGraphRights(s);
+
+          //XXX: May need to be handled in a similar way to to as:Anounce/Create?
+          if (resourceTypes.includes(ns.as.Like.value) ||
+              resourceTypes.includes(ns.as.Dislike.value)){
+            var object = s.out(ns.as.object).values;
+            if (object.length && getPathURL(object.values[0]) == currentPathURL) {
+              var context = s.out(ns.as.context).values;
+              if (context.length) {
+                subjectsReferences.push(context[0]);
+                return showActivities(context[0])
+                  .then(iri => iri)
+                  .catch(e => console.log(context[0] + ': context is unreachable', e));
+              }
+              else {
+                var iri = s.term.value;
+                var targetIRI = object[0];
+                // var motivatedBy = 'oa:assessing';
+                var id = generateUUID(iri);
+                var refId = 'r-' + id;
+                var refLabel = id;
+
+                var bodyValue = (resourceTypes.includes(ns.as.Like.value)) ? 'Liked' : 'Disliked';
+                var motivatedBy = bodyValue.slice(0, -1);
+
+                var noteData = {
+                  "type": bodyValue === 'Liked' ? 'approve' : 'disapprove',
+                  "mode": "read",
+                  "motivatedByIRI": motivatedBy,
+                  "id": id,
+                  "refId": refId,
+                  "refLabel": refLabel,
+                  "iri": iri, //but don't pass this to createNoteDataHTML?
+                  "creator": {},
+                  "target": {
+                    "iri": targetIRI
+                  }
+                };
+
+                var bodyObject = {
+                  "value": bodyValue
+                }
+
+                if (language) {
+                  noteData["language"] = language;
+                  bodyObject["language"] = language;
+                }
+                if (license) {
+                  noteData["rights"] = noteData["license"] = license;
+                  bodyObject["rights"] = bodyObject["license"] = license;
+                }
+
+                noteData["body"] = [bodyObject];
+
+                var actor = s.out(ns.as.actor).values;
+                if (actor.length) {
+                  noteData['creator'] = {
+                    'iri': actor[0]
+                  }
+                  var a = g.node(rdf.namedNode(noteData['creator']['iri']));
+                  var actorName = getAgentName(a);
+                  var actorImage = getGraphImage(a);
+
+                  if (typeof actorName != 'undefined') {
+                    noteData['creator']['name'] = actorName;
+                  }
+                  if (typeof actorImage != 'undefined') {
+                    noteData['creator']['image'] = actorImage;
+                  }
+                }
+                else if (resourceTypes.includes(ns.as.Dislike.value)) {
+                  noteData['creator'] = {
+                    'name': 'Anonymous Coward'
+                  }
+                }
+
+                var datetime = getGraphDate(s);
+                if (datetime){
+                  noteData['datetime'] = datetime;
+                }
+
+                addNoteToNotifications(noteData);
+              }
+            }
           }
-          else {
-            var iri_5 = s.term.value;
-            var targetIRI = object[0];
-            // var motivatedBy = 'oa:assessing';
-            var id = generateUUID(iri_5);
+          else if (resourceTypes.includes(ns.as.Relationship.value)) {
+            if (s.out(ns.as.subject).values.length && as.out(as.relationship).values.length && s.out(ns.as.object).values.length && getPathURL(s.out(ns.as.object).values[0]) == currentPathURL) {
+              var subject = s.out(ns.as.subject).values[0];
+              subjectsReferences.push(subject);
+              return showActivities(subject)
+                .then(iri => iri)
+                .catch(e => console.log(subject + ': subject is unreachable', e));
+            }
+          }
+          else if (resourceTypes.includes(ns.as.Announce.value) || resourceTypes.includes(ns.as.Create.value)) {
+            var o = {};
+
+            var object = s.out(ns.as.object).values.length ? s.out(ns.as.object).values[0] : undefined;
+            //TODO: if no object, leave.
+
+            var target = s.out(ns.as.target).values.length ? s.out(ns.as.target).values[0] : undefined;
+
+            var objectGraph = s.node(rdf.namedNode(object));
+            var inReplyTo = objectGraph.out(ns.as.inReplyTo).values.length && objectGraph.out(ns.as.inReplyTo).values[0];
+
+            if (object && (target || inReplyTo)) {
+              var targetPathURL = getPathURL(target) || getPathURL(inReplyTo);
+
+              if (targetPathURL == currentPathURL) {
+                o['targetInOriginalResource'] = true;
+              }
+              else if (Config.Resource[documentURL].graph.out(ns.rel['latest-version']).values.length && targetPathURL == getPathURL(Config.Resource[documentURL].graph.out(ns.rel['latest-version']).values[0])) {
+                o['targetInMemento'] = true;
+              }
+              else if (Config.Resource[documentURL].graph.out(ns.owl.sameAs).values.length && Config.Resource[documentURL].graph.out(ns.owl.sameAs).values[0] == targetPathURL) {
+                o['targetInSameAs'] = true;
+              }
+
+              if (o['targetInOriginalResource'] || o['targetInMemento'] || o['targetInSameAs']) {
+                subjectsReferences.push(object);
+
+                if (options.notification) {
+                  Config.Notification[url]['Activities'].push(object);
+                }
+
+                if (object.startsWith(url)) {
+                  return showAnnotation(object, s, o);
+                }
+                else {
+                  s = s.node(rdf.namedNode(object));
+                  var citation = {};
+
+                  // if (target.startsWith(currentPathURL)) {
+                    Object.keys(Config.Citation).forEach(citationCharacterization => {
+                      var citedEntity = s.out(rdf.namedNode(citationCharacterization)).values;
+                      // if(citedEntity) {
+                        citedEntity.forEach(cE => {
+                          if(cE.startsWith(currentPathURL)) {
+                            o['objectCitingEntity'] = true;
+                            citation = {
+                              'citingEntity': object,
+                              'citationCharacterization': citationCharacterization,
+                              'citedEntity': target || inReplyTo
+                            }
+                          }
+                        })
+                      // }
+                    })
+                  // }
+
+                  if (o['objectCitingEntity']) {
+                    return showCitations(citation, s);
+                  }
+                  else {
+                    return showActivities(object, o)
+                      .then(iri => iri)
+                      .catch(e => {
+                        // console.log(object + ': object is unreachable', e)
+                      });
+                  }
+                }
+              }
+            }
+          }
+          // else if (resourceTypes.indexOf('http://purl.org/spar/cito/Citation')) {
+            //TODO:
+            // var iri = s.iri().toString();
+            // return showCitations(iri, s)
+          // }
+          else if(resourceTypes.includes(ns.as.Add.value)) {
+            var object = s.out(ns.as.object).values.length ? s.out(ns.as.object).values[0] : undefined;
+            var target = s.out(ns.as.target).values.length ? s.out(ns.as.target).values[0] : undefined;
+            var origin = s.out(ns.as.origin).values.length ? s.out(ns.as.origin).values[0] : undefined;
+
+
+            if (object && (target || origin)) {
+              var targetPathURL = getPathURL(target);
+              var originPathURL = getPathURL(origin);
+// console.log('pathURLs: ', targetPathURL, originPathURL);
+              if (targetPathURL == currentPathURL || originPathURL == currentPathURL) {
+                subjectsReferences.push(object);
+// console.log('object:', object);
+// console.log('target:', target);
+// console.log('origin:', origin);
+
+                if (object.startsWith(url)) {
+                  return showAnnotation(object, s);
+                }
+                else {
+                  return showActivities(object)
+                    .then(iri => iri)
+                    .catch(e => console.log(object + ': object is unreachable', e));
+                }
+              }
+            }
+          }
+          else if (resourceTypes.includes(ns.oa.Annotation.value) && getPathURL(s.out(ns.oa.hasTarget).values[0]) == currentPathURL && !subjectsReferences.includes(i)) {
+            return showAnnotation(i, s);
+          }
+          else if (!subjectsReferences.includes(i) && documentTypes.some(item => resourceTypes.includes(item)) && s.out(ns.as.inReplyTo).values.length && s.out(ns.as.inReplyTo).values[0] && getPathURL(s.out(ns.as.inReplyTo).values[0]) == currentPathURL) {
+              subjectsReferences.push(i);
+            return showAnnotation(i, s);
+          }
+          else if (resourceTypes.includes(ns.bookmark.Bookmark.value) && s.out(ns.bookmark.recalls).values.length && getPathURL(s.out(ns.bookmark.recalls).values[0]) == currentPathURL ) {
+            var iri = s.term.value;
+            var targetIRI = s.out(ns.bookmark.recalls).values[0];
+            var motivatedBy = 'bookmark:Bookmark';
+            var id = generateUUID(iri);
             var refId = 'r-' + id;
             var refLabel = id;
 
-            var bodyValue = (resourceTypes.includes(ns.as.Like.value)) ? 'Liked' : 'Disliked';
-            var motivatedBy = bodyValue.slice(0, -1);
+            var bodyValue = 'Bookmarked';
 
             var noteData = {
-              "type": bodyValue === 'Liked' ? 'approve' : 'disapprove',
+              "type": 'bookmark',
               "mode": "read",
               "motivatedByIRI": motivatedBy,
               "id": id,
               "refId": refId,
               "refLabel": refLabel,
-              "iri": iri_5, //but don't pass this to createNoteDataHTML?
+              "iri": iri, //but don't pass this to createNoteDataHTML?
               "creator": {},
               "target": {
                 "iri": targetIRI
+              },
+              "body": [{ "value": bodyValue }]
+            };
+
+            var creator = options.agent;
+            //TODO: Move to graph.js?
+            Object.keys(Config.Actor.Property).some(key => {
+              const { values } = s.out(rdf.namedNode(key));
+              if (values.length) {
+                creator = values[0];
+                return true;
               }
-            };
+            })
 
-            var bodyObject = {
-              "value": bodyValue
-            };
-
-            if (language) {
-              noteData["language"] = language;
-              bodyObject["language"] = language;
-            }
-            if (license) {
-              noteData["rights"] = noteData["license"] = license;
-              bodyObject["rights"] = bodyObject["license"] = license;
-            }
-
-            noteData["body"] = [bodyObject];
-
-            var actor = s.out(ns.as.actor).values;
-            if (actor.length) {
+            if (creator){
               noteData['creator'] = {
-                'iri': actor[0]
-              };
-              var a_2 = g.node(rdf.namedNode(noteData['creator']['iri']));
-              var actorName = getAgentName(a_2);
-              var actorImage = getGraphImage(a_2);
+                'iri': creator
+              }
+              var a = g.node(rdf.namedNode(noteData['creator']['iri']));
+              var actorName = getAgentName(a);
+              var actorImage = getGraphImage(a);
 
               if (typeof actorName != 'undefined') {
                 noteData['creator']['name'] = actorName;
@@ -364,213 +650,40 @@ export async function showActivities(url, options = {}) {
                 noteData['creator']['image'] = actorImage;
               }
             }
-            else if (resourceTypes.includes(ns.as.Dislike.value)) {
-              noteData['creator'] = {
-                'name': 'Anonymous Coward'
-              };
-            }
 
             var datetime = getGraphDate(s);
             if (datetime) {
               noteData['datetime'] = datetime;
             }
 
+            if (license) {
+              noteData['license'] = license;
+            }
+
+            if (rights) {
+              noteData['rights'] = rights;
+            }
+
             addNoteToNotifications(noteData);
           }
-        }
-      }
-      else if (resourceTypes.includes(ns.as.Relationship.value)) {
-        if (s.out(ns.as.subject).values.length && as.out(as.relationship).values.length && s.out(ns.as.object).values.length && getPathURL(s.out(ns.as.object).values[0]) == currentPathURL) {
-          var subject = s.out(ns.as.subject).values[0];
-          subjectsReferences.push(subject);
-          return showActivities(subject)
-            .then(iri_2 => iri_2)
-            .catch(e_1 => console.log(subject + ': subject is unreachable', e_1));
-        }
-      }
-      else if (resourceTypes.includes(ns.as.Announce.value) || resourceTypes.includes(ns.as.Create.value)) {
-        var o_1 = {};
-
-        var object = s.out(ns.as.object).values.length ? s.out(ns.as.object).values[0] : undefined;
-        //TODO: if no object, leave.
-        var target = s.out(ns.as.target).values.length ? s.out(ns.as.target).values[0] : undefined;
-
-        var objectGraph = s.node(rdf.namedNode(object));
-        var inReplyTo = objectGraph.out(ns.as.inReplyTo).values.length && objectGraph.out(ns.as.inReplyTo).values[0];
-
-        if (object && (target || inReplyTo)) {
-          var targetPathURL = getPathURL(target) || getPathURL(inReplyTo);
-
-          if (targetPathURL == currentPathURL) {
-            o_1['targetInOriginalResource'] = true;
-          }
-          else if (Config.Resource[documentURL].graph.out(ns.rel['latest-version']).values.length && targetPathURL == getPathURL(Config.Resource[documentURL].graph.out(ns.rel['latest-version']).values[0])) {
-            o_1['targetInMemento'] = true;
-          }
-          else if (Config.Resource[documentURL].graph.out(ns.owl.sameAs).values.length && Config.Resource[documentURL].graph.out(ns.owl.sameAs).values[0] == targetPathURL) {
-            o_1['targetInSameAs'] = true;
-          }
-
-          if (o_1['targetInOriginalResource'] || o_1['targetInMemento'] || o_1['targetInSameAs']) {
-            subjectsReferences.push(object);
-
-            if (options.notification) {
-              Config.Notification[url]['Activities'].push(object);
-            }
-
-            if (object.startsWith(url)) {
-              return showAnnotation(object, s, o_1);
-            }
-            else {
-              s = s.node(rdf.namedNode(object));
-              var citation = {};
-
-              // if (target.startsWith(currentPathURL)) {
-              Object.keys(Config.Citation).forEach(citationCharacterization => {
-                var citedEntity = s.out(rdf.namedNode(citationCharacterization)).values;
-                // if(citedEntity) {
-                citedEntity.forEach(cE => {
-                  if (cE.startsWith(currentPathURL)) {
-                    o_1['objectCitingEntity'] = true;
-                    citation = {
-                      'citingEntity': object,
-                      'citationCharacterization': citationCharacterization,
-                      'citedEntity': target || inReplyTo
-                    };
-                  }
-                });
-              });
-              // }
-              if (o_1['objectCitingEntity']) {
-                return showCitations(citation, s);
-              }
-              else {
-                return showActivities(object, o_1)
-                  .then(iri_3 => iri_3)
-                  .catch(e_2 => {
-                  });
-              }
-            }
+          else {
+            // console.log(i + ' has unrecognised types: ' + resourceTypes);
+            // return Promise.reject({'message': 'Unrecognised types ' + resourceTypes});
           }
         }
-      }
-
-
-
-
-
-      // else if (resourceTypes.indexOf('http://purl.org/spar/cito/Citation')) {
-      //TODO:
-      // var iri = s.iri().toString();
-      // return showCitations(iri, s)
-      // }
-      else if (resourceTypes.includes(ns.as.Add.value)) {
-        var object = s.out(ns.as.object).values.length ? s.out(ns.as.object).values[0] : undefined;
-        var target = s.out(ns.as.target).values.length ? s.out(ns.as.target).values[0] : undefined;
-        var origin = s.out(ns.as.origin).values.length ? s.out(ns.as.origin).values[0] : undefined;
-
-
-        if (object && (target || origin)) {
-          var targetPathURL = getPathURL(target);
-          var originPathURL = getPathURL(origin);
-          // console.log('pathURLs: ', targetPathURL, originPathURL);
-          if (targetPathURL == currentPathURL || originPathURL == currentPathURL) {
-            subjectsReferences.push(object);
-            // console.log('object:', object);
-            // console.log('target:', target);
-            // console.log('origin:', origin);
-            if (object.startsWith(url)) {
-              return showAnnotation(object, s);
-            }
-            else {
-              return showActivities(object)
-                .then(iri_4 => iri_4)
-                .catch(e_3 => console.log(object + ': object is unreachable', e_3));
-            }
-          }
+        else {
+          // console.log('Skipping ' + i + ': No type.');
+          // return Promise.reject({'message': 'Activity has no type. What to do?'});
         }
-      }
-      else if (resourceTypes.includes(ns.oa.Annotation.value) && getPathURL(s.out(ns.oa.hasTarget).values[0]) == currentPathURL && !subjectsReferences.includes(i)) {
-        return showAnnotation(i, s);
-      }
-      else if (!subjectsReferences.includes(i) && documentTypes.some(item => resourceTypes.includes(item)) && s.out(ns.as.inReplyTo).values.length && s.out(ns.as.inReplyTo).values[0] && getPathURL(s.out(ns.as.inReplyTo).values[0]) == currentPathURL) {
-        subjectsReferences.push(i);
-        return showAnnotation(i, s);
-      }
-      else if (resourceTypes.includes(ns.bookmark.Bookmark.value) && s.out(ns.bookmark.recalls).values.length && getPathURL(s.out(ns.bookmark.recalls).values[0]) == currentPathURL) {
-        var iri_5 = s.term.value;
-        var targetIRI = s.out(ns.bookmark.recalls).values[0];
-        var motivatedBy = 'bookmark:Bookmark';
-        var id = generateUUID(iri_5);
-        var refId = 'r-' + id;
-        var refLabel = id;
-
-        var bodyValue = 'Bookmarked';
-
-        var noteData = {
-          "type": 'bookmark',
-          "mode": "read",
-          "motivatedByIRI": motivatedBy,
-          "id": id,
-          "refId": refId,
-          "refLabel": refLabel,
-          "iri": iri_5, //but don't pass this to createNoteDataHTML?
-          "creator": {},
-          "target": {
-            "iri": targetIRI
-          },
-          "body": [{ "value": bodyValue }]
-        };
-
-        var creator = options.agent;
-        //TODO: Move to graph.js?
-        Object.keys(Config.Actor.Property).some(key => {
-          const { values } = s.out(rdf.namedNode(key));
-          if (values.length) {
-            creator = values[0];
-            return true;
-          }
-        });
-
-        if (creator) {
-          noteData['creator'] = {
-            'iri': creator
-          };
-          var a_2 = g.node(rdf.namedNode(noteData['creator']['iri']));
-          var actorName = getAgentName(a_2);
-          var actorImage = getGraphImage(a_2);
-
-          if (typeof actorName != 'undefined') {
-            noteData['creator']['name'] = actorName;
-          }
-          if (typeof actorImage != 'undefined') {
-            noteData['creator']['image'] = actorImage;
-          }
-        }
-
-        var datetime = getGraphDate(s);
-        if (datetime) {
-          noteData['datetime'] = datetime;
-        }
-
-        if (license) {
-          noteData['license'] = license;
-        }
-
-        if (rights) {
-          noteData['rights'] = rights;
-        }
-
-        addNoteToNotifications(noteData);
-      }
-      else {
-      }
+      });
     }
-    else {
-    }
-  });
+    // ,
+    // function(reason) {
+    //   console.log(url + ': is unreachable. ' + reason);
+    //   return reason;
+    // }
+  );
 }
-
 
 export function showContactsActivities() {
   var aside = document.querySelector('#document-notifications');

@@ -449,34 +449,6 @@ function showAboutDokieli(node) {
   node.insertAdjacentHTML('beforeend', html);
 }
 
-export function initializeNotifications(options = {}) {
-  // var contextNode = selectArticleNode(document);
-  // <p class="count"><data about="" datatype="xsd:nonNegativeInteger" property="sioc:num_replies" value="' + interactionsCount + '">' + interactionsCount + '</data> interactions</p>
-  //<progress min="0" max="100" value="0"></progress>
-  //<div class="actions"><a href="/docs#resource-activities" rel="noopener" target="_blank">${Icon[".fas.fa-circle-info"]}</a></div>
-
-  var buttonToggle = getButtonHTML({ key: 'panel.notifications.toggle.button', button: 'toggle', buttonClass: 'toggle' })
-
-  //TEMP buttonRel/Resource
-  var aside = `
-  <aside aria-labelledby="document-notifications-label" class="do" contenteditable="false" dir="${Config.User.UI.LanguageDir}" id="document-notifications" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#document-notifications" xml:lang="${Config.User.UI.Language}">
-    <h2 data-i18n="panel.notifications.h2" id="document-notifications-label" property="schema:name">${i18n.t('panel.notifications.h2.textContent')} ${Config.Button.Info.Notifications}</h2>
-    ${buttonToggle}
-    <div>
-      <div class="info"></div>
-      <ul class="activities"></ul>
-    </div>
-  </aside>`;
-  document.body.insertAdjacentHTML('beforeend', aside);
-  aside = document.getElementById('document-notifications');
-
-  if (options.includeButtonMore) {
-    initializeButtonMore(aside);
-  }
-
-  return aside;
-}
-
 export function showNotifications() {
   hideDocumentMenu();
 

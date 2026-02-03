@@ -17,6 +17,7 @@ limitations under the License.
 
 import { showUserIdentityInput, signOut } from "./auth.js";
 import { i18n } from "./i18n.js";
+import Config from "./config.js";
 
 export function eventButtonClose() {
   document.addEventListener('click', e => {
