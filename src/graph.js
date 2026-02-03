@@ -195,6 +195,7 @@ function getSubjectInfo (subjectIRI, options = {}) {
         PrivateTypeIndex: getAgentPrivateTypeIndex(g),
         Liked: getAgentLiked(g),
         Occupations: getAgentOccupations(g),
+        Skills: getGraphSkills(g),
         Publications: getAgentPublications(g),
         Made: getAgentMade(g)
       }
@@ -925,6 +926,7 @@ function getAgentSupplementalInfo(iri) {
         var knows = getAgentKnows(s) || [];
         var liked = getAgentLiked(s) || [];
         var occupations = getAgentOccupations(s) || [];
+        var skills = getGraphSkills(s) || [];
         var publications = getAgentPublications(s) || [];
         var made = getAgentMade(s) || [];
         //TODO publicTypeIndex privateTypeIndex ??
@@ -957,6 +959,12 @@ function getAgentSupplementalInfo(iri) {
           Config.User.Occupations = (Config.User.Occupations)
             ? uniqueArray(Config.User.Occupations.concat(occupations))
             : occupations;
+        }
+
+        if (skills.length > 0) {
+          Config.User.Skills = (Config.User.Skills)
+            ? uniqueArray(Config.User.Skills.concat(skills))
+            : skills;
         }
 
         if (publications.length > 0) {
@@ -1030,6 +1038,7 @@ function getAgentSeeAlsoPrimaryTopicOf(g, subjectURI) {
             var knows = getAgentKnows(s) || [];
             var liked = getAgentLiked(s) || [];
             var occupations = getAgentOccupations(s) || [];
+            var skills = getGraphSkills(s) || [];
             var publications = getAgentPublications(s) || [];
             var made = getAgentMade(s) || [];
 
@@ -1049,6 +1058,12 @@ function getAgentSeeAlsoPrimaryTopicOf(g, subjectURI) {
               Config.User.Occupations = (Config.User.Occupations)
                 ? uniqueArray(Config.User.Occupations.concat(occupations))
                 : occupations;
+            }
+
+            if (skills.length) {
+              Config.User.Skills = (Config.User.Skills)
+                ? uniqueArray(Config.User.Skills.concat(skills))
+                : skills;
             }
 
             if (publications.length) {
@@ -1373,6 +1388,13 @@ function getAgentOccupations (s) {
 
 function getGraphAudience (s) {
   var d = s.out(ns.schema.audience).values;
+  return d.length ? d : undefined;
+}
+
+function getGraphSkills (s) {
+  var ccoSkills = s.out(ns.cco.skill).values;
+  var schemaSkills = s.out(ns.schema.skills).values;
+  var d = uniqueArray(ccoSkills.concat(schemaSkills));
   return d.length ? d : undefined;
 }
 
@@ -1966,6 +1988,7 @@ export {
   getGraphInbox,
   sortGraphTriples,
   getGraphAudience,
+  getGraphSkills,
   getACLResourceGraph,
   getAccessSubjects,
   getAuthorizationsMatching,

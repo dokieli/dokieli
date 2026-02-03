@@ -545,6 +545,7 @@ export default {
     bibo: rdf.namespace('http://purl.org/ontology/bibo/'),
     bookmark: rdf.namespace('http://www.w3.org/2002/01/bookmark#'),
     cc: rdf.namespace('http://creativecommons.org/ns#'),
+    cco: rdf.namespace('http://purl.org/ontology/cco/core#'),
     cert: rdf.namespace('http://www.w3.org/ns/auth/cert#'),
     cito: rdf.namespace('http://purl.org/spar/cito/'),
     dbr: rdf.namespace('http://dbpedia.org/resource/'),
