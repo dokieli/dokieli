@@ -33,7 +33,7 @@ import { i18n } from './i18n.js';
 
 const ns = Config.ns;
 
-export function getDocument(cn, options) {
+export function getDocument(cn, options = {}) {
   let node = cn || document.documentElement;
 
   if (typeof cn === 'string') {
@@ -63,6 +63,7 @@ export function getDocument(cn, options) {
   let nodeDocument = getDocumentNodeFromString(div.getHTML(), nodeParseOptions);
 
   let fragment = cleanProseMirrorOutput(nodeDocument);
+
   nodeDocument.documentElement.setHTMLUnsafe(stringFromFragment(fragment));
 
   nodeDocument = normalizeWhitespace(nodeDocument);

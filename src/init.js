@@ -115,7 +115,7 @@ function initDocumentActions() {
 
   //Fugly
   function checkResourceInfo() {
-// console.log(DO.C.Resource[documentURL])
+// console.log(Config.Resource[documentURL])
 
     if (documentURL in Config.Resource && 'state' in Config.Resource[documentURL]) {
       processPotentialAction(Config.Resource[documentURL]);
@@ -141,7 +141,7 @@ function initDocumentActions() {
       //   options['followLinkRelationTypes'] = ['describedby'];
       // }
 
-      // getResourceSupplementalInfo(DO.C.DocumentURL, options).then(resourceInfo => {
+      // getResourceSupplementalInfo(Config.DocumentURL, options).then(resourceInfo => {
       //   updateButtons();
 
         syncLocalRemoteResource();
@@ -232,14 +232,14 @@ export async function setDocumentMode(mode) {
     }
 
     if (paramGraphView.length && paramGraphView[0] == 'true') {
-      showVisualisationGraph(DO.C.DocumentURL, getDocument(null, documentOptions), '#graph-view');
+      showVisualisationGraph(Config.DocumentURL, getDocument(null, documentOptions), '#graph-view');
     }
 
     // stripUrlSearchHash();
   }
 
   if (paramGraphView.length && paramGraphView[0] == 'true' && paramOpen.length == 0) {
-    showVisualisationGraph(DO.C.DocumentURL, getDocument(null, documentOptions), '#graph-view');
+    showVisualisationGraph(Config.DocumentURL, getDocument(null, documentOptions), '#graph-view');
   }
 
   var urls = paramGraph.map(url => {
@@ -297,8 +297,8 @@ export async function setDocumentMode(mode) {
   //   stripUrlSearchHash(['graph-view']);
   // }
 
-  //XXX: This else if works but current document needs to be processed for DO.C.Resource. See also config.js init and whether non text/html is ever the case (e.g., dokieli in SVG?)
-  // else if (DO.C.Resource[DO.C.DocumentURL].contentType == 'text/html') {
+  //XXX: This else if works but current document needs to be processed for Config.Resource. See also config.js init and whether non text/html is ever the case (e.g., dokieli in SVG?)
+  // else if (Config.Resource[Config.DocumentURL].contentType == 'text/html') {
     var node = selectArticleNode(document);
     var hasContent = hasNonWhitespaceText(node);
 

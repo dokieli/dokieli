@@ -553,7 +553,7 @@ export class ToolbarView {
 
   checkAnnotationServiceUpdateForm(action) {
     const documentOptions = {
-      ...DO.C.DOMProcessing,
+      ...Config.DOMProcessing,
       //sanitize: in this context, seems low risk.
       normalize: true
     };
