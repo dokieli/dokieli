@@ -21,10 +21,10 @@ import {
   getResourceHead,
   getResourceOptions,
   authFetch
-} from "src/fetcher";
+} from "../../src/fetcher.js";
 import { setupMockFetch, resetMockFetch, mockFetch } from "../utils/mockFetch";
 import { Session } from "@uvdsl/solid-oidc-client-browser";
-import Config from "src/config";
+import Config from "../../src//config";
 
 describe("fetcher", () => {
   beforeEach(() => {
@@ -234,7 +234,7 @@ describe('authFetch', () => {
       json: async () => ({ message: 'success' }),
     });
 
-    Config['Session'].authFetch = mockAuthFetch;
+    Config['Session']['authFetch'] = mockAuthFetch;
 
     const response = await authFetch(url, options);
 

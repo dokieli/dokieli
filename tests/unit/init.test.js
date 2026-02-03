@@ -16,6 +16,7 @@ limitations under the License.
 */
 
 import { initLocalStorage } from "../../src/init";
+import Config from "../../src/config.js"
 
 test('initLocalStorage enables localStorage when available', () => {
   initLocalStorage('test-key');

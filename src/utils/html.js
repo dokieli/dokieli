@@ -248,23 +248,23 @@ export function getFormValues(form) {
   return formValues;
 }
 
-export function getIconsFromCurrentDocument() {
-  var usedIcons = Array.from(document.querySelectorAll('i[class*="fa-"]'))
-    .flatMap(el => Array.from(el.classList))
-    .filter(cls => cls.startsWith('fa-'));
+// export function getIconsFromCurrentDocument() {
+//   var usedIcons = Array.from(document.querySelectorAll('i[class*="fa-"]'))
+//     .flatMap(el => Array.from(el.classList))
+//     .filter(cls => cls.startsWith('fa-'));
 
-  var uniqueClasses = [...new Set(usedIcons)];
+//   var uniqueClasses = [...new Set(usedIcons)];
 
-  var filteredEntries = Object.entries(Icon).filter(([cls]) =>
-    uniqueClasses.some(usedCls => cls.includes(usedCls))
-  );
+//   var filteredEntries = Object.entries(Icon).filter(([cls]) =>
+//     uniqueClasses.some(usedCls => cls.includes(usedCls))
+//   );
 
-  var sortedEntries = filteredEntries.sort(([a], [b]) => a.localeCompare(b));
+//   var sortedEntries = filteredEntries.sort(([a], [b]) => a.localeCompare(b));
 
-  var newIcons = Object.fromEntries(sortedEntries);
+//   var newIcons = Object.fromEntries(sortedEntries);
 
-  return newIcons;
-}
+//   return newIcons;
+// }
 
 export function getNodeWithoutClasses (node, classNames) {
   classNames = Array.isArray(classNames) ? classNames : [classNames];
