@@ -32,6 +32,8 @@ export function domSanitize(strHTML, options = {}) {
         if (!Object.keys(Config.DOMProcessing.allowedScripts).includes(src)) {
           node.remove();
         }
+      } else {
+        node.remove();
       }
     }
   });
@@ -151,30 +153,31 @@ export function sanitizeObject(input, options = {}) {
   return input;
 }
 
-export function domSanitizeHTMLBody(nodeDocument, options) {
-  //EXPERIMENTAL
-  // var nodeDocument = document.implementation.createHTMLDocument('template');
-  // nodeDocument.documentElement.setHTMLUnsafe(htmlString);
+export function domSanitizeHTMLBody(input, options) {
+  if (!input) return input;
 
-  let rootNode = '';
+  let rootNode;
   let html = '';
 
-  if (nodeDocument.constructor.name === 'HTMLDocument') {
-    rootNode = nodeDocument.body || undefined; // For HTML documents
-    html = rootNode ? rootNode.getHTML() : '';
-  } else if (nodeDocument.constructor.name === 'XMLDocument') {
-    rootNode = nodeDocument.documentElement || undefined; // For XML documents
-    html = rootNode ? rootNode.outerHTML : '';
+  if (input.constructor.name === 'HTMLDocument') {
+    rootNode = input.body;
+    if (!rootNode) return input;
+    html = rootNode.getHTML ? rootNode.getHTML() : '';
+  } else if (input.constructor.name === 'XMLDocument') {
+    rootNode = input.documentElement;
+    if (!rootNode) return input;
+    html = rootNode.outerHTML || '';
+  } else {
+    rootNode = input;
+    html = rootNode.getHTML ? rootNode.getHTML() : '';
   }
 
   const sanitizedChildren = domSanitize(html, options);
 
-  if (nodeDocument.constructor.name === 'HTMLDocument') {
-    nodeDocument.body.setHTMLUnsafe(sanitizedChildren);
-  }
-  else {
-    nodeDocument.documentElement.setHTMLUnsafe(sanitizedChildren);
+  if (rootNode.setHTMLUnsafe) {
+    rootNode.setHTMLUnsafe(sanitizedChildren);
   }
 
-  return nodeDocument;
+  return input;
 }
+

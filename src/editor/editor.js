@@ -31,6 +31,7 @@ import { updateLocalStorageProfile } from "../storage.js";
 import { updateButtons } from "../ui/buttons.js";
 import { cleanProseMirrorOutput } from "../utils/normalization.js";
 import { i18n } from "../i18n.js";
+import { domSanitize, domSanitizeHTMLBody } from "../utils/sanitization.js";
 
 const ns = Config.ns;
 
@@ -68,7 +69,9 @@ export class Editor {
     switch (this.mode) {
       case 'author':
         this.destroySocialToolbar();
-        this.createEditor(this.node);
+        // PM needs actual live DOM node (not a clone or fragment)
+        this.node = domSanitizeHTMLBody(this.node)
+        this.createEditor();
         this.authorToolbarView = this.editorView?.pluginViews[0];
         break;
 
@@ -76,7 +79,7 @@ export class Editor {
       default:
         this.storeRestrictedNodes();
         this.destroyEditor();
-        this.createSocialToolbar(this.node);
+        this.createSocialToolbar();
         break;
     }
 
@@ -88,10 +91,14 @@ export class Editor {
 
   //TODO: Maintain this list in config normalisation.
   storeRestrictedNodes() {
+    //Skipping these selectors
     const filterSelectors = ['#document-editor', '#review-changes', '.copy-to-clipboard', '.robustlinks', '.ref'];
     const notSelector = filterSelectors.map(selector => `:not(${selector})`).join('');
     //TODO: toc-nav is W3C-specific. Move this into config normalisation
     const allowedScriptSelectors = Object.keys(Config.DOMProcessing.allowedScripts).map(src => `script[src="${src}"]`).join(', ');
+
+    console.log(Array.from(document.body.querySelectorAll('script')))
+    console.log(Array.from(document.body.querySelectorAll('script'))[0].src)
 
     const allowedScriptElements = Array.from(document.body.querySelectorAll('script'))
     .filter(script => script.src && Object.keys(Config.DOMProcessing.allowedScripts).includes(script.src))
@@ -104,7 +111,7 @@ export class Editor {
     this.restrictedNodes = Array.from(document.body.querySelectorAll(selector));
     // this.restrictedNodes = Array.from(document.body.querySelectorAll(selector)).concat(allowedScriptElements);
 
-    // console.log(this.restrictedNodes)
+    console.log(this.restrictedNodes)
   }
 
   showEditorModeActionMessage(mode, options = {}) {
@@ -241,8 +248,11 @@ export class Editor {
     this.storeRestrictedNodes();
 
     this.restrictedNodes.forEach(node => {
+      console.log(node)
       node.remove();
     });
+
+    console.log(this.node)
 
     const editorToolbarPlugin = new Plugin({
       // this editorView is passed onto the Plugin - not this.editorView
