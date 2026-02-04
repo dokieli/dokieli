@@ -35,6 +35,7 @@ import { showVisualisationGraph } from './viz.js';
 import { exportAsDocument, updateUILanguage } from './actions.js';
 import { parseMarkdown, fragmentFromString, removeSelectorFromNode, selectArticleNode, getNodeWithoutClasses } from "./utils/html.js";
 import { showUserSigninSignout, userInfoSignOut } from './auth.js';
+import { generateGeoView } from './geo.js';
 
 export function initDocumentMenu() {
   document.body.prepend(fragmentFromString(`<div class="do" id="document-menu" dir="${Config.User.UI.LanguageDir}" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}">${Config.Button.Menu.OpenMenu}<div><section id="user-info"></section></div></div>`));
