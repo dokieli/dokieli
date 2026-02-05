@@ -26,11 +26,12 @@ import { escapeRDFLiteral, generateAttributeId, generateUUID, htmlEncode, setDoc
 import { deleteResource, getResource, patchResourceWithAcceptPatch, postResource, putResource, putResourceWithAcceptPut, setAcceptRDFTypes } from './fetcher.js';
 import { forceTrailingSlash, generateDataURI, getAbsoluteIRI, getBaseURL, isHttpOrHttpsProtocol, stripFragmentFromString, getFragmentFromString, getURLLastPath, currentLocation } from './uri.js';
 import { getAccessSubjects, getACLResourceGraph, getAgentInbox, getAgentName, getAuthorizationsMatching, getGraphAuthors, getGraphContributors, getGraphEditors, getGraphImage, getGraphLabelOrIRI, getGraphPerformers, getGraphTypes, getLinkRelation, getLinkRelationFromHead, getResourceGraph, getUserContacts, getUserLabelOrIRI, serializeData, getSubjectInfo } from './graph.js';
-import { notifyInbox, sendNotifications, showContactsActivities } from './activity.js';
+import { notifyInbox, sendNotifications, showContactsActivities, initializeNotifications } from './activity.js';
 import Config from './config.js';
 const ns = Config.ns;
 import { Icon } from './ui/icons.js';
-import { disableAutoSave, updateLocalStorageProfile, getLocalStorageItem, enableRemoteSync, disableRemoteSync, enableAutoSave } from './storage.js';
+import { updateLocalStorageProfile, getLocalStorageItem  } from './storage.js';
+import { enableAutoSave, disableAutoSave, enableRemoteSync, disableRemoteSync } from './sync.js';
 import { showVisualisationGraph } from './viz.js';
 import { exportAsDocument, updateUILanguage } from './actions.js';
 import { parseMarkdown, fragmentFromString, removeSelectorFromNode, selectArticleNode, getNodeWithoutClasses } from "./utils/html.js";
@@ -38,14 +39,14 @@ import { showUserSigninSignout, userInfoSignOut } from './auth.js';
 import { generateGeoView } from './geo.js';
 
 export function initDocumentMenu() {
+  //TODO: Looking into adding back about/resource="#document-menu" typeof="schema:ActivateAction"
   document.body.prepend(fragmentFromString(`<div class="do" id="document-menu" dir="${Config.User.UI.LanguageDir}" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}">${Config.Button.Menu.OpenMenu}<div><section id="user-info"></section></div></div>`));
 
   var userInfo = document.getElementById('user-info');
 
-  document.querySelector('#document-menu').addEventListener('click', (e) => {
+  document.addEventListener('click', (e) => {
     var button = e.target.closest('button');
-
-    if (button) {
+    if (button && button.closest('.do-menu')) {
       if (button.classList.contains('show')) {
         showDocumentMenu(e);
       }
@@ -162,13 +163,14 @@ function showLanguages(node) {
 
   node.insertAdjacentHTML('afterbegin', html);
 
-  const select = document.getElementById('ui-language-select');
+  document.addEventListener('change', (e) => {
+    const select = e.target.closest('#ui-language-select');
+    if (!select) return;
 
-  select.addEventListener('change', (e) => {
     e.preventDefault();
     e.stopPropagation();
 
-    updateUILanguage(e.target.value);
+    updateUILanguage(select.value);
   });
 }
 
@@ -191,12 +193,14 @@ export async function showAutoSave(node) {
 
   node.querySelector('#document-do').insertAdjacentHTML('afterend', html);
 
-  document.getElementById('document-autosave').addEventListener('change', async (e) => {
-    if (e.target.checked) {
-      await enableRemoteSync();
-    }
-    else {
-      await disableRemoteSync();
+  document.addEventListener('change', async (e) => {
+    if (e.target.matches('#autosave-remote')) {
+      if (e.target.checked) {
+        await enableRemoteSync();
+      }
+      else {
+        await disableRemoteSync();
+      }
     }
   });
 }
@@ -246,9 +250,7 @@ function showDocumentDo(node) {
 
   node.insertAdjacentHTML('beforeend', s);
 
-  var dd = document.getElementById('document-do');
-
-  dd.addEventListener('click', e => {
+  document.addEventListener('click', e => {
     if (e.target.closest('.resource-share')) {
       shareResource(e);
     }
@@ -394,20 +396,27 @@ function showViews(node) {
   s += '</ul></section>';
   node.insertAdjacentHTML('beforeend', domSanitize(s));
 
-  var viewButtons = document.querySelectorAll('#document-views button:not([class~="resource-visualise"])');
-  for (let i = 0; i < viewButtons.length; i++) {
-    viewButtons[i].removeEventListener('click', initCurrentStylesheet);
-    viewButtons[i].addEventListener('click', initCurrentStylesheet);
-  }
+  // var viewButtons = document.querySelectorAll('#document-views button:not([class~="resource-visualise"])');
+  // for (let i = 0; i < viewButtons.length; i++) {
+  //   viewButtons[i].removeEventListener('click', initCurrentStylesheet);
+  //   viewButtons[i].addEventListener('click', initCurrentStylesheet);
+  // }
+
+  document.addEventListener('click', (e) => {
+    const button = e.target.closest('#document-views button:not([class~="resource-visualise"])');
+    if (!button) return;
+
+    initCurrentStylesheet(e);
+  });
 
   if(Config.GraphViewerAvailable) {
-    document.querySelector('#document-views').addEventListener('click', (e) => {
-      if (e.target.closest('.resource-visualise')) {
+    document.addEventListener('click', (e) => {
+      const button = e.target.closest('.resource-visualise');
+
+      if (button) {
         if(document.querySelector('#graph-view')) { return; }
 
-        if (e) {
-          e.target.disabled = true;
-        }
+        button.disabled = true;
 
         var buttonClose = getButtonHTML({ key: 'dialog.graph-view.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
@@ -419,17 +428,17 @@ function showViews(node) {
           </aside>
         `));
 
-        var graphView = document.getElementById('graph-view');
-        graphView.addEventListener('click', (e) => {
-          if (e.target.closest('button.close')) {
-            var rv = document.querySelector('#document-views .resource-visualise');
-            if (rv) {
-              rv.disabled = false;
-            }
-          }
-        });
-
         showVisualisationGraph(Config.DocumentURL, undefined, '#graph-view');
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      const button = e.target.closest('#graph-view button.close');
+      if (button) {
+        var rv = document.querySelector('#document-views .resource-visualise');
+        if (rv) {
+          rv.disabled = false;
+        }
       }
     });
   }
@@ -2596,10 +2605,11 @@ export function showEmbedData(e) {
                 );
               }
             })
+            //TODO: Catch here when the input is invalid. Show alert indicating invalid. Let user correct it before saving again.
         }
         else {
           //Remove if no longer used
-          script.parentNode.removeChild(script);
+          script?.parentNode.removeChild(script);
         }
 
         var ede = document.getElementById('embed-data-entry');

@@ -21,8 +21,8 @@ const ns = Config.ns;
 import { highlightItems, updateSelectedStylesheets, initCurrentStylesheet, showActionMessage, addMessageToLog, initCopyToClipboard, showFragment, setDocRefType, showRobustLinksDecoration, focusNote, showAsTabs, getResourceInfo, setDocumentString } from './doc.js';
 import { initButtons } from './ui/buttons.js'
 import { setDocumentURL, setWebExtensionURL } from './util.js';
-import { getLocalStorageItem, autoSave, monitorNetworkStatus } from './storage.js';
-import { syncLocalRemoteResource } from './sync.js';
+import { getLocalStorageItem } from './storage.js';
+import { syncLocalRemoteResource, monitorNetworkStatus, autoSave } from './sync.js';
 import { domSanitize, sanitizeObject } from './utils/sanitization.js';
 import { afterSetUserInfo, setUserInfo } from './auth.js';
 import { showNotificationSources } from './activity.js';
@@ -30,10 +30,10 @@ import { getProxyableIRI, getUrlParams, stripFragmentFromString, stripUrlSearchH
 import { getMultipleResources } from './fetcher.js';
 import { initEditor } from './editor/initEditor.js';
 import { showGraph, showVisualisationGraph } from './viz.js';
-import { openResource, initDocumentMenu, spawnDokieli } from './dialog.js';
+import { openResource, initDocumentMenu, spawnDokieli, showDocumentMenu } from './dialog.js';
 import { Icon } from './ui/icons.js';
 import { eventButtonClose, eventButtonSignIn, eventButtonSignOut, eventButtonNotificationsToggle, eventButtonInfo } from './events.js';
-import { getDocumentNodeFromString, hasNonWhitespaceText, getDocumentContentNode, selectArticleNode } from "./utils/html.js";
+import { hasNonWhitespaceText, getDocumentContentNode, selectArticleNode } from "./utils/html.js";
 
 export function init (url) {
   initServiceWorker();

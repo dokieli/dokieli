@@ -58,7 +58,7 @@ export function initButtons() {
     },
     SignIn: getButtonHTML({ key: "menu.signin.button", button: "signin", buttonClass: "signin-user" }),
     Menu: {
-      CloseMenu: getButtonHTML({ key: "menu.close.button", button: "minus", buttonClass: "hide" }),
+      CloseMenu: getButtonHTML({ key: "menu.close.button", button: "minus", buttonClass: "hide do-menu" }),
       Delete: getButtonHTML({ key: "menu.delete.button", button: "delete", buttonClass: "resource-delete", iconSize: "fa-2x", buttonDisabled: true }),
       DocumentInfo: getButtonHTML({ key: "menu.document-info.button", button: "document-info", buttonClass: "document-info", iconSize: "fa-2x", buttonDisabled: true }),
       EditEnable: getButtonHTML({ key: "menu.edit-enable.button", button: "cursor", buttonClass: "editor-enable", iconSize: "fa-2x" }),
@@ -71,7 +71,7 @@ export function initButtons() {
       New: getButtonHTML({ key: "menu.new.button", button: "new", buttonClass: "resource-new", iconSize: "fa-2x" }),
       Notifications: getButtonHTML({ key: "menu.notifications.button", button: "activities", buttonClass: "resource-notifications", iconSize: "fa-2x" }),
       Open: getButtonHTML({ key: "menu.resource-open.button", button: "open", buttonClass: "resource-open", iconSize: "fa-2x" }),
-      OpenMenu: getButtonHTML({ key: "menu.open.button", button: "bars", buttonClass: "show" }),
+      OpenMenu: getButtonHTML({ key: "menu.open.button", button: "bars", buttonClass: "show do-menu" }),
       RobustifyLinks: getButtonHTML({ key: "menu.robustify-links.button", button: "robustify-links", buttonClass: "robustify-links", iconSize: "fa-2x" }),
       Save: getButtonHTML({ key: "menu.resource-save.button", button: "save", buttonClass: "resource-save", iconSize: "fa-2x", buttonDisabled: true }),
       SaveAs: getButtonHTML({ key: "menu.save-as.button", button: "save-as", buttonClass: "resource-save-as", iconSize: "fa-2x" }),

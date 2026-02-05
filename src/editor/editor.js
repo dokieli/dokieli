@@ -91,27 +91,15 @@ export class Editor {
 
   //TODO: Maintain this list in config normalisation.
   storeRestrictedNodes() {
-    //Skipping these selectors
-    const filterSelectors = ['#document-editor', '#review-changes', '.copy-to-clipboard', '.robustlinks', '.ref'];
-    const notSelector = filterSelectors.map(selector => `:not(${selector})`).join('');
-    //TODO: toc-nav is W3C-specific. Move this into config normalisation
-    const allowedScriptSelectors = Object.keys(Config.DOMProcessing.allowedScripts).map(src => `script[src="${src}"]`).join(', ');
+    const preserveInEditor = ['#document-editor', '#review-changes', '.copy-to-clipboard', '.robustlinks', '.ref'];
+    const notSelector = preserveInEditor.map(selector => `:not(${selector})`).join('');
+    const nodesToRestrictSelector = `.do${notSelector}, #toc-nav`;
+    //Nodes to preserve for later. They don't go into the editor.
+    this.restrictedNodes = Array.from(document.body.querySelectorAll(nodesToRestrictSelector));
 
-    console.log(Array.from(document.body.querySelectorAll('script')))
-    console.log(Array.from(document.body.querySelectorAll('script'))[0].src)
-
-    const allowedScriptElements = Array.from(document.body.querySelectorAll('script'))
-    .filter(script => script.src && Object.keys(Config.DOMProcessing.allowedScripts).includes(script.src))
-    .filter((script, index, self) => self.findIndex(s => s.src === script.src) === index)
-    .map(script => script.cloneNode(true)); 
-  
-    // const selector = `.do${notSelector}, #toc-nav, ${allowedScriptSelectors}`;
-    const selector = `.do${notSelector}, #toc-nav`;
-    this.allowedScriptElements = allowedScriptElements;
-    this.restrictedNodes = Array.from(document.body.querySelectorAll(selector));
-    // this.restrictedNodes = Array.from(document.body.querySelectorAll(selector)).concat(allowedScriptElements);
-
-    console.log(this.restrictedNodes)
+    this.allowedScriptElements = Array.from(document.body.querySelectorAll('script'))
+      .filter(script => script.src && Object.keys(Config.DOMProcessing.allowedScripts).includes(script.src))
+      .filter((script, index, self) => self.findIndex(s => s.src === script.src) === index);
   }
 
   showEditorModeActionMessage(mode, options = {}) {
@@ -247,12 +235,11 @@ export class Editor {
     // TODO: think about a review mode of initializing and destroying editor
     this.storeRestrictedNodes();
 
-    this.restrictedNodes.forEach(node => {
-      console.log(node)
+    this.allowedScriptElements.concat(this.restrictedNodes).forEach(node => {
       node.remove();
     });
 
-    console.log(this.node)
+    // console.log(this.node)
 
     const editorToolbarPlugin = new Plugin({
       // this editorView is passed onto the Plugin - not this.editorView
@@ -305,7 +292,7 @@ export class Editor {
     // console.log(this.editorView.state.doc)
     // console.log(hasNonWhitespaceText(state.doc))
     this.slashMenu = new SlashMenu(this.editorView);
-    console.log("Editor created. Mode:", this.mode);
+    // console.log("Editor created. Mode:", this.mode);
   }
 
 
@@ -353,7 +340,7 @@ export class Editor {
 
       // Restore body content and original nodes
     
-      document.body.replaceChildren(...newBodyContent, ...this.restrictedNodes);
+      document.body.replaceChildren(...newBodyContent, ...this.restrictedNodes, ...this.allowedScriptElements);
 
       // this.restrictedNodes.forEach(node => {
       //   document.body.appendChild(node);
