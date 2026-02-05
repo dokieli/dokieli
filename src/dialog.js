@@ -46,16 +46,16 @@ export function initDocumentMenu() {
 
   document.addEventListener('click', (e) => {
     var button = e.target.closest('button');
-    if (button && button.closest('.do-menu')) {
+    if (button?.closest('.do-menu')) {
       if (button.classList.contains('show')) {
         showDocumentMenu(e);
       }
-      else if (button.classList.contains('hide')) {
+      else if (button?.classList.contains('hide')) {
         hideDocumentMenu(e);
       }
-      else if (button.classList.contains('signout-user')) {
-        userInfoSignOut(userInfo);
-      }
+    }
+    else if (button?.classList.contains('signout-user')) {
+      userInfoSignOut(userInfo);
     }
   });
 }
