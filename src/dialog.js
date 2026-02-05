@@ -21,7 +21,7 @@ import { getButtonHTML, updateButtons } from './ui/buttons.js';
 import { addMessageToLog, buildResourceView, copyRelativeResources, createFeedXML, createImmutableResource, createMutableResource, createNoteDataHTML, getAccessModeOptionsHTML, getBaseURLSelection, getDocument, getFeedFormatSelection, getLanguageOptionsHTML, getLicenseOptionsHTML, getResourceInfo, rewriteBaseURL, setCopyToClipboard, setDocumentRelation, showActionMessage, showRobustLinksDecoration, showTimeMap, updateMutableResource, buildReferences, getDocumentConceptDefinitionsHTML, insertDocumentLevelHTML, insertTestCoverageToTable, diffRequirements, removeReferences, getStorageSelfDescription, getContactInformation, getPersistencePolicy, getODRLPolicies, updateResourceInfos, initCurrentStylesheet, setDate } from './doc.js';
 import { removeNodesWithIds, createHTML } from './utils/html.js';
 import { accessModeAllowed, accessModePossiblyAllowed } from './access.js';
-import { domSanitize } from './utils/sanitization.js';
+import { domSanitize, sanitizeInsertAdjacentHTML } from './utils/sanitization.js';
 import { escapeRDFLiteral, generateAttributeId, generateUUID, htmlEncode, setDocumentURL } from './util.js';
 import { deleteResource, getResource, patchResourceWithAcceptPatch, postResource, putResource, putResourceWithAcceptPut, setAcceptRDFTypes } from './fetcher.js';
 import { forceTrailingSlash, generateDataURI, getAbsoluteIRI, getBaseURL, isHttpOrHttpsProtocol, stripFragmentFromString, getFragmentFromString, getURLLastPath, currentLocation } from './uri.js';
@@ -161,7 +161,7 @@ function showLanguages(node) {
       </select>
     </section>`;
 
-  node.insertAdjacentHTML('afterbegin', html);
+  sanitizeInsertAdjacentHTML(node, 'afterbegin', html);
 
   document.addEventListener('change', (e) => {
     const select = e.target.closest('#ui-language-select');
@@ -191,7 +191,7 @@ export async function showAutoSave(node) {
   </section>
   `;
 
-  node.querySelector('#document-do').insertAdjacentHTML('afterend', html);
+  sanitizeInsertAdjacentHTML(node.querySelector('#document-do'), 'afterend', html);
 
   document.addEventListener('change', async (e) => {
     if (e.target.matches('#autosave-remote')) {
@@ -248,7 +248,7 @@ function showDocumentDo(node) {
       <ul>${buttons.map(b => `<li>${b}</li>`).join('')}</ul>
     </section>`;
 
-  node.insertAdjacentHTML('beforeend', s);
+  sanitizeInsertAdjacentHTML(node, 'beforeend', s);
 
   document.addEventListener('click', e => {
     if (e.target.closest('.resource-share')) {
@@ -394,7 +394,7 @@ function showViews(node) {
   }
 
   s += '</ul></section>';
-  node.insertAdjacentHTML('beforeend', domSanitize(s));
+  sanitizeInsertAdjacentHTML(node, 'beforeend', s);
 
   // var viewButtons = document.querySelectorAll('#document-views button:not([class~="resource-visualise"])');
   // for (let i = 0; i < viewButtons.length; i++) {
@@ -456,7 +456,7 @@ function showAboutDokieli(node) {
     </dl>
   </section>`;
 
-  node.insertAdjacentHTML('beforeend', html);
+  sanitizeInsertAdjacentHTML(node, 'beforeend', html);
 }
 
 export function showNotifications() {
@@ -545,7 +545,7 @@ export function shareResource(listenerEvent, iri) {
 
   var li = document.getElementById('share-resource-address-book');
   if (li && Config.User.IRI) {
-    li.insertAdjacentHTML('beforeend', Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]);
+    sanitizeInsertAdjacentHTML(li, 'beforeend', Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]);
     selectContacts(li, Config.User.IRI);
   }
 
@@ -569,7 +569,7 @@ export function shareResource(listenerEvent, iri) {
           </ul>
         </div>
       </div>`;
-    info.insertAdjacentHTML('afterend', shareResourcePermissions);
+    sanitizeInsertAdjacentHTML(info, 'afterend', shareResourcePermissions);
 
     var accessPermissionsNode = document.getElementById('share-resource-permissions');
     var accessPermissionFetchingIndicator = accessPermissionsNode.querySelector('.progress');
@@ -644,7 +644,7 @@ export function shareResource(listenerEvent, iri) {
             }
             img = '<img alt="" height="32" src="' + img + '" width="32" />';
 
-            suggestion.insertAdjacentHTML('beforeend', img + '<span title="' + contact + '">' + name + '</span>');
+            sanitizeInsertAdjacentHTML(suggestion, 'beforeend', img + '<span title="' + contact + '">' + name + '</span>');
 
             var ul = document.querySelector('#share-resource-permissions ul');
 
@@ -658,7 +658,7 @@ export function shareResource(listenerEvent, iri) {
 
               var select = document.querySelector('[id="' + li.id + '"] select');
               select.disabled = true;
-              select.insertAdjacentHTML('afterend', `<span class="progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]}</span>`);
+              sanitizeInsertAdjacentHTML(select, 'afterend', `<span class="progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]}</span>`);
 
               updateAuthorization(options.accessContext, options.selectedAccessMode, contact, 'agent')
                 .catch(error => {
@@ -787,7 +787,7 @@ export function shareResource(listenerEvent, iri) {
       if (rm) {
         rm.parentNode.removeChild(rm);
       }
-      shareResource.insertAdjacentHTML('beforeend', '<div class="response-message"></div>');
+      sanitizeInsertAdjacentHTML(shareResource, 'beforeend', '<div class="response-message"></div>');
 
       return sendNotifications(tos, note, iri, shareResource)
     }
@@ -855,7 +855,7 @@ export function addShareResourceContactInput(node, agent) {
 
     var input = '<li><input id="share-resource-contact-' + id + '" type="checkbox" value="' + iri + '" /><label for="share-resource-contact-' + id + '">' + img + '<a href="' + iri + '" rel="noopener" target="_blank">' + name + '</a></label></li>';
 
-    node.insertAdjacentHTML('beforeend', input);
+    sanitizeInsertAdjacentHTML(node, 'beforeend', input);
   }
 }
 
@@ -894,7 +894,7 @@ function addAccessSubjectItem(node, s, url) {
 
   var input = '<li id="share-resource-access-subject-' + id + '">' + img + '<a href="' + iri + '" rel="noopener" target="_blank">' + name + '</a></li>';
 
-  node.insertAdjacentHTML('beforeend', input);
+  sanitizeInsertAdjacentHTML(node, 'beforeend', input);
 }
 
 function showAccessModeSelection(node, id, accessSubject, subjectType, options) {
@@ -907,7 +907,7 @@ function showAccessModeSelection(node, id, accessSubject, subjectType, options) 
 
   const selectNode = `<select aria-label="${i18n.t('dialog.share-resource.select-access-mode.select.aria-label')}" data-i18n="dialog.share-resource.select-access-mode.select" id="${id}">${getAccessModeOptionsHTML({'context': options.accessContext, 'selected': options.selectedAccessMode })}</select>`;
 
-  node.insertAdjacentHTML('beforeend', selectNode);
+  sanitizeInsertAdjacentHTML(node, 'beforeend', selectNode);
 
   var select = document.getElementById(id);
   select.addEventListener('change', e => {
@@ -915,7 +915,7 @@ function showAccessModeSelection(node, id, accessSubject, subjectType, options) 
 
     if (Config.AccessContext[options.accessContext][selectedMode] || selectedMode == '') {
       e.target.disabled = true;
-      e.target.insertAdjacentHTML('afterend', `<span class="progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]}</span>`);
+      sanitizeInsertAdjacentHTML(e.target, 'afterend', `<span class="progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]}</span>`);
 
       updateAuthorization(options.accessContext, selectedMode, accessSubject, subjectType)
         .catch(error => {
@@ -1138,14 +1138,14 @@ export function replyToResource(e, iri) {
   var noteIRI;
 
   setupResourceBrowser(replyToResource, id, action)
-  document.getElementById(id).insertAdjacentHTML('afterbegin', `<p data-i18n="dialog.reply-to-resource.save-location-choose.p">${i18n.t('dialog.reply-to-resource.save-location-choose.p.textContent')}</p>`)
+  sanitizeInsertAdjacentHTML(document.getElementById(id), 'afterbegin', `<p data-i18n="dialog.reply-to-resource.save-location-choose.p">${i18n.t('dialog.reply-to-resource.save-location-choose.p.textContent')}</p>`)
 
-  replyToResource.insertAdjacentHTML('beforeend', `<p data-i18n="dialog.reply-to-resource.save-location.p">${i18n.t('dialog.reply-to-resource.save-location.p.textContent')} <samp id="${id}-${action}"></samp></p>`)
+  sanitizeInsertAdjacentHTML(replyToResource, 'beforeend', `<p data-i18n="dialog.reply-to-resource.save-location.p">${i18n.t('dialog.reply-to-resource.save-location.p.textContent')} <samp id="${id}-${action}"></samp></p>`)
 
   var bli = document.getElementById(id + '-input')
   bli.focus()
   bli.placeholder = 'https://example.org/path/to/article'
-  replyToResource.insertAdjacentHTML('beforeend', `<button class="reply" data-i18n="dialog.reply-to-resource.submit.button" title="${i18n.t('dialog.reply-to-resource.submit.button.title')}" type="submit">${i18n.t('dialog.reply-to-resource.submit.button.textContent')}</button>`)
+  sanitizeInsertAdjacentHTML(replyToResource, 'beforeend', `<button class="reply" data-i18n="dialog.reply-to-resource.submit.button" title="${i18n.t('dialog.reply-to-resource.submit.button.title')}" type="submit">${i18n.t('dialog.reply-to-resource.submit.button.textContent')}</button>`)
 
   replyToResource.addEventListener('click', e => {
     if (e.target.closest('button.close')) {
@@ -1161,7 +1161,7 @@ export function replyToResource(e, iri) {
       if (rm) {
         rm.parentNode.removeChild(rm)
       }
-      replyToResource.insertAdjacentHTML('beforeend', '<div class="response-message"></div>')
+      sanitizeInsertAdjacentHTML(replyToResource, 'beforeend', '<div class="response-message"></div>')
 
       noteIRI = document.querySelector('#reply-to-resource #' + id + '-' + action).innerText.trim();
 
@@ -1353,7 +1353,7 @@ function setupResourceBrowser(parent, id, action){
     createContainerDiv = `<div id="${id}-create-container"></div>`;
   }
 
-  parent.insertAdjacentHTML('beforeend', `<div id="${id}"><label for="${id}-input">URL</label> <input dir="ltr" id="${id}-input" name="${id}-input" placeholder="https://example.org/path/to/" required="" type="url" /><button data-i18n="browser.browse-location.button" id="${id}-update" disabled="disabled" title="${i18n.t('browser.browse-location.button.textContent')}">${i18n.t('browser.browse-location.button.textContent')}</button>${createContainerButton}</div>${createContainerDiv}<div id="${id}-listing"></div>`);
+  sanitizeInsertAdjacentHTML(parent, 'beforeend', `<div id="${id}"><label for="${id}-input">URL</label> <input dir="ltr" id="${id}-input" name="${id}-input" placeholder="https://example.org/path/to/" required="" type="url" /><button data-i18n="browser.browse-location.button" id="${id}-update" disabled="disabled" title="${i18n.t('browser.browse-location.button.textContent')}">${i18n.t('browser.browse-location.button.textContent')}</button>${createContainerButton}</div>${createContainerDiv}<div id="${id}-listing"></div>`);
 
   // var inputBox = document.getElementById(id);
   var createContainer = document.getElementById(id + '-create-container');
@@ -1471,7 +1471,7 @@ function triggerBrowse(url, id, action){
     });
   }
   else{
-    inputBox.insertAdjacentHTML('beforeend', `<div class="response-message"><p class="error" data-i18n="browser.error.invalid-location.p">${i18n.t('browser.error.invalid-location.p.textContent')}</p></div>`);
+    sanitizeInsertAdjacentHTML(inputBox, 'beforeend', `<div class="response-message"><p class="error" data-i18n="browser.error.invalid-location.p">${i18n.t('browser.error.invalid-location.p.textContent')}</p></div>`);
   }
 }
 
@@ -1487,7 +1487,7 @@ function showCreateContainer(baseURL, id, action, e) {
     div.replaceChildren();
   }
 
-  div.insertAdjacentHTML('beforeend', `<label data-18n="browser.create-container-name.label" for="${id}-create-container-name">${i18n.t('browser.create-container-name.label.textContent')}</label> <input data-i18n="browser.create-container-name.input" dir="auto" id="${id}-create-container-name" name="${id}-create-container-name" type="text" placeholder="${i18n.t('browser.create-container-name.input.placeholder')}" /> <button class="insert" data-i18n="browser.create-container-name.button" disabled="disabled" title="${i18n.t('browser.create-container-name.button.title')}" type="button">${i18n.t('browser.create-container-name.button.textContent')}</button>`);
+  sanitizeInsertAdjacentHTML(div, 'beforeend', `<label data-18n="browser.create-container-name.label" for="${id}-create-container-name">${i18n.t('browser.create-container-name.label.textContent')}</label> <input data-i18n="browser.create-container-name.input" dir="auto" id="${id}-create-container-name" name="${id}-create-container-name" type="text" placeholder="${i18n.t('browser.create-container-name.input.placeholder')}" /> <button class="insert" data-i18n="browser.create-container-name.button" disabled="disabled" title="${i18n.t('browser.create-container-name.button.title')}" type="button">${i18n.t('browser.create-container-name.button.textContent')}</button>`);
 
   var label = div.querySelector('label');
   var input = div.querySelector('input');
@@ -1614,7 +1614,7 @@ function showErrorResponseMessage(node, response, context) {
 
   msg = i18n.t(`browser.error.${errorKey}.p.textContent`);
 
-  node.insertAdjacentHTML('beforeend', `<div class="response-message"><p class="error" data-i18n="browser.error.${errorKey}.p">${msg}</p></div>`);
+  sanitizeInsertAdjacentHTML(node, 'beforeend', `<div class="response-message"><p class="error" data-i18n="browser.error.${errorKey}.p">${msg}</p></div>`);
 }
 
 
@@ -1675,11 +1675,11 @@ function generateBrowserList(g, url, id, action) {
       urlPath.splice(-2,2);
       var prevUrl = forceTrailingSlash(urlPath.join("/"));
       var upBtn = '<li class="container"><input type="radio" name="containers" value="' + prevUrl + '" id="' + prevUrl + '" /><label for="' + prevUrl + '" id="browser-up">..</label></li>';
-      list.insertAdjacentHTML('afterbegin', upBtn);
+      sanitizeInsertAdjacentHTML(list, 'afterbegin', upBtn);
     }
 
     var current = g.node(rdf.namedNode(url));
-    var contains = current.out(ns.ldp.contains).values;
+    var contains = current.out(ns.ldp.contains).values.map(v => domSanitize(v));
     var containersLi = Array();
     var resourcesLi = Array();
     contains.forEach(c => {
@@ -1704,11 +1704,11 @@ function generateBrowserList(g, url, id, action) {
       return a.toLowerCase().localeCompare(b.toLowerCase());
     });
     var liHTML = containersLi.join('\n') + resourcesLi.join('\n');
-    list.insertAdjacentHTML('beforeend', liHTML);
+    sanitizeInsertAdjacentHTML(list, 'beforeend', liHTML);
 
     var buttons = list.querySelectorAll('label');
     if(buttons.length <= 1){
-      list.insertAdjacentHTML('beforeend', '<p><em>(empty)</em></p>');
+      sanitizeInsertAdjacentHTML(list, 'beforeend', '<p><em>(empty)</em></p>');
     }
 
     for(let i = 0; i < buttons.length; i++) {
@@ -1803,7 +1803,7 @@ function showStorageDescription(s, id, storageUrl, checkAgain) {
         if (details) {
           details.remove();
         }
-        samp.insertAdjacentHTML('afterend', `<details id="${id}-storage-description-details"><summary data-i18n="dialog.storage-details.summary">${i18n.t('dialog.storage-details.summary.textContent')}</summary></details>`);
+        sanitizeInsertAdjacentHTML(samp, 'afterend', `<details id="${id}-storage-description-details"><summary data-i18n="dialog.storage-details.summary">${i18n.t('dialog.storage-details.summary.textContent')}</summary></details>`);
 
         sD = document.getElementById(id + '-storage-description-details');
 
@@ -1825,7 +1825,7 @@ function showStorageDescription(s, id, storageUrl, checkAgain) {
                   var odrlPolicies = getODRLPolicies(g);
                   var communicationOptions = getCommunicationOptions(g);
 
-                  sD.insertAdjacentHTML('beforeend', domSanitize('<div id="' + id + '-storage-description">' + storageLocation + selfDescription + contactInformation + persistencePolicy + odrlPolicies + communicationOptions + '</div>'));
+                  sanitizeInsertAdjacentHTML(sD, 'beforeend', '<div id="' + id + '-storage-description">' + storageLocation + selfDescription + contactInformation + persistencePolicy + odrlPolicies + communicationOptions + '</div>');
 
                   var subscriptionsId = id + '-storage-description-details';
                   var topicResource = s.term.value;
@@ -1835,7 +1835,7 @@ function showStorageDescription(s, id, storageUrl, checkAgain) {
                 }
                 else {
                   // TODO: var status = (g.status) ? g.status
-                  sD.insertAdjacentHTML('beforeend', '<div id="' + id + '-storage-description">Unavailable</div>');
+                  sanitizeInsertAdjacentHTML(sD, 'beforeend', '<div id="' + id + '-storage-description">Unavailable</div>');
                 }
               });
             }
@@ -1966,7 +1966,7 @@ export function openDocument(e) {
 
   var buttonClose = getButtonHTML({ key: 'dialog.open-document.close', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
-  document.body.insertAdjacentHTML('beforeend', `
+  sanitizeInsertAdjacentHTML(document.body, 'beforeend', `
     <aside aria-labelledby="open-document-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="open-document" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#open-document" xml:lang="${Config.User.UI.Language}">
       <h2 data-i18n="dialog.open-document.h2" id="open-document-label" property="schema:name">${i18n.t('dialog.open-document.h2.textContent')} ${Config.Button.Info.Open}</h2>
       ${buttonClose}
@@ -1981,7 +1981,7 @@ export function openDocument(e) {
   var openDocument = document.getElementById('open-document');
   setupResourceBrowser(openDocument , id, action);
   var idSamp = (typeof Config.User.Storage == 'undefined') ? '' : '<p><samp id="' + id + '-' + action + '">https://example.org/path/to/article</samp></p>';
-  openDocument.insertAdjacentHTML('beforeend', `${idSamp}<button class="open" data-i18n="dialog.open-document.open.button" title="${i18n.t('dialog.open-document.open.button.title')}" type="submit">${i18n.t('dialog.open-document.open.button.textContent')}</button>`);
+  sanitizeInsertAdjacentHTML(openDocument, 'beforeend', `${idSamp}<button class="open" data-i18n="dialog.open-document.open.button" title="${i18n.t('dialog.open-document.open.button.title')}" type="submit">${i18n.t('dialog.open-document.open.button.textContent')}</button>`);
 
   openDocument.addEventListener('click', function (e) {
     if (e.target.closest('button.close')) {
@@ -2088,7 +2088,7 @@ export async function saveAsDocument(e) {
 
   var locationInboxId = 'location-inbox';
   var locationInboxAction = 'read';
-  saveAsDocument.insertAdjacentHTML('beforeend', `<div><input id="${locationInboxId}-set" name="${locationInboxId}-set" type="checkbox" /> <label data-i18n="dialog.save-as-document.set-inbox.label" for="${locationInboxId}-set">${i18n.t('dialog.save-as-document.set-inbox.label.textContent')}</label></div>`);
+  sanitizeInsertAdjacentHTML(saveAsDocument, 'beforeend', `<div><input id="${locationInboxId}-set" name="${locationInboxId}-set" type="checkbox" /> <label data-i18n="dialog.save-as-document.set-inbox.label" for="${locationInboxId}-set">${i18n.t('dialog.save-as-document.set-inbox.label.textContent')}</label></div>`);
 
   saveAsDocument.addEventListener('click', (e) => {
     if (e.target.closest('input#' + locationInboxId + '-set')) {
@@ -2101,10 +2101,10 @@ export async function saveAsDocument(e) {
       else {
         e.target.setAttribute('checked', 'checked');
 
-        e.target.nextElementSibling.insertAdjacentHTML('afterend', '<fieldset id="' + locationInboxId + '-fieldset"></fieldset>');
+        sanitizeInsertAdjacentHTML(e.target.nextElementSibling, 'afterend', '<fieldset id="' + locationInboxId + '-fieldset"></fieldset>');
         fieldset = saveAsDocument.querySelector('#' + locationInboxId + '-fieldset');
         setupResourceBrowser(fieldset, locationInboxId, locationInboxAction);
-        fieldset.insertAdjacentHTML('beforeend', `<p data-i18n="dialog.save-as-document.article-inbox.p">${i18n.t('dialog.save-as-document.article-inbox.p.textContent')} <samp id="${locationInboxId}-${locationInboxAction}"></samp></p>`);
+        sanitizeInsertAdjacentHTML(fieldset, 'beforeend', `<p data-i18n="dialog.save-as-document.article-inbox.p">${i18n.t('dialog.save-as-document.article-inbox.p.textContent')} <samp id="${locationInboxId}-${locationInboxAction}"></samp></p>`);
         var lii = document.getElementById(locationInboxId + '-input');
         lii.focus();
         lii.placeholder = 'https://example.org/path/to/inbox/';
@@ -2114,7 +2114,7 @@ export async function saveAsDocument(e) {
 
   var locationAnnotationServiceId = 'location-annotation-service';
   var locationAnnotationServiceAction = 'read';
-  saveAsDocument.insertAdjacentHTML('beforeend', `<div><input id="${locationAnnotationServiceId}-set" name="${locationAnnotationServiceId}-set" type="checkbox" /> <label data-i18n="dialog.save-as-document.set-annotation-service.label" for="${locationAnnotationServiceId}-set">${i18n.t('dialog.save-as-document.set-annotation-service.label.textContent')}</label></div>`);
+  sanitizeInsertAdjacentHTML(saveAsDocument, 'beforeend', `<div><input id="${locationAnnotationServiceId}-set" name="${locationAnnotationServiceId}-set" type="checkbox" /> <label data-i18n="dialog.save-as-document.set-annotation-service.label" for="${locationAnnotationServiceId}-set">${i18n.t('dialog.save-as-document.set-annotation-service.label.textContent')}</label></div>`);
 
   saveAsDocument.addEventListener('click', (e) => {
     if (e.target.closest('input#' + locationAnnotationServiceId + '-set')) {
@@ -2127,10 +2127,10 @@ export async function saveAsDocument(e) {
       else {
         e.target.setAttribute('checked', 'checked');
 
-        e.target.nextElementSibling.insertAdjacentHTML('afterend', '<fieldset id="' + locationAnnotationServiceId + '-fieldset"></fieldset>');
+        sanitizeInsertAdjacentHTML(e.target.nextElementSibling, 'afterend', '<fieldset id="' + locationAnnotationServiceId + '-fieldset"></fieldset>');
         fieldset = saveAsDocument.querySelector('#' + locationAnnotationServiceId + '-fieldset');
         setupResourceBrowser(fieldset, locationAnnotationServiceId, locationAnnotationServiceAction);
-        fieldset.insertAdjacentHTML('beforeend', `<p data-i18n="dialog.save-as-document.article-annotation-service.p">${i18n.t('dialog.save-as-document.article-annotation-service.p.textContent')} <samp id="${locationAnnotationServiceId}-${locationAnnotationServiceAction}"></samp></p>`);
+        sanitizeInsertAdjacentHTML(fieldset, 'beforeend', `<p data-i18n="dialog.save-as-document.article-annotation-service.p">${i18n.t('dialog.save-as-document.article-annotation-service.p.textContent')} <samp id="${locationAnnotationServiceId}-${locationAnnotationServiceAction}"></samp></p>`);
         var lasi = document.getElementById(locationAnnotationServiceId + '-input');
         lasi.focus();
         lasi.placeholder = 'https://example.org/path/to/annotation/';
@@ -2236,10 +2236,10 @@ export async function saveAsDocument(e) {
 
   var id = 'location-save-as';
   var action = 'write';
-  saveAsDocument.insertAdjacentHTML('beforeend', `<form><fieldset id="${id}-fieldset"><legend data-i18n="dialog.save-as-document.save-to.legend">${i18n.t('dialog.save-as-document.save-to.legend.textContent')}</legend></fieldset></form>`);
+  sanitizeInsertAdjacentHTML(saveAsDocument, 'beforeend', `<form><fieldset id="${id}-fieldset"><legend data-i18n="dialog.save-as-document.save-to.legend">${i18n.t('dialog.save-as-document.save-to.legend.textContent')}</legend></fieldset></form>`);
   fieldset = saveAsDocument.querySelector('fieldset#' + id + '-fieldset');
   setupResourceBrowser(fieldset, id, action);
-  fieldset.insertAdjacentHTML('beforeend', `<p data-i18n="dialog.save-as-document.save-location.p" id="${id}-samp">${i18n.t('dialog.save-as-document.save-location.p.textContent')} <samp id="${id}-${action}"></samp></p>${getBaseURLSelection()}<ul>${dokielizeResource}${derivationData}</ul>${accessibilityReport}<button class="create" data-i18n="dialog.save-as-document.save.button" title="${i18n.t('dialog.save-as-document.save.button.title')}" type="submit">${i18n.t('dialog.save-as-document.save.button.textContent')}</button>`);
+  sanitizeInsertAdjacentHTML(fieldset, 'beforeend', `<p data-i18n="dialog.save-as-document.save-location.p" id="${id}-samp">${i18n.t('dialog.save-as-document.save-location.p.textContent')} <samp id="${id}-${action}"></samp></p>${getBaseURLSelection()}<ul>${dokielizeResource}${derivationData}</ul>${accessibilityReport}<button class="create" data-i18n="dialog.save-as-document.save.button" title="${i18n.t('dialog.save-as-document.save.button.title')}" type="submit">${i18n.t('dialog.save-as-document.save.button.textContent')}</button>`);
   var bli = document.getElementById(id + '-input');
   bli.focus();
   bli.placeholder = 'https://example.org/path/to/article';
@@ -2263,7 +2263,7 @@ export async function saveAsDocument(e) {
 
     // TODO: this needs to be form validation instead
     if (!storageIRI.length) {
-      saveAsDocument.insertAdjacentHTML('beforeend',
+      sanitizeInsertAdjacentHTML(saveAsDocument, 'beforeend',
         `<div class="response-message"><p class="error" data-i18n="dialog.save-as-document.error.missing-location.p">${i18n.t("dialog.save-as-document.error.missing-location.p.textContent")}</p></div>`
       )
 
@@ -2328,7 +2328,7 @@ export async function saveAsDocument(e) {
     if(progress) {
       progress.parentNode.removeChild(progress)
     }
-    e.target.insertAdjacentHTML('afterend', '<progress min="0" max="100" value="0"></progress>')
+    sanitizeInsertAdjacentHTML(e.target, 'afterend', '<progress min="0" max="100" value="0"></progress>')
     progress = saveAsDocument.querySelector('progress')
 
     putResource(storageIRI, html, null, null, { 'progress': progress })
@@ -2342,7 +2342,7 @@ export async function saveAsDocument(e) {
         let url = response.url || storageIRI
         url = domSanitize(url);
 
-        saveAsDocument.insertAdjacentHTML('beforeend',
+        sanitizeInsertAdjacentHTML(saveAsDocument, 'beforeend',
           `<div class="response-message"><p class="success" data-i18n="dialog.save-as-document.success.saved-at.p"><span>${i18n.t('dialog.save-as-document.success.saved-at.p.textContent')}</span> <a href="${url}">${url}</a></p></div>`
         )
 
@@ -2419,9 +2419,9 @@ export async function saveAsDocument(e) {
         message = i18n.t(`dialog.save-as-document.error.${errorKey}.p.textContent`);
 
         //TODO:i18n
-        saveAsDocument.insertAdjacentHTML('beforeend', domSanitize(
+        sanitizeInsertAdjacentHTML(saveAsDocument, 'beforeend', 
           `<div class="response-message"><p class="error" data-i18n="dialog.save-as-document.error.${errorKey}.p">${message}</p>${requestAccess}</div>`
-        ));
+        );
 
         if (Config.User.IRI && requestAccess) {
           document.querySelector('#save-as-document .response-message .request-access').addEventListener('click', (e) => {
@@ -2433,9 +2433,9 @@ export async function saveAsDocument(e) {
 
             e.target.disabled = true;
             var responseMessage = e.target.parentNode;
-            responseMessage.insertAdjacentHTML('beforeend', domSanitize(
+            sanitizeInsertAdjacentHTML(responseMessage, 'beforeend', 
               `<span class="progress" data-to="${inboxURL}">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]}</span>`
-            ))
+            );
 
             var notificationStatements = `<dl about="` + objectId + `" prefix="acl: http://www.w3.org/ns/auth/acl#">
 <dt>Object type</dt><dd><a about="` + objectId + `" href="` + ns.acl.Authorization.value + `" typeof="acl:Authorization">Authorization</a></dd>
@@ -2596,7 +2596,7 @@ export function showEmbedData(e) {
                 script.textContent = scriptType[name].cdataStart + scriptEntry + scriptType[name].cdataEnd;
               }
               else {
-                document.querySelector('head').insertAdjacentHTML('beforeend',
+                sanitizeInsertAdjacentHTML(document.querySelector('head'), 'beforeend',
                   scriptType[name].scriptStart +
                   scriptType[name].cdataStart +
                   scriptEntry +
@@ -2743,7 +2743,7 @@ export function showDocumentMetadata(node) {
     </table>
   </section>`;
 
-  node.insertAdjacentHTML('beforeend', domSanitize(html));
+  sanitizeInsertAdjacentHTML(node, 'beforeend', html);
 }
 
 export function contentCount(node) {
@@ -2856,7 +2856,7 @@ export function showRobustLinks(e, selector) {
   // console.log(rlCandidates)
   var rlInput = document.querySelector('#robustify-links-input');
 
-  rlInput.insertAdjacentHTML('afterbegin', '<p class="count"><data>' + rlCandidates.length + '</data> candidates.</p>');
+  sanitizeInsertAdjacentHTML(rlInput, 'afterbegin', '<p class="count"><data>' + rlCandidates.length + '</data> candidates.</p>');
 
   var rlUL = document.querySelector('#robustify-links-list');
   rlCandidates.forEach(i => {
@@ -2869,7 +2869,7 @@ export function showRobustLinks(e, selector) {
     //   }
 
     html += '</li>';
-    rlUL.insertAdjacentHTML('beforeend', html);
+    sanitizeInsertAdjacentHTML(rlUL, 'beforeend', html);
   });
 
 
@@ -2900,7 +2900,7 @@ export function showRobustLinks(e, selector) {
 
         // console.log(node);
 
-        i.parentNode.insertAdjacentHTML('beforeend', '<span class="progress" data-to="' + i.value + '">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + '</span>')
+        sanitizeInsertAdjacentHTML(i.parentNode, 'beforeend', '<span class="progress" data-to="' + i.value + '">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + '</span>')
 
         // window.setTimeout(function () {
         // console.log(i.value);
@@ -3070,7 +3070,7 @@ export function snapshotAtEndpoint(e, iri, endpoint, noteData, options = {}) {
         'type': 'info'
       }
       addMessageToLog(message, Config.MessageLog);
-      archiveNode.insertAdjacentHTML('beforeend', ' <span class="progress">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + ' ' + message.content + '</span>');
+      sanitizeInsertAdjacentHTML(archiveNode, 'beforeend', ' <span class="progress">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + ' ' + message.content + '</span>');
     }
 
     progress = archiveNode.querySelector('.progress');
@@ -3293,11 +3293,11 @@ export function generateFeed(e) {
 
   var id = 'location-generate-feed';
   var action = 'write';
-  generateFeed.insertAdjacentHTML('beforeend', `<form><fieldset id="${id}-fieldset"><legend data-i18n="dialog.generate-feed.save-to.legend">${i18n.t('dialog.generate-feed.save-to.legend.textContent')}</legend></fieldset></form>`);
+  sanitizeInsertAdjacentHTML(generateFeed, 'beforeend', `<form><fieldset id="${id}-fieldset"><legend data-i18n="dialog.generate-feed.save-to.legend">${i18n.t('dialog.generate-feed.save-to.legend.textContent')}</legend></fieldset></form>`);
   fieldset = generateFeed.querySelector('fieldset#' + id + '-fieldset');
   setupResourceBrowser(fieldset, id, action);
   var feedTitlePlaceholder = (Config.User.IRI && Config.User.Name) ? Config.User.Name + "'s" : "Foo's";
-  fieldset.insertAdjacentHTML('beforeend', `<p data-i18n="dialog.generate-feed.generate-location.p" id="${id}-samp">${i18n.t('dialog.generate-feed.generate-location.p.textContent')} <samp id="${id}-${action}"></samp></p><ul><li><label data-i18n="dialog.generate-feed.title.label" for="${id}-title">${i18n.t('dialog.generate-feed.title.label.textContent')}</label> <input type="text" placeholder="${feedTitlePlaceholder} Web Feed" name="${id}-title" value=""></li><li><label data-i18n="language.label" for="${id}-language">${i18n.t('language.label.textContent')}</label> <select id="${id}-language" name="${id}-language">${getLanguageOptionsHTML()}</select></li><li><label data-i18n="license.label" for="${id}-license">${i18n.t('license.label.textContent')}</label> <select id="${id}-license" name="${id}-license">${getLicenseOptionsHTML()}</select></li><li>${getFeedFormatSelection()}</li></ul><button class="create" data-i18n="dialog.generate-feed.generate.button" title="${i18n.t('dialog.generate-feed.generate.button.title')}" type="submit">${i18n.t('dialog.generate-feed.generate.button.textContent')}</button>`);
+  sanitizeInsertAdjacentHTML(fieldset, 'beforeend', `<p data-i18n="dialog.generate-feed.generate-location.p" id="${id}-samp">${i18n.t('dialog.generate-feed.generate-location.p.textContent')} <samp id="${id}-${action}"></samp></p><ul><li><label data-i18n="dialog.generate-feed.title.label" for="${id}-title">${i18n.t('dialog.generate-feed.title.label.textContent')}</label> <input type="text" placeholder="${feedTitlePlaceholder} Web Feed" name="${id}-title" value=""></li><li><label data-i18n="language.label" for="${id}-language">${i18n.t('language.label.textContent')}</label> <select id="${id}-language" name="${id}-language">${getLanguageOptionsHTML()}</select></li><li><label data-i18n="license.label" for="${id}-license">${i18n.t('license.label.textContent')}</label> <select id="${id}-license" name="${id}-license">${getLicenseOptionsHTML()}</select></li><li>${getFeedFormatSelection()}</li></ul><button class="create" data-i18n="dialog.generate-feed.generate.button" title="${i18n.t('dialog.generate-feed.generate.button.title')}" type="submit">${i18n.t('dialog.generate-feed.generate.button.textContent')}</button>`);
   var bli = document.getElementById(id + '-input');
   bli.focus();
   bli.placeholder = 'https://example.org/path/to/feed.xml';
@@ -3321,7 +3321,7 @@ export function generateFeed(e) {
 
     // TODO: this needs to be form validation instead
     if (!isHttpOrHttpsProtocol(storageIRI) || !storageIRI.length) {
-      generateFeed.insertAdjacentHTML('beforeend',
+      sanitizeInsertAdjacentHTML(generateFeed, 'beforeend',
         `<div class="response-message"><p class="error" data-i18n="dialog.generate-feed.error.missing-location.p">${i18n.t("dialog.generate-feed.error.missing-location.p.textContent")}</p></div>`
       )
 
@@ -3424,7 +3424,7 @@ export function generateFeed(e) {
         if(progress) {
           progress.parentNode.removeChild(progress)
         }
-        e.target.insertAdjacentHTML('afterend', '<progress min="0" max="100" value="0"></progress>')
+        sanitizeInsertAdjacentHTML(e.target, 'afterend', '<progress min="0" max="100" value="0"></progress>')
         progress = generateFeed.querySelector('progress')
 
 // console.log(feedData)
@@ -3441,7 +3441,7 @@ export function generateFeed(e) {
               throw Error("Not a valid URL for value: ", url);
             }
 
-            generateFeed.insertAdjacentHTML('beforeend',
+            sanitizeInsertAdjacentHTML(generateFeed, 'beforeend',
               `<div class="response-message"><p class="success" data-i18n="dialog.generate-feed.success.saved-at.p"><span>${i18n.t('dialog.generate-feed.success.saved-at.p.textContent')}</span> <a href="${url}" rel="noopener" target="_blank">${url}</a></p></div>`
             )
 
@@ -3647,7 +3647,7 @@ export function showDocumentCommunicationOptions(node) {
         });
 
         communicationOptionsHTML.forEach(html => {
-          node.insertAdjacentHTML('beforeend', domSanitize(html));
+          sanitizeInsertAdjacentHTML(node, 'beforeend', html);
           var nodes = document.querySelectorAll('#' + node.id + ' [id^="notification-subscriptions-"]');
           buttonSubscribeNotificationChannel(nodes, documentURL);
         });
@@ -4159,7 +4159,7 @@ export function showHighlightStructuredData(node) {
       </ul>
     </section>`;
 
-  node.insertAdjacentHTML('beforeend', html);
+  sanitizeInsertAdjacentHTML(node, 'beforeend', html);
 
   var structuredData = document.querySelector('#highlight-data')
 
@@ -4201,7 +4201,7 @@ export function showListOfStuff(node) {
   });
 
   if (s.length) {
-    node.insertAdjacentHTML('beforeend', `
+    sanitizeInsertAdjacentHTML(node, 'beforeend', `
       <section id="list-of-stuff" rel="schema:hasPart" resource="#list-of-stuff">
         <h3 data-i18n="panel.list-of-stuff.h3" property="schema:name">${i18n.t('panel.list-of-stuff.h3.textContent')}</h3>
         <ul>${s.join('')}</ul>
@@ -4245,7 +4245,7 @@ export function showTableOfContents(node, sections, options) {
   toc += getListOfSections(sections, {'sortable': Config.SortableList});
   toc += '</ol></section>';
 
-  node.insertAdjacentHTML('beforeend', domSanitize(toc));
+  sanitizeInsertAdjacentHTML(node, 'beforeend', toc);
 }
 
 
@@ -4565,7 +4565,7 @@ console.log(reason);
 
       var table = document.getElementById(id);
       var thead = table.querySelector('thead');
-      thead.querySelector('tr > th').insertAdjacentHTML('beforeend', '<button id="include-diff-requirements" class="do add" disabled="disabled" title="' + buttonTextDiffRequirements + '">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + '</button>');
+      sanitizeInsertAdjacentHTML(thead.querySelector('tr > th'), 'beforeend', '<button id="include-diff-requirements" class="do add" disabled="disabled" title="' + buttonTextDiffRequirements + '">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + '</button>');
 
       getResourceGraph(url, null, options)
         .then(targetGraph => {
@@ -4625,7 +4625,7 @@ console.log(reason);
       var button = e.target.closest('button.add');
       if (button) {
         button.disabled = true;
-        button.insertAdjacentHTML('beforeend', Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]);
+        sanitizeInsertAdjacentHTML(button, 'beforeend', Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]);
 
         showExtendedConcepts();
       }
@@ -4701,7 +4701,7 @@ export function showExtendedConcepts() {
       var ic = loC.querySelector('#include-concepts');
       if (ic) { ic.parentNode.removeChild(ic); }
 
-      loC.querySelector('div').insertAdjacentHTML('beforeend', domSanitize(html));
+      sanitizeInsertAdjacentHTML(loC.querySelector('div'), 'beforeend', html);
 
       // insertDocumentLevelHTML(document, html, { 'id': id });
 
@@ -4938,7 +4938,7 @@ export async function spawnDokieli(documentNode, data, contentType, iris, option
     });
 
     if (!hasDokieliCss) {
-      document.querySelector('head').insertAdjacentHTML('beforeend', `
+      sanitizeInsertAdjacentHTML(document.querySelector('head'), 'beforeend', `
         <link href="https://dokie.li/media/css/basic.css" media="all" rel="stylesheet" title="Basic" />
         <link href="https://dokie.li/media/css/dokieli.css" media="all" rel="stylesheet" />`);
     }
@@ -4955,7 +4955,7 @@ export async function spawnDokieli(documentNode, data, contentType, iris, option
       baseElement.remove();
     });
 
-    document.querySelector('head').insertAdjacentHTML('afterbegin', '<base href="' + iri + '" />');
+    sanitizeInsertAdjacentHTML(document.querySelector('head'),'afterbegin', '<base href="' + iri + '" />');
     //TODO: Setting the base URL with `base` seems to work correctly, i.e., link base is opened document's URL, and simpler than updating some of the elements' href/src/data attributes. Which approach may be better depends on actions afterwards, e.g., Save As (perhaps other features as well) may need to remove the base and go with the user selection.
     // var nodes = tmpl.querySelectorAll('head link, [src], object[data]');
     // nodes = rewriteBaseURL(nodes, {'baseURLType': 'base-url-absolute', 'iri': iri});

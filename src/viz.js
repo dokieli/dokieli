@@ -30,7 +30,7 @@ import * as d3Selection from 'd3-selection';
 import * as d3Force from 'd3-force';
 const d3 = { ...d3Selection, ...d3Force };
 import { i18n } from "./i18n.js";
-import { domSanitize } from "./utils/sanitization.js";
+import { domSanitize, sanitizeInsertAdjacentHTML } from "./utils/sanitization.js";
 
 //Borrowed some of the d3 parts from https://bl.ocks.org/mbostock/4600693
 export function showVisualisationGraph(url, data, selector, options) {
@@ -122,7 +122,7 @@ export function showVisualisationGraph(url, data, selector, options) {
   // Object.keys(group).forEach(i => {
   //   a.push('<div style="background-color:' + group[i].color + '; width:5em; height:5em;">' + group[i].label + '</div>');
   // });
-  // getDocumentContentNode(document).insertAdjacentHTML('beforeend', a.join(''));
+  // getDocumentContentNode(document).sanitizeInsertAdjacentHTML('beforeend', a.join(''));
 
   var buttonClose = getButtonHTML({ key:'dialog.graph-view.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
@@ -147,7 +147,7 @@ export function showVisualisationGraph(url, data, selector, options) {
     .attr('typeof', 'http://purl.org/dc/dcmitype/Image')
 
   var graphView = document.querySelector(selector);
-  graphView.insertAdjacentHTML('beforeend', `<button class="export" data-i18n="dialog.graph-view.export.button" title="${i18n.t('dialog.graph-view.export.button.title')}" type="button">${i18n.t('dialog.graph-view.export.button.textContent')}</button>`);
+  sanitizeInsertAdjacentHTML(graphView, 'beforeend', `<button class="export" data-i18n="dialog.graph-view.export.button" title="${i18n.t('dialog.graph-view.export.button.title')}" type="button">${i18n.t('dialog.graph-view.export.button.textContent')}</button>`);
   graphView.addEventListener('click', (e) => {
     if (e.target.closest('button.export')) {
       var svgNode = graphView.querySelector('svg[typeof="http://purl.org/dc/dcmitype/Image"]');

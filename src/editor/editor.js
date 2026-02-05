@@ -413,14 +413,14 @@ export class Editor {
 
   //         var userHTML = '<dd class="do"' + contributorId + contributorInList + '><span about="" rel="schema:' + contributorRole + '">' + getAgentHTML({'avatarSize': 32}) + '</span><button class="add-' + contributorRole + '" contenteditable="false" title="Add ' + contributorName + ' as ' + contributorRole + '">' + Icon[".fas.fa-plus"] + '</button></dd>';
 
-  //         contributorNode.insertAdjacentHTML('beforeend', userHTML);
+  //         contributorNode.sanitizeInsertAdjacentHTML('beforeend', userHTML);
   //       }
 
   //       //User can enter a contributor's WebID
-  //       contributorNode.insertAdjacentHTML('beforeend', '<dd class="do"><button class="enter-' + contributorRole + '" contenteditable="false" title="Enter ' + contributorRole +'">' + Icon[".fas.fa-user-plus"] + '</button></dd>');
+  //       contributorNode.sanitizeInsertAdjacentHTML('beforeend', '<dd class="do"><button class="enter-' + contributorRole + '" contenteditable="false" title="Enter ' + contributorRole +'">' + Icon[".fas.fa-user-plus"] + '</button></dd>');
 
   //       //User can invite a contributor from their contacts
-  //       contributorNode.insertAdjacentHTML('beforeend', '<dd class="do"><button class="invite-' + contributorRole + '" contenteditable="false" title="Invite ' + contributorRole +'">' + Icon[".fas.fa-bullhorn"] + '</button></dd>');
+  //       contributorNode.sanitizeInsertAdjacentHTML('beforeend', '<dd class="do"><button class="invite-' + contributorRole + '" contenteditable="false" title="Invite ' + contributorRole +'">' + Icon[".fas.fa-bullhorn"] + '</button></dd>');
 
   //       contributorNode = document.getElementById(contributorNodeId);
   //       contributorNode.addEventListener('click', (e) => {
@@ -437,7 +437,7 @@ export class Editor {
   //         //TODO: This input field can behave like the one in js showUserIdentityInput for enableDisableButton to button.commit
   //         if (button){
   //           n = e.target.closest('.do');
-  //           n.insertAdjacentHTML('beforebegin', '<dd class="do" contenteditable="false"><input contenteditable="false" name="enter-' + contributorRole + '" placeholder="https://csarven.ca/#i" type="text" value="" /> <button class="commit-' + contributorRole + '" contenteditable="false" title="Commit ' + contributorRole + '">' + Icon[".fas.fa-plus"] + '</button></dd>');
+  //           n.sanitizeInsertAdjacentHTML('beforebegin', '<dd class="do" contenteditable="false"><input contenteditable="false" name="enter-' + contributorRole + '" placeholder="https://csarven.ca/#i" type="text" value="" /> <button class="commit-' + contributorRole + '" contenteditable="false" title="Commit ' + contributorRole + '">' + Icon[".fas.fa-plus"] + '</button></dd>');
   //         }
 
   //         button = e.target.closest('button.commit-' + contributorRole);

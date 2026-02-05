@@ -329,7 +329,7 @@ export function updateLocalStorageProfile(User) {
 
 //     var useHTTPStorage = '<li class="http-storage-html-autosave"><input id="http-storage-html-autosave" class="autosave" type="checkbox"' + checked +' /> <label for="http-storage-html-autosave">' + (Config.AutoSave.Timer / 60000) + 'm autosave (http)</label></li>';
 
-//     node.insertAdjacentHTML('beforeend', '<ul id="autosave-items" class="on">' + useLocalStorage + useHTTPStorage + '</ul>');
+//     sanitizeInsertAdjacentHTML(node, 'beforeend', '<ul id="autosave-items" class="on">' + useLocalStorage + useHTTPStorage + '</ul>');
 
 //     node.querySelector('#autosave-items').addEventListener('click', e => {
 //       if (e.target.closest('input.autosave')) {

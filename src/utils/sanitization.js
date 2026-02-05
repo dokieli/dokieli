@@ -20,6 +20,7 @@ import DOMPurify from 'dompurify';
 import { htmlEncode } from '../util.js';
 
 export function domSanitize(strHTML, options = {}) {
+  if (!strHTML) return;
   // console.log("DOMPurify in:", strHTML);
 
   //TODO: Consider allowing meta, link, object
@@ -181,3 +182,6 @@ export function domSanitizeHTMLBody(input, options) {
   return input;
 }
 
+export function sanitizeInsertAdjacentHTML(node, position, input) {
+  node.insertAdjacentHTML(position, domSanitize(input));
+}

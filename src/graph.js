@@ -21,7 +21,7 @@ import { Readable } from "readable-stream";
 import Config from './config.js'
 import { stripFragmentFromString, getBaseURL, getPathURL, getAbsoluteIRI, getParentURLPath, currentLocation, getMediaTypeURIs } from './uri.js'
 import { escapeRegExp, uniqueArray } from './util.js'
-import { domSanitize } from './utils/sanitization.js'
+import { domSanitize, sanitizeInsertAdjacentHTML } from './utils/sanitization.js'
 import { parseMarkdown } from "./utils/html.js";
 import { setAcceptRDFTypes, getResource, getResourceHead } from './fetcher.js'
 import LinkHeader from "http-link-header";
@@ -616,7 +616,7 @@ function setDocumentBase (data, baseURI, contentType) {
       template.documentElement.setHTMLUnsafe(domSanitize(data));
       base = template.querySelector('head base[href]')
       if (!base) {
-        template.querySelector('head').insertAdjacentHTML('afterbegin', '<base href="' + baseURI + '" />')
+        sanitizeInsertAdjacentHTML(template.querySelector('head'), 'afterbegin', '<base href="' + baseURI + '" />')
         data = template.documentElement.outerHTML
       }
       break;

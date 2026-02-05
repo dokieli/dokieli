@@ -24,6 +24,7 @@ import { getAgentHTML, createDateHTML, setCopyToClipboard } from './doc.js'
 import { fragmentFromString, selectArticleNode } from "./utils/html.js";
 import { getResource } from './fetcher.js'
 import { i18n } from './i18n.js';
+import { sanitizeInsertAdjacentHTML } from './utils/sanitization.js';
 
 let gpxTrkptDistance = 0;
 //FIXME: Update RDF properties, datatypes, and other information that's temporarily marked/being used with ex:FIXME- below in gpxtpx.
@@ -70,7 +71,7 @@ function generateGeoView(data) {
   node.appendChild(fragmentFromString(gpxActivity));
 
   var table = node.querySelector('#geo table');
-  table.insertAdjacentHTML('afterend', Config.Button.Clipboard);
+  sanitizeInsertAdjacentHTML(table, 'afterend', Config.Button.Clipboard);
   var button = table.nextElementSibling;
   setCopyToClipboard(table, button);
 
@@ -164,7 +165,7 @@ function generateGeoView(data) {
       if (elevationLoss) {
         dtdd.push(`<dt>${i18n.tDoc('measure.elevation-lost.textContent')}</dt><dd>${parseFloat(elevationLoss.toFixed(2))} <abbr title="${i18n.tDoc('unit.m.abbr.title')}">${i18n.tDoc('unit.m.abbr.textContent')}</abbr></dd>`);
       }
-      document.querySelector('tfoot > tr > td [typeof="schema:ExerciseAction"]').insertAdjacentHTML('beforeend', dtdd.join(''));
+      sanitizeInsertAdjacentHTML(document.querySelector('tfoot > tr > td [typeof="schema:ExerciseAction"]'), 'beforeend', dtdd.join(''));
     }).addTo(map);
   
   // var mapTrackStart = L.divIcon({className: 'map-track-start'});

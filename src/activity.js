@@ -24,7 +24,7 @@ import { getAbsoluteIRI, getPathURL, isHttpOrHttpsProtocol, stripFragmentFromStr
 import { getLinkRelation, serializeDataToPreferredContentType, getGraphLanguage, getGraphLicense, getGraphRights, getGraphTypes, getGraphDate, getGraphImage, getResourceGraph, getResourceOnlyRDF, getAgentTypeIndex, getUserContacts, getAgentName, getSubjectInfo, getItemsList } from './graph.js';
 import { getAcceptPostPreference, postResource } from './fetcher.js';
 import Config from './config.js';
-import { domSanitize } from './utils/sanitization.js';
+import { domSanitize, sanitizeInsertAdjacentHTML } from './utils/sanitization.js';
 import { generateUUID, uniqueArray } from './util.js';
 import { fragmentFromString, getDocumentContentNode } from "./utils/html.js";
 import { i18n } from './i18n.js';
@@ -50,7 +50,7 @@ export function initializeNotifications(options = {}) {
       <ul class="activities"></ul>
     </div>
   </aside>`;
-  document.body.insertAdjacentHTML('beforeend', aside);
+  sanitizeInsertAdjacentHTML(document.body, 'beforeend', aside);
   aside = document.getElementById('document-notifications');
 
   if (options.includeButtonMore) {
@@ -117,10 +117,10 @@ export function addNoteToNotifications(noteData) {
   }
 
   if (previousElement) {
-    previousElement.insertAdjacentHTML('beforebegin', li);
+    sanitizeInsertAdjacentHTML(previousElement, 'beforebegin', li);
   }
   else {
-    notifications.insertAdjacentHTML('beforeend', li);
+    sanitizeInsertAdjacentHTML(notifications, 'beforeend', li);
   }
 }
 
@@ -165,7 +165,7 @@ export function sendNotifications(tos, note, iri, shareResource) {
       var toInput = shareResource.querySelector('[value="' + to + '"]') ||
         shareResource.querySelector('#share-resource-to');
 
-      toInput.parentNode.insertAdjacentHTML('beforeend',
+      sanitizeInsertAdjacentHTML(toInput.parentNode, 'beforeend',
         '<span class="progress" data-to="' + to +
         '">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + '</span>');
 

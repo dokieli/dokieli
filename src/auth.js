@@ -28,6 +28,7 @@ import { isCurrentScriptSameOrigin, isLocalhost } from './uri.js';
 import { SessionIDB } from '@uvdsl/solid-oidc-client-browser';
 import { i18n } from './i18n.js';
 import { showGeneralMessages, setPreferredLanguagesInfo } from './actions.js';
+import { sanitizeInsertAdjacentHTML } from './utils/sanitization.js';
 
 const ns = Config.ns;
 
@@ -65,7 +66,7 @@ async function showUserSigninSignout (node) {
   //Checks if already know the user from prior load of the page
   userInfoHTML = Config.User.IRI ? getAgentHTML() + Config.Button.Menu.SignOut : Config.Button.Menu.SignIn;
 
-  node.insertAdjacentHTML('afterbegin', userInfoHTML);
+  sanitizeInsertAdjacentHTML(node, 'afterbegin', userInfoHTML);
 }
 
 async function signOut() {
@@ -92,7 +93,7 @@ async function userInfoSignOut(node) {
   //Clean up the user-info so it can be reconstructed
   removeChildren(node);
 
-  node.insertAdjacentHTML('afterbegin', Config.Button.Menu.SignIn);
+  sanitizeInsertAdjacentHTML(node, 'afterbegin', Config.Button.Menu.SignIn);
 
   var buttonDeletes = document.querySelectorAll('aside.do blockquote[cite] article button.delete');
   buttonDeletes.forEach(button => {
@@ -191,7 +192,7 @@ function submitSignIn (url) {
 
   if (typeof url !== 'string') {
     if (userIdentityInput) {
-      userIdentityInput.querySelector('#user-identity-input-webid').insertAdjacentHTML('beforeend', Icon[".fas.fa-circle-notch.fa-spin.fa-fw"])
+      sanitizeInsertAdjacentHTML(userIdentityInput.querySelector('#user-identity-input-webid'), 'beforeend', Icon[".fas.fa-circle-notch.fa-spin.fa-fw"])
     }
 
     url = userIdentityInput.querySelector('input#webid').value.trim()
@@ -207,7 +208,7 @@ function submitSignIn (url) {
       var uI = document.getElementById('user-info')
       if (uI) {
         removeChildren(uI);
-        uI.insertAdjacentHTML('beforeend', getAgentHTML() + Config.Button.Menu.SignOut);
+        sanitizeInsertAdjacentHTML(uI, 'beforeend', getAgentHTML() + Config.Button.Menu.SignOut);
       }
 
       if (userIdentityInput) {
@@ -360,7 +361,7 @@ function afterSetUserInfo () {
 
   for (let i = 0; i < user.length; i++) {
     var article = user[i].closest('article')
-    article.insertAdjacentHTML('afterbegin', '<button class="delete" type="button">' + Icon[".fas.fa-trash-alt"] + '</button>')
+    sanitizeInsertAdjacentHTML(article, 'afterbegin', '<button class="delete" type="button">' + Icon[".fas.fa-trash-alt"] + '</button>')
   }
 
   var buttonDelete = document.querySelectorAll('aside.do blockquote[cite] article button.delete')

@@ -26,6 +26,7 @@ import { normalizeForDiff } from "./utils/normalization.js";
 import { getButtonHTML, updateButtons } from "./ui/buttons.js";
 import Config from "./config.js";
 import { i18n } from "./i18n.js";
+import { sanitizeInsertAdjacentHTML } from "./utils/sanitization.js";
 
 export async function syncLocalRemoteResource(options = {}) {
   // console.log('--- syncLocalRemoteResource');
@@ -584,9 +585,9 @@ export function showResourceReviewChanges(localContent, remoteContent, response,
 
   var node = document.getElementById('review-changes');
 
-  node.querySelector('div.info').insertAdjacentHTML('beforeend', detailsInsDel);
+  sanitizeInsertAdjacentHTML(node.querySelector('div.info'), 'beforeend', detailsInsDel);
 
-  node.insertAdjacentHTML('beforeend', `
+  sanitizeInsertAdjacentHTML(node, 'beforeend', `
     <div class="do-diff" dir="auto">${diffHTML.join('')}</div>
     <button class="review-changes-save-local" data-i18n="dialog.review-changes.save-local.button" title="${i18n.t('dialog.review-changes.save-local.button.textContent')}" type="button">${i18n.t('dialog.review-changes.save-local.button.title')}</button>
     <button class="review-changes-save-remote" data-i18n="dialog.review-changes.save-remote.button" title="${i18n.t('dialog.review-changes.save-remote.button.title')}" type="button">${i18n.t('dialog.review-changes.save-remote.button.textContent')}</button>

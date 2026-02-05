@@ -524,7 +524,7 @@ export function processAction(action, formValues, selectionData, storedSelection
 //     Object.keys(Config.RefAreas).forEach(key => {
 //       refAreas += '<option value="' + key + '">' + key + ' - ' + Config.RefAreas[key] + '</option>';
 //     });
-//     form.querySelector('.medium-editor-form-save').insertAdjacentHTML('beforebegin', '<div id="' + sparklineGraphId + '">`' + textInputB + '` is not available. Try: ' + '<select name="refAreas"><option>Select a reference area</option>' + refAreas + '</select></div>');
+//     form.querySelector('.medium-editor-form-save').sanitizeInsertAdjacentHTML('beforebegin', '<div id="' + sparklineGraphId + '">`' + textInputB + '` is not available. Try: ' + '<select name="refAreas"><option>Select a reference area</option>' + refAreas + '</select></div>');
 //     var rA = document.querySelector('#' + sparklineGraphId + ' select[name="refAreas"]');
 //     rA.addEventListener('change', (e) => {
 //       e.preventDefault();
@@ -555,7 +555,7 @@ export function processAction(action, formValues, selectionData, storedSelection
 
 //   queryURL = getProxyableIRI(queryURL);
 
-//   form.querySelector('.medium-editor-form-save').insertAdjacentHTML('beforebegin', '<div id="' + sparklineGraphId + '"></div>' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]);
+//   form.querySelector('.medium-editor-form-save').sanitizeInsertAdjacentHTML('beforebegin', '<div id="' + sparklineGraphId + '"></div>' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]);
 //   sG = document.getElementById(sparklineGraphId);
 
 //   getResourceGraph(queryURL)
@@ -578,7 +578,7 @@ export function processAction(action, formValues, selectionData, storedSelection
 //         for (var i = 0; i < sparkline.length; i++) {
 //           sparkline[i].parentNode.removeChild(sparkline[i]);
 //         }
-//         form.querySelector('.medium-editor-form-save').insertAdjacentHTML('beforebegin', Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]);
+//         form.querySelector('.medium-editor-form-save').sanitizeInsertAdjacentHTML('beforebegin', Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]);
 
 //         var dataset = e.target.value;
 //         var title = e.target.querySelector('*[value="' + e.target.value + '"]').textContent.trim();
@@ -628,12 +628,12 @@ export function processAction(action, formValues, selectionData, storedSelection
 //                 title: title
 //               };
 //               var sparkline = getSparkline(list, options);
-//               sG.insertAdjacentHTML('beforeend', '<span class="sparkline">' + sparkline + '</span> <span class="sparkline-info">' + triples.length + ' observations</span>');
+//               sG.sanitizeInsertAdjacentHTML('beforeend', '<span class="sparkline">' + sparkline + '</span> <span class="sparkline-info">' + triples.length + ' observations</span>');
 //                 form.removeChild(form.querySelector('.fas.fa-circle-notch.fa-spin.fa-fw'));
 //             }
 //             else {
 //               //This shouldn't happen.
-//               sG.insertAdjacentHTML('beforeend', '<span class="sparkline-info">0 observations. Select another.</span>');
+//               sG.sanitizeInsertAdjacentHTML('beforeend', '<span class="sparkline-info">0 observations. Select another.</span>');
 //             }
 //           });
 //       });

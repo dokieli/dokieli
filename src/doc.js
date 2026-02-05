@@ -26,7 +26,7 @@ import { getResourceHead, deleteResource, processSave, patchResourceWithAcceptPa
 import { getResourceGraph, sortGraphTriples, getGraphContributors, getGraphAuthors, getGraphEditors, getGraphPerformers, getGraphPublishers, getGraphLabel, getGraphEmail, getGraphTitle, getGraphConceptLabel, getGraphPublished, getGraphUpdated, getGraphDescription, getGraphLicense, getGraphRights, getGraphFromData, getGraphAudience, getGraphTypes, getGraphLanguage, getGraphInbox, getUserLabelOrIRI, getGraphImage, getGraphDate, processResources } from './graph.js';
 import { Icon } from './ui/icons.js';
 import { buttonIcons, getButtonHTML, updateButtons } from './ui/buttons.js'
-import { domSanitizeHTMLBody, domSanitize } from './utils/sanitization.js';
+import { domSanitizeHTMLBody, domSanitize, sanitizeInsertAdjacentHTML } from './utils/sanitization.js';
 import { cleanProseMirrorOutput, normalizeHTML, normalizeWhitespace } from './utils/normalization.js';
 import { formatHTML, fragmentFromString, getDoctype, getDocumentContentNode, selectArticleNode, getDocumentNodeFromString, stringFromFragment, createHTML, getOffset } from './utils/html.js';
 import { i18n } from './i18n.js';
@@ -766,7 +766,7 @@ export function showActionMessage(node, message, options = {}) {
     `));
     aside = node.querySelector('#document-action-message');
   }
-  aside.querySelector('ul[role="log"]').insertAdjacentHTML('afterbegin', messageItem);
+  sanitizeInsertAdjacentHTML(aside.querySelector('ul[role="log"]'), 'afterbegin', messageItem);
 
   let timerId = null;
 
@@ -834,24 +834,24 @@ export function insertDocumentLevelHTML(rootNode, h, options) {
         if (skipElements.indexOf(node.nodeName.toLowerCase()) > -1) {
           node = node.closest(sectioningElements.join(',')) || article;
         }
-        node.insertAdjacentHTML('afterend', h);
+        node.sanitizeInsertAdjacentHTML('afterend', h);
         break;
       }
       else if (i == 0) {
         var a = article.querySelector('h1');
 
         if (a) {
-          a.insertAdjacentHTML('afterend', h);
+          a.sanitizeInsertAdjacentHTML('afterend', h);
         }
         else {
-          article.insertAdjacentHTML('afterbegin', h);
+          article.sanitizeInsertAdjacentHTML('afterbegin', h);
         }
         break;
       }
     }
   }
   else {
-    article.insertAdjacentHTML('afterbegin', h);
+    article.sanitizeInsertAdjacentHTML('afterbegin', h);
   }
 
   return rootNode;
@@ -963,7 +963,7 @@ export function createDateHTML(options) {
 //       var dd = dLangS.closest('dd');
 //       dd.parentNode.removeChild(dd);
 //       dd = '<dd><span content="' + languageValue + '" lang="" property="dcterms:language" xml:lang="">' + Config.Languages[languageValue].sourceName + '</span></dd>';
-//       dl.insertAdjacentHTML('beforeend', dd);
+//       dl.sanitizeInsertAdjacentHTML('beforeend', dd);
 //     }
 //   }
 
@@ -985,7 +985,7 @@ export function createDateHTML(options) {
 //       dd = dLS.closest('dd');
 //       dd.parentNode.removeChild(dd);
 //       dd = '<dd><a href="' + licenseIRI + '" rel="schema:license" title="' + Config.License[licenseIRI].description + '">' + Config.License[licenseIRI].name + '</a></dd>';
-//       dl.insertAdjacentHTML('beforeend', dd);
+//       dl.sanitizeInsertAdjacentHTML('beforeend', dd);
 //     }
 //   }
 
@@ -1007,7 +1007,7 @@ export function createDateHTML(options) {
 //       dd = dTS.closest('dd');
 //       dd.parentNode.removeChild(dd);
 //       dd = '<dd><a href="' + typeIRI + '" rel="rdf:type">' + Config.ResourceType[typeIRI].name + '</a></dd>';
-//       dl.insertAdjacentHTML('beforeend', dd);
+//       dl.sanitizeInsertAdjacentHTML('beforeend', dd);
 //     }
 //   }
 
@@ -1030,7 +1030,7 @@ export function createDateHTML(options) {
 //       dd.parentNode.removeChild(dd);
 //       dd = '<dd prefix="pso: http://purl.org/spar/pso/" rel="pso:holdsStatusInTime" resource="#' + generateAttributeId() + '"><span rel="pso:withStatus" resource="' + statusIRI + '" typeof="pso:PublicationStatus">' + Config.PublicationStatus[statusIRI].name + '</span></dd>';
 
-//       dl.insertAdjacentHTML('beforeend', dd);
+//       dl.sanitizeInsertAdjacentHTML('beforeend', dd);
 
 //       if (statusIRI == 'http://purl.org/spar/pso/published') {
 //         setDate(document, { 'id': 'document-published', 'property': 'schema:datePublished', 'datetime': options.datetime });
@@ -1055,7 +1055,7 @@ export function createDateHTML(options) {
 //       dd = dTSS.closest('dd');
 //       dd.parentNode.removeChild(dd);
 //       dd = '<dd><a href="' + testSuiteIRI + '" rel="spec:testSuite">' + testSuiteIRI + '</a></dd>';
-//       dl.insertAdjacentHTML('beforeend', dd);
+//       dl.sanitizeInsertAdjacentHTML('beforeend', dd);
 //     }
 //   }
 
@@ -1076,7 +1076,7 @@ export function createDateHTML(options) {
 //       dd = dIS.closest('dd');
 //       dd.parentNode.removeChild(dd);
 //       dd = '<dd><a href="' + inboxIRI + '" rel="ldp:inbox">' + inboxIRI + '</a></dd>';
-//       dl.insertAdjacentHTML('beforeend', dd);
+//       dl.sanitizeInsertAdjacentHTML('beforeend', dd);
 //     }
 //   }
 
@@ -1097,7 +1097,7 @@ export function createDateHTML(options) {
 //       dd = dIRTS.closest('dd');
 //       dd.parentNode.removeChild(dd);
 //       dd = '<dd><a href="' + inReplyToIRI + '" rel="as:inReplyTo">' + inReplyToIRI + '</a></dd>';
-//       dl.insertAdjacentHTML('beforeend', dd);
+//       dl.sanitizeInsertAdjacentHTML('beforeend', dd);
 //     }
 //   }
 
@@ -1131,7 +1131,7 @@ export function setDocumentRelation(rootNode, data, options) {
           }
         }
       }
-      dl.insertAdjacentHTML('beforeend', documentRelation);
+      dl.sanitizeInsertAdjacentHTML('beforeend', documentRelation);
     }
     else {
       h.push(documentRelation);
@@ -1194,7 +1194,7 @@ export function showTimeMap(node, url) {
 
       var html = '<dl class="memento"><dt>Memento</dt><dd><ul>' + items.join('') + '</ul></dd></dl>';
 
-      node.insertAdjacentHTML('beforeend', html);
+      node.sanitizeInsertAdjacentHTML('beforeend', html);
 
       node = document.getElementById(elementId);
       node.addEventListener('click', e => {
@@ -1260,7 +1260,7 @@ export function getDocumentStatusHTML(rootNode, options) {
       if (dl) {
         var clone = dl.cloneNode(true);
         dl.parentNode.removeChild(dl);
-        clone.insertAdjacentHTML('beforeend', dd);
+        clone.sanitizeInsertAdjacentHTML('beforeend', dd);
         s = clone.outerHTML;
       }
       else {
@@ -2316,7 +2316,7 @@ export function buildReferences(referencesList, id, citation) {
   if (!referencesList) {
     var nodeInsertLocation = selectArticleNode(document);
     var section = '<section id="references"><h2>References</h2><div><ol></ol></div></section>';
-    nodeInsertLocation.insertAdjacentHTML('beforeend', section);
+    nodeInsertLocation.sanitizeInsertAdjacentHTML('beforeend', section);
   }
 
   var references = document.querySelector('#references');
@@ -2326,7 +2326,7 @@ export function buildReferences(referencesList, id, citation) {
 
   if (citation) {
     var citationItem = referenceItemHTML(referencesList, id, citation);
-    referencesList.insertAdjacentHTML('beforeend', citationItem);
+    referencesList.sanitizeInsertAdjacentHTML('beforeend', citationItem);
   }
 }
 
@@ -2347,7 +2347,7 @@ export function updateReferences(referencesList, options) {
     // console.log(refId);
     // console.log(refLabel)
     var ref = '<span class="ref"> <span class="ref-reference" id="' + rId + '">' + Config.RefType[Config.DocRefType].InlineOpen + '<a href="#' + refId + '">' + refLabel + '</a>' + Config.RefType[Config.DocRefType].InlineClose + '</span></span>';
-    cite.insertAdjacentHTML('afterend', ref);
+    cite.sanitizeInsertAdjacentHTML('afterend', ref);
   }
 
   citeA.forEach(a => {
@@ -2432,12 +2432,12 @@ export function updateReferences(referencesList, options) {
 
         var referenceItem = referenceItemHTML(referencesList, refId, citation);
 
-        referencesList.insertAdjacentHTML('beforeend', referenceItem);
+        referencesList.sanitizeInsertAdjacentHTML('beforeend', referenceItem);
 
         insertRef(cite, rId, refId, refLabel);
       }
 
-      // cite.insertAdjacentHTML('afterend', ref);
+      // cite.sanitizeInsertAdjacentHTML('afterend', ref);
     }
   })
   // console.log(uniqueCitations);
@@ -2502,7 +2502,7 @@ export function showRobustLinksDecoration(node) {
       }
     }
 
-    i.insertAdjacentHTML('afterend', `<span class="do robustlinks">${getButtonHTML({ key: 'popup.robustlinks.show.button', button: 'robustify-links' })}<span>${citation}${originalurl}${versionurl}${nearlinkdateurl}</span></span>`);
+    sanitizeInsertAdjacentHTML(i, 'afterend', `<span class="do robustlinks">${getButtonHTML({ key: 'popup.robustlinks.show.button', button: 'robustify-links' })}<span>${citation}${originalurl}${versionurl}${nearlinkdateurl}</span></span>`);
   });
 
   document.querySelectorAll('.do.robustlinks').forEach(i => {
@@ -3573,7 +3573,7 @@ export function initCurrentStylesheet(e) {
       slides[j].classList.add('do');
     }
     getDocumentContentNode(document).classList.add('on-slideshow', 'list');
-    document.querySelector('head').insertAdjacentHTML('beforeend', '<meta content="width=792, user-scalable=no" name="viewport" />');
+    sanitizeInsertAdjacentHTML(document.querySelector('head'), 'beforeend', '<meta content="width=792, user-scalable=no" name="viewport" />');
 
     var body = getDocumentContentNode(document);
     var dMenu = document.querySelector('#document-menu.do');
@@ -3622,7 +3622,7 @@ export function initCopyToClipboard() {
   elements.forEach(element => {
     var nodes = selectArticleNode(document).querySelectorAll(element);
     nodes.forEach(node => {
-      node.insertAdjacentHTML('afterend', Config.Button.Clipboard);
+      sanitizeInsertAdjacentHTML(node, 'afterend', Config.Button.Clipboard);
       var button = node.nextElementSibling;
       setCopyToClipboard(node, button);
     });
@@ -3638,7 +3638,7 @@ export function showFragment(selector) {
       if (!fragment && e.target.parentNode.nodeName.toLowerCase() != 'aside'){
         const sign = getSelectorSign(e.target);
 
-        e.target.insertAdjacentHTML('afterbegin', '<span class="do fragment"><a href="#' + e.target.id + '">' + sign + '</a></span>');
+        sanitizeInsertAdjacentHTML(e.target, 'afterbegin', '<span class="do fragment"><a href="#' + e.target.id + '">' + sign + '</a></span>');
         fragment = document.querySelector('[id="' + e.target.id + '"] > .do.fragment');
         var fragmentClientWidth = fragment.clientWidth;
 
@@ -4125,8 +4125,8 @@ export function getDocumentConceptDefinitionsHTML(documentURL) {
 export function insertTestCoverageToTable(id, testSuiteGraph) {
   var table = document.getElementById(id);
   var thead = table.querySelector('thead');
-  thead.querySelector('tr:first-child').insertAdjacentHTML('beforeend', '<th colspan="2">Coverage</th>');
-  thead.querySelector('tr:nth-child(2)').insertAdjacentHTML('beforeend', '<th>Test Case (Review Status)</th>');
+  sanitizeInsertAdjacentHTML(thead.querySelector('tr:first-child'), 'beforeend', '<th colspan="2">Coverage</th>');
+  sanitizeInsertAdjacentHTML(thead.querySelector('tr:nth-child(2)'), 'beforeend', '<th>Test Case (Review Status)</th>');
 
   var subjects = [];
   testSuiteGraph  = rdf.grapoi({ dataset: testSuiteGraph.dataset });
@@ -4186,21 +4186,21 @@ export function insertTestCoverageToTable(id, testSuiteGraph) {
         var tdTestCase = tr.querySelector('td:nth-child(4)');
 
         if (tdTestCase) {
-          tdTestCase.querySelector('ul').insertAdjacentHTML('beforeend', testCaseHTML);
+          sanitizeInsertAdjacentHTML(tdTestCase.querySelector('ul'), 'beforeend', testCaseHTML);
         }
         else {
-          tr.insertAdjacentHTML('beforeend', '<td><ul>' + testCaseHTML + '</ul></td>');
+          sanitizeInsertAdjacentHTML(tr, 'beforeend', '<td><ul>' + testCaseHTML + '</ul></td>');
         }
       }
     })
 
     var tC = tr.querySelector('td:nth-child(4)');
     if (!tC) {
-      tr.insertAdjacentHTML('beforeend', '<td><span class="warning">?</span></td>');
+      sanitizeInsertAdjacentHTML(tr, 'beforeend', '<td><span class="warning">?</span></td>');
     }
   });
 
-  table.insertAdjacentHTML('beforeend', '<tfoot><tr>' + getTestDescriptionReviewStatusHTML() + '</tr></tfoot>')
+  sanitizeInsertAdjacentHTML(table, 'beforeend', '<tfoot><tr>' + getTestDescriptionReviewStatusHTML() + '</tr></tfoot>')
 }
 
 export function getStorageSelfDescription(g) {
@@ -4454,7 +4454,7 @@ export function getCitation(i, options) {
         if (data.covers) {
           // console.log(data.covers)
           isbnData.addOut(ns.schema.image, rdf.namedNode('https://covers.openlibrary.org/b/id/' + data.covers[0] + '-S.jpg'));
-          // document.body.insertAdjacentHTML('afterbegin', '<img src="' + img + '"/>');
+          // sanitizeInsertAdjacentHTML(document.body, 'afterbegin', '<img src="' + img + '"/>');
 
           //   async function fetchImage(url) {
           //     const img = new Image();

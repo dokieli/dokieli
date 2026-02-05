@@ -21,6 +21,8 @@ import { TextSelection } from "prosemirror-state";
 import { undo, redo } from "prosemirror-history";
 import Config from "../../../config.js";
 
+let Slash;
+
 function customEnterCommand(state, dispatch) {
   const { selection } = state;
   const { $from } = selection;
@@ -89,7 +91,7 @@ function checkForSlashCommand(view) {
   const { selection } = view.state;
   const { $from } = selection;
 
-  const Slash = Config.Editor.slashMenu;
+  Slash = Config.Editor.slashMenu;
 
   const textBefore = $from.parent.textBetween(0, $from.parentOffset, null, "\n");
 

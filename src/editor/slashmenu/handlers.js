@@ -18,6 +18,7 @@ limitations under the License.
 import { createLanguageHTML, createLicenseHTML, createInboxHTML, createInReplyToHTML, createPublicationStatusHTML, createResourceTypeHTML, createTestSuiteHTML } from "../../doc.js";
 import { fragmentFromString } from "../../utils/html.js";
 import { getFormValues } from "../../utils/html.js";
+import Config from "../../config.js";
 
 export function formHandlerLanguage(e) {
   e.preventDefault();
@@ -34,7 +35,7 @@ export function formHandlerLanguage(e) {
 
   html.setAttribute('lang', language);
   html.setAttribute('xml:lang', language);
-  html.setAttribute('dir', Config.Language[language].dir);
+  html.setAttribute('dir', Config.Languages[language].dir);
 
   this.replaceSelectionWithFragment(fragmentFromString(htmlString));
   this.hideMenu()

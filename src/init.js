@@ -23,7 +23,7 @@ import { initButtons } from './ui/buttons.js'
 import { setDocumentURL, setWebExtensionURL } from './util.js';
 import { getLocalStorageItem } from './storage.js';
 import { syncLocalRemoteResource, monitorNetworkStatus, autoSave } from './sync.js';
-import { domSanitize, sanitizeObject } from './utils/sanitization.js';
+import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeObject } from './utils/sanitization.js';
 import { afterSetUserInfo, setUserInfo } from './auth.js';
 import { showNotificationSources } from './activity.js';
 import { getProxyableIRI, getUrlParams, stripFragmentFromString, stripUrlSearchHash } from './uri.js';
@@ -182,7 +182,7 @@ export async function setDocumentMode(mode) {
     if (style.startsWith('http')) {
       var pIRI = getProxyableIRI(style);
       var link = '<link class="do" href="' + pIRI + '" media="all" rel="stylesheet" title="' + title + '" />'
-      document.querySelector('head').insertAdjacentHTML('beforeend', link);
+      sanitizeInsertAdjacentHTML(document.querySelector('head'), 'beforeend', link);
     }
 
     stripUrlSearchHash();

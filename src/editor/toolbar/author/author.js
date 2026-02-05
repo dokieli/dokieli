@@ -28,6 +28,7 @@ import Config from "../../../config.js";
 import { fragmentFromString } from "../../../utils/html.js";
 import { htmlEncode } from "../../../util.js";
 import { i18n } from "../../../i18n.js"
+import { sanitizeInsertAdjacentHTML } from "../../../utils/sanitization.js"
 
 const ns = Config.ns;
 
@@ -546,7 +547,7 @@ nodeToHTML(node, schema) {
       errorList.forEach((errorMessage) => {
         errorListItems.push(`<li>${errorMessage}</li>`);
       })
-      legend.insertAdjacentHTML('afterend', `<ul class="error">${errorListItems.join('')}</ul>`);
+      sanitizeInsertAdjacentHTML(legend, 'afterend', `<ul class="error">${errorListItems.join('')}</ul>`);
       node.querySelector('.editor-form-submit').disabled = true;
     }
 
