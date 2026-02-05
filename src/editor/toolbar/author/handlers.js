@@ -26,7 +26,7 @@ import { getGraphInbox } from "../../../graph.js";
 import { notifyInbox } from "../../../activity.js";
 import rdf from 'rdf-ext';
 import Config from "../../../config.js";
-import { getFormValues } from "../../../utils/html.js";
+import { fragmentFromString, getFormValues } from "../../../utils/html.js";
 
 
 export function formHandlerLanguage(e) {
