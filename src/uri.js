@@ -320,11 +320,16 @@ export function isFileProtocol(urlString) {
 export function isLocalhost(urlString) {
   try {
     const url = new URL(urlString);
-    const h = url.hostname;
+    let h = url.hostname.toLowerCase();
+
+    if (h.endsWith('.')) {
+      h = h.slice(0, -1);
+    }
 
     return (
       h === 'localhost' ||
       h.endsWith('.localhost') ||
+      h === '0.0.0.0' ||
       h === '::1' ||
       h.startsWith('127.')
     );
