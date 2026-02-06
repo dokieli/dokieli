@@ -418,26 +418,26 @@ export function parseMarkdown(data, options) {
 }
 
 export function createHTML(title, main, options) {
-  title = domSanitize(title) || '';
-  main = domSanitize(main);
+  title = title || '';
   options = options || {};
   var prefix = ('prefixes' in options && Object.keys(options.prefixes).length > 0) ? ' prefix="' + getRDFaPrefixHTML(options.prefixes) + '"' : '';
   var lang = options.lang || 'en';
   lang = ' lang="' + lang + '" xml:lang="' + lang + '"';
   lang = ('omitLang' in options) ? '' : lang;
-  lang = domSanitize(lang);
 
-  return '<!DOCTYPE html>\n\
-<html' + lang + ' xmlns="http://www.w3.org/1999/xhtml">\n\
-  <head>\n\
-    <meta charset="utf-8" />\n\
-    <title>' + title + '</title>\n\
-  </head>\n\
-  <body' + prefix + '>\n\
-    <main>\n\
-' + main + '\n\
-    </main>\n\
-  </body>\n\
-</html>\n\
-';
+  let html = `<!DOCTYPE html>
+<html${lang} xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>${title}</title>
+  </head>
+  <body${prefix}>
+    <main>
+${main}
+    </main>
+  </body>
+</html>
+`;
+
+  return domSanitize(html);
 }
