@@ -1707,7 +1707,6 @@ export function updateSupplementalInfo(response, options = {}) {
     // headerValue = 'foo=bar ,user=" READ wriTe Append control ", public=" read append" ,other="read " , baz= write, group=" ",,';
 
     if (headerValue) {
-      headerValue = domSanitize(headerValue);
       Config['Resource'][documentURL]['headers'][header] = { 'field-value': headerValue };
 
       if (header == 'wac-allow') {
