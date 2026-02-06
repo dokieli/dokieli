@@ -1310,7 +1310,7 @@ export function handleDeleteNote(button) {
       .then(() => {
         li.parentNode.removeChild(li);
         var span = document.querySelector('span[resource="#' + refId + '"]');
-        span.outerHTML = span.querySelector('mark').textContent;
+        span.outerHTML = domSanitize(span.querySelector('mark').textContent);
         window.history.replaceState({}, null, Config.DocumentURL);
         // TODO: Delete notification or send delete activity
       })
