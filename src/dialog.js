@@ -1267,9 +1267,11 @@ export function replyToResource(e, iri) {
       })
 
       .then(response => {
+        let url = domSanitize(response.url);
+
         replyToResource
           .querySelector('.response-message')
-          .setHTMLUnsafe(domSanitize(`<p class="success" data-i18n="dialog.reply-to-resource.success.saved-at.p"><span>${i18n.t('dialog.reply-to-resource.success.saved-at.p.textContent')}</span> <a href="${response.url}" rel="noopener" target="_blank">${response.url}</a></p>`));
+          .setHTMLUnsafe(domSanitize(`<p class="success" data-i18n="dialog.reply-to-resource.success.saved-at.p"><span>${i18n.t('dialog.reply-to-resource.success.saved-at.p.textContent')}</span> <a href="${url}" rel="noopener" target="_blank">${url}</a></p>`));
 
         return getLinkRelation(ns.ldp.inbox.value, null, getDocument(null, documentOptions));
       })
@@ -1310,11 +1312,11 @@ export function replyToResource(e, iri) {
 
       .then(response => {  // Success!
         var notificationSent = i18n.t('dialog.reply-to-resource.success.notification-sent.p.textContent');
-        var location = response.headers.get('Location')
+        var location = response.headers.get('Location');
         var notificationLink = '';
 
         if (location) {
-          let locationUrl = getAbsoluteIRI(response.url, location.trim());
+          let locationUrl = domSanitize(getAbsoluteIRI(response.url, location.trim()));
           notificationLink = `<a href="${locationUrl}" rel="noopener" "target="_blank">${locationUrl}</a>`;
         }
         // else {
@@ -2467,7 +2469,7 @@ export async function saveAsDocument(e) {
                 var location = response.headers.get('Location');
 
                 if (location) {
-                  let locationUrl = getAbsoluteIRI(response.url, location.trim());
+                  let locationUrl = domSanitize(getAbsoluteIRI(response.url, location.trim()));
                   notificationSent = `<a href="${locationUrl}" rel="noopener" "target="_blank">${Icon[".fas.fa-check-circle.fa-fw"]}</a>`;
                 }
 
@@ -3145,6 +3147,7 @@ export function snapshotAtEndpoint(e, iri, endpoint, noteData, options = {}) {
           let location = response.headers.get('Content-Location');
           // console.log(location)
           if (location && location.length) {
+            location = domSanitize(location);
             //XXX: Scrape Internet Archive's HTML
             if (location.startsWith('/web/')) {
               var o = {
@@ -3366,7 +3369,7 @@ export function generateFeed(e) {
               var cT = response.headers.get('Content-Type');
               var options = {};
               options['contentType'] = (cT) ? cT.split(';')[0].toLowerCase().trim() : 'text/turtle';
-              options['subjectURI'] = response.url;
+              options['subjectURI'] = domSanitize(response.url);
               options['storeHash'] = true;
 
               return response.text()
@@ -3435,6 +3438,7 @@ export function generateFeed(e) {
             progress.parentNode.removeChild(progress)
 
             let url = response.url || storageIRI
+            url = domSanitize(url);
 
             // TODO: this needs to be form validation instead
             if (!isHttpOrHttpsProtocol(url)) {

@@ -18,6 +18,7 @@ limitations under the License.
 import Config from './config.js'
 import { generateUUID } from './util.js'
 import { getProxyableIRI, currentLocation } from './uri.js'
+import { domSanitize } from './utils/sanitization.js'
 
 const DEFAULT_CONTENT_TYPE = 'text/html; charset=utf-8'
 const LDP_RESOURCE = '<http://www.w3.org/ns/ldp#Resource>; rel="type"'
@@ -705,7 +706,7 @@ function processSave(url, slug, data, options) {
       var location = response.headers.get('Location') || url;
 
       var message = {
-        'content': 'Saved document to <code>' + location + '</code>',
+        'content': `Saved document to <code>${domSanitize(location)}</code>`,
         'type': 'success'
       }
       return Promise.resolve({'response': response, 'message': message})

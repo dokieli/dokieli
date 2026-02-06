@@ -178,7 +178,7 @@ export function sendNotifications(tos, note, iri, shareResource) {
               var location = response.headers.get('Location');
 
               if (location) {
-                location = getAbsoluteIRI(inboxURL, location);
+                location = domSanitize(getAbsoluteIRI(inboxURL, location));
 
                 toInput
                   .parentNode

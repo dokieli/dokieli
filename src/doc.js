@@ -1707,6 +1707,7 @@ export function updateSupplementalInfo(response, options = {}) {
     // headerValue = 'foo=bar ,user=" READ wriTe Append control ", public=" read append" ,other="read " , baz= write, group=" ",,';
 
     if (headerValue) {
+      headerValue = domSanitize(headerValue);
       Config['Resource'][documentURL]['headers'][header] = { 'field-value': headerValue };
 
       if (header == 'wac-allow') {
@@ -1734,7 +1735,7 @@ export function updateSupplementalInfo(response, options = {}) {
           var linkTarget = relationItem.uri;
 
           if (!linkTarget.startsWith('http:') && !linkTarget.startsWith('https:')) {
-            linkTarget = relationItem.uri = getAbsoluteIRI(getBaseURL(response.url), linkTarget);
+            linkTarget = relationItem.uri = domSanitize(getAbsoluteIRI(getBaseURL(response.url), linkTarget));
           }
         });
       }

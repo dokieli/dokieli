@@ -153,7 +153,7 @@ export function processAction(action, formValues, selectionData) {
             var location = response.headers.get('Location');
 
             if (location) {
-              location = getAbsoluteIRI(annotation['containerIRI'], location);
+              location = domSanitize(getAbsoluteIRI(annotation['containerIRI'], location));
               annotation['noteIRI'] = annotation['noteURL'] = location;
             }
 
