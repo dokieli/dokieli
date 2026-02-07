@@ -909,6 +909,7 @@ export function createDateHTML(options) {
   return date;
 }
 
+// XXX: Parts of this may need to be ported. Ensure sanitization.
 // export function setEditSelections(options) {
 //   options = options || {};
 
