@@ -198,3 +198,15 @@ export function sanitizeIRI(value, base = null) {
     return null;
   }
 }
+
+export function safeObjectAssign(target, ...sources) {
+  for (const src of sources) {
+    for (const key of Object.keys(src)) {
+      if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+        continue;
+      }
+      target[key] = src[key];
+    }
+  }
+  return target;
+}
