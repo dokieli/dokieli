@@ -21,7 +21,7 @@ import { Readable } from "readable-stream";
 import Config from './config.js'
 import { stripFragmentFromString, getBaseURL, getPathURL, getAbsoluteIRI, getParentURLPath, currentLocation, getMediaTypeURIs } from './uri.js'
 import { escapeRegExp, uniqueArray } from './util.js'
-import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeObject } from './utils/sanitization.js'
+import { domSanitize, safeObjectAssign, sanitizeInsertAdjacentHTML, sanitizeObject } from './utils/sanitization.js'
 import { parseMarkdown } from "./utils/html.js";
 import { setAcceptRDFTypes, getResource, getResourceHead } from './fetcher.js'
 import LinkHeader from "http-link-header";
@@ -323,7 +323,7 @@ function XXXOLDserializeData (data, fromContentType, toContentType, options) {
               subjectsList.push(subjectTriples[i]["@id"])
 
               if ("@id" in subjectTriples[i] && subjectTriples[i]["@id"] == options.subjectURI) {
-                Object.assign(data, subjectTriples[i])
+                safeObjectAssign(data, subjectTriples[i])
 
                 subjectsChecked.push(options.subjectURI)
 
@@ -357,7 +357,7 @@ function XXXOLDserializeData (data, fromContentType, toContentType, options) {
 
             var subject = subjectTriples[rootIndex]
 
-            Object.assign(data, processObject(subject))
+            safeObjectAssign(data, processObject(subject))
 
 // console.log(data)
 // console.log(JSON.stringify(data))
@@ -448,7 +448,7 @@ function XXXOLDserializeData (data, fromContentType, toContentType, options) {
               data[ "via" ] = data[ "id" ]
               data[ "id" ] = ""
             }
-            data = Object.assign({"@context": options["@context"]}, data)
+            data = safeObjectAssign({"@context": options["@context"]}, data)
             data = JSON.stringify(data)
           }
 
@@ -1199,7 +1199,7 @@ function getAgentTypeIndex(s) {
       var typeIndexes = {};
 
       results.forEach(result => {
-        Object.assign(typeIndexes, result.value);
+        safeObjectAssign(typeIndexes, result.value);
       });
 
       return typeIndexes;
