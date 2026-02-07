@@ -348,7 +348,7 @@ function XXXOLDserializeData (data, fromContentType, toContentType, options) {
                     })
                   }
 
-                  return Object.assign({}, processObject(subject[property]))
+                  return sanitizeObject({}, processObject(subject[property]))
                 }
               })
 
