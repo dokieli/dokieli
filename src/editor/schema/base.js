@@ -66,6 +66,7 @@ function getAttributes (node) {
   const attrs = {};
 
   for (const attr of node.attributes) {
+    if (['__proto__', 'constructor', 'prototype'].includes(attr.name)) continue;
     attrs[attr.name] = attr.value; 
   }
 
