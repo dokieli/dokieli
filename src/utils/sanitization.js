@@ -185,3 +185,16 @@ export function domSanitizeHTMLBody(input, options) {
 export function sanitizeInsertAdjacentHTML(node, position, input) {
   node.insertAdjacentHTML(position, domSanitize(input));
 }
+
+export function sanitizeIRI(value, base = null) {
+  try {
+    const iri = base ? new URL(value, base) : new URL(value);
+
+    const unsafeSchemes = ['javascript:', 'data:', 'vbscript:'];
+    if (unsafeSchemes.includes(iri.protocol)) return null;
+
+    return iri.href;
+  } catch {
+    return null;
+  }
+}
