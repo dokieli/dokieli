@@ -21,7 +21,7 @@ import { Readable } from "readable-stream";
 import Config from './config.js'
 import { stripFragmentFromString, getBaseURL, getPathURL, getAbsoluteIRI, getParentURLPath, currentLocation, getMediaTypeURIs } from './uri.js'
 import { escapeRegExp, uniqueArray } from './util.js'
-import { domSanitize, sanitizeInsertAdjacentHTML } from './utils/sanitization.js'
+import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeObject } from './utils/sanitization.js'
 import { parseMarkdown } from "./utils/html.js";
 import { setAcceptRDFTypes, getResource, getResourceHead } from './fetcher.js'
 import LinkHeader from "http-link-header";
@@ -684,7 +684,7 @@ function getResourceGraph (iri, headers, options = {}) {
   let defaultHeaders = {'Accept': setAcceptRDFTypes(options) + wildCard}
   headers = headers || defaultHeaders
   if (!('Accept' in headers)) {
-    Object.assign(headers, defaultHeaders)
+    headers['Accept'] = defaultHeaders['Accept'];
   }
 
   const isWebExtensionURL = Config.WebExtensionBaseURL ? iri.startsWith(Config.WebExtensionBaseURL) : false;
@@ -1175,7 +1175,7 @@ function getAgentTypeIndex(s) {
             }
           });
 // console.log(typeIndexes)
-          return typeIndexes
+          return sanitizeObject(typeIndexes);
         }
       })
   }

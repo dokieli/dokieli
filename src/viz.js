@@ -30,16 +30,17 @@ import * as d3Selection from 'd3-selection';
 import * as d3Force from 'd3-force';
 const d3 = { ...d3Selection, ...d3Force };
 import { i18n } from "./i18n.js";
-import { domSanitize, sanitizeInsertAdjacentHTML } from "./utils/sanitization.js";
+import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI } from "./utils/sanitization.js";
 
 //Borrowed some of the d3 parts from https://bl.ocks.org/mbostock/4600693
 export function showVisualisationGraph(url, data, selector, options) {
   url = url || currentLocation();
   url = stripUrlParamsFromString(url);
+  url = sanitizeIRI(url);
   selector = selector || 'body';
   options = options || {};
   options['contentType'] = options.contentType || 'text/html';
-  options['subjectURI'] = options.subjectURI || url;
+  options['subjectURI'] = sanitizeIRI(options.subjectURI) || url;
   options['license'] = options.license || 'https://creativecommons.org/licenses/by/4.0/';
   options['language'] = options.language || 'en';
   options['creator'] = options.creator || 'https://dokie.li/#i';
@@ -153,7 +154,7 @@ export function showVisualisationGraph(url, data, selector, options) {
       var svgNode = graphView.querySelector('svg[typeof="http://purl.org/dc/dcmitype/Image"]');
 
       var options = {
-        subjectURI: 'http://example.org/' + svgNode.id,
+        subjectURI: 'http://example.org/' + id,
         mediaType: 'image/svg+xml',
         filenameExtension: '.svg'
       }
