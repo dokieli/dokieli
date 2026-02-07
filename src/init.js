@@ -192,7 +192,7 @@ export async function setDocumentMode(mode) {
   }
 
   if (paramOpen.length) {
-    let openResources = paramOpen.map((url) => domSanitize(url));
+    let openResources = paramOpen.map((url) => domSanitize(sanitizeIRI(url)));
 
     if (paramOpen.length > 1) {
       let urlsHtml = openResources.map((url) => `<a href="${url} rel="noopener" target="_blank">${url}</a>`).join(', ');
@@ -243,7 +243,7 @@ export async function setDocumentMode(mode) {
   }
 
   var urls = paramGraph.map(url => {
-    url = domSanitize(url);
+    url = sanitizeIRI(url);
     // var iri = decodeURIComponent(g);
 
     //TODO: Need a way to handle potential proxy use eg. https://dokie.li/?graph=https://dokie.li/proxy?uri=https://example.org/

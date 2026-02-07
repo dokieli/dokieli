@@ -21,7 +21,7 @@ import { getButtonHTML, updateButtons } from './ui/buttons.js';
 import { addMessageToLog, buildResourceView, copyRelativeResources, createFeedXML, createImmutableResource, createMutableResource, createNoteDataHTML, getAccessModeOptionsHTML, getBaseURLSelection, getDocument, getFeedFormatSelection, getLanguageOptionsHTML, getLicenseOptionsHTML, getResourceInfo, rewriteBaseURL, setCopyToClipboard, setDocumentRelation, showActionMessage, showRobustLinksDecoration, showTimeMap, updateMutableResource, buildReferences, getDocumentConceptDefinitionsHTML, insertDocumentLevelHTML, insertTestCoverageToTable, diffRequirements, removeReferences, getStorageSelfDescription, getContactInformation, getPersistencePolicy, getODRLPolicies, updateResourceInfos, initCurrentStylesheet, setDate } from './doc.js';
 import { removeNodesWithIds, createHTML } from './utils/html.js';
 import { accessModeAllowed, accessModePossiblyAllowed } from './access.js';
-import { domSanitize, sanitizeInsertAdjacentHTML } from './utils/sanitization.js';
+import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI } from './utils/sanitization.js';
 import { escapeRDFLiteral, generateAttributeId, generateUUID, htmlEncode, setDocumentURL } from './util.js';
 import { deleteResource, getResource, patchResourceWithAcceptPatch, postResource, putResource, putResourceWithAcceptPut, setAcceptRDFTypes } from './fetcher.js';
 import { forceTrailingSlash, generateDataURI, getAbsoluteIRI, getBaseURL, isHttpOrHttpsProtocol, stripFragmentFromString, getFragmentFromString, getURLLastPath, currentLocation } from './uri.js';
@@ -760,7 +760,7 @@ export function shareResource(listenerEvent, iri) {
       //XXX: This is currently not in the UI. https://github.com/dokieli/dokieli/issues/532
       // var resourceTo = document.querySelector('#share-resource #share-resource-to');
       // if (resourceTo) {
-      //   resourceTo = domSanitize(resourceTo.value.trim());
+      //   resourceTo = sanitizeIRI(resourceTo.value.trim());
       //   tos = (resourceTo.length) ? resourceTo.split(/\r\n|\r|\n/) : [];
       // }
 
@@ -1267,7 +1267,7 @@ export function replyToResource(e, iri) {
       })
 
       .then(response => {
-        let url = domSanitize(response.url);
+        let url = sanitizeIRI(response.url);
 
         replyToResource
           .querySelector('.response-message')
@@ -1729,7 +1729,7 @@ function generateBrowserList(g, url, id, action) {
 }
 
 function nextLevelButton(button, url, id, action) {
-  url = domSanitize(url);
+  url = sanitizeIRI(url);
   id = domSanitize(id);
   action = domSanitize(action);
 
@@ -2342,7 +2342,7 @@ export async function saveAsDocument(e) {
         }
 
         let url = response.url || storageIRI
-        url = domSanitize(url);
+        url = sanitizeIRI(url);
 
         sanitizeInsertAdjacentHTML(saveAsDocument, 'beforeend',
           `<div class="response-message"><p class="success" data-i18n="dialog.save-as-document.success.saved-at.p"><span>${i18n.t('dialog.save-as-document.success.saved-at.p.textContent')}</span> <a href="${url}">${url}</a></p></div>`
@@ -3369,7 +3369,7 @@ export function generateFeed(e) {
               var cT = response.headers.get('Content-Type');
               var options = {};
               options['contentType'] = (cT) ? cT.split(';')[0].toLowerCase().trim() : 'text/turtle';
-              options['subjectURI'] = domSanitize(response.url);
+              options['subjectURI'] = sanitizeIRI(response.url);
               options['storeHash'] = true;
 
               return response.text()
@@ -3438,7 +3438,7 @@ export function generateFeed(e) {
             progress.parentNode.removeChild(progress)
 
             let url = response.url || storageIRI
-            url = domSanitize(url);
+            url = sanitizeIRI(url);
 
             // TODO: this needs to be form validation instead
             if (!isHttpOrHttpsProtocol(url)) {
