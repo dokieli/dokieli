@@ -312,11 +312,12 @@ function afterSetUserInfo () {
   var promises = [];
 
   if (Config.User.Graph) {
-    promises.push(getAgentTypeIndex(Config.User.Graph).then(typeIndexes => {
-      Object.keys(typeIndexes).forEach(typeIndexType => {
-        Config.User.TypeIndex[typeIndexType] = typeIndexes[typeIndexType];
-      });
-    }));
+    promises.push(getAgentTypeIndex(Config.User.Graph)
+      .then(typeIndexes => {
+        Object.keys(typeIndexes).forEach(typeIndexType => {
+          Config.User.TypeIndex[typeIndexType] = typeIndexes[typeIndexType];
+        });
+      }));
 
     promises.push(getAgentPreferencesInfo(Config.User.Graph)
       .then(preferencesInfo => {

@@ -1146,6 +1146,7 @@ function getAgentTypeIndex(s) {
       .then(g => {
         //XXX: https://github.com/solid/type-indexes/issues/29 for potential property to discover TypeRegistrations.
         // console.log(iri, g, g.term.value, typeIndexType);
+
         if (!g) {
           return {};
         }
@@ -1154,35 +1155,38 @@ function getAgentTypeIndex(s) {
 
         var triples = Array.from(g.out().quads());
 
-        if (triples.length) {
-          var typeIndexes = {};
-          typeIndexes[typeIndexType] = {};
+        if (triples.length == 0) {
+          return {};
+        }
 
-          triples.forEach(t => {
-            var p = t.predicate.value;
-            
-            if (p == ns.solid.forClass.value) {
+        var typeIndexes = {};
+        typeIndexes[typeIndexType] = {};
+
+        triples.forEach(t => {
+          var p = t.predicate.value;
+          
+          if (p == ns.solid.forClass.value) {
+            var s = sanitizeIRIOrBNode(t.subject);
+            var o = sanitizeIRIOrBNode(t.object);
+            typeIndexes[typeIndexType][s] = {};
+            typeIndexes[typeIndexType][s][p] = o;
+          }
+        });
+
+        triples.forEach(t => {
+          var p = t.predicate.value;
+          
+          if (typeIndexes[typeIndexType][s]) {
+            if (p == ns.solid.instance.value || p == ns.solid.instanceContainer.value) {
               var s = sanitizeIRIOrBNode(t.subject);
               var o = sanitizeIRIOrBNode(t.object);
-              typeIndexes[typeIndexType][s] = {};
               typeIndexes[typeIndexType][s][p] = o;
             }
-          });
+          }
+        });
 
-          triples.forEach(t => {
-            var p = t.predicate.value;
-            
-            if (typeIndexes[typeIndexType][s]) {
-              if (p == ns.solid.instance.value || p == ns.solid.instanceContainer.value) {
-                var s = sanitizeIRIOrBNode(t.subject);
-                var o = sanitizeIRIOrBNode(t.object);
-                typeIndexes[typeIndexType][s][p] = o;
-              }
-            }
-          });
-          // console.log(typeIndexes)
-          return typeIndexes;
-        }
+        // console.log(typeIndexes)
+        return typeIndexes;
       })
   }
 
@@ -1192,19 +1196,25 @@ function getAgentTypeIndex(s) {
   var privateTypeIndex = getAgentPrivateTypeIndex(s);
 
   if (publicTypeIndex?.length) {
-    promises.push(fetchTypeRegistration(publicTypeIndex[0], ns.solid.publicTypeIndex.value))
+    for (const iri of publicTypeIndex) {
+      promises.push(fetchTypeRegistration(iri, ns.solid.publicTypeIndex.value));
+    }
   }
+
   if (privateTypeIndex?.length && Config['Session']?.isActive) {
-    promises.push(fetchTypeRegistration(privateTypeIndex[0], ns.solid.privateTypeIndex.value))
+    for (const iri of privateTypeIndex) {
+      promises.push(fetchTypeRegistration(iri, ns.solid.privateTypeIndex.value));
+    }
   }
 
   return Promise.allSettled(promises)
     .then(results => {
-      results.filter(result => !(result instanceof Error));
+      const validResults = results.filter(
+        r => r.status === "fulfilled" && r.value && Object.keys(r.value).length > 0
+      );
 
-      var typeIndexes = {};
-
-      results.forEach(result => {
+      const typeIndexes = {};
+      validResults.forEach(result => {
         safeObjectAssign(typeIndexes, result.value);
       });
 
