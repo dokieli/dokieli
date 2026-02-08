@@ -21,7 +21,7 @@ import { Readable } from "readable-stream";
 import Config from './config.js'
 import { stripFragmentFromString, getBaseURL, getPathURL, getAbsoluteIRI, getParentURLPath, currentLocation, getMediaTypeURIs } from './uri.js'
 import { escapeRegExp, uniqueArray } from './util.js'
-import { domSanitize, safeObjectAssign, sanitizeInsertAdjacentHTML, sanitizeObject } from './utils/sanitization.js'
+import { domSanitize, safeObjectAssign, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeIRIOrBNode, sanitizeIRIs, sanitizeObject } from './utils/sanitization.js'
 import { parseMarkdown } from "./utils/html.js";
 import { setAcceptRDFTypes, getResource, getResourceHead } from './fetcher.js'
 import LinkHeader from "http-link-header";
@@ -46,15 +46,15 @@ function getGraphFromData (data, options = {}) {
   if (!('subjectURI' in options)) {
     options['subjectURI'] = localhostUUID;
   }
-// console.log(options)
+  // console.log(options)
   var baseIRI = options.subjectURI
   //  || Config.DocumentURL;
 
-// console.log(data)
-// console.log(baseIRI)
+  // console.log(data)
+  // console.log(baseIRI)
 
   baseIRI = stripFragmentFromString(baseIRI);
-// console.log(baseIRI)
+  // console.log(baseIRI)
 
   // FIXME: These are fugly but a temporary fix to get around the baseURI not being passed to the DOM parser. This injects the `base` element into the document so that the parsers fallsback to that. The actual fix should happen upstream. See related issues:
   // https://github.com/dokieli/dokieli/issues/132
@@ -91,26 +91,26 @@ function getGraphFromData (data, options = {}) {
   const nodeStream = Readable.from([data]);
   const quadStream = parser.import(nodeStream, { baseIRI: baseIRI });
   // const dataset = rdf.dataset().import(quadStream);
-// console.log(quadStream)
+  // console.log(quadStream)
   // return rdf.grapoi({ dataset });
   return rdf.dataset().import(quadStream).then((dataset) => {
-// console.log(dataset.toCanonical())
+  // console.log(dataset.toCanonical())
     return rdf.grapoi({ dataset });
   });
 
 
-// console.log(data)
-// console.log(options)
-//   return SimpleRDF.parse(data, options['contentType'], options['subjectURI'])
-//     .then(g => {
-//       // var o = { 'contentType': 'application/n-triples' };
-//       var o = { 'contentType': 'text/turtle' };
-//       return serializeGraph(g, o).then(d => {
-//         d = skolem(d, o);
-//         d = setDocumentBase(d, options.subjectURI, o.contentType);
-// // console.log(d)
-//         return SimpleRDF.parse(d, o['contentType'], options['subjectURI']);
-//       })});
+  // console.log(data)
+  // console.log(options)
+  //   return SimpleRDF.parse(data, options['contentType'], options['subjectURI'])
+  //     .then(g => {
+  //       // var o = { 'contentType': 'application/n-triples' };
+  //       var o = { 'contentType': 'text/turtle' };
+  //       return serializeGraph(g, o).then(d => {
+  //         d = skolem(d, o);
+  //         d = setDocumentBase(d, options.subjectURI, o.contentType);
+  // // console.log(d)
+  //         return SimpleRDF.parse(d, o['contentType'], options['subjectURI']);
+  //       })});
 }
 
 function getRDFParser(baseIRI, contentType) {
@@ -143,7 +143,7 @@ function getRDFParser(baseIRI, contentType) {
   }
 }
 
-function getSubjectInfo (subjectIRI, options = {}) {
+function getSubjectInfo(subjectIRI, options = {}) {
   if (!subjectIRI) {
     return Promise.reject(new Error('Could not set subject info - no subjectIRI'));
   }
@@ -242,7 +242,7 @@ function serializeDataToPreferredContentType(data, options) {
   }
 }
 
-function serializeData (data, fromContentType, toContentType, options = {}) {
+function serializeData(data, fromContentType, toContentType, options = {}) {
   // if (!rdf.formats.serializers.get(toContentType)) { return Promise.reject('XXX: Should not be here'); }
   if (fromContentType === toContentType && !options.sanitize) {
     return Promise.resolve(data);
@@ -262,7 +262,7 @@ function serializeData (data, fromContentType, toContentType, options = {}) {
     });
 }
 
-function sanitizeGraph (g) {
+function sanitizeGraph(g) {
   var quads = g.out().quads();
 
   const sanitizedQuads = [];
@@ -290,14 +290,14 @@ function sanitizeGraph (g) {
  *
  * @returns {Promise}
  */
-function XXXOLDserializeData (data, fromContentType, toContentType, options) {
+function XXXOLDserializeData(data, fromContentType, toContentType, options) {
   if (fromContentType === toContentType) {
     return Promise.resolve(data)
   }
 
   options.contentType = fromContentType
 
-// console.log(data)
+  // console.log(data)
 
   return getGraphFromData(data, options)
     .then(g => {
@@ -306,7 +306,7 @@ function XXXOLDserializeData (data, fromContentType, toContentType, options) {
 
       switch (toContentType) {
         case 'application/ld+json':
-// console.log(g)
+          // console.log(g)
           return serializeGraph(g, options).then(subjectTriples => {
             subjectTriples = JSON.parse(subjectTriples)
 
@@ -359,8 +359,8 @@ function XXXOLDserializeData (data, fromContentType, toContentType, options) {
 
             safeObjectAssign(data, processObject(subject))
 
-// console.log(data)
-// console.log(JSON.stringify(data))
+            // console.log(data)
+            // console.log(JSON.stringify(data))
             return JSON.stringify(data) + '\n'
           })
 
@@ -454,7 +454,7 @@ function XXXOLDserializeData (data, fromContentType, toContentType, options) {
 
           break;
       }
-// console.log(data)
+      // console.log(data)
       return data
     })
 }
@@ -468,7 +468,7 @@ function isGraphValid(g) {
   return true;
 }
 
-function streamToString (stream) {
+function streamToString(stream) {
   const chunks = [];
   return new Promise((resolve, reject) => {
     stream.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
@@ -477,11 +477,11 @@ function streamToString (stream) {
   })
 }
 
-function serializeGraph (g, options = {}) {
+function serializeGraph(g, options = {}) {
   if (!('contentType' in options)) {
     options['contentType'] = 'text/turtle'
   }
-// console.log(options)
+  // console.log(options)
 
   try {
     var quads = g.out().quads();
@@ -577,7 +577,7 @@ function skolem(data, options) {
   //XXX: Simpler for N-Triples https://www.w3.org/TR/n-triples/#BNodes but not actually conforming:
   // data = data.replace(new RegExp('_:([^ \.]*)([ \.]+)', 'g'), "<http://example.com/.well-known/genid/$1>$2");
 
-// console.log(data)
+  // console.log(data)
   return data;
 }
 
@@ -606,7 +606,7 @@ function transformJsonldContextURLScheme(data) {
   return data;
 }
 
-function setDocumentBase (data, baseURI, contentType) {
+function setDocumentBase(data, baseURI, contentType) {
   baseURI = stripFragmentFromString(baseURI)
   let template;
   let base;
@@ -679,7 +679,7 @@ function traverseRDFList(g, resource) {
 }
 
 //TODO: Review grapoi
-function getResourceGraph (iri, headers, options = {}) {
+function getResourceGraph(iri, headers, options = {}) {
   let wildCard = options.excludeMarkup ? '' : ',*/*;q=0.1';
   let defaultHeaders = {'Accept': setAcceptRDFTypes(options) + wildCard}
   headers = headers || defaultHeaders
@@ -720,23 +720,23 @@ function getResourceGraph (iri, headers, options = {}) {
       return response.text();
     })
     .then(data => {
-// console.log(data, options)
+      // console.log(data, options)
       return getGraphFromData(data, options)
     })
     .then(g => {
-// console.log(g)
-//       let fragment = (iri.lastIndexOf('#') >= 0) ? iri.substr(iri.lastIndexOf('#')) : ''
-// console.log(iri, getProxyableIRI(iri), fragment)
-//       var r = 
-// console.log(r.term.value)
-//       // var r =  rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(getProxyableIRI(iri) + fragment)('')});
+      // console.log(g)
+      //       let fragment = (iri.lastIndexOf('#') >= 0) ? iri.substr(iri.lastIndexOf('#')) : ''
+      // console.log(iri, getProxyableIRI(iri), fragment)
+      //       var r = 
+      // console.log(r.term.value)
+      //       // var r =  rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(getProxyableIRI(iri) + fragment)('')});
 
-//       console.log(Array.from(r.out().quads()))
-//       return r;
+      //       console.log(Array.from(r.out().quads()))
+      //       return r;
 
-// console.log(stripFragmentFromString(iri))
+      // console.log(stripFragmentFromString(iri))
 
-//       return g.node(rdf.namedNode(iri));
+      //       return g.node(rdf.namedNode(iri));
       return rdf.grapoi({ dataset: g.dataset, term: rdf.namedNode(stripFragmentFromString(iri))});
     })
     .catch(e => {
@@ -765,7 +765,7 @@ function getResourceOnlyRDF(url) {
     });
 }
 
-function getLinkRelation (property, url, data) {
+function getLinkRelation(property, url, data) {
   if (url) {
     return getLinkRelationFromHead(property, url)
       .catch(() => {
@@ -789,18 +789,20 @@ function getLinkRelation (property, url, data) {
         // TODO: Should this get all or a given subject's?
         var endpoints = g.out(rdf.namedNode(property)).values;
 
-        if (endpoints?.length) {
+        endpoints = sanitizeIRIs(endpoints);
+
+        if (endpoints.length) {
           return endpoints;
         }
 
-// console.log(property + ' endpoint was not found in message body')
+        // console.log(property + ' endpoint was not found in message body')
         return getLinkRelationFromHead(property, subjectURI)
       })
 
     }
 }
 
-function getLinkRelationFromHead (property, url) {
+function getLinkRelationFromHead(property, url) {
   var properties = (Array.isArray(property)) ? property : [property];
 
   return getResourceHead(url).then(
@@ -808,14 +810,16 @@ function getLinkRelationFromHead (property, url) {
       var link = i.headers.get('Link')
       if (link && link.length) {
         var linkHeaders = LinkHeader.parse(link)
-  // console.log(property)
-  // console.log(linkHeaders)
+        // console.log(property)
+        // console.log(linkHeaders)
         var uris = [];
         properties.forEach(property => {
           if (linkHeaders.has('rel', property)) {
             uris.push(linkHeaders.rel(property)[0].uri);
           }
         });
+
+        uris = sanitizeIRIs(uris);
 
         if (uris.length) {
           return uris;
@@ -831,13 +835,15 @@ function getLinkRelationFromHead (property, url) {
   );
 }
 
-function getLinkRelationFromRDF (property, url) {
+function getLinkRelationFromRDF(property, url) {
   if (!url) { return Promise.reject({'message': 'Missing url paramater' })}
 
   return getResourceGraph(url)
     .then(g => {
         g = g.node(rdf.namedNode(url));
         var values = g.out(rdf.namedNode(property)).values;
+
+        values = sanitizeIRIs(values);
 
         if (values.length) {
           return values;
@@ -848,11 +854,11 @@ function getLinkRelationFromRDF (property, url) {
     )
 }
 
-function isActorType (s) {
+function isActorType(s) {
   return Config.Actor.Type.hasOwnProperty(s)
 }
 
-function isActorProperty (s) {
+function isActorProperty(s) {
   return Config.Actor.Property.hasOwnProperty(s)
 }
 
@@ -879,7 +885,7 @@ function getAgentPreferredPolicyRule(s) {
 
     if (prohibitionG.out(ns.odrl.action).values.length) {
       preferredPolicyRule['Prohibition'] = {};
-      preferredPolicyRule['Prohibition']['Actions'] = prohibitionG.out(ns.odrl.action).values;
+      preferredPolicyRule['Prohibition']['Actions'] = sanitizeIRIs(prohibitionG.out(ns.odrl.action).values);
     }
   }
 
@@ -889,7 +895,7 @@ function getAgentPreferredPolicyRule(s) {
 
     if (permissionG.out(ns.odrl.action).values.length) {
       preferredPolicyRule['Permission'] = {};
-      preferredPolicyRule['Permission']['Actions'] = permissionG.out(ns.odrl.action).values;
+      preferredPolicyRule['Permission']['Actions'] = sanitizeIRIs(permissionG.out(ns.odrl.action).values);
     }
   }
 
@@ -994,9 +1000,10 @@ function getAgentSeeAlsoPrimaryTopicOf(g, subjectURI) {
   if (!g) { return Promise.resolve([]); }
 
   subjectURI = subjectURI || g.term.value;
+  subjectURI = sanitizeIRI(subjectURI);
   var baseURI = stripFragmentFromString(subjectURI);
-  var seeAlso = g.out(ns.rdfs.seeAlso).values;
-  var isPrimaryTopicOf = g.out(ns.foaf.isPrimaryTopicOf).values;
+  var seeAlso = sanitizeIRIs(g.out(ns.rdfs.seeAlso).values);
+  var isPrimaryTopicOf = sanitizeIRIs(g.out(ns.foaf.isPrimaryTopicOf).values);
 
   if (seeAlso.length || isPrimaryTopicOf.length) {
     var promises = [];
@@ -1138,7 +1145,7 @@ function getAgentTypeIndex(s) {
     return getResourceGraph(iri)
       .then(g => {
         //XXX: https://github.com/solid/type-indexes/issues/29 for potential property to discover TypeRegistrations.
-// console.log(iri, g, g.term.value, typeIndexType);
+        // console.log(iri, g, g.term.value, typeIndexType);
         if (!g) {
           return {};
         }
@@ -1152,35 +1159,34 @@ function getAgentTypeIndex(s) {
           typeIndexes[typeIndexType] = {};
 
           triples.forEach(t => {
-            var s = t.subject.value;
             var p = t.predicate.value;
-            var o = t.object.value;
-
+            
             if (p == ns.solid.forClass.value) {
+              var s = sanitizeIRIOrBNode(t.subject);
+              var o = sanitizeIRIOrBNode(t.object);
               typeIndexes[typeIndexType][s] = {};
               typeIndexes[typeIndexType][s][p] = o;
             }
           });
 
           triples.forEach(t => {
-            var s = t.subject.value;
             var p = t.predicate.value;
-            var o = t.object.value;
-
+            
             if (typeIndexes[typeIndexType][s]) {
-              if (p == ns.solid.instance.value ||
-                  p == ns.solid.instanceContainer.value) {
+              if (p == ns.solid.instance.value || p == ns.solid.instanceContainer.value) {
+                var s = sanitizeIRIOrBNode(t.subject);
+                var o = sanitizeIRIOrBNode(t.object);
                 typeIndexes[typeIndexType][s][p] = o;
               }
             }
           });
-// console.log(typeIndexes)
-          return sanitizeObject(typeIndexes);
+          // console.log(typeIndexes)
+          return typeIndexes;
         }
       })
   }
 
-  var promises = []
+  var promises = [];
 
   var publicTypeIndex = getAgentPublicTypeIndex(s);
   var privateTypeIndex = getAgentPrivateTypeIndex(s);
@@ -1207,12 +1213,12 @@ function getAgentTypeIndex(s) {
 }
 
 function processSameAs(s, callback) {
-  var sameAs = s.out(ns.owl.sameAs).values;
+  var sameAs = sanitizeIRIs(s.out(ns.owl.sameAs).values);
 
   if (sameAs.length){
     var promises = [];
     sameAs.forEach(iri => {
-// console.log(iri);
+      // console.log(iri);
       if(iri != Config.User.IRI && !Config.User.SameAs.includes(iri)) {
         Config.User.SameAs = uniqueArray(Config.User.SameAs.concat(iri));
 
@@ -1238,15 +1244,17 @@ function processSameAs(s, callback) {
   }
 }
 
-function getAgentPreferredProxy (s) {
-  return s.out(ns.solid.preferredProxy).values[0] || undefined
+function getAgentPreferredProxy(s) {
+  const proxies = sanitizeIRIs(s.out(ns.solid.preferredProxy).values);
+  return proxies[0];
 }
 
-function getAgentPreferredPolicy (s) {
-  return s.out(ns.solid.preferredPolicy).values[0] || undefined
+function getAgentPreferredPolicy(s) {
+  const policies = sanitizeIRIs(s.out(ns.solid.preferredPolicy).values);
+  return policies[0];
 }
 
-function getAgentPreferredLanguages (s) {
+function getAgentPreferredLanguages(s) {
   var vcardLanguages = s.out(ns.vcard.language).values;
   var knowsLanguages = s.out(ns.schema.knowsLanguage).values;
   var solidPreferredLanguages = s.out(ns.solid.preferredLanguage).values;
@@ -1260,13 +1268,12 @@ function getAgentPreferredLanguages (s) {
 }
 
 //TODO: undefined?
-function getAgentOIDCIssuer (s) {
-  let idp = s.out(ns.solid.oidcIssuer)?.values[0] || undefined;
-
-  return idp;
+function getAgentOIDCIssuer(s) {
+  const idp = sanitizeIRIs(s.out(ns.solid.oidcIssuer).values);
+  return idp[0];
 }
 
-function getAgentName (s) {
+function getAgentName(s) {
   var name = s.out(ns.foaf.name).values[0] || s.out(ns.schema.name).values[0] || s.out(ns.vcard.fn).values[0] || s.out(ns.as.name).values[0] || s.out(ns.rdfs.label).values[0] || undefined;
   // var name = s.out([ns.foaf.name, ns.schema.name]).values[0]
   if (typeof name === 'undefined') {
@@ -1289,40 +1296,51 @@ function getAgentName (s) {
       name = s.out(ns.vcard.nickname).values;
     }
   }
-  return name === undefined ? undefined : domSanitize(name)
+  return name === undefined ? undefined : domSanitize(name);
 }
 
-function getAgentURL (s) {
-  return s.out(ns.foaf.homepage).values[0] || s.out(ns.foaf.weblog).values[0] || s.out(ns.schema.url).values[0] || s.out(ns.vcard.url).values[0] || undefined
+function getAgentURL(s) {
+  const candidates = [
+    ...s.out(ns.foaf.homepage).values,
+    ...s.out(ns.foaf.weblog).values,
+    ...s.out(ns.schema.url).values,
+    ...s.out(ns.vcard.url).values
+  ];
+  const sanitized = sanitizeIRIs(candidates);
+  return sanitized[0];
 }
 
-function getAgentDelegates (s) {
-  var d = s.out(ns.acl.delegates).values;
+function getAgentDelegates(s) {
+  const d = sanitizeIRIs(s.out(ns.acl.delegates).values);
   return d.length ? d : undefined;
 }
 
-function getAgentStorage (s) {
-  var d = s.out(ns.pim.storage).values;
+function getAgentStorage(s) {
+  const d = sanitizeIRIs(s.out(ns.pim.storage).values);
   return d.length ? d : undefined;
 }
 
-function getAgentOutbox (s) {
-  var d = s.out(ns.as.outbox).values;
+function getAgentOutbox(s) {
+  const d = sanitizeIRIs(s.out(ns.as.outbox).values);
   return d.length ? d : undefined;
 }
 
-function getAgentInbox (s) {
+function getAgentInbox(s) {
   return getGraphInbox(s);
 }
 
 function getGraphInbox(s) {
-  var ldpinbox = s.out(ns.ldp.inbox).values;
-  var asinbox = s.out(ns.as.inbox).values;
-  return (
-    ldpinbox.length > 0 ? ldpinbox :
-    asinbox.length > 0 ? asinbox :
-    undefined
-  );
+  const ldpinbox = s.out(ns.ldp.inbox).values;
+  const asinbox = s.out(ns.as.inbox).values;
+
+  let inbox = ldpinbox.length
+    ? ldpinbox
+    : asinbox.length
+    ? asinbox
+    : [];
+
+  inbox = sanitizeIRIs(inbox);
+  return inbox.length ? inbox : undefined;
 }
 
 function getAgentKnows(s) {
@@ -1341,70 +1359,71 @@ function getAgentKnows(s) {
     }
   }
 
-  const uniqueKnows = uniqueArray(knows);
-  return uniqueKnows.length ? uniqueKnows : undefined;
+  knows = sanitizeIRIs(knows);
+  knows = uniqueArray(knows);
+  return knows.length ? knows : undefined;
 }
 
-function getAgentFollowing (s) {
-  var following = s.out(ns.as.following).values;
+function getAgentFollowing(s) {
+  const following = sanitizeIRIs(s.out(ns.as.following).values);
 
   if (following.length) {
-    var options = {
-      headers: {'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams", application/activity+json, text/turtle'},
+    const options = {
+      headers: {
+        'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams", application/activity+json, text/turtle'
+      },
       noCredentials: true
     };
     return getItemsList(following[0], options)
-      .then(items => {
-  // console.log(following);
-        return (items.length) ? items : undefined;
-      });
+      .then(items => items.length ? items : undefined);
   }
 }
 
-function getAgentPublicTypeIndex (s) {
-  var d = s.out(ns.solid.publicTypeIndex).values;
+function getAgentPublicTypeIndex(s) {
+  const d = sanitizeIRIs(s.out(ns.solid.publicTypeIndex).values);
   return d.length ? d : undefined;
 }
 
-function getAgentPrivateTypeIndex (s) {
-  var d = s.out(ns.solid.privateTypeIndex).values;
+function getAgentPrivateTypeIndex(s) {
+  const d = sanitizeIRIs(s.out(ns.solid.privateTypeIndex).values);
   return d.length ? d : undefined;
 }
 
-function getAgentPreferencesFile (s) {
-  var d = s.out(ns.pim.preferencesFile).values;
+function getAgentPreferencesFile(s) {
+  const d = sanitizeIRIs(s.out(ns.pim.preferencesFile).values);
   return d.length ? d : undefined;
 }
 
-function getAgentLiked (s) {
-  var d = s.out(ns.as.liked).values;
+function getAgentLiked(s) {
+  const d = sanitizeIRIs(s.out(ns.as.liked).values);
   return d.length ? d : undefined;
 }
 
-function getAgentOccupations (s) {
-  var d = s.out(ns.schema.hasOccupation).values;
+function getAgentOccupations(s) {
+  const d = sanitizeIRIs(s.out(ns.schema.hasOccupation).values);
   return d.length ? d : undefined;
 }
 
-function getGraphAudience (s) {
-  var d = s.out(ns.schema.audience).values;
+function getGraphAudience(s) {
+  const d = sanitizeIRIs(s.out(ns.schema.audience).values);
   return d.length ? d : undefined;
 }
 
-function getGraphSkills (s) {
-  var ccoSkills = s.out(ns.cco.skill).values;
-  var schemaSkills = s.out(ns.schema.skills).values;
-  var d = uniqueArray(ccoSkills.concat(schemaSkills));
+function getGraphSkills(s) {
+  const ccoSkills = s.out(ns.cco.skill).values;
+  const schemaSkills = s.out(ns.schema.skills).values;
+  const d = uniqueArray(ccoSkills.concat(schemaSkills));
+  const sanitized = sanitizeIRIs(d);
+  return sanitized.length ? sanitized : undefined;
+}
+
+function getAgentPublications(s) {
+  const d = sanitizeIRIs(s.out(ns.foaf.publications).values);
   return d.length ? d : undefined;
 }
 
-function getAgentPublications (s) {
-  var d = s.out(ns.foaf.publications).values;
-  return d.length ? d : undefined;
-}
-
-function getAgentMade (s) {
-  var d = s.out(ns.foaf.made).values;
+function getAgentMade(s) {
+  const d = sanitizeIRIs(s.out(ns.foaf.made).values);
   return d.length ? d : undefined;
 }
 
@@ -1455,15 +1474,7 @@ function getGraphImage(s) {
       ?.value;
   }
 
-  if (image) {
-    try {
-      return new URL(image).href;
-    } catch {
-      return undefined;
-    }
-  }
-
-  return undefined;
+  return sanitizeIRI(image) || undefined;
 }
 
 function getGraphEmail(s) {
@@ -1473,7 +1484,7 @@ function getGraphEmail(s) {
     const terms = s.out(prop).terms;
     for (const term of terms) {
       if (term.termType === 'NamedNode') {
-        return term.value;
+        return sanitizeIRI(term.value);
       }
       if (term.termType === 'Literal') {
         return domSanitize(term.value);
@@ -1485,12 +1496,12 @@ function getGraphEmail(s) {
 }
 
 function getGraphContributors(s) {
-  var d = s.out(ns.schema.contributor).values;
+  let d = sanitizeIRIs(s.out(ns.schema.contributor).values);
   return d.length ? d : undefined;
 }
 
 function getGraphEditors(s) {
-  var d = s.out(ns.schema.editor).values;
+  let d = sanitizeIRIs(s.out(ns.schema.editor).values);
   return d.length ? d : undefined;
 }
 
@@ -1503,9 +1514,8 @@ function getGraphAuthors(s) {
   ];
 
   for (const prop of props) {
-    const values = s.out(prop).values;
-
-    if (values.length > 0) {
+    let values = sanitizeIRIs(s.out(prop).values);
+    if (values.length) {
       return values;
     }
   }
@@ -1514,18 +1524,22 @@ function getGraphAuthors(s) {
 }
 
 function getGraphPerformers(s) {
-  var d = s.out(ns.schema.performer).values;
+  let d = sanitizeIRIs(s.out(ns.schema.performer).values);
   return d.length ? d : undefined;
 }
 
 function getGraphPublishers(s) {
-  var publisher = s.out(ns.schema.publisher).values;
-  var dpublisher = s.out(ns.dcterms.publisher).values;
-  return (
-    publisher.length > 0 ? publisher :
-    dpublisher.length > 0 ? dpublisher :
-    undefined
-  )
+  let schemaPublishers = s.out(ns.schema.publisher).values;
+  let dctermsPublishers = s.out(ns.dcterms.publisher).values;
+
+  let publishers = schemaPublishers.length
+    ? schemaPublishers
+    : dctermsPublishers.length
+    ? dctermsPublishers
+    : [];
+
+  publishers = sanitizeIRIs(publishers);
+  return publishers.length ? publishers : undefined;
 }
 
 function getGraphDate(s) {
@@ -1552,11 +1566,15 @@ function getGraphLanguage(s) {
 }
 
 function getGraphLicense(s) {
-  return s.out(ns.dcterms.license).values[0] || s.out(ns.schema.license).values[0] || s.out(ns.cc.license).values[0] || s.out(ns.xhv.license).values[0] || undefined;
+  let d = s.out(ns.dcterms.license).values || s.out(ns.schema.license).values || s.out(ns.cc.license).values || s.out(ns.xhv.license).values;
+  d = sanitizeIRIs(d);
+  return d[0];
 }
 
 function getGraphRights(s) {
-  return s.out(ns.dcterms.rights).values[0] || getGraphLicense(s) || undefined;
+  let d = s.out(ns.dcterms.rights).values[0] || getGraphLicense(s);
+  d = sanitizeIRIs(d);
+  return d[0];
 }
 
 function getGraphLabel(s) {
@@ -1607,7 +1625,7 @@ function getGraphConceptLabel(g, options) {
   var triples = Array.from(g.out().quads());
 
   triples.forEach(t => {
-// console.log(t)
+  // console.log(t)
     var s = t.subject.value;
     var p = t.predicate.value;
     var o = t.object.value;
@@ -1669,7 +1687,7 @@ function getGraphDescription(s) {
 }
 
 function getGraphTypes(s) {
-  return s.out(ns.rdf.type).values;
+  return sanitizeIRIs(s.out(ns.rdf.type).values);
 }
 
 function sortGraphTriples(g, options) {
@@ -1691,14 +1709,15 @@ function sortGraphTriples(g, options) {
 // https://solidproject.org/TR/2024/wac-20240512#effective-acl-resource-algorithm
 function getACLResourceGraph(documentURL, iri, options = {}) {
   iri = iri || documentURL;
+  iri = sanitizeIRI(iri);
   //This is probably not needed
   Config.Resource[iri] = Config.Resource[iri] || {};
   Config.Resource[iri]['acl'] = {};
 
   var baseURL = getBaseURL(iri)
   var pathURL = getPathURL(iri)
-// console.log(baseURL)
-// console.log(pathURL)
+  // console.log(baseURL)
+  // console.log(pathURL)
 
   //TODO: Consider whether to skip this HEAD if we already determined the ACLResource previously. While possible the effectiveACLResource is unlikely to change.
   return getLinkRelationFromHead('acl', iri)
@@ -1707,18 +1726,18 @@ function getACLResourceGraph(documentURL, iri, options = {}) {
         var aR = i[0];
 
         var aclResource = getAbsoluteIRI(baseURL, aR);
-// console.log(aclResource)
+        // console.log(aclResource)
 
         Config.Resource[iri]['acl']['defaultACLResource'] = Config.Resource[iri]['acl']['defaultACLResource'] || aclResource;
 
         return getResourceGraph(aclResource)
           .then(g => {
-// console.log(i)
-// console.log(i.status)
-//404?
+            // console.log(i)
+            // console.log(i.status)
+            //404?
             if (typeof g === 'undefined') {
               var container = pathURL.endsWith('/') ? getParentURLPath(pathURL) : baseURL;
-// console.log(container);
+              // console.log(container);
               if (typeof container !== 'undefined') {
                 Config.Resource[documentURL]['acl']['effectiveContainer'] = container;
 
@@ -1737,7 +1756,7 @@ function getACLResourceGraph(documentURL, iri, options = {}) {
             return g;
           },
           function(reason){
-console.log(reason)
+            console.log(reason)
             // return getACLResourceGraph(uri.getParentURLPath(iri))
           });
       }
@@ -1747,11 +1766,11 @@ console.log(reason)
     },
     //No HEAD + rel=acl
     function(reason){
-console.log(reason);
-//       var rootURIPath = new URL('/', iri)
-//       rootURIPath = rootURIPath.href;
-// console.log(iri + ' - ' + rootURIPath)
-//       if (iri == rootURIPath) {
+      console.log(reason);
+      // var rootURIPath = new URL('/', iri)
+      // rootURIPath = rootURIPath.href;
+      // console.log(iri + ' - ' + rootURIPath)
+      // if (iri == rootURIPath) {
         return Promise.reject(new Error('effectiveACLResource not determined. https://solidproject.org/TR/2024/wac-20240512#effective-acl-resource-algorithm'));
       // }
       // else {
@@ -1784,18 +1803,18 @@ function getAccessSubjects (authorizations, options) {
 function getAuthorizationsMatching (g, matchers) {
   var authorizations = {};
 
-// console.log("getAuthorizationsMatching:", g.terms, g.out().values, matchers);
+  // console.log("getAuthorizationsMatching:", g.terms, g.out().values, matchers);
 
   var subjects = [];
 
   g = rdf.grapoi({ dataset: g.dataset });
 
   g.out().quads().forEach(t => {
-// console.log(t)
+    // console.log(t)
     subjects.push(t.subject.value);
   });
   subjects = uniqueArray(subjects);
-// console.log(subjects)
+  // console.log(subjects)
   subjects.forEach(i => {
     var s = g.node(rdf.namedNode(i));
 
@@ -1868,6 +1887,8 @@ function getItemsList(url, options) {
 
         var items = [s.out(ns.as.items).values, s.out(ns.as.orderedItems).values, s.out(ns.ldp.contains).values];
 
+        items = sanitizeIRIs(items);
+
         items.forEach(i => {
           i.forEach(resource => {
             // console.log(resource)
@@ -1875,6 +1896,7 @@ function getItemsList(url, options) {
 
             if (r.out(ns.rdf.first).values.length || r.out(ns.rdf.rest).values.length) {
               options.resourceItems = options.resourceItems.concat(traverseRDFList(s, resource));
+              options.resourceItems = sanitizeIRIs(options.resourceItems);
             }
             else {
               //FIXME: This may need to be processed outside of items? See also comment above about processing Collection and CollectionPages.
