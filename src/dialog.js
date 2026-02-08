@@ -21,7 +21,7 @@ import { getButtonHTML, updateButtons } from './ui/buttons.js';
 import { addMessageToLog, buildResourceView, copyRelativeResources, createFeedXML, createImmutableResource, createMutableResource, createNoteDataHTML, getAccessModeOptionsHTML, getBaseURLSelection, getDocument, getFeedFormatSelection, getLanguageOptionsHTML, getLicenseOptionsHTML, getResourceInfo, rewriteBaseURL, setCopyToClipboard, setDocumentRelation, showActionMessage, showRobustLinksDecoration, showTimeMap, updateMutableResource, buildReferences, getDocumentConceptDefinitionsHTML, insertDocumentLevelHTML, insertTestCoverageToTable, diffRequirements, removeReferences, getStorageSelfDescription, getContactInformation, getPersistencePolicy, getODRLPolicies, updateResourceInfos, initCurrentStylesheet, setDate } from './doc.js';
 import { removeNodesWithIds, createHTML } from './utils/html.js';
 import { accessModeAllowed, accessModePossiblyAllowed } from './access.js';
-import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI } from './utils/sanitization.js';
+import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeObject } from './utils/sanitization.js';
 import { escapeRDFLiteral, generateAttributeId, generateUUID, htmlEncode, setDocumentURL } from './util.js';
 import { deleteResource, getResource, patchResourceWithAcceptPatch, postResource, putResource, putResourceWithAcceptPut, setAcceptRDFTypes } from './fetcher.js';
 import { forceTrailingSlash, generateDataURI, getAbsoluteIRI, getBaseURL, isHttpOrHttpsProtocol, stripFragmentFromString, getFragmentFromString, getURLLastPath, currentLocation } from './uri.js';
@@ -853,7 +853,7 @@ export function addShareResourceContactInput(node, agent) {
     }
     img = '<img alt="" height="32" src="' + img + '" width="32" />';
 
-    var input = '<li><input id="share-resource-contact-' + id + '" type="checkbox" value="' + iri + '" /><label for="share-resource-contact-' + id + '">' + img + '<a href="' + iri + '" rel="noopener" target="_blank">' + name + '</a></label></li>';
+    var input = '<li><input id="share-resource-contact-' + id + '" type="checkbox" value="' + iri + '" /><label for="share-resource-contact-' + id + '">' + img + '<a dir="auto" href="' + iri + '" rel="noopener" target="_blank">' + name + '</a></label></li>';
 
     sanitizeInsertAdjacentHTML(node, 'beforeend', input);
   }
@@ -3221,6 +3221,8 @@ export function snapshotAtEndpoint(e, iri, endpoint, noteData, options = {}) {
         options['contentType'] = 'application/json';
       }
 
+      noteData = sanitizeObject(noteData);
+
       return postResource(endpoint, '', JSON.stringify(noteData), options.contentType, null, options)
 
       .then(response => response.json())
@@ -3936,6 +3938,8 @@ export function subscribeToWebSocketChannel(url, d, options = {}) {
   Config.Subscription[d.topic]['Request'] = d;
 
 // console.log(Config.Subscription)
+
+  data = domSanitize(data);
 
   return postResource(url, '', data, options.contentType, null, options)
     .then(response => {

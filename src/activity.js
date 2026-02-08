@@ -234,10 +234,13 @@ export function notifyInbox(o) {
 
   data = createHTML(title, data, { 'prefixes': Config.Prefixes });
 
+  data = domSanitize(data);
+
   var options = {
     'contentType': 'text/html',
     'profile': 'https://www.w3.org/ns/activitystreams'
   };
+
   return postActivity(inboxURL, slug, data, options);
 }
 export function postActivity(url, slug, data, options) {

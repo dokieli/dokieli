@@ -23,6 +23,7 @@ import { getAbsoluteIRI, stripFragmentFromString } from "../../../uri.js"
 import Config from "../../../config.js"
 import { notifyInbox, postActivity, showActivities } from "../../../activity.js"
 import { shareResource } from "../../../dialog.js";
+import { domSanitize } from "../../../utils/sanitization.js";
 
 const ns = Config.ns;
 
@@ -137,6 +138,8 @@ export function processAction(action, formValues, selectionData) {
         }
 
         noteHTML = createHTML('', note);
+
+        noteHTML = domSanitize(noteHTML);
 
         // console.log(noteData)
         // console.log(data)
