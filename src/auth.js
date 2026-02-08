@@ -47,7 +47,7 @@ export async function restoreSession() {
   await Config['Session']?.restore().catch(e => console.log(e.message));
 }
 
-async function showUserSigninSignout (node) {
+export async function showUserSigninSignout (node) {
   var webId = Config['Session']?.isActive ? Config['Session']?.webId : null;
 
   // was LoggedIn with new OIDC WebID
@@ -69,7 +69,7 @@ async function showUserSigninSignout (node) {
   sanitizeInsertAdjacentHTML(node, 'afterbegin', userInfoHTML);
 }
 
-async function signOut() {
+export async function signOut() {
   //Sign out for real
   if (Config['Session']?.isActive) {
     await Config['Session']?.logout();
@@ -89,7 +89,7 @@ async function signOut() {
 }
 
 
-async function userInfoSignOut(node) {
+export async function userInfoSignOut(node) {
   //Clean up the user-info so it can be reconstructed
   removeChildren(node);
 
@@ -106,7 +106,7 @@ async function userInfoSignOut(node) {
   });
 }
 
-function showUserIdentityInput () {
+export function showUserIdentityInput () {
   var userIdentityInput = document.getElementById('user-identity-input');
 
   if (userIdentityInput) {
@@ -161,7 +161,7 @@ function showUserIdentityInput () {
 
 
 // TODO: Generalize this further so that it is not only for submitSignIn
-function enableDisableButton (e, button) {
+function enableDisableButton(e, button) {
   var delay = (e.type === 'cut' || e.type === 'paste') ? 250 : 0
   var input
 
@@ -271,7 +271,7 @@ function submitSignIn (url) {
     });
 }
 
-function setUserInfo (subjectIRI, options = {}) {
+export function setUserInfo (subjectIRI, options = {}) {
   options.ui = Config.User.UI;
   options.fetchIndexes = options.fetchIndexes ?? true;
 
@@ -286,15 +286,6 @@ function setUserInfo (subjectIRI, options = {}) {
   });
 }
 
-function setContactInfo(subjectIRI, options = {}) {
-  return getSubjectInfo(subjectIRI, options).then(subject => {
-    Config.User['Contacts'] = Config.User.Contacts || {};
-    Config.User.Contacts[subjectIRI] = subject;
-
-    updateLocalStorageProfile(Config.User);
-  });
-}
-
 
 //TODO: Review grapoi
 /**
@@ -304,7 +295,7 @@ function setContactInfo(subjectIRI, options = {}) {
  */
 
 //TODO: Review grapoi
-function afterSetUserInfo () {
+export function afterSetUserInfo() {
   getResourceSupplementalInfo(Config.DocumentURL).then(resourceInfo => {
     updateButtons();
   });
@@ -373,17 +364,4 @@ function afterSetUserInfo () {
       handleDeleteNote(button);
     })
   }
-}
-
-export {
-  afterSetUserInfo,
-  enableDisableButton,
-  getSubjectInfo,
-  setUserInfo,
-  setContactInfo,
-  showUserIdentityInput,
-  showUserSigninSignout,
-  submitSignIn,
-  userInfoSignOut,
-  signOut
 }
