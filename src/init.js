@@ -72,7 +72,7 @@ function initServiceWorker() {
 }
 
 function initUser() {
-  getLocalStorageItem('Config.User').then(user => {
+  getLocalStorageItem('DO.Config.User').then(user => {
     if (user && 'object' in user) {
       // user.object.describes.Role = (Config.User.IRI && user.object.describes.Role) ? user.object.describes.Role : 'social';
 
