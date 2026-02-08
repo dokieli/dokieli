@@ -199,6 +199,26 @@ export function sanitizeIRI(value, base = null) {
   }
 }
 
+export function sanitizeIRIs(values, base = null) {
+  return Array.isArray(values)
+    ? values.map(v => sanitizeIRI(v, base)).filter(Boolean)
+    : [];
+}
+
+export function sanitizeIRIOrBNode(term) {
+  if (!term) return null;
+
+  if (term.termType === 'NamedNode') {
+    return sanitizeIRI(term.value);
+  }
+
+  if (term.termType === 'BlankNode') {
+    return term.value;
+  }
+
+  return null;
+}
+
 export function safeObjectAssign(target, ...sources) {
   for (const src of sources) {
     for (const key of Object.keys(src)) {
