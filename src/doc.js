@@ -1629,6 +1629,8 @@ export function getGraphFromDataBlock(data, options) {
       });
       scriptData = lines.join('\n');
 
+      scriptData = domSanitize(scriptData);
+
       // console.log(scriptData)
 
       var o = {
@@ -2095,6 +2097,8 @@ export function getResourceInfoSKOS(g) {
 }
 
 export function createImmutableResource(url, data, options) {
+  url = sanitizeIRI(url);
+
   if (!url) return;
 
   const documentOptions = {
@@ -2204,6 +2208,8 @@ export function createImmutableResource(url, data, options) {
 }
 
 export function createMutableResource(url, data, options) {
+  url = sanitizeIRI(url);
+
   if (!url) return;
 
   const documentOptions = {
