@@ -18,13 +18,13 @@ limitations under the License.
 import rdf from 'rdf-ext';
 import { i18n } from './i18n.js';
 import { getButtonHTML, updateButtons } from './ui/buttons.js';
-import { addMessageToLog, buildResourceView, copyRelativeResources, createFeedXML, createImmutableResource, createMutableResource, createNoteDataHTML, getAccessModeOptionsHTML, getBaseURLSelection, getDocument, getFeedFormatSelection, getLanguageOptionsHTML, getLicenseOptionsHTML, getResourceInfo, rewriteBaseURL, setCopyToClipboard, setDocumentRelation, showActionMessage, showRobustLinksDecoration, showTimeMap, updateMutableResource, buildReferences, getDocumentConceptDefinitionsHTML, insertDocumentLevelHTML, insertTestCoverageToTable, diffRequirements, removeReferences, getStorageSelfDescription, getContactInformation, getPersistencePolicy, getODRLPolicies, updateResourceInfos, initCurrentStylesheet, setDate } from './doc.js';
+import { addMessageToLog, buildResourceView, copyRelativeResources, createFeedXML, createImmutableResource, createMutableResource, createNoteDataHTML, getAccessModeOptionsHTML, getBaseURLSelection, getDocument, getFeedFormatSelection, getLanguageOptionsHTML, getLicenseOptionsHTML, getResourceInfo, rewriteBaseURL, setCopyToClipboard, setDocumentRelation, showActionMessage, showRobustLinksDecoration, showTimeMap, updateMutableResource, buildReferences, getDocumentConceptDefinitionsHTML, insertDocumentLevelHTML, insertTestCoverageToTable, diffRequirements, removeReferences, getStorageSelfDescription, getContactInformation, getPersistencePolicy, getODRLPolicies, updateResourceInfos, initCurrentStylesheet, setDate, showFragment, initCopyToClipboard } from './doc.js';
 import { removeNodesWithIds, createHTML } from './utils/html.js';
 import { accessModeAllowed, accessModePossiblyAllowed } from './access.js';
 import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeObject } from './utils/sanitization.js';
 import { escapeRDFLiteral, generateAttributeId, generateUUID, htmlEncode, setDocumentURL } from './util.js';
 import { deleteResource, getResource, patchResourceWithAcceptPatch, postResource, putResource, putResourceWithAcceptPut, setAcceptRDFTypes } from './fetcher.js';
-import { forceTrailingSlash, generateDataURI, getAbsoluteIRI, getBaseURL, isHttpOrHttpsProtocol, stripFragmentFromString, getFragmentFromString, getURLLastPath, currentLocation } from './uri.js';
+import { forceTrailingSlash, generateDataURI, getAbsoluteIRI, getBaseURL, isHttpOrHttpsProtocol, isFileProtocol, stripFragmentFromString, getFragmentFromString, getURLLastPath, currentLocation } from './uri.js';
 import { getAccessSubjects, getACLResourceGraph, getAgentInbox, getAgentName, getAuthorizationsMatching, getGraphAuthors, getGraphContributors, getGraphEditors, getGraphImage, getGraphLabelOrIRI, getGraphPerformers, getGraphTypes, getLinkRelation, getLinkRelationFromHead, getResourceGraph, getUserContacts, getUserLabelOrIRI, serializeData, getSubjectInfo } from './graph.js';
 import { notifyInbox, sendNotifications, showContactsActivities, initializeNotifications } from './activity.js';
 import Config from './config.js';
@@ -37,6 +37,7 @@ import { exportAsDocument, updateUILanguage } from './actions.js';
 import { parseMarkdown, fragmentFromString, removeSelectorFromNode, selectArticleNode, getNodeWithoutClasses } from "./utils/html.js";
 import { showUserSigninSignout, userInfoSignOut } from './auth.js';
 import { generateGeoView } from './geo.js';
+// import { initEditor } from './editor/initEditor.js';
 
 export function initDocumentMenu() {
   //TODO: Looking into adding back about/resource="#document-menu" typeof="schema:ActivateAction"
@@ -4995,7 +4996,7 @@ export async function spawnDokieli(documentNode, data, contentType, iris, option
 
     document.documentElement.replaceChild(tmplBody, document.body);
     initDocumentMenu();
-    initEditor();
+    Config.Editor.init(null, null, options);
     showFragment();
     initCopyToClipboard();
 
