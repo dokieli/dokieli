@@ -399,11 +399,24 @@ let customNodes = {
 
   iframe: {
     group: "block",
-    inline: false,
     atom: true,
-    attrs: { originalAttributes: { default: {} } },
-    parseDOM: [{ tag: "iframe", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["iframe", { ...node.attrs.originalAttributes }, 0]; }
+    isolating: true,
+    defining: true,
+    selectable: true,
+    draggable: true,
+    attrs: {
+      originalAttributes: { default: {} }
+    },
+    parseDOM: [{
+      tag: "iframe",
+      priority: 100,
+      getAttrs(node) {
+        return getAttributes(node);
+      }
+    }],
+    toDOM(node) {
+      return ["iframe", node.attrs.originalAttributes];
+    }
   },
 
   //TODO: math

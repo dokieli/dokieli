@@ -87,8 +87,8 @@ export function domSanitize(strHTML, options = {}) {
 
   const cleanHTML = DOMPurify.sanitize(strHTML, {
     ALLOW_UNKNOWN_PROTOCOLS: options.ALLOW_UNKNOWN_PROTOCOLS !== false,
-    ADD_TAGS: ['script'],
-    ADD_ATTR: [...Config.DOMProcessing.rdfaAttributes, 'alttext', 'xml:lang', `xmlns:ev`, 'target'],
+    ADD_TAGS: ['script', 'iframe'],
+    ADD_ATTR: [...Config.DOMProcessing.rdfaAttributes, 'alttext', 'xml:lang', `xmlns:ev`, 'target', 'srcdoc', 'sandbox'],
     ...options
   });
 

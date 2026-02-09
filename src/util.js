@@ -295,6 +295,10 @@ export function parseISODuration(duration) {
 export function setDocumentURL(url) {
   url = url || currentLocation();
 
+  if (url.startsWith('blob:')) {
+    throw new Error(`Cannot use blob URL: ${url} . Use 'src' with the source document URL instead. See docs on using dokieli as an embeddable web application: https://dokie.li/docs#embeddable-web-application`);
+  }
+
   Config.DocumentURL = stripFragmentFromString(url);
 }
 

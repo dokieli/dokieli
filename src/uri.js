@@ -43,6 +43,10 @@ export function decodeString(string) {
 export function currentLocation(options = {}) {
   const url = new URL(window.location);
 
+  if (url.protocol === 'blob:') {
+    return url.href;
+  }
+
   // Default params to remove
   const defaultParams = ['author', 'social', 'graph', 'graph-view', 'open', 'style'];
 
