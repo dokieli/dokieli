@@ -655,6 +655,78 @@ dl+hr:before {
   color: inherit;
   border-bottom-color: #080;
 }
+.do-site header:first-of-type:has(+ main) a:not([href]) {
+  border-bottom: none;
+}
+.do-site #document-translations i {
+  padding:0 0.5em;
+  /* border:1px solid red; */
+  background-origin: content-box;
+}
+
+.do-site #document-translations i::after {
+  content: "";
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin-bottom: 0.25em;
+  margin-left: 1.1em;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid currentColor;
+}
+.do-site #document-translations {
+  position:relative;
+}
+.do-site #document-translations ul {
+  display: none;
+  position: fixed;
+  z-index:2147483647;
+  margin-left:0.5em;
+  background-color:#ffffff;
+  color: #000000;
+  border-radius: 0.25em;
+  border: 1px solid #ccc;
+  box-shadow: rgba(0, 0, 0, 0.06) 0 0.4em 0.6em;
+}
+.do-site #document-translations li {
+  display:block;
+  text-align:left;
+  border-bottom: none !important;
+}
+.do-site #document-translations li:first-of-type {
+  border-radius: 0.25em 0.25em 0 0;
+}
+
+.do-site #document-translations li:last-of-type {
+  border-radius: 0 0 0.25em 0.25em;
+}
+.do-site #document-translations li a {
+  border-bottom: none !important;
+  display:block;
+  /* padding: 0.25em 3.5em 0.25em 0.5em; // not letting this one go  */
+  /* padding: 0.25em 2em 0.25em 0.5em; // but you can always do it better, see below*/
+  padding: 0.25em 2.5em 0.25em 0.5em;
+}
+.do-site #document-translations li:has(a:not([href])) {
+  background-color: #eee;
+}
+.do-site #document-translations li:has(a[href]):hover {
+  background-color: #080;
+}
+.do-site #document-translations li:has(a[href]):hover a {
+color:#fff
+}
+
+.do-site #document-translations i:hover {
+cursor:pointer;
+}
+.do-site #document-translations:hover ul,
+/* .do-site #document-translations ul:hover, */
+.do-site #document-translations:focus-visible ul,
+.do-site #document-translations ul:focus-visible {
+display:block;
+}
 
 .do-site header:first-of-type:has(+ main) a:hover,
 .do-site main + footer:first-of-type a:hover {
