@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { getLastPathSegment, stripFragmentFromString, svgToDataURI, currentLocation } from './uri.js';
+import { getLastPathSegment } from './uri.js';
 import Config from './config.js';
 
 export function uniqueArray(a) {
@@ -292,16 +292,6 @@ export function parseISODuration(duration) {
 //   console.log(css);
 // }
 
-export function setDocumentURL(url) {
-  url = url || currentLocation();
-
-  if (url.startsWith('blob:')) {
-    throw new Error(`Cannot use blob URL: ${url} . Use 'src' with the source document URL instead. See docs on using dokieli as an embeddable web application: https://dokie.li/docs#embeddable-web-application`);
-  }
-
-  Config.DocumentURL = stripFragmentFromString(url);
-}
-
 export function setWebExtensionURL() {
   Config['WebExtensionBaseURL'] = Config.WebExtensionEnabled ? Config.WebExtension.runtime.getURL('') : null;
 }
@@ -321,59 +311,4 @@ export function generateFilename(url, options) {
   var extension = options.filenameExtension || '.txt';
   fileName = fileName + "." + timestamp + extension;
   return fileName;
-}
-
-export function encodeUriTerm(term) {
-  return term.replace(/%[0-9A-Fa-f]{2}|&|[^A-Za-z0-9\-._~:/?#\[\]@!$'()*+,;=%]/g, match => {
-    if (match === '&') return '&amp;';
-    if (/^%[0-9A-Fa-f]{2}$/.test(match)) return match;
-    switch (match) {
-      case ' ': return '%20';
-      case "'": return '%27';
-      case '"': return '%22';
-      case '<': return '%3C';
-      case '>': return '%3E';
-      default: return '%' + match.charCodeAt(0).toString(16).toUpperCase();
-    }
-  });
-}
-
-export function htmlEncode(str, options = { mode: 'text', attributeName: null }) {
-  str = String(str);
-
-  if (options.mode === 'uri') {
-    const isMulti = options.attributeName && Config.DOMProcessing.multiTermAttributes.includes(options.attributeName);
-    if (isMulti) {
-      return str.split(/[\t\n\r ]+/).map(term => encodeUriTerm(term)).join(' ');
-    } else {
-      return encodeUriTerm(str);
-    }
-  }
-
-  if (options.mode === 'attribute') {
-    return str.replace(/([&<>"'])/g, (match, p1, offset, fullStr) => {
-      if (p1 === '&') {
-        const semicolonIndex = fullStr.indexOf(';', offset);
-        if (semicolonIndex > -1) {
-          const entity = fullStr.slice(offset, semicolonIndex + 1);
-          if (/^&(?:[a-zA-Z][a-zA-Z0-9]+|#\d+|#x[0-9a-fA-F]+);$/.test(entity)) {
-            return '&';
-          }
-        }
-      }
-      switch (p1) {
-        case '&': return '&amp;';
-        case '<': return '&lt;';
-        case '>': return '&gt;';
-        case '"': return '&quot;';
-        case "'": return '&#39;';
-        default: return p1;
-      }
-    });
-  }
-
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
 }

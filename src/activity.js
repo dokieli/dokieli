@@ -291,19 +291,23 @@ export function getNotifications(url) {
     });
 }
 
-export function showInboxNotifications(url, data) {
-  //TODO: Consider checking multiple getLinkRelation, [ns.ldp.inbox.value, ns.as.inbox.value]
-  getLinkRelation(ns.ldp.inbox.value, url, data)
-    .then(i => {
-      i.forEach(inboxURL => {
-        if (!Config.Inbox[inboxURL]) {
-          showNotificationSources(inboxURL);
-        }
-      });
-    });
-}
+// export function showInboxNotifications(url, data) {
+//   //TODO: Consider checking multiple getLinkRelation, [ns.ldp.inbox.value, ns.as.inbox.value]
+//   getLinkRelation(ns.ldp.inbox.value, url, data)
+//     .then(i => {
+//       i.forEach(inboxURL => {
+//         if (!Config.Inbox[inboxURL]) {
+//           showNotificationSources(inboxURL);
+//         }
+//       });
+//     });
+// }
 
 export function showNotificationSources(url) {
+  if (Config.DocumentURL.startsWith('blob:')) {
+    return;
+  }
+
   getNotifications(url).then(
     function(notifications) {
       notifications.forEach(notification => {

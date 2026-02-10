@@ -647,6 +647,10 @@ export function showResourceReviewChanges(localContent, remoteContent, response,
 export function monitorNetworkStatus() {
   let messageId;
 
+  if (Config.DocumentURL.startsWith('blob:')) {
+    return;
+  }
+
   window.addEventListener('online', async () => {
     console.log('online');
     await enableRemoteSync();

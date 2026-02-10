@@ -20,18 +20,42 @@ import shower from '@shower/core';
 import { diffChars } from 'diff';
 import LinkHeader from "http-link-header";
 import Config from './config.js'
-import { getDateTimeISO, generateAttributeId, uniqueArray, generateUUID, matchAllIndex, getRandomIndex, getHash, isValidISBN, getDateTimeISOFromMDY, htmlEncode } from './util.js'
-import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath, getPrefixedNameFromIRI, generateDataURI, getProxyableIRI, getFragmentOrLastPath } from './uri.js'
+import { getDateTimeISO, generateAttributeId, uniqueArray, generateUUID, matchAllIndex, getRandomIndex, getHash, isValidISBN, getDateTimeISOFromMDY } from './util.js'
+import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath, getPrefixedNameFromIRI, generateDataURI, getProxyableIRI, getFragmentOrLastPath, currentLocation } from './uri.js'
 import { getResourceHead, deleteResource, processSave, patchResourceWithAcceptPatch, copyResource, getResource } from './fetcher.js'
 import { getResourceGraph, sortGraphTriples, getGraphContributors, getGraphAuthors, getGraphEditors, getGraphPerformers, getGraphPublishers, getGraphLabel, getGraphEmail, getGraphTitle, getGraphConceptLabel, getGraphPublished, getGraphUpdated, getGraphDescription, getGraphLicense, getGraphRights, getGraphFromData, getGraphAudience, getGraphTypes, getGraphLanguage, getGraphInbox, getUserLabelOrIRI, getGraphImage, getGraphDate, processResources } from './graph.js';
 import { Icon } from './ui/icons.js';
 import { buttonIcons, getButtonHTML, updateButtons } from './ui/buttons.js'
-import { domSanitizeHTMLBody, domSanitize, sanitizeInsertAdjacentHTML } from './utils/sanitization.js';
+import { domSanitizeHTMLBody, domSanitize, sanitizeInsertAdjacentHTML, htmlEncode } from './utils/sanitization.js';
 import { cleanProseMirrorOutput, normalizeHTML, normalizeWhitespace } from './utils/normalization.js';
 import { formatHTML, fragmentFromString, getDoctype, getDocumentContentNode, selectArticleNode, getDocumentNodeFromString, stringFromFragment, createHTML, getOffset } from './utils/html.js';
 import { i18n } from './i18n.js';
 
 const ns = Config.ns;
+
+export function setDocumentURL(url) {
+  url = url || currentLocation();
+
+  Config.DocumentURL = stripFragmentFromString(url);
+
+  if (url.startsWith('blob:')) {
+    var message = `A snapshot of the original document was loaded in a sandboxed environment and can only work in reduced functionality. It is recommended to open this document in a new window or tab.`;
+    var actionMessage = message;
+
+    const messageObject = {
+      'content': actionMessage,
+      'type': 'warning',
+      'timer': null,
+      'code': 0
+    }
+
+    addMessageToLog({...messageObject, content: message}, Config.MessageLog);
+    showActionMessage(document.body, messageObject);
+
+    console.warn(`Cannot use blob URL: ${url} . If using dokieli in an iframe with a blob URL, use 'src' with the source document URL instead so that operations on the document and related documents work as expected. See docs on using dokieli as an embeddable web application: https://dokie.li/docs#embeddable-web-application`);
+  }
+
+}
 
 export function getDocument(cn, options = {}) {
   let node = cn || document.documentElement;
@@ -1661,6 +1685,11 @@ export function getGraphFromDataBlock(data, options) {
 }
 
 export async function updateResourceInfos(documentURL = Config.DocumentURL, data, response, options = {}) {
+  if (documentURL.startsWith('blob:')) {
+    updateButtons();
+    return;
+  }
+
   const documentOptions = {
     ...Config.DOMProcessing,
     format: true,

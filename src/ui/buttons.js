@@ -367,7 +367,37 @@ export const buttonIcons = {
 }
 
 const buttonState = {
-  '#document-do .resource-save': ({ info, online, localhost }) => {
+  '#document-do .resource-share': ({ blob }) => {
+    if (blob) return false;
+
+    return true;
+  },
+
+  '#document-do .editor-enable': ({ blob }) => {
+    if (blob) return false;
+
+    return true;
+  },
+
+  '#document-do .resource-reply': ({ online, localhost, blob }) => {
+    if (blob) return false;
+
+    if (!online && !localhost) return false;
+
+    return true;
+  },
+
+  '#document-do .resource-notifications': ({ online, localhost, blob }) => {
+    if (blob) return false;
+
+    if (!online && !localhost) return false;
+
+    return true;
+  },
+
+  '#document-do .resource-save': ({ info, online, localhost, blob }) => {
+    if (blob) return false;
+
     if (!online && !localhost) return false;
 
     if (!accessModePossiblyAllowed(null, 'write')) {
@@ -383,7 +413,9 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .create-version': ({ info, online, localhost }) => {
+  '#document-do .create-version': ({ info, online, localhost, blob }) => {
+    if (blob) return false;
+
     if (!online && !localhost) return false;
 
     if (!accessModePossiblyAllowed(null, 'write')) {
@@ -399,7 +431,9 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .create-immutable': ({ info, online, localhost }) => {
+  '#document-do .create-immutable': ({ info, online, localhost, blob }) => {
+    if (blob) return false;
+
     if (!online && !localhost) return false;
 
     if (!accessModePossiblyAllowed(null, 'write')) {
@@ -415,7 +449,9 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .resource-delete': ({ info, online, localhost }) => {
+  '#document-do .resource-delete': ({ info, online, localhost, blob }) => {
+    if (blob) return false;
+
     if (!online && !localhost) return false;
 
     if (!accessModePossiblyAllowed(null, 'write')) {
@@ -431,7 +467,9 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .resource-memento': ({ info, online, localhost }) => {
+  '#document-do .resource-memento': ({ info, online, localhost, blob }) => {
+    if (blob) return false;
+
     if (!info['timemap']) return false;
 
     if (!online && !localhost) return false;
@@ -441,7 +479,10 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .snapshot-internet-archive': ({ info, online, localhost }) => {
+  '#document-do .snapshot-internet-archive': ({ info, online, localhost, blob }) => {
+    console.log("IA", blob)
+    if (blob) return false;
+
     if (info.odrl?.prohibitionActions &&
         info.odrl.prohibitionAssignee === Config.User.IRI &&
         (info.odrl.prohibitionActions.includes(ns.odrl.archive.value) ||
@@ -454,7 +495,9 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .resource-save-as': ({ info, online, localhost }) => {
+  '#document-do .resource-save-as': ({ info, online, localhost, blob }) => {
+    if (blob) return false;
+
     if (info.odrl?.prohibitionActions &&
         info.odrl.prohibitionAssignee === Config.User.IRI &&
         (info.odrl.prohibitionActions.includes(ns.odrl.derive.value) ||
@@ -500,7 +543,9 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .robustify-links': ({ info, online, editorMode }) => {
+  '#document-do .robustify-links': ({ info, online, editorMode, blob }) => {
+    if (blob) return false;
+
     if (editorMode !== 'author') return false;
 
     if (info.odrl?.prohibitionActions &&
@@ -514,9 +559,11 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .embed-data-meta': ({ info, editorMode }) => {
+  '#document-do .embed-data-meta': ({ info, editorMode, blob }) => {
+    if (blob) return false;
+
     if (editorMode !== 'author') return false;
-    
+
     if (info.odrl?.prohibitionActions &&
         info.odrl.prohibitionAssignee === Config.User.IRI &&
         info.odrl.prohibitionActions.includes(ns.odrl.modify.value)) {
@@ -535,7 +582,9 @@ const buttonState = {
     return true;
   },
 
-  '#review-changes .review-changes-save-local': ({ info, online, localhost }) => {
+  '#review-changes .review-changes-save-local': ({ info, online, localhost, blob }) => {
+    if (blob) return false;
+
     if (!online && !localhost) return false;
 
     if (!accessModePossiblyAllowed(null, 'write')) {
@@ -551,7 +600,9 @@ const buttonState = {
     return true;
   },
 
-  '#review-changes .review-changes-submit': ({ info, online, localhost }) => {
+  '#review-changes .review-changes-submit': ({ info, online, localhost, blob }) => {
+    if (blob) return false;
+
     if (!online && !localhost) return false;
 
     if (!accessModePossiblyAllowed(null, 'write')) {
@@ -567,7 +618,9 @@ const buttonState = {
     return true;
   },
 
-  '#document-autosave #autosave-remote': ({ info, online, localhost, documentAction }) => {
+  '#document-autosave #autosave-remote': ({ info, online, localhost, documentAction, blob }) => {
+    if (blob) return false;
+    
     if (documentAction == 'new' || documentAction == 'open')  return false;
 
     if (!online && !localhost) return false;
@@ -599,20 +652,23 @@ export function buttonShouldBeEnabled(selector, context) {
 export function updateButtons(selectors) {
   selectors = selectors || Object.keys(buttonState);
 
+  console.log("HELLO", Config.DocumentURL, Config.DocumentURL.startsWith('blob:'))
+
   const context = {
     info: Config.Resource[Config.DocumentURL],
     authenticated: Config['Session']?.isActive,
     online: navigator.onLine,
     localhost: isLocalhost(Config.DocumentURL),
     editorMode: Config.Editor.mode,
-    documentAction: Config.DocumentAction
+    documentAction: Config.DocumentAction,
+    blob: Config.DocumentURL.startsWith('blob:')
   }
 
   selectors.forEach(selector => {
     const node = document.querySelector(selector);
 
     if (!node) {
-      // console.warn(`Button with selector "${selector}" not found.`);
+      console.warn(`Button with selector "${selector}" not found.`);
       return;
     }
     const buttonEnabled = buttonShouldBeEnabled(selector, context);

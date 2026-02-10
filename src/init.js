@@ -18,12 +18,12 @@ limitations under the License.
 import shower from '@shower/core';
 import Config from './config.js';
 const ns = Config.ns;
-import { highlightItems, updateSelectedStylesheets, initCurrentStylesheet, showActionMessage, addMessageToLog, initCopyToClipboard, showFragment, setDocRefType, showRobustLinksDecoration, focusNote, showAsTabs, getResourceInfo, setDocumentString } from './doc.js';
+import { highlightItems, updateSelectedStylesheets, initCurrentStylesheet, showActionMessage, addMessageToLog, initCopyToClipboard, showFragment, setDocRefType, showRobustLinksDecoration, focusNote, showAsTabs, getResourceInfo, setDocumentString, setDocumentURL } from './doc.js';
 import { initButtons } from './ui/buttons.js'
-import { setDocumentURL, setWebExtensionURL } from './util.js';
+import { setWebExtensionURL } from './util.js';
 import { getLocalStorageItem } from './storage.js';
 import { syncLocalRemoteResource, monitorNetworkStatus, autoSave } from './sync.js';
-import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeObject } from './utils/sanitization.js';
+import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeObject } from './utils/sanitization.js';
 import { afterSetUserInfo, setUserInfo } from './auth.js';
 import { showNotificationSources } from './activity.js';
 import { getProxyableIRI, getUrlParams, stripFragmentFromString, stripUrlSearchHash } from './uri.js';
@@ -87,6 +87,10 @@ function initUser() {
 }
 
 export function initLocalStorage() {
+  if (Config.DocumentURL.startsWith('blob:')) {
+    return;
+  }
+
   getLocalStorageItem(Config.DocumentURL).then(collection => {
     if (!collection) {
       autoSave(Config.DocumentURL, { method: 'localStorage' });

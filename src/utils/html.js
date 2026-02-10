@@ -18,8 +18,8 @@ limitations under the License.
 import { micromark as marked } from 'micromark';
 import { gfm, gfmHtml } from 'micromark-extension-gfm';
 import { gfmTagfilterHtml } from 'micromark-extension-gfm-tagfilter';
-import { escapeRegExp, htmlEncode } from '../util.js'
-import { domSanitize } from '../utils/sanitization.js';
+import { escapeRegExp } from '../util.js'
+import { domSanitize, htmlEncode } from '../utils/sanitization.js';
 import Config from '../config.js'
 
 export function tokenizeHTML(root) {
