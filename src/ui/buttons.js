@@ -480,7 +480,6 @@ const buttonState = {
   },
 
   '#document-do .snapshot-internet-archive': ({ info, online, localhost, blob }) => {
-    console.log("IA", blob)
     if (blob) return false;
 
     if (info.odrl?.prohibitionActions &&
@@ -652,8 +651,6 @@ export function buttonShouldBeEnabled(selector, context) {
 export function updateButtons(selectors) {
   selectors = selectors || Object.keys(buttonState);
 
-  console.log("HELLO", Config.DocumentURL, Config.DocumentURL.startsWith('blob:'))
-
   const context = {
     info: Config.Resource[Config.DocumentURL],
     authenticated: Config['Session']?.isActive,
@@ -668,7 +665,7 @@ export function updateButtons(selectors) {
     const node = document.querySelector(selector);
 
     if (!node) {
-      console.warn(`Button with selector "${selector}" not found.`);
+      // console.warn(`Button with selector "${selector}" not found.`);
       return;
     }
     const buttonEnabled = buttonShouldBeEnabled(selector, context);

@@ -181,18 +181,34 @@ export async function showAutoSave(node) {
   const storageObject = await getLocalStorageItem(Config.DocumentURL);
 
   const hasAccessModeWrite = accessModePossiblyAllowed(Config.DocumentURL, 'write');
-  let checked = storageObject?.autoSave !== undefined ? storageObject.autoSave : true;
+  let checked = true;
+  let disabled = false;
+
+  if (Config.DocumentURL.startsWith('blob:')) {
+    checked = false;
+    disabled = true;
+  }
+  if (storageObject?.autoSave !== undefined) {
+    checked = storageObject.autoSave;
+  }
+
   checked = (checked && hasAccessModeWrite) ? ' checked=""' : '';
+
+  disabled = disabled ? ' disabled="disabled"' : '';
 
   let html = `
   <section aria-labelledby="document-autosave-label" id="document-autosave" rel="schema:hasPart" resource="#document-autosave">
     <h2 data-i18n="menu.autosave.h2" id="document-autosave-label" property="schema:name">${i18n.t('menu.autosave.h2.textContent')}</h2>
-    <input${checked} data-i18n="menu.autosave.input" id="autosave-remote" title="${i18n.t('menu.autosave.input.title')}" type="checkbox" />
+    <input${checked} data-i18n="menu.autosave.input"${disabled} id="autosave-remote" title="${i18n.t('menu.autosave.input.title')}" type="checkbox" />
     <label data-i18n="menu.autosave.label" for="autosave-remote"><span data-i18n="menu.autosave.label.span">${i18n.t('menu.autosave.label.span.textContent')}</span></label> 
   </section>
   `;
 
   sanitizeInsertAdjacentHTML(node.querySelector('#document-do'), 'afterend', html);
+
+  if (!!disabled) {
+    return;
+  }
 
   document.addEventListener('change', async (e) => {
     if (e.target.matches('#autosave-remote')) {
