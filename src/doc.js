@@ -858,24 +858,24 @@ export function insertDocumentLevelHTML(rootNode, h, options) {
         if (skipElements.indexOf(node.nodeName.toLowerCase()) > -1) {
           node = node.closest(sectioningElements.join(',')) || article;
         }
-        node.sanitizeInsertAdjacentHTML('afterend', h);
+        sanitizeInsertAdjacentHTML(node, 'afterend', h);
         break;
       }
       else if (i == 0) {
         var a = article.querySelector('h1');
 
         if (a) {
-          a.sanitizeInsertAdjacentHTML('afterend', h);
+          sanitizeInsertAdjacentHTML(a, 'afterend', h);
         }
         else {
-          article.sanitizeInsertAdjacentHTML('afterbegin', h);
+          sanitizeInsertAdjacentHTML(article, 'afterbegin', h);
         }
         break;
       }
     }
   }
   else {
-    article.sanitizeInsertAdjacentHTML('afterbegin', h);
+    sanitizeInsertAdjacentHTML(article, 'afterbegin', h);
   }
 
   return rootNode;
@@ -1156,7 +1156,7 @@ export function setDocumentRelation(rootNode, data, options) {
           }
         }
       }
-      dl.sanitizeInsertAdjacentHTML('beforeend', documentRelation);
+      sanitizeInsertAdjacentHTML(dl, 'beforeend', documentRelation);
     }
     else {
       h.push(documentRelation);
@@ -1219,7 +1219,7 @@ export function showTimeMap(node, url) {
 
       var html = '<dl class="memento"><dt>Memento</dt><dd><ul>' + items.join('') + '</ul></dd></dl>';
 
-      node.sanitizeInsertAdjacentHTML('beforeend', html);
+      sanitizeInsertAdjacentHTML(node, 'beforeend', html);
 
       node = document.getElementById(elementId);
       node.addEventListener('click', e => {
@@ -1285,7 +1285,7 @@ export function getDocumentStatusHTML(rootNode, options) {
       if (dl) {
         var clone = dl.cloneNode(true);
         dl.parentNode.removeChild(dl);
-        clone.sanitizeInsertAdjacentHTML('beforeend', dd);
+        sanitizeInsertAdjacentHTML(clone, 'beforeend', dd);
         s = clone.outerHTML;
       }
       else {
@@ -2352,7 +2352,7 @@ export function buildReferences(referencesList, id, citation) {
   if (!referencesList) {
     var nodeInsertLocation = selectArticleNode(document);
     var section = '<section id="references"><h2>References</h2><div><ol></ol></div></section>';
-    nodeInsertLocation.sanitizeInsertAdjacentHTML('beforeend', section);
+    sanitizeInsertAdjacentHTML(nodeInsertLocation, 'beforeend', section);
   }
 
   var references = document.querySelector('#references');
@@ -2362,7 +2362,7 @@ export function buildReferences(referencesList, id, citation) {
 
   if (citation) {
     var citationItem = referenceItemHTML(referencesList, id, citation);
-    referencesList.sanitizeInsertAdjacentHTML('beforeend', citationItem);
+    sanitizeInsertAdjacentHTML(referencesList, 'beforeend', citationItem);
   }
 }
 
@@ -2383,7 +2383,7 @@ export function updateReferences(referencesList, options) {
     // console.log(refId);
     // console.log(refLabel)
     var ref = '<span class="ref"> <span class="ref-reference" id="' + rId + '">' + Config.RefType[Config.DocRefType].InlineOpen + '<a href="#' + refId + '">' + refLabel + '</a>' + Config.RefType[Config.DocRefType].InlineClose + '</span></span>';
-    cite.sanitizeInsertAdjacentHTML('afterend', ref);
+    sanitizeInsertAdjacentHTML(cite, 'afterend', ref);
   }
 
   citeA.forEach(a => {
@@ -2468,7 +2468,7 @@ export function updateReferences(referencesList, options) {
 
         var referenceItem = referenceItemHTML(referencesList, refId, citation);
 
-        referencesList.sanitizeInsertAdjacentHTML('beforeend', referenceItem);
+        sanitizeInsertAdjacentHTML(referencesList, 'beforeend', referenceItem);
 
         insertRef(cite, rId, refId, refLabel);
       }
