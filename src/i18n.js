@@ -67,6 +67,8 @@ else {
 Config.Translations = Object.keys(resources);
 Config['Translations'] = Object.keys(resources);
 
+Config['DocsTranslations'] = ['en', 'es'];
+
 // console.log(resources)
 
 const fallbackLng = {

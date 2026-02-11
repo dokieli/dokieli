@@ -22,7 +22,6 @@ import { isLocalhost } from "../uri.js";
 import { i18n } from "../i18n.js";
 
 const ns = Config.ns;
-const docsBaseURL = Config.WebExtensionEnabled ? Config.WebExtension.runtime.getURL('docs') : 'https://dokie.li/docs';
 
 // function getButtonTextContent(key, buttonTextContent) {
 //   const textContentTranslation = i18n.t(key);
@@ -30,7 +29,15 @@ const docsBaseURL = Config.WebExtensionEnabled ? Config.WebExtension.runtime.get
 //   return textContentStr;
 // }
 
+function getDocsBaseURL() {
+  const translatedDocs = (Config.DocsTranslations.includes(Config.User.UI.Language) && Config.User.UI.Language !== 'en') ?
+  `https://dokie.li/${Config.User.UI.Language}/docs` : `https://dokie.li/docs`;
+  return Config.WebExtensionEnabled ? Config.WebExtension.runtime.getURL('docs') : translatedDocs;
+}
+
 export function initButtons() {
+  const docsBaseURL = getDocsBaseURL();
+
   Config.Button = {
     Close: getButtonHTML({ key: "close.button", button: "close", buttonClass: "close", iconSize: "fa-2x" }),
     Clipboard: getButtonHTML({ key: "clipboard.button", button: "clipboard", buttonClass: "do copy-to-clipboard" }),

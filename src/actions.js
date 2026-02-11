@@ -147,11 +147,11 @@ export function updateUILanguage(lang) {
   i18n.changeLanguage(lang, (err) => {
     if (err) return console.error('Error loading language', err);
 
-    // re-run initButtons to update the buttons that are stored
-    initButtons();
-
     Config.User.UI['Language'] = lang;
     Config.User.UI['LanguageDir'] = i18n.dir();
+
+    // re-run initButtons to update the buttons that are stored
+    initButtons();
 
     document.querySelectorAll('.do[lang]').forEach(el => {
       el.setAttribute('lang', lang);

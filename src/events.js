@@ -15,9 +15,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import rdf from "rdf-ext";
 import { showUserIdentityInput, signOut } from "./auth.js";
 import { i18n } from "./i18n.js";
 import Config from "./config.js";
+import { stripFragmentFromString } from "./uri.js";
+import { getGraphDescription, getGraphImage, getGraphTitle, getResourceGraph } from "./graph.js";
+import { fragmentFromString } from "./utils/html.js";
+import { parseISODuration, uniqueArray } from "./util.js";
+
+const ns = Config.ns;
 
 export function eventButtonClose() {
   document.addEventListener('click', e => {
