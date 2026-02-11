@@ -15,10 +15,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { getButtonHTML, buttonIcons } from 'src/ui/buttons.js'; 
+import { getButtonHTML, buttonIcons } from '../../../src/ui/buttons.js'; 
+import Config from '../../../src/config.js';
 
 describe('getButtonHTML', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     // mock SVG for all icons to avoid testing actual markup
     Object.keys(buttonIcons).forEach(key => {
       buttonIcons[key].icon = '<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0h24v24H0z"/></svg>';
@@ -123,7 +124,41 @@ describe('getButtonHTML', () => {
     const html = getButtonHTML({ button: 'aria-test-with-text', buttonLabel: 'TestLabel' });
     expect(html).not.toContain('TestLabel');
     expect(html).toContain('Test Text Content');
-
   })
+vi.unmock('../../src/i18n'); // unapply global mock
+
+  // === Snapshot Tests ===
+  it('matches snapshot for Close button', () => {
+    const html = getButtonHTML({ button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
+    expect(html).toMatchSnapshot();
+  });
+
+  it('matches snapshot for Clipboard button', () => {
+    const html = getButtonHTML({ button: 'clipboard', buttonClass: 'do copy-to-clipboard' });
+    expect(html).toMatchSnapshot();
+  });
+
+  it('matches snapshot for H2 heading button', () => {
+    const html = getButtonHTML({ button: 'h2' });
+    expect(html).toMatchSnapshot();
+  });
+
+  it('matches snapshot for Delete annotation button', () => {
+    const html = getButtonHTML({ key: 'annotations.delete.button', button: 'delete', buttonClass: 'delete' });
+    expect(html).toMatchSnapshot();
+  });
+
+  it('matches snapshot for RTL button', () => {
+    buttonIcons['close'].dir = "rtl";
+    const html = getButtonHTML({ button: 'close', buttonClass: 'close' });
+    expect(html).toMatchSnapshot();
+    buttonIcons['close'].dir = undefined; // reset
+  });
+
+  it('matches snapshot for fallback button', () => {
+    buttonIcons['fallback-test'] = { title: 'Fallback', icon: null };
+    const html = getButtonHTML({ button: 'fallback-test' });
+    expect(html).toMatchSnapshot();
+  });
 
 });

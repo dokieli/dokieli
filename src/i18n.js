@@ -104,7 +104,7 @@ const i18n = {
     return i18next.t(key, vars);
   },
   code: function () {
-    const lang = i18n.language().toLowerCase();
+    const lang = i18n.language();
 
     if (fallbackLng[lang]) {
       return fallbackLng[lang][0]; // default to first fallback
@@ -113,12 +113,12 @@ const i18n = {
     const segments = lang.split("-");
   
     for (let i = segments.length - 1; i >= 0; i--) {
-      if (Config.Translations.includes(segments[i])) {
-        return segments[i];
+      if (Config.Translations.includes(segments[i].toLowerCase())) {
+        return segments[i].toLowerCase();
       }
     }
 
-    return fallbackLng.default;
+    return fallbackLng.default[0] // default to first fallback;
   },
   dir: function() {
     return Config.Languages[i18n.code()].dir;

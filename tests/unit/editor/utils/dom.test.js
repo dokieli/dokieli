@@ -31,7 +31,7 @@ describe('docSelectionToHtml', () => {
     const html = docSelectionToHtml(doc, from, to);
     expect(html).toContain('<p');
     expect(html).toContain('Hello');
-    expect(html).toContain('<strong>world</strong>');
+    expect(html).toContain('<strong dir="auto">world</strong>');
     expect(html).not.toContain('!'); 
     expect(html).toContain('</p>');
   });

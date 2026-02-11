@@ -1,4 +1,10 @@
 import { JSDOM } from "jsdom";
+import { vi } from "vitest";
+
+vi.mock("./src/i18n", async () => {
+  const mod = await import("./tests/utils/mocki18n.js");
+  return { i18n: mod.i18n };
+});
 
 const htmlContent = `
 <!DOCTYPE html>

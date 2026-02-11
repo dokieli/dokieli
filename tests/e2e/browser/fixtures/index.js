@@ -83,11 +83,17 @@ export class Auth {
 }
 
 export const test = base.test.extend({
-  auth: async ({ page, isMobile }, use, testInfo) => {
-    testInfo.setTimeout(120_000); 
-    const auth = new Auth(page, isMobile);
+  page: async ({ browser }, use) => {
+    // fresh context per test
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await use(page);
+    await context.close();
+  },
+
+  auth: async ({ page }, use) => {
+    const auth = new Auth(page);
     await use(auth);
   },
 });
-
 export const expect = base.expect;
