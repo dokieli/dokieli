@@ -39,7 +39,9 @@ export default {
   User: {
     IRI: null,
     Role: null,
-    UI: {},
+    UI: {
+      Language: 'en-GB' // default
+    },
     WebIdDelegate: null
   },
   ContributorRoles: ['author', 'editor'],

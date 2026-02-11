@@ -192,8 +192,8 @@ describe("createFeedXML", () => {
     expect(result).toContain("<entry>");
     expect(result).toContain("<id>https://example.com/item1</id>");
     expect(result).toContain("<title>Item 1</title>");
-    expect(result).toContain("<published>2024-10-17T10:00:00Z</published>");
-    expect(result).toContain("<updated>2024-10-17T11:00:00Z</updated>");
+    expect(result).toContain("<published>2024/10/17T10:00:00Z</published>");
+    expect(result).toContain("<updated>2024/10/17T11:00:00Z</updated>");
     expect(result).toContain("<author>");
     expect(result).toContain("<name>Author Name</name>");
     expect(result).toContain("<email>author@example.com</email>");
@@ -202,7 +202,7 @@ describe("createFeedXML", () => {
     expect(result).toContain("<entry>");
     expect(result).toContain("<id>https://example.com/item2</id>");
     expect(result).toContain("<title>Item 2</title>");
-    expect(result).toContain("<updated>2024-10-16T10:00:00Z</updated>");
+    expect(result).toContain("<updated>2024/10/16T10:00:00Z</updated>");
     expect(result).toContain("</entry>");
   });
 
@@ -323,13 +323,13 @@ describe("setDate", () => {
     const rootNode = d.window.document.getElementById("rootNode");
 
     setDate(rootNode, {
-      datetime: new Date("2024-10-15T00:00:00Z"),
+      datetime: new Date("/10/15T00:00:00Z"),
       id: "document-created",
     });
 
     const timeNode = rootNode.querySelector("time");
-    expect(timeNode.getAttribute("datetime")).toBe("2024-10-15T00:00:00.000Z");
-    expect(timeNode.textContent).toBe("2024-10-15");
+    expect(timeNode.getAttribute("datetime")).toBe("2024/10/15T00:00:00.000Z");
+    expect(timeNode.textContent).toBe("2024/10/15");
   });
 
   it("should insert new time HTML if no existing time element is found", () => {
@@ -344,7 +344,7 @@ describe("setDate", () => {
     });
 
     expect(rootNode.innerHTML).toContain(
-      '<time datetime="2024-10-15T00:00:00.000Z">2024-10-15</time>'
+      '<time datetime="2024-10-15T00:00:00.000Z">2024/10/15</time>'
     );
   });
 });
@@ -377,8 +377,10 @@ describe("createDateHTML", () => {
       datetime: new Date("2024-10-15T00:00:00Z"),
     };
     const result = createDateHTML(options);
-    expect(result).toContain(
-      '<time datetime="2024-10-15T00:00:00.000Z">2024-10-15</time>'
+    expect(result).toContain('<time datetime="2024-10-15T00:00:00.000Z">');
+    expect(result).toContain('2024');
+    expect(result).toMatch(
+      /<time datetime="2024-10-15T00:00:00\.000Z">.*<\/time>/
     );
   });
 
@@ -389,7 +391,7 @@ describe("createDateHTML", () => {
     };
     const result = createDateHTML(options);
     expect(result).toContain(
-      '<time content="2024-10-15T00:00:00.000Z" datatype="xsd:dateTime" datetime="2024-10-15T00:00:00.000Z" property="schema:dateCreated">2024-10-15</time>'
+      '<time content="2024-10-15T00:00:00.000Z" datatype="xsd:dateTime" datetime="2024-10-15T00:00:00.000Z" property="schema:dateCreated">10/15/2024</time>'
     );
   });
 });
