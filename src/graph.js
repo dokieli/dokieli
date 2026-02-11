@@ -815,11 +815,13 @@ function getLinkRelationFromHead(property, url) {
         var uris = [];
         properties.forEach(property => {
           if (linkHeaders.has('rel', property)) {
+            // console.log(linkHeaders.rel(property)[0].uri)
             uris.push(linkHeaders.rel(property)[0].uri);
           }
         });
 
         uris = sanitizeIRIs(uris);
+        // console.log(uris)
 
         if (uris.length) {
           return uris;
@@ -1720,6 +1722,8 @@ function sortGraphTriples(g, options) {
 function getACLResourceGraph(documentURL, iri, options = {}) {
   iri = iri || documentURL;
   iri = sanitizeIRI(iri);
+  // console.log(iri)
+
   //This is probably not needed
   Config.Resource[iri] = Config.Resource[iri] || {};
   Config.Resource[iri]['acl'] = {};

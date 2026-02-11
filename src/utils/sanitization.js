@@ -241,13 +241,20 @@ export function sanitizeInsertAdjacentHTML(node, position, input) {
 }
 
 export function sanitizeIRI(value, base = null) {
+  if (typeof value !== 'string') return null;
+
+  value = value.trim();
+
+  if (value.startsWith('//')) return null;
+
   try {
-    const iri = base ? new URL(value, base) : new URL(value);
+    const iri = new URL(value, base || 'http://example.org/');
 
-    const unsafeSchemes = ['javascript:', 'data:', 'vbscript:'];
-    if (unsafeSchemes.includes(iri.protocol)) return null;
+    const unsafeSchemes = ['javascript:', 'data:', 'vbscript:', 'file:', 'about:', 'chrome:'];
 
-    return iri.href;
+    if (unsafeSchemes.includes(iri.protocol.toLowerCase())) return null;
+
+    return value;
   } catch {
     return null;
   }
