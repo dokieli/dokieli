@@ -148,9 +148,7 @@ export function createFeedXML(feed, options) {
       var isAbsolute = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(p3); // Check if the value is an absolute URL
       return `${p1}="${isAbsolute ? p3 : (p3.startsWith('/') ? origin : url) + '/' + p3}"`;
     });
-    // console.log(description)
-    
-    description = htmlEncode(formatHTML(description));
+    description = htmlEncode(description);
 
     var published = '';
     var updated = '';
@@ -666,7 +664,7 @@ export function createNoteDataHTML(n) {
         }
         target += '</dl>';
 
-        target += '<dl class="renderedvia"><dt>Rendered via</dt><dd><a about="' + targetIRI + '" href="https://dokie.li/" rel="oa:renderedVia">dokieli</a></dd></dl>';
+        target += '<dl class="renderedvia"><dt>Rendered via</dt><dd><a about="' + targetIRI + '" href="https://dokie.li/#i" rel="oa:renderedVia">dokieli</a></dd></dl>';
 
         var canonical = '<dl class="canonical"><dt>Canonical</dt><dd rel="oa:canonical" resource="' + canonicalId + '">' + canonicalId + '</dd></dl>';
 
@@ -898,7 +896,7 @@ export function setDate(rootNode, options) {
     if (node.getAttribute('content')) {
       node.setAttribute('content', datetime);
     }
-    node.textContent = datetime.substr(0, datetime.indexOf('T'));
+    node.textContent = i18n.tDoc('datetime.time.textContent', { val: new Date(datetime.substr(0, datetime.indexOf('T'))) });
   }
   else {
     rootNode = insertDocumentLevelHTML(rootNode, createDateHTML(options), { 'id': id });

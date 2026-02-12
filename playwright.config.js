@@ -21,10 +21,12 @@ const config = {
     reuseExistingServer: true,
   },
   use: {
-    actionTimeout: 0,
+    actionTimeout: 10000,
     baseURL: "http://localhost:3000",
     trace: "retain-on-failure",
     video: "retain-on-failure",
+    trace: "on",
+    video: "on"
   },
   projects: [
     {

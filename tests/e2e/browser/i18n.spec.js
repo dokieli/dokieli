@@ -37,6 +37,38 @@ test("language switching updates visible strings", async ({ page }) => {
   await expect(shareButton).toHaveText('Partager');
 });
 
+test("aside opens up in the selected language", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator("[id=document-menu]")).not.toBeVisible();
+
+  await page.locator("#document-menu button").click();
+  const menu = page.locator("[id=document-menu]");
+  await expect(menu).toBeVisible();
+  
+  const shareButton = await page.locator(".resource-share");
+  shareButton.click();
+
+  const shareDialog = await page.locator("#share-resource");
+  await expect(shareDialog).toBeVisible();
+  await expect(shareDialog).toContainText('Copy URL to clipboard');
+
+  await page.selectOption('#ui-language-select', 'es');
+  await expect(shareDialog).toContainText('Copiar URL al portapapeles');
+});
+
+test("comment popup uses UI language for content by default", async ({ page }) => {
+  await page.goto("/");
+  await select(page, "#summary");
+  const commentButton = page.locator('[id="editor-button-comment"]');
+  await commentButton.click();
+  
+  await expect(page.locator("#comment-language")).toHaveValue("en-GB");
+
+  await page.selectOption("#comment-language", "ar");
+
+  await expect(page.locator("#comment-language")).toHaveValue("ar");
+});
+
 test("comment popup correctly switches to Arabic and sets dir to auto", async ({ page }) => {
   await page.goto("/");
   await select(page, "#summary");
@@ -48,4 +80,52 @@ test("comment popup correctly switches to Arabic and sets dir to auto", async ({
 
   const dir = await page.getAttribute("textarea#comment-content", "dir");
   expect(dir).toBe("auto");
+});
+
+test("preferred language from user profile is used", async ({ page, auth }) => {
+  test.setTimeout(60_000);
+  await auth.login();
+  await page.waitForLoadState("load");
+
+  // Wait until console shows we're logged in
+  await new Promise((resolve) => {
+    page.on("console", (msg) => {
+      if (msg.text().includes(process.env.WEBID)) {
+        resolve();
+      }
+    });
+  });
+
+  await expect(page.locator("[id=document-menu]")).not.toBeVisible();
+
+  await page.locator("#document-menu button").click();
+  const menu = page.locator("[id=document-menu]");
+  await expect(menu).toBeVisible();
+
+  await expect(page.locator("#ui-language-select")).toHaveValue("es");
+})
+
+test.only("info opens up in the selected language", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator("[id=document-menu]")).not.toBeVisible();
+
+  await page.locator("#document-menu button").click();
+  const menu = page.locator("[id=document-menu]");
+  await expect(menu).toBeVisible();
+
+  await page.selectOption('#ui-language-select', 'es');
+  
+  const shareButton = await page.locator(".resource-share");
+  shareButton.click();
+
+  const shareDialog = await page.locator("#share-resource");
+  await expect(shareDialog).toBeVisible();
+ 
+  const infoButton = await page.locator('#share-resource button[rel="rel:help"]');
+  const resourceUrl = await infoButton.getAttribute('resource');
+  expect(resourceUrl).toBe('https://dokie.li/es/docs#feature-share');
+  await infoButton.click();
+  
+  await expect(shareDialog).toContainText('Acerca de Compartir');
+  await page.waitForTimeout(3000);
 });
