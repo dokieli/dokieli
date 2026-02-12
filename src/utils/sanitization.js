@@ -74,7 +74,7 @@ export function encodeUriTerm(term) {
 }
 
 export function domSanitize(strHTML, options = {}) {
-  if (!strHTML) return;
+  if (strHTML === undefined || strHTML === null) return;
   // console.log("DOMPurify in:", strHTML);
 
   //TODO: Consider allowing meta, link, object
