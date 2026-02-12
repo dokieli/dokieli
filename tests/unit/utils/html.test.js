@@ -238,8 +238,24 @@ describe("createHTML", () => {
     const expectedTitle = "<title>title</title>";
     const expectedMain = "<main><p>content</p></main>";
 
+    console.log(result)
+
     expect(normalizedResult).toContain(expectedTitle);
     expect(normalizedResult).toContain(expectedMain);
+  });
+
+  it("returns sanitized HTML", () => {
+    const title = "title";
+    const main = "<script>alert(1)</script><p>content</p>";
+    const result = createHTML(title, main);
+
+    const normalizedResult = result.replace(/\s+/g, "").trim();
+    const expectedTitle = "<title>title</title>";
+    const expectedMain = "<main><p>content</p></main>";
+
+    expect(normalizedResult).toContain(expectedTitle);
+    expect(normalizedResult).toContain(expectedMain);
+    expect(normalizedResult).not.toContain('<script>alert(1)</script>');
   });
 });
 

@@ -419,7 +419,9 @@ export function parseMarkdown(data, options) {
 
 export function createHTML(title, main, options) {
   title = title || '';
+  title = domSanitize(title);
   options = options || {};
+  //prefixes and lang should not be user inputs for createHTML
   var prefix = ('prefixes' in options && Object.keys(options.prefixes).length > 0) ? ' prefix="' + getRDFaPrefixHTML(options.prefixes) + '"' : '';
   var lang = options.lang || 'en';
   lang = ' lang="' + lang + '" xml:lang="' + lang + '"';
@@ -433,11 +435,11 @@ export function createHTML(title, main, options) {
   </head>
   <body${prefix}>
     <main>
-${main}
+${domSanitize(main)}
     </main>
   </body>
 </html>
 `;
-
-  return domSanitize(html);
+  
+  return html;
 }

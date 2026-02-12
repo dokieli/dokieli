@@ -216,13 +216,15 @@ export function domSanitizeHTMLBody(input, options) {
 
   if (input.constructor.name === 'HTMLDocument') {
     rootNode = input.body;
-    if (!rootNode) return input;
+    if (!rootNode) { return input; }
     html = rootNode.getHTML ? rootNode.getHTML() : '';
-  } else if (input.constructor.name === 'XMLDocument') {
+  }
+  else if (input.constructor.name === 'XMLDocument') {
     rootNode = input.documentElement;
-    if (!rootNode) return input;
+    if (!rootNode) { return input; }
     html = rootNode.outerHTML || '';
-  } else {
+  }
+  else {
     rootNode = input;
     html = rootNode.getHTML ? rootNode.getHTML() : '';
   }

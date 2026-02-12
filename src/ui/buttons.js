@@ -131,7 +131,7 @@ export function getButtonHTML({
   const rel = buttonRel ? ` rel="${buttonRel}"` : '';
   const resource = buttonResource ? ` resource="${buttonResource}"` : '';
   const type = buttonType ? ` type="${buttonType}"` : '';
-  const dataI18n = key ? ` data-i18n=${key}` : '';
+  const dataI18n = key ? ` data-i18n="${key}"` : '';
 
   if (icon) {
     let parser = new DOMParser();
@@ -144,7 +144,7 @@ export function getButtonHTML({
     icon = new XMLSerializer().serializeToString(svgElement);
   }
 
-  const buttonContent = (!icon && !textContent) ? button : `${icon ? icon : ''} ${textContent ? `<span>${textContent}</span>` : ''}`;
+  const buttonContent = (!icon && !textContent) ? button : `${icon ? icon : ''}${textContent ? ` <span>${textContent}</span>` : ''}`;
 
   buttonDir = buttonDir ? ` dir="${buttonDir}"` : '';
 
