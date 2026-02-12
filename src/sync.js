@@ -748,6 +748,7 @@ export async function enableAutoSave(key, options = {}) {
   // options['autoSave'] = true;
   Config.AutoSave.Items[key] ||= {};
   Config.AutoSave.Items[key][options.method] ||= {};
+  console.log("XXX",Config.AutoSave.Items[key][options.method])
 
   //TEMPORARY FOR TESTING
   // Config.AutoSave.Items[key]['http'] = {};

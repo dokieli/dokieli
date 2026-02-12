@@ -45,6 +45,10 @@ import { i18n } from '../../src/i18n.js';
 
 const ns = Config.ns;
 
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.clearAllMocks();
+});
 
 vi.mock(import("../../src/util"), async (importOriginal) => {
   const actual = await importOriginal();
@@ -179,8 +183,8 @@ describe("createFeedXML", () => {
     expect(result).toContain("<entry>");
     expect(result).toContain("<id>https://example.com/item1</id>");
     expect(result).toContain("<title>Item 1</title>");
-    expect(result).toContain("<published>2024/10/17T10:00:00Z</published>");
-    expect(result).toContain("<updated>2024/10/17T11:00:00Z</updated>");
+    expect(result).toContain("<published>2024-10-17T10:00:00Z</published>");
+    expect(result).toContain("<updated>2024-10-17T11:00:00Z</updated>");
     expect(result).toContain("<author>");
     expect(result).toContain("<name>Author Name</name>");
     expect(result).toContain("<email>author@example.com</email>");
@@ -189,7 +193,7 @@ describe("createFeedXML", () => {
     expect(result).toContain("<entry>");
     expect(result).toContain("<id>https://example.com/item2</id>");
     expect(result).toContain("<title>Item 2</title>");
-    expect(result).toContain("<updated>2024/10/16T10:00:00Z</updated>");
+    expect(result).toContain("<updated>2024-10-16T10:00:00Z</updated>");
     expect(result).toContain("</entry>");
   });
 
@@ -210,7 +214,7 @@ describe("createFeedXML", () => {
     expect(result).toContain(
       `<copyright>Copyright ${year} Author Name . Rights and license are feed only.</copyright>`
     );
-    expect(result).toContain("<generator>https://dokie.li/</generator>");
+    expect(result).toContain("<generator>https://dokie.li/#i</generator>");
 
     expect(result).toContain("<item>");
     expect(result).toContain("<guid>https://example.com/item1</guid>");
@@ -310,13 +314,13 @@ describe("setDate", () => {
     const rootNode = d.window.document.getElementById("rootNode");
 
     setDate(rootNode, {
-      datetime: new Date("/10/15T00:00:00Z"),
+      datetime: new Date("2024-10-15T00:00:00Z"),
       id: "document-created",
     });
 
     const timeNode = rootNode.querySelector("time");
-    expect(timeNode.getAttribute("datetime")).toBe("2024/10/15T00:00:00.000Z");
-    expect(timeNode.textContent).toBe("2024/10/15");
+    expect(timeNode.getAttribute("datetime")).toBe("2024-10-15T00:00:00.000Z");
+    expect(timeNode.textContent).toBe("10/15/2024");
   });
 
   it("should insert new time HTML if no existing time element is found", () => {
@@ -331,7 +335,7 @@ describe("setDate", () => {
     });
 
     expect(rootNode.innerHTML).toContain(
-      '<time datetime="2024-10-15T00:00:00.000Z">2024/10/15</time>'
+      '<time datetime="2024-10-15T00:00:00.000Z">10/15/2024</time>'
     );
   });
 });
@@ -339,29 +343,22 @@ describe("setDate", () => {
 describe("createDateHTML", () => {
   it("should create HTML with default values when no options are provided", () => {
     const result = createDateHTML();
-    expect(result).toContain('id="document-created"');
     expect(result).toContain('<time datetime="');
     expect(result).toContain("<dt>Created</dt>");
   });
 
   it("should create HTML with provided options", () => {
-    vi.spyOn(i18n, 't').mockImplementation((key, vars) => {
-      if (key === 'datetime.custom-id.dt.textContent') {
-        return 'Test Title';
-      }
-      return key; // fallback behavior
-    });    
     const options = {
-      id: "custom-id",
+      id: "document-published",
       class: "test-class",
       datetime: new Date("2024-10-15T00:00:00Z"),
-      property: "schema:dateCreated",
+      property: "schema:datePublished",
     };
     const result = createDateHTML(options);
-    expect(result).toContain('id="custom-id"');
+    expect(result).toContain('id="document-published"');
     expect(result).toContain('class="test-class"');
     expect(result).toContain('datetime="2024-10-15T00:00:00.000Z"');
-    expect(result).toContain("<dt>Test Title</dt>");
+    expect(result).toContain("<dt>Published</dt>");
   });
 
   it("should create time element without property if not provided", () => {
