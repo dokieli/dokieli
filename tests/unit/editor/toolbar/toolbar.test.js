@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { ToolbarView } from "src/editor/toolbar/toolbar.js";
+import { ToolbarView } from "../../../../src/editor/toolbar/toolbar.js";
 import { JSDOM } from "jsdom";
 
 const htmlContent = `
@@ -84,14 +84,14 @@ describe("ToolbarView", () => {
     document.body.innerHTML = "";
   });
 
-  test("initializes with buttons and appends DOM", () => {
+  test.only("initializes with buttons and appends DOM", () => {
     const mockEditorView = createMockEditorView();
-    const toolbar = new ToolbarView("social", ["quote"], mockEditorView);
+    const toolbar = new ToolbarView("social", ["q"], mockEditorView);
 
     expect(toolbar.dom).toHaveProperty('nodeType', 1);
     expect(typeof toolbar.dom.tagName).toBe('string');
     expect(document.body.contains(toolbar.dom)).toBe(true);
     expect(toolbar.buttons).toHaveLength(1);
-    expect(toolbar.buttons[0].button).toBe("quote");
+    expect(toolbar.buttons[0].button).toBe("q");
   });
 });

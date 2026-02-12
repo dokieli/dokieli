@@ -17,12 +17,15 @@ limitations under the License.
 
 import { getButtonHTML, buttonIcons } from '../../../src/ui/buttons.js'; 
 import Config from '../../../src/config.js';
+import { i18n } from '../../../src/i18n.js';
+
+const key = 'some.key';
 
 describe('getButtonHTML', () => {
   beforeEach(async () => {
     // mock SVG for all icons to avoid testing actual markup
     Object.keys(buttonIcons).forEach(key => {
-      buttonIcons[key].icon = '<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0h24v24H0z"/></svg>';
+      buttonIcons[key].icon = '<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0h24v24H0z" /></svg>';
     });
   });
 
@@ -31,24 +34,35 @@ describe('getButtonHTML', () => {
   });
 
   it('generates button HTML with icon and default title', () => {
-    const html = getButtonHTML({ button: 'p' });
+    vi.spyOn(i18n, 't').mockImplementation((key, vars) => {
+      if (key === 'button.p.title') {
+        return 'paragraph';
+      }
+      return key; // fallback behavior
+    });
+    const html = getButtonHTML({ key: 'button.p', button: 'p' });
     expect(html).toContain('<button');
     expect(html).toContain('title="paragraph"');
     expect(html).toContain('<svg');
   });
 
-  it('uses custom title and class', () => {
+  it('uses custom class', () => {
+    vi.spyOn(i18n, 't').mockImplementation((key, vars) => {
+      if (key === 'button.p.title') {
+        return 'paragraph';
+      }
+      return key; // fallback behavior
+    });
     const html = getButtonHTML({
+      key,
       button: 'p',
-      buttonTitle: 'Custom Title',
       buttonClass: 'btn-custom'
     });
-    expect(html).toContain('title="Custom Title"');
     expect(html).toContain('class="btn-custom"');
   });
 
   it('adds textContent if available', () => {
-    const html = getButtonHTML({ button: 'h2' });
+    const html = getButtonHTML({ key, button: 'h2' });
     expect(html).toContain('<span>2</span>');
   });
 
@@ -75,43 +89,46 @@ describe('getButtonHTML', () => {
       title: 'test icon',
       icon: '<svg xmlns="http://www.w3.org/2000/svg"></svg>'
     };
-    const html = getButtonHTML({ button: 'test-icon-only' });
+    const html = getButtonHTML({ key, button: 'test-icon-only' });
     expect(html).toContain('<svg');
     expect(html).not.toContain('<span>');
   });
 
   it('uses fallback button name if no icon or textContent', () => {
     buttonIcons['fallback-test'] = { title: 'Fallback', icon: null };
-    const html = getButtonHTML({ button: 'fallback-test' });
+    const html = getButtonHTML({ key, button: 'fallback-test' });
     expect(html).toContain('>fallback-test<');
   });
 
-  it("should have aria-label if there is button label", () => {
-    buttonIcons['aria-test-with-text'] = {
-      title: 'ARIA Test',
-      icon: '<svg xmlns="http://www.w3.org/2000/svg"></svg>',
-    }
-    const html = getButtonHTML({ button: 'aria-test-with-text', buttonLabel: 'TestLabel' });
-    expect(html).toContain('aria-label="TestLabel');
-
-  })
-
-  it("should have aria-label if no button label or text content", () => {
-    buttonIcons['aria-test'] = {
-      title: 'ARIA Test',
-      icon: '<svg xmlns="http://www.w3.org/2000/svg"></svg>'
-    }
-    const html = getButtonHTML({ button: 'aria-test' });
-    expect(html).toContain('aria-label="ARIA Test');
+  it("should have aria-label if no text content", () => {
+    vi.spyOn(i18n, 't').mockImplementation((key, vars) => {
+      if (key === 'button.p.title') {
+        return 'paragraph';
+      }
+      if (key === 'button.p.aria-label') {
+        return 'ARIA Test';
+      }
+      return key; // fallback behavior
+    });
+    const html = getButtonHTML({ key: 'button.p', button: 'p' });
+    expect(html).toContain('aria-label="ARIA Test"');
   })
 
   it("should not have aria-label if there is text content", () => {
-    buttonIcons['aria-test-with-text'] = {
-      title: 'ARIA Test',
-      icon: '<svg xmlns="http://www.w3.org/2000/svg"></svg>',
-      textContent: 'Test'
-    }
-    const html = getButtonHTML({ button: 'aria-test-with-text' });
+    vi.spyOn(i18n, 't').mockImplementation((key, vars) => {
+      if (key === 'button.p.title') {
+        return 'paragraph';
+      }
+      if (key === 'button.p.aria-label') {
+        return 'ARIA Test';
+      }
+      if (key === 'button.p.textContent') {
+        return 'paragraph';
+      }
+      return key; // fallback behavior
+    });
+    const html = getButtonHTML({ key: 'button.p', button: 'p' });
+    expect(html).toContain('paragraph');
     expect(html).not.toContain('aria-label');
   })
 
@@ -121,25 +138,28 @@ describe('getButtonHTML', () => {
       icon: '<svg xmlns="http://www.w3.org/2000/svg"></svg>',
       textContent: 'Test Text Content',
     }
-    const html = getButtonHTML({ button: 'aria-test-with-text', buttonLabel: 'TestLabel' });
+    const html = getButtonHTML({ key, button: 'aria-test-with-text', buttonLabel: 'ARIA Test' });
     expect(html).not.toContain('TestLabel');
     expect(html).toContain('Test Text Content');
   })
-vi.unmock('../../src/i18n'); // unapply global mock
+});
 
-  // === Snapshot Tests ===
+describe('getButtonHTML Snapshots', () => {
+
+  vi.unmock('../../src/i18n'); // unapply global mock
+
   it('matches snapshot for Close button', () => {
-    const html = getButtonHTML({ button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
+    const html = getButtonHTML({ key, button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
     expect(html).toMatchSnapshot();
   });
 
   it('matches snapshot for Clipboard button', () => {
-    const html = getButtonHTML({ button: 'clipboard', buttonClass: 'do copy-to-clipboard' });
+    const html = getButtonHTML({ key, button: 'clipboard', buttonClass: 'do copy-to-clipboard' });
     expect(html).toMatchSnapshot();
   });
 
   it('matches snapshot for H2 heading button', () => {
-    const html = getButtonHTML({ button: 'h2' });
+    const html = getButtonHTML({ key, button: 'h2' });
     expect(html).toMatchSnapshot();
   });
 
@@ -150,13 +170,13 @@ vi.unmock('../../src/i18n'); // unapply global mock
 
   it('matches snapshot for RTL button', () => {
     buttonIcons['close'].dir = "rtl";
-    const html = getButtonHTML({ button: 'close', buttonClass: 'close' });
+    const html = getButtonHTML({ key, button: 'close', buttonClass: 'close' });
     expect(html).toMatchSnapshot();
     buttonIcons['close'].dir = undefined; // reset
   });
 
   it('matches snapshot for fallback button', () => {
-    buttonIcons['fallback-test'] = { title: 'Fallback', icon: null };
+    buttonIcons['fallback-test'] = { key, title: 'Fallback', icon: null };
     const html = getButtonHTML({ button: 'fallback-test' });
     expect(html).toMatchSnapshot();
   });

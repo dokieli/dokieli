@@ -1,13 +1,13 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`getButtonHTML > matches snapshot for Clipboard button 1`] = `"<button data-i18n=button.clipboard class="do copy-to-clipboard" title="Copy to clipboard"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M0 0h24v24H0z"/></svg> </button>"`;
+exports[`getButtonHTML Snapshots > matches snapshot for Clipboard button 1`] = `"<button data-i18n="some.key" class="do copy-to-clipboard" title="clipboard"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M0 0h24v24H0z"/></svg></button>"`;
 
-exports[`getButtonHTML > matches snapshot for Close button 1`] = `"<button data-i18n=button.close class="close" title="Close"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="fa-2x"><path d="M0 0h24v24H0z"/></svg> </button>"`;
+exports[`getButtonHTML Snapshots > matches snapshot for Close button 1`] = `"<button data-i18n="some.key" class="close" title="close"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="fa-2x"><path d="M0 0h24v24H0z"/></svg></button>"`;
 
-exports[`getButtonHTML > matches snapshot for Delete annotation button 1`] = `"<button data-i18n=annotations.delete.button class="delete" title="delete"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M0 0h24v24H0z"/></svg> </button>"`;
+exports[`getButtonHTML Snapshots > matches snapshot for Delete annotation button 1`] = `"<button data-i18n="annotations.delete.button" class="delete" title="delete"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M0 0h24v24H0z"/></svg></button>"`;
 
-exports[`getButtonHTML > matches snapshot for H2 heading button 1`] = `"<button data-i18n=button.h2 title="heading level 2" dir="ltr"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M0 0h24v24H0z"/></svg> <span>2</span></button>"`;
+exports[`getButtonHTML Snapshots > matches snapshot for H2 heading button 1`] = `"<button data-i18n="some.key" title="h2" dir="ltr"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M0 0h24v24H0z"/></svg> <span>2</span></button>"`;
 
-exports[`getButtonHTML > matches snapshot for RTL button 1`] = `"<button data-i18n=button.close class="close" title="Close" dir="rtl"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M0 0h24v24H0z"/></svg> </button>"`;
+exports[`getButtonHTML Snapshots > matches snapshot for RTL button 1`] = `"<button data-i18n="some.key" class="close" title="close" dir="rtl"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M0 0h24v24H0z"/></svg></button>"`;
 
-exports[`getButtonHTML > matches snapshot for fallback button 1`] = `"<button data-i18n=button.fallback-test title="fallback-test">fallback-test</button>"`;
+exports[`getButtonHTML Snapshots > matches snapshot for fallback button 1`] = `"<button data-i18n="button.fallback-test" title="fallback-test">fallback-test</button>"`;

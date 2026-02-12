@@ -41,6 +41,9 @@ import Config from "../../src/config";
 import MockGrapoi from "../utils/mockGrapoi";
 import rdf from "rdf-ext";
 import { vi } from "vitest";
+import { i18n } from '../../src/i18n.js';
+
+const ns = Config.ns;
 
 
 vi.mock(import("../../src/util"), async (importOriginal) => {
@@ -50,22 +53,6 @@ vi.mock(import("../../src/util"), async (importOriginal) => {
     generateAttributeId: vi.fn().mockReturnValue("generated-id"),
   };
 });
-
-const ns = Config.ns;
-
-Config.PublicationStatus = {
-  "http://example.org/status/published": { name: "Published" },
-  "http://example.org/status/draft": { name: "Draft" },
-};
-
-Config.ResourceType = {
-  "http://example.org/type/article": { name: "Article" },
-};
-
-Config.MotivationSign = {
-  "oa:commenting": "Commenting",
-  "oa:liking": "Liking",
-};
 
 const htmlContent = `
 <!DOCTYPE html>
@@ -358,8 +345,13 @@ describe("createDateHTML", () => {
   });
 
   it("should create HTML with provided options", () => {
+    vi.spyOn(i18n, 't').mockImplementation((key, vars) => {
+      if (key === 'datetime.custom-id.dt.textContent') {
+        return 'Test Title';
+      }
+      return key; // fallback behavior
+    });    
     const options = {
-      title: "Test Title",
       id: "custom-id",
       class: "test-class",
       datetime: new Date("2024-10-15T00:00:00Z"),
@@ -578,7 +570,7 @@ describe("createInReplyToHTML", () => {
 describe("createPublicationStatusHTML", () => {
   it("renders status with known label", () => {
     const html = createPublicationStatusHTML(
-      "http://example.org/status/published"
+      "http://purl.org/spar/pso/published"
     );
     expect(html).toContain("Published");
     expect(html).toContain("pso:withStatus");
@@ -587,7 +579,7 @@ describe("createPublicationStatusHTML", () => {
 
 describe("createResourceTypeHTML", () => {
   it("renders resource type", () => {
-    const html = createResourceTypeHTML("http://example.org/type/article");
+    const html = createResourceTypeHTML("http://schema.org/Article");
     expect(html).toContain("Article");
     expect(html).toContain("rdf:type");
   });
@@ -608,14 +600,14 @@ describe("getReferenceLabel", () => {
   });
 
   it("returns prefix label if motivatedBy is full URI with # fragment", () => {
-    expect(getReferenceLabel("http://example.org/oa#commenting")).toBe(
-      "Commenting"
+    expect(getReferenceLabel("http://www.w3.org/ns/oa#commenting")).toBe(
+      Config.MotivationSign['oa:commenting']
     );
-    expect(getReferenceLabel("http://example.org/oa#liking")).toBe("Liking");
+    expect(getReferenceLabel("http://www.w3.org/ns/oa#linking")).toBe(Config.MotivationSign['oa:linking']);
   });
 
   it("returns label directly if motivatedBy is known prefix", () => {
-    expect(getReferenceLabel("oa:commenting")).toBe("Commenting");
+    expect(getReferenceLabel("oa:commenting")).toBe(Config.MotivationSign['oa:commenting']);
   });
 });
 

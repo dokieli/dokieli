@@ -2749,6 +2749,9 @@ export function createPublicationStatusHTML(url, options = {}) {
   if (!url) return '';
 
   options['class'] = options.class || 'publication-status';
+  console.log(Config.PublicationStatus)
+  console.log(Config.PublicationStatus[url], url)
+
   var textContent = Config.PublicationStatus[url] || url;
   options['title'] = 'Status';
 
