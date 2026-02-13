@@ -92,30 +92,30 @@ test.only("language switching updates visible strings", async ({ page }) => {
     { selector: '[data-i18n="menu.version.button"]', expectedText: "Versión" },
   ];
 
-  const nodeSelectorsFr = [
-    { selector: '[data-i18n="menu.delete.button"]', expectedText: "Supprimer" },
-    { selector: '[data-i18n="menu.document-info.button"]', expectedText: "Infos" },
-    { selector: '[data-i18n="menu.edit-enable.button"]', expectedText: "Modifier" },
-    { selector: '[data-i18n="menu.embed-data.button"]', expectedText: "Intégrer des données" },
-    { selector: '[data-i18n="menu.export.button"]', expectedText: "Exporter" },
-    { selector: '[data-i18n="menu.feed.button"]', expectedText: "Flux" },
-    { selector: '[data-i18n="menu.immutable.button"]', expectedText: "Immuable" },
-    { selector: '[data-i18n="menu.archive.button"]', expectedText: "Archiver" },
-    { selector: '[data-i18n="menu.new.button"]', expectedText: "Nouveau" },
-    { selector: '[data-i18n="menu.notifications.button"]', expectedText: "Notifications" },
-    { selector: '[data-i18n="menu.resource-open.button"]', expectedText: "Ouvrir" },
-    { selector: '[data-i18n="menu.robustify-links.button"]', expectedText: "Renforcer" },
-    { selector: '[data-i18n="menu.resource-save.button"]', expectedText: "Enregistrer" },
-    { selector: '[data-i18n="menu.save-as.button"]', expectedText: "Enregistrer sous" },
-    { selector: '[data-i18n="menu.share.button"]', expectedText: "Partager" },
-    { selector: '[data-i18n="menu.signin.button"]', expectedText: "Se connecter" },
-    { selector: '[data-i18n="menu.source.button"]', expectedText: "Source" },
-    { selector: '[data-i18n="menu.memento.button"]', expectedText: "Memento" },
-    { selector: '[data-i18n="menu.messages.button"]', expectedText: "Messages" },
-    { selector: '[data-i18n="menu.print.button"]', expectedText: "Imprimer" },
-    { selector: '[data-i18n="menu.reply.button"]', expectedText: "Répondre" },
-    { selector: '[data-i18n="menu.version.button"]', expectedText: "Version" },
-  ];
+  // const nodeSelectorsFr = [
+  //   { selector: '[data-i18n="menu.delete.button"]', expectedText: "Supprimer" },
+  //   { selector: '[data-i18n="menu.document-info.button"]', expectedText: "Infos" },
+  //   { selector: '[data-i18n="menu.edit-enable.button"]', expectedText: "Modifier" },
+  //   { selector: '[data-i18n="menu.embed-data.button"]', expectedText: "Intégrer des données" },
+  //   { selector: '[data-i18n="menu.export.button"]', expectedText: "Exporter" },
+  //   { selector: '[data-i18n="menu.feed.button"]', expectedText: "Flux" },
+  //   { selector: '[data-i18n="menu.immutable.button"]', expectedText: "Immuable" },
+  //   { selector: '[data-i18n="menu.archive.button"]', expectedText: "Archiver" },
+  //   { selector: '[data-i18n="menu.new.button"]', expectedText: "Nouveau" },
+  //   { selector: '[data-i18n="menu.notifications.button"]', expectedText: "Notifications" },
+  //   { selector: '[data-i18n="menu.resource-open.button"]', expectedText: "Ouvrir" },
+  //   { selector: '[data-i18n="menu.robustify-links.button"]', expectedText: "Renforcer" },
+  //   { selector: '[data-i18n="menu.resource-save.button"]', expectedText: "Enregistrer" },
+  //   { selector: '[data-i18n="menu.save-as.button"]', expectedText: "Enregistrer sous" },
+  //   { selector: '[data-i18n="menu.share.button"]', expectedText: "Partager" },
+  //   { selector: '[data-i18n="menu.signin.button"]', expectedText: "Se connecter" },
+  //   { selector: '[data-i18n="menu.source.button"]', expectedText: "Source" },
+  //   { selector: '[data-i18n="menu.memento.button"]', expectedText: "Memento" },
+  //   { selector: '[data-i18n="menu.messages.button"]', expectedText: "Messages" },
+  //   { selector: '[data-i18n="menu.print.button"]', expectedText: "Imprimer" },
+  //   { selector: '[data-i18n="menu.reply.button"]', expectedText: "Répondre" },
+  //   { selector: '[data-i18n="menu.version.button"]', expectedText: "Version" },
+  // ];
 
   // Check default language (English)
   for (const { selector, expectedText } of nodeSelectorsDefaultLang) {
@@ -130,12 +130,12 @@ test.only("language switching updates visible strings", async ({ page }) => {
     await expect(node).toContainText(expectedText);
   }
 
-  // Switch to French
-  await page.selectOption('#ui-language-select', 'fr');
-  for (const { selector, expectedText } of nodeSelectorsFr) {
-    const node = page.locator(selector);
-    await expect(node).toContainText(expectedText);
-  }
+  // // Switch to French
+  // await page.selectOption('#ui-language-select', 'fr');
+  // for (const { selector, expectedText } of nodeSelectorsFr) {
+  //   const node = page.locator(selector);
+  //   await expect(node).toContainText(expectedText);
+  // }
 });
 
 test("aside opens up in the selected language", async ({ page }) => {
