@@ -1127,7 +1127,7 @@ export function replyToResource(e, iri) {
       ${buttonClose}
       <div class="info"></div>
       <div id="reply-to-resource-input">
-        <p data-i18n="dialog.reply-to-resource-input.p" data-i18n-iri="${iri}">${i18n.t('dialog.reply-to-resource-input.p.innerHTML', { url: iri })}</p>
+        <p data-i18n="dialog.reply-to-resource-input.p" data-i18n-url="${iri}">${i18n.t('dialog.reply-to-resource-input.p.innerHTML', { url: iri })}</p>
         <ul>
           <li>
             <p><label data-i18n="dialog.reply-to-resource-note.label" for="reply-to-resource-note">${i18n.t('dialog.reply-to-resource-note.label.textContent')}</label></p>

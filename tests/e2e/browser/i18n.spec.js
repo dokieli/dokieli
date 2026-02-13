@@ -18,23 +18,124 @@ limitations under the License.
 import { test, expect } from "./fixtures";
 import { select } from "./utils";
 
-test("language switching updates visible strings", async ({ page }) => {
+test.only("language switching updates visible strings", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator("[id=document-menu]")).not.toBeVisible();
+  await expect(page.locator('[id="document-menu"]')).not.toBeVisible();
 
   await page.locator("#document-menu button").click();
-  const menu = page.locator("[id=document-menu]");
+  const menu = page.locator('[id="document-menu"]');
   await expect(menu).toBeVisible();
   
-  const shareButton = await page.locator(".resource-share");
 
-  expect(shareButton).toHaveText('Share');
+  //TODO: This needs Config.Button to be restructured and have actual keys (not the parameter to getButtonHTML)
+  // Object.keys(Config.Button.Menu).forEach(async (item) => {
+  //   const key = Config.Button.Menu[item].key;
+  //   const selector = `[data-i18n="${key}"]`;
+  //   const node = await page.locator(`${selector}`);
 
+  //   const expecteds = {
+  //     'menu.close.button': 'Close',
+  //     'menu.resource-save': 'Save',
+  //     'menu.resource-share': 'Share'
+  //   }
+
+  //   expect(node).toContainText(expecteds[key])
+  // });
+
+  const nodeSelectorsDefaultLang = [
+    { selector: '[data-i18n="menu.delete.button"]', expectedText: "Delete" },
+    { selector: '[data-i18n="menu.document-info.button"]', expectedText: "Info" },
+    { selector: '[data-i18n="menu.edit-enable.button"]', expectedText: "Edit" },
+    { selector: '[data-i18n="menu.embed-data.button"]', expectedText: "Embed data" },
+    { selector: '[data-i18n="menu.export.button"]', expectedText: "Export" },
+    { selector: '[data-i18n="menu.feed.button"]', expectedText: "Feed" },
+    { selector: '[data-i18n="menu.immutable.button"]', expectedText: "Immutable" },
+    { selector: '[data-i18n="menu.archive.button"]', expectedText: "Archive" },
+    { selector: '[data-i18n="menu.new.button"]', expectedText: "New" },
+    { selector: '[data-i18n="menu.notifications.button"]', expectedText: "Notifications" },
+    { selector: '[data-i18n="menu.resource-open.button"]', expectedText: "Open" },
+    { selector: '[data-i18n="menu.robustify-links.button"]', expectedText: "Robustify" },
+    { selector: '[data-i18n="menu.resource-save.button"]', expectedText: "Save" },
+    { selector: '[data-i18n="menu.save-as.button"]', expectedText: "Save as" },
+    { selector: '[data-i18n="menu.share.button"]', expectedText: "Share" },
+    { selector: '[data-i18n="menu.signin.button"]', expectedText: "Sign in" },
+    { selector: '[data-i18n="menu.source.button"]', expectedText: "Source" },
+    { selector: '[data-i18n="menu.memento.button"]', expectedText: "Memento" },
+    { selector: '[data-i18n="menu.messages.button"]', expectedText: "Messages" },
+    { selector: '[data-i18n="menu.print.button"]', expectedText: "Print" },
+    { selector: '[data-i18n="menu.reply.button"]', expectedText: "Reply" },
+    { selector: '[data-i18n="menu.version.button"]', expectedText: "Version" },
+  ];
+
+  const nodeSelectorsEs = [
+    { selector: '[data-i18n="menu.delete.button"]', expectedText: "Eliminar" },
+    { selector: '[data-i18n="menu.document-info.button"]', expectedText: "Info" },
+    { selector: '[data-i18n="menu.edit-enable.button"]', expectedText: "Editar" },
+    { selector: '[data-i18n="menu.embed-data.button"]', expectedText: "Insertar datos" },
+    { selector: '[data-i18n="menu.export.button"]', expectedText: "Exportar" },
+    { selector: '[data-i18n="menu.feed.button"]', expectedText: "Feed" },
+    { selector: '[data-i18n="menu.immutable.button"]', expectedText: "Inmutable" },
+    { selector: '[data-i18n="menu.archive.button"]', expectedText: "Archivar" },
+    { selector: '[data-i18n="menu.new.button"]', expectedText: "Nuevo" },
+    { selector: '[data-i18n="menu.notifications.button"]', expectedText: "Notificaciones" },
+    { selector: '[data-i18n="menu.resource-open.button"]', expectedText: "Abrir" },
+    { selector: '[data-i18n="menu.robustify-links.button"]', expectedText: "Robustecer" },
+    { selector: '[data-i18n="menu.resource-save.button"]', expectedText: "Guardar" },
+    { selector: '[data-i18n="menu.save-as.button"]', expectedText: "Guardar como" },
+    { selector: '[data-i18n="menu.share.button"]', expectedText: "Compartir" },
+    { selector: '[data-i18n="menu.signin.button"]', expectedText: "Iniciar sesión" },
+    { selector: '[data-i18n="menu.source.button"]', expectedText: "Fuente" },
+    { selector: '[data-i18n="menu.memento.button"]', expectedText: "Memento" },
+    { selector: '[data-i18n="menu.messages.button"]', expectedText: "Mensajes" },
+    { selector: '[data-i18n="menu.print.button"]', expectedText: "Imprimir" },
+    { selector: '[data-i18n="menu.reply.button"]', expectedText: "Responder" },
+    { selector: '[data-i18n="menu.version.button"]', expectedText: "Versión" },
+  ];
+
+  const nodeSelectorsFr = [
+    { selector: '[data-i18n="menu.delete.button"]', expectedText: "Supprimer" },
+    { selector: '[data-i18n="menu.document-info.button"]', expectedText: "Infos" },
+    { selector: '[data-i18n="menu.edit-enable.button"]', expectedText: "Modifier" },
+    { selector: '[data-i18n="menu.embed-data.button"]', expectedText: "Intégrer des données" },
+    { selector: '[data-i18n="menu.export.button"]', expectedText: "Exporter" },
+    { selector: '[data-i18n="menu.feed.button"]', expectedText: "Flux" },
+    { selector: '[data-i18n="menu.immutable.button"]', expectedText: "Immuable" },
+    { selector: '[data-i18n="menu.archive.button"]', expectedText: "Archiver" },
+    { selector: '[data-i18n="menu.new.button"]', expectedText: "Nouveau" },
+    { selector: '[data-i18n="menu.notifications.button"]', expectedText: "Notifications" },
+    { selector: '[data-i18n="menu.resource-open.button"]', expectedText: "Ouvrir" },
+    { selector: '[data-i18n="menu.robustify-links.button"]', expectedText: "Renforcer" },
+    { selector: '[data-i18n="menu.resource-save.button"]', expectedText: "Enregistrer" },
+    { selector: '[data-i18n="menu.save-as.button"]', expectedText: "Enregistrer sous" },
+    { selector: '[data-i18n="menu.share.button"]', expectedText: "Partager" },
+    { selector: '[data-i18n="menu.signin.button"]', expectedText: "Se connecter" },
+    { selector: '[data-i18n="menu.source.button"]', expectedText: "Source" },
+    { selector: '[data-i18n="menu.memento.button"]', expectedText: "Memento" },
+    { selector: '[data-i18n="menu.messages.button"]', expectedText: "Messages" },
+    { selector: '[data-i18n="menu.print.button"]', expectedText: "Imprimer" },
+    { selector: '[data-i18n="menu.reply.button"]', expectedText: "Répondre" },
+    { selector: '[data-i18n="menu.version.button"]', expectedText: "Version" },
+  ];
+
+  // Check default language (English)
+  for (const { selector, expectedText } of nodeSelectorsDefaultLang) {
+    const node = page.locator(selector);
+    await expect(node).toContainText(expectedText);
+  }
+
+  // Switch to Spanish
   await page.selectOption('#ui-language-select', 'es');
-  await expect(shareButton).toHaveText('Compartir');
+  for (const { selector, expectedText } of nodeSelectorsEs) {
+    const node = page.locator(selector);
+    await expect(node).toContainText(expectedText);
+  }
 
+  // Switch to French
   await page.selectOption('#ui-language-select', 'fr');
-  await expect(shareButton).toHaveText('Partager');
+  for (const { selector, expectedText } of nodeSelectorsFr) {
+    const node = page.locator(selector);
+    await expect(node).toContainText(expectedText);
+  }
 });
 
 test("aside opens up in the selected language", async ({ page }) => {
@@ -69,6 +170,7 @@ test("comment popup uses UI language for content by default", async ({ page }) =
   await expect(page.locator("#comment-language")).toHaveValue("ar");
 });
 
+// TODO: Add RTL test for labels when we have Arabic in translations
 test("comment popup correctly switches to Arabic and sets dir to auto", async ({ page }) => {
   await page.goto("/");
   await select(page, "#summary");
@@ -105,7 +207,7 @@ test("preferred language from user profile is used", async ({ page, auth }) => {
   await expect(page.locator("#ui-language-select")).toHaveValue("es");
 })
 
-test.only("info opens up in the selected language", async ({ page }) => {
+test("info opens up in the selected language", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator("[id=document-menu]")).not.toBeVisible();
 
