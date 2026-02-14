@@ -663,9 +663,10 @@ export function monitorNetworkStatus() {
     let message;
 
     if (remoteAutoSaveEnabled) {
-      message = "You are back online. Your changes will be synced with the remote server.";
+      message = `<span data-i18n="dialog.document-action-message.online.autosave-enabled.span">${i18n.t('dialog.document-action-message.online.autosave-enabled.span.textContent')}</span>`;
+
     } else {
-      message = "You are back online. Changes will be saved only locally because autosave is disabled. You can change this from the main menu.";
+      message = `<span data-i18n="dialog.document-action-message.online.autosave-disabled.span">${i18n.t('dialog.document-action-message.online.autosave-disabled.span.textContent')}</span>`;
     }
 
     message = {
@@ -690,9 +691,9 @@ export function monitorNetworkStatus() {
     let message;
 
     if (remoteAutoSaveEnabled) {
-      message = "You are offline. Your changes will be saved locally and synced when you're back online.";
+      message = `<span data-i18n="dialog.document-action-message.offline.autosave-enabled.span">${i18n.t('dialog.document-action-message.offline.autosave-enabled.span.textContent')}</span>`;
     } else {
-      message = "You are offline. Changes will be saved only locally because autosave is disabled. You can change this from the main menu.";
+      message = `<span data-i18n="dialog.document-action-message.offline.autosave-disabled.span">${i18n.t('dialog.document-action-message.offline.autosave-disabled.span.textContent')}</span>`;
     }
 
     message = {
