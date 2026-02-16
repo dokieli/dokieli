@@ -138,7 +138,16 @@ export function getUrlParams(name) {
     ? window.location.hash.slice(1)
     : window.location.search.slice(1);
 
-  const searchParams = new URLSearchParams(rawParams);
+  let processedParams = rawParams;
+
+  if (name === 'output') {
+    processedParams = rawParams.replace(
+      /([&?]output=)([^&]*)/g, 
+      (match, prefix, value) => prefix + value.replace(/\+/g, '%2B')
+    );
+  }
+  
+  const searchParams = new URLSearchParams(processedParams);
   return searchParams.getAll(name);
 }
 
