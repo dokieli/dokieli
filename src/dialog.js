@@ -21,7 +21,7 @@ import { getButtonHTML, updateButtons } from './ui/buttons.js';
 import { addMessageToLog, buildResourceView, copyRelativeResources, createFeedXML, createImmutableResource, createMutableResource, createNoteDataHTML, getAccessModeOptionsHTML, getBaseURLSelection, getDocument, getFeedFormatSelection, getLanguageOptionsHTML, getLicenseOptionsHTML, getResourceInfo, rewriteBaseURL, setCopyToClipboard, setDocumentRelation, showActionMessage, showRobustLinksDecoration, showTimeMap, updateMutableResource, buildReferences, getDocumentConceptDefinitionsHTML, insertDocumentLevelHTML, insertTestCoverageToTable, diffRequirements, removeReferences, getStorageSelfDescription, getContactInformation, getPersistencePolicy, getODRLPolicies, updateResourceInfos, initCurrentStylesheet, setDate, showFragment, initCopyToClipboard, setDocumentURL } from './doc.js';
 import { removeNodesWithIds, createHTML } from './utils/html.js';
 import { accessModeAllowed, accessModePossiblyAllowed } from './access.js';
-import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeObject, htmlEncode } from './utils/sanitization.js';
+import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeObject, htmlEncode, sanitizeIRIs } from './utils/sanitization.js';
 import { escapeRDFLiteral, generateAttributeId, generateUUID } from './util.js';
 import { deleteResource, getResource, patchResourceWithAcceptPatch, postResource, putResource, putResourceWithAcceptPut, setAcceptRDFTypes } from './fetcher.js';
 import { forceTrailingSlash, generateDataURI, getAbsoluteIRI, getBaseURL, isHttpOrHttpsProtocol, isFileProtocol, stripFragmentFromString, getFragmentFromString, getURLLastPath, currentLocation } from './uri.js';
@@ -37,6 +37,7 @@ import { exportAsDocument, updateUILanguage } from './actions.js';
 import { parseMarkdown, fragmentFromString, removeSelectorFromNode, selectArticleNode, getNodeWithoutClasses } from "./utils/html.js";
 import { showUserSigninSignout, userInfoSignOut } from './auth.js';
 import { generateGeoView } from './geo.js';
+import { csvStringToJson, jsonToHtmlTableString } from './csv.js';
 // import { initEditor } from './editor/initEditor.js';
 
 export function initDocumentMenu() {
@@ -4020,7 +4021,7 @@ export function subscribeToWebSocketChannel(url, d, options = {}) {
 
 export function processNotificationSubscriptionResponse(response, d) {
   var cT = response.headers.get('Content-Type');
-  var contentType = cT.split(';')[0].trim();
+  var contentType = cT.split(';')[0].toLowerCase().trim();
 
   var rD = (contentType == 'application/ld+json') ? response.json() : response.text();
 
@@ -4810,11 +4811,17 @@ export function openInputFile(e) {
   });
 }
 
-export async function spawnDokieli(documentNode, data, contentType, iris, options = {}){
-  let iri =  Array.isArray(iris) ? iris[0] : iris;
-  iri = domSanitize(iri);
-  const isHttpIRI = isHttpOrHttpsProtocol(iri);
-  const isFileIRI = isFileProtocol(iri);
+export async function spawnDokieli(documentNode, data, contentTypes, iris, options = {}){
+  iris = Array.isArray(iris) ? iris : [iris];
+  contentTypes = Array.isArray(contentTypes) ? contentTypes : [contentTypes];
+
+  const isHttpIRI = isHttpOrHttpsProtocol(iris[0]);
+  const isFileIRI = isFileProtocol(iris[0]);
+
+  if (!isFileIRI) {
+    iris = sanitizeIRIs(iris);
+  }
+
   const prefixes = "rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns# rdfs: http://www.w3.org/2000/01/rdf-schema# owl: http://www.w3.org/2002/07/owl# xsd: http://www.w3.org/2001/XMLSchema# rdfa: http://www.w3.org/ns/rdfa# dcterms: http://purl.org/dc/terms/ dctypes: http://purl.org/dc/dcmitype/ foaf: http://xmlns.com/foaf/0.1/ pimspace: http://www.w3.org/ns/pim/space# skos: http://www.w3.org/2004/02/skos/core# prov: http://www.w3.org/ns/prov# mem: http://mementoweb.org/ns# qb: http://purl.org/linked-data/cube# schema: http://schema.org/ void: http://rdfs.org/ns/void# rsa: http://www.w3.org/ns/auth/rsa# cert: http://www.w3.org/ns/auth/cert# wgs: http://www.w3.org/2003/01/geo/wgs84_pos# bibo: http://purl.org/ontology/bibo/ sioc: http://rdfs.org/sioc/ns# doap: http://usefulinc.com/ns/doap# dbr: http://dbpedia.org/resource/ dbp: http://dbpedia.org/property/ sio: http://semanticscience.org/resource/ opmw: http://www.opmw.org/ontology/ deo: http://purl.org/spar/deo/ doco: http://purl.org/spar/doco/ cito: http://purl.org/spar/cito/ fabio: http://purl.org/spar/fabio/ oa: http://www.w3.org/ns/oa# as: https://www.w3.org/ns/activitystreams# ldp: http://www.w3.org/ns/ldp# solid: http://www.w3.org/ns/solid/terms# acl: http://www.w3.org/ns/auth/acl# earl: http://www.w3.org/ns/earl# spec: http://www.w3.org/ns/spec# odrl: http://www.w3.org/ns/odrl/2/ dio: https://w3id.org/dio# rel: https://www.w3.org/ns/iana/link-relations/relation# dcat: http://www.w3.org/ns/dcat csvw: http://www.w3.org/ns/csvw# dpv: https://w3id.org/dpv# risk: https://w3id.org/dpv/risk#";
 
   if (!isHttpIRI && !isFileIRI) {
@@ -4831,8 +4838,8 @@ export async function spawnDokieli(documentNode, data, contentType, iris, option
   }
 
   let files = Array.isArray(data) ? data : [{
-    name: iri,
-    type: contentType,
+    name: iris[0],
+    type: contentTypes[0].split(';')[0].toLowerCase().trim(),
     content: data
   }];
 
@@ -4878,7 +4885,7 @@ export async function spawnDokieli(documentNode, data, contentType, iris, option
   }
 
   else {
-    switch(contentType){
+    switch(contentTypes[0]){
       case 'text/html': case 'application/xhtml+xml':
         // if multiple HTML files come in, just open the first for now
         tmpl.documentElement.setHTMLUnsafe(files[0].content);
@@ -4924,18 +4931,73 @@ export async function spawnDokieli(documentNode, data, contentType, iris, option
         break;
 
       default:
-        data = htmlEncode(files[0].content)
-        // console.log(data)
-        var iframe = document.createElement('iframe');
-        // <pre type=&quot;' + contentType + '&quot; -- nice but `type` is undefined attribute for `pre`.at the moment. Create issue in WHATWG for fun/profit?
-        iframe.srcdoc = '<pre>' + data + '</pre>';
-        iframe.width = '1280'; iframe.height = '720';
+        let main = document.createElement('main');
+        let article = document.createElement('article');
+        main.appendChild(article);
 
-        const dt = (isFileIRI) ? `<code>${iri.slice(5)}</code>` : `<a href="${iri}" rel="noopener" target="_blank">${iri}</a>`;
+        for (const file of files) {
+          let iframe = document.createElement('iframe');
+          iframe.width = '1280'; iframe.height = '720';
 
-        var main = fragmentFromString(`<main><article><dl><dt>${dt}</dt><dd></dd></dl></article></main>`);
-        main.querySelector('dd').appendChild(iframe);
+          let fromContentType = file.type;
+          let toContentType = file.type;
+          
+          if (options.output) {
+            let cT = options.output;
+            cT = (cT) ? cT.split(';')[0].toLowerCase().trim() : '';
+            toContentType = cT;
+
+            const allowedTypes = Config.MediaTypes.Markup.concat(Config.MediaTypes.RDF);
+
+            if (allowedTypes.includes(fromContentType) && allowedTypes.includes(toContentType)) {
+              file.content = await serializeData(file.content, fromContentType, toContentType);
+            }
+          }
+
+          // <pre type=&quot;' + contentType + '&quot; -- nice but `type` is undefined attribute for `pre`.at the moment. Create issue in WHATWG for fun/profit?
+          
+          iframe.srcdoc = `<pre data-content-type="${toContentType}">${
+            toContentType === "application/ld+json"
+              ? htmlEncode(
+                  JSON.stringify(
+                    typeof file.content === "string"
+                      ? JSON.parse(file.content)
+                      : file.content,
+                    null,
+                    2
+                  )
+                )
+              : htmlEncode(file.content)
+          }</pre>`;
+          
+          const button = fragmentFromString(`<button class="export" data-i18n="dialog.open-document.export.button" title="${i18n.t('dialog.open-document.export.button.title')}" type="button">${i18n.t('dialog.open-document.export.button.textContent')}</button>`);
+
+          let dl = document.createElement('dl');
+          let id = generateAttributeId();
+          file['id'] = id;
+          dl.id = id;
+          dl.classList.add('open-preview');
+
+          let dt = (isFileIRI) ? `<code>${file.name.slice(5)}</code>` : `<a href="${file.name}" rel="noopener schema:contentUrl" target="_blank"><code>${file.name}</code></a>`;
+          dl.appendChild(fragmentFromString(`<dt>${dt}</dt>`));
+
+          let dd = document.createElement('dd');
+          dd.setAttribute('rel', 'schema:encodingFormat');
+          dd.appendChild(fragmentFromString(`<code>${toContentType}</code>`));
+          dl.appendChild(dd);
+
+          dd = document.createElement('dd');
+          dd.appendChild(iframe);
+          if (button) {
+            dd.appendChild(button);
+          }
+          dl.appendChild(dd);
+
+          article.appendChild(dl);
+        };
+
         tmpl.body.appendChild(main);
+
         break;
     }
   }
@@ -4974,19 +5036,19 @@ export async function spawnDokieli(documentNode, data, contentType, iris, option
     node.setAttribute('src', node.src);
   })
 
-  if (options.init === true && isHttpIRI && contentType == 'text/html') {
+  if (options.init === true && isHttpIRI && contentTypes[0] == 'text/html') {
     var baseElements = document.querySelectorAll('head base');
     baseElements.forEach(baseElement => {
       baseElement.remove();
     });
 
-    sanitizeInsertAdjacentHTML(document.querySelector('head'),'afterbegin', '<base href="' + iri + '" />');
+    sanitizeInsertAdjacentHTML(document.querySelector('head'),'afterbegin', '<base href="' + iris[0] + '" />');
     //TODO: Setting the base URL with `base` seems to work correctly, i.e., link base is opened document's URL, and simpler than updating some of the elements' href/src/data attributes. Which approach may be better depends on actions afterwards, e.g., Save As (perhaps other features as well) may need to remove the base and go with the user selection.
     // var nodes = tmpl.querySelectorAll('head link, [src], object[data]');
     // nodes = rewriteBaseURL(nodes, {'baseURLType': 'base-url-absolute', 'iri': iri});
   }
 
-  if (contentType == 'application/gpx+xml') {
+  if (contentTypes[0] == 'application/gpx+xml') {
     options['init'] = false;
 
     //XXX: Should this be taken care by ufpdating the document.documentElement and then running init(iri) ? If I'm asking, then probably yes.
@@ -5011,6 +5073,28 @@ export async function spawnDokieli(documentNode, data, contentType, iris, option
     tmplBody.setAttribute('prefix', prefixes);
 
     document.documentElement.replaceChild(tmplBody, document.body);
+
+    let openPreview = document.querySelectorAll('.open-preview');
+
+    openPreview.forEach((preview) => {
+      preview.addEventListener('click', e => {
+        if (e.target.closest('button.export')) {
+          var oP = e.target.closest('.open-preview');
+          var mediaType = oP.querySelector('dd[rel="schema:encodingFormat"]').textContent || 'text/plain';
+          var iframe = oP.querySelector('iframe');
+          let content = iframe.srcdoc;
+
+          var options = {
+            subjectURI: 'http://example.org/' + preview.id,
+            mediaType,
+            filenameExtension: Config.FileExtensions[mediaType]
+          }
+    
+          exportAsDocument(content, options);
+        }
+      })
+    });
+
     initDocumentMenu();
     Config.Editor.init(null, null, options);
     showFragment();

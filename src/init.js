@@ -176,6 +176,7 @@ export async function setDocumentMode(mode) {
   const paramSocial = getUrlParams('social');
   const paramGraph = getUrlParams('graph');
   const paramGraphView = getUrlParams('graph-view');
+  const paramOutput = getUrlParams('output');
 
   if (paramStyle.length) {
     let style = paramStyle[0];
@@ -212,18 +213,21 @@ export async function setDocumentMode(mode) {
       addMessageToLog({...messageObject, content: message}, Config.MessageLog);
       const messageId = showActionMessage(document.body, messageObject);
 
-      let results = await getMultipleResources(openResources, { filename: true })
+      let results = await getMultipleResources(openResources)
+
       const contentTypes = results.map(r => r.type);
-      const contentType = contentTypes.includes('text/csv') ? 'text:csv' : 'text/plain';
       const iris = openResources;
       let spawnOptions = {};
       spawnOptions['defaultStylesheet'] = false;
       spawnOptions['init'] = true;
+      if (paramOutput.length) {
+        spawnOptions['output'] = domSanitize(paramOutput[0]);
+      }
 
       await spawnDokieli(
         document,
         results,
-        contentType,
+        contentTypes,
         iris,
         spawnOptions
       );
