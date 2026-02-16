@@ -527,6 +527,21 @@ export default {
     Geo: ['application/gpx+xml']
   },
 
+  FileExtensions: {
+    'application/activity+json': '.json',
+    'application/atom+xml': '.xml',
+    'application/gpx+xml': '.xml',
+    'application/ld+json': '.jsonld',
+    'application/rdf+xml': '.rdf',
+    'application/rss+xml': '.rss',
+    'application/trig': '.trig',
+    'image/svg+xml': '.svg',
+    'text/html': '.html',
+    'text/markdown': '.md',
+    'text/plain': '.txt',
+    'text/turtle': '.ttl'
+  },
+
   Prefixes: {
     'xsd': 'http://www.w3.org/2001/XMLSchema#',
     'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
