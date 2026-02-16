@@ -244,6 +244,8 @@
   "dialog.open-document.open.button.aria-label": "Open document",
   "dialog.open-document.open.button.textContent": "Open",
   "dialog.open-document.open.button.title": "Open",
+  "dialog.open-document.export.button.textContent": "Export",
+  "dialog.open-document.export.button.title": "Export to file",
   "dialog.remote-sync.error.default.span.textContent": "Could not sync changes to remote storage:",
   "dialog.remote-sync.error.forbidden-action-message.span.textContent": "You do not have permission to update <code dir=\"ltr\">{{url}}</code>. Try signing in with a different account or request access.",
   "dialog.remote-sync.error.forbidden.span.textContent": "You do not have permission to update <code dir=\"ltr\">{{url}}</code>.",
