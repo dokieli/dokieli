@@ -302,7 +302,7 @@ export function showVisualisationGraph(url, data, selector, options) {
       .then(response => {
         // console.log(response)
         var cT = response.headers.get('Content-Type');
-        options['contentType'] = (cT) ? cT.split(';')[0].trim() : 'text/turtle';
+        options['contentType'] = (cT) ? cT.split(';')[0].toLowerCase().trim() : 'text/turtle';
 
         return response.text().then(data => {
           options['mergeGraph'] = true;

@@ -41,15 +41,25 @@ function setAcceptRDFTypes(options = {}) {
 }
 
 export async function getMultipleResources(resources, options = {}) {
+  //TODO: copied from getResourceGraph. Refactor
+  let headers;
+  let wildCard = options.excludeMarkup ? '' : ',*/*;q=0.1';
+  let defaultHeaders = {'Accept': setAcceptRDFTypes(options) + wildCard}
+  headers = headers || defaultHeaders
+  if (!('Accept' in headers)) {
+    headers['Accept'] = defaultHeaders['Accept'];
+  }
+
   return await Promise.all(
     resources.map(async (url) => {
-      const response = await getResource(url);
+      const response = await getResource(url, headers);
 
       const contentType = response.headers.get("content-type") || 'application/octet-stream';
 
       const result = {
-        name: options.filename ? url.split('/').pop(): url,
-        type: contentType,
+        // name: options.filename ? url.split('/').pop(): url,
+        name: url,
+        type: contentType.split(';')[0].toLowerCase().trim(),
       }
 
       switch (contentType) {
