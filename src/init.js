@@ -18,7 +18,7 @@ limitations under the License.
 import shower from '@shower/core';
 import Config from './config.js';
 const ns = Config.ns;
-import { highlightItems, updateSelectedStylesheets, initCurrentStylesheet, showActionMessage, addMessageToLog, initCopyToClipboard, showFragment, setDocRefType, showRobustLinksDecoration, focusNote, showAsTabs, getResourceInfo, setDocumentString, setDocumentURL } from './doc.js';
+import { highlightItems, updateSelectedStylesheets, initCurrentStylesheet, showActionMessage, addMessageToLog, initCopyToClipboard, showFragment, setDocRefType, showRobustLinksDecoration, focusNote, showAsTabs, getResourceInfo, setDocumentString, setDocumentURL, getDocument } from './doc.js';
 import { initButtons } from './ui/buttons.js'
 import { setWebExtensionURL } from './util.js';
 import { getLocalStorageItem } from './storage.js';
@@ -45,7 +45,7 @@ export function init (url) {
     setWebExtensionURL();
     setDocumentString();
     initUser();
-    setDocumentMode();
+    setDocumentModeParams();
     initLocalStorage();
     initDocumentActions();
     initDocumentMenu();
@@ -55,6 +55,7 @@ export function init (url) {
     initCopyToClipboard();
     initSlideshow();
     initEditor();
+    initDocumentMode();
     monitorNetworkStatus();
   }
 }
@@ -160,7 +161,13 @@ function initDocumentActions() {
   processActivateAction();
 }
 
-export async function setDocumentMode(mode) {
+export function setDocumentModeParams() {
+  const params = ['author', 'graph', 'graph-view', 'open', 'output', 'social', 'style'];
+  Config['DocumentModes'] =  {};
+  params.forEach((p) => Config['DocumentModes'][p] = getUrlParams(p));
+}
+
+export async function initDocumentMode(mode) {
   Config.Editor.mode = mode || Config.Editor.mode;
 
   const documentOptions = {
@@ -170,13 +177,13 @@ export async function setDocumentMode(mode) {
     normalize: true
   };
 
-  const paramStyle = getUrlParams('style');
-  const paramOpen = getUrlParams('open');
-  const paramAuthor = getUrlParams('author');
-  const paramSocial = getUrlParams('social');
-  const paramGraph = getUrlParams('graph');
-  const paramGraphView = getUrlParams('graph-view');
-  const paramOutput = getUrlParams('output');
+  const paramAuthor = Config['DocumentModes']['author'];
+  const paramGraph = Config['DocumentModes']['graph'];
+  const paramGraphView = Config['DocumentModes']['graph-view'];
+  const paramOpen = Config['DocumentModes']['open'];
+  const paramOutput = Config['DocumentModes']['output'];
+  const paramSocial = Config['DocumentModes']['social'];
+  const paramStyle = Config['DocumentModes']['style'];
 
   if (paramStyle.length) {
     let style = paramStyle[0];
@@ -199,6 +206,13 @@ export async function setDocumentMode(mode) {
   if (paramOpen.length) {
     let openResources = paramOpen.map((url) => domSanitize(sanitizeIRI(url)));
 
+    let spawnOptions = {};
+    spawnOptions['defaultStylesheet'] = false;
+    spawnOptions['init'] = true;
+    if (paramOutput.length) {
+      spawnOptions['output'] = domSanitize(paramOutput[0]);
+    }
+
     if (paramOpen.length > 1) {
       let urlsHtml = openResources.map((url) => `<a href="${url} rel="noopener" target="_blank">${url}</a>`).join(', ');
       var message = `Opening ${urlsHtml}`;
@@ -217,12 +231,6 @@ export async function setDocumentMode(mode) {
 
       const contentTypes = results.map(r => r.type);
       const iris = openResources;
-      let spawnOptions = {};
-      spawnOptions['defaultStylesheet'] = false;
-      spawnOptions['init'] = true;
-      if (paramOutput.length) {
-        spawnOptions['output'] = domSanitize(paramOutput[0]);
-      }
 
       await spawnDokieli(
         document,
@@ -239,14 +247,14 @@ export async function setDocumentMode(mode) {
       await openResource(open);
     }
 
-    if (paramGraphView.length && paramGraphView[0] == 'true') {
+    if (paramGraphView.length && paramGraphView[0].toLowerCase() == 'true') {
       showVisualisationGraph(Config.DocumentURL, getDocument(null, documentOptions), '#graph-view');
     }
 
     // stripUrlSearchHash();
   }
 
-  if (paramGraphView.length && paramGraphView[0] == 'true' && paramOpen.length == 0) {
+  if (paramGraphView.length && paramGraphView[0].toLowerCase() == 'true' && paramOpen.length == 0) {
     showVisualisationGraph(Config.DocumentURL, getDocument(null, documentOptions), '#graph-view');
   }
 
@@ -293,17 +301,16 @@ export async function setDocumentMode(mode) {
   }
 
 
-  if (paramSocial.length && paramSocial[0] == 'true') {
-    Config.Editor.mode = 'social';
-    stripUrlSearchHash(['social']);
-  }
-  else if (paramAuthor.length && paramAuthor[0] == 'true') {
+  if (paramAuthor.length && paramAuthor[0] == 'true') {
     Config.Editor.mode = 'author';
+    Config.Editor.toggleEditor('author')
     stripUrlSearchHash(['author']);
   }
-  // else if (paramGraphView.length && paramGraphView[0] == 'true') {
-  //   stripUrlSearchHash(['graph-view']);
-  // }
+  else if (paramSocial.length && paramSocial[0] == 'true') {
+    Config.Editor.mode = 'social';
+    Config.Editor.toggleEditor('social')
+    stripUrlSearchHash(['social']);
+  }
 
   //XXX: This else if works but current document needs to be processed for Config.Resource. See also config.js init and whether non text/html is ever the case (e.g., dokieli in SVG?)
   // else if (Config.Resource[Config.DocumentURL].contentType == 'text/html') {

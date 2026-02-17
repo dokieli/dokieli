@@ -1905,8 +1905,6 @@ export async function openResource(iri, options) {
 
       //XXX: It was either a CORS related issue or 4xx/5xx.
 
-      document.getElementById(messageId).remove();
-
       var message = `Unable to open <a href="${iri}" rel="noopener" target="_blank">${iri}</a>.`;
       var actionMessage = `Unable to open <a href="${iri}" rel="noopener" target="_blank">${iri}</a>.`;
 
@@ -1918,7 +1916,7 @@ export async function openResource(iri, options) {
       }
 
       addMessageToLog({...messageObject, content: message}, Config.MessageLog);
-      showActionMessage(document.body, messageObject);
+      showActionMessage(document.body, messageObject, { clearId: messageId });
 
       throw error
     }
@@ -1956,6 +1954,9 @@ export async function openResource(iri, options) {
       // console.log(o)
       spawnOptions['defaultStylesheet'] = ('defaultStylesheet' in o) ? o.defaultStylesheet : (('defaultStylesheet' in spawnOptions) ? spawnOptions['defaultStylesheet'] : false);
       spawnOptions['init'] = true;
+      if (Config.DocumentModes.output.length) {
+        spawnOptions['output'] = Config.DocumentModes.output[0];
+      }
 
       var html = await spawnDokieli(document, o.data, o.options['contentType'], o.options['subjectURI'], spawnOptions);
     }
@@ -1973,7 +1974,7 @@ export async function openResource(iri, options) {
       'timer': 3000
     }
     addMessageToLog(message, Config.MessageLog);
-    showActionMessage(document.body, message);
+    showActionMessage(document.body, message, { clearId: messageId });
   }
 
   await handleResource(iri, headers, options);
@@ -4934,18 +4935,20 @@ export async function spawnDokieli(documentNode, data, contentTypes, iris, optio
         let main = document.createElement('main');
         let article = document.createElement('article');
         main.appendChild(article);
-
+        // console.log(options)
         for (const file of files) {
           let iframe = document.createElement('iframe');
           iframe.width = '1280'; iframe.height = '720';
 
           let fromContentType = file.type;
           let toContentType = file.type;
-          
+
           if (options.output) {
             let cT = options.output;
-            cT = (cT) ? cT.split(';')[0].toLowerCase().trim() : '';
+            cT = (cT) ? cT.split(';')[0].toLowerCase().trim() : cT;
             toContentType = cT;
+
+            console.log(fromContentType, toContentType)
 
             const allowedTypes = Config.MediaTypes.Markup.concat(Config.MediaTypes.RDF);
 
@@ -4955,8 +4958,7 @@ export async function spawnDokieli(documentNode, data, contentTypes, iris, optio
           }
 
           // <pre type=&quot;' + contentType + '&quot; -- nice but `type` is undefined attribute for `pre`.at the moment. Create issue in WHATWG for fun/profit?
-          
-          iframe.srcdoc = `<pre data-content-type="${toContentType}">${
+          iframe.srcdoc = `<pre>${
             toContentType === "application/ld+json"
               ? htmlEncode(
                   JSON.stringify(
@@ -4969,28 +4971,64 @@ export async function spawnDokieli(documentNode, data, contentTypes, iris, optio
                 )
               : htmlEncode(file.content)
           }</pre>`;
-          
-          const button = fragmentFromString(`<button class="export" data-i18n="dialog.open-document.export.button" title="${i18n.t('dialog.open-document.export.button.title')}" type="button">${i18n.t('dialog.open-document.export.button.textContent')}</button>`);
 
           let dl = document.createElement('dl');
           let id = generateAttributeId();
           file['id'] = id;
-          dl.id = id;
-          dl.classList.add('open-preview');
+          dl.setAttribute('id', id);
+          dl.setAttribute('class', 'open-preview');
+          dl.setAttribute('rel', 'schema:hasPart');
+          dl.setAttribute('resource', `#${id}`);
+          // dl.setAttribyte('typeof', 'schema:CreativeWork');
 
-          let dt = (isFileIRI) ? `<code>${file.name.slice(5)}</code>` : `<a href="${file.name}" rel="noopener schema:contentUrl" target="_blank"><code>${file.name}</code></a>`;
-          dl.appendChild(fragmentFromString(`<dt>${dt}</dt>`));
+          let dt, dd, code, a;
 
-          let dd = document.createElement('dd');
-          dd.setAttribute('rel', 'schema:encodingFormat');
-          dd.appendChild(fragmentFromString(`<code>${toContentType}</code>`));
+          //Source
+          dt = document.createElement('dt');
+          dt.textContent = 'Source';
+          dl.appendChild(dt);
+          dd = document.createElement('dd');
+          if (isFileIRI) {
+            code = document.createElement('code');
+            code.textContent = file.name.slice(5);
+            dd.appendChild(code);
+          }
+          else {
+            a = document.createElement('a');
+            a.setAttribute('href', file.name);
+            a.setAttribute('rel', 'noopener schema:contentUrl');
+            a.setAttribute('target', '_blank');
+            a.textContent = file.name;
+            dd.appendChild(a);
+          }
           dl.appendChild(dd);
 
+          //Format
+          dt = document.createElement('dt');
+          dt.textContent = 'Format';
+          dl.appendChild(dt);
+          dd = document.createElement('dd');
+          dd.setAttribute('rel', 'schema:encodingFormat');
+          code = document.createElement('code');
+          code.textContent = toContentType;
+          dd.appendChild(code);
+          dl.appendChild(dd);
+
+          //Content
+          dt = document.createElement('dt');
+          dt.textContent = 'Content';
+          dl.appendChild(dt);
           dd = document.createElement('dd');
           dd.appendChild(iframe);
-          if (button) {
-            dd.appendChild(button);
-          }
+
+          //Button
+          const button = document.createElement('button');
+          button.setAttribute('class', 'export');
+          button.setAttribute('data-i18n', 'dialog.open-document.export.button');
+          button.setAttribute('title', i18n.t('dialog.open-document.export.button.title'));
+          button.setAttribute('type', 'button');
+          button.textContent = i18n.t('dialog.open-document.export.button.textContent');
+          dd.appendChild(button);
           dl.appendChild(dd);
 
           article.appendChild(dl);
@@ -5096,7 +5134,17 @@ export async function spawnDokieli(documentNode, data, contentTypes, iris, optio
     });
 
     initDocumentMenu();
+    // if (!Config.Editor.EditorEnabled) {
+    //   Config.Editor.init(Config.Editor.mode, null, options);
+    // } else {
+    //   Config.Editor.toggleMode(Config.Editor.mode)
+    // }
+    // console.log(Config.Editor.mode)    
+
+    // Config.Editor.init(Config.Editor.mode, null, options);
+    // console.log(Config.Editor)    
     Config.Editor.init(null, null, options);
+
     showFragment();
     initCopyToClipboard();
 

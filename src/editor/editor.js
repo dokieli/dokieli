@@ -56,9 +56,10 @@ export class Editor {
 
   // Initialize editor and toolbar based on the default editor mode
   init(mode, node, options) {
-    this.mode = mode || Config.Editor.mode || this.mode;
+    const documentMode = Config.DocumentModes.author.length ? 'author' : null;
+    this.mode = mode || documentMode || Config.Editor.mode || this.mode;
+    Config.Editor.mode = this.mode || 'social';
     this.node = node || this.node;
-
 
     if (options?.template === 'new') {
       Config.Editor['new'] = true;
@@ -86,6 +87,12 @@ export class Editor {
     if (!this.hasRunTextQuoteSelector && (this.socialToolbarView || this.authorToolbarView)) {
       this.showTextQuoteSelectorFromLocation();
       this.hasRunTextQuoteSelector = true;
+    }
+
+    if (documentMode) {
+      Config.EditorEnabled = (this.mode === 'author');
+      Config.EditorWasEnabled = true;
+      updateButtons();
     }
   }
 

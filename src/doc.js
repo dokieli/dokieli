@@ -797,13 +797,13 @@ export function showActionMessage(node, message, options = {}) {
       timerId = window.setTimeout(() => {
         const aside = node.querySelector('#document-action-message');
         if (aside) {
-          const li = aside.querySelector('#' + id);
+          const li = aside?.querySelector('#' + id);
           if (li) {
             li.parentNode.removeChild(li);
           }
 
-          const remaining = aside.querySelector('h2 + ul > li');
-          if (!remaining) {
+          const remaining = aside?.querySelector('h2 + ul > li');
+          if (!remaining && aside) {
             node.removeChild(aside);
           }
         }

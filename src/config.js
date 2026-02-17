@@ -20,6 +20,7 @@ import rdf from 'rdf-ext';
 export default {
   OIDC: {},
   DocumentAction: '',
+  DocumentModes: {},
   Button: {},
   DocumentURL: '',
   DocumentString: '',
