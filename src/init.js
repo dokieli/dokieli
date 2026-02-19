@@ -105,21 +105,17 @@ export function initLocalStorage() {
   });
 }
 
-function initDocumentActions() {
+async function initDocumentActions() {
   eventButtonClose();
   eventButtonInfo();
   eventButtonSignIn();
   eventButtonSignOut();
   eventButtonNotificationsToggle();
-  showRobustLinksDecoration();
-  focusNote();
-  highlightItems();
-  showAsTabs();
 
   var documentURL = Config.DocumentURL;
 
   //Fugly
-  function checkResourceInfo() {
+  async function checkResourceInfo() {
 // console.log(Config.Resource[documentURL])
 
     if (documentURL in Config.Resource && 'state' in Config.Resource[documentURL]) {
@@ -130,7 +126,7 @@ function initDocumentActions() {
       }
     }
     else {
-      syncLocalRemoteResource({
+      await syncLocalRemoteResource({
         onLocalInfo: (resourceInfo) => {
           processPotentialAction(resourceInfo);
 
@@ -142,9 +138,13 @@ function initDocumentActions() {
     }
   }
 
-  checkResourceInfo();
+  await checkResourceInfo();
 
   processActivateAction();
+  showRobustLinksDecoration();
+  focusNote();
+  highlightItems();
+  showAsTabs();
 }
 
 export function setDocumentModeParams() {
