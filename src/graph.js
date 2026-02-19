@@ -491,10 +491,10 @@ function serializeGraph(g, options = {}) {
       options.contentType = 'text/n3';
     }
 
-    const serializer = rdf.formats.serializers.get(options.contentType, { compact: true, prettyPrint: true });
+    const serializer = getRDFSerializer(options.contentType);
 
     if (!serializer) {
-      throw new Error(`No serializer found for contentType: ${options.contentType}`);
+      throw new Error(`No serializer found for mediaType: ${options.contentType}`);
     }
 
     return streamToString(serializer.import(Readable.from(quads), { compact: true, prettyPrint: true })).then((data) => {
@@ -505,7 +505,7 @@ function serializeGraph(g, options = {}) {
     console.log(e)
   }
 
-
+  // XXX: This comment is left here so that it can be reviewed for grapoi when the RDF vocabs that may need fixing.
   // return store.serializers[options.contentType].serialize(g._graph)
   //   .then(data => {
   //     data = applyParserSerializerFixes(data, options.contentType)
@@ -517,6 +517,10 @@ function serializeGraph(g, options = {}) {
 
     //   return data
     // })
+}
+
+function getRDFSerializer(mediaType) {
+  return rdf.formats.serializers.get(mediaType, { compact: true, prettyPrint: true });
 }
 
 function applyParserSerializerFixes(data, contentType) {
@@ -2122,6 +2126,7 @@ export {
   getAuthorizationsMatching,
   getUserLabelOrIRI,
   getRDFParser,
+  getRDFSerializer,
   filterQuads,
   getSubjectInfo,
   getItemsList,
