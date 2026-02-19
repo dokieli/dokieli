@@ -25,7 +25,7 @@ import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeObject, h
 import { escapeRDFLiteral, generateAttributeId, generateUUID } from './util.js';
 import { deleteResource, getResource, patchResourceWithAcceptPatch, postResource, putResource, putResourceWithAcceptPut, setAcceptRDFTypes } from './fetcher.js';
 import { forceTrailingSlash, generateDataURI, getAbsoluteIRI, getBaseURL, isHttpOrHttpsProtocol, isFileProtocol, stripFragmentFromString, getFragmentFromString, getURLLastPath, currentLocation } from './uri.js';
-import { getAccessSubjects, getACLResourceGraph, getAgentInbox, getAgentName, getAuthorizationsMatching, getGraphAuthors, getGraphContributors, getGraphEditors, getGraphImage, getGraphLabelOrIRI, getGraphPerformers, getGraphTypes, getLinkRelation, getLinkRelationFromHead, getResourceGraph, getUserContacts, getUserLabelOrIRI, serializeData, getSubjectInfo } from './graph.js';
+import { getAccessSubjects, getACLResourceGraph, getAgentInbox, getAgentName, getAuthorizationsMatching, getGraphAuthors, getGraphContributors, getGraphEditors, getGraphImage, getGraphLabelOrIRI, getGraphPerformers, getGraphTypes, getLinkRelation, getLinkRelationFromHead, getResourceGraph, getUserContacts, getUserLabelOrIRI, serializeData, getSubjectInfo, getRDFSerializer } from './graph.js';
 import { notifyInbox, sendNotifications, showContactsActivities, initializeNotifications } from './activity.js';
 import Config from './config.js';
 const ns = Config.ns;
@@ -4942,18 +4942,21 @@ export async function spawnDokieli(documentNode, data, contentTypes, iris, optio
 
           let fromContentType = file.type;
           let toContentType = file.type;
+          let canSerialize = true;
 
           if (options.output) {
             let cT = options.output;
             cT = (cT) ? cT.split(';')[0].toLowerCase().trim() : cT;
             toContentType = cT;
 
-            console.log(fromContentType, toContentType)
+            const allowedFromTypes = Config.MediaTypes.RDF.concat(Config.MediaTypes.Markup);
+            const hasSerializer = !!getRDFSerializer(toContentType);
 
-            const allowedTypes = Config.MediaTypes.Markup.concat(Config.MediaTypes.RDF);
-
-            if (allowedTypes.includes(fromContentType) && allowedTypes.includes(toContentType)) {
+            if (allowedFromTypes.includes(fromContentType) && hasSerializer) {
               file.content = await serializeData(file.content, fromContentType, toContentType);
+            }
+            else {
+              canSerialize = false;
             }
           }
 
@@ -5008,9 +5011,9 @@ export async function spawnDokieli(documentNode, data, contentTypes, iris, optio
           dt.textContent = 'Format';
           dl.appendChild(dt);
           dd = document.createElement('dd');
-          dd.setAttribute('rel', 'schema:encodingFormat');
+          dd.setAttribute('property', 'schema:encodingFormat');
           code = document.createElement('code');
-          code.textContent = toContentType;
+          code.textContent = (canSerialize) ? toContentType : fromContentType;
           dd.appendChild(code);
           dl.appendChild(dd);
 
