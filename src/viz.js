@@ -163,11 +163,10 @@ export function showVisualisationGraph(url, data, selector, options) {
   if (getComputedStyle(graphView).position === 'static') {
     graphView.style.position = 'relative';
   }
-  sanitizeInsertAdjacentHTML(graphView, 'beforeend', `<button class="export" data-i18n="dialog.graph-view.export.button" title="${i18n.t('dialog.graph-view.export.button.title')}" type="button">${i18n.t('dialog.graph-view.export.button.textContent')}</button>`);
 
   var containerStyle = graphView.ownerDocument.defaultView.getComputedStyle(graphView);
   width = options.width || parseInt(containerStyle.width) || 800;
-  height = options.height || parseInt(containerStyle.height) || 600;
+  height = options.height || parseInt(containerStyle.height) - 128 || 600;
   
   graphView.addEventListener('click', (e) => {
     if (e.target.closest('button.export')) {
@@ -464,6 +463,13 @@ export function showVisualisationGraph(url, data, selector, options) {
     canvas.height = height;
     container.appendChild(canvas);
 
+    // var cN = document.getElementById(id);
+    // var containerStyle = cN.ownerDocument.defaultView.getComputedStyle(cN, null);
+    // width = options.width || parseInt(containerStyle.width) || 800;
+    // height = options.height || parseInt(containerStyle.height) || 600;
+
+    sanitizeInsertAdjacentHTML(graphView, 'beforeend', `<button class="export" data-i18n="dialog.graph-view.export.button" title="${i18n.t('dialog.graph-view.export.button.title')}" type="button">${i18n.t('dialog.graph-view.export.button.textContent')}</button>`);
+
     var ctx = canvas.getContext('2d');
     var nodes = Object.values(go.uniqueNodes);
 
@@ -584,6 +590,8 @@ export function showVisualisationGraph(url, data, selector, options) {
       ctx.fillText('Resources: ' + go.resources.join(', '), x, y);
       ctx.fillText('Statements: ' + go.bilinks.length, x, y + 22);
       ctx.fillText('Nodes: ' + nodes.length + ' (unique)', x, y + 44);
+      ctx.fillText('Creator: ' + options.creator, x, y + 66);
+      ctx.fillText('License: ' + options.license, x, y + 88);
 
       const legendInfo = {};
       Object.keys(legendCategories).forEach(g => {
@@ -593,7 +601,7 @@ export function showVisualisationGraph(url, data, selector, options) {
         if (node.group && legendInfo[node.group]) legendInfo[node.group].count++;
       });
 
-      var legendY = y + 72;
+      var legendY = y + 132;
       Object.keys(legendInfo).forEach(function(g, i) {
         ctx.beginPath();
         ctx.arc(x + nodeRadius, legendY + i * 22, nodeRadius, 0, 2 * Math.PI);

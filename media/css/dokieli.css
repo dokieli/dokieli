@@ -464,7 +464,7 @@ cursor:pointer;
 #viz-tooltip {
 position:absolute;
 bottom:1em;
-left:1em;
+right:1em;
 background:#333;
 color:#fff;
 padding:1em;
