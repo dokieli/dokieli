@@ -68,7 +68,7 @@ export function showVisualisationGraph(url, data, selector, options) {
   options['creator'] = options.creator || 'https://dokie.li/#i';
   var width = options.width || '100%';
   var height = options.height || '100%';
-  var nodeRadius = 10;
+  var nodeRadius = 7;
   var simulation;
   var canvasCleanup = null;    // cleanup fn for window-level canvas event listeners
   var currentGraphObject = null; // last built graph, used for on-demand SVG export
@@ -90,39 +90,23 @@ export function showVisualisationGraph(url, data, selector, options) {
   if (!tooltip) {
     tooltip = document.createElement('div');
     tooltip.id = 'viz-tooltip';
-    tooltip.style.cssText = [
-      'position:fixed',
-      'background:rgba(0,0,0,0.85)',
-      'color:#fff',
-      'padding:5px 10px',
-      'border-radius:4px',
-      'font-size:11px',
-      'font-family:monospace',
-      'pointer-events:none',
-      'display:none',
-      'z-index:99999',
-      'max-width:420px',
-      'word-break:break-all',
-      'white-space:pre-wrap',
-      'box-shadow:0 2px 6px rgba(0,0,0,0.4)'
-    ].join(';');
-    document.body.appendChild(tooltip);
+    document.querySelector(selector).appendChild(tooltip);
   }
 
   function showTooltip(e, content) {
     if (!content) return;
-    tooltip.textContent = content;
+    tooltip.textContent = content.length > 120 ? content.slice(0, 117) + '…' : content;
     tooltip.style.display = 'block';
-    moveTooltip(e);
+    // moveTooltip(e);
   }
 
   function moveTooltip(e) {
-    var x = e.clientX + 14;
-    var y = e.clientY + 14;
-    if (x + 440 > window.innerWidth) { x = e.clientX - 440; }
-    if (y + 80 > window.innerHeight) { y = e.clientY - 80; }
-    tooltip.style.left = x + 'px';
-    tooltip.style.top = y + 'px';
+    // var x = e.clientX + 14;
+    // var y = e.clientY + 14;
+    // if (x + 440 > window.innerWidth) { x = e.clientX - 440; }
+    // if (y + 80 > window.innerHeight) { y = e.clientY - 80; }
+    // tooltip.style.left = x + 'px';
+    // tooltip.style.top = y + 'px';
   }
 
   function hideTooltip() {
@@ -166,17 +150,25 @@ export function showVisualisationGraph(url, data, selector, options) {
       </aside>`));
   }
 
-  var svg = d3.select(selector).append('svg')
-    .attr('width', width)
-    .attr('height', height)
-    .attr('id', id)
-    .attr('xmlns', 'http://www.w3.org/2000/svg')
-    .attr('xml:lang', options.language)
-    .attr('prefix', 'rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns# rdfs: http://www.w3.org/2000/01/rdf-schema# xsd: http://www.w3.org/2001/XMLSchema# dcterms: http://purl.org/dc/terms/')
-    .attr('typeof', 'http://purl.org/dc/dcmitype/Image')
+  // var svg = d3.select(selector).append('svg')
+  //   .attr('width', width)
+  //   .attr('height', height)
+  //   .attr('id', id)
+  //   .attr('xmlns', 'http://www.w3.org/2000/svg')
+  //   .attr('xml:lang', options.language)
+  //   .attr('prefix', 'rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns# rdfs: http://www.w3.org/2000/01/rdf-schema# xsd: http://www.w3.org/2001/XMLSchema# dcterms: http://purl.org/dc/terms/')
+  //   .attr('typeof', 'http://purl.org/dc/dcmitype/Image')
 
   var graphView = document.querySelector(selector);
+  if (getComputedStyle(graphView).position === 'static') {
+    graphView.style.position = 'relative';
+  }
   sanitizeInsertAdjacentHTML(graphView, 'beforeend', `<button class="export" data-i18n="dialog.graph-view.export.button" title="${i18n.t('dialog.graph-view.export.button.title')}" type="button">${i18n.t('dialog.graph-view.export.button.textContent')}</button>`);
+
+  var containerStyle = graphView.ownerDocument.defaultView.getComputedStyle(graphView);
+  width = options.width || parseInt(containerStyle.width) || 800;
+  height = options.height || parseInt(containerStyle.height) || 600;
+  
   graphView.addEventListener('click', (e) => {
     if (e.target.closest('button.export')) {
       if (!currentGraphObject) { return; }
@@ -199,15 +191,11 @@ export function showVisualisationGraph(url, data, selector, options) {
     }
   });
 
-  var s = document.getElementById(id);
-  width = options.width || parseInt(s.ownerDocument.defaultView.getComputedStyle(s, null)["width"]);
-  height = options.height || parseInt(s.ownerDocument.defaultView.getComputedStyle(s, null)["height"]);
-
-  // Graph always renders to canvas; SVG element is only used for on-demand export
-  svg.style('display', 'none');
+  // var s = document.getElementById(id);
+  // width = options.width || parseInt(s.ownerDocument.defaultView.getComputedStyle(s, null)["width"]);
+  // height = options.height || parseInt(s.ownerDocument.defaultView.getComputedStyle(s, null)["height"]);
 
   function addLegend(go, target) {
-    target = target || svg;
     var graphLegend = target.append('g')
       .attr('class', 'graph-legend');
 
@@ -378,6 +366,7 @@ export function showVisualisationGraph(url, data, selector, options) {
   function generateExportSVG(go) {
     var exportContainer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     var exportSvg = d3.select(exportContainer)
+      .attr('id', id)
       .attr('width', width)
       .attr('height', height)
       .attr('xmlns', 'http://www.w3.org/2000/svg')
@@ -469,10 +458,10 @@ export function showVisualisationGraph(url, data, selector, options) {
     if (existingCanvas) existingCanvas.remove();
 
     var canvas = document.createElement('canvas');
+    canvas.id = id;
     canvas.className = 'graph-canvas';
     canvas.width = width;
     canvas.height = height;
-    canvas.style.cssText = 'width:100%;height:100%;display:block;';
     container.appendChild(canvas);
 
     var ctx = canvas.getContext('2d');
@@ -512,7 +501,7 @@ export function showVisualisationGraph(url, data, selector, options) {
     }
 
     function drawPill(text, x, y) {
-      ctx.font = 'bold 11px monospace';
+      ctx.font = 'bold 16px monospace';
       var tw = ctx.measureText(text).width;
       ctx.fillStyle = 'rgba(20,20,20,0.88)';
       ctx.beginPath();
@@ -590,8 +579,8 @@ export function showVisualisationGraph(url, data, selector, options) {
 
     function drawCanvasLegend(go) {
       var x = 12, y = 20;
-      ctx.font = '12px sans-serif';
-      ctx.fillStyle = 'rgba(200,200,200,0.9)';
+      ctx.font = '16px monospace';
+      ctx.fillStyle = '#000';
       ctx.fillText('Resources: ' + go.resources.join(', '), x, y);
       ctx.fillText('Statements: ' + go.bilinks.length, x, y + 22);
       ctx.fillText('Nodes: ' + nodes.length + ' (unique)', x, y + 44);
@@ -605,7 +594,6 @@ export function showVisualisationGraph(url, data, selector, options) {
       });
 
       var legendY = y + 72;
-      ctx.font = '11px monospace';
       Object.keys(legendInfo).forEach(function(g, i) {
         ctx.beginPath();
         ctx.arc(x + nodeRadius, legendY + i * 22, nodeRadius, 0, 2 * Math.PI);
@@ -715,7 +703,7 @@ export function showVisualisationGraph(url, data, selector, options) {
         showTooltip(e, node.id);
         canvas.style.cursor = 'pointer';
       } else if (link && link[3]) {
-        showTooltip(e, shortLabel(link[3]) + '\n' + link[3]);
+        showTooltip(e, link[3]);
         canvas.style.cursor = 'default';
       } else {
         hideTooltip();

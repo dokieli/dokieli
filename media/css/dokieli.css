@@ -461,6 +461,25 @@ stroke-width:3px;
 cursor:pointer;
 }
 
+#viz-tooltip {
+position:absolute;
+bottom:1em;
+left:1em;
+background:#333;
+color:#fff;
+padding:1em;
+border-radius:0.5em;
+font-size:14px;
+font-family:monospace;
+pointer-events:none;
+display:none;
+z-index:2147483646;
+word-break:break-all;
+white-space:pre-wrap;
+box-shadow:0 0.25em 0.25em rgba(0,0,0,0.1);
+}
+
+
 article [about^="#"][typeof="schema:ViewAction"]:before,
 article [href^="#"][typeof="schema:ViewAction"]:before,
 article [resource^="#"][typeof="schema:ViewAction"]:before {
