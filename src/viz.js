@@ -32,6 +32,28 @@ const d3 = { ...d3Selection, ...d3Force };
 import { i18n } from "./i18n.js";
 import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI } from "./utils/sanitization.js";
 
+
+// Extract a short human-readable label from an IRI (last non-empty path/fragment segment)
+function shortLabel(iri) {
+  if (!iri || iri.startsWith('http://example.com/.well-known/genid/')) return '';
+  const parts = iri.split(/[/#]/);
+  for (let i = parts.length - 1; i >= 0; i--) {
+    if (parts[i]) return parts[i];
+  }
+  return iri;
+}
+
+// Return the best hover label for a node:
+// - Literals (group 4): show the literal value, truncated to 50 chars
+// - Named/blank nodes: last IRI path/fragment segment
+function nodeLabel(d) {
+  if (d.group === 4) {
+    var val = d.id;
+    return val.length > 50 ? val.slice(0, 47) + '\u2026' : val;
+  }
+  return shortLabel(d.id);
+}
+
 //Borrowed some of the d3 parts from https://bl.ocks.org/mbostock/4600693
 export function showVisualisationGraph(url, data, selector, options) {
   url = url || currentLocation();
@@ -46,8 +68,10 @@ export function showVisualisationGraph(url, data, selector, options) {
   options['creator'] = options.creator || 'https://dokie.li/#i';
   var width = options.width || '100%';
   var height = options.height || '100%';
-  var nodeRadius = 6;
+  var nodeRadius = 10;
   var simulation;
+  var canvasCleanup = null;    // cleanup fn for window-level canvas event listeners
+  var currentGraphObject = null; // last built graph, used for on-demand SVG export
 
   var id = generateAttributeId();
 
@@ -61,37 +85,49 @@ export function showVisualisationGraph(url, data, selector, options) {
     return "translate(" + d.x + "," + d.y + ")";
   }
 
-  // function dragstarted(d) {
-  //   if (!d3.event.active) simulation.alphaTarget(0.3).restart();
-  //   d.fx = d.x, d.fy = d.y;
-  // }
-
-  // function dragged(d) {
-  //   d.fx = d3.event.x, d.fy = d3.event.y;
-  // }
-
-  function dragended(d) {
-    if (!d3.event.active) simulation.alphaTarget(0);
-    d.fx = null, d.fy = null;
+  // Shared floating tooltip element (one per page, reused across renders)
+  var tooltip = document.getElementById('viz-tooltip');
+  if (!tooltip) {
+    tooltip = document.createElement('div');
+    tooltip.id = 'viz-tooltip';
+    tooltip.style.cssText = [
+      'position:fixed',
+      'background:rgba(0,0,0,0.85)',
+      'color:#fff',
+      'padding:5px 10px',
+      'border-radius:4px',
+      'font-size:11px',
+      'font-family:monospace',
+      'pointer-events:none',
+      'display:none',
+      'z-index:99999',
+      'max-width:420px',
+      'word-break:break-all',
+      'white-space:pre-wrap',
+      'box-shadow:0 2px 6px rgba(0,0,0,0.4)'
+    ].join(';');
+    document.body.appendChild(tooltip);
   }
 
-  function runSimulation(graph, svgObject) {
-    // console.log(graph)
-    // console.log(svgObject)
-    simulation
-        .nodes(graph.nodes)
-        .on("tick", ticked);
-
-    simulation.force("link")
-        .links(graph.links);
-
-    function ticked() {
-      svgObject.link.attr("d", positionLink);
-      svgObject.node.attr("transform", positionNode);
-    }
+  function showTooltip(e, content) {
+    if (!content) return;
+    tooltip.textContent = content;
+    tooltip.style.display = 'block';
+    moveTooltip(e);
   }
 
-  // var color = d3.scaleOrdinal(d3.schemeCategory10);
+  function moveTooltip(e) {
+    var x = e.clientX + 14;
+    var y = e.clientY + 14;
+    if (x + 440 > window.innerWidth) { x = e.clientX - 440; }
+    if (y + 80 > window.innerHeight) { y = e.clientY - 80; }
+    tooltip.style.left = x + 'px';
+    tooltip.style.top = y + 'px';
+  }
+
+  function hideTooltip() {
+    tooltip.style.display = 'none';
+  }
 
   //TODO: Structure of these objects should change to use the label as key, and move to config.js
   var group = {
@@ -119,12 +155,6 @@ export function showVisualisationGraph(url, data, selector, options) {
   }
   group = Object.assign(group, legendCategories);
 
-  // var a = [];
-  // Object.keys(group).forEach(i => {
-  //   a.push('<div style="background-color:' + group[i].color + '; width:5em; height:5em;">' + group[i].label + '</div>');
-  // });
-  // getDocumentContentNode(document).sanitizeInsertAdjacentHTML('beforeend', a.join(''));
-
   var buttonClose = getButtonHTML({ key:'dialog.graph-view.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
   if (selector == '#graph-view' && !document.getElementById('graph-view')) {
@@ -140,8 +170,6 @@ export function showVisualisationGraph(url, data, selector, options) {
     .attr('width', width)
     .attr('height', height)
     .attr('id', id)
-    // .attr('about', '#' + id)
-    // .attr('class', 'graph')
     .attr('xmlns', 'http://www.w3.org/2000/svg')
     .attr('xml:lang', options.language)
     .attr('prefix', 'rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns# rdfs: http://www.w3.org/2000/01/rdf-schema# xsd: http://www.w3.org/2001/XMLSchema# dcterms: http://purl.org/dc/terms/')
@@ -151,9 +179,9 @@ export function showVisualisationGraph(url, data, selector, options) {
   sanitizeInsertAdjacentHTML(graphView, 'beforeend', `<button class="export" data-i18n="dialog.graph-view.export.button" title="${i18n.t('dialog.graph-view.export.button.title')}" type="button">${i18n.t('dialog.graph-view.export.button.textContent')}</button>`);
   graphView.addEventListener('click', (e) => {
     if (e.target.closest('button.export')) {
-      var svgNode = graphView.querySelector('svg[typeof="http://purl.org/dc/dcmitype/Image"]');
+      if (!currentGraphObject) { return; }
 
-      var options = {
+      var exportOptions = {
         subjectURI: 'http://example.org/' + id,
         mediaType: 'image/svg+xml',
         filenameExtension: '.svg'
@@ -166,9 +194,8 @@ export function showVisualisationGraph(url, data, selector, options) {
         normalize: true
       };
 
-      svgNode = getDocument(svgNode.cloneNode(true), documentOptions);
-
-      exportAsDocument(svgNode, options);
+      var svgNode = getDocument(generateExportSVG(currentGraphObject), documentOptions);
+      exportAsDocument(svgNode, exportOptions);
     }
   });
 
@@ -176,16 +203,12 @@ export function showVisualisationGraph(url, data, selector, options) {
   width = options.width || parseInt(s.ownerDocument.defaultView.getComputedStyle(s, null)["width"]);
   height = options.height || parseInt(s.ownerDocument.defaultView.getComputedStyle(s, null)["height"]);
 
-  if ('title' in options) {
-    svg.append('title')
-      .attr('property', 'dcterms:title')
-      .text(options.title);
-  }
+  // Graph always renders to canvas; SVG element is only used for on-demand export
+  svg.style('display', 'none');
 
-  function addLegend(go) {
-    // console.log(go)
-
-    var graphLegend = svg.append('g')
+  function addLegend(go, target) {
+    target = target || svg;
+    var graphLegend = target.append('g')
       .attr('class', 'graph-legend');
 
     var graphResources = graphLegend
@@ -287,20 +310,9 @@ export function showVisualisationGraph(url, data, selector, options) {
         .text((d) => { return legendInfo[d].label + ' (' + legendInfo[d].count + ')'} )
   }
 
-  function handleResource (iri, headers, options) {
+  function handleResource(iri, headers, options) {
     return getResource(iri, headers, options)
-        //           .catch(error => {
-        // // console.log(error)
-        //             // if (error.status === 0) {
-        //               // retry with proxied uri
-        //               var pIRI = getProxyableIRI(options['subjectURI'], {'forceProxy': true});
-        //               return handleResource(pIRI, headers, options);
-        //             // }
-
-        //             // throw error  // else, re-throw the error
-        //           })
       .then(response => {
-        // console.log(response)
         var cT = response.headers.get('Content-Type');
         options['contentType'] = (cT) ? cT.split(';')[0].toLowerCase().trim() : 'text/turtle';
 
@@ -311,20 +323,6 @@ export function showVisualisationGraph(url, data, selector, options) {
       })
   }
 
-  function createSVGMarker() {
-    svg.append("defs")
-      .append("marker")
-        .attr("id", "end")
-        .attr("viewBox", "0 -5 10 10")
-        .attr("refX", 20)
-        .attr("refY", -1)
-        .attr("markerWidth", 6)
-        .attr("markerHeight", 6)
-        .attr("orient", "auto")
-        .attr("fill", group[2].color)
-      .append("path")
-        .attr("d", "M0,-5L10,0L0,5");
-  }
 
   function buildGraphObject(graph, options) {
     var graphObject = {};
@@ -332,38 +330,36 @@ export function showVisualisationGraph(url, data, selector, options) {
     var nodeById = new Map();
     nodes.forEach(n => {
       nodeById.set(n.id, n);
-    })
+    });
     var links = graph.links;
     var bilinks = [];
 
-    // console.log(graph)
-    // console.log(nodeById)
     var uniqueNodes = {};
 
     links.forEach(link => {
       var s = link.source = nodeById.get(link.source),
           t = link.target = nodeById.get(link.target),
-          i = {}; // intermediate node
-          // linkValue = link.value
+          i = {}, // intermediate node for curved path
+          predicate = link.value;
 
       nodes.push(i);
 
-      if (uniqueNodes[s.id] > -1) {
+      // Fixed: use 'in' operator instead of > -1 (uniqueNodes stores objects, not numbers)
+      if (s.id in uniqueNodes) {
         s = uniqueNodes[s.id];
-      }
-      else {
+      } else {
         uniqueNodes[s.id] = s;
       }
 
-      if (uniqueNodes[t.id] > -1) {
+      if (t.id in uniqueNodes) {
         t = uniqueNodes[t.id];
-      }
-      else {
+      } else {
         uniqueNodes[t.id] = t;
       }
 
       links.push({source: s, target: i}, {source: i, target: t});
-      bilinks.push([s, i, t]);
+      // Store predicate at index 3 for edge label tooltips
+      bilinks.push([s, i, t, predicate]);
     });
 
     graphObject = {
@@ -373,122 +369,435 @@ export function showVisualisationGraph(url, data, selector, options) {
       'uniqueNodes': uniqueNodes,
       'resources': options.resources
     };
-    // console.log(graphObject)
 
     return graphObject;
   }
 
-  function buildSVGObject(go) {
-    var svgObject = {};
+  // Build a static SVG from current simulation positions for export.
+  // Creates a detached element — never added to the live DOM.
+  function generateExportSVG(go) {
+    var exportContainer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    var exportSvg = d3.select(exportContainer)
+      .attr('width', width)
+      .attr('height', height)
+      .attr('xmlns', 'http://www.w3.org/2000/svg')
+      .attr('xml:lang', options.language)
+      .attr('prefix', 'rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns# rdfs: http://www.w3.org/2000/01/rdf-schema# xsd: http://www.w3.org/2001/XMLSchema# dcterms: http://purl.org/dc/terms/')
+      .attr('typeof', 'http://purl.org/dc/dcmitype/Image');
 
-    createSVGMarker();
+    if ('title' in options) {
+      exportSvg.append('title')
+        .attr('property', 'dcterms:title')
+        .text(options.title);
+    }
 
-    svg.append('g')
-      .attr('class', 'graph-objects');
+    // Arrow marker
+    exportSvg.append('defs')
+      .append('marker')
+        .attr('id', 'end')
+        .attr('viewBox', '0 -5 10 10')
+        .attr('refX', nodeRadius + 6)
+        .attr('refY', -1)
+        .attr('markerWidth', 6)
+        .attr('markerHeight', 6)
+        .attr('orient', 'auto')
+        .attr('fill', group[2].color)
+      .append('path')
+        .attr('d', 'M0,-5L10,0L0,5');
 
-    var graphObjects = svg.select('g.graph-objects');
+    var gObjects = exportSvg.append('g').attr('class', 'graph-objects');
 
-    var link = graphObjects.selectAll("path")
-      .data(go.bilinks)
-      .enter().append("path")
-        // .attr("class", "link")
+    // Links at their settled positions
+    gObjects.selectAll(null)
+      .data(go.bilinks.filter(function(d) { return d[0].x != null && d[2].x != null; }))
+      .enter().append('path')
         .attr('fill', 'none')
         .attr('stroke', group[4].color)
-        .attr("marker-end", "url(#end)");
+        .attr('marker-end', 'url(#end)')
+        .attr('d', positionLink);
 
-    // link.transition();
-
-    var node = graphObjects.selectAll("circle")
-      .data(go.nodes.filter(function(d) {
-        if (go.uniqueNodes[d.id] && go.uniqueNodes[d.id].index == d.index) {
-          return d.id;
-        }
-      }))
+    // Nodes at their settled positions
+    var nodeData = Object.values(go.uniqueNodes).filter(function(d) { return d.x != null; });
+    var nodeGroups = gObjects.selectAll(null)
+      .data(nodeData)
       .enter()
       .append('a')
         .attr('href', function(d) {
           if ('type' in group[d.group] && group[d.group].type !== 'rdfs:Literal' && !d.id.startsWith('http://example.com/.well-known/genid/')) {
-            return d.id
+            return d.id;
           }
-          return null
+          return null;
         })
-        .attr('rel', function(d) {
-          if (this.getAttribute('href') === null) { return null }
-          return 'dcterms:references'
+        .attr('rel', function() {
+          if (this.getAttribute('href') === null) { return null; }
+          return 'dcterms:references';
         })
-      .append('circle')
-        .attr('r', nodeRadius)
-        .attr('fill', function(d) { return group[d.group].color; })
-        .attr('stroke', function(d) {
-          if (d.visited) { return group[3].color }
-          else if (d.group == 4) { return group[2].color }
-          else { return group[7].color }})
-        .on('click', function(e, d) {
-          e.preventDefault();
-          e.stopPropagation();
+      .append('g')
+        .attr('class', 'node-group')
+        .attr('transform', positionNode);
 
-          var iri = d.id;
-          if ('type' in group[d.group] && group[d.group].type !== 'rdf:Literal' && !(d.id in Config.Graphs)) {
-            options = options || {};
-            options['subjectURI'] = iri;
-            //TODO: These values need not be set here. getResource(Graph) should take care of it. Refactor handleResource
-            var headers = { 'Accept': setAcceptRDFTypes() };
-            // var pIRI = getProxyableIRI(iri);
-            if (iri.slice(0, 5).toLowerCase() == 'http:') {
-              options['noCredentials'] = true;
-            }
+    nodeGroups.append('circle')
+      .attr('r', nodeRadius)
+      .attr('fill', function(d) { return group[d.group] ? group[d.group].color : '#fff'; })
+      .attr('stroke', function(d) {
+        if (d.visited) { return group[3].color; }
+        if (d.group == 4) { return group[2].color; }
+        return group[7].color;
+      })
+      .attr('stroke-width', 1.5);
 
-            handleResource(iri, headers, options);
-          }
-        })
+    // Labels always visible in the export
+    nodeGroups.append('text')
+      .attr('x', nodeRadius + 3)
+      .attr('y', 4)
+      .attr('font-size', '10px')
+      .attr('font-family', 'monospace')
+      .attr('fill', 'rgba(220,220,220,0.9)')
+      .text(function(d) { return nodeLabel(d); });
 
-    node.append('title')
-      .text(function(d) { return d.id; });
+    addLegend(go, exportSvg);
 
-        // .call(d3.drag()
-        //     .on("start", dragstarted)
-        //     .on("drag", dragged)
-        //     .on("end", dragended));
+    return exportContainer;
+  }
 
-    svgObject = {
-      'link': link,
-      'node': node
+  // Canvas renderer — always used for the live graph view.
+  // Supports pan (drag) and zoom (wheel). Labels shown on hover only.
+  function buildCanvasRenderer(go) {
+    var container = document.querySelector(selector);
+
+    var existingCanvas = container.querySelector('canvas.graph-canvas');
+    if (existingCanvas) existingCanvas.remove();
+
+    var canvas = document.createElement('canvas');
+    canvas.className = 'graph-canvas';
+    canvas.width = width;
+    canvas.height = height;
+    canvas.style.cssText = 'width:100%;height:100%;display:block;';
+    container.appendChild(canvas);
+
+    var ctx = canvas.getContext('2d');
+    var nodes = Object.values(go.uniqueNodes);
+
+    // Pan/zoom transform state
+    var tx = { x: 0, y: 0, scale: 1 };
+
+    // Hover state — drives label rendering each frame
+    var hoveredNode = null;
+    var hoveredLink = null;
+
+    // Pan gesture tracking
+    var isPanning = false;
+    var panStart = { x: 0, y: 0 };
+    var dragMoved = false;
+
+    // Sample a point on a quadratic bezier at parameter tt in [0,1]
+    function sampleBezier(s, mid, t, tt) {
+      var mx = mid.x != null ? mid.x : (s.x + t.x) / 2;
+      var my = mid.y != null ? mid.y : (s.y + t.y) / 2;
+      return {
+        x: (1 - tt) * (1 - tt) * s.x + 2 * (1 - tt) * tt * mx + tt * tt * t.x,
+        y: (1 - tt) * (1 - tt) * s.y + 2 * (1 - tt) * tt * my + tt * tt * t.y
+      };
     }
 
-    //Adding this now so that it is not selected with circles above.
-    addLegend(go);
+    function drawArrowhead(fromX, fromY, toX, toY) {
+      var angle = Math.atan2(toY - fromY, toX - fromX);
+      var len = 8;
+      ctx.beginPath();
+      ctx.moveTo(toX, toY);
+      ctx.lineTo(toX - len * Math.cos(angle - Math.PI / 6), toY - len * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(toX - len * Math.cos(angle + Math.PI / 6), toY - len * Math.sin(angle + Math.PI / 6));
+      ctx.closePath();
+      ctx.fill();
+    }
 
-    // console.log(svgObject)
-    return svgObject;
+    function drawPill(text, x, y) {
+      ctx.font = 'bold 11px monospace';
+      var tw = ctx.measureText(text).width;
+      ctx.fillStyle = 'rgba(20,20,20,0.88)';
+      ctx.beginPath();
+      ctx.roundRect(x - 3, y - 13, tw + 6, 16, 3);
+      ctx.fill();
+      ctx.fillStyle = '#eee';
+      ctx.fillText(text, x, y);
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, width, height);
+
+      // Apply pan/zoom transform for the graph area
+      ctx.save();
+      ctx.translate(tx.x, tx.y);
+      ctx.scale(tx.scale, tx.scale);
+
+      // Draw links
+      go.bilinks.forEach(function(d) {
+        var s = d[0], mid = d[1], t = d[2];
+        if (s.x == null || t.x == null) return;
+        var mx = mid.x != null ? mid.x : (s.x + t.x) / 2;
+        var my = mid.y != null ? mid.y : (s.y + t.y) / 2;
+        var isHovered = d === hoveredLink;
+
+        ctx.beginPath();
+        ctx.moveTo(s.x, s.y);
+        ctx.quadraticCurveTo(mx, my, t.x, t.y);
+        ctx.strokeStyle = isHovered ? '#ff8800' : group[4].color;
+        ctx.lineWidth = isHovered ? 2 / tx.scale : 1 / tx.scale;
+        ctx.stroke();
+
+        var tip = sampleBezier(s, mid, t, 0.95);
+        var before = sampleBezier(s, mid, t, 0.88);
+        ctx.fillStyle = isHovered ? '#ff8800' : group[2].color;
+        drawArrowhead(before.x, before.y, tip.x, tip.y);
+
+        // Edge label on hover — drawn at the midpoint of the curve
+        if (isHovered && d[3]) {
+          var midPt = sampleBezier(s, mid, t, 0.5);
+          drawPill(shortLabel(d[3]), midPt.x, midPt.y);
+        }
+      });
+
+      // Draw nodes
+      nodes.forEach(function(d) {
+        if (d.x == null) return;
+        var isHovered = d === hoveredNode;
+        var r = isHovered ? nodeRadius * 1.3 : nodeRadius;
+
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, r, 0, 2 * Math.PI);
+        ctx.fillStyle = group[d.group] ? group[d.group].color : '#fff';
+        ctx.fill();
+
+        var strokeColor = d.visited ? group[3].color : (d.group == 4 ? group[2].color : group[7].color);
+        ctx.strokeStyle = isHovered ? '#fff' : strokeColor;
+        ctx.lineWidth = isHovered ? 2.5 / tx.scale : 1.5 / tx.scale;
+        ctx.stroke();
+
+        // Label on hover for all node types (literals show their value)
+        if (isHovered) {
+          var label = nodeLabel(d);
+          if (label) {
+            drawPill(label, d.x + r + 4, d.y + 4);
+          }
+        }
+      });
+
+      ctx.restore();
+
+      // Legend is drawn outside the transform — fixed top-left position
+      drawCanvasLegend(go);
+    }
+
+    function drawCanvasLegend(go) {
+      var x = 12, y = 20;
+      ctx.font = '12px sans-serif';
+      ctx.fillStyle = 'rgba(200,200,200,0.9)';
+      ctx.fillText('Resources: ' + go.resources.join(', '), x, y);
+      ctx.fillText('Statements: ' + go.bilinks.length, x, y + 22);
+      ctx.fillText('Nodes: ' + nodes.length + ' (unique)', x, y + 44);
+
+      const legendInfo = {};
+      Object.keys(legendCategories).forEach(g => {
+        legendInfo[g] = { ...legendCategories[g], count: 0 };
+      });
+      go.nodes.forEach(function(node) {
+        if (node.group && legendInfo[node.group]) legendInfo[node.group].count++;
+      });
+
+      var legendY = y + 72;
+      ctx.font = '11px monospace';
+      Object.keys(legendInfo).forEach(function(g, i) {
+        ctx.beginPath();
+        ctx.arc(x + nodeRadius, legendY + i * 22, nodeRadius, 0, 2 * Math.PI);
+        ctx.fillStyle = legendInfo[g].color;
+        ctx.fill();
+        ctx.fillStyle = legendInfo[g].color;
+        ctx.fillText(legendInfo[g].label + ' (' + legendInfo[g].count + ')', x + nodeRadius * 2 + 4, legendY + i * 22 + 4);
+      });
+    }
+
+    // Convert a mouse event to raw canvas pixel coords
+    function rawCoords(e) {
+      var rect = canvas.getBoundingClientRect();
+      return {
+        x: (e.clientX - rect.left) * (width / rect.width),
+        y: (e.clientY - rect.top) * (height / rect.height)
+      };
+    }
+
+    // Convert raw canvas coords to graph-space coords (inverse of pan/zoom transform)
+    function graphCoords(e) {
+      var raw = rawCoords(e);
+      return {
+        x: (raw.x - tx.x) / tx.scale,
+        y: (raw.y - tx.y) / tx.scale
+      };
+    }
+
+    function getNodeAt(x, y) {
+      return nodes.find(function(d) {
+        if (d.x == null) return false;
+        var dx = d.x - x, dy = d.y - y;
+        return dx * dx + dy * dy <= nodeRadius * nodeRadius;
+      });
+    }
+
+    function getLinkAt(x, y) {
+      var closest = null;
+      // Scale hit tolerance inversely with zoom so it stays ~8px on screen
+      var minDist = 8 / tx.scale;
+      go.bilinks.forEach(function(d) {
+        var s = d[0], mid = d[1], t = d[2];
+        if (s.x == null || t.x == null) return;
+        for (var j = 0; j <= 12; j++) {
+          var pt = sampleBezier(s, mid, t, j / 12);
+          var dist = Math.sqrt((pt.x - x) * (pt.x - x) + (pt.y - y) * (pt.y - y));
+          if (dist < minDist) {
+            minDist = dist;
+            closest = d;
+          }
+        }
+      });
+      return closest;
+    }
+
+    // Zoom toward mouse cursor on wheel
+    canvas.addEventListener('wheel', function(e) {
+      e.preventDefault();
+      var raw = rawCoords(e);
+      var factor = e.deltaY < 0 ? 1.1 : 0.9;
+      tx.x = raw.x - factor * (raw.x - tx.x);
+      tx.y = raw.y - factor * (raw.y - tx.y);
+      tx.scale = Math.max(0.05, Math.min(20, tx.scale * factor));
+      draw();
+    }, { passive: false });
+
+    canvas.addEventListener('mousedown', function(e) {
+      if (e.button !== 0) return;
+      isPanning = true;
+      dragMoved = false;
+      panStart.x = e.clientX - tx.x;
+      panStart.y = e.clientY - tx.y;
+    });
+
+    // Window-level listeners so pan continues when cursor leaves canvas
+    function onWindowMouseMove(e) {
+      if (!isPanning) return;
+      var dx = e.clientX - panStart.x - tx.x;
+      var dy = e.clientY - panStart.y - tx.y;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) dragMoved = true;
+      if (dragMoved) {
+        tx.x = e.clientX - panStart.x;
+        tx.y = e.clientY - panStart.y;
+        hideTooltip();
+        draw();
+      }
+    }
+
+    function onWindowMouseUp() {
+      isPanning = false;
+    }
+
+    window.addEventListener('mousemove', onWindowMouseMove);
+    window.addEventListener('mouseup', onWindowMouseUp);
+
+    canvas.addEventListener('mousemove', function(e) {
+      if (isPanning && dragMoved) return;
+      var pt = graphCoords(e);
+      var node = getNodeAt(pt.x, pt.y);
+      var link = node ? null : getLinkAt(pt.x, pt.y);
+
+      var changed = (node !== hoveredNode) || (link !== hoveredLink);
+      hoveredNode = node;
+      hoveredLink = link;
+
+      if (node) {
+        showTooltip(e, node.id);
+        canvas.style.cursor = 'pointer';
+      } else if (link && link[3]) {
+        showTooltip(e, shortLabel(link[3]) + '\n' + link[3]);
+        canvas.style.cursor = 'default';
+      } else {
+        hideTooltip();
+        canvas.style.cursor = 'default';
+      }
+
+      // Only redraw if hover target changed (sim may not be ticking any more)
+      if (changed) draw();
+    });
+
+    canvas.addEventListener('mouseleave', function() {
+      hoveredNode = null;
+      hoveredLink = null;
+      hideTooltip();
+      draw();
+    });
+
+    canvas.addEventListener('click', function(e) {
+      if (dragMoved) return; // was a pan gesture, not a click
+      var pt = graphCoords(e);
+      var d = getNodeAt(pt.x, pt.y);
+      if (d && 'type' in group[d.group] && group[d.group].type !== 'rdfs:Literal' && !(d.id in Config.Graphs)) {
+        options = options || {};
+        options['subjectURI'] = d.id;
+        var headers = { 'Accept': setAcceptRDFTypes() };
+        if (d.id.slice(0, 5).toLowerCase() == 'http:') {
+          options['noCredentials'] = true;
+        }
+        handleResource(d.id, headers, options);
+      }
+    });
+
+    function cleanup() {
+      window.removeEventListener('mousemove', onWindowMouseMove);
+      window.removeEventListener('mouseup', onWindowMouseUp);
+    }
+
+    return { draw, cleanup };
+  }
+
+
+  // Unified simulation runner: wire links and call tickFn on every tick.
+  // Works for both SVG (pass a fn that updates attrs) and canvas (pass draw).
+  function runSimulation(graph, tickFn) {
+    simulation.force("link").links(graph.links);
+    simulation.on("tick", tickFn);
+    simulation.on("end", tickFn); // one final draw after settling
   }
 
   function initiateVisualisation(url, data, options) {
     url = stripFragmentFromString(url);
     options.resources = ('resources' in options) ? uniqueArray(options.resources.concat(url)) : [url];
 
-    return getVisualisationGraphData(url, data, options).then(
-      function(graph){
-        // console.log(graph);
-        var graphObject = buildGraphObject(graph, options);
+    // Stop any previous simulation before rebuilding
+    if (simulation) { simulation.stop(); }
 
-        simulation = d3.forceSimulation().nodes(graph.nodes)
-          .alphaDecay(0.025)
-          // .velocityDecay(0.1)
-          .force("link", d3.forceLink().distance(nodeRadius).strength(0.25))
-          .force('collide', d3.forceCollide().radius(nodeRadius * 2).strength(0.25))
-          // .force("charge", d3.forceManyBody().stength(-5))
+    return getVisualisationGraphData(url, data, options).then(
+      function(graph) {
+        var graphObject = buildGraphObject(graph, options);
+        var uniqueNodeCount = Object.keys(graphObject.uniqueNodes).length;
+        currentGraphObject = graphObject;
+
+        // Faster convergence for larger graphs at the cost of slightly less optimal layout
+        var alphaDecay = uniqueNodeCount > 500 ? 0.1 : uniqueNodeCount > 200 ? 0.05 : 0.025;
+
+        simulation = d3.forceSimulation()
+          .nodes(graph.nodes)
+          .alphaDecay(alphaDecay)
+          .force("link", d3.forceLink().distance(nodeRadius * 4).strength(0.25))
+          .force('collide', d3.forceCollide().radius(nodeRadius * 2.5).strength(0.25))
           .force("center", d3.forceCenter(width / 2, height / 2));
 
         if ('mergeGraph' in options && options.mergeGraph) {
-          svg.selectAll("defs").remove();
-          svg.selectAll("g.graph-legend").remove();
-          svg.selectAll("g.graph-objects").remove();
-          simulation.restart();
+          if (canvasCleanup) { canvasCleanup(); canvasCleanup = null; }
+          var container = document.querySelector(selector);
+          var existingCanvas = container.querySelector('canvas.graph-canvas');
+          if (existingCanvas) existingCanvas.remove();
         }
 
-        var svgObject = buildSVGObject(graphObject);
-
-        runSimulation(graph, svgObject);
+        var canvasRenderer = buildCanvasRenderer(graphObject);
+        canvasCleanup = canvasRenderer.cleanup;
+        runSimulation(graph, canvasRenderer.draw);
       });
   }
 
@@ -550,7 +859,8 @@ function convertGraphToVisualisationGraph(url, g, options){
   });
 
   var graphData = {"nodes":[], "links": [], "resources": options.resources };
-  var graphNodes = [];
+  // Use a Set for O(1) membership checks instead of O(n) array.includes()
+  var graphNodes = new Set();
 
   dataGraph.out().quads().forEach(t => {
     if (
@@ -710,12 +1020,12 @@ function convertGraphToVisualisationGraph(url, g, options){
 
     //XXX: Don't remember why this if was included but it seems to be problematic since it skips adding nodes where the object doesn't have a type. So commenting it out for now. Seems to work as expected.
     // if (!g.node(rdf.namedNode(t.object.value)).out(ns.rdf.type).values.length) {
-      if (!graphNodes.includes(t.subject.value)) {
-        graphNodes.push(t.subject.value);
+      if (!graphNodes.has(t.subject.value)) {
+        graphNodes.add(t.subject.value);
         graphData.nodes.push({"id": t.subject.value, "group": sGroup, "visited": sVisited });
       }
 
-      if (!graphNodes.includes(t.object.value)) {
+      if (!graphNodes.has(objectValue)) {
         if (t.object.value in Config.Resource) {
           // console.log(t.object.value)
           Config.Resource[t.object.value].graph.out(ns.rdf.type).values.forEach(type => {
@@ -726,7 +1036,7 @@ function convertGraphToVisualisationGraph(url, g, options){
           })
         }
 
-        graphNodes.push(objectValue);
+        graphNodes.add(objectValue);
         graphData.nodes.push({"id": objectValue, "group": oGroup, "visited": oVisited });
       }
     // }
@@ -735,7 +1045,6 @@ function convertGraphToVisualisationGraph(url, g, options){
   });
   // console.log(graphNodes)
 
-  graphNodes = undefined;
   return Promise.resolve(graphData);
 }
 
@@ -785,7 +1094,7 @@ export function showGraphResources(resources, selector, options) {
       Promise.allSettled(promises)
         .then(resolvedPromises => {
           let dataset = rdf.dataset();
-    
+
           resolvedPromises.forEach(response => {
             if (response.value) {
               dataset.addAll(response.value.dataset);
