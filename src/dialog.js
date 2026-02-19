@@ -97,7 +97,8 @@ export function showDocumentMenu(e) {
     options['followLinkRelationTypes'] = ['describedby'];
   }
 
-  updateResourceInfos(Config.DocumentURL, null, null, options);
+  const hasResourceInfo = Config.DocumentURL in Config.Resource && 'state' in Config.Resource[Config.DocumentURL];
+  updateResourceInfos(Config.DocumentURL, null, null, { ...options, skipRDFParse: hasResourceInfo });
 }
 
 export function hideDocumentMenu(e) {

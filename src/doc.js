@@ -1577,7 +1577,7 @@ export async function getResourceInfo(data, options) {
   Config['Resource'][documentURL] = Config['Resource'][documentURL] || {};
   Config['Resource'][documentURL]['data'] = data;
   if (options['storeHash']) {
-    Config['Resource'][documentURL]['digestSRI'] = await getHash(data);
+    Config['Resource'][documentURL]['digestSRI'] = options['digestSRI'] || await getHash(data);
   }
   Config['Resource'][documentURL]['contentType'] = options.contentType;
 
@@ -1688,20 +1688,22 @@ export async function updateResourceInfos(documentURL = Config.DocumentURL, data
     return;
   }
 
-  const documentOptions = {
-    ...Config.DOMProcessing,
-    format: true,
-    sanitize: true,
-    normalize: true
-  };
-
-  data = data || getDocument(null, documentOptions);
-
   const storeHash = options.storeHash !== false;
 
-  await getResourceInfo(data, { storeHash }).then(resourceInfo => {
-    Config.Resource[documentURL] = { ...Config.Resource[documentURL], ...resourceInfo };
-  });
+  if (!options.skipRDFParse) {
+    const documentOptions = {
+      ...Config.DOMProcessing,
+      format: true,
+      sanitize: true,
+      normalize: true
+    };
+
+    data = data || getDocument(null, documentOptions);
+
+    await getResourceInfo(data, { storeHash, digestSRI: options.digestSRI }).then(resourceInfo => {
+      Config.Resource[documentURL] = { ...Config.Resource[documentURL], ...resourceInfo };
+    });
+  }
 
   if (response) {
     updateSupplementalInfo(response, options);
@@ -1717,6 +1719,8 @@ export function updateSupplementalInfo(response, options = {}) {
   var checkHeaders = options?.checkHeaders ?? ['wac-allow', 'link', 'last-modified', 'etag', 'expires', 'date', 'allow'];
   var headers = response.headers;
   var documentURL = options?.documentURL || Config.DocumentURL;
+
+  Config['Resource'][documentURL] ||= {};
 
   const preservedHeaders = {};
   if (options?.preserveHeaders?.length) {
@@ -2269,12 +2273,15 @@ export function createMutableResource(url, data, options) {
     setDocumentRelation(document, [r], o);
   }
 
+  // First serialize: document carries the mutableURL identifier (rel:latest-version).
   data = getDocument(null, documentOptions);
 
   processSave(containerIRI, uuid, data, options)
     .then((resolved) => handleActionMessage(resolved))
     .catch((rejected) => handleActionMessage(null, rejected))
 
+  // setDocumentRelation synchronously mutates the live document, so a second
+  // serialize is required — this one carries the canonical url identifier (owl:sameAs).
   o = { 'id': 'document-identifier', 'title': 'Identifier' };
   r = { 'rel': 'owl:sameAs', 'href': url };
   setDocumentRelation(document, [r], o);

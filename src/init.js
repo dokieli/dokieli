@@ -18,7 +18,7 @@ limitations under the License.
 import shower from '@shower/core';
 import Config from './config.js';
 const ns = Config.ns;
-import { highlightItems, updateSelectedStylesheets, initCurrentStylesheet, showActionMessage, addMessageToLog, initCopyToClipboard, showFragment, setDocRefType, showRobustLinksDecoration, focusNote, showAsTabs, getResourceInfo, setDocumentString, setDocumentURL, getDocument } from './doc.js';
+import { highlightItems, updateSelectedStylesheets, initCurrentStylesheet, showActionMessage, addMessageToLog, initCopyToClipboard, showFragment, setDocRefType, showRobustLinksDecoration, focusNote, showAsTabs, setDocumentString, setDocumentURL, getDocument } from './doc.js';
 import { initButtons } from './ui/buttons.js'
 import { setWebExtensionURL } from './util.js';
 import { getLocalStorageItem } from './storage.js';
@@ -130,29 +130,15 @@ function initDocumentActions() {
       }
     }
     else {
-      //XXX: syncLocalRemoteResource is also eventually calling getResourceInfo through updateResourceInfos (in try)
-      getResourceInfo(Config.DocumentString).then(resourceInfo => {
-        processPotentialAction(resourceInfo);
+      syncLocalRemoteResource({
+        onLocalInfo: (resourceInfo) => {
+          processPotentialAction(resourceInfo);
 
-        if (Config.Resource[documentURL].inbox?.length && !Config.Inbox[Config.Resource[documentURL].inbox[0]]) {
-          showNotificationSources(Config.Resource[documentURL].inbox[0]);
+          if (Config.Resource[documentURL].inbox?.length && !Config.Inbox[Config.Resource[documentURL].inbox[0]]) {
+            showNotificationSources(Config.Resource[documentURL].inbox[0]);
+          }
         }
       });
-
-      // var options = { reuse: true };
-      // var options = { init: true };
-      // var options = {};
-      // if (document.location.protocol.startsWith('http')) {
-      //   options['followLinkRelationTypes'] = ['describedby'];
-      // }
-
-      // getResourceSupplementalInfo(Config.DocumentURL, options).then(resourceInfo => {
-      //   updateButtons();
-
-        syncLocalRemoteResource();
-      // });
-
-      // window.setTimeout(checkResourceInfo, 100);
     }
   }
 

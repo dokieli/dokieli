@@ -17,7 +17,7 @@ limitations under the License.
 
 import { diffArrays } from "diff";
 import { accessModePossiblyAllowed } from "./access.js";
-import { addMessageToLog, getDocument, processSupplementalInfoLinkHeaders, showActionMessage, updateResourceInfos, updateSupplementalInfo } from "./doc.js";
+import { addMessageToLog, getDocument, getResourceInfo, processSupplementalInfoLinkHeaders, showActionMessage, updateResourceInfos, updateSupplementalInfo } from "./doc.js";
 import { getResource, putResource } from "./fetcher.js";
 import { getLocalStorageItem, updateLocalStorageItem, updateStorage } from "./storage.js";
 import { getDateTimeISO, getDateTimeISOFromDate, getHash } from "./util.js";
@@ -59,6 +59,7 @@ export async function syncLocalRemoteResource(options = {}) {
   let remoteETag;
   let remoteLastModified;
   let remoteDate;
+  Config['Resource'][Config.DocumentURL] ||= {};
   const previousRemoteHash = Config.Resource[Config.DocumentURL]['digestSRI'];
 
   const hasAccessModeWrite = accessModePossiblyAllowed(Config.DocumentURL, 'write');
@@ -88,9 +89,19 @@ export async function syncLocalRemoteResource(options = {}) {
     }
   }
 
-  //XXX: REVISIT THIS. This is  cheap way to reuse initial getDocument value. DocumenString is not currently used besides this.
   localContent = Config.DocumentString || getDocument(null, documentOptions);
   Config.DocumentString = null;
+
+  // Parse local content early so:
+  //   (a) Config.Resource[...].data is set before any 304 response uses it
+  //   (b) callers can act on local resource info before the remote fetch returns
+  if (!Config.Resource[Config.DocumentURL]?.data) {
+    await getResourceInfo(localContent).then(resourceInfo => {
+      options.onLocalInfo?.(resourceInfo);
+    });
+  } else {
+    options.onLocalInfo?.(Config.Resource[Config.DocumentURL]);
+  }
 
 // console.log(localContent)
   let localHash = await getHash(localContent);
@@ -127,7 +138,7 @@ export async function syncLocalRemoteResource(options = {}) {
     }
 
     //Need to make sure to wait
-    await updateResourceInfos(Config.DocumentURL, remoteContent, response, { storeHash: true });
+    await updateResourceInfos(Config.DocumentURL, remoteContent, response, { storeHash: true, digestSRI: remoteHash });
     processSupplementalInfoLinkHeaders(Config.DocumentURL, linkHeadersOptions);
 
     // Config.Resource[Config.DocumentURL]['digestSRI'] = remoteHash;
@@ -280,7 +291,7 @@ export async function syncLocalRemoteResource(options = {}) {
       Config.Editor.replaceContent(Config.Editor.mode, remoteContentNode);
       Config.Editor.init(Config.Editor.mode, document.body);
       autoSave(Config.DocumentURL, { method: 'localStorage', published: remotePublishDate });
-      updateResourceInfos(Config.DocumentURL, null, response);
+      updateResourceInfos(Config.DocumentURL, remoteContent, response);
       return;
     }
   }
@@ -344,7 +355,7 @@ export async function syncLocalRemoteResource(options = {}) {
         Config.Editor.replaceContent(Config.Editor.mode, remoteContentNode);
         Config.Editor.init(Config.Editor.mode, document.body);
         autoSave(Config.DocumentURL, { method: 'localStorage', published: remotePublishDate });
-        updateResourceInfos(Config.DocumentURL, null, response);
+        updateResourceInfos(Config.DocumentURL, remoteContent, response);
       }
       else {
         reviewOptions['message'] = `<span data-i18n="dialog.review-changes.message.remote-changed.span">${i18n.t('dialog.review-changes.message.remote-changed.span.textContent')}</span>`;
