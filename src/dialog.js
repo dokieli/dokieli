@@ -444,6 +444,7 @@ function showViews(node) {
             <h2 data-i18n="dialog.graph-view.h2" id="graph-view-label" property="schema:name">${i18n.t('dialog.graph-view.h2.textContent')} ${Config.Button.Info.GraphView}</h2>
             ${buttonClose}
             <div class="info"></div>
+            <div id="viz-tooltip"></div>
           </aside>
         `));
 

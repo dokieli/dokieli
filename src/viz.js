@@ -85,16 +85,10 @@ export function showVisualisationGraph(url, data, selector, options) {
     return "translate(" + d.x + "," + d.y + ")";
   }
 
-  // Shared floating tooltip element (one per page, reused across renders)
-  var tooltip = document.getElementById('viz-tooltip');
-  if (!tooltip) {
-    tooltip = document.createElement('div');
-    tooltip.id = 'viz-tooltip';
-    document.querySelector(selector).appendChild(tooltip);
-  }
-
   function showTooltip(e, content) {
     if (!content) return;
+    content = content.trim();
+    //TODO: if object has rdf:HTML datatype, appendChild
     tooltip.textContent = content.length > 120 ? content.slice(0, 117) + '…' : content;
     tooltip.style.display = 'block';
     // moveTooltip(e);
@@ -147,8 +141,11 @@ export function showVisualisationGraph(url, data, selector, options) {
         <h2 data-i18n="dialog.graph-view.h2" id="graph-view-label" property="schema:name">${i18n.t('dialog.graph-view.h2.textContent')} ${Config.Button.Info.GraphView}</h2>
         ${buttonClose}
         <div class="info"></div>
+        <div id="graph-view-tooltip"></div>
       </aside>`));
   }
+
+  let tooltip = document.getElementById('viz-tooltip');
 
   // var svg = d3.select(selector).append('svg')
   //   .attr('width', width)
@@ -709,13 +706,13 @@ export function showVisualisationGraph(url, data, selector, options) {
 
       if (node) {
         showTooltip(e, node.id);
-        canvas.style.cursor = 'pointer';
+        // canvas.style.cursor = 'pointer';
       } else if (link && link[3]) {
         showTooltip(e, link[3]);
-        canvas.style.cursor = 'default';
+        // canvas.style.cursor = 'default';
       } else {
         hideTooltip();
-        canvas.style.cursor = 'default';
+        // canvas.style.cursor = 'default';
       }
 
       // Only redraw if hover target changed (sim may not be ticking any more)
