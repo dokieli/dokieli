@@ -76,22 +76,16 @@ export class Editor {
         this.authorToolbarView = this.editorView?.pluginViews[0];
         break;
 
-      case 'social':
-      default: {
-        this.storeRestrictedNodes();
-        // Check before destroyEditor since it nulls editorView.
-        const wasAuthorMode = !!this.editorView;
-        this.destroyEditor();
-        this.createSocialToolbar();
-        if (wasAuthorMode) {
-          // PM's parse/serialize strips event listeners. Re-attach robustlinks handlers
-          // (idempotent: won't insert duplicate spans) and regenerate copy-to-clipboard
-          // buttons (which were removed from the DOM before PM parsing).
-          showRobustLinksDecoration();
-          initCopyToClipboard();
+        case 'social':
+        default: {
+          if (this.editorView) {
+            this.destroyEditor();
+            showRobustLinksDecoration();
+            initCopyToClipboard();
+          }
+          this.createSocialToolbar();
+          break;
         }
-        break;
-      }
     }
 
     if (!this.hasRunTextQuoteSelector && (this.socialToolbarView || this.authorToolbarView)) {
@@ -366,10 +360,17 @@ export class Editor {
       // Restore body content and original nodes.
       // #document-menu and #document-info must be prepended before the editor content.
       // copy-to-clipboard buttons are discarded; initCopyToClipboard() regenerates them in social mode.
+      // If restrictedNodes is empty (social mode, no prior storeRestrictedNodes call),
+      // grab #document-menu from the live DOM before replaceChildren wipes it.
+      if (!this.restrictedNodes.length) {
+        const documentMenu = document.getElementById('document-menu');
+        const documentInfo = document.getElementById('document-info');
+        this.restrictedNodes = [documentMenu, documentInfo].filter(Boolean);
+      }
+
       const prependNodes = this.restrictedNodes.filter(n => n.id === 'document-menu' || n.id === 'document-info');
       const appendNodes = this.restrictedNodes.filter(n => n.id !== 'document-menu' && n.id !== 'document-info' && !n.classList.contains('copy-to-clipboard'));
       document.body.replaceChildren(...prependNodes, ...newBodyContent, ...appendNodes, ...this.allowedScriptElements);
-
       // this.restrictedNodes.forEach(node => {
       //   document.body.appendChild(node);
       // });

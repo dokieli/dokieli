@@ -38,18 +38,55 @@ import { parseMarkdown, fragmentFromString, removeSelectorFromNode, selectArticl
 import { showUserSigninSignout, userInfoSignOut } from './auth.js';
 import { generateGeoView } from './geo.js';
 import { csvStringToJson, jsonToHtmlTableString } from './csv.js';
-// import { initEditor } from './editor/initEditor.js';
 
-export function initDocumentMenu() {
-  //TODO: Looking into adding back about/resource="#document-menu" typeof="schema:ActivateAction"
-  document.body.prepend(fragmentFromString(`<div class="do" id="document-menu" dir="${Config.User.UI.LanguageDir}" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}">${Config.Button.Menu.OpenMenu}<div><section id="user-info"></section></div></div>`));
+export function initDocumentMenu() { 
+  const loadingState = `
+  <button class="show do-menu do-loading" aria-disabled="true" title="Loading…" aria-label="Loading">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" aria-hidden="true">
+      <rect x="0" y="60" width="448" height="72" rx="16" class="do-bar do-bar-1"/>
+      <rect x="0" y="220" width="448" height="72" rx="16" class="do-bar do-bar-2"/>
+      <rect x="0" y="380" width="448" height="72" rx="16" class="do-bar do-bar-3"/>
+    </svg>
+  </button>
+  <style>
+    @keyframes do-bar-pulse {
+      0%, 100% { opacity: 0.2; }
+      50%       { opacity: 1; }
+    }
+    #document-menu > button.do-loading {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      // pointer-events: none;
+      cursor: wait;
+    }
+    #document-menu > button.do-loading svg {
+      width: 1em;
+      height: 1em;
+      fill: currentColor;
+    }
+    .do-bar { animation: do-bar-pulse 1.2s ease-in-out infinite; }
+    .do-bar-1 { animation-delay: 0s; }
+    .do-bar-2 { animation-delay: 0.2s; }
+    .do-bar-3 { animation-delay: 0.4s; }
+  </style>
+`;
 
+  document.body.prepend(fragmentFromString(`<div class="do" id="document-menu" dir="${Config.User.UI.LanguageDir}" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}">${loadingState}<div><section id="user-info"></section></div></div>`));
+
+  const menuNode = document.getElementById('document-menu');
+
+  document.addEventListener('dokieli:ready', () => {
+    // console.log('ready');
+    menuNode.innerHTML = `${Config.Button.Menu.OpenMenu}<div><section id="user-info"></section></div>`;
+  }, { once: true });
+  
   var userInfo = document.getElementById('user-info');
 
   document.addEventListener('click', (e) => {
     var button = e.target.closest('button');
     if (button?.closest('.do-menu')) {
-      if (button.classList.contains('show')) {
+      if (button.classList.contains('show') && !button.classList.contains('do-loading')) {
         showDocumentMenu(e);
       }
       else if (button?.classList.contains('hide')) {
@@ -60,6 +97,7 @@ export function initDocumentMenu() {
       userInfoSignOut(userInfo);
     }
   });
+  
 }
 
 export function showDocumentMenu(e) {
@@ -5150,8 +5188,19 @@ export async function spawnDokieli(documentNode, data, contentTypes, iris, optio
     // console.log(Config.Editor)    
     Config.Editor.init(null, null, options);
 
+    //FIXME. Call initDocumentActions (TODO: create document-actions.js)
     showFragment();
     initCopyToClipboard();
+    // showRobustLinksDecoration();
+    // processPotentialAction();
+    // processActivateAction();
+    // highlightItems();
+    // showAsTabs();
+    // initSlideshow();
+    // setDocRefType();
+    // initCurrentStylesheet();
+    // initShowNotificationSources();
+    // focusNote();
 
     // hideDocumentMenu();
     return;

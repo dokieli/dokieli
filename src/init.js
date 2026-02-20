@@ -15,6 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import rdf from 'rdf-ext';
 import shower from '@shower/core';
 import Config from './config.js';
 const ns = Config.ns;
@@ -32,42 +33,51 @@ import { initEditor } from './editor/initEditor.js';
 import { showGraph, showVisualisationGraph } from './viz.js';
 import { openResource, initDocumentMenu, spawnDokieli, showDocumentMenu } from './dialog.js';
 import { Icon } from './ui/icons.js';
-import { eventButtonClose, eventButtonSignIn, eventButtonSignOut, eventButtonNotificationsToggle, eventButtonInfo } from './events.js';
-import { hasNonWhitespaceText, getDocumentContentNode, selectArticleNode } from "./utils/html.js";
+import { eventButtonClose, eventButtonSignIn, eventButtonSignOut, eventButtonNotificationsToggle, eventButtonInfo, emitDocEvent } from './events.js';
+import { hasNonWhitespaceText, getDocumentContentNode, selectArticleNode, fragmentFromString } from "./utils/html.js";
 
-export function init (url) {
+export async function init (url) {
   initServiceWorker();
 
   var contentNode = getDocumentContentNode(document);
   if (contentNode) {
     initButtons();
+    initDocumentMenu();
+    
+    emitDocEvent('loading');
+    
     setDocumentURL(url);
     setWebExtensionURL();
     setDocumentString();
-    initUser();
     setDocumentModeParams();
+    initUser();
     initLocalStorage();
-    initDocumentActions();
-    initDocumentMenu();
-    setDocRefType();
-    initCurrentStylesheet();
-    showFragment();
-    initCopyToClipboard();
-    initSlideshow();
+    initEvents();
     initEditor();
-    initDocumentMode();
+
+    await initSyncLocalRemoteResource();
+
+    await initDocumentActions();
+    await initDocumentMode();
+
+    emitDocEvent('ready', { url: Config.DocumentURL });
+
     monitorNetworkStatus();
   }
 }
 
 function initServiceWorker() {
   if ('serviceWorker' in navigator && !Config.WebExtensionEnabled) {
-    navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
-      .then(() => {
-        console.log('Service Worker registered');
+    fetch('/service-worker.js', { method: 'HEAD' })
+      .then(res => {
+        if (!res.ok) return;
+        return navigator.serviceWorker.register('/service-worker.js', { scope: '/' });
       })
-      .catch((err) => {
-        console.error('Service Worker registration failed:', err);
+      .then(registration => {
+        if (registration) console.log('Service Worker registered');
+      })
+      .catch(() => {
+        // SW not available on this domain, silently skip
       });
   }
 }
@@ -94,7 +104,8 @@ export function initLocalStorage() {
 
   getLocalStorageItem(Config.DocumentURL).then(collection => {
     if (!collection) {
-      autoSave(Config.DocumentURL, { method: 'localStorage' });
+      // autoSave(Config.DocumentURL, { method: 'localStorage' });
+      setTimeout(() => autoSave(Config.DocumentURL, { method: 'localStorage' }), 0);
     }
     else if (collection.autoSave) {
       Config.AutoSave.Items[Config.DocumentURL] ||= {};
@@ -105,46 +116,45 @@ export function initLocalStorage() {
   });
 }
 
-async function initDocumentActions() {
+async function initEvents() {
   eventButtonClose();
   eventButtonInfo();
   eventButtonSignIn();
   eventButtonSignOut();
   eventButtonNotificationsToggle();
+}
 
-  var documentURL = Config.DocumentURL;
-
-  //Fugly
-  async function checkResourceInfo() {
-// console.log(Config.Resource[documentURL])
-
-    if (documentURL in Config.Resource && 'state' in Config.Resource[documentURL]) {
-      processPotentialAction(Config.Resource[documentURL]);
-
-      if (Config.Resource[documentURL].inbox?.length && !Config.Inbox[Config.Resource[documentURL].inbox[0]]) {
-        showNotificationSources(Config.Resource[documentURL].inbox[0]);
-      }
-    }
-    else {
-      await syncLocalRemoteResource({
-        onLocalInfo: (resourceInfo) => {
-          processPotentialAction(resourceInfo);
-
-          if (Config.Resource[documentURL].inbox?.length && !Config.Inbox[Config.Resource[documentURL].inbox[0]]) {
-            showNotificationSources(Config.Resource[documentURL].inbox[0]);
-          }
-        }
-      });
-    }
-  }
-
-  await checkResourceInfo();
-
-  processActivateAction();
+async function initDocumentActions() {
+  showFragment();
+  initCopyToClipboard();
   showRobustLinksDecoration();
-  focusNote();
+  processPotentialAction();
+  processActivateAction();
   highlightItems();
   showAsTabs();
+  initSlideshow();
+  initCurrentStylesheet();
+  initShowNotificationSources();
+  focusNote();
+
+
+  setDocRefType();
+}
+
+function initShowNotificationSources() {
+  var documentURL = Config.DocumentURL;
+
+  if (Config.Resource[documentURL].inbox?.length && !Config.Inbox[Config.Resource[documentURL].inbox[0]]) {
+    showNotificationSources(Config.Resource[documentURL].inbox[0]);
+  }
+}
+
+async function initSyncLocalRemoteResource() {
+  var documentURL = Config.DocumentURL;
+
+  if (!(documentURL in Config.Resource && 'state' in Config.Resource[documentURL])) {
+    await syncLocalRemoteResource();
+  }
 }
 
 export function setDocumentModeParams() {
@@ -332,56 +342,53 @@ function initSlideshow(options) {
 
 //TODO: Review grapoi
 function processPotentialAction(resourceInfo) {
+  resourceInfo = resourceInfo || Config.Resource[Config.DocumentURL];
   var g = resourceInfo.graph;
-  var triples = g.out().quads();
-  triples.forEach(t => {
-    var s = t.subject.value;
-    var p = t.predicate.value;
-    var o = t.object.value;
 
-    if (p == ns.schema.potentialAction.value) {
-      var action = o;
-      var documentOrigin = (document.location.origin === "null") ? "file://" : document.location.origin;
-      var originPathname = documentOrigin + document.location.pathname;
-// console.log(originPathname)
-// console.log(action.startsWith(originPathname + '#'))
-      if (action.startsWith(originPathname)) {
-        document.addEventListener('click', (e) => {
-          var fragment = action.substr(action.lastIndexOf('#'));
-// console.log(fragment)
-          if (fragment) {
-            var selector = '[about="' + fragment  + '"][typeof="schema:ViewAction"], [href="' + fragment  + '"][typeof="schema:ViewAction"], [resource="' + fragment  + '"][typeof="schema:ViewAction"]';
-// console.log(selector)
-            // var element = document.querySelectorAll(selector);
-            var element = e.target.closest(selector);
-// console.log(element)
-            if (element) {
-              e.preventDefault();
-              e.stopPropagation();
+  // console.log(g.dataset.toCanonical());
+  let actions = g.node(rdf.namedNode(Config.DocumentURL)).out(ns.schema.potentialAction).values;
 
-              var so = g.node(rdf.namedNode(action)).out(ns.schema.object).values;
-              if (so.length) {
-                selector = '#' + element.closest('[id]').id;
+  actions.forEach(action => {
+    var documentOrigin = (document.location.origin === "null") ? "file://" : document.location.origin;
+    var originPathname = documentOrigin + document.location.pathname;
+    // console.log(originPathname)
+    // console.log(action.startsWith(originPathname + '#'))
+    if (action.startsWith(originPathname)) {
+      document.addEventListener('click', (e) => {
+        var fragment = action.substr(action.lastIndexOf('#'));
+        // console.log(fragment)
+        if (fragment) {
+          var selector = '[about="' + fragment  + '"][typeof="schema:ViewAction"], [href="' + fragment  + '"][typeof="schema:ViewAction"], [resource="' + fragment  + '"][typeof="schema:ViewAction"]';
+          // console.log(selector)
+          // var element = document.querySelectorAll(selector);
+          var element = e.target.closest(selector);
+          // console.log(element)
+          if (element) {
+            e.preventDefault();
+            e.stopPropagation();
 
-                var svgGraph = document.querySelector(selector + ' svg');
-                if (svgGraph) {
-                  svgGraph.nextSibling.parentNode.removeChild(svgGraph.nextSibling);
-                  svgGraph.parentNode.removeChild(svgGraph);
-                }
-                else {
-                  // serializeGraph(g, { 'contentType': 'text/turtle' })
-                  //   .then(data => {
-                      var options = {};
-                      options['subjectURI'] = so[0];
-                      options['contentType'] = 'text/turtle';
-                      showVisualisationGraph(options.subjectURI, g.dataset.toCanonical(), selector, options);
-                    // });
-                }
+            var so = g.node(rdf.namedNode(action)).out(ns.schema.object).values;
+            if (so.length) {
+              selector = '#' + element.closest('[id]').id;
+
+              var svgGraph = document.querySelector(selector + ' svg');
+              if (svgGraph) {
+                svgGraph.nextSibling.parentNode.removeChild(svgGraph.nextSibling);
+                svgGraph.parentNode.removeChild(svgGraph);
+              }
+              else {
+                // serializeGraph(g, { 'contentType': 'text/turtle' })
+                //   .then(data => {
+                    var options = {};
+                    options['subjectURI'] = so[0];
+                    options['contentType'] = 'text/turtle';
+                    showVisualisationGraph(options.subjectURI, g.dataset.toCanonical(), selector, options);
+                  // });
               }
             }
           }
-        });
-      }
+        }
+      });
     }
   });
 }

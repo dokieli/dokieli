@@ -26,6 +26,13 @@ import { parseISODuration, uniqueArray } from "./util.js";
 
 const ns = Config.ns;
 
+export function emitDocEvent(name, detail = {}) {
+  document.dispatchEvent(new CustomEvent(`dokieli:${name}`, {
+    bubbles: true,
+    detail
+  }));
+}
+
 export function eventButtonClose() {
   document.addEventListener('click', e => {
     var button = e.target.closest('button.close')

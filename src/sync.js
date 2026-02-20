@@ -92,16 +92,6 @@ export async function syncLocalRemoteResource(options = {}) {
   localContent = Config.DocumentString || getDocument(null, documentOptions);
   Config.DocumentString = null;
 
-  // Parse local content early so:
-  //   (a) Config.Resource[...].data is set before any 304 response uses it
-  //   (b) callers can act on local resource info before the remote fetch returns
-  if (!Config.Resource[Config.DocumentURL]?.data) {
-    await getResourceInfo(localContent).then(resourceInfo => {
-      options.onLocalInfo?.(resourceInfo);
-    });
-  } else {
-    options.onLocalInfo?.(Config.Resource[Config.DocumentURL]);
-  }
 
 // console.log(localContent)
   let localHash = await getHash(localContent);
@@ -290,8 +280,8 @@ export async function syncLocalRemoteResource(options = {}) {
 
       Config.Editor.replaceContent(Config.Editor.mode, remoteContentNode);
       Config.Editor.init(Config.Editor.mode, document.body);
-      autoSave(Config.DocumentURL, { method: 'localStorage', published: remotePublishDate });
-      updateResourceInfos(Config.DocumentURL, remoteContent, response);
+      await autoSave(Config.DocumentURL, { method: 'localStorage', published: remotePublishDate });
+      await updateResourceInfos(Config.DocumentURL, remoteContent, response);
       return;
     }
   }
@@ -352,10 +342,13 @@ export async function syncLocalRemoteResource(options = {}) {
         console.log(previousRemoteHash)
 
         console.log(`Local unchaged. Remote changed. Update local.`);
-        Config.Editor.replaceContent(Config.Editor.mode, remoteContentNode);
-        Config.Editor.init(Config.Editor.mode, document.body);
-        autoSave(Config.DocumentURL, { method: 'localStorage', published: remotePublishDate });
-        updateResourceInfos(Config.DocumentURL, remoteContent, response);
+        try {
+          Config.Editor.replaceContent(Config.Editor.mode, remoteContentNode);
+          Config.Editor.init(Config.Editor.mode, document.body);
+        } catch(e) { console.log ("continue")}
+
+        await autoSave(Config.DocumentURL, { method: 'localStorage', published: remotePublishDate });
+        await updateResourceInfos(Config.DocumentURL, remoteContent, response);
       }
       else {
         reviewOptions['message'] = `<span data-i18n="dialog.review-changes.message.remote-changed.span">${i18n.t('dialog.review-changes.message.remote-changed.span.textContent')}</span>`;

@@ -2496,7 +2496,7 @@ export function updateReferences(referencesList, options) {
 export function showRobustLinksDecoration(node) {
   node = node || document;
   // console.log(node)
-  var nodes = node.querySelectorAll('[data-versionurl], [data-originalurl]');
+  var nodes = node.querySelectorAll('a[data-versionurl], a[data-originalurl]');
   // console.log(nodes)
   nodes.forEach(i => {
     if (i.nextElementSibling && i.nextElementSibling.classList.contains('do') && i.nextElementSibling.classList.contains('robustlinks')) {
@@ -3663,10 +3663,12 @@ export function getCurrentLinkStylesheet() {
 export function initCopyToClipboard() {
   var elements = ['pre', 'table'];
 
+  let articleNode = selectArticleNode(document);
+
   elements.forEach(element => {
-    var nodes = selectArticleNode(document).querySelectorAll(element);
+    var nodes = articleNode.querySelectorAll(element);
     nodes.forEach(node => {
-      sanitizeInsertAdjacentHTML(node, 'afterend', Config.Button.Clipboard);
+      node.insertAdjacentHTML('afterend', Config.Button.Clipboard);
       var button = node.nextElementSibling;
       setCopyToClipboard(node, button);
     });

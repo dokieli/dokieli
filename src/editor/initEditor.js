@@ -21,6 +21,12 @@ import { Editor } from "./editor.js";
 export function initEditor(options = {}) {
   Config['Editor'] = new Editor();
   const tmpl = options.template || (Config.Editor.new ? 'new' : null);
-  options = tmpl ? { template: tmpl } : {};
-  Config.Editor.init(null, null, options);
+
+  if (tmpl) {
+    Config.Editor.init('author', null, { template: tmpl });
+  } else {
+    Config.Editor.createSocialToolbar();
+    Config.Editor.showTextQuoteSelectorFromLocation();
+    Config.Editor.hasRunTextQuoteSelector = true;
+  }
 }
