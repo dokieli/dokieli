@@ -85,28 +85,6 @@ export function showVisualisationGraph(url, data, selector, options) {
     return "translate(" + d.x + "," + d.y + ")";
   }
 
-  function showTooltip(e, content) {
-    if (!content) return;
-    content = content.trim();
-    //TODO: if object has rdf:HTML datatype, appendChild
-    tooltip.textContent = content.length > 120 ? content.slice(0, 117) + '…' : content;
-    tooltip.style.display = 'block';
-    // moveTooltip(e);
-  }
-
-  function moveTooltip(e) {
-    // var x = e.clientX + 14;
-    // var y = e.clientY + 14;
-    // if (x + 440 > window.innerWidth) { x = e.clientX - 440; }
-    // if (y + 80 > window.innerHeight) { y = e.clientY - 80; }
-    // tooltip.style.left = x + 'px';
-    // tooltip.style.top = y + 'px';
-  }
-
-  function hideTooltip() {
-    tooltip.style.display = 'none';
-  }
-
   //TODO: Structure of these objects should change to use the label as key, and move to config.js
   var group = {
     "0": { color: '#fff', label: '' },
@@ -135,17 +113,47 @@ export function showVisualisationGraph(url, data, selector, options) {
 
   var buttonClose = getButtonHTML({ key:'dialog.graph-view.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
-  if (selector == '#graph-view' && !document.getElementById('graph-view')) {
-    document.body.appendChild(fragmentFromString(`
-      <aside aria-labelledby="graph-view-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="graph-view" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#graph-view" xml:lang="${Config.User.UI.Language}">
-        <h2 data-i18n="dialog.graph-view.h2" id="graph-view-label" property="schema:name">${i18n.t('dialog.graph-view.h2.textContent')} ${Config.Button.Info.GraphView}</h2>
-        ${buttonClose}
-        <div class="info"></div>
-        <div id="graph-view-tooltip"></div>
-      </aside>`));
+
+  if (selector == '#graph-view') {
+    if (!document.getElementById('graph-view')) {
+      document.body.appendChild(fragmentFromString(`
+        <aside aria-labelledby="graph-view-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="graph-view" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#graph-view" xml:lang="${Config.User.UI.Language}">
+          <h2 data-i18n="dialog.graph-view.h2" id="graph-view-label" property="schema:name">${i18n.t('dialog.graph-view.h2.textContent')} ${Config.Button.Info.GraphView}</h2>
+          ${buttonClose}
+          <div class="info"></div>
+          <div id="viz-tooltip"></div>
+        </aside>`));
+    }
+  }
+  else {
+    let vT = document.createElement('div');
+    vT.id = 'viz-tooltip';
+    document.querySelector(selector)?.appendChild(vT);
   }
 
   let tooltip = document.getElementById('viz-tooltip');
+
+  function showTooltip(e, content) {
+    if (!content) return;
+    content = content.trim();
+    //TODO: if object has rdf:HTML datatype, appendChild
+    tooltip.textContent = content.length > 120 ? content.slice(0, 117) + '…' : content;
+    tooltip.style.display = 'block';
+    // moveTooltip(e);
+  }
+
+  function hideTooltip() {
+    tooltip.style.display = 'none';
+  }
+
+  function moveTooltip(e) {
+    // var x = e.clientX + 14;
+    // var y = e.clientY + 14;
+    // if (x + 440 > window.innerWidth) { x = e.clientX - 440; }
+    // if (y + 80 > window.innerHeight) { y = e.clientY - 80; }
+    // tooltip.style.left = x + 'px';
+    // tooltip.style.top = y + 'px';
+  }
 
   // var svg = d3.select(selector).append('svg')
   //   .attr('width', width)
@@ -460,12 +468,7 @@ export function showVisualisationGraph(url, data, selector, options) {
     canvas.height = height;
     container.appendChild(canvas);
 
-    // var cN = document.getElementById(id);
-    // var containerStyle = cN.ownerDocument.defaultView.getComputedStyle(cN, null);
-    // width = options.width || parseInt(containerStyle.width) || 800;
-    // height = options.height || parseInt(containerStyle.height) || 600;
-
-    sanitizeInsertAdjacentHTML(graphView, 'beforeend', `<button class="export" data-i18n="dialog.graph-view.export.button" title="${i18n.t('dialog.graph-view.export.button.title')}" type="button">${i18n.t('dialog.graph-view.export.button.textContent')}</button>`);
+    graphView.insertAdjacentHTML('beforeend', `<button class="export" data-i18n="dialog.graph-view.export.button" title="${i18n.t('dialog.graph-view.export.button.title')}" type="button">${i18n.t('dialog.graph-view.export.button.textContent')}</button>`);
 
     var ctx = canvas.getContext('2d');
     var nodes = Object.values(go.uniqueNodes);
@@ -504,7 +507,7 @@ export function showVisualisationGraph(url, data, selector, options) {
     }
 
     function drawPill(text, x, y) {
-      ctx.font = 'bold 16px monospace';
+      ctx.font = '16px monospace';
       var tw = ctx.measureText(text).width;
       ctx.fillStyle = 'rgba(20,20,20,0.88)';
       ctx.beginPath();
