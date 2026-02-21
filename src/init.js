@@ -136,8 +136,6 @@ async function initDocumentActions() {
   initCurrentStylesheet();
   initShowNotificationSources();
   focusNote();
-
-
   setDocRefType();
 }
 

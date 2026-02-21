@@ -70,7 +70,7 @@ export function showVisualisationGraph(url, data, selector, options) {
   var height = options.height || '100%';
   var nodeRadius = 7;
   var simulation;
-  var canvasCleanup = null;    // cleanup fn for window-level canvas event listeners
+  var canvasCleanup = null;
   var currentGraphObject = null; // last built graph, used for on-demand SVG export
 
   var id = generateAttributeId();
@@ -155,23 +155,19 @@ export function showVisualisationGraph(url, data, selector, options) {
     // tooltip.style.top = y + 'px';
   }
 
-  // var svg = d3.select(selector).append('svg')
-  //   .attr('width', width)
-  //   .attr('height', height)
-  //   .attr('id', id)
-  //   .attr('xmlns', 'http://www.w3.org/2000/svg')
-  //   .attr('xml:lang', options.language)
-  //   .attr('prefix', 'rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns# rdfs: http://www.w3.org/2000/01/rdf-schema# xsd: http://www.w3.org/2001/XMLSchema# dcterms: http://purl.org/dc/terms/')
-  //   .attr('typeof', 'http://purl.org/dc/dcmitype/Image')
-
+  const minWidth = 800;
+  const minHeight = 600;
   var graphView = document.querySelector(selector);
   if (getComputedStyle(graphView).position === 'static') {
     graphView.style.position = 'relative';
   }
+  if (selector !== '#graph-view') {
+    graphView.setAttribute('style', `height: ${minHeight}px`);
+  }
 
   var containerStyle = graphView.ownerDocument.defaultView.getComputedStyle(graphView);
-  width = options.width || parseInt(containerStyle.width) || 800;
-  height = options.height || parseInt(containerStyle.height) - 128 || 600;
+  width = options.width || parseInt(containerStyle.width) || minWidth;
+  height = options.height || parseInt(containerStyle.height) - 128 || minHeight;
   
   graphView.addEventListener('click', (e) => {
     if (e.target.closest('button.export')) {
@@ -194,10 +190,6 @@ export function showVisualisationGraph(url, data, selector, options) {
       exportAsDocument(svgNode, exportOptions);
     }
   });
-
-  // var s = document.getElementById(id);
-  // width = options.width || parseInt(s.ownerDocument.defaultView.getComputedStyle(s, null)["width"]);
-  // height = options.height || parseInt(s.ownerDocument.defaultView.getComputedStyle(s, null)["height"]);
 
   function addLegend(go, target) {
     var graphLegend = target.append('g')
@@ -366,7 +358,7 @@ export function showVisualisationGraph(url, data, selector, options) {
   }
 
   // Build a static SVG from current simulation positions for export.
-  // Creates a detached element — never added to the live DOM.
+  // Creates a detached element
   function generateExportSVG(go) {
     var exportContainer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     var exportSvg = d3.select(exportContainer)
@@ -443,7 +435,7 @@ export function showVisualisationGraph(url, data, selector, options) {
     nodeGroups.append('text')
       .attr('x', nodeRadius + 3)
       .attr('y', 4)
-      .attr('font-size', '10px')
+      .attr('font-size', '12px')
       .attr('font-family', 'monospace')
       .attr('fill', 'rgba(220,220,220,0.9)')
       .text(function(d) { return nodeLabel(d); });
@@ -453,8 +445,7 @@ export function showVisualisationGraph(url, data, selector, options) {
     return exportContainer;
   }
 
-  // Canvas renderer — always used for the live graph view.
-  // Supports pan (drag) and zoom (wheel). Labels shown on hover only.
+  // Live graph view
   function buildCanvasRenderer(go) {
     var container = document.querySelector(selector);
 
@@ -468,7 +459,11 @@ export function showVisualisationGraph(url, data, selector, options) {
     canvas.height = height;
     container.appendChild(canvas);
 
-    graphView.insertAdjacentHTML('beforeend', `<button class="export" data-i18n="dialog.graph-view.export.button" title="${i18n.t('dialog.graph-view.export.button.title')}" type="button">${i18n.t('dialog.graph-view.export.button.textContent')}</button>`);
+    let buttonExport = container.querySelector('button.export');
+    if (buttonExport) {
+      buttonExport.remove();
+    }
+    container.insertAdjacentHTML('beforeend', `<button class="export" data-i18n="dialog.graph-view.export.button" title="${i18n.t('dialog.graph-view.export.button.title')}" type="button">${i18n.t('dialog.graph-view.export.button.textContent')}</button>`);
 
     var ctx = canvas.getContext('2d');
     var nodes = Object.values(go.uniqueNodes);
@@ -476,7 +471,7 @@ export function showVisualisationGraph(url, data, selector, options) {
     // Pan/zoom transform state
     var tx = { x: 0, y: 0, scale: 1 };
 
-    // Hover state — drives label rendering each frame
+    // Hover state drives label rendering each frame
     var hoveredNode = null;
     var hoveredLink = null;
 
@@ -536,13 +531,13 @@ export function showVisualisationGraph(url, data, selector, options) {
         ctx.beginPath();
         ctx.moveTo(s.x, s.y);
         ctx.quadraticCurveTo(mx, my, t.x, t.y);
-        ctx.strokeStyle = isHovered ? '#ff8800' : group[4].color;
+        ctx.strokeStyle = isHovered ? '#000000' : group[4].color;
         ctx.lineWidth = isHovered ? 2 / tx.scale : 1 / tx.scale;
         ctx.stroke();
 
         var tip = sampleBezier(s, mid, t, 0.95);
         var before = sampleBezier(s, mid, t, 0.88);
-        ctx.fillStyle = isHovered ? '#ff8800' : group[2].color;
+        ctx.fillStyle = isHovered ? '#000000' : group[2].color;
         drawArrowhead(before.x, before.y, tip.x, tip.y);
 
         // Edge label on hover — drawn at the midpoint of the curve
@@ -579,7 +574,7 @@ export function showVisualisationGraph(url, data, selector, options) {
 
       ctx.restore();
 
-      // Legend is drawn outside the transform — fixed top-left position
+      // Legend is drawn outside the transform
       drawCanvasLegend(go);
     }
 
@@ -733,7 +728,9 @@ export function showVisualisationGraph(url, data, selector, options) {
       if (dragMoved) return; // was a pan gesture, not a click
       var pt = graphCoords(e);
       var d = getNodeAt(pt.x, pt.y);
-      if (d && 'type' in group[d.group] && group[d.group].type !== 'rdfs:Literal' && !(d.id in Config.Graphs)) {
+      // console.log(d)
+      //Skip clicks on literals and internal resources (bnodes and fragments) as well as resources that were already visited
+      if (d && 'type' in group[d.group] && group[d.group].type !== 'rdfs:Literal' && d.group != 8 && !(d.id in Config.Graphs)) {
         options = options || {};
         options['subjectURI'] = d.id;
         var headers = { 'Accept': setAcceptRDFTypes() };
@@ -859,6 +856,7 @@ function convertGraphToVisualisationGraph(url, g, options){
   var graphNodes = new Set();
 
   dataGraph.out().quads().forEach(t => {
+    // console.log(t.subject.value + " " + t.predicate.value + " " + t.object.value + "\n")
     if (
       // t.predicate.value == 'http://www.w3.org/1999/02/22-rdf-syntax-ns#first' ||
       // t.predicate.value == 'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest' ||
@@ -898,6 +896,7 @@ function convertGraphToVisualisationGraph(url, g, options){
         break;
     }
 
+    //XXX: Used only if skolem() is used
     if (t.subject.value.startsWith('http://example.com/.well-known/genid/')) {
       sGroup = 8;
     }
