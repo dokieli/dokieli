@@ -30,7 +30,7 @@ import * as d3Selection from 'd3-selection';
 import * as d3Force from 'd3-force';
 const d3 = { ...d3Selection, ...d3Force };
 import { i18n } from "./i18n.js";
-import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI } from "./utils/sanitization.js";
+import { sanitizeIRI } from "./utils/sanitization.js";
 
 
 // Extract a short human-readable label from an IRI (last non-empty path/fragment segment)
@@ -139,20 +139,10 @@ export function showVisualisationGraph(url, data, selector, options) {
     //TODO: if object has rdf:HTML datatype, appendChild
     tooltip.textContent = content.length > 120 ? content.slice(0, 117) + '…' : content;
     tooltip.style.display = 'block';
-    // moveTooltip(e);
   }
 
   function hideTooltip() {
     tooltip.style.display = 'none';
-  }
-
-  function moveTooltip(e) {
-    // var x = e.clientX + 14;
-    // var y = e.clientY + 14;
-    // if (x + 440 > window.innerWidth) { x = e.clientX - 440; }
-    // if (y + 80 > window.innerHeight) { y = e.clientY - 80; }
-    // tooltip.style.left = x + 'px';
-    // tooltip.style.top = y + 'px';
   }
 
   const minWidth = 800;
@@ -295,15 +285,15 @@ export function showVisualisationGraph(url, data, selector, options) {
   }
 
   function handleResource(iri, headers, options) {
-    return getResource(iri, headers, options)
-      .then(response => {
-        var cT = response.headers.get('Content-Type');
-        options['contentType'] = (cT) ? cT.split(';')[0].toLowerCase().trim() : 'text/turtle';
+    return getResourceGraph(iri, headers, options)
+      .then(g => {
+        // var cT = response.headers.get('Content-Type');
+        // options['contentType'] = (cT) ? cT.split(';')[0].toLowerCase().trim() : 'text/turtle';
 
-        return response.text().then(data => {
+        // return response.text().then(data => {
           options['mergeGraph'] = true;
-          initiateVisualisation(options['subjectURI'], data, options);
-        });
+          initiateVisualisation(options['subjectURI'], g, options);
+        // });
       })
   }
 
@@ -635,16 +625,17 @@ export function showVisualisationGraph(url, data, selector, options) {
 
     function getLinkAt(x, y) {
       var closest = null;
-      // Scale hit tolerance inversely with zoom so it stays ~8px on screen
-      var minDist = 8 / tx.scale;
+      var threshold = 8 / tx.scale;
+      var minDistSq = threshold * threshold;
       go.bilinks.forEach(function(d) {
         var s = d[0], mid = d[1], t = d[2];
         if (s.x == null || t.x == null) return;
         for (var j = 0; j <= 12; j++) {
           var pt = sampleBezier(s, mid, t, j / 12);
-          var dist = Math.sqrt((pt.x - x) * (pt.x - x) + (pt.y - y) * (pt.y - y));
-          if (dist < minDist) {
-            minDist = dist;
+          var dx = pt.x - x, dy = pt.y - y;
+          var distSq = dx * dx + dy * dy;
+          if (distSq < minDistSq) {
+            minDistSq = distSq;
             closest = d;
           }
         }
@@ -704,13 +695,13 @@ export function showVisualisationGraph(url, data, selector, options) {
 
       if (node) {
         showTooltip(e, node.id);
-        // canvas.style.cursor = 'pointer';
+        canvas.style.cursor = 'pointer';
       } else if (link && link[3]) {
         showTooltip(e, link[3]);
-        // canvas.style.cursor = 'default';
+        canvas.style.cursor = 'default';
       } else {
         hideTooltip();
-        // canvas.style.cursor = 'default';
+        canvas.style.cursor = 'default';
       }
 
       // Only redraw if hover target changed (sim may not be ticking any more)
@@ -729,15 +720,28 @@ export function showVisualisationGraph(url, data, selector, options) {
       var pt = graphCoords(e);
       var d = getNodeAt(pt.x, pt.y);
       // console.log(d)
-      //Skip clicks on literals and internal resources (bnodes and fragments) as well as resources that were already visited
-      if (d && 'type' in group[d.group] && group[d.group].type !== 'rdfs:Literal' && d.group != 8 && !(d.id in Config.Graphs)) {
-        options = options || {};
-        options['subjectURI'] = d.id;
-        var headers = { 'Accept': setAcceptRDFTypes() };
-        if (d.id.slice(0, 5).toLowerCase() == 'http:') {
-          options['noCredentials'] = true;
+      
+      let url;
+      
+      //Skip click on literals, internal resources (bnodes and fragments), non-HTTP(S), visited resources
+      if (d && 'type' in group[d.group]) {
+        try {
+          url = new URL(d.id);
         }
-        handleResource(d.id, headers, options);
+        catch (e) {}
+
+        if (group[d.group].type !== 'rdfs:Literal' &&
+          d.group != 8 &&
+          url && (url.protocol === 'http:' || url.protocol === 'https:') &&
+          !(d.id in Config.Graphs)) {
+            options = options || {};
+            options['subjectURI'] = d.id;
+            var headers = { 'Accept': setAcceptRDFTypes() };
+            if (url.protocol === 'http:') {
+              options['noCredentials'] = true;
+            }
+            handleResource(d.id, headers, options);
+          }
       }
     });
 
@@ -1005,13 +1009,12 @@ function convertGraphToVisualisationGraph(url, g, options){
     //FIXME: groups are set once - not updated.
 
     var objectValue = t.object.value;
-    if (t.object.termType == 'Literal') {
+    // if (t.object.termType == 'Literal') {
       //TODO: Revisit
       // if(t.object.datatype.termType.value == 'http://www.w3.org/rdf/1999/02/22-rdf-syntax-ns#HTML') {
       // }
       // objectValue = htmlEncode(objectValue);
-      objectValue = domSanitize(objectValue);
-    }
+    // }
 
     //XXX: Don't remember why this if was included but it seems to be problematic since it skips adding nodes where the object doesn't have a type. So commenting it out for now. Seems to work as expected.
     // if (!g.node(rdf.namedNode(t.object.value)).out(ns.rdf.type).values.length) {
@@ -1046,16 +1049,18 @@ function convertGraphToVisualisationGraph(url, g, options){
 export function showGraph(resources, selector, options){
   if (!Config.GraphViewerAvailable) { return; }
 
+  let documentURL = currentLocation();
+
   options = options || {};
   options['contentType'] = options.contentType || 'text/html';
-  options['subjectURI'] = options.subjectURI || location.href.split(location.search||location.hash||/[?#]/)[0];
+  options['subjectURI'] = options.subjectURI || documentURL;
 
   if (Array.isArray(resources)) {
     showGraphResources(resources, selector, options);
   }
   else {
     var property = (resources && 'filter' in options && 'predicates' in options.filter && options.filter.predicates.length) ? options.filter.predicates[0] : ns.ldp.inbox.value;
-    var iri = (resources) ? resources : location.href.split(location.search||location.hash||/[?#]/)[0];
+    var iri = (resources) ? resources : documentURL;
 
     getLinkRelation(property, iri).then(
       function(resources) {
@@ -1109,7 +1114,7 @@ export function showGraphResources(resources, selector, options) {
           // options['subjectURI'] = url;
 
           //FIXME: For multiple graphs (fetched resources), options.subjectURI is the last item, so it is inaccurate
-          showVisualisationGraph(options.subjectURI, dataset.toCanonical(), selector, options);
+          showVisualisationGraph(options.subjectURI, rdf.grapoi({ dataset }), selector, options);
         });
   });
 }

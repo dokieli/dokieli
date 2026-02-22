@@ -380,7 +380,7 @@ function processPotentialAction(resourceInfo) {
                     var options = {};
                     options['subjectURI'] = so[0];
                     options['contentType'] = 'text/turtle';
-                    showVisualisationGraph(options.subjectURI, g.dataset.toCanonical(), selector, options);
+                    showVisualisationGraph(options.subjectURI, g, selector, options);
                   // });
               }
             }

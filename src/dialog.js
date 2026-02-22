@@ -4789,7 +4789,7 @@ export function showExtendedConcepts() {
               options['subjectURI'] = Config.DocumentURL;
               options['contentType'] = 'text/turtle';
               //FIXME: For multiple graphs (fetched resources), options.subjectURI is the last item, so it is inaccurate
-              showVisualisationGraph(options.subjectURI, dataset.toCanonical(), selector, options);
+              showVisualisationGraph(options.subjectURI, rdf.grapoi({ dataset }), selector, options);
             // });
         }
       })
