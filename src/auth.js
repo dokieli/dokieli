@@ -122,41 +122,107 @@ export function showUserIdentityInput () {
   var buttonClose = getButtonHTML({ key: 'dialog.signin.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
   var webid = Config.User.WebIdDelegate ? Config.User.WebIdDelegate : "";
+  var buttonSignInDisabled = webid ? '' : ' disabled="disabled"';
+
   var code = `
     <aside aria-labelledby="user-identity-input-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="user-identity-input" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#user-identity-input" xml:lang="${Config.User.UI.Language}">
       <h2 data-i18n="dialog.signin.h2" id="user-identity-input-label" property="schema:name">${i18n.t('dialog.signin.h2.textContent')} ${Config.Button.Info.SignIn}</h2>
       ${buttonClose}
       <div class="info"></div>
-      <p id="user-identity-input-webid"><label>WebID</label> <input dir="ltr" id="webid" type="url" placeholder="https://csarven.ca/#i" value="${webid}" name="webid"/> <button data-i18n="dialog.signin.submit.button" class="signin" type="button">${i18n.t('dialog.signin.submit.button.textContent')}</button></p>
+
+      <section id="user-identity-input-login">
+        <p data-i18n="dialog.signin.description.p">${i18n.t('dialog.signin.description.p.textContent')}</p>
+
+        <ul class="do-signin-providers">
+          <li>
+            <button aria-expanded="false" class="do-signin-provider" data-provider="solid" data-i18n="dialog.signin.provider-solid.button" title="${i18n.t('dialog.signin.provider-solid.button.title')}" type="button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 1200 1200"><path d="M260.7 1049.4 27.3 644.6c-21.6-37.5-21.6-83.7 0-121.2l233.4-404.5c21.7-37.6 61.8-60.7 105-60.7h466.5c43.3 0 83.5 23.1 105 60.7l233.5 404.7c21.6 37.5 21.6 83.7 0 121.2l-233.4 404.8c-21.7 37.6-61.8 60.7-105 60.7H366c-43.5-.2-83.5-23.4-105.3-60.9z" fill="#fff"/><path d="M280.6 1021.9 61.1 641.2c-20.4-35.3-20.4-78.8 0-114l219.5-380.8c20.5-35.4 58.2-57.1 98.9-57.1h439c40.7 0 78.5 21.7 98.9 57.1L1137.1 527c20.4 35.3 20.4 78.8 0 114l-219.6 381c-20.5 35.4-58.2 57.1-98.9 57.1H379.7c-40.9 0-78.6-21.8-99.1-57.2z" fill="#7c4dff"/><path d="M377.9 510.9h451.7c5.7 0 10.2-4.6 10.2-10.2V416c0-56.3-45.7-102-102-102H466.6c-78.9-.1-142.8 63.8-142.8 142.7-.1 30.1 24.1 54.2 54.1 54.2z" fill="#f7f7f7"/><path d="M422.2 885.1h269.9c81.5 0 147.7-66.2 147.7-147.7 0-27.2-22-49.3-49.3-49.3H333.6c-5.6 0-9.8 4.5-9.8 9.8v88.6c-.1 54.5 44.1 98.6 98.6 98.6z" fill="#f7f7f7"/><path d="m343.8 499.7 336.9 336.9c22.3 22.3 58.4 22.3 80.7 0l58.4-58.4c22.3-22.3 22.3-58.4 0-80.7L483 360.6c-22.3-22.3-58.4-22.3-80.7 0L343.9 419c-22.5 22.3-22.5 58.5-.1 80.7z" fill="#f7f7f7"/><path d="M686.2 842.3 488.3 688.1h43.8z" fill="#444" opacity=".3"/><path d="M477.4 355 155.9 155.9h52.9z" fill="#444" opacity=".3"/></svg>
+              <span>
+                <span data-i18n="dialog.signin.provider-solid.button.span">${i18n.t('dialog.signin.provider-solid.button.span.textContent')}</span>
+                <small data-i18n="dialog.signin.provider-solid.small">${i18n.t('dialog.signin.provider-solid.small.textContent')}</small>
+              </span>
+              ${Icon['.fas.fa-angle-right']}
+            </button>
+            <div class="do-signin-provider-form" id="do-signin-solid" hidden="">
+              <p><label data-i18n="dialog.signin.provider-solid-form.label" for="solid-provider-url">${i18n.t('dialog.signin.provider-solid-form.label.textContent')}</label></p>
+              <p><input id="solid-provider-url" name="solid-provider-url" placeholder="https://solidcommunity.net/" type="url" value="https://solidcommunity.net/"/> <button class="do-signin-provider-go" data-i18n="dialog.signin.provider-form.go.button" data-provider="solid" title="${i18n.t('dialog.signin.provider-form.go.button.title')}" type="button">${i18n.t('dialog.signin.provider-form.go.button.textContent')}</button></p>
+            </div>
+          </li>
+        </ul>
+
+        <details id="user-identity-input-advanced">
+          <summary data-i18n="dialog.signin.advanced.summary">${i18n.t('dialog.signin.advanced.summary.textContent')}</summary>
+          <p id="user-identity-input-webid">
+            <label for="webid" data-i18n="dialog.signin.webid.label">${i18n.t('dialog.signin.webid.label.textContent')}</label>
+            <input dir="ltr" id="webid" type="url" placeholder="https://username.solidcommunity.net/" value="${webid}" name="webid"/>
+            <button data-i18n="dialog.signin.submit.button" class="signin" type="button"${buttonSignInDisabled}>${i18n.t('dialog.signin.submit.button.textContent')}</button>
+          </p>
+        </details>
+
+        <p>
+          ${Config.Button.Info.WebId}
+        </p>
+      </section>
     </aside>`;
 
-  document.body.appendChild(fragmentFromString(code))
+  document.body.appendChild(fragmentFromString(code));
 
-  var buttonSignIn = document.querySelector('#user-identity-input button.signin')
-  if (!Config.User.WebIdDelegate) {
-    buttonSignIn.setAttribute('disabled', 'disabled');
-  }
+  var aside = document.getElementById('user-identity-input');
 
-  document.querySelector('#user-identity-input').addEventListener('click', e => {
+  aside.addEventListener('click', e => {
     if (e.target.closest('button.close')) {
       if (signInUser) {
-        signInUser.disabled = false
+        signInUser.disabled = false;
       }
+      return;
     }
-  })
 
-  var inputWebID = document.querySelector('#user-identity-input input#webid')
-  if(inputWebID) {
-    buttonSignIn.addEventListener('click', submitSignIn)
+    var providerButton = e.target.closest('button.do-signin-provider');
+    if (providerButton) {
+      var provider = providerButton.dataset.provider;
+      var form = aside.querySelector('#do-signin-' + provider);
+      var isExpanded = providerButton.getAttribute('aria-expanded') === 'true';
 
-    let events = ['keyup', 'cut', 'paste', 'input']
+      aside.querySelectorAll('button.do-signin-provider[aria-expanded="true"]').forEach(btn => {
+        if (btn !== providerButton) {
+          btn.setAttribute('aria-expanded', 'false');
+          var otherForm = aside.querySelector('#do-signin-' + btn.dataset.provider);
+          if (otherForm) { otherForm.hidden = true; }
+        }
+      });
+
+      providerButton.setAttribute('aria-expanded', isExpanded ? 'false' : 'true');
+      form.hidden = isExpanded;
+      if (!isExpanded) {
+        form.querySelector('input[type="url"]').focus();
+      }
+      return;
+    }
+
+    var goButton = e.target.closest('button.do-signin-provider-go');
+    if (goButton) {
+      var provider = goButton.dataset.provider;
+      var urlInput = aside.querySelector('#' + provider + '-provider-url');
+      var idpUrl = urlInput ? urlInput.value.trim() : '';
+      if (idpUrl) {
+        loginWithIDP(idpUrl);
+      }
+      return;
+    }
+  });
+
+  var buttonSignIn = aside.querySelector('button.signin');
+  var inputWebID = aside.querySelector('input#webid');
+
+  if (inputWebID) {
+    buttonSignIn.addEventListener('click', submitSignIn);
+
+    let events = ['keyup', 'cut', 'paste', 'input'];
 
     events.forEach(eventType => {
-      inputWebID.addEventListener(eventType, e => { enableDisableButton(e, buttonSignIn) })
-    })
+      inputWebID.addEventListener(eventType, e => { enableDisableButton(e, buttonSignIn); });
+    });
   }
-
-  inputWebID.focus()
 }
 
 
@@ -243,6 +309,24 @@ function submitSignIn (url) {
           })
       }
     })
+}
+
+async function loginWithIDP(idpUrl) {
+  Config.OIDC['authStartLocation'] = Config.OIDC['client_id'] ? window.location.href.split('#')[0] : null;
+  localStorage.setItem('DO.Config.OIDC', JSON.stringify(Config.OIDC));
+
+  let redirect_uri = process.env.OIDC_REDIRECT_URI || (window.location.origin + '/');
+  redirect_uri = Config.OIDC['client_id'] ? redirect_uri : window.location.href.split('#')[0];
+
+  Config['Session']?.login(idpUrl, redirect_uri)
+    .catch(e => {
+      const message = {
+        'content': `Cannot sign in with ${idpUrl}. ${e.message}`,
+        'type': 'error',
+        'timer': null
+      };
+      showActionMessage(document.body, message);
+    });
 }
 
 //XXX: User Profile should've been fetch by now.
