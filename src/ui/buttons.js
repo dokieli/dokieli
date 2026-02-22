@@ -30,9 +30,11 @@ const ns = Config.ns;
 // }
 
 function getDocsBaseURL() {
+  if (Config.WebExtensionEnabled) return Config.WebExtension.runtime.getURL('docs');
+  if (isLocalhost(window.location.href)) return new URL('docs.html', document.baseURI).href;
   const translatedDocs = (Config.DocsTranslations.includes(Config.User.UI.Language) && Config.User.UI.Language !== 'en') ?
   `https://dokie.li/${Config.User.UI.Language}/docs` : `https://dokie.li/docs`;
-  return Config.WebExtensionEnabled ? Config.WebExtension.runtime.getURL('docs') : translatedDocs;
+  return translatedDocs;
 }
 
 export function initButtons() {
@@ -61,7 +63,8 @@ export function initButtons() {
       SaveAs: getButtonHTML({ key: "info.save-as.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-save-as` }),
       Share: getButtonHTML({ key: "info.share.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-share` }),
       SignIn: getButtonHTML({ key: "info.signin.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-sign-in` }),
-      Source: getButtonHTML({ key: "info.source.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-source` })
+      Source: getButtonHTML({ key: "info.source.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-source` }),
+      WebId: `<button class="info" data-i18n="dialog.signin.about.button" rel="rel:help" resource="${docsBaseURL}#feature-webid" title="${i18n.t('dialog.signin.about.button.title')}" type="button">${Icon['.fas.fa-circle-info']}<span data-i18n="dialog.signin.about.button.span">${i18n.t('dialog.signin.about.button.span.textContent')}</span></button>`
     },
     SignIn: getButtonHTML({ key: "menu.signin.button", button: "signin", buttonClass: "signin-user" }),
     Menu: {

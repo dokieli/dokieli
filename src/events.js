@@ -16,12 +16,12 @@ limitations under the License.
 */
 
 import rdf from "rdf-ext";
-import { showUserIdentityInput, signOut } from "./auth.js";
+import { showUserIdentityInput, signOut, userInfoSignOut } from "./auth.js";
 import { i18n } from "./i18n.js";
 import Config from "./config.js";
 import { stripFragmentFromString } from "./uri.js";
 import { getGraphDescription, getGraphImage, getGraphTitle, getResourceGraph } from "./graph.js";
-import { fragmentFromString } from "./utils/html.js";
+import { fragmentFromString, removeChildren } from "./utils/html.js";
 import { parseISODuration, uniqueArray } from "./util.js";
 
 const ns = Config.ns;
@@ -59,6 +59,10 @@ export function eventButtonSignOut() {
     if (button) {
       button.disabled = true;
       await signOut();
+      var userInfo = document.getElementById('user-info');
+      if (userInfo) {
+        await userInfoSignOut(userInfo);
+      }
     }
   });
 }
@@ -80,27 +84,64 @@ export function eventButtonInfo() {
   const errorMessage = `<p class="error" data-i18n="info.button-info.error.p">${i18n.t('info.button-info.error.p.textContent')}</p>`;
 
   document.addEventListener('click', e => {
-    // console.log(e.target)
+    // restore the aside's sections and clear div.info
+    const backButton = e.target.closest('button.do-info-back');
+    if (backButton) {
+      const aside = backButton.closest('.do');
+      if (aside) {
+        const infoDiv = aside.querySelector('div.info');
+        if (infoDiv) { removeChildren(infoDiv); }
+        aside.querySelectorAll('[data-do-info-hidden]').forEach(el => {
+          el.hidden = false;
+          el.removeAttribute('data-do-info-hidden');
+        });
+        aside.querySelectorAll('button.info[disabled]').forEach(btn => { btn.disabled = false; });
+      }
+      return;
+    }
+
     const button = e.target.closest('button.info[rel="rel:help"][resource][title]:not([disabled])');
-    // console.log(button)
 
     if (button) {
       button.disabled = true;
 
-      button.closest('.do')?.querySelector('div.info .error')?.remove();;
+      const aside = button.closest('.do');
+      if (!aside) return;
 
-      // const rel = button.getAttribute('rel');
+      const infoDiv = aside.querySelector('div.info');
+      if (!infoDiv) return;
+
+      // Clear any existing info content and re-enable other disabled info buttons
+      removeChildren(infoDiv);
+      aside.querySelectorAll('button.info[disabled]').forEach(btn => {
+        if (btn !== button) btn.disabled = false;
+      });
+
+      // Hide all direct-child content elements (sections, divs, etc.) except for h2, h3, .close, and .info
+      aside.querySelectorAll(':scope > :not(h2):not(h3):not(.close):not(.info)').forEach(el => {
+        if (!el.hasAttribute('data-do-info-hidden')) {
+          el.hidden = true;
+          el.setAttribute('data-do-info-hidden', '');
+        }
+      });
+
+      const asideTitle = Array.from(aside.querySelector('h2, h3')?.childNodes || [])
+        .filter(n => n.nodeType === Node.TEXT_NODE)
+        .map(n => n.textContent.trim())
+        .join(' ').trim();
+      const backLabel = asideTitle ? `← Back to ${asideTitle.toLowerCase()}` : i18n.t('info.button-info.back.button.textContent');
+      const backButtonHTML = `<button class="do-info-back" type="button">${backLabel}</button>`;
+
       const resource = button.getAttribute('resource');
       const url = stripFragmentFromString(resource);
-      // console.log(rel, resource, url)
 
-      if (!url && !title) { return; }
+      if (!url) { return; }
 
       let title = '';
       let description = '';
       let image = '';
       let video = '';
-      let details = '';
+      let panel = '';
       let seeAlso = '';
       let subject = '';
 
@@ -250,9 +291,10 @@ export function eventButtonInfo() {
               }
             }
 
-            details = `
-              <details about="${resource}" open="" dir="auto">
-                <summary property="schema:name"><span data-i18n="info.button-info.about.summary">${i18n.t('info.button-info.about.summary.textContent')}</span> ${title}</summary>
+            //XXX: the target attribute is sanitized by DOMPurify in fragmentFromString, so it doesn't output at the moment
+            panel = `
+              <div about="${resource}" class="do-info-panel" dir="auto">
+                <h3 property="schema:name">${title}</h3>
                 ${image}
                 <div datatype="rdf:HTML" dir="auto" property="schema:description">
                 ${description}
@@ -264,21 +306,24 @@ export function eventButtonInfo() {
                   ${subject}
                   ${seeAlso}
                 </dl>
-              </details>
+              </div>
             `;
-
-            //XXX: the target attribute is sanitized by DOMPurify in fragmentFromString, so it doesn't output at the moment
-            // console.log(details)
           }
 
-          return details;
+          return panel || errorMessage;
         })
-        .then(details => {
-          e.target.closest('.do').querySelector('div.info').prepend(fragmentFromString(details));
+        .then(panel => {
+          infoDiv.prepend(fragmentFromString(panel));
+          infoDiv.prepend(fragmentFromString(backButtonHTML));
         })
-        .catch((error) => {
+        .catch(() => {
           button.disabled = false;
-          e.target.closest('.do').querySelector('div.info').prepend(fragmentFromString(errorMessage));
+          // Restore sections on fetch error
+          aside.querySelectorAll('[data-do-info-hidden]').forEach(el => {
+            el.hidden = false;
+            el.removeAttribute('data-do-info-hidden');
+          });
+          infoDiv.prepend(fragmentFromString(errorMessage));
         });
     }
   });
