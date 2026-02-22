@@ -616,11 +616,14 @@ export function showVisualisationGraph(url, data, selector, options) {
     }
 
     function getNodeAt(x, y) {
-      return nodes.find(function(d) {
-        if (d.x == null) return false;
+      var hitRadiusSq = nodeRadius * nodeRadius;
+      for (var ni = 0; ni < nodes.length; ni++) {
+        var d = nodes[ni];
+        if (d.x == null) continue;
         var dx = d.x - x, dy = d.y - y;
-        return dx * dx + dy * dy <= nodeRadius * nodeRadius;
-      });
+        if (dx * dx + dy * dy <= hitRadiusSq) return d;
+      }
+      return undefined;
     }
 
     function getLinkAt(x, y) {
@@ -630,13 +633,17 @@ export function showVisualisationGraph(url, data, selector, options) {
       go.bilinks.forEach(function(d) {
         var s = d[0], mid = d[1], t = d[2];
         if (s.x == null || t.x == null) return;
-        for (var j = 0; j <= 12; j++) {
-          var pt = sampleBezier(s, mid, t, j / 12);
-          var dx = pt.x - x, dy = pt.y - y;
-          var distSq = dx * dx + dy * dy;
+        var dx = t.x - s.x, dy = t.y - s.y;
+        var approxLen = Math.sqrt(dx * dx + dy * dy);
+        var samples = Math.max(6, Math.min(24, Math.round(approxLen / 20)));
+        for (var j = 0; j <= samples; j++) {
+          var pt = sampleBezier(s, mid, t, j / samples);
+          var pdx = pt.x - x, pdy = pt.y - y;
+          var distSq = pdx * pdx + pdy * pdy;
           if (distSq < minDistSq) {
             minDistSq = distSq;
             closest = d;
+            if (distSq < 4) break;
           }
         }
       });
@@ -840,20 +847,20 @@ export function getVisualisationGraphData(url, data, options) {
 function convertGraphToVisualisationGraph(url, g, options){
   // console.log(g);
   Config['Graphs'] = Config['Graphs'] || {};
-
-  var dataGraph = rdf.grapoi({ dataset: rdf.dataset().addAll(g.dataset)});
-  var graphs = {};
-  graphs[options['subjectURI']] = g;
-
-  if ('mergeGraph' in options && options.mergeGraph) {
-    graphs = Object.assign(Config.Graphs, graphs);
-  }
-
   Config['Graphs'][options['subjectURI']] = g;
 
+  var graphs = { [options['subjectURI']]: g };
+
+  if ('mergeGraph' in options && options.mergeGraph) {
+    graphs = Object.assign({}, Config.Graphs, graphs);
+  }
+
+  // Build dataGraph by merging all relevant graphs exactly once
+  var mergedDataset = rdf.dataset();
   Object.keys(graphs).forEach(i => {
-    dataGraph.dataset.addAll(graphs[i].dataset);
+    mergedDataset.addAll(graphs[i].dataset);
   });
+  var dataGraph = rdf.grapoi({ dataset: mergedDataset });
 
   var graphData = {"nodes":[], "links": [], "resources": options.resources };
   // Use a Set for O(1) membership checks instead of O(n) array.includes()
