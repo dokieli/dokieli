@@ -847,20 +847,22 @@ export function getVisualisationGraphData(url, data, options) {
 function convertGraphToVisualisationGraph(url, g, options){
   // console.log(g);
   Config['Graphs'] = Config['Graphs'] || {};
-  Config['Graphs'][options['subjectURI']] = g;
 
-  var graphs = { [options['subjectURI']]: g };
+  var dataGraph = rdf.grapoi({ dataset: rdf.dataset().addAll(g.dataset) });
+  var graphs = {};
+  graphs[options['subjectURI']] = g;
 
   if ('mergeGraph' in options && options.mergeGraph) {
-    graphs = Object.assign({}, Config.Graphs, graphs);
+    graphs = Object.assign(Config.Graphs, graphs);
+    // Only add the extra graphs beyond g, which is already loaded into dataGraph
+    Object.keys(graphs).forEach(i => {
+      if (i !== options['subjectURI']) {
+        dataGraph.dataset.addAll(graphs[i].dataset);
+      }
+    });
   }
 
-  // Build dataGraph by merging all relevant graphs exactly once
-  var mergedDataset = rdf.dataset();
-  Object.keys(graphs).forEach(i => {
-    mergedDataset.addAll(graphs[i].dataset);
-  });
-  var dataGraph = rdf.grapoi({ dataset: mergedDataset });
+  Config['Graphs'][options['subjectURI']] = g;
 
   var graphData = {"nodes":[], "links": [], "resources": options.resources };
   // Use a Set for O(1) membership checks instead of O(n) array.includes()
