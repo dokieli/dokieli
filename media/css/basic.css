@@ -126,6 +126,17 @@ body {
   margin: 0 auto;
   padding: 0;
   /*width:100%;*/
+  visibility:visible !important; 
+  font-family:
+    'Inter',
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
 }
 
 .do-site header:first-of-type:has(+ main) {
