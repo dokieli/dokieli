@@ -136,10 +136,10 @@ export function showUserIdentityInput () {
         <ul class="do-signin-providers">
           <li>
             <button aria-expanded="false" class="do-signin-provider" data-provider="solid" data-i18n="dialog.signin.provider-solid.button" title="${i18n.t('dialog.signin.provider-solid.button.title')}" type="button">
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 1200 1200"><path d="M260.7 1049.4 27.3 644.6c-21.6-37.5-21.6-83.7 0-121.2l233.4-404.5c21.7-37.6 61.8-60.7 105-60.7h466.5c43.3 0 83.5 23.1 105 60.7l233.5 404.7c21.6 37.5 21.6 83.7 0 121.2l-233.4 404.8c-21.7 37.6-61.8 60.7-105 60.7H366c-43.5-.2-83.5-23.4-105.3-60.9z" fill="#fff"/><path d="M280.6 1021.9 61.1 641.2c-20.4-35.3-20.4-78.8 0-114l219.5-380.8c20.5-35.4 58.2-57.1 98.9-57.1h439c40.7 0 78.5 21.7 98.9 57.1L1137.1 527c20.4 35.3 20.4 78.8 0 114l-219.6 381c-20.5 35.4-58.2 57.1-98.9 57.1H379.7c-40.9 0-78.6-21.8-99.1-57.2z" fill="#7c4dff"/><path d="M377.9 510.9h451.7c5.7 0 10.2-4.6 10.2-10.2V416c0-56.3-45.7-102-102-102H466.6c-78.9-.1-142.8 63.8-142.8 142.7-.1 30.1 24.1 54.2 54.1 54.2z" fill="#f7f7f7"/><path d="M422.2 885.1h269.9c81.5 0 147.7-66.2 147.7-147.7 0-27.2-22-49.3-49.3-49.3H333.6c-5.6 0-9.8 4.5-9.8 9.8v88.6c-.1 54.5 44.1 98.6 98.6 98.6z" fill="#f7f7f7"/><path d="m343.8 499.7 336.9 336.9c22.3 22.3 58.4 22.3 80.7 0l58.4-58.4c22.3-22.3 22.3-58.4 0-80.7L483 360.6c-22.3-22.3-58.4-22.3-80.7 0L343.9 419c-22.5 22.3-22.5 58.5-.1 80.7z" fill="#f7f7f7"/><path d="M686.2 842.3 488.3 688.1h43.8z" fill="#444" opacity=".3"/><path d="M477.4 355 155.9 155.9h52.9z" fill="#444" opacity=".3"/></svg>
+              <i class="fas solid-project"></i>
               <span>
                 <span data-i18n="dialog.signin.provider-solid.button.span">${i18n.t('dialog.signin.provider-solid.button.span.textContent')}</span>
-                <small data-i18n="dialog.signin.provider-solid.small">${i18n.t('dialog.signin.provider-solid.small.textContent')}</small>
+                <span data-i18n="dialog.signin.provider-solid.small">${i18n.t('dialog.signin.provider-solid.small.textContent')}</span>
               </span>
               ${Icon['.fas.fa-angle-right']}
             </button>
@@ -159,9 +159,7 @@ export function showUserIdentityInput () {
           </p>
         </details>
 
-        <p>
-          ${Config.Button.Info.WebId}
-        </p>
+        <p>${Config.Button.Info.WebId}</p>
       </section>
     </aside>`;
 
@@ -208,6 +206,14 @@ export function showUserIdentityInput () {
         loginWithIDP(idpUrl);
       }
       return;
+    }
+  });
+
+  let details = aside.querySelector('#user-identity-input-advanced');
+  let userIdentityInputWebidInput = details.querySelector('input');
+  details.addEventListener('toggle', e => {
+    if (details.open) {
+      userIdentityInputWebidInput.focus();
     }
   });
 

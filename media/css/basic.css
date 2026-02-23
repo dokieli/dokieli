@@ -155,9 +155,9 @@ body {
   margin: 0 auto;
   padding: 0;
   /*width:100%;*/
-  visibility:visible !important; 
+  visibility:visible !important;
   font-family: 'Ubuntu', system-ui, sans-serif;
-  font-size: 16px;
+  font-size: 18px;
   line-height: 1.6;
 }
 
