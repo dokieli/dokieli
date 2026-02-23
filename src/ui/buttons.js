@@ -23,7 +23,7 @@ import { i18n } from "../i18n.js";
 
 const ns = Config.ns;
 
-const DEV_BRANCH_URL = process.env.DEV_BRANCH_URL;
+const DEV_ORIGIN = process.env.DEV_ORIGIN;
 
 // function getButtonTextContent(key, buttonTextContent) {
 //   const textContentTranslation = i18n.t(key);
@@ -34,7 +34,7 @@ const DEV_BRANCH_URL = process.env.DEV_BRANCH_URL;
 function getDocsBaseURL() {
   if (Config.WebExtensionEnabled) return Config.WebExtension.runtime.getURL('docs');
   if (isLocalhost(window.location.href)) return new URL('docs.html', document.baseURI).href;
-  let origin = window.location.origin === DEV_BRANCH_URL ? DEV_BRANCH_URL : 'https://dokie.li';
+  let origin = window.location.origin === DEV_ORIGIN ? DEV_ORIGIN : 'https://dokie.li';
   const translatedDocs = (Config.DocsTranslations.includes(Config.User.UI.Language) && Config.User.UI.Language !== 'en') ?
   `${origin}/${Config.User.UI.Language}/docs` : `https://${origin}/docs`;
   return translatedDocs;
