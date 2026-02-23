@@ -83,6 +83,7 @@ module.exports = (env) => {
         "process.env.CLIENT_ID": JSON.stringify(process.env.CLIENT_ID),
         "process.env.DEV_CLIENT_ID": JSON.stringify(process.env.DEV_CLIENT_ID),
         "process.env.OIDC_REDIRECT_URI": JSON.stringify(process.env.OIDC_REDIRECT_URI),
+        "process.env.DEV_ORIGIN": JSON.stringify(process.env.DEV_ORIGIN),
       })
     ],
   };
