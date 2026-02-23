@@ -16,18 +16,29 @@
  */
 
  @font-face {
-  font-family: 'Inter';
-  src: url('/fonts/InterVariable.woff2') format('woff2');
-  font-weight: 100 900;
+  font-family: 'Ubuntu';
+  src: url('../fonts/Ubuntu-Regular.woff2') format('woff2');
   font-style: normal;
+  font-display:swap;
+}
+
+@font-face {
+  font-family: 'Ubuntu';
+  src: url('../fonts/Ubuntu-Italic.woff2') format('woff2');
+  font-style: italic;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Inter';
-  src: url('/fonts/InterItalicVariable.woff2') format('woff2');
-  font-weight: 100 900;
-  font-style: italic;
+  font-family: 'Ubuntu';
+  src: url('../fonts/Ubuntu-Bold.woff2') format('woff2');
+  font-weight: bold;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'UbuntuMono';
+  src: url('../fonts/UbuntuMono-Regular.woff2') format('woff2');
   font-display: swap;
 }
 
@@ -117,7 +128,7 @@ height:267mm !important;
 /* media print */
 
 html {
-  font-family: sans-serif;
+  font-family: 'Ubuntu', sans-serif;
 }
 
 body {
@@ -128,7 +139,7 @@ body {
   /*width:100%;*/
   visibility:visible !important; 
   font-family:
-    'Inter',
+    'Ubuntu',
     system-ui,
     -apple-system,
     BlinkMacSystemFont,
