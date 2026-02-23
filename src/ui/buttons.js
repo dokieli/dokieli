@@ -36,7 +36,7 @@ function getDocsBaseURL() {
   if (isLocalhost(window.location.href)) return new URL('docs.html', document.baseURI).href;
   let origin = window.location.origin === DEV_ORIGIN ? DEV_ORIGIN : 'https://dokie.li';
   const translatedDocs = (Config.DocsTranslations.includes(Config.User.UI.Language) && Config.User.UI.Language !== 'en') ?
-  `${origin}/${Config.User.UI.Language}/docs` : `https://${origin}/docs`;
+  `${origin}/${Config.User.UI.Language}/docs` : `${origin}/docs`;
   return translatedDocs;
 }
 
