@@ -15,30 +15,48 @@
  * limitations under the License.
  */
 
- @font-face {
+@font-face {
   font-family: 'Ubuntu';
-  src: url('../fonts/Ubuntu-Regular.woff2') format('woff2');
+  src:
+    local('Ubuntu'),
+    local('Ubuntu Regular'),
+    local('Ubuntu-Regular'),
+    url('../fonts/Ubuntu-Regular.woff2') format('woff2');
+  font-weight: 400;
   font-style: normal;
-  font-display:swap;
+  font-display: swap;
 }
 
 @font-face {
   font-family: 'Ubuntu';
-  src: url('../fonts/Ubuntu-Italic.woff2') format('woff2');
+  src:
+    local('Ubuntu Italic'),
+    local('Ubuntu-Italic'),
+    url('../fonts/Ubuntu-Italic.woff2') format('woff2');
+  font-weight: 400;
   font-style: italic;
   font-display: swap;
 }
 
 @font-face {
   font-family: 'Ubuntu';
-  src: url('../fonts/Ubuntu-Bold.woff2') format('woff2');
-  font-weight: bold;
+  src:
+    local('Ubuntu Bold'),
+    local('Ubuntu-Bold'),
+    url('../fonts/Ubuntu-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'UbuntuMono';
-  src: url('../fonts/UbuntuMono-Regular.woff2') format('woff2');
+  font-family: 'Ubuntu Mono';
+  src:
+    local('Ubuntu Mono'),
+    local('UbuntuMono-Regular'),
+    url('../fonts/UbuntuMono-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
   font-display: swap;
 }
 
@@ -128,7 +146,7 @@ height:267mm !important;
 /* media print */
 
 html {
-  font-family: 'Ubuntu', sans-serif;
+  font-family: 'Ubuntu', system-ui, sans-serif;
 }
 
 body {
@@ -138,14 +156,7 @@ body {
   padding: 0;
   /*width:100%;*/
   visibility:visible !important; 
-  font-family:
-    'Ubuntu',
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
+  font-family: 'Ubuntu', system-ui, sans-serif;
   font-size: 16px;
   line-height: 1.6;
 }
