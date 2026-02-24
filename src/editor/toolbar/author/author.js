@@ -252,16 +252,24 @@ TODO:
   // Called when there is a state change, e.g., added something to the DOM or selection change.
   update(view) {
     this.selectionUpdate(view);
-    const selection = window.getSelection();
-    const isSelection = selection && !selection.isCollapsed;
-    // Hide the toolbar when there is no selection
-    if (!isSelection) {
-      if (this.dom.classList.contains('editor-form-active')) {
-        // this.dom.classList.remove("editor-form-active");
-        // console.log("selection update, cleanup toolbar")
-        this.cleanupToolbar();
-      }
-      return;
+    // const selection = window.getSelection();
+    // const isSelection = selection && !selection.isCollapsed;
+    const { selection } = view.state;
+    const isSelection = !selection.empty;
+    // // Hide the toolbar when there is no selection
+    // if (!isSelection) {
+    //   if (this.dom.classList.contains('editor-form-active')) {
+    //     // this.dom.classList.remove("editor-form-active");
+    //     // console.log("selection update, cleanup toolbar")
+    //     this.cleanupToolbar();
+    //   }
+    //   return;
+    // }
+    const isFormActive = this.dom.classList.contains('editor-form-active');
+    const isInsideForm = document.activeElement?.closest('.editor-form');
+  
+    if (!isSelection && isFormActive && !isInsideForm) {
+      this.cleanupToolbar();
     }
   }  
 

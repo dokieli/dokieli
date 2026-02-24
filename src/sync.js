@@ -19,7 +19,7 @@ import { diffArrays } from "diff";
 import { accessModePossiblyAllowed } from "./access.js";
 import { addMessageToLog, getDocument, getResourceInfo, processSupplementalInfoLinkHeaders, showActionMessage, updateResourceInfos, updateSupplementalInfo } from "./doc.js";
 import { getResource, putResource } from "./fetcher.js";
-import { getLocalStorageItem, updateLocalStorageItem, updateStorage } from "./storage.js";
+import { getLocalStorageItem, removeLocalStorageDocumentFromCollection, updateLocalStorageItem, updateStorage } from "./storage.js";
 import { getDateTimeISO, getDateTimeISOFromDate, getHash } from "./util.js";
 import { fragmentFromString, getDocumentNodeFromString } from "./utils/html.js";
 import { normalizeForDiff } from "./utils/normalization.js";

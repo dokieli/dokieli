@@ -32,6 +32,10 @@ import { updateButtons } from "../ui/buttons.js";
 import { cleanProseMirrorOutput } from "../utils/normalization.js";
 import { i18n } from "../i18n.js";
 import { domSanitize, domSanitizeHTMLBody } from "../utils/sanitization.js";
+import * as Y from 'yjs'
+import { WebsocketProvider } from 'y-websocket'
+import { ySyncPlugin, yCursorPlugin, yUndoPlugin, undo, redo, initProseMirrorDoc, prosemirrorToYDoc } from 'y-prosemirror'
+import { currentLocation } from "../uri.js";
 
 const ns = Config.ns;
 
@@ -274,9 +278,63 @@ export class Editor {
       }
     });
 
+    // window.addEventListener('load', () => {
+  const ydoc = new Y.Doc()
+  const provider = new WebsocketProvider(
+    `ws://localhost:1234/ws`,
+    // `ws${location.protocol.slice(4)}//localhost:1234/ws`,
+    // `ws${location.protocol.slice(4)}//${location.host}/ws`, // alternatively: use the local ws server (run `npm start` in root directory)
+    // encodeURIComponent(currentLocation()),
+    'dokieli',
+    ydoc
+  )
+  const yXmlFragment = ydoc.getXmlFragment('prosemirror')
+
+  // // 🟢 ONLY seed if empty
+  // if (yXmlFragment.length === 0) {
+  //   const pmDoc = DOMParser.fromSchema(schema).parse(this.node)
+  
+  //   const seedDoc = prosemirrorToYDoc(pmDoc)
+  
+  //   ydoc.transact(() => {
+  //     const seedFragment = seedDoc.getXmlFragment('prosemirror')
+  //     yXmlFragment.insert(0, seedFragment.toArray())
+  //   })
+  // }
+
+  ydoc.on('update', (update, origin) => {
+    const decoded = Y.decodeUpdate(update)
+    console.log("📦 Decoded Yjs Update", decoded)
+    // fetch('http://localhost:3000/index.html' + ".yjs", {
+    //   method: "PUT",
+    //   headers: {
+    //     "Content-Type": "application/octet-stream"
+    //   },
+    //   body: Y.encodeStateAsUpdate(ydoc)
+    // })
+  })
+  
+  provider.connect()
+
+  provider.on('status', event => {
+    console.log('YJS STATUS:', event.status)
+  })
+  
+  provider.on('connection-error', e => {
+    console.error('YJS CONNECTION ERROR', e)
+  })
+// });
+const { doc, mapping } = initProseMirrorDoc(yXmlFragment, schema)
+
     const state = EditorState.create({
       doc: DOMParser.fromSchema(schema).parse(this.node),
-      plugins: [history(), keymapPlugin, editorToolbarPlugin],
+      plugins: [
+        ySyncPlugin(yXmlFragment, {mapping }),
+        yCursorPlugin(provider.awareness),
+        yUndoPlugin(),
+        history(), 
+        keymapPlugin, 
+        editorToolbarPlugin],
     });
 
     this.node.replaceChildren();
