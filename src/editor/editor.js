@@ -39,6 +39,8 @@ import { currentLocation } from "../uri.js";
 
 const ns = Config.ns;
 
+const DEV_ORIGIN = process.env.DEV_ORIGIN;
+
 export class Editor {
   constructor(mode, node) {
     this.mode = mode || Config.Editor.mode;
@@ -279,13 +281,21 @@ export class Editor {
     });
 
     // window.addEventListener('load', () => {
-  const ydoc = new Y.Doc()
+  const ydoc = new Y.Doc();
+
+  // let wsOrigin = window.location.origin === DEV_ORIGIN ? DEV_ORIGIN : 'https://dokie.li';
+  // let wsUrl = new URL(wsOrigin);
+  // let wsHost = wsUrl.host;
+  // let wsSecure = wsUrl.protocol.slice(4);
+
+  let wsHost = 'locahost:1234';
+
   const provider = new WebsocketProvider(
-    `ws://localhost:1234/ws`,
+    `ws://${wsHost}/ws`,
     // `ws${location.protocol.slice(4)}//localhost:1234/ws`,
     // `ws${location.protocol.slice(4)}//${location.host}/ws`, // alternatively: use the local ws server (run `npm start` in root directory)
-    // encodeURIComponent(currentLocation()),
-    'dokieli',
+    encodeURIComponent(currentLocation()),
+    // 'dokieli',
     ydoc
   )
   const yXmlFragment = ydoc.getXmlFragment('prosemirror')
