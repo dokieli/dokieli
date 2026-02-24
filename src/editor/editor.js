@@ -39,7 +39,7 @@ import { currentLocation } from "../uri.js";
 
 const ns = Config.ns;
 
-const DEV_ORIGIN = process.env.DEV_ORIGIN;
+const YWEBSOCKET_URL = process.env.YWEBSOCKET_URL;
 
 export class Editor {
   constructor(mode, node) {
@@ -291,7 +291,7 @@ export class Editor {
   let wsHost = 'locahost:1234';
 
   const provider = new WebsocketProvider(
-    `ws://${wsHost}/ws`,
+    YWEBSOCKET_URL,
     // `ws${location.protocol.slice(4)}//localhost:1234/ws`,
     // `ws${location.protocol.slice(4)}//${location.host}/ws`, // alternatively: use the local ws server (run `npm start` in root directory)
     encodeURIComponent(currentLocation()),
