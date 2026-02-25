@@ -332,8 +332,9 @@ export async function syncLocalRemoteResource(options = {}) {
           };
         }
         else {
-          reviewOptions['message'] = `<span data-i18n="dialog.review-changes.message.local-remote-changed.span">${i18n.t('dialog.review-changes.message.local-remote-changed.span.textContent')}</span>`;
-          console.log(reviewOptions['message'])
+          let localUnpublishedChangesRemoteChanged = i18n.t('dialog.review-changes.message.local-remote-changed.span.textContent');
+          reviewOptions['message'] = `<span data-i18n="dialog.review-changes.message.local-remote-changed.span">${localUnpublishedChangesRemoteChanged}</span>`;
+          console.log(localUnpublishedChangesRemoteChanged);
           // console.log(localContent, remoteContent)
           showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
         }
@@ -723,11 +724,7 @@ export async function autoSave(key, options) {
   };
 
   const data = getDocument(null, documentOptions);
-  let temp = getDocumentNodeFromString(data);
-  const normalizedData = normalizeForDiff(temp);
-  temp = getDocument(normalizedData, documentOptions);
-  const hash = await getHash(temp);
-
+  const hash = await getHash(data);
   const item = Config.AutoSave.Items[key]?.[options.method];
 
   const hasMatchingDigest = item?.digestSRI === hash;
@@ -763,6 +760,8 @@ export async function enableAutoSave(key, options = {}) {
   console.log(getDateTimeISO() + ': ' + key + ' ' + options.method + ' autosave enabled.');
 
   await autoSave(key, options);
+
+  await updateLocalStorageItem(key, { autoSave: true });
 
   const handleInputPaste = (e) => {
     //I love that this function is called sync but it is async
@@ -809,7 +808,7 @@ export async function disableAutoSave(key, options = {}) {
       }
 
       clearInterval(Config.AutoSave.Items[key][method].id);
-      Config.AutoSave.Items[key][method] = undefined;
+      // Config.AutoSave.Items[key][method] = undefined;
 
       await updateLocalStorageItem(key, { autoSave: false });
     }
