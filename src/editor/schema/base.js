@@ -51,16 +51,9 @@ export const DIR_AUTO_TAGS = new Set([
 export function toDOMWithAutoDir(tagName) {
   return function (node) {
     const attrs = node.attrs.originalAttributes || {};
-
-    if (DIR_AUTO_TAGS.has(tagName)) {
-      return [tagName, { dir: "auto", ...attrs }, 0];
-    }
-
-    return [tagName, attrs, 0];
+    return [tagName, { dir: "auto", ...attrs }, 0];
   };
 }
-
-
 
 function getAttributes (node) {
   const attrs = {};
@@ -320,17 +313,6 @@ let customNodes = {
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "ol", getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return ["ol", { ...node.attrs.originalAttributes }, 0]; }
-  },
-  li: {
-    content: "block+",
-    group: "block",
-    attrs: { originalAttributes: { default: {} } },
-    // parseDOM: [{ tag: "li", getAttrs(node){ return getAttributes(node); }}],
-    // toDOM(node) { return ["li", { ...node.attrs.originalAttributes }, 0]; },
-    parseDOM: [{ tag: "li", preserveWhitespace: "full", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["li", { dir: "auto", ...node.attrs.originalAttributes }, 0]; },
-    defining: true,
-    // whitespace: 'pre'
   },
   code: {
     inline: true,
