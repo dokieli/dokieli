@@ -16,6 +16,7 @@ limitations under the License.
 */
 
 import rdf from 'rdf-ext';
+import LinkHeader from "http-link-header";
 import { i18n } from './i18n.js';
 import { getButtonHTML, updateButtons } from './ui/buttons.js';
 import { addMessageToLog, buildResourceView, copyRelativeResources, createFeedXML, createImmutableResource, createMutableResource, createNoteDataHTML, getAccessModeOptionsHTML, getBaseURLSelection, getDocument, getFeedFormatSelection, getLanguageOptionsHTML, getLicenseOptionsHTML, getResourceInfo, rewriteBaseURL, setCopyToClipboard, setDocumentRelation, showActionMessage, showRobustLinksDecoration, showTimeMap, updateMutableResource, buildReferences, getDocumentConceptDefinitionsHTML, insertDocumentLevelHTML, insertTestCoverageToTable, diffRequirements, removeReferences, getStorageSelfDescription, getContactInformation, getPersistencePolicy, getODRLPolicies, updateResourceInfos, initCurrentStylesheet, setDate, showFragment, initCopyToClipboard, setDocumentURL } from './doc.js';
