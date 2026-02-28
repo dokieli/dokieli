@@ -2277,7 +2277,7 @@ outline-offset: 5px;
   position: relative;
   cursor: pointer;
   text-align: center;
-  /* font-weight: bold; */
+  font-weight: normal;
   color: #fff;
   user-select: none;
 }
