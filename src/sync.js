@@ -750,7 +750,7 @@ export async function enableAutoSave(key, options = {}) {
   // options['autoSave'] = true;
   Config.AutoSave.Items[key] ||= {};
   Config.AutoSave.Items[key][options.method] ||= {};
-  console.log("XXX",Config.AutoSave.Items[key][options.method])
+  // console.log("XXX",Config.AutoSave.Items[key][options.method])
 
   //TEMPORARY FOR TESTING
   // Config.AutoSave.Items[key]['http'] = {};
@@ -762,6 +762,8 @@ export async function enableAutoSave(key, options = {}) {
   await autoSave(key, options);
 
   await updateLocalStorageItem(key, { autoSave: true });
+
+  document.getElementById('autosave-remote').checked = true;
 
   const handleInputPaste = (e) => {
     //I love that this function is called sync but it is async
@@ -784,11 +786,23 @@ export async function enableAutoSave(key, options = {}) {
       debounceTimeout = setTimeout(async () => await sync(key, options), Config.AutoSave.Timer); // debounce delay 
       // Config.AutoSave.Items[key][options.method]['id'] = debounceTimeout;
     }
+
+    // Delete selection
+    if (!e.target.closest('.ProseMirror[contenteditable]')) return;
+    
+    const isDeleteKey = e.key === 'Backspace' || e.key === 'Delete';
+    const hasSelection = window.getSelection()?.toString().length > 0;
+    
+    if (isDeleteKey && hasSelection) {
+      if (debounceTimeout) clearTimeout(debounceTimeout);
+      debounceTimeout = setTimeout(async () => await sync(key, options), Config.AutoSave.Timer);
+    }
   }
 
   // TODO: check remote in intervals if no input
   document.addEventListener('input', handleInputPaste);
   document.addEventListener('paste', handleInputPaste);
+  document.addEventListener('keydown', handleInputPaste);
 }
 
 export async function disableAutoSave(key, options = {}) {
@@ -811,6 +825,8 @@ export async function disableAutoSave(key, options = {}) {
       // Config.AutoSave.Items[key][method] = undefined;
 
       await updateLocalStorageItem(key, { autoSave: false });
+
+      document.getElementById('autosave-remote').checked = false;
     }
   }
 }
