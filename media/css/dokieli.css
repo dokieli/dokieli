@@ -201,9 +201,6 @@ width: 25%;
 @media screen {
 body { 
   visibility:visible !important;
-  font-family: 'Ubuntu', system-ui, sans-serif;
-  font-size: 18px;
-  line-height: 1.6;
 }
 /*body.on-document-menu > *:not([class~="on"]) {
 opacity:0.5;
@@ -211,13 +208,18 @@ transition:opacity 1s ease-in-out;
 -moz-transition:opacity 1s ease-in-out;
 -webkit-transition:opacity 1s ease-in-out;
 }*/
-
 }
 
-code,
-pre,
-kbd,
-samp {
+.do {
+  font-family: 'Ubuntu', system-ui, sans-serif;
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.do code,
+.do pre,
+.do kbd,
+.do samp {
   font-family: 'Ubuntu Mono', ui-monospace, monospace;
 }
 
@@ -595,7 +597,6 @@ text-align:left;
 main,
 main > article { position:relative; }
 
-.do,
 .do button,
 .do input,
 .do select,
