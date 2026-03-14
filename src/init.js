@@ -63,6 +63,7 @@ export async function init (url) {
     emitDocEvent('ready', { url: Config.DocumentURL });
 
     monitorNetworkStatus();
+    initPrint();
   }
 }
 
@@ -399,6 +400,17 @@ function processActivateAction() {
 
       showDocumentMenu(e);
     }
+  });
+}
+
+
+function initPrint() {
+  window.addEventListener('beforeprint', () => {
+    document.querySelectorAll('a[href^="http"]').forEach(a => {
+      if (a.textContent.trim() === a.href) {
+        a.classList.add('do-print-a-href-hide');
+      }
+    });
   });
 }
 

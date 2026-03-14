@@ -186,7 +186,7 @@ limitations under the License.
      text-underline-offset: 2px;
    }
 
-   a[href^="http"]:after {
+   a[href^="http"]:not(.do-print-a-href-hide):after {
      content: " (" attr(href) ")";
      font-size: 10pt;
      color: #777;
