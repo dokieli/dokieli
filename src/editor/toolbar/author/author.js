@@ -27,7 +27,7 @@ import { getResource } from "../../../fetcher.js"
 import Config from "../../../config.js";
 import { fragmentFromString } from "../../../utils/html.js";
 import { i18n } from "../../../i18n.js"
-import { sanitizeInsertAdjacentHTML,  } from "../../../utils/sanitization.js"
+import { htmlEncode, sanitizeInsertAdjacentHTML } from "../../../utils/sanitization.js";
 
 const ns = Config.ns;
 
