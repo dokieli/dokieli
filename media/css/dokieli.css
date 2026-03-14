@@ -95,6 +95,10 @@ limitations under the License.
    }
 
    .slide {
+     border:1px solid #000 !important;
+     border-radius:0.5em !important;
+     padding:1em !important;
+     margin-top:2em !important;
      position: static !important;
      display: block !important;
      width: auto !important;
@@ -103,10 +107,8 @@ limitations under the License.
      left: auto !important;
      right: auto !important;
      bottom: auto !important;
-     page-break-before: always !important;
-     page-break-after: auto !important;
      page-break-inside: avoid !important;
-     font-size: 10pt !important;
+     font-size: 12pt !important;
    }
 
    .slide * {
@@ -118,6 +120,9 @@ limitations under the License.
      background-repeat: no-repeat !important;
      background-position: center !important;
    }
+  .slide h1, .slide h2, .slide h3, .slide h4 {
+    font-weight:bold !important;
+  }
 
    img,
    video,
