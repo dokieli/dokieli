@@ -569,6 +569,7 @@ nodeToHTML(node, schema) {
 
         requirementSubjectCurrentNode.setAttribute('resource', selectedOptionValue);
         requirementSubjectCurrentNode.textContent = selectedOptionTextContent;
+        node.querySelector('.editor-form-submit').disabled = false;
       });
     }
 
@@ -592,6 +593,7 @@ nodeToHTML(node, schema) {
 
         requirementLevelCurrentNode.setAttribute('resource', selectedOptionValue);
         requirementLevelCurrentNode.textContent = selectedOptionTextContent;
+        node.querySelector('.editor-form-submit').disabled = false;
       });
     }
 
