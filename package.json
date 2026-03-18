@@ -57,6 +57,7 @@
     "micromark-extension-gfm": "^3.0.0",
     "micromark-extension-gfm-tagfilter": "^2.0.0",
     "papaparse": "^5.5.3",
+    "playwright": "^1.58.2",
     "prosemirror-commands": "^1.6.2",
     "prosemirror-example-setup": "^1.2.3",
     "prosemirror-history": "^1.4.1",
@@ -88,7 +89,7 @@
     "terser-webpack-plugin": "^5.3.3",
     "vite": "^8.0.0",
     "vitest": "^4.1.0",
-    "webpack": "5.104.0",
+    "webpack": "^5.105.4",
     "webpack-cli": "^5.0.1"
   },
   "resolutions": {
@@ -97,7 +98,8 @@
     "lru-cache": "^8.0.0",
     "micromatch": "^4.0.8",
     "undici": "^6.24.0",
-    "tar": "^7.5.11"
+    "tar": "^7.5.11",
+    "minimatch": "^10.2.4"
   },
   "standard": {
     "globals": [
