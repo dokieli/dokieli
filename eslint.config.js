@@ -1,6 +1,5 @@
 import jestPlugin from 'eslint-plugin-jest';
 import licenseHeader from 'eslint-plugin-license-header';
-import importPlugin from 'eslint-plugin-import';
 
 export default [
   // Global linting for the whole project
