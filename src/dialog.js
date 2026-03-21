@@ -42,36 +42,14 @@ import { csvStringToJson, jsonToHtmlTableString } from './csv.js';
 
 export function initDocumentMenu() { 
   const loadingState = `
-  <button class="show do-menu do-loading" aria-disabled="true" title="Loading…" aria-label="Loading">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" aria-hidden="true">
-      <rect x="0" y="60" width="448" height="72" rx="16" class="do-bar do-bar-1"/>
-      <rect x="0" y="220" width="448" height="72" rx="16" class="do-bar do-bar-2"/>
-      <rect x="0" y="380" width="448" height="72" rx="16" class="do-bar do-bar-3"/>
+  <button aria-disabled="true" class="show do-menu do-loading"  title="Loading…" aria-label="Loading…">
+    <svg aria-hidden="true" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0" y="60" width="448" height="72" rx="16" />
+      <rect x="0" y="220" width="448" height="72" rx="16" />
+      <rect x="0" y="380" width="448" height="72" rx="16" />
     </svg>
   </button>
-  <style>
-    @keyframes do-bar-pulse {
-      0%, 100% { opacity: 0.2; }
-      50%       { opacity: 1; }
-    }
-    #document-menu > button.do-loading {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      // pointer-events: none;
-      cursor: wait;
-    }
-    #document-menu > button.do-loading svg {
-      width: 1em;
-      height: 1em;
-      fill: currentColor;
-    }
-    .do-bar { animation: do-bar-pulse 1.2s ease-in-out infinite; }
-    .do-bar-1 { animation-delay: 0s; }
-    .do-bar-2 { animation-delay: 0.2s; }
-    .do-bar-3 { animation-delay: 0.4s; }
-  </style>
-`;
+  `;
 
   document.body.prepend(fragmentFromString(`<div class="do" id="document-menu" dir="${Config.User.UI.LanguageDir}" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}">${loadingState}<div><section id="user-info"></section></div></div>`));
 

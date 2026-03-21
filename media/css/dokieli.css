@@ -345,6 +345,27 @@ padding: 0 0.5em;
   }
 }
 
+@keyframes do-bar-pulse {
+  0%, 100% { opacity: 0.2; }
+  50%      { opacity: 1; }
+}
+#document-menu > button.do-loading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: wait;
+}
+#document-menu > button.do-loading svg {
+  width: 1em;
+  height: 1em;
+  fill: currentColor;
+}
+.do-loading rect { animation: do-bar-pulse 1.2s ease-in-out infinite; }
+.do-loading rect:nth-child(1) { animation-delay: 0s; }
+.do-loading rect:nth-child(1) { animation-delay: 0.2s; }
+.do-loading rect:nth-child(1) { animation-delay: 0.4s; }
+
+
 svg.fa-fw, i.fa-fw {
 text-align: center;
 width: 1.25em;
