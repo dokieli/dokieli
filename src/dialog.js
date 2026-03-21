@@ -40,7 +40,9 @@ import { showUserSigninSignout, userInfoSignOut } from './auth.js';
 import { generateGeoView } from './geo.js';
 import { csvStringToJson, jsonToHtmlTableString } from './csv.js';
 
-export function initDocumentMenu() { 
+export function initDocumentMenu(options = {}) {
+  options = { loading: true, ...options };
+
   const loadingState = `
   <button aria-disabled="true" class="show do-menu do-loading"  title="Loading…" aria-label="Loading…">
     <svg aria-hidden="true" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
@@ -51,13 +53,15 @@ export function initDocumentMenu() {
   </button>
   `;
 
-  document.body.prepend(fragmentFromString(`<div class="do" id="document-menu" dir="${Config.User.UI.LanguageDir}" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}">${loadingState}<div><section id="user-info"></section></div></div>`));
+  const menuButton = options.loading ? loadingState : Config.Button.Menu.OpenMenu;
+
+  document.body.prepend(fragmentFromString(`<div class="do" id="document-menu" dir="${Config.User.UI.LanguageDir}" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}">${menuButton}<div><section id="user-info"></section></div></div>`));
 
   const menuNode = document.getElementById('document-menu');
 
   document.addEventListener('dokieli:ready', () => {
     // console.log('ready');
-    menuNode.innerHTML = `${Config.Button.Menu.OpenMenu}<div><section id="user-info"></section></div>`;
+    menuNode.setHTMLUnsafe(domSanitize(`${Config.Button.Menu.OpenMenu}<div><section id="user-info"></section></div>`));
   }, { once: true });
   
   var userInfo = document.getElementById('user-info');
@@ -5155,7 +5159,7 @@ export async function spawnDokieli(documentNode, data, contentTypes, iris, optio
       })
     });
 
-    initDocumentMenu();
+    initDocumentMenu({loading: false});
     // if (!Config.Editor.EditorEnabled) {
     //   Config.Editor.init(Config.Editor.mode, null, options);
     // } else {
