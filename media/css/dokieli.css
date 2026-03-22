@@ -362,8 +362,8 @@ padding: 0 0.5em;
 }
 .do-loading rect { animation: do-bar-pulse 1.2s ease-in-out infinite; }
 .do-loading rect:nth-child(1) { animation-delay: 0s; }
-.do-loading rect:nth-child(1) { animation-delay: 0.2s; }
-.do-loading rect:nth-child(1) { animation-delay: 0.4s; }
+.do-loading rect:nth-child(2) { animation-delay: 0.2s; }
+.do-loading rect:nth-child(3) { animation-delay: 0.4s; }
 
 
 svg.fa-fw, i.fa-fw {
