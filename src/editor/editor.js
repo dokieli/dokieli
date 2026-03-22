@@ -39,6 +39,8 @@ import { currentLocation } from "../uri.js";
 
 const ns = Config.ns;
 
+let provider;
+let ydoc;
 const YWEBSOCKET_URL = process.env.YWEBSOCKET_URL;
 
 export class Editor {
@@ -282,16 +284,16 @@ export class Editor {
     });
 
     // window.addEventListener('load', () => {
-  const ydoc = new Y.Doc();
+  ydoc = new Y.Doc();
 
   // let wsOrigin = window.location.origin === DEV_ORIGIN ? DEV_ORIGIN : 'https://dokie.li';
   // let wsUrl = new URL(wsOrigin);
   // let wsHost = wsUrl.host;
   // let wsSecure = wsUrl.protocol.slice(4);
 
-  let wsHost = 'locahost:1234';
+  // let wsHost = 'locahost:1234';
 
-  const provider = new WebsocketProvider(
+  provider = new WebsocketProvider(
     YWEBSOCKET_URL,
     // `ws${location.protocol.slice(4)}//localhost:1234/ws`,
     // `ws${location.protocol.slice(4)}//${location.host}/ws`, // alternatively: use the local ws server (run `npm start` in root directory)
@@ -333,6 +335,10 @@ export class Editor {
   
   provider.on('connection-error', e => {
     console.error('YJS CONNECTION ERROR', e)
+  })
+
+  provider.on('connection-closed', e => {
+    ydoc.destroy();
   })
 // });
 const { doc, mapping } = initProseMirrorDoc(yXmlFragment, schema)
@@ -455,6 +461,11 @@ const { doc, mapping } = initProseMirrorDoc(yXmlFragment, schema)
       //   document.body.appendChild(node);
       // });
       // console.log("Editor destroyed. Mode:", this.mode);
+
+
+      provider.disconnect()
+      provider.destroy()
+      ydoc.destroy()
     }
   }
 
