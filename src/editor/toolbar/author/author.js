@@ -375,18 +375,28 @@ TODO:
       this.blocktypeSelect.appendChild(option);
     });
 
-    // Save the ProseMirror state on mousedown, before the select steals focus
-    // and collapses the editor's DOM selection.
-    let _savedState = null;
+    // Save the PM selection on mousedown, before the select steals focus and
+    // collapses the editor's DOM selection. We save only the selection (not the
+    // full state) so it can be re-applied to the *current* view state in the
+    // change handler, avoiding stale-transaction issues.
+    let _savedSelection = null;
     this.blocktypeSelect.addEventListener('mousedown', () => {
-      _savedState = this.editorView?.state ?? null;
+      _savedSelection = this.editorView?.state?.selection ?? null;
     });
     this.blocktypeSelect.addEventListener('change', (e) => {
-      const state = _savedState ?? this.editorView?.state;
-      _savedState = null;
+      const savedSelection = _savedSelection;
+      _savedSelection = null;
       const command = this.toolbarCommands[e.target.value];
-      if (command && state && this.editorView) {
+      if (command && this.editorView) {
         e.target.blur();
+        // Re-apply the saved selection to the current state so the command
+        // always operates on a consistent (state, selection) pair.
+        let state = this.editorView.state;
+        if (savedSelection) {
+          const tr = state.tr.setSelection(savedSelection);
+          this.editorView.dispatch(tr);
+          state = this.editorView.state;
+        }
         command(state, this.editorView.dispatch, this.editorView);
         this.editorView.focus();
       }
