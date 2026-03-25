@@ -271,14 +271,20 @@ TODO:
               this.dom.querySelector("#editor-button-img")?.click();
             },
           },
-          // TODO: bring back when we re-implement lists
-          // { icon: buttonIcons['ul']?.icon,         label: 'Bullet List',   action: () => { this.dom.querySelector('#editor-button-ul')?.click(); } },
-          // { icon: buttonIcons['ol']?.icon,         label: 'Numbered List', action: () => { this.dom.querySelector('#editor-button-ol')?.click(); } },
+          { icon: buttonIcons['ul']?.icon,         label: 'Bullet List',   action: () => { this.dom.querySelector('#editor-button-ul')?.click(); } },
+          { icon: buttonIcons['ol']?.icon,         label: 'Numbered List', action: () => { this.dom.querySelector('#editor-button-ol')?.click(); } },
           {
             icon: buttonIcons["blockquote"]?.icon,
-            label: "Quote",
+            label: "Blockquote",
             action: () => {
               this.dom.querySelector("#editor-button-blockquote")?.click();
+            },
+          },
+          {
+            icon: buttonIcons["q"]?.icon,
+            label: "Inline Quote",
+            action: () => {
+              this.dom.querySelector("#editor-button-q")?.click();
             },
           },
           {
@@ -286,6 +292,13 @@ TODO:
             label: "Code Block",
             action: () => {
               this.dom.querySelector("#editor-button-pre")?.click();
+            },
+          },
+          {
+            icon: buttonIcons["code"]?.icon,
+            label: "Inline Code",
+            action: () => {
+              this.dom.querySelector("#editor-button-code")?.click();
             },
           },
         ],
@@ -362,10 +375,19 @@ TODO:
       this.blocktypeSelect.appendChild(option);
     });
 
+    // Save the ProseMirror state on mousedown, before the select steals focus
+    // and collapses the editor's DOM selection.
+    let _savedState = null;
+    this.blocktypeSelect.addEventListener('mousedown', () => {
+      _savedState = this.editorView?.state ?? null;
+    });
     this.blocktypeSelect.addEventListener('change', (e) => {
+      const state = _savedState ?? this.editorView?.state;
+      _savedState = null;
       const command = this.toolbarCommands[e.target.value];
-      if (command && this.editorView) {
-        command(this.editorView.state, this.editorView.dispatch, this.editorView);
+      if (command && state && this.editorView) {
+        e.target.blur();
+        command(state, this.editorView.dispatch, this.editorView);
         this.editorView.focus();
       }
     });
@@ -999,12 +1021,14 @@ function toggleHeading(schema, level) {
     while (depth > 0 && !$from.node(depth).isTextblock) depth--;
     const node = $from.node(depth);
 
+    if (!node.isTextblock) return false;
+
     if (node.type === nodeType && node.attrs.level === level) {
       return setBlockType(nodes.p)(state, dispatch);
     } else {
       return setBlockType(nodeType, {
         level,
-        originalAttributes: node.attrs.originalAttributes
+        originalAttributes: node.attrs.originalAttributes || {}
       })(state, dispatch);
     }
   };
