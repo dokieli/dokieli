@@ -159,6 +159,7 @@ export class ToolbarView {
   }
 
   toggleButtonState(buttonNode, button, command) {
+      this.closeAllDropdowns();
       this.editorView?.focus();
       buttonNode.classList.toggle('editor-button-active');
 
@@ -410,6 +411,7 @@ export class ToolbarView {
           }
         }
 
+        itemBtn.addEventListener('mousedown', (e) => e.preventDefault());
         itemBtn.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -422,9 +424,13 @@ export class ToolbarView {
         panel.appendChild(itemLi);
       });
 
+      trigger.addEventListener('mousedown', (e) => e.preventDefault());
       trigger.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
+        if (document.activeElement && this.dom.contains(document.activeElement)) {
+          document.activeElement.blur();
+        }
         const isActive = panel.classList.contains('editor-dropdown-panel-active');
         this.closeAllDropdowns();
         if (!isActive) {
@@ -457,17 +463,17 @@ export class ToolbarView {
     btn.type = 'button';
     btn.className = 'editor-mode-toggle-btn';
     btn.textContent = label;
+    btn.addEventListener('mousedown', (e) => e.preventDefault());
     btn.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
       const sel = window.getSelection();
-      const containerNode = sel?.rangeCount ? getSelectedParentElement(sel.getRangeAt(0)) : null;
-      const selectionState = containerNode ? exportSelection(containerNode, sel) : null;
+      const body = document.body;
+      const selectionState = sel?.rangeCount ? exportSelection(body, sel) : null;
       Config.Editor.toggleEditor(targetMode);
-      if (selectionState && containerNode) {
+      if (selectionState) {
         requestAnimationFrame(() => {
-          const newContainer = document.querySelector(`[id="${containerNode.id}"]`) ?? containerNode;
-          setSelection(selectionState.start, selectionState.end, newContainer);
+          setSelection(selectionState.start, selectionState.end, document.body);
           const toolbarView = targetMode === 'author'
             ? Config.Editor.authorToolbarView
             : Config.Editor.socialToolbarView;
@@ -486,6 +492,10 @@ export class ToolbarView {
     });
     this.dom.querySelectorAll('.editor-dropdown-trigger').forEach(t => {
       t.classList.remove('editor-button-active');
+    });
+    // Also close any open popup forms
+    this.dom.querySelectorAll('.editor-form.editor-form-active').forEach(f => {
+      f.classList.remove('editor-form-active');
     });
   }
 
