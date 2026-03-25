@@ -72,7 +72,7 @@ function getAttributes (node) {
   if (headings.includes(nodeName)) {
     return {
       originalAttributes: attrs,
-      level: nodeName[1],
+      level: Number(nodeName[1]),
     }
   }
 
