@@ -354,6 +354,7 @@ TODO:
       { label: 'Heading 1', value: 'h1' },
       { label: 'Heading 2', value: 'h2' },
       { label: 'Heading 3', value: 'h3' },
+      { label: 'Heading 4', value: 'h4' },
     ].forEach(({ label, value }) => {
       const option = document.createElement('option');
       option.value = value;
@@ -391,10 +392,12 @@ TODO:
 
   getBlockTypeKey(state) {
     const { $from } = state.selection;
-    const node = $from.parent;
+    let depth = $from.depth;
+    while (depth > 0 && !$from.node(depth).isTextblock) depth--;
+    const node = $from.node(depth);
     if (node.type === schema.nodes.heading) {
       const level = node.attrs.level;
-      if (level >= 1 && level <= 3) return `h${level}`;
+      if (level >= 1 && level <= 4) return `h${level}`;
     }
     return 'p';
   }
@@ -992,12 +995,17 @@ function toggleHeading(schema, level) {
     const { nodes } = schema;
     const { $from } = state.selection;
     const nodeType = nodes.heading;
-    
-    if ($from.node().type === nodeType && $from.node().attrs.level === level) {
+    let depth = $from.depth;
+    while (depth > 0 && !$from.node(depth).isTextblock) depth--;
+    const node = $from.node(depth);
+
+    if (node.type === nodeType && node.attrs.level === level) {
       return setBlockType(nodes.p)(state, dispatch);
-    }
-    else {
-      return setBlockType(nodeType, { level })(state, dispatch);
+    } else {
+      return setBlockType(nodeType, {
+        level,
+        originalAttributes: node.attrs.originalAttributes
+      })(state, dispatch);
     }
   };
 }
