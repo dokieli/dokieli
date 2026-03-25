@@ -264,7 +264,8 @@ export class Editor {
         // console.log(editorView);
 
         //TODO: 'math', 'sparkline',
-        this.authorToolbarView = new AuthorToolbar('author', ['p', 'h1', 'h2', 'h3', 'h4', 'em', 'strong', 'lang', 'a', 'img', 'ol', 'ul', 'pre', 'code', 'blockquote', 'q', 'semantics', 'citation', 'requirement', 'note'], editorView);
+        // Visible: strong, em, a. submenu (block type selector): p, h1-h4. submenu (+): img, ol, ul, pre, code, blockquote, q. submenu (···): semantics, citation, requirement, note, lang.
+        this.authorToolbarView = new AuthorToolbar('author', ['strong', 'em', 'a', 'p', 'h1', 'h2', 'h3', 'h4', 'img', 'ol', 'ul', 'pre', 'code', 'blockquote', 'q', 'semantics', 'citation', 'requirement', 'note', 'lang'], editorView);
 
         // Append DOM portion of toolbar to current editor.
         // editorView.dom.parentNode.appendChild(toolbarView.dom);
@@ -381,7 +382,8 @@ export class Editor {
   createSocialToolbar() {
     // Create and initialize the SocialToolbar only when in social mode
     // console.log("creating social toolbar")
-    this.socialToolbarView = new SocialToolbar('social', ['share', 'approve', 'disapprove', 'specificity', 'bookmark', 'comment']);
+    // Visible: approve, disapprove, comment, bookmark. submenu (···): share, specificity.
+    this.socialToolbarView = new SocialToolbar('social', ['approve', 'disapprove', 'comment', 'bookmark', 'share', 'specificity']);
     document.body.appendChild(this.socialToolbarView.dom); // idk why this is needed? or is it not?
     // console.log("SocialToolbar created. Mode:", this.mode);
   }

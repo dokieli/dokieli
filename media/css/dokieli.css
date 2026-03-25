@@ -3838,7 +3838,7 @@ h1 + div p:first-child {
       padding: 15px;
       text-decoration: none;
       span {
-        font-size:1.25em;
+        font-size:1.5em;
       }
     }
       .editor-toolbar .editor-form-actions li button:focus {
@@ -3981,11 +3981,7 @@ height:auto;
     .editor-toolbar li button:not(:disabled):hover{
       background-color: #EEE;
       color: #080; }
-    .editor-toolbar li button:not(:disabled).editor-button-active svg,
-    .editor-toolbar li button:not(:disabled):hover svg, 
-    .editor-toolbar li button:not(:disabled):focus {
-      fill: #080; }
-
+      
     .editor-toolbar li button:disabled {
       cursor: default;
     }
@@ -4016,6 +4012,265 @@ height:auto;
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
   }
+
+.editor-toolbar .editor-dropdown-panel {
+  display: none;
+  overflow-x: unset;
+  flex-wrap: unset;
+}
+.editor-toolbar .editor-dropdown-panel.editor-dropdown-panel-active {
+  display: flex;
+  padding: 0;
+}
+
+.editor-submenu-button {
+  display: none !important;
+}
+
+#document-editor.editor-toolbar {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.07);
+}
+
+.editor-toolbar .editor-form-actions {
+  align-items: stretch;
+  overflow-y: hidden;
+}
+
+.editor-toolbar .editor-form-actions li {
+  display: flex;
+  align-items: stretch;
+}
+
+.editor-toolbar .editor-form-actions li button {
+  padding: 0 10px;
+  align-items: center;
+  justify-content: center;
+}
+
+.editor-toolbar .editor-form-actions li:first-child .editor-dropdown-trigger,
+.editor-toolbar .editor-form-actions li:first-child button {
+  border-bottom-left-radius: 10px;
+  border-top-left-radius: 10px;
+}
+
+.editor-toolbar .editor-form-actions li:last-child .editor-mode-toggle-btn,
+.editor-toolbar .editor-form-actions li:last-child button {
+  border-bottom-right-radius: 10px;
+  border-top-right-radius: 10px;
+}
+
+.editor-toolbar .editor-form-actions li.editor-dropdown-menu,
+.editor-toolbar .editor-form-actions li.editor-mode-toggle {
+  position: relative;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.editor-toolbar .editor-form-actions li.editor-dropdown-menu .editor-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  padding: 0 10px;
+  font-size: 0.9em;
+  font-weight: bold;
+  letter-spacing: 0.01em;
+  height: 100%;
+  box-sizing: border-box;
+  cursor: pointer;
+  background-color: #fff;
+  border: none;
+  transition: background-color .2s ease-in;
+}
+.editor-toolbar .editor-form-actions li.editor-dropdown-menu .editor-dropdown-trigger:hover,
+.editor-toolbar .editor-form-actions li.editor-dropdown-menu .editor-dropdown-trigger.editor-button-active {
+  background-color: #EEE;
+  color: #080;
+}
+.editor-toolbar .editor-form-actions li.editor-dropdown-menu .editor-dropdown-trigger:hover svg,
+.editor-toolbar .editor-form-actions li.editor-dropdown-menu .editor-dropdown-trigger.editor-button-active svg {
+  fill: #080;
+}
+
+.editor-blocktype-select {
+  height: 100%;
+  border: none;
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.85em;
+  font-weight: 600;
+  padding: 0 0.4em 0 0.75em;
+  cursor: pointer;
+  min-width: 7.5em;
+  border-radius: 10px 0 0 10px;
+  color: #111;
+  outline: none;
+}
+.editor-blocktype-select:hover,
+.editor-blocktype-select:focus {
+  background: #eee;
+  color: #080;
+}
+.editor-blocktype-select option[value="h1"] { font-size: 1.3em; font-weight: 700; }
+.editor-blocktype-select option[value="h2"] { font-size: 1.15em; font-weight: 700; }
+.editor-blocktype-select option[value="h3"] { font-size: 1em; font-weight: 600; }
+.editor-blocktype-select option[value="p"]  { font-size: 0.85em; font-weight: 400; }
+
+.editor-dropdown-panel {
+  position: absolute;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14), 0 1px 4px rgba(0, 0, 0, 0.08);
+  min-width: 220px;
+  padding: 5px 0;
+  z-index: 100;
+  list-style: none;
+  margin: 4px 0 0;
+  flex-direction: column;
+  color: #111;
+}
+
+.editor-dropdown-section-label {
+  padding: 0.55em 0.9em 0.25em;
+  font-weight: 700;
+  font-size: 0.75em;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #888;
+  cursor: default;
+  list-style: none;
+  pointer-events: none;
+  border-top: 1px solid rgba(0,0,0,0.07);
+  margin-top: 3px;
+}
+.editor-dropdown-section-label:first-child {
+  border-top: none;
+  margin-top: 0;
+  padding: 1em;
+}
+
+.editor-dropdown-panel li {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.editor-dropdown-panel li button.editor-dropdown-item {
+  width: 100%;
+  min-height: max-content;
+  text-align: left;
+  padding: 0.45em 0.9em;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  font-family: inherit;
+  font-size: 1em;
+  font-weight: normal;
+  color: #111;
+  transition: background-color 0.1s;
+}
+.editor-dropdown-panel li button.editor-dropdown-item:hover {
+  background-color: #f0f5f0;
+  color: #060;
+}
+.editor-dropdown-item-label {
+  font-weight: 500;
+}
+.editor-dropdown-item-desc {
+  color: #777;
+  margin-top: 0.08em;
+  font-weight: normal;
+}
+
+.editor-dropdown-panel li button.editor-dropdown-item.editor-dropdown-item-current {
+  background-color: #f0f5f0;
+  color: #060;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+.editor-dropdown-item-current::after {
+  content: '✓';
+  font-size: 0.8em;
+  color: #080;
+  padding-left: 0.75em;
+  flex-shrink: 0;
+}
+
+.editor-toolbar .editor-form-actions li button svg {
+  width: 15px;
+  height: 15px;
+  fill: #111;
+  flex-shrink: 0;
+}
+.editor-toolbar .editor-form-actions li button svg[stroke] {
+  fill: none;
+  stroke: #111;
+}
+.editor-toolbar .editor-form-actions li button:hover svg,
+.editor-toolbar .editor-form-actions li button.editor-button-active svg {
+  fill: #080;
+}
+.editor-toolbar .editor-form-actions li button:hover svg[stroke],
+.editor-toolbar .editor-form-actions li button.editor-button-active svg[stroke] {
+  fill: none;
+  stroke: #080;
+}
+
+.editor-dropdown-panel li button.editor-dropdown-item.has-icon {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.55em;
+}
+.editor-dropdown-item-icon {
+  flex-shrink: 0;
+  color: #000;
+  margin-top: 1px;
+  line-height: 0;
+  display: flex;
+  align-items: center;
+}
+.editor-dropdown-item-icon svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+.editor-dropdown-item-text {
+  display: flex;
+  flex-direction: column;
+}
+.editor-dropdown-panel li button.editor-dropdown-item.has-icon:hover .editor-dropdown-item-icon {
+  color: #060;
+}
+
+.editor-toolbar .editor-form-actions li.editor-mode-toggle .editor-mode-toggle-btn {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  box-sizing: border-box;
+  white-space: nowrap;
+  font-style: italic;
+  font-size: 0.8em;
+  padding: 0 12px;
+  opacity: 0.65;
+  border-left: 1px solid rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+  cursor: pointer;
+  border-top: none;
+  border-right: none;
+  border-bottom: none;
+  transition: background-color .2s ease-in, opacity .2s ease-in;
+}
+.editor-toolbar .editor-form-actions li.editor-mode-toggle .editor-mode-toggle-btn:hover {
+  opacity: 1;
+  background-color: #EEE;
+  color: #080;
+}
 
 .editor-form {
   background: #fff;

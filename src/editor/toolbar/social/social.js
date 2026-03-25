@@ -21,6 +21,7 @@ import Config from "../../../config.js";
 import { exportSelection, getSelectedParentElement, restoreSelection } from "../../utils/annotation.js";
 import { htmlEncode } from "../../../utils/sanitization.js";
 import { i18n } from "../../../i18n.js";
+import { buttonIcons } from "../../../ui/buttons.js";
 
 const ns = Config.ns;
 
@@ -38,6 +39,37 @@ export class SocialToolbar extends ToolbarView {
       // console.log('------HERE NOW: cleanupToolbar');
       this.cleanupToolbar();
     }
+  }
+
+  getSubmenuButtons() {
+    return ['share', 'specificity'];
+  }
+
+  getModeToggle() {
+    return { label: 'Switch to Edit', targetMode: 'author' };
+  }
+
+  getDropdownMenus() {
+    return {
+      more: {
+        label: '···',
+        title: 'More options',
+        items: [
+          {
+            icon: buttonIcons['share']?.icon,
+            label: 'Share Selection',
+            description: 'Share this selection with others',
+            action: () => { this.dom.querySelector('#editor-button-share')?.click(); }
+          },
+          {
+            icon: buttonIcons['specificity']?.icon,
+            label: 'Request Specificity',
+            description: 'Request to increase specificity on selected text',
+            action: () => { this.dom.querySelector('#editor-button-specificity')?.click(); }
+          }
+        ]
+      }
+    };
   }
 
   getToolbarButtonClickHandlers() {
