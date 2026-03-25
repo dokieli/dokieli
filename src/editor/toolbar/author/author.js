@@ -299,7 +299,7 @@ TODO:
             icon: buttonIcons["semantics"]?.icon,
             label: "Define Semantics",
             description:
-              "Add attributes to describe selection meaning (e.g. about, property)",
+              "Add attributes to describe selection meaning",
             action: () => {
               this.dom.querySelector("#editor-button-semantics")?.click();
             },
