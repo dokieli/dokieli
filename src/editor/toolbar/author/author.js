@@ -261,29 +261,82 @@ TODO:
   getDropdownMenus() {
     return {
       plus: {
-        label: '+',
-        title: 'Insert',
+        label: "+",
+        title: "Insert",
         items: [
-          { icon: buttonIcons['img']?.icon,        label: 'Image',         action: () => { this.dom.querySelector('#editor-button-img')?.click(); } },
+          {
+            icon: buttonIcons["img"]?.icon,
+            label: "Image",
+            action: () => {
+              this.dom.querySelector("#editor-button-img")?.click();
+            },
+          },
           // TODO: bring back when we re-implement lists
           // { icon: buttonIcons['ul']?.icon,         label: 'Bullet List',   action: () => { this.dom.querySelector('#editor-button-ul')?.click(); } },
           // { icon: buttonIcons['ol']?.icon,         label: 'Numbered List', action: () => { this.dom.querySelector('#editor-button-ol')?.click(); } },
-          { icon: buttonIcons['blockquote']?.icon, label: 'Quote',         action: () => { this.dom.querySelector('#editor-button-blockquote')?.click(); } },
-          { icon: buttonIcons['pre']?.icon,        label: 'Code Block',    action: () => { this.dom.querySelector('#editor-button-pre')?.click(); } },
-        ]
+          {
+            icon: buttonIcons["blockquote"]?.icon,
+            label: "Quote",
+            action: () => {
+              this.dom.querySelector("#editor-button-blockquote")?.click();
+            },
+          },
+          {
+            icon: buttonIcons["pre"]?.icon,
+            label: "Code Block",
+            action: () => {
+              this.dom.querySelector("#editor-button-pre")?.click();
+            },
+          },
+        ],
       },
       meta: {
-        label: '···',
-        title: 'More options',
-        sectionLabel: 'Metadata and Semantics',
+        label: "···",
+        title: "More options",
+        sectionLabel: "Metadata and Semantics",
         items: [
-          { icon: buttonIcons['semantics']?.icon,   label: 'Define Semantics',  description: 'Add attributes to describe selection meaning (e.g. about, property)',    action: () => { this.dom.querySelector('#editor-button-semantics')?.click(); } },
-          { icon: buttonIcons['citation']?.icon,    label: 'Add Requirement', description: 'Link markup to a formal specification requirement',            action: () => { this.dom.querySelector('#editor-button-citation')?.click(); } },
-          { icon: buttonIcons['note']?.icon,        label: 'Note',   description: 'Add an internal note or footnote.',             action: () => { this.dom.querySelector('#editor-button-note')?.click(); } },
-          { icon: buttonIcons['lang']?.icon,        label: 'Set Language',                                                                           action: () => { this.dom.querySelector('#editor-button-lang')?.click(); } },
-          { icon: buttonIcons['requirement']?.icon, label: 'Add Requirement',                                                                        action: () => { this.dom.querySelector('#editor-button-requirement')?.click(); } },
-        ]
-      }
+          {
+            icon: buttonIcons["semantics"]?.icon,
+            label: "Define Semantics",
+            description:
+              "Add attributes to describe selection meaning (e.g. about, property)",
+            action: () => {
+              this.dom.querySelector("#editor-button-semantics")?.click();
+            },
+          },
+          {
+            icon: buttonIcons["citation"]?.icon,
+            label: "Add Citation",
+            description: "Add an inline citation for the selected text.",
+            action: () => {
+              this.dom.querySelector("#editor-button-citation")?.click();
+            },
+          },
+          {
+            icon: buttonIcons["note"]?.icon,
+            label: "Note",
+            description: "Add an internal note or footnote.",
+            action: () => {
+              this.dom.querySelector("#editor-button-note")?.click();
+            },
+          },
+          {
+            icon: buttonIcons["lang"]?.icon,
+            label: "Set Language",
+            action: () => {
+              this.dom.querySelector("#editor-button-lang")?.click();
+            },
+          },
+          {
+            icon: buttonIcons["requirement"]?.icon,
+            label: "Add Requirement",
+            description: "Link markup to a formal specification requirement",
+            action: () => {
+              this.dom.querySelector("#editor-button-requirement")?.click();
+            },
+          },
+        ],
+      },
     };
   }
 
