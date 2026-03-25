@@ -28,6 +28,7 @@ import Config from "../../../config.js";
 import { fragmentFromString } from "../../../utils/html.js";
 import { i18n } from "../../../i18n.js"
 import { htmlEncode, sanitizeInsertAdjacentHTML } from "../../../utils/sanitization.js";
+import { buttonIcons } from "../../../ui/buttons.js";
 
 const ns = Config.ns;
 
@@ -249,21 +250,101 @@ TODO:
     return toolbarPopups;
   }
 
+  getSubmenuButtons() {
+    return ['p', 'h1', 'h2', 'h3', 'h4', 'img', 'ul', 'ol', 'blockquote', 'q', 'pre', 'code', 'semantics', 'citation', 'requirement', 'note', 'lang'];
+  }
+
+  getModeToggle() {
+    return { label: 'Back to Reading', targetMode: 'social' };
+  }
+
+  getDropdownMenus() {
+    return {
+      plus: {
+        label: '+',
+        title: 'Insert',
+        items: [
+          { icon: buttonIcons['img']?.icon,        label: 'Image',         action: () => { this.dom.querySelector('#editor-button-img')?.click(); } },
+          // TODO: bring back when we re-implement lists
+          // { icon: buttonIcons['ul']?.icon,         label: 'Bullet List',   action: () => { this.dom.querySelector('#editor-button-ul')?.click(); } },
+          // { icon: buttonIcons['ol']?.icon,         label: 'Numbered List', action: () => { this.dom.querySelector('#editor-button-ol')?.click(); } },
+          { icon: buttonIcons['blockquote']?.icon, label: 'Quote',         action: () => { this.dom.querySelector('#editor-button-blockquote')?.click(); } },
+          { icon: buttonIcons['pre']?.icon,        label: 'Code Block',    action: () => { this.dom.querySelector('#editor-button-pre')?.click(); } },
+        ]
+      },
+      meta: {
+        label: '···',
+        title: 'More options',
+        sectionLabel: 'Metadata and Semantics',
+        items: [
+          { icon: buttonIcons['semantics']?.icon,   label: 'Define Semantics',  description: 'Add attributes to describe selection meaning (e.g. about, property)',    action: () => { this.dom.querySelector('#editor-button-semantics')?.click(); } },
+          { icon: buttonIcons['citation']?.icon,    label: 'Add Requirement', description: 'Link markup to a formal specification requirement',            action: () => { this.dom.querySelector('#editor-button-citation')?.click(); } },
+          { icon: buttonIcons['note']?.icon,        label: 'Note',   description: 'Add an internal note or footnote.',             action: () => { this.dom.querySelector('#editor-button-note')?.click(); } },
+          { icon: buttonIcons['lang']?.icon,        label: 'Set Language',                                                                           action: () => { this.dom.querySelector('#editor-button-lang')?.click(); } },
+          { icon: buttonIcons['requirement']?.icon, label: 'Add Requirement',                                                                        action: () => { this.dom.querySelector('#editor-button-requirement')?.click(); } },
+        ]
+      }
+    };
+  }
+
+  beforeButtons() {
+    const li = document.createElement('li');
+    li.className = 'editor-blocktype-menu';
+
+    this.blocktypeSelect = document.createElement('select');
+    this.blocktypeSelect.className = 'editor-blocktype-select';
+    this.blocktypeSelect.id = 'editor-blocktype-selector';
+    this.blocktypeSelect.setAttribute('title', 'Block type');
+
+    [
+      { label: 'Paragraph', value: 'p' },
+      { label: 'Heading 1', value: 'h1' },
+      { label: 'Heading 2', value: 'h2' },
+      { label: 'Heading 3', value: 'h3' },
+    ].forEach(({ label, value }) => {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = label;
+      this.blocktypeSelect.appendChild(option);
+    });
+
+    this.blocktypeSelect.addEventListener('change', (e) => {
+      const command = this.toolbarCommands[e.target.value];
+      if (command && this.editorView) {
+        command(this.editorView.state, this.editorView.dispatch, this.editorView);
+        this.editorView.focus();
+      }
+    });
+
+    li.appendChild(this.blocktypeSelect);
+    this.ul.appendChild(li);
+  }
+
   // Called when there is a state change, e.g., added something to the DOM or selection change.
   update(view) {
     this.selectionUpdate(view);
     const selection = window.getSelection();
     const isSelection = selection && !selection.isCollapsed;
-    // Hide the toolbar when there is no selection
     if (!isSelection) {
       if (this.dom.classList.contains('editor-form-active')) {
-        // this.dom.classList.remove("editor-form-active");
-        // console.log("selection update, cleanup toolbar")
         this.cleanupToolbar();
       }
       return;
     }
-  }  
+    if (this.blocktypeSelect && view) {
+      this.blocktypeSelect.value = this.getBlockTypeKey(view.state);
+    }
+  }
+
+  getBlockTypeKey(state) {
+    const { $from } = state.selection;
+    const node = $from.parent;
+    if (node.type === schema.nodes.heading) {
+      const level = node.attrs.level;
+      if (level >= 1 && level <= 3) return `h${level}`;
+    }
+    return 'p';
+  }
 
   updateToolbarVisibility(e) {
     // document.addEventListener('click', (e) => {

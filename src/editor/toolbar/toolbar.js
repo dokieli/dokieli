@@ -18,7 +18,7 @@ limitations under the License.
 import { schema } from "../schema/base.js"
 import { getButtonHTML } from "../../ui/buttons.js"
 import { getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getClassesOfProductsConcepts, getDocument, getLanguageOptionsHTML, getLicenseOptionsHTML, getReferenceLabel } from "../../doc.js";
-import { getTextQuoteHTML, cloneSelection, setSelection, getSelectedParentElement } from "../utils/annotation.js";
+import { getTextQuoteHTML, cloneSelection, exportSelection, setSelection, getSelectedParentElement } from "../utils/annotation.js";
 import { escapeRegExp, matchAllIndex } from "../../util.js";
 import { fragmentFromString, getDocumentContentNode } from "../../utils/html.js";
 import { showUserIdentityInput } from "../../auth.js";
@@ -304,8 +304,8 @@ export class ToolbarView {
 
     var ul = document.querySelector('.editor-form-actions');
 
-    if (ul) { 
-      ul.parentNode.removeChild(ul); 
+    if (ul) {
+      ul.parentNode.removeChild(ul);
     }
 
     const toolbarForms = this.dom.getElementsByClassName('editor-form');
@@ -319,7 +319,174 @@ export class ToolbarView {
     this.dom.appendChild(this.ul);
     document.body.appendChild(this.dom);
 
-    this.initializeButtons(this.buttons)
+    this.beforeButtons();
+    this.initializeButtons(this.buttons);
+    this.afterButtons();
+  }
+
+  beforeButtons() {}
+
+  afterButtons() {
+    this.getSubmenuButtons().forEach(button => {
+      const li = this.dom.querySelector(`#editor-button-${button}`)?.closest('li');
+      if (li) li.classList.add('editor-submenu-button');
+    });
+
+    this.initializeDropdownMenus(this.getDropdownMenus());
+
+    const modeToggle = this.getModeToggle();
+    if (modeToggle) this.addModeToggleButton(modeToggle);
+  }
+
+  getSubmenuButtons() { return []; }
+
+  getDropdownMenus() { return {}; }
+
+  getModeToggle() { return null; }
+
+  initializeDropdownMenus(dropdowns) {
+    Object.entries(dropdowns).forEach(([name, config]) => {
+      const li = document.createElement('li');
+      li.className = 'editor-dropdown-menu';
+
+      const trigger = document.createElement('button');
+      trigger.id = `editor-dropdown-trigger-${name}`;
+      trigger.className = 'editor-dropdown-trigger';
+      trigger.type = 'button';
+      trigger.setAttribute('title', config.title || config.label);
+
+      const triggerLabel = document.createElement('span');
+      triggerLabel.textContent = config.label;
+      trigger.appendChild(triggerLabel);
+
+      const panel = document.createElement('ul');
+      panel.className = 'editor-dropdown-panel';
+      panel.id = `editor-dropdown-panel-${name}`;
+
+      if (config.sectionLabel) {
+        const sectionLi = document.createElement('li');
+        sectionLi.className = 'editor-dropdown-section-label';
+        sectionLi.textContent = config.sectionLabel;
+        panel.appendChild(sectionLi);
+      }
+
+      config.items.forEach(item => {
+        const itemLi = document.createElement('li');
+        const itemBtn = document.createElement('button');
+        itemBtn.type = 'button';
+        itemBtn.className = 'editor-dropdown-item';
+
+        if (item.icon) {
+          itemBtn.classList.add('has-icon');
+          const iconSpan = document.createElement('span');
+          iconSpan.className = 'editor-dropdown-item-icon';
+          iconSpan.setAttribute('aria-hidden', 'true');
+          iconSpan.innerHTML = item.icon;
+          itemBtn.appendChild(iconSpan);
+
+          const textSpan = document.createElement('span');
+          textSpan.className = 'editor-dropdown-item-text';
+          const labelSpan = document.createElement('span');
+          labelSpan.className = 'editor-dropdown-item-label';
+          labelSpan.textContent = item.label;
+          textSpan.appendChild(labelSpan);
+          if (item.description) {
+            const descSpan = document.createElement('span');
+            descSpan.className = 'editor-dropdown-item-desc';
+            descSpan.textContent = item.description;
+            textSpan.appendChild(descSpan);
+          }
+          itemBtn.appendChild(textSpan);
+        } else {
+          const labelSpan = document.createElement('span');
+          labelSpan.className = 'editor-dropdown-item-label';
+          labelSpan.textContent = item.label;
+          itemBtn.appendChild(labelSpan);
+          if (item.description) {
+            const descSpan = document.createElement('span');
+            descSpan.className = 'editor-dropdown-item-desc';
+            descSpan.textContent = item.description;
+            itemBtn.appendChild(descSpan);
+          }
+        }
+
+        itemBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          panel.classList.remove('editor-dropdown-panel-active');
+          trigger.classList.remove('editor-button-active');
+          item.action();
+        });
+
+        itemLi.appendChild(itemBtn);
+        panel.appendChild(itemLi);
+      });
+
+      trigger.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const isActive = panel.classList.contains('editor-dropdown-panel-active');
+        this.closeAllDropdowns();
+        if (!isActive) {
+          panel.classList.add('editor-dropdown-panel-active');
+          trigger.classList.add('editor-button-active');
+          this.positionDropdownPanel(trigger, panel);
+        }
+      });
+
+      li.appendChild(trigger);
+      this.ul.appendChild(li);
+      this.dom.appendChild(panel);
+    });
+  }
+
+  positionDropdownPanel(trigger, panel) {
+    const triggerRect = trigger.getBoundingClientRect();
+    const toolbarRect = this.dom.getBoundingClientRect();
+    let left = triggerRect.left - toolbarRect.left;
+    const maxLeft = toolbarRect.width - panel.offsetWidth;
+    panel.style.left = `${Math.max(0, Math.min(left, maxLeft))}px`;
+    panel.style.top = `${this.dom.offsetHeight}px`;
+  }
+
+  addModeToggleButton({ label, targetMode }) {
+    const li = document.createElement('li');
+    li.className = 'editor-mode-toggle';
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'editor-mode-toggle-btn';
+    btn.textContent = label;
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const sel = window.getSelection();
+      const containerNode = sel?.rangeCount ? getSelectedParentElement(sel.getRangeAt(0)) : null;
+      const selectionState = containerNode ? exportSelection(containerNode, sel) : null;
+      Config.Editor.toggleEditor(targetMode);
+      if (selectionState && containerNode) {
+        requestAnimationFrame(() => {
+          const newContainer = document.querySelector(`[id="${containerNode.id}"]`) ?? containerNode;
+          setSelection(selectionState.start, selectionState.end, newContainer);
+          const toolbarView = targetMode === 'author'
+            ? Config.Editor.authorToolbarView
+            : Config.Editor.socialToolbarView;
+          toolbarView?.selectionUpdate(null);
+        });
+      }
+    });
+
+    li.appendChild(btn);
+    this.ul.appendChild(li);
+  }
+
+  closeAllDropdowns() {
+    this.dom.querySelectorAll('.editor-dropdown-panel').forEach(p => {
+      p.classList.remove('editor-dropdown-panel-active');
+    });
+    this.dom.querySelectorAll('.editor-dropdown-trigger').forEach(t => {
+      t.classList.remove('editor-button-active');
+    });
   }
 
   getPopulateForms() {
@@ -330,9 +497,10 @@ export class ToolbarView {
     return;
   }
 
-  // hides toolbar, updates state of all buttons, hides and resets all forms. 
+  // hides toolbar, updates state of all buttons, hides and resets all forms.
   cleanupToolbar() {
     this.dom.classList.remove("editor-form-active");
+    this.closeAllDropdowns();
 
 // update buttons
     this.buttons.forEach(({button}) => {
@@ -421,6 +589,11 @@ export class ToolbarView {
       // Display the toolbar
       // TODO: do not change visibility if the selection is within a .do element (except the annotation maybe?)
       this.dom.classList.add("editor-form-active");
+
+      // sync block-type select with the current selection
+      if (this.blocktypeSelect && this.editorView && this.getBlockTypeKey) {
+        this.blocktypeSelect.value = this.getBlockTypeKey(this.editorView.state);
+      }
       
       this.dom.style.left = `${selectedPosition.left + (selectedPosition.width / 2 ) - (toolbarWidth / 2)}px`;
 
