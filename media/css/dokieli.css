@@ -4160,7 +4160,7 @@ height:auto;
 }
 .editor-dropdown-panel li button.editor-dropdown-item {
   width: 100%;
-  min-height: max-content;
+  height: max-content;
   text-align: left;
   padding: 0.45em 0.9em;
   background: none;
