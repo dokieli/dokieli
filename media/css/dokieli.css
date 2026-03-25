@@ -3972,6 +3972,7 @@ height:auto;
     font-weight:bold;
     background-color: #fff;
     border: 0;
+    outline: none;
     box-shadow: 0 2px 2px rgba(0, 0, 0, 0.3);
     color: #000;
     height: 50px;
@@ -3981,15 +3982,16 @@ height:auto;
     .editor-toolbar li button:not(:disabled):hover{
       background-color: #EEE;
       color: #080; }
-      
+
     .editor-toolbar li button:disabled {
       cursor: default;
     }
 
-    .editor-toolbar li button:focus {
-      border: 2px solid black;
+    .editor-toolbar li button:focus-visible {
+      outline: 2px solid black;
+      outline-offset: 0;
     }
-  
+
   .editor-toolbar .editor-form-actions li:first-child button {
     border-bottom-left-radius: 5px;
     border-top-left-radius: 5px; }
@@ -4096,7 +4098,7 @@ height:auto;
 
 .editor-blocktype-select {
   height: 100%;
-  border: none;
+  border: none !important;
   border-right: 1px solid rgba(0, 0, 0, 0.1);
   background: transparent;
   font-family: inherit;
@@ -4162,7 +4164,7 @@ height:auto;
   width: 100%;
   height: max-content;
   text-align: left;
-  padding: 0.45em 0.9em;
+  padding: 0.9em;
   background: none;
   border: none;
   cursor: pointer;
