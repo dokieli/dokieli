@@ -445,6 +445,8 @@ export async function pushLocalContentToRemote(localItem, headers) {
   updateLocalStorageItem(id, { published: getDateTimeISO() });
 
   updateResourceInfos(Config.DocumentURL, content, response, { preserveHeaders: ['wac-allow'] });
+
+  window.dispatchEvent(new CustomEvent('dokieli:collab-save'));
 }
 
 export function showResourceReviewChanges(localContent, remoteContent, response, reviewOptions) {
