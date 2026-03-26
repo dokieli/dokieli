@@ -304,15 +304,15 @@ TODO:
         ],
       },
       meta: {
-        label: "···",
+        label: "…",
         title: "More options",
-        sectionLabel: "Metadata and Semantics",
+        sectionLabel: "Structure and Semantics",
         items: [
           {
             icon: buttonIcons["semantics"]?.icon,
             label: "Define Semantics",
             description:
-              "Add attributes to describe selection meaning",
+              "Add attributes to describe the meaning of the selection.",
             action: () => {
               this.dom.querySelector("#editor-button-semantics")?.click();
             },
@@ -336,6 +336,7 @@ TODO:
           {
             icon: buttonIcons["lang"]?.icon,
             label: "Set Language",
+            description: "Set the language of the selection.",
             action: () => {
               this.dom.querySelector("#editor-button-lang")?.click();
             },
@@ -343,7 +344,7 @@ TODO:
           {
             icon: buttonIcons["requirement"]?.icon,
             label: "Add Requirement",
-            description: "Link markup to a formal specification requirement",
+            description: "Link the selection to a technical requirement.",
             action: () => {
               this.dom.querySelector("#editor-button-requirement")?.click();
             },
@@ -368,6 +369,7 @@ TODO:
       { label: 'Heading 2', value: 'h2' },
       { label: 'Heading 3', value: 'h3' },
       { label: 'Heading 4', value: 'h4' },
+      { label: 'Heading 5', value: 'h5' },
     ].forEach(({ label, value }) => {
       const option = document.createElement('option');
       option.value = value;
