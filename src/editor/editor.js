@@ -41,6 +41,8 @@ const ns = Config.ns;
 
 let provider;
 let ydoc;
+let beforeUnloadHandler;
+
 const YWEBSOCKET_URL = process.env.YWEBSOCKET_URL;
 
 export class Editor {
@@ -284,64 +286,101 @@ export class Editor {
     });
 
     // window.addEventListener('load', () => {
-  ydoc = new Y.Doc();
+    const originalDoc = DOMParser.fromSchema(schema).parse(this.node);
+    ydoc = new Y.Doc();
 
-  // let wsOrigin = window.location.origin === DEV_ORIGIN ? DEV_ORIGIN : 'https://dokie.li';
-  // let wsUrl = new URL(wsOrigin);
-  // let wsHost = wsUrl.host;
-  // let wsSecure = wsUrl.protocol.slice(4);
+    // let wsOrigin = window.location.origin === DEV_ORIGIN ? DEV_ORIGIN : 'https://dokie.li';
+    // let wsUrl = new URL(wsOrigin);
+    // let wsHost = wsUrl.host;
+    // let wsSecure = wsUrl.protocol.slice(4);
 
-  // let wsHost = 'locahost:1234';
+    // let wsHost = 'locahost:1234';
 
-  provider = new WebsocketProvider(
-    YWEBSOCKET_URL,
-    // `ws${location.protocol.slice(4)}//localhost:1234/ws`,
-    // `ws${location.protocol.slice(4)}//${location.host}/ws`, // alternatively: use the local ws server (run `npm start` in root directory)
-    encodeURIComponent(currentLocation()),
-    // 'dokieli',
-    ydoc
-  )
-  const yXmlFragment = ydoc.getXmlFragment('prosemirror')
+    provider = new WebsocketProvider(
+      YWEBSOCKET_URL,
+      // `ws${location.protocol.slice(4)}//localhost:1234/ws`,
+      // `ws${location.protocol.slice(4)}//${location.host}/ws`, // alternatively: use the local ws server (run `npm start` in root directory)
+      encodeURIComponent(currentLocation()),
+      // 'dokieli',
+      ydoc
+    );
 
-  // // 🟢 ONLY seed if empty
-  // if (yXmlFragment.length === 0) {
-  //   const pmDoc = DOMParser.fromSchema(schema).parse(this.node)
-  
-  //   const seedDoc = prosemirrorToYDoc(pmDoc)
-  
-  //   ydoc.transact(() => {
-  //     const seedFragment = seedDoc.getXmlFragment('prosemirror')
-  //     yXmlFragment.insert(0, seedFragment.toArray())
-  //   })
-  // }
+    const yXmlFragment = ydoc.getXmlFragment('prosemirror');
 
-  ydoc.on('update', (update, origin) => {
-    const decoded = Y.decodeUpdate(update)
-    console.log("📦 Decoded Yjs Update", decoded)
-    // fetch('http://localhost:3000/index.html' + ".yjs", {
-    //   method: "PUT",
-    //   headers: {
-    //     "Content-Type": "application/octet-stream"
-    //   },
-    //   body: Y.encodeStateAsUpdate(ydoc)
-    // })
-  })
-  
-  provider.connect()
+    // // 🟢 ONLY seed if empty
+    // if (yXmlFragment.length === 0) {
+    //   const pmDoc = DOMParser.fromSchema(schema).parse(this.node)
+    
+    //   const seedDoc = prosemirrorToYDoc(pmDoc)
+    
+    //   ydoc.transact(() => {
+    //     const seedFragment = seedDoc.getXmlFragment('prosemirror')
+    //     yXmlFragment.insert(0, seedFragment.toArray())
+    //   })
+    // }
 
-  provider.on('status', event => {
-    console.log('YJS STATUS:', event.status)
-  })
-  
-  provider.on('connection-error', e => {
-    console.error('YJS CONNECTION ERROR', e)
-  })
+    ydoc.on('update', (update, origin) => {
+      const decoded = Y.decodeUpdate(update)
+      console.log("📦 Decoded Yjs Update", decoded)
+      // fetch('http://localhost:3000/index.html' + ".yjs", {
+      //   method: "PUT",
+      //   headers: {
+      //     "Content-Type": "application/octet-stream"
+      //   },
+      //   body: Y.encodeStateAsUpdate(ydoc)
+      // })
+    })
 
-  provider.on('connection-closed', e => {
-    ydoc.destroy();
-  })
+    provider.connect();
+
+    provider.on('status', event => {
+      console.log('YJS STATUS:', event.status)
+    })
+
+    provider.on('connection-error', e => {
+      console.error('YJS CONNECTION ERROR', e)
+    })
+
+    provider.on('connection-closed', e => {
+      ydoc.destroy();
+    })
+
+    provider.on('synced', () => {
+      setTimeout(() => {
+        if (yXmlFragment.length === 0) return;
+        const states = provider.awareness.getStates();
+        if (states.size > 1) return; // Others are connected — not our call
+
+        const { doc: yjsDoc } = initProseMirrorDoc(yXmlFragment, schema);
+        if (JSON.stringify(yjsDoc.toJSON()) === JSON.stringify(originalDoc.toJSON())) return;
+
+        const discard = window.confirm(
+          'This document has unsaved changes from a previous collaborative session.\n\nDiscard these changes and start fresh?'
+        );
+        if (discard) {
+          ydoc.transact(() => { yXmlFragment.delete(0, yXmlFragment.length); });
+          const seedDoc = prosemirrorToYDoc(originalDoc);
+          ydoc.transact(() => {
+            yXmlFragment.insert(0, seedDoc.getXmlFragment('prosemirror').toArray());
+          });
+        }
+      }, 500);
+    });
+
+  beforeUnloadHandler = (e) => {
+    const states = provider.awareness.getStates();
+    if (states.size > 1) return; // Others still connected — they're responsible
+
+    const { doc: yjsDoc } = initProseMirrorDoc(yXmlFragment, schema);
+    if (JSON.stringify(yjsDoc.toJSON()) !== JSON.stringify(originalDoc.toJSON())) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  };
+  window.addEventListener('beforeunload', beforeUnloadHandler);
 // });
-const { doc, mapping } = initProseMirrorDoc(yXmlFragment, schema)
+
+    const { doc, mapping } = initProseMirrorDoc(yXmlFragment, schema)
 
     const state = EditorState.create({
       doc: DOMParser.fromSchema(schema).parse(this.node),
@@ -349,8 +388,8 @@ const { doc, mapping } = initProseMirrorDoc(yXmlFragment, schema)
         ySyncPlugin(yXmlFragment, {mapping }),
         yCursorPlugin(provider.awareness),
         yUndoPlugin(),
-        history(), 
-        keymapPlugin, 
+        history(),
+        keymapPlugin,
         editorToolbarPlugin],
     });
 
