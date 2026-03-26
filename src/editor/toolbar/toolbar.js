@@ -18,7 +18,7 @@ limitations under the License.
 import { schema } from "../schema/base.js"
 import { getButtonHTML } from "../../ui/buttons.js"
 import { getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getClassesOfProductsConcepts, getDocument, getLanguageOptionsHTML, getLicenseOptionsHTML, getReferenceLabel } from "../../doc.js";
-import { getTextQuoteHTML, cloneSelection, exportSelection, setSelection, getSelectedParentElement } from "../utils/annotation.js";
+import { getTextQuoteHTML, cloneSelection, exportSelection, restoreSelection, setSelection, getSelectedParentElement } from "../utils/annotation.js";
 import { escapeRegExp, matchAllIndex } from "../../util.js";
 import { fragmentFromString, getDocumentContentNode } from "../../utils/html.js";
 import { showUserIdentityInput } from "../../auth.js";
@@ -378,12 +378,7 @@ export class ToolbarView {
         itemBtn.className = 'editor-dropdown-item';
 
         if (item.icon) {
-          itemBtn.classList.add('has-icon');
-          const iconSpan = document.createElement('span');
-          iconSpan.className = 'editor-dropdown-item-icon';
-          iconSpan.setAttribute('aria-hidden', 'true');
-          iconSpan.innerHTML = item.icon;
-          itemBtn.appendChild(iconSpan);
+          itemBtn.appendChild(fragmentFromString(item.icon));
 
           const textSpan = document.createElement('span');
           textSpan.className = 'editor-dropdown-item-text';
@@ -474,6 +469,7 @@ export class ToolbarView {
       if (selectionState) {
         requestAnimationFrame(() => {
           setSelection(selectionState.start, selectionState.end, document.body);
+          // restoreSelection(this.selection);
           const toolbarView = targetMode === 'author'
             ? Config.Editor.authorToolbarView
             : Config.Editor.socialToolbarView;
@@ -593,8 +589,10 @@ export class ToolbarView {
       const toolbarWidth = this.dom.offsetWidth;
       const margin = 10;
 
-      const firstButton = this.dom.querySelector('button');
-      const shouldFocus = !!(!this.dom.classList.contains("editor-form-active") && firstButton !== document.activeElement);
+      const firstFocusable = this.dom.querySelector(
+        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      const shouldFocus = !!(!this.dom.classList.contains("editor-form-active") && firstFocusable !== document.activeElement);
 
       // Display the toolbar
       // TODO: do not change visibility if the selection is within a .do element (except the annotation maybe?)
@@ -643,8 +641,11 @@ export class ToolbarView {
           event.preventDefault(); 
           const focusedButton = this.dom.querySelector('.editor-form-active');
 
-          if (!focusedButton) {
-            firstButton?.focus();
+          // if (!focusedButton) {
+          //   firstFocusable?.focus();
+          // }
+          if (shouldFocus && firstFocusable) {
+            firstFocusable.focus();
           }
 
           document.removeEventListener("keydown", handleTab);

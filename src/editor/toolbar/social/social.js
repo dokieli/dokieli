@@ -52,19 +52,19 @@ export class SocialToolbar extends ToolbarView {
   getDropdownMenus() {
     return {
       more: {
-        label: '···',
+        label: '…',
         title: 'More options',
         items: [
           {
             icon: buttonIcons['share']?.icon,
             label: 'Share Selection',
-            description: 'Share this selection with others',
+            description: 'Share this selection with others.',
             action: () => { this.dom.querySelector('#editor-button-share')?.click(); }
           },
           {
             icon: buttonIcons['specificity']?.icon,
             label: 'Request Specificity',
-            description: 'Request to increase specificity on selected text',
+            description: 'Request greater specificity for the selected text.',
             action: () => { this.dom.querySelector('#editor-button-specificity')?.click(); }
           }
         ]
