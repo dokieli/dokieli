@@ -20,7 +20,7 @@ import { getButtonHTML } from "../../ui/buttons.js"
 import { getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getClassesOfProductsConcepts, getDocument, getLanguageOptionsHTML, getLicenseOptionsHTML, getReferenceLabel } from "../../doc.js";
 import { getTextQuoteHTML, cloneSelection, exportSelection, restoreSelection, setSelection, getSelectedParentElement } from "../utils/annotation.js";
 import { escapeRegExp, matchAllIndex } from "../../util.js";
-import { fragmentFromString, getDocumentContentNode } from "../../utils/html.js";
+import { fragmentFromString, getDocumentContentNode, selectArticleNode } from "../../utils/html.js";
 import { showUserIdentityInput } from "../../auth.js";
 import { getLinkRelation } from "../../graph.js";
 import Config from "../../config.js";
@@ -463,13 +463,13 @@ export class ToolbarView {
       e.preventDefault();
       e.stopPropagation();
       const sel = window.getSelection();
-      const body = document.body;
-      const selectionState = sel?.rangeCount ? exportSelection(body, sel) : null;
+      const article = selectArticleNode(document);
+      const selectionState = (sel?.rangeCount && article) ? exportSelection(article, sel) : null;
       Config.Editor.toggleEditor(targetMode);
       if (selectionState) {
         requestAnimationFrame(() => {
-          setSelection(selectionState.start, selectionState.end, document.body);
-          // restoreSelection(this.selection);
+          const newArticle = selectArticleNode(document);
+          if (newArticle) setSelection(selectionState.start, selectionState.end, newArticle);
           const toolbarView = targetMode === 'author'
             ? Config.Editor.authorToolbarView
             : Config.Editor.socialToolbarView;
