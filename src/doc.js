@@ -90,8 +90,6 @@ export function getDocument(cn, options = {}) {
 
   nodeDocument.documentElement.setHTMLUnsafe(stringFromFragment(fragment));
 
-  nodeDocument = normalizeWhitespace(nodeDocument);
-
   if (options.sanitize) {
     nodeDocument = domSanitizeHTMLBody(nodeDocument, options);
   }
@@ -99,6 +97,8 @@ export function getDocument(cn, options = {}) {
   if (options.normalize) {
     nodeDocument = normalizeHTML(nodeDocument);
   }
+
+  nodeDocument = normalizeWhitespace(nodeDocument);
 
   if (options.format) {
     htmlString = formatHTML(nodeDocument.documentElement, options);

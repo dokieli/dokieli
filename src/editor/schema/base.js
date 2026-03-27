@@ -48,10 +48,14 @@ export const DIR_AUTO_TAGS = new Set([
   "title", "metadata"
 ]);
 
-export function toDOMWithAutoDir(tagName) {
+export function toDOMWith(tagName, options = {}) {
   return function (node) {
     const attrs = node.attrs.originalAttributes || {};
-    return [tagName, { dir: "auto", ...attrs }, 0];
+    const { skipContentHole, ...optionalAttrs } = options;
+    if (skipContentHole) {
+      return [tagName, { ...optionalAttrs, ...attrs }];
+    }
+    return [tagName, { ...optionalAttrs, ...attrs }, 0];
   };
 }
 
@@ -90,7 +94,7 @@ let customNodes = {
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "p", preserveWhitespace: "full", getAttrs(node){ return getAttributes(node); }}],
-    toDOM: toDOMWithAutoDir("p")
+    toDOM: toDOMWith("p")
     // whitespace: "pre"
   },
   dt: {
@@ -98,21 +102,21 @@ let customNodes = {
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "dt", getAttrs(node){ return getAttributes(node); }}],
-    toDOM: toDOMWithAutoDir("dt")
+    toDOM: toDOMWith("dt")
   },
   dd: {
     content: "block+",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "dd", preserveWhitespace: "full", getAttrs(node){ return getAttributes(node); }}],
-    toDOM: toDOMWithAutoDir("dd")
+    toDOM: toDOMWith("dd")
   },
   li: {
     content: "block+",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "li", preserveWhitespace: "full", getAttrs(node){ return getAttributes(node); }}],
-    toDOM: toDOMWithAutoDir("li"),
+    toDOM: toDOMWith("li"),
     defining: true
   },
   pre: {
@@ -120,7 +124,7 @@ let customNodes = {
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "pre", preserveWhitespace: "full", getAttrs(node){ return getAttributes(node); }}],
-    toDOM: toDOMWithAutoDir("pre"),
+    toDOM: toDOMWith("pre"),
     code: true,
     defining: true
   },
@@ -129,7 +133,7 @@ let customNodes = {
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "blockquote", getAttrs(node){ return getAttributes(node); }}],
-    toDOM: toDOMWithAutoDir("blockquote"),
+    toDOM: toDOMWith("blockquote"),
     defining: true
   },
   summary: {
@@ -137,14 +141,14 @@ let customNodes = {
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "summary", getAttrs(node){ return getAttributes(node); }}],
-    toDOM: toDOMWithAutoDir("summary")
+    toDOM: toDOMWith("summary")
   },
   figcaption: {
     content: "block+",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "figcaption", getAttrs(node){ return getAttributes(node); }}],
-    toDOM: toDOMWithAutoDir("figcaption")
+    toDOM: toDOMWith("figcaption")
   },
   svgText: {
     content: "inline*",
@@ -152,7 +156,7 @@ let customNodes = {
     inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "text", getAttrs(node) { return getAttributes(node) }}],
-    toDOM: toDOMWithAutoDir("text")
+    toDOM: toDOMWith("text")
   },
   tspan: {
     content: "inline*",
@@ -160,7 +164,7 @@ let customNodes = {
     inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "tspan", getAttrs(node){ return getAttributes(node); }}],
-    toDOM: toDOMWithAutoDir("tspan")
+    toDOM: toDOMWith("tspan")
   },
   title: {
     content: "inline*",
@@ -168,7 +172,7 @@ let customNodes = {
     inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "title", getAttrs(node){ return getAttributes(node); }}],
-    toDOM: toDOMWithAutoDir("title")
+    toDOM: toDOMWith("title")
   },
   metadata: {
     content: "inline*",
@@ -176,7 +180,7 @@ let customNodes = {
     inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "metadata", getAttrs(node){ return getAttributes(node); }}],
-    toDOM: toDOMWithAutoDir("metadata")
+    toDOM: toDOMWith("metadata")
   },
   button: {
     content: "inline*",
@@ -184,7 +188,7 @@ let customNodes = {
     inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "button", getAttrs(node){ return getAttributes(node); }}],
-    toDOM: toDOMWithAutoDir("button")
+    toDOM: toDOMWith("button")
   },
   main: {
     content: "block*",
@@ -198,42 +202,42 @@ let customNodes = {
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "article", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["article", { ...node.attrs.originalAttributes }, 0]; }
+    toDOM: toDOMWith("article")
   },
   section: {
     content: "block*",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "section", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["section", { ...node.attrs.originalAttributes }, 0]; }
+    toDOM: toDOMWith("section")
   },
   aside: {
     content: "block*",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "aside", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["aside", { ...node.attrs.originalAttributes }, 0]; }
+    toDOM: toDOMWith("aside")
   },
   header: {
     content: "block*",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "header", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["header", { ...node.attrs.originalAttributes }, 0]; }
+    toDOM: toDOMWith("header")
   },
   footer: {
     content: "block*",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "footer", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["footer", { ...node.attrs.originalAttributes }, 0]; }
+    toDOM: toDOMWith("footer")
   },
   div: {
     content: "block*",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "div", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["div", { ...node.attrs.originalAttributes }, 0]; }
+    toDOM: toDOMWith("div")
   },
   style: {
     content: "text*",
@@ -242,7 +246,7 @@ let customNodes = {
     code: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "style", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["style", { ...node.attrs.originalAttributes }, 0]; }
+    toDOM: toDOMWith("style")
   },
   script: {
     content: "text*",
@@ -251,21 +255,21 @@ let customNodes = {
     code: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "script", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["script", { ...node.attrs.originalAttributes }, 0]; }
+    toDOM: toDOMWith("script")
   },
   nav: {
     content: "block*",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "nav", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["nav", { ...node.attrs.originalAttributes }, 0]; }
+    toDOM: toDOMWith("nav")
   },
   address: {
     content: "inline*",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "address", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["address", { ...node.attrs.originalAttributes }, 0]; }
+    toDOM: toDOMWith("address")
   },
   heading: {
     content: "inline*",
@@ -291,28 +295,28 @@ let customNodes = {
       }
     },
     parseDOM: [{ tag: "img[src]", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["img", { ...node.attrs.originalAttributes }]; } // img is a leaf node, so it shouldn't have a content hole
+    toDOM: toDOMWith("img", { skipContentHole: true }) // img is a leaf node, so it shouldn't have a content hole
   },
   dl: {
     content: "block+",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "dl", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["dl", { ...node.attrs.originalAttributes }, 0]; }
+    toDOM: toDOMWith("dl")
   },
   ul: {
     content: "li+",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "ul", getAttrs(node){ return getAttributes(node); } }],
-    toDOM(node) { return ["ul", { ...node.attrs.originalAttributes }, 0]; }
+    toDOM: toDOMWith("ul")
   },
   ol: {
     content: "li+",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "ol", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["ol", { ...node.attrs.originalAttributes }, 0]; }
+    toDOM: toDOMWith("ol")
   },
   code: {
     inline: true,
@@ -321,62 +325,62 @@ let customNodes = {
     content: "inline*",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "code", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["code",  { ...node.attrs.originalAttributes }, 0]; }
+    toDOM: toDOMWith("code")
   },
   video: {
     content: "block+",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "video", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["video", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM: toDOMWith("video")
   },
   audio: {
     content: "block+",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "audio", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["audio", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM: toDOMWith("audio")
   },
   source: {
     content: "inline*",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "source", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["source", { ...node.attrs.originalAttributes }]; },
+    toDOM: toDOMWith("source", {skipContentHole: true})
   },
   track: {
     content: "inline*",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "track", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["track", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM: toDOMWith("track")
   },
   figure: {
     content: "block+",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "figure", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["figure", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM: toDOMWith("figure")
   },
   details: {
     content: "block+",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "details", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["details", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM: toDOMWith("details")
   },
   hr: {
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "hr", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["hr", { ...node.attrs.originalAttributes }]; },
+    toDOM: toDOMWith("hr", {skipContentHole: true})
   },
   object: {
     content: "block*",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "object", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["object", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM: toDOMWith("object")
   },
 
   iframe: {
@@ -396,9 +400,7 @@ let customNodes = {
         return getAttributes(node);
       }
     }],
-    toDOM(node) {
-      return ["iframe", node.attrs.originalAttributes];
-    }
+    toDOM: toDOMWith("iframe", {skipContentHole: true})
   },
 
   //TODO: math
@@ -408,7 +410,7 @@ let customNodes = {
     inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "math", getAttrs(node) { return getAttributes(node) }}],
-    toDOM(node) { return ["http://www.w3.org/1998/Math/MathML math", { ...node.attrs.originalAttributes }, 0] }
+    toDOM: toDOMWith("http://www.w3.org/1998/Math/MathML math")
   },
   mfrac: {
     content: "inline*",
@@ -416,7 +418,7 @@ let customNodes = {
     inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "mfrac", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["http://www.w3.org/1998/Math/MathML mfrac", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM: toDOMWith("http://www.w3.org/1998/Math/MathML mfrac")
   },
   mi: {
     content: "inline*",
@@ -424,7 +426,7 @@ let customNodes = {
     inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "mi", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["http://www.w3.org/1998/Math/MathML mi", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM: toDOMWith("http://www.w3.org/1998/Math/MathML mi")
   },
   mo: {
     content: "inline*",
@@ -432,7 +434,7 @@ let customNodes = {
     inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "mo", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["http://www.w3.org/1998/Math/MathML mo", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM: toDOMWith("http://www.w3.org/1998/Math/MathML mo")
   },
 /*
   mn: {
@@ -440,14 +442,14 @@ let customNodes = {
     group: "inline",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "mn", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["http://www.w3.org/1998/Math/MathML mn", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM: toDOMWith("http://www.w3.org/1998/Math/MathML mn")
   },
   mroot: {
     content: "inline*",
     group: "inline",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "mroot", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["http://www.w3.org/1998/Math/MathML mroot", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM: toDOMWith("http://www.w3.org/1998/Math/MathML mroot")
   },
 */
   mrow: {
@@ -456,7 +458,7 @@ let customNodes = {
     inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "mrow", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["http://www.w3.org/1998/Math/MathML mrow", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM: toDOMWith("http://www.w3.org/1998/Math/MathML mrow")
   },
 /*
   ms: {
@@ -464,42 +466,42 @@ let customNodes = {
     group: "inline",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "ms", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["http://www.w3.org/1998/Math/MathML ms", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM: toDOMWith("http://www.w3.org/1998/Math/MathML ms")
   },
   mspace: {
     content: "inline*",
     group: "inline",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "mspace", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["http://www.w3.org/1998/Math/MathML mspace", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM: toDOMWith("http://www.w3.org/1998/Math/MathML mspace")
   },
   msqrt: {
     content: "inline*",
     group: "inline",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "msqrt", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["http://www.w3.org/1998/Math/MathML msqrt", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM: toDOMWith("http://www.w3.org/1998/Math/MathML msqrt")
   },
   msub: {
     content: "inline*",
     group: "inline",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "msub", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["http://www.w3.org/1998/Math/MathML msub", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM: toDOMWith("http://www.w3.org/1998/Math/MathML msub")
   },
   msup: {
     content: "inline*",
     group: "inline",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "msup", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["http://www.w3.org/1998/Math/MathML msup", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM: toDOMWith("http://www.w3.org/1998/Math/MathML msup")
   },
   mtext: {
     content: "inline*",
     group: "inline",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "mtext", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["http://www.w3.org/1998/Math/MathML mtext", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM: toDOMWith("http://www.w3.org/1998/Math/MathML mtext")
   },
 */
 
@@ -509,7 +511,7 @@ let customNodes = {
     inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "svg", getAttrs(node) { return getAttributes(node) }}],
-    toDOM(node) { return ["http://www.w3.org/2000/svg svg", { ...node.attrs.originalAttributes }, 0] }
+    toDOM: toDOMWith("http://www.w3.org/2000/svg svg")
   },
   g: {
     content: "inline*",
@@ -517,7 +519,7 @@ let customNodes = {
     inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "g", getAttrs(node) { return getAttributes(node) }}],
-    toDOM(node) { return ["http://www.w3.org/2000/svg g", { ...node.attrs.originalAttributes }, 0] }
+    toDOM: toDOMWith("http://www.w3.org/2000/svg g")
   },
   circle: {
     content: "inline+",
@@ -525,7 +527,7 @@ let customNodes = {
     inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "circle", getAttrs(node) { return getAttributes(node) }}],
-    toDOM(node) { return ["http://www.w3.org/2000/svg circle", { ...node.attrs.originalAttributes }, 0]}
+    toDOM: toDOMWith("http://www.w3.org/2000/svg circle")
   },
   line: {
     content: "inline+",
@@ -533,7 +535,7 @@ let customNodes = {
     inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "line", getAttrs(node) { return getAttributes(node) }}],
-    toDOM(node) { return ["http://www.w3.org/2000/svg line", { ...node.attrs.originalAttributes }, 0] }
+    toDOM: toDOMWith("http://www.w3.org/2000/svg line")
   },
   path: {
     content: "inline*",
@@ -541,7 +543,7 @@ let customNodes = {
     inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "path", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["http://www.w3.org/2000/svg path", { ...node.attrs.originalAttributes }]; },
+    toDOM: toDOMWith("http://www.w3.org/2000/svg path")
   },
   defs: {
     content: "inline*",
@@ -549,7 +551,7 @@ let customNodes = {
     inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "defs", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["http://www.w3.org/2000/svg defs", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM: toDOMWith("http://www.w3.org/2000/svg defs")
   },
   marker: {
     content: "inline*",
@@ -557,14 +559,14 @@ let customNodes = {
     inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "marker", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["http://www.w3.org/2000/svg marker", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM: toDOMWith("http://www.w3.org/2000/svg marker")
   },
   form: {
     content: "inline*",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
-    parseDOM: [{ tag: "label", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["label", { ...node.attrs.originalAttributes }, 0]; },
+    parseDOM: [{ tag: "form", getAttrs(node){ return getAttributes(node); }}],
+    toDOM: toDOMWith("form")
   },
   label: {
     content: "inline*",
@@ -572,7 +574,7 @@ let customNodes = {
     inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "label", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["label", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM: toDOMWith("label")
   },
   select: {
     content: "inline+",
@@ -580,7 +582,7 @@ let customNodes = {
     inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "select", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["select", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM: toDOMWith("select")
   },
   option: {
     content: "inline*",
@@ -588,14 +590,14 @@ let customNodes = {
     inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "option", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["option", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM: toDOMWith("options")
   },
   input: {
     group: "inline",
     inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "input", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["input", { ...node.attrs.originalAttributes }]; },
+    toDOM: toDOMWith("input")
   },
   textarea: {
     content: "inline*",
@@ -603,7 +605,7 @@ let customNodes = {
     inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "textarea", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["textarea", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM: toDOMWith("textarea")
   },
 
   table: {
@@ -611,69 +613,69 @@ let customNodes = {
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "table", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["table", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM: toDOMWith("table")
   },
   thead: {
     content: "block*",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "thead", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["thead", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM: toDOMWith("thead")
   },
   tbody: {
     content: "block*",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "tbody", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["tbody", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM: toDOMWith("tbody")
   },
   tfoot: {
     content: "block*",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "tfoot", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["tfoot", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM: toDOMWith("tfoot")
   },
   caption: {
     content: "inline*",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "caption", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["caption", { ...node.attrs.originalAttributes }, 0]; }
+    toDOM: toDOMWith("caption")
   },
   tr: {
     content: "block*",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "tr", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["tr", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM: toDOMWith("tr")
   },
   th: {
     content: "block*",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "th", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["th", { ...node.attrs.originalAttributes }, 0]; }
+    toDOM: toDOMWith("th")
   },
   td: {
     content: "block*",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "td", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["td", { ...node.attrs.originalAttributes }, 0]; }
+    toDOM: toDOMWith("td")
   },
   colgroup: {
     content: "block*",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "colgroup", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["colgroup", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM: toDOMWith("colgroup")
   },
   col: {
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "col", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["col", { ...node.attrs.originalAttributes }]; },
+    toDOM: toDOMWith("col", {skipContentHole: true})
   },
 
   canvas: {
@@ -681,7 +683,7 @@ let customNodes = {
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "canvas", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["canvas", { ...node.attrs.originalAttributes }, 0]; }
+    toDOM: toDOMWith("canvas")
   },
 };
 //Make PM Nodes for all inlineElements except those that need to be Marks.
@@ -693,7 +695,7 @@ Config.DOMProcessing.inlineElements.filter(el => !Config.DOMProcessing.proseMirr
     // whitespace: "pre",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: tagName, /*preserveWhitespace: "full", */getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return [tagName, { ...node.attrs.originalAttributes }, 0]; }
+    toDOM: toDOMWith(tagName)
   }
 });
 
@@ -704,7 +706,7 @@ Config?.DOMProcessing.proseMirrorMarks.forEach(tagName => {
 
   const toDOM =
     DIR_AUTO_TAGS.has(tagName)
-      ? toDOMWithAutoDir(tagName)
+      ? toDOMWith(tagName)
       : function (node) {
           return [
             namespace + tagName,

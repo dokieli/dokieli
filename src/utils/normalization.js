@@ -184,13 +184,16 @@ export function cleanProseMirrorOutput(node) {
     });
   });
 
-    //Remove any trailing whitespace-only text nodes inside <p>
-    element.querySelectorAll('p').forEach(p => {
-      const last = p.lastChild;
-      if (last && last.nodeType === Node.TEXT_NODE && !last.textContent.trim()) {
-        p.removeChild(last);
-      }
-    });
+  //Remove any trailing whitespace-only text nodes inside <p>
+  element.querySelectorAll('p').forEach(p => {
+    const last = p.lastChild;
+    if (last && last.nodeType === Node.TEXT_NODE && !last.textContent.trim()) {
+      p.removeChild(last);
+    }
+    if (p.childNodes.length == 0) {
+      p.remove();
+    }
+  });
 
   // Remove the trailing breaks that ProseMirror adds for empty nodes
   element.querySelectorAll('.ProseMirror-trailingBreak').forEach(node => node.remove());
