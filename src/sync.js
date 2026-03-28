@@ -296,7 +296,7 @@ export async function syncLocalRemoteResource(options = {}) {
     tmplLocal.documentElement.setHTMLUnsafe(localContent);
     const localContentNode = tmplLocal.body;
 
-    if (latestLocalDocumentItemObjectPublished.digestSRI !== remoteHash && status !== 304) {
+    if (previousRemoteHash !== undefined && previousRemoteHash !== remoteHash && status !== 304) {
       reviewOptions['message'] = `<span data-i18n="dialog.review-changes.message.conflict.span">${i18n.t('dialog.review-changes.message.conflict.span.textContent')}</span>`;
       showResourceReviewChanges(localContent, remoteContent, Config.Resource[Config.DocumentURL].response, reviewOptions);
       return;
@@ -308,7 +308,7 @@ export async function syncLocalRemoteResource(options = {}) {
       console.log(`Local or remote changed.`);
 
       if (latestLocalDocumentItemObjectUnpublished) {
-        if (etagsMatch || previousRemoteHash == remoteHash) {
+        if (etagsMatch || previousRemoteHash === undefined || previousRemoteHash == remoteHash) {
           console.log(`Local unpublished changes. Remote unchanged (200). Should update remote.`);
 
           if (!remoteAutoSaveEnabled) {
@@ -331,9 +331,7 @@ export async function syncLocalRemoteResource(options = {}) {
             if (error.status === 412) {
               syncLocalRemoteResource();
             }
-            else {
-              throw new Error(`${error.status} Unhandled status ${error}`);
-            }
+            // else: push failed (e.g., 403/405 on read-only remote) — silently keep local edits
           };
         }
         else {
@@ -344,7 +342,7 @@ export async function syncLocalRemoteResource(options = {}) {
           showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
         }
       }
-      else if (previousRemoteHash !== undefined && (!etagsMatch || previousRemoteHash != remoteHash)) {
+      else if (previousRemoteHash !== undefined && previousRemoteHash != remoteHash) {
         console.log(previousRemoteHash)
 
         console.log(`Local unchaged. Remote changed. Update local.`);
@@ -768,7 +766,8 @@ export async function enableAutoSave(key, options = {}) {
 
   await updateLocalStorageItem(key, { autoSave: true });
 
-  document.getElementById('autosave-remote').checked = true;
+  const autosaveCheckbox = document.getElementById('autosave-remote');
+  if (autosaveCheckbox) autosaveCheckbox.checked = true;
 
   const handleInputPaste = (e) => {
     //I love that this function is called sync but it is async
@@ -831,7 +830,8 @@ export async function disableAutoSave(key, options = {}) {
 
       await updateLocalStorageItem(key, { autoSave: false });
 
-      document.getElementById('autosave-remote').checked = false;
+      const autosaveCheckbox = document.getElementById('autosave-remote');
+      if (autosaveCheckbox) autosaveCheckbox.checked = false;
     }
   }
 }

@@ -1965,7 +1965,8 @@ export async function openResource(iri, options) {
       var spawnOptions = {};
 
       var checkMarkdownInMediaTypes = ['text/markdown', 'text/plain'];
-      if  (checkMarkdownInMediaTypes.includes(options['contentType'])) {
+      const isMarkdownSource = checkMarkdownInMediaTypes.includes(options['contentType']);
+      if (isMarkdownSource) {
         data = parseMarkdown(data, {createDocument: true});
         spawnOptions['defaultStylesheet'] = true;
         //XXX: Perhaps okay for text/markdown but not text/plain?
@@ -1973,7 +1974,11 @@ export async function openResource(iri, options) {
       }
 
       if (Config.MediaTypes.RDF.includes(options['contentType'])) {
-        options['storeHash'] = true;
+        if (!isMarkdownSource) {
+          // For markdown-origin HTML, skip storeHash: the hash will be set correctly
+          // on first sync using the same normalized pipeline as syncLocalRemoteResource
+          options['storeHash'] = true;
+        }
         getResourceInfo(data, options);
       }
 

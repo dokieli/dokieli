@@ -23,6 +23,7 @@ import { escapeRegExp, matchAllIndex } from "../../util.js";
 import { fragmentFromString, getDocumentContentNode, selectArticleNode } from "../../utils/html.js";
 import { showUserIdentityInput } from "../../auth.js";
 import { getLinkRelation } from "../../graph.js";
+import { enableAutoSave } from "../../sync.js";
 import Config from "../../config.js";
 import { i18n } from "../../i18n.js";
 
@@ -466,6 +467,9 @@ export class ToolbarView {
       const article = selectArticleNode(document);
       const textQuote = (sel?.rangeCount && article) ? selectionToTextQuote(article, sel) : null;
       Config.Editor.toggleEditor(targetMode);
+      if (targetMode === 'author') {
+        enableAutoSave(Config.DocumentURL, { method: 'localStorage' });
+      }
       if (textQuote) {
         requestAnimationFrame(() => {
           const newArticle = selectArticleNode(document);

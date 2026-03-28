@@ -37,8 +37,8 @@ export async function updateLocalStorageDocumentWithItem(key, data, options = {}
   var id = `${key}#${generateUUID()}`;
 
   var datetime = getDateTimeISO();
-  options.datetime = options.datetime || datetime;
 
+  let isInitialSave = false;
   if (!collection) {
     collection = {
       "@context": [
@@ -51,23 +51,27 @@ export async function updateLocalStorageDocumentWithItem(key, data, options = {}
       autoSave: true
     }
 
-    options['init'] = true;
+    isInitialSave = true;
   }
 
-  collection['updated'] = options.datetime;
-  collection.autoSave = (options.autoSave !== undefined) ? options.autoSave : collection.autoSave;
+  const itemOptions = { ...options, datetime: options.datetime || datetime, collectionKey: key };
+  if (isInitialSave) {
+    itemOptions['init'] = true;
+  }
+
+  collection['updated'] = itemOptions.datetime;
+  collection.autoSave = (itemOptions.autoSave !== undefined) ? itemOptions.autoSave : collection.autoSave;
   collection.items.unshift(id);
-  options.collectionKey = key;
 
   //TODO: Reconsider this key (which is essentially Config.DocumentURL) because there is a possibility that some other thing on that page will use the same key? We don't want to conflict with that. Perhaps the key in storage should be something unique, e.g., UUID, digestSRI, or something dokieli-specific? Probably dokieli-specific because we need to have a deterministic way of recalling it. Even if it is just `do-${Config.DocumentURL}` which would be sufficient.. or even digestSRI(Config.DocumentURL)
   localStorage.setItem(key, JSON.stringify(collection));
 
-  Config.AutoSave.Items[options.collectionKey] ||= {};
-  Config.AutoSave.Items[options.collectionKey].localStorage ||= {};
+  Config.AutoSave.Items[itemOptions.collectionKey] ||= {};
+  Config.AutoSave.Items[itemOptions.collectionKey].localStorage ||= {};
 
   console.log(datetime + `: ${key} saved.`);
 
-  addLocalStorageDocumentItem(id, data, options);
+  addLocalStorageDocumentItem(id, data, itemOptions);
 }
 
 export async function updateLocalStorageItem(id, data) {
