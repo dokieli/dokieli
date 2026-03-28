@@ -571,6 +571,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@mixmark-io/domino@npm:^2.2.0":
+  version: 2.2.0
+  resolution: "@mixmark-io/domino@npm:2.2.0"
+  checksum: 10c0/aa468a15f9217d425220fe6a4b3f9416cbe8e566ee14efc191c6d5cc04fe39338b16a90bbac190f28d44e69465db5f2cf95f479c621ce38060ca6b2a3d346e9d
+  languageName: node
+  linkType: hard
+
 "@napi-rs/wasm-runtime@npm:^1.1.1":
   version: 1.1.1
   resolution: "@napi-rs/wasm-runtime@npm:1.1.1"
@@ -2201,6 +2208,7 @@ __metadata:
     rdf-ext: "npm:^2.5.2"
     rdfa-streaming-parser: "npm:^3.0.2"
     terser-webpack-plugin: "npm:^5.4.0"
+    turndown: "npm:^7.2.2"
     uri-templates: "npm:^0.2.0"
     vite: "npm:^8.0.0"
     vitest: "npm:^4.1.0"
@@ -5386,6 +5394,15 @@ __metadata:
   version: 2.8.1
   resolution: "tslib@npm:2.8.1"
   checksum: 10c0/9c4759110a19c53f992d9aae23aac5ced636e99887b51b9e61def52611732872ff7668757d4e4c61f19691e36f4da981cd9485e869b4a7408d689f6bf1f14e62
+  languageName: node
+  linkType: hard
+
+"turndown@npm:^7.2.2":
+  version: 7.2.2
+  resolution: "turndown@npm:7.2.2"
+  dependencies:
+    "@mixmark-io/domino": "npm:^2.2.0"
+  checksum: 10c0/ee09f7bd67c468505aad6c3a26b11269ca49ffce07eaa9c212926d068f242b11b4e955b31a58289f26674ff29f91209b29454907551dcaec7da712e524cc78c2
   languageName: node
   linkType: hard
 

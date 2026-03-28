@@ -78,6 +78,7 @@ export function initButtons() {
       EditDisable: getButtonHTML({ key: "menu.edit-disable.button", button: "cursor", buttonClass: "editor-disable", iconSize: "fa-2x" }),
       EmbedData: getButtonHTML({ key: "menu.embed-data.button", button: "data-meta", buttonClass: "embed-data-meta", iconSize: "fa-2x" }),
       Export: getButtonHTML({ key: "menu.export.button", button: "export", buttonClass: "export-as-html", iconSize: "fa-2x" }),
+      Markdown: getButtonHTML({ key: "menu.markdown.button", button: "markdown", buttonClass: "resource-markdown", iconSize: "fa-2x" }),
       GenerateFeed: getButtonHTML({ key: "menu.feed.button", button: "feed", buttonClass: "generate-feed", iconSize: "fa-2x" }),
       Immutable: getButtonHTML({ key: "menu.immutable.button", button: "immutable", buttonClass: "create-immutable", iconSize: "fa-2x", buttonDisabled: true }),
       InternetArchive: getButtonHTML({ key: "menu.archive.button", button: "archive", buttonClass: "snapshot-internet-archive", iconSize: "fa-2x" }),
@@ -318,7 +319,10 @@ export const buttonIcons = {
     icon: Icon [".fas.fa-table"]
   },
   source: {
-    icon: Icon[".fas.fa-code"] 
+    icon: Icon[".fas.fa-code"]
+  },
+  markdown: {
+    icon: Icon[".fas.fa-scroll"]
   },
   memento: {
     icon: Icon[".far.fa-clock"] 
@@ -531,6 +535,8 @@ const buttonState = {
 
     return true;
   },
+
+  '#document-do .resource-markdown': () => Config.EditorEnabled || !!document.querySelector('[data-markdown-mode]'),
 
   '#document-do .export-as-html': ({ info }) => {
     if (info.odrl?.prohibitionActions &&

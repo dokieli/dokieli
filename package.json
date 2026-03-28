@@ -70,6 +70,7 @@
     "prosemirror-view": "^1.37.2",
     "rdf-ext": "^2.5.2",
     "rdfa-streaming-parser": "^3.0.2",
+    "turndown": "^7.2.2",
     "uri-templates": "^0.2.0"
   },
   "devDependencies": {

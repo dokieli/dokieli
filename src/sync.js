@@ -19,9 +19,9 @@ import { diffArrays } from "diff";
 import { accessModePossiblyAllowed } from "./access.js";
 import { addMessageToLog, getDocument, getResourceInfo, processSupplementalInfoLinkHeaders, showActionMessage, updateResourceInfos, updateSupplementalInfo } from "./doc.js";
 import { getResource, putResource } from "./fetcher.js";
-import { getLocalStorageItem, updateLocalStorageItem, updateStorage } from "./storage.js";
+import { getLocalStorageItem, updateLocalStorageItem, updateStorage, removeLocalStorageDocumentFromCollection } from "./storage.js";
 import { getDateTimeISO, getDateTimeISOFromDate, getHash } from "./util.js";
-import { fragmentFromString, getDocumentNodeFromString } from "./utils/html.js";
+import { fragmentFromString, getDocumentNodeFromString, parseMarkdown } from "./utils/html.js";
 import { normalizeForDiff } from "./utils/normalization.js";
 import { getButtonHTML, updateButtons } from "./ui/buttons.js";
 import Config from "./config.js";
@@ -113,6 +113,11 @@ export async function syncLocalRemoteResource(options = {}) {
     remoteDate = response.headers.get('Date');
 
     data = await response.text();
+
+    const remoteContentType = response.headers.get('Content-Type')?.split(';')[0].toLowerCase().trim();
+    if (['text/markdown', 'text/plain'].includes(remoteContentType)) {
+      data = parseMarkdown(data, { createDocument: true });
+    }
 
     // remoteContentNode = getDocumentNodeFromString(data);
     // remoteContent = getDocument(remoteContentNode.documentElement, documentOptions);
@@ -339,7 +344,7 @@ export async function syncLocalRemoteResource(options = {}) {
           showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
         }
       }
-      else if (!etagsMatch || previousRemoteHash != remoteHash) {
+      else if (previousRemoteHash !== undefined && (!etagsMatch || previousRemoteHash != remoteHash)) {
         console.log(previousRemoteHash)
 
         console.log(`Local unchaged. Remote changed. Update local.`);

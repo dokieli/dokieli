@@ -18,6 +18,7 @@ limitations under the License.
 import { micromark as marked } from 'micromark';
 import { gfm, gfmHtml } from 'micromark-extension-gfm';
 import { gfmTagfilterHtml } from 'micromark-extension-gfm-tagfilter';
+import TurndownService from 'turndown';
 import { escapeRegExp } from '../util.js'
 import { domSanitize, htmlEncode } from '../utils/sanitization.js';
 import Config from '../config.js'
@@ -415,6 +416,45 @@ export function parseMarkdown(data, options) {
   }
   // console.log(html);
   return html;
+}
+
+function _hasSemanticAttrs(node) {
+  return Config.DOMProcessing.rdfaAttributes.filter(attr => !["href", "rel", "rev", "src"].includes(attr)).some(a => node.hasAttribute?.(a));
+}
+
+export function htmlToMarkdown(node) {
+  const td = new TurndownService({
+    headingStyle: 'atx',
+    bulletListMarker: '*',
+    codeBlockStyle: 'fenced',
+  });
+
+  // ProseMirror wraps list item content in <p>. Strip that wrapper so Turndown
+  // produces tight lists (* item) instead of loose lists (* \n\n  item\n\n).
+  // Loose lists round-trip through micromark with extra empty paragraphs.
+  td.addRule('paragraphInListItem', {
+    filter(node) {
+      return node.nodeName.toLowerCase() === 'p' && node.parentNode?.nodeName?.toLowerCase() === 'li';
+    },
+    replacement(content) {
+      return content;
+    },
+  });
+
+  // Preserve elements that carry RDFa/semantic attributes as raw HTML
+  td.addRule('semanticInline', {
+    filter(el) {
+      const inlineTags = ['span', 'a', 'cite', 'abbr', 'time', 'data', 'dfn', 'mark', 'q'];
+      return inlineTags.includes(el.nodeName.toLowerCase()) && _hasSemanticAttrs(el);
+      // return _hasSemanticAttrs(el);
+    },
+    replacement(_content, el) {
+      return el.outerHTML;
+    },
+  });
+
+  const html = node.innerHTML ?? node.outerHTML ?? String(node);
+  return td.turndown(html);
 }
 
 export function createHTML(title, main, options) {

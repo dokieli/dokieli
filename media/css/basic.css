@@ -626,7 +626,7 @@ ins {
 ul {
   padding: 0;
   margin-bottom: 1em;
-  /* list-style-position: inside; */
+  list-style-position: inside;
 }
 li ul:last-of-type {
 margin-bottom:0;

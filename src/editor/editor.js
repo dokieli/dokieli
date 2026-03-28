@@ -316,6 +316,15 @@ export class Editor {
   }
 
 
+  // Returns a <div> containing the current PM content as HTML, for use outside of editor.js
+  getContentNode() {
+    if (!this.editorView) return null;
+    const fragment = DOMSerializer.fromSchema(schema).serializeFragment(this.editorView.state.doc.content);
+    const div = document.createElement('div');
+    div.appendChild(fragment);
+    return div;
+  }
+
   destroyEditor(content) {
     if (content || this.editorView) {
       content = content ?? DOMSerializer.fromSchema(schema).serializeFragment(this.editorView.state.doc.content);

@@ -29,6 +29,7 @@ import { fragmentFromString } from "../../../utils/html.js";
 import { i18n } from "../../../i18n.js"
 import { htmlEncode, sanitizeInsertAdjacentHTML } from "../../../utils/sanitization.js";
 import { buttonIcons } from "../../../ui/buttons.js";
+import { toggleMarkdownMode } from "../../../dialog.js";
 
 const ns = Config.ns;
 
@@ -257,6 +258,55 @@ TODO:
   getModeToggle() {
     return { label: 'Back to Reading', targetMode: 'social' };
   }
+
+  afterButtons() {
+    super.afterButtons();
+
+    // Remove any existing toggle (e.g. after reinit) before recreating.
+    document.getElementById('editor-area-md-toggle')?.remove();
+
+    const toggleEl = document.createElement('div');
+    toggleEl.id = 'editor-area-md-toggle';
+
+    const group = document.createElement('span');
+    group.className = 'md-mode-toggle';
+    group.setAttribute('role', 'group');
+    group.setAttribute('aria-label', 'Editor mode');
+
+    const wysiwygBtn = document.createElement('button');
+    wysiwygBtn.type = 'button';
+    wysiwygBtn.className = 'md-mode-wysiwyg';
+    wysiwygBtn.title = 'Visual editor active';
+    wysiwygBtn.setAttribute('aria-pressed', 'true');
+    wysiwygBtn.textContent = 'W';
+    wysiwygBtn.addEventListener('mousedown', (e) => e.preventDefault());
+    wysiwygBtn.addEventListener('click', (e) => {
+      if (wysiwygBtn.getAttribute('aria-pressed') === 'false') {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleMarkdownMode(e);
+      }
+    });
+
+    const mdBtn = document.createElement('button');
+    mdBtn.type = 'button';
+    mdBtn.className = 'md-mode-markdown';
+    mdBtn.title = 'Switch to Markdown mode';
+    mdBtn.setAttribute('aria-pressed', 'false');
+    mdBtn.textContent = 'MD';
+    mdBtn.addEventListener('mousedown', (e) => e.preventDefault());
+    mdBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleMarkdownMode(e);
+    });
+
+    group.appendChild(wysiwygBtn);
+    group.appendChild(mdBtn);
+    toggleEl.appendChild(group);
+    document.body.appendChild(toggleEl);
+  }
+
 
   getDropdownMenus() {
     return {

@@ -35,7 +35,7 @@ import { updateLocalStorageProfile, getLocalStorageItem  } from './storage.js';
 import { enableAutoSave, disableAutoSave, enableRemoteSync, disableRemoteSync } from './sync.js';
 import { showVisualisationGraph } from './viz.js';
 import { exportAsDocument, updateUILanguage } from './actions.js';
-import { parseMarkdown, fragmentFromString, removeSelectorFromNode, selectArticleNode, getNodeWithoutClasses } from "./utils/html.js";
+import { parseMarkdown, htmlToMarkdown, fragmentFromString, removeSelectorFromNode, selectArticleNode, getNodeWithoutClasses } from "./utils/html.js";
 import { showUserSigninSignout, userInfoSignOut } from './auth.js';
 import { generateGeoView } from './geo.js';
 import { csvStringToJson, jsonToHtmlTableString } from './csv.js';
@@ -339,6 +339,10 @@ function showDocumentDo(node) {
 
     if (e.target.closest('.resource-source')) {
       viewSource(e);
+    }
+
+    if (e.target.closest('.resource-markdown')) {
+      toggleMarkdownMode(e);
     }
 
     if (e.target.closest('.embed-data-meta')) {
@@ -2098,6 +2102,99 @@ export function viewSource(e) {
   });
 }
 
+
+export function toggleMarkdownMode(e) {
+  // Find the node currently in markdown mode (if any) by its data attribute.
+  const mdNode = document.querySelector('[data-markdown-mode]');
+
+  if (mdNode) {
+    // Exit markdown mode: parse markdown > HTML, restart PM
+    const markdownText = mdNode.textContent;
+    const wasAuthored = mdNode.dataset.mdModeWasAuthored === 'true';
+    const wasNew = mdNode.dataset.mdModeWasNew === 'true';
+
+    mdNode.setHTMLUnsafe(domSanitize(parseMarkdown(markdownText)));
+    mdNode.removeAttribute('contenteditable');
+    delete mdNode.dataset.markdownMode;
+    delete mdNode.dataset.mdModeWasAuthored;
+    delete mdNode.dataset.mdModeWasNew;
+
+    if (wasAuthored) {
+      Config.Editor['new'] = wasNew;
+      // New docs: reinit PM on the article node directly.
+      // Existing docs: pass no node so Editor falls back to document.body,
+      // which now contains mdNode with the parsed HTML — PM will parse it.
+      Config.Editor.init('author', wasNew ? mdNode : undefined);
+      Config.EditorEnabled = true;
+      Config.EditorWasEnabled = true;
+      updateButtons();
+    }
+  } else {
+    // Enter markdown mode: convert HTML to markdown
+    const wasAuthored = Config.EditorEnabled;
+    const sourceNode = (wasAuthored && Config.Editor?.getContentNode?.())
+                       || selectArticleNode(document);
+    const hasContent = sourceNode.textContent.trim().length > 0;
+
+    if (hasContent && !confirm('Converting to Markdown may lose some semantic markup (RDFa attributes on block elements) or formatting. Continue?')) {
+      return;
+    }
+
+    const markdown = htmlToMarkdown(sourceNode);
+
+    // Determine the content node to make editable.
+    // New docs: PM is on article -> editorView.dom.parentNode = article (use it directly).
+    // Existing docs: PM is on body -> editorView.dom.parentNode = body -> create a fresh
+    // <article> so we don't clobber body (which holds the toolbar and other .do nodes).
+    const pmParent = wasAuthored
+      ? Config.Editor.editorView?.dom?.parentNode
+      : null;
+    const contentNode =
+      pmParent && pmParent !== document.body
+        ? pmParent
+        : document.createElement("article");
+
+    // Save toolbar before destroy: for body-mounted PM (existing docs),
+    // ToolbarView.destroy() removes it — detach first so we can re-insert it.
+    const editorToolbar = document.getElementById('document-editor');
+    editorToolbar?.remove();
+
+    if (wasAuthored) {
+      if (Config.Editor.editorView) {
+        Config.Editor.editorView.destroy();
+        Config.Editor.editorView = null;
+      }
+      Config.Editor.authorToolbarView = null;
+      Config.EditorEnabled = false;
+      Config.EditorWasEnabled = true;
+    }
+
+    // For existing docs contentNode is a new element not yet in the DOM — insert it.
+    if (!contentNode.parentNode) {
+      document.body.insertBefore(contentNode, document.body.firstChild);
+    }
+
+    // Re-insert toolbar in markdown mode: hide editing buttons, keep Back to Reading.
+    if (editorToolbar) {
+      editorToolbar.classList.add('editor-toolbar--markdown');
+      document.body.appendChild(editorToolbar);
+    }
+
+    contentNode.textContent = markdown;
+    contentNode.contentEditable = 'plaintext-only';
+    contentNode.dataset.markdownMode = 'true';
+    contentNode.dataset.mdModeWasAuthored = String(wasAuthored);
+    contentNode.dataset.mdModeWasNew = String(!!Config.Editor['new']);
+    contentNode.focus();
+
+    // Update the standalone W|MD toggle state.
+    const toggle = document.getElementById('editor-area-md-toggle');
+    if (toggle) {
+      toggle.querySelector('.md-mode-wysiwyg')?.setAttribute('aria-pressed', 'false');
+      toggle.querySelector('.md-mode-markdown')?.setAttribute('aria-pressed', 'true');
+    }
+  }
+}
 
 export async function saveAsDocument(e) {
   if (e) {

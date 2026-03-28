@@ -4272,6 +4272,67 @@ button.editor-dropdown-item svg {
   color: #080;
 }
 
+/* Standalone W|MD mode toggle — fixed to the top-right of the editor area */
+#editor-area-md-toggle {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  z-index: 100;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.18);
+  overflow: hidden;
+}
+
+#editor-area-md-toggle .md-mode-toggle {
+  display: inline-flex;
+}
+
+#editor-area-md-toggle .md-mode-wysiwyg,
+#editor-area-md-toggle .md-mode-markdown {
+  display: flex;
+  align-items: center;
+  padding: 0.35em 0.7em;
+  font-size: 0.75em;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  cursor: pointer;
+  border: none;
+  background: #fff;
+  color: #999;
+  transition: background-color .15s ease-in, color .15s ease-in;
+}
+
+#editor-area-md-toggle .md-mode-wysiwyg {
+  border-right: 1px solid #ddd;
+}
+
+#editor-area-md-toggle .md-mode-wysiwyg[aria-pressed="true"],
+#editor-area-md-toggle .md-mode-markdown[aria-pressed="true"] {
+  background-color: #333;
+  color: #fff;
+}
+
+#editor-area-md-toggle .md-mode-wysiwyg[aria-pressed="false"]:hover,
+#editor-area-md-toggle .md-mode-markdown[aria-pressed="false"]:hover {
+  background-color: #eee;
+  color: #333;
+}
+
+/* Preserve newlines in plaintext markdown editor (Firefox doesn't do this by default) */
+[data-markdown-mode] {
+  white-space: pre-wrap;
+}
+
+/* In markdown mode: hide editing buttons, keep Back to Reading */
+.editor-toolbar--markdown .editor-form-actions > li:not(.editor-mode-toggle) {
+  display: none;
+}
+.editor-toolbar--markdown .editor-dropdown-panel {
+  display: none;
+}
+
 .editor-form {
   background: #fff;
   border: 1px solid #ccc;
