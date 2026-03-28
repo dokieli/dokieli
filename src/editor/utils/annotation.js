@@ -518,3 +518,43 @@ export function setSelection(start, end, containerNode) {
   selection.removeAllRanges();
   selection.addRange(range);
 }
+
+const QUOTE_CONTEXT_LENGTH = 32;
+
+export function selectionToTextQuote(containerNode, selection) {
+  if (!selection.rangeCount) return null;
+  const range = selection.getRangeAt(0);
+  const exact = range.toString();
+
+  const preRange = document.createRange();
+  preRange.selectNodeContents(containerNode);
+  preRange.setEnd(range.startContainer, range.startOffset);
+  const prefix = preRange.toString().slice(-QUOTE_CONTEXT_LENGTH);
+
+  const postRange = document.createRange();
+  postRange.selectNodeContents(containerNode);
+  postRange.setStart(range.endContainer, range.endOffset);
+  const suffix = postRange.toString().slice(0, QUOTE_CONTEXT_LENGTH);
+
+  return { exact, prefix, suffix };
+}
+
+export function setSelectionFromTextQuote(containerNode, { exact, prefix, suffix }) {
+  const text = containerNode.textContent;
+  const search = (prefix || '') + exact + (suffix || '');
+
+  let start = -1;
+  if (search.length > 0) {
+    const idx = text.indexOf(search);
+    if (idx !== -1) start = idx + (prefix || '').length;
+  }
+
+  if (start === -1 && exact) {
+    start = text.indexOf(exact);
+  }
+
+  if (start === -1) return false;
+
+  setSelection(start, start + exact.length, containerNode);
+  return true;
+}

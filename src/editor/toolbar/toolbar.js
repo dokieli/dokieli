@@ -18,7 +18,7 @@ limitations under the License.
 import { schema } from "../schema/base.js"
 import { getButtonHTML } from "../../ui/buttons.js"
 import { getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getClassesOfProductsConcepts, getDocument, getLanguageOptionsHTML, getLicenseOptionsHTML, getReferenceLabel } from "../../doc.js";
-import { getTextQuoteHTML, cloneSelection, exportSelection, restoreSelection, setSelection, getSelectedParentElement } from "../utils/annotation.js";
+import { getTextQuoteHTML, cloneSelection, setSelection, selectionToTextQuote, setSelectionFromTextQuote, getSelectedParentElement } from "../utils/annotation.js";
 import { escapeRegExp, matchAllIndex } from "../../util.js";
 import { fragmentFromString, getDocumentContentNode, selectArticleNode } from "../../utils/html.js";
 import { showUserIdentityInput } from "../../auth.js";
@@ -464,12 +464,12 @@ export class ToolbarView {
       e.stopPropagation();
       const sel = window.getSelection();
       const article = selectArticleNode(document);
-      const selectionState = (sel?.rangeCount && article) ? exportSelection(article, sel) : null;
+      const textQuote = (sel?.rangeCount && article) ? selectionToTextQuote(article, sel) : null;
       Config.Editor.toggleEditor(targetMode);
-      if (selectionState) {
+      if (textQuote) {
         requestAnimationFrame(() => {
           const newArticle = selectArticleNode(document);
-          if (newArticle) setSelection(selectionState.start, selectionState.end, newArticle);
+          if (newArticle) setSelectionFromTextQuote(newArticle, textQuote);
           const toolbarView = targetMode === 'author'
             ? Config.Editor.authorToolbarView
             : Config.Editor.socialToolbarView;
