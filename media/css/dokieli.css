@@ -403,7 +403,7 @@ max-width:calc(100% - 2em);
 width: 1.25em;
 height: 1.25em;
 display: flex;
-align-self: center;
+align-self: auto;
 }
 .editor-form svg.fas,
 .editor-form svg.far,
