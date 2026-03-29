@@ -171,6 +171,20 @@ export function hashCode(s) {
   return hash;
 }
 
+export function stringToColor(str) {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) + hash + str.charCodeAt(i);
+  }
+
+  const h = Math.abs(hash) % 360;
+  const s = 60 + (Math.abs(hash) % 20);  // 60–80%
+  const l = 40 + (Math.abs(hash >> 8) % 20); // 40–60%
+  const a = 0.9;
+
+  return `hsl(${h}, ${s}%, ${l}%, ${a})`;
+}
+
 export function getRandomIndex(length) {
   const array = new Uint32Array(1);
   crypto.getRandomValues(array);

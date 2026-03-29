@@ -37,6 +37,7 @@ import { WebsocketProvider } from 'y-websocket'
 import { ySyncPlugin, yCursorPlugin, yUndoPlugin, undo, redo, initProseMirrorDoc, prosemirrorToYDoc } from 'y-prosemirror'
 import { currentLocation } from "../uri.js";
 import { showCollabBanner, hideCollabBanner } from './collab-banner.js';
+import { getRandomIndex, stringToColor } from "../util.js";
 
 const ns = Config.ns;
 
@@ -293,7 +294,6 @@ export class Editor {
   originalDoc = DOMParser.fromSchema(schema).parse(this.node);
 
   ydoc = new Y.Doc();
-
   provider = new WebsocketProvider(
     YWEBSOCKET_URL,
     encodeURIComponent(currentLocation()),
@@ -301,6 +301,54 @@ export class Editor {
     { connect: false }
   );
   yXmlFragment = ydoc.getXmlFragment('prosemirror');
+  const awareness = provider.awareness;
+  const clientId = awareness.clientID; // unique per connected client
+  
+  // Deterministic name from clientId
+  const name = Config.User.Name || Config.SecretAgentNames[clientId % Config.SecretAgentNames.length];
+  
+  // Deterministic color from clientId
+  const color = Config.User.IRI ? stringToColor(Config.User.IRI) : stringToColor(name);
+  const avatar = Config.User.Image;
+  
+  awareness.setLocalStateField('user', { name, color, avatar });
+
+  const cursorPlugin = yCursorPlugin(awareness, {
+    cursorBuilder: user => {
+      const wrapper = document.createElement('span');
+      wrapper.className = 'yjs-cursor';
+  
+      // caret (vertical line)
+      const caret = document.createElement('span');
+      caret.className = 'yjs-caret';
+      caret.style.borderLeftColor = user.color;
+  
+      // label container
+      const label = document.createElement('span');
+      label.className = 'yjs-label';
+      label.style.backgroundColor = user.color;
+  
+      // avatar
+      if (user.avatar) {
+        const img = document.createElement('img');
+        img.src = user.avatar;
+        img.className = 'yjs-avatar';
+        label.appendChild(img);
+      }
+  
+      // name
+      const name = document.createElement('span');
+      name.textContent = user.name;
+      name.style.color = '#fff'
+  
+      label.appendChild(name);
+  
+      wrapper.appendChild(caret);
+      wrapper.appendChild(label);
+  
+      return wrapper;
+    }
+  });
 
   collabSaveHandler = () => {
     if (!ydoc || ydoc.isDestroyed) return;
@@ -361,7 +409,7 @@ export class Editor {
     doc: yjsDoc,
     plugins: [
       ySyncPlugin(yXmlFragment, { mapping }),
-      yCursorPlugin(provider.awareness),
+      cursorPlugin,
       yUndoPlugin(),
       history(),
       keymapPlugin,
