@@ -15,6 +15,36 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import { get as idbGet, set as idbSet, del as idbDel, createStore } from 'idb-keyval';
+
+// Use a named database so we own the upgrade lifecycle.
+const DB_NAME = 'dokieli';
+const STORE_NAME = 'keyval';
+let store = createStore(DB_NAME, STORE_NAME);
+
+// If the DB was partially cleared (store missing), delete it and rebuild.
+function rebuildStore() {
+  return new Promise(resolve => {
+    const req = indexedDB.deleteDatabase(DB_NAME);
+    req.onsuccess = req.onerror = () => {
+      store = createStore(DB_NAME, STORE_NAME);
+      resolve();
+    };
+  });
+}
+
+async function get(key) {
+  try { return await idbGet(key, store); }
+  catch { await rebuildStore(); return idbGet(key, store); }
+}
+async function set(key, value) {
+  try { return await idbSet(key, value, store); }
+  catch { await rebuildStore(); return idbSet(key, value, store); }
+}
+async function del(key) {
+  try { return await idbDel(key, store); }
+  catch { await rebuildStore(); return idbDel(key, store); }
+}
 import Config from './config.js';
 import { getDateTimeISO, generateUUID } from './util.js';
 import { getDocument, updateMutableResource } from './doc.js';
@@ -64,14 +94,14 @@ export async function updateLocalStorageDocumentWithItem(key, data, options = {}
   collection.items.unshift(id);
 
   //TODO: Reconsider this key (which is essentially Config.DocumentURL) because there is a possibility that some other thing on that page will use the same key? We don't want to conflict with that. Perhaps the key in storage should be something unique, e.g., UUID, digestSRI, or something dokieli-specific? Probably dokieli-specific because we need to have a deterministic way of recalling it. Even if it is just `do-${Config.DocumentURL}` which would be sufficient.. or even digestSRI(Config.DocumentURL)
-  localStorage.setItem(key, JSON.stringify(collection));
+  await set(key, collection);
 
   Config.AutoSave.Items[itemOptions.collectionKey] ||= {};
   Config.AutoSave.Items[itemOptions.collectionKey].localStorage ||= {};
 
   console.log(datetime + `: ${key} saved.`);
 
-  addLocalStorageDocumentItem(id, data, itemOptions);
+  await addLocalStorageDocumentItem(id, data, itemOptions);
 }
 
 export async function updateLocalStorageItem(id, data) {
@@ -84,10 +114,10 @@ export async function updateLocalStorageItem(id, data) {
     ...data
   }
 
-  localStorage.setItem(id, JSON.stringify(item));
+  await set(id, item);
 }
 
-export function addLocalStorageDocumentItem(id, data, options = {}) {
+export async function addLocalStorageDocumentItem(id, data, options = {}) {
   const documentOptions = {
     ...Config.DOMProcessing,
     format: true,
@@ -121,7 +151,7 @@ export function addLocalStorageDocumentItem(id, data, options = {}) {
     item['actor'] = Config.User.IRI;
   }
 
-  localStorage.setItem(id, JSON.stringify(item));
+  await set(id, item);
 
   // if (options.autoSave) {
   Config.AutoSave.Items[options.collectionKey]['localStorage']['updated'] = item.updated;
@@ -151,7 +181,7 @@ export function updateHTTPStorageDocument(url, data, options = {}) {
   console.log(datetime + ': Document saved.');
 }
 
-export function updateStorage(key, data, options = {}) {
+export async function updateStorage(key, data, options = {}) {
   if (!key && !data) return;
 
   options['method'] = 'localStorage';
@@ -159,7 +189,7 @@ export function updateStorage(key, data, options = {}) {
   switch (options.method) {
     default:
     case 'localStorage':
-      updateLocalStorageDocumentWithItem(key, data, options);
+      await updateLocalStorageDocumentWithItem(key, data, options);
       break;
 
     case 'http':
@@ -180,11 +210,8 @@ export function removeLocalStorageItem(key) {
 
     return browser.storage.sync.remove(key);
   }
-  else if (window.localStorage) {
-    return Promise.resolve(localStorage.removeItem(key));
-  }
   else {
-    return Promise.reject({ 'message': 'storage is unavailable' })
+    return del(key);
   }
 }
 
@@ -206,7 +233,6 @@ export async function removeLocalStorageDocumentFromCollection(collectionKey, it
 export async function removeLocalStorageDocumentItems(key) {
   console.log(key)
   if (!key) return Promise.resolve();
-console.log(await localStorage.getItem(key))
   const collection = await getLocalStorageItem(key);
   console.log(collection)
 
@@ -249,20 +275,8 @@ export function getLocalStorageItem(key) {
       });
     }
   }
-  else if (window.localStorage) {
-    var o = localStorage.getItem(key);
-    let value = null;
-    try {
-      value = JSON.parse(o);
-    } catch (e) {
-      if (typeof o == 'string') {
-        value = o;
-      }
-    }
-    return Promise.resolve(value);
-  }
   else {
-    return Promise.reject({ 'message': 'storage is unavailable' })
+    return get(key);
   }
 }
 
@@ -304,12 +318,8 @@ export function updateLocalStorageProfile(User) {
       return Promise.resolve(chrome.storage.sync.set({ [key]: object }));
     }
   }
-  else if (window.localStorage) {
-    // console.log(datetime + ': User ' + User.IRI + ' saved.');
-    return Promise.resolve(localStorage.setItem(key, JSON.stringify(object)));
-  }
   else {
-    return Promise.reject({ 'message': 'storage is unavailable' })
+    return set(key, object);
   }
 }
 

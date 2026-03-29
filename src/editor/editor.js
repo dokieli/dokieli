@@ -34,6 +34,7 @@ import { i18n } from "../i18n.js";
 import { domSanitize, domSanitizeHTMLBody } from "../utils/sanitization.js";
 import * as Y from 'yjs'
 import { WebsocketProvider } from 'y-websocket'
+import { IndexeddbPersistence } from 'y-indexeddb'
 import { ySyncPlugin, yCursorPlugin, yUndoPlugin, undo, redo, initProseMirrorDoc, prosemirrorToYDoc } from 'y-prosemirror'
 import { currentLocation } from "../uri.js";
 import { showCollabBanner, hideCollabBanner } from './collab-banner.js';
@@ -42,13 +43,13 @@ import { getRandomIndex, stringToColor } from "../util.js";
 const ns = Config.ns;
 
 let provider;
+let localProvider;
 let ydoc;
 let yXmlFragment;
 let originalDoc;
 let collabSaveHandler;
 let collabAwarenessHandler;
 let collabBeforeUnloadHandler;
-let collabFallbackTimer;
 const YWEBSOCKET_URL = process.env.YWEBSOCKET_URL;
 
 export class Editor {
@@ -293,128 +294,138 @@ export class Editor {
 
   originalDoc = DOMParser.fromSchema(schema).parse(this.node);
 
-  ydoc = new Y.Doc();
-  provider = new WebsocketProvider(
-    YWEBSOCKET_URL,
-    encodeURIComponent(currentLocation()),
-    ydoc,
-    { connect: false }
-  );
-  yXmlFragment = ydoc.getXmlFragment('prosemirror');
-  const awareness = provider.awareness;
-  const clientId = awareness.clientID; // unique per connected client
-  
-  // Deterministic name from clientId
-  const name = Config.User.Name || Config.SecretAgentNames[clientId % Config.SecretAgentNames.length];
-  
-  // Deterministic color from clientId
-  const color = Config.User.IRI ? stringToColor(Config.User.IRI) : stringToColor(name);
-  const avatar = Config.User.Image;
-  
-  awareness.setLocalStateField('user', { name, color, avatar });
+  let pmDoc;
+  let editorPlugins;
 
-  const cursorPlugin = yCursorPlugin(awareness, {
-    cursorBuilder: user => {
-      const wrapper = document.createElement('span');
-      wrapper.className = 'yjs-cursor';
-  
-      // caret (vertical line)
-      const caret = document.createElement('span');
-      caret.className = 'yjs-caret';
-      caret.style.borderLeftColor = user.color;
-  
-      // label container
-      const label = document.createElement('span');
-      label.className = 'yjs-label';
-      label.style.backgroundColor = user.color;
-  
-      // avatar
-      if (user.avatar) {
-        const img = document.createElement('img');
-        img.src = user.avatar;
-        img.className = 'yjs-avatar';
-        label.appendChild(img);
+  if (Config.Editor['new'] || Config.Editor['review']) {
+    // New document (no permanent URL) or review/diff editor (conflict resolution,
+    // not a collaborative session): skip Yjs/IndexedDB/remote-sync entirely.
+    pmDoc = originalDoc;
+    editorPlugins = [history(), keymapPlugin, editorToolbarPlugin];
+  } else {
+    ydoc = new Y.Doc();
+    const roomName = encodeURIComponent(currentLocation());
+    localProvider = new IndexeddbPersistence(roomName, ydoc);
+    provider = new WebsocketProvider(
+      YWEBSOCKET_URL,
+      roomName,
+      ydoc,
+      { connect: false }
+    );
+    yXmlFragment = ydoc.getXmlFragment('prosemirror');
+    const awareness = provider.awareness;
+    const clientId = awareness.clientID; // unique per connected client
+
+    const name = Config.User.Name || Config.SecretAgentNames[clientId % Config.SecretAgentNames.length];
+    const color = Config.User.IRI ? stringToColor(Config.User.IRI) : stringToColor(name);
+    const avatar = Config.User.Image;
+
+    awareness.setLocalStateField('user', { name, color, avatar });
+
+    const cursorPlugin = yCursorPlugin(awareness, {
+      cursorBuilder: user => {
+        const wrapper = document.createElement('span');
+        wrapper.className = 'yjs-cursor';
+
+        // caret (vertical line)
+        const caret = document.createElement('span');
+        caret.className = 'yjs-caret';
+        caret.style.borderLeftColor = user.color;
+
+        // label container
+        const label = document.createElement('span');
+        label.className = 'yjs-label';
+        label.style.backgroundColor = user.color;
+
+        // avatar
+        if (user.avatar) {
+          const img = document.createElement('img');
+          img.src = user.avatar;
+          img.className = 'yjs-avatar';
+          label.appendChild(img);
+        }
+
+        // name
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = user.name;
+        nameSpan.style.color = '#fff';
+
+        label.appendChild(nameSpan);
+
+        wrapper.appendChild(caret);
+        wrapper.appendChild(label);
+
+        return wrapper;
       }
-  
-      // name
-      const name = document.createElement('span');
-      name.textContent = user.name;
-      name.style.color = '#fff'
-  
-      label.appendChild(name);
-  
-      wrapper.appendChild(caret);
-      wrapper.appendChild(label);
-  
-      return wrapper;
-    }
-  });
+    });
 
-  collabSaveHandler = () => {
-    if (!ydoc || ydoc.isDestroyed) return;
-    ydoc.getMap('meta').set('savedStateVector', Y.encodeStateVector(ydoc));
-    hideCollabBanner();
-  };
-  window.addEventListener('dokieli:collab-save', collabSaveHandler);
-
-  provider.on('status', event => {
-    console.log('YJS STATUS:', event.status);
-  });
-
-  provider.on('connection-closed', () => {
-    if (!ydoc.isDestroyed) ydoc.destroy();
-  });
-
-  function hasUnsavedCollabChanges() {
-    const savedSV = ydoc.getMap('meta').get('savedStateVector');
-    if (!savedSV) return false;
-    const { structs } = Y.decodeUpdate(Y.encodeStateAsUpdate(ydoc, savedSV));
-    return structs.length > 1;
-  }
-
-  function discardCollabChanges() {
-    ydoc.transact(() => { yXmlFragment.delete(0, yXmlFragment.length); });
-    const seedDoc = prosemirrorToYDoc(originalDoc);
-    Y.applyUpdate(ydoc, Y.encodeStateAsUpdate(seedDoc));
-  }
-
-  let prevAwarenessSize = 0;
-  collabAwarenessHandler = () => {
-    const size = provider.awareness.getStates().size;
-    const becameAlone = prevAwarenessSize > 1 && size <= 1;
-    const notAloneAnymore = prevAwarenessSize <= 1 && size > 1;
-    prevAwarenessSize = size;
-
-    if (becameAlone && hasUnsavedCollabChanges()) {
-      showCollabBanner({ provider, onDiscard: discardCollabChanges });
-    } else if (notAloneAnymore) {
+    collabSaveHandler = () => {
+      if (!ydoc || ydoc.isDestroyed) return;
+      ydoc.getMap('meta').set('savedStateVector', Y.encodeStateVector(ydoc));
       hideCollabBanner();
+    };
+    window.addEventListener('dokieli:collab-save', collabSaveHandler);
+
+    provider.on('status', event => {
+      console.log('YJS STATUS:', event.status);
+    });
+
+    provider.on('connection-closed', () => {
+      if (!ydoc.isDestroyed) ydoc.destroy();
+    });
+
+    function hasUnsavedCollabChanges() {
+      const savedSV = ydoc.getMap('meta').get('savedStateVector');
+      if (!savedSV) return false;
+      const { structs } = Y.decodeUpdate(Y.encodeStateAsUpdate(ydoc, savedSV));
+      return structs.length > 1;
     }
-  };
-  provider.awareness.on('change', collabAwarenessHandler);
 
-  collabBeforeUnloadHandler = (e) => {
-    const alone = provider.awareness.getStates().size <= 1;
-    if (alone && hasUnsavedCollabChanges()) {
-      e.preventDefault();
-      e.returnValue = '';
+    function discardCollabChanges() {
+      ydoc.transact(() => { yXmlFragment.delete(0, yXmlFragment.length); });
+      const seedDoc = prosemirrorToYDoc(originalDoc);
+      Y.applyUpdate(ydoc, Y.encodeStateAsUpdate(seedDoc));
     }
-  };
-  window.addEventListener('beforeunload', collabBeforeUnloadHandler);
 
-  // Mount the editor immediately. ySyncPlugin will apply server state once synced.
-  const { doc: yjsDoc, mapping } = initProseMirrorDoc(yXmlFragment, schema);
+    let prevAwarenessSize = 0;
+    collabAwarenessHandler = () => {
+      const size = provider.awareness.getStates().size;
+      const becameAlone = prevAwarenessSize > 1 && size <= 1;
+      const notAloneAnymore = prevAwarenessSize <= 1 && size > 1;
+      prevAwarenessSize = size;
 
-  const state = EditorState.create({
-    doc: yjsDoc,
-    plugins: [
+      if (becameAlone && hasUnsavedCollabChanges()) {
+        showCollabBanner({ provider, onDiscard: discardCollabChanges });
+      } else if (notAloneAnymore) {
+        hideCollabBanner();
+      }
+    };
+    provider.awareness.on('change', collabAwarenessHandler);
+
+    collabBeforeUnloadHandler = (e) => {
+      const alone = provider.awareness.getStates().size <= 1;
+      if (alone && hasUnsavedCollabChanges()) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', collabBeforeUnloadHandler);
+
+    const { doc: yjsDoc, mapping } = initProseMirrorDoc(yXmlFragment, schema);
+    pmDoc = yjsDoc;
+    editorPlugins = [
       ySyncPlugin(yXmlFragment, { mapping }),
       cursorPlugin,
       yUndoPlugin(),
       history(),
       keymapPlugin,
       editorToolbarPlugin,
-    ],
+    ];
+  }
+
+  const state = EditorState.create({
+    doc: pmDoc,
+    plugins: editorPlugins,
   });
 
   this.node.replaceChildren();
@@ -433,18 +444,6 @@ export class Editor {
   // Copy-to-clipboard buttons are not restored in author mode; they're regenerated
   // by initCopyToClipboard() when returning to social mode.
   this.restrictedNodes
-    .filter(n => !n.classList.contains('copy-to-clipboard'))
-    .forEach(node => {
-      if (node.id === 'document-menu' || node.id === 'document-info') {
-        document.body.prepend(node);
-      } else {
-        document.body.appendChild(node);
-      }
-     });
-
-     // Copy-to-clipboard buttons are not restored in author mode; they're regenerated
-     // by initCopyToClipboard() when returning to social mode.
-     this.restrictedNodes
       .filter(n => !n.classList.contains('copy-to-clipboard'))
       .filter(n => n.id !== 'editor-area-toggle') // recreated fresh by afterButtons()
       .filter(n => n.id !== 'document-slashmenu') // recreated fresh by SlashMenu()
@@ -466,24 +465,42 @@ export class Editor {
 
   this.slashMenu = new SlashMenu(this.editorView);
 
-  // Seed from the original HTML if the room is empty (fresh server or first ever load).
-  // ySyncPlugin observes yXmlFragment and will push the change into the PM editor.
-  const seedIfEmpty = () => {
-    if (yXmlFragment.length === 0) {
-      const seedDoc = prosemirrorToYDoc(originalDoc);
-      Y.applyUpdate(ydoc, Y.encodeStateAsUpdate(seedDoc));
-    }
-  };
+  if (!Config.Editor['new']) {
+    // Seed from originalDoc only if the room is truly empty (no local IndexedDB
+    // state AND no server state). Connect first so the server state arrives before
+    // we decide to seed — this prevents concurrent seeds from multiple clients
+    // each producing an extra copy of the document.
+    const seedIfEmpty = () => {
+      if (yXmlFragment.length === 0) {
+        const seedDoc = prosemirrorToYDoc(originalDoc);
+        Y.applyUpdate(ydoc, Y.encodeStateAsUpdate(seedDoc));
+      }
+    };
 
-  provider.once('synced', () => {
-    clearTimeout(collabFallbackTimer);
-    seedIfEmpty();
-  });
+    localProvider.whenSynced.then(() => {
+      provider.connect();
 
-  // If WS never syncs within 5s, seed locally so the editor isn't blank.
-  collabFallbackTimer = setTimeout(seedIfEmpty, 5000);
+      let done = false;
+      const doSeed = () => {
+        if (done) return;
+        done = true;
+        seedIfEmpty();
+      };
 
-  provider.connect();
+      const onSync = (isSynced) => {
+        if (isSynced) {
+          provider.off('sync', onSync);
+          clearTimeout(fallback);
+          doSeed();
+        }
+      };
+      provider.on('sync', onSync);
+
+      // Fallback: if the server is unreachable, seed after 5 s so the editor
+      // is not stuck empty when working offline.
+      const fallback = setTimeout(doSeed, 5000);
+    });
+  }
   }
 
 
@@ -510,9 +527,11 @@ export class Editor {
       window.removeEventListener('beforeunload', collabBeforeUnloadHandler);
       collabBeforeUnloadHandler = null;
     }
-    clearTimeout(collabFallbackTimer);
-    collabFallbackTimer = null;
     hideCollabBanner();
+    if (localProvider) {
+      localProvider.destroy();
+      localProvider = null;
+    }
     if (provider) {
       provider.disconnect();
       provider.destroy();

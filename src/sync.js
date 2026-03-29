@@ -606,6 +606,7 @@ export function showResourceReviewChanges(localContent, remoteContent, response,
 
   const diffNode = document.querySelector('#review-changes .do-diff');
 
+  Config.Editor['review'] = true;
   Config.Editor.init("author", diffNode);
 
   node.addEventListener('click', e => {
@@ -614,7 +615,11 @@ export function showResourceReviewChanges(localContent, remoteContent, response,
     if (button) {
       //XXX: What's this for?
       // Config.Editor.toggleMode();
-      if (button.classList.contains('close') || button.classList.contains('info')) {
+      if (button.classList.contains('close')) {
+        Config.Editor['review'] = false;
+        return;
+      }
+      if (button.classList.contains('info')) {
         return;
       }
 
@@ -649,6 +654,7 @@ export function showResourceReviewChanges(localContent, remoteContent, response,
         syncLocalRemoteResource({ forceLocal: true });
       }
 
+      Config.Editor['review'] = false;
       node.remove();
     }
   });
@@ -738,7 +744,7 @@ export async function autoSave(key, options) {
     options['digestSRI'] = hash;
 
     try {
-      updateStorage(key, data, options);
+      await updateStorage(key, data, options);
       Config.AutoSave.Items[key] ||= {};
       Config.AutoSave.Items[key][options.method] ||= {};
       Config.AutoSave.Items[key][options.method].digestSRI = hash;
@@ -775,6 +781,9 @@ export async function enableAutoSave(key, options = {}) {
     //I love that this function is called sync but it is async
     const sync = async (key, options) => {
       await autoSave(key, options);
+
+      // New documents (no URL yet) and review/diff editors must not sync to remote.
+      if (Config.Editor['new'] || Config.Editor['review']) return;
 
       const storageObject = await getLocalStorageItem(Config.DocumentURL);
       const remoteAutoSaveEnabled = (storageObject && storageObject.autoSave !== undefined) ? storageObject.autoSave : true;
