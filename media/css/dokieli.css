@@ -3051,6 +3051,10 @@ font-size:1.25em;
 }
 
 
+
+
+
+
 figure [typeof="schema:Map"] {
 height: 480px !important;
 font:inherit;
@@ -4429,7 +4433,37 @@ font-size:2.25em;
     .editor-table-builder-toolbar button i {
       color: white; }
 /* XXX: MediumEditor above. This is automatically generated (using build.editor.sh) and inserted. Do not modify directly */
+.yjs-cursor {
+  position: relative;
+}
 
+.yjs-caret {
+  border-left-width: 0.1em;
+  border-left-style: solid;
+  height: 1em;
+}
+
+.yjs-label {
+  position: absolute;
+  top: -1.5em;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 16px;
+  font-weight:bold;
+  font-family: 'Ubuntu', system-ui, sans-serif;
+  font-style: normal;
+  white-space: nowrap;
+  padding:0.1em 0.5em;
+  border-radius:0.75em;
+}
+
+.yjs-avatar {
+  width: max-content;
+  height: 24px;
+  border-radius: 50%;
+}
 
 /* Shower CSS is updated to use .shower as parent selector to not conflict with dokieli and removed @page rule */
 /**
