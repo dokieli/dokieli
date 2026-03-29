@@ -297,6 +297,8 @@ export class Editor {
      // by initCopyToClipboard() when returning to social mode.
      this.restrictedNodes
       .filter(n => !n.classList.contains('copy-to-clipboard'))
+      .filter(n => n.id !== 'editor-area-toggle') // recreated fresh by afterButtons()
+      .filter(n => n.id !== 'document-slashmenu') // recreated fresh by SlashMenu()
       .forEach(node => {
         if (node.id == 'document-menu' || node.id == 'document-info') {
           document.body.prepend(node);

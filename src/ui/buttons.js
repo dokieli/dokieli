@@ -322,7 +322,7 @@ export const buttonIcons = {
     icon: Icon[".fas.fa-code"]
   },
   markdown: {
-    icon: Icon[".fas.fa-scroll"]
+    icon: Icon[".fab.fa-markdown"]
   },
   memento: {
     icon: Icon[".far.fa-clock"] 

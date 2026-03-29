@@ -4256,7 +4256,7 @@ button.editor-dropdown-item svg {
 .editor-toolbar .editor-form-actions li.editor-mode-toggle .editor-mode-toggle-btn {
   display: flex;
   align-items: center;
-  height: 100%;
+  height: 50px;
   box-sizing: border-box;
   white-space: nowrap;
   font-style: italic;
@@ -4273,51 +4273,63 @@ button.editor-dropdown-item svg {
 }
 
 /* Standalone W|MD mode toggle — fixed to the top-right of the editor area */
-#editor-area-md-toggle {
+#editor-area-toggle {
   position: fixed;
-  bottom: 1rem;
-  right: 1rem;
-  z-index: 100;
-  border-radius: 6px;
-  box-shadow: 0 1px 4px rgba(0,0,0,.18);
+  bottom: 1em;
+  right: 1em;
+  z-index: 2147483646;
+  border-radius: 0.5em;
+  border: 1px solid rgba(0, 0, 0, 0.35);
+  box-shadow: rgba(0, 0, 0, 0.06) 0 0.4em 0.6em;
   overflow: hidden;
+  margin:0;
+  line-height: 1;
 }
 
-#editor-area-md-toggle .md-mode-toggle {
+#editor-area-toggle ul {
   display: inline-flex;
+  list-style-type:none;
+  margin:0;
 }
 
-#editor-area-md-toggle .md-mode-wysiwyg,
-#editor-area-md-toggle .md-mode-markdown {
+#editor-area-toggle .mode-wysiwym,
+#editor-area-toggle .mode-markdown {
   display: flex;
   align-items: center;
-  padding: 0.35em 0.7em;
-  font-size: 0.75em;
-  font-weight: 700;
-  font-style: normal;
-  letter-spacing: 0.04em;
   white-space: nowrap;
-  cursor: pointer;
   border: none;
   background: #fff;
-  color: #999;
   transition: background-color .15s ease-in, color .15s ease-in;
+  line-height:1;
 }
 
-#editor-area-md-toggle .md-mode-wysiwyg {
-  border-right: 1px solid #ddd;
+#editor-area-toggle .mode-wysiwym {
+padding:1em 1.5em;
+}
+#editor-area-toggle .mode-wysiwym svg {
+font-size:1.25em;
+}
+#editor-area-toggle .mode-markdown {
+padding: 0.5em 1em;
+}
+#editor-area-toggle .mode-markdown svg {
+font-size:2.25em;
 }
 
-#editor-area-md-toggle .md-mode-wysiwyg[aria-pressed="true"],
-#editor-area-md-toggle .md-mode-markdown[aria-pressed="true"] {
-  background-color: #333;
-  color: #fff;
+#editor-area-toggle .mode-wysiwym[aria-pressed="true"],
+#editor-area-toggle .mode-markdown[aria-pressed="true"] {
+  background-color: #080;
+  fill: #fff;
+}
+#editor-area-toggle button:disabled svg {
+  fill: #fff;
 }
 
-#editor-area-md-toggle .md-mode-wysiwyg[aria-pressed="false"]:hover,
-#editor-area-md-toggle .md-mode-markdown[aria-pressed="false"]:hover {
+#editor-area-toggle .mode-wysiwym[aria-pressed="false"]:hover,
+#editor-area-toggle .mode-markdown[aria-pressed="false"]:hover {
   background-color: #eee;
-  color: #333;
+  fill: #333;
+  cursor:pointer;
 }
 
 /* Preserve newlines in plaintext markdown editor (Firefox doesn't do this by default) */
@@ -4326,10 +4338,10 @@ button.editor-dropdown-item svg {
 }
 
 /* In markdown mode: hide editing buttons, keep Back to Reading */
-.editor-toolbar--markdown .editor-form-actions > li:not(.editor-mode-toggle) {
+.editor-toolbar-markdown .editor-form-actions > li:not(.editor-mode-toggle) {
   display: none;
 }
-.editor-toolbar--markdown .editor-dropdown-panel {
+.editor-toolbar-markdown .editor-dropdown-panel {
   display: none;
 }
 

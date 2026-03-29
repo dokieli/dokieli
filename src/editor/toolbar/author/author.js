@@ -28,7 +28,7 @@ import Config from "../../../config.js";
 import { fragmentFromString } from "../../../utils/html.js";
 import { i18n } from "../../../i18n.js"
 import { htmlEncode, sanitizeInsertAdjacentHTML } from "../../../utils/sanitization.js";
-import { buttonIcons } from "../../../ui/buttons.js";
+import { buttonIcons, getButtonHTML } from "../../../ui/buttons.js";
 import { toggleMarkdownMode } from "../../../dialog.js";
 
 const ns = Config.ns;
@@ -263,50 +263,49 @@ TODO:
     super.afterButtons();
 
     // Remove any existing toggle (e.g. after reinit) before recreating.
-    document.getElementById('editor-area-md-toggle')?.remove();
+    document.getElementById('editor-area-toggle')?.remove();
 
     const toggleEl = document.createElement('div');
-    toggleEl.id = 'editor-area-md-toggle';
+    toggleEl.id = 'editor-area-toggle';
+    toggleEl.className = 'do';
 
-    const group = document.createElement('span');
-    group.className = 'md-mode-toggle';
-    group.setAttribute('role', 'group');
-    group.setAttribute('aria-label', 'Editor mode');
+    const group = document.createElement('ul');
 
-    const wysiwygBtn = document.createElement('button');
-    wysiwygBtn.type = 'button';
-    wysiwygBtn.className = 'md-mode-wysiwyg';
-    wysiwygBtn.title = 'Visual editor active';
-    wysiwygBtn.setAttribute('aria-pressed', 'true');
-    wysiwygBtn.textContent = 'W';
-    wysiwygBtn.addEventListener('mousedown', (e) => e.preventDefault());
-    wysiwygBtn.addEventListener('click', (e) => {
-      if (wysiwygBtn.getAttribute('aria-pressed') === 'false') {
+    let buttonWysiwym = fragmentFromString(`<li>${getButtonHTML({ key: 'dialog.mode-wysiwym.button', button: 'cursor', buttonClass: 'mode-wysiwym' })}</li>`);
+    let buttonMarkdown = fragmentFromString(`<li>${getButtonHTML({ key: 'dialog.mode-markdown.button', button: 'markdown', buttonClass: 'mode-markdown' })}</li>`);
+
+    group.appendChild(buttonWysiwym);
+    group.appendChild(buttonMarkdown);
+    toggleEl.appendChild(group);
+    document.body.appendChild(toggleEl);
+
+    buttonWysiwym = document.querySelector('#editor-area-toggle .mode-wysiwym');
+    buttonMarkdown = document.querySelector('#editor-area-toggle .mode-markdown');
+    
+    buttonWysiwym.setAttribute('aria-pressed', 'true');
+    buttonMarkdown.setAttribute('aria-pressed', 'false');
+    buttonWysiwym.disabled = true;
+
+    toggleEl.addEventListener('mousedown', (e) => e.preventDefault());
+    toggleEl.addEventListener('click', (e) => {
+      const button = e.target.closest('.mode-wysiwym');
+      if (button && button.getAttribute('aria-pressed') === 'false') {
         e.preventDefault();
         e.stopPropagation();
         toggleMarkdownMode(e);
       }
     });
 
-    const mdBtn = document.createElement('button');
-    mdBtn.type = 'button';
-    mdBtn.className = 'md-mode-markdown';
-    mdBtn.title = 'Switch to Markdown mode';
-    mdBtn.setAttribute('aria-pressed', 'false');
-    mdBtn.textContent = 'MD';
-    mdBtn.addEventListener('mousedown', (e) => e.preventDefault());
-    mdBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      toggleMarkdownMode(e);
+    toggleEl.addEventListener('mousedown', (e) => e.preventDefault());
+    toggleEl.addEventListener('click', (e) => {
+      const button = e.target.closest('.mode-markdown');
+      if (button && button.getAttribute('aria-pressed') === 'false') {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleMarkdownMode(e);
+      }
     });
-
-    group.appendChild(wysiwygBtn);
-    group.appendChild(mdBtn);
-    toggleEl.appendChild(group);
-    document.body.appendChild(toggleEl);
   }
-
 
   getDropdownMenus() {
     return {

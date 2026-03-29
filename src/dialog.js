@@ -2107,22 +2107,31 @@ export function viewSource(e) {
   });
 }
 
-
 export function toggleMarkdownMode(e) {
+  // Update the standalone WYSIWYM|Markdown toggle state.
+  const buttonPressed = e.target.closest('button');
+  const toggle = document.getElementById('editor-area-toggle');
+  toggle.querySelectorAll('button').forEach(button => {
+    button.setAttribute('aria-pressed', 'false');
+    button.disabled = false;
+  })
+  buttonPressed.setAttribute('aria-pressed', 'true');
+  buttonPressed.disabled = true;
+
   // Find the node currently in markdown mode (if any) by its data attribute.
   const mdNode = document.querySelector('[data-markdown-mode]');
 
   if (mdNode) {
-    // Exit markdown mode: parse markdown > HTML, restart PM
+    // Exit markdown mode: parse markdown -> HTML, restart PM
     const markdownText = mdNode.textContent;
-    const wasAuthored = mdNode.dataset.mdModeWasAuthored === 'true';
-    const wasNew = mdNode.dataset.mdModeWasNew === 'true';
+    const wasAuthored = mdNode.getAttribute('data-markdown-mode-was-authored') === 'true';
+    const wasNew = mdNode.getAttribute('data-markdown-mode-was-new') === 'true';
 
     mdNode.setHTMLUnsafe(domSanitize(parseMarkdown(markdownText)));
     mdNode.removeAttribute('contenteditable');
-    delete mdNode.dataset.markdownMode;
-    delete mdNode.dataset.mdModeWasAuthored;
-    delete mdNode.dataset.mdModeWasNew;
+    mdNode.removeAttribute('data-markdown-mode');
+    mdNode.removeAttribute('data-markdown-mode-was-authored');
+    mdNode.removeAttribute('data-markdown-mode-was-new');
 
     if (wasAuthored) {
       Config.Editor['new'] = wasNew;
@@ -2141,8 +2150,11 @@ export function toggleMarkdownMode(e) {
                        || selectArticleNode(document);
     const hasContent = sourceNode.textContent.trim().length > 0;
 
-    if (hasContent && !confirm('Converting to Markdown may lose some semantic markup (RDFa attributes on block elements) or formatting. Continue?')) {
-      return;
+    if (hasContent && !Config.markdownModeConfirmed) {
+      if (!confirm(i18n.t('dialog.mode-markdown.confirm.textContent'))) {
+        return;
+      }
+      Config.markdownModeConfirmed = true;
     }
 
     const markdown = htmlToMarkdown(sourceNode);
@@ -2181,23 +2193,16 @@ export function toggleMarkdownMode(e) {
 
     // Re-insert toolbar in markdown mode: hide editing buttons, keep Back to Reading.
     if (editorToolbar) {
-      editorToolbar.classList.add('editor-toolbar--markdown');
+      editorToolbar.classList.add('editor-toolbar-markdown');
       document.body.appendChild(editorToolbar);
     }
 
     contentNode.textContent = markdown;
     contentNode.contentEditable = 'plaintext-only';
-    contentNode.dataset.markdownMode = 'true';
-    contentNode.dataset.mdModeWasAuthored = String(wasAuthored);
-    contentNode.dataset.mdModeWasNew = String(!!Config.Editor['new']);
+    contentNode.setAttribute('data-markdown-mode', 'true');
+    contentNode.setAttribute('data-markdown-mode-was-authored', String(wasAuthored));
+    contentNode.setAttribute('data-markdown-mode-was-new', String(!!Config.Editor['new']));
     contentNode.focus();
-
-    // Update the standalone W|MD toggle state.
-    const toggle = document.getElementById('editor-area-md-toggle');
-    if (toggle) {
-      toggle.querySelector('.md-mode-wysiwyg')?.setAttribute('aria-pressed', 'false');
-      toggle.querySelector('.md-mode-markdown')?.setAttribute('aria-pressed', 'true');
-    }
   }
 }
 

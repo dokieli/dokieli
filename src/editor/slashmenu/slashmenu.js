@@ -58,6 +58,7 @@ export class SlashMenu {
       'test-suite': [ { event: 'submit', callback: this.formHandlerTestSuite }, { event: 'click', callback: (e) => this.formClickHandler(e, 'test-suite') } ],
     }
 
+    document.getElementById('document-slashmenu')?.remove();
     document.body.appendChild(this.menuContainer);
     this.bindHideEvents();
   }
