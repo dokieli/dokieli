@@ -741,7 +741,7 @@ border-bottom:1px solid #ccc;
 border-bottom-left-radius:0.5em;
 box-shadow:0.25em 0.25em 0.25em rgba(0,0,0,0.1);
 }
-aside.do.on:not([id="document-info"]):not([id="document-notifications"]) {
+aside.do.on:not([id="document-info"]):not([id="document-notifications"]):not([id="document-version-history"]) {
 left:50%;
 transform:translate(-50%, 0);
 }
@@ -1223,6 +1223,60 @@ position:static;
 display:none;
 }
 
+#document-version-history:not([class~="on"]) {
+display:none;
+}
+
+#document-version-history {
+position: fixed;
+top: 0;
+right: 0;
+z-index:2147483646;
+width:25em;
+height:100%;
+max-height:100%;
+overflow: unset;
+font-size:1em;
+}
+#document-version-history h2 {
+margin-top:1.5em;
+margin-bottom:0.5em;
+}
+#document-version-history button.toggle {
+justify-content: center;
+position: absolute;
+top: 1em;
+left: -1em;
+width: 2.3em;
+padding: 0;
+height: 2.3em;
+border-radius: 50%;
+border:1px solid rgba(0, 0, 0, 0.35);
+background-color: #fff;
+transition: box-shadow 0.3s;
+font-size:1.2em;
+}
+#document-version-history button.toggle:hover {
+box-shadow: 0 0 1.2em rgba(33, 33, 33, 0.2);
+fill: #080 !important;
+transition: fill 0.3s;
+}
+#document-version-history > div {
+display:flex;
+flex-direction: column;
+max-height: 90%;
+}
+#document-version-history > div > ul.versions {
+overflow-y: auto;
+height: 100%;
+}
+#document-version-history .versions button {
+margin-left:2em;
+padding:0.25em;
+display:inline-block;
+}
+
+
 @media (max-width: 768px) {
 #document-notifications {
 max-width:calc(100% - 3em);
@@ -1370,6 +1424,7 @@ font-size:1em;
 }
 
 
+#document-version-history ul.versions > li,
 #document-notifications ul.activities > li {
 margin-bottom:2em;
 padding:0;
@@ -1390,6 +1445,7 @@ border-left:2px solid #ccc;
 margin-bottom:0;
 font-size:1em;
 }
+#document-version-history img,
 #document-notifications article img {
 vertical-align:middle;
 margin-right:0.5em;
@@ -1438,6 +1494,7 @@ position:relative;
 #document-notifications article .rights,
 #document-notifications article .license,
 #document-notifications article .canonical,
+#document-version-history .versions dt,
 aside.note h2,
 aside.note h3,
 aside.note h4,
@@ -1459,6 +1516,8 @@ display:block;
 #document-notifications section,
 #document-notifications article dl,
 #document-notifications article dl *,
+#document-version-history dl,
+#document-version-history dl *,
 .do div,
 aside.note dl,
 aside.note dl * {
@@ -4435,7 +4494,6 @@ font-size:2.25em;
 /* XXX: MediumEditor above. This is automatically generated (using build.editor.sh) and inserted. Do not modify directly */
 .yjs-cursor {
   position: relative;
-  user-select: none;
 }
 
 .yjs-caret {
