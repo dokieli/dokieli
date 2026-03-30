@@ -233,7 +233,12 @@ export async function syncLocalRemoteResource(options = {}) {
 
   if (options.forceLocal || options.forceRemote) {
     if (etagWasUsed && !etagsMatch && !options.forceRemote && status !== 304) {
-      // reviewOptions['message'] = `Cannot force due to missing or changed ETag. Show review.`;
+      if (Config.Editor['collab']) {
+        // In collab mode the Yjs CRDT is the authority — force-push local state.
+        console.log('Collab mode: ETag mismatch, force-pushing Yjs state.');
+        await pushLocalContentToRemote(latestLocalDocumentItemObjectUnpublished, {});
+        return;
+      }
       reviewOptions['message'] = `<span data-i18n="dialog.review-changes.message.etag-mismatch.span">${i18n.t('dialog.review-changes.message.etag-mismatch.span.textContent')}</span>`;
       showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
       return;
@@ -297,6 +302,11 @@ export async function syncLocalRemoteResource(options = {}) {
     const localContentNode = tmplLocal.body;
 
     if (previousRemoteHash !== undefined && previousRemoteHash !== remoteHash && status !== 304) {
+      if (Config.Editor['collab']) {
+        console.log('Collab mode: conflict, force-pushing Yjs state.');
+        await pushLocalContentToRemote(latestLocalDocumentItemObjectUnpublished, {});
+        return;
+      }
       reviewOptions['message'] = `<span data-i18n="dialog.review-changes.message.conflict.span">${i18n.t('dialog.review-changes.message.conflict.span.textContent')}</span>`;
       showResourceReviewChanges(localContent, remoteContent, Config.Resource[Config.DocumentURL].response, reviewOptions);
       return;
@@ -335,10 +345,14 @@ export async function syncLocalRemoteResource(options = {}) {
           };
         }
         else {
+          if (Config.Editor['collab']) {
+            console.log('Collab mode: local and remote both changed, force-pushing Yjs state.');
+            await pushLocalContentToRemote(latestLocalDocumentItemObjectUnpublished, {});
+            return;
+          }
           let localUnpublishedChangesRemoteChanged = i18n.t('dialog.review-changes.message.local-remote-changed.span.textContent');
           reviewOptions['message'] = `<span data-i18n="dialog.review-changes.message.local-remote-changed.span">${localUnpublishedChangesRemoteChanged}</span>`;
           console.log(localUnpublishedChangesRemoteChanged);
-          // console.log(localContent, remoteContent)
           showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
         }
       }
@@ -770,8 +784,12 @@ export async function enableAutoSave(key, options = {}) {
 
   console.log(getDateTimeISO() + ': ' + key + ' ' + options.method + ' autosave enabled.');
 
-  await autoSave(key, options);
-
+  // Do NOT call autoSave here. The collaborative editor (Yjs) initialises
+  // asynchronously: localProvider.whenSynced fires after IndexedDB loads,
+  // so the PM editor is empty at this point. Capturing that empty state as
+  // an unpublished item would cause the next syncLocalRemoteResource call
+  // to PUT an empty body to the server. The first real save happens on the
+  // next user edit via handleInputPaste.
   await updateLocalStorageItem(key, { autoSave: true });
 
   const autosaveCheckbox = document.getElementById('autosave-remote');
