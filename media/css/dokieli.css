@@ -4435,6 +4435,7 @@ font-size:2.25em;
 /* XXX: MediumEditor above. This is automatically generated (using build.editor.sh) and inserted. Do not modify directly */
 .yjs-cursor {
   position: relative;
+  user-select: none;
 }
 
 .yjs-caret {

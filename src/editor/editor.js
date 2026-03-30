@@ -300,9 +300,11 @@ export class Editor {
   if (Config.Editor['new'] || Config.Editor['review']) {
     // New document (no permanent URL) or review/diff editor (conflict resolution,
     // not a collaborative session): skip Yjs/IndexedDB/remote-sync entirely.
+    Config.Editor['collab'] = false;
     pmDoc = originalDoc;
     editorPlugins = [history(), keymapPlugin, editorToolbarPlugin];
   } else {
+    Config.Editor['collab'] = true;
     ydoc = new Y.Doc();
     const roomName = encodeURIComponent(currentLocation());
     localProvider = new IndexeddbPersistence(roomName, ydoc);
@@ -325,7 +327,7 @@ export class Editor {
     const cursorPlugin = yCursorPlugin(awareness, {
       cursorBuilder: user => {
         const wrapper = document.createElement('span');
-        wrapper.className = 'yjs-cursor';
+        wrapper.className = 'yjs-cursor do';
 
         // caret (vertical line)
         const caret = document.createElement('span');
@@ -514,6 +516,7 @@ export class Editor {
   }
 
   destroyEditor(content) {
+    Config.Editor['collab'] = false;
     // Always clean up collab resources, even if the editor never finished mounting.
     if (collabSaveHandler) {
       window.removeEventListener('dokieli:collab-save', collabSaveHandler);
