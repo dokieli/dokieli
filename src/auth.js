@@ -29,6 +29,7 @@ import { SessionIDB } from '@uvdsl/solid-oidc-client-browser';
 import { i18n } from './i18n.js';
 import { showGeneralMessages, setPreferredLanguagesInfo } from './actions.js';
 import { sanitizeInsertAdjacentHTML } from './utils/sanitization.js';
+import { updateCollabUserIdentity } from './editor/editor.js';
 
 const ns = Config.ns;
 
@@ -386,6 +387,8 @@ export function setUserInfo (subjectIRI, options = {}) {
 
 //TODO: Review grapoi
 export function afterSetUserInfo() {
+  updateCollabUserIdentity();
+
   getResourceSupplementalInfo(Config.DocumentURL).then(resourceInfo => {
     updateButtons();
   });

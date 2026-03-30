@@ -19,7 +19,7 @@ import rdf from 'rdf-ext';
 import LinkHeader from "http-link-header";
 import { i18n } from './i18n.js';
 import { getButtonHTML, updateButtons } from './ui/buttons.js';
-import { addMessageToLog, buildResourceView, copyRelativeResources, createFeedXML, createImmutableResource, createMutableResource, createNoteDataHTML, getAccessModeOptionsHTML, getBaseURLSelection, getDocument, getFeedFormatSelection, getLanguageOptionsHTML, getLicenseOptionsHTML, getResourceInfo, rewriteBaseURL, setCopyToClipboard, setDocumentRelation, showActionMessage, showRobustLinksDecoration, showTimeMap, updateMutableResource, buildReferences, getDocumentConceptDefinitionsHTML, insertDocumentLevelHTML, insertTestCoverageToTable, diffRequirements, removeReferences, getStorageSelfDescription, getContactInformation, getPersistencePolicy, getODRLPolicies, updateResourceInfos, initCurrentStylesheet, setDate, showFragment, initCopyToClipboard, setDocumentURL } from './doc.js';
+import { addMessageToLog, buildResourceView, copyRelativeResources, createFeedXML, createImmutableResource, createMutableResource, createNoteDataHTML, getAccessModeOptionsHTML, getBaseURLSelection, getDocument, getFeedFormatSelection, getLanguageOptionsHTML, getLicenseOptionsHTML, getResourceInfo, rewriteBaseURL, setCopyToClipboard, setDocumentRelation, showActionMessage, showRobustLinksDecoration, showTimeMap, updateMutableResource, buildReferences, getDocumentConceptDefinitionsHTML, insertDocumentLevelHTML, insertTestCoverageToTable, diffRequirements, removeReferences, getStorageSelfDescription, getContactInformation, getPersistencePolicy, getODRLPolicies, updateResourceInfos, initCurrentStylesheet, setDate, showFragment, initCopyToClipboard, setDocumentURL, getAgentHTML } from './doc.js';
 import { removeNodesWithIds, createHTML } from './utils/html.js';
 import { accessModeAllowed, accessModePossiblyAllowed } from './access.js';
 import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeObject, htmlEncode, sanitizeIRIs } from './utils/sanitization.js';
@@ -32,13 +32,16 @@ import Config from './config.js';
 const ns = Config.ns;
 import { Icon } from './ui/icons.js';
 import { updateLocalStorageProfile, getLocalStorageItem  } from './storage.js';
-import { enableAutoSave, disableAutoSave, enableRemoteSync, disableRemoteSync } from './sync.js';
+import { enableAutoSave, disableAutoSave, enableRemoteSync, disableRemoteSync, showResourceReviewChanges } from './sync.js';
 import { showVisualisationGraph } from './viz.js';
 import { exportAsDocument, updateUILanguage } from './actions.js';
 import { parseMarkdown, htmlToMarkdown, fragmentFromString, removeSelectorFromNode, selectArticleNode, getNodeWithoutClasses } from "./utils/html.js";
 import { showUserSigninSignout, userInfoSignOut } from './auth.js';
 import { generateGeoView } from './geo.js';
 import { csvStringToJson, jsonToHtmlTableString } from './csv.js';
+import { restoreYjsContent, addYjsVersion, getYjsVersions } from "./editor/editor.js";
+
+const versionItemCache = new Map();
 
 export function initDocumentMenu(options = {}) {
   options = { loading: true, ...options };
@@ -361,8 +364,12 @@ function showDocumentDo(node) {
       mementoDocument(e);
     }
 
-    if (e.target.closest('.create-version') ||
-        e.target.closest('.create-immutable')) {
+    if (e.target.closest('.create-version')) {
+      hideDocumentMenu();
+      showVersionHistory();
+    }
+
+    if (e.target.closest('.create-immutable')) {
       resourceSave(e);
     }
 
@@ -2946,6 +2953,104 @@ export function resourceSave(e, options) {
       }
     }
   });
+}
+
+export function initializeVersionHistory() {
+  var buttonToggle = getButtonHTML({ key: 'panel.version-history.toggle.button', button: 'toggle', buttonClass: 'toggle' });
+
+  var aside = `
+  <aside aria-labelledby="document-version-history-label" class="do" contenteditable="false" dir="${Config.User.UI.LanguageDir}" id="document-version-history" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#document-version-history" xml:lang="${Config.User.UI.Language}">
+    <h2 data-i18n="panel.version-history.h2" id="document-version-history-label" property="schema:name">${i18n.t('panel.version-history.h2.textContent')}</h2>
+    ${buttonToggle}
+    <div>
+      <div class="info"></div>
+      <ul class="versions"></ul>
+    </div>
+  </aside>`;
+  sanitizeInsertAdjacentHTML(document.body, 'beforeend', aside);
+  aside = document.getElementById('document-version-history');
+
+  aside.addEventListener('click', async e => {
+    const button = e.target.closest('button.version-preview');
+
+    if (!button) return;
+
+    const itemId = button.dataset.key;
+    const item = await getLocalStorageItem(itemId);
+
+    if (!item?.content) return;
+
+    const documentOptions = { ...Config.DOMProcessing, format: true, sanitize: true, normalize: true };
+    const currentContent = getDocument(null, documentOptions);
+
+    showResourceReviewChanges(currentContent, item.content, null, {
+      mode: 'version-preview',
+      versionItem: item,
+    });
+  });
+
+  return aside;
+}
+
+export async function showVersionHistory() {
+  var aside = document.getElementById('document-version-history');
+  if (!aside) {
+    aside = initializeVersionHistory();
+  }
+  aside.classList.add('on');
+
+  const list = aside.querySelector('ul.versions');
+  list.innerHTML = '';
+  versionItemCache.clear();
+
+  let items;
+  if (Config.Editor['collab']) {
+    items = getYjsVersions();
+  } else {
+    const collection = await getLocalStorageItem(Config.DocumentURL);
+    if (!collection?.items?.length) {
+      sanitizeInsertAdjacentHTML(list, 'beforeend', `<li><p data-i18n="panel.version-history.empty.p">${i18n.t('panel.version-history.empty.p.textContent')}</p></li>`);
+      return;
+    }
+    items = [];
+    for (const itemId of collection.items) {
+      const item = await getLocalStorageItem(itemId);
+      if (item) items.push(item);
+    }
+  }
+
+  if (!items.length) {
+    sanitizeInsertAdjacentHTML(list, 'beforeend', `<li><p data-i18n="panel.version-history.empty.p">${i18n.t('panel.version-history.empty.p.textContent')}</p></li>`);
+    return;
+  }
+
+  let firstItem = true;
+  for (const item of items) {
+    const key = item.updated || item.id;
+console.log(key)
+    versionItemCache.set(key, item);
+    
+    const datetime = item.updated || item.published || '';
+    const a = item.actor;
+    const actor = (a?.name || a?.iri)
+      ? `<dl class="author-name"><dt>Authors</dt><dd>${getAgentHTML({ iri: a?.iri, name: a?.name, image: a?.avatar })}</dd></dl>`
+      : '';
+
+    let previewButton = '';
+    if (!firstItem) {
+      previewButton = `<button class="version-preview" data-i18n="panel.version-history.item.preview.button" data-key="${key}" title="${i18n.t('panel.version-history.item.preview.button.title')}" type="button">${i18n.t('panel.version-history.item.preview.button.textContent')}</button>`;
+    }
+    firstItem = false;
+
+    const dateDisplay = datetime ? `<dl class="created"><dt>Created</dt><dd><time content="${datetime}" datatype="xsd:dateTime" datetime="${datetime}" property="dcterms:created">${datetime.substr(0, 19).replace('T', ' ')}</time> ${previewButton}</dd></dl>` : '';
+
+    sanitizeInsertAdjacentHTML(list, 'beforeend', `
+      <li data-datetime="${datetime}">
+        ${actor}
+        ${dateDisplay}
+      </li>
+      `);
+  }
 }
 
 export function mementoDocument(e) {

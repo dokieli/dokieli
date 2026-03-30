@@ -763,3 +763,82 @@ export class Editor {
   //   }
   // }
 }
+
+// Update the Yjs awareness user field after sign-in so peers see the correct identity.
+// Also reconnects the websocket so the server sees a fresh session under the new identity.
+export function updateCollabUserIdentity() {
+  if (!provider || !provider.awareness) return;
+
+  const awareness = provider.awareness;
+  const clientId = awareness.clientID;
+  const name = Config.User.Name || Config.SecretAgentNames[clientId % Config.SecretAgentNames.length];
+  const color = Config.User.IRI ? stringToColor(Config.User.IRI) : stringToColor(name);
+  const avatar = Config.User.Image;
+
+  awareness.setLocalStateField('user', { name, color, avatar });
+
+  // Reconnect so the websocket server session reflects the new identity.
+  if (provider.wsconnected) {
+    provider.disconnect();
+    provider.connect();
+  }
+}
+
+// Replace the live Yjs document content with an arbitrary HTML string.
+// Used by version history restore in collab mode.
+export function restoreYjsContent(htmlString) {
+  if (!ydoc || ydoc.isDestroyed || !yXmlFragment) return false;
+
+  const tmpl = document.implementation.createHTMLDocument('');
+  tmpl.documentElement.setHTMLUnsafe(htmlString);
+  const pmDoc = DOMParser.fromSchema(schema).parse(tmpl.body);
+  const seedDoc = prosemirrorToYDoc(pmDoc);
+
+  ydoc.transact(() => { yXmlFragment.delete(0, yXmlFragment.length); });
+  Y.applyUpdate(ydoc, Y.encodeStateAsUpdate(seedDoc));
+
+  return true;
+}
+
+const VERSIONS_MAP = 'versions';
+const MAX_VERSIONS = 20;
+
+// Write a version snapshot into the shared Yjs doc so all peers see it.
+export function addYjsVersion(versionData) {
+  if (!ydoc || ydoc.isDestroyed) return;
+
+  // Freeze actor identity from awareness at save time. This ensures anonymous
+  // versions keep their pseudonymous identity even after the user signs in.
+  const awarenessUser = provider?.awareness?.getLocalState()?.user;
+  console.log('[addYjsVersion] awarenessUser', awarenessUser, 'Config.User.IRI', Config.User?.IRI);
+  const actor = {
+    iri: Config.User?.IRI || null,
+    name: awarenessUser?.name || null,
+    avatar: awarenessUser?.avatar || null
+  };
+
+  const versionsMap = ydoc.getMap(VERSIONS_MAP);
+  const key = versionData.updated || new Date().toISOString();
+
+  ydoc.transact(() => {
+    versionsMap.set(key, { ...versionData, actor });
+
+    // Enforce max count — drop oldest entries beyond the limit.
+    if (versionsMap.size > MAX_VERSIONS) {
+      const sorted = Array.from(versionsMap.keys()).sort();
+      for (let i = 0; i < versionsMap.size - MAX_VERSIONS; i++) {
+        versionsMap.delete(sorted[i]);
+      }
+    }
+  });
+}
+
+// Read all version snapshots from the shared Yjs doc, newest first.
+export function getYjsVersions() {
+  if (!ydoc || ydoc.isDestroyed) return [];
+
+  const versionsMap = ydoc.getMap(VERSIONS_MAP);
+  return Array.from(versionsMap.entries())
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .map(([, v]) => v);
+}

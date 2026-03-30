@@ -26,7 +26,7 @@ import { getResourceHead, deleteResource, processSave, patchResourceWithAcceptPa
 import { getResourceGraph, sortGraphTriples, getGraphContributors, getGraphAuthors, getGraphEditors, getGraphPerformers, getGraphPublishers, getGraphLabel, getGraphEmail, getGraphTitle, getGraphConceptLabel, getGraphPublished, getGraphUpdated, getGraphDescription, getGraphLicense, getGraphRights, getGraphFromData, getGraphAudience, getGraphTypes, getGraphLanguage, getGraphInbox, getUserLabelOrIRI, getGraphImage, getGraphDate, processResources } from './graph.js';
 import { Icon } from './ui/icons.js';
 import { buttonIcons, getButtonHTML, updateButtons } from './ui/buttons.js'
-import { domSanitizeHTMLBody, domSanitize, sanitizeInsertAdjacentHTML, htmlEncode } from './utils/sanitization.js';
+import { domSanitizeHTMLBody, domSanitize, sanitizeInsertAdjacentHTML, htmlEncode, sanitizeIRI } from './utils/sanitization.js';
 import { cleanProseMirrorOutput, normalizeHTML, normalizeWhitespace } from './utils/normalization.js';
 import { formatHTML, fragmentFromString, getDoctype, getDocumentContentNode, selectArticleNode, getDocumentNodeFromString, stringFromFragment, createHTML, getOffset } from './utils/html.js';
 import { i18n } from './i18n.js';
@@ -2597,23 +2597,28 @@ export function getTestDescriptionReviewStatusHTML() {
 }
 
 export function getAgentHTML(options = {}) {
+  let { name, image, iri } = options;
   let userName = Config.SecretAgentNames[getRandomIndex(Config.SecretAgentNames.length)];
 
-  if (Config.User.Name) {
-    // XXX: We have the IRI already
-    userName = `<span about="${Config.User.IRI}" property="schema:name">${Config.User.Name}</span>`;
+  iri = iri || Config.User.IRI;
+  name = name || Config.User.Name;
+  image = image || Config.User.Image;
+
+  // XXX: We have the IRI already
+  if (iri && name) {
+    userName = `<span about="${iri}" property="schema:name">${name}</span>`;
   }
 
   let userImage = '';
 
-  if (!('omitImage' in options && options.omitImage) && 'Image' in Config.User && typeof Config.User.Image !== 'undefined' && Config.User.Image.length > 0) {
-    userImage = getResourceImageHTML(Config.User.Image, options) + ' ';
+  if (!('omitImage' in options && options.omitImage) && image) {
+    userImage = getResourceImageHTML(image, options) + ' ';
   }
 
   let user = `<span typeof="schema:Person">${userName}</span>`;
 
-  if ('IRI' in Config.User && Config.User.IRI !== null && Config.User.IRI.length > 0) {
-    user = `<span about="${Config.User.IRI}" typeof="schema:Person">${userImage}<a rel="schema:url" href="${Config.User.IRI}">${userName}</a></span>`;
+  if (iri?.length) {
+    user = `<span about="${iri}" typeof="schema:Person">${userImage}<a rel="schema:url" href="${iri}">${userName}</a></span>`;
   }
 
   return user;

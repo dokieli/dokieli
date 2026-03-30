@@ -27,6 +27,7 @@ import { getButtonHTML, updateButtons } from "./ui/buttons.js";
 import Config from "./config.js";
 import { i18n } from "./i18n.js";
 import { sanitizeInsertAdjacentHTML } from "./utils/sanitization.js";
+import { restoreYjsContent, addYjsVersion, getYjsVersions } from "./editor/editor.js";
 
 export async function syncLocalRemoteResource(options = {}) {
   // console.log('--- syncLocalRemoteResource');
@@ -465,49 +466,28 @@ export async function pushLocalContentToRemote(localItem, headers) {
 
 export function showResourceReviewChanges(localContent, remoteContent, response, reviewOptions) {
   if (!localContent.length || !remoteContent.length) return;
+
+  const isVersionPreview = reviewOptions?.mode === 'version-preview';
+
   var tmplLocal = document.implementation.createHTMLDocument('template');
   tmplLocal.documentElement.setHTMLUnsafe(localContent);
   const localContentNode = tmplLocal.body;
-  // const localContentBody = localContentNode.getHTML().trim();
 
   var tmplRemote = document.implementation.createHTMLDocument('template');
   tmplRemote.documentElement.setHTMLUnsafe(remoteContent);
-
-  // const remoteContentNode = tmplRemote.body;
-  // const remoteContentBody = tmplRemote.body.getHTML().trim();
   const remoteContentNode = tmplRemote.body;
 
-  // console.log(localContent, remoteContent);
   const tokenizeHTML = (html) => {
     return html.split(/(<[^>]+>)/g).filter(Boolean);
   };
 
-  // function serializeToken(token) {
-  //   return JSON.stringify([
-  //     token.block,
-  //     token.text,
-  //     token.bold,
-  //     token.italic,
-  //     token.link
-  //   ]);
-  // }
-  
   const localNormalized = normalizeForDiff(localContentNode);
   const remoteNormalized = normalizeForDiff(remoteContentNode);
 
-  // console.log("--- Local Normalized ---", localNormalized);
-  // console.log("--- Remote Normalized ---", remoteNormalized);
-  
   const localTokens = tokenizeHTML(localNormalized);
   const remoteTokens = tokenizeHTML(remoteNormalized);
 
-  // const localSerialized = localTokens.map(serializeToken);
-  // const remoteSerialized = remoteTokens.map(serializeToken);
-  
-  // const diff = diffArrays(remoteTokens, localTokens).filter(d => d.added || d.removed);
   const diff = diffArrays(remoteTokens, localTokens)
-  // console.log(diff)
-  // const diff = diffArrays(remoteSerialized, localSerialized);
 
   if (!diff.length || !diff.filter(d => d.added || d.removed).length) return;
 
@@ -517,32 +497,37 @@ export function showResourceReviewChanges(localContent, remoteContent, response,
     reviewChanges.remove();
   }
 
-  // console.log(localContentBody + '/---')
-  // console.log(remoteContentBody + '/---')
-
   let message = '';
   if (reviewOptions?.message) {
     message = `<p>${reviewOptions?.message}</p>`;
   }
 
-  var buttonClose = getButtonHTML({ key: 'dialog.review-changes.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
+  const panelTitle = isVersionPreview
+    ? `${i18n.t('dialog.version-preview.h2.textContent')}`
+    : `${i18n.t('dialog.review-changes.h2.textContent')} ${Config.Button.Info.ReviewChanges}`;
+
+  const panelTitleI18n = isVersionPreview ? 'dialog.version-preview.h2' : 'dialog.review-changes.h2';
+
+  var buttonClose = isVersionPreview
+    ? getButtonHTML({ key: 'dialog.version-preview.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' })
+    : getButtonHTML({ key: 'dialog.review-changes.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
   document.body.appendChild(fragmentFromString(`
     <aside aria-labelledby="review-changes-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="review-changes" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#review-changes" xml:lang="${Config.User.UI.Language}">
-      <h2 data-i18n="dialog.review-changes.h2" id="review-changes-label" property="schema:name">${i18n.t('dialog.review-changes.h2.textContent')} ${Config.Button.Info.ReviewChanges}</h2>
+      <h2 data-i18n="${panelTitleI18n}" id="review-changes-label" property="schema:name">${panelTitle}</h2>
       ${buttonClose}
       <div class="info">${message}</div>
     </aside>`));
 
   let insCounter = 0;
   let delCounter = 0;
-  
+
   let diffHTML = [];
   diff.forEach(part => {
     let eName;
-    if (part.added) eName = 'ins';
-    else if (part.removed) eName = 'del';
-  
+    if (part.added) { eName = 'ins'; insCounter++; }
+    else if (part.removed) { eName = 'del'; delCounter++; }
+
     const val = part.value.join('');
     if (eName) {
       diffHTML.push(`<${eName}>${val}</${eName}>`);
@@ -550,34 +535,6 @@ export function showResourceReviewChanges(localContent, remoteContent, response,
       diffHTML.push(val);
     }
   });
-  // console.log(`ins: ${insCounter}, del: ${delCounter}`);
-
-  // function renderToken(token) {
-  //   let content = token.text;
-  
-  //   if (token.bold) content = `<strong>${content}</strong>`;
-  //   if (token.italic) content = `<em>${content}</em>`;
-  //   if (token.link) content = `<a href="${token.link}">${content}</a>`;
-  
-  //   return `<${token.block}>${content}</${token.block}>`;
-  // }
-
-  // diff.forEach(part => {
-  //   let tag = null;
-  //   if (part.added) tag = "ins";
-  //   if (part.removed) tag = "del";
-
-  //   part.value.forEach(val => {
-  //     const token = JSON.parse(val); // back to object
-  //     const html = renderToken(token);
-
-  //     if (tag) {
-  //       diffHTML.push(`<${tag}>${html}</${tag}>`);
-  //     } else {
-  //       diffHTML.push(html);
-  //     }
-  //   });
-  // });
 
   let detailsInsDel = `
     <details>
@@ -611,56 +568,75 @@ export function showResourceReviewChanges(localContent, remoteContent, response,
 
   sanitizeInsertAdjacentHTML(node.querySelector('div.info'), 'beforeend', detailsInsDel);
 
-  sanitizeInsertAdjacentHTML(node, 'beforeend', `
-    <div class="do-diff" dir="auto">${diffHTML.join('')}</div>
-    <button class="review-changes-save-local" data-i18n="dialog.review-changes.save-local.button" title="${i18n.t('dialog.review-changes.save-local.button.textContent')}" type="button">${i18n.t('dialog.review-changes.save-local.button.title')}</button>
-    <button class="review-changes-save-remote" data-i18n="dialog.review-changes.save-remote.button" title="${i18n.t('dialog.review-changes.save-remote.button.title')}" type="button">${i18n.t('dialog.review-changes.save-remote.button.textContent')}</button>
-    <button class="review-changes-submit" data-i18n="dialog.review-changes.save.button" title="${i18n.t('dialog.review-changes.save.button.title')}" type="submit">${i18n.t('dialog.review-changes.save.button.textContent')}</button>
-  `);
+  if (isVersionPreview) {
+    sanitizeInsertAdjacentHTML(node, 'beforeend', `
+      <div class="do-diff" dir="auto">${diffHTML.join('')}</div>
+      <button class="version-restore" data-i18n="dialog.version-preview.restore.button" title="${i18n.t('dialog.version-preview.restore.button.title')}" type="button">${i18n.t('dialog.version-preview.restore.button.textContent')}</button>
+    `);
+  } else {
+    sanitizeInsertAdjacentHTML(node, 'beforeend', `
+      <div class="do-diff" dir="auto">${diffHTML.join('')}</div>
+      <button class="review-changes-save-local" data-i18n="dialog.review-changes.save-local.button" title="${i18n.t('dialog.review-changes.save-local.button.textContent')}" type="button">${i18n.t('dialog.review-changes.save-local.button.title')}</button>
+      <button class="review-changes-save-remote" data-i18n="dialog.review-changes.save-remote.button" title="${i18n.t('dialog.review-changes.save-remote.button.title')}" type="button">${i18n.t('dialog.review-changes.save-remote.button.textContent')}</button>
+      <button class="review-changes-submit" data-i18n="dialog.review-changes.save.button" title="${i18n.t('dialog.review-changes.save.button.title')}" type="submit">${i18n.t('dialog.review-changes.save.button.textContent')}</button>
+    `);
 
-  const diffNode = document.querySelector('#review-changes .do-diff');
-
-  Config.Editor['review'] = true;
-  Config.Editor.init("author", diffNode);
+    const diffNode = document.querySelector('#review-changes .do-diff');
+    Config.Editor['review'] = true;
+    Config.Editor.init("author", diffNode);
+  }
 
   node.addEventListener('click', e => {
     var button = e.target.closest('button');
 
     if (button) {
-      //XXX: What's this for?
-      // Config.Editor.toggleMode();
       if (button.classList.contains('close')) {
-        Config.Editor['review'] = false;
+        if (!isVersionPreview) Config.Editor['review'] = false;
         return;
       }
       if (button.classList.contains('info')) {
         return;
       }
 
+      if (isVersionPreview) {
+        if (button.classList.contains('version-restore')) {
+          const versionItem = reviewOptions.versionItem;
+          if (Config.Editor['collab']) {
+            restoreYjsContent(versionItem.content);
+            autoSave(Config.DocumentURL, { method: 'localStorage' });
+          } else {
+            const tmpl = document.implementation.createHTMLDocument('');
+            tmpl.documentElement.setHTMLUnsafe(versionItem.content);
+            Config.Editor.replaceContent(Config.Editor.mode, tmpl.body);
+            Config.Editor.init(Config.Editor.mode, document.body);
+            autoSave(Config.DocumentURL, { method: 'localStorage' });
+            syncLocalRemoteResource({ forceLocal: true });
+          }
+        }
+        node.remove();
+        return;
+      }
+
       var diffedNode = node.querySelector('.do-diff');
+      const diffNode = diffedNode;
 
       //TODO: Progress
 
       //TODO: update getResourceInfo somewhere
 
       if (button.classList.contains('review-changes-save-local')) {
-        // keep editor area with current contents
-        // try to push but need to check latest before
-        // check if things are still up to date with remote
         syncLocalRemoteResource({ forceLocal: true });
       }
       else if (button.classList.contains('review-changes-save-remote')) {
         syncLocalRemoteResource({ forceRemote: true });
       }
       else if (button.classList.contains('review-changes-submit')) {
-        // same as first one but with contents of diff panel
         diffedNode.querySelectorAll('del').forEach(el => el.remove());
         diffedNode.querySelectorAll('ins').forEach(el => {
           const parent = el.parentNode;
           while (el.firstChild) parent.insertBefore(el.firstChild, el);
           el.remove();
         });
-        // update local content with the stuff in the diff editor view
         Config.Editor.replaceContent(Config.Editor.mode, diffNode.querySelector('.ProseMirror'));
         Config.Editor.init(Config.Editor.mode, document.body);
         autoSave(Config.DocumentURL, { method: 'localStorage' });
@@ -758,10 +734,20 @@ export async function autoSave(key, options) {
     options['digestSRI'] = hash;
 
     try {
-      await updateStorage(key, data, options);
+      const datetime = getDateTimeISO();
+      await updateStorage(key, data, { ...options, datetime });
       Config.AutoSave.Items[key] ||= {};
       Config.AutoSave.Items[key][options.method] ||= {};
       Config.AutoSave.Items[key][options.method].digestSRI = hash;
+
+      if (Config.Editor['collab']) {
+        addYjsVersion({
+          content: data,
+          updated: datetime,
+          actor: Config.User?.IRI || null,
+          mediaType: 'text/html'
+        });
+      }
     } catch (error) {
       console.error(getDateTimeISO() + ': Error saving document: ', error);
     }
