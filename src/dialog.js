@@ -2972,17 +2972,18 @@ export function initializeVersionHistory() {
 
   aside.addEventListener('click', async e => {
     const button = e.target.closest('button.version-preview');
-
+console.log(button)
     if (!button) return;
 
     const itemId = button.dataset.key;
+console.log(itemId)
     const item = await getLocalStorageItem(itemId);
+    console.log(item)
 
     if (!item?.content) return;
 
     const documentOptions = { ...Config.DOMProcessing, format: true, sanitize: true, normalize: true };
     const currentContent = getDocument(null, documentOptions);
-
     showResourceReviewChanges(currentContent, item.content, null, {
       mode: 'version-preview',
       versionItem: item,
@@ -3000,7 +3001,7 @@ export async function showVersionHistory() {
   aside.classList.add('on');
 
   const list = aside.querySelector('ul.versions');
-  list.innerHTML = '';
+  list.replaceChildren();
   versionItemCache.clear();
 
   let items;
