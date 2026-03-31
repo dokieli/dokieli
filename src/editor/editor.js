@@ -312,7 +312,8 @@ export class Editor {
     ydoc = new Y.Doc();
     const roomName = encodeURIComponent(currentLocation());
     localProvider = new IndexeddbPersistence(roomName, ydoc);
-    if (YWEBSOCKET_URL) {
+    // TODO: temp allowing websocket only on the demo doc
+    if (YWEBSOCKET_URL && window.location.pathname === '/dokieli/playground.html') {
       try {
         provider = new WebsocketProvider(
           YWEBSOCKET_URL,
@@ -489,10 +490,16 @@ export class Editor {
     // we decide to seed — this prevents concurrent seeds from multiple clients
     // each producing an extra copy of the document.
     const seedIfEmpty = () => {
-      if (yXmlFragment.length === 0) {
-        const seedDoc = prosemirrorToYDoc(originalDoc);
-        Y.applyUpdate(ydoc, Y.encodeStateAsUpdate(seedDoc));
+      // Always seed from the current DOM. The DOM is the authoritative state —
+      // it includes annotations and other changes made in social mode that IDB
+      // does not know about. If a websocket is connected, peer changes will
+      // arrive via sync and be merged on top by the Yjs CRDT.
+      // Must clear first when non-empty: Y.applyUpdate is additive, not a replace.
+      if (yXmlFragment.length > 0) {
+        ydoc.transact(() => { yXmlFragment.delete(0, yXmlFragment.length); });
       }
+      const seedDoc = prosemirrorToYDoc(originalDoc);
+      Y.applyUpdate(ydoc, Y.encodeStateAsUpdate(seedDoc));
     };
 
     localProvider.whenSynced.then(() => {
@@ -552,6 +559,22 @@ export class Editor {
       collabBeforeUnloadHandler = null;
     }
     hideCollabBanner();
+
+    // Serialize content and destroy editorView first, so ySyncPlugin unregisters
+    // its ydoc observers before ydoc is destroyed. Destroying ydoc first causes
+    // y-prosemirror's updateMetas to dispatch a transaction on the still-live
+    // editorView with a broken state, crashing on null.matchesNode.
+    if (content || this.editorView) {
+      content = content ?? DOMSerializer.fromSchema(schema).serializeFragment(this.editorView.state.doc.content);
+
+      if (this.editorView) {
+        this.editorView.destroy();
+        this.editorView = null;
+        this.authorToolbarView = null;
+      }
+    }
+
+    // Always clean up collab resources, even if the editor never finished mounting.
     if (localProvider) {
       localProvider.destroy();
       localProvider = null;
@@ -566,9 +589,7 @@ export class Editor {
       ydoc = null;
     }
 
-    if (content || this.editorView) {
-      content = content ?? DOMSerializer.fromSchema(schema).serializeFragment(this.editorView.state.doc.content);
-
+    if (content) {
       let normalisedContent;
 
       if (content.body) {
@@ -576,7 +597,7 @@ export class Editor {
       } else {
         normalisedContent = cleanProseMirrorOutput(content);
       }
-  
+
       // If normalisedContent includes a <body>, extract just its children
       let newBodyContent;
       if (normalisedContent instanceof Document) {
@@ -588,20 +609,6 @@ export class Editor {
         newBodyContent = body ? Array.from(body.childNodes) : Array.from(normalisedContent.childNodes);
       } else {
         newBodyContent = Array.from(normalisedContent.childNodes ?? []);
-      }
-  
-
-      // const serializer = DOMSerializer.fromSchema(schema);
-      // const htmlString = new XMLSerializer().serializeToString(fragment);
-
-      // const json = this.editorView.state.doc.toJSON();
-      // console.log(json);
-
-      if (this.editorView) {
-        this.editorView.destroy();
-
-        this.editorView = null;
-        this.authorToolbarView = null;
       }
 
       //TODO: Create a new function that normalises, e.g., clean up PM related stuff, handle other non-PM but dokieli stuff
@@ -807,7 +814,7 @@ export function updateCollabUserIdentity() {
 
 // Replace the live Yjs document content with an arbitrary HTML string.
 // Used by version history restore in collab mode.
-export function restoreYjsContent(htmlString) {
+export function restoreYjsContent(htmlString, key) {
   if (!ydoc || ydoc.isDestroyed || !yXmlFragment) return false;
 
   const tmpl = document.implementation.createHTMLDocument('');
@@ -818,7 +825,17 @@ export function restoreYjsContent(htmlString) {
   ydoc.transact(() => { yXmlFragment.delete(0, yXmlFragment.length); });
   Y.applyUpdate(ydoc, Y.encodeStateAsUpdate(seedDoc));
 
+  if (key) {
+    ydoc.getMap('meta').set('currentVersionKey', key);
+    window.dispatchEvent(new CustomEvent('dokieli:version-current-changed', { detail: { key } }));
+  }
+
   return true;
+}
+
+export function getCurrentVersionKey() {
+  if (!ydoc || ydoc.isDestroyed) return null;
+  return ydoc.getMap('meta').get('currentVersionKey') ?? null;
 }
 
 const VERSIONS_MAP = 'versions';
@@ -842,6 +859,7 @@ export function addYjsVersion(versionData) {
 
   ydoc.transact(() => {
     versionsMap.set(key, { ...versionData, actor });
+    ydoc.getMap('meta').set('currentVersionKey', key);
 
     // Enforce max count — drop oldest entries beyond the limit.
     if (versionsMap.size > MAX_VERSIONS) {
@@ -851,6 +869,8 @@ export function addYjsVersion(versionData) {
       }
     }
   });
+
+  window.dispatchEvent(new CustomEvent('dokieli:version-current-changed', { detail: { key } }));
 }
 
 // Read all version snapshots from the shared Yjs doc, newest first.

@@ -467,7 +467,7 @@ export async function pushLocalContentToRemote(localItem, headers) {
 export function showResourceReviewChanges(localContent, remoteContent, response, reviewOptions) {
   if (!localContent.length || !remoteContent.length) return;
 
-  const isVersionPreview = reviewOptions?.mode === 'version-preview';
+  const isVersionPreview = reviewOptions?.mode === 'edit-history-preview';
 
   var tmplLocal = document.implementation.createHTMLDocument('template');
   tmplLocal.documentElement.setHTMLUnsafe(localContent);
@@ -503,13 +503,13 @@ export function showResourceReviewChanges(localContent, remoteContent, response,
   }
 
   const panelTitle = isVersionPreview
-    ? `${i18n.t('dialog.version-preview.h2.textContent')}`
+    ? `${i18n.t('dialog.edit-history-preview.h2.textContent')}`
     : `${i18n.t('dialog.review-changes.h2.textContent')} ${Config.Button.Info.ReviewChanges}`;
 
-  const panelTitleI18n = isVersionPreview ? 'dialog.version-preview.h2' : 'dialog.review-changes.h2';
+  const panelTitleI18n = isVersionPreview ? 'dialog.edit-history-preview.h2' : 'dialog.review-changes.h2';
 
   var buttonClose = isVersionPreview
-    ? getButtonHTML({ key: 'dialog.version-preview.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' })
+    ? getButtonHTML({ key: 'dialog.edit-history-preview.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' })
     : getButtonHTML({ key: 'dialog.review-changes.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
   document.body.appendChild(fragmentFromString(`
@@ -571,7 +571,7 @@ export function showResourceReviewChanges(localContent, remoteContent, response,
   if (isVersionPreview) {
     sanitizeInsertAdjacentHTML(node, 'beforeend', `
       <div class="do-diff" dir="auto">${diffHTML.join('')}</div>
-      <button class="version-restore" data-i18n="dialog.version-preview.restore.button" title="${i18n.t('dialog.version-preview.restore.button.title')}" type="button">${i18n.t('dialog.version-preview.restore.button.textContent')}</button>
+      <button class="version-restore" data-i18n="dialog.edit-history-preview.restore.button" title="${i18n.t('dialog.edit-history-preview.restore.button.title')}" type="button">${i18n.t('dialog.edit-history-preview.restore.button.textContent')}</button>
     `);
   } else {
     sanitizeInsertAdjacentHTML(node, 'beforeend', `
@@ -602,7 +602,7 @@ export function showResourceReviewChanges(localContent, remoteContent, response,
         if (button.classList.contains('version-restore')) {
           const versionItem = reviewOptions.versionItem;
           if (Config.Editor['collab']) {
-            restoreYjsContent(versionItem.content);
+            restoreYjsContent(versionItem.content, versionItem.updated || versionItem.id);
             autoSave(Config.DocumentURL, { method: 'localStorage' });
           } else {
             const tmpl = document.implementation.createHTMLDocument('');

@@ -76,6 +76,7 @@ export function initButtons() {
       DocumentInfo: getButtonHTML({ key: "menu.document-info.button", button: "document-info", buttonClass: "document-info", iconSize: "fa-2x", buttonDisabled: true }),
       EditEnable: getButtonHTML({ key: "menu.edit-enable.button", button: "cursor", buttonClass: "editor-enable", iconSize: "fa-2x" }),
       EditDisable: getButtonHTML({ key: "menu.edit-disable.button", button: "cursor", buttonClass: "editor-disable", iconSize: "fa-2x" }),
+      EditHistory: getButtonHTML({ key: "menu.edit-history.button", button: "edit-history", buttonClass: "edit-history", iconSize: "fa-2x", buttonDisabled: true }),
       EmbedData: getButtonHTML({ key: "menu.embed-data.button", button: "data-meta", buttonClass: "embed-data-meta", iconSize: "fa-2x" }),
       Export: getButtonHTML({ key: "menu.export.button", button: "export", buttonClass: "export-as-html", iconSize: "fa-2x" }),
       Markdown: getButtonHTML({ key: "menu.markdown.button", button: "markdown", buttonClass: "resource-markdown", iconSize: "fa-2x" }),
@@ -380,6 +381,9 @@ export const buttonIcons = {
   },
   'document-info': {
     icon: Icon[".fas.fa-atom"]
+  },
+  'edit-history': {
+    icon: Icon[".far.fa-clock-left"]
   }
 }
 
@@ -390,8 +394,14 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .editor-enable': ({ blob }) => {
-    if (blob) return false;
+  '#document-do .edit-history' : ({ blob, editorMode }) => {
+    if (blob || editorMode !== 'author') return false;
+
+    return true;
+  },
+
+  '#document-do .editor-enable': ({ blob, editorMode }) => {
+    if (blob || editorMode === 'author') return false;
 
     return true;
   },

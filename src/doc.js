@@ -1313,6 +1313,7 @@ export function getDocumentStatusHTML(rootNode, options) {
   return s;
 }
 
+
 export function handleDeleteNote(button) {
   button.setAttribute("disabled", "disabled");
   var article = button.closest('article');
@@ -1325,17 +1326,32 @@ export function handleDeleteNote(button) {
 
   if (url) {
     deleteResource(url)
+      .then(() => {
+        li.parentNode.removeChild(li);
+        if (Config.EditorEnabled && Config.Editor.editorView) {
+          const view = Config.Editor.editorView;
+          const { state: { doc, tr, schema }, dispatch } = view;
+          doc.descendants((node, pos) => {
+            if (node.type.name === 'span' && node.attrs.originalAttributes?.resource === '#' + refId) {
+              let text = '';
+              node.forEach(child => { if (child.type.name !== 'sup') text += child.textContent; });
+              view.dispatch(text ? tr.replaceWith(pos, pos + node.nodeSize, schema.text(text)) : tr.delete(pos, pos + node.nodeSize));
+              return false;
+            }
+          });
+        } else {
+          var span = document.querySelector('span[resource="#' + refId + '"]');
+          if (span) {
+            span.outerHTML = domSanitize(span.querySelector('mark').textContent);
+          }
+        }
+        window.history.replaceState({}, null, Config.DocumentURL);
+        // TODO: Delete notification or send delete activity
+      })
       .catch(error => {
         console.log(error);
         //TODO: Alert user.. try again later or..?
         li.classList.add('error');
-      })
-      .then(() => {
-        li.parentNode.removeChild(li);
-        var span = document.querySelector('span[resource="#' + refId + '"]');
-        span.outerHTML = domSanitize(span.querySelector('mark').textContent);
-        window.history.replaceState({}, null, Config.DocumentURL);
-        // TODO: Delete notification or send delete activity
       })
   }
 }

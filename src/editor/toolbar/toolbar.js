@@ -16,7 +16,7 @@ limitations under the License.
 */
 
 import { schema } from "../schema/base.js"
-import { getButtonHTML } from "../../ui/buttons.js"
+import { getButtonHTML, updateButtons } from "../../ui/buttons.js"
 import { getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getClassesOfProductsConcepts, getDocument, getLanguageOptionsHTML, getLicenseOptionsHTML, getReferenceLabel } from "../../doc.js";
 import { getTextQuoteHTML, cloneSelection, setSelection, selectionToTextQuote, setSelectionFromTextQuote, getSelectedParentElement } from "../utils/annotation.js";
 import { escapeRegExp, matchAllIndex } from "../../util.js";
