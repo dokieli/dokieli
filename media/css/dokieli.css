@@ -1276,11 +1276,12 @@ padding:0.5em !important;
 #document-edit-history .versions li.selected {
 background-color: #eee;
 border-radius: 0.5em;
+border: 1px solid #ccc;
 }
 #document-edit-history .versions li.selected .edit-history-current,
 #document-edit-history .versions button {
 margin-left:2em;
-padding:0.25em;
+padding:0.25em 0.5em;
 display:inline-block;
 }
 #document-edit-history .versions li.selected .edit-history-current {
@@ -1289,6 +1290,7 @@ background-repeat: no-repeat;
 background-size: 1em;
 background-position: 0 50%;
 padding-left:1.5em;
+font-weight: bold;
 }
 
 @media (max-width: 768px) {
@@ -4528,7 +4530,7 @@ font-size:2.25em;
   font-family: 'Ubuntu', system-ui, sans-serif;
   font-style: normal;
   white-space: nowrap;
-  padding:0.1em 0.5em;
+  padding:0.25em 0.5em;
   border-radius:0.75em;
 }
 
