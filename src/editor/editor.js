@@ -313,7 +313,7 @@ export class Editor {
     const roomName = encodeURIComponent(currentLocation());
     localProvider = new IndexeddbPersistence(roomName, ydoc);
     // TODO: temp allowing websocket only on the demo doc
-    if (YWEBSOCKET_URL && window.location.pathname === '/dokieli/playground.html') {
+    if (YWEBSOCKET_URL && window.location.pathname === '/dokieli/demo.html') {
       try {
         provider = new WebsocketProvider(
           YWEBSOCKET_URL,
@@ -885,7 +885,7 @@ export function getYjsVersions() {
 
 // Read version snapshots directly from IndexedDB without needing the editor
 // to be active. Used to show version history before the user enters edit mode.
-export async function getYjsVersionsFromIDB() {
+export async function getYjsVersionsFromIDB({ limit }) {
   const roomName = encodeURIComponent(currentLocation());
   const tempDoc = new Y.Doc();
   const persistence = new IndexeddbPersistence(roomName, tempDoc);
@@ -899,6 +899,10 @@ export async function getYjsVersionsFromIDB() {
 
   persistence.destroy();
   tempDoc.destroy();
+  
+  if (limit) {
+    versions = versions.slice(0, limit)
+  }
 
   return versions;
 }

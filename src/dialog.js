@@ -2990,6 +2990,12 @@ export function initEditHistory() {
     });
   });
 
+  window.addEventListener('dokieli:version-current-changed', () => {
+    if (aside.classList.contains('on')) {
+      showEditHistory();
+    }
+  });
+
   return aside;
 }
 
@@ -3016,7 +3022,7 @@ export async function showEditHistory() {
     items = getYjsVersions();
   } else if (Config.Editor['author'] || Config.Editor['social']) {
     // Editor initialised but not in collab mode, try IDB directly.
-    items = await getYjsVersionsFromIDB();
+    items = await getYjsVersionsFromIDB({ limit: 100});
     if (!items.length) {
       const collection = await getLocalStorageItem(Config.DocumentURL);
       if (!collection?.items?.length) {
@@ -3031,7 +3037,7 @@ export async function showEditHistory() {
     }
   } else {
     // Editor not yet active, read Yjs versions directly from IDB.
-    items = await getYjsVersionsFromIDB();
+    items = await getYjsVersionsFromIDB({ limit: 100 });
   }
 
   if (!items.length) {
