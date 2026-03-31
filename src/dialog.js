@@ -39,10 +39,10 @@ import { parseMarkdown, htmlToMarkdown, fragmentFromString, removeSelectorFromNo
 import { showUserSigninSignout, userInfoSignOut } from './auth.js';
 import { generateGeoView } from './geo.js';
 import { csvStringToJson, jsonToHtmlTableString } from './csv.js';
-import { restoreYjsContent, addYjsVersion, getYjsVersions, getYjsVersionsFromIDB } from "./editor/editor.js";
+import { restoreYjsContent, addYjsVersion, getYjsVersions, getYjsVersionsFromIDB, getCurrentVersionKey } from "./editor/editor.js";
 
 const versionItemCache = new Map();
-let versionHistoryAside = null;
+let editHistoryAside = null;
 
 export function initDocumentMenu(options = {}) {
   options = { loading: true, ...options };
@@ -268,6 +268,7 @@ function showDocumentDo(node) {
     Config.Button.Menu.Notifications,
     Config.Button.Menu.New,
     Config.Button.Menu.EditEnable,
+    Config.Button.Menu.EditHistory,
     Config.Button.Menu.Open,
     Config.Button.Menu.Save,
     Config.Button.Menu.SaveAs,
@@ -275,8 +276,8 @@ function showDocumentDo(node) {
     Config.Button.Menu.Immutable,
     Config.Button.Menu.Memento,
     Config.Button.Menu.RobustifyLinks,
-    Config.Button.Menu.InternetArchive,
     Config.Button.Menu.GenerateFeed,
+    Config.Button.Menu.InternetArchive,
     Config.Button.Menu.Export,
     Config.Button.Menu.Source,
     Config.Button.Menu.EmbedData,
@@ -365,13 +366,13 @@ function showDocumentDo(node) {
       mementoDocument(e);
     }
 
-    if (e.target.closest('.create-version')) {
-      hideDocumentMenu();
-      showVersionHistory();
+    if (e.target.closest('.create-version') ||
+        e.target.closest('.create-immutable')) {
+      resourceSave(e);
     }
 
-    if (e.target.closest('.create-immutable')) {
-      resourceSave(e);
+    if (e.target.closest('.edit-history')) {
+      showEditHistory();
     }
 
     if (e.target.closest('.export-as-html')) {
@@ -2956,12 +2957,12 @@ export function resourceSave(e, options) {
   });
 }
 
-export function initializeVersionHistory() {
-  var buttonToggle = getButtonHTML({ key: 'panel.version-history.toggle.button', button: 'toggle', buttonClass: 'toggle' });
+export function initEditHistory() {
+  var buttonToggle = getButtonHTML({ key: 'panel.edit-history.toggle.button', button: 'toggle', buttonClass: 'toggle' });
 
   var aside = `
-  <aside aria-labelledby="document-version-history-label" class="do" contenteditable="false" dir="${Config.User.UI.LanguageDir}" id="document-version-history" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#document-version-history" xml:lang="${Config.User.UI.Language}">
-    <h2 data-i18n="panel.version-history.h2" id="document-version-history-label" property="schema:name">${i18n.t('panel.version-history.h2.textContent')}</h2>
+  <aside aria-labelledby="document-edit-history-label" class="do" contenteditable="false" dir="${Config.User.UI.LanguageDir}" id="document-edit-history" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#document-edit-history" xml:lang="${Config.User.UI.Language}">
+    <h2 data-i18n="panel.edit-history.h2" id="document-edit-history-label" property="schema:name">${i18n.t('panel.edit-history.h2.textContent')}</h2>
     ${buttonToggle}
     <div>
       <div class="info"></div>
@@ -2969,11 +2970,11 @@ export function initializeVersionHistory() {
     </div>
   </aside>`;
   sanitizeInsertAdjacentHTML(document.body, 'beforeend', aside);
-  aside = document.getElementById('document-version-history');
-  versionHistoryAside = aside;
+  aside = document.getElementById('document-edit-history');
+  editHistoryAside = aside;
 
   document.addEventListener('click', async e => {
-    const button = e.target.closest('button.version-preview');
+    const button = e.target.closest('button.edit-history-preview');
     if (!button) return;
 
     const itemId = button.dataset.key;
@@ -2984,7 +2985,7 @@ export function initializeVersionHistory() {
     const documentOptions = { ...Config.DOMProcessing, format: true, sanitize: true, normalize: true };
     const currentContent = getDocument(null, documentOptions);
     showResourceReviewChanges(currentContent, item.content, null, {
-      mode: 'version-preview',
+      mode: 'edit-history-preview',
       versionItem: item,
     });
   });
@@ -2992,11 +2993,13 @@ export function initializeVersionHistory() {
   return aside;
 }
 
-export async function showVersionHistory() {
-  if (!versionHistoryAside) {
-    initializeVersionHistory();
+export async function showEditHistory() {
+  hideDocumentMenu();
+
+  if (!editHistoryAside) {
+    initEditHistory();
   }
-  const aside = versionHistoryAside;
+  const aside = editHistoryAside;
 
   // Re-attach to body if the editor removed it from the DOM.
   if (!aside.isConnected) {
@@ -3017,7 +3020,7 @@ export async function showVersionHistory() {
     if (!items.length) {
       const collection = await getLocalStorageItem(Config.DocumentURL);
       if (!collection?.items?.length) {
-        sanitizeInsertAdjacentHTML(list, 'beforeend', `<li><p data-i18n="panel.version-history.empty.p">${i18n.t('panel.version-history.empty.p.textContent')}</p></li>`);
+        sanitizeInsertAdjacentHTML(list, 'beforeend', `<li><p data-i18n="panel.edit-history.empty.p">${i18n.t('panel.edit-history.empty.p.textContent')}</p></li>`);
         return;
       }
       items = [];
@@ -3032,31 +3035,31 @@ export async function showVersionHistory() {
   }
 
   if (!items.length) {
-    sanitizeInsertAdjacentHTML(list, 'beforeend', `<li><p data-i18n="panel.version-history.empty.p">${i18n.t('panel.version-history.empty.p.textContent')}</p></li>`);
+    sanitizeInsertAdjacentHTML(list, 'beforeend', `<li><p data-i18n="panel.edit-history.empty.p">${i18n.t('panel.edit-history.empty.p.textContent')}</p></li>`);
     return;
   }
 
-  let firstItem = true;
+  const currentKey = getCurrentVersionKey() || (items[0] ? (items[0].updated || items[0].id) : null);
+
   for (const item of items) {
     const key = item.updated || item.id;
     versionItemCache.set(key, item);
-    
+
     const datetime = item.updated || item.published || '';
     const a = item.actor;
     const actor = (a?.name || a?.iri)
       ? `<dl class="author-name"><dt>Authors</dt><dd>${getAgentHTML({ iri: a?.iri, name: a?.name, image: a?.avatar })}</dd></dl>`
       : '';
 
-    let previewButton = '';
-    if (!firstItem) {
-      previewButton = `<button class="version-preview" data-i18n="panel.version-history.item.preview.button" data-key="${key}" title="${i18n.t('panel.version-history.item.preview.button.title')}" type="button">${i18n.t('panel.version-history.item.preview.button.textContent')}</button>`;
-    }
-    firstItem = false;
+    const isCurrent = key === currentKey;
+    const action = isCurrent
+      ? `<span class="edit-history-current" data-i18n="panel.edit-history.item.current.span">${i18n.t('panel.edit-history.item.current.span.textContent')}</span>`
+      : `<button class="edit-history-preview" data-i18n="panel.edit-history.item.preview.button" data-key="${key}" title="${i18n.t('panel.edit-history.item.preview.button.title')}" type="button">${i18n.t('panel.edit-history.item.preview.button.textContent')}</button>`;
 
-    const dateDisplay = datetime ? `<dl class="created"><dt>Created</dt><dd><time content="${datetime}" datatype="xsd:dateTime" datetime="${datetime}" property="dcterms:created">${datetime.substr(0, 19).replace('T', ' ')}</time> ${previewButton}</dd></dl>` : '';
+    const dateDisplay = datetime ? `<dl class="created"><dt>Created</dt><dd><time content="${datetime}" datatype="xsd:dateTime" datetime="${datetime}" property="dcterms:created">${datetime.substr(0, 19).replace('T', ' ')}</time> ${action}</dd></dl>` : '';
 
     sanitizeInsertAdjacentHTML(list, 'beforeend', `
-      <li data-datetime="${datetime}">
+      <li data-datetime="${datetime}"${isCurrent ? ' class="selected"' : ''}>
         ${actor}
         ${dateDisplay}
       </li>
