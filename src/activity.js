@@ -16,7 +16,7 @@ limitations under the License.
 */
 
 import rdf from 'rdf-ext';
-import { createActivityHTML, showCitations, getReferenceLabel, createNoteDataHTML } from './doc.js';
+import { createActivityHTML, showCitations, getReferenceLabel, createNoteDataHTML, handleDeleteNote } from './doc.js';
 import { createHTML } from './utils/html.js';
 import { Icon } from './ui/icons.js'
 import { getButtonHTML } from './ui/buttons.js'
@@ -1177,9 +1177,11 @@ export function showAnnotation(noteIRI, g, options) {
       if(Config.User.IRI) {
         var buttonDelete = document.querySelector('aside.do blockquote[cite="' + noteIRI + '"] article button.delete');
         if (buttonDelete) {
-          buttonDelete.addEventListener('click', (e) => {
+          document.addEventListener('click', (e) => {
+            if (e.target.closest('button.delete')) {
             var button = e.target.closest('button.delete');
             handleDeleteNote(button);
+            }
           });
         }
       }

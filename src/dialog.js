@@ -39,9 +39,10 @@ import { parseMarkdown, htmlToMarkdown, fragmentFromString, removeSelectorFromNo
 import { showUserSigninSignout, userInfoSignOut } from './auth.js';
 import { generateGeoView } from './geo.js';
 import { csvStringToJson, jsonToHtmlTableString } from './csv.js';
-import { restoreYjsContent, addYjsVersion, getYjsVersions } from "./editor/editor.js";
+import { restoreYjsContent, addYjsVersion, getYjsVersions, getYjsVersionsFromIDB } from "./editor/editor.js";
 
 const versionItemCache = new Map();
+let versionHistoryAside = null;
 
 export function initDocumentMenu(options = {}) {
   options = { loading: true, ...options };
@@ -2969,16 +2970,14 @@ export function initializeVersionHistory() {
   </aside>`;
   sanitizeInsertAdjacentHTML(document.body, 'beforeend', aside);
   aside = document.getElementById('document-version-history');
+  versionHistoryAside = aside;
 
-  aside.addEventListener('click', async e => {
+  document.addEventListener('click', async e => {
     const button = e.target.closest('button.version-preview');
-console.log(button)
     if (!button) return;
 
     const itemId = button.dataset.key;
-console.log(itemId)
-    const item = await getLocalStorageItem(itemId);
-    console.log(item)
+    const item = versionItemCache.get(itemId);
 
     if (!item?.content) return;
 
@@ -2994,9 +2993,14 @@ console.log(itemId)
 }
 
 export async function showVersionHistory() {
-  var aside = document.getElementById('document-version-history');
-  if (!aside) {
-    aside = initializeVersionHistory();
+  if (!versionHistoryAside) {
+    initializeVersionHistory();
+  }
+  const aside = versionHistoryAside;
+
+  // Re-attach to body if the editor removed it from the DOM.
+  if (!aside.isConnected) {
+    document.body.appendChild(aside);
   }
   aside.classList.add('on');
 
@@ -3007,17 +3011,24 @@ export async function showVersionHistory() {
   let items;
   if (Config.Editor['collab']) {
     items = getYjsVersions();
+  } else if (Config.Editor['author'] || Config.Editor['social']) {
+    // Editor initialised but not in collab mode, try IDB directly.
+    items = await getYjsVersionsFromIDB();
+    if (!items.length) {
+      const collection = await getLocalStorageItem(Config.DocumentURL);
+      if (!collection?.items?.length) {
+        sanitizeInsertAdjacentHTML(list, 'beforeend', `<li><p data-i18n="panel.version-history.empty.p">${i18n.t('panel.version-history.empty.p.textContent')}</p></li>`);
+        return;
+      }
+      items = [];
+      for (const itemId of collection.items) {
+        const item = await getLocalStorageItem(itemId);
+        if (item) items.push(item);
+      }
+    }
   } else {
-    const collection = await getLocalStorageItem(Config.DocumentURL);
-    if (!collection?.items?.length) {
-      sanitizeInsertAdjacentHTML(list, 'beforeend', `<li><p data-i18n="panel.version-history.empty.p">${i18n.t('panel.version-history.empty.p.textContent')}</p></li>`);
-      return;
-    }
-    items = [];
-    for (const itemId of collection.items) {
-      const item = await getLocalStorageItem(itemId);
-      if (item) items.push(item);
-    }
+    // Editor not yet active, read Yjs versions directly from IDB.
+    items = await getYjsVersionsFromIDB();
   }
 
   if (!items.length) {
@@ -3028,7 +3039,6 @@ export async function showVersionHistory() {
   let firstItem = true;
   for (const item of items) {
     const key = item.updated || item.id;
-console.log(key)
     versionItemCache.set(key, item);
     
     const datetime = item.updated || item.published || '';

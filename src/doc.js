@@ -2600,9 +2600,15 @@ export function getAgentHTML(options = {}) {
   let { name, image, iri } = options;
   let userName = Config.SecretAgentNames[getRandomIndex(Config.SecretAgentNames.length)];
 
-  iri = iri || Config.User.IRI;
-  name = name || Config.User.Name;
-  image = image || Config.User.Image;
+  // Only fall back to Config.User values when the iri is the signed-in user's iri
+  // (or when iri was not explicitly provided, meaning we're rendering the current user).
+  const hasExplicitIri = 'iri' in options;
+  const isCurrentUser = !hasExplicitIri || iri === Config.User.IRI;
+  if (isCurrentUser) {
+    iri = iri || Config.User.IRI;
+    name = name || Config.User.Name;
+    image = image || Config.User.Image;
+  }
 
   // XXX: We have the IRI already
   if (iri && name) {

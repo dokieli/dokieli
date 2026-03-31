@@ -125,7 +125,11 @@ export class Editor {
     // .robustlinks and .ref are schema-compatible inline nodes and can safely pass through PM.
     const preserveInEditor = ['#document-editor', '#review-changes', '.robustlinks', '.ref'];
     const notSelector = preserveInEditor.map(selector => `:not(${selector})`).join('');
-    const nodesToRestrictSelector = `.do${notSelector}, #toc-nav`;
+    // Use :scope > to select only direct children of body. Without this, nested .do
+    // elements (e.g. the delete button inside the notifications aside) are also stored
+    // as separate entries, causing node.remove() to detach them from their parent and
+    // replaceChildren to re-append them as floating body-level elements.
+    const nodesToRestrictSelector = `:scope > .do${notSelector}, :scope > #toc-nav`;
     //Nodes to preserve for later. They don't go into the editor.
     this.restrictedNodes = Array.from(document.body.querySelectorAll(nodesToRestrictSelector));
 
@@ -308,23 +312,33 @@ export class Editor {
     ydoc = new Y.Doc();
     const roomName = encodeURIComponent(currentLocation());
     localProvider = new IndexeddbPersistence(roomName, ydoc);
-    provider = new WebsocketProvider(
-      YWEBSOCKET_URL,
-      roomName,
-      ydoc,
-      { connect: false }
-    );
+    if (YWEBSOCKET_URL) {
+      try {
+        provider = new WebsocketProvider(
+          YWEBSOCKET_URL,
+          roomName,
+          ydoc,
+          { connect: false }
+        );
+      } catch (e) {
+        console.warn('WebsocketProvider failed to initialise, running local-only:', e);
+        provider = null;
+      }
+    } else {
+      provider = null;
+    }
+
     yXmlFragment = ydoc.getXmlFragment('prosemirror');
-    const awareness = provider.awareness;
-    const clientId = awareness.clientID; // unique per connected client
+    const awareness = provider?.awareness;
+    const clientId = awareness?.clientID ?? 0;
 
     const name = Config.User.Name || Config.SecretAgentNames[clientId % Config.SecretAgentNames.length];
     const color = Config.User.IRI ? stringToColor(Config.User.IRI) : stringToColor(name);
     const avatar = Config.User.Image;
 
-    awareness.setLocalStateField('user', { name, color, avatar });
+    awareness?.setLocalStateField('user', { name, color, avatar });
 
-    const cursorPlugin = yCursorPlugin(awareness, {
+    const cursorPlugin = awareness ? yCursorPlugin(awareness, {
       cursorBuilder: user => {
         const wrapper = document.createElement('span');
         wrapper.className = 'yjs-cursor do';
@@ -359,7 +373,7 @@ export class Editor {
 
         return wrapper;
       }
-    });
+    }) : null;
 
     collabSaveHandler = () => {
       if (!ydoc || ydoc.isDestroyed) return;
@@ -368,13 +382,15 @@ export class Editor {
     };
     window.addEventListener('dokieli:collab-save', collabSaveHandler);
 
-    provider.on('status', event => {
-      console.log('YJS STATUS:', event.status);
-    });
+    if (provider) {
+      provider.on('status', event => {
+        console.log('YJS STATUS:', event.status);
+      });
 
-    provider.on('connection-closed', () => {
-      if (!ydoc.isDestroyed) ydoc.destroy();
-    });
+      provider.on('connection-closed', () => {
+        if (!ydoc.isDestroyed) ydoc.destroy();
+      });
+    }
 
     function hasUnsavedCollabChanges() {
       const savedSV = ydoc.getMap('meta').get('savedStateVector');
@@ -391,7 +407,7 @@ export class Editor {
 
     let prevAwarenessSize = 0;
     collabAwarenessHandler = () => {
-      const size = provider.awareness.getStates().size;
+      const size = provider?.awareness?.getStates().size ?? 0;
       const becameAlone = prevAwarenessSize > 1 && size <= 1;
       const notAloneAnymore = prevAwarenessSize <= 1 && size > 1;
       prevAwarenessSize = size;
@@ -402,10 +418,10 @@ export class Editor {
         hideCollabBanner();
       }
     };
-    provider.awareness.on('change', collabAwarenessHandler);
+    awareness?.on('change', collabAwarenessHandler);
 
     collabBeforeUnloadHandler = (e) => {
-      const alone = provider.awareness.getStates().size <= 1;
+      const alone = (provider?.awareness?.getStates().size ?? 0) <= 1;
       if (alone && hasUnsavedCollabChanges()) {
         e.preventDefault();
         e.returnValue = '';
@@ -417,7 +433,7 @@ export class Editor {
     pmDoc = yjsDoc;
     editorPlugins = [
       ySyncPlugin(yXmlFragment, { mapping }),
-      cursorPlugin,
+      ...(cursorPlugin ? [cursorPlugin] : []),
       yUndoPlugin(),
       history(),
       keymapPlugin,
@@ -480,8 +496,6 @@ export class Editor {
     };
 
     localProvider.whenSynced.then(() => {
-      provider.connect();
-
       let done = false;
       const doSeed = () => {
         if (done) return;
@@ -489,18 +503,25 @@ export class Editor {
         seedIfEmpty();
       };
 
-      const onSync = (isSynced) => {
-        if (isSynced) {
-          provider.off('sync', onSync);
-          clearTimeout(fallback);
-          doSeed();
-        }
-      };
-      provider.on('sync', onSync);
+      if (provider) {
+        provider.connect();
 
-      // Fallback: if the server is unreachable, seed after 5 s so the editor
-      // is not stuck empty when working offline.
-      const fallback = setTimeout(doSeed, 5000);
+        const onSync = (isSynced) => {
+          if (isSynced) {
+            provider.off('sync', onSync);
+            clearTimeout(fallback);
+            doSeed();
+          }
+        };
+        provider.on('sync', onSync);
+
+        // Fallback: if the server is unreachable, seed after 5 s so the editor
+        // is not stuck empty when working offline.
+        const fallback = setTimeout(doSeed, 5000);
+      } else {
+        // No websocket — seed immediately from local IDB state.
+        doSeed();
+      }
     });
   }
   }
@@ -522,7 +543,7 @@ export class Editor {
       window.removeEventListener('dokieli:collab-save', collabSaveHandler);
       collabSaveHandler = null;
     }
-    if (collabAwarenessHandler && provider) {
+    if (collabAwarenessHandler && provider?.awareness) {
       provider.awareness.off('change', collabAwarenessHandler);
       collabAwarenessHandler = null;
     }
@@ -810,7 +831,6 @@ export function addYjsVersion(versionData) {
   // Freeze actor identity from awareness at save time. This ensures anonymous
   // versions keep their pseudonymous identity even after the user signs in.
   const awarenessUser = provider?.awareness?.getLocalState()?.user;
-  console.log('[addYjsVersion] awarenessUser', awarenessUser, 'Config.User.IRI', Config.User?.IRI);
   const actor = {
     iri: Config.User?.IRI || null,
     name: awarenessUser?.name || null,
@@ -841,4 +861,24 @@ export function getYjsVersions() {
   return Array.from(versionsMap.entries())
     .sort((a, b) => b[0].localeCompare(a[0]))
     .map(([, v]) => v);
+}
+
+// Read version snapshots directly from IndexedDB without needing the editor
+// to be active. Used to show version history before the user enters edit mode.
+export async function getYjsVersionsFromIDB() {
+  const roomName = encodeURIComponent(currentLocation());
+  const tempDoc = new Y.Doc();
+  const persistence = new IndexeddbPersistence(roomName, tempDoc);
+
+  await persistence.whenSynced;
+
+  const versionsMap = tempDoc.getMap(VERSIONS_MAP);
+  const versions = Array.from(versionsMap.entries())
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .map(([, v]) => v);
+
+  persistence.destroy();
+  tempDoc.destroy();
+
+  return versions;
 }
