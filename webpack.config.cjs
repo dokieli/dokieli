@@ -85,7 +85,7 @@ module.exports = (env) => {
         "process.env.OIDC_REDIRECT_URI": JSON.stringify(process.env.OIDC_REDIRECT_URI),
         "process.env.DEV_ORIGIN": JSON.stringify(process.env.DEV_ORIGIN),
         "process.env.YWEBSOCKET_URL": JSON.stringify(process.env.YWEBSOCKET_URL),
-        "process.env.PLAYGROUND_PATH": JSON.stringify(process.env.PLAYGROUND_PATH),
+        "process.env.PLAYGROUND_URL": JSON.stringify(process.env.PLAYGROUND_URL),
       })
     ],
   };
