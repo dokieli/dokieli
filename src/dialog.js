@@ -44,6 +44,8 @@ import { restoreYjsContent, addYjsVersion, getYjsVersions, getYjsVersionsFromIDB
 const versionItemCache = new Map();
 let editHistoryAside = null;
 let unobserveEditHistory = () => {};
+let lastRestoredKey = null;
+window.addEventListener('dokieli:version-restored', (e) => { lastRestoredKey = e.detail?.key ?? null; });
 
 export function initDocumentMenu(options = {}) {
   options = { loading: true, ...options };
@@ -2976,11 +2978,13 @@ export function initEditHistory() {
 
   document.addEventListener('click', async e => {
     const button = e.target.closest('button.edit-history-preview');
-    if (!button) return;
+    if (!button || button.disabled) return;
 
     const itemId = button.dataset.key;
     const item = versionItemCache.get(itemId);
     if (!item?.content) return;
+
+    button.disabled = true;
 
     const documentOptions = { ...Config.DOMProcessing, format: true, sanitize: true, normalize: true };
     const currentContent = getDocument(null, documentOptions);
@@ -2988,6 +2992,22 @@ export function initEditHistory() {
       mode: 'edit-history-preview',
       versionItem: item,
     });
+
+    const reviewPanel = document.getElementById('review-changes');
+    if (!reviewPanel) {
+      // No diff — nothing to show, leave the button disabled.
+      return;
+    }
+
+    new MutationObserver((mutations, obs) => {
+      const removed = [...mutations].some(m => [...m.removedNodes].some(n => n.id === 'review-changes'));
+      if (!removed) return;
+      obs.disconnect();
+      // Re-enable only if this version was not the one restored.
+      if (button.isConnected && lastRestoredKey !== itemId) {
+        button.disabled = false;
+      }
+    }).observe(document.body, { childList: true });
   });
 
   window.addEventListener('dokieli:version-current-changed', () => {
@@ -3070,9 +3090,10 @@ export async function showEditHistory() {
       : '';
 
     const isCurrent = key === currentKey;
+    const isRestored = key === lastRestoredKey;
     const action = isCurrent
       ? `<span class="edit-history-current" data-i18n="panel.edit-history.item.current.span">${i18n.t('panel.edit-history.item.current.span.textContent')}</span>`
-      : `<button class="edit-history-preview" data-i18n="panel.edit-history.item.preview.button" data-key="${key}" title="${i18n.t('panel.edit-history.item.preview.button.title')}" type="button">${i18n.t('panel.edit-history.item.preview.button.textContent')}</button>`;
+      : `<button class="edit-history-preview" data-i18n="panel.edit-history.item.preview.button" data-key="${key}" title="${i18n.t('panel.edit-history.item.preview.button.title')}" type="button"${isRestored ? ' disabled' : ''}>${i18n.t('panel.edit-history.item.preview.button.textContent')}</button>`;
 
     const dateDisplay = datetime ? `<dl class="created"><dt>Created</dt><dd><time content="${datetime}" datatype="xsd:dateTime" datetime="${datetime}" property="dcterms:created">${datetime.substr(0, 19).replace('T', ' ')}</time> ${action}</dd></dl>` : '';
 
