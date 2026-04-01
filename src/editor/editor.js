@@ -414,7 +414,8 @@ export class Editor {
     // Restore Yjs to the remote state and wipe the version history so IDB
     // and still-connected peers don't retain the discarded session.
     window.addEventListener('pagehide', (e) => {
-      if (!e.persisted && ydoc && !ydoc.isDestroyed && hasUnsavedCollabChanges()) {
+      const alone = (provider?.awareness?.getStates().size ?? 0) <= 1;
+      if (!e.persisted && alone && ydoc && !ydoc.isDestroyed && hasUnsavedCollabChanges()) {
         ydoc.transact(() => {
           yXmlFragment.delete(0, yXmlFragment.length);
           ydoc.getMap(VERSIONS_MAP).clear();

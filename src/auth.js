@@ -323,7 +323,7 @@ async function loginWithIDP(idpUrl) {
   localStorage.setItem('DO.Config.OIDC', JSON.stringify(Config.OIDC));
 
   let redirect_uri = process.env.OIDC_REDIRECT_URI || (window.location.origin + '/');
-  redirect_uri = Config.OIDC['client_id'] ? redirect_uri : window.location.href.split('#')[0];
+  redirect_uri = Config.OIDC['client_id'] ?  window.location.href.split('#')[0] : redirect_uri;
 
   Config['Session']?.login(idpUrl, redirect_uri)
     .catch(e => {
@@ -340,12 +340,11 @@ async function loginWithIDP(idpUrl) {
  async function signInWithOIDC() {
   const idp = Config.User.OIDCIssuer;
 
-  Config.OIDC['authStartLocation'] = Config.OIDC['client_id'] ? window.location.href.split('#')[0] : null;
+  Config.OIDC['authStartLocation'] = window.location.href.split('#')[0];
   localStorage.setItem('DO.Config.OIDC', JSON.stringify(Config.OIDC));
 
-  let redirect_uri = process.env.OIDC_REDIRECT_URI || (window.location.origin + '/') ;
-
-  redirect_uri = Config.OIDC['client_id'] ? redirect_uri :  window.location.href.split('#')[0];
+  let redirect_uri = process.env.OIDC_REDIRECT_URI || (window.location.origin + '/');
+  redirect_uri = Config.OIDC['client_id'] ? window.location.href.split('#')[0] : redirect_uri;
 
   // Redirects away from dokieli :( but hopefully only briefly :)
   Config['Session']?.login(idp, redirect_uri)
