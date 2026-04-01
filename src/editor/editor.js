@@ -37,7 +37,6 @@ import { WebsocketProvider } from 'y-websocket'
 import { IndexeddbPersistence } from 'y-indexeddb'
 import { ySyncPlugin, yCursorPlugin, yUndoPlugin, undo, redo, initProseMirrorDoc, prosemirrorToYDoc } from 'y-prosemirror'
 import { currentLocation } from "../uri.js";
-import { showCollabBanner, hideCollabBanner } from './collab-banner.js';
 import { getRandomIndex, stringToColor } from "../util.js";
 
 const ns = Config.ns;
@@ -48,7 +47,6 @@ let ydoc;
 let yXmlFragment;
 let originalDoc;
 let collabSaveHandler;
-let collabAwarenessHandler;
 let collabBeforeUnloadHandler;
 const YWEBSOCKET_URL = process.env.YWEBSOCKET_URL;
 const DEMO_URL = process.env.DEMO_URL;
@@ -380,7 +378,6 @@ export class Editor {
     collabSaveHandler = () => {
       if (!ydoc || ydoc.isDestroyed) return;
       ydoc.getMap('meta').set('savedStateVector', Y.encodeStateVector(ydoc));
-      hideCollabBanner();
     };
     window.addEventListener('dokieli:collab-save', collabSaveHandler);
 
@@ -394,33 +391,6 @@ export class Editor {
       });
     }
 
-    function hasUnsavedCollabChanges() {
-      const savedSV = ydoc.getMap('meta').get('savedStateVector');
-      if (!savedSV) return false;
-      const { structs } = Y.decodeUpdate(Y.encodeStateAsUpdate(ydoc, savedSV));
-      return structs.length > 1;
-    }
-
-    function discardCollabChanges() {
-      ydoc.transact(() => { yXmlFragment.delete(0, yXmlFragment.length); });
-      const seedDoc = prosemirrorToYDoc(originalDoc);
-      Y.applyUpdate(ydoc, Y.encodeStateAsUpdate(seedDoc));
-    }
-
-    let prevAwarenessSize = 0;
-    collabAwarenessHandler = () => {
-      const size = provider?.awareness?.getStates().size ?? 0;
-      const becameAlone = prevAwarenessSize > 1 && size <= 1;
-      const notAloneAnymore = prevAwarenessSize <= 1 && size > 1;
-      prevAwarenessSize = size;
-
-      if (becameAlone && hasUnsavedCollabChanges()) {
-        showCollabBanner({ provider, onDiscard: discardCollabChanges });
-      } else if (notAloneAnymore) {
-        hideCollabBanner();
-      }
-    };
-    awareness?.on('change', collabAwarenessHandler);
 
     collabBeforeUnloadHandler = (e) => {
       const alone = (provider?.awareness?.getStates().size ?? 0) <= 1;
@@ -551,10 +521,6 @@ export class Editor {
     if (collabSaveHandler) {
       window.removeEventListener('dokieli:collab-save', collabSaveHandler);
       collabSaveHandler = null;
-    }
-    if (collabAwarenessHandler && provider?.awareness) {
-      provider.awareness.off('change', collabAwarenessHandler);
-      collabAwarenessHandler = null;
     }
     if (collabBeforeUnloadHandler) {
       window.removeEventListener('beforeunload', collabBeforeUnloadHandler);
