@@ -231,7 +231,7 @@ transition:opacity 1s ease-in-out;
 
 [contenteditable=true] {
 outline-color:#080;
-padding: 0 0.5em;
+/* padding: 0 0.5em; */
 }
 
 @keyframes target {
