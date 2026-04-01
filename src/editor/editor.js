@@ -821,6 +821,7 @@ export function restoreYjsContent(htmlString, key) {
   if (key) {
     ydoc.getMap('meta').set('currentVersionKey', key);
     window.dispatchEvent(new CustomEvent('dokieli:version-current-changed', { detail: { key } }));
+    window.dispatchEvent(new CustomEvent('dokieli:version-restored', { detail: { key } }));
   }
 
   return true;
