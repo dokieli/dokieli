@@ -392,6 +392,13 @@ export class Editor {
     }
 
 
+    function hasUnsavedCollabChanges() {
+      const savedSV = ydoc.getMap('meta').get('savedStateVector');
+      if (!savedSV) return false;
+      const { structs } = Y.decodeUpdate(Y.encodeStateAsUpdate(ydoc, savedSV));
+      return structs.length > 1;
+    }
+
     collabBeforeUnloadHandler = (e) => {
       const alone = (provider?.awareness?.getStates().size ?? 0) <= 1;
       if (alone && hasUnsavedCollabChanges()) {
@@ -461,12 +468,14 @@ export class Editor {
     // we decide to seed — this prevents concurrent seeds from multiple clients
     // each producing an extra copy of the document.
     const seedIfEmpty = () => {
-      // Always seed from the current DOM. The DOM is the authoritative state —
-      // it includes annotations and other changes made in social mode that IDB
-      // does not know about. If a websocket is connected, peer changes will
-      // arrive via sync and be merged on top by the Yjs CRDT.
-      // Must clear first when non-empty: Y.applyUpdate is additive, not a replace.
       if (yXmlFragment.length > 0) {
+        if (provider) {
+          // Collab session: IDB + websocket state is authoritative.
+          // Don't overwrite collaborative changes with the local DOM.
+          return;
+        }
+        // Single-user: DOM is authoritative. Clear and re-seed from DOM.
+        // Must clear first: Y.applyUpdate is additive, not a replace.
         ydoc.transact(() => { yXmlFragment.delete(0, yXmlFragment.length); });
       }
       const seedDoc = prosemirrorToYDoc(originalDoc);
@@ -526,7 +535,6 @@ export class Editor {
       window.removeEventListener('beforeunload', collabBeforeUnloadHandler);
       collabBeforeUnloadHandler = null;
     }
-    hideCollabBanner();
 
     // Serialize content and destroy editorView first, so ySyncPlugin unregisters
     // its ydoc observers before ydoc is destroyed. Destroying ydoc first causes
