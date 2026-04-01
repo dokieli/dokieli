@@ -411,11 +411,15 @@ export class Editor {
     window.addEventListener('beforeunload', collabBeforeUnloadHandler);
 
     // pagehide fires only after the user confirmed leaving (not on "Stay").
-    // Restore Yjs to the remote state so IDB and still-connected peers
-    // don't retain the discarded changes.
+    // Restore Yjs to the remote state and wipe the version history so IDB
+    // and still-connected peers don't retain the discarded session.
     window.addEventListener('pagehide', (e) => {
       if (!e.persisted && ydoc && !ydoc.isDestroyed && hasUnsavedCollabChanges()) {
-        ydoc.transact(() => { yXmlFragment.delete(0, yXmlFragment.length); });
+        ydoc.transact(() => {
+          yXmlFragment.delete(0, yXmlFragment.length);
+          ydoc.getMap(VERSIONS_MAP).clear();
+          ydoc.getMap('meta').clear();
+        });
         const seedDoc = prosemirrorToYDoc(originalDoc);
         Y.applyUpdate(ydoc, Y.encodeStateAsUpdate(seedDoc));
       }
