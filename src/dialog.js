@@ -39,10 +39,11 @@ import { parseMarkdown, htmlToMarkdown, fragmentFromString, removeSelectorFromNo
 import { showUserSigninSignout, userInfoSignOut } from './auth.js';
 import { generateGeoView } from './geo.js';
 import { csvStringToJson, jsonToHtmlTableString } from './csv.js';
-import { restoreYjsContent, addYjsVersion, getYjsVersions, getYjsVersionsFromIDB, getCurrentVersionKey } from "./editor/editor.js";
+import { restoreYjsContent, addYjsVersion, getYjsVersions, getYjsVersionsFromIDB, getCurrentVersionKey, onYjsVersionsChanged } from "./editor/editor.js";
 
 const versionItemCache = new Map();
 let editHistoryAside = null;
+let unobserveEditHistory = () => {};
 
 export function initDocumentMenu(options = {}) {
   options = { loading: true, ...options };
@@ -2979,7 +2980,6 @@ export function initEditHistory() {
 
     const itemId = button.dataset.key;
     const item = versionItemCache.get(itemId);
-
     if (!item?.content) return;
 
     const documentOptions = { ...Config.DOMProcessing, format: true, sanitize: true, normalize: true };
@@ -2995,6 +2995,14 @@ export function initEditHistory() {
       showEditHistory();
     }
   });
+
+  // Tear down the Yjs observer when the panel is closed via the toggle button.
+  new MutationObserver(() => {
+    if (!aside.classList.contains('on')) {
+      unobserveEditHistory();
+      unobserveEditHistory = () => {};
+    }
+  }).observe(aside, { attributeFilter: ['class'] });
 
   return aside;
 }
@@ -3012,6 +3020,10 @@ export async function showEditHistory() {
     document.body.appendChild(aside);
   }
   aside.classList.add('on');
+
+  // Observe Yjs versions map for peer changes while panel is open.
+  unobserveEditHistory();
+  unobserveEditHistory = onYjsVersionsChanged(() => showEditHistory());
 
   const list = aside.querySelector('ul.versions');
   list.replaceChildren();

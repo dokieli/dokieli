@@ -51,6 +51,7 @@ let collabSaveHandler;
 let collabAwarenessHandler;
 let collabBeforeUnloadHandler;
 const YWEBSOCKET_URL = process.env.YWEBSOCKET_URL;
+const PLAYGROUND_PATH = process.env.PLAYGROUND_PATH || '/playground';
 
 export class Editor {
   constructor(mode, node) {
@@ -313,7 +314,7 @@ export class Editor {
     const roomName = encodeURIComponent(currentLocation());
     localProvider = new IndexeddbPersistence(roomName, ydoc);
     // TODO: temp allowing websocket only on the demo doc
-    if (YWEBSOCKET_URL && window.location.pathname === '/dokieli/demo.html') {
+    if (YWEBSOCKET_URL && window.location.pathname === PLAYGROUND_PATH) {
       try {
         provider = new WebsocketProvider(
           YWEBSOCKET_URL,
@@ -518,6 +519,7 @@ export class Editor {
             provider.off('sync', onSync);
             clearTimeout(fallback);
             doSeed();
+            window.dispatchEvent(new CustomEvent('dokieli:collab-ready'));
           }
         };
         provider.on('sync', onSync);
@@ -871,6 +873,15 @@ export function addYjsVersion(versionData) {
   });
 
   window.dispatchEvent(new CustomEvent('dokieli:version-current-changed', { detail: { key } }));
+}
+
+// Subscribe to changes in the shared versions map. Returns an unsubscribe function.
+// Calls callback whenever a peer adds/removes a version entry.
+export function onYjsVersionsChanged(callback) {
+  if (!ydoc || ydoc.isDestroyed) return () => {};
+  const versionsMap = ydoc.getMap(VERSIONS_MAP);
+  versionsMap.observe(callback);
+  return () => versionsMap.unobserve(callback);
 }
 
 // Read all version snapshots from the shared Yjs doc, newest first.
