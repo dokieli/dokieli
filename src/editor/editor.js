@@ -393,8 +393,10 @@ export class Editor {
 
 
     function hasUnsavedCollabChanges() {
+      if (yXmlFragment.length === 0) return false;
       const savedSV = ydoc.getMap('meta').get('savedStateVector');
-      if (!savedSV) return false;
+      // Never saved: any content is unsaved.
+      if (!savedSV) return true;
       const { structs } = Y.decodeUpdate(Y.encodeStateAsUpdate(ydoc, savedSV));
       return structs.length > 1;
     }
@@ -407,6 +409,17 @@ export class Editor {
       }
     };
     window.addEventListener('beforeunload', collabBeforeUnloadHandler);
+
+    // pagehide fires only after the user confirmed leaving (not on "Stay").
+    // Restore Yjs to the remote state so IDB and still-connected peers
+    // don't retain the discarded changes.
+    window.addEventListener('pagehide', (e) => {
+      if (!e.persisted && ydoc && !ydoc.isDestroyed && hasUnsavedCollabChanges()) {
+        ydoc.transact(() => { yXmlFragment.delete(0, yXmlFragment.length); });
+        const seedDoc = prosemirrorToYDoc(originalDoc);
+        Y.applyUpdate(ydoc, Y.encodeStateAsUpdate(seedDoc));
+      }
+    }, { once: true });
 
     const { doc: yjsDoc, mapping } = initProseMirrorDoc(yXmlFragment, schema);
     pmDoc = yjsDoc;
