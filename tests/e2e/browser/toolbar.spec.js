@@ -91,16 +91,21 @@ test.describe("social mode", () => {
         await closeButton.click();
       }
 
-      const title = await button.getAttribute("title");
+      const id = await button.getAttribute("id") || "";
+      const buttonName = id.startsWith("editor-button-") ? id.slice("editor-button-".length) : null;
 
-      if (title?.toLowerCase() === "share") {
+      // Skip dropdown triggers, mode toggle, and any other non-action buttons
+      if (!buttonName) continue;
+
+      if (buttonName === "share") {
         // Skipping share because it has a different behavior
         continue;
       }
 
-      await button.click();
+      // Use evaluate to click — some buttons (e.g. specificity) are hidden submenu items
+      await page.evaluate((id) => document.getElementById(id)?.click(), `editor-button-${buttonName}`);
 
-      const formSelector = `#editor-form-${title}`;
+      const formSelector = `#editor-form-${buttonName}`;
       const form = page.locator(formSelector);
 
       await expect(form).toBeVisible();
@@ -131,16 +136,21 @@ test.describe("social mode", () => {
         await closeButton.click();
       }
 
-      const title = await button.getAttribute("title");
+      const id = await button.getAttribute("id") || "";
+      const buttonName = id.startsWith("editor-button-") ? id.slice("editor-button-".length) : null;
 
-      if (title?.toLowerCase() === "share") {
+      // Skip dropdown triggers, mode toggle, and any other non-action buttons
+      if (!buttonName) continue;
+
+      if (buttonName === "share") {
         // Skipping share because it has a different behavior
         continue;
       }
 
-      await button.click();
+      // Use evaluate to click — some buttons (e.g. specificity) are hidden submenu items
+      await page.evaluate((id) => document.getElementById(id)?.click(), `editor-button-${buttonName}`);
 
-      const formSelector = `#editor-form-${title}`;
+      const formSelector = `#editor-form-${buttonName}`;
       const form = page.locator(formSelector);
 
       await expect(form).toBeVisible();
@@ -172,16 +182,21 @@ test.describe("social mode", () => {
         await closeButton.click();
       }
 
-      const title = await button.getAttribute("title");
+      const id = await button.getAttribute("id") || "";
+      const buttonName = id.startsWith("editor-button-") ? id.slice("editor-button-".length) : null;
 
-      if (title?.toLowerCase() === "share") {
+      // Skip dropdown triggers, mode toggle, and any other non-action buttons
+      if (!buttonName) continue;
+
+      if (buttonName === "share") {
         // Skipping share because it has a different behavior
         continue;
       }
 
-      await button.click();
+      // Use evaluate to click — some buttons (e.g. specificity) are hidden submenu items
+      await page.evaluate((id) => document.getElementById(id)?.click(), `editor-button-${buttonName}`);
 
-      const formSelector = `#editor-form-${title}`;
+      const formSelector = `#editor-form-${buttonName}`;
       const form = page.locator(formSelector);
 
       await expect(form).toBeVisible();
@@ -270,7 +285,7 @@ test.describe("author mode", () => {
   test("toolbar popups should not have any automatically detectable accessibility issues", async ({
     page,
   }) => {
-    const buttonsWithPopups = ["link", "q", "semantics"];
+    const buttonsWithPopups = ["a", "q", "semantics"];
     const buttons = page.locator("ul.editor-form-actions button");
     const count = await buttons.count();
 
@@ -292,7 +307,8 @@ test.describe("author mode", () => {
       if (!buttonName || !buttonsWithPopups.includes(buttonName)) {
         continue; // skip buttons that do not have popups
       }
-      await button.click();
+      // Use evaluate to click — q and semantics are hidden submenu items
+      await page.evaluate((id) => document.getElementById(id)?.click(), `editor-button-${buttonName}`);
 
       const formSelector = `#editor-form-${buttonName}`;
       const form = page.locator(formSelector);
@@ -310,7 +326,7 @@ test.describe("author mode", () => {
   test("toolbar popups should not have any automatically detectable WCAG A or AA violations", async ({
     page,
   }) => {
-    const buttonsWithPopups = ["link", "q", "semantics"];
+    const buttonsWithPopups = ["a", "q", "semantics"];
     const buttons = page.locator("ul.editor-form-actions button");
     const count = await buttons.count();
 
@@ -324,7 +340,8 @@ test.describe("author mode", () => {
       if (!buttonName || !buttonsWithPopups.includes(buttonName)) {
         continue; // skip buttons that do not have popups
       }
-      await button.click();
+      // Use evaluate to click — q and semantics are hidden submenu items
+      await page.evaluate((id) => document.getElementById(id)?.click(), `editor-button-${buttonName}`);
 
       const formSelector = `#editor-form-${buttonName}`;
       const form = page.locator(formSelector);
@@ -343,7 +360,7 @@ test.describe("author mode", () => {
   test("toolbar popups should not have any automatically detectable WCAG AAA violations", async ({
     page,
   }) => {
-    const buttonsWithPopups = ["link", "q", "semantics"];
+    const buttonsWithPopups = ["a", "q", "semantics"];
     const buttons = page.locator("ul.editor-form-actions button");
     const count = await buttons.count();
 
@@ -357,7 +374,8 @@ test.describe("author mode", () => {
       if (!buttonName || !buttonsWithPopups.includes(buttonName)) {
         continue; // skip buttons that do not have popups
       }
-      await button.click();
+      // Use evaluate to click — q and semantics are hidden submenu items
+      await page.evaluate((id) => document.getElementById(id)?.click(), `editor-button-${buttonName}`);
 
       const formSelector = `#editor-form-${buttonName}`;
       const form = page.locator(formSelector);

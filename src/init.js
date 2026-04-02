@@ -312,9 +312,8 @@ export async function initDocumentMode(mode) {
     var node = selectArticleNode(document);
     var hasContent = hasNonWhitespaceText(node);
 
-    if (!hasContent) {
-      Config.Editor.mode = 'author';
-      Config.Editor.new = true;
+    if (!hasContent && !Config.EditorEnabled) {
+      Config.Editor.toggleEditor('author', { template: 'new' });
     }
   // }
 }

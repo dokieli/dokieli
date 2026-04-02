@@ -411,6 +411,7 @@ TODO:
     this.blocktypeSelect.className = 'editor-blocktype-select';
     this.blocktypeSelect.id = 'editor-blocktype-selector';
     this.blocktypeSelect.setAttribute('title', 'Block type');
+    this.blocktypeSelect.setAttribute('aria-label', 'Block type');
 
     [
       { label: 'Paragraph', value: 'p' },

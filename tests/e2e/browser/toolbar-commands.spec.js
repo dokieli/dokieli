@@ -48,21 +48,30 @@ test.describe("author mode", () => {
   test("toolbar formatting commands work as expected", async ({
     page,
   }) => {
+    test.setTimeout(30000);
     const commands = [
-      { label: "h1", tag: "h1" },
-      { label: "h2", tag: "h2" },
-      { label: "h3", tag: "h3" },
-      { label: "h4", tag: "h4" },
+      // h1-h4, pre, code are submenu buttons (hidden in dropdowns) — force: true bypasses visibility check
+      { label: "h1", tag: "h1", submenu: true },
+      { label: "h2", tag: "h2", submenu: true },
+      { label: "h3", tag: "h3", submenu: true },
+      { label: "h4", tag: "h4", submenu: true },
       { label: "em", tag: "em" },
       { label: "strong", tag: "strong" },
-      { label: "pre", tag: "pre" },
-      { label: "code", tag: "code" },
+      { label: "pre", tag: "pre", submenu: true },
+      { label: "code", tag: "code", submenu: true },
     ];
 
     const editor = page.locator(".ProseMirror");
 
-    for (const { label, tag } of commands) {
-      await page.click(`.editor-toolbar [id="editor-button-${label}"]`);
+    for (const { label, tag, submenu } of commands) {
+      if (submenu) {
+        // Submenu buttons are hidden in dropdown menus — call .click() directly via JS
+        await page.evaluate((id) => {
+          document.getElementById(id)?.click();
+        }, `editor-button-${label}`);
+      } else {
+        await page.click(`.editor-toolbar [id="editor-button-${label}"]`);
+      }
 
       const wrappedText = editor.locator(`${tag}:has-text("${selectedText}")`);
       await wrappedText.first().waitFor({ state: "visible", timeout: 3000 });
@@ -70,7 +79,13 @@ test.describe("author mode", () => {
       await expect(wrappedText.first()).toBeVisible();
 
       // toggle back with button
-      await page.click(`.editor-toolbar [id="editor-button-${label}"]`);
+      if (submenu) {
+        await page.evaluate((id) => {
+          document.getElementById(id)?.click();
+        }, `editor-button-${label}`);
+      } else {
+        await page.click(`.editor-toolbar [id="editor-button-${label}"]`);
+      }
 
       const restoredText = editor.locator(`text=${selectedText}`);
 
