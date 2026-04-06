@@ -17,7 +17,7 @@ limitations under the License.
 
 import { showActionMessage, addMessageToLog } from './doc.js'
 import { getLocalStorageItem, removeLocalStorageItem } from './storage.js'
-import { restoreSession } from './auth.js'
+import { restoreSession, setUserInfo, afterSetUserInfo } from './auth.js'
 import Config from './config.js';
 import { i18n, i18nextInit } from './i18n.js'
 import { init } from './init.js'
@@ -51,7 +51,7 @@ const DO = window.DO ?? {
           window.location.replace(OIDC.authStartLocation);
         }
         else {
-          DO.U.initAuth().then(() => init())
+          DO.U.initAuth();
         }
       });
     },
@@ -61,13 +61,13 @@ const DO = window.DO ?? {
         DO.U.initUserLanguage().then(() => {
           const params = new URLSearchParams(window.location.search);
 
+          init();
+
           if (params.has('code') && params.has('iss') && params.has('state')) {
             DO.U.initAuth().then(() => DO.U.handleIncomingRedirect());
           }
           else {
             DO.U.initAuth();
-
-            init();
           }
         })
       });
@@ -78,13 +78,21 @@ const DO = window.DO ?? {
     },
 
     initAuth: async function() {
-      return restoreSession().then(() => {
+      return restoreSession().then(async () => {
         if (!Config['Session']) {
           console.log("No session");
           return;
         }
 
-        console.log("Logged in: ", Config['Session'].webId);
+        const webId = Config['Session'].webId;
+        console.log("Logged in: ", webId);
+
+        if (webId) {
+          await setUserInfo(webId);
+          afterSetUserInfo();
+        }
+      }).finally(() => {
+        document.dispatchEvent(new Event('dokieli:auth-ready'));
       })
     },
 

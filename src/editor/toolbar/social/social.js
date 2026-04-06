@@ -16,7 +16,7 @@ limitations under the License.
 */
 
 import { formHandlerAnnotate, shareButtonHandler } from "./handlers.js"
-import { ToolbarView, annotateFormControls, updateAnnotationInboxForm } from "../toolbar.js"
+import { ToolbarView, annotateFormControls, updateAnnotationInboxForm, updateAnnotationServiceForm  } from "../toolbar.js"
 import Config from "../../../config.js";
 import { exportSelection, getSelectedParentElement, restoreSelection } from "../../utils/annotation.js";
 import { htmlEncode } from "../../../utils/sanitization.js";
@@ -249,6 +249,7 @@ export class SocialToolbar extends ToolbarView {
   }
 
   populateFormAnnotate(action, node) {
+    updateAnnotationServiceForm(action);
     updateAnnotationInboxForm(action);
   }
 

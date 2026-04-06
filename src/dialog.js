@@ -66,9 +66,23 @@ export function initDocumentMenu(options = {}) {
 
   const menuNode = document.getElementById('document-menu');
 
+  let docReady = false;
+  let authReady = false;
+
+  function enableMenu() {
+    if (docReady && authReady) {
+      menuNode.setHTMLUnsafe(domSanitize(`${Config.Button.Menu.OpenMenu}<div><section id="user-info"></section></div>`));
+    }
+  }
+
   document.addEventListener('dokieli:ready', () => {
-    // console.log('ready');
-    menuNode.setHTMLUnsafe(domSanitize(`${Config.Button.Menu.OpenMenu}<div><section id="user-info"></section></div>`));
+    docReady = true;
+    enableMenu();
+  }, { once: true });
+
+  document.addEventListener('dokieli:auth-ready', () => {
+    authReady = true;
+    enableMenu();
   }, { once: true });
   
   var userInfo = document.getElementById('user-info');
