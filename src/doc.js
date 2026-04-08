@@ -1724,7 +1724,7 @@ export async function updateResourceInfos(documentURL = Config.DocumentURL, data
   if (response) {
     updateSupplementalInfo(response, options);
   }
-  else {
+  else if (!documentURL.startsWith('file:')) {
     await getResourceSupplementalInfo(documentURL, options);
   }
 

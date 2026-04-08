@@ -32,10 +32,6 @@ import { restoreYjsContent, addYjsVersion, getYjsVersions } from "./editor/edito
 export async function syncLocalRemoteResource(options = {}) {
   // console.log('--- syncLocalRemoteResource');
 
-  if (Config.DocumentURL.startsWith('blob:') || Config.DocumentURL.startsWith('file:')) {
-    return;
-  }
-
   const documentOptions = {
     ...Config.DOMProcessing,
     format: true,
@@ -107,6 +103,11 @@ export async function syncLocalRemoteResource(options = {}) {
     localContent = content;
     localHash = digestSRI;
     localContentType = mediaType;
+  }
+
+  if (Config.DocumentURL.startsWith('file:')) {
+    await updateResourceInfos(Config.DocumentURL, localContent, null, { storeHash: true, digestSRI: localHash });
+    return;
   }
 
   //200
@@ -657,7 +658,7 @@ export function showResourceReviewChanges(localContent, remoteContent, response,
 export function monitorNetworkStatus() {
   let messageId;
 
-  if (Config.DocumentURL.startsWith('blob:') || Config.DocumentURL.startsWith('file:')) {
+  if (Config.DocumentURL.startsWith('blob:')) {
     return;
   }
 
