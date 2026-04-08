@@ -32,6 +32,10 @@ import { restoreYjsContent, addYjsVersion, getYjsVersions } from "./editor/edito
 export async function syncLocalRemoteResource(options = {}) {
   // console.log('--- syncLocalRemoteResource');
 
+  if (Config.DocumentURL.startsWith('blob:') || Config.DocumentURL.startsWith('file:')) {
+    return;
+  }
+
   const documentOptions = {
     ...Config.DOMProcessing,
     format: true,
@@ -653,7 +657,7 @@ export function showResourceReviewChanges(localContent, remoteContent, response,
 export function monitorNetworkStatus() {
   let messageId;
 
-  if (Config.DocumentURL.startsWith('blob:')) {
+  if (Config.DocumentURL.startsWith('blob:') || Config.DocumentURL.startsWith('file:')) {
     return;
   }
 
