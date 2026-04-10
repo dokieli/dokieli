@@ -259,7 +259,7 @@ function getResource (url, headers = {}, options = {}) {
   options.method = ('method' in options && options.method == 'HEAD') ? 'HEAD' : 'GET'
 
   if (!headers['Accept'] && options.method !== 'HEAD') {
-    headers['Accept'] = 'text/turtle'
+    headers['Accept'] = '*/*'
   }
 
   if (options.noCache) {
