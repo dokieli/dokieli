@@ -1181,10 +1181,10 @@ function getAgentTypeIndex(s) {
 
         triples.forEach(t => {
           var p = t.predicate.value;
-          
+          var s = sanitizeIRIOrBNode(t.subject);
+
           if (typeIndexes[typeIndexType][s]) {
             if (p == ns.solid.instance.value || p == ns.solid.instanceContainer.value) {
-              var s = sanitizeIRIOrBNode(t.subject);
               var o = sanitizeIRIOrBNode(t.object);
               typeIndexes[typeIndexType][s][p] = o;
             }
@@ -1905,7 +1905,7 @@ function getItemsList(url, options) {
 
         var items = [s.out(ns.as.items).values, s.out(ns.as.orderedItems).values, s.out(ns.ldp.contains).values];
 
-        items = sanitizeIRIs(items);
+        items = items.map(arr => sanitizeIRIs(arr));
 
         items.forEach(i => {
           i.forEach(resource => {
