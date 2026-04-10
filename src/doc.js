@@ -1333,16 +1333,46 @@ export function handleDeleteNote(button) {
           const { state: { doc, tr, schema }, dispatch } = view;
           doc.descendants((node, pos) => {
             if (node.type.name === 'span' && node.attrs.originalAttributes?.resource === '#' + refId) {
-              let text = '';
-              node.forEach(child => { if (child.type.name !== 'sup') text += child.textContent; });
-              view.dispatch(text ? tr.replaceWith(pos, pos + node.nodeSize, schema.text(text)) : tr.delete(pos, pos + node.nodeSize));
+              const remainingSups = node.content.content.filter(c => c.type.name === 'sup').length;
+              if (remainingSups <= 1) {
+                let text = '';
+                node.forEach(child => { if (child.type.name !== 'sup') text += child.textContent; });
+                view.dispatch(text ? tr.replaceWith(pos, pos + node.nodeSize, schema.text(text)) : tr.delete(pos, pos + node.nodeSize));
+              } else {
+                // Remove only the sup whose resource matches the deleted annotation IRI
+                let supPos = -1, supSize = 0;
+                node.forEach((child, offset) => {
+                  if (child.type.name === 'sup') {
+                    child.forEach((a) => {
+                      if (a.attrs.originalAttributes?.resource === cite) {
+                        supPos = pos + 1 + offset;
+                        supSize = child.nodeSize;
+                      }
+                    });
+                  }
+                });
+                if (supPos >= 0) view.dispatch(tr.delete(supPos, supPos + supSize));
+              }
               return false;
             }
           });
         } else {
-          var span = document.querySelector('span[resource="#' + refId + '"]');
-          if (span) {
-            span.outerHTML = domSanitize(span.querySelector('mark').textContent);
+          // Find the specific <sup> by its annotation IRI (resource attribute on its <a>)
+          var supAnchor = document.querySelector('sup > a[resource="' + cite + '"]');
+          if (supAnchor) {
+            var sup = supAnchor.parentElement;
+            var spanRef = sup.closest('span.ref');
+            sup.parentNode.removeChild(sup);
+            // Only unwrap the mark when no sups remain
+            if (spanRef && !spanRef.querySelector('sup')) {
+              spanRef.outerHTML = domSanitize(spanRef.querySelector('mark').textContent);
+            }
+          } else {
+            // Fallback: remove by refId (handles annotations created in this session before reload)
+            var span = document.querySelector('span[resource="#' + refId + '"]');
+            if (span) {
+              span.outerHTML = domSanitize(span.querySelector('mark').textContent);
+            }
           }
         }
         window.history.replaceState({}, null, Config.DocumentURL);
