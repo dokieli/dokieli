@@ -1948,30 +1948,34 @@ export async function openResource(iri, options) {
     let response;
     let error;
 
+    // Attempt 1: GET with existing RDF Accept header (CORS-safe, no preflight)
     try {
       response = await getResource(iri, headers, options);
     } catch(e) {
-      error = e;
-      // console.log(error)
-      // console.log(error.status)
-      // console.log(error.response)
+      // Attempt 2: bare GET, no Accept header, let server decide
+      try {
+        response = await getResource(iri, {}, options);
+      } catch(e2) {
+        error = e2;
+        // console.log(error)
+        // console.log(error.status)
+        // console.log(error.response)
 
-      //XXX: It was either a CORS related issue or 4xx/5xx.
+        var message = `Unable to open <a href="${iri}" rel="noopener" target="_blank">${iri}</a>.`;
+        var actionMessage = `Unable to open <a href="${iri}" rel="noopener" target="_blank">${iri}</a>.`;
 
-      var message = `Unable to open <a href="${iri}" rel="noopener" target="_blank">${iri}</a>.`;
-      var actionMessage = `Unable to open <a href="${iri}" rel="noopener" target="_blank">${iri}</a>.`;
+        const messageObject = {
+          'content': actionMessage,
+          'type': 'error',
+          'timer': 5000,
+          'code': error.status
+        }
 
-      const messageObject = {
-        'content': actionMessage,
-        'type': 'error',
-        'timer': 5000,
-        'code': error.status
+        addMessageToLog({...messageObject, content: message}, Config.MessageLog);
+        showActionMessage(document.body, messageObject, { clearId: messageId });
+
+        throw error
       }
-
-      addMessageToLog({...messageObject, content: message}, Config.MessageLog);
-      showActionMessage(document.body, messageObject, { clearId: messageId });
-
-      throw error
     }
 
     if (response) {
