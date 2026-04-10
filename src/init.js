@@ -88,12 +88,8 @@ function initUser() {
     if (user && 'object' in user) {
       // user.object.describes.Role = (Config.User.IRI && user.object.describes.Role) ? user.object.describes.Role : 'social';
 
+      // Restore user info only, do not fetch profile or TypeIndex here. Auth (restoreSession) runs in parallel and may not have completed yet, so any authenticated fetch here gets a 401. The dokieli:auth-ready event fires after initAuth completes and triggers setUserInfo + afterSetUserInfo with a live session.
       Config.User = sanitizeObject(user.object.describes);
-
-      if (!Config.User.Graph) {
-        setUserInfo(Config.User.IRI)
-          .then(afterSetUserInfo);
-      }
     }
   })
 }
