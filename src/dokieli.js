@@ -89,7 +89,7 @@ const DO = window.DO ?? {
 
         if (webId) {
           await setUserInfo(webId);
-          afterSetUserInfo();
+          await afterSetUserInfo();
         }
       }).finally(() => {
         document.dispatchEvent(new Event('dokieli:auth-ready'));

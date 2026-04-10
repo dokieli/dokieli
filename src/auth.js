@@ -421,7 +421,23 @@ export function afterSetUserInfo() {
     promises.push(getAgentSeeAlsoPrimaryTopicOf(Config.User.Graph))
   }
 
-  Promise.allSettled(promises)
+  var user = document.querySelectorAll('aside.do article *[rel~="dcterms:creator"] > *[about="' + Config.User.IRI + '"]');
+
+  for (let i = 0; i < user.length; i++) {
+    var article = user[i].closest('article')
+    sanitizeInsertAdjacentHTML(article, 'afterbegin', '<button class="delete" type="button">' + Icon[".fas.fa-trash-alt"] + '</button>')
+  }
+
+  var buttonDelete = document.querySelectorAll('aside.do blockquote[cite] article button.delete')
+
+  for (let i = 0; i < buttonDelete.length; i++) {
+    buttonDelete[i].addEventListener('click', function (e) {
+      var button = e.target.closest('button.delete');
+      handleDeleteNote(button);
+    })
+  }
+
+  return Promise.allSettled(promises)
     .then(results => {
       var uI = document.getElementById('user-info')
 
@@ -440,20 +456,4 @@ export function afterSetUserInfo() {
     .catch(e => {
       return Promise.resolve();
     });
-
-  var user = document.querySelectorAll('aside.do article *[rel~="dcterms:creator"] > *[about="' + Config.User.IRI + '"]');
-
-  for (let i = 0; i < user.length; i++) {
-    var article = user[i].closest('article')
-    sanitizeInsertAdjacentHTML(article, 'afterbegin', '<button class="delete" type="button">' + Icon[".fas.fa-trash-alt"] + '</button>')
-  }
-
-  var buttonDelete = document.querySelectorAll('aside.do blockquote[cite] article button.delete')
-
-  for (let i = 0; i < buttonDelete.length; i++) {
-    buttonDelete[i].addEventListener('click', function (e) {
-      var button = e.target.closest('button.delete');
-      handleDeleteNote(button);
-    })
-  }
 }
