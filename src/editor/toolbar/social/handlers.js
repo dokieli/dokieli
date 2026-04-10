@@ -21,7 +21,7 @@ import { getNodeLanguage, getFormValues, createHTML } from "../../../utils/html.
 import { getReferenceLabel, createActivityHTML, createNoteDataHTML, } from "../../../doc.js";
 import { getAbsoluteIRI, stripFragmentFromString } from "../../../uri.js"
 import Config from "../../../config.js"
-import { notifyInbox, postActivity, showActivities } from "../../../activity.js"
+import { notifyInbox, postActivity, showActivities, registerAnnotationInTypeIndex } from "../../../activity.js"
 import { shareResource } from "../../../dialog.js";
 import { domSanitize } from "../../../utils/sanitization.js";
 
@@ -158,6 +158,10 @@ export function processAction(action, formValues, selectionData) {
             if (location) {
               location = domSanitize(getAbsoluteIRI(annotation['containerIRI'], location));
               annotation['noteIRI'] = annotation['noteURL'] = location;
+            }
+
+            if (annotation.canonical) {
+              registerAnnotationInTypeIndex(annotation['containerIRI'], ns.oa.Annotation.value);
             }
 
             // console.log(annotation, data.options)

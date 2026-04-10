@@ -17,16 +17,18 @@ limitations under the License.
 
 import rdf from 'rdf-ext';
 import { createActivityHTML, showCitations, getReferenceLabel, createNoteDataHTML, handleDeleteNote } from './doc.js';
+var _deleteListenerAttached = false;
 import { createHTML } from './utils/html.js';
 import { Icon } from './ui/icons.js'
 import { getButtonHTML } from './ui/buttons.js'
-import { getAbsoluteIRI, getPathURL, isHttpOrHttpsProtocol, stripFragmentFromString, currentLocation } from './uri.js';
+import { getAbsoluteIRI, getPathURL, isHttpOrHttpsProtocol, stripFragmentFromString, currentLocation, getFragmentFromString } from './uri.js';
 import { getLinkRelation, serializeDataToPreferredContentType, getGraphLanguage, getGraphLicense, getGraphRights, getGraphTypes, getGraphDate, getGraphImage, getResourceGraph, getResourceOnlyRDF, getAgentTypeIndex, getUserContacts, getAgentName, getSubjectInfo, getItemsList } from './graph.js';
-import { getAcceptPostPreference, postResource } from './fetcher.js';
+import { getAcceptPostPreference, postResource, patchResourceWithAcceptPatch } from './fetcher.js';
 import Config from './config.js';
 import { domSanitize, sanitizeInsertAdjacentHTML } from './utils/sanitization.js';
-import { generateUUID, uniqueArray } from './util.js';
-import { fragmentFromString, getDocumentContentNode } from "./utils/html.js";
+import { generateUUID, uniqueArray, findPreviousDateTime } from './util.js';
+import { fragmentFromString, getDocumentContentNode, selectArticleNode } from "./utils/html.js";
+import { getTextContentExcludingSups } from './editor/utils/annotation.js';
 import { i18n } from './i18n.js';
 import { showUserIdentityInput } from './auth.js';
 
@@ -88,6 +90,14 @@ export function initializeButtonMore(node) {
 export function addNoteToNotifications(noteData) {
   var id = document.getElementById(noteData.id);
   if (id) return;
+
+  if (Config.User.IRI && !_deleteListenerAttached) {
+    _deleteListenerAttached = true;
+    document.addEventListener('click', (e) => {
+      var button = e.target.closest('button.delete');
+      if (button) handleDeleteNote(button);
+    });
+  }
 
   var noteDataIRI = noteData.iri;
   
@@ -257,6 +267,47 @@ export function postActivity(url, slug, data, options) {
           return postResource(url, slug, serializedData, contentType);
         });
     });
+}
+
+const _registeredTypeIndexKeys = new Set();
+
+export function registerAnnotationInTypeIndex(containerIRI, forClass) {
+  const privateTypeIndexIRIs = Config.User.PrivateTypeIndex;
+  const publicTypeIndexIRIs = Config.User.PublicTypeIndex;
+
+  // Prefer private TypeIndex when session is active, fall back to public
+  const usePrivate = privateTypeIndexIRIs?.length && Config['Session']?.isActive;
+  const typeIndexIRI = usePrivate ? privateTypeIndexIRIs[0] : publicTypeIndexIRIs?.[0];
+  if (!typeIndexIRI) return Promise.resolve();
+
+  // Guard against duplicate registrations for the same type (one per forClass is enough)
+  if (_registeredTypeIndexKeys.has(forClass)) return Promise.resolve();
+
+  // Check if this forClass is already registered in memory
+  const privateEntries = Config.User.TypeIndex?.[ns.solid.privateTypeIndex.value] || {};
+  const publicEntries = Config.User.TypeIndex?.[ns.solid.publicTypeIndex.value] || {};
+  const alreadyRegistered = Object.values({ ...privateEntries, ...publicEntries }).some(entry =>
+    entry[ns.solid.forClass.value] === forClass
+  );
+  if (alreadyRegistered) return Promise.resolve();
+
+  _registeredTypeIndexKeys.add(forClass);
+
+  const registrationId = generateUUID();
+  const insert = `<#${registrationId}> a <http://www.w3.org/ns/solid/terms#TypeRegistration> ;\n` +
+    `  <http://www.w3.org/ns/solid/terms#forClass> <${forClass}> ;\n` +
+    `  <http://www.w3.org/ns/solid/terms#instanceContainer> <${containerIRI}> .\n`;
+
+  return patchResourceWithAcceptPatch(typeIndexIRI, { insert })
+    .then(() => {
+      const typeIndexType = usePrivate ? ns.solid.privateTypeIndex.value : ns.solid.publicTypeIndex.value;
+      Config.User.TypeIndex[typeIndexType] = Config.User.TypeIndex[typeIndexType] || {};
+      Config.User.TypeIndex[typeIndexType][`${typeIndexIRI}#${registrationId}`] = {
+        [ns.solid.forClass.value]: forClass,
+        [ns.solid.instanceContainer.value]: containerIRI
+      };
+    })
+    .catch(e => console.log('Could not register annotation type in TypeIndex:', e));
 }
 
 export function getNotifications(url) {
@@ -600,8 +651,20 @@ export function showActivities(url, options = {}) {
               }
             }
           }
-          else if (resourceTypes.includes(ns.oa.Annotation.value) && getPathURL(s.out(ns.oa.hasTarget).values[0]) == currentPathURL && !subjectsReferences.includes(i)) {
-            return showAnnotation(i, s);
+          else if (resourceTypes.includes(ns.oa.Annotation.value) && !subjectsReferences.includes(i)) {
+            // Chain through the grapoi pointer so blank-node targets are traversed correctly
+            var targetPtr = s.out(ns.oa.hasTarget);
+            var hasTargetValue = targetPtr.values[0];
+            if (hasTargetValue) {
+              // oa:hasTarget may be a direct document IRI or a blank node with oa:hasSource
+              var hasSourceValue = targetPtr.out(ns.oa.hasSource).values[0];
+              var urlToCheck = hasSourceValue || hasTargetValue;
+              var targetPathURL;
+              try { targetPathURL = getPathURL(urlToCheck); } catch(e) {}
+              if (targetPathURL === currentPathURL) {
+                return showAnnotation(i, s);
+              }
+            }
           }
           else if (!subjectsReferences.includes(i) && documentTypes.some(item => resourceTypes.includes(item)) && s.out(ns.as.inReplyTo).values.length && s.out(ns.as.inReplyTo).values[0] && getPathURL(s.out(ns.as.inReplyTo).values[0]) == currentPathURL) {
               subjectsReferences.push(i);
@@ -774,14 +837,14 @@ export function processAgentActivities(agent) {
     return processAgentTypeIndex(agent);
   }
   else if (agent.Graph && (agent.PublicTypeIndex?.length || agent.PrivateTypeIndex?.length)) {
-    return getAgentTypeIndex(agent.Graph)
+    return [getAgentTypeIndex(agent.Graph)
       .then(typeIndexes => {
         Object.keys(typeIndexes).forEach(typeIndexType => {
           agent.TypeIndex[typeIndexType] = typeIndexes[typeIndexType];
         });
 
-        return processAgentActivities(agent);
-      });
+        return Promise.all(processAgentActivities(agent));
+      })];
   }
 
   return [Promise.resolve()];
@@ -872,8 +935,9 @@ export async function positionInteraction(noteIRI, containerNode, options) {
 }
 
 export function showAnnotation(noteIRI, g, options) {
-  // containerNode = containerNode || getDocumentContentNode(document);
-  var containerNode = getDocumentContentNode(document);
+  // Use the document content node (main > article or main) rather than document.body
+  // so that the notifications panel aside is excluded from text searches.
+  var containerNode = selectArticleNode(document);
   options = options || {};
 
   var documentURL = Config.DocumentURL;
@@ -1033,17 +1097,19 @@ export function showAnnotation(noteIRI, g, options) {
     }
 
     // console.log(documentURL)
-    var hasTarget = note.out(ns.oa.hasTarget).values[0];
-    if (hasTarget && !(hasTarget.startsWith(documentURL) || 'targetInMemento' in options || 'targetInSameAs' in options)){
+    // Use pointer chaining so blank-node targets (oa:hasTarget as anonymous object) are traversed correctly
+    var targetPtr = note.out(ns.oa.hasTarget);
+    var hasTarget = targetPtr.values[0];
+    var targetIRI = hasTarget;
+    // console.log(targetIRI);
+
+    var source = targetPtr.out(ns.oa.hasSource).values[0];
+    // oa:hasTarget may be a blank node with oa:hasSource pointing to the document
+    var targetOrSource = source || hasTarget;
+    if (targetOrSource && !(targetOrSource.startsWith(documentURL) || 'targetInMemento' in options || 'targetInSameAs' in options)){
       // return Promise.reject();
       return;
     }
-
-    var target = g.node(rdf.namedNode(hasTarget));
-    var targetIRI = target.term.value;
-    // console.log(targetIRI);
-
-    var source = target.out(ns.oa.hasSource).values[0];
     // console.log(source);
     // console.log(note.oamotivatedBy);
     var motivatedBy = note.out(ns.oa.motivatedBy).values[0];
@@ -1052,37 +1118,36 @@ export function showAnnotation(noteIRI, g, options) {
     }
 
     var exact, prefix, suffix;
-    var selector = target.out(ns.oa.hasSelector).values[0];
+    var selectorPtr = targetPtr.out(ns.oa.hasSelector);
+    var selector = selectorPtr.values[0];
     if (selector) {
-      selector = g.node(rdf.namedNode(selector));
-      // console.log(selector);
+      // selectorPtr already points at the selector node — no need to re-lookup by IRI
+      // console.log(selectorPtr);
 
-      // console.log(selector.rdftype);
-      // console.log(selector.out(ns.rdf.type).values);
+      // console.log(selectorPtr.out(ns.rdf.type).values);
       //FIXME: This is taking the first rdf:type. There could be multiple.
-      var selectorTypes = getGraphTypes(selector)[0];
+      var selectorTypes = getGraphTypes(selectorPtr)[0];
       // console.log(selectorTypes)
       // console.log(selectorTypes == 'http://www.w3.org/ns/oa#FragmentSelector');
       if (selectorTypes == ns.oa.TextQuoteSelector.value) {
-        exact = selector.out(ns.oa.exact).values[0];
-        prefix = selector.out(ns.oa.prefix).values[0];
-        suffix = selector.out(ns.oa.suffix).values[0];
+        exact = selectorPtr.out(ns.oa.exact).values[0];
+        prefix = selectorPtr.out(ns.oa.prefix).values[0];
+        suffix = selectorPtr.out(ns.oa.suffix).values[0];
       }
       else if (selectorTypes == ns.oa.FragmentSelector.value) {
-        var refinedBy = selector.out(ns.oa.refinedBy).values[0];
-        refinedBy = refinedBy && selector.node(rdf.namedNode(refinedBy));
-        // console.log(refinedBy)
-        exact = refinedBy && refinedBy.out(ns.oa.exact).values[0];
-        prefix = refinedBy && refinedBy.out(ns.oa.prefix).values[0];
-        suffix = refinedBy && refinedBy.out(ns.oa.suffix).values[0];
-        // console.log(selector.rdfvalue)
-        if (selector.out(ns.rdf.value).values[0] && selector.out(ns.dcterms.conformsTo).values[0] && selector.out(ns.dcterms.conformsTo).values[0].endsWith('://tools.ietf.org/html/rfc3987')) {
-          var fragment = selector.out(ns.rdf.value).values[0];
+        var refinedByPtr = selectorPtr.out(ns.oa.refinedBy);
+        // console.log(refinedByPtr)
+        exact = refinedByPtr.out(ns.oa.exact).values[0];
+        prefix = refinedByPtr.out(ns.oa.prefix).values[0];
+        suffix = refinedByPtr.out(ns.oa.suffix).values[0];
+        // console.log(selectorPtr.rdfvalue)
+        if (selectorPtr.out(ns.rdf.value).values[0] && selectorPtr.out(ns.dcterms.conformsTo).values[0] && selectorPtr.out(ns.dcterms.conformsTo).values[0].endsWith('://tools.ietf.org/html/rfc3987')) {
+          var fragment = selectorPtr.out(ns.rdf.value).values[0];
           // console.log(fragment)
           fragment = (fragment.indexOf('#') == 0) ? getFragmentFromString(fragment) : fragment;
 
           if (fragment !== '') {
-            containerNode = document.getElementById(fragment) || getDocumentContentNode(document);
+            containerNode = document.getElementById(fragment) || selectArticleNode(document);
           }
         }
       }
@@ -1093,13 +1158,13 @@ export function showAnnotation(noteIRI, g, options) {
     // console.log('----')
     var docRefType = '<sup class="ref-annotation"><a href="#' + id + '" rel="cito:hasReplyFrom" resource="' + noteIRI + '">' + refLabel + '</a></sup>';
 
-    var containerNodeTextContent = containerNode.textContent;
+    var containerNodeTextContent = getTextContentExcludingSups(containerNode);
     //XXX: Seems better?
     // var containerNodeTextContent = fragmentFromString(getDocument(containerNode)).textContent.trim();
 
     // console.log(containerNodeTextContent);
     // console.log(prefix + exact + suffix);
-    var selectorIndex = containerNodeTextContent.indexOf(prefix + exact + suffix);
+    var selectorIndex = containerNodeTextContent.indexOf((prefix || '') + (exact || '') + (suffix || ''));
     // console.log(selectorIndex);
     if (selectorIndex >= 0) {
       selector =  {
@@ -1173,18 +1238,6 @@ export function showAnnotation(noteIRI, g, options) {
       // parentSection.appendChild(asideNode);
       // XXX: Keeping this comment around for emergency
       // selectedParentNode.parentNode.insertBefore(asideNode, selectedParentNode.nextSibling);
-
-      if(Config.User.IRI) {
-        var buttonDelete = document.querySelector('aside.do blockquote[cite="' + noteIRI + '"] article button.delete');
-        if (buttonDelete) {
-          document.addEventListener('click', (e) => {
-            if (e.target.closest('button.delete')) {
-            var button = e.target.closest('button.delete');
-            handleDeleteNote(button);
-            }
-          });
-        }
-      }
 
       //Perhaps return something more useful?
       return noteIRI;
