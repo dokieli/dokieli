@@ -597,7 +597,7 @@ let customNodes = {
     inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "input", getAttrs(node){ return getAttributes(node); }}],
-    toDOM: toDOMWith("input")
+    toDOM: toDOMWith("input", { skipContentHole: true })
   },
   textarea: {
     content: "inline*",
