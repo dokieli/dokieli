@@ -488,6 +488,20 @@ export function createNoteData(annotation) {
   return noteData;
 }
 
+// Returns the text content of a node while skipping <sup> elements.
+// This is used so that annotation markup (<sup> labels) injected into the DOM
+// by previous showAnnotation calls does not shift character offsets for
+// subsequent annotations targeting the same passage.
+export function getTextContentExcludingSups(node) {
+  if (node.nodeType === Node.TEXT_NODE) return node.textContent;
+  if (node.tagName?.toUpperCase() === 'SUP') return '';
+  let text = '';
+  for (const child of node.childNodes) {
+    text += getTextContentExcludingSups(child);
+  }
+  return text;
+}
+
 export function setSelection(start, end, containerNode) {
   const range = document.createRange();
   const selection = window.getSelection();
@@ -506,7 +520,7 @@ export function setSelection(start, end, containerNode) {
       }
       charIndex = nextCharIndex;
     }
-    else {
+    else if (node.tagName?.toUpperCase() !== 'SUP') {
       for (let i = 0; i < node.childNodes.length; i++) {
         traverseNodes(node.childNodes[i]);
       }
@@ -540,7 +554,7 @@ export function selectionToTextQuote(containerNode, selection) {
 }
 
 export function setSelectionFromTextQuote(containerNode, { exact, prefix, suffix }) {
-  const text = containerNode.textContent;
+  const text = getTextContentExcludingSups(containerNode);
   const search = (prefix || '') + exact + (suffix || '');
 
   let start = -1;

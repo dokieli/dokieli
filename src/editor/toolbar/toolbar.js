@@ -18,7 +18,7 @@ limitations under the License.
 import { schema } from "../schema/base.js"
 import { getButtonHTML, updateButtons } from "../../ui/buttons.js"
 import { getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getClassesOfProductsConcepts, getDocument, getLanguageOptionsHTML, getLicenseOptionsHTML, getReferenceLabel } from "../../doc.js";
-import { getTextQuoteHTML, cloneSelection, setSelection, selectionToTextQuote, setSelectionFromTextQuote, getSelectedParentElement } from "../utils/annotation.js";
+import { getTextQuoteHTML, cloneSelection, setSelection, selectionToTextQuote, setSelectionFromTextQuote, getSelectedParentElement, getTextContentExcludingSups } from "../utils/annotation.js";
 import { escapeRegExp, matchAllIndex } from "../../util.js";
 import { fragmentFromString, getDocumentContentNode, selectArticleNode } from "../../utils/html.js";
 import { showUserIdentityInput } from "../../auth.js";
@@ -799,7 +799,8 @@ export class ToolbarView {
     // console.log(motivatedBy)
     // console.log(docRefType)
     // console.log(options)
-    var containerNodeTextContent = containerNode.textContent;
+    // Exclude <sup> elements so that annotation labels injected by prior showAnnotation calls don't shift character offsets and break phrase matching for subsequent annotations targeting the same passage.
+    var containerNodeTextContent = getTextContentExcludingSups(containerNode);
       //XXX: Seems better?
       // var containerNodeTextContent = fragmentFromString(getDocument(containerNode, documentOptions)).textContent.trim();
     // console.log(containerNodeTextContent);
@@ -844,28 +845,34 @@ export class ToolbarView {
 
       //XXX: Review
       selection = window.getSelection();
-      // console.log(selection)
       var r = selection.getRangeAt(0);
       selection.removeAllRanges();
       selection.addRange(r);
       r.collapse(true);
-      // console.log(r)
-      // console.log('r.commonAncestorContainer: r.commonAncestorContainer);
 
-      selectedParentNode = r.commonAncestorContainer.parentNode;
-      // console.log('selectedParentNode:')
-      // console.log(selectedParentNode)
-      var selectedParentNodeValue = r.commonAncestorContainer.nodeValue;
-      // console.log(selectedParentNodeValue)
-  
-      var selectionUpdated = fragmentFromString(selectedParentNodeValue.substr(0, r.startOffset) + ref + selectedParentNodeValue.substr(r.startOffset + exact.length));
-      // console.log(selectionUpdated)
-  
-      //XXX: Review. This feels a bit dirty
-      for(var i = 0; i < selectedParentNode.childNodes.length; i++) {
-        var n = selectedParentNode.childNodes[i];
-        if (n.nodeType === 3 && n.nodeValue === selectedParentNodeValue) {
-          selectedParentNode.replaceChild(selectionUpdated, n);
+      // Skip matches that fall inside the notifications panel
+      if (r.commonAncestorContainer.parentNode?.closest('#document-notifications')) {
+        return;
+      }
+
+      // If this text is already wrapped in a span.ref, the same passage already has at least one annotation. Reuse the existing mark and just append the new <sup>.
+      var existingRefSpan = r.commonAncestorContainer.parentNode?.closest('span.ref');
+      if (existingRefSpan) {
+        existingRefSpan.insertAdjacentHTML('beforeend', docRefType);
+        selectedParentNode = existingRefSpan;
+      }
+      else {
+        selectedParentNode = r.commonAncestorContainer.parentNode;
+        var selectedParentNodeValue = r.commonAncestorContainer.nodeValue;
+
+        var selectionUpdated = fragmentFromString(selectedParentNodeValue.substr(0, r.startOffset) + ref + selectedParentNodeValue.substr(r.startOffset + exact.length));
+
+        //XXX: Review. This feels a bit dirty
+        for(var i = 0; i < selectedParentNode.childNodes.length; i++) {
+          var n = selectedParentNode.childNodes[i];
+          if (n.nodeType === 3 && n.nodeValue === selectedParentNodeValue) {
+            selectedParentNode.replaceChild(selectionUpdated, n);
+          }
         }
       }
 
