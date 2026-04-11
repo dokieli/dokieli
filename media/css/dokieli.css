@@ -4915,6 +4915,50 @@ transition: opacity 0.3s;
 opacity: 0.8;
 }
 
+#slide-overlay {
+position: absolute;
+display: flex;
+gap: 4px;
+z-index: 20;
+}
+#slide-overlay button {
+background: rgba(255,255,255,0.9);
+border: 1px solid rgba(0,0,0,0.15);
+border-radius: 4px;
+padding: 6px 8px;
+cursor: pointer;
+box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+#slide-overlay button:hover {
+background: #fff;
+}
+#slide-overlay button svg {
+width: 16px;
+height: 16px;
+display: block;
+}
+#slide-overlay .slide-drag-handle {
+cursor: grab;
+}
+#slide-overlay .slide-drag-handle:active {
+cursor: grabbing;
+}
+.shower:not(.list) #slide-overlay,
+.shower:not(:has(.ProseMirror)) #slide-overlay {
+display: none;
+}
+
+#slide-drop-indicator {
+position: absolute;
+height: 4px;
+background: #0a0;
+z-index: 30;
+pointer-events: none;
+}
+body.slide-dragging, body.slide-dragging .slide {
+cursor: grabbing;
+}
+
 .shower.list .slide::before {
 content: '⛶';
 position: absolute;
