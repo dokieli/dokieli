@@ -660,7 +660,11 @@ export class ToolbarView {
       document.addEventListener("keydown", handleTab);
     }
 
-    const handleEscKey = (event) => {
+    // Dedupe: selectionUpdate runs on every selection change; stale handlers from a destroyed editorView crash PM at null.matchesNode.
+    if (this._handleEscKey) {
+      document.removeEventListener("keydown", this._handleEscKey);
+    }
+    this._handleEscKey = (event) => {
       if (event.key === "Escape") {
         const toolbarForms = document.querySelectorAll(`.editor-form`);
         const activeForm = Array.from(toolbarForms).filter(form => form.classList.contains('editor-form-active'))[0];
@@ -670,11 +674,12 @@ export class ToolbarView {
         }
         this.dom.classList.remove("editor-form-active");
         this.clearSelection();
-        document.removeEventListener("keydown", handleEscKey);
+        document.removeEventListener("keydown", this._handleEscKey);
+        this._handleEscKey = null;
       }
     };
-  
-    document.addEventListener("keydown", handleEscKey);
+
+    document.addEventListener("keydown", this._handleEscKey);
   }
 
   isSelectionsStartEndRangesWithinSameParent(selection) {
@@ -892,6 +897,10 @@ export class ToolbarView {
     }
     this.documentBody.removeChild(this.dom);
     document.removeEventListener("selectionchange", this.selectionHandler);
+    if (this._handleEscKey) {
+      document.removeEventListener("keydown", this._handleEscKey);
+      this._handleEscKey = null;
+    }
   }
 }
 

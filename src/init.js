@@ -16,7 +16,6 @@ limitations under the License.
 */
 
 import rdf from 'rdf-ext';
-import shower from '@shower/core';
 import Config from './config.js';
 const ns = Config.ns;
 import { highlightItems, updateSelectedStylesheets, initCurrentStylesheet, showActionMessage, addMessageToLog, initCopyToClipboard, showFragment, setDocRefType, showRobustLinksDecoration, focusNote, showAsTabs, setDocumentString, setDocumentURL, getDocument } from './doc.js';
@@ -31,7 +30,8 @@ import { getProxyableIRI, getUrlParams, stripFragmentFromString, stripUrlSearchH
 import { getMultipleResources } from './fetcher.js';
 import { initEditor } from './editor/initEditor.js';
 import { showGraph, showVisualisationGraph } from './viz.js';
-import { openResource, initDocumentMenu, spawnDokieli, showDocumentMenu } from './dialog.js';
+import shower from '@shower/core';
+import { openResource, initDocumentMenu, spawnDokieli, showDocumentMenu, initSlideshowInteraction } from './dialog.js';
 import { Icon } from './ui/icons.js';
 import { eventButtonClose, eventButtonSignIn, eventButtonSignOut, eventButtonNotificationsToggle, eventButtonInfo, emitDocEvent } from './events.js';
 import { hasNonWhitespaceText, getDocumentContentNode, selectArticleNode, fragmentFromString } from "./utils/html.js";
@@ -314,6 +314,44 @@ export async function initDocumentMode(mode) {
   // }
 }
 
+let _showerInstance = null;
+let _showerExternalListeners = [];
+
+// shower has no destroy() API; record listeners so teardownShower() can remove them.
+function startTrackedShower() {
+  _showerExternalListeners = [];
+  const targets = [document, document.body, window];
+  const originals = new Map();
+  for (const t of targets) {
+    originals.set(t, t.addEventListener);
+    t.addEventListener = function (type, listener, options) {
+      _showerExternalListeners.push({ target: t, type, listener, options });
+      return originals.get(t).call(t, type, listener, options);
+    };
+  }
+  try {
+    const shwr = new shower();
+    shwr.start();
+    return shwr;
+  } finally {
+    for (const t of targets) {
+      delete t.addEventListener;
+    }
+  }
+}
+
+function teardownShower() {
+  if (!_showerInstance) return;
+  // Neutralizes dispatchEvent paths still reachable via stale per-slide click handlers.
+  _showerInstance._isStarted = false;
+  for (const { target, type, listener, options } of _showerExternalListeners) {
+    target.removeEventListener(type, listener, options);
+  }
+  _showerExternalListeners = [];
+  document.querySelectorAll('body > section.region[role="region"]').forEach(n => n.remove());
+  _showerInstance = null;
+}
+
 function initSlideshow(options) {
   options = options || {};
   options.progress = options.progress || true;
@@ -329,10 +367,21 @@ function initSlideshow(options) {
       getDocumentContentNode(document).appendChild(fragmentFromString('<div class="progress"></progress>'));
     }
 
-    var shwr = new shower();
-    shwr.start();
+    teardownShower();
+    _showerInstance = startTrackedShower();
+    initSlideshowInteraction(_showerInstance);
   }
 }
+
+// Shower's body keydown listener hijacks p/l/backspace from PM; tear down in author mode.
+window.addEventListener('dokieli:editor-mode-changed', (e) => {
+  if (!document.body.classList.contains('shower')) return;
+  if (e.detail?.mode === 'author') {
+    teardownShower();
+  } else if (e.detail?.mode === 'social') {
+    initSlideshow();
+  }
+});
 
 //TODO: Review grapoi
 function processPotentialAction(resourceInfo) {

@@ -3824,7 +3824,7 @@ max-width:none;
   height: 40px;
   width: 40px; }
 
-  [class~="do-new"] {
+  [class~="do-new"]:not(:has(.slide)) {
     height:100vh;
   }
 
@@ -4559,8 +4559,7 @@ background:none !important;
 }
 }*/
 
-.shower.full,
-.shower .slide {
+.shower.list .slide {
 overflow:auto;
 }
 .shower.list {
@@ -4595,6 +4594,10 @@ background-color:#EEEEEE;
 margin: 0;
 padding: 0;
 max-width: initial;
+}
+.shower.list>main,
+.shower.list>main>article {
+height: stretch;
 }
 .shower>main>article {
 position: relative;
@@ -4887,6 +4890,54 @@ content: counter(code);
 margin-left:-0.45em;
 }
 
+
+#add-slide-control {
+display: flex;
+justify-content: center;
+padding: 2em 0 3em;
+}
+
+#add-slide-control button {
+background-color: #080;
+color: #fff;
+border: none;
+border-radius: .25rem;
+box-shadow: rgba(0, 0, 0, 0.06) 0 0.4em 0.6em;
+cursor: pointer;
+font-size: 1.5em;
+font-weight: bold;
+line-height: 1;
+padding: 0.5em 1em;
+transition: opacity 0.3s;
+}
+
+#add-slide-control button:hover {
+opacity: 0.8;
+}
+
+.shower.list .slide::before {
+content: '⛶';
+position: absolute;
+top: 0.3em;
+right: 0.3em;
+font-size: 5em;
+line-height: 1;
+color: rgba(0,0,0,0.5);
+background: rgba(255,255,255,0.75);
+border-radius: 6px;
+padding: 2px 8px;
+opacity: 0;
+transition: opacity 0.15s;
+z-index: 10;
+pointer-events: none;
+}
+.shower.list .slide:hover::before {
+opacity: 1;
+}
+.shower.full .slide::before,
+.shower.list:has(.ProseMirror) .slide::before {
+display: none;
+}
 
 /*
 Leaflet ( https://leafletjs.com/ )

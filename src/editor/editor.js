@@ -77,7 +77,7 @@ export class Editor {
     Config.Editor.mode = this.mode || 'social';
     this.node = node || this.node;
 
-    if (options?.template === 'new') {
+    if (options?.template === 'new' || options?.template === 'new-slideshow') {
       Config.Editor['new'] = true;
       this.setTemplate(mode, options);
       this.node = this.node.querySelector('article');
@@ -157,7 +157,7 @@ export class Editor {
 
     let node = document.body;
 
-    if (options?.template === 'new') {
+    if (options?.template === 'new' || options?.template === 'new-slideshow') {
       Config.Editor['new'] = true;
       this.setTemplate(mode, options);
       node = node.querySelector('article');
@@ -173,6 +173,8 @@ export class Editor {
 
     updateButtons();
 
+    window.dispatchEvent(new CustomEvent('dokieli:editor-mode-changed', { detail: { mode } }));
+
     // this.setEditorDataItems(e);
   }
 
@@ -185,6 +187,9 @@ export class Editor {
     switch(options.template) {
       case 'new':
         this.setTemplateNew(mode, options);
+        break;
+      case 'new-slideshow':
+        this.setTemplateNewSlideshow(mode, options);
         break;
     }
   }
@@ -222,11 +227,41 @@ export class Editor {
     // If the initial nodes have no content, show placeholder text, else remove placeholder text.
 
     /*
-    
+
     Set flag e.g. Config.Editor.New = true
     Update Save function to check this flag. If New = true, ask where to save.
     Immutable, Version button states should be disabled/false
     */
+  }
+
+  setTemplateNewSlideshow(mode, options) {
+    document.documentElement.setAttribute("lang", `${Config.User.UI.Language}`);
+    document.documentElement.setAttribute("xml:lang", `${Config.User.UI.Language}`);
+    document.documentElement.setAttribute("dir", `${Config.User.UI.LanguageDir}`);
+
+    const titleElement = document.querySelector('head title');
+
+    if (titleElement) {
+      titleElement.textContent = 'Untitled';
+    }
+    else {
+      const newTitle = document.createElement('title');
+      newTitle.textContent = 'Untitled';
+      document.head.appendChild(newTitle);
+    }
+
+    const documentMenu = document.getElementById('document-menu');
+    // Drop dynamic menu sections so they re-render in the correct order.
+    ['#document-do', '#document-autosave', '#document-views', '#about-dokieli', '#ui-language'].forEach(sel => {
+      documentMenu?.querySelector(sel)?.remove();
+    });
+
+    document.body.replaceChildren(fragmentFromString(`<main><article about="" dir="auto" typeof="schema:CreativeWork"><header class="caption"><h1 property="schema:name" data-placeholder="Presentation title"></h1></header><section class="slide" id="cover" inlist="" rel="schema:hasPart" resource="#cover" typeof="bibo:Slide"><h2 aria-label="${i18n.t('editor.new-slideshow.h2.aria-label')}" data-i18n="editor.new-slideshow.h2" data-placeholder="${i18n.t('editor.new-slideshow.h2.data-placeholder')}" property="schema:name"></h2><p data-i18n="editor.new-slideshow.p" data-placeholder="${i18n.t('editor.new-slideshow.p.data-placeholder')}"></p></section></article><div class="progress"></div></main>`));
+
+    document.body.prepend(documentMenu);
+
+    document.body.removeAttribute('id');
+    document.body.className = 'shower list';
   }
 
 
@@ -263,6 +298,11 @@ export class Editor {
   insertFragmentInNode(fragment, parentNode){
     const toolbarView = this.authorToolbarView || this.socialToolbarView;
     return toolbarView?.insertFragmentInNode(fragment, parentNode)
+  }
+
+  insertSlideAtEnd(fragment) {
+    const toolbarView = this.authorToolbarView || this.socialToolbarView;
+    return toolbarView?.insertSlideAtEnd(fragment);
   }
 
   //Creating a ProseMirror editor view at a specified this.node
