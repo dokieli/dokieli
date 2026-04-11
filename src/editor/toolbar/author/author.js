@@ -660,6 +660,40 @@ nodeToHTML(node, schema) {
     const tr = state.tr.insert(lastSlideEndPos, node);
     dispatch(tr);
   }
+
+  findSlideById(id) {
+    const { state } = this.editorView;
+    let found = null;
+    state.doc.descendants((node, pos) => {
+      if (found) return false;
+      if (node.type.name !== 'section') return;
+      const attrs = node.attrs.originalAttributes || {};
+      if (attrs.id === id) found = { node, pos };
+    });
+    return found;
+  }
+
+  deleteSlideById(id) {
+    const { state, dispatch } = this.editorView;
+    const target = this.findSlideById(id);
+    if (!target) return;
+    dispatch(state.tr.delete(target.pos, target.pos + target.node.nodeSize));
+  }
+
+  moveSlide(fromId, toId, before = true) {
+    if (fromId === toId) return;
+    const { state, dispatch } = this.editorView;
+    const from = this.findSlideById(fromId);
+    const to = this.findSlideById(toId);
+    if (!from || !to) return;
+
+    let tr = state.tr.delete(from.pos, from.pos + from.node.nodeSize);
+    let insertAt = before ? to.pos : to.pos + to.node.nodeSize;
+    // If source was before target, target shifted up by fromSize after delete.
+    if (from.pos < to.pos) insertAt -= from.node.nodeSize;
+    tr = tr.insert(insertAt, from.node);
+    dispatch(tr);
+  }
   updateMarkWithAttributes(schema, markType, attrs) {
     return (state, dispatch) => {
 // console.log(state, dispatch)

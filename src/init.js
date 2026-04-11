@@ -314,18 +314,18 @@ export async function initDocumentMode(mode) {
   // }
 }
 
-let _showerInstance = null;
-let _showerExternalListeners = [];
+let showerInstance = null;
+let showerExternalListeners = [];
 
 // shower has no destroy() API; record listeners so teardownShower() can remove them.
 function startTrackedShower() {
-  _showerExternalListeners = [];
+  showerExternalListeners = [];
   const targets = [document, document.body, window];
   const originals = new Map();
   for (const t of targets) {
     originals.set(t, t.addEventListener);
     t.addEventListener = function (type, listener, options) {
-      _showerExternalListeners.push({ target: t, type, listener, options });
+      showerExternalListeners.push({ target: t, type, listener, options });
       return originals.get(t).call(t, type, listener, options);
     };
   }
@@ -341,15 +341,15 @@ function startTrackedShower() {
 }
 
 function teardownShower() {
-  if (!_showerInstance) return;
+  if (!showerInstance) return;
   // Neutralizes dispatchEvent paths still reachable via stale per-slide click handlers.
-  _showerInstance._isStarted = false;
-  for (const { target, type, listener, options } of _showerExternalListeners) {
+  showerInstance._isStarted = false;
+  for (const { target, type, listener, options } of showerExternalListeners) {
     target.removeEventListener(type, listener, options);
   }
-  _showerExternalListeners = [];
+  showerExternalListeners = [];
   document.querySelectorAll('body > section.region[role="region"]').forEach(n => n.remove());
-  _showerInstance = null;
+  showerInstance = null;
 }
 
 function initSlideshow(options) {
@@ -368,8 +368,8 @@ function initSlideshow(options) {
     }
 
     teardownShower();
-    _showerInstance = startTrackedShower();
-    initSlideshowInteraction(_showerInstance);
+    showerInstance = startTrackedShower();
+    initSlideshowInteraction(showerInstance);
   }
 }
 

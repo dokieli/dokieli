@@ -2769,9 +2769,136 @@ export function updateSlideshowAddButton() {
       div.innerHTML = '<button class="do resource-new-slide" type="button">+</button>';
       container.appendChild(div);
     }
+    initSlideOverlay();
   } else {
     existing?.remove();
+    const overlay = document.getElementById('slide-overlay');
+    if (overlay) overlay.hidden = true;
   }
+}
+
+let slideOverlayInit = false;
+let hoveredSlide = null;
+let draggingSlideId = null;
+
+export function initSlideOverlay() {
+  let overlay = document.getElementById('slide-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'slide-overlay';
+    overlay.className = 'do';
+    overlay.hidden = true;
+    overlay.innerHTML = `<button class="slide-drag-handle" draggable="true" type="button" title="Drag to reorder" aria-label="Drag to reorder">${Icon['.fas.fa-grip-vertical']}</button><button class="slide-delete" type="button" title="Delete slide" aria-label="Delete slide">${Icon['.fas.fa-trash-alt']}</button>`;
+    document.body.appendChild(overlay);
+  }
+
+  let indicator = document.getElementById('slide-drop-indicator');
+  if (!indicator) {
+    indicator = document.createElement('div');
+    indicator.id = 'slide-drop-indicator';
+    indicator.className = 'do';
+    indicator.hidden = true;
+    document.body.appendChild(indicator);
+  }
+
+  if (slideOverlayInit) return;
+  slideOverlayInit = true;
+
+  const positionOverlay = (slide) => {
+    const rect = slide.getBoundingClientRect();
+    overlay.style.top = `${rect.top + window.scrollY + 8}px`;
+    overlay.style.left = `${rect.right + window.scrollX - overlay.offsetWidth - 8}px`;
+    overlay.hidden = false;
+  };
+
+  const hideIndicator = () => { indicator.hidden = true; };
+
+  document.body.addEventListener('mouseover', (e) => {
+    if (Config.Editor.mode !== 'author') return;
+    if (!document.body.classList.contains('shower')) return;
+    if (e.target.closest('#slide-overlay')) return;
+    const slide = e.target.closest('.slide');
+    if (slide && slide !== hoveredSlide) {
+      hoveredSlide = slide;
+      positionOverlay(slide);
+    }
+  });
+
+  overlay.addEventListener('click', (e) => {
+    if (!e.target.closest('.slide-delete') || !hoveredSlide) return;
+    Config.Editor.deleteSlideById(hoveredSlide.id);
+    overlay.hidden = true;
+    hoveredSlide = null;
+  });
+
+  const handle = overlay.querySelector('.slide-drag-handle');
+  handle.addEventListener('dragstart', (e) => {
+    if (!hoveredSlide) { e.preventDefault(); return; }
+    draggingSlideId = hoveredSlide.id;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('application/x-slide-id', draggingSlideId);
+
+    const rect = hoveredSlide.getBoundingClientRect();
+    const ghostHost = document.createElement('div');
+    ghostHost.className = 'shower list';
+    ghostHost.style.cssText = `position:fixed;top:0;left:-10000px;width:${rect.width}px;height:${rect.height}px;pointer-events:none;`;
+    const ghostArticle = document.createElement('article');
+    ghostArticle.style.cssText = 'margin:0;padding:0;';
+    const clone = hoveredSlide.cloneNode(true);
+    clone.style.margin = '0';
+    ghostArticle.appendChild(clone);
+    ghostHost.appendChild(ghostArticle);
+    document.body.appendChild(ghostHost);
+    e.dataTransfer.setDragImage(ghostHost, e.clientX - rect.left, e.clientY - rect.top);
+    setTimeout(() => ghostHost.remove(), 0);
+
+    document.body.classList.add('slide-dragging');
+  });
+  handle.addEventListener('dragend', (e) => {
+    draggingSlideId = null;
+    document.body.classList.remove('slide-dragging');
+    hideIndicator();
+    overlay.hidden = true;
+    hoveredSlide = null;
+
+    const { clientX, clientY } = e;
+    setTimeout(() => {
+      const el = document.elementFromPoint(clientX, clientY);
+      const slide = el && el.closest && el.closest('.slide');
+      if (slide) {
+        hoveredSlide = slide;
+        positionOverlay(slide);
+      }
+    }, 0);
+  });
+
+  document.addEventListener('dragover', (e) => {
+    if (!draggingSlideId) return;
+    const slide = e.target.closest('.slide');
+    if (!slide) { hideIndicator(); return; }
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'move';
+    const rect = slide.getBoundingClientRect();
+    const before = e.clientY < rect.top + rect.height / 2;
+    const y = (before ? rect.top : rect.bottom) + window.scrollY;
+    indicator.style.top = `${y - 4}px`;
+    indicator.style.left = `${rect.left + window.scrollX - 4}px`;
+    indicator.style.width = `${rect.width + 8}px`;
+    indicator.hidden = false;
+  }, true);
+
+  document.addEventListener('drop', (e) => {
+    if (!draggingSlideId) return;
+    const slide = e.target.closest('.slide');
+    hideIndicator();
+    if (!slide || slide.id === draggingSlideId) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = slide.getBoundingClientRect();
+    const before = e.clientY < rect.top + rect.height / 2;
+    Config.Editor.moveSlide(draggingSlideId, slide.id, before);
+  }, true);
 }
 
 export function addSlide(e) {

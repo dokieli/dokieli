@@ -305,6 +305,14 @@ export class Editor {
     return toolbarView?.insertSlideAtEnd(fragment);
   }
 
+  deleteSlideById(id) {
+    return this.authorToolbarView?.deleteSlideById(id);
+  }
+
+  moveSlide(fromId, toId, before) {
+    return this.authorToolbarView?.moveSlide(fromId, toId, before);
+  }
+
   //Creating a ProseMirror editor view at a specified this.node
   createEditor(options) {
     // TODO: think about a review mode of initializing and destroying editor
