@@ -295,7 +295,9 @@ export class Editor {
       }
     });
 
-  originalDoc = DOMParser.fromSchema(schema).parse(this.node);
+  const parseRoot = this.node.cloneNode(true);
+  parseRoot.querySelectorAll('#document-editor, #review-changes').forEach(n => n.remove());
+  originalDoc = DOMParser.fromSchema(schema).parse(parseRoot);
 
   let pmDoc;
   let editorPlugins;
