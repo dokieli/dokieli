@@ -27,7 +27,7 @@ import { SlashMenu } from "./slashmenu/slashmenu.js";
 import Config from "./../config.js";
 import { addMessageToLog, showActionMessage, initCopyToClipboard, showRobustLinksDecoration } from "../doc.js";
 import { fragmentFromString, hasNonWhitespaceText } from "./../utils/html.js";
-import { updateLocalStorageProfile } from "../storage.js";
+import { updateDeviceStorageProfile } from "../storage.js";
 import { updateButtons } from "../ui/buttons.js";
 import { cleanProseMirrorOutput } from "../utils/normalization.js";
 import { i18n } from "../i18n.js";
@@ -163,7 +163,7 @@ export class Editor {
       node = node.querySelector('article');
     }
 
-    updateLocalStorageProfile(Config.User);
+    updateDeviceStorageProfile(Config.User);
 
 // Do not EVER pass options passed to toggleEditor onto this call to init - template option breaks everything. TODO look into this
     this.init(mode, node);

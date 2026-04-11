@@ -19,7 +19,7 @@ import { diffArrays } from "diff";
 import { accessModePossiblyAllowed } from "./access.js";
 import { addMessageToLog, getDocument, getResourceInfo, processSupplementalInfoLinkHeaders, showActionMessage, updateResourceInfos, updateSupplementalInfo } from "./doc.js";
 import { getResource, putResource } from "./fetcher.js";
-import { getLocalStorageItem, updateLocalStorageItem, updateStorage, removeLocalStorageDocumentFromCollection } from "./storage.js";
+import { getDeviceStorageItem, updateDeviceStorageItem, updateStorage, removeDeviceStorageDocumentFromCollection } from "./storage.js";
 import { getDateTimeISO, getDateTimeISOFromDate, getHash } from "./util.js";
 import { fragmentFromString, getDocumentNodeFromString, parseMarkdown } from "./utils/html.js";
 import { normalizeForDiff } from "./utils/normalization.js";
@@ -65,11 +65,11 @@ export async function syncLocalRemoteResource(options = {}) {
 
   const hasAccessModeWrite = accessModePossiblyAllowed(Config.DocumentURL, 'write');
 
-  storageObject = await getLocalStorageItem(Config.DocumentURL);
+  storageObject = await getDeviceStorageItem(Config.DocumentURL);
 
   const remoteAutoSaveEnabled = (storageObject && storageObject.autoSave !== undefined) ? storageObject.autoSave : true;
 
-  // let latestLocalDocumentItemObject = (storageObject && storageObject.items?.length) ? await getLocalStorageItem(storageObject.items[0]) : null;
+  // let latestLocalDocumentItemObject = (storageObject && storageObject.items?.length) ? await getDeviceStorageItem(storageObject.items[0]) : null;
 
   let localContent;
   let latestLocalDocumentItemObjectPublished;
@@ -77,7 +77,7 @@ export async function syncLocalRemoteResource(options = {}) {
 
   if (storageObject?.items?.length) {
     for (const item of storageObject.items) {
-      const r = await getLocalStorageItem(item);
+      const r = await getDeviceStorageItem(item);
       if (r?.published && !latestLocalDocumentItemObjectPublished) {
         latestLocalDocumentItemObjectPublished = r;
       }
@@ -292,11 +292,11 @@ export async function syncLocalRemoteResource(options = {}) {
     if (options.forceRemote) {
       console.log(`Force replacing with remote content.`);
 
-      removeLocalStorageDocumentFromCollection(Config.DocumentURL, latestLocalDocumentItemObjectUnpublished.id);
+      removeDeviceStorageDocumentFromCollection(Config.DocumentURL, latestLocalDocumentItemObjectUnpublished.id);
 
       Config.Editor.replaceContent(Config.Editor.mode, remoteContentNode);
       Config.Editor.init(Config.Editor.mode, document.body);
-      await autoSave(Config.DocumentURL, { method: 'localStorage', published: remotePublishDate });
+      await autoSave(Config.DocumentURL, { method: 'IndexedDB', published: remotePublishDate });
       await updateResourceInfos(Config.DocumentURL, remoteContent, response);
       return;
     }
@@ -371,7 +371,7 @@ export async function syncLocalRemoteResource(options = {}) {
           Config.Editor.init(Config.Editor.mode, document.body);
         } catch(e) { console.log ("continue")}
 
-        await autoSave(Config.DocumentURL, { method: 'localStorage', published: remotePublishDate });
+        await autoSave(Config.DocumentURL, { method: 'IndexedDB', published: remotePublishDate });
         await updateResourceInfos(Config.DocumentURL, remoteContent, response);
       }
       else {
@@ -462,7 +462,7 @@ export async function pushLocalContentToRemote(localItem, headers) {
 
   console.log(`Remote updated (${response.status}).`);
 
-  updateLocalStorageItem(id, { published: getDateTimeISO() });
+  updateDeviceStorageItem(id, { published: getDateTimeISO() });
 
   updateResourceInfos(Config.DocumentURL, content, response, { preserveHeaders: ['wac-allow'] });
 
@@ -608,13 +608,13 @@ export function showResourceReviewChanges(localContent, remoteContent, response,
           const versionItem = reviewOptions.versionItem;
           if (Config.Editor['collab']) {
             restoreYjsContent(versionItem.content, versionItem.updated || versionItem.id);
-            autoSave(Config.DocumentURL, { method: 'localStorage' });
+            autoSave(Config.DocumentURL, { method: 'IndexedDB' });
           } else {
             const tmpl = document.implementation.createHTMLDocument('');
             tmpl.documentElement.setHTMLUnsafe(versionItem.content);
             Config.Editor.replaceContent(Config.Editor.mode, tmpl.body);
             Config.Editor.init(Config.Editor.mode, document.body);
-            autoSave(Config.DocumentURL, { method: 'localStorage' });
+            autoSave(Config.DocumentURL, { method: 'IndexedDB' });
             syncLocalRemoteResource({ forceLocal: true });
           }
         }
@@ -644,7 +644,7 @@ export function showResourceReviewChanges(localContent, remoteContent, response,
         });
         Config.Editor.replaceContent(Config.Editor.mode, diffNode.querySelector('.ProseMirror'));
         Config.Editor.init(Config.Editor.mode, document.body);
-        autoSave(Config.DocumentURL, { method: 'localStorage' });
+        autoSave(Config.DocumentURL, { method: 'IndexedDB' });
 
         syncLocalRemoteResource({ forceLocal: true });
       }
@@ -667,7 +667,7 @@ export function monitorNetworkStatus() {
     await enableRemoteSync();
     await syncLocalRemoteResource();
 
-    const storageObject = await getLocalStorageItem(Config.DocumentURL);
+    const storageObject = await getDeviceStorageItem(Config.DocumentURL);
 
     const remoteAutoSaveEnabled = (storageObject && storageObject.autoSave !== undefined) ? storageObject.autoSave : true;
 
@@ -695,7 +695,7 @@ export function monitorNetworkStatus() {
 
     await disableRemoteSync();
 
-    const storageObject = await getLocalStorageItem(Config.DocumentURL);
+    const storageObject = await getDeviceStorageItem(Config.DocumentURL);
 
     const remoteAutoSaveEnabled = (storageObject && storageObject.autoSave !== undefined) ? storageObject.autoSave : true;
 
@@ -762,7 +762,7 @@ export async function autoSave(key, options) {
 export async function enableAutoSave(key, options = {}) {
   if (!key) return;
 
-  options['method'] = ('method' in options) ? options.method : 'localStorage';
+  options['method'] = ('method' in options) ? options.method : 'IndexedDB';
   // options['autoSave'] = true;
   Config.AutoSave.Items[key] ||= {};
   Config.AutoSave.Items[key][options.method] ||= {};
@@ -781,7 +781,7 @@ export async function enableAutoSave(key, options = {}) {
   // an unpublished item would cause the next syncLocalRemoteResource call
   // to PUT an empty body to the server. The first real save happens on the
   // next user edit via handleInputPaste.
-  await updateLocalStorageItem(key, { autoSave: true });
+  await updateDeviceStorageItem(key, { autoSave: true });
 
   const autosaveCheckbox = document.getElementById('autosave-remote');
   if (autosaveCheckbox) autosaveCheckbox.checked = true;
@@ -794,7 +794,7 @@ export async function enableAutoSave(key, options = {}) {
       // New documents (no URL yet) and review/diff editors must not sync to remote.
       if (Config.Editor['new'] || Config.Editor['review']) return;
 
-      const storageObject = await getLocalStorageItem(Config.DocumentURL);
+      const storageObject = await getDeviceStorageItem(Config.DocumentURL);
       const remoteAutoSaveEnabled = (storageObject && storageObject.autoSave !== undefined) ? storageObject.autoSave : true;
 
       if (remoteAutoSaveEnabled) {
@@ -832,7 +832,7 @@ export async function enableAutoSave(key, options = {}) {
 export async function disableAutoSave(key, options = {}) {
   if (!Config.AutoSave.Items[key]) { return; }
 
-  options['method'] = ('method' in options) ? options.method : 'localStorage';
+  options['method'] = ('method' in options) ? options.method : 'IndexedDB';
   // options['autoSave'] = true;
 
   let methods = Array.isArray(options.method) ? options.method : [options.method];
@@ -848,7 +848,7 @@ export async function disableAutoSave(key, options = {}) {
       clearInterval(Config.AutoSave.Items[key][method].id);
       // Config.AutoSave.Items[key][method] = undefined;
 
-      await updateLocalStorageItem(key, { autoSave: false });
+      await updateDeviceStorageItem(key, { autoSave: false });
 
       const autosaveCheckbox = document.getElementById('autosave-remote');
       if (autosaveCheckbox) autosaveCheckbox.checked = false;
@@ -857,7 +857,7 @@ export async function disableAutoSave(key, options = {}) {
 }
 
 export async function enableRemoteSync() {
-  await updateLocalStorageItem(Config.DocumentURL, { autoSave: true });
+  await updateDeviceStorageItem(Config.DocumentURL, { autoSave: true });
 
   syncLocalRemoteResource();
 }
@@ -865,8 +865,8 @@ export async function enableRemoteSync() {
 export async function disableRemoteSync() {
   updateButtons();
 
-  await updateLocalStorageItem(Config.DocumentURL, { autoSave: false });
+  await updateDeviceStorageItem(Config.DocumentURL, { autoSave: false });
 
-  await autoSave(Config.DocumentURL, { method: 'localStorage' });
+  await autoSave(Config.DocumentURL, { method: 'IndexedDB' });
 }
 

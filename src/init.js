@@ -21,7 +21,7 @@ const ns = Config.ns;
 import { highlightItems, updateSelectedStylesheets, initCurrentStylesheet, showActionMessage, addMessageToLog, initCopyToClipboard, showFragment, setDocRefType, showRobustLinksDecoration, focusNote, showAsTabs, setDocumentString, setDocumentURL, getDocument } from './doc.js';
 import { initButtons } from './ui/buttons.js'
 import { setWebExtensionURL } from './util.js';
-import { getLocalStorageItem } from './storage.js';
+import { getDeviceStorageItem } from './storage.js';
 import { syncLocalRemoteResource, monitorNetworkStatus, autoSave } from './sync.js';
 import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeObject } from './utils/sanitization.js';
 import { afterSetUserInfo, setUserInfo } from './auth.js';
@@ -51,7 +51,7 @@ export async function init (url) {
     setDocumentString();
     setDocumentModeParams();
     initUser();
-    initLocalStorage();
+    initDeviceStorage();
     initEvents();
     initEditor();
 
@@ -84,7 +84,7 @@ function initServiceWorker() {
 }
 
 function initUser() {
-  getLocalStorageItem('DO.Config.User').then(user => {
+  getDeviceStorageItem('DO.Config.User').then(user => {
     if (user && 'object' in user) {
       // user.object.describes.Role = (Config.User.IRI && user.object.describes.Role) ? user.object.describes.Role : 'social';
 
@@ -94,21 +94,21 @@ function initUser() {
   })
 }
 
-export function initLocalStorage() {
+export function initDeviceStorage() {
   if (Config.DocumentURL.startsWith('blob:')) {
     return;
   }
 
-  getLocalStorageItem(Config.DocumentURL).then(collection => {
+  getDeviceStorageItem(Config.DocumentURL).then(collection => {
     if (!collection) {
-      // autoSave(Config.DocumentURL, { method: 'localStorage' });
-      setTimeout(() => autoSave(Config.DocumentURL, { method: 'localStorage' }), 0);
+      // autoSave(Config.DocumentURL, { method: 'IndexedDB' });
+      setTimeout(() => autoSave(Config.DocumentURL, { method: 'IndexedDB' }), 0);
     }
     else if (collection.autoSave) {
       Config.AutoSave.Items[Config.DocumentURL] ||= {};
-      Config.AutoSave.Items[Config.DocumentURL]['localStorage'] ||= {};
-      // Config.AutoSave.Items[Config.DocumentURL]['localStorage']['digestSRI'] = latestLocalDocumentItem.digestSRI;
-      Config.AutoSave.Items[Config.DocumentURL]['localStorage']['updated'] = collection.updated;
+      Config.AutoSave.Items[Config.DocumentURL]['IndexedDB'] ||= {};
+      // Config.AutoSave.Items[Config.DocumentURL]['IndexedDB']['digestSRI'] = latestLocalDocumentItem.digestSRI;
+      Config.AutoSave.Items[Config.DocumentURL]['IndexedDB']['updated'] = collection.updated;
     }
   });
 }

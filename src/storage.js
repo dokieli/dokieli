@@ -15,42 +15,42 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { get as idbGet, set as idbSet, del as idbDel, createStore } from 'idb-keyval';
+import { get as idbGet, set as idbSet, del as idbDel, createStore as idbCreateStore } from 'idb-keyval';
 
-// Use a named database so we own the upgrade lifecycle.
+// Named database to avoid colliding with idb-keyval's default store.
 const DB_NAME = 'dokieli';
 const STORE_NAME = 'keyval';
-let store = createStore(DB_NAME, STORE_NAME);
+let store = idbCreateStore(DB_NAME, STORE_NAME);
 
 // If the DB was partially cleared (store missing), delete it and rebuild.
-function rebuildStore() {
+function idbRebuildStore() {
   return new Promise(resolve => {
     const req = indexedDB.deleteDatabase(DB_NAME);
     req.onsuccess = req.onerror = () => {
-      store = createStore(DB_NAME, STORE_NAME);
+      store = idbCreateStore(DB_NAME, STORE_NAME);
       resolve();
     };
   });
 }
-
 async function get(key) {
   try { return await idbGet(key, store); }
-  catch { await rebuildStore(); return idbGet(key, store); }
+  catch { await idbRebuildStore(); return idbGet(key, store); }
 }
 async function set(key, value) {
   try { return await idbSet(key, value, store); }
-  catch { await rebuildStore(); return idbSet(key, value, store); }
+  catch { await idbRebuildStore(); return idbSet(key, value, store); }
 }
 async function del(key) {
   try { return await idbDel(key, store); }
-  catch { await rebuildStore(); return idbDel(key, store); }
+  catch { await idbRebuildStore(); return idbDel(key, store); }
 }
+
 import Config from './config.js';
 import { getDateTimeISO, generateUUID } from './util.js';
 import { getDocument, updateMutableResource } from './doc.js';
 
-export async function updateLocalStorageDocumentWithItem(key, data, options = {}) {
-  if (!key) { Promise.resolve(); }
+export async function updateDeviceStorageDocumentWithItem(key, data, options = {}) {
+  if (!key) { return Promise.resolve(); }
 
   const documentOptions = {
     ...Config.DOMProcessing,
@@ -61,7 +61,7 @@ export async function updateLocalStorageDocumentWithItem(key, data, options = {}
 
   data = data || getDocument(null, documentOptions);
 
-  var collection = await getLocalStorageItem(key);
+  var collection = await getDeviceStorageItem(key);
   // console.log(collection);
 
   var id = `${key}#${generateUUID()}`;
@@ -97,15 +97,15 @@ export async function updateLocalStorageDocumentWithItem(key, data, options = {}
   await set(key, collection);
 
   Config.AutoSave.Items[itemOptions.collectionKey] ||= {};
-  Config.AutoSave.Items[itemOptions.collectionKey].localStorage ||= {};
+  Config.AutoSave.Items[itemOptions.collectionKey]['IndexedDB'] ||= {};
 
   console.log(datetime + `: ${key} saved.`);
 
-  await addLocalStorageDocumentItem(id, data, itemOptions);
+  await addDeviceStorageDocumentItem(id, data, itemOptions);
 }
 
-export async function updateLocalStorageItem(id, data) {
-  let item = await getLocalStorageItem(id);
+export async function updateDeviceStorageItem(id, data) {
+  let item = await getDeviceStorageItem(id);
 
   if (!item) { return; }
 
@@ -117,7 +117,7 @@ export async function updateLocalStorageItem(id, data) {
   await set(id, item);
 }
 
-export async function addLocalStorageDocumentItem(id, data, options = {}) {
+export async function addDeviceStorageDocumentItem(id, data, options = {}) {
   const documentOptions = {
     ...Config.DOMProcessing,
     format: true,
@@ -154,7 +154,7 @@ export async function addLocalStorageDocumentItem(id, data, options = {}) {
   await set(id, item);
 
   // if (options.autoSave) {
-  Config.AutoSave.Items[options.collectionKey]['localStorage']['updated'] = item.updated;
+  Config.AutoSave.Items[options.collectionKey]['IndexedDB']['updated'] = item.updated;
   // }
 
   console.log(datetime + `: ${id} saved.`);
@@ -184,12 +184,12 @@ export function updateHTTPStorageDocument(url, data, options = {}) {
 export async function updateStorage(key, data, options = {}) {
   if (!key && !data) return;
 
-  options['method'] = 'localStorage';
+  options['method'] = 'IndexedDB';
 
   switch (options.method) {
     default:
-    case 'localStorage':
-      await updateLocalStorageDocumentWithItem(key, data, options);
+    case 'IndexedDB':
+      await updateDeviceStorageDocumentWithItem(key, data, options);
       break;
 
     case 'http':
@@ -200,8 +200,8 @@ export async function updateStorage(key, data, options = {}) {
 
 
 
-export function removeLocalStorageItem(key) {
-  if (!key) { Promise.resolve(); }
+export function removeDeviceStorageItem(key) {
+  if (!key) { return Promise.resolve(); }
 
   console.log(getDateTimeISO() + ': ' + key + ' removed from local storage.')
 
@@ -215,25 +215,26 @@ export function removeLocalStorageItem(key) {
   }
 }
 
-export async function removeLocalStorageDocumentFromCollection(collectionKey, itemKey) {
+export async function removeDeviceStorageDocumentFromCollection(collectionKey, itemKey) {
   if (!itemKey) return Promise.resolve();
 
-  const collection = await getLocalStorageItem(collectionKey);
+  const collection = await getDeviceStorageItem(collectionKey);
 
   if (!collection) return;
 
-  await removeLocalStorageItem(itemKey);
+  await removeDeviceStorageItem(itemKey);
 
   const index = collection.items.indexOf(itemKey);
   if (index !== -1) {
     collection.items.splice(index, 1);
+    await set(collectionKey, collection)
   }
 }
 
-export async function removeLocalStorageDocumentItems(key) {
+export async function removeDeviceStorageDocumentItems(key) {
   // console.log(key)
   if (!key) return Promise.resolve();
-  const collection = await getLocalStorageItem(key);
+  const collection = await getDeviceStorageItem(key);
   // console.log(collection)
 
   if (!collection) return;
@@ -241,23 +242,23 @@ export async function removeLocalStorageDocumentItems(key) {
   if (collection.items) {
     for (const item of collection.items) {
       console.log(item)
-      await removeLocalStorageItem(item);
+      await removeDeviceStorageItem(item);
     }
   }
 
-  await removeLocalStorageItem(key);
+  await removeDeviceStorageItem(key);
 }
 
-export async function removeLocalStorageAsSignOut() {
-  removeLocalStorageDocumentItems(Config.DocumentURL);
+export async function removeDeviceStorageAsSignOut() {
+  removeDeviceStorageDocumentItems(Config.DocumentURL);
 
-  removeLocalStorageItem('DO.Config.User');
-  removeLocalStorageItem('DO.Config.OIDC');
-  removeLocalStorageItem('i18nextLng');
+  removeDeviceStorageItem('DO.Config.User');
+  removeDeviceStorageItem('DO.Config.OIDC');
+  localStorage.removeItem('i18nextLng');
 }
 
-export function getLocalStorageItem(key) {
-  if (!key) { Promise.resolve(); }
+export function getDeviceStorageItem(key) {
+  if (!key) { return Promise.resolve(); }
 
   if (Config.WebExtensionEnabled) {
     if (typeof browser !== 'undefined') {
@@ -280,7 +281,11 @@ export function getLocalStorageItem(key) {
   }
 }
 
-export function updateLocalStorageProfile(User) {
+export function updateBrowserStorageOIDC() {
+  return set('DO.Config.OIDC', Config.OIDC);
+}
+
+export function updateDeviceStorageProfile(User) {
   if (!User.IRI) { return Promise.resolve({ 'message': 'User.IRI is not set' }); }
 
   var U = { ...User };
@@ -289,7 +294,7 @@ export function updateLocalStorageProfile(User) {
   var id = generateUUID();
   var datetime = getDateTimeISO();
 
-  //Graphs seem to be cyclic and not allowed in localStorage, so we delete.
+  // Graphs are large and reconstructable, so we don't persist them.
   U.Graph && delete U.Graph;
   U.Preferences?.graph && delete U.Preferences.graph;
   Object.entries(U.Contacts).forEach(([key, contact]) => {
@@ -322,68 +327,3 @@ export function updateLocalStorageProfile(User) {
     return set(key, object);
   }
 }
-
-//XXX: Currently unused but needs to be revisited when there is a UI to allow user to disable autosave
-// function showAutoSaveStorage(node, iri) {
-//   iri = iri || Config.DocumentURL;
-
-//   if (document.querySelector('#autosave-items')) { return; }
-
-//   var checked;
-//   var useLocalStorage = '';
-//   if (window.localStorage) {
-//     checked = (Config.AutoSave.Items[iri] && Config.AutoSave.Items[iri]['localStorage']) ? ' checked="checked"' : '';
-
-//     //XXX: May bring this back somewhere else.
-//     // useLocalStorage = '<li class="local-storage-html-autosave"><input id="local-storage-html-autosave" class="autosave" type="checkbox"' + checked +' /> <label for="local-storage-html-autosave">' + (Config.AutoSave.Timer / 60000) + 'm autosave (local storage)</label></li>';
-
-//     //XXX: Enabling autoSave for localStorage
-//     enableAutoSave(iri, {'method': 'localStorage'});
-//   }
-
-//   if (accessModeAllowed(iri, 'write') && navigator.onLine) {
-//     checked = (Config.AutoSave.Items[iri] && Config.AutoSave.Items[iri]['http']) ? ' checked="checked"' : '';
-
-//     var useHTTPStorage = '<li class="http-storage-html-autosave"><input id="http-storage-html-autosave" class="autosave" type="checkbox"' + checked +' /> <label for="http-storage-html-autosave">' + (Config.AutoSave.Timer / 60000) + 'm autosave (http)</label></li>';
-
-//     sanitizeInsertAdjacentHTML(node, 'beforeend', '<ul id="autosave-items" class="on">' + useLocalStorage + useHTTPStorage + '</ul>');
-
-//     node.querySelector('#autosave-items').addEventListener('click', e => {
-//       if (e.target.closest('input.autosave')) {
-//         var method;
-//         switch (e.target.id){
-//           default:
-//           case 'local-storage-html-autosave':
-//             method = 'localStorage';
-//             break;
-//           case 'http-storage-html-autosave':
-//             method = 'http';
-//             break;
-//         }
-
-//         if (e.target.getAttribute('checked')) {
-//           e.target.removeAttribute('checked');
-//           disableAutoSave(iri, {'method': method});
-//         }
-//         else {
-//           e.target.setAttribute('checked', 'checked');
-//           enableAutoSave(iri, {'method': method});
-//         }
-//       }
-//     });
-//   }
-// }
-
-// function hideAutoSaveStorage(node, iri) {
-//   node = node || document.getElementById('autosave-items');
-
-//   if (!node) { return; }
-
-//   iri = iri || Config.DocumentURL;
-//   node.parentNode.removeChild(node);
-//   disableAutoSave(iri);
-//   //XXX: Disabling autoSave for localStorage (as it was enabled by default)
-//   if (Config.AutoSave.Items[iri] && Config.AutoSave.Items[iri]['localStorage']) {
-//     disableAutoSave(iri, {'method': 'localStorage'});
-//   }
-// }

@@ -31,7 +31,7 @@ import { notifyInbox, sendNotifications, showContactsActivities, initializeNotif
 import Config from './config.js';
 const ns = Config.ns;
 import { Icon } from './ui/icons.js';
-import { updateLocalStorageProfile, getLocalStorageItem  } from './storage.js';
+import { updateDeviceStorageProfile, getDeviceStorageItem  } from './storage.js';
 import { enableAutoSave, disableAutoSave, enableRemoteSync, disableRemoteSync, showResourceReviewChanges } from './sync.js';
 import { showVisualisationGraph } from './viz.js';
 import { exportAsDocument, updateUILanguage } from './actions.js';
@@ -225,7 +225,7 @@ function showLanguages(node) {
 export async function showAutoSave(node) {
   if (node.querySelector('#document-autosave')) { return; }
 
-  const storageObject = await getLocalStorageItem(Config.DocumentURL);
+  const storageObject = await getDeviceStorageItem(Config.DocumentURL);
 
   const hasAccessModeWrite = accessModePossiblyAllowed(Config.DocumentURL, 'write');
   let checked = true;
@@ -336,9 +336,8 @@ function showDocumentDo(node) {
       b.outerHTML = Config.Button.Menu.EditEnable;
       hideDocumentMenu();
       Config.Editor.toggleEditor('social');
-      // hideAutoSaveStorage(node.querySelector('#autosave-items'), documentURL);
 
-      disableAutoSave(Config.DocumentURL, {'method': 'localStorage', saveSnapshot: true });
+      disableAutoSave(Config.DocumentURL, {'method': 'IndexedDB', saveSnapshot: true });
     }
     else {
       b = e.target.closest('button.editor-enable');
@@ -346,9 +345,8 @@ function showDocumentDo(node) {
         b.outerHTML = Config.Button.Menu.EditDisable;
         hideDocumentMenu();
         Config.Editor.toggleEditor('author');
-        // showAutoSaveStorage(node, documentURL);
 
-        enableAutoSave(Config.DocumentURL, {'method': 'localStorage'});
+        enableAutoSave(Config.DocumentURL, {'method': 'IndexedDB'});
       }
     }
 
@@ -909,7 +907,7 @@ export function updateContactsInfo(url, node, options) {
               addShareResourceContactInput(node, subject);
 
               //TODO: This should be called only once after processing all contacts. Refactor the loop to eventually use Promise.allSettled perhaps.
-              updateLocalStorageProfile(Config.User);
+              updateDeviceStorageProfile(Config.User);
             })
         });
 
@@ -2683,7 +2681,7 @@ export function createNewDocument(e) {
 
   Config.DocumentAction = 'new';
 
-  disableAutoSave(Config.DocumentURL, {'method': 'localStorage'});
+  disableAutoSave(Config.DocumentURL, {'method': 'IndexedDB'});
 
   updateButtons();
 }
@@ -2695,7 +2693,7 @@ export function createNewSlideshow(e) {
 
   Config.DocumentAction = 'new';
 
-  disableAutoSave(Config.DocumentURL, {'method': 'localStorage'});
+  disableAutoSave(Config.DocumentURL, {'method': 'IndexedDB'});
 
   updateButtons();
 
@@ -3309,14 +3307,14 @@ export async function showEditHistory() {
     // Editor initialised but not in collab mode, try IDB directly.
     items = await getYjsVersionsFromIDB({ limit: 100});
     if (!items.length) {
-      const collection = await getLocalStorageItem(Config.DocumentURL);
+      const collection = await getDeviceStorageItem(Config.DocumentURL);
       if (!collection?.items?.length) {
         sanitizeInsertAdjacentHTML(list, 'beforeend', `<li><p data-i18n="panel.edit-history.empty.p">${i18n.t('panel.edit-history.empty.p.textContent')}</p></li>`);
         return;
       }
       items = [];
       for (const itemId of collection.items) {
-        const item = await getLocalStorageItem(itemId);
+        const item = await getDeviceStorageItem(itemId);
         if (item) items.push(item);
       }
     }

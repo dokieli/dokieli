@@ -36,7 +36,7 @@ const ns = Config.ns;
 
 //validate form
 //post to external location(s)
-//copy to localStorage
+//copy to storage
 //mark the highlight text
 //add the note as an aside
 //update message log

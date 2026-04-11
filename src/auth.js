@@ -21,7 +21,7 @@ import { fragmentFromString, removeChildren } from "./utils/html.js";
 import { getAgentHTML, showActionMessage, getResourceSupplementalInfo, handleDeleteNote, addMessageToLog } from './doc.js';
 import { Icon } from './ui/icons.js';
 import { setPreferredPolicyInfo, getAgentTypeIndex, getAgentSupplementalInfo, getAgentSeeAlsoPrimaryTopicOf, getAgentPreferencesInfo, getSubjectInfo } from './graph.js';
-import { removeLocalStorageAsSignOut, updateLocalStorageProfile } from './storage.js';
+import { removeDeviceStorageAsSignOut, updateDeviceStorageProfile, updateBrowserStorageOIDC } from './storage.js';
 import { updateButtons, getButtonHTML } from './ui/buttons.js';
 import { SessionCore } from '@uvdsl/solid-oidc-client-browser/core';
 import { isCurrentScriptSameOrigin, isLocalhost } from './uri.js';
@@ -76,7 +76,7 @@ export async function signOut() {
     await Config['Session']?.logout();
   }
 
-  removeLocalStorageAsSignOut();
+  removeDeviceStorageAsSignOut();
 
   Config.User = {
     IRI: null,
@@ -320,7 +320,7 @@ function submitSignIn (url) {
 
 async function loginWithIDP(idpUrl) {
   Config.OIDC['authStartLocation'] = Config.OIDC['client_id'] ? window.location.href.split('#')[0] : null;
-  localStorage.setItem('DO.Config.OIDC', JSON.stringify(Config.OIDC));
+  updateBrowserStorageOIDC();
 
   let redirect_uri = process.env.OIDC_REDIRECT_URI || (window.location.origin + '/');
   redirect_uri = Config.OIDC['client_id'] ? redirect_uri : window.location.href.split('#')[0];
@@ -341,7 +341,7 @@ async function loginWithIDP(idpUrl) {
   const idp = Config.User.OIDCIssuer;
 
   Config.OIDC['authStartLocation'] = window.location.href.split('#')[0];
-  localStorage.setItem('DO.Config.OIDC', JSON.stringify(Config.OIDC));
+  updateBrowserStorageOIDC();
 
   let redirect_uri = process.env.OIDC_REDIRECT_URI || (window.location.origin + '/');
   redirect_uri = Config.OIDC['client_id'] ? redirect_uri :  window.location.href.split('#')[0];
@@ -372,7 +372,7 @@ export function setUserInfo (subjectIRI, options = {}) {
 
     setPreferredLanguagesInfo(subject.Graph);
 
-    updateLocalStorageProfile(subject);
+    updateDeviceStorageProfile(subject);
   });
 }
 
@@ -451,7 +451,7 @@ export function afterSetUserInfo() {
 
       showGeneralMessages();
 
-      return updateLocalStorageProfile(Config.User)
+      return updateDeviceStorageProfile(Config.User)
     })
     .catch(e => {
       return Promise.resolve();

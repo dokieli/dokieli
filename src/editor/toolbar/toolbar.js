@@ -468,7 +468,7 @@ export class ToolbarView {
       const textQuote = (sel?.rangeCount && article) ? selectionToTextQuote(article, sel) : null;
       Config.Editor.toggleEditor(targetMode);
       if (targetMode === 'author') {
-        enableAutoSave(Config.DocumentURL, { method: 'localStorage' });
+        enableAutoSave(Config.DocumentURL, { method: 'IndexedDB' });
       }
       if (textQuote) {
         requestAnimationFrame(() => {
