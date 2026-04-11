@@ -607,7 +607,9 @@ export class ToolbarView {
         this.blocktypeSelect.value = this.getBlockTypeKey(this.editorView.state);
       }
       
-      this.dom.style.left = `${selectedPosition.left + (selectedPosition.width / 2 ) - (toolbarWidth / 2)}px`;
+      const rawLeft = selectedPosition.left + (selectedPosition.width / 2) - (toolbarWidth / 2);
+      const clampedLeft = Math.max(0, Math.min(rawLeft, window.innerWidth - toolbarWidth));
+      this.dom.style.left = `${clampedLeft}px`;
 
       // Cleanup the arrow from previous toolbar poisitioning
       this.dom.classList.remove("toolbar-arrow-over", "toolbar-arrow-under");
