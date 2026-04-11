@@ -46,6 +46,9 @@ let editHistoryAside = null;
 let unobserveEditHistory = () => {};
 let lastRestoredKey = null;
 window.addEventListener('dokieli:version-restored', (e) => { lastRestoredKey = e.detail?.key ?? null; });
+window.addEventListener('dokieli:editor-mode-changed', () => updateSlideshowAddButton());
+
+let _documentDoClickInit = false;
 
 export function initDocumentMenu(options = {}) {
   options = { loading: true, ...options };
@@ -284,7 +287,8 @@ function showDocumentDo(node) {
     Config.Button.Menu.Reply,
     Config.Button.Menu.Notifications,
     Config.Button.Menu.New,
-    Config.Button.Menu.EditEnable,
+    Config.Button.Menu.NewSlideshow,
+    Config.Editor.mode === 'author' ? Config.Button.Menu.EditDisable : Config.Button.Menu.EditEnable,
     Config.Button.Menu.EditHistory,
     Config.Button.Menu.Open,
     Config.Button.Menu.Save,
@@ -312,6 +316,9 @@ function showDocumentDo(node) {
 
   sanitizeInsertAdjacentHTML(node, 'beforeend', s);
 
+  if (_documentDoClickInit) return;
+  _documentDoClickInit = true;
+
   document.addEventListener('click', e => {
     if (e.target.closest('.resource-share')) {
       shareResource(e);
@@ -325,8 +332,7 @@ function showDocumentDo(node) {
 
     b = e.target.closest('button.editor-disable');
 
-    if (b) {
-      var node = b.closest('li');
+    if (b && b.isConnected) {
       b.outerHTML = Config.Button.Menu.EditEnable;
       hideDocumentMenu();
       Config.Editor.toggleEditor('social');
@@ -336,8 +342,7 @@ function showDocumentDo(node) {
     }
     else {
       b = e.target.closest('button.editor-enable');
-      if (b) {
-        node = b.closest('li');
+      if (b && b.isConnected) {
         b.outerHTML = Config.Button.Menu.EditDisable;
         hideDocumentMenu();
         Config.Editor.toggleEditor('author');
@@ -353,6 +358,14 @@ function showDocumentDo(node) {
 
     if (e.target.closest('.resource-new')) {
       createNewDocument(e);
+    }
+
+    if (e.target.closest('.resource-new-slideshow')) {
+      createNewSlideshow(e);
+    }
+
+    if (e.target.closest('.resource-new-slide')) {
+      addSlide(e);
     }
 
     if (e.target.closest('.resource-open')) {
@@ -2673,6 +2686,101 @@ export function createNewDocument(e) {
   disableAutoSave(Config.DocumentURL, {'method': 'localStorage'});
 
   updateButtons();
+}
+
+export function createNewSlideshow(e) {
+  hideDocumentMenu();
+
+  Config.Editor.toggleEditor('author', { template: 'new-slideshow' });
+
+  Config.DocumentAction = 'new';
+
+  disableAutoSave(Config.DocumentURL, {'method': 'localStorage'});
+
+  updateButtons();
+
+  updateSlideshowAddButton();
+
+  initSlideshowInteraction();
+}
+
+let _slideshowInteractionInit = false;
+let _showerInstance = null;
+
+export function initSlideshowInteraction(showerInstance) {
+  if (showerInstance) _showerInstance = showerInstance;
+
+  if (_slideshowInteractionInit) return;
+  _slideshowInteractionInit = true;
+
+  // Capture phase so we run before shower's per-slide click handler (which checks defaultPrevented).
+  document.addEventListener('click', (e) => {
+    if (!document.body.classList.contains('shower')) return;
+    if (!document.body.classList.contains('list')) return;
+    if (Config.Editor.mode === 'author') return;
+    if (e.target.closest('#document-menu') || e.target.closest('.do')) return;
+    const slide = e.target.closest('.slide');
+    if (!slide) return;
+
+    const rect = slide.getBoundingClientRect();
+    const cornerPx = 60;
+    const inCorner = e.clientX >= rect.right - cornerPx && e.clientY <= rect.top + cornerPx;
+
+    if (!inCorner) {
+      e.preventDefault();
+      return;
+    }
+
+    e.preventDefault();
+    if (_showerInstance) {
+      const slides = Array.from(document.querySelectorAll('.shower .slide'));
+      const idx = slides.indexOf(slide);
+      _showerInstance.goTo(idx);
+      _showerInstance.enterFullMode();
+    } else {
+      document.querySelectorAll('.shower .slide').forEach(s => s.classList.remove('active'));
+      slide.classList.add('active');
+      document.body.classList.remove('list');
+      document.body.classList.add('full');
+    }
+  }, true);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (!document.body.classList.contains('shower')) return;
+    if (!document.body.classList.contains('full')) return;
+    if (_showerInstance) return;
+    document.body.classList.remove('full');
+    document.body.classList.add('list');
+  });
+}
+
+export function updateSlideshowAddButton() {
+  const existing = document.getElementById('add-slide-control');
+  const isSlideshow = document.body.classList.contains('shower');
+  const isAuthor = Config.Editor.mode === 'author';
+
+  if (isSlideshow && isAuthor) {
+    if (!existing) {
+      const container = document.querySelector('main') || document.body;
+      const div = document.createElement('div');
+      div.className = 'do';
+      div.id = 'add-slide-control';
+      div.innerHTML = '<button class="do resource-new-slide" type="button">+</button>';
+      container.appendChild(div);
+    }
+  } else {
+    existing?.remove();
+  }
+}
+
+export function addSlide(e) {
+  hideDocumentMenu();
+
+  const id = 'slide-' + generateUUID();
+  const slide = fragmentFromString(`<section class="slide" id="${id}" inlist="" rel="schema:hasPart" resource="#${id}" typeof="bibo:Slide"><h2 property="schema:name"></h2><p></p></section>`);
+
+  Config.Editor.insertSlideAtEnd(slide);
 }
 
 export function showEmbedData(e) {

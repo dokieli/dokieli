@@ -84,6 +84,7 @@ export function initButtons() {
       Immutable: getButtonHTML({ key: "menu.immutable.button", button: "immutable", buttonClass: "create-immutable", iconSize: "fa-2x", buttonDisabled: true }),
       InternetArchive: getButtonHTML({ key: "menu.archive.button", button: "archive", buttonClass: "snapshot-internet-archive", iconSize: "fa-2x" }),
       New: getButtonHTML({ key: "menu.new.button", button: "new", buttonClass: "resource-new", iconSize: "fa-2x" }),
+      NewSlideshow: getButtonHTML({ key: "menu.new-slideshow.button", button: "new-slideshow", buttonClass: "resource-new-slideshow", iconSize: "fa-2x" }),
       Notifications: getButtonHTML({ key: "menu.notifications.button", button: "activities", buttonClass: "resource-notifications", iconSize: "fa-2x" }),
       Open: getButtonHTML({ key: "menu.resource-open.button", button: "open", buttonClass: "resource-open", iconSize: "fa-2x" }),
       OpenMenu: getButtonHTML({ key: "menu.open.button", button: "bars", buttonClass: "show do-menu" }),
@@ -297,6 +298,9 @@ export const buttonIcons = {
   },
   new: {
     icon: Icon['.far.fa-lightbulb']
+  },
+  'new-slideshow': {
+    icon: Icon['.fas.fa-slideshow']
   },
   open: {
     icon: Icon['.fas.fa-coffee']

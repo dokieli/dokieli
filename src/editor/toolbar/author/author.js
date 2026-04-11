@@ -627,15 +627,37 @@ nodeToHTML(node, schema) {
   insertFragmentInNode(fragment) {
     const { state, dispatch } = this.editorView;
     const { selection } = state;
-  
+
     const endPos = getClosestSectionNodeEndPos(this.editorView)
-  
+
     let node = DOMParser.fromSchema(schema).parse(fragment);
 
 // console.log(node)
 
     let tr = state.tr.insert(endPos, node);
-  
+
+    dispatch(tr);
+  }
+
+  // Insert a new slide after the last section.slide in the document (at article level)
+  insertSlideAtEnd(fragment) {
+    const { state, dispatch } = this.editorView;
+
+    let lastSlideEndPos = null;
+
+    state.doc.descendants((node, pos) => {
+      if (node.type.name === 'section') {
+        const attrs = node.attrs.originalAttributes || {};
+        if (attrs.class && attrs.class.split(' ').includes('slide')) {
+          lastSlideEndPos = pos + node.nodeSize;
+        }
+      }
+    });
+
+    if (lastSlideEndPos === null) return;
+
+    const node = DOMParser.fromSchema(schema).parse(fragment);
+    const tr = state.tr.insert(lastSlideEndPos, node);
     dispatch(tr);
   }
   updateMarkWithAttributes(schema, markType, attrs) {
