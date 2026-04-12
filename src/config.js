@@ -50,7 +50,7 @@ export default {
   UseLocalStorage: false,
   HttpTimeout: 5000,
   AutoSave: {
-    Methods: ['localStorage', 'http'],
+    Methods: ['IndexedDB', 'http'],
     Timer: 3000,
     Items: {}
   },
