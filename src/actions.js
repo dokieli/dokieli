@@ -17,7 +17,7 @@ limitations under the License.
 
 import Config from './config.js';
 import { getAgentPreferredLanguages } from './graph.js';
-import { i18n } from './i18n.js';
+import { fallbackLng, i18n } from './i18n.js';
 import { generateFilename } from './util.js';
 import { fragmentFromString, getDocumentContentNode } from "./utils/html.js";
 import { initButtons } from './ui/buttons.js';
@@ -110,6 +110,12 @@ export function showResourceAudienceAgentOccupations() {
 }
 
 export function setPreferredLanguagesInfo(g) {
+  var userChoice = localStorage.getItem('dokieli-user-language-choice');
+  if (userChoice) {
+    updateUILanguage(userChoice);
+    return;
+  }
+
   let preferredLanguages = navigator.languages;
 
   if (Array.isArray(g)) {
@@ -128,7 +134,7 @@ export function setPreferredLanguagesInfo(g) {
     for (let len = segments.length; len > 0; len--) {
       const candidate = segments.slice(0, len).join("-");
 
-      if (Config.Translations.includes(candidate)) {
+      if (Config.Translations.includes(candidate) || candidate in fallbackLng) {
         matchedLang = candidate;
         found = true;
         break;

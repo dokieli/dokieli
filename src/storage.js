@@ -255,6 +255,7 @@ export async function removeDeviceStorageAsSignOut() {
   removeDeviceStorageItem('DO.Config.User');
   removeDeviceStorageItem('DO.Config.OIDC');
   localStorage.removeItem('i18nextLng');
+  localStorage.removeItem('dokieli-user-language-choice');
 }
 
 export function getDeviceStorageItem(key) {

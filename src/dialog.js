@@ -218,6 +218,7 @@ function showLanguages(node) {
     e.preventDefault();
     e.stopPropagation();
 
+    localStorage.setItem('dokieli-user-language-choice', select.value);
     updateUILanguage(select.value);
   });
 }

@@ -136,4 +136,4 @@ i18n['tDoc'] = function (key, vars = {}) {
   return i18n.t(key, vars);
 }
 
-export { i18n };
+export { fallbackLng, i18n };
