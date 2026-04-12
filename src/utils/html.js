@@ -19,9 +19,11 @@ import { micromark as marked } from 'micromark';
 import { gfm, gfmHtml } from 'micromark-extension-gfm';
 import { gfmTagfilterHtml } from 'micromark-extension-gfm-tagfilter';
 import TurndownService from 'turndown';
+import { gfm as turndownGfm } from 'turndown-plugin-gfm';
 import { escapeRegExp } from '../util.js'
 import { domSanitize, htmlEncode } from '../utils/sanitization.js';
 import Config from '../config.js'
+import { normalizeForDiff } from './normalization.js';
 
 export function tokenizeHTML(root) {
   const tokens = [];
@@ -422,6 +424,7 @@ function _hasSemanticAttrs(node) {
   return Config.DOMProcessing.rdfaAttributes.filter(attr => !["href", "rel", "rev", "src"].includes(attr)).some(a => node.hasAttribute?.(a));
 }
 
+//TODO: Preserve some HTML markup that doesn't easily map to known Markdown convention, e.g., dl
 export function htmlToMarkdown(node) {
   const td = new TurndownService({
     headingStyle: 'atx',
@@ -453,7 +456,12 @@ export function htmlToMarkdown(node) {
     },
   });
 
-  const html = node.innerHTML ?? node.outerHTML ?? String(node);
+  td.use([turndownGfm]);
+
+  // const html = node.innerHTML ?? node.outerHTML ?? String(node);
+
+  const html = normalizeForDiff(node);
+
   return td.turndown(html);
 }
 
