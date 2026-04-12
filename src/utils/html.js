@@ -421,15 +421,21 @@ export function parseMarkdown(data, options) {
 }
 
 function _hasSemanticAttrs(node) {
-  return Config.DOMProcessing.rdfaAttributes.filter(attr => !["href", "rel", "rev", "src"].includes(attr)).some(a => node.hasAttribute?.(a));
+  return Config.DOMProcessing.rdfaAttributes
+          .filter(attr => !["href", "src"]
+          .includes(attr))
+          .some(a => node.hasAttribute?.(a));
 }
 
-//TODO: Preserve some HTML markup that doesn't easily map to known Markdown convention, e.g., dl
 export function htmlToMarkdown(node) {
   const td = new TurndownService({
     headingStyle: 'atx',
     bulletListMarker: '*',
     codeBlockStyle: 'fenced',
+    emDelimiter: '*',
+    strongDelimiter: '**',
+    hr: '---',
+    linkStyle: 'inlined'
   });
 
   // ProseMirror wraps list item content in <p>. Strip that wrapper so Turndown
@@ -444,21 +450,35 @@ export function htmlToMarkdown(node) {
     },
   });
 
-  // Preserve elements that carry RDFa/semantic attributes as raw HTML
-  td.addRule('semanticInline', {
+  td.keep(['svg', 'math', 'ruby']);
+
+  const alwaysPreserved = [
+    'abbr', 'bdi', 'cite', 'data', 'del', 'details', 'dfn', 'ins', 'kbd', 'mark',
+    'meta', 'q', 'samp', 'span', 'sub', 'summary', 'sup', 'time', 'u', 'var',
+    'dl', 'dt', 'dd',
+  ];
+  const semanticOnly = ['a', 'ul', 'ol'];
+  const blockTags = ['ul', 'ol', 'dl', 'dt', 'dd', 'details', 'summary'];
+
+  td.addRule('preservedElements', {
     filter(el) {
-      const inlineTags = ['span', 'a', 'cite', 'abbr', 'time', 'data', 'dfn', 'mark', 'q'];
-      return inlineTags.includes(el.nodeName.toLowerCase()) && _hasSemanticAttrs(el);
-      // return _hasSemanticAttrs(el);
+      const tag = el.nodeName.toLowerCase();
+      if (alwaysPreserved.includes(tag)) return true;
+      if (semanticOnly.includes(tag)) {
+        return _hasSemanticAttrs(el);
+      }
+      return false;
     },
-    replacement(_content, el) {
-      return el.outerHTML;
+    replacement(content, node) {
+      if (_hasSemanticAttrs(node)) return node.outerHTML;
+      const tag = node.nodeName.toLowerCase();
+      const attrs = Array.from(node.attributes).map(a => ` ${a.name}="${a.value}"`).join('');
+      const s = blockTags.includes(tag) ? '\n' : '';
+      return `<${tag}${attrs}>${s}${content}${s}</${tag}>`;
     },
   });
 
   td.use([turndownGfm]);
-
-  // const html = node.innerHTML ?? node.outerHTML ?? String(node);
 
   const html = normalizeForDiff(node);
 
