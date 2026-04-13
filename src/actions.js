@@ -19,11 +19,10 @@ import Config from './config.js';
 import { getAgentPreferredLanguages } from './graph.js';
 import { fallbackLng, i18n } from './i18n.js';
 import { generateFilename } from './util.js';
-import { fragmentFromString, getDocumentContentNode } from "./utils/html.js";
+import { getDocumentContentNode } from "./utils/html.js";
 import { initButtons } from './ui/buttons.js';
 import { domSanitize } from './utils/sanitization.js';
-
-const ns = Config.ns;
+import { getDeviceStorageItem, updateDeviceStorageItem } from './storage.js';
 
 export function exportAsDocument(data, options = {}) {
   const documentOptions = {
@@ -109,10 +108,12 @@ export function showResourceAudienceAgentOccupations() {
   }
 }
 
-export function setPreferredLanguagesInfo(g) {
-  var userChoice = localStorage.getItem('dokieli-user-language-choice');
-  if (userChoice) {
-    updateUILanguage(userChoice);
+export async function setPreferredLanguagesInfo(g) {
+  const user = await getDeviceStorageItem('DO.Config.User');
+
+  if (user?.object?.describes?.UI?.Language) {
+    const lang = domSanitize(user.object.describes.UI.Language);
+    updateUILanguage(lang, user);
     return;
   }
 
@@ -149,12 +150,24 @@ export function setPreferredLanguagesInfo(g) {
   }
 }
 
-export function updateUILanguage(lang) {
-  i18n.changeLanguage(lang, (err) => {
+export async function updateUILanguage(initLang, user) {
+  i18n.changeLanguage(initLang, async (err) => {
     if (err) return console.error('Error loading language', err);
+
+    const lang = i18n.code();
 
     Config.User.UI['Language'] = lang;
     Config.User.UI['LanguageDir'] = i18n.dir();
+
+    user = user || await getDeviceStorageItem('DO.Config.User');
+    if (user?.object?.describes) {
+      user.object.describes.UI = {
+        ...user.object.describes.UI,
+        Language: lang,
+        LanguageDir: Config.User.UI['LanguageDir']
+      };
+      await updateDeviceStorageItem('DO.Config.User', user);
+    }
 
     // re-run initButtons to update the buttons that are stored
     initButtons();
