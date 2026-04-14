@@ -22,7 +22,7 @@ import { generateFilename } from './util.js';
 import { getDocumentContentNode } from "./utils/html.js";
 import { initButtons } from './ui/buttons.js';
 import { domSanitize } from './utils/sanitization.js';
-import { getDeviceStorageItem, updateDeviceStorageItem } from './storage.js';
+import { getDeviceStorageItem, setDeviceStorageItem, updateDeviceStorageItem } from './storage.js';
 
 export function exportAsDocument(data, options = {}) {
   const documentOptions = {
@@ -109,11 +109,12 @@ export function showResourceAudienceAgentOccupations() {
 }
 
 export async function setPreferredLanguagesInfo(g) {
-  const user = await getDeviceStorageItem('DO.Config.User');
+  //XXX: Naming this key like this for now until preferred language from user's profile is sorted.
+  const uiLanguage = await getDeviceStorageItem('DO.Config.UI.Language');
 
-  if (user?.object?.describes?.UI?.Language) {
-    const lang = domSanitize(user.object.describes.UI.Language);
-    updateUILanguage(lang, user);
+  if (uiLanguage) {
+    const lang = domSanitize(uiLanguage);
+    updateUILanguage(lang);
     return;
   }
 
@@ -150,15 +151,15 @@ export async function setPreferredLanguagesInfo(g) {
   }
 }
 
-export async function updateUILanguage(initLang, user) {
-  i18n.changeLanguage(initLang, async (err) => {
+export async function updateUILanguage(lang, user) {
+  i18n.changeLanguage(lang, async (err) => {
     if (err) return console.error('Error loading language', err);
 
-    const lang = i18n.code();
-
+    //XXX: This is used for updating the DOM nodes at some point but it could be based off DO.Config.UI.Language in IndexedDB instead going forward. Revisit.
     Config.User.UI['Language'] = lang;
-    Config.User.UI['LanguageDir'] = i18n.dir();
+    Config.User.UI['LanguageDir'] = Config.Languages[lang].dir;
 
+    //XXX: We keep this up to date. Will figure out when user's preferred language comes into place from their WebID.
     user = user || await getDeviceStorageItem('DO.Config.User');
     if (user?.object?.describes) {
       user.object.describes.UI = {
@@ -168,6 +169,10 @@ export async function updateUILanguage(initLang, user) {
       };
       await updateDeviceStorageItem('DO.Config.User', user);
     }
+
+    //XXX: We persist this so that lang selection is available on the same device / profile. Makes it convenient.
+    //But it is kind of a duplicate of i18nextLng in localStorage which is managed by i18next library.
+    await setDeviceStorageItem('DO.Config.UI.Language', lang);
 
     // re-run initButtons to update the buttons that are stored
     initButtons();

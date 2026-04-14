@@ -41,7 +41,8 @@ export default {
     IRI: null,
     Role: null,
     UI: {
-      Language: 'en-GB' // default
+      Language: 'en-GB', // default
+      LanguageDir: 'ltr'
     },
     WebIdDelegate: null
   },

@@ -104,6 +104,10 @@ export async function updateDeviceStorageDocumentWithItem(key, data, options = {
   await addDeviceStorageDocumentItem(id, data, itemOptions);
 }
 
+export async function setDeviceStorageItem(id, data) {
+  await set(id, data);
+}
+
 export async function updateDeviceStorageItem(id, data) {
   let item = await getDeviceStorageItem(id);
 
@@ -254,7 +258,6 @@ export async function removeDeviceStorageAsSignOut() {
 
   removeDeviceStorageItem('DO.Config.User');
   removeDeviceStorageItem('DO.Config.OIDC');
-  localStorage.removeItem('i18nextLng');
 }
 
 export function getDeviceStorageItem(key) {

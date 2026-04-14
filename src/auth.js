@@ -86,7 +86,8 @@ export async function signOut() {
 
   updateButtons();
 
-  setPreferredLanguagesInfo();
+  //XXX: Selected language is already known, no need to re-run this since it need not be set again. Remove these comments once tested.
+  // setPreferredLanguagesInfo();
 }
 
 

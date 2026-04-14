@@ -96,12 +96,13 @@ const DO = window.DO ?? {
       })
     },
 
-    initUserLanguage: function() {
-      const lang = i18n.code();
+    initUserLanguage: async function() {
+      //Try to recall previously selected language if not figure out most appropriate language.
+      const lang = await getDeviceStorageItem('DO.Config.UI.Language') || i18n.code();
 
       if (lang && Config.Languages[lang]) {
         Config.User.UI['Language'] = lang;
-        Config.User.UI['LanguageDir'] = i18n.dir();
+        Config.User.UI['LanguageDir'] = Config.Languages[lang].dir;
       }
 
       return Promise.resolve();
