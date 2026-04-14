@@ -23,7 +23,6 @@ import { Icon } from './ui/icons.js'
 import { getButtonHTML } from './ui/buttons.js'
 import { getAbsoluteIRI, getPathURL, isHttpOrHttpsProtocol, stripFragmentFromString, currentLocation, getFragmentFromString } from './uri.js';
 import { getLinkRelation, serializeDataToPreferredContentType, getGraphLanguage, getGraphLicense, getGraphRights, getGraphTypes, getGraphDate, getGraphImage, getResourceGraph, getResourceOnlyRDF, getAgentTypeIndex, getUserContacts, getAgentName, getSubjectInfo, getItemsList } from './graph.js';
-import { getAcceptPostPreference, postResource, patchResourceWithAcceptPatch } from './fetcher.js';
 import Config from './config.js';
 import { domSanitize, sanitizeInsertAdjacentHTML } from './utils/sanitization.js';
 import { generateUUID, uniqueArray, findPreviousDateTime } from './util.js';
@@ -254,7 +253,7 @@ export function notifyInbox(o) {
   return postActivity(inboxURL, slug, data, options);
 }
 export function postActivity(url, slug, data, options) {
-  return getAcceptPostPreference(url)
+  return Config.Storage.getAcceptPost(url)
     .then(preferredContentType => {
       options = options || {};
       options['preferredContentType'] = preferredContentType;
@@ -264,7 +263,7 @@ export function postActivity(url, slug, data, options) {
           var profile = ('profile' in options) ? '; profile="' + options.profile + '"' : '';
           var contentType = options['preferredContentType'] + profile + '; charset=utf-8';
 
-          return postResource(url, slug, serializedData, contentType);
+          return Config.Storage.post(url, slug, serializedData, contentType);
         });
     });
 }
@@ -298,7 +297,7 @@ export function registerAnnotationInTypeIndex(containerIRI, forClass) {
     `  <http://www.w3.org/ns/solid/terms#forClass> <${forClass}> ;\n` +
     `  <http://www.w3.org/ns/solid/terms#instanceContainer> <${containerIRI}> .\n`;
 
-  return patchResourceWithAcceptPatch(typeIndexIRI, { insert })
+  return Config.Storage.patchWithConneg(typeIndexIRI, { insert })
     .then(() => {
       const typeIndexType = usePrivate ? ns.solid.privateTypeIndex.value : ns.solid.publicTypeIndex.value;
       Config.User.TypeIndex[typeIndexType] = Config.User.TypeIndex[typeIndexType] || {};

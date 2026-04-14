@@ -24,7 +24,7 @@ import { removeNodesWithIds, createHTML } from './utils/html.js';
 import { accessModeAllowed, accessModePossiblyAllowed } from './access.js';
 import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeObject, htmlEncode, sanitizeIRIs } from './utils/sanitization.js';
 import { escapeRDFLiteral, generateAttributeId, generateUUID } from './util.js';
-import { deleteResource, getResource, patchResourceWithAcceptPatch, postResource, putResource, putResourceWithAcceptPut, setAcceptRDFTypes } from './fetcher.js';
+import { setAcceptRDFTypes } from './fetcher.js';
 import { forceTrailingSlash, generateDataURI, getAbsoluteIRI, getBaseURL, isHttpOrHttpsProtocol, isFileProtocol, stripFragmentFromString, getFragmentFromString, getURLLastPath, currentLocation } from './uri.js';
 import { getAccessSubjects, getACLResourceGraph, getAgentInbox, getAgentName, getAuthorizationsMatching, getGraphAuthors, getGraphContributors, getGraphEditors, getGraphImage, getGraphLabelOrIRI, getGraphPerformers, getGraphTypes, getLinkRelation, getLinkRelationFromHead, getResourceGraph, getUserContacts, getUserLabelOrIRI, serializeData, getSubjectInfo, getRDFSerializer } from './graph.js';
 import { notifyInbox, sendNotifications, showContactsActivities, initializeNotifications } from './activity.js';
@@ -1161,7 +1161,7 @@ ${additionalProperties} .
     throw new Error("Check why the patch payload wasn't constructed in updateAuthorization." + patches);
   }
   else {
-    return patchResourceWithAcceptPatch(patchACLResource, patches);
+    return Config.Storage.patchWithConneg(patchACLResource, patches);
   }
 }
 
@@ -1311,7 +1311,7 @@ export function replyToResource(e, iri) {
 
     var data = createHTML('', note)
 
-    putResource(noteIRI, data)
+    Config.Storage.put(noteIRI, data)
       .catch(error => {
         console.log('Could not save reply:')
         console.error(error)
@@ -1605,7 +1605,7 @@ function showCreateContainer(baseURL, id, action, e) {
 
     var node = document.getElementById(id + '-create-container');
 
-    patchResourceWithAcceptPatch(containerURL, patch, options)
+    Config.Storage.patchWithConneg(containerURL, patch, options)
       .then(response => {
         triggerBrowse(containerURL, id, action);
       })
@@ -1627,7 +1627,7 @@ function showCreateContainer(baseURL, id, action, e) {
 
         options.headers['Content-Type'] = 'text/html';
 
-        putResourceWithAcceptPut(containerURL, data, options)
+        Config.Storage.putWithConneg(containerURL, data, options)
           .then(response => {
             triggerBrowse(containerURL, id, action);
           })
@@ -1961,11 +1961,11 @@ export async function openResource(iri, options) {
 
     // Attempt 1: GET with existing RDF Accept header (CORS-safe, no preflight)
     try {
-      response = await getResource(iri, headers, options);
+      response = await Config.Storage.get(iri, headers, options);
     } catch(e) {
       // Attempt 2: bare GET, no Accept header, let server decide
       try {
-        response = await getResource(iri, {}, options);
+        response = await Config.Storage.get(iri, {}, options);
       } catch(e2) {
         error = e2;
         // console.log(error)
@@ -2523,7 +2523,7 @@ export async function saveAsDocument(e) {
     sanitizeInsertAdjacentHTML(e.target, 'afterend', '<progress min="0" max="100" value="0"></progress>')
     progress = saveAsDocument.querySelector('progress')
 
-    putResource(storageIRI, html, null, null, { 'progress': progress })
+    Config.Storage.put(storageIRI, html, null, null, { 'progress': progress })
       .then(response => {
         progress.parentNode.removeChild(progress)
 
@@ -3695,7 +3695,7 @@ export function snapshotAtEndpoint(e, iri, endpoint, noteData, options = {}) {
       pIRI = (Config.WebExtensionEnabled) ? pIRI : getProxyableIRI(pIRI, {'forceProxy': true});
       // pIRI = getProxyableIRI(pIRI, {'forceProxy': true})
       // console.log(pIRI)
-      return getResource(pIRI, headers, options)
+      return Config.Storage.get(pIRI, headers, options)
         .then(response => {
           // console.log(response)
           // for(var key of response.headers.keys()) {
@@ -3781,7 +3781,7 @@ export function snapshotAtEndpoint(e, iri, endpoint, noteData, options = {}) {
 
       noteData = sanitizeObject(noteData);
 
-      return postResource(endpoint, '', JSON.stringify(noteData), options.contentType, null, options)
+      return Config.Storage.post(endpoint, '', JSON.stringify(noteData), options.contentType, null, options)
 
       .then(response => response.json())
 
@@ -3924,7 +3924,7 @@ export function generateFeed(e) {
       urls.forEach(function (url) {
         // var pIRI = getProxyableIRI(u);
         promises.push(
-          getResource(url, headers)
+          Config.Storage.get(url, headers)
             .then(response => {
               var cT = response.headers.get('Content-Type');
               var options = {};
@@ -3993,7 +3993,7 @@ export function generateFeed(e) {
 // console.log(feedData)
 // console.log(storageIRI)
 // console.log(options);
-        putResource(storageIRI, feedData, options.contentType, null, { 'progress': progress })
+        Config.Storage.put(storageIRI, feedData, options.contentType, null, { 'progress': progress })
           .then(response => {
             progress.parentNode.removeChild(progress)
 
@@ -4093,7 +4093,7 @@ export function resourceDelete(e, url, options) {
       }
     }
     else if (buttonDelete) {
-      deleteResource(url)
+      Config.Storage.delete(url)
         .then(response => {
           Config.Editor.toggleEditor('author', { template: 'new' });
 
@@ -4499,7 +4499,7 @@ export function subscribeToWebSocketChannel(url, d, options = {}) {
 
   data = domSanitize(data);
 
-  return postResource(url, '', data, options.contentType, null, options)
+  return Config.Storage.post(url, '', data, options.contentType, null, options)
     .then(response => {
       return processNotificationSubscriptionResponse(response, d);
     })

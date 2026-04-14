@@ -23,7 +23,7 @@ import { stripFragmentFromString, getBaseURL, getPathURL, getAbsoluteIRI, getPar
 import { escapeRegExp, uniqueArray } from './util.js'
 import { domSanitize, safeObjectAssign, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeIRIOrBNode, sanitizeIRIs, sanitizeObject } from './utils/sanitization.js'
 import { parseMarkdown } from "./utils/html.js";
-import { setAcceptRDFTypes, getResource, getResourceHead } from './fetcher.js'
+import { setAcceptRDFTypes } from './fetcher.js'
 import LinkHeader from "http-link-header";
 
 const ns = Config?.ns;
@@ -693,7 +693,7 @@ function getResourceGraph(iri, headers, options = {}) {
 
   const isWebExtensionURL = Config.WebExtensionBaseURL ? iri.startsWith(Config.WebExtensionBaseURL) : false;
 
-  return getResource(iri, headers, options)
+  return Config.Storage.get(iri, headers, options)
     .then(response => {
       let cT = response.headers.get('Content-Type');
 
@@ -753,7 +753,7 @@ function getResourceGraph(iri, headers, options = {}) {
 }
 
 function getResourceOnlyRDF(url) {
-  return getResourceHead(url)
+  return Config.Storage.head(url)
     .then(response => {
       var cT = response.headers.get('Content-Type');
       var options = {};
@@ -809,7 +809,7 @@ function getLinkRelation(property, url, data) {
 function getLinkRelationFromHead(property, url) {
   var properties = (Array.isArray(property)) ? property : [property];
 
-  return getResourceHead(url).then(
+  return Config.Storage.head(url).then(
     function (i) {
       var link = i.headers.get('Link')
       if (link && link.length) {
