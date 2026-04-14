@@ -27,7 +27,7 @@ import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeObject } 
 import { afterSetUserInfo, setUserInfo } from './auth.js';
 import { showNotificationSources } from './activity.js';
 import { getProxyableIRI, getUrlParams, stripFragmentFromString, stripUrlSearchHash } from './uri.js';
-import { getMultipleResources } from './fetcher.js';
+import { SolidStorage } from './storage/backend.js';
 import { initEditor } from './editor/initEditor.js';
 import { showGraph, showVisualisationGraph } from './viz.js';
 import shower from '@shower/core';
@@ -38,6 +38,7 @@ import { hasNonWhitespaceText, getDocumentContentNode, selectArticleNode, fragme
 
 export async function init (url) {
   initServiceWorker();
+  initStorageBackend();
 
   var contentNode = getDocumentContentNode(document);
   if (contentNode) {
@@ -64,6 +65,12 @@ export async function init (url) {
 
     monitorNetworkStatus();
     initPrint();
+  }
+}
+
+function initStorageBackend() {
+  if (!Config.Storage) {
+    Config.Storage = new SolidStorage();
   }
 }
 
@@ -218,7 +225,7 @@ export async function initDocumentMode(mode) {
       addMessageToLog({...messageObject, content: message}, Config.MessageLog);
       const messageId = showActionMessage(document.body, messageObject);
 
-      let results = await getMultipleResources(openResources)
+      let results = await Config.Storage.getMultiple(openResources)
 
       const contentTypes = results.map(r => r.type);
       const iris = openResources;
