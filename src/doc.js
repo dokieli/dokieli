@@ -22,7 +22,6 @@ import LinkHeader from "http-link-header";
 import Config from './config.js'
 import { getDateTimeISO, generateAttributeId, uniqueArray, generateUUID, matchAllIndex, getRandomIndex, getHash, isValidISBN, getDateTimeISOFromMDY } from './util.js'
 import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath, getPrefixedNameFromIRI, generateDataURI, getProxyableIRI, getFragmentOrLastPath, currentLocation } from './uri.js'
-import { getResourceHead, deleteResource, processSave, patchResourceWithAcceptPatch, copyResource, getResource } from './fetcher.js'
 import { getResourceGraph, sortGraphTriples, getGraphContributors, getGraphAuthors, getGraphEditors, getGraphPerformers, getGraphPublishers, getGraphLabel, getGraphEmail, getGraphTitle, getGraphConceptLabel, getGraphPublished, getGraphUpdated, getGraphDescription, getGraphLicense, getGraphRights, getGraphFromData, getGraphAudience, getGraphTypes, getGraphLanguage, getGraphInbox, getUserLabelOrIRI, getGraphImage, getGraphDate, processResources, getAgentName } from './graph.js';
 import { Icon } from './ui/icons.js';
 import { buttonIcons, getButtonHTML, updateButtons } from './ui/buttons.js'
@@ -1325,7 +1324,7 @@ export function handleDeleteNote(button) {
   url = url.href.replace(url.hash, '');
 
   if (url) {
-    deleteResource(url)
+    Config.Storage.delete(url)
       .then(() => {
         li.parentNode.removeChild(li);
         if (Config.EditorEnabled && Config.Editor.editorView) {
@@ -1847,7 +1846,7 @@ export function getResourceSupplementalInfo(documentURL, options) {
   if (!options.reuse) {
     var rHeaders = { 'Cache-Control': 'no-cache' };
     var rOptions = { 'noCache': true };
-    return getResourceHead(documentURL, rHeaders, rOptions)
+    return Config.Storage.head(documentURL, rHeaders, rOptions)
       .then(response => {
         updateSupplementalInfo(response);
         processSupplementalInfoLinkHeaders(documentURL, options);
@@ -2231,7 +2230,7 @@ export function createImmutableResource(url, data, options) {
 
   // Create URI-M
   data = getDocument(rootNode, documentOptions);
-  processSave(containerIRI, uuid, data, options)
+  Config.Storage.save(containerIRI, uuid, data, options)
     .then((resolved) => handleActionMessage(resolved))
     .catch((rejected) => handleActionMessage(null, rejected))
     .finally(() => {
@@ -2267,7 +2266,7 @@ export function createImmutableResource(url, data, options) {
 
     // Create URI-R
     data = getDocument(null, documentOptions);
-    processSave(url, null, data, options)
+    Config.Storage.save(url, null, data, options)
       .then((resolved) => handleActionMessage(resolved))
       .catch((rejected) => handleActionMessage(null, rejected))
   }
@@ -2279,7 +2278,7 @@ export function createImmutableResource(url, data, options) {
 
   var patch = { 'insert': insertG };
 
-  patchResourceWithAcceptPatch(timeMapURL, patch).then(() => {
+  Config.Storage.patchWithConneg(timeMapURL, patch).then(() => {
     showTimeMap(null, timeMapURL)
   });
 }
@@ -2322,7 +2321,7 @@ export function createMutableResource(url, data, options) {
   // First serialize: document carries the mutableURL identifier (rel:latest-version).
   data = getDocument(null, documentOptions);
 
-  processSave(containerIRI, uuid, data, options)
+  Config.Storage.save(containerIRI, uuid, data, options)
     .then((resolved) => handleActionMessage(resolved))
     .catch((rejected) => handleActionMessage(null, rejected))
 
@@ -2334,7 +2333,7 @@ export function createMutableResource(url, data, options) {
 
   data = getDocument(null, documentOptions);
 
-  processSave(url, null, data, options)
+  Config.Storage.save(url, null, data, options)
     .then((resolved) => handleActionMessage(resolved))
     .catch((rejected) => handleActionMessage(null, rejected))
     .finally(() => {
@@ -2364,7 +2363,7 @@ export function updateMutableResource(url, data, options) {
 
   data = getDocument(null, documentOptions);
 
-  processSave(url, null, data, options)
+  Config.Storage.save(url, null, data, options)
     .then((resolved) => handleActionMessage(resolved))
     .catch((rejected) => handleActionMessage(null, rejected))
     .finally(() => {
@@ -4155,7 +4154,7 @@ export function copyRelativeResources(storageIRI, relativeNodes) {
         toURL = baseURL + pathToFile
       }
 
-      copyResource(fromURL, toURL);
+      Config.Storage.copy(fromURL, toURL);
     }
   }
 }
@@ -4527,7 +4526,7 @@ export function getCitation(i, options) {
 
     var isbnData = rdf.grapoi({ dataset: rdf.dataset() }).node(rdf.namedNode(url));
 
-    return getResource(url, headers, options)
+    return Config.Storage.get(url, headers, options)
       .then(response => {
         // console.log(response)
         return response.text();
@@ -4575,7 +4574,7 @@ export function getCitation(i, options) {
         if (data.authors && Array.isArray(data.authors) && data.authors.length && data.authors[0].key) {
           var a = 'https://openlibrary.org' + data.authors[0].key;
           // console.log(a)
-          promises.push(getResource(a, headers, options)
+          promises.push(Config.Storage.get(a, headers, options)
             .then(response => {
               // console.log(response)
               return response.text();

@@ -23,7 +23,6 @@ import { schema, allowedEmptyAttributes } from "./../../schema/base.js"
 import { formHandlerLanguage, formHandlerA, formHandlerAnnotate, formHandlerBlockquote, formHandlerImg, formHandlerQ, formHandlerCitation, formHandlerRequirement, formHandlerSemantics } from "./handlers.js"
 import { ToolbarView, annotateFormControls } from "../toolbar.js"
 import { createRDFaHTMLRequirement, getCitationOptionsHTML, getLanguageOptionsHTML, getRequirementLevelOptionsHTML, getRequirementSubjectOptionsHTML } from "../../../doc.js"
-import { getResource } from "../../../fetcher.js"
 import Config from "../../../config.js";
 import { fragmentFromString } from "../../../utils/html.js";
 import { i18n } from "../../../i18n.js"
@@ -970,7 +969,7 @@ nodeToHTML(node, schema) {
       var headers = {'Accept': 'application/json'};
       var options = {'noCredentials': true};
 
-      getResource(url, headers, options)
+      Config.Storage.get(url, headers, options)
         .then(response => {
           // console.log(response);
           return response.text();

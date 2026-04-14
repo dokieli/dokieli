@@ -18,7 +18,6 @@ limitations under the License.
 import { diffArrays } from "diff";
 import { accessModePossiblyAllowed } from "./access.js";
 import { addMessageToLog, getDocument, getResourceInfo, processSupplementalInfoLinkHeaders, showActionMessage, updateResourceInfos, updateSupplementalInfo } from "./doc.js";
-import { getResource, putResource } from "./fetcher.js";
 import { getDeviceStorageItem, updateDeviceStorageItem, updateStorage, removeDeviceStorageDocumentFromCollection } from "./storage.js";
 import { getDateTimeISO, getDateTimeISOFromDate, getHash } from "./util.js";
 import { fragmentFromString, getDocumentNodeFromString, parseMarkdown } from "./utils/html.js";
@@ -112,7 +111,7 @@ export async function syncLocalRemoteResource(options = {}) {
 
   //200
   try {
-    response = await getResource(Config.DocumentURL, headers, {});
+    response = await Config.Storage.get(Config.DocumentURL, headers, {});
     status = response.status;
     remoteETag = response.headers.get('ETag');
     remoteLastModified = response.headers.get('Last-Modified');
@@ -458,7 +457,7 @@ export async function pushLocalContentToRemote(localItem, headers) {
   const { id, content, mediaType } = localItem;
   // console.log(localItem, headers)
 
-  const response = await putResource(Config.DocumentURL, content, mediaType, null, { headers });
+  const response = await Config.Storage.put(Config.DocumentURL, content, mediaType, null, { headers });
 
   console.log(`Remote updated (${response.status}).`);
 

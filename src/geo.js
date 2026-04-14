@@ -22,7 +22,6 @@ const L = { ...leaflet, ...leafletGpx };
 import { generateAttributeId, convertToISO8601Duration } from './util.js'
 import { getAgentHTML, createDateHTML, setCopyToClipboard } from './doc.js'
 import { fragmentFromString, selectArticleNode } from "./utils/html.js";
-import { getResource } from './fetcher.js'
 import { i18n } from './i18n.js';
 import { sanitizeInsertAdjacentHTML } from './utils/sanitization.js';
 
@@ -539,14 +538,14 @@ async function lookupPlace(lat, lon) {
   const options = { 'noCredentials': true };
 
   try {
-    const reverseResponse = await getResource(reverseURL, headers, options);
+    const reverseResponse = await Config.Storage.get(reverseURL, headers, options);
     const reverseData = await reverseResponse.json();
 
     const osmId = reverseData.features[0].properties.osm_id;
     const osmType = reverseData.features[0].properties.osm_type.charAt(0).toUpperCase();
 
     const detailsURL = `https://nominatim.openstreetmap.org/details.php?format=json&osmtype=${osmType}&osmid=${osmId}`;
-    const detailsResponse = await getResource(detailsURL, headers, options);
+    const detailsResponse = await Config.Storage.get(detailsURL, headers, options);
     const detailsData = await detailsResponse.json();
 
     return { 'reverse': reverseData, 'details': detailsData };
