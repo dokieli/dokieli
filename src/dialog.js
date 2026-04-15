@@ -1461,12 +1461,6 @@ function setupResourceBrowser(parent, id, action){
         defaultDirUrl = u.toString();
       }
     } catch {}
-    var gf = Config.User?.GitForge;
-    var srcIsForge = false;
-    try { srcIsForge = !!(defaultDirUrl && Config.Storage?.for?.(defaultDirUrl)?.name === 'gitforge'); } catch {}
-    if (gf?.host && gf?.login && !srcIsForge) {
-      defaultDirUrl = `https://${gf.host}/${gf.login}/`;
-    }
     var inMarkdownMode = !!document.querySelector('[data-markdown-mode]');
     var preferredExt = inMarkdownMode ? 'md' : 'html';
     if (!defaultFilename) {
@@ -1474,6 +1468,13 @@ function setupResourceBrowser(parent, id, action){
     } else if (inMarkdownMode) {
       defaultFilename = defaultFilename.replace(/\.[^./]+$/, '') + '.md';
     }
+  }
+
+  var gf = Config.User?.GitForge;
+  var srcIsForge = false;
+  try { srcIsForge = !!(defaultDirUrl && Config.Storage?.for?.(defaultDirUrl)?.name === 'gitforge'); } catch {}
+  if (gf?.host && gf?.login && !srcIsForge) {
+    defaultDirUrl = `https://${gf.host}/${gf.login}/`;
   }
 
   var filenameField = action === 'write'
@@ -1567,7 +1568,7 @@ function setupResourceBrowser(parent, id, action){
   else if(Config.Resource[Config.DocumentURL]?.annotationService?.length) {
     baseUrl = forceTrailingSlash(Config.Resource[Config.DocumentURL].annotationService[0]);
   }
-  else if (action === 'write' && Config.User?.GitForge?.host && Config.User?.GitForge?.login) {
+  else if (Config.User?.GitForge?.host && Config.User?.GitForge?.login) {
     baseUrl = `https://${Config.User.GitForge.host}/${Config.User.GitForge.login}/`;
   }
 
@@ -1603,7 +1604,13 @@ function setupResourceBrowser(parent, id, action){
 function triggerBrowse(url, id, action){
   var inputBox = document.getElementById(id);
   if (url.length > 10 && url.match(/^https?:\/\//g) && url.slice(-1) == "/"){
-// console.log(url)
+    const gitforge = Config.Storage?.backend?.('gitforge');
+    if (gitforge?.canList?.(url)) {
+      generateGitForgeBrowserList(url, id, action).catch(e => {
+        showErrorResponseMessage(inputBox, { status: e.status, statusText: e.message });
+      });
+      return;
+    }
     var headers;
     headers = {'Accept': 'text/turtle, application/ld+json'};
     getResourceGraph(url, headers).then(g => {
@@ -1772,20 +1779,38 @@ function showErrorResponseMessage(node, response, context) {
 //TODO: Refactor, especially buttons.
 function initBrowse(baseUrl, input, browseButton, createButton, id, action){
   input.value = baseUrl;
-  var headers = {'Accept': 'text/turtle, application/ld+json'};
-  getResourceGraph(baseUrl, headers)
-    .then(g => {
-      if (!g) return;
-      return generateBrowserList(g, baseUrl, id, action)
-        .then(() => showStorageDescription(g, id, baseUrl));
-    })
-    .catch(() => {})
-    .then(() => {
-      let sampNode = document.getElementById(id + '-' + action);
-      if (sampNode) {
-        sampNode.textContent = (action == 'write') ? input.value + generateAttributeId() : input.value;
-      }
-    });
+
+  const gitforge = Config.Storage?.backend?.('gitforge');
+  if (gitforge?.canList?.(baseUrl)) {
+    generateGitForgeBrowserList(baseUrl, id, action)
+      .catch((e) => {
+        const node = document.getElementById(id);
+        if (node) {
+          showErrorResponseMessage(node, { status: e.status, statusText: e.message });
+        }
+      })
+      .then(() => {
+        let sampNode = document.getElementById(id + '-' + action);
+        if (sampNode) {
+          sampNode.textContent = (action == 'write') ? input.value + (document.getElementById(id + '-filename')?.value || generateAttributeId()) : input.value;
+        }
+      });
+  } else {
+    var headers = {'Accept': 'text/turtle, application/ld+json'};
+    getResourceGraph(baseUrl, headers)
+      .then(g => {
+        if (!g) return;
+        return generateBrowserList(g, baseUrl, id, action)
+          .then(() => showStorageDescription(g, id, baseUrl));
+      })
+      .catch(() => {})
+      .then(() => {
+        let sampNode = document.getElementById(id + '-' + action);
+        if (sampNode) {
+          sampNode.textContent = (action == 'write') ? input.value + generateAttributeId() : input.value;
+        }
+      });
+  }
 
 
 
@@ -1797,6 +1822,81 @@ function initBrowse(baseUrl, input, browseButton, createButton, id, action){
       showCreateContainer(input.value, id, action, e);
     }, false);
   }
+}
+
+async function generateGitForgeBrowserList(url, id, action) {
+  const gitforge = Config.Storage?.backend?.('gitforge');
+  if (!gitforge) return;
+
+  const inputEl = document.getElementById(id + '-input');
+  inputEl.value = url;
+
+  const containerNode = document.getElementById(id);
+  containerNode.querySelectorAll('.response-message').forEach(n => n.parentNode.removeChild(n));
+  const createContainer = document.getElementById(id + '-create-container');
+  if (createContainer) createContainer.replaceChildren();
+
+  const list = document.getElementById(id + '-ul');
+  list.replaceChildren();
+
+  let items;
+  try {
+    items = await gitforge.list(url);
+  } catch (e) {
+    sanitizeInsertAdjacentHTML(containerNode, 'beforeend', `<div class="response-message"><p class="error">${e.message}</p></div>`);
+    return;
+  }
+
+  try {
+    const u = new URL(url);
+    const parts = u.pathname.replace(/^\//, '').replace(/\/$/, '').split('/').filter(Boolean);
+    if (parts.length > 1) {
+      let prev;
+      if (parts.length === 2) {
+        prev = `${u.origin}/${parts[0]}/`;
+      } else {
+        const popped = parts.slice(0, -1);
+        if ((popped.length === 4 && popped[2] === 'src' && popped[3] === 'branch') ||
+            (popped.length === 3 && popped[2] === 'tree')) {
+          prev = `${u.origin}/${popped[0]}/${popped[1]}/`;
+        } else {
+          prev = `${u.origin}/${popped.join('/')}/`;
+        }
+      }
+      const upId = `gf-up-${generateAttributeId()}`;
+      sanitizeInsertAdjacentHTML(list, 'beforeend', `<li class="container"><input type="radio" name="containers" value="${prev}" id="${upId}" /><label for="${upId}" id="browser-up">..</label></li>`);
+    }
+  } catch {}
+
+  const dirs = items.filter(i => i.type === 'dir').sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+  const files = items.filter(i => i.type === 'file').sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+
+  const renderItem = (it) => {
+    const inputId = `gf-${generateAttributeId()}`;
+    return `<li class="${it.type === 'dir' ? 'container' : ''}"><input type="radio" name="resources" value="${it.url}" id="${inputId}"/><label for="${inputId}">${it.name}</label></li>`;
+  };
+  const html = [...dirs.map(renderItem), ...files.map(renderItem)].join('\n');
+  sanitizeInsertAdjacentHTML(list, 'beforeend', html);
+
+  if (items.length === 0) {
+    sanitizeInsertAdjacentHTML(list, 'beforeend', '<p><em>(empty)</em></p>');
+  }
+
+  const actionNode = document.getElementById(id + '-' + action);
+  const labels = list.querySelectorAll('label');
+  labels.forEach(label => {
+    const li = label.parentNode;
+    const input = li.querySelector('input');
+    const nextUrl = input.value;
+    label.addEventListener('click', () => {
+      if (li.classList.contains('container')) {
+        generateGitForgeBrowserList(nextUrl, id, action).catch(() => {});
+      } else {
+        inputEl.value = nextUrl;
+        if (actionNode) actionNode.textContent = nextUrl;
+      }
+    }, false);
+  });
 }
 
 function generateBrowserList(g, url, id, action) {

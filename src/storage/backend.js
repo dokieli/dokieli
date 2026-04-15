@@ -638,6 +638,96 @@ class GitForgeStorage extends StorageBackend {
     return `${target}.${ext}`;
   }
 
+  _parseListTarget(url) {
+    let u;
+    try { u = new URL(url); } catch { return null; }
+    const cfg = this._configFor(url);
+    if (!cfg || u.host !== cfg.host) return null;
+
+    const parts = u.pathname.replace(/^\//, "").replace(/\/$/, "").split("/").filter(Boolean);
+    if (parts.length === 0) return null;
+    if (parts.length === 1) return { kind: "user", host: cfg.host, login: parts[0] };
+    if (parts.length === 2) return { kind: "repo", host: cfg.host, owner: parts[0], repo: parts[1] };
+
+    const [owner, repo, kind, ...rest] = parts;
+    if (cfg.provider === "forgejo" && kind === "src" && rest[0] === "branch" && rest.length >= 2) {
+      const ref = rest[1];
+      const path = rest.slice(2).join("/");
+      return { kind: "tree", host: cfg.host, owner, repo, ref, path };
+    }
+    if (cfg.provider === "github" && kind === "tree" && rest.length >= 1) {
+      let ref, pathParts;
+      if (rest[0] === "refs" && (rest[1] === "heads" || rest[1] === "tags") && rest.length >= 3) {
+        ref = rest.slice(0, 3).join("/");
+        pathParts = rest.slice(3);
+      } else {
+        ref = rest[0];
+        pathParts = rest.slice(1);
+      }
+      return { kind: "tree", host: cfg.host, owner, repo, ref, path: pathParts.join("/") };
+    }
+    return null;
+  }
+
+  _treeUrl({ host, owner, repo, ref, path }) {
+    const cfg = this.#hosts.get(host);
+    const base = cfg.provider === "forgejo"
+      ? `https://${host}/${owner}/${repo}/src/branch/${ref}`
+      : `https://${host}/${owner}/${repo}/tree/${ref}`;
+    return path ? `${base}/${path}/` : `${base}/`;
+  }
+
+  _repoBrowseUrl({ host, owner, repo }) {
+    return `https://${host}/${owner}/${repo}/`;
+  }
+
+  canList(url) {
+    return !!this._parseListTarget(url);
+  }
+
+  async list(url) {
+    const target = this._parseListTarget(url);
+    if (!target) throw new Error(`GitForgeStorage: cannot list ${url}`);
+    const cfg = this.#hosts.get(target.host);
+
+    if (target.kind === "user") {
+      const apiUrl = `${cfg.apiBase}/users/${encodeURIComponent(target.login)}/repos?per_page=100&sort=updated`;
+      const response = await fetch(apiUrl, { headers: this._headers(target.host) });
+      if (!response.ok) throw new Error(`Error listing repos: ${response.status} ${response.statusText}`);
+      const payload = await response.json();
+      return payload.map(r => ({
+        name: r.name,
+        type: "dir",
+        url: this._repoBrowseUrl({ host: target.host, owner: r.owner?.login || target.login, repo: r.name }),
+      }));
+    }
+
+    let ref, path;
+    if (target.kind === "repo") {
+      ref = await this._resolveDefaultBranch({ host: target.host, owner: target.owner, repo: target.repo });
+      path = "";
+    } else {
+      ref = target.ref;
+      path = target.path;
+    }
+
+    const apiUrl = `${cfg.apiBase}/repos/${target.owner}/${target.repo}/contents/${path}${ref ? `?ref=${encodeURIComponent(ref)}` : ""}`;
+    const response = await fetch(apiUrl, { headers: this._headers(target.host) });
+    if (!response.ok) throw new Error(`Error listing contents: ${response.status} ${response.statusText}`);
+    const payload = await response.json();
+    const items = Array.isArray(payload) ? payload : [payload];
+    const parent = { host: target.host, owner: target.owner, repo: target.repo, ref };
+    return items.map(it => ({
+      name: it.name,
+      type: it.type === "dir" ? "dir" : "file",
+      url: it.type === "dir"
+        ? this._treeUrl({ ...parent, path: path ? `${path}/${it.name}` : it.name })
+        : (cfg.provider === "forgejo"
+            ? `https://${target.host}/${target.owner}/${target.repo}/src/branch/${ref}/${path ? `${path}/` : ""}${it.name}`
+            : `https://${target.host}/${target.owner}/${target.repo}/blob/${ref}/${path ? `${path}/` : ""}${it.name}`),
+    }));
+  }
+
   async save(url, slug, data, options = {}) {
     let target = slug ? url.replace(/\/?$/, "/") + slug : url;
     target = this._ensureExtension(target, options.contentType);
