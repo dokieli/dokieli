@@ -49,6 +49,8 @@ window.addEventListener('dokieli:version-restored', (e) => { lastRestoredKey = e
 window.addEventListener('dokieli:editor-mode-changed', () => updateSlideshowAddButton());
 
 let _documentDoClickInit = false;
+let _documentMenuClickInit = false;
+let _autoSaveChangeInit = false;
 
 export function initDocumentMenu(options = {}) {
   options = { loading: true, ...options };
@@ -88,7 +90,8 @@ export function initDocumentMenu(options = {}) {
     enableMenu();
   }, { once: true });
   
-  var userInfo = document.getElementById('user-info');
+  if (_documentMenuClickInit) return;
+  _documentMenuClickInit = true;
 
   document.addEventListener('click', (e) => {
     var button = e.target.closest('button');
@@ -101,7 +104,7 @@ export function initDocumentMenu(options = {}) {
       }
     }
     else if (button?.classList.contains('signout-user')) {
-      userInfoSignOut(userInfo);
+      userInfoSignOut(document.getElementById('user-info'));
     }
   });
   
@@ -223,9 +226,11 @@ function showLanguages(node) {
 }
 
 export async function showAutoSave(node) {
-  if (node.querySelector('#document-autosave')) { return; }
+  if (document.getElementById('document-autosave')) { return; }
 
   const storageObject = await getDeviceStorageItem(Config.DocumentURL);
+
+  if (document.getElementById('document-autosave')) { return; }
 
   const hasAccessModeWrite = accessModePossiblyAllowed(Config.DocumentURL, 'write');
   let checked = true;
@@ -247,7 +252,7 @@ export async function showAutoSave(node) {
   <section aria-labelledby="document-autosave-label" id="document-autosave" rel="schema:hasPart" resource="#document-autosave">
     <h2 data-i18n="menu.autosave.h2" id="document-autosave-label" property="schema:name">${i18n.t('menu.autosave.h2.textContent')}</h2>
     <input${checked} data-i18n="menu.autosave.input"${disabled} id="autosave-remote" title="${i18n.t('menu.autosave.input.title')}" type="checkbox" />
-    <label data-i18n="menu.autosave.label" for="autosave-remote"><span data-i18n="menu.autosave.label.span">${i18n.t('menu.autosave.label.span.textContent')}</span></label> 
+    <label data-i18n="menu.autosave.label" for="autosave-remote"><span data-i18n="menu.autosave.label.span">${i18n.t('menu.autosave.label.span.textContent')}</span></label>
   </section>
   `;
 
@@ -256,6 +261,9 @@ export async function showAutoSave(node) {
   if (!!disabled) {
     return;
   }
+
+  if (_autoSaveChangeInit) return;
+  _autoSaveChangeInit = true;
 
   document.addEventListener('change', async (e) => {
     if (e.target.matches('#autosave-remote')) {

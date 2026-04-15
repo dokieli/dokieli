@@ -28,23 +28,16 @@ import { i18n } from "./i18n.js";
 import { sanitizeInsertAdjacentHTML } from "./utils/sanitization.js";
 import { restoreYjsContent, addYjsVersion, getYjsVersions } from "./editor/editor.js";
 
-let remoteSyncDisabledNoticeShown = false;
+let autoSaveRemoteNoticeShown = false;
+
+function isGitForgeTarget(url) {
+  return Config.Storage?.for?.(url)?.name === 'gitforge';
+}
 
 export async function syncLocalRemoteResource(options = {}) {
   // console.log('--- syncLocalRemoteResource');
 
-  const backend = Config.Storage?.for?.(Config.DocumentURL);
-  if (backend?.name === 'gitforge') {
-    if (!remoteSyncDisabledNoticeShown) {
-      remoteSyncDisabledNoticeShown = true;
-      showActionMessage(document.body, {
-        content: 'Autosave to GitHub is disabled. Use Save to commit changes.',
-        type: 'info',
-        timer: 7000,
-      });
-    }
-    return;
-  }
+  if (isGitForgeTarget(Config.DocumentURL)) return;
 
   const documentOptions = {
     ...Config.DOMProcessing,
@@ -812,6 +805,17 @@ export async function enableAutoSave(key, options = {}) {
       const remoteAutoSaveEnabled = (storageObject && storageObject.autoSave !== undefined) ? storageObject.autoSave : true;
 
       if (remoteAutoSaveEnabled) {
+        if (isGitForgeTarget(Config.DocumentURL)) {
+          if (!autoSaveRemoteNoticeShown) {
+            autoSaveRemoteNoticeShown = true;
+            showActionMessage(document.body, {
+              content: 'Autosave to GitHub is disabled. Use Save to commit changes.',
+              type: 'info',
+              timer: 7000,
+            });
+          }
+          return;
+        }
         syncLocalRemoteResource();
       }
     }
