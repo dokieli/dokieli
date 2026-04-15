@@ -303,9 +303,20 @@ class SolidStorage extends StorageBackend {
 
 class GitForgeStorage extends StorageBackend {
   #hosts = new Map();
+  #branchLocks = new Map();
 
   constructor() {
     super();
+  }
+
+  #withBranchLock(key, fn) {
+    const prev = this.#branchLocks.get(key) || Promise.resolve();
+    const next = prev.catch(() => {}).then(fn);
+    this.#branchLocks.set(key, next);
+    next.finally(() => {
+      if (this.#branchLocks.get(key) === next) this.#branchLocks.delete(key);
+    });
+    return next;
   }
 
   get name() {
@@ -522,6 +533,7 @@ class GitForgeStorage extends StorageBackend {
     const apiUrl = this._contentsUrl(parsed, { withRef: false });
     const cfg = this.#hosts.get(parsed.host) || {};
     const branch = parsed.ref.replace(/^refs\/(heads|tags)\//, "");
+    const lockKey = `${parsed.host}/${parsed.owner}/${parsed.repo}@${branch}`;
 
     const send = async (sha) => {
       const body = {
@@ -538,20 +550,22 @@ class GitForgeStorage extends StorageBackend {
       });
     };
 
-    let sha = await this._getSha(parsed);
-    let response = await send(sha);
-    if (response.status === 409 || (response.status === 422 && !sha)) {
-      sha = await this._getSha(parsed);
-      if (sha) response = await send(sha);
-    }
-    if (!response.ok) {
-      const error = new Error(`Error writing resource: ${response.status} ${response.statusText}`);
-      error.status = response.status;
-      error.response = response;
-      throw error;
-    }
-    const location = this._browseUrl(parsed) || url;
-    return new Response(null, { status: 201, headers: { "Location": location } });
+    return this.#withBranchLock(lockKey, async () => {
+      let sha = await this._getSha(parsed);
+      let response = await send(sha);
+      if (response.status === 409 || (response.status === 422 && !sha)) {
+        sha = await this._getSha(parsed);
+        if (sha) response = await send(sha);
+      }
+      if (!response.ok) {
+        const error = new Error(`Error writing resource: ${response.status} ${response.statusText}`);
+        error.status = response.status;
+        error.response = response;
+        throw error;
+      }
+      const location = this._browseUrl(parsed) || url;
+      return new Response(null, { status: 201, headers: { "Location": location } });
+    });
   }
 
   _browseUrl({ host, owner, repo, ref, path }) {
@@ -576,30 +590,35 @@ class GitForgeStorage extends StorageBackend {
     if (parsed.ref === "HEAD") {
       parsed.ref = await this._resolveDefaultBranch(parsed);
     }
-    const sha = await this._getSha(parsed);
-    if (!sha) {
-      const error = new Error(`Error deleting resource: 404 Not Found`);
-      error.status = 404;
-      throw error;
-    }
+    const branch = parsed.ref.replace(/^refs\/(heads|tags)\//, "");
+    const lockKey = `${parsed.host}/${parsed.owner}/${parsed.repo}@${branch}`;
     const apiUrl = this._contentsUrl(parsed, { withRef: false });
-    const body = {
-      message: options.message || `Delete ${parsed.path}`,
-      sha,
-      branch: parsed.ref.replace(/^refs\/(heads|tags)\//, ""),
-    };
-    const response = await fetch(apiUrl, {
-      method: "DELETE",
-      headers: { ...this._headers(parsed.host), "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+
+    return this.#withBranchLock(lockKey, async () => {
+      const sha = await this._getSha(parsed);
+      if (!sha) {
+        const error = new Error(`Error deleting resource: 404 Not Found`);
+        error.status = 404;
+        throw error;
+      }
+      const body = {
+        message: options.message || `Delete ${parsed.path}`,
+        sha,
+        branch,
+      };
+      const response = await fetch(apiUrl, {
+        method: "DELETE",
+        headers: { ...this._headers(parsed.host), "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!response.ok) {
+        const error = new Error(`Error deleting resource: ${response.status} ${response.statusText}`);
+        error.status = response.status;
+        error.response = response;
+        throw error;
+      }
+      return response;
     });
-    if (!response.ok) {
-      const error = new Error(`Error deleting resource: ${response.status} ${response.statusText}`);
-      error.status = response.status;
-      error.response = response;
-      throw error;
-    }
-    return response;
   }
 
   async copy(fromURL, toURL, options = {}) {
