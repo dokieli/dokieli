@@ -431,11 +431,18 @@ async function signInWithForgejoPAT(serverUrl, token, aside) {
 }
 
 export async function signOutGitForge(host) {
-  const { getDeviceStorageItem } = await import('./storage.js');
+  const { getDeviceStorageItem, removeDeviceStorageItem } = await import('./storage.js');
   const hosts = (await getDeviceStorageItem(GIT_FORGE_HOSTS_KEY)) || {};
-  if (host) delete hosts[host];
-  else Object.keys(hosts).forEach(k => delete hosts[k]);
-  await setDeviceStorageItem(GIT_FORGE_HOSTS_KEY, hosts);
+  if (host) {
+    delete hosts[host];
+    if (Object.keys(hosts).length) {
+      await setDeviceStorageItem(GIT_FORGE_HOSTS_KEY, hosts);
+    } else {
+      await removeDeviceStorageItem(GIT_FORGE_HOSTS_KEY);
+    }
+  } else {
+    await removeDeviceStorageItem(GIT_FORGE_HOSTS_KEY);
+  }
   const gitforge = Config.Storage?.backend?.('gitforge');
   if (gitforge?.setToken) {
     if (host) gitforge.setToken(host, null);
