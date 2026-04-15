@@ -519,22 +519,31 @@ class GitForgeStorage extends StorageBackend {
     if (parsed.ref === "HEAD") {
       parsed.ref = await this._resolveDefaultBranch(parsed);
     }
-    const sha = await this._getSha(parsed);
     const apiUrl = this._contentsUrl(parsed, { withRef: false });
-    const body = {
-      message: options.message || `Update ${parsed.path}`,
-      content: this._encodeContent(data),
-      branch: parsed.ref.replace(/^refs\/(heads|tags)\//, ""),
-    };
-    if (sha) body.sha = sha;
-
     const cfg = this.#hosts.get(parsed.host) || {};
-    const method = (cfg.provider === "forgejo" && !sha) ? "POST" : "PUT";
-    const response = await fetch(apiUrl, {
-      method,
-      headers: { ...this._headers(parsed.host), "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    const branch = parsed.ref.replace(/^refs\/(heads|tags)\//, "");
+
+    const send = async (sha) => {
+      const body = {
+        message: options.message || `Update ${parsed.path}`,
+        content: this._encodeContent(data),
+        branch,
+      };
+      if (sha) body.sha = sha;
+      const method = (cfg.provider === "forgejo" && !sha) ? "POST" : "PUT";
+      return fetch(apiUrl, {
+        method,
+        headers: { ...this._headers(parsed.host), "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+    };
+
+    let sha = await this._getSha(parsed);
+    let response = await send(sha);
+    if (response.status === 409 || (response.status === 422 && !sha)) {
+      sha = await this._getSha(parsed);
+      if (sha) response = await send(sha);
+    }
     if (!response.ok) {
       const error = new Error(`Error writing resource: ${response.status} ${response.statusText}`);
       error.status = response.status;
