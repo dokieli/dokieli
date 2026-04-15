@@ -19,7 +19,7 @@ import rdf from 'rdf-ext';
 import LinkHeader from "http-link-header";
 import { i18n } from './i18n.js';
 import { getButtonHTML, updateButtons } from './ui/buttons.js';
-import { addMessageToLog, buildResourceView, copyRelativeResources, createFeedXML, createImmutableResource, createMutableResource, createNoteDataHTML, getAccessModeOptionsHTML, getBaseURLSelection, getDocument, getFeedFormatSelection, getLanguageOptionsHTML, getLicenseOptionsHTML, getResourceInfo, rewriteBaseURL, setCopyToClipboard, setDocumentRelation, showActionMessage, showRobustLinksDecoration, showTimeMap, updateMutableResource, buildReferences, getDocumentConceptDefinitionsHTML, insertDocumentLevelHTML, insertTestCoverageToTable, diffRequirements, removeReferences, getStorageSelfDescription, getContactInformation, getPersistencePolicy, getODRLPolicies, updateResourceInfos, initCurrentStylesheet, setDate, showFragment, initCopyToClipboard, setDocumentURL, getAgentHTML } from './doc.js';
+import { addMessageToLog, buildResourceView, copyRelativeResources, createFeedXML, createImmutableResource, createMutableResource, createNoteDataHTML, getAccessModeOptionsHTML, getBaseURLSelection, getDocument, getFeedFormatSelection, getLanguageOptionsHTML, getLicenseOptionsHTML, getResourceInfo, getSavePayload, isMarkdownTarget, rewriteBaseURL, setCopyToClipboard, setDocumentRelation, showActionMessage, showRobustLinksDecoration, showTimeMap, updateMutableResource, buildReferences, getDocumentConceptDefinitionsHTML, insertDocumentLevelHTML, insertTestCoverageToTable, diffRequirements, removeReferences, getStorageSelfDescription, getContactInformation, getPersistencePolicy, getODRLPolicies, updateResourceInfos, initCurrentStylesheet, setDate, showFragment, initCopyToClipboard, setDocumentURL, getAgentHTML } from './doc.js';
 import { removeNodesWithIds, createHTML } from './utils/html.js';
 import { accessModeAllowed, accessModePossiblyAllowed } from './access.js';
 import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeObject, htmlEncode, sanitizeIRIs } from './utils/sanitization.js';
@@ -1437,43 +1437,84 @@ function setupResourceBrowser(parent, id, action){
     createContainerDiv = `<div id="${id}-create-container"></div>`;
   }
 
-  sanitizeInsertAdjacentHTML(parent, 'beforeend', `<div id="${id}"><label for="${id}-input">URL</label> <input dir="ltr" id="${id}-input" name="${id}-input" placeholder="https://example.org/path/to/" required="" type="url" /><button data-i18n="browser.browse-location.button" id="${id}-update" disabled="disabled" title="${i18n.t('browser.browse-location.button.textContent')}">${i18n.t('browser.browse-location.button.textContent')}</button>${createContainerButton}</div>${createContainerDiv}<div id="${id}-listing"></div>`);
+  var defaultDirUrl = '';
+  var defaultFilename = '';
+  if (action === 'write') {
+    try {
+      var src = Config.DocumentURL;
+      if (src && /^https?:\/\//.test(src)) {
+        var u = new URL(src);
+        var segments = u.pathname.split('/');
+        var last = segments.pop();
+        defaultFilename = last || '';
+        u.pathname = segments.join('/') + '/';
+        u.search = '';
+        u.hash = '';
+        defaultDirUrl = u.toString();
+      }
+    } catch {}
+    var inMarkdownMode = !!document.querySelector('[data-markdown-mode]');
+    var preferredExt = inMarkdownMode ? 'md' : 'html';
+    if (!defaultFilename) {
+      defaultFilename = generateAttributeId() + '.' + preferredExt;
+    } else if (inMarkdownMode) {
+      defaultFilename = defaultFilename.replace(/\.[^./]+$/, '') + '.md';
+    }
+  }
+
+  var filenameField = action === 'write'
+    ? ` <label for="${id}-filename">Filename</label> <input dir="ltr" id="${id}-filename" name="${id}-filename" placeholder="my-document.html" type="text" value="${defaultFilename}" />`
+    : '';
+
+  var urlLabel = (action === 'write' && Config.User?.GitForge) ? 'URL or repo URL' : 'URL';
+  sanitizeInsertAdjacentHTML(parent, 'beforeend', `<div id="${id}"><label for="${id}-input">${urlLabel}</label> <input dir="ltr" id="${id}-input" name="${id}-input" placeholder="https://example.org/path/to/" required="" type="url" value="${defaultDirUrl}" /><button data-i18n="browser.browse-location.button" id="${id}-update" ${defaultDirUrl ? '' : 'disabled="disabled"'} title="${i18n.t('browser.browse-location.button.textContent')}">${i18n.t('browser.browse-location.button.textContent')}</button>${createContainerButton}${filenameField}</div>${createContainerDiv}<div id="${id}-listing"></div>`);
 
   // var inputBox = document.getElementById(id);
   var createContainer = document.getElementById(id + '-create-container');
   var createButton = document.getElementById(id + '-create-container-button');
   var storageBox = document.getElementById(id + '-listing');
   var input = document.getElementById(id + '-input');
+  var filenameInput = document.getElementById(id + '-filename');
   var browseButton = document.getElementById(id + '-update');
 
-  input.addEventListener('keyup', (e) => {
+  var isValidBase = (v) => v.length > 10 && /^https?:\/\//.test(v);
+  var withTrailingSlash = (v) => v.slice(-1) === '/' ? v : v + '/';
+
+  input.addEventListener('input', () => {
     var msgs = document.getElementById(id).querySelectorAll('.response-message');
     for(var i = 0; i < msgs.length; i++){
       msgs[i].parentNode.removeChild(msgs[i]);
     }
 
     var actionNode = document.getElementById(id + '-' + action);
-    if (input.value.length > 10 && input.value.match(/^https?:\/\//g) && input.value.slice(-1) == "/") {
+    if (isValidBase(input.value)) {
       browseButton.removeAttribute('disabled');
-      //TODO: enable button if only agent has write permission?
-      // createButton.removeAttribute('disabled');
-
-      if(e.which == 13){
-        triggerBrowse(input.value, id, action);
-      }
       if(actionNode){
-        actionNode.textContent = input.value + generateAttributeId();
+        actionNode.textContent = withTrailingSlash(input.value) + (filenameInput ? filenameInput.value : generateAttributeId());
       }
     }
     else {
       browseButton.disabled = 'disabled';
-      //TODO: disable button if only agent has write permission?
-      // createButton.disabled = 'disabled';
       if(actionNode) {
         actionNode.textContent = input.value;
       }
     }
   }, false);
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && isValidBase(input.value)) {
+      triggerBrowse(input.value, id, action);
+    }
+  }, false);
+
+  if (filenameInput) {
+    filenameInput.addEventListener('input', () => {
+      var actionNode = document.getElementById(id + '-' + action);
+      if (actionNode && isValidBase(input.value)) {
+        actionNode.textContent = withTrailingSlash(input.value) + filenameInput.value;
+      }
+    });
+  }
 
   browseButton.addEventListener('click', (e) => {
     e.preventDefault();
@@ -1481,6 +1522,15 @@ function setupResourceBrowser(parent, id, action){
 
     triggerBrowse(input.value, id, action);
   }, false);
+
+  if (action === 'write' && isValidBase(input.value)) {
+    queueMicrotask(() => {
+      var actionNode = document.getElementById(id + '-' + action);
+      if (actionNode) {
+        actionNode.textContent = withTrailingSlash(input.value) + (filenameInput ? filenameInput.value : '');
+      }
+    });
+  }
 
   var browserul = document.getElementById(id + '-ul');
   if(!browserul){
@@ -2445,7 +2495,19 @@ export async function saveAsDocument(e) {
     e.stopPropagation();
 
     var saveAsDocument = document.getElementById('save-as-document')
-    var storageIRI = saveAsDocument.querySelector('#' + id + '-' + action).innerText.trim()
+    var urlInputEl = saveAsDocument.querySelector('#' + id + '-input');
+    var filenameInputEl = saveAsDocument.querySelector('#' + id + '-filename');
+    var baseUrlValue = (urlInputEl?.value || '').trim();
+    var filenameValue = (filenameInputEl?.value || '').trim();
+    var storageIRI = '';
+    try {
+      if (baseUrlValue) {
+        var baseHref = baseUrlValue.slice(-1) === '/' ? baseUrlValue : baseUrlValue + '/';
+        storageIRI = filenameValue ? new URL(filenameValue, baseHref).href : baseHref;
+      }
+    } catch {
+      storageIRI = '';
+    }
 
     var rm = saveAsDocument.querySelector('.response-message')
     if (rm) {
@@ -2454,7 +2516,7 @@ export async function saveAsDocument(e) {
 
 
     // TODO: this needs to be form validation instead
-    if (!storageIRI.length) {
+    if (!storageIRI.length || !/^https?:\/\/[^/]+\//.test(storageIRI) || (storageIRI.match(/:\/\//g) || []).length > 1) {
       sanitizeInsertAdjacentHTML(saveAsDocument, 'beforeend',
         `<div class="response-message"><p class="error" data-i18n="dialog.save-as-document.error.missing-location.p">${i18n.t("dialog.save-as-document.error.missing-location.p.textContent")}</p></div>`
       )
@@ -2523,7 +2585,15 @@ export async function saveAsDocument(e) {
     sanitizeInsertAdjacentHTML(e.target, 'afterend', '<progress min="0" max="100" value="0"></progress>')
     progress = saveAsDocument.querySelector('progress')
 
-    Config.Storage.put(storageIRI, html, null, null, { 'progress': progress })
+    let saveData = html;
+    let saveContentType = 'text/html';
+    if (isMarkdownTarget(storageIRI)) {
+      const payload = getSavePayload(storageIRI, documentOptions);
+      saveData = payload.data;
+      saveContentType = payload.contentType;
+    }
+
+    Config.Storage.put(storageIRI, saveData, saveContentType, null, { 'progress': progress, 'contentType': saveContentType })
       .then(response => {
         progress.parentNode.removeChild(progress)
 
@@ -2531,7 +2601,7 @@ export async function saveAsDocument(e) {
           copyRelativeResources(storageIRI, nodes)
         }
 
-        let url = response.url || storageIRI
+        let url = response.headers?.get?.('Location') || response.url || storageIRI
         url = sanitizeIRI(url);
 
         sanitizeInsertAdjacentHTML(saveAsDocument, 'beforeend',
@@ -3189,12 +3259,12 @@ export function resourceSave(e, options) {
     normalize: true
   };
 
-  var url = currentLocation();
+  var url = Config.DocumentURL || currentLocation();
   var data = getDocument(null, documentOptions);
   options = options || {};
 
   getResourceInfo(data, options).then(i => {
-    if (Config.DocumentAction == 'new'|| Config.DocumentAction == 'open') {
+    if (Config.DocumentAction == 'new') {
       saveAsDocument(e);
     }
     else {

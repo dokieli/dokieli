@@ -27,7 +27,7 @@ import { Icon } from './ui/icons.js';
 import { buttonIcons, getButtonHTML, updateButtons } from './ui/buttons.js'
 import { domSanitizeHTMLBody, domSanitize, sanitizeInsertAdjacentHTML, htmlEncode, sanitizeIRI } from './utils/sanitization.js';
 import { cleanProseMirrorOutput, normalizeHTML, normalizeWhitespace } from './utils/normalization.js';
-import { formatHTML, fragmentFromString, getDoctype, getDocumentContentNode, selectArticleNode, getDocumentNodeFromString, stringFromFragment, createHTML, getOffset } from './utils/html.js';
+import { formatHTML, fragmentFromString, getDoctype, getDocumentContentNode, selectArticleNode, getDocumentNodeFromString, stringFromFragment, createHTML, getOffset, htmlToMarkdown } from './utils/html.js';
 import { i18n } from './i18n.js';
 
 const ns = Config.ns;
@@ -2341,6 +2341,29 @@ export function createMutableResource(url, data, options) {
     });
 }
 
+export function isMarkdownTarget(url) {
+  if (document.querySelector('[data-markdown-mode]')) return true;
+  if (!url) return false;
+  try {
+    const path = new URL(url).pathname;
+    return /\.(md|markdown)$/i.test(path);
+  } catch {
+    return /\.(md|markdown)$/i.test(url);
+  }
+}
+
+export function getSavePayload(url, documentOptions) {
+  const mdNode = document.querySelector('[data-markdown-mode]');
+  if (mdNode) {
+    return { data: mdNode.textContent, contentType: 'text/markdown' };
+  }
+  if (isMarkdownTarget(url)) {
+    const article = selectArticleNode(document);
+    return { data: htmlToMarkdown(article), contentType: 'text/markdown' };
+  }
+  return { data: getDocument(null, documentOptions), contentType: 'text/html' };
+}
+
 export function updateMutableResource(url, data, options) {
   if (!url) return;
   options = options || {};
@@ -2361,7 +2384,9 @@ export function updateMutableResource(url, data, options) {
   setDate(rootNode, { 'id': 'document-modified', 'property': 'schema:dateModified', 'datetime': options.datetime });
   // setEditSelections(options);
 
-  data = getDocument(null, documentOptions);
+  const payload = getSavePayload(url, documentOptions);
+  data = payload.data;
+  options.contentType = payload.contentType;
 
   Config.Storage.save(url, null, data, options)
     .then((resolved) => handleActionMessage(resolved))
