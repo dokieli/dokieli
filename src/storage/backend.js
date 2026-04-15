@@ -301,4 +301,386 @@ class SolidStorage extends StorageBackend {
   }
 }
 
-export { StorageBackend, HttpStorage, SolidStorage, CAPS };
+class GitForgeStorage extends StorageBackend {
+  constructor() {
+    super();
+    this._hosts = new Map();
+  }
+
+  get name() {
+    return "gitforge";
+  }
+
+  supports(_cap) {
+    return false;
+  }
+
+  addHost(host, { apiBase, rawHost = host, provider = "github", token = null } = {}) {
+    const existing = this._hosts.get(host) || {};
+    this._hosts.set(host, {
+      apiBase: apiBase.replace(/\/$/, ""),
+      rawHost,
+      provider,
+      token: token ?? existing.token ?? null,
+    });
+  }
+
+  setToken(host, token) {
+    const cfg = this._hosts.get(host);
+    if (!cfg) return;
+    cfg.token = token || null;
+  }
+
+  hosts() {
+    return Array.from(this._hosts.keys());
+  }
+
+  matches(host) {
+    if (!host) return false;
+    if (this._hosts.has(host)) return true;
+    for (const cfg of this._hosts.values()) {
+      if (host === cfg.rawHost) return true;
+      try { if (host === new URL(cfg.apiBase).host) return true; } catch {}
+    }
+    return false;
+  }
+
+  _configFor(url) {
+    let u;
+    try { u = new URL(url); } catch { return null; }
+    if (this._hosts.has(u.host)) return { host: u.host, ...this._hosts.get(u.host) };
+    for (const [host, cfg] of this._hosts) {
+      if (u.host === cfg.rawHost) return { host, ...cfg };
+      try { if (u.host === new URL(cfg.apiBase).host) return { host, ...cfg }; } catch {}
+    }
+    return null;
+  }
+
+  _parse(url) {
+    let u;
+    try { u = new URL(url); } catch { return null; }
+    const cfg = this._configFor(url);
+    if (!cfg) return null;
+
+    const apiUrl = new URL(cfg.apiBase);
+    const apiPrefix = apiUrl.pathname.replace(/\/$/, "");
+    if (u.host === apiUrl.host && (apiPrefix === "" || u.pathname.startsWith(apiPrefix + "/"))) {
+      const rest = apiPrefix ? u.pathname.slice(apiPrefix.length) : u.pathname;
+      const m = rest.match(/^\/repos\/([^/]+)\/([^/]+)\/contents\/(.+)$/);
+      if (m) {
+        return { host: cfg.host, owner: m[1], repo: m[2], ref: u.searchParams.get("ref") || "HEAD", path: m[3] };
+      }
+    }
+
+    if (u.host === cfg.rawHost && cfg.provider === "github") {
+      const parts = u.pathname.replace(/^\//, "").split("/");
+      if (parts.length < 4) return null;
+      const [owner, repo, ref, ...rest] = parts;
+      return { host: cfg.host, owner, repo, ref, path: rest.join("/") };
+    }
+
+    const parts = u.pathname.replace(/^\//, "").split("/").filter(Boolean);
+    if (parts.length < 2) return null;
+    const [owner, repo, ...after] = parts;
+    const kind = after[0];
+
+    if (cfg.provider === "forgejo" && (kind === "src" || kind === "raw" || kind === "media") && after.length >= 4) {
+      const ref = after[2];
+      const pathParts = after.slice(3);
+      return { host: cfg.host, owner, repo, ref, path: pathParts.join("/") };
+    }
+
+    if (cfg.provider === "github" && (kind === "blob" || kind === "raw") && after.length >= 3) {
+      const browse = after.slice(1);
+      let ref, pathParts;
+      if (browse[0] === "refs" && (browse[1] === "heads" || browse[1] === "tags") && browse.length >= 4) {
+        ref = browse.slice(0, 3).join("/");
+        pathParts = browse.slice(3);
+      } else {
+        ref = browse[0];
+        pathParts = browse.slice(1);
+      }
+      return { host: cfg.host, owner, repo, ref, path: pathParts.join("/") };
+    }
+
+    if (after.length === 0) return null;
+    return { host: cfg.host, owner, repo, ref: "HEAD", path: after.join("/") };
+  }
+
+  _contentsUrl({ host, owner, repo, ref, path }, { withRef = true } = {}) {
+    const cfg = this._hosts.get(host);
+    const u = new URL(`${cfg.apiBase}/repos/${owner}/${repo}/contents/${path}`);
+    if (withRef && ref && ref !== "HEAD") u.searchParams.set("ref", ref);
+    return u.toString();
+  }
+
+  _headers(host, accept) {
+    const cfg = this._hosts.get(host) || {};
+    const h = { "Accept": accept || (cfg.provider === "github" ? "application/vnd.github.v3+json" : "application/json") };
+    if (cfg.token) {
+      h["Authorization"] = cfg.provider === "forgejo" ? `token ${cfg.token}` : `Bearer ${cfg.token}`;
+    }
+    return h;
+  }
+
+  _encodeContent(data) {
+    const bytes = typeof data === "string" ? new TextEncoder().encode(data) : new Uint8Array(data);
+    let binary = "";
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+    }
+    return btoa(binary);
+  }
+
+  async _resolveDefaultBranch(parsed) {
+    const cfg = this._hosts.get(parsed.host);
+    const apiUrl = `${cfg.apiBase}/repos/${parsed.owner}/${parsed.repo}`;
+    const response = await fetch(apiUrl, { headers: this._headers(parsed.host) });
+    if (!response.ok) throw new Error(`Error resolving default branch: ${response.status} ${response.statusText}`);
+    const payload = await response.json();
+    return payload.default_branch || "main";
+  }
+
+  async _getSha(parsed) {
+    const apiUrl = this._contentsUrl(parsed);
+    const response = await fetch(apiUrl, { headers: this._headers(parsed.host) });
+    if (response.status === 404) return null;
+    if (!response.ok) throw new Error(`Error reading current sha: ${response.status} ${response.statusText}`);
+    const payload = await response.json();
+    return Array.isArray(payload) ? null : payload.sha;
+  }
+
+  _sniffContentType(path) {
+    const ext = path.split(".").pop().toLowerCase();
+    const map = {
+      html: "text/html; charset=utf-8",
+      htm: "text/html; charset=utf-8",
+      ttl: "text/turtle",
+      jsonld: "application/ld+json",
+      json: "application/json",
+      md: "text/markdown",
+      txt: "text/plain",
+      svg: "image/svg+xml",
+    };
+    return map[ext] || "application/octet-stream";
+  }
+
+  async get(url, _headers = {}, _options = {}) {
+    const parsed = this._parse(url);
+    if (!parsed) throw new Error(`GitForgeStorage: cannot parse URL ${url}`);
+    const apiUrl = this._contentsUrl(parsed);
+    const response = await fetch(apiUrl, { headers: this._headers(parsed.host) });
+    if (!response.ok) {
+      const error = new Error(`Error fetching resource: ${response.status} ${response.statusText}`);
+      error.status = response.status;
+      error.response = response;
+      throw error;
+    }
+    const payload = await response.json();
+    if (Array.isArray(payload)) {
+      throw new Error(`GitForgeStorage: ${url} is a directory, not a file`);
+    }
+    const content = payload.encoding === "base64"
+      ? new TextDecoder().decode(Uint8Array.from(atob(payload.content.replace(/\n/g, "")), c => c.charCodeAt(0)))
+      : payload.content;
+    const contentType = this._sniffContentType(parsed.path);
+    return new Response(content, {
+      status: 200,
+      headers: { "Content-Type": contentType, "ETag": payload.sha ? `"${payload.sha}"` : "" },
+    });
+  }
+
+  async head(url, headers = {}, options = {}) {
+    const response = await this.get(url, headers, options);
+    return new Response(null, { status: response.status, headers: response.headers });
+  }
+
+  async options(_url, _opts = {}) {
+    return { headers: new Headers() };
+  }
+
+  async getMultiple(resources, _options = {}) {
+    return Promise.all(resources.map(async (url) => {
+      const response = await this.get(url);
+      const contentType = response.headers.get("content-type") || "application/octet-stream";
+      return {
+        name: url,
+        type: contentType.split(";")[0].toLowerCase().trim(),
+        content: await response.text(),
+      };
+    }));
+  }
+
+  async put(url, data, _contentType, _links, options = {}) {
+    const parsed = this._parse(url);
+    if (!parsed) throw new Error(`GitForgeStorage: cannot parse URL ${url}`);
+    if (parsed.ref === "HEAD") {
+      parsed.ref = await this._resolveDefaultBranch(parsed);
+    }
+    const sha = await this._getSha(parsed);
+    const apiUrl = this._contentsUrl(parsed, { withRef: false });
+    const body = {
+      message: options.message || `Update ${parsed.path}`,
+      content: this._encodeContent(data),
+      branch: parsed.ref.replace(/^refs\/(heads|tags)\//, ""),
+    };
+    if (sha) body.sha = sha;
+
+    const cfg = this._hosts.get(parsed.host) || {};
+    const method = (cfg.provider === "forgejo" && !sha) ? "POST" : "PUT";
+    const response = await fetch(apiUrl, {
+      method,
+      headers: { ...this._headers(parsed.host), "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+      const error = new Error(`Error writing resource: ${response.status} ${response.statusText}`);
+      error.status = response.status;
+      error.response = response;
+      throw error;
+    }
+    const location = this._browseUrl(parsed) || url;
+    return new Response(null, { status: 201, headers: { "Location": location } });
+  }
+
+  _browseUrl({ host, owner, repo, ref, path }) {
+    const cfg = this._hosts.get(host);
+    if (!cfg) return null;
+    const branch = (ref || "HEAD").replace(/^refs\/(heads|tags)\//, "");
+    if (cfg.provider === "forgejo") {
+      return `https://${host}/${owner}/${repo}/src/branch/${branch}/${path}`;
+    }
+    return `https://${host}/${owner}/${repo}/blob/${branch}/${path}`;
+  }
+
+  post(url, slug, data, contentType, _links, options = {}) {
+    if (!url) return Promise.reject(new Error("Cannot POST resource - missing url"));
+    const target = slug ? url.replace(/\/?$/, "/") + slug : url;
+    return this.put(target, data, contentType, null, options);
+  }
+
+  async delete(url, options = {}) {
+    const parsed = this._parse(url);
+    if (!parsed) throw new Error(`GitForgeStorage: cannot parse URL ${url}`);
+    if (parsed.ref === "HEAD") {
+      parsed.ref = await this._resolveDefaultBranch(parsed);
+    }
+    const sha = await this._getSha(parsed);
+    if (!sha) {
+      const error = new Error(`Error deleting resource: 404 Not Found`);
+      error.status = 404;
+      throw error;
+    }
+    const apiUrl = this._contentsUrl(parsed, { withRef: false });
+    const body = {
+      message: options.message || `Delete ${parsed.path}`,
+      sha,
+      branch: parsed.ref.replace(/^refs\/(heads|tags)\//, ""),
+    };
+    const response = await fetch(apiUrl, {
+      method: "DELETE",
+      headers: { ...this._headers(parsed.host), "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+      const error = new Error(`Error deleting resource: ${response.status} ${response.statusText}`);
+      error.status = response.status;
+      error.response = response;
+      throw error;
+    }
+    return response;
+  }
+
+  async copy(fromURL, toURL, options = {}) {
+    if (!fromURL || !toURL) throw new Error("Missing fromURL or toURL in copy");
+    const fetcher = this.matches(new URL(fromURL).host) ? this : null;
+    const response = fetcher
+      ? await fetcher.get(fromURL, { Accept: "*/*" }, options)
+      : await fetch(fromURL, { headers: { Accept: "*/*" } });
+    const contents = await response.text();
+    return this.put(toURL, contents, null, null, options);
+  }
+
+  _ensureExtension(target, contentType) {
+    const lastSegment = target.split("/").pop() || "";
+    if (lastSegment.includes(".")) return target;
+    const ext = contentType && contentType.startsWith("text/markdown") ? "md" : "html";
+    return `${target}.${ext}`;
+  }
+
+  async save(url, slug, data, options = {}) {
+    let target = slug ? url.replace(/\/?$/, "/") + slug : url;
+    target = this._ensureExtension(target, options.contentType);
+    await this.put(target, data, null, null, options);
+    return {
+      response: new Response(null, { status: 201, headers: { "Location": target } }),
+      message: { content: `Saved document to ${target}`, type: "success" },
+    };
+  }
+}
+
+class StorageRouter {
+  constructor({ default: defaultBackend, backends = {} } = {}) {
+    this._default = defaultBackend;
+    this._backends = backends;
+  }
+
+  register(name, backend) {
+    this._backends[name] = backend;
+    return this;
+  }
+
+  backend(name) {
+    return this._backends[name];
+  }
+
+  for(url, options) {
+    if (options && options.backend && this._backends[options.backend]) {
+      return this._backends[options.backend];
+    }
+    if (url && this._backends.gitforge?.matches) {
+      try {
+        if (this._backends.gitforge.matches(new URL(url).host)) {
+          return this._backends.gitforge;
+        }
+      } catch {}
+    }
+    return this._default;
+  }
+
+  get name() { return "router"; }
+  supports(cap) { return this._default.supports(cap); }
+
+  get(url, headers, options)                         { return this.for(url, options).get(url, headers, options); }
+  head(url, headers, options)                        { return this.for(url, options).head(url, headers, options); }
+  options(url, opts)                                 { return this.for(url, opts).options(url, opts); }
+  put(url, data, contentType, links, options)        { return this.for(url, options).put(url, data, contentType, links, options); }
+  post(url, slug, data, contentType, links, options) { return this.for(url, options).post(url, slug, data, contentType, links, options); }
+  patch(url, data, options)                          { return this.for(url, options).patch(url, data, options); }
+  delete(url, options)                               { return this.for(url, options).delete(url, options); }
+  copy(fromURL, toURL, options)                      { return this.for(toURL, options).copy(fromURL, toURL, options); }
+  getMultiple(resources, options)                    { return this.for(resources?.[0], options).getMultiple(resources, options); }
+  save(url, slug, data, options)                     { return this.for(url, options).save(url, slug, data, options); }
+  putWithConneg(url, data, options)                  { return this.for(url, options).putWithConneg(url, data, options); }
+  patchWithConneg(url, patch, options)               { return this.for(url, options).patchWithConneg(url, patch, options); }
+  getAcceptPost(url)                                 { return this.for(url).getAcceptPost(url); }
+}
+
+let _router = null;
+
+function initStorage({ default: defaultBackend, backends = {} } = {}) {
+  if (_router) return _router;
+  const router = new StorageRouter({ default: defaultBackend, backends });
+  Object.freeze(router._backends);
+  Object.freeze(router);
+  _router = router;
+  return _router;
+}
+
+function storage() {
+  if (!_router) throw new Error("Storage not initialized; call initStorage() first");
+  return _router;
+}
+
+export { StorageBackend, HttpStorage, SolidStorage, GitForgeStorage, StorageRouter, CAPS, initStorage, storage };

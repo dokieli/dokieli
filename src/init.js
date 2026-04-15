@@ -22,12 +22,13 @@ import { highlightItems, updateSelectedStylesheets, initCurrentStylesheet, showA
 import { initButtons } from './ui/buttons.js'
 import { setWebExtensionURL } from './util.js';
 import { getDeviceStorageItem } from './storage.js';
+const GIT_FORGE_HOSTS_KEY = 'DO.Config.GitForge.hosts';
 import { syncLocalRemoteResource, monitorNetworkStatus, autoSave } from './sync.js';
 import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeObject } from './utils/sanitization.js';
 import { afterSetUserInfo, setUserInfo } from './auth.js';
 import { showNotificationSources } from './activity.js';
 import { getProxyableIRI, getUrlParams, stripFragmentFromString, stripUrlSearchHash } from './uri.js';
-import { SolidStorage } from './storage/backend.js';
+import { SolidStorage, GitForgeStorage, initStorage } from './storage/backend.js';
 import { initEditor } from './editor/initEditor.js';
 import { showGraph, showVisualisationGraph } from './viz.js';
 import shower from '@shower/core';
@@ -38,7 +39,7 @@ import { hasNonWhitespaceText, getDocumentContentNode, selectArticleNode, fragme
 
 export async function init (url) {
   initServiceWorker();
-  initStorageBackend();
+  await initStorageBackend();
 
   var contentNode = getDocumentContentNode(document);
   if (contentNode) {
@@ -68,10 +69,36 @@ export async function init (url) {
   }
 }
 
-function initStorageBackend() {
-  if (!Config.Storage) {
-    Config.Storage = new SolidStorage();
+async function initStorageBackend() {
+  if (Config.Storage) return;
+
+  const solid = new SolidStorage();
+  const gitforge = new GitForgeStorage();
+
+  gitforge.addHost('github.com', {
+    apiBase: 'https://api.github.com',
+    rawHost: 'raw.githubusercontent.com',
+    provider: 'github',
+  });
+
+  const persisted = await getDeviceStorageItem(GIT_FORGE_HOSTS_KEY);
+  if (persisted && typeof persisted === 'object') {
+    for (const [host, cfg] of Object.entries(persisted)) {
+      gitforge.addHost(host, cfg);
+    }
   }
+
+  const router = initStorage({
+    default: solid,
+    backends: { solid, gitforge },
+  });
+
+  Object.defineProperty(Config, 'Storage', {
+    value: router,
+    writable: false,
+    configurable: false,
+    enumerable: true,
+  });
 }
 
 function initServiceWorker() {
