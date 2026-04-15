@@ -21,7 +21,7 @@ import { fragmentFromString, removeChildren } from "./utils/html.js";
 import { getAgentHTML, showActionMessage, getResourceSupplementalInfo, handleDeleteNote, addMessageToLog } from './doc.js';
 import { Icon } from './ui/icons.js';
 import { setPreferredPolicyInfo, getAgentTypeIndex, getAgentSupplementalInfo, getAgentSeeAlsoPrimaryTopicOf, getAgentPreferencesInfo, getSubjectInfo } from './graph.js';
-import { removeDeviceStorageAsSignOut, updateDeviceStorageProfile, updateBrowserStorageOIDC } from './storage.js';
+import { removeDeviceStorageAsSignOut, updateDeviceStorageProfile, updateBrowserStorageOIDC, setDeviceStorageItem } from './storage.js';
 import { updateButtons, getButtonHTML } from './ui/buttons.js';
 import { SessionCore } from '@uvdsl/solid-oidc-client-browser/core';
 import { isCurrentScriptSameOrigin, isLocalhost } from './uri.js';
@@ -150,6 +150,38 @@ export function showUserIdentityInput () {
               <p><input id="solid-provider-url" name="solid-provider-url" placeholder="https://solidcommunity.net/" type="url" value="https://solidcommunity.net/"/> <button class="do-signin-provider-go" data-i18n="dialog.signin.provider-form.go.button" data-provider="solid" title="${i18n.t('dialog.signin.provider-form.go.button.title')}" type="button">${i18n.t('dialog.signin.provider-form.go.button.textContent')}</button></p>
             </div>
           </li>
+          <li>
+            <button aria-expanded="false" class="do-signin-provider" data-provider="github" type="button">
+              ${Icon['.fab.fa-github']}
+              <span>
+                <span>Sign in with GitHub</span>
+                <span>Paste a Personal Access Token to read and write to GitHub repos.</span>
+              </span>
+              ${Icon['.fas.fa-angle-right']}
+            </button>
+            <div class="do-signin-provider-form" id="do-signin-github" hidden="">
+              <p><label for="github-provider-url">Personal Access Token</label></p>
+              <p><input id="github-provider-url" name="github-provider-url" placeholder="ghp_..." type="password" autocomplete="off"/> <button class="do-signin-provider-go" data-provider="github" type="button">Save</button></p>
+              <p><small>Create a token at <a href="https://github.com/settings/tokens" rel="noopener" target="_blank">github.com/settings/tokens</a> with <code>repo</code> scope. Stored locally in your browser.</small></p>
+            </div>
+          </li>
+          <li>
+            <button aria-expanded="false" class="do-signin-provider" data-provider="forgejo" type="button">
+              ${Icon['.fas.fa-code-branch']}
+              <span>
+                <span>Sign in with Forgejo</span>
+                <span>For Codeberg and other Forgejo instances.</span>
+              </span>
+              ${Icon['.fas.fa-angle-right']}
+            </button>
+            <div class="do-signin-provider-form" id="do-signin-forgejo" hidden="">
+              <p><label for="forgejo-provider-server">Server URL</label></p>
+              <p><input id="forgejo-provider-server" name="forgejo-provider-server" placeholder="https://codeberg.org" type="url" value="https://codeberg.org"/></p>
+              <p><label for="forgejo-provider-url">Personal Access Token</label></p>
+              <p><input id="forgejo-provider-url" name="forgejo-provider-url" placeholder="access token" type="password" autocomplete="off"/> <button class="do-signin-provider-go" data-provider="forgejo" type="button">Save</button></p>
+              <p><small>Create a token in your account settings. Required scopes: <code>read:user</code> and <code>write:repository</code> (or <code>read:repository</code> for read-only). Stored locally in your browser.</small></p>
+            </div>
+          </li>
         </ul>
 
         <details id="user-identity-input-advanced">
@@ -194,7 +226,7 @@ export function showUserIdentityInput () {
       providerButton.setAttribute('aria-expanded', isExpanded ? 'false' : 'true');
       form.hidden = isExpanded;
       if (!isExpanded) {
-        form.querySelector('input[type="url"]').focus();
+        form.querySelector('input').focus();
       }
       return;
     }
@@ -203,9 +235,17 @@ export function showUserIdentityInput () {
     if (goButton) {
       var provider = goButton.dataset.provider;
       var urlInput = aside.querySelector('#' + provider + '-provider-url');
-      var idpUrl = urlInput ? urlInput.value.trim() : '';
-      if (idpUrl) {
-        loginWithIDP(idpUrl);
+      var value = urlInput ? urlInput.value.trim() : '';
+      if (!value) return;
+      if (provider === 'github') {
+        signInWithGitHubPAT(value, aside);
+      } else if (provider === 'forgejo') {
+        var serverInput = aside.querySelector('#forgejo-provider-server');
+        var server = serverInput ? serverInput.value.trim() : '';
+        if (!server) return;
+        signInWithForgejoPAT(server, value, aside);
+      } else {
+        loginWithIDP(value);
       }
       return;
     }
@@ -317,6 +357,87 @@ function submitSignIn (url) {
           })
       }
     })
+}
+
+const GIT_FORGE_HOSTS_KEY = 'DO.Config.GitForge.hosts';
+
+async function persistForgeHost(host, cfg) {
+  const { getDeviceStorageItem } = await import('./storage.js');
+  const hosts = (await getDeviceStorageItem(GIT_FORGE_HOSTS_KEY)) || {};
+  hosts[host] = cfg;
+  await setDeviceStorageItem(GIT_FORGE_HOSTS_KEY, hosts);
+}
+
+function applyForgeUser(user, { provider, host, iriFallback }) {
+  Config.User.IRI = user.html_url || iriFallback;
+  Config.User.Name = user.full_name || user.name || user.login;
+  Config.User.Image = user.avatar_url;
+  Config.User.Contacts = Config.User.Contacts || {};
+  Config.User.Preferences = Config.User.Preferences || {};
+  Config.User.GitForge = { provider, host, login: user.login };
+}
+
+function renderSignedIn(aside, message) {
+  var uI = document.getElementById('user-info');
+  if (uI) {
+    removeChildren(uI);
+    sanitizeInsertAdjacentHTML(uI, 'beforeend', getAgentHTML() + Config.Button.Menu.SignOut);
+  }
+  showActionMessage(document.body, { content: message, type: 'success', timer: 5000 });
+  if (aside?.parentNode) aside.parentNode.removeChild(aside);
+}
+
+async function signInWithGitHubPAT(token, aside) {
+  try {
+    const response = await fetch('https://api.github.com/user', { headers: { 'Accept': 'application/vnd.github.v3+json', 'Authorization': `Bearer ${token}` } });
+    if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+    const user = await response.json();
+
+    const host = 'github.com';
+    const cfg = { apiBase: 'https://api.github.com', rawHost: 'raw.githubusercontent.com', provider: 'github', token };
+    await persistForgeHost(host, cfg);
+    const gitforge = Config.Storage?.backend?.('gitforge');
+    if (gitforge?.addHost) gitforge.addHost(host, cfg);
+
+    applyForgeUser(user, { provider: 'github', host });
+    renderSignedIn(aside, `Signed in to GitHub as ${user.login}.`);
+  } catch (e) {
+    showActionMessage(document.body, { content: `GitHub sign-in failed: ${e.message}`, type: 'error', timer: null });
+  }
+}
+
+async function signInWithForgejoPAT(serverUrl, token, aside) {
+  try {
+    const server = serverUrl.replace(/\/$/, '');
+    const apiBase = `${server}/api/v1`;
+    const response = await fetch(`${apiBase}/user`, { headers: { 'Accept': 'application/json', 'Authorization': `token ${token}` } });
+    if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+    const user = await response.json();
+
+    const host = new URL(server).host;
+    const cfg = { apiBase, rawHost: host, provider: 'forgejo', token };
+    await persistForgeHost(host, cfg);
+    const gitforge = Config.Storage?.backend?.('gitforge');
+    if (gitforge?.addHost) gitforge.addHost(host, cfg);
+
+    applyForgeUser(user, { provider: 'forgejo', host, iriFallback: `${server}/${user.login}` });
+    renderSignedIn(aside, `Signed in to ${host} as ${user.login}.`);
+  } catch (e) {
+    showActionMessage(document.body, { content: `Forgejo sign-in failed: ${e.message}`, type: 'error', timer: null });
+  }
+}
+
+export async function signOutGitForge(host) {
+  const { getDeviceStorageItem } = await import('./storage.js');
+  const hosts = (await getDeviceStorageItem(GIT_FORGE_HOSTS_KEY)) || {};
+  if (host) delete hosts[host];
+  else Object.keys(hosts).forEach(k => delete hosts[k]);
+  await setDeviceStorageItem(GIT_FORGE_HOSTS_KEY, hosts);
+  const gitforge = Config.Storage?.backend?.('gitforge');
+  if (gitforge?.setToken) {
+    if (host) gitforge.setToken(host, null);
+    else gitforge.hosts().forEach(h => gitforge.setToken(h, null));
+  }
 }
 
 async function loginWithIDP(idpUrl) {
