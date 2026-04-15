@@ -4414,6 +4414,7 @@ font-size:2.25em;
 /* Preserve newlines in plaintext markdown editor (Firefox doesn't do this by default) */
 [data-markdown-mode] {
   white-space: pre-wrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 /* In markdown mode: hide editing buttons, keep Back to Reading */
