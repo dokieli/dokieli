@@ -300,7 +300,7 @@ export function updateDeviceStorageProfile(User) {
   // Graphs are large and reconstructable, so we don't persist them.
   U.Graph && delete U.Graph;
   U.Preferences?.graph && delete U.Preferences.graph;
-  Object.entries(U.Contacts).forEach(([key, contact]) => {
+  Object.entries(U.Contacts || {}).forEach(([key, contact]) => {
     contact.Graph && delete contact.Graph;
     contact.Preferences?.graph && delete contact.Preferences.graph;
   });
