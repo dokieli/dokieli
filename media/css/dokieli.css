@@ -2436,6 +2436,20 @@ outline-offset: 5px;
   right: 0.2em;
 }
 
+#document-autosave input:disabled + label,
+#document-autosave input:disabled:checked + label {
+  background: #777;
+  cursor: not-allowed;
+}
+
+#document-autosave input:disabled + label:hover {
+  outline: none;
+}
+
+#document-autosave input:disabled ~ span {
+  cursor: not-allowed;
+}
+
 #document-autosave span {
   position: absolute;
   left: 4em;
