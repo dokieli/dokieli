@@ -302,9 +302,10 @@ class SolidStorage extends StorageBackend {
 }
 
 class GitForgeStorage extends StorageBackend {
+  #hosts = new Map();
+
   constructor() {
     super();
-    this._hosts = new Map();
   }
 
   get name() {
@@ -316,8 +317,8 @@ class GitForgeStorage extends StorageBackend {
   }
 
   addHost(host, { apiBase, rawHost = host, provider = "github", token = null } = {}) {
-    const existing = this._hosts.get(host) || {};
-    this._hosts.set(host, {
+    const existing = this.#hosts.get(host) || {};
+    this.#hosts.set(host, {
       apiBase: apiBase.replace(/\/$/, ""),
       rawHost,
       provider,
@@ -326,19 +327,19 @@ class GitForgeStorage extends StorageBackend {
   }
 
   setToken(host, token) {
-    const cfg = this._hosts.get(host);
+    const cfg = this.#hosts.get(host);
     if (!cfg) return;
     cfg.token = token || null;
   }
 
   hosts() {
-    return Array.from(this._hosts.keys());
+    return Array.from(this.#hosts.keys());
   }
 
   matches(host) {
     if (!host) return false;
-    if (this._hosts.has(host)) return true;
-    for (const cfg of this._hosts.values()) {
+    if (this.#hosts.has(host)) return true;
+    for (const cfg of this.#hosts.values()) {
       if (host === cfg.rawHost) return true;
       try { if (host === new URL(cfg.apiBase).host) return true; } catch {}
     }
@@ -348,8 +349,8 @@ class GitForgeStorage extends StorageBackend {
   _configFor(url) {
     let u;
     try { u = new URL(url); } catch { return null; }
-    if (this._hosts.has(u.host)) return { host: u.host, ...this._hosts.get(u.host) };
-    for (const [host, cfg] of this._hosts) {
+    if (this.#hosts.has(u.host)) return { host: u.host, ...this.#hosts.get(u.host) };
+    for (const [host, cfg] of this.#hosts) {
       if (u.host === cfg.rawHost) return { host, ...cfg };
       try { if (u.host === new URL(cfg.apiBase).host) return { host, ...cfg }; } catch {}
     }
@@ -408,14 +409,14 @@ class GitForgeStorage extends StorageBackend {
   }
 
   _contentsUrl({ host, owner, repo, ref, path }, { withRef = true } = {}) {
-    const cfg = this._hosts.get(host);
+    const cfg = this.#hosts.get(host);
     const u = new URL(`${cfg.apiBase}/repos/${owner}/${repo}/contents/${path}`);
     if (withRef && ref && ref !== "HEAD") u.searchParams.set("ref", ref);
     return u.toString();
   }
 
   _headers(host, accept) {
-    const cfg = this._hosts.get(host) || {};
+    const cfg = this.#hosts.get(host) || {};
     const h = { "Accept": accept || (cfg.provider === "github" ? "application/vnd.github.v3+json" : "application/json") };
     if (cfg.token) {
       h["Authorization"] = cfg.provider === "forgejo" ? `token ${cfg.token}` : `Bearer ${cfg.token}`;
@@ -434,7 +435,7 @@ class GitForgeStorage extends StorageBackend {
   }
 
   async _resolveDefaultBranch(parsed) {
-    const cfg = this._hosts.get(parsed.host);
+    const cfg = this.#hosts.get(parsed.host);
     const apiUrl = `${cfg.apiBase}/repos/${parsed.owner}/${parsed.repo}`;
     const response = await fetch(apiUrl, { headers: this._headers(parsed.host) });
     if (!response.ok) throw new Error(`Error resolving default branch: ${response.status} ${response.statusText}`);
@@ -527,7 +528,7 @@ class GitForgeStorage extends StorageBackend {
     };
     if (sha) body.sha = sha;
 
-    const cfg = this._hosts.get(parsed.host) || {};
+    const cfg = this.#hosts.get(parsed.host) || {};
     const method = (cfg.provider === "forgejo" && !sha) ? "POST" : "PUT";
     const response = await fetch(apiUrl, {
       method,
@@ -545,7 +546,7 @@ class GitForgeStorage extends StorageBackend {
   }
 
   _browseUrl({ host, owner, repo, ref, path }) {
-    const cfg = this._hosts.get(host);
+    const cfg = this.#hosts.get(host);
     if (!cfg) return null;
     const branch = (ref || "HEAD").replace(/^refs\/(heads|tags)\//, "");
     if (cfg.provider === "forgejo") {
