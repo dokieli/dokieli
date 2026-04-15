@@ -377,6 +377,7 @@ function applyForgeUser(user, { provider, host, iriFallback }) {
   Config.User.Contacts = Config.User.Contacts || {};
   Config.User.Preferences = Config.User.Preferences || {};
   Config.User.GitForge = { provider, host, login: user.login };
+  updateDeviceStorageProfile(Config.User);
 }
 
 function renderSignedIn(aside, message) {
