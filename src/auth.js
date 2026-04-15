@@ -76,6 +76,8 @@ export async function signOut() {
     await Config['Session']?.logout();
   }
 
+  await signOutGitForge();
+
   removeDeviceStorageAsSignOut();
 
   Config.User = {
