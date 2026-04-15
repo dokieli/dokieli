@@ -1758,12 +1758,12 @@ function initBrowse(baseUrl, input, browseButton, createButton, id, action){
   var headers = {'Accept': 'text/turtle, application/ld+json'};
   getResourceGraph(baseUrl, headers)
     .then(g => {
-      generateBrowserList(g, baseUrl, id, action)
-        .then(i => {
-          showStorageDescription(g, id, baseUrl);
-        })
+      if (!g) return;
+      return generateBrowserList(g, baseUrl, id, action)
+        .then(() => showStorageDescription(g, id, baseUrl));
     })
-    .then(i => {
+    .catch(() => {})
+    .then(() => {
       let sampNode = document.getElementById(id + '-' + action);
       if (sampNode) {
         sampNode.textContent = (action == 'write') ? input.value + generateAttributeId() : input.value;
