@@ -792,6 +792,7 @@ margin: 0.5em 0.25em 0.5em 0.5em;
 
 aside.do input[type="text"],
 aside.do input[type="url"],
+aside.do input[type="password"],
 .editor-form input[type="text"],
 .editor-form input[type="url"],
 .editor-form select {
@@ -802,7 +803,8 @@ padding: 0.75em;
 margin:0;
 }
 aside.do input[type="text"],
-aside.do input[type="url"] {
+aside.do input[type="url"],
+aside.do input[type="password"] {
 width: calc(100% - 14em);
 padding: 0.75em;
 margin: 0.5em;
