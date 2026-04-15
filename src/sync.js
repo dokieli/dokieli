@@ -28,8 +28,23 @@ import { i18n } from "./i18n.js";
 import { sanitizeInsertAdjacentHTML } from "./utils/sanitization.js";
 import { restoreYjsContent, addYjsVersion, getYjsVersions } from "./editor/editor.js";
 
+let remoteSyncDisabledNoticeShown = false;
+
 export async function syncLocalRemoteResource(options = {}) {
   // console.log('--- syncLocalRemoteResource');
+
+  const backend = Config.Storage?.for?.(Config.DocumentURL);
+  if (backend?.name === 'gitforge') {
+    if (!remoteSyncDisabledNoticeShown) {
+      remoteSyncDisabledNoticeShown = true;
+      showActionMessage(document.body, {
+        content: 'Autosave to GitHub is disabled. Use Save to commit changes.',
+        type: 'info',
+        timer: 7000,
+      });
+    }
+    return;
+  }
 
   const documentOptions = {
     ...Config.DOMProcessing,
