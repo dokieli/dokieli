@@ -1461,6 +1461,12 @@ function setupResourceBrowser(parent, id, action){
         defaultDirUrl = u.toString();
       }
     } catch {}
+    var gf = Config.User?.GitForge;
+    var srcIsForge = false;
+    try { srcIsForge = !!(defaultDirUrl && Config.Storage?.for?.(defaultDirUrl)?.name === 'gitforge'); } catch {}
+    if (gf?.host && gf?.login && !srcIsForge) {
+      defaultDirUrl = `https://${gf.host}/${gf.login}/`;
+    }
     var inMarkdownMode = !!document.querySelector('[data-markdown-mode]');
     var preferredExt = inMarkdownMode ? 'md' : 'html';
     if (!defaultFilename) {
@@ -1560,6 +1566,9 @@ function setupResourceBrowser(parent, id, action){
   }
   else if(Config.Resource[Config.DocumentURL]?.annotationService?.length) {
     baseUrl = forceTrailingSlash(Config.Resource[Config.DocumentURL].annotationService[0]);
+  }
+  else if (action === 'write' && Config.User?.GitForge?.host && Config.User?.GitForge?.login) {
+    baseUrl = `https://${Config.User.GitForge.host}/${Config.User.GitForge.login}/`;
   }
 
 
