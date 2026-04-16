@@ -2725,25 +2725,14 @@ export async function saveAsDocument(e) {
           `<div class="response-message"><p class="success" data-i18n="dialog.save-as-document.success.saved-at.p"><span>${i18n.t('dialog.save-as-document.success.saved-at.p.textContent')}</span> <a href="${url}">${url}</a></p></div>`
         )
 
+        const wasNewDocument = Config.DocumentAction === 'new';
         Config.DocumentAction = 'save-as';
 
         setTimeout(() => {
-          if (Config.Editor['new']) {
-            //XXX: Commenting this out for now, not sure what this was supposed to fix
-            // Config.Editor.replaceContent('author', fragmentFromString(html));
+          if (wasNewDocument) {
             Config.Editor['new'] = false;
-
-            var urlObject = new URL(url);
-            var documentURLObject = new URL(Config.DocumentURL);
-
-            if (urlObject.origin === documentURLObject.origin) {
-              window.history.pushState({}, null, url);
-              setDocumentURL(url);
-              hideDocumentMenu();
-            }
-            else {
-              window.open(url, '_blank');
-            }
+            hideDocumentMenu();
+            openResource(url);
           }
           else {
             window.open(url, '_blank');
