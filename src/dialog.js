@@ -2296,13 +2296,13 @@ export function viewSource(e) {
   `));
   var sourceBox = document.getElementById('source-view');
   var input = document.getElementById('source-edit');
-  input.value = getDocument(null, documentOptions);
+  input.value = getDocument(document.body, documentOptions);
 
   sourceBox.addEventListener('click', (e) => {
     if (e.target.closest('button.update')) {
       var data = document.getElementById('source-edit').value;
       //FIXME: dokieli related stuff may be getting repainted / updated in the DOM
-      document.documentElement.setHTMLUnsafe(domSanitize(data));
+      document.body.setHTMLUnsafe(domSanitize(data));
       initDocumentMenu();
       showDocumentMenu(e);
       viewSource();
