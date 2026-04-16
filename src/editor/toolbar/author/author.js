@@ -1142,12 +1142,46 @@ function toggleHeading(schema, level) {
 
     if (node.type === nodeType && node.attrs.level === level) {
       return setBlockType(nodes.p)(state, dispatch);
-    } else {
-      return setBlockType(nodeType, {
-        level,
-        originalAttributes: node.attrs.originalAttributes || {}
-      })(state, dispatch);
     }
+
+    // Slide templates seed an empty <h2 property="schema:name"> placeholder immediately before the body content. If the user types into the body and toggles it to a heading at the same level, merge into the empty placeholder with any attributes
+    let emptyPrev = null;
+    let emptyPrevStart = null;
+    const parentDepth = depth - 1;
+    if (parentDepth >= 0) {
+      const index = $from.index(parentDepth);
+      if (index > 0) {
+        const prev = $from.node(parentDepth).child(index - 1);
+        if (
+          prev.type === nodeType &&
+          prev.attrs.level === level &&
+          prev.content.size === 0
+        ) {
+          emptyPrev = prev;
+          emptyPrevStart = $from.before(depth) - prev.nodeSize;
+        }
+      }
+    }
+
+    const carriedAttrs = emptyPrev?.attrs.originalAttributes?.property
+      ? { property: emptyPrev.attrs.originalAttributes.property }
+      : {};
+    const originalAttributes = {
+      ...(node.attrs.originalAttributes || {}),
+      ...carriedAttrs,
+    };
+
+    if (dispatch) {
+      const tr = state.tr;
+      if (emptyPrev !== null) {
+        tr.delete(emptyPrevStart, emptyPrevStart + emptyPrev.nodeSize);
+      }
+      const blockStart = tr.mapping.map($from.before(depth));
+      const blockEnd = blockStart + node.nodeSize;
+      tr.setBlockType(blockStart, blockEnd, nodeType, { level, originalAttributes });
+      dispatch(tr.scrollIntoView());
+    }
+    return true;
   };
 }
 
