@@ -2587,8 +2587,8 @@ export async function saveAsDocument(e) {
 
   let dokielizeResource = '';
   let derivationData = '';
-  
-  if (!Config.Editor['new']) {
+
+  if (Config.DocumentAction !== 'new') {
     dokielizeResource = '<li><input type="checkbox" id="dokielize-resource" name="dokielize-resource" /><label for="dokielize-resource">dokielize</label></li>';
     derivationData = `<li><input type="checkbox" id="derivation-data" name="derivation-data" checked="checked" /><label data-i18n="dialog.save-as-document.derivation-data.label" for="derivation-data">${i18n.t('dialog.save-as-document.derivation-data.label.textContent')}</label></li>`;
   }
@@ -2644,7 +2644,7 @@ export async function saveAsDocument(e) {
     var html = document.documentElement.cloneNode(true)
     var o, r
 
-    if (!Config.Editor['new']) {
+    if (Config.DocumentAction !== 'new') {
       var dokielize = document.querySelector('#dokielize-resource')
       if (dokielize.checked) {
         html = getDocument(html, documentOptions)
