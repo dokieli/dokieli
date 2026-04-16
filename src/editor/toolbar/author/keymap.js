@@ -47,6 +47,10 @@ function customEnterCommand(state, dispatch) {
       listItemDepth = depth;
       break;
     }
+    else if (nodeName === 'section') {
+      // don't go past past a section boundary
+      break;
+    }
   }
 
   if (isCodeBlock) {
