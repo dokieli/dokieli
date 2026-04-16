@@ -2343,9 +2343,9 @@ export function toggleMarkdownMode(e) {
 
     if (wasAuthored) {
       Config.Editor['new'] = wasNew;
-      // New docs: reinit PM on the article node directly.
-      // Existing docs: pass no node so Editor falls back to document.body,
-      // which now contains mdNode with the parsed HTML — PM will parse it.
+      // New docs: reinit PM on the passed article node directly.
+      // Existing docs: pass no node so Editor falls back to the article node
+      // selected at construction time, which now contains the parsed HTML.
       Config.Editor.init('author', wasNew ? mdNode : undefined);
       Config.EditorEnabled = true;
       Config.EditorWasEnabled = true;

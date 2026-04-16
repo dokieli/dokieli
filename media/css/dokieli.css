@@ -4582,7 +4582,8 @@ overflow:auto;
 .shower.list {
 padding-top:0;
 }
-.shower.full>main>article > header {
+.shower.full>main>article > header,
+.shower.full>main>article > .ProseMirror > header {
 display:none;
 }
 
@@ -4592,10 +4593,12 @@ margin-top:1em;
 }
 
 .shower>main>article header nav,
-.shower>main>article > [property="schema:description"] > :not(section.slide) {
+.shower>main>article > [property="schema:description"] > :not(section.slide),
+.shower>main>article > .ProseMirror > [property="schema:description"] > :not(section.slide) {
 display:none;
 }
-.shower > main > article > [property="schema:description"] {
+.shower > main > article > [property="schema:description"],
+.shower > main > article > .ProseMirror > [property="schema:description"] {
 display:flex;
 flex-wrap:wrap;
 }
@@ -4618,6 +4621,15 @@ height: stretch;
 }
 .shower>main>article {
 position: relative;
+}
+/* Flex-wrap layout for slides. In author mode, PM mounts inside <article>,
+   so the slides are wrapped by <div class="ProseMirror">; apply the same
+   flex-wrap layout to that wrapper so slides still tile. */
+.shower > main > article > .ProseMirror {
+padding-top:24px;
+display:flex;
+flex-wrap:wrap;
+background:#eee;
 }
 .shower .slide {
 padding: 2em 2.5em 0 2.5em;

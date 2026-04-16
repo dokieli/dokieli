@@ -26,7 +26,7 @@ import { SocialToolbar } from "./toolbar/social/social.js";
 import { SlashMenu } from "./slashmenu/slashmenu.js";
 import Config from "./../config.js";
 import { addMessageToLog, showActionMessage, initCopyToClipboard, showRobustLinksDecoration } from "../doc.js";
-import { fragmentFromString, hasNonWhitespaceText } from "./../utils/html.js";
+import { fragmentFromString, hasNonWhitespaceText, selectArticleNode } from "./../utils/html.js";
 import { updateDeviceStorageProfile } from "../storage.js";
 import { updateButtons } from "../ui/buttons.js";
 import { cleanProseMirrorOutput } from "../utils/normalization.js";
@@ -54,12 +54,11 @@ const DEMO_URL = process.env.DEMO_URL;
 export class Editor {
   constructor(mode, node) {
     this.mode = mode || Config.Editor.mode;
-    //TODO: Look into replacing document.body with selectArticleNode(document) so that main > article, article, or body is used?
-    // if body is used, take care to filter out do elements at this point
-    // TODO: When choosing the editor node, we need to filter out these items from the content of the editor node. we also need to restore the body to its original form WITH the do elements.
     this.restrictedNodes = [];
     this.allowedScriptElements = [];
-    this.node = node || document.body;
+    // Default to the article node so PM mounts inside <main><article>
+    // rather than stripping the wrapper when it attaches to <body>.
+    this.node = node || selectArticleNode(document.body);
     this.toggleModeMessageId = null;
     this.slashMenu = null;
 
@@ -75,12 +74,13 @@ export class Editor {
     const documentMode = Config.DocumentModes.author.length ? 'author' : null;
     this.mode = mode || documentMode || Config.Editor.mode || this.mode;
     Config.Editor.mode = this.mode || 'social';
-    this.node = node || this.node;
+    // make sure we use article node if available
+    this.node = (node === document.body ? selectArticleNode(document.body) : node) || this.node;
 
     if (options?.template === 'new' || options?.template === 'new-slideshow') {
       Config.Editor['new'] = true;
       this.setTemplate(mode, options);
-      this.node = this.node.querySelector('article');
+      this.node = selectArticleNode(document.body);
     }
 
     switch (this.mode) {
@@ -155,13 +155,14 @@ export class Editor {
   toggleEditor(mode, options) {
     Config.Editor['new'] = false;
 
-    let node = document.body;
+    let node;
 
     if (options?.template === 'new' || options?.template === 'new-slideshow') {
       Config.Editor['new'] = true;
       this.setTemplate(mode, options);
-      node = node.querySelector('article');
     }
+
+    node = selectArticleNode(document.body);
 
     updateDeviceStorageProfile(Config.User);
 
@@ -671,7 +672,24 @@ export class Editor {
 
       const prependNodes = this.restrictedNodes.filter(n => n.id === 'document-menu' || n.id === 'document-info');
       const appendNodes = this.restrictedNodes.filter(n => n.id !== 'document-menu' && n.id !== 'document-info' && !n.classList.contains('copy-to-clipboard'));
-      document.body.replaceChildren(...prependNodes, ...newBodyContent, ...appendNodes, ...this.allowedScriptElements);
+
+      // preserve wrapper when available
+      const hasMainWrapper = newBodyContent.some(n =>
+        n.nodeType === Node.ELEMENT_NODE && n.tagName?.toLowerCase() === 'main'
+      );
+      const preserveWrapper = this.node &&
+        this.node !== document.body &&
+        document.body.contains(this.node) &&
+        !hasMainWrapper;
+
+      if (preserveWrapper) {
+        this.node.replaceChildren(...newBodyContent);
+        prependNodes.forEach(n => document.body.prepend(n));
+        appendNodes.forEach(n => document.body.appendChild(n));
+        this.allowedScriptElements.forEach(s => document.body.appendChild(s));
+      } else {
+        document.body.replaceChildren(...prependNodes, ...newBodyContent, ...appendNodes, ...this.allowedScriptElements);
+      }
       // this.restrictedNodes.forEach(node => {
       //   document.body.appendChild(node);
       // });
