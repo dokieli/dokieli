@@ -483,6 +483,8 @@ function showViews(node) {
     }
   }
 
+  s += `<li><button class="resource-edit-custom-style" data-i18n="menu.document-views.custom.button" title="${i18n.t('menu.document-views.custom.button.title')}">${i18n.t('menu.document-views.custom.button.textContent')}</button></li>`;
+
   s += '</ul></section>';
   sanitizeInsertAdjacentHTML(node, 'beforeend', s);
 
@@ -493,10 +495,17 @@ function showViews(node) {
   // }
 
   document.addEventListener('click', (e) => {
-    const button = e.target.closest('#document-views button:not([class~="resource-visualise"])');
+    const button = e.target.closest('#document-views button:not([class~="resource-visualise"]):not([class~="resource-edit-custom-style"])');
     if (!button) return;
 
     initCurrentStylesheet(e);
+  });
+
+  document.addEventListener('click', (e) => {
+    const button = e.target.closest('#document-views .resource-edit-custom-style');
+    if (!button) return;
+
+    editCustomStylesheet(e);
   });
 
   if(Config.GraphViewerAvailable) {
@@ -2318,6 +2327,67 @@ export function viewSource(e) {
       document.querySelector('#document-do .resource-source').disabled = false;
     }
   });
+}
+
+export function editCustomStylesheet(e) {
+  if (document.getElementById('custom-style-view')) return;
+
+  if (e) {
+    e.target.closest('button').disabled = true;
+  }
+
+  var buttonClose = getButtonHTML({ key: 'dialog.custom-style-view.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
+
+  document.body.appendChild(fragmentFromString(`
+    <aside aria-labelledby="custom-style-view-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="custom-style-view" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#custom-style-view" xml:lang="${Config.User.UI.Language}">
+      <h2 data-i18n="dialog.custom-style-view.h2" id="custom-style-view-label" property="schema:name">${i18n.t('dialog.custom-style-view.h2.textContent')}</h2>
+      ${buttonClose}
+      <div class="info"></div>
+      <textarea dir="ltr" id="custom-style-edit" rows="24" cols="80" spellcheck="false"></textarea>
+      <p><button class="update" data-i18n="dialog.custom-style-view.update.button" title="${i18n.t('dialog.custom-style-view.update.button.title')}" type="submit">${i18n.t('dialog.custom-style-view.update.button.textContent')}</button></p>
+    </aside>
+  `));
+
+  var box = document.getElementById('custom-style-view');
+  var input = document.getElementById('custom-style-edit');
+
+  input.value = getCustomStylesheetContent();
+
+  const reenableEditButton = () => {
+    var btn = document.querySelector('#document-views .resource-edit-custom-style');
+    if (btn) btn.disabled = false;
+  };
+
+  const closeBox = () => {
+    box.remove();
+    reenableEditButton();
+  };
+
+  box.addEventListener('click', (ev) => {
+    if (ev.target.closest('button.update')) {
+      var css = document.getElementById('custom-style-edit').value;
+      applyCustomStylesheetPreview(css);
+      closeBox();
+    }
+    if (ev.target.closest('button.close')) {
+      closeBox();
+    }
+  });
+}
+
+function getCustomStylesheetContent() {
+  var styleEl = document.getElementById('dokieli-custom-style');
+  return styleEl ? (styleEl.textContent || '') : '';
+}
+
+function applyCustomStylesheetPreview(css) {
+  var styleEl = document.getElementById('dokieli-custom-style');
+  if (!styleEl) {
+    styleEl = document.createElement('style');
+    styleEl.id = 'dokieli-custom-style';
+    document.head.appendChild(styleEl);
+  }
+  styleEl.textContent = css;
 }
 
 export function toggleMarkdownMode(e) {
@@ -5832,6 +5902,13 @@ export async function spawnDokieli(documentNode, data, contentTypes, iris, optio
 
     const tmplBody = tmpl.body.cloneNode(true);
     tmplBody.setAttribute('prefix', prefixes);
+
+    const customStyle = tmpl.head.querySelector('style#dokieli-custom-style');
+    if (customStyle) {
+      const existing = document.getElementById('dokieli-custom-style');
+      if (existing) existing.remove();
+      document.head.appendChild(customStyle.cloneNode(true));
+    }
 
     document.documentElement.replaceChild(tmplBody, document.body);
 
