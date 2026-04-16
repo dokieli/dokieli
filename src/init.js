@@ -359,8 +359,16 @@ function startTrackedShower() {
   for (const t of targets) {
     originals.set(t, t.addEventListener);
     t.addEventListener = function (type, listener, options) {
-      showerExternalListeners.push({ target: t, type, listener, options });
-      return originals.get(t).call(t, type, listener, options);
+      // prevent shower's keydown listener from hijacking p/l/backspace from PM (a bit hacky)
+      let tracked = listener;
+      if (type === 'keydown' && typeof listener === 'function') {
+        tracked = function (event) {
+          if (event.target?.closest?.('[contenteditable=""], [contenteditable="true"]')) return;
+          return listener.call(this, event);
+        };
+      }
+      showerExternalListeners.push({ target: t, type, listener: tracked, options });
+      return originals.get(t).call(t, type, tracked, options);
     };
   }
   try {
