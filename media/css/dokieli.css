@@ -234,9 +234,9 @@ outline-color:#080;
 /* padding: 0 0.5em; */
 }
 
-@keyframes target {
+/* @keyframes target {
   50% { background-color:#efe; box-shadow:inset 0px 0px 0px 3px #ccc;}
-}
+} */
 
 [contenteditable=true]:focus-visible,
 *:target {
@@ -1206,7 +1206,8 @@ max-width:60%;
 max-width: unset !important;
 }
 
-#source-view textarea {
+#source-view textarea,
+#custom-style-view textarea {
 font-family: 'Ubuntu Mono', ui-monospace, monospace !important;
 }
 
@@ -3860,9 +3861,7 @@ max-width:none;
 
   [class~="do-new"] h1[data-placeholder]:has(br),
   [class~="do-new"] p[data-placeholder]:has(br) {
-    /* height:1em; */
     position:relative;
-    background-color:#eee;
   }
 
 .editor-empty-node {
