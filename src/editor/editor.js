@@ -24,6 +24,8 @@ import { keymapPlugin } from "./toolbar/author/keymap.js";
 import { AuthorToolbar } from "./toolbar/author/author.js";
 import { SocialToolbar } from "./toolbar/social/social.js";
 import { SlashMenu } from "./slashmenu/slashmenu.js";
+import { placeholderPlugin } from "./plugins/placeholder.js";
+import { ImageResizeView } from "./nodeviews/imageResize.js";
 import Config from "./../config.js";
 import { addMessageToLog, showActionMessage, initCopyToClipboard, showRobustLinksDecoration } from "../doc.js";
 import { fragmentFromString, hasNonWhitespaceText, selectArticleNode } from "./../utils/html.js";
@@ -356,7 +358,7 @@ export class Editor {
     // not a collaborative session): skip Yjs/IndexedDB/remote-sync entirely.
     Config.Editor['collab'] = false;
     pmDoc = originalDoc;
-    editorPlugins = [history(), keymapPlugin, editorToolbarPlugin];
+    editorPlugins = [history(), keymapPlugin, placeholderPlugin, editorToolbarPlugin];
   } else {
     Config.Editor['collab'] = true;
     ydoc = new Y.Doc();
@@ -485,6 +487,7 @@ export class Editor {
       yUndoPlugin(),
       history(),
       keymapPlugin,
+      placeholderPlugin,
       editorToolbarPlugin,
     ];
   }
@@ -502,6 +505,9 @@ export class Editor {
     attributes: {
       class: `${hasNonWhitespaceText(originalDoc) ? '' : 'do-new'}`,
       dir: "auto",
+    },
+    nodeViews: {
+      img(node, view, getPos) { return new ImageResizeView(node, view, getPos); }
     },
   });
 
