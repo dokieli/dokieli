@@ -17,7 +17,7 @@ limitations under the License.
 
 import { getLanguageOptionsHTML, getLicenseOptionsHTML, getPublicationStatusOptionsHTML, getResourceTypeOptionsHTML } from "../../doc.js";
 import { getButtonHTML } from "../../ui/buttons.js";
-import { formHandlerLanguage, formHandlerLicense, formHandlerInbox, formHandlerInReplyTo, formHandlerPublicationStatus, formHandlerResourceType, formHandlerTestSuite } from "./handlers.js";
+import { formHandlerLanguage, formHandlerLicense, formHandlerInbox, formHandlerInReplyTo, formHandlerPublicationStatus, formHandlerResourceType, formHandlerTestSuite, formHandlerImg } from "./handlers.js";
 import { TextSelection } from "prosemirror-state";
 import { DOMParser } from "prosemirror-model";
 import { i18n } from "../../i18n.js";
@@ -32,13 +32,14 @@ export class SlashMenu {
     this.menuContainer.style.display = "none";
     this.menuContainer.style.position = "absolute";
 
-    this.slashMenuButtons = ['language', 'license', 'inbox', 'in-reply-to', 'publication-status', 'resource-type', 'test-suite'].map(button => ({
+    this.slashMenuButtons = ['img', 'language', 'license', 'inbox', 'in-reply-to', 'publication-status', 'resource-type', 'test-suite'].map(button => ({
       button,
       dom: () => fragmentFromString(getButtonHTML({ button } )).firstChild,
     }));
 
     this.createMenuItems();
 
+    this.formHandlerImg = formHandlerImg.bind(this);
     this.formHandlerLanguage = formHandlerLanguage.bind(this);
     this.formHandlerLicense = formHandlerLicense.bind(this);
     this.formHandlerInbox = formHandlerInbox.bind(this);
@@ -49,6 +50,7 @@ export class SlashMenu {
 
     //TODO: Create formValidationHandlers to handle `input` and `invalid` event handlers. Move oninput/oninvalid out of form's inline HTML
     this.formEventListeners = {
+      img: [ { event: 'submit', callback: this.formHandlerImg }, { event: 'click', callback: (e) => this.formClickHandler(e, 'img') } ],
       language: [ { event: 'submit', callback: this.formHandlerLanguage }, { event: 'click', callback: (e) => this.formClickHandler(e, 'language') } ],
       license: [ { event: 'submit', callback: this.formHandlerLicense }, { event: 'click', callback: (e) => this.formClickHandler(e, 'license') } ],
       inbox: [ { event: 'submit', callback: this.formHandlerInbox }, { event: 'click', callback: (e) => this.formClickHandler(e, 'inbox') } ],
@@ -141,6 +143,7 @@ export class SlashMenu {
 
   handlePopups(button) {
     let popupContent = {
+      img: this.createImgWidgetHTML(),
       language: this.createLanguageWidgetHTML(),
       license: this.createLicenseWidgetHTML(),
       inbox: this.createInboxWidgetHTML(),
@@ -152,6 +155,25 @@ export class SlashMenu {
 
     const popup = fragmentFromString(`<form class="editor-form editor-form-active">${popupContent[button]}</form>`);
     this.openPopup(popup, button);
+  }
+
+  createImgWidgetHTML() {
+    var html = `
+      <fieldset>
+        <legend data-i18n="editor.toolbar.img.form.legend">${i18n.t('editor.toolbar.img.form.legend.textContent')}</legend>
+        <figure class="img-preview"></figure>
+        <label data-i18n="editor.toolbar.img.form.img-file.label" for="img-file">${i18n.t('editor.toolbar.img.form.img-file.label.textContent')}</label> <input class="editor-form-input" id="img-file" name="img-file" type="file" />
+        <label for="img-src">URL</label> <input class="editor-form-input" dir="ltr" id="img-src" name="img-src" placeholder="${i18n.t('editor.toolbar.form.url.input.placeholder')}" type="text" value="" />
+        <label data-i18n="editor.toolbar.img.form.img-alt.label" for="img-alt">${i18n.t('editor.toolbar.img.form.img-alt.label.textContent')}</label> <input class="editor-form-input" data-i18n="editor.toolbar.img.form.img-alt.input" dir="auto" id="img-alt" name="img-alt" placeholder="${i18n.t('editor.toolbar.img.form.img-alt.input.placeholder')}" type="text" value="" />
+        <label data-i18n="editor.toolbar.img.form.img-figcaption" for="img-figcaption">${i18n.t('editor.toolbar.img.form.img-figcaption.label.textContent')}</label> <input class="editor-form-input" data-i18n="editor.toolbar.img.form.img-figcaption.input" id="img-figcaption" name="img-figcaption" placeholder="${i18n.t('editor.toolbar.img.form.img-alt.label.textContent')}" type="text" value="" />
+        <div>
+          <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
+          <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
+        </div>
+      </fieldset>
+    `;
+
+    return html;
   }
 
   createLanguageWidgetHTML() {
@@ -269,6 +291,25 @@ export class SlashMenu {
       this.formEventListeners[button].forEach(({ event, callback }) => {
         popupForm.addEventListener(event, callback);
       });
+    }
+
+    if (button === 'img') {
+      const fileInput = popupForm.querySelector('[name="img-file"]');
+      const srcInput = popupForm.querySelector('[name="img-src"]');
+      const preview = popupForm.querySelector('.img-preview');
+
+      if (fileInput) {
+        fileInput.addEventListener("change", () => {
+          const file = fileInput.files?.[0];
+          if (!file) return;
+          preview.replaceChildren();
+          const image = document.createElement("img");
+          image.src = URL.createObjectURL(file);
+          image.alt = file.name;
+          preview.appendChild(image);
+          srcInput.value = image.src;
+        });
+      }
     }
 
     this.menuContainer.style.display = "block";

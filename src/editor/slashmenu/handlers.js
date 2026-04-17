@@ -18,6 +18,8 @@ limitations under the License.
 import { createLanguageHTML, createLicenseHTML, createInboxHTML, createInReplyToHTML, createPublicationStatusHTML, createResourceTypeHTML, createTestSuiteHTML } from "../../doc.js";
 import { fragmentFromString } from "../../utils/html.js";
 import { getFormValues } from "../../utils/html.js";
+import { schema } from "../schema/base.js";
+import { TextSelection } from "prosemirror-state";
 import Config from "../../config.js";
 
 export function formHandlerLanguage(e) {
@@ -129,4 +131,34 @@ export function formHandlerTestSuite(e) {
 
   this.replaceSelectionWithFragment(fragmentFromString(htmlString));
   this.hideMenu()
+}
+
+export function formHandlerImg(e) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const formValues = getFormValues(e.target);
+  const src = formValues['img-src'];
+  const alt = formValues['img-alt'] || '';
+  const title = formValues['img-figcaption'] || '';
+
+  if (!src) return;
+
+  const attrs = { src, alt, title };
+
+  const preview = e.target.querySelector('.img-preview');
+  const previewImg = preview?.querySelector('img[src]');
+  if (previewImg) {
+    if (previewImg.width) attrs.width = String(previewImg.width);
+    if (previewImg.height) attrs.height = String(previewImg.height);
+  }
+
+  const { state, dispatch } = this.editorView;
+  const { selection } = state;
+  const newSelection = TextSelection.create(state.doc, Math.max(selection.from - 1, 0), selection.from);
+  const imageNode = schema.nodes.img.create({ originalAttributes: attrs });
+  const tr = state.tr.setSelection(newSelection).replaceSelectionWith(imageNode);
+  dispatch(tr);
+
+  this.hideMenu();
 }
