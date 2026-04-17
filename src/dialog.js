@@ -2296,7 +2296,9 @@ export function viewSource(e) {
   `));
   var sourceBox = document.getElementById('source-view');
   var input = document.getElementById('source-edit');
-  input.value = getDocument(document.body, documentOptions);
+  const fullHTML = getDocument(document.body, documentOptions);
+  const parsedDoc = new DOMParser().parseFromString(fullHTML, 'text/html');
+  input.value = parsedDoc.body.outerHTML;
 
   sourceBox.addEventListener('click', (e) => {
     if (e.target.closest('button.update')) {
