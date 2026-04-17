@@ -68,34 +68,62 @@ export class SlashMenu {
   showMenu(cursorX, cursorY) {
     this.createMenuItems();
     this.menuContainer.style.display = "block";
-    
+
     this.menuContainer.style.left = `${cursorX}px`;
     this.menuContainer.style.top = `${cursorY}px`;
 
-    const firstButton = this.menuContainer.querySelector("button");
+    const buttons = Array.from(this.menuContainer.querySelectorAll("button"));
+    const firstButton = buttons[0];
 
-    const handleTab = (event) => {
-      if (event.key === "Tab") {
-        event.preventDefault();
-        firstButton?.focus();
-        document.removeEventListener("keydown", handleTab);
+    firstButton?.focus();
+
+    this.menuKeyHandler = (event) => {
+      if (this.menuContainer.style.display === "none") return;
+
+      const current = document.activeElement;
+      const idx = buttons.indexOf(current);
+
+      switch (event.key) {
+        case "ArrowDown": {
+          event.preventDefault();
+          const next = buttons[(idx + 1 + buttons.length) % buttons.length];
+          next?.focus();
+          break;
+        }
+        case "ArrowUp": {
+          event.preventDefault();
+          const prev = buttons[(idx - 1 + buttons.length) % buttons.length];
+          prev?.focus();
+          break;
+        }
+        case "Home": {
+          event.preventDefault();
+          buttons[0]?.focus();
+          break;
+        }
+        case "End": {
+          event.preventDefault();
+          buttons[buttons.length - 1]?.focus();
+          break;
+        }
+        case "Escape": {
+          this.hideMenu();
+          this.editorView.focus();
+          break;
+        }
       }
     };
 
-    const handleEscKey = (event) => {
-      if (event.key === "Escape") {
-        this.hideMenu();
-        document.removeEventListener("keydown", handleEscKey);
-      }
-    };
-  
-    document.addEventListener("keydown", handleTab);
-    document.addEventListener("keydown", handleEscKey);
+    document.addEventListener("keydown", this.menuKeyHandler);
   }
 
   hideMenu() {
     this.menuContainer.style.display = "none";
-    this.menuContainer.replaceChildren(); 
+    this.menuContainer.replaceChildren();
+    if (this.menuKeyHandler) {
+      document.removeEventListener("keydown", this.menuKeyHandler);
+      this.menuKeyHandler = null;
+    }
   }
 
   formClickHandler(e, button) {
@@ -282,10 +310,17 @@ export class SlashMenu {
   }
 
   openPopup(popup, button) {
+    if (this.menuKeyHandler) {
+      document.removeEventListener("keydown", this.menuKeyHandler);
+      this.menuKeyHandler = null;
+    }
+
     this.menuContainer.replaceChildren();
     this.menuContainer.appendChild(popup);
 
     const popupForm = this.menuContainer.querySelector('form');
+    const firstField = popupForm.querySelector("input, select, textarea, button");
+    firstField?.focus();
 
     if (this.formEventListeners[button]) {
       this.formEventListeners[button].forEach(({ event, callback }) => {
