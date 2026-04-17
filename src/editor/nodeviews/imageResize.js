@@ -30,11 +30,14 @@ export class ImageResizeView {
 
     const startX = e.clientX;
     const startWidth = this.img.offsetWidth;
+    const startHeight = this.img.offsetHeight;
+    const ratio = startWidth > 0 ? startHeight / startWidth : 1;
 
     const onMouseMove = (e) => {
       const newWidth = Math.max(32, startWidth + (e.clientX - startX));
-      this.img.style.width = newWidth + "px";
-      this.img.style.height = "auto";
+      const newHeight = Math.round(newWidth * ratio);
+      this.img.setAttribute("width", String(newWidth));
+      this.img.setAttribute("height", String(newHeight));
     };
 
     const onMouseUp = (e) => {
@@ -42,13 +45,14 @@ export class ImageResizeView {
       document.removeEventListener("mouseup", onMouseUp);
 
       const finalWidth = this.img.offsetWidth;
+      const finalHeight = Math.round(finalWidth * ratio);
       const pos = this.getPos();
       if (pos == null) return;
 
       const attrs = { ...this.node.attrs.originalAttributes };
       attrs.width = String(finalWidth);
-      attrs.style = `width: ${finalWidth}px; height: auto;`;
-      delete attrs.height;
+      attrs.height = String(finalHeight);
+      delete attrs.style;
 
       this.view.dispatch(
         this.view.state.tr.setNodeMarkup(pos, null, {
