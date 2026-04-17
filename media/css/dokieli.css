@@ -3865,17 +3865,18 @@ max-width:none;
     background-color:#eee;
   }
 
-p.editor-empty-node {
+.editor-empty-node {
   position: relative; }
-  p.editor-empty-node:has(br:only-child):after,
-  p.editor-empty-node:empty:after {
+  .editor-empty-node:has(br:only-child):after,
+  .editor-empty-node:empty:after {
     color: #999;
     content: attr(data-placeholder);
     font-style: italic;
     pointer-events: none;
     position: absolute;
     left: 0;
-    top: 0; }
+    top: 0;
+    white-space: nowrap; }
 
 .editor-image-resize {
   display: inline-block;
