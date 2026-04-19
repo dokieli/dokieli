@@ -169,6 +169,34 @@ export function hideDocumentMenu(e) {
   }
 
   removeNodesWithIds(Config.DocumentDoItems);
+
+  // When dialog nodes are removed (e.g., when switching modes), the close button
+  // handlers are never called, so re-enable the trigger buttons here.
+  // This fixes issue #527: buttons disabled when dialog is open stay disabled
+  // when dialog is closed for reasons other than clicking the close button.
+  const dialogTriggerButtons = {
+    'graph-view': '#document-views .resource-visualise',
+    'share-resource': '#document-do .resource-share',
+    'reply-to-resource': '#document-do .resource-reply',
+    'open-document': '#document-do .resource-open',
+    'source-view': '#document-do .resource-source',
+    'save-as-document': '#document-do .resource-save-as',
+    'embed-data-entry': '#document-do .embed-data-meta',
+    'generate-feed': '#document-do .generate-feed',
+    'robustify-links': '#document-do .robustify-links',
+    'message-log': '#document-do .message-log',
+    'delete-document': '#document-do .resource-delete',
+    'document-info': '#document-do .document-info',
+  };
+
+  Config.DocumentDoItems.forEach(id => {
+    const selector = dialogTriggerButtons[id];
+    if (!selector) return;
+    const btn = document.querySelector(selector);
+    if (btn) {
+      btn.disabled = false;
+    }
+  });
 }
 
 export function eventEscapeDocumentMenu(e) {
