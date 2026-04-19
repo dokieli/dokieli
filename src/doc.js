@@ -3204,8 +3204,7 @@ export function serializeTableSectionToText(section) {
         cells = tr.querySelectorAll('th, td');
         break;
       case 'tbody':
-        //FIXME:
-        cells = tr.querySelectorAll('td');
+        cells = tr.querySelectorAll('th, td');
         break;
     }
 
