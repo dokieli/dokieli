@@ -99,7 +99,7 @@ function checkForSlashCommand(view) {
 
   const textBefore = $from.parent.textBetween(0, $from.parentOffset, null, "\n");
 
-  if (textBefore === "/" || textBefore.substring(textBefore.length - 2) === " /") {
+  if (textBefore === "/") {
     const coords = view.coordsAtPos($from.pos);
 
     Slash.showMenu(coords.left, coords.top);
