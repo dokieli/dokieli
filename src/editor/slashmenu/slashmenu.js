@@ -124,6 +124,10 @@ export class SlashMenu {
       document.removeEventListener("keydown", this.menuKeyHandler);
       this.menuKeyHandler = null;
     }
+    if (this.popupKeyHandler) {
+      document.removeEventListener("keydown", this.popupKeyHandler);
+      this.popupKeyHandler = null;
+    }
   }
 
   formClickHandler(e, button) {
@@ -349,6 +353,13 @@ export class SlashMenu {
 
     this.menuContainer.style.display = "block";
     this.menuContainer.style.padding = 0;
+
+    this.popupKeyHandler = (event) => {
+      if (event.key !== "Escape") return;
+      this.hideMenu();
+      this.editorView.focus();
+    };
+    document.addEventListener("keydown", this.popupKeyHandler);
   }
 
   // this function is duplicated from the Author toolbar. The reason is that 1. the editor instance is not accessible from everywhere (although that could be solved) and 2. the toolbar might not be initialized when we trigger this menu yet. it might be better to keep this somewhere common to every menu/toolbar using the author mode functions (prosemirror transactions) and re-use. and 3. for the specific case of the slash menu i need to update the selection so that it includes (and replaces) the slash
