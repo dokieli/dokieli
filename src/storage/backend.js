@@ -456,7 +456,7 @@ class GitForgeStorage extends StorageBackend {
 
   async _getSha(parsed) {
     const apiUrl = this._contentsUrl(parsed);
-    const response = await fetch(apiUrl, { headers: this._headers(parsed.host) });
+    const response = await fetch(apiUrl, { headers: this._headers(parsed.host), cache: 'no-cache' });
     if (response.status === 404) return null;
     if (!response.ok) throw new Error(`Error reading current sha: ${response.status} ${response.statusText}`);
     const payload = await response.json();
@@ -482,7 +482,7 @@ class GitForgeStorage extends StorageBackend {
     const parsed = this._parse(url);
     if (!parsed) throw new Error(`GitForgeStorage: cannot parse URL ${url}`);
     const apiUrl = this._contentsUrl(parsed);
-    const response = await fetch(apiUrl, { headers: this._headers(parsed.host) });
+    const response = await fetch(apiUrl, { headers: this._headers(parsed.host), cache: 'no-cache' });
     if (!response.ok) {
       const error = new Error(`Error fetching resource: ${response.status} ${response.statusText}`);
       error.status = response.status;
