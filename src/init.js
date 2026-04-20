@@ -394,7 +394,7 @@ function teardownShower() {
   showerInstance = null;
 }
 
-function initSlideshow(options) {
+export function initSlideshow(options) {
   options = options || {};
   options.progress = options.progress || true;
 
