@@ -2382,6 +2382,10 @@ function getCustomStylesheetContent() {
 
 function applyCustomStylesheetPreview(css) {
   var styleEl = document.getElementById('dokieli-custom-style');
+  if (!css.trim()) {
+    if (styleEl) styleEl.remove();
+    return;
+  }
   if (!styleEl) {
     styleEl = document.createElement('style');
     styleEl.id = 'dokieli-custom-style';
