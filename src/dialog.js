@@ -2200,6 +2200,8 @@ export async function openResource(iri, options) {
       }
 
       var html = await spawnDokieli(document, o.data, o.options['contentType'], o.options['subjectURI'], spawnOptions);
+
+      window.history.replaceState({}, '', '#open=' + iri);
     }
 
     Config.DocumentAction = 'open';
