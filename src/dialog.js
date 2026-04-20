@@ -37,6 +37,7 @@ import { showVisualisationGraph } from './viz.js';
 import { exportAsDocument, updateUILanguage } from './actions.js';
 import { parseMarkdown, htmlToMarkdown, fragmentFromString, removeSelectorFromNode, selectArticleNode, getNodeWithoutClasses } from "./utils/html.js";
 import { showUserSigninSignout, userInfoSignOut } from './auth.js';
+import { initSlideshow } from './init.js';
 import { generateGeoView } from './geo.js';
 import { csvStringToJson, jsonToHtmlTableString } from './csv.js';
 import { restoreYjsContent, addYjsVersion, getYjsVersions, getYjsVersionsFromIDB, getCurrentVersionKey, onYjsVersionsChanged } from "./editor/editor.js";
@@ -5873,7 +5874,7 @@ export async function spawnDokieli(documentNode, data, contentTypes, iris, optio
     // processActivateAction();
     // highlightItems();
     // showAsTabs();
-    // initSlideshow();
+    initSlideshow();
     // setDocRefType();
     // initCurrentStylesheet();
     // initShowNotificationSources();
