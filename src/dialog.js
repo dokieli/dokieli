@@ -132,11 +132,18 @@ export function showDocumentMenu(e) {
   dMenuButton.parentNode.replaceChild(fragmentFromString(Config.Button.Menu.CloseMenu), dMenuButton);
   dMenu.classList.add('on');
 
-  showLanguages(dInfo)
   showUserSigninSignout(dUserInfo);
-  showDocumentDo(dInfo);
-  showAutoSave(dInfo);
-  showViews(dInfo);
+  ensureMenuTabs(dInfo);
+
+  const tabActions = dInfo.querySelector('#menu-actions');
+  const tabTools = dInfo.querySelector('#menu-tools');
+  const tabSettings = dInfo.querySelector('#menu-settings');
+
+  showDocumentDo(tabActions);
+  showDocumentTools(tabTools);
+  showViews(tabTools);
+  showLanguages(tabSettings);
+  showAutoSave(tabSettings);
   showAboutDokieli(dInfo);
 
   // var body = getDocumentContentNode(document);
@@ -182,6 +189,43 @@ export function eventLeaveDocumentMenu(e) {
   if (!e.target.closest('.do.on')) {
     hideDocumentMenu(e);
   }
+}
+
+function ensureMenuTabs(node) {
+  if (node.querySelector('#document-menu-tabs')) { return; }
+
+  const html = `
+    <div class="tabs" id="document-menu-tabs">
+      <nav aria-label="${i18n.t('menu.tabs.nav.aria-label')}">
+        <ul>
+          <li class="selected"><a data-i18n="menu.tabs.actions" href="#menu-actions">${i18n.t('menu.tabs.actions.textContent')}</a></li>
+          <li><a data-i18n="menu.tabs.tools" href="#menu-tools">${i18n.t('menu.tabs.tools.textContent')}</a></li>
+          <li><a data-i18n="menu.tabs.settings" href="#menu-settings">${i18n.t('menu.tabs.settings.textContent')}</a></li>
+        </ul>
+      </nav>
+      <section class="selected" id="menu-actions"></section>
+      <section id="menu-tools"></section>
+      <section id="menu-settings"></section>
+    </div>`;
+
+  sanitizeInsertAdjacentHTML(node, 'beforeend', html);
+
+  const tabs = node.querySelector('#document-menu-tabs');
+  tabs.querySelector('nav').addEventListener('click', (e) => {
+    const a = e.target.closest('a');
+    if (!a) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const li = a.parentNode;
+    if (li.classList.contains('selected')) return;
+
+    tabs.querySelector('nav li.selected')?.classList.remove('selected');
+    li.classList.add('selected');
+    tabs.querySelector(':scope > section.selected')?.classList.remove('selected');
+    tabs.querySelector(`:scope > section${a.hash}`)?.classList.add('selected');
+  });
 }
 
 function showLanguages(node) {
@@ -257,7 +301,7 @@ export async function showAutoSave(node) {
   </section>
   `;
 
-  sanitizeInsertAdjacentHTML(node.querySelector('#document-do'), 'afterend', html);
+  sanitizeInsertAdjacentHTML(node, 'beforeend', html);
 
   if (!!disabled) {
     return;
@@ -278,9 +322,26 @@ export async function showAutoSave(node) {
   });
 }
 
+function showDocumentTools(node) {
+  if (document.getElementById('document-tools')) { return; }
+
+  const buttons = [
+    Config.Button.Menu.Source,
+    Config.Button.Menu.EmbedData,
+    Config.Button.Menu.DocumentInfo
+  ];
+
+  const s = `
+    <section aria-labelledby="document-tools-label" id="document-tools" rel="schema:hasPart" resource="#document-tools">
+      <h2 id="document-tools-label" property="schema:name" data-i18n="menu.tools.h2">${i18n.t('menu.tools.h2.textContent')}</h2>
+      <ul>${buttons.map(b => `<li>${b}</li>`).join('')}</ul>
+    </section>`;
+
+  sanitizeInsertAdjacentHTML(node, 'beforeend', s);
+}
+
 function showDocumentDo(node) {
-  var d = node.querySelector('#document-do');
-  if (d) { return; }
+  if (document.getElementById('document-do')) { return; }
 
   const documentOptions = {
     ...Config.DOMProcessing,
@@ -289,38 +350,60 @@ function showDocumentDo(node) {
     normalize: true
   };
 
-  var buttonDisabled = '';
+  const editToggle = Config.Editor.mode === 'author' ? Config.Button.Menu.EditDisable : Config.Button.Menu.EditEnable;
 
-  const buttons = [
-    Config.Button.Menu.Share,
-    Config.Button.Menu.Reply,
-    Config.Button.Menu.Notifications,
-    Config.Button.Menu.New,
-    Config.Button.Menu.NewSlideshow,
-    Config.Editor.mode === 'author' ? Config.Button.Menu.EditDisable : Config.Button.Menu.EditEnable,
-    Config.Button.Menu.EditHistory,
-    Config.Button.Menu.Open,
-    Config.Button.Menu.Save,
-    Config.Button.Menu.SaveAs,
-    Config.Button.Menu.Version,
-    Config.Button.Menu.Immutable,
-    Config.Button.Menu.Memento,
-    Config.Button.Menu.RobustifyLinks,
-    Config.Button.Menu.GenerateFeed,
-    Config.Button.Menu.InternetArchive,
-    Config.Button.Menu.Export,
-    Config.Button.Menu.Source,
-    Config.Button.Menu.EmbedData,
-    Config.Button.Menu.Print,
-    Config.Button.Menu.Delete,
-    Config.Button.Menu.MessageLog,
-    Config.Button.Menu.DocumentInfo
-  ]
+  const groups = [
+    {
+      id: 'menu-group-primary',
+      className: 'menu-group-primary',
+      buttons: [editToggle, Config.Button.Menu.Open, Config.Button.Menu.New, Config.Button.Menu.NewSlideshow]
+    },
+    {
+      id: 'menu-group-file',
+      summaryKey: 'menu.group.file',
+      summaryFallback: 'File operations',
+      open: true,
+      buttons: [Config.Button.Menu.Save, Config.Button.Menu.SaveAs, Config.Button.Menu.Version, Config.Button.Menu.Immutable, Config.Button.Menu.Memento, Config.Button.Menu.EditHistory]
+    },
+    {
+      id: 'menu-group-share',
+      summaryKey: 'menu.group.share',
+      summaryFallback: 'Share & communicate',
+      open: true,
+      buttons: [Config.Button.Menu.Share, Config.Button.Menu.Reply, Config.Button.Menu.Notifications, Config.Button.Menu.MessageLog]
+    },
+    {
+      id: 'menu-group-advanced',
+      summaryKey: 'menu.group.advanced',
+      summaryFallback: 'Advanced',
+      open: false,
+      buttons: [Config.Button.Menu.RobustifyLinks, Config.Button.Menu.InternetArchive, Config.Button.Menu.GenerateFeed, Config.Button.Menu.Export, Config.Button.Menu.Print]
+    },
+    {
+      id: 'menu-group-danger',
+      className: 'menu-group-danger',
+      summaryKey: 'menu.group.danger',
+      summaryFallback: 'Danger zone',
+      open: false,
+      buttons: [Config.Button.Menu.Delete]
+    }
+  ];
 
-  var s = `
+  const groupsHTML = groups.map(g => {
+    const list = `<ul>${g.buttons.map(b => `<li>${b}</li>`).join('')}</ul>`;
+    if (!g.summaryKey) {
+      return `<div class="menu-group ${g.className || ''}" id="${g.id}">${list}</div>`;
+    }
+    const summaryLabel = i18n.t(`${g.summaryKey}.textContent`) === `${g.summaryKey}.textContent` ? g.summaryFallback : i18n.t(`${g.summaryKey}.textContent`);
+    const openAttr = g.open ? ' open=""' : '';
+    const classAttr = g.className ? ` ${g.className}` : '';
+    return `<details class="menu-group${classAttr}" id="${g.id}"${openAttr}><summary data-i18n="${g.summaryKey}">${summaryLabel}</summary>${list}</details>`;
+  }).join('');
+
+  const s = `
     <section aria-labelledby="document-do-label" id="document-do" rel="schema:hasPart" resource="#document-do">
       <h2 id="document-do-label" property="schema:name">Do</h2>
-      <ul>${buttons.map(b => `<li>${b}</li>`).join('')}</ul>
+      ${groupsHTML}
     </section>`;
 
   sanitizeInsertAdjacentHTML(node, 'beforeend', s);
@@ -2320,11 +2403,11 @@ export function viewSource(e) {
       initDocumentMenu();
       showDocumentMenu(e);
       viewSource();
-      document.querySelector('#document-do .resource-source').disabled = true;
+      document.querySelector('#document-menu .resource-source').disabled = true;
     }
 
     if (e.target.closest('button.close')) {
-      document.querySelector('#document-do .resource-source').disabled = false;
+      document.querySelector('#document-menu .resource-source').disabled = false;
     }
   });
 }
@@ -4563,7 +4646,7 @@ export function showDocumentInfo(e) {
 
   documentInfo.addEventListener('click', (e) => {
     if (e.target.closest('button.close')) {
-      document.querySelector('#document-do .document-info').disabled = false;
+      document.querySelector('#document-menu .document-info').disabled = false;
     }
   });
 

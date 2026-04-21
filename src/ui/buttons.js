@@ -591,7 +591,7 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .embed-data-meta': ({ info, editorMode, blob }) => {
+  '#document-menu .embed-data-meta': ({ info, editorMode, blob }) => {
     if (blob) return false;
 
     if (editorMode !== 'author') return false;
@@ -605,7 +605,7 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .document-info': ({ info, editorMode }) => {
+  '#document-menu .document-info': ({ info, editorMode }) => {
     //TODO: Consider moving on-slideshow to Config
     if(document.body.classList.contains('on-slideshow')) {
       return false;
