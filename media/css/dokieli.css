@@ -2076,7 +2076,7 @@ display: flex;
 align-items: center;
 gap: 0.75em;
 width: 100%;
-padding: 0.5em 0.75em;
+padding: 0.75em 1em;
 text-align: start;
 border-radius: 0.25em;
 }
@@ -2483,10 +2483,9 @@ text-align: center;
 #document-menu #document-menu-tabs > nav li a {
 display: block;
 background-color: #fff;
-color: #555;
+color: #333;
 padding: 0.5em 0.75em;
 border-bottom: 2px solid transparent;
-font-weight: normal;
 text-decoration: none;
 }
 #document-menu #document-menu-tabs > nav li a:hover,
@@ -2499,7 +2498,6 @@ border: 0;
 }
 #document-menu #document-menu-tabs > nav li.selected a {
 color: #080;
-font-weight: bold;
 border-bottom-color: #080;
 background-color: #fff;
 }
@@ -2523,7 +2521,7 @@ padding: 0;
 }
 #document-menu #document-do .menu-group > ul {
 margin: 0;
-padding: 0;
+padding: 0.25em;
 }
 #document-menu #document-do details.menu-group {
 border: 1px solid #eee;
