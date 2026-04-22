@@ -2268,8 +2268,9 @@ content:"";
 }
 
 #document-menu #about-dokieli {
-margin:0 auto;
+margin:1em auto 0 auto;
 width:calc(100% - 2em);
+border:1px solid #ccc !important;
 }
 
 #document-menu #about-dokieli img,
@@ -2277,9 +2278,6 @@ width:calc(100% - 2em);
 vertical-align:middle;
 }
 
-#document-menu #document-do {
-margin-top:0.5em;
-}
 #document-menu #document-do li {
 width: 100%;
 height: auto;
@@ -2308,12 +2306,16 @@ float:none;
 }
 
 #document-menu #ui-language {
-margin-top:5em;
 margin-bottom:0.5em;
 }
-#document-menu #ui-language label {
-display:none;
+#document-menu #ui-language label,
+#document-menu #document-views-label {
+display: block !important;
+font-size: 0.85em;
+text-transform: uppercase;
+font-weight: bold;
 }
+
 
 #document-menu #document-views > svg.fas,
 #document-menu #ui-language > svg.fas {
@@ -2468,7 +2470,7 @@ margin-top: 0.75em;
 }
 #document-menu #document-menu-tabs > nav {
 border-bottom: 1px solid #ccc;
-margin-bottom: 0.75em;
+margin-bottom: 0.5em;
 }
 #document-menu #document-menu-tabs > nav ul {
 display: flex;
@@ -2521,21 +2523,19 @@ padding: 0;
 }
 #document-menu #document-do .menu-group > ul {
 margin: 0;
-padding: 0.25em;
+padding: 0.5em;
 }
 #document-menu #document-do details.menu-group {
 border: 1px solid #eee;
+border-bottom:0;
 border-radius: 0.25em;
-}
-#document-menu #document-do details.menu-group > ul {
-padding: 0.25em;
 }
 #document-menu #document-do details.menu-group > summary {
 cursor: pointer;
-padding: 0.4em 0.75em;
+padding: 0.5em 1em;
 font-size: 0.85em;
 font-weight: bold;
-color: #555;
+color: #333;
 text-transform: uppercase;
 letter-spacing: 0.03em;
 list-style: none;
