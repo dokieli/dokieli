@@ -402,7 +402,7 @@ function showDocumentDo(node) {
 
   const s = `
     <section aria-labelledby="document-do-label" id="document-do" rel="schema:hasPart" resource="#document-do">
-      <h2 id="document-do-label" property="schema:name">Do</h2>
+      <h2 id="document-do-label" property="schema:name">Menu</h2>
       ${groupsHTML}
     </section>`;
 

@@ -2031,7 +2031,7 @@ background-color:#fff !important;
 color:#000 !important;
 padding:0;
 margin:0;
-font-size:1em;
+font-size:1.1em;
 font-weight:normal;
 text-transform: inherit !important;
 }
@@ -2064,10 +2064,11 @@ float:none !important;
 clear: both !important;
 position: static !important;
 margin:0;
-padding:0;
+padding: 0;
 }
 #document-menu section h2 {
 display:none;
+margin-bottom:1em;
 }
 #document-menu section button {
 color:#000 !important;
@@ -2075,8 +2076,9 @@ background-color:#fff !important;
 display: flex;
 align-items: center;
 gap: 0.75em;
-width: 100%;
-padding: 0.75em 1em;
+/* width: calc(100% - 2em); */
+width:100%;
+padding: 0.75em 1em 0.7em 1.5em;
 text-align: start;
 border-radius: 0.25em;
 }
@@ -2192,7 +2194,6 @@ margin-left:0;
   grid-template-columns: 1fr 1fr;
 }
 #document-views ul {
-max-width:70%;
 display:inline-block;
 }
 #document-views ul li {
@@ -2270,7 +2271,7 @@ content:"";
 #document-menu #about-dokieli {
 margin:1em auto 0 auto;
 width:calc(100% - 2em);
-border:1px solid #ccc !important;
+border-top:1px solid #ccc !important;
 }
 
 #document-menu #about-dokieli img,
@@ -2322,10 +2323,10 @@ font-weight: bold;
   vertical-align: middle;
 }
 #document-menu #ui-language > svg.fas {
-margin:0 0.5em 0 2.25em;
+margin:0 0.5em 0 1em;
 }
 #document-menu #document-views > svg.fas {
-margin:0 1em 0 2.5em;
+margin:0 1em 0 1em;
 }
 
 #document-menu .editor-disable,
@@ -2509,6 +2510,7 @@ padding: 0;
 border: 0;
 width: auto;
 display: none;
+user-select: none;
 }
 #document-menu #document-menu-tabs > section.selected {
 display: block;
@@ -2523,13 +2525,12 @@ padding: 0;
 }
 #document-menu #document-do .menu-group > ul {
 margin: 0;
-padding: 0.5em;
+padding: 0;
 }
 #document-menu #document-do details.menu-group {
-border: 1px solid #eee;
-border-bottom:0;
-border-radius: 0.25em;
+
 }
+#document-views h2,
 #document-menu #document-do details.menu-group > summary {
 cursor: pointer;
 padding: 0.5em 1em;
@@ -2855,10 +2856,12 @@ background-color: #fff;
 width: 4em;
 }
 
-button.copy-to-clipboard > svg, 
+button.copy-to-clipboard > svg
+/* , 
 button.signout-user > svg,
 #document-views > svg,
-#ui-language > svg {
+#ui-language > svg */
+{
 width:1.5em;
 height:1.5em;
 }
