@@ -3471,11 +3471,13 @@ export function showAsTabs(selector) {
           var navLi = node.querySelectorAll('nav li');
           for (var i = 0; i < navLi.length; i++) {
             navLi[i].classList.remove('selected');
+            if (!navLi[i].classList.length) navLi[i].removeAttribute('class');
           }
           li.classList.add('selected');
           var figures = node.querySelectorAll('figure');
           for (let i = 0; i < figures.length; i++) {
             figures[i].classList.remove('selected');
+            if (!figures[i].classList.length) figures[i].removeAttribute('class');
           }
           node.querySelector('figure' + a.hash).classList.add('selected');
         }

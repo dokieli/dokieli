@@ -942,6 +942,14 @@ width:35%;
 margin:0 0 0.5em 0;
 }
 
+.do section + p::before,
+.do section + dl::before,
+.do section + div::before {
+content:"";
+white-space:unset !important;
+}
+
+
 /* Sign in dialog */
 #user-identity-input section + section {
 margin-top:1.5em;
@@ -1964,7 +1972,7 @@ height: 1.8em;
 border-radius: 0.25em;
 vertical-align:middle;
 border: 1px solid rgba(0, 0, 0, 0.35);
-box-shadow: rgba(0, 0, 0, 0.06) 0 0.4em 0.6em;
+/* box-shadow: rgba(0, 0, 0, 0.06) 0 0.4em 0.6em; */
 background-color: #fff;
 display: inline-flex;
 cursor: pointer;
@@ -2127,9 +2135,12 @@ background-color:#fff !important;
 /*background-color:inherit !important;*/
 cursor:default !important;
 }
-#document-menu section button.signout-user {
+#document-menu #user-info button {
 width:auto;
 height:auto;
+position: relative;
+right: 0;
+left: 0;
 }
 
 #document-menu section button .fa,
@@ -2145,11 +2156,12 @@ margin: 0;
 #document-menu #user-info {
 display:block;
 position:relative;
-margin:0 0 0.5em 0;
+margin:0;
+min-height:5em;
 }
 #document-menu #user-info > span {
 display: block;
-margin: 0.25em 0;
+margin: 1em 5em 0 1em;
 }
 #user-info img {
 display:block;
@@ -2160,7 +2172,10 @@ margin: 0.25em 0;
 display: inline-block;
 }
 #document-menu #user-info img + a {
-margin:0;
+margin:0 1em 0 0;
+}
+#document-menu #user-info img + a:hover {
+margin-bottom:-1px;
 }
 
 #document-menu p {
@@ -2287,10 +2302,9 @@ height: auto;
 #document-menu #user-info button.signout-user {
 display: inline-flex;
 align-items: center;
-gap: 0.5em;
-margin: 0.25em 0;
-padding: 0.4em 0.75em;
-border: 1px solid #ccc;
+gap: 0.75em;
+margin: 1em 0 0 0.75em;
+padding: 0.5em 0.75em;
 }
 
 #document-menu .timemap dd {
@@ -2315,7 +2329,8 @@ margin-bottom:0.5em;
 #document-menu #ui-language label {
 display:none;
 }
-#document-menu #document-views-label {
+#document-menu #document-views-label,
+#document-menu #ui-language-label {
 display: block !important;
 font-size: 0.85em;
 text-transform: uppercase;
@@ -2339,14 +2354,14 @@ background-color:#eee !important;
 }
 
 #document-menu #document-autosave {
-margin-top:1em;
+margin-top:3em;
 width:calc(100% - 1.5em);
 }
 
 #document-autosave input[type="checkbox"] {
   position:relative;
-  top:-0.5em;
-  left:3em;
+  top:0;
+  right:23em;
 }
 #document-autosave input:focus + label {
   outline: 2px solid #080;
@@ -2369,12 +2384,15 @@ outline-offset: 5px;
   height: 1.75em;
   background: #777;
   border-radius: 1em;
-  position: relative;
   cursor: pointer;
   text-align: center;
   font-weight: normal;
   color: #fff;
   user-select: none;
+  position: absolute;
+  right: 2em;
+  left: auto;
+}
 }
 
 #document-autosave label:lang(ko)::before,
@@ -2443,10 +2461,10 @@ outline-offset: 5px;
 
 #document-autosave span {
   position: absolute;
-  left: 4em;
+  left: -17.5em;
   color: #000;
   padding-left: 1em;
-  margin-left: -1em;
+  padding-right:13em;
   width:max-content;
 }
 
@@ -2535,6 +2553,7 @@ padding: 0;
 
 }
 #document-views h2,
+#ui-language h2, 
 #document-menu #document-do details.menu-group > summary {
 cursor: pointer;
 padding: 0.5em 1em;

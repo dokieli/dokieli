@@ -221,9 +221,17 @@ function ensureMenuTabs(node) {
     const li = a.parentNode;
     if (li.classList.contains('selected')) return;
 
-    tabs.querySelector('nav li.selected')?.classList.remove('selected');
+    const prevLi = tabs.querySelector('nav li.selected');
+    if (prevLi) {
+      prevLi.classList.remove('selected');
+      if (!prevLi.classList.length) prevLi.removeAttribute('class');
+    }
     li.classList.add('selected');
-    tabs.querySelector(':scope > section.selected')?.classList.remove('selected');
+    const prevSection = tabs.querySelector(':scope > section.selected');
+    if (prevSection) {
+      prevSection.classList.remove('selected');
+      if (!prevSection.classList.length) prevSection.removeAttribute('class');
+    }
     tabs.querySelector(`:scope > section${a.hash}`)?.classList.add('selected');
   });
 }
@@ -326,9 +334,11 @@ function showDocumentTools(node) {
   if (document.getElementById('document-tools')) { return; }
 
   const buttons = [
-    Config.Button.Menu.Source,
+    Config.Button.Menu.DocumentInfo,
     Config.Button.Menu.EmbedData,
-    Config.Button.Menu.DocumentInfo
+    Config.Button.Menu.Source,
+    Config.Button.Menu.Export, 
+    Config.Button.Menu.Print
   ];
 
   const s = `
@@ -359,31 +369,27 @@ function showDocumentDo(node) {
       buttons: [editToggle, Config.Button.Menu.Open, Config.Button.Menu.New, Config.Button.Menu.NewSlideshow]
     },
     {
-      id: 'menu-group-file',
-      summaryKey: 'menu.group.file',
-      summaryFallback: 'File operations',
+      id: 'menu-group-document',
+      summaryKey: 'menu.group.document',
       open: true,
       buttons: [Config.Button.Menu.Save, Config.Button.Menu.SaveAs, Config.Button.Menu.Version, Config.Button.Menu.Immutable, Config.Button.Menu.Memento, Config.Button.Menu.EditHistory]
     },
     {
-      id: 'menu-group-share',
-      summaryKey: 'menu.group.share',
-      summaryFallback: 'Share & communicate',
+      id: 'menu-group-interactions',
+      summaryKey: 'menu.group.interactions',
       open: true,
       buttons: [Config.Button.Menu.Share, Config.Button.Menu.Reply, Config.Button.Menu.Notifications, Config.Button.Menu.MessageLog]
     },
     {
       id: 'menu-group-advanced',
       summaryKey: 'menu.group.advanced',
-      summaryFallback: 'Advanced',
       open: false,
-      buttons: [Config.Button.Menu.RobustifyLinks, Config.Button.Menu.InternetArchive, Config.Button.Menu.GenerateFeed, Config.Button.Menu.Export, Config.Button.Menu.Print]
+      buttons: [Config.Button.Menu.RobustifyLinks, Config.Button.Menu.InternetArchive, Config.Button.Menu.GenerateFeed]
     },
     {
       id: 'menu-group-danger',
       className: 'menu-group-danger',
       summaryKey: 'menu.group.danger',
-      summaryFallback: 'Danger zone',
       open: false,
       buttons: [Config.Button.Menu.Delete]
     }
@@ -394,7 +400,7 @@ function showDocumentDo(node) {
     if (!g.summaryKey) {
       return `<div class="menu-group ${g.className || ''}" id="${g.id}">${list}</div>`;
     }
-    const summaryLabel = i18n.t(`${g.summaryKey}.textContent`) === `${g.summaryKey}.textContent` ? g.summaryFallback : i18n.t(`${g.summaryKey}.textContent`);
+    const summaryLabel = i18n.t(`${g.summaryKey}.textContent`);
     const openAttr = g.open ? ' open=""' : '';
     const classAttr = g.className ? ` ${g.className}` : '';
     return `<details class="menu-group${classAttr}" id="${g.id}"${openAttr}><summary data-i18n="${g.summaryKey}">${summaryLabel}</summary>${list}</details>`;
