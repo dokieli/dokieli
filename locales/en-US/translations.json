@@ -535,7 +535,7 @@
   "menu.document-views.custom.button.title": "Edit a custom stylesheet for this document",
   "menu.document-views.graph.button.textContent": "Graph",
   "menu.document-views.graph.button.title": "Show Graph View",
-  "menu.document-views.h2.textContent": "Views",
+  "menu.document-views.h2.textContent": "Display Modes",
   "menu.document-views.native-style.button.textContent": "Native",
   "menu.document-views.native-style.button.title": "Change to native/device browser view",
   "menu.edit-disable.button.textContent": "Edit",

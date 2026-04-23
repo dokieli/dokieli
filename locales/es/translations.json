@@ -535,7 +535,7 @@
   "menu.document-views.custom.button.title": "Editar una hoja de estilo personalizada para este documento",
   "menu.document-views.graph.button.textContent": "Gráfico",
   "menu.document-views.graph.button.title": "Mostrar vista de gráfico",
-  "menu.document-views.h2.textContent": "Vistas",
+  "menu.document-views.h2.textContent": "Modos de visualización",
   "menu.document-views.native-style.button.textContent": "Nativa",
   "menu.document-views.native-style.button.title": "Cambiar a la vista nativa/del dispositivo",
   "menu.edit-disable.button.textContent": "Editar",
