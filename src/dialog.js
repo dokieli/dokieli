@@ -337,7 +337,7 @@ function showDocumentTools(node) {
     Config.Button.Menu.DocumentInfo,
     Config.Button.Menu.EmbedData,
     Config.Button.Menu.Source,
-    Config.Button.Menu.Export, 
+    Config.Button.Menu.Export,
     Config.Button.Menu.Print
   ];
 
@@ -366,7 +366,7 @@ function showDocumentDo(node) {
     {
       id: 'menu-group-primary',
       className: 'menu-group-primary',
-      buttons: [editToggle, Config.Button.Menu.Open, Config.Button.Menu.New, Config.Button.Menu.NewSlideshow]
+      buttons: [Config.Button.Menu.New, Config.Button.Menu.NewSlideshow, Config.Button.Menu.Open, editToggle]
     },
     {
       id: 'menu-group-document',
