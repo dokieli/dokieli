@@ -609,24 +609,37 @@ export class ToolbarView {
       
       const rawLeft = selectedPosition.left + (selectedPosition.width / 2) - (toolbarWidth / 2);
       const clampedLeft = Math.max(0, Math.min(rawLeft, window.innerWidth - toolbarWidth));
-      this.dom.style.left = `${clampedLeft}px`;
+
+      // Find the containing block for position: absolute (offsetParent is unreliable).
+      let originLeft = -window.scrollX;
+      let originTop = -window.scrollY;
+      for (let a = this.dom.parentElement; a; a = a.parentElement) {
+        if (getComputedStyle(a).position !== 'static') {
+          const r = a.getBoundingClientRect();
+          originLeft = r.left;
+          originTop = r.top;
+          break;
+        }
+      }
+
+      this.dom.style.left = `${clampedLeft - originLeft}px`;
 
       // Cleanup the arrow from previous toolbar poisitioning
       this.dom.classList.remove("toolbar-arrow-over", "toolbar-arrow-under");
 
       //Normally we want to position the toolbar above the selection, otherwise below the selection.
       //Put the toolbar above the selection if there is enough space in the viewport above the position of the selected text's rectangle.
-  
+
       //1 & 2
       if (selectedPosition.top >= toolbarHeight + (margin * 2)) {
-        this.dom.style.top = `${selectedPosition.top + window.scrollY - toolbarHeight - margin}px`;
+        this.dom.style.top = `${selectedPosition.top - originTop - toolbarHeight - margin}px`;
         //This is just the arrow below the toolbar pointing at the selection.
         this.dom.classList.add("toolbar-arrow-under");
       }
       //Put the toolbar below the selection.
       // 3
       else {
-        this.dom.style.top = `${selectedPosition.bottom + window.scrollY + margin}px`;
+        this.dom.style.top = `${selectedPosition.bottom - originTop + margin}px`;
         this.dom.classList.add("toolbar-arrow-over");
       }
 
