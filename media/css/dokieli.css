@@ -2309,7 +2309,12 @@ float:none;
 #document-menu #ui-language {
 margin-bottom:0.5em;
 }
-#document-menu #ui-language label,
+#document-menu #ui-language {
+  display:block !important;
+}
+#document-menu #ui-language label {
+display:none;
+}
 #document-menu #document-views-label {
 display: block !important;
 font-size: 0.85em;
@@ -2319,14 +2324,13 @@ font-weight: bold;
 
 
 #document-menu #document-views > svg.fas,
-#document-menu #ui-language > svg.fas {
+#document-menu #ui-language svg.fas {
   vertical-align: middle;
 }
-#document-menu #ui-language > svg.fas {
-margin:0 0.5em 0 1em;
-}
+#document-menu #ui-language svg.fas,
 #document-menu #document-views > svg.fas {
-margin:0 1em 0 1em;
+margin:0 0.75em 0 1.5em;
+font-size:1.1em;
 }
 
 #document-menu .editor-disable,
