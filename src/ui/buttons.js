@@ -171,6 +171,15 @@ export const buttonIcons = {
   strong: {
     icon: Icon['.fas.fa-bold']
   },
+  'align-left': {
+    icon: Icon['.fas.fa-align-left']
+  },
+  'align-center': {
+    icon: Icon['.fas.fa-align-center']
+  },
+  'align-right': {
+    icon: Icon['.fas.fa-align-right']
+  },
   ol: {
     icon: Icon['.fas.fa-link-ol']
   },

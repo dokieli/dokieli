@@ -18,7 +18,7 @@ limitations under the License.
 import { toggleMark, setBlockType } from "prosemirror-commands"
 import { wrapInList, liftListItem } from "prosemirror-schema-list"
 import { DOMSerializer, DOMParser } from "prosemirror-model"
-import { TextSelection } from "prosemirror-state"
+import { TextSelection, NodeSelection } from "prosemirror-state"
 import { schema, allowedEmptyAttributes } from "./../../schema/base.js"
 import { formHandlerLanguage, formHandlerA, formHandlerAnnotate, formHandlerBlockquote, formHandlerImg, formHandlerQ, formHandlerCitation, formHandlerRequirement, formHandlerSemantics } from "./handlers.js"
 import { ToolbarView, annotateFormControls } from "../toolbar.js"
@@ -83,6 +83,9 @@ export class AuthorToolbar extends ToolbarView {
       // q: toggleMark(schema.marks.q),
       pre: setBlockType(schema.nodes.pre),
       code: this.insertCodeInline(schema),
+      'align-left': setTextAlign('left'),
+      'align-center': setTextAlign('center'),
+      'align-right': setTextAlign('right'),
       // math: toggleMark(schema.marks.math), //prosemirror-math
       // citation: citeForm(),
       // semantics: semanticsForm()
@@ -462,7 +465,8 @@ TODO:
     this.selectionUpdate(view);
     const selection = window.getSelection();
     const isSelection = selection && !selection.isCollapsed;
-    if (!isSelection) {
+    const isNodeSelection = view?.state?.selection instanceof NodeSelection;
+    if (!isSelection && !isNodeSelection) {
       if (this.dom.classList.contains('editor-form-active')) {
         this.cleanupToolbar();
       }
@@ -1052,9 +1056,25 @@ nodeToHTML(node, schema) {
   }
 
   updateButtonState(schema, buttonNode, button, editorView) {
+    const alignMatch = button.match(/^align-(left|center|right)$/);
+    if (alignMatch) {
+      const want = alignMatch[1];
+      const { $from } = editorView.state.selection;
+      let current = null;
+      for (let depth = $from.depth; depth > 0; depth--) {
+        const n = $from.node(depth);
+        if (ALIGNABLE_BLOCK_TYPES.has(n.type.name)) {
+          current = currentTextAlign(n.attrs.originalAttributes?.style);
+          break;
+        }
+      }
+      buttonNode.classList.toggle('editor-button-active', current === want);
+      return;
+    }
+
     const nodeType = getSchemaTypeFromButton(schema, button);
     let isActive;
-  
+
     if (nodeType) {
       if (nodeType.type === "mark") {
         isActive = isMarkActive(editorView.state, nodeType.schema);
@@ -1062,8 +1082,8 @@ nodeToHTML(node, schema) {
       else if (nodeType.type === "node") {
         isActive = isNodeActive(editorView.state, nodeType.schema, { level: nodeType.level });
       }
-    } 
-  
+    }
+
     if (isActive !== undefined) {
       if (isActive) {
         buttonNode.classList.add('editor-button-active');
@@ -1072,7 +1092,7 @@ nodeToHTML(node, schema) {
         buttonNode.classList.remove('editor-button-active');
       }
     }
-  } 
+  }
 }
 
 //Checks whether a given a mark schema is applied / active to the current selection.
@@ -1126,6 +1146,57 @@ function getSchemaTypeFromButton(schema, button) {
   }
 
   return null;
+}
+
+const ALIGNABLE_BLOCK_TYPES = new Set([
+  'p', 'heading', 'blockquote', 'figure', 'figcaption', 'pre',
+  'li', 'dt', 'dd', 'summary', 'td', 'th'
+]);
+
+function stripTextAlign(style) {
+  return (style || '')
+    .split(';')
+    .map(s => s.trim())
+    .filter(s => s && !/^text-align\s*:/i.test(s))
+    .join('; ');
+}
+
+function currentTextAlign(style) {
+  const m = /(?:^|;)\s*text-align\s*:\s*([a-z]+)/i.exec(style || '');
+  return m ? m[1].toLowerCase() : null;
+}
+
+function setTextAlign(value) {
+  return (state, dispatch) => {
+    const { $from } = state.selection;
+    let node = null;
+    let pos = null;
+    for (let depth = $from.depth; depth > 0; depth--) {
+      const n = $from.node(depth);
+      if (ALIGNABLE_BLOCK_TYPES.has(n.type.name)) {
+        node = n;
+        pos = $from.before(depth);
+        break;
+      }
+    }
+    if (!node) return false;
+    if (!dispatch) return true;
+
+    const prev = node.attrs.originalAttributes || {};
+    const nextOriginal = { ...prev };
+    const cleaned = stripTextAlign(prev.style);
+    const isSame = currentTextAlign(prev.style) === value;
+    if (isSame) {
+      if (cleaned) nextOriginal.style = cleaned;
+      else delete nextOriginal.style;
+    } else {
+      nextOriginal.style = cleaned ? `${cleaned}; text-align: ${value}` : `text-align: ${value}`;
+    }
+
+    const tr = state.tr.setNodeMarkup(pos, null, { ...node.attrs, originalAttributes: nextOriginal });
+    dispatch(tr.scrollIntoView());
+    return true;
+  };
 }
 
 //Heading is a schema (as opposed to h1-h6). This is an intermediary step to find out how to apply setBlockType (which level of heading). If heading is applied, it either toggles to new heading or to paragraph.

@@ -16,6 +16,7 @@ limitations under the License.
 */
 
 import { schema } from "../schema/base.js"
+import { NodeSelection } from "prosemirror-state"
 import { getButtonHTML, updateButtons } from "../../ui/buttons.js"
 import { getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getClassesOfProductsConcepts, getDocument, getLanguageOptionsHTML, getLicenseOptionsHTML, getReferenceLabel } from "../../doc.js";
 import { getTextQuoteHTML, cloneSelection, setSelection, selectionToTextQuote, setSelectionFromTextQuote, getSelectedParentElement, getTextContentExcludingSups } from "../utils/annotation.js";
@@ -541,7 +542,11 @@ export class ToolbarView {
     if (!selection.rangeCount) return false;
     const range = selection.getRangeAt(0);
     const selectedParentElement = getSelectedParentElement(range);
-    return selectedParentElement.closest('.do');
+    const closestDo = selectedParentElement.closest('.do');
+    if (!closestDo) return false;
+    // image nodeView wraps <img> in .do chrome; don't let it block the toolbar
+    if (closestDo.classList.contains('editor-image-resize')) return false;
+    return true;
   }
   
   // Called when there is a state change, e.g., added something to the DOM or selection change.
@@ -558,37 +563,51 @@ export class ToolbarView {
 
       const selection = window.getSelection();
       const isSelection = selection && !selection.isCollapsed;
-      // Hide the toolbar when there is no selection
-      if (!isSelection) {
-        // if (this.dom.classList.contains('editor-form-active')) {
-        //   // this.dom.classList.remove("editor-form-active");
-        //   // console.log("selection update, cleanup toolbar")
-        //   // this.cleanupToolbar();
-        // }
+      const pmSelection = this.editorView?.state?.selection;
+      const isNodeSelection = pmSelection instanceof NodeSelection;
+
+      if (!isSelection && !isNodeSelection) {
         return;
       }
 
-      //If selection is empty string or a new line
-      if (!selection.rangeCount || !selection.toString().length || selection.toString().charCodeAt(0) === 10) {
+      if (isSelection && (!selection.rangeCount || selection.toString().charCodeAt(0) === 10)) {
         return;
       }
 
-      
+      // img selections report toString() === ""; only bail if the range also has no width/height
+      if (isSelection && !isNodeSelection && selection.toString().length === 0) {
+        const probeRect = selection.getRangeAt(0).getBoundingClientRect();
+        if (probeRect.width === 0 && probeRect.height === 0) {
+          return;
+        }
+      }
+
+
       //TODO: Revisit
       // const allowMultiNodeSelection = false;
       // if (allowMultiNodeSelection) {
       //   return;
       // }
 
-      if (!this.isSelectionsStartEndRangesWithinSameParent(selection)) {
+      if (isSelection && !this.isSelectionsStartEndRangesWithinSameParent(selection)) {
         return;
       }
 
-      this.selection = cloneSelection();
+      if (isSelection) {
+        this.selection = cloneSelection();
+      }
 
       //Get information on the selection to position the toolbar.
-      const range = selection.getRangeAt(0);
-      const selectedPosition = range.getBoundingClientRect();
+      let selectedPosition;
+      if (isSelection) {
+        const range = selection.getRangeAt(0);
+        selectedPosition = range.getBoundingClientRect();
+      } else {
+        const nodeDom = this.editorView.nodeDOM(pmSelection.from);
+        const rectSource = (nodeDom && nodeDom.getBoundingClientRect) ? nodeDom : nodeDom?.parentElement;
+        if (!rectSource) return;
+        selectedPosition = rectSource.getBoundingClientRect();
+      }
       const toolbarHeight = this.dom.offsetHeight;
       const toolbarWidth = this.dom.offsetWidth;
       const margin = 10;

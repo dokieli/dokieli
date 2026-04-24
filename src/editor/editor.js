@@ -336,7 +336,7 @@ export class Editor {
 
         //TODO: 'math', 'sparkline',
         // Visible: strong, em, a. submenu (block type selector): p, h1-h4. submenu (+): img, ol, ul, pre, code, blockquote, q. submenu (···): semantics, citation, requirement, note, lang.
-        this.authorToolbarView = new AuthorToolbar('author', ['strong', 'em', 'a', 'p', 'h1', 'h2', 'h3', 'h4', 'img', 'ol', 'ul', 'pre', 'code', 'blockquote', 'q', 'semantics', 'citation', 'requirement', 'note', 'lang'], editorView);
+        this.authorToolbarView = new AuthorToolbar('author', ['strong', 'em', 'a', 'p', 'h1', 'h2', 'h3', 'h4', 'img', 'ol', 'ul', 'pre', 'code', 'align-left', 'align-center', 'align-right', 'blockquote', 'q', 'semantics', 'citation', 'requirement', 'note', 'lang'], editorView);
 
         // Append DOM portion of toolbar to current editor.
         // editorView.dom.parentNode.appendChild(toolbarView.dom);
