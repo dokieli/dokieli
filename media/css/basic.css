@@ -1589,9 +1589,87 @@ display: block;
   text-align: center;
 }
 
+#home #try-demo {
+  text-align: center;
+  margin: 1.5em auto 2.5em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5em;
+}
+
+#home #try-demo > a {
+  display: inline-block;
+  background-color: #080;
+  color: #fff;
+  padding: 0.75em 1.75em;
+  border-radius: 0.35em;
+  font-size: 1.15em;
+  font-weight: bold;
+  text-decoration: none;
+  border: none;
+  box-shadow: 0 0.2em 0.6em rgba(0, 0, 0, 0.15);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+#home #try-demo > a:hover,
+#home #try-demo > a:focus-visible {
+  background-color: #0a0;
+  transform: translateY(-1px);
+  box-shadow: 0 0.35em 0.9em rgba(0, 0, 0, 0.2);
+}
+
+#home #do-try-caption {
+  color: #333;
+  font-size: 1em;
+  text-align: center;
+  margin-bottom: 2.5em;
+}
+
 #home #introduction {
   font-size: 1.25em;
   margin-bottom: 2em;
+}
+
+/* Demo sandbox page */
+.do-demo-guide {
+  background-color: #f4f9f4;
+  border-left: 4px solid #080;
+  padding: 0.75em 1.25em;
+  margin: 1.5em 0 2em;
+  border-radius: 0 0.35em 0.35em 0;
+}
+
+.do-demo-guide > summary {
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1.15em;
+  color: #060;
+  list-style-position: outside;
+  padding: 0.25em 0;
+}
+
+.do-demo-guide[open] > summary {
+  margin-bottom: 0.5em;
+}
+
+.do-demo-guide .do-demo-lead {
+  font-size: 1.1em;
+  line-height: 1.5;
+  margin-top: 0;
+}
+
+.do-demo-guide ol {
+  margin: 0.5em 0;
+  padding-left: 1.25em;
+}
+
+.do-demo-guide li {
+  margin: 0.35em 0;
+}
+
+.do-demo-guide p:last-child {
+  margin-bottom: 0;
 }
 
 #home #features h3 {
