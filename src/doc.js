@@ -3701,6 +3701,14 @@ export function initCurrentStylesheet(e) {
     getDocumentContentNode(document).classList.add('on-slideshow', 'list');
     sanitizeInsertAdjacentHTML(document.querySelector('head'), 'beforeend', '<meta content="width=792, user-scalable=no" name="viewport" />');
 
+    if (!document.getElementById('do-slideshow-print-page')) {
+      var printStyle = document.createElement('style');
+      printStyle.id = 'do-slideshow-print-page';
+      printStyle.media = 'print';
+      printStyle.textContent = '@page { size: 1024px 640px; margin: 0 }';
+      document.head.appendChild(printStyle);
+    }
+
     var body = getDocumentContentNode(document);
     var dMenu = document.querySelector('#document-menu.do');
 

@@ -26,7 +26,7 @@ const GIT_FORGE_HOSTS_KEY = 'DO.Config.GitForge.hosts';
 import { syncLocalRemoteResource, monitorNetworkStatus, autoSave } from './sync.js';
 import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeObject } from './utils/sanitization.js';
 import { afterSetUserInfo, setUserInfo } from './auth.js';
-import { showNotificationSources } from './activity.js';
+import { showNotificationSources, showAnnotationContainer } from './activity.js';
 import { getProxyableIRI, getUrlParams, stripFragmentFromString, stripUrlSearchHash } from './uri.js';
 import { SolidStorage, GitForgeStorage, initStorage } from './storage/backend.js';
 import { initEditor } from './editor/initEditor.js';
@@ -175,6 +175,11 @@ function initShowNotificationSources() {
 
   if (Config.Resource[documentURL].inbox?.length && !Config.Inbox[Config.Resource[documentURL].inbox[0]]) {
     showNotificationSources(Config.Resource[documentURL].inbox[0]);
+  }
+
+  var annotationService = Config.Resource[documentURL].annotationService;
+  if (annotationService?.length) {
+    showAnnotationContainer(annotationService[0]);
   }
 }
 
@@ -392,6 +397,24 @@ function teardownShower() {
   showerExternalListeners = [];
   document.querySelectorAll('body > section.region[role="region"]').forEach(n => n.remove());
   showerInstance = null;
+  const slides = document.querySelectorAll('.slide.do');
+  for (let i = 0; i < slides.length; i++) slides[i].classList.remove('do');
+  getDocumentContentNode(document).classList.remove('on-slideshow');
+  removeSlideshowPrintPage();
+}
+
+function installSlideshowPrintPage() {
+  if (document.getElementById('do-slideshow-print-page')) return;
+  const s = document.createElement('style');
+  s.id = 'do-slideshow-print-page';
+  s.media = 'print';
+  s.textContent = '@page { size: 1024px 640px; margin: 0 }';
+  document.head.appendChild(s);
+}
+
+function removeSlideshowPrintPage() {
+  const s = document.getElementById('do-slideshow-print-page');
+  if (s) s.parentNode.removeChild(s);
 }
 
 export function initSlideshow(options) {
@@ -412,6 +435,10 @@ export function initSlideshow(options) {
     teardownShower();
     showerInstance = startTrackedShower();
     initSlideshowInteraction(showerInstance);
+    const slides = document.querySelectorAll('.slide');
+    for (let i = 0; i < slides.length; i++) slides[i].classList.add('do');
+    getDocumentContentNode(document).classList.add('on-slideshow');
+    installSlideshowPrintPage();
   }
 }
 

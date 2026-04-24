@@ -193,6 +193,56 @@ limitations under the License.
    }
  }
 
+@media print {
+  .on-slideshow,
+  .on-slideshow .shower,
+  .on-slideshow .slides {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  .on-slideshow .slide {
+    box-sizing: border-box !important;
+    position: relative !important;
+    display: block !important;
+    width: 1024px !important;
+    height: 640px !important;
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 104px 112px 0 96px !important;
+    font-size: 24px !important;
+    overflow: hidden !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    transform: none !important;
+  }
+
+  .on-slideshow .slide:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+
+  .on-slideshow .slide a[href^="http"]:not(.do-print-a-href-hide):after {
+    content: none !important;
+  }
+
+  .on-slideshow .slide h1,
+  .on-slideshow .slide h2 {
+    margin-bottom: 32px !important;
+    line-height: 1 !important;
+    font-size: 48px !important;
+  }
+
+  .on-slideshow .slide h3 {
+    font-size: 36px !important;
+    line-height: 1.1 !important;
+  }
+}
+
 @media screen and (min-width: 75em){
 aside.note article {
 position: absolute !important;
