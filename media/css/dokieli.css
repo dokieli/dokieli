@@ -4017,11 +4017,13 @@ max-width:none;
     bottom: 0;
     cursor: nwse-resize;
     height: 12px;
+    opacity: 0;
     position: absolute;
     right: 0;
+    transition: opacity 0.15s ease-in-out;
     width: 12px; }
   .editor-image-resize:hover .editor-image-resize-handle {
-    background: #2a6cb8; }
+    opacity: 1; }
 
   /*Move to basic.css?*/
 h1 + div p:first-child {

@@ -198,6 +198,18 @@ export function cleanProseMirrorOutput(node) {
   // Remove the trailing breaks that ProseMirror adds for empty nodes
   element.querySelectorAll('.ProseMirror-trailingBreak').forEach(node => node.remove());
 
+  // Unwrap .editor-image-resize to the inner img (reverse to collapse nested wrappers).
+  const resizeWrappers = Array.from(element.querySelectorAll('.editor-image-resize')).reverse();
+  resizeWrappers.forEach(wrapper => {
+    if (!wrapper.isConnected) return;
+    const img = wrapper.querySelector('img');
+    if (img) {
+      wrapper.replaceWith(img);
+    } else {
+      wrapper.remove();
+    }
+  });
+
   //Remove ProseMirror wrap
   let pmNode = element.querySelector('.ProseMirror');
 

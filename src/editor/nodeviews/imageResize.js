@@ -5,7 +5,7 @@ export class ImageResizeView {
     this.getPos = getPos;
 
     this.dom = document.createElement("span");
-    this.dom.classList.add("editor-image-resize");
+    this.dom.classList.add("do", "editor-image-resize");
 
     const attrs = node.attrs.originalAttributes || {};
     this.img = document.createElement("img");
