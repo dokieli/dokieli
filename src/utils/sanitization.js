@@ -73,71 +73,71 @@ export function encodeUriTerm(term) {
   });
 }
 
-export function domSanitize(strHTML, options = {}) {
-  if (strHTML === undefined || strHTML === null) return;
-  // console.log("DOMPurify in:", strHTML);
+//TODO: Consider allowing meta, link, object
 
-  //TODO: Consider allowing meta, link, object
-
-  DOMPurify.addHook('uponSanitizeElement', function(node, data) {
-    if (node.nodeName.toLowerCase() === 'script') {
-      let src = node.getAttribute('src');
-      if (src) {
-        src = src.trim();
-        if (!Object.keys(Config.DOMProcessing.allowedScripts).includes(src)) {
-          node.remove();
-        }
-      } else {
+DOMPurify.addHook('uponSanitizeElement', function(node, data) {
+  if (node.nodeName.toLowerCase() === 'script') {
+    let src = node.getAttribute('src');
+    if (src) {
+      src = src.trim();
+      if (!Object.keys(Config.DOMProcessing.allowedScripts).includes(src)) {
         node.remove();
       }
+    } else {
+      node.remove();
     }
-  });
+  }
+});
 
-  DOMPurify.addHook('uponSanitizeAttribute', function(node, data) {
-    const attrName = data.attrName;
-    const attrValue = data.attrValue?.trim().toLowerCase();
+DOMPurify.addHook('uponSanitizeAttribute', function(node, data) {
+  const attrName = data.attrName;
+  const attrValue = data.attrValue?.trim();
+  const lowerValue = attrValue.toLowerCase();
 
-    if (['href', 'src', 'data', 'xlink:href'].includes(attrName)) {
-      const lowerValue = attrValue.toLowerCase();
+  if (['href', 'src', 'data', 'xlink:href'].includes(attrName)) {
+    if (lowerValue.startsWith('javascript:') || lowerValue.startsWith('vbscript:')) {
+      data.keepAttr = false;
+      return;
+    }
 
-      if (lowerValue.startsWith('javascript:') || lowerValue.startsWith('vbscript:')) {
+    if (lowerValue.startsWith('data:')) {
+      const mimeMatch = lowerValue.match(/^data:([^;,]+)[;,]/);
+      const mimeType = mimeMatch?.[1];
+
+      if (!mimeType || !Config.DOMProcessing.allowedDataMimeTypes.includes(mimeType)) {
         data.keepAttr = false;
         return;
       }
 
-      if (lowerValue.startsWith('data:')) {
-        const mimeMatch = lowerValue.match(/^data:([^;,]+)[;,]/);
-        const mimeType = mimeMatch?.[1];
-
-        if (!mimeType || !Config.DOMProcessing.allowedDataMimeTypes.includes(mimeType)) {
+      if (['image/svg+xml'].includes(mimeType)) {
+        const sanitizedUrl = sanitizeDataUrl(attrValue);
+        // console.log(attrValue, sanitizedUrl)
+        if (sanitizedUrl) {
+          data.attrValue = sanitizedUrl;
+        } else {
           data.keepAttr = false;
-          return;
-        }
-
-        if (['image/svg+xml'].includes(mimeType)) {
-          const sanitizedUrl = sanitizeDataUrl(attrValue);
-          if (sanitizedUrl) {
-            data.attrValue = sanitizedUrl;
-          } else {
-            data.keepAttr = false;
-          }
         }
       }
-
-      //TODO blob:
-      // if (attrValue.startsWith('blob:')) {
-      //   const trustedBlobSources = [
-      //     'blob:https://dokie.li',
-
-      //   ];
-      //   const originMatch = attrValue.match(/^blob:(https?:\/\/[^\/]+)/);
-      //   if (!originMatch || !trustedBlobSources.includes(originMatch[0])) {
-      //     data.keepAttr = false;
-      //     return;
-      //   }
-      // }
     }
-  });
+
+    //TODO blob:
+    // if (attrValue.startsWith('blob:')) {
+    //   const trustedBlobSources = [
+    //     'blob:https://dokie.li',
+
+    //   ];
+    //   const originMatch = attrValue.match(/^blob:(https?:\/\/[^\/]+)/);
+    //   if (!originMatch || !trustedBlobSources.includes(originMatch[0])) {
+    //     data.keepAttr = false;
+    //     return;
+    //   }
+    // }
+  }
+});
+
+export function domSanitize(strHTML, options = {}) {
+  if (strHTML === undefined || strHTML === null) return;
+  // console.log("DOMPurify in:", strHTML);
 
   const cleanHTML = DOMPurify.sanitize(strHTML, {
     ALLOW_UNKNOWN_PROTOCOLS: options.ALLOW_UNKNOWN_PROTOCOLS !== false,
@@ -166,7 +166,7 @@ export function sanitizeDataUrl(dataUrl) {
 }
 
 export function extractDataPayload(dataUrl) {
-  const match = dataUrl.match(/^data:([^;,]+);base64,(.*)$/);
+  const match = dataUrl.match(/^data:([^;,]+);base64,(.*)$/i);
   if (!match) return null;
 
   const mimeType = match[1];

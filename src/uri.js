@@ -250,7 +250,9 @@ export function generateDataURI(mediaType, encoding, data) {
 
     if (encoding === 'base64') {
       mediaTypeEncoding = mediaType + ';base64';
-      encodedData = btoa(data);
+      const bytes = new TextEncoder().encode(data);
+      const binary = String.fromCharCode(...bytes);
+      encodedData = btoa(binary);
     }
   }
 
