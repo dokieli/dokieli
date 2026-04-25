@@ -138,10 +138,10 @@ limitations under the License.
    }
 
    footer {
+     clear:both;
      font-size: 8pt;
      margin-top: auto;
-     text-align: right;
-     color: #555;
+     color: #333;
    }
 
    figure {
