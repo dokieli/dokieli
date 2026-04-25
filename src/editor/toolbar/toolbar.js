@@ -17,6 +17,7 @@ limitations under the License.
 
 import { schema } from "../schema/base.js"
 import { NodeSelection } from "prosemirror-state"
+import { Icon } from "../../ui/icons.js"
 import { getButtonHTML, updateButtons } from "../../ui/buttons.js"
 import { getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getClassesOfProductsConcepts, getDocument, getLanguageOptionsHTML, getLicenseOptionsHTML, getReferenceLabel } from "../../doc.js";
 import { getTextQuoteHTML, cloneSelection, setSelection, selectionToTextQuote, setSelectionFromTextQuote, getSelectedParentElement, getTextContentExcludingSups } from "../utils/annotation.js";
@@ -358,9 +359,14 @@ export class ToolbarView {
       trigger.type = 'button';
       trigger.setAttribute('title', config.title || config.label);
 
-      const triggerLabel = document.createElement('span');
-      triggerLabel.textContent = config.label;
-      trigger.appendChild(triggerLabel);
+      if (config.icon) {
+        trigger.appendChild(fragmentFromString(config.icon));
+        trigger.appendChild(fragmentFromString(`<span class="editor-dropdown-trigger-caret">${Icon['.fas.fa-caret-down']}</span>`));
+      } else {
+        const triggerLabel = document.createElement('span');
+        triggerLabel.textContent = config.label;
+        trigger.appendChild(triggerLabel);
+      }
 
       const panel = document.createElement('ul');
       panel.className = 'editor-dropdown-panel';

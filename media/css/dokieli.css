@@ -4352,6 +4352,21 @@ height:auto;
   fill: #080;
 }
 
+.editor-dropdown-trigger-caret {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.25em;
+}
+.editor-toolbar .editor-form-actions .editor-dropdown-trigger-caret svg.fas {
+  width: 0.625em;
+  height: 0.625em;
+  fill: #888;
+}
+.editor-toolbar .editor-form-actions .editor-dropdown-trigger:hover .editor-dropdown-trigger-caret svg.fas,
+.editor-toolbar .editor-form-actions .editor-dropdown-trigger.editor-button-active .editor-dropdown-trigger-caret svg.fas {
+  fill: #080;
+}
+
 .editor-toolbar .editor-form-actions .editor-blocktype-menu {
 padding:0 0.5em;
 

@@ -254,7 +254,7 @@ TODO:
   }
 
   getSubmenuButtons() {
-    return ['p', 'h1', 'h2', 'h3', 'h4', 'img', 'ul', 'ol', 'blockquote', 'q', 'pre', 'code', 'semantics', 'citation', 'requirement', 'note', 'lang'];
+    return ['p', 'h1', 'h2', 'h3', 'h4', 'img', 'ul', 'ol', 'blockquote', 'q', 'pre', 'code', 'align-left', 'align-center', 'align-right', 'semantics', 'citation', 'requirement', 'note', 'lang'];
   }
 
   getModeToggle() {
@@ -311,6 +311,16 @@ TODO:
 
   getDropdownMenus() {
     return {
+      align: {
+        icon: buttonIcons['align-center']?.icon,
+        label: 'Align',
+        title: i18n.t('button.align-center.title'),
+        items: [
+          { icon: buttonIcons['align-left']?.icon,   label: i18n.t('button.align-left.textContent'),   action: () => { this.dom.querySelector('#editor-button-align-left')?.click(); } },
+          { icon: buttonIcons['align-center']?.icon, label: i18n.t('button.align-center.textContent'), action: () => { this.dom.querySelector('#editor-button-align-center')?.click(); } },
+          { icon: buttonIcons['align-right']?.icon,  label: i18n.t('button.align-right.textContent'),  action: () => { this.dom.querySelector('#editor-button-align-right')?.click(); } },
+        ],
+      },
       plus: {
         label: "+",
         title: "Insert",
