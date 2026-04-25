@@ -74,7 +74,7 @@ export function formHandlerBlockquote(e) {
   const formValues = getFormValues(e.target);
   const cite = formValues['blockquote-cite'];
 
-  const attrs = { cite };
+  const attrs = { originalAttributes: { cite } };
 
   toggleBlockquote(schema, attrs)(this.editorView.state, this.editorView.dispatch);
 
