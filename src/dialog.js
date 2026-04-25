@@ -830,7 +830,7 @@ export function shareResource(listenerEvent, iri) {
             var name = Config.User.Contacts[contact].Name || contact;
             var img = Config.User.Contacts[contact].Image;
             if (!(img && img.length)) {
-              img = generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
+              img = Config.IconBase64['.fas.fa-user-secret'];
             }
             img = '<img alt="" height="32" src="' + img + '" width="32" />';
 
@@ -1039,7 +1039,7 @@ export function addShareResourceContactInput(node, agent) {
     var name = agent.Name || iri;
     var img = agent.Image;
     if (!(img && img.length)) {
-      img = generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
+      img = Config.IconBase64['.fas.fa-user-secret'];
     }
     img = '<img alt="" height="32" src="' + img + '" width="32" />';
 
@@ -1078,7 +1078,7 @@ function addAccessSubjectItem(node, s, url) {
   var name = s ? getAgentName(s) || iri : iri;
   var img = s ? getGraphImage(s) : null;
   if (!(img && img.length)) {
-    img = generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
+    img = Config.IconBase64['.fas.fa-user-secret'];
   }
   img = '<img alt="" height="32" src="' + img + '" width="32" />';
 

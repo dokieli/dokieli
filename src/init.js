@@ -27,7 +27,7 @@ import { syncLocalRemoteResource, monitorNetworkStatus, autoSave } from './sync.
 import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeObject } from './utils/sanitization.js';
 import { afterSetUserInfo, setUserInfo } from './auth.js';
 import { showNotificationSources } from './activity.js';
-import { getProxyableIRI, getUrlParams, stripFragmentFromString, stripUrlSearchHash } from './uri.js';
+import { generateDataURI, getProxyableIRI, getUrlParams, stripFragmentFromString, stripUrlSearchHash } from './uri.js';
 import { SolidStorage, GitForgeStorage, initStorage } from './storage/backend.js';
 import { initEditor } from './editor/initEditor.js';
 import { showGraph, showVisualisationGraph } from './viz.js';
@@ -44,6 +44,7 @@ export async function init (url) {
   var contentNode = getDocumentContentNode(document);
   if (contentNode) {
     initButtons();
+    initIcons();
     initDocumentMenu();
     
     emitDocEvent('loading');
@@ -498,6 +499,11 @@ function initPrint() {
       }
     });
   });
+}
+
+function initIcons() {
+  Config['IconBase64'] = Config['IconBase64'] || {};
+  Config.IconBase64['.fas.fa-user-secret'] = generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
 }
 
 // function initMath(config) {

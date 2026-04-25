@@ -269,7 +269,7 @@ export function createNoteData(annotation) {
         noteData.creator["name"] = Config.User.Name;
       }
 
-      noteData.creator["image"] = Config.User.Image || generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
+      noteData.creator["image"] = Config.User.Image || Config.IconBase64['.fas.fa-user-secret'];
 
       if (Config.User.URL) {
         noteData.creator["url"] = Config.User.URL;
@@ -334,7 +334,7 @@ export function createNoteData(annotation) {
         noteData.creator["name"] = Config.User.Name;
       }
 
-      noteData.creator["image"] = Config.User.Image || generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
+      noteData.creator["image"] = Config.User.Image || Config.IconBase64['.fas.fa-user-secret'];
 
       if (Config.User.URL) {
         noteData.creator["url"] = Config.User.URL;
@@ -399,7 +399,7 @@ export function createNoteData(annotation) {
         noteData.creator["name"] = Config.User.Name;
       }
 
-      noteData.creator["image"] = Config.User.Image || generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
+      noteData.creator["image"] = Config.User.Image || Config.IconBase64['.fas.fa-user-secret'];
 
       if (Config.User.URL) {
         noteData.creator["url"] = Config.User.URL;

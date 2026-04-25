@@ -542,7 +542,7 @@ export function createNoteDataHTML(n) {
       creatorNameIRI = (creatorName == creatorIRI) ? creatorName : '<span about="' + creatorIRI + '" property="schema:name">' + creatorName + '</span>';
     }
 
-    var img = generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
+    var img = Config.IconBase64['.fas.fa-user-secret'];
     if ('image' in n.creator) {
       img = (n.mode == 'read') ? getProxyableIRI(n.creator.image) : n.creator.image;
     }
