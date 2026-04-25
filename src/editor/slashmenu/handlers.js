@@ -21,6 +21,7 @@ import { getFormValues } from "../../utils/html.js";
 import { schema } from "../schema/base.js";
 import { TextSelection } from "prosemirror-state";
 import Config from "../../config.js";
+import { describeBlobAsset } from "../utils/imageAssets.js";
 
 export function formHandlerLanguage(e) {
   e.preventDefault();
@@ -151,6 +152,12 @@ export function formHandlerImg(e) {
   if (previewImg) {
     if (previewImg.width) attrs.width = String(previewImg.width);
     if (previewImg.height) attrs.height = String(previewImg.height);
+  }
+
+  if (src.startsWith('blob:')) {
+    const blobAsset = describeBlobAsset(src);
+    if (blobAsset?.name) attrs['data-original-filename'] = blobAsset.name;
+    if (blobAsset?.type) attrs['data-content-type'] = blobAsset.type;
   }
 
   const { state, dispatch } = this.editorView;

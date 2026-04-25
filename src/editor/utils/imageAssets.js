@@ -43,6 +43,31 @@ function splitExt(name) {
   return { stem: name.slice(0, dot), ext: name.slice(dot) };
 }
 
+const TYPE_TO_EXT = {
+  'image/png': '.png',
+  'image/jpeg': '.jpg',
+  'image/jpg': '.jpg',
+  'image/gif': '.gif',
+  'image/webp': '.webp',
+  'image/svg+xml': '.svg',
+  'image/avif': '.avif',
+  'image/bmp': '.bmp',
+  'image/tiff': '.tiff'
+};
+
+function extFromType(type) {
+  if (!type) return '';
+  return TYPE_TO_EXT[type.toLowerCase()] || '';
+}
+
+export function describeBlobAsset(blobURL) {
+  const entry = blobAssets.get(blobURL);
+  if (entry?.kind !== 'upload') return null;
+  const file = entry.file;
+  if (!file) return null;
+  return { name: file.name || '', type: file.type || '' };
+}
+
 export function rewriteBlobImagesToRelative(rootEl, used = new Set()) {
   const mapping = [];
   const imgs = rootEl.querySelectorAll('img[src^="blob:"]');
@@ -56,9 +81,13 @@ export function rewriteBlobImagesToRelative(rootEl, used = new Set()) {
     }
 
     const file = entry?.file;
-    const baseName = sanitizeFilename(file?.name || 'image');
-    const { stem, ext } = splitExt(baseName);
-    let candidate = `media/images/${baseName}`;
+    const storedName = img.getAttribute('data-original-filename') || '';
+    const storedType = img.getAttribute('data-content-type') || '';
+    const baseName = sanitizeFilename(file?.name || storedName || 'image');
+    let { stem, ext } = splitExt(baseName);
+    if (!ext) ext = extFromType(file?.type || storedType);
+    const finalBase = `${stem}${ext}`;
+    let candidate = `media/images/${finalBase}`;
     let n = 1;
     while (used.has(candidate)) {
       n += 1;
@@ -66,7 +95,9 @@ export function rewriteBlobImagesToRelative(rootEl, used = new Set()) {
     }
     used.add(candidate);
     img.setAttribute('src', candidate);
-    mapping.push({ blobURL: src, relativePath: candidate, file });
+    img.removeAttribute('data-original-filename');
+    img.removeAttribute('data-content-type');
+    mapping.push({ blobURL: src, relativePath: candidate, file, contentType: file?.type || storedType || '' });
   }
   return mapping;
 }
@@ -74,16 +105,16 @@ export function rewriteBlobImagesToRelative(rootEl, used = new Set()) {
 export async function uploadBlobAssets(storageIRI, mapping, options = {}) {
   if (!mapping.length) return [];
   const baseURL = getBaseURL(storageIRI);
-  const tasks = mapping.map(async ({ blobURL, relativePath, file }) => {
+  const tasks = mapping.map(async ({ blobURL, relativePath, file, contentType }) => {
     let blob = file;
     if (!blob) {
       const r = await fetch(blobURL);
       blob = await r.blob();
     }
     const buffer = await blob.arrayBuffer();
-    const contentType = blob.type || 'application/octet-stream';
+    const resolvedType = blob.type || contentType || 'application/octet-stream';
     const target = baseURL + relativePath;
-    return Config.Storage.put(target, buffer, contentType, null, options);
+    return Config.Storage.put(target, buffer, resolvedType, null, options);
   });
   return Promise.allSettled(tasks);
 }

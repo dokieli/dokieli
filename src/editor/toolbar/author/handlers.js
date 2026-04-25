@@ -27,6 +27,7 @@ import { notifyInbox } from "../../../activity.js";
 import rdf from 'rdf-ext';
 import Config from "../../../config.js";
 import { fragmentFromString, getFormValues } from "../../../utils/html.js";
+import { describeBlobAsset } from "../../utils/imageAssets.js";
 
 
 export function formHandlerLanguage(e) {
@@ -120,6 +121,12 @@ export function formHandlerImg(e) {
     ...(width !== undefined && width !== null ? { width } : {}),
     title
   };
+
+  if (typeof src === 'string' && src.startsWith('blob:')) {
+    const blobAsset = describeBlobAsset(src);
+    if (blobAsset?.name) attrs['data-original-filename'] = blobAsset.name;
+    if (blobAsset?.type) attrs['data-content-type'] = blobAsset.type;
+  }
 
   this.insertImage(attrs)(this.editorView.state, this.editorView.dispatch);
 
