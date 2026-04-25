@@ -2994,8 +2994,9 @@ unicode-bidi:bidi-override;
 direction:rtl;
 }
 
-.align-left { float:left; margin-right:2em; margin-bottom:2em; }
-.align-right { float:right; margin-left:2em; margin-bottom:2em; }
+.align-left { text-align: left; }
+.align-center { text-align: center; }
+.align-right { text-align: right; }
 
 .do.fragment {
 position:absolute;

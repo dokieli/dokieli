@@ -1064,7 +1064,7 @@ nodeToHTML(node, schema) {
       for (let depth = $from.depth; depth > 0; depth--) {
         const n = $from.node(depth);
         if (ALIGNABLE_BLOCK_TYPES.has(n.type.name)) {
-          current = currentTextAlign(n.attrs.originalAttributes?.style);
+          current = currentTextAlign(n.attrs.originalAttributes?.class);
           break;
         }
       }
@@ -1153,17 +1153,20 @@ const ALIGNABLE_BLOCK_TYPES = new Set([
   'li', 'dt', 'dd', 'summary', 'td', 'th'
 ]);
 
-function stripTextAlign(style) {
-  return (style || '')
-    .split(';')
-    .map(s => s.trim())
-    .filter(s => s && !/^text-align\s*:/i.test(s))
-    .join('; ');
+const ALIGN_VALUES = ['left', 'center', 'right'];
+const ALIGN_CLASS_PREFIX = 'align-';
+
+function stripAlignClass(classAttr) {
+  return (classAttr || '')
+    .split(/\s+/)
+    .filter(c => c && !(c.startsWith(ALIGN_CLASS_PREFIX) && ALIGN_VALUES.includes(c.slice(ALIGN_CLASS_PREFIX.length))))
+    .join(' ')
+    .trim();
 }
 
-function currentTextAlign(style) {
-  const m = /(?:^|;)\s*text-align\s*:\s*([a-z]+)/i.exec(style || '');
-  return m ? m[1].toLowerCase() : null;
+function currentTextAlign(classAttr) {
+  const found = (classAttr || '').split(/\s+/).find(c => c.startsWith(ALIGN_CLASS_PREFIX) && ALIGN_VALUES.includes(c.slice(ALIGN_CLASS_PREFIX.length)));
+  return found ? found.slice(ALIGN_CLASS_PREFIX.length) : null;
 }
 
 function setTextAlign(value) {
@@ -1184,13 +1187,13 @@ function setTextAlign(value) {
 
     const prev = node.attrs.originalAttributes || {};
     const nextOriginal = { ...prev };
-    const cleaned = stripTextAlign(prev.style);
-    const isSame = currentTextAlign(prev.style) === value;
+    const cleaned = stripAlignClass(prev.class);
+    const isSame = currentTextAlign(prev.class) === value;
     if (isSame) {
-      if (cleaned) nextOriginal.style = cleaned;
-      else delete nextOriginal.style;
+      if (cleaned) nextOriginal.class = cleaned;
+      else delete nextOriginal.class;
     } else {
-      nextOriginal.style = cleaned ? `${cleaned}; text-align: ${value}` : `text-align: ${value}`;
+      nextOriginal.class = cleaned ? `${cleaned} ${ALIGN_CLASS_PREFIX}${value}` : `${ALIGN_CLASS_PREFIX}${value}`;
     }
 
     const tr = state.tr.setNodeMarkup(pos, null, { ...node.attrs, originalAttributes: nextOriginal });
