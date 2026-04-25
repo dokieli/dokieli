@@ -22,6 +22,7 @@ import { TextSelection } from "prosemirror-state";
 import { DOMParser } from "prosemirror-model";
 import { i18n } from "../../i18n.js";
 import { fragmentFromString } from "../../utils/html.js";
+import { registerBlobAsset } from "../utils/imageAssets.js";
 
 export class SlashMenu {
   constructor(editorView) {
@@ -347,6 +348,7 @@ export class SlashMenu {
           image.alt = file.name;
           preview.appendChild(image);
           srcInput.value = image.src;
+          registerBlobAsset(image.src, file);
         });
       }
     }

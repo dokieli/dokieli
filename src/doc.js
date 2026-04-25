@@ -29,6 +29,7 @@ import { domSanitizeHTMLBody, domSanitize, sanitizeInsertAdjacentHTML, htmlEncod
 import { cleanProseMirrorOutput, normalizeHTML, normalizeWhitespace } from './utils/normalization.js';
 import { formatHTML, fragmentFromString, getDoctype, getDocumentContentNode, selectArticleNode, getDocumentNodeFromString, stringFromFragment, createHTML, getOffset, htmlToMarkdown } from './utils/html.js';
 import { i18n } from './i18n.js';
+import { rewriteBlobImagesToRelative, uploadBlobAssets, clearBlobAssets, hasUploadTarget } from './editor/utils/imageAssets.js';
 
 const ns = Config.ns;
 
@@ -2384,12 +2385,27 @@ export function updateMutableResource(url, data, options) {
   setDate(rootNode, { 'id': 'document-modified', 'property': 'schema:dateModified', 'datetime': options.datetime });
   // setEditSelections(options);
 
-  const payload = getSavePayload(url, documentOptions);
+  let blobImageMapping = [];
+  let payload;
+  const inMarkdownMode = !!document.querySelector('[data-markdown-mode]');
+  if (!data && hasUploadTarget() && !isMarkdownTarget(url) && !inMarkdownMode && document.querySelector('img[src^="blob:"]')) {
+    const clone = document.documentElement.cloneNode(true);
+    blobImageMapping = rewriteBlobImagesToRelative(clone);
+    payload = { data: getDocument(clone, documentOptions), contentType: 'text/html' };
+  } else {
+    payload = getSavePayload(url, documentOptions);
+  }
   data = payload.data;
   options.contentType = payload.contentType;
 
   Config.Storage.save(url, null, data, options)
-    .then((resolved) => handleActionMessage(resolved))
+    .then(async (resolved) => {
+      if (blobImageMapping.length) {
+        await uploadBlobAssets(url, blobImageMapping);
+        clearBlobAssets();
+      }
+      handleActionMessage(resolved);
+    })
     .catch((rejected) => handleActionMessage(null, rejected))
     .finally(() => {
       getResourceInfo(data, { 'mode': 'update' });

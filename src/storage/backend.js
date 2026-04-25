@@ -493,11 +493,11 @@ class GitForgeStorage extends StorageBackend {
     if (Array.isArray(payload)) {
       throw new Error(`GitForgeStorage: ${url} is a directory, not a file`);
     }
-    const content = payload.encoding === "base64"
-      ? new TextDecoder().decode(Uint8Array.from(atob(payload.content.replace(/\n/g, "")), c => c.charCodeAt(0)))
+    const body = payload.encoding === "base64"
+      ? Uint8Array.from(atob(payload.content.replace(/\n/g, "")), c => c.charCodeAt(0))
       : payload.content;
     const contentType = this._sniffContentType(parsed.path);
-    return new Response(content, {
+    return new Response(body, {
       status: 200,
       headers: { "Content-Type": contentType, "ETag": payload.sha ? `"${payload.sha}"` : "" },
     });

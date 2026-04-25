@@ -25,6 +25,7 @@ import { ToolbarView, annotateFormControls } from "../toolbar.js"
 import { createRDFaHTMLRequirement, getCitationOptionsHTML, getLanguageOptionsHTML, getRequirementLevelOptionsHTML, getRequirementSubjectOptionsHTML } from "../../../doc.js"
 import Config from "../../../config.js";
 import { fragmentFromString } from "../../../utils/html.js";
+import { registerBlobAsset } from "../../utils/imageAssets.js";
 import { i18n } from "../../../i18n.js"
 import { htmlEncode, sanitizeInsertAdjacentHTML } from "../../../utils/sanitization.js";
 import { buttonIcons, getButtonHTML } from "../../../ui/buttons.js";
@@ -787,6 +788,10 @@ nodeToHTML(node, schema) {
       if (previewImageNode) {
         srcInput = node.querySelector('[name="img-src"]');
         srcInput.value = previewImageNode.src;
+        const file = fileInput.files?.[0];
+        if (file && previewImageNode.src.startsWith('blob:')) {
+          registerBlobAsset(previewImageNode.src, file);
+        }
       }
     });
   }
