@@ -563,6 +563,7 @@ export class Editor {
         if (done) return;
         done = true;
         seedIfEmpty();
+        window.dispatchEvent(new CustomEvent('dokieli:editor-ready'));
       };
 
       if (provider) {

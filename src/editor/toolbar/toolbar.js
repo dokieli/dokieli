@@ -473,19 +473,28 @@ export class ToolbarView {
       const sel = window.getSelection();
       const article = selectArticleNode(document);
       const textQuote = (sel?.rangeCount && article) ? selectionToTextQuote(article, sel) : null;
+
+      const restoreSelection = () => {
+        const newArticle = selectArticleNode(document);
+        if (newArticle) setSelectionFromTextQuote(newArticle, textQuote);
+        const toolbarView = targetMode === 'author'
+          ? Config.Editor.authorToolbarView
+          : Config.Editor.socialToolbarView;
+        toolbarView?.selectionUpdate(null);
+      };
+
+      // Author mode mounts PM with an empty Yjs-backed doc; content arrives async via localProvider.whenSynced. Wait for editor-ready before restoring selection.
+      if (textQuote && targetMode === 'author') {
+        window.addEventListener('dokieli:editor-ready', restoreSelection, { once: true });
+      }
+
       Config.Editor.toggleEditor(targetMode);
       if (targetMode === 'author') {
         enableAutoSave(Config.DocumentURL, { method: 'IndexedDB' });
       }
-      if (textQuote) {
-        requestAnimationFrame(() => {
-          const newArticle = selectArticleNode(document);
-          if (newArticle) setSelectionFromTextQuote(newArticle, textQuote);
-          const toolbarView = targetMode === 'author'
-            ? Config.Editor.authorToolbarView
-            : Config.Editor.socialToolbarView;
-          toolbarView?.selectionUpdate(null);
-        });
+
+      if (textQuote && targetMode !== 'author') {
+        requestAnimationFrame(restoreSelection);
       }
     });
 
