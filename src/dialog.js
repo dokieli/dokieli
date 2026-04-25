@@ -5981,6 +5981,21 @@ export async function spawnDokieli(documentNode, data, contentTypes, iris, optio
     baseEl.setAttribute('class', 'do');
     baseEl.setAttribute('href', iris[0]);
     document.querySelector('head').prepend(baseEl);
+
+    if (!History.prototype.__dokieliBasePatched) {
+      const patch = (name) => {
+        const orig = History.prototype[name];
+        History.prototype[name] = function (state, title, url) {
+          if (url != null && typeof url === 'string') {
+            try { url = new URL(url, window.location.href).href; } catch {}
+          }
+          return orig.call(this, state, title, url);
+        };
+      };
+      patch('replaceState');
+      patch('pushState');
+      History.prototype.__dokieliBasePatched = true;
+    }
     //TODO: Setting the base URL with `base` seems to work correctly, i.e., link base is opened document's URL, and simpler than updating some of the elements' href/src/data attributes. Which approach may be better depends on actions afterwards, e.g., Save As (perhaps other features as well) may need to remove the base and go with the user selection.
     // var nodes = tmpl.querySelectorAll('head link, [src], object[data]');
     // nodes = rewriteBaseURL(nodes, {'baseURLType': 'base-url-absolute', 'iri': iri});
