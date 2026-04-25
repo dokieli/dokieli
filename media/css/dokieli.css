@@ -62,7 +62,10 @@ limitations under the License.
 
 @media print {
    @page {
-     size: A4 portrait;
+     size: portrait;
+   }
+   @page slide-page {
+     size: landscape;
    }
 
    html,
@@ -95,9 +98,11 @@ limitations under the License.
    }
 
    .slide {
-     border:1px solid #000 !important;
-     border-radius:0.5em !important;
-     padding:1em !important;
+     page: slide-page !important;
+     font-size: 2em !important;
+     /* border:1px solid #000 !important; */
+     /* border-radius:0.5em !important; */
+     padding:0.5em 0.5em 0 0.5em !important;
      margin-top:2em !important;
      position: static !important;
      display: block !important;
@@ -108,18 +113,16 @@ limitations under the License.
      right: auto !important;
      bottom: auto !important;
      page-break-inside: avoid !important;
-     font-size: 12pt !important;
-   }
+     page-break-after: always !important;
+     background-size: contain !important;
+     background-repeat: no-repeat !important;
+     background-position: center !important;
+    }
 
    .slide * {
      position: static !important;
    }
 
-   .slide {
-     background-size: contain !important;
-     background-repeat: no-repeat !important;
-     background-position: center !important;
-   }
   .slide h1, .slide h2, .slide h3, .slide h4 {
     font-weight:bold !important;
   }
@@ -4817,6 +4820,8 @@ line-height: 1.1;
 }
 .shower .slide h2 {
 margin-bottom: 0.5em;
+font-size:2em !important;
+margin-bottom:1em;
 }
 .shower .slide h3 {
 font-weight: bold;
