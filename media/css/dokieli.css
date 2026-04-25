@@ -61,140 +61,144 @@ limitations under the License.
 }
 
 @media print {
-   @page {
-     size: portrait;
-   }
-   @page slide-page {
-     size: landscape;
-   }
-
-   html,
-   body {
-    background: #fff !important;
-      color: #000 !important;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-   }
-
-   .do,
-   nav,
-   header.caption,
-   details#document-details,
-   .caption {
-     display: none !important;
-   }
-
-   main {
-     display: block;
-   }
-
-   .shower,
-   .slides {
-     position: static !important;
-     height: auto !important;
-     width: auto !important;
-     overflow: visible !important;
-     display: block !important;
-   }
-
-   .slide {
-     page: slide-page !important;
-     font-size: 2em !important;
-     /* border:1px solid #000 !important; */
-     /* border-radius:0.5em !important; */
-     padding:0.5em 0.5em 0 0.5em !important;
-     margin-top:2em !important;
-     position: static !important;
-     display: block !important;
-     width: auto !important;
-     height: auto !important;
-     top: auto !important;
-     left: auto !important;
-     right: auto !important;
-     bottom: auto !important;
-     page-break-inside: avoid !important;
-     page-break-after: always !important;
-     background-size: contain !important;
-     background-repeat: no-repeat !important;
-     background-position: center !important;
-    }
-
-   .slide * {
-     position: static !important;
-   }
-
-  .slide h1, .slide h2, .slide h3, .slide h4 {
-    font-weight:bold !important;
+  @page {
+    size: portrait;
   }
 
-   img,
-   video,
-   iframe,
-   figure {
-     position: relative !important;
-     max-width: 100%;
-     page-break-inside: avoid;
-     overflow: visible !important;
-   }
+  @page slide-page {
+    size: landscape;
+  }
 
-   footer {
-     clear:both;
-     font-size: 8pt;
-     margin-top: auto;
-     color: #333;
-   }
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
 
-   figure {
-     margin: 1em 0;
-   }
+  .do,
+  nav,
+  header.caption,
+  details#document-details,
+  .caption {
+    display: none !important;
+  }
 
-   table {
-     width: 100% !important;
-     max-width: 100% !important;
-     table-layout: auto !important;
-     border-collapse: collapse !important;
-     word-break: break-word !important;
-     overflow: visible !important;
-     font-size: 9pt !important;
-   }
+  main {
+    display: block;
+  }
 
-   thead {
-     display: table-header-group !important;
-   }
+  .shower,
+  .slides {
+    position: static !important;
+    height: auto !important;
+    width: auto !important;
+    overflow: visible !important;
+    display: block !important;
+  }
 
-   tfoot {
-     display: table-footer-group !important;
-   }
+  .slide {
+    page: slide-page !important;
+    font-size: 2em !important;
+    /* border:1px solid #000 !important; */
+    /* border-radius:0.5em !important; */
+    padding: 0.5em 0.5em 0 0.5em !important;
+    margin-top: 2em !important;
+    position: static !important;
+    display: block !important;
+    width: auto !important;
+    height: auto !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    page-break-inside: avoid !important;
+    page-break-after: always !important;
+    background-size: contain !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+  }
 
-   tr {
-     page-break-inside: avoid !important;
-     break-inside: avoid !important;
-   }
+  .slide * {
+    position: static !important;
+  }
 
-   th,
-   td {
-     white-space: normal !important;
-     word-wrap: break-word !important;
-     padding: 4px 6px !important;
-     border: 1px solid #ccc !important;
-     font-size: 9pt !important;
-   }
+  .slide h1,
+  .slide h2,
+  .slide h3,
+  .slide h4 {
+    font-weight: bold !important;
+  }
+
+  img,
+  video,
+  iframe,
+  figure {
+    position: relative !important;
+    max-width: 100%;
+    page-break-inside: avoid;
+    overflow: visible !important;
+  }
+
+  footer {
+    clear: both;
+    font-size: 8pt;
+    margin-top: auto;
+    color: #333;
+  }
+
+  figure {
+    margin: 1em 0;
+  }
+
+  table {
+    width: 100% !important;
+    max-width: 100% !important;
+    table-layout: auto !important;
+    border-collapse: collapse !important;
+    word-break: break-word !important;
+    overflow: visible !important;
+    font-size: 9pt !important;
+  }
+
+  thead {
+    display: table-header-group !important;
+  }
+
+  tfoot {
+    display: table-footer-group !important;
+  }
+
+  tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  th,
+  td {
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    padding: 4px 6px !important;
+    border: 1px solid #ccc !important;
+    font-size: 9pt !important;
+  }
 
 
 
-   a {
-     color: inherit;
-     text-decoration: underline;
-     text-decoration-thickness: 0.5px;
-     text-underline-offset: 2px;
-   }
+  a {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-thickness: 0.5px;
+    text-underline-offset: 2px;
+  }
 
-   a[href^="http"]:not(.do-print-a-href-hide):after {
-     content: " (" attr(href) ")";
-     font-size: 10pt;
-     color: #777;
-   }
- }
+  a[href^="http"]:not(.do-print-a-href-hide):after {
+    content: " (" attr(href) ")";
+    font-size: 10pt;
+    color: #777;
+  }
+}
 
 @media screen and (min-width: 75em){
 aside.note article {
