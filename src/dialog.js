@@ -41,6 +41,7 @@ import { initSlideshow } from './init.js';
 import { generateGeoView } from './geo.js';
 import { csvStringToJson, jsonToHtmlTableString } from './csv.js';
 import { restoreYjsContent, addYjsVersion, getYjsVersions, getYjsVersionsFromIDB, getCurrentVersionKey, onYjsVersionsChanged } from "./editor/editor.js";
+import { rewriteBlobImagesToRelative, uploadBlobAssets, clearBlobAssets, hasUploadTarget, resolveAuthenticatedImages } from "./editor/utils/imageAssets.js";
 
 const versionItemCache = new Map();
 let editHistoryAside = null;
@@ -2848,6 +2849,11 @@ export async function saveAsDocument(e) {
       html = setDocumentRelation(html, [r], o);
     }
 
+    var blobImageMapping = [];
+    if (hasUploadTarget()) {
+      blobImageMapping = rewriteBlobImagesToRelative(html);
+    }
+
     var baseURLSelectionChecked = saveAsDocument.querySelector('select[id="base-url"]');
     let baseURLType;
     if (baseURLSelectionChecked.length) {
@@ -2879,11 +2885,16 @@ export async function saveAsDocument(e) {
     }
 
     Config.Storage.put(storageIRI, saveData, saveContentType, null, { 'progress': progress, 'contentType': saveContentType })
-      .then(response => {
+      .then(async response => {
         progress.parentNode.removeChild(progress)
 
         if (baseURLType == 'base-url-relative') {
           copyRelativeResources(storageIRI, nodes)
+        }
+
+        if (blobImageMapping.length) {
+          await uploadBlobAssets(storageIRI, blobImageMapping);
+          clearBlobAssets();
         }
 
         let url = response.headers?.get?.('Location') || response.url || storageIRI
@@ -5966,7 +5977,10 @@ export async function spawnDokieli(documentNode, data, contentTypes, iris, optio
       baseElement.remove();
     });
 
-    sanitizeInsertAdjacentHTML(document.querySelector('head'),'afterbegin', '<base href="' + iris[0] + '" />');
+    var baseEl = document.createElement('base');
+    baseEl.setAttribute('class', 'do');
+    baseEl.setAttribute('href', iris[0]);
+    document.querySelector('head').prepend(baseEl);
     //TODO: Setting the base URL with `base` seems to work correctly, i.e., link base is opened document's URL, and simpler than updating some of the elements' href/src/data attributes. Which approach may be better depends on actions afterwards, e.g., Save As (perhaps other features as well) may need to remove the base and go with the user selection.
     // var nodes = tmpl.querySelectorAll('head link, [src], object[data]');
     // nodes = rewriteBaseURL(nodes, {'baseURLType': 'base-url-absolute', 'iri': iri});
@@ -6037,6 +6051,8 @@ export async function spawnDokieli(documentNode, data, contentTypes, iris, optio
     // Config.Editor.init(Config.Editor.mode, null, options);
     // console.log(Config.Editor)    
     Config.Editor.init(null, null, options);
+
+    resolveAuthenticatedImages(document.body);
 
     //FIXME. Call initDocumentActions (TODO: create document-actions.js)
     showFragment();
