@@ -3763,6 +3763,9 @@ export function initCopyToClipboard() {
 
   let articleNode = selectArticleNode(document);
 
+  // Drop any pre-existing copy-to-clipboard buttons so repeat calls don't stack.
+  articleNode.querySelectorAll('button.copy-to-clipboard').forEach(b => b.remove());
+
   elements.forEach(element => {
     var nodes = articleNode.querySelectorAll(element);
     nodes.forEach(node => {
