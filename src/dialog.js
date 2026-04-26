@@ -830,7 +830,7 @@ export function shareResource(listenerEvent, iri) {
             var name = Config.User.Contacts[contact].Name || contact;
             var img = Config.User.Contacts[contact].Image;
             if (!(img && img.length)) {
-              img = Config.IconBase64['.fas.fa-user-secret'];
+              img = generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
             }
             img = '<img alt="" height="32" src="' + img + '" width="32" />';
 
@@ -1039,7 +1039,7 @@ export function addShareResourceContactInput(node, agent) {
     var name = agent.Name || iri;
     var img = agent.Image;
     if (!(img && img.length)) {
-      img = Config.IconBase64['.fas.fa-user-secret'];
+      img = generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
     }
     img = '<img alt="" height="32" src="' + img + '" width="32" />';
 
@@ -1075,12 +1075,10 @@ function addAccessSubjectItem(node, s, url) {
   iri = domSanitize(iri);
 
   var id = encodeURIComponent(iri);
-
-  var name = Config.User?.Contacts[iri]?.Name || (s ? getAgentName(s) || iri : iri);
-  var img = Config.User?.Contacts[iri]?.Image || (s ? getGraphImage(s) : null);
-
+  var name = s ? getAgentName(s) || iri : iri;
+  var img = s ? getGraphImage(s) : null;
   if (!(img && img.length)) {
-    img = Config.IconBase64['.fas.fa-user-secret'];
+    img = generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
   }
   img = '<img alt="" height="32" src="' + img + '" width="32" />';
 
@@ -2407,12 +2405,37 @@ export function viewSource(e) {
   sourceBox.addEventListener('click', (e) => {
     if (e.target.closest('button.update')) {
       var data = document.getElementById('source-edit').value;
-      //FIXME: dokieli related stuff may be getting repainted / updated in the DOM
+
+      const wasAuthor = Config.Editor?.mode === 'author';
+
+      // Prevent ydoc/provider leak racing the new editor on the same IDB room.
+      if (Config.EditorEnabled && Config.Editor) {
+        Config.Editor.destroyEditor();
+      }
+
+      // initDocumentMenu's ready listeners are {once:true}, so preserve menu instead of recreating.
+      const preserveNodes = Array.from(
+        document.body.querySelectorAll(':scope > .do, :scope > #toc-nav')
+      ).filter(n => n.id !== 'source-view');
+      preserveNodes.forEach(n => n.remove());
+
       document.body.setHTMLUnsafe(domSanitize(data));
-      initDocumentMenu();
-      showDocumentMenu(e);
-      viewSource();
-      document.querySelector('#document-menu .resource-source').disabled = true;
+
+      preserveNodes.forEach(n => {
+        if (n.id === 'document-menu' || n.id === 'document-info') {
+          document.body.prepend(n);
+        } else {
+          document.body.appendChild(n);
+        }
+      });
+
+      if (wasAuthor) {
+        Config.Editor.toggleEditor('author');
+      }
+
+      sourceBox.remove();
+      const srcBtn = document.querySelector('#document-menu .resource-source');
+      if (srcBtn) srcBtn.disabled = false;
     }
 
     if (e.target.closest('button.close')) {

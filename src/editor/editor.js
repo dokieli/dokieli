@@ -259,7 +259,7 @@ export class Editor {
       documentMenu?.querySelector(sel)?.remove();
     });
 
-    document.body.replaceChildren(fragmentFromString(`<main><article about="" dir="auto" typeof="schema:CreativeWork"><header class="caption"><h1 property="schema:name" data-placeholder="Presentation title"></h1></header><section class="slide" id="cover" inlist="" rel="schema:hasPart" resource="#cover" typeof="bibo:Slide"><h2 aria-label="${i18n.t('editor.new-slideshow.h2.aria-label')}" data-i18n="editor.new-slideshow.h2" data-placeholder="${i18n.t('editor.new-slideshow.h2.data-placeholder')}" property="schema:name"></h2><p data-i18n="editor.new-slideshow.p" data-placeholder="${i18n.t('editor.new-slideshow.p.data-placeholder')}"></p></section></article><div class="progress"></div></main>`));
+    document.body.replaceChildren(fragmentFromString(`<main><article about="" dir="auto" typeof="schema:CreativeWork"><header class="caption"><h1 property="schema:name" data-placeholder="Presentation title"></h1></header><section class="slide" id="cover" inlist="" rel="schema:hasPart" resource="#cover" typeof="bibo:Slide"><h2 aria-label="${i18n.t('editor.new-slideshow.h2.aria-label')}" data-i18n="editor.new-slideshow.h2" data-placeholder="${i18n.t('editor.new-slideshow.h2.data-placeholder')}" property="schema:name"></h2><p data-i18n="editor.new-slideshow.p" data-placeholder="${i18n.t('editor.new-slideshow.p.data-placeholder')}"></p></section></article><div class="do progress"></div></main>`));
 
     document.body.prepend(documentMenu);
 

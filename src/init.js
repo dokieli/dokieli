@@ -27,7 +27,7 @@ import { syncLocalRemoteResource, monitorNetworkStatus, autoSave } from './sync.
 import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeObject } from './utils/sanitization.js';
 import { afterSetUserInfo, setUserInfo } from './auth.js';
 import { showNotificationSources } from './activity.js';
-import { generateDataURI, getProxyableIRI, getUrlParams, stripFragmentFromString, stripUrlSearchHash } from './uri.js';
+import { getProxyableIRI, getUrlParams, stripFragmentFromString, stripUrlSearchHash } from './uri.js';
 import { SolidStorage, GitForgeStorage, initStorage } from './storage/backend.js';
 import { initEditor } from './editor/initEditor.js';
 import { showGraph, showVisualisationGraph } from './viz.js';
@@ -44,7 +44,6 @@ export async function init (url) {
   var contentNode = getDocumentContentNode(document);
   if (contentNode) {
     initButtons();
-    initIcons();
     initDocumentMenu();
     
     emitDocEvent('loading');
@@ -351,10 +350,50 @@ export async function initDocumentMode(mode) {
 
 let showerInstance = null;
 let showerExternalListeners = [];
+let showerHistoryRestore = null;
+
+const DOKIELI_HASH_PARAMS = ['author', 'graph', 'graph-view', 'open', 'output', 'social', 'style'];
+
+// Drop shower's slide-id URL writes when a dokieli hash param like #open=URL is set.
+function patchHistoryForShower() {
+  const origReplace = history.replaceState.bind(history);
+  const origPush = history.pushState.bind(history);
+
+  const hasDokieliHashParam = () => {
+    const hash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : '';
+    if (!hash) return false;
+    const params = new URLSearchParams(hash);
+    return DOKIELI_HASH_PARAMS.some(p => params.has(p));
+  };
+
+  const isShowerSlideHash = (url) => {
+    if (typeof url !== 'string') return false;
+    const hashIdx = url.indexOf('#');
+    if (hashIdx < 0) return false;
+    const hash = url.slice(hashIdx + 1);
+    if (!hash) return false;
+    return !!document.getElementById(hash)?.classList?.contains('slide');
+  };
+
+  history.replaceState = function (state, title, url) {
+    if (hasDokieliHashParam() && isShowerSlideHash(url)) return;
+    return origReplace(state, title, url);
+  };
+  history.pushState = function (state, title, url) {
+    if (hasDokieliHashParam() && isShowerSlideHash(url)) return;
+    return origPush(state, title, url);
+  };
+
+  return () => {
+    history.replaceState = origReplace;
+    history.pushState = origPush;
+  };
+}
 
 // shower has no destroy() API; record listeners so teardownShower() can remove them.
 function startTrackedShower() {
   showerExternalListeners = [];
+  showerHistoryRestore = patchHistoryForShower();
   const targets = [document, document.body, window];
   const originals = new Map();
   for (const t of targets) {
@@ -375,6 +414,7 @@ function startTrackedShower() {
   try {
     const shwr = new shower();
     shwr.start();
+    document.querySelectorAll('body > section.region[role="region"]').forEach(n => n.classList.add('do'));
     return shwr;
   } finally {
     for (const t of targets) {
@@ -393,6 +433,10 @@ function teardownShower() {
   showerExternalListeners = [];
   document.querySelectorAll('body > section.region[role="region"]').forEach(n => n.remove());
   showerInstance = null;
+  if (showerHistoryRestore) {
+    showerHistoryRestore();
+    showerHistoryRestore = null;
+  }
 }
 
 export function initSlideshow(options) {
@@ -407,7 +451,7 @@ export function initSlideshow(options) {
     //TODO: Check if .bibo:Slide, and if there is no .slide, add .slide
 
     if (!getDocumentContentNode(document).querySelector('.progress') && options.progress) {
-      getDocumentContentNode(document).appendChild(fragmentFromString('<div class="progress"></progress>'));
+      getDocumentContentNode(document).appendChild(fragmentFromString('<div class="do progress"></div>'));
     }
 
     teardownShower();
@@ -499,11 +543,6 @@ function initPrint() {
       }
     });
   });
-}
-
-function initIcons() {
-  Config['IconBase64'] = Config['IconBase64'] || {};
-  Config.IconBase64['.fas.fa-user-secret'] = generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
 }
 
 // function initMath(config) {
