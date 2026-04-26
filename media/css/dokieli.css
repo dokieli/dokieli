@@ -4855,6 +4855,7 @@ width: auto;
 }
 .shower .slide p {
 margin-bottom: 0.5em;
+color:initial;
 }
 .shower .slide a {
 color: initial;
@@ -4889,7 +4890,7 @@ vertical-align: middle;
 .shower .slide footer dd ul,
 .shower .slide footer dd li {
 display: inline;
-margin:0;
+margin:0 0.5em 0 0;
 }
 .shower .slide footer dd li:after {
 content: ", ";
