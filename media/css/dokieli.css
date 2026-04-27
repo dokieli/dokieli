@@ -189,7 +189,7 @@ limitations under the License.
     word-break: break-word !important;
     overflow: visible !important;
     /* font-size: 9pt !important; */
-    margin-left: 0 !important;
+    margin:0 !important;
   }
 
   .slide table td:first-child,
@@ -223,6 +223,7 @@ limitations under the License.
     border: 1px solid #ccc !important;
     /* font-size: 9pt !important; */
     word-break: keep-all !important;
+    padding:0.25em! important;
   }
 
   a,
