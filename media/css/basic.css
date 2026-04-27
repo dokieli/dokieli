@@ -857,9 +857,9 @@ table tbody tr:nth-child(odd) {
   background-color: #f3f3f3;
 }
 
-table tbody tr:nth-child(odd) th {
+/* table tbody tr:nth-child(odd) th {
   background-color: #fff;
-}
+} */
 
 figure.listing pre code:before,
 figure.listing pre samp:before {
