@@ -192,16 +192,6 @@ limitations under the License.
     margin:0 !important;
   }
 
-  .slide table td:first-child,
-  .slide table th:first-child {
-    padding-left: 6px !important;
-  }
-
-  .slide table td:last-child,
-  .slide table th:last-child {
-    padding-right: 6px !important;
-  }
-
   thead {
     display: table-header-group !important;
   }
@@ -220,10 +210,9 @@ limitations under the License.
     white-space: normal !important;
     word-wrap: break-word !important;
     padding: 4px 6px !important;
-    border: 1px solid #ccc !important;
+    /* border: 1px solid #ccc !important; */
     /* font-size: 9pt !important; */
     word-break: keep-all !important;
-    padding:0.25em! important;
   }
 
   a,
@@ -4990,20 +4979,6 @@ text-decoration: none;
 background: none;
 }
 
-/*
-.shower .slide table {
-margin-left:0;
-width:auto;
-}
-.shower .slide table th,
-.shower .slide table td,
-.shower .slide table th:first-child,
-.shower .slide table td:first-child {
-padding:0 0.5em;
-}
-
-OR:
-*/
 .shower .slide table caption {
 font-weight:bold;
 }
@@ -5011,6 +4986,16 @@ font-weight:bold;
 margin-left:96px;
 content:"";
 }
+.shower .slide table {
+margin:0 0 0 -5%;
+width:110%;
+line-height:1.8;
+}
+.shower .slide table th,
+.shower .slide table td {
+padding:0.25em !important;
+}
+
 
 .shower dl.performer,
 .shower dl.organisations {
