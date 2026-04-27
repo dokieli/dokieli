@@ -118,17 +118,46 @@ limitations under the License.
     background-size: contain !important;
     background-repeat: no-repeat !important;
     background-position: center !important;
+
+    a[href^="http"]::after {
+      content: "" !important;
+    }
+
+    h1, h2, h3, h4 {
+      font-weight: bold !important;
+    }
   }
 
   .slide * {
     position: static !important;
   }
 
-  .slide h1,
-  .slide h2,
-  .slide h3,
-  .slide h4 {
+  .slide:has(.shout) {
+    background: #080 linear-gradient(135deg, #080 50%, #070 50%) no-repeat !important;
+    color: #fff !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 6.5in !important;
+    text-align: center !important;
+    padding: 0.5em !important;
+  }
+
+  .slide .shout {
+    color: #fff !important;
     font-weight: bold !important;
+    font-size: 3.5em !important;
+    line-height: 1.1 !important;
+    width: 100% !important;
+    padding: 0 !important;
+    transform: none !important;
+  }
+
+  .slide .shout::after,
+  .slide .shout::before {
+    content: none !important;
+    display: none !important;
+    background: none !important;
   }
 
   img,
@@ -159,7 +188,18 @@ limitations under the License.
     border-collapse: collapse !important;
     word-break: break-word !important;
     overflow: visible !important;
-    font-size: 9pt !important;
+    /* font-size: 9pt !important; */
+    margin-left: 0 !important;
+  }
+
+  .slide table td:first-child,
+  .slide table th:first-child {
+    padding-left: 6px !important;
+  }
+
+  .slide table td:last-child,
+  .slide table th:last-child {
+    padding-right: 6px !important;
   }
 
   thead {
@@ -181,16 +221,16 @@ limitations under the License.
     word-wrap: break-word !important;
     padding: 4px 6px !important;
     border: 1px solid #ccc !important;
-    font-size: 9pt !important;
+    /* font-size: 9pt !important; */
+    word-break: keep-all !important;
   }
 
-
-
-  a {
-    color: inherit;
-    text-decoration: underline;
-    text-decoration-thickness: 0.5px;
-    text-underline-offset: 2px;
+  a,
+  .shower .slide a,
+  .shower .slide .shout a {
+    color: inherit !important;
+    text-decoration: none !important;
+    background: none !important;
   }
 
   a[href^="http"]:not(.do-print-a-href-hide):after {
