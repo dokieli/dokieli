@@ -4981,9 +4981,9 @@ background: none;
 
 .shower .slide table caption {
 font-weight:bold;
+padding:0.25em;
 }
 .shower .slide table caption:before {
-padding:0.25em;
 content:"";
 }
 .shower .slide table {
