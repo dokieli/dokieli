@@ -126,6 +126,7 @@
                     </li>
                   </ol>
                 </li>
+                <li data-id="privacy-policy"><a href="#privacy-policy">Privacy policy</a></li>
               </ol>
             </div>
           </nav>
@@ -755,6 +756,59 @@
                       </dl>
                     </div>
                   </section>
+                </div>
+              </section>
+            </div>
+          </section>
+          <section id="privacy-policy" inlist="" rel="schema:hasPart" resource="#privacy-policy">
+            <h2 property="schema:name">Privacy Policy</h2>
+            <div datatype="rdf:HTML" property="schema:description">
+              <section id="application-privacy" inlist="" rel="schema:hasPart" resource="#application-privacy">
+                <h3 property="schema:name">Application Privacy</h3>
+                <div datatype="rdf:HTML" property="schema:description">
+                  <p>dokieli is a client side application, and can be hosted from any web server. It does not collect, transmit, or store any data about its users on remote servers. No analytics, telemetry, or tracking is built into the application. All content produced using dokieli is directed entirely by the user to destinations of the user's own choosing.</p>
+                </div>
+              </section>
+              <section id="cookies" inlist="" rel="schema:hasPart" resource="#cookies">
+                <h3 property="schema:name">Cookies</h3>
+                <div datatype="rdf:HTML" property="schema:description">
+                  <p>dokieli does not use cookies.</p>
+                </div>
+              </section>
+              <section id="policy-dokieli-website" inlist="" rel="schema:hasPart" resource="#policy-dokieli-website">
+                <h3 property="schema:name">dokie.li website policy</h3>
+                <div datatype="rdf:HTML" property="schema:description">
+                  <p>The <a href="http://dokie.li/">dokie.li</a> website is a simple static server. When the application's assets (HTML, CSS, JavaScript) are served from dokie.li, the server receives and logs standard HTTP requests, as is the case with any web server. Those logs are not processed for analytics, profiling, or any other purpose beyond routine server operation. Deploying dokieli on your own server means the dokie.li server is not involved at all.</p>
+                </div>
+              </section>
+              <section id="policy-outbound-requests" inlist="" rel="schema:hasPart" resource="#policy-outbound-requests">
+                <h3 property="schema:name">Outbound requests</h3>
+                <div datatype="rdf:HTML" property="schema:description">
+                  <p>dokieli makes outbound requests to resources and services as directed by the user. Those requests originate directly from the user's browser, which discloses the user's IP address to the destination server. This is a standard characteristic of web browsing, not something specific to dokieli. It applies when fetching documents, annotations, profiles, or other linked data, as well as when sending notifications or signing in via a WebID provider. Users can configure a preferred proxy if they wish to limit IP disclosure to external servers.</p>
+                </div>
+              </section>
+              <section id="privacy-local-storage" inlist="" rel="schema:hasPart" resource="#privacy-local-storage">
+                <h3 property="schema:name">Local storage</h3>
+                <div datatype="rdf:HTML" property="schema:description">
+                  <p>dokieli uses the browser's <a href="https://html.spec.whatwg.org/multipage/webstorage.html#webstorage">local storage</a> for autosave and offline access. When signed in, a refresh token is also stored to keep the session active without requiring repeated sign-ins. On a shared device, content and credentials held in local storage may be visible to others using the same browser profile. Signing out clears authentication credentials and session data, including any stored tokens, from local storage. In private or guest browsing mode, local storage is cleared automatically when the session ends. Users on shared devices should sign out when finished, or use private browsing mode, to ensure any remaining content is also removed. A UI language preference may be retained in browser storage between sessions as a convenience. It contains no identifying information and is not linked to any account or profile.</p>
+                </div>
+              </section>
+              <section id="privacy-service-worker" inlist="" rel="schema:hasPart" resource="#service-worker">
+                <h3 property="schema:name">Service worker</h3>
+                <div datatype="rdf:HTML" property="schema:description">
+                  <p>dokieli uses a <a href="https://www.w3.org/TR/service-workers/">service worker</a> to cache the application's own assets for offline use. The service worker does not store any user data, content, or identifying information, and does not perform any tracking.</p>
+                </div>
+              </section>
+              <section id="privacy-third-party-services" inlist="" rel="schema:hasPart" resource="#privacy-third-party-services">
+                <h3 property="schema:name">Third-party services</h3>
+                <div datatype="rdf:HTML" property="schema:description">
+                  <p>Some features make outbound requests to third-party services. This includes resources embedded or referenced in documents and annotations by their authors, which may trigger requests to external servers when that content is loaded. It also covers dedicated features. The archiving feature, for example, sends a snapshot request to the <a href="https://web.archive.org/">Internet Archive's Wayback Machine</a>, which involves the URL being archived and the user's IP address. When using such features the user is interacting directly with the relevant third party and that service's own policies apply. Protected resources are exempt from public archiving since the request to create an archive snapshot does not carry credentials.</p>
+                </div>
+              </section>
+              <section id="privacy-contact" inlist="" rel="schema:hasPart" resource="#privacy-contact">
+                <h3 property="schema:name">Privacy contact</h3>
+                <div datatype="rdf:HTML" property="schema:description">
+                  <p>For privacy-related questions or concerns, please open an issue in the issue tracker at <a href="https://git.dokie.li/">https://git.dokie.li/</a>.</p>
                 </div>
               </section>
             </div>
