@@ -8,9 +8,13 @@ You may obtain a copy of the License at
     http://www.apache.org/licenses/LICENSE-2.0
 */
 
+import Config from './config.js';
 import { getDocumentContentNode } from './utils/html.js';
 
 const MODES = { LIST: 'list', FULL: 'full' };
+
+// Skipped when syncing slide id to URL; 'open=' is handled specially (slide id rides as its fragment).
+const OTHER_DOKIELI_HASH_PARAMS = ['author', 'graph', 'graph-view', 'output', 'social', 'style'];
 
 let activeIndex = 0;
 let started = false;
@@ -38,12 +42,40 @@ function inEditableTarget(target) {
   return !!(target && target.closest && target.closest('[contenteditable=""], [contenteditable="true"]'));
 }
 
-function setActive(idx) {
+function setActive(idx, options = {}) {
   const slides = getSlides();
   if (!slides.length) return;
   activeIndex = Math.max(0, Math.min(idx, slides.length - 1));
   slides.forEach((s, i) => s.classList.toggle('active', i === activeIndex));
   updateProgress();
+  if (options.syncHash !== false) syncToHash(slides[activeIndex]);
+}
+
+function hasOtherDokieliParam(hashStr) {
+  if (!hashStr) return false;
+  const params = new URLSearchParams(hashStr);
+  return OTHER_DOKIELI_HASH_PARAMS.some(p => params.has(p));
+}
+
+// Forms: #open=URL#slide-id (riding open's fragment) | #slide-id (bare) | other dokieli params (skipped).
+function syncToHash(slide) {
+  if (!slide?.id) return;
+  const cur = location.hash.startsWith('#') ? location.hash.slice(1) : '';
+
+  let next;
+  if (/(?:^|&)open=/.test(cur)) {
+    next = /(?:^|&)open=[^&#]*#[^&]*/.test(cur)
+      ? cur.replace(/((?:^|&)open=[^&#]*)#[^&]*/, `$1#${slide.id}`)
+      : cur.replace(/((?:^|&)open=[^&#]*)/, `$1#${slide.id}`);
+  } else if (hasOtherDokieliParam(cur)) {
+    return;
+  } else {
+    next = slide.id;
+  }
+
+  const target = '#' + next;
+  if (location.hash === target) return;
+  history.replaceState(null, '', target);
 }
 
 function updateProgress() {
@@ -118,13 +150,26 @@ function onKeydown(e) {
   }
 }
 
+// Resolves slide from #slide-id or #open=URL#slide-id; returns the element or null.
 function syncFromHash() {
-  const hash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : '';
-  if (!hash) return;
-  const slide = document.getElementById(hash);
-  if (!slide || !slide.classList.contains('slide')) return;
+  const hash = location.hash.startsWith('#') ? location.hash.slice(1) : '';
+  if (!hash) return null;
+
+  let slideId;
+  const m = hash.match(/(?:^|&)open=[^&]*#([^&]+)/);
+  if (m) {
+    slideId = m[1];
+  } else if (!/[=&]/.test(hash)) {
+    slideId = hash;
+  }
+  if (!slideId) return null;
+
+  const slide = document.getElementById(slideId);
+  if (!slide || !slide.classList.contains('slide')) return null;
   const idx = getSlides().indexOf(slide);
-  if (idx >= 0) setActive(idx);
+  if (idx < 0) return null;
+  setActive(idx, { syncHash: false });
+  return slide;
 }
 
 export function start() {
@@ -147,8 +192,12 @@ export function start() {
     document.body.classList.add(MODES.LIST);
   }
 
-  setActive(0);
-  syncFromHash();
+  setActive(0, { syncHash: false });
+  const deepLinked = syncFromHash();
+  // Deep-link entry: shared #slide-id URL lands in full mode (unless editing).
+  if (deepLinked && Config.Editor?.mode !== 'author') {
+    enterFullMode();
+  }
 
   keydownHandler = onKeydown;
   keyupHandler = onKeyup;
