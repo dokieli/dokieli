@@ -14,6 +14,7 @@ const MODES = { LIST: 'list', FULL: 'full' };
 
 let activeIndex = 0;
 let started = false;
+let keyupHandler = null;
 let keydownHandler = null;
 let hashHandler = null;
 
@@ -76,16 +77,22 @@ export function exitFullMode() {
   document.body.classList.add(MODES.LIST);
 }
 
+function onKeyup(e) {
+  if (!document.body.classList.contains('shower')) return;
+  if (inEditableTarget(e.target)) return;
+
+  if (isFull() && e.key === 'Escape') {
+    e.preventDefault();
+    exitFullMode();
+  }
+}
+
 function onKeydown(e) {
   if (!document.body.classList.contains('shower')) return;
   if (inEditableTarget(e.target)) return;
 
   if (isFull()) {
     switch (e.key) {
-      case 'Escape':
-        e.preventDefault();
-        exitFullMode();
-        return;
       case 'ArrowRight':
       case 'ArrowDown':
       case 'PageDown':
@@ -144,8 +151,10 @@ export function start() {
   syncFromHash();
 
   keydownHandler = onKeydown;
+  keyupHandler = onKeyup;
   hashHandler = syncFromHash;
   document.addEventListener('keydown', keydownHandler);
+  document.addEventListener('keyup', keyupHandler);
   window.addEventListener('hashchange', hashHandler);
 }
 
@@ -153,8 +162,9 @@ export function stop() {
   if (!started) return;
   started = false;
   if (keydownHandler) document.removeEventListener('keydown', keydownHandler);
+  if (keyupHandler) document.removeEventListener('keyup', keyupHandler);
   if (hashHandler) window.removeEventListener('hashchange', hashHandler);
-  keydownHandler = hashHandler = null;
+  keydownHandler = keyupHandler = hashHandler = null;
 }
 
 export function isStarted() {
