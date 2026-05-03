@@ -31,11 +31,11 @@ import { getProxyableIRI, getUrlParams, stripFragmentFromString, stripUrlSearchH
 import { SolidStorage, GitForgeStorage, initStorage } from './storage/backend.js';
 import { initEditor } from './editor/initEditor.js';
 import { showGraph, showVisualisationGraph } from './viz.js';
-import shower from '@shower/core';
+import * as Slideshow from './slideshow.js';
 import { openResource, initDocumentMenu, spawnDokieli, showDocumentMenu, initSlideshowInteraction } from './dialog.js';
 import { Icon } from './ui/icons.js';
 import { eventButtonClose, eventButtonSignIn, eventButtonSignOut, eventButtonNotificationsToggle, eventButtonInfo, emitDocEvent } from './events.js';
-import { hasNonWhitespaceText, getDocumentContentNode, selectArticleNode, fragmentFromString } from "./utils/html.js";
+import { hasNonWhitespaceText, getDocumentContentNode, selectArticleNode } from "./utils/html.js";
 
 export async function init (url) {
   initServiceWorker();
@@ -348,127 +348,20 @@ export async function initDocumentMode(mode) {
   // }
 }
 
-let showerInstance = null;
-let showerExternalListeners = [];
-let showerHistoryRestore = null;
-
-const DOKIELI_HASH_PARAMS = ['author', 'graph', 'graph-view', 'open', 'output', 'social', 'style'];
-
-// Drop shower's slide-id URL writes when a dokieli hash param like #open=URL is set.
-function patchHistoryForShower() {
-  const origReplace = history.replaceState.bind(history);
-  const origPush = history.pushState.bind(history);
-
-  const hasDokieliHashParam = () => {
-    const hash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : '';
-    if (!hash) return false;
-    const params = new URLSearchParams(hash);
-    return DOKIELI_HASH_PARAMS.some(p => params.has(p));
-  };
-
-  const isShowerSlideHash = (url) => {
-    if (typeof url !== 'string') return false;
-    const hashIdx = url.indexOf('#');
-    if (hashIdx < 0) return false;
-    const hash = url.slice(hashIdx + 1);
-    if (!hash) return false;
-    return !!document.getElementById(hash)?.classList?.contains('slide');
-  };
-
-  history.replaceState = function (state, title, url) {
-    if (hasDokieliHashParam() && isShowerSlideHash(url)) return;
-    return origReplace(state, title, url);
-  };
-  history.pushState = function (state, title, url) {
-    if (hasDokieliHashParam() && isShowerSlideHash(url)) return;
-    return origPush(state, title, url);
-  };
-
-  return () => {
-    history.replaceState = origReplace;
-    history.pushState = origPush;
-  };
-}
-
-// shower has no destroy() API; record listeners so teardownShower() can remove them.
-function startTrackedShower() {
-  showerExternalListeners = [];
-  showerHistoryRestore = patchHistoryForShower();
-  const targets = [document, document.body, window];
-  const originals = new Map();
-  for (const t of targets) {
-    originals.set(t, t.addEventListener);
-    t.addEventListener = function (type, listener, options) {
-      // prevent shower's keydown listener from hijacking p/l/backspace from PM (a bit hacky)
-      let tracked = listener;
-      if (type === 'keydown' && typeof listener === 'function') {
-        tracked = function (event) {
-          if (event.target?.closest?.('[contenteditable=""], [contenteditable="true"]')) return;
-          return listener.call(this, event);
-        };
-      }
-      showerExternalListeners.push({ target: t, type, listener: tracked, options });
-      return originals.get(t).call(t, type, tracked, options);
-    };
-  }
-  try {
-    const shwr = new shower();
-    shwr.start();
-    document.querySelectorAll('body > section.region[role="region"]').forEach(n => n.classList.add('do'));
-    return shwr;
-  } finally {
-    for (const t of targets) {
-      delete t.addEventListener;
-    }
-  }
-}
-
-function teardownShower() {
-  if (!showerInstance) return;
-  // Neutralizes dispatchEvent paths still reachable via stale per-slide click handlers.
-  showerInstance._isStarted = false;
-  for (const { target, type, listener, options } of showerExternalListeners) {
-    target.removeEventListener(type, listener, options);
-  }
-  showerExternalListeners = [];
-  document.querySelectorAll('body > section.region[role="region"]').forEach(n => n.remove());
-  showerInstance = null;
-  if (showerHistoryRestore) {
-    showerHistoryRestore();
-    showerHistoryRestore = null;
-  }
-}
-
 export function initSlideshow(options) {
   options = options || {};
-  options.progress = options.progress || true;
+  options.progress = options.progress !== false;
 
   //TODO: .shower can be anywhere?
   //TODO: check for rdf:type bibo:Slideshow or schema:PresentationDigitalDocument
-  if (getDocumentContentNode(document).classList.contains('shower')) {
-    //TODO: Check if .shower.list or .shower.full. pick a default in a dokieli or leave default to shower (list)?
+  if (!getDocumentContentNode(document).classList.contains('shower')) return;
 
-    //TODO: Check if .bibo:Slide, and if there is no .slide, add .slide
+  //TODO: Check if .bibo:Slide, and if there is no .slide, add .slide
 
-    if (!getDocumentContentNode(document).querySelector('.progress') && options.progress) {
-      getDocumentContentNode(document).appendChild(fragmentFromString('<div class="do progress"></div>'));
-    }
-
-    teardownShower();
-    showerInstance = startTrackedShower();
-    initSlideshowInteraction(showerInstance);
-  }
+  Slideshow.stop();
+  Slideshow.start();
+  initSlideshowInteraction(Slideshow);
 }
-
-// Shower's body keydown listener hijacks p/l/backspace from PM; tear down in author mode.
-window.addEventListener('dokieli:editor-mode-changed', (e) => {
-  if (!document.body.classList.contains('shower')) return;
-  if (e.detail?.mode === 'author') {
-    teardownShower();
-  } else if (e.detail?.mode === 'social') {
-    initSlideshow();
-  }
-});
 
 //TODO: Review grapoi
 function processPotentialAction(resourceInfo) {
