@@ -440,26 +440,31 @@ TODO:
       this.blocktypeSelect.appendChild(option);
     });
 
-    // Save the PM selection on mousedown, before the select steals focus and
-    // collapses the editor's DOM selection. We save only the selection (not the
-    // full state) so it can be re-applied to the *current* view state in the
-    // change handler, avoiding stale-transaction issues.
+    // Save the PM selection before the select steals focus and collapses it.
     let _savedSelection = null;
+    // Firefox: change/input fire with the stale value; capture the picked one at the popup-internal mousedown.
+    let _intendedValue = null;
+    const validValues = new Set(
+      Array.from(this.blocktypeSelect.options).map(o => o.value)
+    );
     this.blocktypeSelect.addEventListener('mousedown', () => {
       _savedSelection = this.editorView?.state?.selection ?? null;
+      if (document.activeElement === this.blocktypeSelect) {
+        const v = this.blocktypeSelect.value;
+        if (validValues.has(v)) _intendedValue = v;
+      }
     });
     this.blocktypeSelect.addEventListener('change', (e) => {
       const savedSelection = _savedSelection;
       _savedSelection = null;
-      const command = this.toolbarCommands[e.target.value];
+      const value = _intendedValue ?? e.target.value;
+      _intendedValue = null;
+      const command = this.toolbarCommands[value];
       if (command && this.editorView) {
         e.target.blur();
-        // Re-apply the saved selection to the current state so the command
-        // always operates on a consistent (state, selection) pair.
         let state = this.editorView.state;
         if (savedSelection) {
-          const tr = state.tr.setSelection(savedSelection);
-          this.editorView.dispatch(tr);
+          this.editorView.dispatch(state.tr.setSelection(savedSelection));
           state = this.editorView.state;
         }
         command(state, this.editorView.dispatch, this.editorView);
