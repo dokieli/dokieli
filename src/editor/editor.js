@@ -27,7 +27,7 @@ import { SlashMenu } from "./slashmenu/slashmenu.js";
 import { applyEditorParseTransforms } from "./../utils/documentTransforms.js";
 import { placeholderPlugin } from "./plugins/placeholder.js";
 import { autoIdPlugin } from "./plugins/autoId.js";
-import { slideStructurePlugin } from "./plugins/slideStructure.js";
+import { documentStructurePlugin } from "./plugins/documentStructure.js";
 import { slideshowDecorationsPlugin } from "./plugins/slideshowDecorations.js";
 import { ImageResizeView } from "./nodeviews/imageResize.js";
 import { DetailsView } from "./nodeviews/details.js";
@@ -368,7 +368,7 @@ export class Editor {
     // not a collaborative session): skip Yjs/IndexedDB/remote-sync entirely.
     Config.Editor['collab'] = false;
     pmDoc = originalDoc;
-    editorPlugins = [history(), mentionsPlugin, keymapPlugin, placeholderPlugin, slideStructurePlugin, slideshowDecorationsPlugin, cvNavDecorationPlugin, specificationNavDecorationPlugin, specificationConceptSyncPlugin, autoIdPlugin, protectPlaceholdersPlugin, editorToolbarPlugin];
+    editorPlugins = [history(), mentionsPlugin, keymapPlugin, placeholderPlugin, documentStructurePlugin, slideshowDecorationsPlugin, cvNavDecorationPlugin, specificationNavDecorationPlugin, specificationConceptSyncPlugin, autoIdPlugin, protectPlaceholdersPlugin, editorToolbarPlugin];
   } else {
     Config.Editor['collab'] = true;
     ydoc = new Y.Doc();
@@ -576,7 +576,7 @@ export class Editor {
       mentionsPlugin,
       keymapPlugin,
       placeholderPlugin,
-      slideStructurePlugin,
+      documentStructurePlugin,
       slideshowDecorationsPlugin,
       cvNavDecorationPlugin,
       specificationNavDecorationPlugin,
