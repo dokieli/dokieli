@@ -78,6 +78,25 @@ function syncToHash(slide) {
   history.replaceState(null, '', target);
 }
 
+// Strip slide id from the URL — used on exit from full mode so the URL no longer deep-links to a slide.
+function clearSlideFromHash() {
+  const cur = location.hash.startsWith('#') ? location.hash.slice(1) : '';
+  if (!cur) return;
+
+  let next;
+  if (/(?:^|&)open=[^&#]*#[^&]*/.test(cur)) {
+    next = cur.replace(/((?:^|&)open=[^&#]*)#[^&]*/, '$1');
+  } else if (!hasOtherDokieliParam(cur) && !/[=&]/.test(cur)) {
+    next = '';
+  } else {
+    return;
+  }
+
+  const target = next ? '#' + next : location.pathname + location.search;
+  if (location.hash === (next ? '#' + next : '')) return;
+  history.replaceState(null, '', target);
+}
+
 function updateProgress() {
   const progress = getProgress();
   const slides = getSlides();
@@ -107,6 +126,7 @@ export function enterFullMode() {
 export function exitFullMode() {
   document.body.classList.remove(MODES.FULL);
   document.body.classList.add(MODES.LIST);
+  clearSlideFromHash();
 }
 
 function onKeyup(e) {
