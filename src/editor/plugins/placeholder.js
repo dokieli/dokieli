@@ -50,12 +50,35 @@ function getPlaceholder(node, $pos) {
   return null;
 }
 
+function placeholderWidget(text) {
+  const span = document.createElement("span");
+  span.className = "editor-placeholder";
+  span.textContent = text;
+  span.setAttribute("aria-hidden", "true");
+  span.contentEditable = "false";
+  return span;
+}
+
 export const placeholderPlugin = new Plugin({
   props: {
     decorations(state) {
       const { doc, selection } = state;
       const decorations = [];
       const decoratedPositions = new Set();
+
+      const addPlaceholder = (pos, node, text) => {
+        decorations.push(
+          Decoration.node(pos, pos + node.nodeSize, {
+            class: "editor-empty-node",
+          })
+        );
+        decorations.push(
+          Decoration.widget(pos + 1, () => placeholderWidget(text), {
+            side: 1,
+            ignoreSelection: true,
+          })
+        );
+      };
 
       doc.descendants((node, pos) => {
         if (!node.isTextblock) return;
@@ -65,12 +88,7 @@ export const placeholderPlugin = new Plugin({
         const placeholder = getPlaceholder(node, $pos);
         if (!placeholder) return;
 
-        decorations.push(
-          Decoration.node(pos, pos + node.nodeSize, {
-            class: "editor-empty-node",
-            "data-placeholder": placeholder,
-          })
-        );
+        addPlaceholder(pos, node, placeholder);
         decoratedPositions.add(pos);
       });
 
@@ -79,12 +97,7 @@ export const placeholderPlugin = new Plugin({
       if (parentNode.type.name === "p" && parentNode.content.size === 0) {
         const pos = $from.before($from.depth);
         if (!decoratedPositions.has(pos)) {
-          decorations.push(
-            Decoration.node(pos, pos + parentNode.nodeSize, {
-              class: "editor-empty-node",
-              "data-placeholder": i18n.t("editor.placeholder.slash-hint"),
-            })
-          );
+          addPlaceholder(pos, parentNode, i18n.t("editor.placeholder.slash-hint"));
         }
       }
 
