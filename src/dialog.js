@@ -162,8 +162,11 @@ export function hideDocumentMenu(e) {
   // document.removeEventListener('click', eventLeaveDocumentMenu);
 
   var dMenu = document.querySelector('#document-menu.do');
+  if (!dMenu) return;
   var dMenuButton = dMenu.querySelector('button');
-  dMenuButton.parentNode.replaceChild(fragmentFromString(Config.Button.Menu.OpenMenu), dMenuButton);
+  if (dMenuButton) {
+    dMenuButton.parentNode.replaceChild(fragmentFromString(Config.Button.Menu.OpenMenu), dMenuButton);
+  }
 
   dMenu.classList.remove('on');
   // var sections = dMenu.querySelectorAll('section');
@@ -3083,15 +3086,14 @@ export function createNewSlideshow(e) {
 }
 
 let _slideshowInteractionInit = false;
-let _showerInstance = null;
+let _slideshow = null;
 
-export function initSlideshowInteraction(showerInstance) {
-  if (showerInstance) _showerInstance = showerInstance;
+export function initSlideshowInteraction(slideshow) {
+  if (slideshow) _slideshow = slideshow;
 
   if (_slideshowInteractionInit) return;
   _slideshowInteractionInit = true;
 
-  // Capture phase so we run before shower's per-slide click handler (which checks defaultPrevented).
   document.addEventListener('click', (e) => {
     if (!document.body.classList.contains('shower')) return;
     if (!document.body.classList.contains('list')) return;
@@ -3110,27 +3112,18 @@ export function initSlideshowInteraction(showerInstance) {
     }
 
     e.preventDefault();
-    if (_showerInstance) {
-      const slides = Array.from(document.querySelectorAll('.shower .slide'));
-      const idx = slides.indexOf(slide);
-      _showerInstance.goTo(idx);
-      _showerInstance.enterFullMode();
+    const slides = Array.from(document.querySelectorAll('.shower .slide'));
+    const idx = slides.indexOf(slide);
+    if (_slideshow) {
+      _slideshow.goTo(idx);
+      _slideshow.enterFullMode();
     } else {
-      document.querySelectorAll('.shower .slide').forEach(s => s.classList.remove('active'));
+      slides.forEach(s => s.classList.remove('active'));
       slide.classList.add('active');
       document.body.classList.remove('list');
       document.body.classList.add('full');
     }
   }, true);
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key !== 'Escape') return;
-    if (!document.body.classList.contains('shower')) return;
-    if (!document.body.classList.contains('full')) return;
-    if (_showerInstance) return;
-    document.body.classList.remove('full');
-    document.body.classList.add('list');
-  });
 }
 
 export function updateSlideshowAddButton() {
