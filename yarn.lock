@@ -1009,13 +1009,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@shower/core@npm:3.3.0":
-  version: 3.3.0
-  resolution: "@shower/core@npm:3.3.0"
-  checksum: 10c0/2f798fbef73039a4ce8fb764caeda8ec391d9961949cf99d8ae13b950e09f80f4c6f5e2661c132188c31a4456f281f1407ebb6b832fcf6db2d9260076be07881
-  languageName: node
-  linkType: hard
-
 "@sinclair/typebox@npm:^0.34.0":
   version: 0.34.49
   resolution: "@sinclair/typebox@npm:0.34.49"
@@ -2169,7 +2162,6 @@ __metadata:
   dependencies:
     "@axe-core/playwright": "npm:^4.9.1"
     "@playwright/test": "npm:^1.44.1"
-    "@shower/core": "npm:3.3.0"
     "@uvdsl/solid-oidc-client-browser": "npm:^0.2.2"
     "@vitest/coverage-istanbul": "npm:^4.0.18"
     "@vitest/coverage-v8": "npm:^4.0.18"
