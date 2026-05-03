@@ -16,7 +16,7 @@ limitations under the License.
 */
 
 import rdf from "rdf-ext";
-import shower from '@shower/core';
+import * as Slideshow from './slideshow.js';
 import { diffChars } from 'diff';
 import LinkHeader from "http-link-header";
 import Config from './config.js'
@@ -3735,7 +3735,7 @@ export function initCurrentStylesheet(e) {
     var toc = document.getElementById('table-of-contents');
     toc = (toc) ? toc.parentNode.removeChild(toc) : false;
 
-    shower.initRun();
+    Slideshow.start();
   }
 
   if (currentStylesheet.toLowerCase() == 'shower') {
@@ -3750,7 +3750,7 @@ export function initCurrentStylesheet(e) {
 
     history.pushState(null, null, window.location.pathname);
 
-    shower.removeEvents();
+    Slideshow.stop();
   }
 }
 
