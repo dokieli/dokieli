@@ -21,17 +21,19 @@ function getPlaceholder(node, $pos) {
 
   if (
     node.type.name === "heading" &&
-    node.attrs.level === 2 &&
-    parent?.type.name === "section" &&
-    hasClass(parent, "slide")
+    node.attrs.level >= 2 &&
+    parent?.type.name === "section"
   ) {
-    return i18n.t("editor.new-slideshow.h2.data-placeholder");
+    if (hasClass(parent, "slide")) {
+      return i18n.t("editor.new-slideshow.h2.data-placeholder");
+    }
+    return i18n.t("editor.new.h1.data-placeholder");
   }
 
   if (
     node.type.name === "heading" &&
     node.attrs.level === 1 &&
-    parent?.type.name === "article"
+    (parent?.type.name === "article" || parent?.type.name === "doc")
   ) {
     return i18n.t("editor.new.h1.data-placeholder");
   }
