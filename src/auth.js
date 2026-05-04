@@ -33,15 +33,51 @@ import { updateCollabUserIdentity } from './editor/editor.js';
 
 const ns = Config.ns;
 
-Config.OIDC['client_id'] = isLocalhost(window.location) ? process.env.DEV_CLIENT_ID : process.env.CLIENT_ID;
+// Read an embedder-supplied Client ID Document URL from the script tag, e.g.
+//   <script src="https://dokie.li/scripts/dokieli.js"
+//           data-client-id="https://example.org/clientid.json"></script>
+// This lets pages embedding dokieli cross-origin declare their own clientid
+// document, since they cannot rely on the build-time process.env.CLIENT_ID.
+function readScriptClientId() {
+  const s = document.currentScript;
+  if (!s || !s.dataset || !s.dataset.clientId) return null;
+  const value = s.dataset.clientId.trim();
+  if (!/^https:\/\//i.test(value)) {
+    console.warn('dokieli: ignoring data-client-id, must be an absolute https:// URL:', value);
+    return null;
+  }
+  return value;
+}
 
-const clientid = (Config.OIDC['client_id']) ? Config.OIDC['client_id'] : null;
+const scriptClientId = readScriptClientId();
+const builtinClientId = isLocalhost(window.location) ? process.env.DEV_CLIENT_ID : process.env.CLIENT_ID;
+
+// Embedder override wins; otherwise fall back to the build-time default.
+Config.OIDC['client_id'] = scriptClientId || builtinClientId || null;
+
+// Record whether the embedder opted in via data-client-id, so the login
+// functions below can adjust redirect_uri behavior for that path without
+// affecting deployments using the build-time CLIENT_ID convention.
+Config.OIDC['scriptClientId'] = scriptClientId;
+
+const clientid = Config.OIDC['client_id'];
 
 const currentScriptSameOrigin = isCurrentScriptSameOrigin();
 
-//Use static client registration if there is a Client ID Document URL and the dokieli script is on same origin as webpage and not Web Extension mode. Otherwise, use dynamic registration.
-// Manually configuring the database so that we can restore the session without using the refresher worker 
-Config['Session'] = (clientid && !Config['WebExtensionEnabled'] && currentScriptSameOrigin) ? new SessionCore({ client_id: clientid }, { database: new SessionIDB() }) : new SessionCore({ redirect_uris: [window.location.href], client_name: "dokieli" }, { database: new SessionIDB() });
+// Use static client registration when:
+//   - we have a Client ID Document URL, AND
+//   - we're not in a Web Extension context, AND
+//   - either the script is same-origin with the page (the build-time CLIENT_ID is
+//     trusted because the page author served the script themselves), OR the page
+//     author explicitly opted in via the data-client-id attribute on the <script>
+//     tag (the attribute is part of the embedding HTML, controlled by the page
+//     origin; a cross-origin script cannot set the attribute on its own tag).
+// Otherwise, fall back to dynamic registration.
+// Manually configuring the database so that we can restore the session without using the refresher worker
+const useStaticClientId = clientid && !Config['WebExtensionEnabled'] && (currentScriptSameOrigin || scriptClientId);
+Config['Session'] = useStaticClientId
+  ? new SessionCore({ client_id: clientid }, { database: new SessionIDB() })
+  : new SessionCore({ redirect_uris: [window.location.href], client_name: "dokieli" }, { database: new SessionIDB() });
 
 export async function restoreSession() {
   await Config['Session']?.handleRedirectFromLogin();
@@ -454,8 +490,20 @@ async function loginWithIDP(idpUrl) {
   Config.OIDC['authStartLocation'] = Config.OIDC['client_id'] ? window.location.href.split('#')[0] : null;
   updateBrowserStorageOIDC();
 
-  let redirect_uri = process.env.OIDC_REDIRECT_URI || (window.location.origin + '/');
-  redirect_uri = Config.OIDC['client_id'] ? redirect_uri : window.location.href.split('#')[0];
+  // For embedders who opted in via data-client-id, redirect back to the page
+  // that loaded dokieli. They control their own clientid document, so they can
+  // enumerate the pages they want to support there. Other paths keep the
+  // existing origin-root convention so existing deployments are unchanged.
+  let redirect_uri;
+  if (process.env.OIDC_REDIRECT_URI) {
+    redirect_uri = process.env.OIDC_REDIRECT_URI;
+  } else if (Config.OIDC['scriptClientId']) {
+    redirect_uri = window.location.href.split('#')[0];
+  } else if (Config.OIDC['client_id']) {
+    redirect_uri = window.location.origin + '/';
+  } else {
+    redirect_uri = window.location.href.split('#')[0];
+  }
 
   Config['Session']?.login(idpUrl, redirect_uri)
     .catch(e => {
@@ -475,8 +523,17 @@ async function loginWithIDP(idpUrl) {
   Config.OIDC['authStartLocation'] = window.location.href.split('#')[0];
   updateBrowserStorageOIDC();
 
-  let redirect_uri = process.env.OIDC_REDIRECT_URI || (window.location.origin + '/');
-  redirect_uri = Config.OIDC['client_id'] ? redirect_uri :  window.location.href.split('#')[0];
+  // See loginWithIDP above: data-client-id embedders get page-scoped redirects.
+  let redirect_uri;
+  if (process.env.OIDC_REDIRECT_URI) {
+    redirect_uri = process.env.OIDC_REDIRECT_URI;
+  } else if (Config.OIDC['scriptClientId']) {
+    redirect_uri = window.location.href.split('#')[0];
+  } else if (Config.OIDC['client_id']) {
+    redirect_uri = window.location.origin + '/';
+  } else {
+    redirect_uri = window.location.href.split('#')[0];
+  }
 
   // Redirects away from dokieli :( but hopefully only briefly :)
   Config['Session']?.login(idp, redirect_uri)
