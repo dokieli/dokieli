@@ -5,7 +5,6 @@
   "author":"dokieli team",
   "homepage_url": "https://dokie.li/",
   "version": "0.3.1466",
-  "applications": {
   "manifest_version": 3,
   "minimum_chrome_version": "109",
   "browser_specific_settings": {
