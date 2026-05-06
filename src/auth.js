@@ -453,6 +453,9 @@ export async function signOutGitForge(host) {
 async function loginWithIDP(idpUrl) {
   Config.OIDC['authStartLocation'] = Config.OIDC.useStaticClientId ? window.location.href.split('#')[0] : null;
   updateBrowserStorageOIDC();
+  if (Config['WebExtensionEnabled']) {
+    return extensionLogin(idpUrl);
+  }
 
   let redirect_uri = process.env.OIDC_REDIRECT_URI || (window.location.origin + '/');
   redirect_uri = Config.OIDC.useStaticClientId ? redirect_uri : window.location.href.split('#')[0];
@@ -469,8 +472,12 @@ async function loginWithIDP(idpUrl) {
 }
 
 //XXX: User Profile should've been fetch by now.
- async function signInWithOIDC() {
+async function signInWithOIDC() {
   const idp = Config.User.OIDCIssuer;
+
+  if (Config['WebExtensionEnabled']) {
+    return extensionLogin(idp);
+  }
 
   Config.OIDC['authStartLocation'] = window.location.href.split('#')[0];
   updateBrowserStorageOIDC();
@@ -491,6 +498,92 @@ async function loginWithIDP(idpUrl) {
 
       afterSetUserInfo();
     });
+}
+
+// Extension-only OIDC login.
+// The entire PKCE flow runs in the background service worker (the only context where
+// browser.identity.launchWebAuthFlow() is available). The background returns the access
+// token and exported DPoP key pair, which we use to construct a minimal duck-typed session
+// object — avoiding any use of SessionCore whose prototype chain is broken by Firefox's
+// Xray wrappers when the class extends the built-in EventTarget.
+async function extensionLogin(idp) {
+  const showError = (msg) => showActionMessage(document.body, { content: msg, type: 'error', timer: null });
+
+  let response;
+  try {
+    console.log('dokieli: extensionLogin sending message to background');
+    response = await Config.WebExtension.runtime.sendMessage({ action: 'dokieli.login', idp });
+    console.log('dokieli: extensionLogin got response', response?.ok, 'webId:', response?.webId);
+  } catch (e) {
+    console.error('dokieli: extensionLogin sendMessage failed', e);
+    return showError(`Cannot sign in: extension background unreachable. ${e.message}`);
+  }
+
+  if (!response?.ok) {
+    console.error('dokieli: extensionLogin response not ok', response);
+    return showError(`Cannot sign in with ${idp}. ${response?.error || 'Unknown error'}`);
+  }
+
+  // Re-import the DPoP key pair from JWK (CryptoKey is not cloneable across the message boundary).
+  let dpopKeyPair;
+  try {
+    const [privateKey, publicKey] = await Promise.all([
+      crypto.subtle.importKey('jwk', response.dpopPrivateJwk, { name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign']),
+      crypto.subtle.importKey('jwk', response.dpopPublicJwk, { name: 'ECDSA', namedCurve: 'P-256' }, true, ['verify']),
+    ]);
+    dpopKeyPair = { privateKey, publicKey };
+    console.log('dokieli: extensionLogin DPoP key pair reconstructed');
+  } catch (e) {
+    console.error('dokieli: extensionLogin key import failed', e);
+    return showError(`Cannot reconstruct session keys: ${e.message}`);
+  }
+
+  const accessToken = response.accessToken;
+  const webId = response.webId;
+  console.log('dokieli: extensionLogin setting session for webId:', webId);
+
+  async function makeDpopProof(method, url) {
+    const publicJwk = await crypto.subtle.exportKey('jwk', dpopKeyPair.publicKey);
+    const header = { alg: 'ES256', typ: 'dpop+jwt', jwk: publicJwk };
+    const payload = {
+      jti: crypto.randomUUID(),
+      htm: method.toUpperCase(),
+      htu: new URL(url).origin + new URL(url).pathname,
+      iat: Math.floor(Date.now() / 1000),
+    };
+    const enc = async (obj) => {
+      const bytes = new TextEncoder().encode(JSON.stringify(obj));
+      const b64 = btoa(String.fromCharCode(...bytes));
+      return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    };
+    const signingInput = (await enc(header)) + '.' + (await enc(payload));
+    const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, dpopKeyPair.privateKey, new TextEncoder().encode(signingInput));
+    const sigB64 = btoa(String.fromCharCode(...new Uint8Array(sig))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    return signingInput + '.' + sigB64;
+  }
+
+  Config['Session'] = {
+    isActive: true,
+    webId,
+
+    async authFetch(input, init) {
+      const url = input instanceof Request ? input.url : input.toString();
+      const method = (init?.method || (input instanceof Request ? input.method : null) || 'GET').toUpperCase();
+      const dpop = await makeDpopProof(method, url);
+      const headers = new Headers(input instanceof Request ? input.headers : (init?.headers || {}));
+      headers.set('Authorization', `DPoP ${accessToken}`);
+      headers.set('DPoP', dpop);
+      if (input instanceof Request) return fetch(new Request(input, { ...init, headers }));
+      return fetch(url, { ...init, headers });
+    },
+
+    async logout() {
+      Config['Session'] = null;
+    },
+  };
+
+  await setUserInfo(webId);
+  afterSetUserInfo();
 }
 
 export function setUserInfo (subjectIRI, options = {}) {

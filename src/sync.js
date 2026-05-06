@@ -382,8 +382,9 @@ export async function syncLocalRemoteResource(options = {}) {
         await updateResourceInfos(Config.DocumentURL, remoteContent, response);
       }
       else {
-        reviewOptions['message'] = `<span data-i18n="dialog.review-changes.message.remote-changed.span">${i18n.t('dialog.review-changes.message.remote-changed.span.textContent')}</span>`;
-        syncLocalRemoteResource();
+        // No local changes and no previous hash to compare against (first sync).
+        // Record the remote hash so subsequent calls can detect future changes.
+        await updateResourceInfos(Config.DocumentURL, remoteContent, response);
       }
 
       break;

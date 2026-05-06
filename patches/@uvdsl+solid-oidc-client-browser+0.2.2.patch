@@ -1,0 +1,37 @@
+diff --git a/node_modules/@uvdsl/solid-oidc-client-browser/dist/esm/core/index.js b/node_modules/@uvdsl/solid-oidc-client-browser/dist/esm/core/index.js
+index 0000000..0000000 100644
+--- a/node_modules/@uvdsl/solid-oidc-client-browser/dist/esm/core/index.js
++++ b/node_modules/@uvdsl/solid-oidc-client-browser/dist/esm/core/index.js
+@@ -1,5 +1,5 @@
+ var crypto$1 = crypto;
+-const isCryptoKey = (key) => key instanceof CryptoKey;
++const isCryptoKey = (key) => Object.prototype.toString.call(key) === '[object CryptoKey]';
+
+ const digest = async (algorithm, data) => {
+     const subtleDigest = `SHA-${algorithm.slice(-3)}`;
+@@ -290,9 +290,13 @@ function message(msg, actual, ...types) {
+         msg += ` Received function ${actual.name}`;
+     }
+     else if (typeof actual === 'object' && actual != null) {
+-        if (actual.constructor?.name) {
+-            msg += ` Received an instance of ${actual.constructor.name}`;
+-        }
++        try {
++            if (actual.constructor?.name) {
++                msg += ` Received an instance of ${actual.constructor.name}`;
++            }
++        } catch {
++            msg += ` Received ${Object.prototype.toString.call(actual)}`;
++        }
+     }
+     return msg;
+ }
+@@ -1080,7 +1084,7 @@
+
+ class FlattenedSign {
+     constructor(payload) {
+-        if (!(payload instanceof Uint8Array)) {
++        if (Object.prototype.toString.call(payload) !== '[object Uint8Array]') {
+             throw new TypeError('payload must be an instance of Uint8Array');
+         }
+         this._payload = payload;

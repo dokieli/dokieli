@@ -241,14 +241,28 @@ export function removeChildren(node) {
 }
 
 export function getFormValues(form) {
-  const formData = new FormData(form);
-
-  const formValues = Object.fromEntries(
-    [...formData.entries()].map(([key, value]) => [key, typeof value === "string" ? domSanitize(value.trim()) : value])
-  );
-
-// console.log(formValues);
-  return formValues;
+  // Prefer FormData when available and iterable. In Firefox content scripts
+  // the form lives in the page's Xray-wrapped world, which can make the
+  // FormData iterator invisible to the extension world. Fall back to reading
+  // named form elements directly when that happens.
+  try {
+    const formData = new FormData(form);
+    const entries = [...formData.entries()];
+    return Object.fromEntries(
+      entries.map(([key, value]) => [key, typeof value === "string" ? domSanitize(value.trim()) : value])
+    );
+  } catch {
+    const formValues = {};
+    for (const el of form.elements) {
+      if (!el.name) continue;
+      if (el.type === 'checkbox' || el.type === 'radio') {
+        if (el.checked) formValues[el.name] = domSanitize(el.value.trim());
+      } else {
+        formValues[el.name] = typeof el.value === 'string' ? domSanitize(el.value.trim()) : el.value;
+      }
+    }
+    return formValues;
+  }
 }
 
 // export function getIconsFromCurrentDocument() {

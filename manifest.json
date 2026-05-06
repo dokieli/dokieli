@@ -5,32 +5,33 @@
   "author":"dokieli team",
   "homepage_url": "https://dokie.li/",
   "version": "0.3.1466",
-  "manifest_version": 2,
-  "minimum_chrome_version": "18",
   "applications": {
+  "manifest_version": 3,
+  "minimum_chrome_version": "109",
+  "browser_specific_settings": {
     "gecko": {
-      "id": "i@dokie.li"
+      "id": "i@dokie.li",
+      "strict_min_version": "109.0"
     }
   },
   "icons": {
     "16": "media/images/logo.png",
     "48": "media/images/logo.png",
-   "128": "media/images/logo.png"
-   },
-  "browser_action": {
+    "128": "media/images/logo.png"
+  },
+  "action": {
     "default_icon": "media/images/logo.png",
-    "default_title": "Activate dokieli"
+    "default_title": "dokieli",
+    "default_popup": "popup.html"
   },
   "background": {
-    "scripts": [
-      "extension-background.js"
-    ]
+    "service_worker": "extension-background.js",
+    "scripts": ["extension-background.js"]
   },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
       "js": [
-        "scripts/dokieli.js",
         "extension-content-script.js"
       ],
       "run_at": "document_idle"
@@ -39,9 +40,16 @@
   "permissions": [
     "activeTab",
     "storage",
+    "scripting",
+    "identity"
+  ],
+  "host_permissions": [
     "<all_urls>"
   ],
   "web_accessible_resources": [
-    "media/css/*"
+    {
+      "resources": ["media/css/*", "scripts/*"],
+      "matches": ["<all_urls>"]
+    }
   ]
 }
