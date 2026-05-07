@@ -42,15 +42,86 @@ const currentScriptSameOrigin = isCurrentScriptSameOrigin();
 const useStaticClientId = !!(clientid && !Config['WebExtensionEnabled'] && currentScriptSameOrigin);
 Config.OIDC['useStaticClientId'] = useStaticClientId;
 
-//Use static client registration if there is a Client ID Document URL and the dokieli script is on same origin as webpage and not Web Extension mode. Otherwise, use dynamic registration.
-// Manually configuring the database so that we can restore the session without using the refresher worker 
-Config['Session'] = useStaticClientId
-  ? new SessionCore({ client_id: clientid }, { database: new SessionIDB() })
-  : new SessionCore({ redirect_uris: [window.location.href], client_name: "dokieli" }, { database: new SessionIDB() });
+// Skip SessionCore in extension context - Firefox's Xray wrapper breaks the EventTarget prototype chain. Auth goes through extensionLogin() instead.
+if (!Config['WebExtensionEnabled']) {
+  Config['Session'] = useStaticClientId
+    ? new SessionCore({ client_id: clientid }, { database: new SessionIDB() })
+    : new SessionCore({ redirect_uris: [window.location.href], client_name: "dokieli" }, { database: new SessionIDB() });
+}
 
 export async function restoreSession() {
+  if (Config['WebExtensionEnabled']) {
+    await restoreExtensionSession();
+    return;
+  }
   await Config['Session']?.handleRedirectFromLogin();
   await Config['Session']?.restore().catch(e => console.log(e.message));
+}
+
+const EXTENSION_SESSION_KEY = 'DO.Config.ExtensionSession';
+
+async function buildExtensionSession({ webId, accessToken, dpopPrivateJwk, dpopPublicJwk }) {
+  const [privateKey, publicKey] = await Promise.all([
+    crypto.subtle.importKey('jwk', dpopPrivateJwk, { name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign']),
+    crypto.subtle.importKey('jwk', dpopPublicJwk, { name: 'ECDSA', namedCurve: 'P-256' }, true, ['verify']),
+  ]);
+  const dpopKeyPair = { privateKey, publicKey };
+
+  async function makeDpopProof(method, url) {
+    const publicJwk = await crypto.subtle.exportKey('jwk', dpopKeyPair.publicKey);
+    const header = { alg: 'ES256', typ: 'dpop+jwt', jwk: publicJwk };
+    const u = new URL(url);
+    const payload = {
+      jti: crypto.randomUUID(),
+      htm: method.toUpperCase(),
+      htu: u.origin + u.pathname,
+      iat: Math.floor(Date.now() / 1000),
+    };
+    const enc = async (obj) => {
+      const bytes = new TextEncoder().encode(JSON.stringify(obj));
+      const b64 = btoa(String.fromCharCode(...bytes));
+      return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    };
+    const signingInput = (await enc(header)) + '.' + (await enc(payload));
+    const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, dpopKeyPair.privateKey, new TextEncoder().encode(signingInput));
+    const sigB64 = btoa(String.fromCharCode(...new Uint8Array(sig))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    return signingInput + '.' + sigB64;
+  }
+
+  Config['Session'] = {
+    isActive: true,
+    webId,
+    async authFetch(input, init) {
+      const url = input instanceof Request ? input.url : input.toString();
+      const method = (init?.method || (input instanceof Request ? input.method : null) || 'GET').toUpperCase();
+      const dpop = await makeDpopProof(method, url);
+      const headers = new Headers(input instanceof Request ? input.headers : (init?.headers || {}));
+      headers.set('Authorization', `DPoP ${accessToken}`);
+      headers.set('DPoP', dpop);
+      if (input instanceof Request) return fetch(new Request(input, { ...init, headers }));
+      return fetch(url, { ...init, headers });
+    },
+    async logout() {
+      Config['Session'] = null;
+      try { await Config.WebExtension.storage.local.remove(EXTENSION_SESSION_KEY); } catch {}
+    },
+  };
+}
+
+async function restoreExtensionSession() {
+  try {
+    const stored = await Config.WebExtension.storage.local.get(EXTENSION_SESSION_KEY);
+    const creds = stored?.[EXTENSION_SESSION_KEY];
+    if (!creds?.webId || !creds?.accessToken || !creds?.dpopPrivateJwk || !creds?.dpopPublicJwk) {
+      return;
+    }
+    await buildExtensionSession(creds);
+    await setUserInfo(creds.webId);
+    afterSetUserInfo();
+  } catch (e) {
+    console.warn('dokieli: extension session restore failed', e);
+    try { await Config.WebExtension.storage.local.remove(EXTENSION_SESSION_KEY); } catch {}
+  }
 }
 
 export async function showUserSigninSignout (node) {
@@ -504,7 +575,7 @@ async function signInWithOIDC() {
 // The entire PKCE flow runs in the background service worker (the only context where
 // browser.identity.launchWebAuthFlow() is available). The background returns the access
 // token and exported DPoP key pair, which we use to construct a minimal duck-typed session
-// object — avoiding any use of SessionCore whose prototype chain is broken by Firefox's
+// object - avoiding any use of SessionCore whose prototype chain is broken by Firefox's
 // Xray wrappers when the class extends the built-in EventTarget.
 async function extensionLogin(idp) {
   const showError = (msg) => showActionMessage(document.body, { content: msg, type: 'error', timer: null });
@@ -524,65 +595,40 @@ async function extensionLogin(idp) {
     return showError(`Cannot sign in with ${idp}. ${response?.error || 'Unknown error'}`);
   }
 
-  // Re-import the DPoP key pair from JWK (CryptoKey is not cloneable across the message boundary).
-  let dpopKeyPair;
+  const creds = {
+    webId: response.webId,
+    accessToken: response.accessToken,
+    dpopPrivateJwk: response.dpopPrivateJwk,
+    dpopPublicJwk: response.dpopPublicJwk,
+  };
+
   try {
-    const [privateKey, publicKey] = await Promise.all([
-      crypto.subtle.importKey('jwk', response.dpopPrivateJwk, { name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign']),
-      crypto.subtle.importKey('jwk', response.dpopPublicJwk, { name: 'ECDSA', namedCurve: 'P-256' }, true, ['verify']),
-    ]);
-    dpopKeyPair = { privateKey, publicKey };
-    console.log('dokieli: extensionLogin DPoP key pair reconstructed');
+    await buildExtensionSession(creds);
+    console.log('dokieli: extensionLogin session built for webId:', creds.webId);
   } catch (e) {
-    console.error('dokieli: extensionLogin key import failed', e);
+    console.error('dokieli: extensionLogin buildExtensionSession failed', e);
     return showError(`Cannot reconstruct session keys: ${e.message}`);
   }
 
-  const accessToken = response.accessToken;
-  const webId = response.webId;
-  console.log('dokieli: extensionLogin setting session for webId:', webId);
-
-  async function makeDpopProof(method, url) {
-    const publicJwk = await crypto.subtle.exportKey('jwk', dpopKeyPair.publicKey);
-    const header = { alg: 'ES256', typ: 'dpop+jwt', jwk: publicJwk };
-    const payload = {
-      jti: crypto.randomUUID(),
-      htm: method.toUpperCase(),
-      htu: new URL(url).origin + new URL(url).pathname,
-      iat: Math.floor(Date.now() / 1000),
-    };
-    const enc = async (obj) => {
-      const bytes = new TextEncoder().encode(JSON.stringify(obj));
-      const b64 = btoa(String.fromCharCode(...bytes));
-      return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-    };
-    const signingInput = (await enc(header)) + '.' + (await enc(payload));
-    const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, dpopKeyPair.privateKey, new TextEncoder().encode(signingInput));
-    const sigB64 = btoa(String.fromCharCode(...new Uint8Array(sig))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-    return signingInput + '.' + sigB64;
+  // Persist so page reload survives without re-login. Tokens expire (~1h); no refresh-token plumbing yet.
+  try {
+    await Config.WebExtension.storage.local.set({ [EXTENSION_SESSION_KEY]: creds });
+  } catch (e) {
+    console.warn('dokieli: could not persist extension session', e);
   }
 
-  Config['Session'] = {
-    isActive: true,
-    webId,
+  await setUserInfo(creds.webId);
 
-    async authFetch(input, init) {
-      const url = input instanceof Request ? input.url : input.toString();
-      const method = (init?.method || (input instanceof Request ? input.method : null) || 'GET').toUpperCase();
-      const dpop = await makeDpopProof(method, url);
-      const headers = new Headers(input instanceof Request ? input.headers : (init?.headers || {}));
-      headers.set('Authorization', `DPoP ${accessToken}`);
-      headers.set('DPoP', dpop);
-      if (input instanceof Request) return fetch(new Request(input, { ...init, headers }));
-      return fetch(url, { ...init, headers });
-    },
+  var uI = document.getElementById('user-info');
+  if (uI) {
+    removeChildren(uI);
+    sanitizeInsertAdjacentHTML(uI, 'beforeend', getAgentHTML() + Config.Button.Menu.SignOut);
+  }
+  var userIdentityInput = document.getElementById('user-identity-input');
+  if (userIdentityInput) {
+    userIdentityInput.parentNode.removeChild(userIdentityInput);
+  }
 
-    async logout() {
-      Config['Session'] = null;
-    },
-  };
-
-  await setUserInfo(webId);
   afterSetUserInfo();
 }
 

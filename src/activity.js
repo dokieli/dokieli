@@ -652,10 +652,10 @@ export function showActivities(url, options = {}) {
           }
           else if (resourceTypes.includes(ns.oa.Annotation.value) && !subjectsReferences.includes(i)) {
             // Chain through the grapoi pointer so blank-node targets are traversed correctly
+            // oa:hasTarget may be an IRI or a blank node with oa:hasSource
             var targetPtr = s.out(ns.oa.hasTarget);
             var hasTargetValue = targetPtr.values[0];
             if (hasTargetValue) {
-              // oa:hasTarget may be a direct document IRI or a blank node with oa:hasSource
               var hasSourceValue = targetPtr.out(ns.oa.hasSource).values[0];
               var urlToCheck = hasSourceValue || hasTargetValue;
               var targetPathURL;
@@ -782,44 +782,48 @@ export function showContactsActivities() {
 
   showProgress();
 
-  var processContacts = async (contacts) => {
-    if (contacts.length) {
-      var contactsPromises = contacts.map((url) =>
-        getSubjectInfo(url, { 'fetchIndexes': true }).then((subject) => {
-          if (subject.Graph) {
-            Config.User['Contacts'] = Config.User['Contacts'] || {};
-            Config.User.Contacts[url] = subject;
-            return processAgentActivities(subject); 
-          }
-          return [];
-        })
-      );
+  // Cap concurrency so a large foaf:knows list doesn't fan out into hundreds of parallel fetches and lock the tab.
+  const CONTACT_CONCURRENCY = 5;
 
-      const allContactPromises = await Promise.allSettled(contactsPromises);
-      promises.push(...allContactPromises.flat());
-    }
-    return Promise.resolve();
+  var runContactsBounded = async (items, fn) => {
+    let cursor = 0;
+    var workers = Array.from({ length: Math.min(CONTACT_CONCURRENCY, items.length) }, async () => {
+      while (cursor < items.length) {
+        var i = cursor++;
+        try { await fn(items[i]); } catch {}
+      }
+    });
+    await Promise.all(workers);
   };
 
-  var processExistingContacts = (contacts) => {
-    var contactsPromises = Object.keys(contacts).map((iri) => {
+  var processContacts = (contacts) =>
+    runContactsBounded(contacts, async (url) => {
+      var subject = await getSubjectInfo(url, { 'fetchIndexes': true });
+      if (subject.Graph) {
+        Config.User['Contacts'] = Config.User['Contacts'] || {};
+        Config.User.Contacts[url] = subject;
+        await Promise.allSettled(processAgentActivities(subject));
+      }
+    });
+
+  var processExistingContacts = (contacts) =>
+    runContactsBounded(Object.keys(contacts), async (iri) => {
       var contact = Config.User.Contacts[iri];
       if (contact.IRI) {
-        return processAgentActivities(contact);
+        await Promise.allSettled(processAgentActivities(contact));
       }
-      return [];
     });
-
-    return Promise.allSettled(contactsPromises).then((allContactPromises) => {
-      promises.push(...allContactPromises.flat());
-    });
-  };
 
   function getContactsAndActivities() {
     if (Config.User.Contacts && Object.keys(Config.User.Contacts).length) {
       return processExistingContacts(Config.User.Contacts);
     } else if (Config.User.IRI) {
-      return getUserContacts(Config.User.IRI).then(processContacts);
+      return getUserContacts(Config.User.IRI).then(c => {
+        // Drop http: contacts on https: pages - mixed-content blocks them.
+        var pageIsHttps = window.location.protocol === 'https:';
+        var filtered = pageIsHttps ? c.filter(iri => !iri.toLowerCase().startsWith('http:')) : c;
+        return processContacts(filtered);
+      });
     }
     return Promise.resolve();
   }
@@ -831,19 +835,22 @@ export function showContactsActivities() {
 }
 
 export function processAgentActivities(agent) {
-  // console.log(agent.IRI, agent.TypeIndex, agent.PublicTypeIndex, agent.PrivateTypeIndex)
   if (agent.TypeIndex && Object.keys(agent.TypeIndex).length) {
     return processAgentTypeIndex(agent);
   }
-  else if (agent.Graph && (agent.PublicTypeIndex?.length || agent.PrivateTypeIndex?.length)) {
+  else if (agent.Graph && (agent.PublicTypeIndex?.length || agent.PrivateTypeIndex?.length) && !agent._typeIndexAttempted) {
+    // Guard prevents infinite recursion when an unreadable TypeIndex returns 0 entries.
+    agent._typeIndexAttempted = true;
     return [getAgentTypeIndex(agent.Graph)
       .then(typeIndexes => {
-        Object.keys(typeIndexes).forEach(typeIndexType => {
+        var keys = Object.keys(typeIndexes);
+        if (keys.length === 0) return;
+        keys.forEach(typeIndexType => {
           agent.TypeIndex[typeIndexType] = typeIndexes[typeIndexType];
         });
-
         return Promise.all(processAgentActivities(agent));
-      })];
+      })
+      .catch(() => {})];
   }
 
   return [Promise.resolve()];
@@ -1124,7 +1131,7 @@ export function showAnnotation(noteIRI, g, options) {
     var selectorPtr = targetPtr.out(ns.oa.hasSelector);
     var selector = selectorPtr.values[0];
     if (selector) {
-      // selectorPtr already points at the selector node — no need to re-lookup by IRI
+      // selectorPtr already points at the selector node - no need to re-lookup by IRI
       // console.log(selectorPtr);
 
       // console.log(selectorPtr.out(ns.rdf.type).values);
