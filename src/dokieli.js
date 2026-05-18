@@ -17,7 +17,7 @@ limitations under the License.
 
 import { showActionMessage, addMessageToLog } from './doc.js'
 import { getDeviceStorageItem, removeDeviceStorageItem } from './storage.js'
-import { restoreSession, setUserInfo, afterSetUserInfo } from './auth.js'
+import { restoreSession, setUserInfo, afterSetUserInfo, showUserIdentityInput } from './auth.js'
 import Config from './config.js';
 import { i18n, i18nextInit } from './i18n.js'
 import { init } from './init.js'
@@ -115,6 +115,10 @@ const DO = window.DO ?? {
 
     showDocumentMenu: function() {
       return showDocumentMenu();
+    },
+
+    showUserIdentityInput: function() {
+      return showUserIdentityInput();
     }
 
   } //DO.U

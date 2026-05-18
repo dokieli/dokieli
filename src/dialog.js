@@ -55,6 +55,9 @@ let _documentMenuClickInit = false;
 let _autoSaveChangeInit = false;
 
 export function initDocumentMenu(options = {}) {
+  // In extension mode the browser-action popup is the menu surface so we skip the in-page corner button.
+  if (Config.WebExtensionEnabled) return;
+
   options = { loading: true, ...options };
 
   const loadingState = `

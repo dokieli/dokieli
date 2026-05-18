@@ -33,10 +33,13 @@ module.exports = (env) => {
       extensions: [".ts", ".js", ".mjs"],
     },
     mode: "production",
-    entry: ["./src/dokieli.js"],
+    entry: {
+      dokieli: "./src/dokieli.js",
+      popup: "./src/popup.js",
+    },
     output: {
       path: path.join(__dirname, "/scripts/"),
-      filename: "dokieli.js",
+      filename: "[name].js",
       publicPath: "",
       library: undefined,
       libraryExport: 'default',

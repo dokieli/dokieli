@@ -4,157 +4,39 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>dokieli</title>
+  <link rel="stylesheet" href="media/css/dokieli.css">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: system-ui, sans-serif;
-      font-size: 14px;
-      min-width: 260px;
-      max-width: 320px;
+    html { font-size: 18px; }
+    html, body {
+      margin: 0;
       background: #fff;
-      color: #1a1a1a;
     }
-
-    header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 14px 16px 12px;
-      border-bottom: 1px solid #e5e5e5;
+    #document-menu.do {
+      position: static;
+      max-height: none;
     }
-
-    header img {
-      width: 24px;
-      height: 24px;
+    /* Drop the 90vw clamp from dokieli.css inside the popup — vw is tied to
+       the popup window (which sizes to content), so the clamp collapses the
+       popup. Width stays at the menu's intrinsic 20em from dokieli.css. */
+    #document-menu.do.on { max-width: none; }
+    /* #document-menu.do.on {
+      border: 0;
+      box-shadow: none;
+      border-radius: 0;
+      padding: 1em;
     }
-
-    header h1 {
-      font-size: 15px;
-      font-weight: 600;
-      letter-spacing: 0.01em;
+    #user-info {
+      margin-bottom: 1em;
     }
-
-    main {
-      padding: 14px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .status-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      color: #555;
-    }
-
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #ccc;
-      flex-shrink: 0;
-    }
-
-    .status-dot.active { background: #22c55e; }
-    .status-dot.inactive { background: #ccc; }
-    .status-dot.loading { background: #f59e0b; }
-
-    .user-row {
-      font-size: 12px;
-      color: #666;
+    #user-info .user-iri {
+      font-size: 0.85em;
       word-break: break-all;
-      display: none;
-    }
-
-    .user-row.visible { display: block; }
-
-    .actions {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    button {
-      width: 100%;
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      border: 1px solid transparent;
-      transition: opacity 0.15s;
-    }
-
-    button:disabled {
-      opacity: 0.45;
-      cursor: default;
-    }
-
-    .btn-primary {
-      background: #1a1a1a;
-      color: #fff;
-      border-color: #1a1a1a;
-    }
-
-    .btn-primary:hover:not(:disabled) { opacity: 0.85; }
-
-    .btn-secondary {
-      background: #fff;
-      color: #1a1a1a;
-      border-color: #d1d5db;
-    }
-
-    .btn-secondary:hover:not(:disabled) { background: #f5f5f5; }
-
-    .error {
-      font-size: 12px;
-      color: #dc2626;
-      display: none;
-    }
-
-    .error.visible { display: block; }
-
-    footer {
-      padding: 10px 16px;
-      border-top: 1px solid #e5e5e5;
-      font-size: 11px;
-      color: #999;
-      text-align: center;
-    }
-
-    footer a { color: #999; }
+      margin: 0 0 0.5em 0;
+    } */
   </style>
 </head>
 <body>
-  <header>
-    <img src="media/images/logo.png" alt="">
-    <h1>dokieli</h1>
-  </header>
-
-  <main>
-    <div class="status-row">
-      <span class="status-dot inactive" id="status-dot"></span>
-      <span id="status-text">Checking…</span>
-    </div>
-
-    <div class="user-row" id="user-row">
-      <span id="user-iri"></span>
-    </div>
-
-    <div class="actions">
-      <button class="btn-primary" id="activate-btn" disabled>Activate</button>
-    </div>
-
-    <div class="error" id="error-msg"></div>
-  </main>
-
-  <footer>
-    <a href="https://dokie.li/" target="_blank" rel="noopener">dokie.li</a>
-  </footer>
-
-  <script src="popup.js"></script>
+  <div class="do on" id="document-menu" dir="ltr" lang="en" xml:lang="en"></div>
+  <script src="scripts/popup.js"></script>
 </body>
 </html>

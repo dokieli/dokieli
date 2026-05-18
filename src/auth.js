@@ -619,6 +619,20 @@ async function extensionLogin(idp) {
 
   await setUserInfo(creds.webId);
 
+  // Augment the stored session with profile info so popups/other contexts can
+  // render name + avatar without re-fetching the WebID profile.
+  try {
+    await Config.WebExtension.storage.local.set({
+      [EXTENSION_SESSION_KEY]: {
+        ...creds,
+        name: Config.User?.Name || null,
+        image: Config.User?.Image || null,
+      },
+    });
+  } catch (e) {
+    console.warn('dokieli: could not persist profile info', e);
+  }
+
   var uI = document.getElementById('user-info');
   if (uI) {
     removeChildren(uI);
