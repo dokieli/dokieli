@@ -4038,6 +4038,17 @@ max-width:none;
     position:relative;
   }
 
+.editor-placeholder {
+  color: #999;
+  font-style: italic;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
 .editor-empty-node {
   position: relative; }
   .editor-empty-node:has(br:only-child):after,

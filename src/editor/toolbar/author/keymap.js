@@ -23,20 +23,14 @@ import Config from "../../../config.js";
 
 let Slash;
 
-function isSlideSection(node) {
-  if (node?.type.name !== 'section') return false;
-  const cls = node.attrs.originalAttributes?.class || '';
-  return cls.split(/\s+/).includes('slide');
-}
-
-function handleSlideHeadingEnter(state, dispatch) {
+function handleSectionHeadingEnter(state, dispatch) {
   const { $from } = state.selection;
   if (!state.selection.empty) return false;
   if ($from.parent.type.name !== 'heading') return false;
   if ($from.parentOffset !== $from.parent.content.size) return false;
   if ($from.depth < 1) return false;
   const section = $from.node($from.depth - 1);
-  if (!isSlideSection(section)) return false;
+  if (section.type.name !== 'section') return false;
 
   const { schema } = state;
   const headingIdx = $from.index($from.depth - 1);
@@ -56,7 +50,7 @@ function handleSlideHeadingEnter(state, dispatch) {
   return true;
 }
 
-function handleSlideEmptyDescBackspace(state, dispatch) {
+function handleEmptyDescBackspace(state, dispatch) {
   const { $from } = state.selection;
   if (!state.selection.empty) return false;
   if ($from.parentOffset !== 0) return false;
@@ -68,7 +62,7 @@ function handleSlideEmptyDescBackspace(state, dispatch) {
   if (descDiv.childCount !== 1) return false;
 
   const section = $from.node($from.depth - 2);
-  if (!isSlideSection(section)) return false;
+  if (section.type.name !== 'section') return false;
 
   let headingEnd = null;
   let cursor = $from.before($from.depth - 2) + 1;
@@ -123,7 +117,7 @@ function customEnterCommand(state, dispatch) {
     return newlineInCode(state, dispatch);
   }
 
-  if (handleSlideHeadingEnter(state, dispatch)) return true;
+  if (handleSectionHeadingEnter(state, dispatch)) return true;
 
   if (isListItem && listItemDepth !== null) {
     let liType = node.type;
@@ -189,7 +183,7 @@ function customBackspaceCommand(state, dispatch) {
     return deleteSelection(state, dispatch);
   }
 
-  if (handleSlideEmptyDescBackspace(state, dispatch)) return true;
+  if (handleEmptyDescBackspace(state, dispatch)) return true;
 
   return joinBackward(state, dispatch);
 }

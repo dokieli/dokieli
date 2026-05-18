@@ -1,3 +1,20 @@
+/*!
+Copyright 2012-2026 Sarven Capadisli <https://csarven.ca/>
+Copyright 2023-2026 Virginia Balseiro <https://virginiabalseiro.com/>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 import { Plugin } from "prosemirror-state";
 import { Decoration, DecorationSet } from "prosemirror-view";
 import { i18n } from "../../i18n.js";
@@ -21,17 +38,19 @@ function getPlaceholder(node, $pos) {
 
   if (
     node.type.name === "heading" &&
-    node.attrs.level === 2 &&
-    parent?.type.name === "section" &&
-    hasClass(parent, "slide")
+    node.attrs.level >= 2 &&
+    parent?.type.name === "section"
   ) {
-    return i18n.t("editor.new-slideshow.h2.data-placeholder");
+    if (hasClass(parent, "slide")) {
+      return i18n.t("editor.new-slideshow.h2.data-placeholder");
+    }
+    return i18n.t("editor.new.h1.data-placeholder");
   }
 
   if (
     node.type.name === "heading" &&
     node.attrs.level === 1 &&
-    parent?.type.name === "article"
+    (parent?.type.name === "article" || parent?.type.name === "doc")
   ) {
     return i18n.t("editor.new.h1.data-placeholder");
   }
@@ -48,12 +67,35 @@ function getPlaceholder(node, $pos) {
   return null;
 }
 
+function placeholderWidget(text) {
+  const span = document.createElement("span");
+  span.className = "editor-placeholder";
+  span.textContent = text;
+  span.setAttribute("aria-hidden", "true");
+  span.contentEditable = "false";
+  return span;
+}
+
 export const placeholderPlugin = new Plugin({
   props: {
     decorations(state) {
       const { doc, selection } = state;
       const decorations = [];
       const decoratedPositions = new Set();
+
+      const addPlaceholder = (pos, node, text) => {
+        decorations.push(
+          Decoration.node(pos, pos + node.nodeSize, {
+            class: "editor-empty-node",
+          })
+        );
+        decorations.push(
+          Decoration.widget(pos + 1, () => placeholderWidget(text), {
+            side: 1,
+            ignoreSelection: true,
+          })
+        );
+      };
 
       doc.descendants((node, pos) => {
         if (!node.isTextblock) return;
@@ -63,12 +105,7 @@ export const placeholderPlugin = new Plugin({
         const placeholder = getPlaceholder(node, $pos);
         if (!placeholder) return;
 
-        decorations.push(
-          Decoration.node(pos, pos + node.nodeSize, {
-            class: "editor-empty-node",
-            "data-placeholder": placeholder,
-          })
-        );
+        addPlaceholder(pos, node, placeholder);
         decoratedPositions.add(pos);
       });
 
@@ -77,12 +114,7 @@ export const placeholderPlugin = new Plugin({
       if (parentNode.type.name === "p" && parentNode.content.size === 0) {
         const pos = $from.before($from.depth);
         if (!decoratedPositions.has(pos)) {
-          decorations.push(
-            Decoration.node(pos, pos + parentNode.nodeSize, {
-              class: "editor-empty-node",
-              "data-placeholder": i18n.t("editor.placeholder.slash-hint"),
-            })
-          );
+          addPlaceholder(pos, parentNode, i18n.t("editor.placeholder.slash-hint"));
         }
       }
 
