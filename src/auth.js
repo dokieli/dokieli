@@ -619,8 +619,6 @@ async function extensionLogin(idp) {
 
   await setUserInfo(creds.webId);
 
-  // Augment the stored session with profile info so popups/other contexts can
-  // render name + avatar without re-fetching the WebID profile.
   try {
     await Config.WebExtension.storage.local.set({
       [EXTENSION_SESSION_KEY]: {

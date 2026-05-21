@@ -9,12 +9,6 @@ You may obtain a copy of the License at
     http://www.apache.org/licenses/LICENSE-2.0
 */
 
-// Shared menu structure used by the extension popup. Mirrors the markup that
-// src/dialog.js (showDocumentDo + showDocumentTools + ensureMenuTabs) produces
-// in-page, but as a pure HTML-returning function so it can be reused outside
-// the page context (e.g. the extension popup) without depending on the rest of
-// dokieli's initialization.
-
 import Config from '../config.js';
 import { i18n } from '../i18n.js';
 import { Icon } from './icons.js';
@@ -92,7 +86,7 @@ function renderDocumentTools() {
 }
 
 function renderLanguageSelector() {
-  const effectiveLanguage = Config.User?.UI?.Language;
+  const effectiveLanguage = Config.User?.UI?.Language || i18n.code();
   const options = [];
 
   (Config.Translations || []).forEach(lang => {
@@ -115,8 +109,6 @@ function renderLanguageSelector() {
 }
 
 function renderAutoSave() {
-  // Popup has no document context, so this is a placeholder for visual parity
-  // with the in-page menu. Wiring per-tab state comes later.
   return `
     <section aria-labelledby="document-autosave-label" id="document-autosave" rel="schema:hasPart" resource="#document-autosave">
       <h2 data-i18n="menu.autosave.h2" id="document-autosave-label" property="schema:name">${i18n.t('menu.autosave.h2.textContent')}</h2>
@@ -145,9 +137,6 @@ function renderTabs() {
     </div>`;
 }
 
-// Returns the inner HTML of #document-menu: user-info slot + tabs with all
-// three sections populated. Caller is responsible for the outer container and
-// for attaching click handlers (tab switching, button actions).
 export function renderMenuInner() {
   return `<section id="user-info"></section>${renderTabs()}`;
 }

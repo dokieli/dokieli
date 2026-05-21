@@ -55,8 +55,7 @@ let _documentMenuClickInit = false;
 let _autoSaveChangeInit = false;
 
 export function initDocumentMenu(options = {}) {
-  // In extension mode the browser-action popup is the menu surface so we skip the in-page corner button.
-  if (Config.WebExtensionEnabled) return;
+  if (Config.HideInPageMenu) return;
 
   options = { loading: true, ...options };
 
@@ -418,6 +417,10 @@ function showDocumentDo(node) {
 
   sanitizeInsertAdjacentHTML(node, 'beforeend', s);
 
+  initDocumentDoEvents();
+}
+
+export function initDocumentDoEvents() {
   if (_documentDoClickInit) return;
   _documentDoClickInit = true;
 
@@ -2786,10 +2789,20 @@ export async function saveAsDocument(e) {
   sanitizeInsertAdjacentHTML(saveAsDocument, 'beforeend', `<form><fieldset id="${id}-fieldset"><legend data-i18n="dialog.save-as-document.save-to.legend">${i18n.t('dialog.save-as-document.save-to.legend.textContent')}</legend></fieldset></form>`);
   fieldset = saveAsDocument.querySelector('fieldset#' + id + '-fieldset');
   setupResourceBrowser(fieldset, id, action);
-  sanitizeInsertAdjacentHTML(fieldset, 'beforeend', `<p data-i18n="dialog.save-as-document.save-location.p" id="${id}-samp">${i18n.t('dialog.save-as-document.save-location.p.textContent')} <samp id="${id}-${action}"></samp></p>${getBaseURLSelection()}<ul>${dokielizeResource}${derivationData}</ul>${accessibilityReport}<button class="create" data-i18n="dialog.save-as-document.save.button" title="${i18n.t('dialog.save-as-document.save.button.title')}" type="submit">${i18n.t('dialog.save-as-document.save.button.textContent')}</button>`);
+  sanitizeInsertAdjacentHTML(fieldset, 'beforeend', `<p data-i18n="dialog.save-as-document.save-location.p" id="${id}-samp">${i18n.t('dialog.save-as-document.save-location.p.textContent')} <samp id="${id}-${action}"></samp></p>${getBaseURLSelection()}<ul>${dokielizeResource}${derivationData}</ul>${accessibilityReport}<button class="create" data-i18n="dialog.save-as-document.save.button" title="${i18n.t('dialog.save-as-document.save.button.title')}" type="submit">${i18n.t('dialog.save-as-document.save.button.textContent')}</button> <button class="save-locally" data-i18n="dialog.save-as-document.save-locally.button" title="${i18n.t('dialog.save-as-document.save-locally.button.title')}" type="button">${i18n.t('dialog.save-as-document.save-locally.button.textContent')}</button>`);
   var bli = document.getElementById(id + '-input');
   bli.focus();
   bli.placeholder = 'https://example.org/path/to/article';
+
+  saveAsDocument.addEventListener('click', (e) => {
+    if (!e.target.closest('button.save-locally')) return;
+    e.preventDefault();
+    e.stopPropagation();
+    exportAsDocument(getDocument(null, documentOptions));
+    saveAsDocument.parentNode?.removeChild(saveAsDocument);
+    var sa = document.querySelector('#document-do .resource-save-as');
+    if (sa) sa.disabled = false;
+  });
 
   saveAsDocument.addEventListener('click', async (e) => {
     if (!e.target.closest('button.create')) {

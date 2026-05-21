@@ -23,6 +23,7 @@ import { i18n, i18nextInit } from './i18n.js'
 import { init } from './init.js'
 import { getDocumentContentNode } from './utils/html.js';
 import { showDocumentMenu } from './dialog.js';
+import { updateUILanguage } from './actions.js';
 
 const DO = window.DO ?? {
   C: Config,
@@ -119,6 +120,27 @@ const DO = window.DO ?? {
 
     showUserIdentityInput: function() {
       return showUserIdentityInput();
+    },
+
+    updateUILanguage: function(lang) {
+      return updateUILanguage(lang);
+    },
+
+    menuClick: function(className) {
+      if (!className) return;
+
+      if (className === 'editor-enable') return Config.Editor.toggleEditor('author');
+      if (className === 'editor-disable') return Config.Editor.toggleEditor('social');
+
+      const wrapper = document.createElement('div');
+      wrapper.style.display = 'none';
+      const b = document.createElement('button');
+      b.className = className;
+      b.type = 'button';
+      wrapper.appendChild(b);
+      document.body.appendChild(wrapper);
+      b.click();
+      wrapper.remove();
     }
 
   } //DO.U

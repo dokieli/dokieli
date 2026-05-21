@@ -339,6 +339,8 @@
   "dialog.save-as-document.save-to.legend.textContent": "Guardar en",
   "dialog.save-as-document.save.button.textContent": "Guardar",
   "dialog.save-as-document.save.button.title": "Guardar en el destino",
+  "dialog.save-as-document.save-locally.button.textContent": "Guardar localmente",
+  "dialog.save-as-document.save-locally.button.title": "Descargar una copia a este dispositivo",
   "dialog.save-as-document.set-annotation-service.label.textContent": "Configurar servicio de anotaciones",
   "dialog.save-as-document.set-inbox.label.textContent": "Configurar bandeja de entrada",
   "dialog.save-as-document.success.saved-at.p.textContent": "Documento guardado en:",

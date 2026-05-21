@@ -143,7 +143,7 @@ export class Editor {
 
   showEditorModeActionMessage(mode, options = {}) {
     const modeTranslation = i18n.t(`editor.mode.${mode}`)
-    var message = `<span data-i18n="editor.mode.span">${i18n.t('editor.mode.span.innerHTML', {mode: modeTranslation})}</span>`;
+    var message = `<span data-i18n="editor.mode.span" data-i18n-mode="${modeTranslation}">${i18n.t('editor.mode.span.innerHTML', {mode: modeTranslation})}</span>`;
 
     message = {
       'content': message,

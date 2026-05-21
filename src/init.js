@@ -32,7 +32,7 @@ import { SolidStorage, GitForgeStorage, initStorage } from './storage/backend.js
 import { initEditor } from './editor/initEditor.js';
 import { showGraph, showVisualisationGraph } from './viz.js';
 import * as Slideshow from './slideshow.js';
-import { openResource, initDocumentMenu, spawnDokieli, showDocumentMenu, initSlideshowInteraction } from './dialog.js';
+import { openResource, initDocumentMenu, spawnDokieli, showDocumentMenu, initSlideshowInteraction, initDocumentDoEvents } from './dialog.js';
 import { Icon } from './ui/icons.js';
 import { eventButtonClose, eventButtonSignIn, eventButtonSignOut, eventButtonNotificationsToggle, eventButtonInfo, emitDocEvent } from './events.js';
 import { hasNonWhitespaceText, getDocumentContentNode, selectArticleNode } from "./utils/html.js";
@@ -46,6 +46,7 @@ export async function init (url) {
     initButtons();
     initIcons();
     initDocumentMenu();
+    initDocumentDoEvents();
     
     emitDocEvent('loading');
     
@@ -344,7 +345,9 @@ export async function initDocumentMode(mode) {
     var hasContent = hasNonWhitespaceText(node);
 
     if (!hasContent && !Config.EditorEnabled) {
-      Config.Editor.toggleEditor('author', { template: 'new' });
+      const template = getUrlParams('template')[0] || 'new';
+      Config.Editor.toggleEditor('author', { template });
+      Config.DocumentAction = 'new';
     }
   // }
 }
