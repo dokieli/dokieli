@@ -17,7 +17,6 @@ import { renderMenuInner } from './ui/menu-builder.js';
 
 const WebExtension = (typeof globalThis.browser !== 'undefined') ? globalThis.browser : globalThis.chrome;
 
-// Shared with src/auth.js EXTENSION_SESSION_KEY.
 const SESSION_KEY = 'DO.Config.ExtensionSession';
 
 function initTabs() {
@@ -101,7 +100,7 @@ async function activateOnActiveTab() {
     });
     await WebExtension.tabs.sendMessage(tab.id, { action: 'dokieli.activate' });
   } catch (e) {
-    console.warn('dokieli popup: activate failed', e);
+    console.warn(e);
   }
 }
 
@@ -123,7 +122,7 @@ async function openSigninDialog() {
     await WebExtension.tabs.sendMessage(tab.id, { action: 'dokieli.showSignin' });
     window.close();
   } catch (e) {
-    console.error('dokieli popup: could not open sign-in dialog', e);
+    console.error(e);
   }
 }
 
@@ -198,7 +197,7 @@ function initMenuActions() {
       await WebExtension.tabs.sendMessage(tab.id, { action: 'dokieli.menuClick', className: actionClass });
       window.close();
     } catch (err) {
-      console.warn('dokieli popup: menuClick failed', err);
+      console.warn(err);
     }
   });
 }

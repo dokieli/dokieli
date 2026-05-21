@@ -628,7 +628,7 @@ async function extensionLogin(idp) {
       },
     });
   } catch (e) {
-    console.warn('dokieli: could not persist profile info', e);
+    console.warn(e);
   }
 
   var uI = document.getElementById('user-info');
