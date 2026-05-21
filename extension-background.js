@@ -1,7 +1,3 @@
-// dokieli extension background service worker (MV3)
-// Does the complete Solid OIDC PKCE flow on behalf of the content script,
-// since browser.identity.launchWebAuthFlow() is only available here.
-
 const WebExtension = (typeof browser !== 'undefined') ? browser : chrome;
 
 // ---------------------------------------------------------------------------

@@ -50,7 +50,7 @@ WebExtension.runtime.onMessage.addListener(function (request, sender, sendRespon
             C.WebID = iri;
           }
         } catch (e) {
-          console.log('dokieli: request.webid may be malformed: ' + e);
+          console.log(e);
         }
       }
 
@@ -65,7 +65,7 @@ WebExtension.runtime.onMessage.addListener(function (request, sender, sendRespon
         sendResponse({ ok: false });
         return;
       }
-      try { DO.U.menuClick(request.className); } catch (e) { console.log('dokieli: menuClick failed: ' + e); }
+      try { DO.U.menuClick(request.className); } catch (e) { console.log(e); }
       sendResponse({ ok: true });
     }
     else if (request.action === 'dokieli.updateLanguage') {
@@ -73,7 +73,7 @@ WebExtension.runtime.onMessage.addListener(function (request, sender, sendRespon
         sendResponse({ ok: false });
         return;
       }
-      try { DO.U.updateUILanguage(request.lang); } catch (e) { console.log('dokieli: updateLanguage failed: ' + e); }
+      try { DO.U.updateUILanguage(request.lang); } catch (e) { console.log(e); }
       sendResponse({ ok: true });
     }
     else if (request.action === 'dokieli.activate') {
@@ -109,7 +109,7 @@ WebExtension.runtime.onMessage.addListener(function (request, sender, sendRespon
             DO.C.Editor.toggleEditor('social');
           }
         } catch (e) {
-          console.log('dokieli: activate toggleEditor failed: ' + e);
+          console.log(e);
         }
       }, { once: true });
 
@@ -126,7 +126,7 @@ WebExtension.runtime.onMessage.addListener(function (request, sender, sendRespon
 
       var showDialog = function () {
         try { DO.U.showUserIdentityInput(); }
-        catch (e) { console.log('dokieli: showSignin failed: ' + e); }
+        catch (e) { console.log(e); }
       };
 
       if (DO.C && DO.C.Button && DO.C.Button.Info && DO.C.Button.Info.SignIn) {
@@ -161,7 +161,7 @@ WebExtension.runtime.onMessage.addListener(function (request, sender, sendRespon
       sendResponse({});
     }
   } catch (e) {
-    console.log('dokieli: runtime.onMessage: ' + e);
+    console.log(e);
     sendResponse({});
   }
 });
