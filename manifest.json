@@ -24,8 +24,8 @@
     "default_popup": "popup.html"
   },
   "background": {
-    "service_worker": "extension-background.js",
-    "scripts": ["extension-background.js"]
+    "service_worker": "scripts/extension-background.js",
+    "scripts": ["scripts/extension-background.js"]
   },
   "content_scripts": [
     {

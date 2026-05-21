@@ -36,6 +36,7 @@ module.exports = (env) => {
     entry: {
       dokieli: "./src/dokieli.js",
       popup: "./src/popup.js",
+      "extension-background": "./extension-background.js",
     },
     output: {
       path: path.join(__dirname, "/scripts/"),
