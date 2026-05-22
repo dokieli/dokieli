@@ -241,7 +241,7 @@ export function notifyInbox(o) {
   var title = '';
   var data = createActivityHTML(o);
 
-  data = createHTML(title, data, { 'prefixes': Config.Prefixes });
+  data = createHTML(title, data, { prefix: Config.prefixStrings.activity });
 
   data = domSanitize(data);
 

@@ -378,8 +378,8 @@ export function selectArticleNode(node) {
   return (x && x.length > 0) ? x[x.length - 1] : getDocumentContentNode(document);
 }
 
-export function getRDFaPrefixHTML(prefixes) {
-  return Object.keys(prefixes).map(i => { return i + ': ' + prefixes[i]; }).join(' ');
+export function getRDFaPrefixHTML(keys) {
+  return keys.slice().sort().map(k => `${k}: ${Config.ns[k].value}`).join(' ');
 }
 
 export function removeNodesWithIds(ids) {
@@ -503,8 +503,8 @@ export function createHTML(title, main, options) {
   title = title || '';
   title = domSanitize(title);
   options = options || {};
-  //prefixes and lang should not be user inputs for createHTML
-  var prefix = ('prefixes' in options && Object.keys(options.prefixes).length > 0) ? ' prefix="' + getRDFaPrefixHTML(options.prefixes) + '"' : '';
+  //prefix should not be a user input for createHTML
+  var prefix = options.prefix ? ` prefix="${options.prefix}"` : '';
   var lang = options.lang || 'en';
   lang = ' lang="' + lang + '" xml:lang="' + lang + '"';
   lang = ('omitLang' in options) ? '' : lang;

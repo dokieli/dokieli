@@ -333,12 +333,12 @@ export function getFeedFormatSelection() {
 }
 
 export function createActivityHTML(o) {
-  var prefixes = ' prefix="rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns# schema: http://schema.org/ oa: http://www.w3.org/ns/oa# as: https://www.w3.org/ns/activitystreams#"';
+  var prefixes = ' prefix="' + Config.prefixStrings.activity + '"';
 
   var types = '<dt>Types</dt>'
 
   o.type.forEach(function (t) {
-    types += '<dd><a about="" href="' + Config.Prefixes[t.split(':')[0]] + t.split(':')[1] + '" typeof="' + t + '">' + t.split(':')[1] + '</a></dd>'
+    types += '<dd><a about="" href="' + Config.getPrefixURI(t.split(':')[0]) + t.split(':')[1] + '" typeof="' + t + '">' + t.split(':')[1] + '</a></dd>'
   })
 
   var asObjectTypes = ''
@@ -439,7 +439,7 @@ export function createNoteDataHTML(n) {
   var targetLabel = '';
   var bodyAltLabel = '';
   var articleClass = '';
-  var prefixes = ' prefix="rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns# schema: http://schema.org/ dcterms: http://purl.org/dc/terms/ oa: http://www.w3.org/ns/oa# as: https://www.w3.org/ns/activitystreams# ldp: http://www.w3.org/ns/ldp#"';
+  var prefixes = ' prefix="' + Config.prefixStrings.annotation + '"';
 
   var canonicalId = n.canonical || 'urn:uuid:' + generateUUID();
 
@@ -4370,7 +4370,7 @@ export function getStorageSelfDescription(g) {
 export function getPersistencePolicy(g) {
   var s = '';
 
-  var persistencePolicy = g.out(ns.pim.persistencePolicy).values;
+  var persistencePolicy = g.out(ns.doc.persistencePolicy).values;
 
   if (persistencePolicy.length) {
     var pp = [];

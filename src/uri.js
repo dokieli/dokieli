@@ -271,9 +271,7 @@ export function getPrefixedNameFromIRI(iri) {
   const ns = iri.slice(0, sepIndex + 1);
   const localPart = iri.slice(sepIndex + 1);
 
-  const prefix = Object.keys(Config.Prefixes).find(key => {
-    return Config.Prefixes[key] === ns;
-  });
+  const prefix = Object.keys(Config.ns).find(key => Config.ns[key]('').value === ns);
 
   if (prefix) {
     return `${prefix}:${localPart}`;

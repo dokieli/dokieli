@@ -462,7 +462,7 @@ export function createActivityData(annotation, options = {}) {
 
   var notificationStatements = '    <dl about="' + noteIRI + '">\n\
 <dt>Object type</dt><dd><a about="' + noteIRI + '" typeof="oa:Annotation" href="' + ns.oa.Annotation.value + '">Annotation</a></dd>\n\
-<dt>Motivation</dt><dd><a href="' + Config.Prefixes[annotation.motivatedByIRI.split(':')[0]] + annotation.motivatedByIRI.split(':')[1] + '" property="oa:motivation">' + annotation.motivatedByIRI.split(':')[1] + '</a></dd>\n\
+<dt>Motivation</dt><dd><a href="' + Config.getPrefixURI(annotation.motivatedByIRI.split(':')[0]) + annotation.motivatedByIRI.split(':')[1] + '" property="oa:motivation">' + annotation.motivatedByIRI.split(':')[1] + '</a></dd>\n\
 </dl>\n\
 ';
 

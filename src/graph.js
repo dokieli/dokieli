@@ -1333,7 +1333,7 @@ function getAgentDelegates(s) {
 }
 
 function getAgentStorage(s) {
-  const d = sanitizeIRIs(s.out(ns.pim.storage).values);
+  const d = sanitizeIRIs(s.out(ns.ws.storage).values);
   return d.length ? d : undefined;
 }
 
@@ -1406,7 +1406,7 @@ function getAgentPrivateTypeIndex(s) {
 }
 
 function getAgentPreferencesFile(s) {
-  const d = sanitizeIRIs(s.out(ns.pim.preferencesFile).values);
+  const d = sanitizeIRIs(s.out(ns.ws.preferencesFile).values);
   return d.length ? d : undefined;
 }
 

@@ -31,8 +31,8 @@ let gpxTrkptDistance = 0;
 const gpxtpx = {
   'atemp': { 'label': 'measure.air-temperature.textContent', 'unitLabel': 'unit.degrees-celsius.textContent', 'property': 'ex:FIXME-atemp', 'datatype': 'xsd:double', 'xpathResultType': 'NUMBER_TYPE' },
   'wtemp': { 'label': 'measure.water-temperature.textContent', 'unitLabel': 'unit.degrees-celsius.textContent', 'property': 'ex:FIXME-wtemp', 'datatype': 'xsd:double', 'xpathResultType': 'NUMBER_TYPE' },
-  'depth': { 'label': 'measure.depth.textContent', 'unitLabel': 'unit.meters.textContent', 'property': 'qudt-unit:Meter', 'datatype': 'xsd:double', 'xpathResultType': 'NUMBER_TYPE' },
-  'hr': { 'label': 'measure.heart-rate.textContent', 'unitLabel': 'unit.beats-per-minute.textContent', 'property': 'qudt-unit:HeartBeatsPerMinute', 'datatype': 'xsd:unsignedByte', 'xpathResultType': 'NUMBER_TYPE' },
+  'depth': { 'label': 'measure.depth.textContent', 'unitLabel': 'unit.meters.textContent', 'property': 'unit:Meter', 'datatype': 'xsd:double', 'xpathResultType': 'NUMBER_TYPE' },
+  'hr': { 'label': 'measure.heart-rate.textContent', 'unitLabel': 'unit.beats-per-minute.textContent', 'property': 'unit:HeartBeatsPerMinute', 'datatype': 'xsd:unsignedByte', 'xpathResultType': 'NUMBER_TYPE' },
   'cad': { 'label': 'measure.cadence.textContent', 'unitLabel': 'unit.revolutions-per-minute.textContent', 'property': 'ex:FIXME-cadence', 'datatype': 'xsd:unsignedByte', 'xpathResultType': 'NUMBER_TYPE' },
   'speed': { 'label': 'measure.speed.textContent', 'unitLabel': 'unit.meters-per-second.textContent', 'property': 'schema:speed', 'datatype': 'xsd:double', 'xpathResultType': 'NUMBER_TYPE' },
   'course': { 'label': 'measure.course.textContent', 'unitLabel': 'unit.degrees-angle.textContent', 'property': 'ex:FIXME-course', 'datatype': 'xsd:decimal', 'xpathResultType': 'NUMBER_TYPE' },
@@ -61,8 +61,8 @@ function generateGeoView(data) {
 
   var gpxActivity = getGPXActivityHTML(rootNode, contextNode);
 
-  var prefixes = document.body.getAttribute('prefix') + ' wgs: http://www.w3.org/2003/01/geo/wgs84_pos# sdmx-dimension: http://purl.org/linked-data/sdmx/2009/dimension# sdmx-measure: http://purl.org/linked-data/sdmx/2009/measure# gi: http://reference.data.gov.uk/id/gregorian-instant/ qudt-unit: http://qudt.org/vocab/unit#';
-  document.body.setAttribute('prefix', prefixes);
+  const currentPrefix = document.body.getAttribute('prefix') || '';
+  document.body.setAttribute('prefix', currentPrefix + ' ' + Config.prefixStrings.geo);
 
   var node = selectArticleNode(document);
   // document.body.replaceChildren(fragmentFromString('<main><article about="" typeof="schema:Article">' + gpxActivity + '</article></main>'));
@@ -312,7 +312,7 @@ function getGPXActivityHTML(rootNode, contextNode, options) {
       gpxtpxTH.push(`<th rel="qb:component" resource="#component/${data.dataset}/measure/${element}" typeof="qb:ComponentSpecification"><span rel="qb:componentProperty" resource="${gpxtpx[element].property}" typeof="qb:MeasureProperty"><span property="skos:prefLabel" rel="rdfs:subPropertyOf" resource="sdmx-measure:obsValue">${i18n.tDoc(gpxtpx[element].label)}</span></span></th>`);
 
       var p = gpxtpx[element].property;
-      var propertyURI = Config.Prefixes[p.split(':')[0]] + p.split(':')[1];
+      var propertyURI = Config.getPrefixURI(p.split(':')[0]) + p.split(':')[1];
 
       gpxtpxLI.push(`<li><a href="${propertyURI}">${i18n.tDoc(gpxtpx[element].label)}</a> (${i18n.tDoc(gpxtpx[element].unitLabel)})</li>`);
     }

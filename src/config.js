@@ -544,17 +544,6 @@ export default {
     'text/turtle': '.ttl'
   },
 
-  Prefixes: {
-    'xsd': 'http://www.w3.org/2001/XMLSchema#',
-    'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-    'as': 'https://www.w3.org/ns/activitystreams#',
-    'oa': 'http://www.w3.org/ns/oa#',
-    'schema': 'http://schema.org/',
-    'cito': 'http://purl.org/spar/cito/',
-    'qudt-unit': 'http://qudt.org/vocab/unit#',
-    'ex': 'http://example.org/'
-  },
-
   ns: {
     'sdmx-dimension': rdf.namespace('http://purl.org/linked-data/sdmx/2009/dimension#'),
     'sdmx-measure': rdf.namespace('http://purl.org/linked-data/sdmx/2009/measure#'),
@@ -569,6 +558,7 @@ export default {
     cito: rdf.namespace('http://purl.org/spar/cito/'),
     dbr: rdf.namespace('http://dbpedia.org/resource/'),
     dbp: rdf.namespace('http://dbpedia.org/property/'),
+    csvw: rdf.namespace('http://www.w3.org/ns/csvw#'),
     dcat: rdf.namespace('http://www.w3.org/ns/dcat#'),
     dcelements: rdf.namespace('http://purl.org/dc/elements/'),
     dcterms: rdf.namespace('http://purl.org/dc/terms/'),
@@ -579,6 +569,8 @@ export default {
     doc: rdf.namespace('http://www.w3.org/2000/10/swap/pim/doc#'),
     doco: rdf.namespace('http://purl.org/spar/doco/'),
     dpv: rdf.namespace('https://w3id.org/dpv#'),
+    earl: rdf.namespace('http://www.w3.org/ns/earl#'),
+    ex: rdf.namespace('http://example.org/'),
     fabio: rdf.namespace('http://purl.org/spar/fabio/'),
     foaf: rdf.namespace('http://xmlns.com/foaf/0.1/'),
     ldp: rdf.namespace('http://www.w3.org/ns/ldp#'),
@@ -588,13 +580,12 @@ export default {
     odrl: rdf.namespace('http://www.w3.org/ns/odrl/2/'),
     opmw: rdf.namespace('http://www.opmw.org/ontology/'),
     owl: rdf.namespace('http://www.w3.org/2002/07/owl#'),
-    pim: rdf.namespace('http://www.w3.org/ns/pim/space#'),
+    gi: rdf.namespace('http://reference.data.gov.uk/id/gregorian-instant/'),
     prov: rdf.namespace('http://www.w3.org/ns/prov#'),
     pso: rdf.namespace('http://purl.org/spar/pso/'),
     qb: rdf.namespace('http://purl.org/linked-data/cube#'),
-    qudt: rdf.namespace('http://qudt.org/vocab/unit#'),
     rdf: rdf.namespace('http://www.w3.org/1999/02/22-rdf-syntax-ns#'),
-    rdfa: rdf.namespace(' http://www.w3.org/ns/rdfa#'),
+    rdfa: rdf.namespace('http://www.w3.org/ns/rdfa#'),
     rdfs: rdf.namespace('http://www.w3.org/2000/01/rdf-schema#'),
     rel: rdf.namespace('https://www.w3.org/ns/iana/link-relations/relation#'),
     risk: rdf.namespace('https://w3id.org/dpv/risk#'),
@@ -607,11 +598,39 @@ export default {
     solid: rdf.namespace('http://www.w3.org/ns/solid/terms#'),
     spec: rdf.namespace('http://www.w3.org/ns/spec#'),
     tech: rdf.namespace('https://w3id.org/dpv/tech#'),
+    unit: rdf.namespace('http://qudt.org/vocab/unit/'),
     vcard: rdf.namespace('http://www.w3.org/2006/vcard/ns#'),
     void: rdf.namespace('http://rdfs.org/ns/void#'),
     wgs: rdf.namespace('http://www.w3.org/2003/01/geo/wgs84_pos#'),
+    ws: rdf.namespace('http://www.w3.org/ns/pim/space#'),
     xhv: rdf.namespace('http://www.w3.org/1999/xhtml/vocab#'),
     xsd: rdf.namespace('http://www.w3.org/2001/XMLSchema#')
+  },
+
+  PrefixSets: {
+    document:      ['acl', 'as', 'bibo', 'cert', 'cito', 'csvw', 'dbp', 'dbr', 'dcat', 'dcterms', 'dctypes',
+                    'deo', 'dio', 'doap', 'doco', 'dpv', 'earl', 'fabio', 'foaf', 'ldp', 'mem',
+                    'oa', 'odrl', 'opmw', 'owl', 'prov', 'qb', 'rdf', 'rdfa', 'rdfs',
+                    'rel', 'risk', 'rsa', 'schema', 'sio', 'sioc', 'skos', 'solid', 'spec', 'void', 'wgs', 'ws', 'xsd'],
+    activity:      ['as', 'oa', 'rdf', 'schema'],
+    annotation:    ['as', 'dcterms', 'ldp', 'oa', 'rdf', 'schema'],
+    visualization: ['dcterms', 'rdf', 'rdfs', 'xsd'],
+    geo:           ['gi', 'sdmx-dimension', 'sdmx-measure', 'unit']
+  },
+
+  getPrefixURI(prefix) {
+    return this.ns[prefix]?.('').value;
+  },
+
+  get prefixStrings() {
+    const strings = Object.fromEntries(
+      Object.entries(this.PrefixSets).map(([name, keys]) => [
+        name,
+        keys.slice().sort().map(k => `${k}: ${this.ns[k]('').value}`).join(' ')
+      ])
+    );
+    Object.defineProperty(this, 'prefixStrings', { value: strings, writable: true, configurable: true });
+    return strings;
   },
 
   ChangeClasses: {
