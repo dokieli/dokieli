@@ -345,7 +345,8 @@ export async function initDocumentMode(mode) {
     var hasContent = hasNonWhitespaceText(node);
 
     if (!hasContent && !Config.EditorEnabled) {
-      const template = getUrlParams('template')[0] || 'new';
+      const param = getUrlParams('template')[0];
+      const template = param === 'slideshow' ? 'new-slideshow' : (param || 'new');
       Config.Editor.toggleEditor('author', { template });
       Config.DocumentAction = 'new';
     }

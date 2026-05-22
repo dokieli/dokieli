@@ -170,7 +170,7 @@ function initLanguageHandler() {
 
 const NEW_TAB_BUTTONS = {
   'resource-new': ['new.html'],
-  'resource-new-slideshow': ['new.html', '?template=new-slideshow'],
+  'resource-new-slideshow': ['new.html', '#template=slideshow'],
 };
 
 function initMenuActions() {
