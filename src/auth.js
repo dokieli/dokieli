@@ -60,32 +60,15 @@ export async function restoreSession() {
 
 const EXTENSION_SESSION_KEY = 'DO.Config.ExtensionSession';
 
-async function buildExtensionSession({ webId, accessToken, dpopPrivateJwk, dpopPublicJwk }) {
-  const [privateKey, publicKey] = await Promise.all([
-    crypto.subtle.importKey('jwk', dpopPrivateJwk, { name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign']),
-    crypto.subtle.importKey('jwk', dpopPublicJwk, { name: 'ECDSA', namedCurve: 'P-256' }, true, ['verify']),
-  ]);
-  const dpopKeyPair = { privateKey, publicKey };
-
-  async function makeDpopProof(method, url) {
-    const publicJwk = await crypto.subtle.exportKey('jwk', dpopKeyPair.publicKey);
-    const header = { alg: 'ES256', typ: 'dpop+jwt', jwk: publicJwk };
-    const u = new URL(url);
-    const payload = {
-      jti: crypto.randomUUID(),
-      htm: method.toUpperCase(),
-      htu: u.origin + u.pathname,
-      iat: Math.floor(Date.now() / 1000),
-    };
-    const enc = async (obj) => {
-      const bytes = new TextEncoder().encode(JSON.stringify(obj));
-      const b64 = btoa(String.fromCharCode(...bytes));
-      return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-    };
-    const signingInput = (await enc(header)) + '.' + (await enc(payload));
-    const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, dpopKeyPair.privateKey, new TextEncoder().encode(signingInput));
-    const sigB64 = btoa(String.fromCharCode(...new Uint8Array(sig))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-    return signingInput + '.' + sigB64;
+async function buildExtensionSession({ webId }) {
+  async function serializeBody(body) {
+    if (body == null) return undefined;
+    if (typeof body === 'string') return body;
+    if (body instanceof URLSearchParams) return body.toString();
+    if (body instanceof Blob || body instanceof ArrayBuffer || ArrayBuffer.isView(body)) {
+      return await new Response(body).text();
+    }
+    return String(body);
   }
 
   Config['Session'] = {
@@ -93,13 +76,31 @@ async function buildExtensionSession({ webId, accessToken, dpopPrivateJwk, dpopP
     webId,
     async authFetch(input, init) {
       const url = input instanceof Request ? input.url : input.toString();
+      const reqHeaders = new Headers(init?.headers || (input instanceof Request ? input.headers : {}));
+      const headers = {};
+      reqHeaders.forEach((v, k) => { headers[k] = v; });
+
       const method = (init?.method || (input instanceof Request ? input.method : null) || 'GET').toUpperCase();
-      const dpop = await makeDpopProof(method, url);
-      const headers = new Headers(input instanceof Request ? input.headers : (init?.headers || {}));
-      headers.set('Authorization', `DPoP ${accessToken}`);
-      headers.set('DPoP', dpop);
-      if (input instanceof Request) return fetch(new Request(input, { ...init, headers }));
-      return fetch(url, { ...init, headers });
+      const hasBody = method !== 'GET' && method !== 'HEAD';
+      const body = hasBody
+        ? await serializeBody(init?.body ?? (input instanceof Request ? await input.clone().text() : undefined))
+        : undefined;
+
+      const result = await Config.WebExtension.runtime.sendMessage({
+        action: 'dokieli.fetch',
+        url,
+        options: { method, headers, body },
+      });
+
+      if (!result || !result.status) {
+        throw new TypeError(result?.statusText || `Failed to fetch ${url}`);
+      }
+
+      return new Response(result.body, {
+        status: result.status,
+        statusText: result.statusText,
+        headers: result.headers,
+      });
     },
     async logout() {
       Config['Session'] = null;
@@ -617,7 +618,11 @@ async function extensionLogin(idp) {
     console.warn('dokieli: could not persist extension session', e);
   }
 
-  await setUserInfo(creds.webId);
+  try {
+    await setUserInfo(creds.webId);
+  } catch (e) {
+    console.error('dokieli: setUserInfo failed', e);
+  }
 
   try {
     await Config.WebExtension.storage.local.set({

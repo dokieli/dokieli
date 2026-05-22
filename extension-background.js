@@ -7,17 +7,90 @@ you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
     http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
 */
 
 import * as oidc from 'openid-client';
+import { SignJWT } from 'jose';
 
 const WebExtension = (typeof browser !== 'undefined') ? browser : chrome;
+const SESSION_KEY = 'DO.Config.ExtensionSession';
+
+let cachedSession = null;
+
+WebExtension.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes[SESSION_KEY]) cachedSession = null;
+});
+
+async function getSession() {
+  if (cachedSession) return cachedSession;
+  const stored = await WebExtension.storage.local.get(SESSION_KEY);
+  const creds = stored?.[SESSION_KEY];
+  if (!creds?.accessToken || !creds?.dpopPrivateJwk || !creds?.dpopPublicJwk) return null;
+  const [privateKey, publicKey] = await Promise.all([
+    crypto.subtle.importKey('jwk', creds.dpopPrivateJwk, { name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign']),
+    crypto.subtle.importKey('jwk', creds.dpopPublicJwk, { name: 'ECDSA', namedCurve: 'P-256' }, true, ['verify']),
+  ]);
+  cachedSession = { accessToken: creds.accessToken, keyPair: { privateKey, publicKey } };
+  return cachedSession;
+}
+
+async function makeDpopProof(method, url, keyPair, nonce) {
+  const { kty, crv, x, y } = await crypto.subtle.exportKey('jwk', keyPair.publicKey);
+  const u = new URL(url);
+  return new SignJWT({
+    jti: crypto.randomUUID(),
+    htm: method.toUpperCase(),
+    htu: u.origin + u.pathname,
+    iat: Math.floor(Date.now() / 1000),
+    ...(nonce && { nonce }),
+  })
+    .setProtectedHeader({ alg: 'ES256', typ: 'dpop+jwt', jwk: { kty, crv, x, y } })
+    .sign(keyPair.privateKey);
+}
+
+async function solidFetch(url, options) {
+  const session = await getSession();
+  const method = (options?.method || 'GET').toUpperCase();
+  const baseHeaders = options?.headers ? { ...options.headers } : {};
+
+  const doFetch = async (nonce) => {
+    const headers = { ...baseHeaders };
+    if (session) {
+      const dpop = await makeDpopProof(method, url, session.keyPair, nonce);
+      headers.Authorization = `DPoP ${session.accessToken}`;
+      headers.DPoP = dpop;
+    }
+    const init = { method, headers };
+    if (method !== 'GET' && method !== 'HEAD' && options?.body != null) init.body = options.body;
+    return fetch(url, init);
+  };
+
+  let response;
+  try {
+    response = await doFetch();
+  } catch (e) {
+    return { status: 0, statusText: e.message, headers: {}, body: '' };
+  }
+
+  if (response.status === 401 && session) {
+    const wwwAuth = response.headers.get('WWW-Authenticate') || '';
+    const nonce = response.headers.get('DPoP-Nonce') || wwwAuth.match(/nonce="([^"]+)"/i)?.[1];
+    if (nonce) {
+      try { response = await doFetch(nonce); } catch (e) {
+        return { status: 0, statusText: e.message, headers: {}, body: '' };
+      }
+    }
+  }
+
+  return serializeResponse(response);
+}
+
+async function serializeResponse(response) {
+  const headers = {};
+  response.headers.forEach((v, k) => { headers[k] = v; });
+  const body = await response.text();
+  return { status: response.status, statusText: response.statusText, headers, body };
+}
 
 async function dynamicClientRegistration(registrationEndpoint, redirectUri) {
   const res = await fetch(registrationEndpoint, {
@@ -104,5 +177,8 @@ WebExtension.runtime.onMessage.addListener(function (request) {
         console.error('dokieli: login failed:', err);
         return { ok: false, error: err.message };
       });
+  }
+  if (request.action === 'dokieli.fetch') {
+    return solidFetch(request.url, request.options);
   }
 });
