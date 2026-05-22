@@ -4671,12 +4671,17 @@ export function showDocumentInfo(e) {
 
   var buttonClose = getButtonHTML({ key: 'panel.document-info.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
-  document.body.insertBefore(fragmentFromString(`
+  var fragment = fragmentFromString(`
     <aside aria-labelledby="document-info-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="document-info" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#document-info" xml:lang="${Config.User.UI.Language}">
       <h2 data-i18n="panel.document-info.h2" id="document-info-label" property="schema:name">${i18n.t('panel.document-info.h2.textContent')}</h2>
       ${buttonClose}
     </aside>
-  `), documentMenu.nextSibling);
+  `);
+  if (documentMenu) {
+    document.body.insertBefore(fragment, documentMenu.nextSibling);
+  } else {
+    document.body.appendChild(fragment);
+  }
   var documentInfo = document.getElementById('document-info');
 
   documentInfo.setAttribute('tabindex', '-1');
