@@ -23,17 +23,28 @@ const localScriptContent = fs.readFileSync(path.resolve("./scripts/dokieli.js"),
 const augmentedScript = localScriptContent.replace(
   "window.DO = DO;",
   `window.DO = DO;
-window.__doCollabTest = { showReviewPanel: showResourceReviewChanges };`
+window.doCollabTest = {
+  showReviewPanel: showResourceReviewChanges,
+  addYjsVersion,
+  getYjsVersions,
+  restoreYjsContent,
+  showEditHistory,
+  getCurrentVersionKey,
+};`
 );
 
 async function setupRoutes(page, { augment = false } = {}) {
   await page.route("https://dokie.li/**", (route) => route.abort());
-  await page.route("https://dokie.li/scripts/dokieli.js", (route) =>
+  await page.route("**/scripts/dokieli.js", (route) =>
     route.fulfill({
       contentType: "application/javascript",
       body: augment ? augmentedScript : localScriptContent,
     })
   );
+}
+
+function versionPayload(content, updated) {
+  return { content, updated, mediaType: "text/html", actor: null };
 }
 
 async function enableAuthorMode(page) {
@@ -122,7 +133,7 @@ test.describe("review changes panel", () => {
 
   test("appears when local and remote content differ", async ({ page }) => {
     await page.evaluate(
-      ([local, remote]) => window.__doCollabTest.showReviewPanel(local, remote, null, {}),
+      ([local, remote]) => window.doCollabTest.showReviewPanel(local, remote, null, {}),
       [LOCAL_HTML, REMOTE_HTML]
     );
 
@@ -132,21 +143,20 @@ test.describe("review changes panel", () => {
 
   test("contains a diff visualization with ins and del elements", async ({ page }) => {
     await page.evaluate(
-      ([local, remote]) => window.__doCollabTest.showReviewPanel(local, remote, null, {}),
+      ([local, remote]) => window.doCollabTest.showReviewPanel(local, remote, null, {}),
       [LOCAL_HTML, REMOTE_HTML]
     );
 
     const diff = page.locator("#review-changes .do-diff");
     await expect(diff).toBeVisible();
 
-    // Both insertions and deletions should appear in the diff
     await expect(diff.locator("ins").first()).toBeVisible();
     await expect(diff.locator("del").first()).toBeVisible();
   });
 
   test("shows a statistics table with added and removed counts", async ({ page }) => {
     await page.evaluate(
-      ([local, remote]) => window.__doCollabTest.showReviewPanel(local, remote, null, {}),
+      ([local, remote]) => window.doCollabTest.showReviewPanel(local, remote, null, {}),
       [LOCAL_HTML, REMOTE_HTML]
     );
 
@@ -163,7 +173,7 @@ test.describe("review changes panel", () => {
 
   test("provides save-local, save-remote, and submit action buttons", async ({ page }) => {
     await page.evaluate(
-      ([local, remote]) => window.__doCollabTest.showReviewPanel(local, remote, null, {}),
+      ([local, remote]) => window.doCollabTest.showReviewPanel(local, remote, null, {}),
       [LOCAL_HTML, REMOTE_HTML]
     );
 
@@ -175,7 +185,7 @@ test.describe("review changes panel", () => {
 
   test("close button removes the panel and clears review state", async ({ page }) => {
     await page.evaluate(
-      ([local, remote]) => window.__doCollabTest.showReviewPanel(local, remote, null, {}),
+      ([local, remote]) => window.doCollabTest.showReviewPanel(local, remote, null, {}),
       [LOCAL_HTML, REMOTE_HTML]
     );
 
@@ -189,7 +199,7 @@ test.describe("review changes panel", () => {
 
   test("submit button merges changes and removes the panel", async ({ page }) => {
     await page.evaluate(
-      ([local, remote]) => window.__doCollabTest.showReviewPanel(local, remote, null, {}),
+      ([local, remote]) => window.doCollabTest.showReviewPanel(local, remote, null, {}),
       [LOCAL_HTML, REMOTE_HTML]
     );
 
@@ -201,7 +211,7 @@ test.describe("review changes panel", () => {
 
   test("save-local button dismisses the panel", async ({ page }) => {
     await page.evaluate(
-      ([local, remote]) => window.__doCollabTest.showReviewPanel(local, remote, null, {}),
+      ([local, remote]) => window.doCollabTest.showReviewPanel(local, remote, null, {}),
       [LOCAL_HTML, REMOTE_HTML]
     );
 
@@ -213,7 +223,7 @@ test.describe("review changes panel", () => {
 
   test("save-remote button dismisses the panel", async ({ page }) => {
     await page.evaluate(
-      ([local, remote]) => window.__doCollabTest.showReviewPanel(local, remote, null, {}),
+      ([local, remote]) => window.doCollabTest.showReviewPanel(local, remote, null, {}),
       [LOCAL_HTML, REMOTE_HTML]
     );
 
@@ -231,7 +241,7 @@ test.describe("review changes panel", () => {
 
     await page.evaluate(
       ([older, current, opts]) =>
-        window.__doCollabTest.showReviewPanel(older, current, null, opts),
+        window.doCollabTest.showReviewPanel(older, current, null, opts),
       [versionContent, currentContent, { mode: "edit-history-preview" }]
     );
 
@@ -249,7 +259,7 @@ test.describe("review changes panel", () => {
       "<html><body><article><p>Identical content on both sides.</p></article></body></html>";
 
     await page.evaluate(
-      ([content]) => window.__doCollabTest.showReviewPanel(content, content, null, {}),
+      ([content]) => window.doCollabTest.showReviewPanel(content, content, null, {}),
       [sameContent]
     );
 
@@ -258,7 +268,7 @@ test.describe("review changes panel", () => {
 
   test("review panel has a label and accessible structure", async ({ page }) => {
     await page.evaluate(
-      ([local, remote]) => window.__doCollabTest.showReviewPanel(local, remote, null, {}),
+      ([local, remote]) => window.doCollabTest.showReviewPanel(local, remote, null, {}),
       [LOCAL_HTML, REMOTE_HTML]
     );
 
@@ -296,6 +306,7 @@ test.describe("collab save event", () => {
 async function openDemoPage(browser) {
   const context = await browser.newContext();
   const page = await context.newPage();
+  await setupRoutes(page, { augment: true });
   await page.goto("/demo");
   await page.waitForLoadState("domcontentloaded");
 
@@ -313,8 +324,11 @@ async function openDemoPage(browser) {
   return { context, page };
 }
 
-test.describe("multi-user collab via WebSocket", () => {
-  test.describe.configure({ timeout: 60000 });
+// Serial so each test gets a clean /demo y-websocket room.
+test.describe("demo-backed collab", () => {
+  test.describe.configure({ mode: "serial", timeout: 60000 });
+
+  test.describe("multi-user collab via WebSocket", () => {
 
   test("changes typed by one user appear in a second user's editor", async ({ browser }) => {
     const { context: ctx1, page: page1 } = await openDemoPage(browser);
@@ -389,5 +403,159 @@ test.describe("multi-user collab via WebSocket", () => {
     expect(fired).toBe(true);
 
     await context.close();
+  });
+  });
+
+  test.describe("edit-history panel", () => {
+    test("a version added via addYjsVersion appears in the list", async ({ browser }) => {
+      const { context, page } = await openDemoPage(browser);
+      const datetime = "2099-05-22T10:00:00Z";
+
+      await page.evaluate((v) => window.doCollabTest.addYjsVersion(v), versionPayload(
+        "<html><body><article><p>v1</p></article></body></html>",
+        datetime
+      ));
+
+      await page.evaluate(() => window.doCollabTest.showEditHistory());
+
+      await expect(page.locator(
+        `#document-edit-history ul.versions li[data-datetime="${datetime}"]`
+      )).toBeVisible();
+      await context.close();
+    });
+
+    // Future timestamps so my versions sort newer than any wall-clock autosave.
+    test("versions render newest first", async ({ browser }) => {
+      const { context, page } = await openDemoPage(browser);
+      const added = [
+        "2099-01-01T00:00:00Z",
+        "2099-03-01T00:00:00Z",
+        "2099-05-01T00:00:00Z",
+      ];
+
+      await page.evaluate((dates) => {
+        const add = window.doCollabTest.addYjsVersion;
+        for (const updated of dates) {
+          add({ content: `<p>${updated}</p>`, updated, mediaType: "text/html" });
+        }
+      }, added);
+
+      await page.evaluate(() => window.doCollabTest.showEditHistory());
+
+      const datetimes = await page
+        .locator("#document-edit-history ul.versions li")
+        .evaluateAll((els) => els.map((el) => el.getAttribute("data-datetime")));
+      expect(datetimes.slice(0, 3)).toEqual([
+        "2099-05-01T00:00:00Z",
+        "2099-03-01T00:00:00Z",
+        "2099-01-01T00:00:00Z",
+      ]);
+      await context.close();
+    });
+  });
+
+  test.describe("version restore workflow", () => {
+    test("preview then restore replaces editor content", async ({ browser }) => {
+      const { context, page } = await openDemoPage(browser);
+      const restoredHTML =
+        "<html><body><article><p>this is the restored content</p></article></body></html>";
+
+      await page.evaluate((v) => window.doCollabTest.addYjsVersion(v), versionPayload(
+        restoredHTML,
+        "2026-05-22T10:00:00Z"
+      ));
+
+      const editor = page.locator(".ProseMirror");
+      await editor.click();
+      await page.keyboard.press("Control+a");
+      await page.keyboard.press("Backspace");
+      await page.keyboard.type("scratch text that should be replaced");
+
+      await page.evaluate(() => window.doCollabTest.showEditHistory());
+      await page.locator("#document-edit-history button.edit-history-preview").first().click();
+
+      await expect(page.locator("#review-changes")).toBeVisible();
+      await page.locator("#review-changes .version-restore").click();
+
+      await expect(editor).toContainText("this is the restored content");
+      await expect(editor).not.toContainText("scratch text");
+      await context.close();
+    });
+
+    test("restoring a version disables its preview button", async ({ browser }) => {
+      const { context, page } = await openDemoPage(browser);
+      const olderKey = "2099-05-22T10:00:00Z";
+      const newerKey = "2099-05-22T12:00:00Z";
+
+      await page.evaluate((v) => window.doCollabTest.addYjsVersion(v), versionPayload(
+        "<html><body><article><p>older</p></article></body></html>", olderKey));
+      await page.evaluate((v) => window.doCollabTest.addYjsVersion(v), versionPayload(
+        "<html><body><article><p>newer</p></article></body></html>", newerKey));
+
+      await page.evaluate(() => window.doCollabTest.showEditHistory());
+
+      const olderPreview = page.locator(
+        `#document-edit-history button.edit-history-preview[data-key="${olderKey}"]`
+      );
+      await expect(olderPreview).toBeEnabled();
+
+      await olderPreview.click();
+      await page.locator("#review-changes .version-restore").click();
+
+      await expect(olderPreview).toBeDisabled();
+      await context.close();
+    });
+  });
+
+  test.describe("version cap", () => {
+    test("keeps only the newest 20 versions and renders them in the panel", async ({ browser }) => {
+      const { context, page } = await openDemoPage(browser);
+      await page.evaluate(() => {
+        const add = window.doCollabTest.addYjsVersion;
+        for (let i = 0; i < 25; i++) {
+          const stamp = `2026-01-01T00:00:${String(i).padStart(2, "0")}Z`;
+          add({ content: `<p>${i}</p>`, updated: stamp, mediaType: "text/html" });
+        }
+      });
+
+      const stored = await page.evaluate(() => window.doCollabTest.getYjsVersions().length);
+      expect(stored).toBe(20);
+
+      await page.evaluate(() => window.doCollabTest.showEditHistory());
+      const items = page.locator("#document-edit-history ul.versions li");
+      await expect(items).toHaveCount(20);
+      await context.close();
+    });
+  });
+
+  test.describe("multi-user version propagation", () => {
+    test("a version saved by user 1 appears in user 2's edit-history panel", async ({ browser }) => {
+      const { context: ctx1, page: page1 } = await openDemoPage(browser);
+      const { context: ctx2, page: page2 } = await openDemoPage(browser);
+      const datetime = "2099-05-22T13:00:00Z";
+
+      await page1.evaluate((v) => window.doCollabTest.addYjsVersion(v), versionPayload(
+        "<html><body><article><p>from user 1</p></article></body></html>",
+        datetime
+      ));
+
+      await expect
+        .poll(
+          () => page2.evaluate(
+            (d) => window.doCollabTest.getYjsVersions().some(v => v.updated === d),
+            datetime
+          ),
+          { timeout: 5000 }
+        )
+        .toBe(true);
+
+      await page2.evaluate(() => window.doCollabTest.showEditHistory());
+      await expect(page2.locator(
+        `#document-edit-history ul.versions li[data-datetime="${datetime}"]`
+      )).toBeVisible();
+
+      await ctx1.close();
+      await ctx2.close();
+    });
   });
 });
