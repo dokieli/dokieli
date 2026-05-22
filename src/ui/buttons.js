@@ -32,7 +32,7 @@ const DEV_ORIGIN = process.env.DEV_ORIGIN;
 // }
 
 function getDocsBaseURL() {
-  if (Config.WebExtensionEnabled) return Config.WebExtension.runtime.getURL('docs');
+  if (Config.WebExtensionEnabled) return Config.WebExtension.runtime.getURL('docs.html');
   if (isLocalhost(window.location.href)) return new URL('docs.html', document.baseURI).href;
   let origin = window.location.origin === DEV_ORIGIN ? DEV_ORIGIN : 'https://dokie.li';
   const translatedDocs = (Config.DocsTranslations.includes(Config.User.UI.Language) && Config.User.UI.Language !== 'en') ?
