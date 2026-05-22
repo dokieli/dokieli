@@ -556,8 +556,8 @@ export default {
   },
 
   ns: {
-    'sdmx-dimension': rdf.namespace('http://purl.org/linked-data/sdmx/2009/dimension'),
-    'sdmx-measure': rdf.namespace('http://purl.org/linked-data/sdmx/2009/measure'),
+    'sdmx-dimension': rdf.namespace('http://purl.org/linked-data/sdmx/2009/dimension#'),
+    'sdmx-measure': rdf.namespace('http://purl.org/linked-data/sdmx/2009/measure#'),
     'test-description': rdf.namespace('http://www.w3.org/2006/03/test-description#'),
     acl: rdf.namespace('http://www.w3.org/ns/auth/acl#'),
     as: rdf.namespace('https://www.w3.org/ns/activitystreams#'),
@@ -606,7 +606,7 @@ export default {
     skosxl: rdf.namespace('http://www.w3.org/2008/05/skos-xl#'),
     solid: rdf.namespace('http://www.w3.org/ns/solid/terms#'),
     spec: rdf.namespace('http://www.w3.org/ns/spec#'),
-    tech: rdf.namespace('https://w3id.org/dpv/tech'),
+    tech: rdf.namespace('https://w3id.org/dpv/tech#'),
     vcard: rdf.namespace('http://www.w3.org/2006/vcard/ns#'),
     void: rdf.namespace('http://rdfs.org/ns/void#'),
     wgs: rdf.namespace('http://www.w3.org/2003/01/geo/wgs84_pos#'),
