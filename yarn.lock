@@ -2131,6 +2131,7 @@ __metadata:
     eslint: "npm:^10.0.3"
     eslint-plugin-header: "npm:^3.1.1"
     eslint-plugin-license-header: "npm:^0.8.0"
+    fake-indexeddb: "npm:^6.0.0"
     fs: "npm:^0.0.1-security"
     http-link-header: "npm:^1.1.3"
     husky: "npm:^9.0.11"
@@ -2537,6 +2538,13 @@ __metadata:
   version: 3.1.3
   resolution: "exponential-backoff@npm:3.1.3"
   checksum: 10c0/77e3ae682b7b1f4972f563c6dbcd2b0d54ac679e62d5d32f3e5085feba20483cf28bd505543f520e287a56d4d55a28d7874299941faf637e779a1aa5994d1267
+  languageName: node
+  linkType: hard
+
+"fake-indexeddb@npm:^6.0.0":
+  version: 6.2.5
+  resolution: "fake-indexeddb@npm:6.2.5"
+  checksum: 10c0/6c5e2fe84a61daa06d7ad63699d1041fe61847f15f92db12415634b3db94f363a64be9e08a3c3c4434af9c3c0132086b85c4d5dc5e8e06edae1e7daf70ce1f3c
   languageName: node
   linkType: hard
 
