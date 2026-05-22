@@ -93,10 +93,13 @@ async function buildExtensionSession({ webId }) {
       });
 
       if (!result || !result.status) {
+        console.error('dokieli authFetch: SW returned bad result', { url, method, result });
         throw new TypeError(result?.statusText || `Failed to fetch ${url}`);
       }
 
-      return new Response(result.body, {
+      const nullBodyStatus = result.status === 101 || result.status === 103
+        || result.status === 204 || result.status === 205 || result.status === 304;
+      return new Response(nullBodyStatus ? null : result.body, {
         status: result.status,
         statusText: result.statusText,
         headers: result.headers,
@@ -117,11 +120,8 @@ async function restoreExtensionSession() {
       return;
     }
     await buildExtensionSession(creds);
-    await setUserInfo(creds.webId);
-    afterSetUserInfo();
   } catch (e) {
     console.warn('dokieli: extension session restore failed', e);
-    try { await Config.WebExtension.storage.local.remove(EXTENSION_SESSION_KEY); } catch {}
   }
 }
 

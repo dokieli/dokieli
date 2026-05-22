@@ -69,6 +69,7 @@ async function solidFetch(url, options) {
   try {
     response = await doFetch();
   } catch (e) {
+    console.error('dokieli SW: fetch threw', method, url, e);
     return { status: 0, statusText: e.message, headers: {}, body: '' };
   }
 
@@ -169,16 +170,20 @@ async function solidLogin(idp) {
   };
 }
 
-WebExtension.runtime.onMessage.addListener(function (request) {
+WebExtension.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (request.action === 'dokieli.login') {
-    return solidLogin(request.idp)
-      .then(result => ({ ok: true, ...result }))
+    solidLogin(request.idp)
+      .then(result => sendResponse({ ok: true, ...result }))
       .catch(err => {
         console.error('dokieli: login failed:', err);
-        return { ok: false, error: err.message };
+        sendResponse({ ok: false, error: err.message });
       });
+    return true;
   }
   if (request.action === 'dokieli.fetch') {
-    return solidFetch(request.url, request.options);
+    solidFetch(request.url, request.options)
+      .then(sendResponse)
+      .catch(err => sendResponse({ status: 0, statusText: err.message, headers: {}, body: '' }));
+    return true;
   }
 });

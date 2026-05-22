@@ -89,8 +89,13 @@ const DO = window.DO ?? {
         console.log("Logged in: ", webId);
 
         if (webId) {
-          await setUserInfo(webId);
-          await afterSetUserInfo();
+          while (!Config.Storage) await new Promise(r => setTimeout(r, 50));
+          try {
+            await setUserInfo(webId);
+            await afterSetUserInfo();
+          } catch (e) {
+            console.error('dokieli: initAuth profile load failed', e);
+          }
         }
       }).finally(() => {
         document.dispatchEvent(new Event('dokieli:auth-ready'));
