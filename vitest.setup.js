@@ -1,10 +1,17 @@
 import { JSDOM } from "jsdom";
 import { vi } from "vitest";
+import {
+  IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFactory, IDBIndex,
+  IDBKeyRange, IDBObjectStore, IDBOpenDBRequest, IDBRequest,
+  IDBTransaction, IDBVersionChangeEvent,
+} from "fake-indexeddb";
 
 vi.mock("./src/i18n", async () => {
   const mod = await import("./tests/utils/mocki18n.js");
   return { i18n: mod.i18n };
 });
+
+vi.mock("leaflet-gpx", () => ({}));
 
 const htmlContent = `
 <!DOCTYPE html>
@@ -31,6 +38,17 @@ const dom = new JSDOM(htmlContent.trim(), { url: "https://example.com/" });
 
 global.window = dom.window;
 global.document = dom.window.document;
+
+const idbGlobals = {
+  indexedDB: new IDBFactory(),
+  IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFactory, IDBIndex,
+  IDBKeyRange, IDBObjectStore, IDBOpenDBRequest, IDBRequest,
+  IDBTransaction, IDBVersionChangeEvent,
+};
+for (const [k, v] of Object.entries(idbGlobals)) {
+  globalThis[k] = v;
+  dom.window[k] = v;
+}
 
 // Polyfill helper
 function patchElementPrototype(win) {
