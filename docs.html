@@ -39,7 +39,7 @@
           </dl>
           <dl id="document-modified">
             <dt>Modified</dt>
-            <dd><time content="2026-05-17T00:00:00Z" datatype="xsd:dateTime" datetime="2026-05-17T00:00:00Z" property="schema:dateModified">2026-05-17</time></dd>
+            <dd><time content="2026-05-24T00:00:00Z" datatype="xsd:dateTime" datetime="2026-05-24T00:00:00Z" property="schema:dateModified">2026-05-24</time></dd>
           </dl>
           <dl id="document-type">
             <dt>Document Type</dt>
@@ -167,13 +167,20 @@
                     <h4 property="schema:name">Web Extension</h4>
                     <div datatype="rdf:HTML" property="schema:description">
                       <p>Dokieli can also be used as a browser extension, providing full functionality directly in the browser. The extension works in Firefox and Chromium-based browsers, offering a browser toolbar option that enables the same features as the standalone web application.</p>
-                      <p>Currently the extension works with Firefox and Chromium browsers. The extension can be used in the following way:</p>
+                      <p>Install from your browser's add-on store:</p>
+                      <dl>
+                        <dt>Firefox</dt>
+                        <dd><a href="https://addons.mozilla.org/en-GB/firefox/addon/dokieli/">Firefox Add-ons: dokieli</a> (temporarily unavailable)</dd>
+                        <dt>Chromium</dt>
+                        <dd><a href="https://chromewebstore.google.com/detail/dokieli/ddmhaonbhodhgkaljpjlglodncddalid">Chrome Web Store: dokieli</a> (Chrome, Brave, Vivaldi, and other Chromium-based browsers)</dd>
+                      </dl>
+                      <p>Alternatively, the extension can be loaded manually from source:</p>
                       <ol>
-                        <li>Clone the dokieli repository from <a href="https://github.com/dokieli/dokieli">https://github.com/dokieli/dokieli</a> (or fork it).</li>
+                        <li>Clone the dokieli repository from <a href="https://git.dokie.li/">https://git.dokie.li/</a> (or fork it).</li>
                         <li>
                           <dl>
                             <dt>Firefox</dt>
-                            <dd>From the "Add-ons and themes" menu, select "Debug Add-ons" (or go to <code>about:debugging#/runtime/this-firefox</code> from the addressbar) and import by selecting any file from the cloned dokieli directory (e.g., <code>manifest.json</code>). See also <a href="https://developer.mozilla.org/en-US/Add-ons/WebExtensions/Temporary_Installation_in_Firefox">temporary installation in Firefox</a>. Note that if you restart your browser, you'll need to go through this process.</dd>
+                            <dd>From the "Add-ons and themes" menu, select "Debug Add-ons" (or go to <code>about:debugging#/runtime/this-firefox</code> from the addressbar) and import by selecting any file from the cloned dokieli directory (e.g., <code>manifest.json</code>). See also <a href="https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/">temporary installation in Firefox</a>. Note that if you restart your browser, you'll need to go through this process.</dd>
                             <dt>Chromium</dt>
                             <dd>The general process for browsers such as Chrome, Brave, Vivaldi, <a href="https://en.wikipedia.org/wiki/Chromium_(web_browser)#Browsers_based_on_Chromium">etc.</a>, are as follows. From the "Extensions" menu (or go to <code>chrome://extensions/</code>, <code>brave://extensions</code>, <code>vivaldi://extensions/</code> from addressbar), check the "developer mode" option. Import the dokieli directory from "Load unpacked".</dd>
                           </dl>
