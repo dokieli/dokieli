@@ -301,6 +301,14 @@ export function getMediaTypeURIs(mediaTypes) {
 
   return mediaTypes.map(mediaType => { return `http://www.w3.org/ns/iana/media-types/${mediaType}#Resource` });
 }
+export function isUrl(urlString) {
+  try {
+    const url = new URL(urlString);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export function isHttpOrHttpsProtocol(urlString) {
   try {

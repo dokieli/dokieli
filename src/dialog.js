@@ -797,9 +797,12 @@ export function shareResource(listenerEvent, iri) {
         }
 
         var authorizations = getAuthorizationsMatching(aclResourceGraph, matchers);
-// console.log(authorizations)
+console.log(authorizations)
         const subjectsWithAccess = getAccessSubjects(authorizations);
 // console.log(subjectsWithAccess)
+
+        // const accessConditions = getAccessConditions(authorizations);
+        // console.log(accessConditions)
 
         const input = document.getElementById('share-resource-search-contacts');
         const suggestions = document.querySelector('#share-resource-permissions .suggestions');
@@ -1161,6 +1164,7 @@ function showAccessModeSelection(node, id, accessSubject, subjectType, options) 
   });
 }
 
+//TODO: Check environment variable for issuerCondition information that's enforced per dokieli instance.
 function updateAuthorization(accessContext, selectedMode, accessSubject, subjectType) {
   var documentURL = currentLocation();
 
@@ -1181,7 +1185,8 @@ function updateAuthorization(accessContext, selectedMode, accessSubject, subject
 
   var authorizations = getAuthorizationsMatching(aclResourceGraph, matchers);
 
-  // console.log(authorizations);
+  console.log('updateAuthorization');
+  console.log(authorizations);
 
   var insertGraph = '';
   var deleteGraph = '';
@@ -1220,6 +1225,11 @@ function updateAuthorization(accessContext, selectedMode, accessSubject, subject
 
         var accessModes = authorizations[authorization].mode;
         var deleteAccessModes = '<' + accessModes.join('>, <') + '>';
+
+        var accessConditions = authorizations[authorization].condition;
+        accessConditions.forEach(condition => {
+          
+        })
 
         //Deletes the Authorization
         if (!multipleAccessSubjects) {
@@ -1312,9 +1322,26 @@ acl:${subjectType} <${accessSubject}> .
       authorizationSubject = '#' + generateAttributeId();
 
       var additionalProperties = [];
-      ['agent', 'agentClass', 'agentGroup', 'origin'].forEach(key => {
+      ['agent', 'agentClass', 'agentGroup', 'origin', 'condition'].forEach(key => {
         if (updatedAuthorizations[authorization][key] && updatedAuthorizations[authorization][key].length) {
-          additionalProperties.push(`acl:${key} <${updatedAuthorizations[authorization][key].join('>, <')}>`);
+          if (key === 'condition') {
+            Object.values(updatedAuthorizations[authorization][key]).forEach((condition) => {
+              let conditionStatements = [];
+              if (condition.type) {
+                conditionStatements.push(`a <${condition.type}>`);
+              }
+              Object.entries(condition).forEach(([conditionKey, conditionValue]) => {
+                if (conditionKey === 'type') return;
+                const values = Array.isArray(conditionValue) ? conditionValue : [conditionValue];
+                const formatted = `<${values.join('>, <')}>`;
+                conditionStatements.push(`acl:${conditionKey} ${formatted}`);
+              });
+              additionalProperties.push(`acl:condition [ ${conditionStatements.join('; ')} ]`);
+            })
+          }
+          else {
+            additionalProperties.push(`acl:${key} <${updatedAuthorizations[authorization][key].join('>, <')}>`);
+          }
         }
       })
       additionalProperties = additionalProperties.join(';\n');
@@ -1344,7 +1371,7 @@ acl:${subjectType} <${accessSubject}> .
     patches.push({ 'insert': insertGraph });
   }
 
-  // console.log(patches)
+  console.log(patches)
   if (!patches.length) {
     throw new Error("Check why the patch payload wasn't constructed in updateAuthorization." + patches);
   }

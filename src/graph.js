@@ -19,7 +19,7 @@ import rdf from "rdf-ext";
 import { RdfaParser } from "rdfa-streaming-parser";
 import { Readable } from "readable-stream";
 import Config from './config.js'
-import { stripFragmentFromString, getBaseURL, getPathURL, getAbsoluteIRI, getParentURLPath, currentLocation, getMediaTypeURIs } from './uri.js'
+import { stripFragmentFromString, getBaseURL, getPathURL, getAbsoluteIRI, getParentURLPath, currentLocation, getMediaTypeURIs, isUrl } from './uri.js'
 import { escapeRegExp, uniqueArray } from './util.js'
 import { domSanitize, safeObjectAssign, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeIRIOrBNode, sanitizeIRIs, sanitizeObject } from './utils/sanitization.js'
 import { parseMarkdown } from "./utils/html.js";
@@ -1750,9 +1750,22 @@ export function getACLResourceGraph(documentURL, iri, options = {}) {
 
         return getResourceGraph(aclResource, {})
           .then(({ response, graph: g }) => {
+            const link = response.headers.get('Link');
+            const conditions = [];
+
+            if (link) {
+              const linkHeaders = LinkHeader.parse(link);
+              if (linkHeaders.has('rel', 'http://www.w3.org/ns/auth/acl#condition')) {
+                linkHeaders.rel('http://www.w3.org/ns/auth/acl#condition').forEach(l => {
+                  conditions.push(l.uri);
+                });
+              }
+            }
+
             Config.Resource[documentURL]['acl']['effectiveACLResource'] = aclResource;
             Config.Resource[aclResource] = {};
             Config.Resource[aclResource]['response'] = response;
+            Config.Resource[aclResource]['conditions'] = conditions;
             //TODO: We probably shouldn't use this approach here:
             Config.Resource[aclResource]['graph'] = g;
             return g;
@@ -1819,9 +1832,32 @@ export function getAccessSubjects (authorizations, options) {
   return accessSubjects;
 }
 
+export function getAccessConditions (authorizations, options) {
+  var accessConditions = {};
+  var conditionTypes = options || ['ClientCondition', 'IssuerCondition'];
+
+  Object.keys(authorizations).forEach(authorization => {
+    conditionTypes.forEach(conditionType => {
+      var accessConditionsArray = authorizations[authorization][conditionType];
+      accessConditionsArray.forEach(accessSubject => {
+        accessConditions[accessSubject] = {};
+        accessConditions[accessSubject]['conditionType'] = conditionType;
+        accessConditions[accessSubject]['mode'] = authorizations[authorization]['mode'];
+      });
+    })
+  })
+
+  return accessSubjects;
+}
+
 
 export function getAuthorizationsMatching (g, matchers) {
   var authorizations = {};
+
+  const authorizationProperties = ['agent', 'agentClass', 'agentGroup', 'accessTo', 'default', 'mode', 'origin', 'condition'];
+  const conditionTypes = ['ClientCondition', 'IssuerCondition'];
+  const conditionClientProperties = ['client', 'clientClass', 'clientGroup'];
+  const conditionIssuerProperties = ['issuer', 'issuerClass', 'issuerGroup'];
 
   // console.log("getAuthorizationsMatching:", g.terms, g.out().values, matchers);
 
@@ -1851,10 +1887,36 @@ export function getAuthorizationsMatching (g, matchers) {
       var allKeysMatched = Object.keys(matchers).every(key => Object.keys(candidateAuthorization).includes(key));
 
       if (allKeysMatched) {
-        var properties = ['agent', 'agentClass', 'agentGroup', 'accessTo', 'default', 'mode', 'origin'];
         var authorization = {};
-        properties.forEach(p => {
+        authorizationProperties.forEach(p => {
           authorization[p] = s.out(ns.acl[p]).values;
+
+          if (p === 'condition' && authorization[p].length) {
+            authorization[p] = authorization[p].map(term => {
+              const conditionNode = isUrl(term) ? s.node(rdf.namedNode(term)) : s.node(rdf.blankNode(term));
+
+              const clientProps = {};
+              conditionClientProperties.forEach(prop => {
+                const vals = conditionNode.out(ns.acl[prop]).values;
+                if (vals.length) clientProps[prop] = vals;
+              });
+
+              const issuerProps = {};
+              conditionIssuerProperties.forEach(prop => {
+                const vals = conditionNode.out(ns.acl[prop]).values;
+                if (vals.length) issuerProps[prop] = vals;
+              });
+
+              if (Object.keys(clientProps).length) {
+                return { type: ns.acl.ClientCondition.value, ...clientProps };
+              }
+              if (Object.keys(issuerProps).length) {
+                return { type: ns.acl.IssuerCondition.value, ...issuerProps };
+              }
+
+              return term;
+            });
+          }
         })
         authorizations[authorizationIRI] = authorization;
       }
