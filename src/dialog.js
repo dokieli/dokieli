@@ -20,7 +20,7 @@ import LinkHeader from "http-link-header";
 import { i18n } from './i18n.js';
 import { getButtonHTML, updateButtons } from './ui/buttons.js';
 import { addMessageToLog, buildResourceView, copyRelativeResources, createFeedXML, createImmutableResource, createMutableResource, createNoteDataHTML, getAccessModeOptionsHTML, getBaseURLSelection, getDocument, getFeedFormatSelection, getLanguageOptionsHTML, getLicenseOptionsHTML, getResourceInfo, getSavePayload, isMarkdownTarget, rewriteBaseURL, setCopyToClipboard, setDocumentRelation, showActionMessage, showRobustLinksDecoration, showTimeMap, updateMutableResource, buildReferences, getDocumentConceptDefinitionsHTML, insertDocumentLevelHTML, insertTestCoverageToTable, diffRequirements, removeReferences, getStorageSelfDescription, getContactInformation, getPersistencePolicy, getODRLPolicies, updateResourceInfos, initCurrentStylesheet, setDate, showFragment, initCopyToClipboard, setDocumentURL, getAgentHTML } from './doc.js';
-import { removeNodesWithIds, createHTML } from './utils/html.js';
+import { removeNodesWithIds, createHTML, getFormValues } from './utils/html.js';
 import { accessModeAllowed, accessModePossiblyAllowed } from './access.js';
 import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeObject, htmlEncode, sanitizeIRIs } from './utils/sanitization.js';
 import { escapeRDFLiteral, generateAttributeId, generateUUID } from './util.js';
@@ -370,7 +370,7 @@ function showDocumentDo(node) {
     {
       id: 'menu-group-primary',
       className: 'menu-group-primary',
-      buttons: [Config.Button.Menu.New, Config.Button.Menu.NewSlideshow, Config.Button.Menu.Open, editToggle]
+      buttons: [Config.Button.Menu.New, Config.Button.Menu.Open, editToggle]
     },
     {
       id: 'menu-group-document',
@@ -461,11 +461,7 @@ export function initDocumentDoEvents() {
     }
 
     if (e.target.closest('.resource-new')) {
-      createNewDocument(e);
-    }
-
-    if (e.target.closest('.resource-new-slideshow')) {
-      createNewSlideshow(e);
+      showCreateNewDocument(e);
     }
 
     if (e.target.closest('.resource-new-slide')) {
@@ -2996,6 +2992,81 @@ export async function openResource(iri, options) {
   await handleResource(iri, headers, options);
 }
 
+export function showCreateNewDocument(e) {
+  if (e) {
+    e.target.closest('button').disabled = true;
+  }
+
+  const documentOptions = {
+    ...Config.DOMProcessing,
+    format: true,
+    // TODO: Revisit because the user should be informed (show dialog) whether they want to retain or include certain scripts.
+    // sanitize: true,
+    normalize: true
+  };
+
+  var buttonDisabled = (document.location.protocol === 'file:') ? ' disabled="disabled"' : '';
+
+  let id = 'create-new-document';
+
+  var buttonClose = getButtonHTML({ key: `dialog.${id}.close.button`, button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
+
+  document.body.appendChild(fragmentFromString(`
+    <aside aria-labelledby="${id}-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="${id}" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#${id}" xml:lang="${Config.User.UI.Language}">
+      <h2 data-i18n="dialog.${id}.h2" id="${id}-label" property="schema:name">${i18n.t(`dialog.${id}.h2.textContent`)} ${Config.Button.Info.NewDocument}</h2>
+      ${buttonClose}
+      <div class="info"></div>
+      <form>
+        <fieldset id="${id}-fieldset">
+          <legend data-i18n="dialog.${id}.legend">${i18n.t(`dialog.${id}.legend.textContent`)}</legend>
+          <ul>
+            <li><input type="radio" id="create-new-document-article" name="create-new-document" value="create-new-document-article" checked="checked" /> <label for="create-new-document-article">Article</label></li>
+            <li><input type="radio" id="create-new-document-slideshow" name="create-new-document" value="create-new-document-slideshow" /> <label for="create-new-document-slideshow">Slideshow</label></li>
+            <li><input type="radio" id="create-new-document-cv" name="create-new-document" value="create-new-document-cv" /> <label for="create-new-document-cv">Curriculum Vitae</label></li>
+          </ul>
+          <button class="create ${id}" type="submit" data-i18n="dialog.${id}.create-template.button" title="${i18n.t(`dialog.${id}.create-template.button.title`)}">${i18n.t(`dialog.${id}.create-template.button.textContent`)}</button>
+        </fieldset>
+      </form>
+    </aside>
+  `));
+
+  var createNewDocumentDialog = document.getElementById('create-new-document');
+
+  createNewDocumentDialog.addEventListener('click', (e) => {
+    if (e.target.closest('button.close')) {
+      document.querySelector('#document-menu .resource-new').disabled = false;
+    }
+
+    if (!e.target.closest('button.create')) {
+      return
+    }
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    document.querySelector('#document-menu .resource-new').disabled = false;
+
+    // const selected = createNewDocumentDialog.querySelector('input[name="create-new-document"]:checked')?.value;
+
+    const form = e.target.closest('form');
+
+    const formValues = getFormValues(form);
+    // console.log(formValues)
+
+    switch (formValues['create-new-document']) {
+      case 'create-new-document-article': default:
+        createNewDocument();
+        break;
+      case 'create-new-document-slideshow':
+        createNewSlideshow();
+        break;
+      case 'create-new-document-cv':
+        createNewCV();
+        break;
+    }
+  });
+}
+
 export function openDocument(e) {
   if(typeof e !== 'undefined') {
     e.target.disabled = true;
@@ -3923,6 +3994,22 @@ export async function saveAsDocument(e) {
   })
 }
 
+export function createNewCV(e) {
+  hideDocumentMenu();
+
+  // init cv controls / buttons somehwere
+
+  Config.Editor.toggleEditor('author', { template: 'new-cv' });
+
+  Config.DocumentAction = 'new';
+
+  disableAutoSave(Config.DocumentURL, {'method': 'IndexedDB'});
+
+  updateButtons();
+
+  initSlideshow({ focusEditor: true });
+}
+
 export function createNewDocument(e) {
   hideDocumentMenu();
 
@@ -3939,11 +4026,14 @@ export function createNewSlideshow(e) {
   hideDocumentMenu();
 
   const liveEditor = Config.Editor?.mode === 'author' && Config.Editor.authorToolbarView?.editorView;
+
+  
   if (liveEditor) {
-    Config.Editor.wrapArticleAsSlideshow();
-    updateButtons();
-    initSlideshow({ focusEditor: true });
-    return;
+    Config.Editor.toggleEditor('social');
+  //   Config.Editor.wrapArticleAsSlideshow();
+  //   updateButtons();
+  //   initSlideshow({ focusEditor: true });
+  //   return;
   }
 
   Config.Editor.toggleEditor('author', { template: 'new-slideshow' });
