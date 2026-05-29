@@ -279,6 +279,7 @@ export default {
   ResourceType: {
     "http://schema.org/Article": 'Article',
     "http://schema.org/BlogPosting": 'Blog Posting',
+    "http://w3id.org/roh#CurriculumVitae": 'Curriculum Vitae',
     "http://schema.org/Course": 'Course',
     "http://schema.org/Guide": 'Guide',
     "http://schema.org/NewsArticle": 'News Article',
