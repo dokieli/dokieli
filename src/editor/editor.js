@@ -42,7 +42,7 @@ import { WebsocketProvider } from 'y-websocket'
 import { IndexeddbPersistence } from 'y-indexeddb'
 import { ySyncPlugin, yCursorPlugin, yUndoPlugin, undo, redo, initProseMirrorDoc, prosemirrorToYDoc } from 'y-prosemirror'
 import { currentLocation } from "../uri.js";
-import { getRandomIndex, stringToColor } from "../util.js";
+import { getRandomIndex, stringToColor, generateUUID } from "../util.js";
 
 const ns = Config.ns;
 
@@ -162,7 +162,7 @@ export class Editor {
 
     let node;
 
-    if (options?.template === 'new' || options?.template === 'new-slideshow') {
+    if (options?.template === 'new' || options?.template === 'new-slideshow' || options?.template === 'new-cv') {
       Config.Editor['new'] = true;
       this.setTemplate(mode, options);
     }
@@ -196,6 +196,9 @@ export class Editor {
         break;
       case 'new-slideshow':
         this.setTemplateNewSlideshow(mode, options);
+        break;
+      case 'new-cv':
+        this.setTemplateNewCV(mode, options);
         break;
     }
   }
@@ -256,6 +259,7 @@ export class Editor {
       document.head.appendChild(newTitle);
     }
 
+    // FIXME: do we still need this? 
     const documentMenu = document.getElementById('document-menu');
     // Drop dynamic menu sections so they re-render in the correct order.
     ['#document-do', '#document-autosave', '#document-views', '#about-dokieli', '#ui-language'].forEach(sel => {
@@ -268,6 +272,77 @@ export class Editor {
 
     document.body.removeAttribute('id');
     document.body.className = 'shower single';
+  }
+
+  setTemplateNewCV(mode, options) {
+    //Start with empty body. Reuse <head>, <html> will have its lang/xml:lang, <body> will have prefix.
+    // Add initial nodes h1, p with no content.
+    // Update head > title to 'Untitled'. Make sure to have Save update head > title with h1 value (if specified).
+
+    document.documentElement.setAttribute("lang", `${Config.User.UI.Language}`);
+    document.documentElement.setAttribute("xml:lang", `${Config.User.UI.Language}`);
+    document.documentElement.setAttribute("dir", `${Config.User.UI.LanguageDir}`);
+
+    const titleElement = document.querySelector('head title');
+
+    if (titleElement) {
+      titleElement.textContent = 'Untitled';
+    }
+    else {
+      const newTitle = document.createElement('title');
+      newTitle.textContent = 'Untitled';
+      document.head.appendChild(newTitle);
+    }
+    // TODO: Remove aria-label when content is updated
+
+    var documentMenu = document.getElementById('document-menu');
+
+    document.body.replaceChildren(fragmentFromString(`<main><article dir="auto"><h1 aria-label="${i18n.t('editor.new.h1.aria-label')}" property="schema:name"></h1><div datatype="rdf:HTML" property="schema:description"><p></p></div></article></main>`));
+
+    document.body.prepend(documentMenu);
+
+    document.body.removeAttribute('id');
+    document.body.removeAttribute('class');
+
+    let userDetails = {
+      IRI: Config.User.IRI || 'https://example.com/profile/card#me',
+      Name: Config.User.Name || 'Your Name',
+      Email: Config.User.Email || 'you@example.org',
+    };
+
+    //TODO: Move to separate micro template
+    let documentDetails = `
+<details open="">
+  <summary>More details about this document</summary>
+  <dl id="document-identifier">
+    <dt>Identifier</dt>
+    <dd><a href="${Config.DocumentURL}">${Config.DocumentURL}</a></dd>
+  </dl>
+  <dl id="document-authors">
+    <dt>Author</dt>
+    <dd><a href="${userDetails.IRI}" rel="schema:creator schema:publisher schema:author" typeof="schema:Person">${userDetails.Name}</a></dd>
+  </dl>
+  <dl id="document-primary-topic">
+    <dt>Topic</dt>
+    <dd>
+      <p><a href="${userDetails.IRI}" rel="foaf:primaryTopic">${userDetails.Name}</a></p>
+      <dl>
+        <dt>WebID</dt>
+        <dd><a href="${userDetails.IRI}">${userDetails.IRI}</a></dd>
+        <dt>Email</dt>
+        <dd><a href="mailto:${userDetails.Email}">${userDetails.Email}</a></dd>
+      </dl>
+    </dd>
+  </dl>
+  <dl id="document-type">
+    <dt>Document Type</dt>
+    <dd><a href="http://xmlns.com/foaf/0.1/PersonalProfileDocument" rel="rdf:type">Personal Profile Document</a></dd>
+    <dd><a href="http://w3id.org/roh#CurriculumVitae" rel="rdf:type">Curriculum Vitae</a></dd>
+  </dl>
+</details>
+    `
+
+    document.querySelector('main > article').appendChild(fragmentFromString(documentDetails));
   }
 
 

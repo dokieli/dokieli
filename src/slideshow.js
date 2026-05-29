@@ -36,6 +36,7 @@ let keydownHandler = null;
 let hashHandler = null;
 let railClickHandler = null;
 let decorationsUpdateHandler = null;
+let modeChangeHandler = null;
 
 function getSlides() {
   // Exclude the cloned active-slide thumbnail living inside #rail-active-placeholder.
@@ -358,11 +359,19 @@ export function start(options = {}) {
   hashHandler = syncFromHash;
   railClickHandler = onRailClick;
   decorationsUpdateHandler = () => { if (!isFull()) layoutSingle(); };
+  // In author mode .active is a PM decoration, not a real attribute; switching to
+  // reading mode destroys the editor and drops it, leaving the main view empty.
+  // Re-apply the active slide for the new mode (read mode toggles the real class).
+  modeChangeHandler = () => {
+    if (!document.body.classList.contains('shower')) return;
+    setActive(activeIndex, { syncHash: false });
+  };
   document.addEventListener('keydown', keydownHandler, true);
   document.addEventListener('keyup', keyupHandler, true);
   window.addEventListener('hashchange', hashHandler);
   document.addEventListener('click', railClickHandler, true);
   window.addEventListener('dokieli:slideshow-decorations-updated', decorationsUpdateHandler);
+  window.addEventListener('dokieli:editor-mode-changed', modeChangeHandler);
 }
 
 export function stop() {
@@ -373,7 +382,8 @@ export function stop() {
   if (hashHandler) window.removeEventListener('hashchange', hashHandler);
   if (railClickHandler) document.removeEventListener('click', railClickHandler, true);
   if (decorationsUpdateHandler) window.removeEventListener('dokieli:slideshow-decorations-updated', decorationsUpdateHandler);
-  keydownHandler = keyupHandler = hashHandler = railClickHandler = decorationsUpdateHandler = null;
+  if (modeChangeHandler) window.removeEventListener('dokieli:editor-mode-changed', modeChangeHandler);
+  keydownHandler = keyupHandler = hashHandler = railClickHandler = decorationsUpdateHandler = modeChangeHandler = null;
 }
 
 export function isStarted() {
