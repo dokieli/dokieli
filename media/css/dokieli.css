@@ -2215,6 +2215,52 @@ margin-top:0.25em;
 margin-bottom:1em;
 }
 
+#create-new-document-fieldset legend {
+margin-bottom:1em;
+}
+
+#create-new-document-fieldset ul {
+  list-style: none;
+  margin-bottom:1em;
+  display: flex;
+  gap: 2em;
+}
+
+#create-new-document-fieldset ul li {
+  flex: 1;
+  position: relative;
+}
+
+#create-new-document-fieldset ul li input[type="radio"] {
+  display: none;
+}
+
+#create-new-document-fieldset ul li label {
+  display: block;
+  text-align: center;
+  padding: 1em 0;
+  border: 1px solid #ccc;
+  border-radius: 0.5em;
+  cursor: pointer;
+  user-select: none;
+}
+
+#create-new-document-fieldset ul li input[type="radio"]:checked + label {
+  background-color: #080;
+  color: #fff;
+  border-color: #efe;
+}
+
+#create-new-document-fieldset ul li input[type="radio"]:focus-visible + label {
+  outline: 2px solid #000;
+  outline-offset: 2px;
+}
+
+#create-new-document-fieldset ul li label:hover {
+  background-color: #eee;
+}
+
+
 .info { background-color:#FFFFFF; color:#000000; font-weight:bold; }
 .success { background-color:#FFFFFF; color:#008800; font-weight:bold; }
 .warning { background-color:#FFFF00; color:#000000; font-weight:bold; }
