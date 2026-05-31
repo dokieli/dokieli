@@ -40,6 +40,11 @@ export default {
   User: {
     IRI: null,
     Role: null,
+    Encryption: {
+      Enabled: false,
+      KeyId: null,
+      Document: false
+    },
     UI: {
       Language: 'en-GB', // default
       LanguageDir: 'ltr'
@@ -626,6 +631,7 @@ export default {
     rel: rdf.namespace('https://www.w3.org/ns/iana/link-relations/relation#'),
     risk: rdf.namespace('https://w3id.org/dpv/risk#'),
     rsa: rdf.namespace('http://www.w3.org/ns/auth/rsa#'),
+    sec: rdf.namespace('https://w3id.org/security#'),
     schema: rdf.namespace('http://schema.org/'),
     sio: rdf.namespace('http://semanticscience.org/resource/'),
     sioc: rdf.namespace('http://rdfs.org/sioc/ns#'),

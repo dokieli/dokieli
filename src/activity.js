@@ -18,7 +18,6 @@ limitations under the License.
 import rdf from 'rdf-ext';
 import { createActivityHTML, createActivityJSONLD, showCitations, getReferenceLabel, createNoteDataHTML, handleDeleteNote } from './doc.js';
 import { applyMarksFromTextQuote, applyMarkFromSelector } from '@dokieli/web-annotation';
-var _deleteListenerAttached = false;
 import { createHTML } from './utils/html.js';
 import { Icon } from './ui/icons.js'
 import { getButtonHTML } from './ui/buttons.js'
@@ -32,6 +31,34 @@ import { getTextContentExcludingSups } from './editor/utils/annotation.js';
 import { i18n } from './i18n.js';
 import { showUserIdentityInput } from './auth.js';
 import { updateDeviceStorageProfile } from './storage.js';
+import { decryptContent, isJWE } from './crypto.js';
+import { isUnlocked, getSessionPrivateKey } from './keystore.js';
+
+var _deleteListenerAttached = false;
+let _pendingEncryptedAnnotations = [];
+let _onEncryptionNeeded = null;
+
+export function registerEncryptionUnlockHandler(fn) {
+  _onEncryptionNeeded = fn;
+  if (_pendingEncryptedAnnotations.length > 0 && !document.getElementById('encryption-unlock')) {
+    fn();
+  }
+}
+
+export function clearPendingEncryptedQueues() {
+  _pendingEncryptedAnnotations.length = 0;
+}
+
+export async function processPendingEncryptedNotes() {
+  const pending = _pendingEncryptedAnnotations.splice(0);
+  for (const { noteIRI, g, options } of pending) {
+    try {
+      await showAnnotation(noteIRI, g, options);
+    } catch(e) {
+      console.error('processPendingEncryptedNotes: failed for', noteIRI, e);
+    }
+  }
+}
 
 const ns = Config?.ns;
 
@@ -142,9 +169,8 @@ export function initializeButtonMore(node) {
   });
 }
 
-export function addNoteToNotifications(noteData) {
-  var id = document.getElementById(noteData.id);
-  if (id) return;
+export async function addNoteToNotifications(noteData) {
+  if (document.getElementById(noteData.id)) return;
 
   if (Config.User.IRI && !_deleteListenerAttached) {
     _deleteListenerAttached = true;
@@ -155,7 +181,7 @@ export function addNoteToNotifications(noteData) {
   }
 
   var noteDataIRI = noteData.iri;
-  
+
 // console.log(noteData)
   var note = createNoteDataHTML(noteData);
 
@@ -188,6 +214,7 @@ export function addNoteToNotifications(noteData) {
     sanitizeInsertAdjacentHTML(notifications, 'beforeend', li);
   }
 }
+
 
 export function sendNotifications(tos, note, iri, shareResource) {
   return new Promise((resolve, reject) => {
@@ -601,7 +628,7 @@ function showActivitiesUncached(url, options = {}) {
       });
       subjects = uniqueArray(subjects);
 
-      subjects.forEach(i => {
+      const subjectPromises = subjects.map(i => {
         var s = g.node(rdf.namedNode(i));
         var types = getGraphTypes(s);
 
@@ -691,7 +718,7 @@ function showActivitiesUncached(url, options = {}) {
                   noteData['datetime'] = datetime;
                 }
 
-                addNoteToNotifications(noteData);
+                return addNoteToNotifications(noteData);
               }
             }
           }
@@ -889,7 +916,7 @@ function showActivitiesUncached(url, options = {}) {
               noteData['rights'] = rights;
             }
 
-            addNoteToNotifications(noteData);
+            return addNoteToNotifications(noteData);
           }
           else {
             // console.log(i + ' has unrecognised types: ' + resourceTypes);
@@ -900,7 +927,8 @@ function showActivitiesUncached(url, options = {}) {
           // console.log('Skipping ' + i + ': No type.');
           // return Promise.reject({'message': 'Activity has no type. What to do?'});
         }
-      });
+      }).filter(Boolean);
+      return Promise.allSettled(subjectPromises);
     }
     // ,
     // function(reason) {
@@ -910,7 +938,7 @@ function showActivitiesUncached(url, options = {}) {
   );
 }
 
-export function showContactsActivities() {
+export function showContactsActivities(onComplete) {
   var aside = document.querySelector('#document-notifications');
 
   var showProgress = function() {
@@ -986,8 +1014,14 @@ export function showContactsActivities() {
 
   getContactsAndActivities()
     .then(() => Promise.allSettled(promises))
-    .then(() => removeProgress())
-    .catch(() => removeProgress());
+    .then(() => {
+      removeProgress();
+      if (typeof onComplete === 'function') onComplete();
+    })
+    .catch(() => {
+      removeProgress();
+      if (typeof onComplete === 'function') onComplete();
+    });
 }
 
 export function processAgentActivities(agent) {
@@ -1302,6 +1336,27 @@ export async function showAnnotation(noteIRI, g, options) {
         }
         bodyObjects.push(bodyObject);
       })
+
+      const encryptedBodyItems = bodyObjects.filter(b => b.value && isJWE(b.value));
+      if (encryptedBodyItems.length) {
+        if (isUnlocked()) {
+          for (const b of encryptedBodyItems) {
+            try {
+              b.value = await decryptContent(b.value, getSessionPrivateKey());
+            } catch(e) {
+              console.error('showAnnotation: body decrypt failed', e);
+            }
+          }
+        } else {
+          if (!_pendingEncryptedAnnotations.some(p => p.noteIRI === noteIRI)) {
+            _pendingEncryptedAnnotations.push({ noteIRI, g, options });
+          }
+          if (_onEncryptionNeeded && !document.getElementById('encryption-unlock')) {
+            _onEncryptionNeeded();
+          }
+          return;
+        }
+      }
       // console.log(bodyObjects)
     }
 
@@ -1350,6 +1405,22 @@ export async function showAnnotation(noteIRI, g, options) {
         containerNode = document.getElementById(fragment) || selectArticleNode(document);
       }
     }
+
+    if ([exact, prefix, suffix].some(v => v && isJWE(v))) {
+      if (isUnlocked()) {
+        const dec = async v => (v && isJWE(v)) ? decryptContent(v, getSessionPrivateKey()) : v;
+        [exact, prefix, suffix] = await Promise.all([dec(exact), dec(prefix), dec(suffix)]);
+      } else {
+        if (!_pendingEncryptedAnnotations.some(p => p.noteIRI === noteIRI)) {
+          _pendingEncryptedAnnotations.push({ noteIRI, g, options });
+        }
+        if (_onEncryptionNeeded && !document.getElementById('encryption-unlock')) {
+          _onEncryptionNeeded();
+        }
+        return;
+      }
+    }
+
     // console.log(exact);
     // console.log(prefix);
     // console.log(suffix);
@@ -1439,7 +1510,7 @@ export async function showAnnotation(noteIRI, g, options) {
         noteData["datetime"] = datetime;
       }
 
-      addNoteToNotifications(noteData);
+      await addNoteToNotifications(noteData);
 
       // var asideNode = fragmentFromString(asideNote);
       // var parentSection = getClosestSectionNode(selectedParentNode);
@@ -1497,7 +1568,7 @@ export async function showAnnotation(noteIRI, g, options) {
         noteData["datetime"] = datetime;
       }
       // console.log(noteData)
-      addNoteToNotifications(noteData);
+      await addNoteToNotifications(noteData);
     }
   }
   //TODO: Refactor
@@ -1557,7 +1628,7 @@ export async function showAnnotation(noteIRI, g, options) {
       if (datetime){
         noteData["datetime"] = datetime;
       }
-      addNoteToNotifications(noteData);
+      await addNoteToNotifications(noteData);
     }
     else {
       console.log(noteIRI + ' is not an oa:Annotation, as:inReplyTo, sioc:reply_of');

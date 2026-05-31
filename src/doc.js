@@ -34,6 +34,8 @@ import { rewriteBlobImagesToRelative, uploadBlobAssets, clearBlobAssets, hasUplo
 import { serializeAnnotationToHTML, serializeAnnotationToJSONLD } from '@dokieli/web-annotation';
 import { renderFootnote, renderCitation } from './editor/utils/reference-render.js';
 import { getResource } from "./fetcher.js";
+import { encryptContent } from './crypto.js';
+import { isUnlocked, getSessionPublicKey, getSessionKid } from './keystore.js';
 
 const ns = Config.ns;
 
@@ -2104,7 +2106,7 @@ export function createImmutableResource(url, data, options) {
   });
 }
 
-export function createMutableResource(url, data, options) {
+export async function createMutableResource(url, data, options) {
   url = sanitizeIRI(url);
 
   if (!url) return;
@@ -2141,6 +2143,7 @@ export function createMutableResource(url, data, options) {
 
   // First serialize: document carries the mutableURL identifier (rel:latest-version).
   data = getDocument(null, documentOptions);
+  if (Config.User.Encryption?.Enabled) data = await encryptArticlePayload(data);
 
   Config.Storage.save(containerIRI, uuid, data, options)
     .then((resolved) => handleActionMessage(resolved))
@@ -2153,6 +2156,7 @@ export function createMutableResource(url, data, options) {
   setDocumentRelation(document, [r], o);
 
   data = getDocument(null, documentOptions);
+  if (Config.User.Encryption?.Enabled) data = await encryptArticlePayload(data);
 
   Config.Storage.save(url, null, data, options)
     .then((resolved) => handleActionMessage(resolved))
@@ -2160,6 +2164,39 @@ export function createMutableResource(url, data, options) {
     .finally(() => {
       getResourceInfo(data, { 'mode': 'update' });
     });
+}
+
+// Encrypts the innerHTML of the article node within a full HTML string.
+// The encrypted JWE is embedded as a <script id="dokieli-e2ee" type="application/jose"> tag.
+// The outer <article> element and its attributes (RDFa, id, etc.) are preserved.
+// Returns the modified HTML string; returns the original unchanged if no article is found
+// or if the keystore is not unlocked.
+export async function encryptArticlePayload(htmlString) {
+  if (!isUnlocked()) return htmlString
+
+  const parser = new DOMParser()
+  const parsed = parser.parseFromString(htmlString, 'text/html')
+  const article = selectArticleNode(parsed)
+  if (!article) return htmlString
+
+  const plaintext = article.innerHTML
+  const pubKey = getSessionPublicKey()
+  const kid = getSessionKid()
+  const jwe = await encryptContent(plaintext, [pubKey], kid)
+
+  const script = parsed.createElement('script')
+  script.id = 'dokieli-e2ee'
+  script.type = 'application/jose'
+  script.textContent = jwe
+
+  article.setAttribute('data-encrypted', 'true')
+  article.innerHTML = ''
+  article.appendChild(script)
+
+  Config.User.Encryption.Document = true
+
+  const doctype = getDoctype()
+  return (doctype ? doctype + '\n' : '') + parsed.documentElement.outerHTML
 }
 
 export function isMarkdownTarget(url) {
@@ -2185,7 +2222,7 @@ export function getSavePayload(url, documentOptions) {
   return { data: getDocument(null, documentOptions), contentType: 'text/html' };
 }
 
-export function updateMutableResource(url, data, options) {
+export async function updateMutableResource(url, data, options) {
   if (!url) return;
   options = options || {};
 
@@ -2217,6 +2254,8 @@ export function updateMutableResource(url, data, options) {
   }
   data = payload.data;
   options.contentType = payload.contentType;
+
+  if (Config.User.Encryption?.Enabled) data = await encryptArticlePayload(data);
 
   Config.Storage.save(url, null, data, options)
     .then(async (resolved) => {

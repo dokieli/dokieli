@@ -22,6 +22,7 @@ import { getAgentHTML, showActionMessage, getResourceSupplementalInfo, handleDel
 import { Icon } from './ui/icons.js';
 import { setPreferredPolicyInfo, getAgentTypeIndex, getAgentSupplementalInfo, getAgentSeeAlsoPrimaryTopicOf, getAgentPreferencesInfo, getSubjectInfo } from './graph.js';
 import { removeDeviceStorageAsSignOut, updateDeviceStorageProfile, updateBrowserStorageOIDC, setDeviceStorageItem } from './storage.js';
+import { hasKeystore, lockKeystore } from './keystore.js';
 import { updateButtons, getButtonHTML } from './ui/buttons.js';
 import { SessionCore } from '@uvdsl/solid-oidc-client-browser/core';
 import { isCurrentScriptSameOrigin, isLocalhost } from './uri.js';
@@ -155,9 +156,11 @@ export async function signOut() {
   await signOutHttp();
 
   removeDeviceStorageAsSignOut();
+  lockKeystore();
 
   Config.User = {
     IRI: null,
+    Encryption: { Enabled: false, KeyId: null },
     UI: Config.User.UI
   }
 
@@ -864,6 +867,14 @@ export function afterSetUserInfo() {
 
   getResourceSupplementalInfo(Config.DocumentURL).then(resourceInfo => {
     updateButtons();
+  });
+
+  // Check for an existing keystore and surface the unlock prompt if found.
+  // Deferred so it does not block the rest of the sign-in flow.
+  hasKeystore().then(exists => {
+    if (exists) {
+      import('./dialog.js').then(({ showEncryptionUnlock }) => showEncryptionUnlock());
+    }
   });
 
   var promises = [];

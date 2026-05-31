@@ -27,7 +27,7 @@ const HTTP_ORIGINS_KEY = 'DO.Config.Http.origins';
 import { syncLocalRemoteResource, monitorNetworkStatus } from './sync.js';
 import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeObject } from './utils/sanitization.js';
 import { afterSetUserInfo, setUserInfo, processLoginInvocation } from './auth.js';
-import { showNotificationSources } from './activity.js';
+import { showNotificationSources, registerEncryptionUnlockHandler } from './activity.js';
 import { generateDataURI, getProxyableIRI, getUrlParams, stripFragmentFromString, stripUrlSearchHash } from './uri.js';
 import { SolidStorage, GitForgeStorage, HttpStorage, initStorage } from './storage/backend.js';
 import { initEditor } from './editor/initEditor.js';
@@ -38,6 +38,8 @@ import { openResource, initDocumentMenu, spawnDokieli, showDocumentMenu, initSli
 import { Icon } from './ui/icons.js';
 import { eventButtonClose, eventButtonSignIn, eventButtonSignOut, eventButtonNotificationsToggle, eventButtonInfo, emitDocEvent } from './events.js';
 import { hasNonWhitespaceText, getDocumentContentNode, selectArticleNode } from "./utils/html.js";
+import { decryptContent } from './crypto.js';
+import { isUnlocked, getSessionPrivateKey, getSessionKid, hasKeystore } from './keystore.js';
 
 export async function init (url) {
   initServiceWorker();
@@ -65,6 +67,7 @@ export async function init (url) {
 
     await initDocumentActions();
     await initDocumentMode();
+    await initEncryptedDocument();
 
     emitDocEvent('ready', { url: Config.DocumentURL });
 
@@ -135,7 +138,7 @@ function initUser() {
       // user.object.describes.Role = (Config.User.IRI && user.object.describes.Role) ? user.object.describes.Role : 'social';
 
       // Restore user info only, do not fetch profile or TypeIndex here. Auth (restoreSession) runs in parallel and may not have completed yet, so any authenticated fetch here gets a 401. The dokieli:auth-ready event fires after initAuth completes and triggers setUserInfo + afterSetUserInfo with a live session.
-      Config.User = sanitizeObject(user.object.describes);
+      Config.User = { Encryption: { Enabled: false, KeyId: null }, ...sanitizeObject(user.object.describes) };
     }
   })
 }
@@ -180,6 +183,12 @@ async function initDocumentActions() {
   initSlideshow();
   initCV();
   initCurrentStylesheet();
+  registerEncryptionUnlockHandler(async () => {
+    if (!document.getElementById('encryption-unlock') && await hasKeystore()) {
+      const { showEncryptionUnlock } = await import('./dialog.js');
+      showEncryptionUnlock();
+    }
+  });
   initShowNotificationSources();
   focusNote();
   setDocRefType();
@@ -501,6 +510,46 @@ function initPrint() {
       }
     });
   });
+}
+
+// Checks whether the loaded document contains an encrypted article.
+// If the keystore is already unlocked (e.g. user signed in before load), decrypts
+// in place immediately. Otherwise surfaces the unlock/setup prompt via dialog.js so
+// the user can enter their passphrase, after which the caller should invoke
+// decryptArticleInPlace() once the keystore is unlocked.
+async function initEncryptedDocument() {
+  const encryptedScript = document.getElementById('dokieli-e2ee');
+  if (!encryptedScript) return;
+
+  if (isUnlocked()) {
+    await decryptArticleInPlace();
+    return;
+  }
+
+  const { showEncryptionUnlock } = await import('./dialog.js');
+  showEncryptionUnlock();
+}
+
+// Decrypts the JWE stored in #dokieli-e2ee and restores the article innerHTML.
+// Requires the keystore to be unlocked. Called from the unlock dialog on success
+// as well as from initEncryptedDocument when the keystore is already unlocked.
+export async function decryptArticleInPlace() {
+  const encryptedScript = document.getElementById('dokieli-e2ee');
+  if (!encryptedScript) return;
+
+  const privateKey = getSessionPrivateKey();
+  if (!privateKey) return;
+
+  const jwe = encryptedScript.textContent.trim();
+  const plaintext = await decryptContent(jwe, privateKey);
+
+  const article = encryptedScript.closest('[data-encrypted]') || encryptedScript.parentElement;
+  article.removeAttribute('data-encrypted');
+  article.setHTMLUnsafe(plaintext);
+
+  Config.User.Encryption.Enabled = true;
+  Config.User.Encryption.KeyId = getSessionKid();
+  Config.User.Encryption.Document = true;
 }
 
 // function initMath(config) {

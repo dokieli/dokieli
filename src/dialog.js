@@ -28,7 +28,7 @@ import { escapeRDFLiteral, generateAttributeId } from './util.js';
 import { setAcceptRDFTypes } from './fetcher.js';
 import { forceTrailingSlash, generateDataURI, getAbsoluteIRI, getBaseURL, isHttpOrHttpsProtocol, isFileProtocol, isUrl, stripFragmentFromString, getFragmentFromString, getURLLastPath, currentLocation } from './uri.js';
 import { getAccessSubjects, getACLResourceGraph, getAgentInbox, getAgentName, getAuthorizationsMatching, getGraphAuthors, getGraphContributors, getGraphEditors, getGraphImage, getGraphLabelOrIRI, getGraphPerformers, getGraphTypes, getLinkRelation, getLinkRelationFromHead, getResourceGraph, getUserContacts, getUserLabelOrIRI, serializeData, getSubjectInfo, getRDFSerializer, getGraphCreators } from './graph.js';
-import { notifyInbox, sendNotifications, showContactsActivities, initializeNotifications } from './activity.js';
+import { notifyInbox, sendNotifications, showContactsActivities, initializeNotifications, registerEncryptionUnlockHandler, processPendingEncryptedNotes, clearPendingEncryptedQueues } from './activity.js';
 import Config from './config.js';
 const ns = Config.ns;
 import { Icon } from './ui/icons.js';
@@ -45,6 +45,7 @@ import { generateGeoView } from './geo.js';
 import { csvStringToJson, jsonToHtmlTableString } from './csv.js';
 import { restoreYjsContent, addYjsVersion, getYjsVersions, getYjsVersionsFromIDB, getCurrentVersionKey, onYjsVersionsChanged } from "./editor/editor.js";
 import { rewriteBlobImagesToRelative, uploadBlobAssets, clearBlobAssets, hasUploadTarget, resolveAuthenticatedImages } from "./editor/utils/imageAssets.js";
+import { createKeystore, unlockKeystore, isUnlocked, getSessionKid, hasKeystore } from './keystore.js';
 
 const versionItemCache = new Map();
 let editHistoryAside = null;
@@ -679,6 +680,12 @@ export function showNotifications() {
     aside = initializeNotifications();
   }
   aside.classList.add('on');
+
+  registerEncryptionUnlockHandler(async () => {
+    if (!document.getElementById('encryption-unlock') && await hasKeystore()) {
+      showEncryptionUnlock();
+    }
+  });
 
   showContactsActivities();
 }
@@ -7250,4 +7257,126 @@ export async function spawnDokieli(documentNode, data, contentTypes, iris, optio
   return tmpl.documentElement.cloneNode(true);
 
   // console.log('//TODO: Handle server returning wrong or unknown Response/Content-Type for the Request/Accept');
+}
+
+// Shows the first-time encryption setup aside panel.
+// Prompts the user to choose a passphrase, generates their keypair, stores the
+// encrypted keystore in IndexedDB, and enables encryption on the session.
+export function showEncryptionSetup(onSuccess) {
+  if (document.getElementById('encryption-setup')) return;
+
+  var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
+
+  var html = `
+    <aside aria-labelledby="encryption-setup-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="encryption-setup" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}">
+      <h2 id="encryption-setup-label">Set up encryption</h2>
+      ${buttonClose}
+      <div class="info"></div>
+      <p>Choose a passphrase to protect your encryption key. You will be asked for it each session. <strong>There is no recovery if you forget it.</strong></p>
+      <form id="encryption-setup-form">
+        <label for="encryption-passphrase">Passphrase</label>
+        <input id="encryption-passphrase" type="password" autocomplete="new-password" minlength="12" required />
+        <label for="encryption-passphrase-confirm">Confirm passphrase</label>
+        <input id="encryption-passphrase-confirm" type="password" autocomplete="new-password" minlength="12" required />
+        <button type="submit">Enable encryption</button>
+      </form>
+    </aside>`;
+
+  document.body.appendChild(fragmentFromString(html));
+
+  var aside = document.getElementById('encryption-setup');
+  var info = aside.querySelector('.info');
+  var form = aside.querySelector('#encryption-setup-form');
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    var pass = form.querySelector('#encryption-passphrase').value;
+    var confirm = form.querySelector('#encryption-passphrase-confirm').value;
+
+    if (pass !== confirm) {
+      info.textContent = 'Passphrases do not match.';
+      return;
+    }
+    if (pass.length < 12) {
+      info.textContent = 'Passphrase must be at least 12 characters.';
+      return;
+    }
+
+    form.querySelector('button[type="submit"]').disabled = true;
+    info.textContent = 'Generating key…';
+
+    try {
+      const publicKeyJWK = await createKeystore(pass);
+      Config.User.Encryption.Enabled = true;
+      Config.User.Encryption.KeyId = getSessionKid();
+      info.textContent = 'Encryption enabled. Annotations will be encrypted when posted.';
+      form.remove();
+      clearPendingEncryptedQueues();
+      if (typeof onSuccess === 'function') onSuccess();
+      // TODO Phase 2: publish publicKeyJWK to WebID profile
+    } catch (err) {
+      info.textContent = 'Setup failed: ' + err.message;
+      form.querySelector('button[type="submit"]').disabled = false;
+    }
+  });
+}
+
+// Shows the passphrase unlock aside panel for an existing keystore.
+// On success calls decryptArticleInPlace() if the document is encrypted,
+// then enables encryption on the session.
+export function showEncryptionUnlock(onSuccess) {
+  if (document.getElementById('encryption-unlock')) return;
+
+  var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
+
+  var html = `
+    <aside aria-labelledby="encryption-unlock-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="encryption-unlock" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}">
+      <h2 id="encryption-unlock-label">Unlock encryption</h2>
+      ${buttonClose}
+      <div class="info"></div>
+      <p>Enter your passphrase to unlock your encryption key for this session.</p>
+      <form id="encryption-unlock-form">
+        <label for="encryption-unlock-passphrase">Passphrase</label>
+        <input id="encryption-unlock-passphrase" type="password" autocomplete="current-password" required />
+        <button type="submit">Unlock</button>
+      </form>
+      <p><small>No encryption key yet? <button class="setup-encryption" type="button">Set up encryption</button></small></p>
+    </aside>`;
+
+  document.body.appendChild(fragmentFromString(html));
+
+  var aside = document.getElementById('encryption-unlock');
+  var info = aside.querySelector('.info');
+  var form = aside.querySelector('#encryption-unlock-form');
+
+  aside.querySelector('button.close').addEventListener('click', () => aside.remove());
+
+  aside.querySelector('button.setup-encryption').addEventListener('click', () => {
+    aside.remove();
+    showEncryptionSetup(onSuccess);
+  });
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    var pass = form.querySelector('#encryption-unlock-passphrase').value;
+    form.querySelector('button[type="submit"]').disabled = true;
+    info.textContent = 'Unlocking…';
+
+    try {
+      await unlockKeystore(pass);
+      Config.User.Encryption.Enabled = true;
+      Config.User.Encryption.KeyId = getSessionKid();
+
+      const { decryptArticleInPlace } = await import('./init.js');
+      await decryptArticleInPlace();
+      await processPendingEncryptedNotes();
+
+      if (typeof onSuccess === 'function') onSuccess();
+      info.textContent = 'Unlocked.';
+      setTimeout(() => aside.remove(), 800);
+    } catch (err) {
+      info.textContent = 'Wrong passphrase or no keystore found.';
+      form.querySelector('button[type="submit"]').disabled = false;
+    }
+  });
 }
