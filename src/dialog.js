@@ -38,6 +38,7 @@ import { exportAsDocument, updateUILanguage } from './actions.js';
 import { parseMarkdown, htmlToMarkdown, fragmentFromString, removeSelectorFromNode, selectArticleNode, getNodeWithoutClasses } from "./utils/html.js";
 import { showUserSigninSignout } from './auth.js';
 import { initSlideshow } from './init.js';
+import { initCV } from './cv.js';
 import * as Slideshow from './slideshow.js';
 import { generateGeoView } from './geo.js';
 import { csvStringToJson, jsonToHtmlTableString } from './csv.js';
@@ -3997,8 +3998,6 @@ export async function saveAsDocument(e) {
 export function createNewCV(e) {
   hideDocumentMenu();
 
-  // init cv controls / buttons somehwere
-
   Config.Editor.toggleEditor('author', { template: 'new-cv' });
 
   Config.DocumentAction = 'new';
@@ -4007,7 +4006,7 @@ export function createNewCV(e) {
 
   updateButtons();
 
-  initSlideshow({ focusEditor: true });
+  initCV();
 }
 
 export function createNewDocument(e) {

@@ -15,69 +15,203 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import Config from './config.js';
+import { fragmentFromString } from './utils/html.js';
+import { slugify } from './editor/plugins/autoId.js';
+import { registerDocumentTransform } from './utils/documentTransforms.js';
+
+// type === slugify(label) so it matches the id autoIdPlugin derives from the heading.
 const SECTIONS = [
-  { type: 'summary', label: 'Summary' },
-  { type: 'experience', label: 'Experience' },
-  { type: 'education', label: 'Education' },
-  { type: 'skills', label: 'Skills' },
-  { type: 'presentations', label: 'Presentations and Talks' },
-  { type: 'contributions', label: 'Technical and Community Contributions' },
-  { type: 'scholarly-articles', label: 'Scholarly Articles' }
-  { type: 'awards', label: 'Awards' }
-];
+  'Summary',
+  'Experience',
+  'Education',
+  'Skills',
+  'Presentations and Talks',
+  'Technical and Community Contributions',
+  'Scholarly Articles'
+].map(label => ({ type: slugify(label), label }));
 
-const DEFAULT_SECTIONS = [
-  'summary',
-  'experience',
-  'education',
-  'skills'
-];
+// Placeheld in a new CV; the rest are offered as "+ add" in the nav.
+const DEFAULT_SECTIONS = ['summary', 'experience', 'skills'];
 
-const SKILLS_TYPES = [
-  { type: 'programming-languages', label: 'Programming Languages' },
-  { type: 'human-languages', label: 'Human Languages' },
-];
+let clickHandlerAttached = false;
+let modeHandlerAttached = false;
 
-// Build interactive TOC from SECTIONS and SKILLS_TYPES
-
-export function buildTOC(cv) {
-    // if on edit mode, show sections as buttons to add sections (existing sections should have a minus button to delete section)
-    
-    // if on view mode, show sections as links to scroll to sections 
+function isAuthorMode() {
+  return Config.Editor?.mode === 'author';
 }
 
-export function addExperienceSection(cv, experience) {}
+function getSection(type) {
+  return SECTIONS.find(s => s.type === type) || null;
+}
 
-export function addEducationSection(cv, education) {}
+function getCVRoot() {
+  return document.querySelector('main > article');
+}
 
-export function addSkillsSection(cv, skills) {}
+function sectionPresent(root, type) {
+  return !!root.querySelector(`#content > section[id="${type}"]`);
+}
 
-export function addPresentationsSection(cv, presentations) {}
+function sectionHTML(type) {
+  const s = getSection(type);
+  if (!s) return '';
+  return `<section id="${s.type}">
+      <h2>${s.label}</h2>
+      <div datatype="rdf:HTML" property="schema:description"><p></p></div>
+    </section>`;
+}
 
-export function addContributionsSection(cv, contributions) {}
+export function buildSection(type) {
+  const html = sectionHTML(type);
+  return html ? fragmentFromString(html).firstElementChild : null;
+}
 
-export function addArticlesSection(cv, articles) {}
+// Default sections, inlined by the template so they exist before PM mounts.
+export function defaultContentHTML() {
+  return `<div id="content">${DEFAULT_SECTIONS.map(sectionHTML).join('')}</div>`;
+}
 
-export function addSkillSubsection(skills, skillType, skillList) {}
+// Null unless the author editor is live (section mutations must go through PM).
+function pmEditor() {
+  return Config.Editor?.authorToolbarView?.editorView ? Config.Editor : null;
+}
 
-export function addExperienceEntry(experience, entry) {}
+// Read mode: links to present sections. Author mode: + remove/add buttons.
+export function buildTOC(root) {
+  const author = isAuthorMode();
 
-export function addEducationEntry(education, entry) {}
+  const nav = document.createElement('nav');
+  nav.className = 'do';
+  nav.id = 'cv-toc';
 
-export function addPresentationEntry(presentations, entry) {}
+  const ul = document.createElement('ul');
+  nav.appendChild(ul);
 
-export function addContributionEntry(contributions, entry) {}
+  SECTIONS.forEach(section => {
+    const present = sectionPresent(root, section.type);
+    if (!present && !author) return;
 
-export function addArticleEntry(articles, entry) {}
+    const li = document.createElement('li');
 
-export function addSkillEntry(skillList, entry) {}
+    if (present) {
+      const a = document.createElement('a');
+      a.href = `#${section.type}`;
+      a.textContent = section.label;
+      li.appendChild(a);
 
-export function createCV() {}
+      if (author) {
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'do cv-section-remove';
+        remove.dataset.type = section.type;
+        remove.title = `Remove ${section.label}`;
+        remove.setAttribute('aria-label', `Remove ${section.label}`);
+        remove.textContent = '−';
+        li.appendChild(remove);
+      }
+    } else {
+      const add = document.createElement('button');
+      add.type = 'button';
+      add.className = 'do cv-section-add';
+      add.dataset.type = section.type;
+      add.textContent = `+ ${section.label}`;
+      li.appendChild(add);
+    }
 
-export function deleteEntry(entry) {}
+    ul.appendChild(li);
+  });
 
-export function editEntry(entry, newData) {}
+  return nav;
+}
 
-export function deleteSection(section) {}
+// The nav lives in <main> before <article>, outside PM, so its buttons survive.
+function refreshTOC(root) {
+  const main = root.closest('main') || root.parentNode;
+  const nav = buildTOC(root);
+  const existing = main.querySelector(':scope > #cv-toc');
+  if (existing) {
+    existing.replaceWith(nav);
+  } else {
+    main.insertBefore(nav, root);
+  }
+}
 
-export function deleteSubsection(subsection) {}
+export function addSection(root, type) {
+  if (!getSection(type) || sectionPresent(root, type)) return;
+
+  const editor = pmEditor();
+  if (editor) {
+    editor.insertFragmentAtEndOf('content', fragmentFromString(sectionHTML(type)));
+  } else {
+    const content = root.querySelector('#content');
+    if (!content) return;
+    const order = SECTIONS.map(s => s.type);
+    const idx = order.indexOf(type);
+    const after = Array.from(content.children).find(el => order.indexOf(el.id) > idx);
+    content.insertBefore(buildSection(type), after || null);
+  }
+
+  refreshTOC(root);
+}
+
+export function removeSection(root, type) {
+  const editor = pmEditor();
+  if (editor) {
+    editor.deleteNodeById(type);
+  } else {
+    root.querySelector(`#content > section[id="${type}"]`)?.remove();
+  }
+  refreshTOC(root);
+}
+
+function isCV(root) {
+  return !!root.querySelector('[rel~="rdf:type"][href*="CurriculumVitae"], [rel~="rdf:type"][resource*="CurriculumVitae"]');
+}
+
+// Save hook: the live nav is .do (stripped on save); add a clean links-only nav.
+function injectCVTOC(doc) {
+  const article = doc.querySelector('main > article') || doc.querySelector('article');
+  if (!article || !isCV(article)) return;
+
+  const content = article.querySelector('#content');
+  if (!content) return;
+
+  doc.querySelectorAll('#cv-toc').forEach(n => n.remove());
+
+  const present = SECTIONS.filter(s => content.querySelector(`:scope > section[id="${s.type}"]`));
+  if (!present.length) return;
+
+  const lis = present.map(s => `<li><a href="#${s.type}">${s.label}</a></li>`).join('');
+  content.parentNode.insertBefore(fragmentFromString(`<nav id="cv-toc"><ul>${lis}</ul></nav>`), content);
+}
+
+registerDocumentTransform(injectCVTOC);
+
+// Render the nav and wire add/remove. Safe to call repeatedly.
+export function initCV() {
+  const root = getCVRoot();
+  if (!root || !isCV(root)) return;
+
+  refreshTOC(root);
+
+  if (!clickHandlerAttached) {
+    clickHandlerAttached = true;
+    document.addEventListener('click', (e) => {
+      const root = getCVRoot();
+      if (!root) return;
+      const add = e.target.closest('.cv-section-add');
+      if (add) { addSection(root, add.dataset.type); return; }
+      const remove = e.target.closest('.cv-section-remove');
+      if (remove) { removeSection(root, remove.dataset.type); }
+    });
+  }
+
+  if (!modeHandlerAttached) {
+    modeHandlerAttached = true;
+    window.addEventListener('dokieli:editor-mode-changed', () => {
+      const root = getCVRoot();
+      if (root && isCV(root)) refreshTOC(root);
+    });
+  }
+}

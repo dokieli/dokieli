@@ -17,7 +17,7 @@ limitations under the License.
 
 import { Plugin } from "prosemirror-state";
 
-function slugify(text) {
+export function slugify(text) {
   return text
     .toLowerCase()
     .trim()

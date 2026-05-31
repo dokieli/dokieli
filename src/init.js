@@ -32,6 +32,7 @@ import { SolidStorage, GitForgeStorage, initStorage } from './storage/backend.js
 import { initEditor } from './editor/initEditor.js';
 import { showGraph, showVisualisationGraph } from './viz.js';
 import * as Slideshow from './slideshow.js';
+import { initCV } from './cv.js';
 import { openResource, initDocumentMenu, spawnDokieli, showDocumentMenu, initSlideshowInteraction, initDocumentDoEvents } from './dialog.js';
 import { Icon } from './ui/icons.js';
 import { eventButtonClose, eventButtonSignIn, eventButtonSignOut, eventButtonNotificationsToggle, eventButtonInfo, emitDocEvent } from './events.js';
@@ -166,6 +167,7 @@ async function initDocumentActions() {
   highlightItems();
   showAsTabs();
   initSlideshow();
+  initCV();
   initCurrentStylesheet();
   initShowNotificationSources();
   focusNote();
