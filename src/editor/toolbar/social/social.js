@@ -22,6 +22,7 @@ import { exportSelection, getSelectedParentElement, restoreSelection } from "../
 import { htmlEncode } from "../../../utils/sanitization.js";
 import { i18n } from "../../../i18n.js";
 import { buttonIcons } from "../../../ui/buttons.js";
+import { isUnlocked } from "../../../keystore.js";
 
 const ns = Config.ns;
 
@@ -251,6 +252,11 @@ export class SocialToolbar extends ToolbarView {
   populateFormAnnotate(action, node) {
     updateAnnotationServiceForm(action);
     updateAnnotationInboxForm(action);
+
+    const encryptCheckbox = node?.querySelector('input.editor-form-encrypt');
+    if (encryptCheckbox) {
+      encryptCheckbox.checked = isUnlocked();
+    }
   }
 
   //TODO function getTransactionHistory()

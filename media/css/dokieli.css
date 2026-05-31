@@ -7046,3 +7046,50 @@ svg.leaflet-image-layer.leaflet-interactive path {
   margin-left: -12px;
   border-right-color: #fff;
   }
+
+/* Lock icon path fill */
+.fas.fa-lock path,
+.fas.fa-lock-open path {
+  fill: #fff;
+}
+
+/* Annotation encrypt toggle */
+.editor-form input.editor-form-encrypt {
+  position: absolute;
+  left: -9999px;
+}
+.editor-form .editor-form-encrypt-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 3.5em;
+  height: 1.75em;
+  background: #777;
+  border-radius: 1em;
+  cursor: pointer;
+  padding: 0 0.25em;
+  box-sizing: border-box;
+  transition: background 0.2s;
+  vertical-align: middle;
+}
+.editor-form .editor-form-encrypt-label svg {
+  width: 1em;
+  height: 1em;
+}
+.editor-form .editor-form-encrypt-label .fas.fa-lock {
+  display: none;
+}
+.editor-form input.editor-form-encrypt:checked + .editor-form-encrypt-label {
+  background: #080;
+  justify-content: flex-end;
+}
+.editor-form input.editor-form-encrypt:checked + .editor-form-encrypt-label .fas.fa-lock {
+  display: block;
+}
+.editor-form input.editor-form-encrypt:checked + .editor-form-encrypt-label .fas.fa-lock-open {
+  display: none;
+}
+.editor-form input.editor-form-encrypt:focus + .editor-form-encrypt-label {
+  outline: 2px solid #080;
+  outline-offset: 3px;
+}

@@ -24,6 +24,8 @@ import Config from "../../../config.js"
 import { notifyInbox, postActivity, showActivities, registerAnnotationInTypeIndex, markAnnotationTarget } from "../../../activity.js"
 import { shareResource } from "../../../dialog.js";
 import { domSanitize } from "../../../utils/sanitization.js";
+import { encryptContent } from "../../../crypto.js";
+import { isUnlocked, getSessionPublicKey, getSessionKid } from "../../../keystore.js";
 
 const ns = Config.ns;
 
@@ -106,7 +108,7 @@ function updateUserUI(fields) {
 }
 
 
-export function processAction(action, formValues, selectionData) {
+export async function processAction(action, formValues, selectionData) {
   //TODO:
 
   const data = getFormActionData(action, formValues, selectionData);
@@ -125,7 +127,7 @@ export function processAction(action, formValues, selectionData) {
   //XXX: Sort of a placeholder switch but don't really need it now
   switch(action) {
     case 'approve': case 'disapprove': case 'specificity': case 'bookmark': case 'comment':
-      annotationDistribution.forEach(annotationData => {
+      for (const annotationData of annotationDistribution) {
         // We want to have one object with the annotation distribution data and remaining data from the form that is the same for all annotations. However, we need to overwrite any default values that we got initially from the form data with the latest calculations from annotation distribution data.
         const annotation = {
           ...otherFormData,
@@ -141,6 +143,28 @@ export function processAction(action, formValues, selectionData) {
         noteData.iri = '';
 
         annotation['motivatedBy'] = noteData['motivatedBy'];
+
+        if (formValues[`${action}-encrypt`] === 'true' && isUnlocked()) {
+          const pubKey = getSessionPublicKey();
+          const kid = getSessionKid();
+          const enc = async v => v ? encryptContent(v, [pubKey], kid) : v;
+
+          if (noteData.body) {
+            noteData.body = await Promise.all(noteData.body.map(async item => {
+              if (item.value && item.purpose !== 'tagging' && item.purpose !== ns.oa.tagging.value) {
+                return { ...item, value: await enc(item.value) };
+              }
+              return item;
+            }));
+          }
+
+          if (noteData.target?.selector) {
+            const sel = noteData.target.selector;
+            [sel.exact, sel.prefix, sel.suffix] = await Promise.all([
+              enc(sel.exact), enc(sel.prefix), enc(sel.suffix)
+            ]);
+          }
+        }
 
         if ('profile' in annotation && annotation.profile == 'https://www.w3.org/ns/activitystreams') {
           var notificationData = createActivityData(annotation, { 'relativeObject': true });
@@ -202,7 +226,7 @@ export function processAction(action, formValues, selectionData) {
             // nothing else needs to be done, the loop will proceed
             // to the next annotation
           });
-      });
+      }
       break;
 
     // case 'selector':

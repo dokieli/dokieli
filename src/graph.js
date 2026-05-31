@@ -791,8 +791,10 @@ export function getResourceGraph(iri, headers, options = {}) {
 
       //XXX: Perhaps okay for text/markdown but not text/plain?
       if  (['text/markdown', 'text/plain'].includes(options['contentType'])) {
-        options.contentType = 'text/html';
-        return response.text().then(data => parseMarkdown(data, {createDocument: true}));
+        return response.text().then(data => {
+          options.contentType = 'text/html';
+          return parseMarkdown(data, {createDocument: true});
+        });
       }
       else if (options['contentType'] == 'application/json') {
         return response.json().then(data => {
@@ -964,6 +966,19 @@ export function isActorProperty(s) {
 
 export function isEventType(s) {
   return Config.Event.Type.hasOwnProperty(s)
+}
+
+// Reads sec:publicKeyJwk from a parsed WebID profile graph for the given subject IRI.
+// Returns the parsed JWK object, or null if none is present.
+export function getAgentEncryptionPublicKey(g, subjectIRI) {
+  if (!g || !subjectIRI) return null
+  const quads = [...g.match(rdf.namedNode(subjectIRI), Config.ns.sec.publicKeyJwk, null)]
+  if (!quads.length) return null
+  try {
+    return JSON.parse(quads[0].object.value)
+  } catch {
+    return null
+  }
 }
 
 export function getAgentPreferencesInfo(g) {

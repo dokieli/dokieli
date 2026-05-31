@@ -24,6 +24,7 @@ import { cloneSelection, selectionToTextQuote, setSelectionFromTextQuote, getSel
 import { applyMarksFromTextQuote } from "@dokieli/web-annotation";
 import { fragmentFromString, getDocumentContentNode, selectArticleNode } from "../../utils/html.js";
 import { showUserIdentityInput } from "../../auth.js";
+import { isUnlocked, hasKeystore } from '../../keystore.js';
 import { getLinkRelation } from "../../graph.js";
 import { enableAutoSave } from "../../sync.js";
 import Config from "../../config.js";
@@ -768,6 +769,32 @@ export class ToolbarView {
         this.clearToolbarForm(toolbarForm);
         this.clearToolbarButton(button);
       }
+
+    }
+
+    const encryptLabel = e.target.closest('label.editor-form-encrypt-label');
+    if (encryptLabel) {
+      e.preventDefault();
+      const form = encryptLabel.closest('form');
+      const checkbox = form?.querySelector('input.editor-form-encrypt');
+      if (!checkbox) return;
+
+      if (checkbox.checked) {
+        checkbox.checked = false;
+      } else if (isUnlocked()) {
+        checkbox.checked = true;
+      } else {
+        hasKeystore().then(exists => {
+          import('../../dialog.js').then(({ showEncryptionSetup, showEncryptionUnlock }) => {
+            const activate = () => { checkbox.checked = true; };
+            if (exists) {
+              showEncryptionUnlock(activate);
+            } else {
+              showEncryptionSetup(activate);
+            }
+          });
+        });
+      }
     }
   }
 
@@ -867,6 +894,8 @@ export function annotateFormControls(options) {
       <span class="annotation-location-selection">${locationHTML}</span>
       <span class="annotation-inbox">${getAnnotationInboxLocationHTML(options.button)}</span>
 
+      <input type="checkbox" class="editor-form-encrypt" id="${options.button}-encrypt" name="${options.button}-encrypt" value="true"${isUnlocked() ? ' checked="checked"' : ''} />
+      <label class="editor-form-encrypt-label" for="${options.button}-encrypt" title="Encrypt this annotation">${Icon['.fas.fa-lock-open']}${Icon['.fas.fa-lock']}</label>
       <button class="editor-form-submit" data-i18n="editor.toolbar.form.post.button" type="submit"${submitDisabled}>${i18n.t('editor.toolbar.form.post.button.textContent')}</button>
       <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
     </fieldset>
