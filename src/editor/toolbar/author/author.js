@@ -703,6 +703,33 @@ nodeToHTML(node, schema) {
     dispatch(state.tr.delete(target.pos, target.pos + target.node.nodeSize));
   }
 
+  findNodeById(id) {
+    const { state } = this.editorView;
+    let found = null;
+    state.doc.descendants((node, pos) => {
+      if (found) return false;
+      if ((node.attrs.originalAttributes || {}).id === id) found = { node, pos };
+    });
+    return found;
+  }
+
+  // Insert a fragment at the end of the node with the given id (targeted, not cursor-relative).
+  insertFragmentAtEndOf(targetId, fragment) {
+    const { state, dispatch } = this.editorView;
+    const target = this.findNodeById(targetId);
+    if (!target) return;
+    const node = DOMParser.fromSchema(schema).parse(fragment);
+    const insertAt = target.pos + 1 + target.node.content.size;
+    dispatch(state.tr.insert(insertAt, node));
+  }
+
+  deleteNodeById(id) {
+    const { state, dispatch } = this.editorView;
+    const target = this.findNodeById(id);
+    if (!target) return;
+    dispatch(state.tr.delete(target.pos, target.pos + target.node.nodeSize));
+  }
+
   moveSlide(fromId, toId, before = true) {
     if (fromId === toId) return;
     const { state, dispatch } = this.editorView;

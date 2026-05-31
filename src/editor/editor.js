@@ -43,6 +43,7 @@ import { IndexeddbPersistence } from 'y-indexeddb'
 import { ySyncPlugin, yCursorPlugin, yUndoPlugin, undo, redo, initProseMirrorDoc, prosemirrorToYDoc } from 'y-prosemirror'
 import { currentLocation } from "../uri.js";
 import { getRandomIndex, stringToColor, generateUUID } from "../util.js";
+import { defaultContentHTML } from "../cv.js";
 
 const ns = Config.ns;
 
@@ -297,7 +298,7 @@ export class Editor {
 
     var documentMenu = document.getElementById('document-menu');
 
-    document.body.replaceChildren(fragmentFromString(`<main><article dir="auto"><h1 aria-label="${i18n.t('editor.new.h1.aria-label')}" property="schema:name"></h1><div datatype="rdf:HTML" property="schema:description"><p></p></div></article></main>`));
+    document.body.replaceChildren(fragmentFromString(`<main><article about="" dir="auto" typeof="schema:CreativeWork"><h1 aria-label="${i18n.t('editor.new.h1.aria-label')}" property="schema:name"></h1></article></main>`));
 
     document.body.prepend(documentMenu);
 
@@ -342,7 +343,9 @@ export class Editor {
 </details>
     `
 
-    document.querySelector('main > article').appendChild(fragmentFromString(documentDetails));
+    const article = document.querySelector('main > article');
+    article.appendChild(fragmentFromString(documentDetails));
+    article.appendChild(fragmentFromString(defaultContentHTML()));
   }
 
 
@@ -396,6 +399,14 @@ export class Editor {
 
   moveSlide(fromId, toId, before) {
     return this.authorToolbarView?.moveSlide(fromId, toId, before);
+  }
+
+  insertFragmentAtEndOf(targetId, fragment) {
+    return this.authorToolbarView?.insertFragmentAtEndOf(targetId, fragment);
+  }
+
+  deleteNodeById(id) {
+    return this.authorToolbarView?.deleteNodeById(id);
   }
 
   //Creating a ProseMirror editor view at a specified this.node

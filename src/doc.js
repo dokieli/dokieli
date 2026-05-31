@@ -27,6 +27,7 @@ import { Icon } from './ui/icons.js';
 import { buttonIcons, getButtonHTML, updateButtons } from './ui/buttons.js'
 import { domSanitizeHTMLBody, domSanitize, sanitizeInsertAdjacentHTML, htmlEncode, sanitizeIRI } from './utils/sanitization.js';
 import { cleanProseMirrorOutput, normalizeHTML, normalizeWhitespace } from './utils/normalization.js';
+import { applyDocumentTransforms } from './utils/documentTransforms.js';
 import { formatHTML, fragmentFromString, getDoctype, getDocumentContentNode, selectArticleNode, getDocumentNodeFromString, stringFromFragment, createHTML, getOffset, htmlToMarkdown } from './utils/html.js';
 import { i18n } from './i18n.js';
 import { rewriteBlobImagesToRelative, uploadBlobAssets, clearBlobAssets, hasUploadTarget } from './editor/utils/imageAssets.js';
@@ -97,6 +98,8 @@ export function getDocument(cn, options = {}) {
   if (options.normalize) {
     nodeDocument = normalizeHTML(nodeDocument);
   }
+
+  applyDocumentTransforms(nodeDocument);
 
   nodeDocument = normalizeWhitespace(nodeDocument);
 
