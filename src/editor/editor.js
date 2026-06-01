@@ -29,6 +29,7 @@ import { autoIdPlugin } from "./plugins/autoId.js";
 import { slideStructurePlugin } from "./plugins/slideStructure.js";
 import { slideshowDecorationsPlugin } from "./plugins/slideshowDecorations.js";
 import { ImageResizeView } from "./nodeviews/imageResize.js";
+import { DetailsView } from "./nodeviews/details.js";
 import Config from "./../config.js";
 import { addMessageToLog, showActionMessage, initCopyToClipboard, showRobustLinksDecoration } from "../doc.js";
 import { fragmentFromString, hasNonWhitespaceText, selectArticleNode } from "./../utils/html.js";
@@ -44,6 +45,7 @@ import { ySyncPlugin, yCursorPlugin, yUndoPlugin, undo, redo, initProseMirrorDoc
 import { currentLocation } from "../uri.js";
 import { getRandomIndex, stringToColor, generateUUID } from "../util.js";
 import { defaultContentHTML } from "../cv.js";
+import { cvNavDecorationPlugin } from "./plugins/cvNavDecorations.js";
 
 const ns = Config.ns;
 
@@ -305,8 +307,9 @@ export class Editor {
     document.body.removeAttribute('id');
     document.body.removeAttribute('class');
 
+    //TOOD: i18n
     let userDetails = {
-      IRI: Config.User.IRI || 'https://example.com/profile/card#me',
+      IRI: Config.User.IRI || 'https://example.org/profile/card#me',
       Name: Config.User.Name || 'Your Name',
       Email: Config.User.Email || 'you@example.org',
     };
@@ -401,8 +404,8 @@ export class Editor {
     return this.authorToolbarView?.moveSlide(fromId, toId, before);
   }
 
-  insertFragmentAtEndOf(targetId, fragment) {
-    return this.authorToolbarView?.insertFragmentAtEndOf(targetId, fragment);
+  insertFragmentAtEndOf(targetSelector, fragment) {
+    return this.authorToolbarView?.insertFragmentAtEndOf(targetSelector, fragment);
   }
 
   deleteNodeById(id) {
@@ -451,7 +454,7 @@ export class Editor {
     // not a collaborative session): skip Yjs/IndexedDB/remote-sync entirely.
     Config.Editor['collab'] = false;
     pmDoc = originalDoc;
-    editorPlugins = [history(), keymapPlugin, placeholderPlugin, slideStructurePlugin, slideshowDecorationsPlugin, autoIdPlugin, editorToolbarPlugin];
+    editorPlugins = [history(), keymapPlugin, placeholderPlugin, slideStructurePlugin, slideshowDecorationsPlugin, cvNavDecorationPlugin, autoIdPlugin, editorToolbarPlugin];
   } else {
     Config.Editor['collab'] = true;
     ydoc = new Y.Doc();
@@ -583,6 +586,7 @@ export class Editor {
       placeholderPlugin,
       slideStructurePlugin,
       slideshowDecorationsPlugin,
+      cvNavDecorationPlugin,
       autoIdPlugin,
       editorToolbarPlugin,
     ];
@@ -603,7 +607,8 @@ export class Editor {
       dir: "auto",
     },
     nodeViews: {
-      img(node, view, getPos) { return new ImageResizeView(node, view, getPos); }
+      img(node, view, getPos) { return new ImageResizeView(node, view, getPos); },
+      details(node) { return new DetailsView(node); }
     },
   });
 

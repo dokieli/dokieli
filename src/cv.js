@@ -56,8 +56,8 @@ function sectionPresent(root, type) {
 function sectionHTML(type) {
   const s = getSection(type);
   if (!s) return '';
-  return `<section id="${s.type}">
-      <h2>${s.label}</h2>
+  return `<section id="${s.type}" inlist="" rel="schema:hasPart" resource="#${s.type}">
+      <h2 property="schema:name">${s.label}</h2>
       <div datatype="rdf:HTML" property="schema:description"><p></p></div>
     </section>`;
 }
@@ -78,7 +78,10 @@ function pmEditor() {
 }
 
 // Read mode: links to present sections. Author mode: + remove/add buttons.
-export function buildTOC(root) {
+// presentTypes, when given, is the authoritative set of present section ids
+// (e.g. read from the PM doc) and overrides DOM probing — needed when the nav
+// is rendered before the section DOM is painted.
+export function buildTOC(root, presentTypes = null) {
   const author = isAuthorMode();
 
   const nav = document.createElement('nav');
@@ -89,7 +92,9 @@ export function buildTOC(root) {
   nav.appendChild(ul);
 
   SECTIONS.forEach(section => {
-    const present = sectionPresent(root, section.type);
+    const present = presentTypes
+      ? presentTypes.has(section.type)
+      : sectionPresent(root, section.type);
     if (!present && !author) return;
 
     const li = document.createElement('li');
@@ -125,9 +130,16 @@ export function buildTOC(root) {
   return nav;
 }
 
-// The nav lives in <main> before <article>, outside PM, so its buttons survive.
+// Read/social mode: the nav lives in <main> before <article>, outside PM, so its
+// buttons survive. In author mode the nav is rendered inside the article (after
+// <details>) by cvNavDecorationPlugin, which rebuilds on docChanged — so here we
+// just clear any stale <main> nav left over from read mode and let PM own it.
 function refreshTOC(root) {
   const main = root.closest('main') || root.parentNode;
+  if (pmEditor()) {
+    main.querySelector(':scope > #cv-toc')?.remove();
+    return;
+  }
   const nav = buildTOC(root);
   const existing = main.querySelector(':scope > #cv-toc');
   if (existing) {
@@ -142,7 +154,7 @@ export function addSection(root, type) {
 
   const editor = pmEditor();
   if (editor) {
-    editor.insertFragmentAtEndOf('content', fragmentFromString(sectionHTML(type)));
+    editor.insertFragmentAtEndOf('#content', fragmentFromString(sectionHTML(type)));
   } else {
     const content = root.querySelector('#content');
     if (!content) return;
