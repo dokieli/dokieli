@@ -2237,8 +2237,7 @@ margin-bottom:1em;
 
 #create-new-document-fieldset ul li label {
   display: block;
-  text-align: center;
-  padding: 1em 0;
+  padding: 1em;
   border: 1px solid #ccc;
   border-radius: 0.5em;
   cursor: pointer;
@@ -2250,6 +2249,9 @@ margin-bottom:1em;
   color: #fff;
   border-color: #efe;
 }
+#create-new-document-fieldset ul li input[type="radio"]:checked + label svg {
+  fill:#fff;
+}
 
 #create-new-document-fieldset ul li input[type="radio"]:focus-visible + label {
   outline: 2px solid #000;
@@ -2258,6 +2260,11 @@ margin-bottom:1em;
 
 #create-new-document-fieldset ul li label:hover {
   background-color: #eee;
+}
+
+#create-new-document-fieldset ul li label span span {
+  font-weight:normal;
+  display:block;
 }
 
 
