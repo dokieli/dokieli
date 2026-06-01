@@ -1,0 +1,144 @@
+/*!
+Copyright 2012-2026 Sarven Capadisli <https://csarven.ca/>
+Copyright 2023-2026 Virginia Balseiro <https://virginiabalseiro.com/>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+import { Plugin, PluginKey } from "prosemirror-state";
+import { Decoration, DecorationSet } from "prosemirror-view";
+import Config from "../../config.js";
+import { buildTOC } from "../../cv.js";
+
+// Renders the CV nav inside the article (after <details>, before #content) as a
+// widget decoration. PM owns the widget DOM, so it survives PM's redraws and
+// stays out of serialization — unlike raw DOM dropped into the editable region,
+// which PM's MutationObserver reverts. The nav is marked contenteditable=false
+// and its events are kept away from the editor; the add/remove buttons bubble to
+// the document-level handler wired in initCV().
+export const cvNavDecorationKey = new PluginKey("cvNavDecoration");
+
+function isContentDiv(node) {
+  return node.type.name === "div" && node.attrs.originalAttributes?.id === "content";
+}
+
+// The doc top-level holds [details, div#content]; the nav goes right after the
+// details node, falling back to before #content when there is no details.
+function navPos(doc) {
+  let afterDetails = null;
+  let beforeContent = null;
+  doc.forEach((node, offset) => {
+    if (node.type.name === "details" && afterDetails === null) {
+      afterDetails = offset + node.nodeSize;
+    }
+    if (isContentDiv(node) && beforeContent === null) {
+      beforeContent = offset;
+    }
+  });
+  return afterDetails ?? beforeContent;
+}
+
+// Carries the CurriculumVitae rdf:type link somewhere in the document details.
+// The link is an <a> mark, not a node, so check both node attrs (for resource
+// on a wrapping element) and the marks on each node.
+function isCVType(a) {
+  return !!a && /\brdf:type\b/.test(a.rel || "") &&
+    /CurriculumVitae/.test(`${a.href || ""} ${a.resource || ""}`);
+}
+
+function isCVDoc(doc) {
+  let found = false;
+  doc.descendants((node) => {
+    if (found) return false;
+    if (isCVType(node.attrs?.originalAttributes) ||
+        node.marks.some((m) => isCVType(m.attrs?.originalAttributes))) {
+      found = true;
+    }
+    return !found;
+  });
+  return found;
+}
+
+// Present section ids, in document order, read from the PM doc (the source of
+// truth). buildTOC must not probe view.dom: the widget renders before the
+// #content sections after it are painted, so the DOM lags a step.
+function sectionIds(doc) {
+  const ids = [];
+  doc.forEach((node) => {
+    if (!isContentDiv(node)) return;
+    node.forEach((child) => {
+      if (child.type.name === "section") {
+        const id = child.attrs.originalAttributes?.id;
+        if (id) ids.push(id);
+      }
+    });
+  });
+  return ids;
+}
+
+// Cheap fingerprint of everything the nav's contents depend on: the present
+// sections (in order) and the editor mode. Rebuild the DecorationSet only when
+// this changes; otherwise map the existing one so we don't re-render on every
+// keystroke.
+function navSignature(doc) {
+  return `${Config.Editor?.mode || ""}|${sectionIds(doc).join(",")}`;
+}
+
+function buildDecorations(doc) {
+  if (!isCVDoc(doc)) return DecorationSet.empty;
+
+  const pos = navPos(doc);
+  if (pos === null) return DecorationSet.empty;
+
+  const presentTypes = new Set(sectionIds(doc));
+  const widget = Decoration.widget(pos, (view) => {
+    const nav = buildTOC(view.dom, presentTypes);
+    nav.contentEditable = "false";
+    nav.setAttribute("contenteditable", "false");
+    return nav;
+  }, {
+    side: 1,
+    // Keep the cursor and selection out of the widget...
+    ignoreSelection: true,
+    // ...and let button clicks bubble to the document handler instead of being
+    // treated as editor input.
+    stopEvent: () => true,
+  });
+
+  return DecorationSet.create(doc, [widget]);
+}
+
+export const cvNavDecorationPlugin = new Plugin({
+  key: cvNavDecorationKey,
+  state: {
+    init(_, state) {
+      return {
+        signature: navSignature(state.doc),
+        decorations: buildDecorations(state.doc),
+      };
+    },
+    apply(tr, value, _oldState, newState) {
+      if (!tr.docChanged) return value;
+      const signature = navSignature(newState.doc);
+      if (signature === value.signature) {
+        return { signature, decorations: value.decorations.map(tr.mapping, tr.doc) };
+      }
+      return { signature, decorations: buildDecorations(newState.doc) };
+    },
+  },
+  props: {
+    decorations(state) {
+      return cvNavDecorationKey.getState(state).decorations;
+    },
+  },
+});
