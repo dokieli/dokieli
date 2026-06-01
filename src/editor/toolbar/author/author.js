@@ -713,10 +713,34 @@ nodeToHTML(node, schema) {
     return found;
   }
 
-  // Insert a fragment at the end of the node with the given id (targeted, not cursor-relative).
-  insertFragmentAtEndOf(targetId, fragment) {
+  findNodeBySelector(selector) {
+    const { state } = this.editorView;
+    let found = null;
+
+    const match = (node) => {
+      const attrs = node.attrs.originalAttributes || {};
+      if (selector.startsWith('#')) {
+        return attrs.id === selector.slice(1);
+      }
+      if (selector.startsWith('.')) {
+        const classes = (attrs.class || '').split(/\s+/);
+        return classes.includes(selector.slice(1));
+      }
+      // tag/type selector
+      return node.type.name === selector;
+    };
+
+    state.doc.descendants((node, pos) => {
+      if (found) return false;
+      if (match(node)) found = { node, pos };
+    });
+    return found;
+  }
+
+  // Insert a fragment at the end of the node with the given selector (targeted, not cursor-relative).
+  insertFragmentAtEndOf(targetSelector, fragment) {
     const { state, dispatch } = this.editorView;
-    const target = this.findNodeById(targetId);
+    const target = this.findNodeBySelector(targetSelector);
     if (!target) return;
     const node = DOMParser.fromSchema(schema).parse(fragment);
     const insertAt = target.pos + 1 + target.node.content.size;
