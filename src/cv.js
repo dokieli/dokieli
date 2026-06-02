@@ -19,6 +19,7 @@ import Config from './config.js';
 import { fragmentFromString } from './utils/html.js';
 import { slugify } from './editor/plugins/autoId.js';
 import { registerDocumentTransform } from './utils/documentTransforms.js';
+import { i18n } from './i18n.js';
 
 // type === slugify(label) so it matches the id autoIdPlugin derives from the heading.
 const SECTIONS = [
@@ -198,6 +199,38 @@ function injectCVTOC(doc) {
   content.parentNode.insertBefore(fragmentFromString(`<nav id="cv-toc"><ul>${lis}</ul></nav>`), content);
 }
 
+//TODO Move this to somewhere else as it is not CV specific
+function eventHTML(type, options = {}) {
+  //TODO: Review article and slideshow rels b/c they may not be entirely accurate. Add other templates later.
+  switch (options.template) {
+    default:
+    case 'article':
+      rel = 'schema:hasPart';
+      break;
+    case 'cv':
+      rel = 'schema:performerIn';
+      break;
+    case 'slideshow':
+      rel = 'bibo:presentedAt';
+      break;
+  }
+
+  return `<dl id="${eventId}" rel="${rel}" resource="#${eventId}" typeof="schema:Event">
+    <dt data-i18n="event.name.dt">${i18n.t('event.name.dt.textContent')}</dt>
+    <dd property="schema:name">${eventName}</dd>
+    <dt data-i18n="event.organizer.dt">${i18n.t('event.organizer.dt.textContent')}</dt>
+    <dd rel="schema:organizer" resource="#${eventOrganizerId}" typeof="schema:Organization"><a href="${eventOrganizerUrl}" property="schema:name" rel="schema:url">${eventOrganizer}</a> <span rel="schema:department" resource="#${eventOrganizerDepartmentId}"><a href="${eventOrganizerDepartmentUrl}" property="schema:name" rel="schema:url"><abbr title="${eventOrganizerDepartment}">${eventOrganizerDepartmentCode}</abbr></a></span></dd>
+    <dt data-i18n="event.location.dt">${i18n.t('event.location.dt.textContent')}</dt>
+    <dd rel="schema:location" resource="${eventLocation}" typeof="schema:Place"><span rel="schema:address"><span property="schema:addressLocality">${eventAddressLocality}</span>, <abbr title="${eventAddressRegion}">${eventAddressRegionCode}</abbr>, <abbr title="${eventAddressCountry}">${eventAddressCountryCode}</abbr></span></dd>
+    <dt data-i18n="event.date.dt">${i18n.t('event.date.dt.textContent')}</dt>
+    <dd><time content="${eventStartDate}" datatype="xsd:date" datetime="${eventStartDate}" property="schema:startDate">${eventStartDate}</time>–<time content="${eventEndDate}" datatype="xsd:date" datetime="${eventEndDate}" property="schema:endDate">${eventEndDate}</time></dd>
+    <dt data-i18n="event.description.dt">${i18n.t('event.description.dt.textContent')}</dt>
+    <dd datatype="rdf:HTML" property="schema:description">
+      <p rel="schema:performer" resource="${userDetails.IRI}">${eventDescription}</p>
+    </dd>
+  </dl>`;
+}
+
 registerDocumentTransform(injectCVTOC);
 
 // Render the nav and wire add/remove. Safe to call repeatedly.
@@ -226,4 +259,12 @@ export function initCV() {
       if (root && isCV(root)) refreshTOC(root);
     });
   }
+
+  const addEntry = e.target.closest('.cv-entry-add');
+  if (addEntry) {
+    pmEditor()?.insertFragmentAtEndOf(addEntry.dataset.type,
+      fragmentFromString(entryHTML(addEntry.dataset.type)));
+    return;
+  }
+
 }

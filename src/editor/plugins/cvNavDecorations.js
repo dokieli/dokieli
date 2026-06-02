@@ -142,3 +142,24 @@ export const cvNavDecorationPlugin = new Plugin({
     },
   },
 });
+
+function entryButtonDecorations(doc) {
+  const decos = [];
+  doc.descendants((node, pos) => {
+    if (node.type.name !== "section") return false;
+    const id = node.attrs.originalAttributes?.id;
+    if (!REPEATABLE.has(id)) return false;
+    const end = pos + 1 + node.content.size;
+    decos.push(Decoration.widget(end, () => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "do cv-entry-add";
+      b.dataset.type = id;
+      b.textContent = `+ Add ${id}`;
+      b.setAttribute("contenteditable", "false");
+      return b;
+    }, { side: 1, ignoreSelection: true, stopEvent: () => true }));
+    return false;
+  });
+  return decos;
+}
