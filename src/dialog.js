@@ -25,7 +25,7 @@ import { accessModeAllowed, accessModePossiblyAllowed } from './access.js';
 import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeObject, htmlEncode, sanitizeIRIs } from './utils/sanitization.js';
 import { escapeRDFLiteral, generateAttributeId, generateUUID } from './util.js';
 import { setAcceptRDFTypes } from './fetcher.js';
-import { forceTrailingSlash, generateDataURI, getAbsoluteIRI, getBaseURL, isHttpOrHttpsProtocol, isFileProtocol, stripFragmentFromString, getFragmentFromString, getURLLastPath, currentLocation } from './uri.js';
+import { forceTrailingSlash, generateDataURI, getAbsoluteIRI, getBaseURL, isHttpOrHttpsProtocol, isFileProtocol, isUrl, stripFragmentFromString, getFragmentFromString, getURLLastPath, currentLocation } from './uri.js';
 import { getAccessSubjects, getACLResourceGraph, getAgentInbox, getAgentName, getAuthorizationsMatching, getGraphAuthors, getGraphContributors, getGraphEditors, getGraphImage, getGraphLabelOrIRI, getGraphPerformers, getGraphTypes, getLinkRelation, getLinkRelationFromHead, getResourceGraph, getUserContacts, getUserLabelOrIRI, serializeData, getSubjectInfo, getRDFSerializer } from './graph.js';
 import { notifyInbox, sendNotifications, showContactsActivities, initializeNotifications } from './activity.js';
 import Config from './config.js';
@@ -1189,6 +1189,7 @@ function updateAuthorization(accessContext, selectedMode, accessSubject, subject
   var deleteGraph = '';
   // var whereGraph = '';
   var authorizationSubject;
+  var authorizationCondition;
 
   var authorizationForAccessSubjectInserted = false;
 
@@ -1233,6 +1234,8 @@ function updateAuthorization(accessContext, selectedMode, accessSubject, subject
           });
         }
         else {
+          var accessConditions = authorizations[authorization].condition;
+
           //When only one particular agent uses this Authorization, remove the whole
           if (!multipleAccessSubjects) {
             deleteGraph += `
@@ -1242,6 +1245,26 @@ acl:${deleteAccessObjectProperty} <${documentURL}> ;
 acl:mode ${deleteAccessModes} ;
 acl:${deleteAccessSubjectProperty} <${deleteAccessSubject}> .
 `;
+            accessConditions.forEach(condition => {
+              if (typeof condition !== 'object') return;
+              const condParts = [];
+              Object.entries(condition).forEach(([predIRI, objects]) => {
+                if (predIRI === 'id') return;
+                const values = Array.isArray(objects) ? objects : [objects];
+                condParts.push(`<${predIRI}> <${values.join('>, <')}>`);
+              });
+              if (isUrl(condition.id)) {
+                deleteGraph += `\n<${authorization}> acl:condition <${condition.id}> .\n`;
+                deleteGraph += `<${condition.id}>\n${condParts.join(' ;\n')} .\n`;
+              }
+              /* XXX: Do not remove this comment
+              Blank node deleting via SPARQL Update or Solid Protocol N3 Patch (or another protocol) is not guaranteed to work. Worst case here is that there is dangling, e.g., <${authorization} acl:condition [ ... ] but it is not effective since it doesn't conform to https://solid.github.io/web-access-control-spec/#authorization-conformance . It'll never be matched with the exception of clients reusing the same Authorization IRI in the future to add the other parts of the Authorization rule. Even in this case access
+              Alternatively, TODO: modify the triple directly and use PUT instead
+              // else {
+              //   deleteGraph += `\n<${authorization}> acl:condition [ ${condParts.join(' ; ')} ] .\n`;
+              // }
+              */
+            });
           }
           //When we need to remove the access of only one of the access subjects from an Authorization (and leave the rest untouched)
           else {
@@ -1271,6 +1294,16 @@ acl:accessTo <${documentURL}> ;
 acl:mode <${updatedMode.join('>, <')}> ;
 acl:${subjectType} <${accessSubject}> .
 `;
+
+      if (Config.Resource[effectiveACLResource]?.conditions?.length) {
+        authorizationCondition = '#' + generateAttributeId();
+        insertGraph += `
+<${authorizationSubject}> acl:condition <${authorizationCondition}> .
+<${authorizationCondition}>
+a acl:ClientCondition ;
+acl:clientClass foaf:Agent .
+`;
+      }
 
       patches.push({ 'insert': insertGraph });
     }
@@ -1318,9 +1351,27 @@ acl:${subjectType} <${accessSubject}> .
       authorizationSubject = '#' + generateAttributeId();
 
       var additionalProperties = [];
-      ['agent', 'agentClass', 'agentGroup', 'origin'].forEach(key => {
+      var conditionInserts = '';
+      ['agent', 'agentClass', 'agentGroup', 'origin', 'condition'].forEach(key => {
         if (updatedAuthorizations[authorization][key] && updatedAuthorizations[authorization][key].length) {
-          additionalProperties.push(`acl:${key} <${updatedAuthorizations[authorization][key].join('>, <')}>`);
+          if (key === 'condition') {
+            if (Config.Resource[effectiveACLResource]?.conditions?.length) {
+              Object.values(updatedAuthorizations[authorization][key]).forEach((condition) => {
+                authorizationCondition = '#' + generateAttributeId();
+                additionalProperties.push(`acl:condition <${authorizationCondition}>`);
+                const condParts = [];
+                Object.entries(condition).forEach(([predIRI, objects]) => {
+                  if (predIRI === 'id') return;
+                  const values = Array.isArray(objects) ? objects : [objects];
+                  condParts.push(`<${predIRI}> <${values.join('>, <')}>`);
+                });
+                conditionInserts += `\n<${authorizationCondition}>\n${condParts.join(' ;\n')} .\n`;
+              });
+            }
+          }
+          else {
+            additionalProperties.push(`acl:${key} <${updatedAuthorizations[authorization][key].join('>, <')}>`);
+          }
         }
       })
       additionalProperties = additionalProperties.join(';\n');
@@ -1332,6 +1383,7 @@ acl:accessTo <${documentURL}> ;
 acl:mode <${updatedAuthorizations[authorization].mode.join('>, <')}> ;
 ${additionalProperties} .
 `;
+      insertGraph += conditionInserts;
     });
 
     //Here we add the new Authorization that needs to be added as per user's selection
@@ -1345,6 +1397,16 @@ acl:accessTo <${documentURL}> ;
 acl:mode <${updatedMode.join('>, <')}> ;
 acl:${subjectType} <${accessSubject}> .
 `;
+
+      if (Config.Resource[effectiveACLResource]?.conditions?.length) {
+        authorizationCondition = '#' + generateAttributeId();
+        insertGraph += `
+<${authorizationSubject}> acl:condition <${authorizationCondition}> .
+<${authorizationCondition}>
+a acl:ClientCondition ;
+acl:clientClass foaf:Agent .
+`;
+      }
     }
 
     patches.push({ 'insert': insertGraph });
