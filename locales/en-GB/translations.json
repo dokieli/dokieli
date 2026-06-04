@@ -494,6 +494,8 @@
   "event.organizer.dt.textContent": "Organiser",
   "event.location.dt.textContent": "Location",
   "event.date.dt.textContent": "Date",
+  "event.date.end-date.label.textContent": "End date",
+  "event.date.start-date.label.textContent": "Start date",
   "event.description.dt.textContent": "Description",
   "geo.activity-at.figcaption.textContent": "Activity at",
   "geo.activity-data-at.figcaption.textContent": "Activity data at",
