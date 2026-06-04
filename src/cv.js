@@ -16,21 +16,52 @@ limitations under the License.
 */
 
 import Config from './config.js';
-import { fragmentFromString } from './utils/html.js';
+import { fragmentFromString, selectArticleNode } from './utils/html.js';
 import { slugify } from './editor/plugins/autoId.js';
 import { registerDocumentTransform } from './utils/documentTransforms.js';
 import { i18n } from './i18n.js';
+import { generateAttributeId, generateUUID } from './util.js';
 
 // type === slugify(label) so it matches the id autoIdPlugin derives from the heading.
-const SECTIONS = [
-  'Summary',
-  'Experience',
-  'Education',
-  'Skills',
-  'Presentations and Talks',
-  'Technical and Community Contributions',
-  'Scholarly Articles'
-].map(label => ({ type: slugify(label), label }));
+
+const SECTIONS = {
+  summary: {
+    label: 'Summary',
+    entryHTML: () => paragraphHTML({ template: 'cv', type: 'summary' })
+  },
+  experience: {
+    label: 'Experience',
+    entryHTML: () => eventHTML({ template: 'cv', type: 'experience' })
+  },
+  skills: {
+    label: 'Skills',
+    entryHTML: () => skillHTML({ template: 'cv', type: 'skills' })
+  },
+  education: {
+    label: 'Education',
+    entryHTML:() => eventHTML({ template: 'cv', type: 'education' })
+  },
+  talks: {
+    label: 'Presentations and Talks',
+    entryHTML: () => eventHTML({ template: 'cv', type: 'talks' })
+  },
+  'scholarly-articles': {
+    label: 'Scholarly Articles',
+    entryHTML: () => contributionHTML({ template: 'cv', type: 'scholarly-articles' })
+  },
+  'technical-community-contributions': {
+    label: 'Technical and Community Contributions',
+    entryHTML: () => contributionHTML({ template: 'cv', type: 'technical-contributions' })
+  },
+  awards: {
+    label: 'Awards',
+    entryHTML: () => awardHTML({ template: 'cv', type: 'awards' })
+  },
+  credentials: {
+    label: 'Credentials',
+    entryHTML: () => credentialHTML({ template: 'cv', type: 'credentials' })
+  },
+}
 
 // Placeheld in a new CV; the rest are offered as "+ add" in the nav.
 const DEFAULT_SECTIONS = ['summary', 'experience', 'skills'];
@@ -43,7 +74,7 @@ function isAuthorMode() {
 }
 
 function getSection(type) {
-  return SECTIONS.find(s => s.type === type) || null;
+  return SECTIONS[type] || null;
 }
 
 function getCVRoot() {
@@ -56,8 +87,14 @@ function sectionPresent(root, type) {
 
 function sectionHTML(type) {
   const s = getSection(type);
-  if (!s) return '';
-  return `<section id="${s.type}" inlist="" rel="schema:hasPart" resource="#${s.type}">
+  if (!s) {
+    var e = `Section type ${type} not found.`;
+    console.log(e);
+    return `<div class="error"></div>`;
+  };
+
+  return `
+    <section id="${type}" inlist="" rel="schema:hasPart" resource="#${type}">
       <h2 property="schema:name">${s.label}</h2>
       <div datatype="rdf:HTML" property="schema:description"><p></p></div>
     </section>`;
@@ -92,27 +129,27 @@ export function buildTOC(root, presentTypes = null) {
   const ul = document.createElement('ul');
   nav.appendChild(ul);
 
-  SECTIONS.forEach(section => {
+  Object.keys(SECTIONS).forEach(section => {
     const present = presentTypes
-      ? presentTypes.has(section.type)
-      : sectionPresent(root, section.type);
+      ? presentTypes.has(section)
+      : sectionPresent(root, section);
     if (!present && !author) return;
 
     const li = document.createElement('li');
 
     if (present) {
       const a = document.createElement('a');
-      a.href = `#${section.type}`;
-      a.textContent = section.label;
+      a.href = `#${section}`;
+      a.textContent = SECTIONS[section].label;
       li.appendChild(a);
 
       if (author) {
         const remove = document.createElement('button');
         remove.type = 'button';
         remove.className = 'do cv-section-remove';
-        remove.dataset.type = section.type;
+        remove.dataset.type = section;
         remove.title = `Remove ${section.label}`;
-        remove.setAttribute('aria-label', `Remove ${section.label}`);
+        remove.setAttribute('aria-label', `Remove ${SECTIONS[section].label}`);
         remove.textContent = '−';
         li.appendChild(remove);
       }
@@ -120,8 +157,8 @@ export function buildTOC(root, presentTypes = null) {
       const add = document.createElement('button');
       add.type = 'button';
       add.className = 'do cv-section-add';
-      add.dataset.type = section.type;
-      add.textContent = `+ ${section.label}`;
+      add.dataset.type = section;
+      add.textContent = `+ ${SECTIONS[section].label}`;
       li.appendChild(add);
     }
 
@@ -159,7 +196,7 @@ export function addSection(root, type) {
   } else {
     const content = root.querySelector('#content');
     if (!content) return;
-    const order = SECTIONS.map(s => s.type);
+    const order = Object.keys(SECTIONS);
     const idx = order.indexOf(type);
     const after = Array.from(content.children).find(el => order.indexOf(el.id) > idx);
     content.insertBefore(buildSection(type), after || null);
@@ -184,7 +221,7 @@ function isCV(root) {
 
 // Save hook: the live nav is .do (stripped on save); add a clean links-only nav.
 function injectCVTOC(doc) {
-  const article = doc.querySelector('main > article') || doc.querySelector('article');
+  const article = selectArticleNode(doc);
   if (!article || !isCV(article)) return;
 
   const content = article.querySelector('#content');
@@ -199,8 +236,32 @@ function injectCVTOC(doc) {
   content.parentNode.insertBefore(fragmentFromString(`<nav id="cv-toc"><ul>${lis}</ul></nav>`), content);
 }
 
+function paragraphHTML() {
+  return `<p rel="schema:description" datatype="rdf:HTML"><br /></p>`;
+}
+
+function contributionHTML() {
+  return `<p rev="schema:contributor" rel="foaf:made" property="schema:description" datatype="rdf:HTML"><br /></p>`;
+}
+
+function skillHTML() {
+  return `<p rel="cco:skill" datatype="rdf:HTML"><br /></p>`;
+}
+
+function awardHTML() {
+  return `<p rel="schema:award" datatype="rdf:HTML"><br /></p>`;
+}
+
+function credentialHTML() {
+  return `<p rel="schema:hasCredential" datatype="rdf:HTML"><br /></p>`;
+}
+
 //TODO Move this to somewhere else as it is not CV specific
-function eventHTML(type, options = {}) {
+function eventHTML(options = {}) {
+  console.log("eventHTML options", options);
+
+  let rel;
+
   //TODO: Review article and slideshow rels b/c they may not be entirely accurate. Add other templates later.
   switch (options.template) {
     default:
@@ -215,20 +276,49 @@ function eventHTML(type, options = {}) {
       break;
   }
 
+  const eventId = generateAttributeId();
+  const eventOrganizerId = generateAttributeId();
+  const eventOrganizerUrl = 'https://example.org/';
+  const eventOrganizer = 'Organizer';
+  const eventOrganizerDepartmentId = generateAttributeId();
+  const eventOrganizerDepartmentUrl = 'https://example.org/department';
+  const eventOrganizerDepartment = 'Department';
+  const eventOrganizerDepartmentCode = 'ABC';
+  const eventLocation = 'https://wikidata.org/concept/Bern';
+  const eventAddressLocality = 'Bern';
+  const eventAddressRegion = 'Bern';
+  const eventAddressRegionCode = 'CH-BE';
+  const eventAddressCountry = 'Switzerland';
+  const eventAddressCountryCode = 'CH';
+  const eventDescription = 'To be or not to be';
+  const userDetails = {
+    IRI: 'https://csarven.ca/#i'
+  }
+
   return `<dl id="${eventId}" rel="${rel}" resource="#${eventId}" typeof="schema:Event">
-    <dt data-i18n="event.name.dt">${i18n.t('event.name.dt.textContent')}</dt>
-    <dd property="schema:name">${eventName}</dd>
-    <dt data-i18n="event.organizer.dt">${i18n.t('event.organizer.dt.textContent')}</dt>
+    <dt class="event-name" data-i18n="event.name.dt">${i18n.t('event.name.dt.textContent')}</dt>
+    <dd property="schema:name"><p data-placeholder="Experience name"></p></dd>
+
+    <dt class="event-organizer" data-i18n="event.organizer.dt">${i18n.t('event.organizer.dt.textContent')}</dt>
     <dd rel="schema:organizer" resource="#${eventOrganizerId}" typeof="schema:Organization"><a href="${eventOrganizerUrl}" property="schema:name" rel="schema:url">${eventOrganizer}</a> <span rel="schema:department" resource="#${eventOrganizerDepartmentId}"><a href="${eventOrganizerDepartmentUrl}" property="schema:name" rel="schema:url"><abbr title="${eventOrganizerDepartment}">${eventOrganizerDepartmentCode}</abbr></a></span></dd>
-    <dt data-i18n="event.location.dt">${i18n.t('event.location.dt.textContent')}</dt>
+
+    <dt class="event-location" data-i18n="event.location.dt">${i18n.t('event.location.dt.textContent')}</dt>
     <dd rel="schema:location" resource="${eventLocation}" typeof="schema:Place"><span rel="schema:address"><span property="schema:addressLocality">${eventAddressLocality}</span>, <abbr title="${eventAddressRegion}">${eventAddressRegionCode}</abbr>, <abbr title="${eventAddressCountry}">${eventAddressCountryCode}</abbr></span></dd>
-    <dt data-i18n="event.date.dt">${i18n.t('event.date.dt.textContent')}</dt>
-    <dd><time content="${eventStartDate}" datatype="xsd:date" datetime="${eventStartDate}" property="schema:startDate">${eventStartDate}</time>–<time content="${eventEndDate}" datatype="xsd:date" datetime="${eventEndDate}" property="schema:endDate">${eventEndDate}</time></dd>
-    <dt data-i18n="event.description.dt">${i18n.t('event.description.dt.textContent')}</dt>
+
+    <dt class="event-date" data-i18n="event.date.dt">${i18n.t('event.date.dt.textContent')}</dt>
+    <dd>
+      <label for="event-start-date" data-i18n="event.date.start-date.label">${i18n.t('event.date.start-date.label.textContent')}</label><input contenteditable="false" data-i18n="event.date.start-date.input" draggable="false" type="date" value="" />
+      <label for="event-end-date" data-i18n="event.date.end-date.label">${i18n.t('event.date.end-date.label.textContent')}</label><input data-i18n="event.date.end-date.input" draggable="false" type="date" value="" />
+    </dd>
+
+    <dt class="event-description" data-i18n="event.description.dt">${i18n.t('event.description.dt.textContent')}</dt>
     <dd datatype="rdf:HTML" property="schema:description">
       <p rel="schema:performer" resource="${userDetails.IRI}">${eventDescription}</p>
     </dd>
   </dl>`;
+
+//<time content="${eventStartDate}" datatype="xsd:date" datetime="${eventStartDate}" property="schema:startDate">${eventStartDate}</time>–<time content="${eventEndDate}" datatype="xsd:date" datetime="${eventEndDate}" property="schema:endDate">${eventEndDate}</time>
+
 }
 
 registerDocumentTransform(injectCVTOC);
@@ -249,6 +339,15 @@ export function initCV() {
       if (add) { addSection(root, add.dataset.type); return; }
       const remove = e.target.closest('.cv-section-remove');
       if (remove) { removeSection(root, remove.dataset.type); }
+
+      const addEntry = e.target.closest('.cv-entry-add');
+      if (addEntry) {
+        const type = addEntry.dataset.type;
+        const entryHTML = SECTIONS[type]?.entryHTML;
+        if (entryHTML) {
+          pmEditor()?.insertFragmentAtEndOf(`#${type}`, fragmentFromString(entryHTML()));
+        }
+      }
     });
   }
 
@@ -259,12 +358,4 @@ export function initCV() {
       if (root && isCV(root)) refreshTOC(root);
     });
   }
-
-  const addEntry = e.target.closest('.cv-entry-add');
-  if (addEntry) {
-    pmEditor()?.insertFragmentAtEndOf(addEntry.dataset.type,
-      fragmentFromString(entryHTML(addEntry.dataset.type)));
-    return;
-  }
-
 }
