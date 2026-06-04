@@ -25,3 +25,13 @@ export function registerDocumentTransform(fn) {
 export function applyDocumentTransforms(doc) {
   transforms.forEach(fn => fn(doc));
 }
+
+const editorParseTransforms = new Set();
+
+export function registerEditorParseTransform(fn) {
+  editorParseTransforms.add(fn);
+}
+
+export function applyEditorParseTransforms(root) {
+  editorParseTransforms.forEach(fn => fn(root));
+}

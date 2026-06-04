@@ -3043,7 +3043,36 @@ export function getLicenseOptionsHTML(options) {
   return s.join('');
 }
 
-export function getCitationOptionsHTML(options) {
+export function getCountryOptionsHTML(options) {
+  options = options || {};
+  
+  var s = [], selectedCode = '';
+
+  if ('selected' in options) {
+    selectedCode = options.selected;
+    if (selectedCode == '') {
+      s.push(`<option dir="auto" data-i18n="country.choose.option" selected="selected" value="">${i18n.t('country.choose.option.textContent')}</option>`);
+    }
+  }
+
+  //Just for fun maybe in the future:
+  // else if (typeof Config.User.Address.Country !== 'undefined') {
+  //   selectedCode = Config.User.Address.Country;
+  // }
+  // else {
+  //   selectedCode = 'https://creativecommons.org/licenses/by/4.0/';
+  // }
+
+  Object.keys(Config.RefCountry).forEach(code => {
+    var selected = (code == selectedCode) ? ' selected="selected"' : '';
+    s.push(`<option dir="auto" data-i18n="${`country.${code}.option`}" value="${code}"${selected}">${i18n.t(`country.${code}.option.textContent`)}</option>`);
+  })
+
+  return s.join('');
+}
+
+
+export function getCitationOptionsHTML(options = {}) {
   options = options || {};
   var s = [], selectedIRI = '';
 

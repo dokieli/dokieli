@@ -23,7 +23,7 @@ import { stripFragmentFromString, getBaseURL, getPathURL, getAbsoluteIRI, getPar
 import { escapeRegExp, uniqueArray } from './util.js'
 import { domSanitize, safeObjectAssign, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeIRIOrBNode, sanitizeIRIs, sanitizeObject } from './utils/sanitization.js'
 import { parseMarkdown } from "./utils/html.js";
-import { setAcceptRDFTypes } from './fetcher.js'
+import { getResource, setAcceptRDFTypes } from './fetcher.js'
 import LinkHeader from "http-link-header";
 
 const ns = Config?.ns;
@@ -2086,3 +2086,97 @@ WHERE {\n\
 }
 
 
+
+export async function showSelectionWikidataResults (e) {
+console.log("triggered", e);
+  const keyword = e.target.value;
+
+  let wikidataSearchLanguage = Config.User.UI.Language;
+  wikidataSearchLanguage = wikidataSearchLanguage.split('-')[0];
+
+
+  let wikidataSearchLimit = 100;
+
+  let wikidataQueryUrl;
+
+  // ['city', 'human settlement', 'village, 'city or town', 'geographic location', 'township', 'administrative territorial entity', 'state', 'province', 'country', 'political territorial entity', 'federal state', 'department']
+  let wikidataTypes = {
+    place: ["wd:Q515", "wd:Q486972", "wd:Q532", "wd:Q7930989", "wd:Q2221906", "wd:Q19610511", "wd:Q56061", "wd:Q7275", "wd:Q34876", "wd:Q6256", "wd:Q1048835", "wd:Q107390", 'wd:Q643589']
+  };
+
+  wikidataTypes = wikidataTypes['place'].join(' ');
+
+  const typeFilter = `
+?id wdt:P31/wdt:P279* ?baseType .
+VALUES ?baseType { ${wikidataTypes} }
+`
+
+  let wikidataSparqlQuery = `
+PREFIX wikibase: <http://wikiba.se/ontology#>
+PREFIX mwapi: <https://www.mediawiki.org/ontology#API/>
+PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX schema: <http://schema.org/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT DISTINCT ?id ?label ?url
+WHERE {
+{
+  SELECT DISTINCT ?id
+  WHERE {
+    SERVICE wikibase:mwapi {
+      bd:serviceParam
+        wikibase:endpoint "www.wikidata.org" ;
+        wikibase:api "EntitySearch" ;
+        mwapi:search "${keyword}" ;
+        mwapi:language "${wikidataSearchLanguage}" ;
+        mwapi:limit "${wikidataSearchLimit}" .
+      ?id wikibase:apiOutputItem mwapi:item .
+    }
+    ${typeFilter}
+  }
+}
+
+OPTIONAL {
+?id rdfs:label ?labelStr .
+FILTER(LANG(?labelStr) IN ("", "${wikidataSearchLanguage}", "mul"))
+BIND(STR(?labelStr) AS ?label)
+}
+
+OPTIONAL {
+?url
+  schema:about ?id ;
+  schema:isPartOf <https://${wikidataSearchLanguage}.wikipedia.org/> .
+}
+
+SERVICE wikibase:label { bd:serviceParam wikibase:language "${wikidataSearchLanguage}". }
+}
+`.trim();
+
+  // console.log(wikidataSparqlQuery);
+
+  wikidataQueryUrl = "https://query.wikidata.org/sparql?query=" + encodeURIComponent(wikidataSparqlQuery);
+
+  let options = {};
+
+  let headers = { 'Accept': 'application/json' };
+  
+  const sparqlResultsResponse = await getResource(wikidataQueryUrl, headers, options);
+  const sparqlResultsGraph = await sparqlResultsResponse.json();
+
+  // console.log(sparqlResultsGraph)
+
+  let results = sparqlResultsGraph.results.bindings;
+
+  results = results.sort((itemA, itemB) => {
+    const labelA = itemA?.label?.value || "";
+    const labelB = itemB?.label?.value || "";
+
+    const scoreA = scoreMatch(keyword, labelA);
+    const scoreB = scoreMatch(keyword, labelB);
+
+    return scoreB - scoreA;
+  });
+
+  console.log(results)
+}

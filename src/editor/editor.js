@@ -24,6 +24,7 @@ import { keymapPlugin } from "./toolbar/author/keymap.js";
 import { AuthorToolbar } from "./toolbar/author/author.js";
 import { SocialToolbar } from "./toolbar/social/social.js";
 import { SlashMenu } from "./slashmenu/slashmenu.js";
+import { applyEditorParseTransforms } from "./../utils/documentTransforms.js";
 import { placeholderPlugin } from "./plugins/placeholder.js";
 import { autoIdPlugin } from "./plugins/autoId.js";
 import { slideStructurePlugin } from "./plugins/slideStructure.js";
@@ -31,6 +32,7 @@ import { slideshowDecorationsPlugin } from "./plugins/slideshowDecorations.js";
 import { ImageResizeView } from "./nodeviews/imageResize.js";
 import { DetailsView } from "./nodeviews/details.js";
 import { InputView } from "./nodeviews/input.js";
+import { SelectView } from "./nodeviews/select.js";
 import Config from "./../config.js";
 import { addMessageToLog, showActionMessage, initCopyToClipboard, showRobustLinksDecoration } from "../doc.js";
 import { fragmentFromString, hasNonWhitespaceText, selectArticleNode } from "./../utils/html.js";
@@ -445,6 +447,7 @@ export class Editor {
 
   const parseRoot = this.node.cloneNode(true);
   parseRoot.querySelectorAll('#document-editor, #review-changes').forEach(n => n.remove());
+  applyEditorParseTransforms(parseRoot);
   originalDoc = DOMParser.fromSchema(schema).parse(parseRoot);
 
   let pmDoc;
@@ -610,7 +613,8 @@ export class Editor {
     nodeViews: {
       img(node, view, getPos) { return new ImageResizeView(node, view, getPos); },
       details(node) { return new DetailsView(node); },
-      input(node) { return new InputView(node); },
+      input(node, view, getPos) { return new InputView(node, view, getPos); },
+      select(node, view, getPos) { return new SelectView(node, view, getPos); }
     },
   });
 

@@ -18,9 +18,11 @@ limitations under the License.
 import Config from './config.js';
 import { fragmentFromString, selectArticleNode } from './utils/html.js';
 import { slugify } from './editor/plugins/autoId.js';
-import { registerDocumentTransform } from './utils/documentTransforms.js';
+import { registerDocumentTransform, registerEditorParseTransform } from './utils/documentTransforms.js';
 import { i18n } from './i18n.js';
 import { generateAttributeId, generateUUID } from './util.js';
+import { getCountryOptionsHTML } from './doc.js';
+import { showSelectionWikidataResults } from './graph.js';
 
 // type === slugify(label) so it matches the id autoIdPlugin derives from the heading.
 
@@ -229,10 +231,10 @@ function injectCVTOC(doc) {
 
   doc.querySelectorAll('#cv-toc').forEach(n => n.remove());
 
-  const present = SECTIONS.filter(s => content.querySelector(`:scope > section[id="${s.type}"]`));
+  const present = Object.keys(SECTIONS).filter(type => content.querySelector(`:scope > section[id="${type}"]`));
   if (!present.length) return;
 
-  const lis = present.map(s => `<li><a href="#${s.type}">${s.label}</a></li>`).join('');
+  const lis = present.map(type => `<li><a href="#${type}">${SECTIONS[type].label}</a></li>`).join('');
   content.parentNode.insertBefore(fragmentFromString(`<nav id="cv-toc"><ul>${lis}</ul></nav>`), content);
 }
 
@@ -303,12 +305,12 @@ function eventHTML(options = {}) {
     <dd rel="schema:organizer" resource="#${eventOrganizerId}" typeof="schema:Organization"><a href="${eventOrganizerUrl}" property="schema:name" rel="schema:url">${eventOrganizer}</a> <span rel="schema:department" resource="#${eventOrganizerDepartmentId}"><a href="${eventOrganizerDepartmentUrl}" property="schema:name" rel="schema:url"><abbr title="${eventOrganizerDepartment}">${eventOrganizerDepartmentCode}</abbr></a></span></dd>
 
     <dt class="event-location" data-i18n="event.location.dt">${i18n.t('event.location.dt.textContent')}</dt>
-    <dd rel="schema:location" resource="${eventLocation}" typeof="schema:Place"><span rel="schema:address"><span property="schema:addressLocality">${eventAddressLocality}</span>, <abbr title="${eventAddressRegion}">${eventAddressRegionCode}</abbr>, <abbr title="${eventAddressCountry}">${eventAddressCountryCode}</abbr></span></dd>
+    <dd rel="schema:location" resource="${eventLocation}" typeof="schema:Place"><span rel="schema:address"><input name="${eventId}-event-location" placeholder="Enter location (city, region, country)" value="" type="text" /></span></dd>
 
     <dt class="event-date" data-i18n="event.date.dt">${i18n.t('event.date.dt.textContent')}</dt>
     <dd>
-      <label for="event-start-date" data-i18n="event.date.start-date.label">${i18n.t('event.date.start-date.label.textContent')}</label><input contenteditable="false" data-i18n="event.date.start-date.input" draggable="false" type="date" value="" />
-      <label for="event-end-date" data-i18n="event.date.end-date.label">${i18n.t('event.date.end-date.label.textContent')}</label><input data-i18n="event.date.end-date.input" draggable="false" type="date" value="" />
+      <label for="event-start-date" data-i18n="event.date.start-date.label">${i18n.t('event.date.start-date.label.textContent')}</label><input contenteditable="false" data-i18n="event.date.start-date.input" data-property="schema:startDate" draggable="false" type="date" value="" />
+      <label for="event-end-date" data-i18n="event.date.end-date.label">${i18n.t('event.date.end-date.label.textContent')}</label><input data-i18n="event.date.end-date.input" data-property="schema:endDate" draggable="false" type="date" value="" />
     </dd>
 
     <dt class="event-description" data-i18n="event.description.dt">${i18n.t('event.description.dt.textContent')}</dt>
@@ -317,11 +319,110 @@ function eventHTML(options = {}) {
     </dd>
   </dl>`;
 
-//<time content="${eventStartDate}" datatype="xsd:date" datetime="${eventStartDate}" property="schema:startDate">${eventStartDate}</time>–<time content="${eventEndDate}" datatype="xsd:date" datetime="${eventEndDate}" property="schema:endDate">${eventEndDate}</time>
+//<span property="schema:addressLocality">${eventAddressLocality}</span>, <abbr title="${eventAddressRegion}">${eventAddressRegionCode}</abbr>, <abbr title="${eventAddressCountry}">${eventAddressCountryCode}</abbr>
 
 }
 
 registerDocumentTransform(injectCVTOC);
+
+// Save hook: collapse the editable date inputs back into <time> elements, as in
+// a published CV. A date <dd> holds one or two <input type="date">; replace its
+// contents with <time>start</time>–<time>end</time>.
+function transformDateInputs(doc) {
+  const article = selectArticleNode(doc);
+  if (!article || !isCV(article)) return;
+
+  const toTime = (input) => {
+    const value = input.getAttribute('value') || '';
+    const time = doc.createElement('time');
+    time.setAttribute('datatype', 'xsd:date');
+    const property = input.getAttribute('data-property');
+    if (property) time.setAttribute('property', property);
+    if (value) {
+      time.setAttribute('content', value);
+      time.setAttribute('datetime', value);
+    }
+    time.textContent = value;
+    return time;
+  };
+
+  article.querySelectorAll('dd').forEach((dd) => {
+    const inputs = dd.querySelectorAll('input[type="date"]');
+    if (!inputs.length) return;
+    const times = Array.from(inputs, toTime);
+    dd.replaceChildren(...times.flatMap((t, i) => (i ? [doc.createTextNode('–'), t] : [t])));
+  });
+}
+
+registerDocumentTransform(transformDateInputs);
+
+// Editor hook (inverse of transformDateInputs): expand published <time> date
+// pairs back into the editable label+input form so saved CVs get the picker.
+// Acts only on a date <dd>, identified by a <time> carrying schema:startDate/End.
+function dateInputHTML(kind, value) {
+  const property = kind === 'start' ? 'schema:startDate' : 'schema:endDate';
+  return `<label for="event-${kind}-date" data-i18n="event.date.${kind}-date.label">${i18n.t(`event.date.${kind}-date.label.textContent`)}</label><input data-i18n="event.date.${kind}-date.input" data-property="${property}" draggable="false" type="date" value="${value}" />`;
+}
+
+function transformDatesToInputs(root) {
+  if (!root || !isCV(root)) return;
+
+  const valueOf = (t) => t ? (t.getAttribute('content') || t.getAttribute('datetime') || t.textContent.trim()) : '';
+
+  root.querySelectorAll('dd').forEach((dd) => {
+    const start = dd.querySelector(':scope > time[property="schema:startDate"]');
+    const end = dd.querySelector(':scope > time[property="schema:endDate"]');
+    if (!start && !end) return;
+    let html = dateInputHTML('start', valueOf(start));
+    if (end) html += dateInputHTML('end', valueOf(end));
+    dd.replaceChildren(fragmentFromString(html));
+  });
+}
+
+registerEditorParseTransform(transformDatesToInputs);
+
+
+// Save/read hook: collapse the editable country <select> into an <abbr> like a
+// published CV (<abbr title="Switzerland">CH</abbr>). The selected code lives in
+// data-value (synced by SelectView); the matching <option>'s text is the name.
+function transformCountrySelects(doc) {
+  const article = selectArticleNode(doc);
+  if (!article || !isCV(article)) return;
+
+  article.querySelectorAll('select[id$="-country"]').forEach((select) => {
+    const code = select.getAttribute('data-value') ||
+      (select.querySelector('option[selected]') || select.querySelector('option[value]:not([value=""])'))?.getAttribute('value') || '';
+    if (!code) { select.remove(); return; }
+    const option = select.querySelector(`option[value="${code}"]`);
+    const name = option ? (option.textContent.trim() || option.getAttribute('title') || '') : '';
+    //TODO: Change this to <span without using country code
+    const abbr = doc.createElement('abbr');
+    abbr.setAttribute('property', 'schema:addressCountry');
+    if (name) abbr.setAttribute('title', name);
+    abbr.textContent = code;
+    select.replaceWith(abbr);
+  });
+}
+
+registerDocumentTransform(transformCountrySelects);
+
+// Editor hook (inverse): expand a published country <abbr> back into the
+// editable <select> with that country pre-selected.
+function countrySelectHTML(code) {
+  const id = `${generateAttributeId()}-country`;
+  return `<select id="${id}" name="${id}">${getCountryOptionsHTML({ selected: code })}</select>`;
+}
+
+function transformCountriesToSelects(root) {
+  if (!root || !isCV(root)) return;
+
+  root.querySelectorAll('abbr[property="schema:addressCountry"]').forEach((abbr) => {
+    const code = abbr.textContent.trim();
+    abbr.replaceWith(fragmentFromString(countrySelectHTML(code)));
+  });
+}
+
+registerEditorParseTransform(transformCountriesToSelects);
 
 // Render the nav and wire add/remove. Safe to call repeatedly.
 export function initCV() {
@@ -349,13 +450,26 @@ export function initCV() {
         }
       }
     });
+
+    document.addEventListener('change', (e) => {
+      if (e.target.matches('input[name$="-event-location"]')) {
+        showSelectionWikidataResults(e);
+      }
+    });
   }
 
   if (!modeHandlerAttached) {
     modeHandlerAttached = true;
-    window.addEventListener('dokieli:editor-mode-changed', () => {
+    window.addEventListener('dokieli:editor-mode-changed', (e) => {
       const root = getCVRoot();
-      if (root && isCV(root)) refreshTOC(root);
-    });
+      if (!root || !isCV(root)) return;
+      // Leaving author mode: PM is already torn down, so the live DOM holds the
+      // date inputs (with synced values). Collapse them to <time>, as on save.
+      if (e.detail?.mode !== 'author') {
+        transformDateInputs(document);
+        transformCountrySelects(document);
+      }      
+      refreshTOC(root);
+  });
   }
 }
