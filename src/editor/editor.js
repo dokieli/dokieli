@@ -30,6 +30,7 @@ import { slideStructurePlugin } from "./plugins/slideStructure.js";
 import { slideshowDecorationsPlugin } from "./plugins/slideshowDecorations.js";
 import { ImageResizeView } from "./nodeviews/imageResize.js";
 import { DetailsView } from "./nodeviews/details.js";
+import { InputView } from "./nodeviews/input.js";
 import Config from "./../config.js";
 import { addMessageToLog, showActionMessage, initCopyToClipboard, showRobustLinksDecoration } from "../doc.js";
 import { fragmentFromString, hasNonWhitespaceText, selectArticleNode } from "./../utils/html.js";
@@ -608,7 +609,8 @@ export class Editor {
     },
     nodeViews: {
       img(node, view, getPos) { return new ImageResizeView(node, view, getPos); },
-      details(node) { return new DetailsView(node); }
+      details(node) { return new DetailsView(node); },
+      input(node) { return new InputView(node); },
     },
   });
 

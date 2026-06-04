@@ -25,6 +25,12 @@ function hasClass(node, name) {
 }
 
 function getPlaceholder(node, $pos) {
+  // Template-declared hint: any empty textblock carrying data-placeholder shows
+  // it verbatim. Lets any template (CV, event, ...) opt in without new rules
+  // here; the attribute is stripped on save by cleanProseMirrorOutput.
+  const declared = node.attrs.originalAttributes?.["data-placeholder"];
+  if (declared) return declared;
+
   const parent = $pos.parent;
   const grandparent = $pos.depth >= 1 ? $pos.node($pos.depth - 1) : null;
 

@@ -28,6 +28,9 @@ import { buildTOC } from "../../cv.js";
 // the document-level handler wired in initCV().
 export const cvNavDecorationKey = new PluginKey("cvNavDecoration");
 
+// Sections that hold a list of entries and get an "+ add entry" button.
+const REPEATABLE = new Set(["experience", "education", "skills", "talks", "scholarly-articles", "technical-contributions", "awards", "credentials"]);
+
 function isContentDiv(node) {
   return node.type.name === "div" && node.attrs.originalAttributes?.id === "content";
 }
@@ -115,7 +118,9 @@ function buildDecorations(doc) {
     stopEvent: () => true,
   });
 
-  return DecorationSet.create(doc, [widget]);
+  const entryDecos = entryButtonDecorations(doc);
+  console.log("[cvNav] buildDecorations sections=", sectionIds(doc), "entryButtons=", entryDecos.length);
+  return DecorationSet.create(doc, [widget, ...entryDecos]);
 }
 
 export const cvNavDecorationPlugin = new Plugin({
@@ -146,7 +151,8 @@ export const cvNavDecorationPlugin = new Plugin({
 function entryButtonDecorations(doc) {
   const decos = [];
   doc.descendants((node, pos) => {
-    if (node.type.name !== "section") return false;
+    // Descend into containers (e.g. div#content) to reach the sections inside.
+    if (node.type.name !== "section") return true;
     const id = node.attrs.originalAttributes?.id;
     if (!REPEATABLE.has(id)) return false;
     const end = pos + 1 + node.content.size;
