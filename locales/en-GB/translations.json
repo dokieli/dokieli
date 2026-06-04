@@ -161,6 +161,8 @@
   "clipboard.button.aria-label": "Copy to clipboard",
   "clipboard.button.title": "Copy to clipboard",
   "close.button.title": "Close",
+  "country.choose.option.textContent": "Choose country",
+  "country.AF.option.textContent": "Afghanistan",
   "datetime.created.dt.textContent": "Created",
   "datetime.derived-on.dt.textContent": "Derived on",
   "datetime.issued.dt.textContent": "Issued",

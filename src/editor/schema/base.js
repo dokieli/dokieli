@@ -589,7 +589,7 @@ let customNodes = {
     inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "option", getAttrs(node){ return getAttributes(node); }}],
-    toDOM: toDOMWith("options")
+    toDOM: toDOMWith("option")
   },
   input: {
     group: "inline",

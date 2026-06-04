@@ -119,7 +119,6 @@ function buildDecorations(doc) {
   });
 
   const entryDecos = entryButtonDecorations(doc);
-  console.log("[cvNav] buildDecorations sections=", sectionIds(doc), "entryButtons=", entryDecos.length);
   return DecorationSet.create(doc, [widget, ...entryDecos]);
 }
 
