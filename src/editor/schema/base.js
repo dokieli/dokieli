@@ -231,6 +231,34 @@ let customNodes = {
     parseDOM: [{ tag: 'div[property~="schema:description"]', priority: 60, getAttrs(node){ return getAttributes(node); }}],
     toDOM: toDOMWith("div")
   },
+  // Atom widget: the location autocomplete. The inner <input> is lifted onto the
+  // node's attrs and rendered by AutocompleteView, so it isn't editable content
+  // (can't be deleted/typed-into as text) and needs no contentDOM wrapper.
+  autocomplete: {
+    group: "block",
+    atom: true,
+    attrs: { originalAttributes: { default: {} }, inputAttributes: { default: {} } },
+    parseDOM: [{
+      tag: "div.autocomplete",
+      priority: 70,
+      getAttrs(node) {
+        const lift = (el) => {
+          const attrs = {};
+          for (const attr of el.attributes) {
+            if (['__proto__', 'constructor', 'prototype'].includes(attr.name)) continue;
+            attrs[attr.name] = attr.value;
+          }
+          return attrs;
+        };
+        const input = node.querySelector('input');
+        return { originalAttributes: lift(node), inputAttributes: input ? lift(input) : {} };
+      }
+    }],
+    toDOM(node) {
+      const { originalAttributes = {}, inputAttributes = {} } = node.attrs;
+      return ["div", { ...originalAttributes }, ["input", { ...inputAttributes }]];
+    }
+  },
   div: {
     content: "block*",
     group: "block",

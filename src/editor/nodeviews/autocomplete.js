@@ -15,28 +15,49 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// <div class="autocomplete">: input in contentDOM, suggestions injected outside it so PM ignores them.
+// Atom view for the location autocomplete: renders the <input> itself (no
+// contentDOM), so PM owns nothing inside. ignoreMutation + atom mean the injected
+// suggestions <ul> is left alone and the input can't be edited/deleted as content.
 export class AutocompleteView {
-  constructor(node) {
+  constructor(node, view, getPos) {
     this.node = node;
+    this.view = view;
+    this.getPos = getPos;
     this.dom = document.createElement("div");
-    const attrs = node.attrs.originalAttributes || {};
-    for (const [name, value] of Object.entries(attrs)) {
+    for (const [name, value] of Object.entries(node.attrs.originalAttributes || {})) {
       this.dom.setAttribute(name, value);
     }
-    this.contentDOM = document.createElement("div");
-    this.contentDOM.className = "autocomplete-content";
-    this.dom.appendChild(this.contentDOM);
+    this.input = document.createElement("input");
+    for (const [name, value] of Object.entries(node.attrs.inputAttributes || {})) {
+      this.input.setAttribute(name, value);
+    }
+    this.input.setAttribute("contenteditable", "false");
+    this.dom.appendChild(this.input);
+    this.input.addEventListener("change", () => this.syncInput());
   }
 
-  ignoreMutation(mutation) {
-    return !this.contentDOM.contains(mutation.target);
+  syncInput() {
+    const pos = typeof this.getPos === "function" ? this.getPos() : null;
+    if (pos == null) return;
+    const inputAttributes = { ...this.node.attrs.inputAttributes, value: this.input.value };
+    for (const attr of this.input.attributes) {
+      if (attr.name.startsWith("data-")) inputAttributes[attr.name] = attr.value;
+    }
+    this.view.dispatch(
+      this.view.state.tr.setNodeMarkup(pos, null, { ...this.node.attrs, inputAttributes })
+    );
+  }
+
+  stopEvent() {
+    return true;
+  }
+
+  ignoreMutation() {
+    return true;
   }
 
   update(node) {
     if (node.type !== this.node.type) return false;
-    const cls = node.attrs.originalAttributes?.class || "";
-    if (!cls.split(/\s+/).includes("autocomplete")) return false;
     this.node = node;
     return true;
   }

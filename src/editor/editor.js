@@ -616,11 +616,7 @@ export class Editor {
       details(node) { return new DetailsView(node); },
       input(node, view, getPos) { return new InputView(node, view, getPos); },
       select(node, view, getPos) { return new SelectView(node, view, getPos); },
-      div(node, view, getPos) {
-        const cls = node.attrs.originalAttributes?.class || "";
-        // Only autocomplete divs get a custom view; null → PM's default rendering.
-        return cls.split(/\s+/).includes("autocomplete") ? new AutocompleteView(node, view, getPos) : null;
-      }
+      autocomplete(node, view, getPos) { return new AutocompleteView(node, view, getPos); }
     },
   });
 
