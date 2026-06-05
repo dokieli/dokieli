@@ -61,6 +61,28 @@ export function debounce(func, delay) {
   };
 }
 
+export function debounceAsync(func, delay) {
+  let timer;
+  let supersede;
+  const debounced = function (...args) {
+    clearTimeout(timer);
+    if (supersede) { supersede(undefined); supersede = null; }
+    return new Promise((resolve) => {
+      supersede = resolve;
+      timer = setTimeout(async () => {
+        supersede = null;
+        resolve(await func(...args));
+      }, delay);
+    });
+  };
+  debounced.cancel = () => {
+    clearTimeout(timer);
+    if (supersede) { supersede(undefined); supersede = null; }
+    timer = null;
+    supersede = null;
+  };
+  return debounced;
+}
 
 export function escapeRegExp(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -325,4 +347,24 @@ export function generateFilename(url, options) {
   var extension = options.filenameExtension || '.txt';
   fileName = fileName + "." + timestamp + extension;
   return fileName;
+}
+
+export function scoreMatch(search, label) {
+  const a = search.toLowerCase();
+  const b = label.toLowerCase();
+
+  if (a === b) return 1000000;
+
+  let i = 0, j = 0, matches = 0;
+
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) {
+      matches++;
+      i++; j++;
+    } else {
+      j++;
+    }
+  }
+
+  return matches;
 }
