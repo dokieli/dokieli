@@ -4928,7 +4928,11 @@ export function showLocationSuggestions(input, results) {
       input.dispatchEvent(new Event('change', { bubbles: true }));
       list.remove();
     };
-    li.addEventListener('mousedown', (ev) => { ev.preventDefault(); li.selectResult(); });
+    li.addEventListener('mouseup', (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      li.selectResult();
+    });
     list.appendChild(li);
   });
 }

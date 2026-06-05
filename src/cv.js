@@ -23,6 +23,8 @@ import { i18n } from './i18n.js';
 import { generateAttributeId, generateUUID, debounce } from './util.js';
 import { getCountryOptionsHTML, showLocationSuggestions } from './doc.js';
 import { getWikidataResults } from './graph.js';
+import { Icon } from './ui/icons.js';
+import { sanitizeInsertAdjacentHTML } from './utils/sanitization.js';
 
 // type === slugify(label) so it matches the id autoIdPlugin derives from the heading.
 
@@ -517,55 +519,84 @@ export function initCV() {
     });
 
     const locationSearchOptions = { wikidataTypes: ['places'] };
+    let locationSuggestionsClosed = false;
 
     const doLocationSearch = async (input) => {
       const keyword = input.value.trim();
-      if (!keyword) { document.getElementById('cv-location-suggestions')?.remove(); return; }
-      const results = await getWikidataResults(keyword, locationSearchOptions);
-      if (input.value.trim() !== keyword) return;
-      showLocationSuggestions(input, results);
+      document.getElementById('cv-location-suggestions')?.remove();
+
+      if (!keyword) {
+        document.getElementById('cv-location-suggestions')?.remove();
+        return;
+      }
+
+      try {
+        let progress = input.nextElementSibling?.classList.contains('progress') ? input.nextElementSibling : null;
+
+        if (progress) {
+          progress.remove();
+        }
+
+        progress = `<span class="progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]}</span>`;
+        sanitizeInsertAdjacentHTML(input, 'afterend', progress);
+
+        const results = await getWikidataResults(keyword, locationSearchOptions);
+
+        progress = input.nextElementSibling?.classList.contains('progress') ? input.nextElementSibling : null;
+
+        progress.remove();
+
+        if (locationSuggestionsClosed || input.value.trim() !== keyword) return;
+
+        showLocationSuggestions(input, results);
+      } catch(err) {
+        console.log(err)
+      }
     };
-    const runLocationSearch = debounce(doLocationSearch, 300);
+
+    const runLocationSearch = debounce(doLocationSearch, 1000);
 
     document.addEventListener('input', (e) => {
-      if (e.target.matches('input[name$="-event-location"]')) runLocationSearch(e.target);
+      if (!e.target.matches('input[name$="-event-location"]')) return;
+      locationSuggestionsClosed = false;
+      runLocationSearch(e.target);
     });
 
-document.addEventListener('keydown', (e) => {
-  if (!e.target.matches('input[name$="-event-location"]')) return;
-  const list = document.getElementById('cv-location-suggestions');
-  const items = list ? Array.from(list.children) : [];
+    document.addEventListener('keyup', (e) => {
+      if (!e.target.matches('input[name$="-event-location"]')) return;
+      const list = document.getElementById('cv-location-suggestions');
+      const items = list ? Array.from(list.children) : [];
 
-  switch (e.key) {
-    case 'ArrowDown':
-    case 'ArrowUp': {
-      if (!items.length) return;
-      e.preventDefault();
-      e.stopPropagation();
-      let i = items.findIndex(li => li.classList.contains('active'));
-      items.forEach(li => { li.classList.remove('active'); li.setAttribute('aria-selected', 'false'); });
-      i = e.key === 'ArrowDown' ? (i + 1) % items.length : (i <= 0 ? items.length : i) - 1;
-      const active = items[i];
-      active.classList.add('active');
-      active.setAttribute('aria-selected', 'true');
-      break;
-    }
-    case 'Enter': {
-      e.preventDefault();
-      e.stopPropagation();
-      const active = items.find(li => li.classList.contains('active'));
-      if (active) active.selectResult();
-      else doLocationSearch(e.target); 
-      break;
-    }
-    case 'Escape':
-      if (list) { 
-        e.stopPropagation();
-        list?.remove();
+      switch (e.key) {
+        case 'ArrowDown':
+        case 'ArrowUp': {
+          if (!items.length) return;
+          e.preventDefault();
+          e.stopPropagation();
+          let i = items.findIndex(li => li.classList.contains('active'));
+          items.forEach(li => { li.classList.remove('active'); li.setAttribute('aria-selected', 'false'); });
+          i = e.key === 'ArrowDown' ? (i + 1) % items.length : (i <= 0 ? items.length : i) - 1;
+          const active = items[i];
+          active.classList.add('active');
+          active.setAttribute('aria-selected', 'true');
+          break;
+        }
+        case 'Enter': {
+          e.preventDefault();
+          e.stopPropagation();
+          const active = items.find(li => li.classList.contains('active'));
+          if (active) active.selectResult();
+          else doLocationSearch(e.target); 
+          break;
+        }
+        case 'Escape':
+          e.preventDefault();
+          e.stopPropagation();
+          locationSuggestionsClosed = true;
+          list?.remove();
+          break;
       }
-      break;
-  }
-}, true);
+    }, true);
   }
 
   if (!modeHandlerAttached) {
