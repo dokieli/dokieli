@@ -1741,6 +1741,9 @@ padding:0;
 .autocomplete {
 position: relative;
 }
+.autocomplete p {
+margin-bottom:0;
+}
 .suggestions {
 position: absolute;
 z-index: 1;
@@ -1750,6 +1753,9 @@ border-bottom-left-radius: 0.5em;
 border-bottom-right-radius: 0.5em;
 box-shadow: 0.25em 0.25em 0.25em rgba(0,0,0,0.1);
 list-style-type: none;
+height: 18.5em;
+overflow-y: auto;
+resize:vertical;
 }
 .autocomplete ul.suggestions li {
 cursor: pointer;
