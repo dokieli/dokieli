@@ -2131,7 +2131,7 @@ PREFIX wdt: <http://www.wikidata.org/prop/direct/>
 PREFIX schema: <http://schema.org/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
-SELECT DISTINCT ?id ?label ?url
+SELECT DISTINCT ?id ?label ?url ?country ?countryCode ?countryLabel
 WHERE {
 {
   SELECT DISTINCT ?id
@@ -2159,6 +2159,16 @@ OPTIONAL {
 ?url
   schema:about ?id ;
   schema:isPartOf <https://${wikidataSearchLanguage}.wikipedia.org/> .
+}
+
+OPTIONAL {
+?id wdt:P17 ?country .
+OPTIONAL { ?country wdt:P297 ?countryCode . }
+OPTIONAL {
+?country rdfs:label ?countryLabelStr .
+FILTER(LANG(?countryLabelStr) IN ("", "${wikidataSearchLanguage}", "mul"))
+BIND(STR(?countryLabelStr) AS ?countryLabel)
+}
 }
 
 SERVICE wikibase:label { bd:serviceParam wikibase:language "${wikidataSearchLanguage}". }

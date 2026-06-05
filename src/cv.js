@@ -423,6 +423,72 @@ function transformCountriesToSelects(root) {
 
 registerEditorParseTransform(transformCountriesToSelects);
 
+// Location autocomplete -> published address markup.
+function transformLocationInputs(doc) {
+  const article = selectArticleNode(doc);
+  if (!article || !isCV(article)) return;
+
+  article.querySelectorAll('.autocomplete').forEach((wrapper) => {
+    const input = wrapper.querySelector('input[name$="-event-location"]');
+    if (!input) return;
+    const label = (input.value || input.getAttribute('value') || '').trim();
+    const entity = input.getAttribute('data-entity') || '';
+    const countryCode = input.getAttribute('data-country-code') || '';
+    const countryName = input.getAttribute('data-country-name') || '';
+
+    const address = doc.createElement('span');
+    const rel = wrapper.getAttribute('rel');
+    if (rel) address.setAttribute('rel', rel);
+    const locality = doc.createElement('span');
+    locality.setAttribute('property', 'schema:addressLocality');
+    locality.textContent = label;
+    address.appendChild(locality);
+    if (countryCode) {
+      address.appendChild(doc.createTextNode(', '));
+      const abbr = doc.createElement('abbr');
+      abbr.setAttribute('property', 'schema:addressCountry');
+      if (countryName) abbr.setAttribute('title', countryName);
+      abbr.textContent = countryCode;
+      address.appendChild(abbr);
+    }
+    const dd = wrapper.closest('dd');
+    if (dd && entity) dd.setAttribute('resource', entity);
+    wrapper.replaceWith(address);
+  });
+}
+
+registerDocumentTransform(transformLocationInputs);
+
+// Inverse: published address -> editable autocomplete.
+function locationInputHTML({ label = '', entity = '', countryCode = '', countryName = '' } = {}) {
+  const id = generateAttributeId();
+  const esc = (s) => (s || '').replace(/"/g, '&quot;');
+  const data = [
+    entity && `data-entity="${esc(entity)}"`,
+    countryCode && `data-country-code="${esc(countryCode)}"`,
+    countryName && `data-country-name="${esc(countryName)}"`,
+  ].filter(Boolean).join(' ');
+  return `<div class="autocomplete" rel="schema:address"><input name="${id}-event-location" placeholder="Enter location (city, region, country)" value="${esc(label)}" ${data} type="text" /></div>`;
+}
+
+function transformLocationsToInputs(root) {
+  if (!root || !isCV(root)) return;
+
+  root.querySelectorAll('span[rel~="schema:address"]').forEach((address) => {
+    const locality = address.querySelector('[property~="schema:addressLocality"]');
+    const abbr = address.querySelector('abbr[property~="schema:addressCountry"]');
+    const dd = address.closest('dd');
+    address.replaceWith(fragmentFromString(locationInputHTML({
+      label: locality ? locality.textContent.trim() : '',
+      entity: dd ? (dd.getAttribute('resource') || '') : '',
+      countryCode: abbr ? abbr.textContent.trim() : '',
+      countryName: abbr ? (abbr.getAttribute('title') || '') : '',
+    })));
+  });
+}
+
+registerEditorParseTransform(transformLocationsToInputs);
+
 // Render the nav and wire add/remove. Safe to call repeatedly.
 export function initCV() {
   const root = getCVRoot();
@@ -512,6 +578,7 @@ document.addEventListener('keydown', (e) => {
       if (e.detail?.mode !== 'author') {
         transformDateInputs(document);
         transformCountrySelects(document);
+        transformLocationInputs(document);
       }      
       refreshTOC(root);
   });
