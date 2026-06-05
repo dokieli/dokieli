@@ -2103,20 +2103,18 @@ export async function getWikidataResults (keywords, options = {}) {
 
   let wikidataQueryUrl;
 
-  // ['city', 'human settlement', 'village, 'city or town', 'geographic location', 'township', 'administrative territorial entity', 'state', 'province', 'country', 'political territorial entity', 'federal state', 'department']
-  let wikidataTypes = {
-    place: ["wd:Q515", "wd:Q486972", "wd:Q532", "wd:Q7930989", "wd:Q2221906", "wd:Q19610511", "wd:Q56061", "wd:Q7275", "wd:Q34876", "wd:Q6256", "wd:Q1048835", "wd:Q107390", 'wd:Q643589']
-  };
+  // city, village, city or town, township
+  const wikidataAddressLocality = ["wd:Q515", "wd:Q532", "wd:Q7930989", "wd:Q19610511"];
+  // state, province, federal state, department, canton
+  const wikidataAddressRegion = ["wd:Q7275", "wd:Q34876", "wd:Q107390", "wd:Q643589", "wd:Q28575"];
+  // country, political territorial entity
+  const wikidataAddressCountry = ["wd:Q6256", "wd:Q1048835"];
+  // human settlement, geographic location, administrative territorial entity
+  const wikidataPlace = ["wd:Q486972", "wd:Q2221906", "wd:Q56061"];
 
-  //FIXME: So that if options.wikidataTypes is provided, use it
-  if (options?.wikidataTypes?.place) {
-    wikidataTypes = wikidataTypes['place'];
-  }
-  else {
-    wikidataTypes = wikidataTypes['place'];
-  }
-
-  wikidataTypes = wikidataTypes.join(' ');
+  const wikidataTypes = [...wikidataAddressLocality, ...wikidataAddressRegion, ...wikidataAddressCountry].join(' ');
+  const wikidataRegionTypes = wikidataAddressRegion.join(' ');
+  const wikidataLocalityTypes = wikidataAddressLocality.join(' ');
 
   const typeFilter = `
 ?id wdt:P31/wdt:P279* ?baseType .
@@ -2131,7 +2129,7 @@ PREFIX wdt: <http://www.wikidata.org/prop/direct/>
 PREFIX schema: <http://schema.org/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
-SELECT DISTINCT ?id ?label ?url ?country ?countryCode ?countryLabel
+SELECT DISTINCT ?id ?label ?url ?locationType ?selfRegionCode ?selfCountryCode ?region ?regionCode ?regionLabel ?country ?countryCode ?countryLabel
 WHERE {
 {
   SELECT DISTINCT ?id
@@ -2159,6 +2157,25 @@ OPTIONAL {
 ?url
   schema:about ?id ;
   schema:isPartOf <https://${wikidataSearchLanguage}.wikipedia.org/> .
+}
+
+BIND(
+  IF(EXISTS { ?id wdt:P31/wdt:P279* wd:Q6256 }, "addressCountry",
+  IF(EXISTS { VALUES ?rt { ${wikidataRegionTypes} } ?id wdt:P31/wdt:P279* ?rt }, "addressRegion",
+  "addressLocality")) AS ?locationType
+)
+
+OPTIONAL { ?id wdt:P300 ?selfRegionCode . }
+OPTIONAL { ?id wdt:P297 ?selfCountryCode . }
+
+OPTIONAL {
+?id wdt:P131 ?region .
+OPTIONAL { ?region wdt:P300 ?regionCode . }
+OPTIONAL {
+?region rdfs:label ?regionLabelStr .
+FILTER(LANG(?regionLabelStr) IN ("", "${wikidataSearchLanguage}", "mul"))
+BIND(STR(?regionLabelStr) AS ?regionLabel)
+}
 }
 
 OPTIONAL {
@@ -2192,10 +2209,18 @@ SERVICE wikibase:label { bd:serviceParam wikibase:language "${wikidataSearchLang
       { timeout: 20000, ...options }
     );
     const graph = await response.json();
-    const seen = new Set();
-    return graph.results.bindings
+    const byId = new Map();
+    graph.results.bindings
       .filter(item => !!item.label)
-      .filter(item => { const id = item.id?.value; if (!id || seen.has(id)) return false; seen.add(id); return true; })
+      .forEach(item => {
+        const id = item.id?.value;
+        if (!id) return;
+        const prev = byId.get(id);
+        if (!prev || (!prev.regionCode?.value && item.regionCode?.value)) {
+          byId.set(id, item);
+        }
+      });
+    return Array.from(byId.values())
       .sort((a, b) => scoreMatch(keyword, b?.label?.value || '') - scoreMatch(keyword, a?.label?.value || ''));
   } catch (error) {
     console.warn('Wikidata search failed:', error?.message || error);

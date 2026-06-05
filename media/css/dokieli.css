@@ -1781,14 +1781,21 @@ background-color: #efe;
 color: #080;
 }
 .suggestions li {
-display: flex;
+/* display: flex;
 justify-content: space-between;
-gap: 0.5em;
+gap: 0.5em; */
 }
+.suggestions .region-code,
 .suggestions .country-code {
-color: #777;
+color: #555;
 font-variant: small-caps;
 }
+
+/* .suggestions .region-code:before,
+.suggestions .country-code:before {
+content: ", ";
+} */
+
 .autocomplete .progress {
 margin: -0.25em 0 0 -2em;
 margin-top: -0.35em;

@@ -435,23 +435,71 @@ function transformLocationInputs(doc) {
     if (!input) return;
     const label = (input.value || input.getAttribute('value') || '').trim();
     const entity = input.getAttribute('data-entity') || '';
+    const locationType = input.getAttribute('data-location-type') || 'addressLocality';
+    const regionCode = input.getAttribute('data-region-code') || '';
+    const regionName = input.getAttribute('data-region-name') || '';
     const countryCode = input.getAttribute('data-country-code') || '';
     const countryName = input.getAttribute('data-country-name') || '';
 
     const address = doc.createElement('span');
     const rel = wrapper.getAttribute('rel');
     if (rel) address.setAttribute('rel', rel);
-    const locality = doc.createElement('span');
-    locality.setAttribute('property', 'schema:addressLocality');
-    locality.textContent = label;
-    address.appendChild(locality);
-    if (countryCode) {
-      address.appendChild(doc.createTextNode(', '));
-      const abbr = doc.createElement('abbr');
-      abbr.setAttribute('property', 'schema:addressCountry');
-      if (countryName) abbr.setAttribute('title', countryName);
-      abbr.textContent = countryCode;
-      address.appendChild(abbr);
+
+    if (locationType === 'addressLocality') {
+      const span = doc.createElement('span');
+      span.setAttribute('property', 'schema:addressLocality');
+      span.textContent = label;
+      address.appendChild(span);
+      if (regionCode) {
+        address.appendChild(doc.createTextNode(', '));
+        const abbr = doc.createElement('abbr');
+        abbr.setAttribute('property', 'schema:addressRegion');
+        if (regionName) abbr.setAttribute('title', regionName);
+        abbr.textContent = regionCode;
+        address.appendChild(abbr);
+      }
+      if (countryCode) {
+        address.appendChild(doc.createTextNode(', '));
+        const abbr = doc.createElement('abbr');
+        abbr.setAttribute('property', 'schema:addressCountry');
+        if (countryName) abbr.setAttribute('title', countryName);
+        abbr.textContent = countryCode;
+        address.appendChild(abbr);
+      }
+    } else if (locationType === 'addressRegion') {
+      if (regionCode) {
+        const abbr = doc.createElement('abbr');
+        abbr.setAttribute('property', 'schema:addressRegion');
+        if (regionName) abbr.setAttribute('title', regionName);
+        abbr.textContent = regionCode;
+        address.appendChild(abbr);
+      } else {
+        const span = doc.createElement('span');
+        span.setAttribute('property', 'schema:addressRegion');
+        span.textContent = label;
+        address.appendChild(span);
+      }
+      if (countryCode) {
+        address.appendChild(doc.createTextNode(', '));
+        const abbr = doc.createElement('abbr');
+        abbr.setAttribute('property', 'schema:addressCountry');
+        if (countryName) abbr.setAttribute('title', countryName);
+        abbr.textContent = countryCode;
+        address.appendChild(abbr);
+      }
+    } else {
+      if (countryCode) {
+        const abbr = doc.createElement('abbr');
+        abbr.setAttribute('property', 'schema:addressCountry');
+        if (countryName) abbr.setAttribute('title', countryName);
+        abbr.textContent = countryCode;
+        address.appendChild(abbr);
+      } else {
+        const span = doc.createElement('span');
+        span.setAttribute('property', 'schema:addressCountry');
+        span.textContent = label;
+        address.appendChild(span);
+      }
     }
     const dd = wrapper.closest('dd');
     if (dd && entity) dd.setAttribute('resource', entity);
@@ -462,11 +510,14 @@ function transformLocationInputs(doc) {
 registerDocumentTransform(transformLocationInputs);
 
 // Inverse: published address -> editable autocomplete.
-function locationInputHTML({ label = '', entity = '', countryCode = '', countryName = '' } = {}) {
+function locationInputHTML({ label = '', entity = '', locationType = '', regionCode = '', regionName = '', countryCode = '', countryName = '' } = {}) {
   const id = generateAttributeId();
   const esc = (s) => (s || '').replace(/"/g, '&quot;');
   const data = [
     entity && `data-entity="${esc(entity)}"`,
+    locationType && `data-location-type="${esc(locationType)}"`,
+    regionCode && `data-region-code="${esc(regionCode)}"`,
+    regionName && `data-region-name="${esc(regionName)}"`,
     countryCode && `data-country-code="${esc(countryCode)}"`,
     countryName && `data-country-name="${esc(countryName)}"`,
   ].filter(Boolean).join(' ');
@@ -478,13 +529,30 @@ function transformLocationsToInputs(root) {
 
   root.querySelectorAll('span[rel~="schema:address"]').forEach((address) => {
     const locality = address.querySelector('[property~="schema:addressLocality"]');
-    const abbr = address.querySelector('abbr[property~="schema:addressCountry"]');
+    const region = address.querySelector('[property~="schema:addressRegion"]');
+    const country = address.querySelector('[property~="schema:addressCountry"]');
     const dd = address.closest('dd');
+
+    let locationType, label;
+    if (locality) {
+      locationType = 'addressLocality';
+      label = locality.textContent.trim();
+    } else if (region) {
+      locationType = 'addressRegion';
+      label = region.getAttribute('title') || region.textContent.trim();
+    } else {
+      locationType = 'addressCountry';
+      label = country ? (country.getAttribute('title') || country.textContent.trim()) : '';
+    }
+
     address.replaceWith(fragmentFromString(locationInputHTML({
-      label: locality ? locality.textContent.trim() : '',
+      label,
       entity: dd ? (dd.getAttribute('resource') || '') : '',
-      countryCode: abbr ? abbr.textContent.trim() : '',
-      countryName: abbr ? (abbr.getAttribute('title') || '') : '',
+      locationType,
+      regionCode: region ? region.textContent.trim() : '',
+      regionName: region ? (region.getAttribute('title') || '') : '',
+      countryCode: country ? country.textContent.trim() : '',
+      countryName: country ? (country.getAttribute('title') || '') : '',
     })));
   });
 }
