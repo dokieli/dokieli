@@ -1773,6 +1773,15 @@ background-color:#eee;
 background-color: #efe;
 color: #080;
 }
+.suggestions li {
+display: flex;
+justify-content: space-between;
+gap: 0.5em;
+}
+.suggestions .country-code {
+color: #777;
+font-variant: small-caps;
+}
 
 .ProseMirror [typeof="schema:Event"] {
 border:1px solid #ddd;

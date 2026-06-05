@@ -4906,13 +4906,25 @@ export function showLocationSuggestions(input, results) {
   results.slice(0, 20).forEach((b) => {
     const entity = b.id?.value || '';
     const label = b.label?.value || entity;
+    const countryCode = b.countryCode?.value || '';
+    const countryName = b.countryLabel?.value || '';
     const li = document.createElement('li');
-    li.textContent = label;
+    li.append(label);
+    if (countryCode) { 
+      const code = document.createElement('span');
+      code.className = 'country-code';
+      code.textContent = countryCode;
+      if (countryName) code.title = countryName;
+      li.append(' ', code);
+    }
     li.setAttribute('title', entity);
-    li.selectResult = () => {                 // shared by click + Enter
-      input.value = li.textContent;
-      input.setAttribute('value', li.textContent);
-      if (entity) input.closest('dd')?.setAttribute('resource', entity);
+    li.selectResult = () => {
+      input.value = label;
+      input.setAttribute('value', label);
+      const set = (name, value) => value ? input.setAttribute(name, value) : input.removeAttribute(name);
+      set('data-entity', entity);
+      set('data-country-code', countryCode);
+      set('data-country-name', countryName);
       input.dispatchEvent(new Event('change', { bubbles: true }));
       list.remove();
     };
