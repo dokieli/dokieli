@@ -15,12 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Native <select> inside the editable region. Like InputView: stopEvent keeps
-// every DOM event away from PM (no selection, no toolbar) and ignoreMutation
-// stops reparses. The view renders the <option>s itself (no contentDOM) so PM
-// never tries to edit inside the control. The picked value lives only in the DOM
-// property, so the change handler writes it into a data-value attribute that
-// survives serialization (read by the save/read-mode transform).
+// Native <select>; renders its own options, PM ignores events, change syncs data-value.
 export class SelectView {
   constructor(node, view, getPos) {
     this.node = node;
