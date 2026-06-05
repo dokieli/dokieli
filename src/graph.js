@@ -2192,8 +2192,11 @@ SERVICE wikibase:label { bd:serviceParam wikibase:language "${wikidataSearchLang
       { timeout: 20000, ...options }
     );
     const graph = await response.json();
-    return graph.results.bindings.filter(item => !!item.label).sort((a, b) =>
-      scoreMatch(keyword, b?.label?.value || '') - scoreMatch(keyword, a?.label?.value || ''));
+    const seen = new Set();
+    return graph.results.bindings
+      .filter(item => !!item.label)
+      .filter(item => { const id = item.id?.value; if (!id || seen.has(id)) return false; seen.add(id); return true; })
+      .sort((a, b) => scoreMatch(keyword, b?.label?.value || '') - scoreMatch(keyword, a?.label?.value || ''));
   } catch (error) {
     console.warn('Wikidata search failed:', error?.message || error);
     return [];

@@ -1753,9 +1753,10 @@ border-bottom-left-radius: 0.5em;
 border-bottom-right-radius: 0.5em;
 box-shadow: 0.25em 0.25em 0.25em rgba(0,0,0,0.1);
 list-style-type: none;
-height: 18.5em;
-overflow-y: auto;
-resize:vertical;
+}
+.suggestions:has(li) {
+max-height:18.5em;
+overflow-y:auto;
 }
 .autocomplete ul.suggestions li {
 cursor: pointer;
@@ -1787,6 +1788,14 @@ gap: 0.5em;
 .suggestions .country-code {
 color: #777;
 font-variant: small-caps;
+}
+.autocomplete .progress {
+margin: -0.25em 0 0 -2em;
+margin-top: -0.35em;
+display: inline-block;
+}
+.autocomplete .progress svg {
+fill:#080;
 }
 
 .ProseMirror [typeof="schema:Event"] {
