@@ -4872,6 +4872,57 @@ export function setDocumentString(node) {
 }
 
 
+// Floating autocomplete list under the location input. It lives in <body> (not
+// inside the editable article) so ProseMirror's MutationObserver doesn't revert
+// it. Mirrors the share panel's contacts suggestions. Picking an item fills the
+// input, tags the <dd> with the entity URI, and fires `change` so InputView
+// syncs the value for save.
+export function getLocationSuggestionsElement(input) {
+  const container = input.closest('.autocomplete');
+  let list = document.getElementById('cv-location-suggestions');
+  if (!list) {
+    list = document.createElement('ul');
+    list.id = 'cv-location-suggestions';
+    list.className = 'suggestions';
+    list.setAttribute('contenteditable', 'false');
+    list.setAttribute('spellcheck', 'false');
+    container.appendChild(list);
+  }
+  const rect = input.getBoundingClientRect();
+  // list.style.position = 'absolute';
+  // list.style.left = `${rect.left + window.scrollX}px`;
+  // list.style.top = `${rect.bottom + window.scrollY}px`;
+  // list.style.minWidth = `${rect.width}px`;
+  // list.style.zIndex = '10000';
+  return list;
+}
+
+export function showLocationSuggestions(input, results) {
+  const list = getLocationSuggestionsElement(input);
+  list.replaceChildren();
+
+  if (!results.length) { list.remove(); return; }
+
+  results.slice(0, 20).forEach((b) => {
+    const entity = b.id?.value || '';
+    const label = b.label?.value || entity;
+    const li = document.createElement('li');
+    li.textContent = label;
+    li.setAttribute('title', entity);
+    li.selectResult = () => {                 // shared by click + Enter
+      input.value = li.textContent;
+      input.setAttribute('value', li.textContent);
+      if (entity) input.closest('dd')?.setAttribute('resource', entity);
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      list.remove();
+    };
+    li.addEventListener('mousedown', (ev) => { ev.preventDefault(); li.selectResult(); });
+    list.appendChild(li);
+  });
+}
+
+
+
 //XXX: Unused
 // export function getListHTMLFromTriples(triples, options) {
 //   options = options || {element: 'ul'};

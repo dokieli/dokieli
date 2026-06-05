@@ -20,7 +20,7 @@ import { RdfaParser } from "rdfa-streaming-parser";
 import { Readable } from "readable-stream";
 import Config from './config.js'
 import { stripFragmentFromString, getBaseURL, getPathURL, getAbsoluteIRI, getParentURLPath, currentLocation, getMediaTypeURIs, isUrl } from './uri.js'
-import { escapeRegExp, uniqueArray } from './util.js'
+import { escapeRegExp, scoreMatch, uniqueArray } from './util.js'
 import { domSanitize, safeObjectAssign, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeIRIOrBNode, sanitizeIRIs, sanitizeObject } from './utils/sanitization.js'
 import { parseMarkdown } from "./utils/html.js";
 import { getResource, setAcceptRDFTypes } from './fetcher.js'
@@ -2086,14 +2086,18 @@ WHERE {\n\
 }
 
 
+export async function getWikidataResults (keywords, options = {}) {
+  console.log(`getWikidataResults: ${keywords}`)
+  // console.log(options);
 
-export async function showSelectionWikidataResults (e) {
-console.log("triggered", e);
-  const keyword = e.target.value;
+  keywords = Array.isArray(keywords) ? keywords : [keywords];
 
+  // TODO: This function so far only does one keyword at a time
+  const keyword = keywords[0].trim();
+
+  //TODO: Using the root language only for now, without locale.
   let wikidataSearchLanguage = Config.User.UI.Language;
   wikidataSearchLanguage = wikidataSearchLanguage.split('-')[0];
-
 
   let wikidataSearchLimit = 100;
 
@@ -2104,7 +2108,15 @@ console.log("triggered", e);
     place: ["wd:Q515", "wd:Q486972", "wd:Q532", "wd:Q7930989", "wd:Q2221906", "wd:Q19610511", "wd:Q56061", "wd:Q7275", "wd:Q34876", "wd:Q6256", "wd:Q1048835", "wd:Q107390", 'wd:Q643589']
   };
 
-  wikidataTypes = wikidataTypes['place'].join(' ');
+  //FIXME: So that if options.wikidataTypes is provided, use it
+  if (options?.wikidataTypes?.place) {
+    wikidataTypes = wikidataTypes['place'];
+  }
+  else {
+    wikidataTypes = wikidataTypes['place'];
+  }
+
+  wikidataTypes = wikidataTypes.join(' ');
 
   const typeFilter = `
 ?id wdt:P31/wdt:P279* ?baseType .
@@ -2157,26 +2169,23 @@ SERVICE wikibase:label { bd:serviceParam wikibase:language "${wikidataSearchLang
 
   wikidataQueryUrl = "https://query.wikidata.org/sparql?query=" + encodeURIComponent(wikidataSparqlQuery);
 
-  let options = {};
+  let sparqlRequestOptions = {};
 
   let headers = { 'Accept': 'application/json' };
-  
-  const sparqlResultsResponse = await getResource(wikidataQueryUrl, headers, options);
-  const sparqlResultsGraph = await sparqlResultsResponse.json();
 
   // console.log(sparqlResultsGraph)
 
-  let results = sparqlResultsGraph.results.bindings;
-
-  results = results.sort((itemA, itemB) => {
-    const labelA = itemA?.label?.value || "";
-    const labelB = itemB?.label?.value || "";
-
-    const scoreA = scoreMatch(keyword, labelA);
-    const scoreB = scoreMatch(keyword, labelB);
-
-    return scoreB - scoreA;
-  });
-
-  console.log(results)
+  try {
+    const response = await getResource(
+      wikidataQueryUrl,
+      { 'Accept': 'application/json' },
+      { timeout: 20000, ...options }
+    );
+    const graph = await response.json();
+    return graph.results.bindings.filter(item => !!item.label).sort((a, b) =>
+      scoreMatch(keyword, b?.label?.value || '') - scoreMatch(keyword, a?.label?.value || ''));
+  } catch (error) {
+    console.warn('Wikidata search failed:', error?.message || error);
+    return [];
+  }
 }

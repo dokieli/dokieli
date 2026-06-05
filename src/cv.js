@@ -20,9 +20,9 @@ import { fragmentFromString, selectArticleNode } from './utils/html.js';
 import { slugify } from './editor/plugins/autoId.js';
 import { registerDocumentTransform, registerEditorParseTransform } from './utils/documentTransforms.js';
 import { i18n } from './i18n.js';
-import { generateAttributeId, generateUUID } from './util.js';
-import { getCountryOptionsHTML } from './doc.js';
-import { showSelectionWikidataResults } from './graph.js';
+import { generateAttributeId, generateUUID, debounce } from './util.js';
+import { getCountryOptionsHTML, showLocationSuggestions } from './doc.js';
+import { getWikidataResults } from './graph.js';
 
 // type === slugify(label) so it matches the id autoIdPlugin derives from the heading.
 
@@ -305,12 +305,11 @@ function eventHTML(options = {}) {
     <dd rel="schema:organizer" resource="#${eventOrganizerId}" typeof="schema:Organization"><a href="${eventOrganizerUrl}" property="schema:name" rel="schema:url">${eventOrganizer}</a> <span rel="schema:department" resource="#${eventOrganizerDepartmentId}"><a href="${eventOrganizerDepartmentUrl}" property="schema:name" rel="schema:url"><abbr title="${eventOrganizerDepartment}">${eventOrganizerDepartmentCode}</abbr></a></span></dd>
 
     <dt class="event-location" data-i18n="event.location.dt">${i18n.t('event.location.dt.textContent')}</dt>
-    <dd rel="schema:location" resource="${eventLocation}" typeof="schema:Place"><span rel="schema:address"><input name="${eventId}-event-location" placeholder="Enter location (city, region, country)" value="" type="text" /></span></dd>
+    <dd rel="schema:location" resource="${eventLocation}" typeof="schema:Place"><div class="autocomplete" rel="schema:address"><input name="${eventId}-event-location" placeholder="Enter location (city, region, country)" value="" type="text" /></div></dd>
 
     <dt class="event-date" data-i18n="event.date.dt">${i18n.t('event.date.dt.textContent')}</dt>
     <dd>
-      <label for="event-start-date" data-i18n="event.date.start-date.label">${i18n.t('event.date.start-date.label.textContent')}</label><input contenteditable="false" data-i18n="event.date.start-date.input" data-property="schema:startDate" draggable="false" type="date" value="" />
-      <label for="event-end-date" data-i18n="event.date.end-date.label">${i18n.t('event.date.end-date.label.textContent')}</label><input data-i18n="event.date.end-date.input" data-property="schema:endDate" draggable="false" type="date" value="" />
+      <label for="event-start-date" data-i18n="event.date.start-date.label">${i18n.t('event.date.start-date.label.textContent')}</label><input contenteditable="false" data-i18n="event.date.start-date.input" data-property="schema:startDate" draggable="false" type="date" value="" /><label for="event-end-date" data-i18n="event.date.end-date.label">${i18n.t('event.date.end-date.label.textContent')}</label><input data-i18n="event.date.end-date.input" data-property="schema:endDate" draggable="false" type="date" value="" />
     </dd>
 
     <dt class="event-description" data-i18n="event.description.dt">${i18n.t('event.description.dt.textContent')}</dt>
@@ -451,11 +450,56 @@ export function initCV() {
       }
     });
 
-    document.addEventListener('change', (e) => {
-      if (e.target.matches('input[name$="-event-location"]')) {
-        showSelectionWikidataResults(e);
-      }
+    const locationSearchOptions = { wikidataTypes: ['places'] };
+
+    const doLocationSearch = async (input) => {
+      const keyword = input.value.trim();
+      if (!keyword) { document.getElementById('cv-location-suggestions')?.remove(); return; }
+      const results = await getWikidataResults(keyword, locationSearchOptions);
+      if (input.value.trim() !== keyword) return;
+      showLocationSuggestions(input, results);
+    };
+    const runLocationSearch = debounce(doLocationSearch, 300);
+
+    document.addEventListener('input', (e) => {
+      if (e.target.matches('input[name$="-event-location"]')) runLocationSearch(e.target);
     });
+
+document.addEventListener('keydown', (e) => {
+  if (!e.target.matches('input[name$="-event-location"]')) return;
+  const list = document.getElementById('cv-location-suggestions');
+  const items = list ? Array.from(list.children) : [];
+
+  switch (e.key) {
+    case 'ArrowDown':
+    case 'ArrowUp': {
+      if (!items.length) return;
+      e.preventDefault();
+      e.stopPropagation();
+      let i = items.findIndex(li => li.classList.contains('active'));
+      items.forEach(li => { li.classList.remove('active'); li.setAttribute('aria-selected', 'false'); });
+      i = e.key === 'ArrowDown' ? (i + 1) % items.length : (i <= 0 ? items.length : i) - 1;
+      const active = items[i];
+      active.classList.add('active');
+      active.setAttribute('aria-selected', 'true');
+      break;
+    }
+    case 'Enter': {
+      e.preventDefault();
+      e.stopPropagation();
+      const active = items.find(li => li.classList.contains('active'));
+      if (active) active.selectResult();
+      else doLocationSearch(e.target); 
+      break;
+    }
+    case 'Escape':
+      if (list) { 
+        e.stopPropagation();
+        list?.remove();
+      }
+      break;
+  }
+}, true);
   }
 
   if (!modeHandlerAttached) {
