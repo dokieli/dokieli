@@ -15,14 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// A native form control inside the editable region. stopEvent keeps every DOM
-// event (click, focus, keydown) away from PM, so clicking the input never sets
-// a PM selection and the author toolbar stays hidden; the native picker still
-// works. ignoreMutation stops PM from reparsing when the value changes.
-//
-// Because PM ignores the input, the picked value lives only in the DOM property
-// and would never reach serialization. The change handler writes it back into
-// the node's value attribute so it survives save (and downstream transforms).
+// Native form control; PM ignores its events, change syncs value + data-* back.
 export class InputView {
   constructor(node, view, getPos) {
     this.node = node;
@@ -41,6 +34,9 @@ export class InputView {
     const pos = typeof this.getPos === "function" ? this.getPos() : null;
     if (pos == null) return;
     const next = { ...this.node.attrs.originalAttributes, value: this.dom.value };
+    for (const attr of this.dom.attributes) {
+      if (attr.name.startsWith("data-")) next[attr.name] = attr.value;
+    }
     this.view.dispatch(
       this.view.state.tr.setNodeMarkup(pos, null, { ...this.node.attrs, originalAttributes: next })
     );

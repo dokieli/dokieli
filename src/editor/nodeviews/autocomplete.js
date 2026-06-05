@@ -15,12 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// NodeView for <div class="autocomplete">. The editable content (the input)
-// lives in contentDOM; the suggestions list is injected into dom *outside*
-// contentDOM. ignoreMutation tells PM to leave anything outside contentDOM
-// alone, so the dynamically injected <ul> isn't reverted, doesn't lose its
-// contenteditable=false, and doesn't corrupt the editor selection. PM still
-// owns and edits the input inside contentDOM as normal.
+// <div class="autocomplete">: input in contentDOM, suggestions injected outside it so PM ignores them.
 export class AutocompleteView {
   constructor(node) {
     this.node = node;
@@ -34,9 +29,6 @@ export class AutocompleteView {
     this.dom.appendChild(this.contentDOM);
   }
 
-  // Only mutations within the content area (the input) are PM's business. The
-  // injected suggestions <ul> is a sibling of contentDOM, so contains() is
-  // false for it and we tell PM to ignore it.
   ignoreMutation(mutation) {
     return !this.contentDOM.contains(mutation.target);
   }
