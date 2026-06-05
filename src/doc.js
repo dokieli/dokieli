@@ -4906,15 +4906,33 @@ export function showLocationSuggestions(input, results) {
   results.slice(0, 20).forEach((b) => {
     const entity = b.id?.value || '';
     const label = b.label?.value || entity;
+    const locationType = b.locationType?.value || 'addressLocality';
+    const selfRegionCode = b.selfRegionCode?.value || '';
+    const selfCountryCode = b.selfCountryCode?.value || '';
     const countryCode = b.countryCode?.value || '';
     const countryName = b.countryLabel?.value || '';
+    const regionCode = b.regionCode?.value || '';
+    const regionName = b.regionLabel?.value || '';
+
+    const displayRegionCode = locationType === 'addressLocality' ? regionCode : locationType === 'addressRegion' ? selfRegionCode : '';
+    const displayRegionName = locationType === 'addressLocality' ? regionName : label;
+    const displayCountryCode = locationType === 'addressCountry' ? selfCountryCode : countryCode;
+    const displayCountryName = locationType === 'addressCountry' ? label : countryName;
+
     const li = document.createElement('li');
     li.append(label);
-    if (countryCode) { 
+    if (displayRegionCode) {
+      const code = document.createElement('span');
+      code.className = 'region-code';
+      code.textContent = displayRegionCode;
+      if (displayRegionName) code.title = displayRegionName;
+      li.append(' ', code);
+    }
+    if (displayCountryCode) {
       const code = document.createElement('span');
       code.className = 'country-code';
-      code.textContent = countryCode;
-      if (countryName) code.title = countryName;
+      code.textContent = displayCountryCode;
+      if (displayCountryName) code.title = displayCountryName;
       li.append(' ', code);
     }
     li.setAttribute('title', entity);
@@ -4923,8 +4941,21 @@ export function showLocationSuggestions(input, results) {
       input.setAttribute('value', label);
       const set = (name, value) => value ? input.setAttribute(name, value) : input.removeAttribute(name);
       set('data-entity', entity);
-      set('data-country-code', countryCode);
-      set('data-country-name', countryName);
+      set('data-location-type', locationType);
+      if (locationType === 'addressLocality') {
+        set('data-region-code', regionCode);
+        set('data-region-name', regionName);
+        set('data-country-code', countryCode);
+        set('data-country-name', countryName);
+      } else if (locationType === 'addressRegion') {
+        set('data-region-code', selfRegionCode);
+        set('data-region-name', label);
+        set('data-country-code', countryCode);
+        set('data-country-name', countryName);
+      } else {
+        set('data-country-code', selfCountryCode);
+        set('data-country-name', label);
+      }
       input.dispatchEvent(new Event('change', { bubbles: true }));
       list.remove();
     };
