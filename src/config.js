@@ -188,14 +188,13 @@ export default {
   },
 
   DocumentDoItems: [
-    'create-new-document',
-    'create-new-slideshow',
     'document-info',
     'embed-data-entry',
     'generate-feed',
     'graph-view',
     'memento-document',
     'message-log',
+    'new-document',
     'open-document',
     'reply-to-resource',
     'resource-browser',

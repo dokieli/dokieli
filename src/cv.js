@@ -289,12 +289,6 @@ function eventHTML(options = {}) {
   const eventOrganizerDepartment = 'Department';
   const eventOrganizerDepartmentCode = 'ABC';
   const eventLocation = 'https://wikidata.org/concept/Bern';
-  const eventAddressLocality = 'Bern';
-  const eventAddressRegion = 'Bern';
-  const eventAddressRegionCode = 'CH-BE';
-  const eventAddressCountry = 'Switzerland';
-  const eventAddressCountryCode = 'CH';
-  const eventDescription = 'To be or not to be';
   const userDetails = {
     IRI: 'https://csarven.ca/#i'
   }
@@ -307,7 +301,7 @@ function eventHTML(options = {}) {
     <dd rel="schema:organizer" resource="#${eventOrganizerId}" typeof="schema:Organization"><a href="${eventOrganizerUrl}" property="schema:name" rel="schema:url">${eventOrganizer}</a> <span rel="schema:department" resource="#${eventOrganizerDepartmentId}"><a href="${eventOrganizerDepartmentUrl}" property="schema:name" rel="schema:url"><abbr title="${eventOrganizerDepartment}">${eventOrganizerDepartmentCode}</abbr></a></span></dd>
 
     <dt class="event-location" data-i18n="event.location.dt">${i18n.t('event.location.dt.textContent')}</dt>
-    <dd rel="schema:location" resource="${eventLocation}" typeof="schema:Place"><div class="autocomplete" rel="schema:address"><input name="${eventId}-event-location" placeholder="Enter location (city, region, country)" value="" type="text" /></div></dd>
+    <dd rel="schema:location" resource="${eventLocation}" typeof="schema:Place"><div class="autocomplete" rel="schema:address"><input name="${eventId}-event-location" placeholder="Enter location (locality, region, country)" value="" type="text" /></div></dd>
 
     <dt class="event-date" data-i18n="event.date.dt">${i18n.t('event.date.dt.textContent')}</dt>
     <dd>
@@ -316,12 +310,9 @@ function eventHTML(options = {}) {
 
     <dt class="event-description" data-i18n="event.description.dt">${i18n.t('event.description.dt.textContent')}</dt>
     <dd datatype="rdf:HTML" property="schema:description">
-      <p rel="schema:performer" resource="${userDetails.IRI}">${eventDescription}</p>
+      <p data-placeholder="Experience description" rel="schema:performer" resource="${userDetails.IRI}"></p>
     </dd>
   </dl>`;
-
-//<span property="schema:addressLocality">${eventAddressLocality}</span>, <abbr title="${eventAddressRegion}">${eventAddressRegionCode}</abbr>, <abbr title="${eventAddressCountry}">${eventAddressCountryCode}</abbr>
-
 }
 
 registerDocumentTransform(injectCVTOC);
