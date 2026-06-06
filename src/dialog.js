@@ -462,7 +462,7 @@ export function initDocumentDoEvents() {
     }
 
     if (e.target.closest('.resource-new')) {
-      showCreateNewDocument(e);
+      showNewDocument(e);
     }
 
     if (e.target.closest('.resource-new-slide')) {
@@ -3061,7 +3061,7 @@ export async function openResource(iri, options) {
   await handleResource(iri, headers, options);
 }
 
-export function showCreateNewDocument(e) {
+export function showNewDocument(e) {
   if (e) {
     e.target.closest('button').disabled = true;
   }
@@ -3076,7 +3076,7 @@ export function showCreateNewDocument(e) {
 
   var buttonDisabled = (document.location.protocol === 'file:') ? ' disabled="disabled"' : '';
 
-  let id = 'create-new-document';
+  const id = 'new-document';
 
   var buttonClose = getButtonHTML({ key: `dialog.${id}.close.button`, button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
@@ -3089,9 +3089,9 @@ export function showCreateNewDocument(e) {
         <fieldset id="${id}-fieldset">
           <legend data-i18n="dialog.${id}.legend">${i18n.t(`dialog.${id}.legend.textContent`)}</legend>
           <ul>
-            <li><input type="radio" id="create-new-document-article" name="create-new-document" value="create-new-document-article" checked="checked" /> <label for="create-new-document-article">${Icon['.fas.fa-newspaper']} <span class="create-new-document-article"><strong data-i18n="create-new-document-article.strong">Article</strong> <span data-i18n="create-new-document-article.span">Write your story, scholarly article, report a story, blog.</span></span</label></li>
-            <li><input type="radio" id="create-new-document-slideshow" name="create-new-document" value="create-new-document-slideshow" /> <label for="create-new-document-slideshow">${Icon['.fas.fa-slideshow']} <span class="create-new-document-slideshow"><strong data-i18n="create-new-document-slideshow.strong">Slideshow</strong> <span data-i18n="create-new-document-slideshow.span">Prepare a slideshow to impress your friends, family, and colleagues.</span></span></label></li>
-            <li><input type="radio" id="create-new-document-cv" name="create-new-document" value="create-new-document-cv" /> <label for="create-new-document-cv">${Icon['.fas.fa-book-skull']} <span class="create-new-document-cv"><strong data-i18n="">Curriculum Vitae</strong> <span>Be profesh and carpe diem</span></span</label></li>
+            <li><input type="radio" id="${id}-article" name="${id}" value="${id}-article" checked="checked" /> <label for="${id}-article">${Icon['.fas.fa-newspaper']} <span class="${id}-article"><strong data-i18n="${id}-article.strong">Article</strong> <span data-i18n="${id}-article.span">Write your story, scholarly article, report a story, blog.</span></span</label></li>
+            <li><input type="radio" id="${id}-slideshow" name="${id}" value="${id}-slideshow" /> <label for="${id}-slideshow">${Icon['.fas.fa-slideshow']} <span class="${id}-slideshow"><strong data-i18n="${id}-slideshow.strong">Slideshow</strong> <span data-i18n="${id}-slideshow.span">Prepare a slideshow to impress your friends, family, and colleagues.</span></span></label></li>
+            <li><input type="radio" id="${id}-cv" name="${id}" value="${id}-cv" /> <label for="${id}-cv">${Icon['.fas.fa-book-skull']} <span class="${id}-cv"><strong data-i18n="">Curriculum Vitae</strong> <span>Be profesh and carpe diem</span></span</label></li>
           </ul>
           <button class="create ${id}" type="submit" data-i18n="dialog.${id}.create-template.button" title="${i18n.t(`dialog.${id}.create-template.button.title`)}">${i18n.t(`dialog.${id}.create-template.button.textContent`)}</button>
         </fieldset>
@@ -3099,7 +3099,7 @@ export function showCreateNewDocument(e) {
     </aside>
   `));
 
-  var createNewDocumentDialog = document.getElementById('create-new-document');
+  var createNewDocumentDialog = document.getElementById(id);
 
   createNewDocumentDialog.addEventListener('click', (e) => {
     if (e.target.closest('button.close')) {
@@ -3115,21 +3115,21 @@ export function showCreateNewDocument(e) {
 
     document.querySelector('#document-menu .resource-new').disabled = false;
 
-    // const selected = createNewDocumentDialog.querySelector('input[name="create-new-document"]:checked')?.value;
+    // const selected = createNewDocumentDialog.querySelector(`input[name="${id}"]:checked`)?.value;
 
     const form = e.target.closest('form');
 
     const formValues = getFormValues(form);
     // console.log(formValues)
 
-    switch (formValues['create-new-document']) {
-      case 'create-new-document-article': default:
+    switch (formValues[id]) {
+      case 'new-document-article': default:
         createNewDocument();
         break;
-      case 'create-new-document-slideshow':
+      case 'new-document-slideshow':
         createNewSlideshow();
         break;
-      case 'create-new-document-cv':
+      case 'new-document-cv':
         createNewCV();
         break;
     }
