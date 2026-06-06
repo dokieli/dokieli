@@ -2270,27 +2270,27 @@ margin-top:0.25em;
 margin-bottom:1em;
 }
 
-#create-new-document-fieldset legend {
+#new-document-fieldset legend {
 margin-bottom:1em;
 }
 
-#create-new-document-fieldset ul {
+#new-document-fieldset ul {
   list-style: none;
   margin-bottom:1em;
   display: flex;
   gap: 2em;
 }
 
-#create-new-document-fieldset ul li {
+#new-document-fieldset ul li {
   flex: 1;
   position: relative;
 }
 
-#create-new-document-fieldset ul li input[type="radio"] {
+#new-document-fieldset ul li input[type="radio"] {
   display: none;
 }
 
-#create-new-document-fieldset ul li label {
+#new-document-fieldset ul li label {
   display: block;
   padding: 1em;
   border: 1px solid #ccc;
@@ -2299,25 +2299,25 @@ margin-bottom:1em;
   user-select: none;
 }
 
-#create-new-document-fieldset ul li input[type="radio"]:checked + label {
+#new-document-fieldset ul li input[type="radio"]:checked + label {
   background-color: #080;
   color: #fff;
   border-color: #efe;
 }
-#create-new-document-fieldset ul li input[type="radio"]:checked + label svg {
+#new-document-fieldset ul li input[type="radio"]:checked + label svg {
   fill:#fff;
 }
 
-#create-new-document-fieldset ul li input[type="radio"]:focus-visible + label {
+#new-document-fieldset ul li input[type="radio"]:focus-visible + label {
   outline: 2px solid #000;
   outline-offset: 2px;
 }
 
-#create-new-document-fieldset ul li label:hover {
+#new-document-fieldset ul li label:hover {
   background-color: #eee;
 }
 
-#create-new-document-fieldset ul li label span span {
+#new-document-fieldset ul li label span span {
   font-weight:normal;
   display:block;
 }
