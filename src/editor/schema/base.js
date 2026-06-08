@@ -332,7 +332,7 @@ let customNodes = {
     toDOM: toDOMWith("dl")
   },
   ul: {
-    content: "li+",
+    content: "li*",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "ul", getAttrs(node){ return getAttributes(node); } }],

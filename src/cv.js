@@ -97,12 +97,15 @@ function sectionHTML(type) {
 
   let html = '';
 
+  const webid = Config.User?.IRI;
+  const about = webid ? ` about="${webid}"` : '';
+
   switch(type) {
     default:
-      html = `<div datatype="rdf:HTML" property="schema:description"><p></p></div>`;
+      html = `<div datatype="rdf:HTML" property="schema:description"><ul${about} id="${type}-list"></ul></div>`;
       break;
     case 'summary':
-      html = `<div datatype="rdf:HTML" property="schema:abstract"><p></p></div>`;
+      html = `<div datatype="rdf:HTML" property="schema:abstract"></div>`;
       break;
   }
 
@@ -661,7 +664,7 @@ export function initCV() {
         const type = addEntry.dataset.type;
         const entryHTML = SECTIONS[type]?.entryHTML;
         if (entryHTML) {
-          pmEditor()?.insertFragmentAtEndOf(`#${type}`, fragmentFromString(entryHTML()));
+          pmEditor()?.insertFragmentAtEndOf(`#${type}-list`, fragmentFromString(`<li>${entryHTML()}</li>`));
         }
         return;
       }
