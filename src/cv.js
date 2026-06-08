@@ -95,15 +95,21 @@ function sectionHTML(type) {
     return `<div class="error"></div>`;
   };
 
-  // Only summary is freeform prose; other sections fill via entries.
-  const body = type === 'summary'
-    ? `<div datatype="rdf:HTML" property="schema:description"><p></p></div>`
-    : '';
+  let html = '';
+
+  switch(type) {
+    default:
+      html = `<div datatype="rdf:HTML" property="schema:description"><p></p></div>`;
+      break;
+    case 'summary':
+      html = `<div datatype="rdf:HTML" property="schema:abstract"><p></p></div>`;
+      break;
+  }
 
   return `
-    <section id="${type}" inlist="" rel="schema:hasPart" resource="#${type}">
+    <section id="${type}" rel="schema:hasPart" resource="#${type}">
       <h2 property="schema:name">${s.label}</h2>
-      ${body}
+      ${html}
     </section>`;
 }
 
