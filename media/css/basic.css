@@ -1707,6 +1707,17 @@ display: block;
   display: none;
 }
 
+
+:has([rel="rdf:type"][href="http://w3id.org/roh#CurriculumVitae"]) section {
+  ul {
+    list-style-type:none;
+  }
+  div > ul li {
+    margin-bottom:2em;
+  }
+}
+
+
 /*
 1600px = 1000px = 1200px = 800px
 100em  = 62.5em = 75em   = 50em
