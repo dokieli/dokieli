@@ -412,6 +412,14 @@ export class Editor {
     return this.authorToolbarView?.insertFragmentAtEndOf(targetSelector, fragment);
   }
 
+  insertFragmentAtEndOfChild(parentSelector, childType, fragment) {
+    return this.authorToolbarView?.insertFragmentAtEndOfChild(parentSelector, childType, fragment);
+  }
+
+  setOriginalAttributeOnDescendants(parentSelector, childType, attrName, attrValue) {
+    return this.authorToolbarView?.setOriginalAttributeOnDescendants(parentSelector, childType, attrName, attrValue);
+  }
+
   deleteNodeById(id) {
     return this.authorToolbarView?.deleteNodeById(id);
   }

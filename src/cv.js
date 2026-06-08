@@ -70,6 +70,7 @@ const DEFAULT_SECTIONS = ['summary', 'experience', 'skills'];
 
 let clickHandlerAttached = false;
 let modeHandlerAttached = false;
+let authHandlerAttached = false;
 
 function isAuthorMode() {
   return Config.Editor?.mode === 'author';
@@ -102,7 +103,7 @@ function sectionHTML(type) {
 
   switch(type) {
     default:
-      html = `<div datatype="rdf:HTML" property="schema:description"><ul${about} id="${type}-list"></ul></div>`;
+      html = `<div datatype="rdf:HTML" property="schema:description"><ul${about}></ul></div>`;
       break;
     case 'summary':
       html = `<div datatype="rdf:HTML" property="schema:abstract"></div>`;
@@ -664,7 +665,7 @@ export function initCV() {
         const type = addEntry.dataset.type;
         const entryHTML = SECTIONS[type]?.entryHTML;
         if (entryHTML) {
-          pmEditor()?.insertFragmentAtEndOf(`#${type}-list`, fragmentFromString(`<li>${entryHTML()}</li>`));
+          pmEditor()?.insertFragmentAtEndOfChild(`#${type}`, 'ul', fragmentFromString(`<li>${entryHTML()}</li>`));
         }
         return;
       }
@@ -686,6 +687,24 @@ export function initCV() {
     setupAutocomplete('input[data-autocomplete="skill"]', getEscoResults, showSkillSuggestions, {
       listId: 'cv-skill-suggestions',
       debounceMs: 300,
+    });
+  }
+
+  if (!authHandlerAttached) {
+    authHandlerAttached = true;
+    document.addEventListener('dokieli:auth-ready', () => {
+      const iri = Config.User?.IRI;
+      if (!iri) return;
+      const root = getCVRoot();
+      if (!root || !isCV(root)) return;
+      const editor = pmEditor();
+      if (editor) {
+        editor.setOriginalAttributeOnDescendants('#content', 'ul', 'about', iri);
+      } else {
+        root.querySelectorAll('#content > section ul').forEach(ul => {
+          if (!ul.getAttribute('about')) ul.setAttribute('about', iri);
+        });
+      }
     });
   }
 

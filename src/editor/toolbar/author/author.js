@@ -737,6 +737,42 @@ nodeToHTML(node, schema) {
     return found;
   }
 
+  findFirstChildOfType(parentSelector, childType) {
+    const parent = this.findNodeBySelector(parentSelector);
+    if (!parent) return null;
+    let found = null;
+    parent.node.descendants((node, pos) => {
+      if (found) return false;
+      if (node.type.name === childType) found = { node, pos: parent.pos + 1 + pos };
+    });
+    return found;
+  }
+
+  insertFragmentAtEndOfChild(parentSelector, childType, fragment) {
+    const { state, dispatch } = this.editorView;
+    const target = this.findFirstChildOfType(parentSelector, childType);
+    if (!target) return;
+    const node = DOMParser.fromSchema(schema).parse(fragment);
+    const insertAt = target.pos + 1 + target.node.content.size;
+    dispatch(state.tr.insert(insertAt, node));
+  }
+
+  setOriginalAttributeOnDescendants(parentSelector, childType, attrName, attrValue) {
+    const { state, dispatch } = this.editorView;
+    const parent = this.findNodeBySelector(parentSelector);
+    if (!parent) return;
+    const updates = [];
+    parent.node.descendants((node, pos) => {
+      if (node.type.name !== childType) return;
+      if (node.attrs.originalAttributes?.[attrName]) return;
+      updates.push({ pos: parent.pos + 1 + pos, attrs: { ...node.attrs, originalAttributes: { ...node.attrs.originalAttributes, [attrName]: attrValue } } });
+    });
+    if (!updates.length) return;
+    let tr = state.tr;
+    updates.forEach(({ pos, attrs }) => { tr = tr.setNodeMarkup(pos, null, attrs); });
+    dispatch(tr);
+  }
+
   // Insert a fragment at the end of the node with the given selector (targeted, not cursor-relative).
   insertFragmentAtEndOf(targetSelector, fragment) {
     const { state, dispatch } = this.editorView;
