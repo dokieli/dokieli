@@ -31,6 +31,9 @@ export const cvNavDecorationKey = new PluginKey("cvNavDecoration");
 // Sections that hold a list of entries and get an "+ add entry" button.
 const REPEATABLE = new Set(["experience", "education", "skills", "talks", "scholarly-articles", "technical-contributions", "awards", "credentials"]);
 
+// Friendlier entry-button labels (default is "+ Add <id>").
+const ENTRY_LABELS = { skills: "Skill Category" };
+
 function isContentDiv(node) {
   return node.type.name === "div" && node.attrs.originalAttributes?.id === "content";
 }
@@ -89,12 +92,28 @@ function sectionIds(doc) {
   return ids;
 }
 
+// Skill-category <dl>s and their end positions (where the "+ add skill" button goes).
+function skillCategoryNodes(doc) {
+  const found = [];
+  doc.descendants((node, pos) => {
+    if (node.type.name !== "dl") return true;
+    const cls = node.attrs.originalAttributes?.class || "";
+    if (cls.split(/\s+/).includes("skill-category")) {
+      found.push({ id: node.attrs.originalAttributes?.id || "", end: pos + 1 + node.content.size });
+      return false;
+    }
+    return true;
+  });
+  return found;
+}
+
 // Cheap fingerprint of everything the nav's contents depend on: the present
-// sections (in order) and the editor mode. Rebuild the DecorationSet only when
-// this changes; otherwise map the existing one so we don't re-render on every
-// keystroke.
+// sections (in order), the skill categories, and the editor mode. Rebuild the
+// DecorationSet only when this changes; otherwise map the existing one so we
+// don't re-render on every keystroke.
 function navSignature(doc) {
-  return `${Config.Editor?.mode || ""}|${sectionIds(doc).join(",")}`;
+  const cats = skillCategoryNodes(doc).map(c => c.id).join(",");
+  return `${Config.Editor?.mode || ""}|${sectionIds(doc).join(",")}|${cats}`;
 }
 
 function buildDecorations(doc) {
@@ -119,7 +138,21 @@ function buildDecorations(doc) {
   });
 
   const entryDecos = entryButtonDecorations(doc);
-  return DecorationSet.create(doc, [widget, ...entryDecos]);
+  return DecorationSet.create(doc, [widget, ...entryDecos, ...skillButtonDecorations(doc)]);
+}
+
+// Per skill-category: a "+ add" button at the category's end to add another skill.
+function skillButtonDecorations(doc) {
+  return skillCategoryNodes(doc).map((cat) =>
+    Decoration.widget(cat.end, () => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "do cv-skill-add";
+      b.dataset.target = cat.id;
+      b.textContent = "+ Add";
+      b.setAttribute("contenteditable", "false");
+      return b;
+    }, { side: 1, ignoreSelection: true, stopEvent: () => true }));
 }
 
 export const cvNavDecorationPlugin = new Plugin({
@@ -160,7 +193,7 @@ function entryButtonDecorations(doc) {
       b.type = "button";
       b.className = "do cv-entry-add";
       b.dataset.type = id;
-      b.textContent = `+ Add ${id}`;
+      b.textContent = `+ Add ${ENTRY_LABELS[id] || id}`;
       b.setAttribute("contenteditable", "false");
       return b;
     }, { side: 1, ignoreSelection: true, stopEvent: () => true }));
