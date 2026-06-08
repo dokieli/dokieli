@@ -4924,6 +4924,11 @@ export function setupAutocomplete(inputSelector, fetchFn, showFn, { listId, fetc
   document.addEventListener('input', (e) => {
     if (!e.target.matches(inputSelector)) return;
     closed = false;
+    // Editing invalidates a previously picked result: the value is now free text,
+    // so drop the pick-derived metadata (keep the data-autocomplete marker).
+    [...e.target.attributes].forEach(a => {
+      if (a.name.startsWith('data-') && a.name !== 'data-autocomplete') e.target.removeAttribute(a.name);
+    });
     runSearch(e.target);
   });
 
@@ -4949,8 +4954,9 @@ export function setupAutocomplete(inputSelector, fetchFn, showFn, { listId, fetc
         e.preventDefault();
         e.stopPropagation();
         const active = items.find(li => li.classList.contains('active'));
-        if (active) active.selectResult();
-        else doSearch(e.target);
+        if (active) { active.selectResult(); }
+        // Nothing highlighted: keep the typed free text and close the dropdown.
+        else { closed = true; list?.remove(); }
         break;
       }
       case 'Escape':

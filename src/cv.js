@@ -95,10 +95,15 @@ function sectionHTML(type) {
     return `<div class="error"></div>`;
   };
 
+  // Only summary is freeform prose; other sections fill via entries.
+  const body = type === 'summary'
+    ? `<div datatype="rdf:HTML" property="schema:description"><p></p></div>`
+    : '';
+
   return `
     <section id="${type}" inlist="" rel="schema:hasPart" resource="#${type}">
       <h2 property="schema:name">${s.label}</h2>
-      <div datatype="rdf:HTML" property="schema:description"><p></p></div>
+      ${body}
     </section>`;
 }
 
@@ -254,9 +259,9 @@ function skillInputHTML({ title = '', uri = '' } = {}) {
 }
 
 function skillHTML() {
-  const skillId = `skill-human-languages`;
-  return `<dl id="${skillId}">
-    <dt class="skill-name" data-i18n="skill-name.dt">${i18n.t('skill.name.dt.textContent')}</dt>
+  const id = `${generateAttributeId()}-skill-category`;
+  return `<dl class="skill-category" id="${id}">
+    <dt data-placeholder="Category name"></dt>
     <dd>${skillInputHTML()}</dd>
   </dl>`;
 }
@@ -600,6 +605,13 @@ function transformSkillsToInputs(root) {
 
 registerEditorParseTransform(transformSkillsToInputs);
 
+// data-placeholder is an editor-only hint for empty fields; drop it in read mode.
+function removePlaceholders(doc) {
+  const article = selectArticleNode(doc);
+  if (!article) return;
+  article.querySelectorAll('[data-placeholder]').forEach(el => el.removeAttribute('data-placeholder'));
+}
+
 // Render the nav and wire add/remove. Safe to call repeatedly.
 export function initCV() {
   const root = getCVRoot();
@@ -623,6 +635,15 @@ export function initCV() {
         const entryHTML = SECTIONS[type]?.entryHTML;
         if (entryHTML) {
           pmEditor()?.insertFragmentAtEndOf(`#${type}`, fragmentFromString(entryHTML()));
+        }
+        return;
+      }
+
+      const addSkill = e.target.closest('.cv-skill-add');
+      if (addSkill) {
+        const target = addSkill.dataset.target;
+        if (target) {
+          pmEditor()?.insertFragmentAtEndOf(`#${target}`, fragmentFromString(`<dd>${skillInputHTML()}</dd>`));
         }
       }
     });
@@ -649,7 +670,9 @@ export function initCV() {
         transformDateInputs(document);
         transformCountrySelects(document);
         transformLocationInputs(document);
-      }      
+        transformSkillInputs(document);
+        removePlaceholders(document);
+      }
       refreshTOC(root);
   });
   }
