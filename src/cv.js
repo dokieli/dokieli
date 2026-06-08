@@ -20,11 +20,9 @@ import { fragmentFromString, selectArticleNode } from './utils/html.js';
 import { slugify } from './editor/plugins/autoId.js';
 import { registerDocumentTransform, registerEditorParseTransform } from './utils/documentTransforms.js';
 import { i18n } from './i18n.js';
-import { generateAttributeId, generateUUID, debounce } from './util.js';
-import { getCountryOptionsHTML, showLocationSuggestions } from './doc.js';
-import { getWikidataResults } from './graph.js';
-import { Icon } from './ui/icons.js';
-import { sanitizeInsertAdjacentHTML } from './utils/sanitization.js';
+import { generateAttributeId, generateUUID } from './util.js';
+import { getCountryOptionsHTML, showLocationSuggestions, showSkillSuggestions, setupAutocomplete } from './doc.js';
+import { getWikidataResults, getEscoResults } from './graph.js';
 
 // type === slugify(label) so it matches the id autoIdPlugin derives from the heading.
 
@@ -248,8 +246,19 @@ function contributionHTML() {
   return `<p rev="schema:contributor" rel="foaf:made" property="schema:description" datatype="rdf:HTML"><br /></p>`;
 }
 
+function skillInputHTML({ title = '', uri = '' } = {}) {
+  const id = generateAttributeId();
+  const esc = (s) => (s || '').replace(/"/g, '&quot;');
+  const data = uri ? `data-entity="${esc(uri)}"` : '';
+  return `<div class="autocomplete"><input data-autocomplete="skill" name="${id}-skill" placeholder="Enter skill" value="${esc(title)}" ${data} type="text" /></div>`;
+}
+
 function skillHTML() {
-  return `<p rel="cco:skill" datatype="rdf:HTML"><br /></p>`;
+  const skillId = `skill-human-languages`;
+  return `<dl id="${skillId}">
+    <dt class="skill-name" data-i18n="skill-name.dt">${i18n.t('skill.name.dt.textContent')}</dt>
+    <dd>${skillInputHTML()}</dd>
+  </dl>`;
 }
 
 function awardHTML() {
@@ -550,6 +559,47 @@ function transformLocationsToInputs(root) {
 
 registerEditorParseTransform(transformLocationsToInputs);
 
+// Skill autocomplete -> published markup.
+function transformSkillInputs(doc) {
+  const article = selectArticleNode(doc);
+  if (!article || !isCV(article)) return;
+
+  article.querySelectorAll('.autocomplete').forEach((wrapper) => {
+    const input = wrapper.querySelector('input[data-autocomplete="skill"]');
+    if (!input) return;
+    const title = (input.value || input.getAttribute('value') || '').trim();
+    const uri = input.getAttribute('data-entity') || '';
+    if (!title) { wrapper.remove(); return; }
+    if (uri) {
+      const a = doc.createElement('a');
+      a.setAttribute('property', 'schema:knowsAbout');
+      a.setAttribute('href', uri);
+      a.textContent = title;
+      wrapper.replaceWith(a);
+    } else {
+      const span = doc.createElement('span');
+      span.setAttribute('property', 'schema:knowsAbout');
+      span.textContent = title;
+      wrapper.replaceWith(span);
+    }
+  });
+}
+
+registerDocumentTransform(transformSkillInputs);
+
+// Inverse: published skill -> editable autocomplete.
+function transformSkillsToInputs(root) {
+  if (!root || !isCV(root)) return;
+
+  root.querySelectorAll('[property~="schema:knowsAbout"]').forEach((el) => {
+    const title = el.textContent.trim();
+    const uri = el.tagName === 'A' ? (el.getAttribute('href') || '') : '';
+    el.replaceWith(fragmentFromString(skillInputHTML({ title, uri })));
+  });
+}
+
+registerEditorParseTransform(transformSkillsToInputs);
+
 // Render the nav and wire add/remove. Safe to call repeatedly.
 export function initCV() {
   const root = getCVRoot();
@@ -577,85 +627,15 @@ export function initCV() {
       }
     });
 
-    const locationSearchOptions = { wikidataTypes: ['places'] };
-    let locationSuggestionsClosed = false;
-
-    const doLocationSearch = async (input) => {
-      const keyword = input.value.trim();
-      document.getElementById('cv-location-suggestions')?.remove();
-
-      if (!keyword) {
-        document.getElementById('cv-location-suggestions')?.remove();
-        return;
-      }
-
-      try {
-        let progress = input.nextElementSibling?.classList.contains('progress') ? input.nextElementSibling : null;
-
-        if (progress) {
-          progress.remove();
-        }
-
-        progress = `<span class="progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]}</span>`;
-        sanitizeInsertAdjacentHTML(input, 'afterend', progress);
-
-        const results = await getWikidataResults(keyword, locationSearchOptions);
-
-        progress = input.nextElementSibling?.classList.contains('progress') ? input.nextElementSibling : null;
-
-        progress.remove();
-
-        if (locationSuggestionsClosed || input.value.trim() !== keyword) return;
-
-        showLocationSuggestions(input, results);
-      } catch(err) {
-        console.log(err)
-      }
-    };
-
-    const runLocationSearch = debounce(doLocationSearch, 1000);
-
-    document.addEventListener('input', (e) => {
-      if (!e.target.matches('input[name$="-event-location"]')) return;
-      locationSuggestionsClosed = false;
-      runLocationSearch(e.target);
+    setupAutocomplete('input[name$="-event-location"]', getWikidataResults, showLocationSuggestions, {
+      listId: 'cv-location-suggestions',
+      debounceMs: 1000,
     });
 
-    document.addEventListener('keyup', (e) => {
-      if (!e.target.matches('input[name$="-event-location"]')) return;
-      const list = document.getElementById('cv-location-suggestions');
-      const items = list ? Array.from(list.children) : [];
-
-      switch (e.key) {
-        case 'ArrowDown':
-        case 'ArrowUp': {
-          if (!items.length) return;
-          e.preventDefault();
-          e.stopPropagation();
-          let i = items.findIndex(li => li.classList.contains('active'));
-          items.forEach(li => { li.classList.remove('active'); li.setAttribute('aria-selected', 'false'); });
-          i = e.key === 'ArrowDown' ? (i + 1) % items.length : (i <= 0 ? items.length : i) - 1;
-          const active = items[i];
-          active.classList.add('active');
-          active.setAttribute('aria-selected', 'true');
-          break;
-        }
-        case 'Enter': {
-          e.preventDefault();
-          e.stopPropagation();
-          const active = items.find(li => li.classList.contains('active'));
-          if (active) active.selectResult();
-          else doLocationSearch(e.target); 
-          break;
-        }
-        case 'Escape':
-          e.preventDefault();
-          e.stopPropagation();
-          locationSuggestionsClosed = true;
-          list?.remove();
-          break;
-      }
-    }, true);
+    setupAutocomplete('input[data-autocomplete="skill"]', getEscoResults, showSkillSuggestions, {
+      listId: 'cv-skill-suggestions',
+      debounceMs: 300,
+    });
   }
 
   if (!modeHandlerAttached) {

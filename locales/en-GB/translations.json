@@ -733,6 +733,7 @@
   "resource-type.thesis.option.title": "A thesis or dissertation document submitted in support of candidature for an academic degree or professional qualification.",
   "resource-type.trip.option.textContent": "Trip",
   "resource-type.trip.option.title": "A trip or journey. An itinerary of visits to one or more places.",
+  "skill.name.dt.textContent": "Skill",
   "tags.input.placeholder": "Separate tags with commas",
   "tags.label.textContent": "Tags",
   "test-description-review-status.accepted.dd.textContent": "the item has gone through a first review, which shows it as valid for further processing",

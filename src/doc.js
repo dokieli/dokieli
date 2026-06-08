@@ -20,7 +20,7 @@ import * as Slideshow from './slideshow.js';
 import { diffChars } from 'diff';
 import LinkHeader from "http-link-header";
 import Config from './config.js'
-import { getDateTimeISO, generateAttributeId, uniqueArray, generateUUID, matchAllIndex, getRandomIndex, getHash, isValidISBN, getDateTimeISOFromMDY } from './util.js'
+import { getDateTimeISO, generateAttributeId, uniqueArray, generateUUID, matchAllIndex, getRandomIndex, getHash, isValidISBN, getDateTimeISOFromMDY, debounce } from './util.js'
 import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath, getPrefixedNameFromIRI, generateDataURI, getProxyableIRI, getFragmentOrLastPath, currentLocation } from './uri.js'
 import { getResourceGraph, sortGraphTriples, getGraphContributors, getGraphAuthors, getGraphEditors, getGraphPerformers, getGraphPublishers, getGraphLabel, getGraphEmail, getGraphTitle, getGraphConceptLabel, getGraphPublished, getGraphUpdated, getGraphDescription, getGraphLicense, getGraphRights, getGraphFromData, getGraphAudience, getGraphTypes, getGraphLanguage, getGraphInbox, getUserLabelOrIRI, getGraphImage, getGraphDate, processResources, getAgentName } from './graph.js';
 import { Icon } from './ui/icons.js';
@@ -4877,24 +4877,90 @@ export function setDocumentString(node) {
 // it. Mirrors the share panel's contacts suggestions. Picking an item fills the
 // input, tags the <dd> with the entity URI, and fires `change` so InputView
 // syncs the value for save.
-export function getLocationSuggestionsElement(input) {
+function getSuggestionsElement(input, listId) {
   const container = input.closest('.autocomplete');
-  let list = document.getElementById('cv-location-suggestions');
+  let list = document.getElementById(listId);
   if (!list) {
     list = document.createElement('ul');
-    list.id = 'cv-location-suggestions';
+    list.id = listId;
     list.className = 'suggestions';
     list.setAttribute('contenteditable', 'false');
     list.setAttribute('spellcheck', 'false');
     container.appendChild(list);
   }
-  const rect = input.getBoundingClientRect();
-  // list.style.position = 'absolute';
-  // list.style.left = `${rect.left + window.scrollX}px`;
-  // list.style.top = `${rect.bottom + window.scrollY}px`;
-  // list.style.minWidth = `${rect.width}px`;
-  // list.style.zIndex = '10000';
   return list;
+}
+
+export function getLocationSuggestionsElement(input) {
+  return getSuggestionsElement(input, 'cv-location-suggestions');
+}
+
+export function setupAutocomplete(inputSelector, fetchFn, showFn, { listId, fetchOptions = {}, debounceMs = 300 } = {}) {
+  let closed = false;
+
+  const doSearch = async (input) => {
+    const keyword = input.value.trim();
+    document.getElementById(listId)?.remove();
+    if (!keyword) return;
+
+    try {
+      input.nextElementSibling?.classList.contains('progress') && input.nextElementSibling.remove();
+      sanitizeInsertAdjacentHTML(input, 'afterend', `<span class="progress">${Icon['.fas.fa-circle-notch.fa-spin.fa-fw']}</span>`);
+
+      const results = await fetchFn(keyword, fetchOptions);
+
+      input.nextElementSibling?.classList.contains('progress') && input.nextElementSibling.remove();
+
+      if (closed || input.value.trim() !== keyword) return;
+
+      showFn(input, results);
+    } catch (err) {
+      console.warn(err);
+    }
+  };
+
+  const runSearch = debounce(doSearch, debounceMs);
+
+  document.addEventListener('input', (e) => {
+    if (!e.target.matches(inputSelector)) return;
+    closed = false;
+    runSearch(e.target);
+  });
+
+  document.addEventListener('keyup', (e) => {
+    if (!e.target.matches(inputSelector)) return;
+    const list = document.getElementById(listId);
+    const items = list ? Array.from(list.children) : [];
+
+    switch (e.key) {
+      case 'ArrowDown':
+      case 'ArrowUp': {
+        if (!items.length) return;
+        e.preventDefault();
+        e.stopPropagation();
+        let i = items.findIndex(li => li.classList.contains('active'));
+        items.forEach(li => { li.classList.remove('active'); li.setAttribute('aria-selected', 'false'); });
+        i = e.key === 'ArrowDown' ? (i + 1) % items.length : (i <= 0 ? items.length : i) - 1;
+        items[i].classList.add('active');
+        items[i].setAttribute('aria-selected', 'true');
+        break;
+      }
+      case 'Enter': {
+        e.preventDefault();
+        e.stopPropagation();
+        const active = items.find(li => li.classList.contains('active'));
+        if (active) active.selectResult();
+        else doSearch(e.target);
+        break;
+      }
+      case 'Escape':
+        e.preventDefault();
+        e.stopPropagation();
+        closed = true;
+        list?.remove();
+        break;
+    }
+  }, true);
 }
 
 export function showLocationSuggestions(input, results) {
@@ -4969,6 +5035,32 @@ export function showLocationSuggestions(input, results) {
 }
 
 
+
+export function showSkillSuggestions(input, results) {
+  const list = getSuggestionsElement(input, 'cv-skill-suggestions');
+  list.replaceChildren();
+
+  if (!results.length) { list.remove(); return; }
+
+  results.slice(0, 20).forEach(({ uri, title }) => {
+    const li = document.createElement('li');
+    li.textContent = title;
+    if (uri) li.setAttribute('title', uri);
+    li.selectResult = () => {
+      input.value = title;
+      input.setAttribute('value', title);
+      uri ? input.setAttribute('data-entity', uri) : input.removeAttribute('data-entity');
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      list.remove();
+    };
+    li.addEventListener('mouseup', (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      li.selectResult();
+    });
+    list.appendChild(li);
+  });
+}
 
 //XXX: Unused
 // export function getListHTMLFromTriples(triples, options) {
