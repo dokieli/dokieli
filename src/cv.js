@@ -612,6 +612,27 @@ function removePlaceholders(doc) {
   article.querySelectorAll('[data-placeholder]').forEach(el => el.removeAttribute('data-placeholder'));
 }
 
+// Drop items left completely empty (no text, no media): a skill with no value, a
+// category with no name or skills, an empty award/credential or list item. Loops
+// so emptying children can empty parents (e.g. last skill removed -> empty
+// category). Event <dd>s are not pruned standalone — they pair with <dt> labels.
+function pruneEmptyItems(doc) {
+  const article = selectArticleNode(doc);
+  if (!article) return;
+  const keep = 'img, hr, input, time, iframe, audio, video, svg, object, embed';
+  const isEmpty = (el) => !el.textContent.trim() && !el.querySelector(keep);
+  const selector = 'dl.skill-category dd, dl.skill-category, li, p[rel]';
+  let changed = true;
+  while (changed) {
+    changed = false;
+    article.querySelectorAll(selector).forEach((el) => {
+      if (isEmpty(el)) { el.remove(); changed = true; }
+    });
+  }
+}
+
+registerDocumentTransform(pruneEmptyItems);
+
 // Render the nav and wire add/remove. Safe to call repeatedly.
 export function initCV() {
   const root = getCVRoot();
@@ -672,6 +693,7 @@ export function initCV() {
         transformLocationInputs(document);
         transformSkillInputs(document);
         removePlaceholders(document);
+        pruneEmptyItems(document);
       }
       refreshTOC(root);
   });
