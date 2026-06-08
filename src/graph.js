@@ -704,6 +704,25 @@ export function getResourceGraph(iri, headers, options = {}) {
       options['contentType'] = (cT) ? cT.split(';')[0].toLowerCase().trim() : 'text/turtle'
       options['subjectURI'] = iri
 
+      // Some servers serve RDF (e.g. WebID profiles) as the generic binary type.
+      // Sniff the body so it can still be parsed: JSON(-LD) starts with { or [,
+      // otherwise assume Turtle.
+      if (options['contentType'] === 'application/octet-stream') {
+        return response.text().then(text => {
+          const t = text.trimStart();
+          if (t.startsWith('{') || t.startsWith('[')) {
+            options['contentType'] = 'application/ld+json';
+            const data = JSON.parse(t);
+            if (data['@context']) {
+              return JSON.stringify(transformJsonldContextURLScheme(data));
+            }
+            return Promise.reject(new Error('Unsupported media type for RDF parsing (without @context): application/octet-stream'));
+          }
+          options['contentType'] = 'text/turtle';
+          return text;
+        });
+      }
+
       //XXX: Perhaps okay for text/markdown but not text/plain?
       if  (['text/markdown', 'text/plain'].includes(options['contentType'])) {
         options.contentType = 'text/html';

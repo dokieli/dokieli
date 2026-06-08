@@ -653,6 +653,10 @@ export function setUserInfo (subjectIRI, options = {}) {
   options.ui = Config.User.UI;
   options.fetchIndexes = options.fetchIndexes ?? true;
 
+  // The WebID is the IRI: set it up front so UI personalisation (e.g. the CV
+  // `about` on lists) works even if the profile document fails to load/parse.
+  Config.User.IRI = subjectIRI;
+
   return getSubjectInfo(subjectIRI, options).then(subject => {
     Object.keys(subject).forEach((key) => {
       Config.User[key] = subject[key];
@@ -738,6 +742,10 @@ export function afterSetUserInfo() {
       }
 
       showGeneralMessages();
+
+      // Signal that user info is ready. initAuth also fires this on page load,
+      // but interactive sign-ins (custom WebID, GitHub) only reach it here.
+      document.dispatchEvent(new Event('dokieli:auth-ready'));
 
       return updateDeviceStorageProfile(Config.User)
     })
