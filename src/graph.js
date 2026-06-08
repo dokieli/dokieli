@@ -2227,3 +2227,24 @@ SERVICE wikibase:label { bd:serviceParam wikibase:language "${wikidataSearchLang
     return [];
   }
 }
+
+
+export async function getEscoResults(keyword, options = {}) {
+  let language = Config.User.UI.Language;
+  language = language.split('-')[0];
+
+  const escoApi = `https://ec.europa.eu/esco/api/search?language=${language}&limit=10&type=skill&text=${encodeURIComponent(keyword)}`;
+  const headers = { 'Accept': 'application/json; charset=utf-8' };
+
+  try {
+    const response = await getResource(escoApi, headers, options);
+    const data = await response.json();
+    return (data._embedded?.results || []).map(skill => ({
+      uri: skill.uri || '',
+      title: skill.title || '',
+    }));
+  } catch (e) {
+    console.warn('ESCO search failed:', e?.message || e);
+    return [];
+  }
+}

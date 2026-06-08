@@ -2293,6 +2293,8 @@ margin-bottom:1em;
 #new-document-fieldset ul li label {
   display: block;
   padding: 1em;
+  margin:0;
+  height: calc(100% - 2em);
   border: 1px solid #ccc;
   border-radius: 0.5em;
   cursor: pointer;
