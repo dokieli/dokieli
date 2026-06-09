@@ -4612,7 +4612,7 @@ max-width:none;
   position: relative; }
   .editor-empty-node:has(br:only-child):after,
   .editor-empty-node:empty:after {
-    color: #999;
+    color: #777;
     content: attr(data-placeholder);
     font-style: italic;
     pointer-events: none;
