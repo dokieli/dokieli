@@ -301,6 +301,8 @@ function eventHTML(options = {}) {
   const eventId = generateAttributeId();
   const fields = EVENT_FIELDS_ORDER.map((key) => eventFieldHTML(key, eventId)).join('\n    ');
 
+  // console.log(eventId, eventRel, eventType, fields)
+
   return `<dl id="${eventId}" rel="${eventRel}" resource="#${eventId}" typeof="${eventType}">
     ${fields}
   </dl>`;
