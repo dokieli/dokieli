@@ -296,14 +296,7 @@ function eventHTML(options = {}) {
   };
   const eventRel = templateEventRel[options.template] ?? 'schema:hasPart';
 
-  //TODO: Move elsewhere
-  const templateEventType = {
-    experience: 'schema:BusinessEvent',
-    education: 'schema:EducationEvent',
-    talks: 'schema:ConferenceEvent'
-  }
-
-  let eventType = templateEventType[options.type] ?? 'schema:Event';
+  const eventType = EVENT_TYPE_BY_SECTION[options.type] ?? 'schema:Event';
 
   const eventId = generateAttributeId();
   const fields = EVENT_FIELDS_ORDER.map((key) => eventFieldHTML(key, eventId)).join('\n    ');
@@ -314,6 +307,18 @@ function eventHTML(options = {}) {
 }
 
 const EVENT_FIELDS_ORDER = ['name', 'organizer', 'location', 'date', 'description'];
+
+// Section type -> RDFa event subtype; schema:Event is the generic fallback.
+const EVENT_TYPE_BY_SECTION = {
+  experience: 'schema:BusinessEvent',
+  education: 'schema:EducationEvent',
+  talks: 'schema:ConferenceEvent',
+};
+
+// Matches any event dl regardless of subtype, so prune/restore cover every
+// event-based section (experience, education, talks) and the generic case.
+const EVENT_SELECTOR = ['schema:Event', ...Object.values(EVENT_TYPE_BY_SECTION)]
+  .map(t => `dl[typeof~="${t}"]`).join(', ');
 
 // One dt/dd pair of an event, in editable form. Shared by eventHTML and
 // restoreEventFields so re-created fields match freshly added ones.
@@ -646,7 +651,7 @@ registerEditorParseTransform(addPlaceholders);
 // field (dt/dd pair) in canonical order, with its placeholder, ready to edit.
 function restoreEventFields(root) {
   if (!root || !isCV(root)) return;
-  root.querySelectorAll('dl[typeof~="schema:Event"]').forEach((dl) => {
+  root.querySelectorAll(EVENT_SELECTOR).forEach((dl) => {
     const eventId = dl.getAttribute('id') || generateAttributeId();
     EVENT_FIELDS_ORDER.forEach((key, idx) => {
       if (dl.querySelector(`:scope > dt.event-${key}`)) return;
@@ -701,7 +706,7 @@ function pruneEmptyItems(doc) {
 
   // Event entries: prune each empty field, then drop the whole <li> if nothing
   // is left, ignoring the <dt>/<label> chrome and leftover separators.
-  article.querySelectorAll('dl[typeof~="schema:Event"]').forEach((dl) => {
+  article.querySelectorAll(EVENT_SELECTOR).forEach((dl) => {
     pruneEmptyEventFields(dl);
     const clone = dl.cloneNode(true);
     clone.querySelectorAll('dt, label').forEach(el => el.remove());
