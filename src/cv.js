@@ -305,38 +305,38 @@ function eventHTML(options = {}) {
   }
 
   const eventId = generateAttributeId();
-  const eventOrganizerId = generateAttributeId();
-  const eventOrganizerUrl = 'https://example.org/';
-  const eventOrganizer = 'Organizer';
-  const eventOrganizerDepartmentId = generateAttributeId();
-  const eventOrganizerDepartmentUrl = 'https://example.org/department';
-  const eventOrganizerDepartment = 'Department';
-  const eventOrganizerDepartmentCode = 'ABC';
-  const eventLocation = 'https://wikidata.org/concept/Bern';
-  const userDetails = {
-    IRI: 'https://csarven.ca/#i'
-  }
+  const fields = EVENT_FIELDS_ORDER.map((key) => eventFieldHTML(key, eventId)).join('\n    ');
 
   return `<dl id="${eventId}" rel="${rel}" resource="#${eventId}" typeof="schema:Event">
-    <dt class="event-name" data-i18n="event.name.dt">${i18n.t('event.name.dt.textContent')}</dt>
-    <dd property="schema:name"><p data-placeholder="Experience name"></p></dd>
+    ${fields}
+  </dl>`;
+}
 
-    <dt class="event-organizer" data-i18n="event.organizer.dt">${i18n.t('event.organizer.dt.textContent')}</dt>
-    <dd rel="schema:organizer" resource="#${eventOrganizerId}" typeof="schema:Organization"><a href="${eventOrganizerUrl}" property="schema:name" rel="schema:url">${eventOrganizer}</a> <span rel="schema:department" resource="#${eventOrganizerDepartmentId}"><a href="${eventOrganizerDepartmentUrl}" property="schema:name" rel="schema:url"><abbr title="${eventOrganizerDepartment}">${eventOrganizerDepartmentCode}</abbr></a></span></dd>
+const EVENT_FIELDS_ORDER = ['name', 'organizer', 'location', 'date', 'description'];
 
-    <dt class="event-location" data-i18n="event.location.dt">${i18n.t('event.location.dt.textContent')}</dt>
-    <dd rel="schema:location" resource="${eventLocation}" typeof="schema:Place"><div class="autocomplete" rel="schema:address"><input name="${eventId}-event-location" placeholder="Enter location (locality, region, country)" value="" type="text" /></div></dd>
-
-    <dt class="event-date" data-i18n="event.date.dt">${i18n.t('event.date.dt.textContent')}</dt>
+// One dt/dd pair of an event, in editable form. Shared by eventHTML and
+// restoreEventFields so re-created fields match freshly added ones.
+function eventFieldHTML(key, eventId) {
+  switch (key) {
+    case 'name':
+      return `<dt class="event-name" data-i18n="event.name.dt">${i18n.t('event.name.dt.textContent')}</dt>
+    <dd property="schema:name"><p data-placeholder="Experience name"></p></dd>`;
+    case 'organizer':
+      return `<dt class="event-organizer" data-i18n="event.organizer.dt">${i18n.t('event.organizer.dt.textContent')}</dt>
+    <dd rel="schema:organizer" resource="#${generateAttributeId()}" typeof="schema:Organization"><p property="schema:name" data-placeholder="Organizer"></p></dd>`;
+    case 'location':
+      return `<dt class="event-location" data-i18n="event.location.dt">${i18n.t('event.location.dt.textContent')}</dt>
+    <dd rel="schema:location" typeof="schema:Place"><div class="autocomplete" rel="schema:address"><input name="${eventId}-event-location" placeholder="Enter location (locality, region, country)" value="" type="text" /></div></dd>`;
+    case 'date':
+      return `<dt class="event-date" data-i18n="event.date.dt">${i18n.t('event.date.dt.textContent')}</dt>
     <dd>
       <label for="event-start-date" data-i18n="event.date.start-date.label">${i18n.t('event.date.start-date.label.textContent')}</label><input contenteditable="false" data-i18n="event.date.start-date.input" data-property="schema:startDate" draggable="false" type="date" value="" /><label for="event-end-date" data-i18n="event.date.end-date.label">${i18n.t('event.date.end-date.label.textContent')}</label><input data-i18n="event.date.end-date.input" data-property="schema:endDate" draggable="false" type="date" value="" />
-    </dd>
-
-    <dt class="event-description" data-i18n="event.description.dt">${i18n.t('event.description.dt.textContent')}</dt>
-    <dd datatype="rdf:HTML" property="schema:description">
-      <p data-placeholder="Experience description" rel="schema:performer" resource="${userDetails.IRI}"></p>
-    </dd>
-  </dl>`;
+    </dd>`;
+    case 'description':
+      return `<dt class="event-description" data-i18n="event.description.dt">${i18n.t('event.description.dt.textContent')}</dt>
+    <dd datatype="rdf:HTML" property="schema:description"><p data-placeholder="Experience description"></p></dd>`;
+  }
+  return '';
 }
 
 registerDocumentTransform(injectCVTOC);
@@ -622,16 +622,99 @@ function removePlaceholders(doc) {
   article.querySelectorAll('[data-placeholder]').forEach(el => el.removeAttribute('data-placeholder'));
 }
 
+// Inverse: re-add the editor-only hints when entering author mode (after a read
+// toggle or reopening a saved CV, where they were stripped). The plugin only
+// shows them on empty fields, so adding to all matching fields is harmless.
+// Event fields are handled by restoreEventFields (they are pruned in read mode).
+const PLACEHOLDERS = [
+  ['dl.skill-category > dt', 'Category name'],
+];
+
+function addPlaceholders(root) {
+  if (!root || !isCV(root)) return;
+  PLACEHOLDERS.forEach(([selector, text]) => {
+    root.querySelectorAll(selector).forEach(el => {
+      if (!el.getAttribute('data-placeholder')) el.setAttribute('data-placeholder', text);
+    });
+  });
+}
+
+registerEditorParseTransform(addPlaceholders);
+
+// Read mode prunes empty event fields, so on author switch re-add any missing
+// field (dt/dd pair) in canonical order, with its placeholder, ready to edit.
+function restoreEventFields(root) {
+  if (!root || !isCV(root)) return;
+  root.querySelectorAll('dl[typeof~="schema:Event"]').forEach((dl) => {
+    const eventId = dl.getAttribute('id') || generateAttributeId();
+    EVENT_FIELDS_ORDER.forEach((key, idx) => {
+      if (dl.querySelector(`:scope > dt.event-${key}`)) return;
+      let anchor = null;
+      for (let j = idx + 1; j < EVENT_FIELDS_ORDER.length; j++) {
+        anchor = dl.querySelector(`:scope > dt.event-${EVENT_FIELDS_ORDER[j]}`);
+        if (anchor) break;
+      }
+      const frag = fragmentFromString(eventFieldHTML(key, eventId));
+      if (anchor) anchor.before(frag); else dl.append(frag);
+    });
+  });
+}
+
+registerEditorParseTransform(restoreEventFields);
+
+// True when an event <dd> carries no real value, ignoring label chrome and the
+// separators (date "–", address commas) that are always present.
+function isEventFieldEmpty(dd) {
+  const clone = dd.cloneNode(true);
+  clone.querySelectorAll('label').forEach(el => el.remove());
+  if (clone.textContent.replace(/[\s,–—-]+/g, '')) return false;
+  if (clone.querySelector('img, iframe, audio, video, svg, object, embed')) return false;
+  if (Array.from(clone.querySelectorAll('input')).some(i => (i.getAttribute('value') || '').trim())) return false;
+  if (Array.from(clone.querySelectorAll('time')).some(t => (t.getAttribute('datetime') || t.textContent).trim())) return false;
+  return true;
+}
+
+// Drop empty event fields so read mode only shows filled ones; restoreEventFields
+// re-adds them with placeholders on the next author switch. A field is the <dt>
+// plus its following <dd>; remove the pair when the <dd> is empty, and remove an
+// orphan <dt> whose <dd> was already stripped (e.g. by an earlier save).
+function pruneEmptyEventFields(dl) {
+  Array.from(dl.children).forEach((dt) => {
+    if (dt.tagName !== 'DT') return;
+    const dd = dt.nextElementSibling;
+    const hasDd = dd && dd.tagName === 'DD';
+    if (!hasDd || isEventFieldEmpty(dd)) {
+      dt.remove();
+      if (hasDd) dd.remove();
+    }
+  });
+}
+
 // Drop items left completely empty (no text, no media): a skill with no value, a
 // category with no name or skills, an empty award/credential or list item. Loops
 // so emptying children can empty parents (e.g. last skill removed -> empty
-// category). Event <dd>s are not pruned standalone — they pair with <dt> labels.
+// category).
 function pruneEmptyItems(doc) {
   const article = selectArticleNode(doc);
   if (!article) return;
+
+  // Event entries: prune each empty field, then drop the whole <li> if nothing
+  // is left, ignoring the <dt>/<label> chrome and leftover separators.
+  article.querySelectorAll('dl[typeof~="schema:Event"]').forEach((dl) => {
+    pruneEmptyEventFields(dl);
+    const clone = dl.cloneNode(true);
+    clone.querySelectorAll('dt, label').forEach(el => el.remove());
+    const text = clone.textContent.replace(/[\s,–—-]+/g, '');
+    if (!text && !clone.querySelector('img, iframe, audio, video, svg')) {
+      (dl.closest('li') || dl).remove();
+    }
+  });
+
   const keep = 'img, hr, input, time, iframe, audio, video, svg, object, embed';
   const isEmpty = (el) => !el.textContent.trim() && !el.querySelector(keep);
-  const selector = 'dl.skill-category dd, dl.skill-category, li, p[rel]';
+  // p[rel] is scoped to award/credential entries — not event fields like the
+  // description <p rel="schema:performer">, which must survive as an editable field.
+  const selector = 'dl.skill-category dd, dl.skill-category, li, p[rel~="schema:award"], p[rel~="schema:hasCredential"]';
   let changed = true;
   while (changed) {
     changed = false;
