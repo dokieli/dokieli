@@ -24,7 +24,7 @@ import { stripFragmentFromString, stripUrlParamsFromString, currentLocation } fr
 import { generateAttributeId, uniqueArray } from "./util.js";
 import Config from "./config.js";
 const ns = Config.ns;
-import { filterQuads, getGraphFromData, getResourceGraph, isActorProperty, isActorType, processResources } from "./graph.js";
+import { filterQuads, getGraphFromData, getResourceGraph, isActorProperty, isActorType, isEventType, processResources } from "./graph.js";
 import rdf from 'rdf-ext';
 import * as d3Selection from 'd3-selection';
 import * as d3Force from 'd3-force';
@@ -916,6 +916,10 @@ function convertGraphToVisualisationGraph(url, g, options){
         sGroup = 10;
       }
 
+      if (isEventType(t.object.value)) {
+        sGroup = 16;
+      }
+
       switch (t.object.value) {
         case ns.qb.DataSet.value:
           oGroup = 11;
@@ -932,11 +936,6 @@ function convertGraphToVisualisationGraph(url, g, options){
         case ns.odrl.Set.value:
         case ns.odrl.Ticket.value:
           sGroup = 15;
-          break;
-        case ns.schema.Event.value:
-        case ns.bibo.Event.value:
-        case ns.bibo.Conference.value:
-          sGroup = 16;
           break;
         case ns.bibo.Slide.value:
           sGroup = 17;

@@ -288,26 +288,27 @@ function credentialHTML() {
 function eventHTML(options = {}) {
   console.log("eventHTML options", options);
 
-  let rel;
-
   //TODO: Review article and slideshow rels b/c they may not be entirely accurate. Add other templates later.
-  switch (options.template) {
-    default:
-    case 'article':
-      rel = 'schema:hasPart';
-      break;
-    case 'cv':
-      rel = 'schema:performerIn';
-      break;
-    case 'slideshow':
-      rel = 'bibo:presentedAt';
-      break;
+  const templateEventRel = {
+    article: 'schema:hasPart',
+    cv: 'schema:performerIn',
+    slideshow: 'bibo:presentedAt',
+  };
+  const eventRel = templateEventRel[options.template] ?? 'schema:hasPart';
+
+  //TODO: Move elsewhere
+  const templateEventType = {
+    experience: 'schema:BusinessEvent',
+    education: 'schema:EducationEvent',
+    talks: 'schema:ConferenceEvent'
   }
+
+  let eventType = templateEventType[options.type] ?? 'schema:Event';
 
   const eventId = generateAttributeId();
   const fields = EVENT_FIELDS_ORDER.map((key) => eventFieldHTML(key, eventId)).join('\n    ');
 
-  return `<dl id="${eventId}" rel="${rel}" resource="#${eventId}" typeof="schema:Event">
+  return `<dl id="${eventId}" rel="${eventRel}" resource="#${eventId}" typeof="${eventType}">
     ${fields}
   </dl>`;
 }
