@@ -1715,6 +1715,12 @@ display: block;
   div > ul li {
     margin-bottom:2em;
   }
+  dt {
+    display:none;
+  }
+  dd {
+    margin: 0 0 1em 0;
+  }
 }
 
 

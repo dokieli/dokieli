@@ -329,17 +329,24 @@ function eventFieldHTML(key, eventId) {
     case 'name':
       return `<dt class="event-name" data-i18n="event.name.dt">${i18n.t('event.name.dt.textContent')}</dt>
     <dd property="schema:name"><p data-placeholder="Experience name"></p></dd>`;
+
     case 'organizer':
       return `<dt class="event-organizer" data-i18n="event.organizer.dt">${i18n.t('event.organizer.dt.textContent')}</dt>
-    <dd rel="schema:organizer" resource="#${generateAttributeId()}" typeof="schema:Organization"><p property="schema:name" data-placeholder="Organizer"></p></dd>`;
+    <dd rel="schema:organizer" resource="#${generateAttributeId()}" typeof="schema:Organization">
+      <p class="event-organization-name" data-placeholder="Organizer"></p>
+      <p class="event-organization-department-name" data-placeholder="Department"></p>
+    </dd>`;
+
     case 'location':
       return `<dt class="event-location" data-i18n="event.location.dt">${i18n.t('event.location.dt.textContent')}</dt>
     <dd rel="schema:location" typeof="schema:Place"><div class="autocomplete" rel="schema:address"><input name="${eventId}-event-location" placeholder="Enter location (locality, region, country)" value="" type="text" /></div></dd>`;
+
     case 'date':
       return `<dt class="event-date" data-i18n="event.date.dt">${i18n.t('event.date.dt.textContent')}</dt>
     <dd>
       <label for="event-start-date" data-i18n="event.date.start-date.label">${i18n.t('event.date.start-date.label.textContent')}</label><input contenteditable="false" data-i18n="event.date.start-date.input" data-property="schema:startDate" draggable="false" type="date" value="" /><label for="event-end-date" data-i18n="event.date.end-date.label">${i18n.t('event.date.end-date.label.textContent')}</label><input data-i18n="event.date.end-date.input" data-property="schema:endDate" draggable="false" type="date" value="" />
     </dd>`;
+
     case 'description':
       return `<dt class="event-description" data-i18n="event.description.dt">${i18n.t('event.description.dt.textContent')}</dt>
     <dd datatype="rdf:HTML" property="schema:description"><p data-placeholder="Experience description"></p></dd>`;
@@ -623,6 +630,66 @@ function transformSkillsToInputs(root) {
 
 registerEditorParseTransform(transformSkillsToInputs);
 
+// Organizer/department anchors -> published semantic attributes + department span wrapper.
+function transformOrganizerInputs(doc) {
+  const article = selectArticleNode(doc);
+  if (!article || !isCV(article)) return;
+
+  article.querySelectorAll('p.event-organization-name').forEach((p) => {
+    const a = p.querySelector('a');
+    if (a) {
+      a.setAttribute('property', 'schema:name');
+      a.setAttribute('rel', 'schema:url');
+    }
+    p.replaceWith(...Array.from(p.childNodes));
+  });
+
+  article.querySelectorAll('p.event-organization-department-name').forEach((p) => {
+    const a = p.querySelector('a');
+    if (a) {
+      a.setAttribute('property', 'schema:name');
+      a.setAttribute('rel', 'schema:url');
+    }
+    const span = doc.createElement('span');
+    span.setAttribute('rel', 'schema:department');
+    span.setAttribute('resource', `#${generateAttributeId()}`);
+    span.append(...Array.from(p.childNodes));
+    p.replaceWith(doc.createTextNode(' '), span);
+  });
+}
+
+registerDocumentTransform(transformOrganizerInputs);
+
+// Inverse: strip the semantic attributes and unwrap the department span on re-edit.
+function transformOrganizerToInputs(root) {
+  if (!root || !isCV(root)) return;
+
+  root.querySelectorAll('dd[rel~="schema:organizer"]').forEach((dd) => {
+    const deptSpan = dd.querySelector(':scope > span[rel~="schema:department"]');
+
+    const deptP = document.createElement('p');
+    deptP.className = 'event-organization-department-name';
+    deptP.setAttribute('data-placeholder', 'Department');
+    if (deptSpan) {
+      const a = deptSpan.querySelector('a');
+      if (a) { a.removeAttribute('property'); a.removeAttribute('rel'); }
+      deptP.append(...Array.from(deptSpan.childNodes));
+      deptSpan.remove();
+    }
+
+    const orgP = document.createElement('p');
+    orgP.className = 'event-organization-name';
+    orgP.setAttribute('data-placeholder', 'Organizer');
+    const orgA = dd.querySelector(':scope > a');
+    if (orgA) { orgA.removeAttribute('property'); orgA.removeAttribute('rel'); }
+    orgP.append(...Array.from(dd.childNodes));
+
+    dd.append(orgP, deptP);
+  });
+}
+
+registerEditorParseTransform(transformOrganizerToInputs);
+
 // data-placeholder is an editor-only hint for empty fields; drop it in read mode.
 function removePlaceholders(doc) {
   const article = selectArticleNode(doc);
@@ -811,6 +878,7 @@ export function initCV() {
         transformCountrySelects(document);
         transformLocationInputs(document);
         transformSkillInputs(document);
+        transformOrganizerInputs(document);
         removePlaceholders(document);
         pruneEmptyItems(document);
       }

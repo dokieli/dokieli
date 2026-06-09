@@ -50,6 +50,7 @@ import { currentLocation } from "../uri.js";
 import { getRandomIndex, stringToColor, generateUUID } from "../util.js";
 import { defaultContentHTML } from "../cv.js";
 import { cvNavDecorationPlugin } from "./plugins/cvNavDecorations.js";
+import { protectPlaceholdersPlugin } from "./plugins/protectPlaceholders.js";
 
 const ns = Config.ns;
 
@@ -467,7 +468,7 @@ export class Editor {
     // not a collaborative session): skip Yjs/IndexedDB/remote-sync entirely.
     Config.Editor['collab'] = false;
     pmDoc = originalDoc;
-    editorPlugins = [history(), keymapPlugin, placeholderPlugin, slideStructurePlugin, slideshowDecorationsPlugin, cvNavDecorationPlugin, autoIdPlugin, editorToolbarPlugin];
+    editorPlugins = [history(), keymapPlugin, placeholderPlugin, slideStructurePlugin, slideshowDecorationsPlugin, cvNavDecorationPlugin, autoIdPlugin, protectPlaceholdersPlugin, editorToolbarPlugin];
   } else {
     Config.Editor['collab'] = true;
     ydoc = new Y.Doc();
@@ -601,6 +602,7 @@ export class Editor {
       slideshowDecorationsPlugin,
       cvNavDecorationPlugin,
       autoIdPlugin,
+      protectPlaceholdersPlugin,
       editorToolbarPlugin,
     ];
   }
