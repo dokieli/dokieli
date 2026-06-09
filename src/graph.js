@@ -886,6 +886,10 @@ export function isActorProperty(s) {
   return Config.Actor.Property.hasOwnProperty(s)
 }
 
+export function isEventType(s) {
+  return Config.Event.Type.hasOwnProperty(s)
+}
+
 export function getAgentPreferencesInfo(g) {
   if (!g) { return; }
 
