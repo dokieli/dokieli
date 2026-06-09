@@ -1848,12 +1848,6 @@ border:1px dashed #333;
 border-radius:0.5em;
 padding:1em;
 }
-.ProseMirror:has([rel="rdf:type"][href="http://w3id.org/roh#CurriculumVitae"]) section dt {
-display:none;
-}
-.ProseMirror:has([rel="rdf:type"][href="http://w3id.org/roh#CurriculumVitae"]) section dd {
-margin: 0 0 1em 0;
-}
 .ProseMirror:has([rel="rdf:type"][href="http://w3id.org/roh#CurriculumVitae"]) section label {
 margin-right:0.5em;
 width:initial;
