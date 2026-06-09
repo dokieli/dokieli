@@ -697,6 +697,44 @@ main > article { position:relative; }
 font-family:inherit;
 }
 
+.cv-section-add,
+.cv-section-remove,
+.cv-entry-add,
+.cv-skill-add {
+border:1px dashed #080;
+border-radius:0.25em;
+background:none;
+color:#333;
+cursor:pointer;
+font-size:inherit;
+}
+.cv-section-add:hover,
+.cv-section-add:focus-visible,
+.cv-entry-add:hover,
+.cv-entry-add:focus-visible,
+.cv-skill-add:hover,
+.cv-skill-add:focus-visible {
+border-style:solid;
+border-color:#080;
+background-color:#efe;
+color:#080;
+outline:none;
+}
+.cv-entry-add,
+.cv-skill-add {
+display:inline-block;
+margin:0.5em 0;
+}
+.cv-section-remove {
+margin-left:0.4em;
+}
+.cv-section-remove:hover,
+.cv-section-remove:focus-visible {
+border-color:#c00;
+background:#fee;
+color:#c00;
+}
+
 .do figcaption,
 .do caption {
   padding:0;
@@ -1805,21 +1843,31 @@ display: inline-block;
 fill:#080;
 }
 
-.ProseMirror [typeof="schema:Event"] {
-border:1px solid #ddd;
+.ProseMirror:has([rel="rdf:type"][href="http://w3id.org/roh#CurriculumVitae"]) section dl {
+border:1px dashed #333;
 border-radius:0.5em;
+padding:1em;
 }
-.ProseMirror [typeof="schema:Event"] dt {
- display:none;
+.ProseMirror:has([rel="rdf:type"][href="http://w3id.org/roh#CurriculumVitae"]) section dt {
+display:none;
 }
-.ProseMirror [typeof="schema:Event"] dd {
-margin-bottom:1em;
+.ProseMirror:has([rel="rdf:type"][href="http://w3id.org/roh#CurriculumVitae"]) section dd {
+margin: 0 0 1em 0;
 }
-.ProseMirror [typeof="schema:Event"] label {
+.ProseMirror:has([rel="rdf:type"][href="http://w3id.org/roh#CurriculumVitae"]) section label {
 margin-right:0.5em;
 width:initial;
 }
-.ProseMirror [typeof="schema:Event"] label + input + label {
+.ProseMirror:has([rel="rdf:type"][href="http://w3id.org/roh#CurriculumVitae"]) section input {
+border:0;
+font-style:italic;
+padding-left:0;
+padding-right:0;
+}
+.ProseMirror:has([rel="rdf:type"][href="http://w3id.org/roh#CurriculumVitae"]) section input:focus {
+font-style:normal;
+}
+.ProseMirror:has([rel="rdf:type"][href="http://w3id.org/roh#CurriculumVitae"]) section label + input + label {
 margin-left:1em;
 }
 
