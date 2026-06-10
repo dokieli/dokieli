@@ -1708,19 +1708,41 @@ display: block;
 }
 
 
-:has([rel="rdf:type"][href="http://w3id.org/roh#CurriculumVitae"]) section {
-  ul {
-    list-style-type:none;
+:has([rel="rdf:type"][href="http://w3id.org/roh#CurriculumVitae"]) {
+  section {
+    ul {
+      list-style-type:none;
+    }
+    div > ul li {
+      margin-bottom:2em;
+    }
+    dt {
+      display:none;
+    }
+    dd {
+      margin: 0 0 1em 0;
+    }
   }
-  div > ul li {
-    margin-bottom:2em;
+
+  section[data-cv-section="skills"] {
+    dt {
+      display:block;
+    }
   }
-  dt {
-    display:none;
+
+  section[data-cv-section="technical-contributions"],
+  section[data-cv-section="scholalry-communication"],
+  section[data-cv-section="awards"],
+  section[data-cv-section="credentials"] {
+    ul {
+      list-style-type:initial;
+    }
+    div > ul li {
+      margin-bottom:0;
+    }
   }
-  dd {
-    margin: 0 0 1em 0;
-  }
+
+
 }
 
 
