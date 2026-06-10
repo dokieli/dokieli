@@ -442,11 +442,12 @@ export default {
     },
 
     Property: {
+      'http://schema.org/endDate': "end date",
+      'http://schema.org/organizer': "organizer",
+      'http://schema.org/performer': "performer",
+      'http://schema.org/startDate': "start date",
       'http://schema.org/subEvent': "sub event",
       'http://schema.org/superEvent': "super event",
-      'http://schema.org/startDate': "start date",
-      'http://schema.org/endDate': "end date",
-      'http://schema.org/performer': "performer"
     }
   },
 

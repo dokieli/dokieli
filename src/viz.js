@@ -946,9 +946,10 @@ function convertGraphToVisualisationGraph(url, g, options){
       }
     }
 
-    if (t.subject.value == 'http://purl.org/ontology/bibo/presentedAt') {
+    if (t.predicate.value == 'http://purl.org/ontology/bibo/presentedAt' || t.predicate.value == 'http://schema.org/performerIn') {
       oGroup = 16;
     }
+
     if (Config.Event.Property.hasOwnProperty(t.predicate.value)) {
       sGroup = 16;
     }
