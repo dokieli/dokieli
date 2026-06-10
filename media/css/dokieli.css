@@ -2410,9 +2410,8 @@ margin-bottom:1em;
 #new-document-fieldset ul li label span span {
   display: block;
   font-weight: normal;
-  font-size: 0.9em;
-  line-height: 1.4;
-  color: #666;
+  /* line-height: 1.4; */
+  color: #333;
 }
 
 #new-document-fieldset ul li label:hover {
@@ -2430,18 +2429,22 @@ margin-bottom:1em;
   fill: #fff;
 }
 #new-document-fieldset ul li input[type="radio"]:checked + label::after {
-  content: "✓";
+  background-color: #080;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3e%3cpath d='M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z' fill='%23ffffff'/%3e%3c/svg%3e");
+  background-repeat:no-repeat;
+  background-position: 50% 50%;
+  background-size: 0.75em;
+  content: "";
   position: absolute;
-  top: 0.6em;
-  right: 0.6em;
+  top: 1.25em;
+  right: 1em;
   width: 1.5em;
   height: 1.5em;
   line-height: 1.5em;
   text-align: center;
-  font-size: 0.8em;
   color: #fff;
-  background: #080;
-  border-radius: 50%;
+  font-size:0.85em;
+  border-radius: 0.75em;
 }
 
 #new-document-fieldset ul li input[type="radio"]:focus-visible + label {
