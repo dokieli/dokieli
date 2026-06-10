@@ -18,6 +18,8 @@ limitations under the License.
 // Atom view for the location autocomplete: renders the <input> itself (no
 // contentDOM), so PM owns nothing inside. ignoreMutation + atom mean the injected
 // suggestions <ul> is left alone and the input can't be edited/deleted as content.
+import { moveField } from "../eventFieldNav.js";
+
 export class AutocompleteView {
   constructor(node, view, getPos) {
     this.node = node;
@@ -34,6 +36,13 @@ export class AutocompleteView {
     this.input.setAttribute("contenteditable", "false");
     this.dom.appendChild(this.input);
     this.input.addEventListener("change", () => this.syncInput());
+    // Tab leaves to the next/previous event field. Arrows stay native (the
+    // suggestions list uses them).
+    this.input.addEventListener("keydown", (e) => {
+      if (e.key !== "Tab") return;
+      const pos = typeof this.getPos === "function" ? this.getPos() : null;
+      if (pos != null && moveField(this.view, pos, e.shiftKey ? -1 : 1)) e.preventDefault();
+    });
   }
 
   syncInput() {

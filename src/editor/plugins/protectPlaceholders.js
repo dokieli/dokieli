@@ -44,19 +44,20 @@ export const protectPlaceholdersPlugin = new Plugin({
     });
     if (rejected) return false;
 
-    // Protect dt[data-i18n] label content from being modified or typed into.
-    // Covers both deletions (from < to) and insertions (from === to).
+    // Protect fixed labels (dt and the date-picker <label>s, both data-i18n) from
+    // being modified or typed into. Covers deletions (from < to) and insertions
+    // (from === to).
     for (const step of tr.steps) {
       if (typeof step.from !== 'number') continue;
       const from = step.from;
       const to = typeof step.to === 'number' ? step.to : from;
       state.doc.descendants((node, pos) => {
         if (rejected) return false;
-        if (node.type.name !== 'dt') return;
+        if (node.type.name !== 'dt' && node.type.name !== 'label') return;
         if (!node.attrs.originalAttributes?.['data-i18n']) return;
-        const dtFrom = pos + 1;
-        const dtTo = pos + node.nodeSize - 1;
-        if (from <= dtTo && to >= dtFrom && !tr.mapping.mapResult(pos).deleted) {
+        const labelFrom = pos + 1;
+        const labelTo = pos + node.nodeSize - 1;
+        if (from <= labelTo && to >= labelFrom && !tr.mapping.mapResult(pos).deleted) {
           rejected = true;
         }
       });

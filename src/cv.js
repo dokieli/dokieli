@@ -344,7 +344,7 @@ function eventFieldHTML(key, eventId) {
     case 'date':
       return `<dt class="event-date" data-i18n="event.date.dt">${i18n.t('event.date.dt.textContent')}</dt>
     <dd>
-      <label for="event-start-date" data-i18n="event.date.start-date.label">${i18n.t('event.date.start-date.label.textContent')}</label><input contenteditable="false" data-i18n="event.date.start-date.input" data-property="schema:startDate" draggable="false" type="date" value="" /><label for="event-end-date" data-i18n="event.date.end-date.label">${i18n.t('event.date.end-date.label.textContent')}</label><input data-i18n="event.date.end-date.input" data-property="schema:endDate" draggable="false" type="date" value="" />
+      <label contenteditable="false" for="event-start-date" data-i18n="event.date.start-date.label">${i18n.t('event.date.start-date.label.textContent')}</label><input contenteditable="false" data-i18n="event.date.start-date.input" data-property="schema:startDate" draggable="false" type="date" value="" /><label contenteditable="false" for="event-end-date" data-i18n="event.date.end-date.label">${i18n.t('event.date.end-date.label.textContent')}</label><input data-i18n="event.date.end-date.input" data-property="schema:endDate" draggable="false" type="date" value="" />
     </dd>`;
 
     case 'description':
