@@ -191,6 +191,14 @@ function customBackspaceCommand(state, dispatch) {
 
   if (handleSlideEmptyDescBackspace(state, dispatch)) return true;
 
+  // In a placeholder-protected field, delete the char ourselves so the browser
+  // can't merge the emptied block into the preceding label (which desyncs into a
+  // stray line break). At block start, fall through to the protected join.
+  if ($from.parentOffset > 0 && $from.parent.attrs.originalAttributes?.['data-placeholder']) {
+    if (dispatch) dispatch(state.tr.delete($from.pos - 1, $from.pos).scrollIntoView());
+    return true;
+  }
+
   return joinBackward(state, dispatch);
 }
 
