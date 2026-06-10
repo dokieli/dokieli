@@ -216,23 +216,23 @@ export function buildTOC(root, presentTypes = null) {
   return nav;
 }
 
-// Read/social mode: the nav lives in <main> before <article>, outside PM, so its
-// buttons survive. In author mode the nav is rendered inside the article (after
-// <details>) by cvNavDecorationPlugin, which rebuilds on docChanged — so here we
-// just clear any stale <main> nav left over from read mode and let PM own it.
+// The nav sits inside the article, right after <details> (matching author mode,
+// where cvNavDecorationPlugin renders it there). It is a .do element: stripped on
+// save and removed from the parse root on entering author mode, so PM never owns
+// it. In author mode PM's widget is the nav, so here we just leave it alone.
 function refreshTOC(root) {
   const main = root.closest('main') || root.parentNode;
-  if (pmEditor()) {
-    main.querySelector(':scope > #cv-toc')?.remove();
-    return;
-  }
+  main.querySelector(':scope > #cv-toc')?.remove(); // drop a stale nav from the old <main> layout
+  if (pmEditor()) return;
+
   const nav = buildTOC(root);
-  const existing = main.querySelector(':scope > #cv-toc');
-  if (existing) {
-    existing.replaceWith(nav);
-  } else {
-    main.insertBefore(nav, root);
-  }
+  const existing = root.querySelector(':scope > #cv-toc');
+  if (existing) { existing.replaceWith(nav); return; }
+  const details = root.querySelector(':scope > details');
+  const content = root.querySelector(':scope > #content');
+  if (details) details.after(nav);
+  else if (content) content.before(nav);
+  else root.prepend(nav);
 }
 
 export function addSection(root, type) {

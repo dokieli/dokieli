@@ -2347,7 +2347,6 @@ margin-bottom:1em;
 
 #new-document-fieldset legend {
   margin-bottom: 1.5em;
-  color: #555;
   font-weight: normal;
 }
 
@@ -2391,13 +2390,12 @@ margin-bottom:1em;
 #new-document-fieldset ul li label svg {
   align-self: flex-start;
   flex: none;
-  width: 1.4em;
-  height: 1.4em;
+  width: 1.5em;
+  height: 1.5em;
   padding: 0.5em;
   box-sizing: content-box;
-  background: #f1f3f5;
-  border-radius: 0.6em;
-  fill: #555;
+  background: #f1f1f1;
+  border-radius: 0.5em;
 }
 
 #new-document-fieldset ul li label strong {
