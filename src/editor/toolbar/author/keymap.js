@@ -192,11 +192,25 @@ function customBackspaceCommand(state, dispatch) {
 
   if (handleSlideEmptyDescBackspace(state, dispatch)) return true;
 
-  // In a placeholder-protected field, delete the char ourselves so the browser
-  // can't merge the emptied block into the preceding label (which desyncs into a
-  // stray line break). At block start, fall through to the protected join.
-  if ($from.parentOffset > 0 && $from.parent.attrs.originalAttributes?.['data-placeholder']) {
-    if (dispatch) dispatch(state.tr.delete($from.pos - 1, $from.pos).scrollIntoView());
+  // In a placeholder-protected field (the parent block holds an anchor placeholder
+  // paragraph, e.g. an event card's name/organizer/description), keep that anchor
+  // intact. Delete the char ourselves (so the browser can't merge the emptied block
+  // into a preceding label and desync into a stray break). At block start: swallow
+  // the first paragraph so it can't be lifted out; merge a later one into the
+  // previous with join (which keeps the previous block, unlike joinBackward, which
+  // drops an empty previous placeholder).
+  const field = $from.depth >= 1 ? $from.node($from.depth - 1) : null;
+  let protectedField = false;
+  for (let i = 0; field && i < field.childCount; i++) {
+    const c = field.child(i);
+    if (c.isTextblock && c.attrs.originalAttributes?.['data-placeholder']) { protectedField = true; break; }
+  }
+  if (protectedField) {
+    if ($from.parentOffset > 0) {
+      if (dispatch) dispatch(state.tr.delete($from.pos - 1, $from.pos).scrollIntoView());
+    } else if ($from.index($from.depth - 1) !== 0) {
+      if (dispatch) dispatch(state.tr.join($from.before($from.depth)).scrollIntoView());
+    }
     return true;
   }
 

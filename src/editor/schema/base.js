@@ -228,7 +228,10 @@ let customNodes = {
     defining: true,
     isolating: true,
     attrs: { originalAttributes: { default: {} } },
-    parseDOM: [{ tag: 'div[property~="schema:description"]', priority: 60, getAttrs(node){ return getAttributes(node); }}],
+    parseDOM: [
+      { tag: 'div[property~="schema:description"]', priority: 60, getAttrs(node){ return getAttributes(node); }},
+      { tag: 'div[property~="schema:abstract"]', priority: 60, getAttrs(node){ return getAttributes(node); }}
+    ],
     toDOM: toDOMWith("div")
   },
   // Atom widget: the search (location, skill?) autocomplete. The inner <input> is lifted onto the

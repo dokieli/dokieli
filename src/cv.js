@@ -106,7 +106,7 @@ function sectionHTML(type) {
       html = `<div datatype="rdf:HTML" property="schema:description"><ul${about}></ul></div>`;
       break;
     case 'summary':
-      html = `<div datatype="rdf:HTML" property="schema:abstract"></div>`;
+      html = `<div datatype="rdf:HTML" property="schema:abstract"><p></p></div>`;
       break;
   }
 
