@@ -87,6 +87,12 @@ function getSection(type) {
   return SECTIONS[type] || null;
 }
 
+// Localized section label. SECTIONS[type].label stays the English reference that
+// migrateSectionMarkers slugs against; this is what gets displayed.
+function sectionLabel(type) {
+  return i18n.t(`cv.section.${type}.label`);
+}
+
 function getCVRoot() {
   return document.querySelector('main > article');
 }
@@ -121,7 +127,7 @@ function sectionHTML(type) {
 
   return `
     <section id="${type}" data-cv-section="${type}" rel="schema:hasPart" resource="#${type}">
-      <h2 property="schema:name">${s.label}</h2>
+      <h2 property="schema:name">${sectionLabel(type)}</h2>
       ${html}
     </section>`;
 }
@@ -192,7 +198,7 @@ export function buildTOC(root, presentTypes = null) {
     if (present) {
       const a = document.createElement('a');
       a.href = `#${sectionId || section}`;
-      a.textContent = SECTIONS[section].label;
+      a.textContent = sectionLabel(section);
       li.appendChild(a);
 
       if (author) {
@@ -200,8 +206,9 @@ export function buildTOC(root, presentTypes = null) {
         remove.type = 'button';
         remove.className = 'do cv-section-remove';
         remove.dataset.type = section;
-        remove.title = `Remove ${section.label}`;
-        remove.setAttribute('aria-label', `Remove ${SECTIONS[section].label}`);
+        const removeLabel = i18n.t('cv.button.remove-section.aria-label', { label: sectionLabel(section) });
+        remove.title = removeLabel;
+        remove.setAttribute('aria-label', removeLabel);
         remove.textContent = '−';
         li.appendChild(remove);
       }
@@ -210,7 +217,7 @@ export function buildTOC(root, presentTypes = null) {
       add.type = 'button';
       add.className = 'do cv-section-add';
       add.dataset.type = section;
-      add.textContent = `+ ${SECTIONS[section].label}`;
+      add.textContent = `+ ${sectionLabel(section)}`;
       li.appendChild(add);
     }
 
@@ -288,7 +295,7 @@ function injectCVTOC(doc) {
     .filter(x => x.section);
   if (!present.length) return;
 
-  const lis = present.map(({ type, section }) => `<li><a href="#${section.id}">${SECTIONS[type].label}</a></li>`).join('');
+  const lis = present.map(({ type, section }) => `<li><a href="#${section.id}">${sectionLabel(type)}</a></li>`).join('');
   content.parentNode.insertBefore(fragmentFromString(`<nav><ul>${lis}</ul></nav>`), content);
 }
 
@@ -306,7 +313,9 @@ function paragraphHTML() {
 }
 
 function contributionHTML(options = {}) {
-  const ph = options.type === 'technical-contributions' ? 'Technical contribution' : 'Scholarly communication';
+  const ph = options.type === 'technical-contributions'
+    ? i18n.t('cv.placeholder.technical-contribution')
+    : i18n.t('cv.placeholder.scholarly-communication');
   return `<li rev="schema:contributor" rel="foaf:made" property="schema:description" datatype="rdf:HTML"><p data-placeholder="${ph}"></p></li>`;
 }
 
@@ -314,23 +323,23 @@ function skillInputHTML({ title = '', uri = '' } = {}) {
   const id = generateAttributeId();
   const esc = (s) => (s || '').replace(/"/g, '&quot;');
   const data = uri ? `data-entity="${esc(uri)}"` : '';
-  return `<div class="autocomplete"><input data-autocomplete="skill" name="${id}-skill" placeholder="Enter skill" value="${esc(title)}" ${data} type="text" /></div>`;
+  return `<div class="autocomplete"><input data-autocomplete="skill" name="${id}-skill" placeholder="${i18n.t('cv.placeholder.skill')}" value="${esc(title)}" ${data} type="text" /></div>`;
 }
 
 function skillHTML() {
   const id = `${generateAttributeId()}-skill-category`;
   return `<li><dl class="skill-category" id="${id}">
-    <dt data-placeholder="Category name"></dt>
+    <dt data-placeholder="${i18n.t('cv.placeholder.category-name')}"></dt>
     <dd>${skillInputHTML()}</dd>
   </dl></li>`;
 }
 
 function awardHTML() {
-  return `<li property="schema:award" datatype="rdf:HTML"><p data-placeholder="Award"></p></li>`;
+  return `<li property="schema:award" datatype="rdf:HTML"><p data-placeholder="${i18n.t('cv.placeholder.award')}"></p></li>`;
 }
 
 function credentialHTML() {
-  return `<li rel="schema:hasCredential" datatype="rdf:HTML"><p data-placeholder="Credential"></p></li>`;
+  return `<li rel="schema:hasCredential" datatype="rdf:HTML"><p data-placeholder="${i18n.t('cv.placeholder.credential')}"></p></li>`;
 }
 
 //TODO Move this to somewhere else as it is not CV specific
@@ -377,18 +386,18 @@ function eventFieldHTML(key, eventId) {
   switch (key) {
     case 'name':
       return `<dt class="event-name" data-i18n="event.name.dt">${i18n.t('event.name.dt.textContent')}</dt>
-    <dd property="schema:name"><p data-placeholder="Experience name"></p></dd>`;
+    <dd property="schema:name"><p data-placeholder="${i18n.t('cv.placeholder.experience-name')}"></p></dd>`;
 
     case 'organizer':
       return `<dt class="event-organizer" data-i18n="event.organizer.dt">${i18n.t('event.organizer.dt.textContent')}</dt>
     <dd rel="schema:organizer" resource="#${generateAttributeId()}" typeof="schema:Organization">
-      <p class="event-organization-name" data-placeholder="Organizer"></p>
-      <p class="event-organization-department-name" data-placeholder="Department"></p>
+      <p class="event-organization-name" data-placeholder="${i18n.t('cv.placeholder.organizer')}"></p>
+      <p class="event-organization-department-name" data-placeholder="${i18n.t('cv.placeholder.department')}"></p>
     </dd>`;
 
     case 'location':
       return `<dt class="event-location" data-i18n="event.location.dt">${i18n.t('event.location.dt.textContent')}</dt>
-    <dd rel="schema:location" typeof="schema:Place"><div class="autocomplete" rel="schema:address"><input name="${eventId}-event-location" placeholder="Enter location (locality, region, country)" value="" type="text" /></div></dd>`;
+    <dd rel="schema:location" typeof="schema:Place"><div class="autocomplete" rel="schema:address"><input name="${eventId}-event-location" placeholder="${i18n.t('cv.placeholder.location')}" value="" type="text" /></div></dd>`;
 
     case 'date':
       return `<dt class="event-date" data-i18n="event.date.dt">${i18n.t('event.date.dt.textContent')}</dt>
@@ -398,7 +407,7 @@ function eventFieldHTML(key, eventId) {
 
     case 'description':
       return `<dt class="event-description" data-i18n="event.description.dt">${i18n.t('event.description.dt.textContent')}</dt>
-    <dd datatype="rdf:HTML" property="schema:description"><p data-placeholder="Experience description"></p></dd>`;
+    <dd datatype="rdf:HTML" property="schema:description"><p data-placeholder="${i18n.t('cv.placeholder.experience-description')}"></p></dd>`;
   }
   return '';
 }
@@ -600,7 +609,7 @@ function locationInputHTML({ label = '', entity = '', locationType = '', regionC
     countryCode && `data-country-code="${esc(countryCode)}"`,
     countryName && `data-country-name="${esc(countryName)}"`,
   ].filter(Boolean).join(' ');
-  return `<div class="autocomplete" rel="schema:address"><input name="${id}-event-location" placeholder="Enter location (city, region, country)" value="${esc(label)}" ${data} type="text" /></div>`;
+  return `<div class="autocomplete" rel="schema:address"><input name="${id}-event-location" placeholder="${i18n.t('cv.placeholder.location')}" value="${esc(label)}" ${data} type="text" /></div>`;
 }
 
 function transformLocationsToInputs(root) {

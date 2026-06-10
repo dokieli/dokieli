@@ -21,6 +21,7 @@ import Config from "../../config.js";
 import { buildTOC } from "../../cv.js";
 import { Icon } from "../../ui/icons.js";
 import { fragmentFromString } from "../../utils/html.js";
+import { i18n } from "../../i18n.js";
 
 // Renders the CV nav inside the article (after <details>, before #content) as a
 // widget decoration. PM owns the widget DOM, so it survives PM's redraws and
@@ -33,17 +34,8 @@ export const cvNavDecorationKey = new PluginKey("cvNavDecoration");
 // Sections that hold a list of entries and get an "+ add entry" button.
 const REPEATABLE = new Set(["experience", "education", "skills", "talks", "scholarly-communication", "technical-contributions", "awards", "credentials"]);
 
-// Friendlier entry-button labels (default is "+ Add <id>").
-const ENTRY_LABELS = {
-  experience: "experience",
-  education: "education",
-  skills: "skill category",
-  talks: "talk",
-  "scholarly-communication": "scholarly communication",
-  "technical-contributions": "technical contribution",
-  "awards": "award",
-  "credentials": "credential"
-};
+// Singular entry noun per section, for the "+ Add <entry>" button label.
+const entryLabel = (type) => i18n.t(`cv.entry.${type}.label`);
 
 function isContentDiv(node) {
   return node.type.name === "div" && node.attrs.originalAttributes?.id === "content";
@@ -236,8 +228,8 @@ function deleteWidget(pos, targetType, label) {
 
 function entryDeleteDecorations(doc) {
   const decos = [];
-  entryLiPositions(doc).forEach((end) => decos.push(deleteWidget(end, "li", "Remove entry")));
-  skillDdPositions(doc).forEach((end) => decos.push(deleteWidget(end, "dd", "Remove skill")));
+  entryLiPositions(doc).forEach((end) => decos.push(deleteWidget(end, "li", i18n.t("cv.button.remove-entry.aria-label"))));
+  skillDdPositions(doc).forEach((end) => decos.push(deleteWidget(end, "dd", i18n.t("cv.button.remove-skill.aria-label"))));
   return decos;
 }
 
@@ -249,7 +241,7 @@ function skillButtonDecorations(doc) {
       b.type = "button";
       b.className = "do cv-skill-add";
       b.dataset.target = cat.id;
-      b.textContent = "+ Add";
+      b.textContent = i18n.t("cv.button.add-skill.textContent");
       b.setAttribute("contenteditable", "false");
       return b;
     }, { side: 1, ignoreSelection: true, stopEvent: () => true }));
@@ -295,7 +287,7 @@ function entryButtonDecorations(doc) {
       b.className = "do cv-entry-add";
       b.dataset.type = type;
       b.dataset.sectionId = attrs.id || "";
-      b.textContent = `+ Add ${ENTRY_LABELS[type] || type}`;
+      b.textContent = i18n.t("cv.button.add-entry.textContent", { label: entryLabel(type) });
       b.setAttribute("contenteditable", "false");
       return b;
     }, { side: 1, ignoreSelection: true, stopEvent: () => true }));
