@@ -316,7 +316,7 @@ function contributionHTML(options = {}) {
   const ph = options.type === 'technical-contributions'
     ? i18n.t('cv.placeholder.technical-contribution')
     : i18n.t('cv.placeholder.scholarly-communication');
-  return `<li rev="schema:contributor" rel="foaf:made" property="schema:description" datatype="rdf:HTML"><p data-placeholder="${ph}"></p></li>`;
+  return `<li><p data-placeholder="${ph}"></p></li>`;
 }
 
 function skillInputHTML({ title = '', uri = '' } = {}) {
@@ -339,8 +339,46 @@ function awardHTML() {
 }
 
 function credentialHTML() {
-  return `<li rel="schema:hasCredential" datatype="rdf:HTML"><p data-placeholder="${i18n.t('cv.placeholder.credential')}"></p></li>`;
+  return `<li><p data-placeholder="${i18n.t('cv.placeholder.credential')}"></p></li>`;
 }
+
+// These entries reference a resource via a link, so their rel/rev relations only
+// make sense when the item contains an <a href>. The entry <li> never carries
+// property/datatype. Relations are derived on save and stripped on edit (the
+// editor item stays a plain <li>), similar to the organizer/department handling.
+const ITEM_RELATIONS = {
+  'credentials': { rel: 'schema:hasCredential' },
+  'scholarly-communication': { rev: 'schema:contributor', rel: 'foaf:made' },
+  'technical-contributions': { rev: 'schema:contributor', rel: 'foaf:made' },
+};
+
+const itemEntrySelector = (type) => `section[data-cv-section="${type}"] > div > ul > li`;
+
+// Save: add the relations to an entry <li> only when it links to a resource.
+function transformContributionItems(doc) {
+  const article = selectArticleNode(doc);
+  if (!article || !isCV(article)) return;
+  Object.entries(ITEM_RELATIONS).forEach(([type, rels]) => {
+    article.querySelectorAll(itemEntrySelector(type)).forEach((li) => {
+      ['rel', 'rev', 'property', 'datatype'].forEach((a) => li.removeAttribute(a));
+      if (li.querySelector('a[href]')) {
+        Object.entries(rels).forEach(([k, v]) => li.setAttribute(k, v));
+      }
+    });
+  });
+}
+registerDocumentTransform(transformContributionItems);
+
+// Edit: strip the relations so the editor item is a plain <li> (re-derived on save).
+function stripContributionItems(root) {
+  if (!root || !isCV(root)) return;
+  Object.keys(ITEM_RELATIONS).forEach((type) => {
+    root.querySelectorAll(itemEntrySelector(type)).forEach((li) => {
+      ['rel', 'rev', 'property', 'datatype'].forEach((a) => li.removeAttribute(a));
+    });
+  });
+}
+registerEditorParseTransform(stripContributionItems);
 
 //TODO Move this to somewhere else as it is not CV specific
 function eventHTML(options = {}) {
