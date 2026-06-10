@@ -2110,7 +2110,7 @@ WHERE {\n\
 
 
 export async function getWikidataResults (keywords, options = {}) {
-  console.log(`getWikidataResults: ${keywords}`)
+  // console.log(`getWikidataResults: ${keywords}`)
   // console.log(options);
 
   keywords = Array.isArray(keywords) ? keywords : [keywords];
