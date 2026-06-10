@@ -25,22 +25,32 @@ export const protectPlaceholdersPlugin = new Plugin({
 
     let rejected = false;
 
-    // Protect nodes with data-placeholder from deletion while their parent survives.
-    // Treat it as a node removal only when both boundaries are deleted; checking
-    // just pos (assoc 1) also fires when the node's first/last char is deleted,
-    // which would wrongly block emptying the field.
+    // Field protection: a field (the parent of a placeholder paragraph, e.g. a
+    // <dd>) must always keep at least one placeholder paragraph. Reject only when a
+    // surviving field would be left with none. This protects the template's
+    // placeholder while letting users add and remove extra paragraphs (each merge/
+    // delete is fine as long as one placeholder remains), and lets the whole field
+    // be removed. Emptying a field's text keeps the paragraph, so it stays allowed.
+    const checked = new Set();
     state.doc.descendants((node, pos) => {
       if (rejected) return false;
+      if (!node.isTextblock) return;
       if (!node.attrs.originalAttributes?.['data-placeholder']) return;
-      const openDeleted = tr.mapping.mapResult(pos, 1).deleted;
-      const closeDeleted = tr.mapping.mapResult(pos + node.nodeSize, -1).deleted;
-      if (!openDeleted || !closeDeleted) return;
-      try {
-        const $pos = state.doc.resolve(pos + 1);
-        if ($pos.depth < 2) return;
-        // $pos.before(depth - 1) is the opening-token position of the direct parent.
-        if (!tr.mapping.mapResult($pos.before($pos.depth - 1)).deleted) rejected = true;
-      } catch (_) {}
+      const $pos = state.doc.resolve(pos);
+      if ($pos.depth < 1) return;
+      const before = $pos.before($pos.depth);
+      if (checked.has(before)) return;
+      checked.add(before);
+      const after = $pos.after($pos.depth);
+      const start = tr.mapping.map(before, 1);
+      const end = tr.mapping.map(after, -1);
+      if (end <= start) return; // field removed entirely: allowed
+      let kept = false;
+      tr.doc.nodesBetween(start, end, (n) => {
+        if (kept) return false;
+        if (n.isTextblock && n.attrs.originalAttributes?.['data-placeholder']) kept = true;
+      });
+      if (!kept) rejected = true;
     });
     if (rejected) return false;
 
