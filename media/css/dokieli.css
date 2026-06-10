@@ -735,6 +735,36 @@ background:#fee;
 color:#c00;
 }
 
+/* Per-entry delete: small red button pinned to the entry's top-right corner. */
+#content section li,
+dl.skill-category dd {
+position:relative;
+}
+.cv-entry-delete {
+position:absolute;
+top:0.2em;
+right:0.2em;
+z-index:1;
+border:0;
+background:none;
+cursor:pointer;
+line-height:0;
+padding:0.15em;
+}
+.cv-entry-delete svg {
+display:block;
+width:0.9em;
+height:0.9em;
+fill:#c00;
+}
+.cv-entry-delete:hover svg,
+.cv-entry-delete:focus-visible svg {
+fill:#a00;
+}
+.cv-entry-delete:focus-visible {
+outline:none;
+}
+
 .do figcaption,
 .do caption {
   padding:0;
