@@ -70,6 +70,11 @@ const SECTIONS = {
 // Placeheld in a new CV; the rest are offered as "+ add" in the nav.
 const DEFAULT_SECTIONS = ['summary', 'experience', 'skills'];
 
+// Simple list sections (plain <p> entries) seeded with one placeholder <li> so an
+// empty section shows a prompt as a proper list item, not a bare <ul>. The richer
+// sections (experience/education/talks/skills) start empty and rely on "+ add".
+const SEED_ENTRY = new Set(['scholarly-communication', 'technical-contributions', 'awards', 'credentials']);
+
 let clickHandlerAttached = false;
 let modeHandlerAttached = false;
 let authHandlerAttached = false;
@@ -104,9 +109,11 @@ function sectionHTML(type) {
   const about = webid ? ` about="${webid}"` : '';
 
   switch(type) {
-    default:
-      html = `<div datatype="rdf:HTML" property="schema:description"><ul${about}></ul></div>`;
+    default: {
+      const seed = SEED_ENTRY.has(type) ? s.entryHTML() : '';
+      html = `<div datatype="rdf:HTML" property="schema:description"><ul${about}>${seed}</ul></div>`;
       break;
+    }
     case 'summary':
       html = `<div datatype="rdf:HTML" property="schema:abstract"><p></p></div>`;
       break;
@@ -287,7 +294,7 @@ function paragraphHTML() {
 
 function contributionHTML(options = {}) {
   const ph = options.type === 'technical-contributions' ? 'Technical contribution' : 'Scholarly communication';
-  return `<p rev="schema:contributor" rel="foaf:made" property="schema:description" datatype="rdf:HTML" data-placeholder="${ph}"></p>`;
+  return `<li rev="schema:contributor" rel="foaf:made" property="schema:description" datatype="rdf:HTML"><p data-placeholder="${ph}"></p></li>`;
 }
 
 function skillInputHTML({ title = '', uri = '' } = {}) {
@@ -299,18 +306,18 @@ function skillInputHTML({ title = '', uri = '' } = {}) {
 
 function skillHTML() {
   const id = `${generateAttributeId()}-skill-category`;
-  return `<dl class="skill-category" id="${id}">
+  return `<li><dl class="skill-category" id="${id}">
     <dt data-placeholder="Category name"></dt>
     <dd>${skillInputHTML()}</dd>
-  </dl>`;
+  </dl></li>`;
 }
 
 function awardHTML() {
-  return `<p property="schema:award" datatype="rdf:HTML" data-placeholder="Award"></p>`;
+  return `<li property="schema:award" datatype="rdf:HTML"><p data-placeholder="Award"></p></li>`;
 }
 
 function credentialHTML() {
-  return `<p rel="schema:hasCredential" datatype="rdf:HTML" data-placeholder="Credential"></p>`;
+  return `<li rel="schema:hasCredential" datatype="rdf:HTML"><p data-placeholder="Credential"></p></li>`;
 }
 
 //TODO Move this to somewhere else as it is not CV specific
@@ -332,9 +339,9 @@ function eventHTML(options = {}) {
 
   // console.log(eventId, eventRel, eventType, fields)
 
-  return `<dl id="${eventId}" rel="${eventRel}" resource="#${eventId}" typeof="${eventType}">
+  return `<li><dl id="${eventId}" rel="${eventRel}" resource="#${eventId}" typeof="${eventType}">
     ${fields}
-  </dl>`;
+  </dl></li>`;
 }
 
 const EVENT_FIELDS_ORDER = ['name', 'organizer', 'location', 'date', 'description'];
@@ -853,7 +860,7 @@ export function initCV() {
         const sectionId = addEntry.dataset.sectionId;
         const entryHTML = SECTIONS[type]?.entryHTML;
         if (entryHTML && sectionId) {
-          pmEditor()?.insertFragmentAtEndOfChild(`#${sectionId}`, 'ul', fragmentFromString(`<li>${entryHTML()}</li>`));
+          pmEditor()?.insertFragmentAtEndOfChild(`#${sectionId}`, 'ul', fragmentFromString(entryHTML()));
         }
         return;
       }
