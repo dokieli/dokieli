@@ -143,9 +143,17 @@ function customEnterCommand(state, dispatch) {
 
     const paragraphType = schema.nodes.p;
 
+    // A new entry inherits the current item's attributes (RDFa) and its first
+    // paragraph's editor attributes (data-placeholder), so pressing Enter in a
+    // one-line entry (award/credential/contribution) adds another proper entry,
+    // matching the section's "+ add" button. Scoped to <li> so event/skill fields
+    // (dt/dd) keep their own behaviour.
+    const isLi = node.type.name === 'li';
+    const firstPara = node.firstChild;
+    const paraAttrs = isLi && firstPara?.type.name === 'p' ? firstPara.attrs : {};
     const newListItem = liType.create(
-      {}, 
-      paragraphType.create()
+      isLi ? node.attrs : {},
+      paragraphType.create(paraAttrs)
     );
 
     const insertPos = $from.after(listItemDepth);

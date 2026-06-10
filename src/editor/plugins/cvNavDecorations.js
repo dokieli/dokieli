@@ -155,8 +155,10 @@ function buildDecorations(doc) {
   return DecorationSet.create(doc, [widget, ...entryDecos, ...skillButtonDecorations(doc), ...entryDeleteDecorations(doc)]);
 }
 
-// Entry <li> positions inside a repeatable section (section > div > ul > li),
-// so user-content lists nested deeper (e.g. in a description) are left alone.
+// Position at the END of each entry <li>'s content (section > div > ul > li),
+// where the delete widget goes. Placing it last (not first) keeps the entry's
+// first child first, so CSS like `li > p:first-child { display: inline }` still
+// applies. Nested user lists deeper in a description are left alone.
 function entryLiPositions(doc) {
   const positions = [];
   doc.descendants((node, pos) => {
@@ -171,7 +173,7 @@ function entryLiPositions(doc) {
           if (gc.type.name === "ul") {
             let o3 = o2 + 1;
             gc.forEach((li) => {
-              if (li.type.name === "li") positions.push(o3);
+              if (li.type.name === "li") positions.push(o3 + li.nodeSize - 1);
               o3 += li.nodeSize;
             });
           }
@@ -185,7 +187,8 @@ function entryLiPositions(doc) {
   return positions;
 }
 
-// Each skill <dd> inside a skill-category <dl>, so individual skills are removable.
+// End-of-content position of each skill <dd> inside a skill-category <dl>, so
+// individual skills are removable (widget placed last, as above).
 function skillDdPositions(doc) {
   const positions = [];
   doc.descendants((node, pos) => {
@@ -194,7 +197,7 @@ function skillDdPositions(doc) {
     if (!cls.split(/\s+/).includes("skill-category")) return true;
     let off = pos + 1;
     node.forEach((child) => {
-      if (child.type.name === "dd") positions.push(off);
+      if (child.type.name === "dd") positions.push(off + child.nodeSize - 1);
       off += child.nodeSize;
     });
     return false;
@@ -233,8 +236,8 @@ function deleteWidget(pos, targetType, label) {
 
 function entryDeleteDecorations(doc) {
   const decos = [];
-  entryLiPositions(doc).forEach((liPos) => decos.push(deleteWidget(liPos + 1, "li", "Remove entry")));
-  skillDdPositions(doc).forEach((ddPos) => decos.push(deleteWidget(ddPos + 1, "dd", "Remove skill")));
+  entryLiPositions(doc).forEach((end) => decos.push(deleteWidget(end, "li", "Remove entry")));
+  skillDdPositions(doc).forEach((end) => decos.push(deleteWidget(end, "dd", "Remove skill")));
   return decos;
 }
 
