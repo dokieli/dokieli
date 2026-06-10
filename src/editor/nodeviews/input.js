@@ -16,6 +16,8 @@ limitations under the License.
 */
 
 // Native form control; PM ignores its events, change syncs value + data-* back.
+import { moveField } from "../eventFieldNav.js";
+
 export class InputView {
   constructor(node, view, getPos) {
     this.node = node;
@@ -28,6 +30,12 @@ export class InputView {
     }
     this.dom.setAttribute("contenteditable", "false");
     this.dom.addEventListener("change", () => this.syncValue());
+    // Tab moves to the next/previous event field.
+    this.dom.addEventListener("keydown", (e) => {
+      if (e.key !== "Tab") return;
+      const pos = typeof this.getPos === "function" ? this.getPos() : null;
+      if (pos != null && moveField(this.view, pos, e.shiftKey ? -1 : 1)) e.preventDefault();
+    });
   }
 
   syncValue() {

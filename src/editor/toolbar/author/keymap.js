@@ -20,6 +20,7 @@ import { keymap } from "prosemirror-keymap";
 import { TextSelection } from "prosemirror-state";
 import { undo, redo } from "prosemirror-history";
 import Config from "../../../config.js";
+import { eventDlAt, moveField } from "../../eventFieldNav.js";
 
 let Slash;
 
@@ -207,10 +208,42 @@ function customSlashCommand(state, dispatch, view) {
   return false; 
 }
 
+// Tab moves between event-card fields; returns false elsewhere so Tab stays
+// normal in the rest of the editor.
+function eventFieldTab(dir) {
+  return (state, dispatch, view) => {
+    if (!eventDlAt(state, state.selection.from)) return false;
+    const { $from } = state.selection;
+    return moveField(view, $from.before($from.depth), dir);
+  };
+}
+
+// At a text field's edge, step into the adjacent native input; otherwise leave
+// arrow motion to PM (text-to-text movement already works).
+function eventFieldArrow(dir) {
+  return (state, dispatch, view) => {
+    const sel = state.selection;
+    if (!sel.empty) return false;
+    if (!eventDlAt(state, sel.from)) return false;
+    const { $from } = sel;
+    const atEdge = dir === 1
+      ? $from.parentOffset === $from.parent.content.size
+      : $from.parentOffset === 0;
+    if (!atEdge) return false;
+    return moveField(view, $from.before($from.depth), dir, "dom");
+  };
+}
+
 export const keymapPlugin = keymap({
   "Backspace": customBackspaceCommand,
   "Enter": customEnterCommand,
   "/": (state, dispatch, view) => customSlashCommand(state, dispatch, view),
+  "Tab": eventFieldTab(1),
+  "Shift-Tab": eventFieldTab(-1),
+  "ArrowDown": eventFieldArrow(1),
+  "ArrowRight": eventFieldArrow(1),
+  "ArrowUp": eventFieldArrow(-1),
+  "ArrowLeft": eventFieldArrow(-1),
   "Mod-z": undo,
   "Mod-y": redo,
 });
