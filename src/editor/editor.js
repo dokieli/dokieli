@@ -456,7 +456,7 @@ export class Editor {
     });
 
   const parseRoot = this.node.cloneNode(true);
-  parseRoot.querySelectorAll('#document-editor, #review-changes, #cv-toc').forEach(n => n.remove());
+  parseRoot.querySelectorAll('#document-editor, #review-changes').forEach(n => n.remove());
   applyEditorParseTransforms(parseRoot);
   originalDoc = DOMParser.fromSchema(schema).parse(parseRoot);
 
