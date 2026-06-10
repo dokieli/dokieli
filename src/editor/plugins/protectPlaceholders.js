@@ -26,11 +26,15 @@ export const protectPlaceholdersPlugin = new Plugin({
     let rejected = false;
 
     // Protect nodes with data-placeholder from deletion while their parent survives.
-    // Uses mapResult to detect whether a node's position was inside a deleted range.
+    // Treat it as a node removal only when both boundaries are deleted; checking
+    // just pos (assoc 1) also fires when the node's first/last char is deleted,
+    // which would wrongly block emptying the field.
     state.doc.descendants((node, pos) => {
       if (rejected) return false;
       if (!node.attrs.originalAttributes?.['data-placeholder']) return;
-      if (!tr.mapping.mapResult(pos).deleted) return;
+      const openDeleted = tr.mapping.mapResult(pos, 1).deleted;
+      const closeDeleted = tr.mapping.mapResult(pos + node.nodeSize, -1).deleted;
+      if (!openDeleted || !closeDeleted) return;
       try {
         const $pos = state.doc.resolve(pos + 1);
         if ($pos.depth < 2) return;
