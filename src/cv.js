@@ -24,7 +24,9 @@ import { generateAttributeId, generateUUID } from './util.js';
 import { getCountryOptionsHTML, showLocationSuggestions, showSkillSuggestions, setupAutocomplete } from './doc.js';
 import { getWikidataResults, getEscoResults } from './graph.js';
 
-// type === slugify(label) so it matches the id autoIdPlugin derives from the heading.
+// Sections are identified by a stable data-cv-section marker (= the SECTIONS key),
+// not by id: autoIdPlugin rewrites a section's id to the heading slug, so the id
+// follows the user's heading while the marker stays put.
 
 const SECTIONS = {
   summary: {
@@ -47,12 +49,12 @@ const SECTIONS = {
     label: 'Presentations and Talks',
     entryHTML: () => eventHTML({ template: 'cv', type: 'talks' })
   },
-  'scholarly-articles': {
-    label: 'Scholarly Articles',
-    entryHTML: () => contributionHTML({ template: 'cv', type: 'scholarly-articles' })
+  'scholarly-communication': {
+    label: 'Scholarly Communication',
+    entryHTML: () => contributionHTML({ template: 'cv', type: 'scholarly-communication' })
   },
-  'technical-community-contributions': {
-    label: 'Technical and Community Contributions',
+  'technical-contributions': {
+    label: 'Technical Contributions',
     entryHTML: () => contributionHTML({ template: 'cv', type: 'technical-contributions' })
   },
   awards: {
@@ -85,7 +87,7 @@ function getCVRoot() {
 }
 
 function sectionPresent(root, type) {
-  return !!root.querySelector(`#content > section[id="${type}"]`);
+  return !!root.querySelector(`#content > section[data-cv-section="${type}"]`);
 }
 
 function sectionHTML(type) {
@@ -111,7 +113,7 @@ function sectionHTML(type) {
   }
 
   return `
-    <section id="${type}" rel="schema:hasPart" resource="#${type}">
+    <section id="${type}" data-cv-section="${type}" rel="schema:hasPart" resource="#${type}">
       <h2 property="schema:name">${s.label}</h2>
       ${html}
     </section>`;
@@ -127,15 +129,31 @@ export function defaultContentHTML() {
   return `<div id="content">${DEFAULT_SECTIONS.map(sectionHTML).join('')}</div>`;
 }
 
+// Back-fill the data-cv-section marker on CVs authored before it existed: derive
+// it from a section's id while the id still matches a section key or its default
+// heading slug. Runs on author entry; persists once the marker is set.
+function migrateSectionMarkers(root) {
+  if (!root || !isCV(root)) return;
+  const byLabelSlug = {};
+  Object.entries(SECTIONS).forEach(([type, s]) => { byLabelSlug[slugify(s.label)] = type; });
+  root.querySelectorAll('#content > section').forEach((section) => {
+    if (section.getAttribute('data-cv-section')) return;
+    const id = section.getAttribute('id') || '';
+    const type = SECTIONS[id] ? id : byLabelSlug[id];
+    if (type) section.setAttribute('data-cv-section', type);
+  });
+}
+registerEditorParseTransform(migrateSectionMarkers);
+
 // Null unless the author editor is live (section mutations must go through PM).
 function pmEditor() {
   return Config.Editor?.authorToolbarView?.editorView ? Config.Editor : null;
 }
 
 // Read mode: links to present sections. Author mode: + remove/add buttons.
-// presentTypes, when given, is the authoritative set of present section ids
-// (e.g. read from the PM doc) and overrides DOM probing — needed when the nav
-// is rendered before the section DOM is painted.
+// presentTypes, when given, is the authoritative Map of present section type ->
+// actual section id (e.g. read from the PM doc) and overrides DOM probing — needed
+// when the nav is rendered before the section DOM is painted.
 export function buildTOC(root, presentTypes = null) {
   const author = isAuthorMode();
 
@@ -147,16 +165,22 @@ export function buildTOC(root, presentTypes = null) {
   nav.appendChild(ul);
 
   Object.keys(SECTIONS).forEach(section => {
-    const present = presentTypes
-      ? presentTypes.has(section)
-      : sectionPresent(root, section);
+    let present, sectionId;
+    if (presentTypes) {
+      present = presentTypes.has(section);
+      sectionId = present ? presentTypes.get(section) : null;
+    } else {
+      const el = root.querySelector(`#content > section[data-cv-section="${section}"]`);
+      present = !!el;
+      sectionId = el?.id || null;
+    }
     if (!present && !author) return;
 
     const li = document.createElement('li');
 
     if (present) {
       const a = document.createElement('a');
-      a.href = `#${section}`;
+      a.href = `#${sectionId || section}`;
       a.textContent = SECTIONS[section].label;
       li.appendChild(a);
 
@@ -215,7 +239,7 @@ export function addSection(root, type) {
     if (!content) return;
     const order = Object.keys(SECTIONS);
     const idx = order.indexOf(type);
-    const after = Array.from(content.children).find(el => order.indexOf(el.id) > idx);
+    const after = Array.from(content.children).find(el => order.indexOf(el.getAttribute('data-cv-section')) > idx);
     content.insertBefore(buildSection(type), after || null);
   }
 
@@ -223,11 +247,13 @@ export function addSection(root, type) {
 }
 
 export function removeSection(root, type) {
+  const section = root.querySelector(`#content > section[data-cv-section="${type}"]`);
+  if (!section) return;
   const editor = pmEditor();
   if (editor) {
-    editor.deleteNodeById(type);
+    editor.deleteNodeById(section.id);
   } else {
-    root.querySelector(`#content > section[id="${type}"]`)?.remove();
+    section.remove();
   }
   refreshTOC(root);
 }
@@ -246,10 +272,12 @@ function injectCVTOC(doc) {
 
   doc.querySelectorAll('#cv-toc').forEach(n => n.remove());
 
-  const present = Object.keys(SECTIONS).filter(type => content.querySelector(`:scope > section[id="${type}"]`));
+  const present = Object.keys(SECTIONS)
+    .map(type => ({ type, section: content.querySelector(`:scope > section[data-cv-section="${type}"]`) }))
+    .filter(x => x.section);
   if (!present.length) return;
 
-  const lis = present.map(type => `<li><a href="#${type}">${SECTIONS[type].label}</a></li>`).join('');
+  const lis = present.map(({ type, section }) => `<li><a href="#${section.id}">${SECTIONS[type].label}</a></li>`).join('');
   content.parentNode.insertBefore(fragmentFromString(`<nav id="cv-toc"><ul>${lis}</ul></nav>`), content);
 }
 
@@ -257,8 +285,9 @@ function paragraphHTML() {
   return `<p rel="schema:description" datatype="rdf:HTML"><br /></p>`;
 }
 
-function contributionHTML() {
-  return `<p rev="schema:contributor" rel="foaf:made" property="schema:description" datatype="rdf:HTML"><br /></p>`;
+function contributionHTML(options = {}) {
+  const ph = options.type === 'technical-contributions' ? 'Technical contribution' : 'Scholarly communication';
+  return `<p rev="schema:contributor" rel="foaf:made" property="schema:description" datatype="rdf:HTML" data-placeholder="${ph}"></p>`;
 }
 
 function skillInputHTML({ title = '', uri = '' } = {}) {
@@ -277,11 +306,11 @@ function skillHTML() {
 }
 
 function awardHTML() {
-  return `<p rel="schema:award" datatype="rdf:HTML"><br /></p>`;
+  return `<p property="schema:award" datatype="rdf:HTML" data-placeholder="Award"></p>`;
 }
 
 function credentialHTML() {
-  return `<p rel="schema:hasCredential" datatype="rdf:HTML"><br /></p>`;
+  return `<p rel="schema:hasCredential" datatype="rdf:HTML" data-placeholder="Credential"></p>`;
 }
 
 //TODO Move this to somewhere else as it is not CV specific
@@ -789,7 +818,7 @@ function pruneEmptyItems(doc) {
   const isEmpty = (el) => !el.textContent.trim() && !el.querySelector(keep);
   // p[rel] is scoped to award/credential entries — not event fields like the
   // description <p rel="schema:performer">, which must survive as an editable field.
-  const selector = 'dl.skill-category dd, dl.skill-category, li, p[rel~="schema:award"], p[rel~="schema:hasCredential"]';
+  const selector = 'dl.skill-category dd, dl.skill-category, li, p[property~="schema:award"], p[rel~="schema:hasCredential"]';
   let changed = true;
   while (changed) {
     changed = false;
@@ -821,9 +850,10 @@ export function initCV() {
       const addEntry = e.target.closest('.cv-entry-add');
       if (addEntry) {
         const type = addEntry.dataset.type;
+        const sectionId = addEntry.dataset.sectionId;
         const entryHTML = SECTIONS[type]?.entryHTML;
-        if (entryHTML) {
-          pmEditor()?.insertFragmentAtEndOfChild(`#${type}`, 'ul', fragmentFromString(`<li>${entryHTML()}</li>`));
+        if (entryHTML && sectionId) {
+          pmEditor()?.insertFragmentAtEndOfChild(`#${sectionId}`, 'ul', fragmentFromString(`<li>${entryHTML()}</li>`));
         }
         return;
       }

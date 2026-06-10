@@ -19,6 +19,8 @@ import { Plugin, PluginKey } from "prosemirror-state";
 import { Decoration, DecorationSet } from "prosemirror-view";
 import Config from "../../config.js";
 import { buildTOC } from "../../cv.js";
+import { Icon } from "../../ui/icons.js";
+import { fragmentFromString } from "../../utils/html.js";
 
 // Renders the CV nav inside the article (after <details>, before #content) as a
 // widget decoration. PM owns the widget DOM, so it survives PM's redraws and
@@ -29,10 +31,19 @@ import { buildTOC } from "../../cv.js";
 export const cvNavDecorationKey = new PluginKey("cvNavDecoration");
 
 // Sections that hold a list of entries and get an "+ add entry" button.
-const REPEATABLE = new Set(["experience", "education", "skills", "talks", "scholarly-articles", "technical-contributions", "awards", "credentials"]);
+const REPEATABLE = new Set(["experience", "education", "skills", "talks", "scholarly-communication", "technical-contributions", "awards", "credentials"]);
 
 // Friendlier entry-button labels (default is "+ Add <id>").
-const ENTRY_LABELS = { skills: "Skill Category" };
+const ENTRY_LABELS = {
+  experience: "experience",
+  education: "education",
+  skills: "skill category",
+  talks: "talk",
+  "scholarly-communication": "scholarly communication",
+  "technical-contributions": "technical contribution",
+  "awards": "award",
+  "credentials": "credential"
+};
 
 function isContentDiv(node) {
   return node.type.name === "div" && node.attrs.originalAttributes?.id === "content";
@@ -75,21 +86,22 @@ function isCVDoc(doc) {
   return found;
 }
 
-// Present section ids, in document order, read from the PM doc (the source of
-// truth). buildTOC must not probe view.dom: the widget renders before the
-// #content sections after it are painted, so the DOM lags a step.
-function sectionIds(doc) {
-  const ids = [];
+// Present sections as [type, id] pairs, in document order, read from the PM doc
+// (the source of truth). type is the stable data-cv-section marker, id is the
+// heading-derived anchor. buildTOC must not probe view.dom: the widget renders
+// before the #content sections after it are painted, so the DOM lags a step.
+function sectionEntries(doc) {
+  const entries = [];
   doc.forEach((node) => {
     if (!isContentDiv(node)) return;
     node.forEach((child) => {
       if (child.type.name === "section") {
-        const id = child.attrs.originalAttributes?.id;
-        if (id) ids.push(id);
+        const attrs = child.attrs.originalAttributes || {};
+        if (attrs["data-cv-section"]) entries.push([attrs["data-cv-section"], attrs.id || ""]);
       }
     });
   });
-  return ids;
+  return entries;
 }
 
 // Skill-category <dl>s and their end positions (where the "+ add skill" button goes).
@@ -113,7 +125,9 @@ function skillCategoryNodes(doc) {
 // don't re-render on every keystroke.
 function navSignature(doc) {
   const cats = skillCategoryNodes(doc).map(c => c.id).join(",");
-  return `${Config.Editor?.mode || ""}|${sectionIds(doc).join(",")}|${cats}`;
+  const secs = sectionEntries(doc).map(([t, id]) => `${t}:${id}`).join(",");
+  const entries = `${entryLiPositions(doc).length}/${skillDdPositions(doc).length}`;
+  return `${Config.Editor?.mode || ""}|${secs}|${cats}|${entries}`;
 }
 
 function buildDecorations(doc) {
@@ -122,7 +136,7 @@ function buildDecorations(doc) {
   const pos = navPos(doc);
   if (pos === null) return DecorationSet.empty;
 
-  const presentTypes = new Set(sectionIds(doc));
+  const presentTypes = new Map(sectionEntries(doc));
   const widget = Decoration.widget(pos, (view) => {
     const nav = buildTOC(view.dom, presentTypes);
     nav.contentEditable = "false";
@@ -138,7 +152,90 @@ function buildDecorations(doc) {
   });
 
   const entryDecos = entryButtonDecorations(doc);
-  return DecorationSet.create(doc, [widget, ...entryDecos, ...skillButtonDecorations(doc)]);
+  return DecorationSet.create(doc, [widget, ...entryDecos, ...skillButtonDecorations(doc), ...entryDeleteDecorations(doc)]);
+}
+
+// Entry <li> positions inside a repeatable section (section > div > ul > li),
+// so user-content lists nested deeper (e.g. in a description) are left alone.
+function entryLiPositions(doc) {
+  const positions = [];
+  doc.descendants((node, pos) => {
+    if (node.type.name !== "section") return true;
+    const type = node.attrs.originalAttributes?.["data-cv-section"];
+    if (!REPEATABLE.has(type)) return false;
+    let off = pos + 1;
+    node.forEach((child) => {
+      if (child.type.name === "div" || child.type.name === "descriptionDiv") {
+        let o2 = off + 1;
+        child.forEach((gc) => {
+          if (gc.type.name === "ul") {
+            let o3 = o2 + 1;
+            gc.forEach((li) => {
+              if (li.type.name === "li") positions.push(o3);
+              o3 += li.nodeSize;
+            });
+          }
+          o2 += gc.nodeSize;
+        });
+      }
+      off += child.nodeSize;
+    });
+    return false;
+  });
+  return positions;
+}
+
+// Each skill <dd> inside a skill-category <dl>, so individual skills are removable.
+function skillDdPositions(doc) {
+  const positions = [];
+  doc.descendants((node, pos) => {
+    if (node.type.name !== "dl") return true;
+    const cls = node.attrs.originalAttributes?.class || "";
+    if (!cls.split(/\s+/).includes("skill-category")) return true;
+    let off = pos + 1;
+    node.forEach((child) => {
+      if (child.type.name === "dd") positions.push(off);
+      off += child.nodeSize;
+    });
+    return false;
+  });
+  return positions;
+}
+
+// A small red delete button pinned top-right of an entry. Placed at the entry's
+// content start; on click, resolves its live position and removes the nearest
+// enclosing node of targetType (the <li> entry, or a skill <dd>).
+function deleteWidget(pos, targetType, label) {
+  return Decoration.widget(pos, (view, getPos) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "do cv-entry-delete";
+    b.title = label;
+    b.setAttribute("aria-label", label);
+    b.setAttribute("contenteditable", "false");
+    b.appendChild(fragmentFromString(Icon['.fas.fa-trash-alt']));
+    b.addEventListener("mousedown", (e) => e.preventDefault());
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      const p = typeof getPos === "function" ? getPos() : null;
+      if (p == null) return;
+      const $p = view.state.doc.resolve(p);
+      for (let d = $p.depth; d > 0; d--) {
+        if ($p.node(d).type.name === targetType) {
+          view.dispatch(view.state.tr.delete($p.before(d), $p.after(d)).scrollIntoView());
+          return;
+        }
+      }
+    });
+    return b;
+  }, { side: -1, ignoreSelection: true, stopEvent: () => true });
+}
+
+function entryDeleteDecorations(doc) {
+  const decos = [];
+  entryLiPositions(doc).forEach((liPos) => decos.push(deleteWidget(liPos + 1, "li", "Remove entry")));
+  skillDdPositions(doc).forEach((ddPos) => decos.push(deleteWidget(ddPos + 1, "dd", "Remove skill")));
+  return decos;
 }
 
 // Per skill-category: a "+ add" button at the category's end to add another skill.
@@ -185,15 +282,17 @@ function entryButtonDecorations(doc) {
   doc.descendants((node, pos) => {
     // Descend into containers (e.g. div#content) to reach the sections inside.
     if (node.type.name !== "section") return true;
-    const id = node.attrs.originalAttributes?.id;
-    if (!REPEATABLE.has(id)) return false;
+    const attrs = node.attrs.originalAttributes || {};
+    const type = attrs["data-cv-section"];
+    if (!REPEATABLE.has(type)) return false;
     const end = pos + 1 + node.content.size;
     decos.push(Decoration.widget(end, () => {
       const b = document.createElement("button");
       b.type = "button";
       b.className = "do cv-entry-add";
-      b.dataset.type = id;
-      b.textContent = `+ Add ${ENTRY_LABELS[id] || id}`;
+      b.dataset.type = type;
+      b.dataset.sectionId = attrs.id || "";
+      b.textContent = `+ Add ${ENTRY_LABELS[type] || type}`;
       b.setAttribute("contenteditable", "false");
       return b;
     }, { side: 1, ignoreSelection: true, stopEvent: () => true }));
