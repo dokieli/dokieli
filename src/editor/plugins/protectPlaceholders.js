@@ -25,33 +25,33 @@ export const protectPlaceholdersPlugin = new Plugin({
 
     let rejected = false;
 
-    // Field protection: a field (the parent of a placeholder paragraph, e.g. a
-    // <dd>) must always keep at least one placeholder paragraph. Reject only when a
-    // surviving field would be left with none. This protects the template's
-    // placeholder while letting users add and remove extra paragraphs (each merge/
-    // delete is fine as long as one placeholder remains), and lets the whole field
-    // be removed. Emptying a field's text keeps the paragraph, so it stays allowed.
-    const checked = new Set();
+    // Field protection: a field (the parent of placeholder paragraphs, e.g. a <dd>)
+    // must keep ALL of them. Count per field before the transaction; reject if a
+    // surviving field has fewer after. This protects every template placeholder
+    // (e.g. both organizer and department) from removal, merge or lift, while still
+    // letting their text be edited and plain paragraphs (uncounted) be added/removed.
+    // A field removed entirely is allowed.
+    const fields = new Map();
     state.doc.descendants((node, pos) => {
-      if (rejected) return false;
       if (!node.isTextblock) return;
       if (!node.attrs.originalAttributes?.['data-placeholder']) return;
       const $pos = state.doc.resolve(pos);
       if ($pos.depth < 1) return;
-      const before = $pos.before($pos.depth);
-      if (checked.has(before)) return;
-      checked.add(before);
-      const after = $pos.after($pos.depth);
-      const start = tr.mapping.map(before, 1);
-      const end = tr.mapping.map(after, -1);
-      if (end <= start) return; // field removed entirely: allowed
-      let kept = false;
-      tr.doc.nodesBetween(start, end, (n) => {
-        if (kept) return false;
-        if (n.isTextblock && n.attrs.originalAttributes?.['data-placeholder']) kept = true;
-      });
-      if (!kept) rejected = true;
+      const open = $pos.before($pos.depth);
+      let f = fields.get(open);
+      if (!f) { f = { close: $pos.after($pos.depth), count: 0 }; fields.set(open, f); }
+      f.count++;
     });
+    for (const [open, f] of fields) {
+      const start = tr.mapping.map(open, 1);
+      const end = tr.mapping.map(f.close, -1);
+      if (end <= start) continue; // field removed entirely: allowed
+      let now = 0;
+      tr.doc.nodesBetween(start, end, (n) => {
+        if (n.isTextblock && n.attrs.originalAttributes?.['data-placeholder']) now++;
+      });
+      if (now < f.count) { rejected = true; break; }
+    }
     if (rejected) return false;
 
     // Protect fixed labels (dt and the date-picker <label>s, both data-i18n) from

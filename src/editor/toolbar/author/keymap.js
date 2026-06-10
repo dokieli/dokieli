@@ -192,26 +192,28 @@ function customBackspaceCommand(state, dispatch) {
 
   if (handleSlideEmptyDescBackspace(state, dispatch)) return true;
 
-  // In a placeholder-protected field (the parent block holds an anchor placeholder
-  // paragraph, e.g. an event card's name/organizer/description), keep that anchor
-  // intact. Delete the char ourselves (so the browser can't merge the emptied block
-  // into a preceding label and desync into a stray break). At block start: swallow
-  // the first paragraph so it can't be lifted out; merge a later one into the
-  // previous with join (which keeps the previous block, unlike joinBackward, which
-  // drops an empty previous placeholder).
-  const field = $from.depth >= 1 ? $from.node($from.depth - 1) : null;
-  let protectedField = false;
-  for (let i = 0; field && i < field.childCount; i++) {
-    const c = field.child(i);
-    if (c.isTextblock && c.attrs.originalAttributes?.['data-placeholder']) { protectedField = true; break; }
-  }
-  if (protectedField) {
-    if ($from.parentOffset > 0) {
-      if (dispatch) dispatch(state.tr.delete($from.pos - 1, $from.pos).scrollIntoView());
-    } else if ($from.index($from.depth - 1) !== 0) {
-      if (dispatch) dispatch(state.tr.join($from.before($from.depth)).scrollIntoView());
+  // A template placeholder paragraph (event card name/organizer/department/
+  // description) is protected: edit its text, but never remove, merge or lift it.
+  // Delete the char ourselves so the browser can't merge the emptied block into a
+  // preceding label and desync into a stray break; at block start, swallow.
+  if ($from.parent.attrs.originalAttributes?.['data-placeholder']) {
+    if ($from.parentOffset > 0 && dispatch) {
+      dispatch(state.tr.delete($from.pos - 1, $from.pos).scrollIntoView());
     }
     return true;
+  }
+
+  // A plain paragraph whose previous sibling is a placeholder anchor merges into it
+  // with join (keeps the anchor; joinBackward would drop it when both are empty).
+  if ($from.parentOffset === 0 && $from.depth >= 1) {
+    const idx = $from.index($from.depth - 1);
+    if (idx > 0) {
+      const prev = $from.node($from.depth - 1).child(idx - 1);
+      if (prev.isTextblock && prev.attrs.originalAttributes?.['data-placeholder']) {
+        if (dispatch) dispatch(state.tr.join($from.before($from.depth)).scrollIntoView());
+        return true;
+      }
+    }
   }
 
   return joinBackward(state, dispatch);
