@@ -165,8 +165,12 @@ export function buildTOC(root, presentTypes = null) {
   const author = isAuthorMode();
 
   const nav = document.createElement('nav');
-  nav.className = 'do';
-  nav.id = 'cv-toc';
+  // The author-mode widget keeps the editor id/class; the read/save nav is a clean
+  // <nav> (managed structurally as the article's nav, see refreshTOC/stripCVTOC).
+  if (author) {
+    nav.className = 'do';
+    nav.id = 'cv-toc';
+  }
 
   const ul = document.createElement('ul');
   nav.appendChild(ul);
@@ -226,7 +230,7 @@ function refreshTOC(root) {
   if (pmEditor()) return;
 
   const nav = buildTOC(root);
-  const existing = root.querySelector(':scope > #cv-toc');
+  const existing = root.querySelector(':scope > nav');
   if (existing) { existing.replaceWith(nav); return; }
   const details = root.querySelector(':scope > details');
   const content = root.querySelector(':scope > #content');
@@ -277,7 +281,7 @@ function injectCVTOC(doc) {
   const content = article.querySelector('#content');
   if (!content) return;
 
-  doc.querySelectorAll('#cv-toc').forEach(n => n.remove());
+  article.querySelectorAll(':scope > nav').forEach(n => n.remove());
 
   const present = Object.keys(SECTIONS)
     .map(type => ({ type, section: content.querySelector(`:scope > section[data-cv-section="${type}"]`) }))
@@ -285,8 +289,17 @@ function injectCVTOC(doc) {
   if (!present.length) return;
 
   const lis = present.map(({ type, section }) => `<li><a href="#${section.id}">${SECTIONS[type].label}</a></li>`).join('');
-  content.parentNode.insertBefore(fragmentFromString(`<nav id="cv-toc"><ul>${lis}</ul></nav>`), content);
+  content.parentNode.insertBefore(fragmentFromString(`<nav><ul>${lis}</ul></nav>`), content);
 }
+
+// On author entry, drop the read-mode nav from the parse root so PM doesn't parse
+// it as content; cvNavDecorationPlugin renders the author nav (a widget) instead.
+function stripCVTOC(root) {
+  if (!root || !isCV(root)) return;
+  const content = root.querySelector('#content');
+  (content?.parentNode || root).querySelectorAll(':scope > nav').forEach(n => n.remove());
+}
+registerEditorParseTransform(stripCVTOC);
 
 function paragraphHTML() {
   return `<p rel="schema:description" datatype="rdf:HTML"><br /></p>`;
