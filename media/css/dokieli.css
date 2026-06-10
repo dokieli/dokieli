@@ -742,14 +742,14 @@ position:relative;
 }
 .cv-entry-delete {
 position:absolute;
-top:0.2em;
-right:0.2em;
+top:0.5em;
+right:0.5em;
 z-index:1;
 border:0;
 background:none;
 cursor:pointer;
 line-height:0;
-padding:0.15em;
+padding:0.25em;
 }
 .cv-entry-delete svg {
 display:block;
@@ -2343,57 +2343,107 @@ margin-bottom:1em;
 }
 
 #new-document-fieldset legend {
-margin-bottom:1em;
+  margin-bottom: 1.5em;
+  color: #555;
+  font-weight: normal;
 }
 
 #new-document-fieldset ul {
   list-style: none;
-  margin-bottom:1em;
+  margin: 0 0 1em 0;
+  padding: 0;
   display: flex;
-  gap: 2em;
+  gap: 1em;
 }
 
 #new-document-fieldset ul li {
   flex: 1;
   position: relative;
+  margin: 0;
 }
 
 #new-document-fieldset ul li input[type="radio"] {
-  display: none;
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
 }
 
 #new-document-fieldset ul li label {
-  display: block;
-  padding: 1em;
-  margin:0;
-  height: calc(100% - 2em);
-  border: 1px solid #ccc;
-  border-radius: 0.5em;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75em;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 1.25em;
+  margin: 0;
+  border: 1px solid #ddd;
+  border-radius: 0.75em;
   cursor: pointer;
   user-select: none;
+  transition: border-color 0.15s, background-color 0.15s;
 }
 
-#new-document-fieldset ul li input[type="radio"]:checked + label {
-  background-color: #080;
-  color: #fff;
-  border-color: #efe;
-}
-#new-document-fieldset ul li input[type="radio"]:checked + label svg {
-  fill:#fff;
+/* Icon in a rounded square */
+#new-document-fieldset ul li label svg {
+  align-self: flex-start;
+  flex: none;
+  width: 1.4em;
+  height: 1.4em;
+  padding: 0.5em;
+  box-sizing: content-box;
+  background: #f1f3f5;
+  border-radius: 0.6em;
+  fill: #555;
 }
 
-#new-document-fieldset ul li input[type="radio"]:focus-visible + label {
-  outline: 2px solid #000;
-  outline-offset: 2px;
-}
-
-#new-document-fieldset ul li label:hover {
-  background-color: #eee;
+#new-document-fieldset ul li label strong {
+  display: block;
+  margin-bottom: 0.35em;
+  font-size: 1.05em;
+  color: #111;
 }
 
 #new-document-fieldset ul li label span span {
-  font-weight:normal;
-  display:block;
+  display: block;
+  font-weight: normal;
+  font-size: 0.9em;
+  line-height: 1.4;
+  color: #666;
+}
+
+#new-document-fieldset ul li label:hover {
+  border-color: #bbb;
+}
+
+/* Selected card: themed green border + light fill, green icon, check badge */
+#new-document-fieldset ul li input[type="radio"]:checked + label {
+  border: 2px solid #080;
+  background-color: #efe;
+  padding: calc(1.25em - 1px);
+}
+#new-document-fieldset ul li input[type="radio"]:checked + label svg {
+  background: #080;
+  fill: #fff;
+}
+#new-document-fieldset ul li input[type="radio"]:checked + label::after {
+  content: "✓";
+  position: absolute;
+  top: 0.6em;
+  right: 0.6em;
+  width: 1.5em;
+  height: 1.5em;
+  line-height: 1.5em;
+  text-align: center;
+  font-size: 0.8em;
+  color: #fff;
+  background: #080;
+  border-radius: 50%;
+}
+
+#new-document-fieldset ul li input[type="radio"]:focus-visible + label {
+  outline: 2px solid #080;
+  outline-offset: 2px;
 }
 
 
