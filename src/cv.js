@@ -309,7 +309,7 @@ function stripCVTOC(root) {
 registerEditorParseTransform(stripCVTOC);
 
 function paragraphHTML() {
-  return `<p rel="schema:description" datatype="rdf:HTML"><br /></p>`;
+  return `<p property="schema:description" datatype="rdf:HTML"><br /></p>`;
 }
 
 function contributionHTML(options = {}) {
@@ -343,9 +343,9 @@ function credentialHTML() {
 }
 
 // These entries reference a resource via a link, so their rel/rev relations only
-// make sense when the item contains an <a href>. The entry <li> never carries
-// property/datatype. Relations are derived on save and stripped on edit (the
-// editor item stays a plain <li>), similar to the organizer/department handling.
+// make sense when the item contains an <a href>. Relations are derived on save
+// and stripped on edit (the editor item stays a plain <li>), similar to the
+// organizer/department handling.
 const ITEM_RELATIONS = {
   'credentials': { rel: 'schema:hasCredential' },
   'scholarly-communication': { rev: 'schema:contributor', rel: 'foaf:made' },
@@ -360,7 +360,7 @@ function transformContributionItems(doc) {
   if (!article || !isCV(article)) return;
   Object.entries(ITEM_RELATIONS).forEach(([type, rels]) => {
     article.querySelectorAll(itemEntrySelector(type)).forEach((li) => {
-      ['rel', 'rev', 'property', 'datatype'].forEach((a) => li.removeAttribute(a));
+      ['rel', 'rev'].forEach((a) => li.removeAttribute(a));
       if (li.querySelector('a[href]')) {
         Object.entries(rels).forEach(([k, v]) => li.setAttribute(k, v));
       }
@@ -374,7 +374,7 @@ function stripContributionItems(root) {
   if (!root || !isCV(root)) return;
   Object.keys(ITEM_RELATIONS).forEach((type) => {
     root.querySelectorAll(itemEntrySelector(type)).forEach((li) => {
-      ['rel', 'rev', 'property', 'datatype'].forEach((a) => li.removeAttribute(a));
+      ['rel', 'rev'].forEach((a) => li.removeAttribute(a));
     });
   });
 }
@@ -976,6 +976,7 @@ export function initCV() {
         transformLocationInputs(document);
         transformSkillInputs(document);
         transformOrganizerInputs(document);
+        transformContributionItems(document);
         removePlaceholders(document);
         pruneEmptyItems(document);
       }
