@@ -322,7 +322,7 @@ function credentialHTML() {
 
 //TODO Move this to somewhere else as it is not CV specific
 function eventHTML(options = {}) {
-  console.log("eventHTML options", options);
+  // console.log("eventHTML options", options);
 
   //TODO: Review article and slideshow rels b/c they may not be entirely accurate. Add other templates later.
   const templateEventRel = {

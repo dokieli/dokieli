@@ -1884,9 +1884,12 @@ width:initial;
 }
 .ProseMirror:has([rel="rdf:type"][href="http://w3id.org/roh#CurriculumVitae"]) section input {
 border:0;
-font-style:italic;
 padding-left:0;
 padding-right:0;
+}
+.ProseMirror:has([rel="rdf:type"][href="http://w3id.org/roh#CurriculumVitae"]) section input:placeholder-shown:focus,
+.ProseMirror:has([rel="rdf:type"][href="http://w3id.org/roh#CurriculumVitae"]) section input:placeholder-shown {
+font-style:italic;
 }
 .ProseMirror:has([rel="rdf:type"][href="http://w3id.org/roh#CurriculumVitae"]) section input:focus {
 font-style:normal;
