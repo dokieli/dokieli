@@ -524,6 +524,14 @@ export function initDocumentDoEvents() {
 
     if (e.target.closest('.export-as-html')) {
       exitSingleBeforeSerialize();
+
+      const documentOptions = {
+        ...Config.DOMProcessing,
+        format: true,
+        sanitize: true,
+        normalize: true
+      };
+
       var options = {
         subjectURI: Config.DocumentURL,
         mediaType: 'text/html',
