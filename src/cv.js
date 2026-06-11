@@ -113,7 +113,7 @@ const SECTION_SIGNAL_TERMS = [
   ['experience', 'typeof', 'schema:BusinessEvent'],
   ['education', 'typeof', 'schema:EducationEvent'],
   ['talks', 'typeof', 'schema:ConferenceEvent'],
-  ['skills', 'property', 'schema:knowsAbout'],
+  ['skills', 'property', 'schema:skills'],
   ['awards', 'property', 'schema:award'],
   ['credentials', 'rel', 'schema:hasCredential'],
   ['summary', 'property', 'schema:abstract'],
@@ -800,13 +800,13 @@ function transformSkillInputs(doc) {
     if (!title) { wrapper.remove(); return; }
     if (uri) {
       const a = doc.createElement('a');
-      a.setAttribute('property', 'schema:knowsAbout');
+      a.setAttribute('property', 'schema:skills');
       a.setAttribute('href', uri);
       a.textContent = title;
       wrapper.replaceWith(a);
     } else {
       const span = doc.createElement('span');
-      span.setAttribute('property', 'schema:knowsAbout');
+      span.setAttribute('property', 'schema:skills');
       span.textContent = title;
       wrapper.replaceWith(span);
     }
@@ -819,7 +819,7 @@ registerDocumentTransform(transformSkillInputs);
 function transformSkillsToInputs(root) {
   if (!root || !isCV(root)) return;
 
-  root.querySelectorAll('[property~="schema:knowsAbout"]').forEach((el) => {
+  root.querySelectorAll('[property~="schema:skills"]').forEach((el) => {
     const title = el.textContent.trim();
     const uri = el.tagName === 'A' ? (el.getAttribute('href') || '') : '';
     el.replaceWith(fragmentFromString(skillInputHTML({ title, uri })));
