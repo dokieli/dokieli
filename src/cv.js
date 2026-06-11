@@ -406,6 +406,16 @@ function eventHTML(options = {}) {
 
 const EVENT_FIELDS_ORDER = ['name', 'organizer', 'location', 'date', 'description'];
 
+// Fallback selectors to detect an existing field by its dd's RDFa attributes,
+// for documents saved before the event-* classes were added to dt elements.
+const EVENT_FIELD_DD_SELECTOR = {
+  name: ':scope > dd[property~="schema:name"]',
+  organizer: ':scope > dd[rel~="schema:organizer"]',
+  location: ':scope > dd[rel~="schema:location"]',
+  date: 'time[property~="schema:startDate"], input[data-property~="schema:startDate"]',
+  description: ':scope > dd[property~="schema:description"]',
+};
+
 // Section type -> RDFa event subtype; schema:Event is the generic fallback.
 const EVENT_TYPE_BY_SECTION = {
   experience: 'schema:BusinessEvent',
@@ -835,7 +845,7 @@ function restoreEventFields(root) {
     const typeofTokens = (dl.getAttribute('typeof') || '').split(/\s+/);
     const sectionType = typeofTokens.map(t => EVENT_SECTION_BY_TYPE[t]).find(Boolean) ?? 'experience';
     EVENT_FIELDS_ORDER.forEach((key, idx) => {
-      if (dl.querySelector(`:scope > dt.event-${key}`)) return;
+      if (dl.querySelector(`:scope > dt.event-${key}`) || dl.querySelector(EVENT_FIELD_DD_SELECTOR[key])) return;
       let anchor = null;
       for (let j = idx + 1; j < EVENT_FIELDS_ORDER.length; j++) {
         anchor = dl.querySelector(`:scope > dt.event-${EVENT_FIELDS_ORDER[j]}`);
