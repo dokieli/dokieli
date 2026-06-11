@@ -395,7 +395,7 @@ function eventHTML(options = {}) {
   const eventType = EVENT_TYPE_BY_SECTION[options.type] ?? 'schema:Event';
 
   const eventId = generateAttributeId();
-  const fields = EVENT_FIELDS_ORDER.map((key) => eventFieldHTML(key, eventId)).join('\n    ');
+  const fields = EVENT_FIELDS_ORDER.map((key) => eventFieldHTML(key, eventId, options.type)).join('\n    ');
 
   // console.log(eventId, eventRel, eventType, fields)
 
@@ -413,6 +413,19 @@ const EVENT_TYPE_BY_SECTION = {
   talks: 'schema:ConferenceEvent',
 };
 
+// Reverse map: RDFa event subtype -> section type (for restoreEventFields).
+const EVENT_SECTION_BY_TYPE = Object.fromEntries(
+  Object.entries(EVENT_TYPE_BY_SECTION).map(([s, t]) => [t, s])
+);
+
+// Maps section type to the i18n key prefix used in placeholder keys.
+// talks -> 'talk' so keys read cv.placeholder.talk-name, not talks-name.
+const EVENT_PLACEHOLDER_PREFIX = {
+  experience: 'experience',
+  education: 'education',
+  talks: 'talk',
+};
+
 // Matches any event dl regardless of subtype, so prune/restore cover every
 // event-based section (experience, education, talks) and the generic case.
 const EVENT_SELECTOR = ['schema:Event', ...Object.values(EVENT_TYPE_BY_SECTION)]
@@ -420,16 +433,17 @@ const EVENT_SELECTOR = ['schema:Event', ...Object.values(EVENT_TYPE_BY_SECTION)]
 
 // One dt/dd pair of an event, in editable form. Shared by eventHTML and
 // restoreEventFields so re-created fields match freshly added ones.
-function eventFieldHTML(key, eventId) {
+function eventFieldHTML(key, eventId, sectionType = 'experience') {
+  const prefix = EVENT_PLACEHOLDER_PREFIX[sectionType] ?? 'experience';
   switch (key) {
     case 'name':
       return `<dt class="event-name" data-i18n="event.name.dt">${i18n.t('event.name.dt.textContent')}</dt>
-    <dd property="schema:name"><p data-placeholder="${i18n.t('cv.placeholder.experience-name')}"></p></dd>`;
+    <dd property="schema:name"><p data-placeholder="${i18n.t(`cv.placeholder.${prefix}-name`)}"></p></dd>`;
 
     case 'organizer':
-      return `<dt class="event-organizer" data-i18n="event.organizer.dt">${i18n.t('event.organizer.dt.textContent')}</dt>
+      return `<dt class="event-organizer" data-i18n="event.organization.dt">${i18n.t('event.organization.dt.textContent')}</dt>
     <dd rel="schema:organizer" resource="#${generateAttributeId()}" typeof="schema:Organization">
-      <p class="event-organization-name" data-placeholder="${i18n.t('cv.placeholder.organizer')}"></p>
+      <p class="event-organization-name" data-placeholder="${i18n.t('cv.placeholder.organization')}"></p>
       <p class="event-organization-department-name" data-placeholder="${i18n.t('cv.placeholder.department')}"></p>
     </dd>`;
 
@@ -445,7 +459,7 @@ function eventFieldHTML(key, eventId) {
 
     case 'description':
       return `<dt class="event-description" data-i18n="event.description.dt">${i18n.t('event.description.dt.textContent')}</dt>
-    <dd datatype="rdf:HTML" property="schema:description"><p data-placeholder="${i18n.t('cv.placeholder.experience-description')}"></p></dd>`;
+    <dd datatype="rdf:HTML" property="schema:description"><p data-placeholder="${i18n.t(`cv.placeholder.${prefix}-description`)}"></p></dd>`;
   }
   return '';
 }
@@ -818,6 +832,8 @@ function restoreEventFields(root) {
   if (!root || !isCV(root)) return;
   root.querySelectorAll(EVENT_SELECTOR).forEach((dl) => {
     const eventId = dl.getAttribute('id') || generateAttributeId();
+    const typeofTokens = (dl.getAttribute('typeof') || '').split(/\s+/);
+    const sectionType = typeofTokens.map(t => EVENT_SECTION_BY_TYPE[t]).find(Boolean) ?? 'experience';
     EVENT_FIELDS_ORDER.forEach((key, idx) => {
       if (dl.querySelector(`:scope > dt.event-${key}`)) return;
       let anchor = null;
@@ -825,7 +841,7 @@ function restoreEventFields(root) {
         anchor = dl.querySelector(`:scope > dt.event-${EVENT_FIELDS_ORDER[j]}`);
         if (anchor) break;
       }
-      const frag = fragmentFromString(eventFieldHTML(key, eventId));
+      const frag = fragmentFromString(eventFieldHTML(key, eventId, sectionType));
       if (anchor) anchor.before(frag); else dl.append(frag);
     });
   });
