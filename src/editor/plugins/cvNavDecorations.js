@@ -18,7 +18,8 @@ limitations under the License.
 import { Plugin, PluginKey } from "prosemirror-state";
 import { Decoration, DecorationSet } from "prosemirror-view";
 import Config from "../../config.js";
-import { buildTOC } from "../../cv.js";
+import { buildTOC, classifySection } from "../../cv.js";
+import { collectTerms } from "../../utils/rdfa.js";
 import { Icon } from "../../ui/icons.js";
 import { fragmentFromString } from "../../utils/html.js";
 import { i18n } from "../../i18n.js";
@@ -78,18 +79,43 @@ function isCVDoc(doc) {
   return found;
 }
 
+// First heading's text inside a section node (for the classifier's slug fallback).
+function pmHeadingText(section) {
+  let text = "";
+  section.forEach((child) => {
+    if (!text && child.type.name === "heading") text = child.textContent;
+  });
+  return text;
+}
+
+// Identify a section PM node's type. The transient marker is preferred here: in
+// author mode it is present and authoritative, and it agrees with the RDFa
+// whenever the RDFa is present — so this avoids walking the subtree on every
+// transaction. Only when the marker is absent do we collect the RDFa terms and
+// fall back to the shared classifier (RDFa signal, then heading slug).
+function pmSectionType(section) {
+  const marker = section.attrs.originalAttributes?.["data-cv-section"];
+  const byMarker = classifySection({ marker });
+  if (byMarker) return byMarker;
+  const terms = collectTerms(
+    (cb) => section.descendants((node) => { cb(node); return true; }),
+    (node, name) => node.attrs?.originalAttributes?.[name]
+  );
+  return classifySection({ terms, headingText: pmHeadingText(section) });
+}
+
 // Present sections as [type, id] pairs, in document order, read from the PM doc
-// (the source of truth). type is the stable data-cv-section marker, id is the
-// heading-derived anchor. buildTOC must not probe view.dom: the widget renders
-// before the #content sections after it are painted, so the DOM lags a step.
+// (the source of truth). type comes from pmSectionType, id is the heading-derived
+// anchor. buildTOC must not probe view.dom: the widget renders before the
+// #content sections after it are painted, so the DOM lags a step.
 function sectionEntries(doc) {
   const entries = [];
   doc.forEach((node) => {
     if (!isContentDiv(node)) return;
     node.forEach((child) => {
       if (child.type.name === "section") {
-        const attrs = child.attrs.originalAttributes || {};
-        if (attrs["data-cv-section"]) entries.push([attrs["data-cv-section"], attrs.id || ""]);
+        const type = pmSectionType(child);
+        if (type) entries.push([type, child.attrs.originalAttributes?.id || ""]);
       }
     });
   });
@@ -155,7 +181,7 @@ function entryLiPositions(doc) {
   const positions = [];
   doc.descendants((node, pos) => {
     if (node.type.name !== "section") return true;
-    const type = node.attrs.originalAttributes?.["data-cv-section"];
+    const type = pmSectionType(node);
     if (!REPEATABLE.has(type)) return false;
     let off = pos + 1;
     node.forEach((child) => {
@@ -278,7 +304,7 @@ function entryButtonDecorations(doc) {
     // Descend into containers (e.g. div#content) to reach the sections inside.
     if (node.type.name !== "section") return true;
     const attrs = node.attrs.originalAttributes || {};
-    const type = attrs["data-cv-section"];
+    const type = pmSectionType(node);
     if (!REPEATABLE.has(type)) return false;
     const end = pos + 1 + node.content.size;
     decos.push(Decoration.widget(end, () => {

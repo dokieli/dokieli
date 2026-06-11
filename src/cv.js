@@ -23,10 +23,16 @@ import { i18n } from './i18n.js';
 import { generateAttributeId, generateUUID } from './util.js';
 import { getCountryOptionsHTML, showLocationSuggestions, showSkillSuggestions, setupAutocomplete } from './doc.js';
 import { getWikidataResults, getEscoResults } from './graph.js';
+import { expandTerm, getPrefixes, collectTerms } from './utils/rdfa.js';
 
-// Sections are identified by a stable data-cv-section marker (= the SECTIONS key),
-// not by id: autoIdPlugin rewrites a section's id to the heading slug, so the id
-// follows the user's heading while the marker stays put.
+// Sections are identified from the RDFa their entries carry — the entry type or
+// property is the signal, and the enclosing <section> is the CV section (see
+// classifySection / SECTION_SIGNALS). The data-cv-section marker is now only a
+// transient author-mode aid: it survives heading renames for sections whose RDFa
+// is editorialized away in author mode (skills become inputs, contributions lose
+// their rel/rev), and is stripped on save so it never persists. On reload, those
+// sections are re-identified from read-mode RDFa, or by heading slug as a last
+// resort (the path migrateSectionMarkers already used for legacy CVs).
 
 const SECTIONS = {
   summary: {
@@ -97,8 +103,90 @@ function getCVRoot() {
   return document.querySelector('main > article');
 }
 
+// RDFa signals that identify a section by its entries. Each section's entry
+// carries a distinguishing type (events) or property (skills, awards, summary,
+// credentials), so finding that term inside a <section> identifies the section.
+// scholarly-communication and technical-contributions are intentionally absent:
+// they share the same foaf:made/schema:contributor relations and so are not
+// distinguishable by RDFa — they fall back to the marker / heading slug.
+const SECTION_SIGNAL_TERMS = [
+  ['experience', 'typeof', 'schema:BusinessEvent'],
+  ['education', 'typeof', 'schema:EducationEvent'],
+  ['talks', 'typeof', 'schema:ConferenceEvent'],
+  ['skills', 'property', 'schema:knowsAbout'],
+  ['awards', 'property', 'schema:award'],
+  ['credentials', 'rel', 'schema:hasCredential'],
+  ['summary', 'property', 'schema:abstract'],
+];
+
+let signalCache = null;
+function sectionSignals() {
+  if (!signalCache) {
+    const prefixes = getPrefixes();
+    signalCache = SECTION_SIGNAL_TERMS.map(([type, attr, term]) => ({ type, attr, iri: expandTerm(term, prefixes) }));
+  }
+  return signalCache;
+}
+
+// Heading-text slug -> section type, for the last-resort fallback (legacy CVs and
+// sections whose RDFa is gone in author mode and whose marker was stripped). Both
+// the section key itself and the English label slug map to the type.
+let labelSlugCache = null;
+function labelSlugToType() {
+  if (!labelSlugCache) {
+    labelSlugCache = {};
+    Object.entries(SECTIONS).forEach(([type, s]) => {
+      labelSlugCache[type] = type;
+      labelSlugCache[slugify(s.label)] = type;
+    });
+  }
+  return labelSlugCache;
+}
+
+// Identify a section type from collected signals, in precedence order:
+// 1. RDFa term asserted by an entry, 2. transient data-cv-section marker,
+// 3. heading slug. `terms` is the { typeof, property, rel, rev } map of full IRIs
+// from collectTerms(); tree-agnostic so DOM and ProseMirror share one classifier.
+export function classifySection({ terms, marker, headingText } = {}) {
+  for (const sig of sectionSignals()) {
+    if (terms?.[sig.attr]?.has(sig.iri)) return sig.type;
+  }
+  if (marker && SECTIONS[marker]) return marker;
+  const slug = headingText ? slugify(headingText.trim()) : '';
+  if (slug && labelSlugToType()[slug]) return labelSlugToType()[slug];
+  return null;
+}
+
+// DOM section classifier: gather the RDFa terms in the subtree, the marker, and
+// the heading text, then classify.
+function getSectionType(section) {
+  if (!section) return null;
+  const terms = collectTerms(
+    (cb) => section.querySelectorAll('[typeof],[property],[rel],[rev]').forEach(cb),
+    (el, name) => el.getAttribute(name)
+  );
+  const heading = section.querySelector(':scope > h1, :scope > h2, :scope > h3, :scope > h4, :scope > h5, :scope > h6');
+  return classifySection({ terms, marker: section.getAttribute('data-cv-section'), headingText: heading?.textContent || '' });
+}
+
+// type -> section element, in document order (first match wins per type).
+function sectionIndex(root) {
+  const map = new Map();
+  const content = root?.querySelector('#content');
+  if (!content) return map;
+  content.querySelectorAll(':scope > section').forEach((section) => {
+    const type = getSectionType(section);
+    if (type && !map.has(type)) map.set(type, section);
+  });
+  return map;
+}
+
+function findSection(root, type) {
+  return sectionIndex(root).get(type) || null;
+}
+
 function sectionPresent(root, type) {
-  return !!root.querySelector(`#content > section[data-cv-section="${type}"]`);
+  return !!findSection(root, type);
 }
 
 function sectionHTML(type) {
@@ -117,7 +205,8 @@ function sectionHTML(type) {
   switch(type) {
     default: {
       const seed = SEED_ENTRY.has(type) ? s.entryHTML() : '';
-      html = `<div datatype="rdf:HTML" property="schema:description"><ul${about}>${seed}</ul></div>`;
+      const rels = webid ? itemRelationsAttr(type) : '';
+      html = `<div datatype="rdf:HTML" property="schema:description"><ul${about}${rels}>${seed}</ul></div>`;
       break;
     }
     case 'summary':
@@ -181,13 +270,15 @@ export function buildTOC(root, presentTypes = null) {
   const ul = document.createElement('ul');
   nav.appendChild(ul);
 
+  const index = presentTypes ? null : sectionIndex(root);
+
   Object.keys(SECTIONS).forEach(section => {
     let present, sectionId;
     if (presentTypes) {
       present = presentTypes.has(section);
       sectionId = present ? presentTypes.get(section) : null;
     } else {
-      const el = root.querySelector(`#content > section[data-cv-section="${section}"]`);
+      const el = index.get(section);
       present = !!el;
       sectionId = el?.id || null;
     }
@@ -257,7 +348,7 @@ export function addSection(root, type) {
     if (!content) return;
     const order = Object.keys(SECTIONS);
     const idx = order.indexOf(type);
-    const after = Array.from(content.children).find(el => order.indexOf(el.getAttribute('data-cv-section')) > idx);
+    const after = Array.from(content.children).find(el => order.indexOf(getSectionType(el)) > idx);
     content.insertBefore(buildSection(type), after || null);
   }
 
@@ -265,7 +356,7 @@ export function addSection(root, type) {
 }
 
 export function removeSection(root, type) {
-  const section = root.querySelector(`#content > section[data-cv-section="${type}"]`);
+  const section = findSection(root, type);
   if (!section) return;
   const editor = pmEditor();
   if (editor) {
@@ -290,8 +381,9 @@ function injectCVTOC(doc) {
 
   article.querySelectorAll(':scope > nav').forEach(n => n.remove());
 
+  const index = sectionIndex(article);
   const present = Object.keys(SECTIONS)
-    .map(type => ({ type, section: content.querySelector(`:scope > section[data-cv-section="${type}"]`) }))
+    .map(type => ({ type, section: index.get(type) }))
     .filter(x => x.section);
   if (!present.length) return;
 
@@ -342,43 +434,29 @@ function credentialHTML() {
   return `<li><p data-placeholder="${i18n.t('cv.placeholder.credential')}"></p></li>`;
 }
 
-// These entries reference a resource via a link, so their rel/rev relations only
-// make sense when the item contains an <a href>. Relations are derived on save
-// and stripped on edit (the editor item stays a plain <li>), similar to the
-// organizer/department handling.
+// These sections relate the person (the <ul>'s about=WebID subject) to each
+// entry, so the relation belongs on the <ul> alongside about — and, like about,
+// only when signed in: without a subject the relation has nothing to attach to.
+// Baked in at section creation (sectionHTML) and (re)applied on sign-in (the
+// auth-ready handler), so it lives on the container throughout rather than being
+// lifted onto each <li>:
+//
+//   <ul about="https://csarven.ca/#i" rel="foaf:made">
+//     <li><a href="https://example.org/"></a></li>
+//     <li><a href="https://example.net/"></a></li>
+//   </ul>
 const ITEM_RELATIONS = {
   'credentials': { rel: 'schema:hasCredential' },
   'scholarly-communication': { rev: 'schema:contributor', rel: 'foaf:made' },
-  'technical-contributions': { rev: 'schema:contributor', rel: 'foaf:made' },
+  'technical-contributions': { rev: 'schema:contributor' },
 };
 
-const itemEntrySelector = (type) => `section[data-cv-section="${type}"] > div > ul > li`;
-
-// Save: add the relations to an entry <li> only when it links to a resource.
-function transformContributionItems(doc) {
-  const article = selectArticleNode(doc);
-  if (!article || !isCV(article)) return;
-  Object.entries(ITEM_RELATIONS).forEach(([type, rels]) => {
-    article.querySelectorAll(itemEntrySelector(type)).forEach((li) => {
-      ['rel', 'rev'].forEach((a) => li.removeAttribute(a));
-      if (li.querySelector('a[href]')) {
-        Object.entries(rels).forEach(([k, v]) => li.setAttribute(k, v));
-      }
-    });
-  });
+// The rel/rev attribute string for a section's <ul>, '' when the section has no
+// person-relation. The caller gates on sign-in (see sectionHTML / auth-ready).
+function itemRelationsAttr(type) {
+  const rels = ITEM_RELATIONS[type];
+  return rels ? Object.entries(rels).map(([k, v]) => ` ${k}="${v}"`).join('') : '';
 }
-registerDocumentTransform(transformContributionItems);
-
-// Edit: strip the relations so the editor item is a plain <li> (re-derived on save).
-function stripContributionItems(root) {
-  if (!root || !isCV(root)) return;
-  Object.keys(ITEM_RELATIONS).forEach((type) => {
-    root.querySelectorAll(itemEntrySelector(type)).forEach((li) => {
-      ['rel', 'rev'].forEach((a) => li.removeAttribute(a));
-    });
-  });
-}
-registerEditorParseTransform(stripContributionItems);
 
 //TODO Move this to somewhere else as it is not CV specific
 function eventHTML(options = {}) {
@@ -923,6 +1001,18 @@ function pruneEmptyItems(doc) {
 
 registerDocumentTransform(pruneEmptyItems);
 
+// data-cv-section is a transient author-mode marker (see top of file). Strip it on
+// save so it never reaches persisted markup — sections are re-identified from RDFa
+// or heading slug on reload. Registered last so the other save transforms above
+// (which may still resolve sections by marker) run while it is present.
+function stripSectionMarkers(doc) {
+  const article = selectArticleNode(doc);
+  if (!article || !isCV(article)) return;
+  article.querySelectorAll('#content > section[data-cv-section]').forEach((s) => s.removeAttribute('data-cv-section'));
+}
+
+registerDocumentTransform(stripSectionMarkers);
+
 // Render the nav and wire add/remove. Safe to call repeatedly.
 export function initCV() {
   const root = getCVRoot();
@@ -986,6 +1076,21 @@ export function initCV() {
           if (!ul.getAttribute('about')) ul.setAttribute('about', iri);
         });
       }
+
+      // Person-relation sections: set rel/rev on the section's <ul>, like about.
+      Object.entries(ITEM_RELATIONS).forEach(([type, rels]) => {
+        const section = findSection(root, type);
+        if (!section) return;
+        Object.entries(rels).forEach(([attr, val]) => {
+          if (editor) {
+            if (section.id) editor.setOriginalAttributeOnDescendants(`#${section.id}`, 'ul', attr, val);
+          } else {
+            section.querySelectorAll(':scope > div > ul').forEach(ul => {
+              if (!ul.getAttribute(attr)) ul.setAttribute(attr, val);
+            });
+          }
+        });
+      });
     });
   }
 
@@ -1002,9 +1107,9 @@ export function initCV() {
         transformLocationInputs(document);
         transformSkillInputs(document);
         transformOrganizerInputs(document);
-        transformContributionItems(document);
         removePlaceholders(document);
         pruneEmptyItems(document);
+        stripSectionMarkers(document);
       }
       refreshTOC(root);
   });
