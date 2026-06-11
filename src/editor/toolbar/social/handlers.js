@@ -54,7 +54,11 @@ const ns = Config.ns;
 //actions = ['note'] //Author
 
 export function shareButtonHandler(e) {
-  shareResource(e)
+  const selector = this.getTextQuoteSelector();
+  const baseURL = stripFragmentFromString(window.location.href);
+  const uri = getAnnotationSelectorStateURI(baseURL, selector);
+
+  shareResource(e, uri);
 }
 
 export function formHandlerAnnotate(e, action) {

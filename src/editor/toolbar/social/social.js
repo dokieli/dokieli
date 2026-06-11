@@ -74,7 +74,7 @@ export class SocialToolbar extends ToolbarView {
 
   getToolbarButtonClickHandlers() {
     return {
-      share: shareButtonHandler
+      share: shareButtonHandler.bind(this)
     }
   }
 
