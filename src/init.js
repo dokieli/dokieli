@@ -24,7 +24,7 @@ import { setWebExtensionURL } from './util.js';
 import { getDeviceStorageItem } from './storage.js';
 const GIT_FORGE_HOSTS_KEY = 'DO.Config.GitForge.hosts';
 const HTTP_ORIGINS_KEY = 'DO.Config.Http.origins';
-import { syncLocalRemoteResource, monitorNetworkStatus, autoSave } from './sync.js';
+import { syncLocalRemoteResource, monitorNetworkStatus } from './sync.js';
 import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeObject } from './utils/sanitization.js';
 import { afterSetUserInfo, setUserInfo } from './auth.js';
 import { showNotificationSources } from './activity.js';
@@ -146,11 +146,13 @@ export function initDeviceStorage() {
   }
 
   getDeviceStorageItem(Config.DocumentURL).then(collection => {
-    if (!collection) {
-      // autoSave(Config.DocumentURL, { method: 'IndexedDB' });
-      setTimeout(() => autoSave(Config.DocumentURL, { method: 'IndexedDB' }), 0);
-    }
-    else if (collection.autoSave) {
+    // First visit: don't seed a local snapshot here. A freshly loaded page is
+    // the remote, not an unsaved edit; seeding it (with no published marker)
+    // would make syncLocalRemoteResource treat it as a pending local change and
+    // push it back to the remote. The first sync records the remote as the
+    // baseline and seeds a published local copy instead (see the first-sync
+    // branch in syncLocalRemoteResource).
+    if (collection?.autoSave) {
       Config.AutoSave.Items[Config.DocumentURL] ||= {};
       Config.AutoSave.Items[Config.DocumentURL]['IndexedDB'] ||= {};
       // Config.AutoSave.Items[Config.DocumentURL]['IndexedDB']['digestSRI'] = latestLocalDocumentItem.digestSRI;

@@ -383,7 +383,10 @@ export async function syncLocalRemoteResource(options = {}) {
       }
       else {
         // No local changes and no previous hash to compare against (first sync).
-        // Record the remote hash so subsequent calls can detect future changes.
+        // Remote is canonical: seed a local copy marked published (in sync with
+        // remote) so it is never mistaken for an unsaved edit, and record the
+        // remote hash so subsequent calls can detect future changes.
+        await autoSave(Config.DocumentURL, { method: 'IndexedDB', published: remotePublishDate });
         await updateResourceInfos(Config.DocumentURL, remoteContent, response);
       }
 
