@@ -1873,28 +1873,28 @@ display: inline-block;
 fill:#080;
 }
 
-.ProseMirror:has([rel="rdf:type"][href="http://w3id.org/roh#CurriculumVitae"]) section dl {
+body:has([rel~="rdf:type"][href*="CurriculumVitae"],[rel~="rdf:type"][resource*="CurriculumVitae"]) .ProseMirror section dl {
 border:1px dashed #333;
 border-radius:0.5em;
 padding:1em;
 }
-.ProseMirror:has([rel="rdf:type"][href="http://w3id.org/roh#CurriculumVitae"]) section label {
+body:has([rel~="rdf:type"][href*="CurriculumVitae"],[rel~="rdf:type"][resource*="CurriculumVitae"]) .ProseMirror section label {
 margin-right:0.5em;
 width:initial;
 }
-.ProseMirror:has([rel="rdf:type"][href="http://w3id.org/roh#CurriculumVitae"]) section input {
+body:has([rel~="rdf:type"][href*="CurriculumVitae"],[rel~="rdf:type"][resource*="CurriculumVitae"]) .ProseMirror section input {
 border:0;
 padding-left:0;
 padding-right:0;
 }
-.ProseMirror:has([rel="rdf:type"][href="http://w3id.org/roh#CurriculumVitae"]) section input:placeholder-shown:focus,
-.ProseMirror:has([rel="rdf:type"][href="http://w3id.org/roh#CurriculumVitae"]) section input:placeholder-shown {
+body:has([rel~="rdf:type"][href*="CurriculumVitae"],[rel~="rdf:type"][resource*="CurriculumVitae"]) .ProseMirror section input:placeholder-shown:focus,
+body:has([rel~="rdf:type"][href*="CurriculumVitae"],[rel~="rdf:type"][resource*="CurriculumVitae"]) .ProseMirror section input:placeholder-shown {
 font-style:italic;
 }
-.ProseMirror:has([rel="rdf:type"][href="http://w3id.org/roh#CurriculumVitae"]) section input:focus {
+body:has([rel~="rdf:type"][href*="CurriculumVitae"],[rel~="rdf:type"][resource*="CurriculumVitae"]) .ProseMirror section input:focus {
 font-style:normal;
 }
-.ProseMirror:has([rel="rdf:type"][href="http://w3id.org/roh#CurriculumVitae"]) section label + input + label {
+body:has([rel~="rdf:type"][href*="CurriculumVitae"],[rel~="rdf:type"][resource*="CurriculumVitae"]) .ProseMirror section label + input + label {
 margin-left:1em;
 }
 
