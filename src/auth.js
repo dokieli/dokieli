@@ -152,6 +152,8 @@ export async function signOut() {
     await signOutGitForge();
   }
 
+  await signOutHttp();
+
   removeDeviceStorageAsSignOut();
 
   Config.User = {
@@ -265,6 +267,14 @@ export function showUserIdentityInput () {
             <input dir="ltr" id="webid" type="url" placeholder="https://username.solidcommunity.net/" value="" name="webid"/>
             <button data-i18n="dialog.signin.submit.button" class="signin" type="button"${buttonSignInDisabled}>${i18n.t('dialog.signin.submit.button.textContent')}</button>
           </p>
+          <details id="user-identity-input-server-token">
+            <summary data-i18n="dialog.signin.server-token.summary">${i18n.t('dialog.signin.server-token.summary.textContent')}</summary>
+            <p data-i18n="dialog.signin.server-token.p">${i18n.t('dialog.signin.server-token.p.textContent')}</p>
+            <p>
+              <label for="webid-server-token" data-i18n="dialog.signin.server-token.label">${i18n.t('dialog.signin.server-token.label.textContent')}</label>
+              <input id="webid-server-token" name="webid-server-token" type="password" autocomplete="off" />
+            </p>
+          </details>
         </details>
 
         <p>${Config.Button.Info.WebId}</p>
@@ -390,8 +400,17 @@ function submitSignIn (url) {
     return Promise.resolve()
   }
 
+  // Capture optional server token now, before the form is removed on success.
+  var serverTokenInput = userIdentityInput?.querySelector('input#webid-server-token')
+  var serverToken = serverTokenInput ? serverTokenInput.value.trim() : ''
+
   //TODO: Consider throwing an error with setUserInfo where there is no profile, and so don't trigger signInWithOIDC at all.
   return setUserInfo(url)
+    .then(async () => {
+      if (serverToken) {
+        await registerServerTokenForUser(url, serverToken)
+      }
+    })
     .then(() => {
       var uI = document.getElementById('user-info')
       if (uI) {
@@ -434,6 +453,56 @@ function submitSignIn (url) {
 }
 
 const GIT_FORGE_HOSTS_KEY = 'DO.Config.GitForge.hosts';
+const HTTP_ORIGINS_KEY = 'DO.Config.Http.origins';
+
+async function persistHttpOrigin(origin, cfg) {
+  const { getDeviceStorageItem } = await import('./storage.js');
+  const origins = (await getDeviceStorageItem(HTTP_ORIGINS_KEY)) || {};
+  origins[origin] = cfg;
+  await setDeviceStorageItem(HTTP_ORIGINS_KEY, origins);
+}
+
+// Bind the server token to the origin (scheme + host + port) of the discovered
+// pim:space#storage. The origin match is intentionally strict: a token issued
+// for `https://example.org` will NOT fire on requests to `http://example.org`,
+// `https://other.com`, or any other origin — even if a careless caller passes
+// the wrong URL to Config.Storage. Falls back to the WebID's own origin only
+// if the profile doesn't declare a storage location.
+async function registerServerTokenForUser(webIdUrl, token) {
+  let origin;
+  try {
+    const storage = Config.User?.Storage?.[0];
+    origin = storage ? new URL(storage).origin : new URL(webIdUrl).origin;
+  } catch {
+    return;
+  }
+  if (!origin) return;
+
+  const cfg = { token };
+  await persistHttpOrigin(origin, cfg);
+  const http = Config.Storage?.backend?.('http');
+  if (http?.addOrigin) http.addOrigin(origin, cfg);
+}
+
+export async function signOutHttp(origin) {
+  const { getDeviceStorageItem, removeDeviceStorageItem } = await import('./storage.js');
+  if (origin) {
+    const origins = (await getDeviceStorageItem(HTTP_ORIGINS_KEY)) || {};
+    delete origins[origin];
+    if (Object.keys(origins).length) {
+      await setDeviceStorageItem(HTTP_ORIGINS_KEY, origins);
+    } else {
+      await removeDeviceStorageItem(HTTP_ORIGINS_KEY);
+    }
+  } else {
+    await removeDeviceStorageItem(HTTP_ORIGINS_KEY);
+  }
+  const http = Config.Storage?.backend?.('http');
+  if (http?.setToken) {
+    if (origin) http.setToken(origin, null);
+    else http.origins().forEach(o => http.setToken(o, null));
+  }
+}
 
 async function persistForgeHost(host, cfg) {
   const { getDeviceStorageItem } = await import('./storage.js');

@@ -23,12 +23,13 @@ import { initButtons } from './ui/buttons.js'
 import { setWebExtensionURL } from './util.js';
 import { getDeviceStorageItem } from './storage.js';
 const GIT_FORGE_HOSTS_KEY = 'DO.Config.GitForge.hosts';
+const HTTP_ORIGINS_KEY = 'DO.Config.Http.origins';
 import { syncLocalRemoteResource, monitorNetworkStatus, autoSave } from './sync.js';
 import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeObject } from './utils/sanitization.js';
 import { afterSetUserInfo, setUserInfo } from './auth.js';
 import { showNotificationSources } from './activity.js';
 import { generateDataURI, getProxyableIRI, getUrlParams, stripFragmentFromString, stripUrlSearchHash } from './uri.js';
-import { SolidStorage, GitForgeStorage, initStorage } from './storage/backend.js';
+import { SolidStorage, GitForgeStorage, HttpStorage, initStorage } from './storage/backend.js';
 import { initEditor } from './editor/initEditor.js';
 import { showGraph, showVisualisationGraph } from './viz.js';
 import * as Slideshow from './slideshow.js';
@@ -77,6 +78,7 @@ async function initStorageBackend() {
 
   const solid = new SolidStorage();
   const gitforge = new GitForgeStorage();
+  const http = new HttpStorage();
 
   gitforge.addHost('github.com', {
     apiBase: 'https://api.github.com',
@@ -84,16 +86,23 @@ async function initStorageBackend() {
     provider: 'github',
   });
 
-  const persisted = await getDeviceStorageItem(GIT_FORGE_HOSTS_KEY);
-  if (persisted && typeof persisted === 'object') {
-    for (const [host, cfg] of Object.entries(persisted)) {
+  const persistedForge = await getDeviceStorageItem(GIT_FORGE_HOSTS_KEY);
+  if (persistedForge && typeof persistedForge === 'object') {
+    for (const [host, cfg] of Object.entries(persistedForge)) {
       gitforge.addHost(host, cfg);
+    }
+  }
+
+  const persistedHttp = await getDeviceStorageItem(HTTP_ORIGINS_KEY);
+  if (persistedHttp && typeof persistedHttp === 'object') {
+    for (const [origin, cfg] of Object.entries(persistedHttp)) {
+      http.addOrigin(origin, cfg);
     }
   }
 
   const router = initStorage({
     default: solid,
-    backends: { solid, gitforge },
+    backends: { solid, gitforge, http },
   });
 
   Object.defineProperty(Config, 'Storage', {

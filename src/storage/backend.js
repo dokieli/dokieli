@@ -96,12 +96,21 @@ class StorageBackend {
   }
 }
 
-// Plain HTTP CRUD. No Solid session, LDP Link, or conneg handling
+// Plain HTTP CRUD. No Solid session, LDP Link, or conneg handling.
+// Carries a per-origin token map so requests to registered origins get an
+// `Authorization: Bearer <token>` injected. Storage is keyed by full ORIGIN
+// (scheme + host + port) — a token bound to `https://example.org` will NOT
+// fire on `http://example.org`, `https://example.org:8443`, or any other
+// origin, even if the host matches. The router still dispatches by host
+// (matches() returns true if any registered origin has that host) to keep
+// the routing API symmetric with GitForgeStorage; the strict origin check
+// happens inside _fetch before any Bearer is added.
 class HttpStorage extends StorageBackend {
   constructor({ authFetch, defaultContentType } = {}) {
     super();
     this._authFetch = authFetch || null;
     this._defaultContentType = defaultContentType || DEFAULT_CONTENT_TYPE;
+    this._origins = new Map();
   }
 
   get name() {
@@ -112,7 +121,71 @@ class HttpStorage extends StorageBackend {
     return cap === CAPS.PATCH;
   }
 
-  _fetch(url, options) {
+  _normalizeOrigin(origin) {
+    try {
+      return new URL(origin).origin;
+    } catch {
+      return null;
+    }
+  }
+
+  addOrigin(origin, cfg = {}) {
+    const normalized = this._normalizeOrigin(origin);
+    if (!normalized) return;
+    const existing = this._origins.get(normalized) || {};
+    this._origins.set(normalized, { ...existing, ...cfg });
+  }
+
+  setToken(origin, token) {
+    const normalized = this._normalizeOrigin(origin);
+    if (!normalized) return;
+    if (token == null) {
+      const existing = this._origins.get(normalized);
+      if (!existing) return;
+      delete existing.token;
+      if (Object.keys(existing).length === 0) this._origins.delete(normalized);
+      return;
+    }
+    const existing = this._origins.get(normalized) || {};
+    this._origins.set(normalized, { ...existing, token });
+  }
+
+  origins() {
+    return Array.from(this._origins.keys());
+  }
+
+  // Loose host match for router dispatch — the strict origin check is in _fetch.
+  matches(host) {
+    if (!host) return false;
+    for (const origin of this._origins.keys()) {
+      try {
+        if (new URL(origin).host === host) return true;
+      } catch {}
+    }
+    return false;
+  }
+
+  _tokenFor(url) {
+    try {
+      const requestOrigin = new URL(
+        url,
+        typeof location !== "undefined" ? location.href : undefined,
+      ).origin;
+      return this._origins.get(requestOrigin)?.token || null;
+    } catch {
+      return null;
+    }
+  }
+
+  _fetch(url, options = {}) {
+    const token = this._tokenFor(url);
+    if (token) {
+      const headers = new Headers(options.headers || {});
+      if (!headers.has("Authorization")) {
+        headers.set("Authorization", `Bearer ${token}`);
+      }
+      options = { ...options, headers };
+    }
     return this._authFetch
       ? this._authFetch(url, options)
       : fetch(url, options);
@@ -758,9 +831,13 @@ class StorageRouter {
     if (options && options.backend && this._backends[options.backend]) {
       return this._backends[options.backend];
     }
-    if (url && this._backends.gitforge?.matches) {
+    if (url) {
       try {
-        if (this._backends.gitforge.matches(new URL(url).host)) {
+        const host = new URL(url).host;
+        if (this._backends.http?.matches?.(host)) {
+          return this._backends.http;
+        }
+        if (this._backends.gitforge?.matches?.(host)) {
           return this._backends.gitforge;
         }
       } catch {}
