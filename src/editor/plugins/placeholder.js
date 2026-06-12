@@ -54,7 +54,7 @@ function getPlaceholder(node, $pos) {
   if (
     node.type.name === "heading" &&
     node.attrs.level === 1 &&
-    parent?.type.name === "article"
+    (parent?.type.name === "article" || parent?.type.name === "doc")
   ) {
     return i18n.t("editor.new.h1.data-placeholder");
   }

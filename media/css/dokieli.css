@@ -724,6 +724,8 @@ outline:none;
 .cv-skill-add {
 display:inline-block;
 margin:0.5em 0;
+padding:0.25em;
+font-weight:bold;
 }
 .cv-section-remove {
 margin-left:0.4em;
@@ -737,9 +739,18 @@ color:#c00;
 
 /* Per-entry delete: small red button pinned to the entry's top-right corner. */
 #content section li,
-dl.skill-category dd {
+dd:has([class~="cv-entry-delete"]) {
 position:relative;
+display:block !important;
 }
+[data-cv-section] dd:after {
+content:'' !important;
+}
+[data-cv-section] dt.editor-empty-node {
+margin-bottom:1em;
+}
+
+
 .cv-entry-delete {
 position:absolute;
 top:0.5em;
@@ -748,7 +759,6 @@ z-index:1;
 border:0;
 background:none;
 cursor:pointer;
-line-height:0;
 padding:0.25em;
 }
 .cv-entry-delete svg {

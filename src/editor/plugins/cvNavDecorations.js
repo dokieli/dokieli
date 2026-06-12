@@ -17,8 +17,9 @@ limitations under the License.
 
 import { Plugin, PluginKey } from "prosemirror-state";
 import { Decoration, DecorationSet } from "prosemirror-view";
+import { DOMParser } from "prosemirror-model";
 import Config from "../../config.js";
-import { buildTOC, classifySection } from "../../cv.js";
+import { buildTOC, classifySection, skillInputHTML } from "../../cv.js";
 import { collectTerms } from "../../utils/rdfa.js";
 import { Icon } from "../../ui/icons.js";
 import { fragmentFromString } from "../../utils/html.js";
@@ -123,16 +124,18 @@ function sectionEntries(doc) {
 }
 
 // Skill-category <dl>s and their end positions (where the "+ add skill" button goes).
+// Identified structurally: all <dl> nodes within the skills section.
 function skillCategoryNodes(doc) {
   const found = [];
   doc.descendants((node, pos) => {
-    if (node.type.name !== "dl") return true;
-    const cls = node.attrs.originalAttributes?.class || "";
-    if (cls.split(/\s+/).includes("skill-category")) {
-      found.push({ id: node.attrs.originalAttributes?.id || "", end: pos + 1 + node.content.size });
+    if (node.type.name !== "section") return true;
+    if (pmSectionType(node) !== "skills") return true;
+    node.descendants((child, childPos) => {
+      if (child.type.name !== "dl") return true;
+      found.push({ end: pos + 1 + childPos + 1 + child.content.size });
       return false;
-    }
-    return true;
+    });
+    return false;
   });
   return found;
 }
@@ -142,7 +145,7 @@ function skillCategoryNodes(doc) {
 // DecorationSet only when this changes; otherwise map the existing one so we
 // don't re-render on every keystroke.
 function navSignature(doc) {
-  const cats = skillCategoryNodes(doc).map(c => c.id).join(",");
+  const cats = skillCategoryNodes(doc).map(c => c.end).join(",");
   const secs = sectionEntries(doc).map(([t, id]) => `${t}:${id}`).join(",");
   const entries = `${entryLiPositions(doc).length}/${skillDdPositions(doc).length}`;
   return `${Config.Editor?.mode || ""}|${secs}|${cats}|${entries}`;
@@ -205,18 +208,22 @@ function entryLiPositions(doc) {
   return positions;
 }
 
-// End-of-content position of each skill <dd> inside a skill-category <dl>, so
+// End-of-content position of each skill <dd> inside the skills section, so
 // individual skills are removable (widget placed last, as above).
 function skillDdPositions(doc) {
   const positions = [];
   doc.descendants((node, pos) => {
-    if (node.type.name !== "dl") return true;
-    const cls = node.attrs.originalAttributes?.class || "";
-    if (!cls.split(/\s+/).includes("skill-category")) return true;
-    let off = pos + 1;
-    node.forEach((child) => {
-      if (child.type.name === "dd") positions.push(off + child.nodeSize - 1);
-      off += child.nodeSize;
+    if (node.type.name !== "section") return true;
+    if (pmSectionType(node) !== "skills") return true;
+    node.descendants((child, childPos) => {
+      if (child.type.name !== "dl") return true;
+      const dlAbsPos = pos + 1 + childPos;
+      let off = dlAbsPos + 1;
+      child.forEach((grandchild) => {
+        if (grandchild.type.name === "dd") positions.push(off + grandchild.nodeSize - 1);
+        off += grandchild.nodeSize;
+      });
+      return false;
     });
     return false;
   });
@@ -234,6 +241,7 @@ function deleteWidget(pos, targetType, label) {
     b.title = label;
     b.setAttribute("aria-label", label);
     b.setAttribute("contenteditable", "false");
+    b.addEventListener("mousedown", (e) => e.preventDefault());
     b.appendChild(fragmentFromString(Icon['.fas.fa-trash-alt']));
     b.addEventListener("mousedown", (e) => e.preventDefault());
     b.addEventListener("click", (e) => {
@@ -259,16 +267,23 @@ function entryDeleteDecorations(doc) {
   return decos;
 }
 
-// Per skill-category: a "+ add" button at the category's end to add another skill.
+// Per skill category <dl>: a "+ add" button at the end to add another skill.
 function skillButtonDecorations(doc) {
   return skillCategoryNodes(doc).map((cat) =>
-    Decoration.widget(cat.end, () => {
+    Decoration.widget(cat.end, (view, getPos) => {
       const b = document.createElement("button");
       b.type = "button";
       b.className = "do cv-skill-add";
-      b.dataset.target = cat.id;
       b.textContent = i18n.t("cv.button.add-skill.textContent");
       b.setAttribute("contenteditable", "false");
+      b.addEventListener("mousedown", (e) => e.preventDefault());
+      b.addEventListener("click", (e) => {
+        e.preventDefault();
+        const pos = typeof getPos === "function" ? getPos() : null;
+        if (pos == null) return;
+        const node = DOMParser.fromSchema(view.state.schema).parse(fragmentFromString(`<dd>${skillInputHTML()}</dd>`));
+        view.dispatch(view.state.tr.insert(pos, node).scrollIntoView());
+      });
       return b;
     }, { side: 1, ignoreSelection: true, stopEvent: () => true }));
 }

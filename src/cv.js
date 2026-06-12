@@ -411,7 +411,7 @@ function contributionHTML(options = {}) {
   return `<li><p data-placeholder="${ph}"></p></li>`;
 }
 
-function skillInputHTML({ title = '', uri = '' } = {}) {
+export function skillInputHTML({ title = '', uri = '' } = {}) {
   const id = generateAttributeId();
   const esc = (s) => (s || '').replace(/"/g, '&quot;');
   const data = uri ? `data-entity="${esc(uri)}"` : '';
@@ -419,9 +419,8 @@ function skillInputHTML({ title = '', uri = '' } = {}) {
 }
 
 function skillHTML() {
-  const id = `${generateAttributeId()}-skill-category`;
   return `<li>
-  <dl class="skill-category" id="${id}">
+  <dl>
     <dt data-placeholder="${i18n.t('cv.placeholder.category-name')}"></dt>
     <dd>${skillInputHTML()}</dd>
   </dl>
@@ -902,7 +901,7 @@ function removePlaceholders(doc) {
 // shows them on empty fields, so adding to all matching fields is harmless.
 // Event fields are handled by restoreEventFields (they are pruned in read mode).
 const PLACEHOLDERS = [
-  ['dl.skill-category > dt', 'Category name'],
+  ['[data-cv-section="skills"] dl > dt', 'Category name'],
 ];
 
 function addPlaceholders(root) {
@@ -991,7 +990,7 @@ function pruneEmptyItems(doc) {
   const isEmpty = (el) => !el.textContent.trim() && !el.querySelector(keep);
   // p[rel] is scoped to award/credential entries — not event fields like the
   // description <p rel="schema:performer">, which must survive as an editable field.
-  const selector = 'dl.skill-category dd, dl.skill-category, li, p[property~="schema:award"], p[rel~="schema:hasCredential"]';
+  const selector = '[data-cv-section="skills"] dl dd, [data-cv-section="skills"] dl, li, p[property~="schema:award"], p[rel~="schema:hasCredential"]';
   let changed = true;
   while (changed) {
     changed = false;
@@ -1043,13 +1042,6 @@ export function initCV() {
         return;
       }
 
-      const addSkill = e.target.closest('.cv-skill-add');
-      if (addSkill) {
-        const target = addSkill.dataset.target;
-        if (target) {
-          pmEditor()?.insertFragmentAtEndOf(`#${target}`, fragmentFromString(`<dd>${skillInputHTML()}</dd>`));
-        }
-      }
     });
 
     setupAutocomplete('input[name$="-event-location"]', getWikidataResults, showLocationSuggestions, {
