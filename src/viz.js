@@ -938,6 +938,7 @@ function convertGraphToVisualisationGraph(url, g, options){
           sGroup = 15;
           break;
         case ns.bibo.Slide.value:
+        case ns.bibo.Slideshow.value:
           sGroup = 17;
           break;
         // case ns.skos.Collection.value:

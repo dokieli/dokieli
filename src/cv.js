@@ -420,10 +420,12 @@ function skillInputHTML({ title = '', uri = '' } = {}) {
 
 function skillHTML() {
   const id = `${generateAttributeId()}-skill-category`;
-  return `<li><dl class="skill-category" id="${id}">
+  return `<li>
+  <dl class="skill-category" id="${id}">
     <dt data-placeholder="${i18n.t('cv.placeholder.category-name')}"></dt>
     <dd>${skillInputHTML()}</dd>
-  </dl></li>`;
+  </dl>
+</li>`;
 }
 
 function awardHTML() {
