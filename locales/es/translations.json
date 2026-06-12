@@ -737,6 +737,7 @@
   "panel.notifications.more.button.title": "Mostrar más",
   "panel.notifications.progress.checking.textContent": "Comprobando actividades",
   "panel.notifications.progress.more.textContent": "Ver más interacciones con este documento",
+  "panel.notifications.resizer.title": "Arrastra para redimensionar. Doble clic para restablecer.",
   "panel.notifications.toggle.button.aria-label": "Mostrar/Ocultar Notificaciones",
   "panel.notifications.toggle.button.title": "Mostrar/Ocultar",
   "popup.robustlinks.citation-reason.span.textContent": "Motivo de la citación",

@@ -737,6 +737,7 @@
   "panel.notifications.more.button.title": "Show more",
   "panel.notifications.progress.checking.textContent": "Checking activities",
   "panel.notifications.progress.more.textContent": "See more interactions with this document",
+  "panel.notifications.resizer.title": "Drag to resize. Double-click to reset.",
   "panel.notifications.toggle.button.aria-label": "Show/Hide Notifications",
   "panel.notifications.toggle.button.title": "Show/Hide",
   "popup.robustlinks.citation-reason.span.textContent": "Citation Reason",

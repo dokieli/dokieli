@@ -1396,8 +1396,8 @@ margin-bottom:0;
   padding: 1em 0.25em;
   margin-top: 0;
   margin-bottom:0;
-  margin-left: calc(-50vw + 50%);
-  margin-right: calc(-50vw + 50%);
+  margin-left: calc(-0.5 * var(--do-bleed-width, 100vw) + 50%);
+  margin-right: calc(-0.5 * var(--do-bleed-width, 100vw) + 50%);
 }
 
 #home #features {

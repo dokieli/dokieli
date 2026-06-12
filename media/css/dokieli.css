@@ -2046,11 +2046,49 @@ position: fixed;
 top: 0;
 right: 0;
 z-index:2147483646;
-width:25em;
+box-sizing: border-box;
+width: clamp(15rem, var(--dokieli-notifications-width, 25rem), 90vw);
 height:100%;
 max-height:100%;
 overflow: unset;
 font-size:1em;
+}
+#document-notifications .resizer {
+position: absolute;
+top: 0;
+left: 0;
+width: 0.5em;
+height: 100%;
+cursor: ew-resize;
+touch-action: none;
+z-index: 1;
+}
+#document-notifications .resizer:hover,
+#document-notifications .resizer.active {
+background-color: rgba(0, 0, 0, 0.1);
+}
+
+@media (min-width: 769px) {
+/* Two-column reflow: the panel occupies a fixed-width column on the right; body
+   content reflows into the remaining space via margin-right (no clip, so nothing is
+   trimmed). --do-bleed-width exposes that remaining width so dokieli's own full-bleed
+   bands (see basic.css) break out to the column width instead of the full 100vw.
+   Third-party full-bleed elements that don't use this variable can't reflow (vw is
+   always the real viewport) and will extend under the panel. */
+html:has(#document-notifications.on) {
+--do-bleed-width: calc(100vw - clamp(15rem, var(--dokieli-notifications-width, 25rem), 90vw));
+}
+body:has(#document-notifications) {
+transition: margin-right 0.2s ease;
+}
+html.notifications-resizing body:has(#document-notifications) {
+transition: none;
+}
+body:has(#document-notifications.on) {
+margin-left: 0 !important;
+margin-right: clamp(15rem, var(--dokieli-notifications-width, 25rem), 90vw) !important;
+max-width: none !important;
+}
 }
 #document-notifications h2 {
 margin-top:1.5em;

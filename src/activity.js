@@ -44,6 +44,7 @@ export function initializeNotifications(options = {}) {
   //TEMP buttonRel/Resource
   var aside = `
   <aside aria-labelledby="document-notifications-label" class="do" contenteditable="false" dir="${Config.User.UI.LanguageDir}" id="document-notifications" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#document-notifications" xml:lang="${Config.User.UI.Language}">
+    <div aria-hidden="true" class="resizer" title="${i18n.t('panel.notifications.resizer.title')}"></div>
     <h2 data-i18n="panel.notifications.h2" id="document-notifications-label" property="schema:name">${i18n.t('panel.notifications.h2.textContent')} ${Config.Button.Info.Notifications}</h2>
     ${buttonToggle}
     <div>
@@ -54,11 +55,64 @@ export function initializeNotifications(options = {}) {
   sanitizeInsertAdjacentHTML(document.body, 'beforeend', aside);
   aside = document.getElementById('document-notifications');
 
+  initializeNotificationsResize(aside);
+
   if (options.includeButtonMore) {
     initializeButtonMore(aside);
   }
 
   return aside;
+}
+
+const NotificationsWidthKey = 'dokieli-notifications-width';
+const NotificationsWidthProperty = '--dokieli-notifications-width';
+
+export function initializeNotificationsResize(aside) {
+  var resizer = aside.querySelector('.resizer');
+  if (!resizer) { return; }
+
+  var root = document.documentElement;
+
+  var stored = window.localStorage.getItem(NotificationsWidthKey);
+  if (stored) {
+    root.style.setProperty(NotificationsWidthProperty, stored);
+  }
+
+  var minWidth = 240;
+
+  resizer.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    var maxWidth = window.innerWidth * 0.9;
+
+    root.classList.add('notifications-resizing');
+    resizer.classList.add('active');
+    resizer.setPointerCapture(e.pointerId);
+
+    var onMove = (ev) => {
+      var width = Math.min(maxWidth, Math.max(minWidth, window.innerWidth - ev.clientX));
+      root.style.setProperty(NotificationsWidthProperty, width + 'px');
+    };
+
+    var onUp = () => {
+      root.classList.remove('notifications-resizing');
+      resizer.classList.remove('active');
+      resizer.removeEventListener('pointermove', onMove);
+      resizer.removeEventListener('pointerup', onUp);
+
+      var current = root.style.getPropertyValue(NotificationsWidthProperty).trim();
+      if (current) {
+        window.localStorage.setItem(NotificationsWidthKey, current);
+      }
+    };
+
+    resizer.addEventListener('pointermove', onMove);
+    resizer.addEventListener('pointerup', onUp);
+  });
+
+  resizer.addEventListener('dblclick', () => {
+    root.style.removeProperty(NotificationsWidthProperty);
+    window.localStorage.removeItem(NotificationsWidthKey);
+  });
 }
 
 export function initializeButtonMore(node) {
