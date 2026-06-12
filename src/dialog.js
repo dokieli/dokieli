@@ -176,11 +176,14 @@ export function hideDocumentMenu(e) {
   //     sections[i].parentNode.removeChild(sections[i]);
   //   }
   // };
-  var buttonSigninUser = dMenu.querySelector('button.signin-user');
-  if(buttonSigninUser) {
-    dMenu.querySelector('button.signin-user').disabled = false;
-  }
+  // var buttonSigninUser = dMenu.querySelector('button.signin-user');
+  // if(buttonSigninUser) {
+  //   dMenu.querySelector('button.signin-user').disabled = false;
+  // }
 
+   // Re-enable any menu buttons disabled while their dialog was open; the
+  // dialogs are torn down below, so their per-button close handlers won't run.
+  dMenu.querySelectorAll('button[disabled]').forEach(b => { b.disabled = false; });
   removeNodesWithIds(Config.DocumentDoItems);
 }
 
