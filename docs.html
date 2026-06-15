@@ -404,7 +404,17 @@
                     <dt about="#feature-specificity" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-crosshairs"></i><dfn id="feature-specificity">Specificity</dfn></dt>
                     <dd about="#feature-specificity" property="skos:definition">Request to increase specificity on selected text. Optional note can indicate that a citation or more specificity is needed.</dd>
                     <dt about="#feature-new" property="skos:prefLabel" typeof="skos:Concept"><i class="far fa-lightbulb"></i><dfn id="feature-new">New</dfn></dt>
-                    <dd about="#feature-new" property="skos:definition">A <em>new</em> article can be temporarily authored until it is stored in <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or <a href="#local-storage" rel="rdfs:seeAlso">local storage</a>. In order to persist the article long term, the user can <a href="#feature-save" rel="rdfs:seeAlso">Save</a> or <a href="#feature-save-as">Save as</a> the article.</dd>
+                    <dd about="#feature-new" property="skos:definition">
+                      <p>A <em>new</em> document can be temporarily authored until it is stored in <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or <a href="#local-storage" rel="rdfs:seeAlso">local storage</a>. In order to persist the article long term, the user can <a href="#feature-save" rel="rdfs:seeAlso">Save</a> or <a href="#feature-save-as">Save as</a> the article. New documents can be created from temmplates such as:</p>
+                      <dl rel="dcterms:subject">
+                        <dt about="#feature-article" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-newspaper"></i><dfn id="feature-article">Article</dfn></dt>
+                        <dd property="skos:definition">An article, such as a blog post, story, or report.</dd>
+                        <dt about="#feature-slideshow" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-slideshow"></i><dfn id="feature-slideshow">Slideshow</dfn></dt>
+                        <dd property="skos:definition">A presentation of a series of slides.</dd>
+                        <dt about="#feature-cv" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-book-skull"></i><dfn  id="feature-cv">Curriculum Vitae</dfn></dt>
+                        <dd property="skos:definition">An academic and professional history and achievements.</dd>
+                      </dl>
+                    </dd>
                     <dt about="#feature-open" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-coffee"></i><dfn id="feature-open">Open</dfn></dt>
                     <dd about="#feature-open">
                       <p property="skos:definition">A document can be <em>opened</em> (imported) from a local filesystem or by specifying the URL of the resource on the web. <a href="#feature-browser" rel="rdfs:seeAlso">resource browser</a> can be used to navigate to the document of interest in the <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or <a href="#annotation-service" rel="rdfs:seeAlso">annotation service</a>. Custom views are available when importing some data formats such as:</p>
