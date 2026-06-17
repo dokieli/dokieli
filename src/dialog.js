@@ -18,7 +18,7 @@ limitations under the License.
 import rdf from 'rdf-ext';
 import LinkHeader from "http-link-header";
 import { i18n } from './i18n.js';
-import { getButtonHTML, updateButtons } from './ui/buttons.js';
+import { getButtonHTML, updateButtons, setMenuButtonDisabled } from './ui/buttons.js';
 import { addMessageToLog, buildResourceView, copyRelativeResources, createFeedXML, createImmutableResource, createMutableResource, createNoteDataHTML, getAccessModeOptionsHTML, getBaseURLSelection, getDocument, getFeedFormatSelection, getLanguageOptionsHTML, getLicenseOptionsHTML, getResourceInfo, getSavePayload, isMarkdownTarget, rewriteBaseURL, setCopyToClipboard, setDocumentRelation, showActionMessage, showRobustLinksDecoration, showTimeMap, updateMutableResource, buildReferences, getDocumentConceptDefinitionsHTML, insertDocumentLevelHTML, insertTestCoverageToTable, diffRequirements, removeReferences, getStorageSelfDescription, getContactInformation, getPersistencePolicy, getODRLPolicies, updateResourceInfos, initCurrentStylesheet, setDate, showFragment, initCopyToClipboard, setDocumentURL, getAgentHTML } from './doc.js';
 import { removeNodesWithIds, createHTML, getFormValues } from './utils/html.js';
 import { accessModeAllowed, accessModePossiblyAllowed } from './access.js';
@@ -1495,7 +1495,7 @@ export function replyToResource(e, iri) {
 
   replyToResource.addEventListener('click', e => {
     if (e.target.closest('button.close')) {
-      document.querySelector('#document-do .resource-reply').disabled = false
+      setMenuButtonDisabled('.resource-reply');
     }
 
     if (e.target.closest('button.reply')) {
@@ -3114,7 +3114,7 @@ export function showNewDocument(e) {
 
   createNewDocumentDialog.addEventListener('click', (e) => {
     if (e.target.closest('button.close')) {
-      document.querySelector('#document-menu .resource-new').disabled = false;
+      setMenuButtonDisabled('.resource-new');
     }
 
     if (!e.target.closest('button.create')) {
@@ -3124,7 +3124,7 @@ export function showNewDocument(e) {
     e.preventDefault();
     e.stopPropagation();
 
-    document.querySelector('#document-menu .resource-new').disabled = false;
+    setMenuButtonDisabled('.resource-new');
 
     // const selected = createNewDocumentDialog.querySelector(`input[name="${id}"]:checked`)?.value;
 
@@ -3174,7 +3174,7 @@ export function openDocument(e) {
 
   openDocument.addEventListener('click', function (e) {
     if (e.target.closest('button.close')) {
-      document.querySelector('#document-do .resource-open').disabled = false;
+      setMenuButtonDisabled('.resource-open');
     }
 
     if (e.target.closest('button.open')) {
@@ -3265,7 +3265,7 @@ export function viewSource(e) {
     }
 
     if (e.target.closest('button.close')) {
-      document.querySelector('#document-menu .resource-source').disabled = false;
+      setMenuButtonDisabled('.resource-source');
     }
   });
 }
@@ -5343,7 +5343,7 @@ export function generateFeed(e) {
   var generateFeed = document.getElementById('generate-feed');
   generateFeed.addEventListener('click', (e) => {
     if (e.target.closest('button.close')) {
-      document.querySelector('#document-do .generate-feed').disabled = false;
+      setMenuButtonDisabled('.generate-feed');
     }
   });
 
@@ -5809,7 +5809,7 @@ export function showDocumentInfo(e) {
 
   documentInfo.addEventListener('click', (e) => {
     if (e.target.closest('button.close')) {
-      document.querySelector('#document-menu .document-info').disabled = false;
+      setMenuButtonDisabled('.document-info');
     }
   });
 
@@ -7154,7 +7154,7 @@ export async function spawnDokieli(documentNode, data, contentTypes, iris, optio
     if (asideOpenDocument) {
       asideOpenDocument.parentNode.removeChild(asideOpenDocument);
     }
-    document.querySelector('#document-do .resource-open').disabled = false;
+    setMenuButtonDisabled('.resource-open');
     hideDocumentMenu();
   }
   else if (options.init === true) { // && !isFileIRI ?

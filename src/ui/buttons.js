@@ -686,6 +686,11 @@ const buttonState = {
 };
 
 
+export function setMenuButtonDisabled(buttonSelector, disabled = false) {
+  const button = document.querySelector(`#document-menu ${buttonSelector}`);
+  if (button) button.disabled = disabled;
+}
+
 export function buttonShouldBeEnabled(selector, context) {
   const fn = buttonState[selector];
 
