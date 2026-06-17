@@ -152,6 +152,19 @@ function renderMenu() {
   if (menu) menu.setHTMLUnsafe(domSanitize(renderMenuInner()));
 }
 
+async function applyButtonStates() {
+  try {
+    const tab = await getActiveTab();
+    if (!tab?.id) return;
+    const states = await WebExtension.tabs.sendMessage(tab.id, { action: 'dokieli.buttonStates' });
+    if (!states) return;
+    Object.entries(states).forEach(([cls, enabled]) => {
+      const button = document.querySelector(`#document-menu .${cls}`);
+      if (button) button.disabled = !enabled;
+    });
+  } catch {}
+}
+
 function initLanguageHandler() {
   document.addEventListener('change', async (e) => {
     const select = e.target.closest('#ui-language-select');
@@ -227,7 +240,8 @@ async function init() {
   initMenuActions();
   renderUserInfo();
 
-  activateOnActiveTab();
+  await activateOnActiveTab();
+  applyButtonStates();
 }
 
 document.addEventListener('DOMContentLoaded', init);

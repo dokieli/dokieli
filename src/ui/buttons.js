@@ -405,25 +405,25 @@ export const buttonIcons = {
 }
 
 const buttonState = {
-  '#document-do .resource-share': ({ blob }) => {
+  '#document-menu .resource-share': ({ blob }) => {
     if (blob) return false;
 
     return true;
   },
 
-  '#document-do .edit-history' : ({ blob, editorMode }) => {
+  '#document-menu .edit-history' : ({ blob, editorMode }) => {
     if (blob || editorMode !== 'author') return false;
 
     return true;
   },
 
-  '#document-do .editor-enable': ({ blob, editorMode }) => {
+  '#document-menu .editor-enable': ({ blob, editorMode }) => {
     if (blob || editorMode === 'author') return false;
 
     return true;
   },
 
-  '#document-do .resource-reply': ({ online, localhost, blob }) => {
+  '#document-menu .resource-reply': ({ online, localhost, blob }) => {
     if (blob) return false;
 
     if (!online && !localhost) return false;
@@ -431,7 +431,7 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .resource-notifications': ({ online, localhost, blob }) => {
+  '#document-menu .resource-notifications': ({ online, localhost, blob }) => {
     if (blob) return false;
 
     if (!online && !localhost) return false;
@@ -439,7 +439,7 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .resource-save': ({ info, online, localhost, blob }) => {
+  '#document-menu .resource-save': ({ info, online, localhost, blob }) => {
     if (blob) return false;
 
     if (!online && !localhost) return false;
@@ -457,7 +457,7 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .create-version': ({ info, online, localhost, blob }) => {
+  '#document-menu .create-version': ({ info, online, localhost, blob }) => {
     if (blob) return false;
 
     if (!online && !localhost) return false;
@@ -475,7 +475,7 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .create-immutable': ({ info, online, localhost, blob }) => {
+  '#document-menu .create-immutable': ({ info, online, localhost, blob }) => {
     if (blob) return false;
 
     if (!online && !localhost) return false;
@@ -493,7 +493,7 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .resource-delete': ({ info, online, localhost, blob }) => {
+  '#document-menu .resource-delete': ({ info, online, localhost, blob }) => {
     if (blob) return false;
 
     if (!online && !localhost) return false;
@@ -511,7 +511,7 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .resource-memento': ({ info, online, localhost, blob }) => {
+  '#document-menu .resource-memento': ({ info, online, localhost, blob }) => {
     if (blob) return false;
 
     if (!info['timemap']) return false;
@@ -523,7 +523,7 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .snapshot-internet-archive': ({ info, online, localhost, blob }) => {
+  '#document-menu .snapshot-internet-archive': ({ info, online, localhost, blob }) => {
     if (blob) return false;
 
     if (info.odrl?.prohibitionActions &&
@@ -538,7 +538,7 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .resource-save-as': ({ info, online, localhost, blob }) => {
+  '#document-menu .resource-save-as': ({ info, online, localhost, blob }) => {
     if (blob) return false;
 
     if (info.odrl?.prohibitionActions &&
@@ -553,7 +553,7 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .resource-print': ({ info }) => {
+  '#document-menu .resource-print': ({ info }) => {
     if (info.odrl?.prohibitionActions &&
         info.odrl.prohibitionAssignee === Config.User.IRI &&
         info.odrl.prohibitionActions.includes(ns.odrl.print.value)) {
@@ -563,9 +563,9 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .resource-markdown': () => Config.EditorEnabled || !!document.querySelector('[data-markdown-mode]'),
+  '#document-menu .resource-markdown': () => Config.EditorEnabled || !!document.querySelector('[data-markdown-mode]'),
 
-  '#document-do .export-as-html': ({ info }) => {
+  '#document-menu .export-as-html': ({ info }) => {
     if (info.odrl?.prohibitionActions &&
         info.odrl.prohibitionAssignee === Config.User.IRI &&
         (info.odrl.prohibitionActions.includes(ns.odrl.transform.value) ||
@@ -576,7 +576,7 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .generate-feed': ({ info, online, localhost }) => {
+  '#document-menu .generate-feed': ({ info, online, localhost }) => {
     if (info.odrl?.prohibitionActions &&
         info.odrl.prohibitionAssignee === Config.User.IRI &&
         info.odrl.prohibitionActions.includes(ns.odrl.reproduce.value)) {
@@ -588,7 +588,7 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .robustify-links': ({ info, online, editorMode, blob }) => {
+  '#document-menu .robustify-links': ({ info, online, editorMode, blob }) => {
     if (blob) return false;
 
     if (editorMode !== 'author') return false;
@@ -694,10 +694,8 @@ export function buttonShouldBeEnabled(selector, context) {
   return fn(context);
 }
 
-export function updateButtons(selectors) {
-  selectors = selectors || Object.keys(buttonState);
-
-  const context = {
+function getButtonContext() {
+  return {
     info: Config.Resource[Config.DocumentURL],
     authenticated: Config['Session']?.isActive,
     online: navigator.onLine,
@@ -705,7 +703,24 @@ export function updateButtons(selectors) {
     editorMode: Config.Editor.mode,
     documentAction: Config.DocumentAction,
     blob: Config.DocumentURL.startsWith('blob:')
-  }
+  };
+}
+
+export function getButtonStates() {
+  const context = getButtonContext();
+  const states = {};
+  Object.keys(buttonState).forEach(selector => {
+    const last = selector.split(' ').pop();
+    if (!last.startsWith('.')) return;
+    states[last.slice(1)] = buttonShouldBeEnabled(selector, context);
+  });
+  return states;
+}
+
+export function updateButtons(selectors) {
+  selectors = selectors || Object.keys(buttonState);
+
+  const context = getButtonContext();
 
   selectors.forEach(selector => {
     const node = document.querySelector(selector);

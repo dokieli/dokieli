@@ -24,6 +24,7 @@ import { init } from './init.js'
 import { getDocumentContentNode } from './utils/html.js';
 import { showDocumentMenu } from './dialog.js';
 import { updateUILanguage } from './actions.js';
+import { getButtonStates } from './ui/buttons.js';
 
 const DO = window.DO ?? {
   C: Config,
@@ -129,6 +130,10 @@ const DO = window.DO ?? {
 
     updateUILanguage: function(lang) {
       return updateUILanguage(lang);
+    },
+
+    getButtonStates: function() {
+      return getButtonStates();
     },
 
     menuClick: function(className) {

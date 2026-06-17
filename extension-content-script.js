@@ -77,6 +77,13 @@ WebExtension.runtime.onMessage.addListener(function (request, sender, sendRespon
 
       sendResponse({ loaded: true });
     }
+    else if (request.action === 'dokieli.buttonStates') {
+      if (typeof DO === 'undefined' || !DO.U) {
+        sendResponse(null);
+        return;
+      }
+      try { sendResponse(DO.U.getButtonStates()); } catch (e) { console.log(e); sendResponse(null); }
+    }
     else if (request.action === 'dokieli.menuClick') {
       if (typeof DO === 'undefined' || !DO.U || !request.className) {
         sendResponse({ ok: false });
