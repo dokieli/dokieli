@@ -701,7 +701,7 @@ export function buttonShouldBeEnabled(selector, context) {
 
 function getButtonContext() {
   return {
-    info: Config.Resource[Config.DocumentURL],
+    info: Config.Resource[Config.DocumentURL] || {},
     authenticated: Config['Session']?.isActive,
     online: navigator.onLine,
     localhost: isLocalhost(Config.DocumentURL),

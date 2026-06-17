@@ -236,7 +236,7 @@ export class Editor {
 
     document.body.replaceChildren(fragmentFromString(`<main><article dir="auto"><h1 aria-label="${i18n.t('editor.new.h1.aria-label')}" property="schema:name"></h1><div datatype="rdf:HTML" property="schema:description"><p></p></div></article></main>`));
 
-    document.body.prepend(documentMenu);
+    if (documentMenu) document.body.prepend(documentMenu);
 
     document.body.removeAttribute('id');
     document.body.removeAttribute('class');
@@ -276,7 +276,7 @@ export class Editor {
 
     document.body.replaceChildren(fragmentFromString(`<main><article about="" dir="auto" typeof="schema:CreativeWork"><header class="caption"><h1 property="schema:name"></h1></header><section class="slide" id="cover" inlist="" rel="schema:hasPart" resource="#cover" typeof="bibo:Slide"><h2 aria-label="${i18n.t('editor.new-slideshow.h2.aria-label')}" property="schema:name"></h2><div datatype="rdf:HTML" property="schema:description"><p></p></div></section></article><div class="do progress"></div></main>`));
 
-    document.body.prepend(documentMenu);
+    if (documentMenu) document.body.prepend(documentMenu);
 
     document.body.removeAttribute('id');
     document.body.className = 'shower single';
@@ -307,7 +307,7 @@ export class Editor {
 
     document.body.replaceChildren(fragmentFromString(`<main><article about="" dir="auto" typeof="schema:CreativeWork"><h1 aria-label="${i18n.t('editor.new.h1.aria-label')}" property="schema:name"></h1></article></main>`));
 
-    document.body.prepend(documentMenu);
+    if (documentMenu) document.body.prepend(documentMenu);
 
     document.body.removeAttribute('id');
     document.body.removeAttribute('class');
