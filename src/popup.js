@@ -188,25 +188,12 @@ function initLanguageHandler() {
   });
 }
 
-const NEW_TAB_BUTTONS = {
-  'resource-new': ['new.html'],
-  'resource-new-slideshow': ['new.html', '#template=slideshow'],
-};
-
 function initMenuActions() {
   document.addEventListener('click', async (e) => {
     const button = e.target.closest('button');
     if (!button || button.disabled) return;
     if (!button.closest('#document-do, #document-tools')) return;
     if (button.matches('.signin-user, .signout-user')) return;
-
-    const cls = [...button.classList].find(c => c in NEW_TAB_BUTTONS);
-    if (cls) {
-      const [path, query = ''] = NEW_TAB_BUTTONS[cls];
-      await WebExtension.tabs.create({ url: WebExtension.runtime.getURL(path) + query });
-      window.close();
-      return;
-    }
 
     const actionClass = [...button.classList].find(c => c !== 'show' && c !== 'hide' && c !== 'do-menu');
     if (!actionClass) return;

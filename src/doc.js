@@ -1225,7 +1225,7 @@ export function showTimeMap(node, url) {
       node = document.getElementById(elementId);
       node.addEventListener('click', e => {
         if (e.target.closest('button.close')) {
-          document.querySelector('#document-do .resource-memento').disabled = false
+          document.querySelector('#document-menu .resource-memento').disabled = false
         }
       });
     })

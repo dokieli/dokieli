@@ -28,7 +28,7 @@ function renderDocumentDo() {
     {
       id: 'menu-group-primary',
       className: 'menu-group-primary',
-      buttons: [Config.Button.Menu.New, Config.Button.Menu.NewSlideshow, Config.Button.Menu.Open, editToggle]
+      buttons: [Config.Button.Menu.New, Config.Button.Menu.Open, editToggle]
     },
     {
       id: 'menu-group-document',

@@ -3316,12 +3316,7 @@ width: 20em;
 max-width: 90vw;
 padding: 0;
 }
-#document-menu.do.on > button.do-menu.hide {
-position: absolute;
-top: 0.5em;
-right: 0.5em;
-z-index: 1;
-}
+
 #document-menu.do.on > div {
 padding: 1em 1em 0.5em 1em;
 font-size: initial;
@@ -3362,16 +3357,13 @@ border-color: #000;
 #document-menu #document-menu-tabs > nav li a:focus {
 outline:2px solid #080;
 }
-#document-menu #document-menu-tabs > nav li.selected {
-}
+
 #document-menu #document-menu-tabs > nav li.selected a {
 color: #080;
 background-color: #fff;
 border-bottom: transparent;
 /*! border: 2px solid #333; */
 border-bottom: 2px solid #080;
-}
-#document-menu #document-menu-tabs > nav li:first-child a {
 }
 
 #document-menu #document-menu-tabs > section {
@@ -3401,9 +3393,7 @@ padding: 0;
 margin: 0;
 padding: 0;
 }
-#document-menu #document-do details.menu-group {
 
-}
 #document-views h2,
 #ui-language h2, 
 #document-menu #document-do details.menu-group > summary {

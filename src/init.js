@@ -34,7 +34,7 @@ import { initEditor } from './editor/initEditor.js';
 import { showGraph, showVisualisationGraph } from './viz.js';
 import * as Slideshow from './slideshow.js';
 import { initCV } from './cv.js';
-import { openResource, initDocumentMenu, spawnDokieli, showDocumentMenu, initSlideshowInteraction, initDocumentDoEvents } from './dialog.js';
+import { openResource, initDocumentMenu, spawnDokieli, showDocumentMenu, initSlideshowInteraction, initDocumentDoEvents, showNewDocument } from './dialog.js';
 import { Icon } from './ui/icons.js';
 import { eventButtonClose, eventButtonSignIn, eventButtonSignOut, eventButtonNotificationsToggle, eventButtonInfo, emitDocEvent } from './events.js';
 import { hasNonWhitespaceText, getDocumentContentNode, selectArticleNode } from "./utils/html.js";
@@ -359,7 +359,13 @@ export async function initDocumentMode(mode) {
 
     if (!hasContent && !Config.EditorEnabled) {
       const param = getUrlParams('template')[0];
-      const template = param === 'slideshow' ? 'new-slideshow' : (param || 'new');
+      let template;
+      if (!param) {
+        showNewDocument();
+      }
+      else {
+        template = param === 'slideshow' ? 'new-slideshow' : param;
+      }
       Config.Editor.toggleEditor('author', { template });
       Config.DocumentAction = 'new';
       if (template === 'new-slideshow') initSlideshow({ focusEditor: true });

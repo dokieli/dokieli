@@ -3260,8 +3260,7 @@ export function viewSource(e) {
       }
 
       sourceBox.remove();
-      const srcBtn = document.querySelector('#document-menu .resource-source');
-      if (srcBtn) srcBtn.disabled = false;
+      document.querySelector('#document-menu .resource-source').disabled = false;
     }
 
     if (e.target.closest('button.close')) {
@@ -3459,8 +3458,7 @@ export async function saveAsDocument(e) {
   var saveAsDocument = document.getElementById('save-as-document');
   saveAsDocument.addEventListener('click', (e) => {
     if (e.target.closest('button.close') || e.target.closest('button.cancel')) {
-      var sa = document.querySelector('#document-do .resource-save-as');
-      if (sa) sa.disabled = false;
+      document.querySelector('#document-menu .resource-save-as').disabled = false;
     }
   });
   saveAsDocument.addEventListener('click', (e) => {
@@ -3820,8 +3818,7 @@ export async function saveAsDocument(e) {
         }
       }
       saveAsDocument.parentNode?.removeChild(saveAsDocument);
-      var saButton = document.querySelector('#document-do .resource-save-as');
-      if (saButton) saButton.disabled = false;
+      document.querySelector('#document-menu .resource-save-as').disabled = false;
       return;
     }
 
@@ -4933,10 +4930,7 @@ export function showRobustLinks(e, selector) {
   var robustifyLinks = document.getElementById('robustify-links');
   robustifyLinks.addEventListener('click', function (e) {
     if (e.target.closest('button.close')) {
-      var rs = document.querySelector('#document-do .robustify-links');
-      if (rs) {
-        rs.disabled = false;
-      }
+      document.querySelector('#document-menu .robustify-links').disabled = false;
     }
 
     if (e.target.closest('button.robustify')) {
@@ -5583,10 +5577,7 @@ export function resourceDelete(e, url, options) {
       var parent = buttonCC.parentNode;
       parent.parentNode.removeChild(parent);
 
-      var rd = document.querySelector('#document-do .resource-delete');
-      if (rd) {
-        rd.disabled = false;
-      }
+      document.querySelector('#document-menu .resource-delete').disabled = false;
     }
     else if (buttonDelete) {
       Config.Storage.delete(url)
