@@ -40,7 +40,7 @@
     "node": ">=22.0.0"
   },
   "dependencies": {
-    "@uvdsl/solid-oidc-client-browser": "^0.2.2",
+    "@uvdsl/solid-oidc-client-browser": "^0.2.3",
     "buffer": "^6.0.3",
     "d3-force": "^3.0.0",
     "d3-selection": "^3.0.0",

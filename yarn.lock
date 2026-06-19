@@ -1187,12 +1187,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@uvdsl/solid-oidc-client-browser@npm:^0.2.2":
-  version: 0.2.2
-  resolution: "@uvdsl/solid-oidc-client-browser@npm:0.2.2"
+"@uvdsl/solid-oidc-client-browser@npm:^0.2.3":
+  version: 0.2.3
+  resolution: "@uvdsl/solid-oidc-client-browser@npm:0.2.3"
   dependencies:
     jose: "npm:^5.9.6"
-  checksum: 10c0/ce67477999ae9044c09d5ef17fe9b4e6b49b9ee35262e2a3508e2c3f82ccc013b85e127ecbad3fcb662fe126b8424e1c63622d14b7342a4bdda1014de21e1aec
+  checksum: 10c0/a592fb7775cbf88b043f774b11be16588ea52e6f46805d73acecb7d53e5a5dc22d467c2dd128b4fb802b7c8e2c83772cff33ed2e75e0d5289173b10253a9fc7b
   languageName: node
   linkType: hard
 
@@ -2098,7 +2098,7 @@ __metadata:
   dependencies:
     "@axe-core/playwright": "npm:^4.9.1"
     "@playwright/test": "npm:^1.44.1"
-    "@uvdsl/solid-oidc-client-browser": "npm:^0.2.2"
+    "@uvdsl/solid-oidc-client-browser": "npm:^0.2.3"
     "@vitest/coverage-istanbul": "npm:^4.0.18"
     "@vitest/coverage-v8": "npm:^4.0.18"
     babel-eslint: "npm:^10.1.0"
