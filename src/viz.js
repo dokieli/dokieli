@@ -939,7 +939,7 @@ function convertGraphToVisualisationGraph(url, g, options){
           break;
         case ns.bibo.Slide.value:
         case ns.bibo.Slideshow.value:
-        case ns:schema.PresentationDigitalDocument.value;
+        case ns.schema.PresentationDigitalDocument.value:
           sGroup = 17;
           break;
         // case ns.skos.Collection.value:

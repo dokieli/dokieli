@@ -143,8 +143,6 @@ export function processAction(action, formValues, selectionData) {
 
         noteHTML = createHTML('', note);
 
-        noteHTML = domSanitize(noteHTML);
-
         // console.log(noteData)
         // console.log(data)
         // console.log(annotation)
