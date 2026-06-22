@@ -744,8 +744,11 @@ color:#c00;
 #content section li,
 dd:has([class~="cv-entry-delete"]) {
 position:relative;
+}
+dd:has([class~="cv-entry-delete"]) {
 display:block !important;
 }
+
 [data-cv-section] dd:after {
 content:'' !important;
 }
