@@ -146,7 +146,7 @@ let customNodes = {
     inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "text", getAttrs(node) { return getAttributes(node) }}],
-    toDOM: toDOMWith("text")
+    toDOM: toDOMWith("http://www.w3.org/2000/svg text")
   },
   tspan: {
     content: "inline*",
@@ -154,7 +154,7 @@ let customNodes = {
     inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "tspan", getAttrs(node){ return getAttributes(node); }}],
-    toDOM: toDOMWith("tspan")
+    toDOM: toDOMWith("http://www.w3.org/2000/svg tspan")
   },
   title: {
     content: "inline*",
@@ -162,7 +162,7 @@ let customNodes = {
     inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "title", getAttrs(node){ return getAttributes(node); }}],
-    toDOM: toDOMWith("title")
+    toDOM: toDOMWith("http://www.w3.org/2000/svg title")
   },
   metadata: {
     content: "inline*",
@@ -170,7 +170,7 @@ let customNodes = {
     inline: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "metadata", getAttrs(node){ return getAttributes(node); }}],
-    toDOM: toDOMWith("metadata")
+    toDOM: toDOMWith("http://www.w3.org/2000/svg metadata")
   },
   button: {
     content: "inline*",
