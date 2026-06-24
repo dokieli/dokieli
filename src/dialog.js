@@ -7310,6 +7310,7 @@ export function showEncryptionSetup(onSuccess) {
       Config.User.Encryption.Enabled = true;
       Config.User.Encryption.KeyId = getSessionKid();
       info.textContent = 'Encryption enabled. Annotations will be encrypted when posted.';
+      aside.querySelector('p').remove();
       form.remove();
       clearPendingEncryptedQueues();
       if (typeof onSuccess === 'function') onSuccess();
