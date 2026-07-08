@@ -1,8 +1,11 @@
 {
   "annotation-inbox.label.textContent": "Inbox",
+  "annotation-location-selection.not-found.p.textContent": "Location to store annotation not found. Please ensure you have a place to store your annotation, re-signin, and try again.",
   "annotation-location-selection.store-at.span.textContent": "Store at:",
   "annotation-location.annotation-service.label.textContent": "Annotation service",
+  "annotation-location.annotation-store.label.textContent": "Annotations store",
   "annotation-location.personal-storage.label.textContent": "Personal storage",
+  "annotation-location.activity-outbox.label.textContent": "Activity outbox",
   "annotation.delete.button.aria-label": "Delete annotation",
   "annotation.delete.button.title": "Delete",
   "browser.browse-location.button.textContent": "Browse",

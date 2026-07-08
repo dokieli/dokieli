@@ -46,7 +46,7 @@ async function del(key) {
 }
 
 import Config from './config.js';
-import { getDateTimeISO, generateUUID } from './util.js';
+import { getDateTimeISO, generateAttributeId } from './util.js';
 import { getDocument, updateMutableResource } from './doc.js';
 
 export async function updateDeviceStorageDocumentWithItem(key, data, options = {}) {
@@ -64,7 +64,7 @@ export async function updateDeviceStorageDocumentWithItem(key, data, options = {
   var collection = await getDeviceStorageItem(key);
   // console.log(collection);
 
-  var id = `${key}#${generateUUID()}`;
+  var id = `${key}#${generateAttributeId()}`;
 
   var datetime = getDateTimeISO();
 
@@ -294,7 +294,7 @@ export function updateDeviceStorageProfile(User) {
   var U = { ...User };
   var key = 'DO.Config.User';
 
-  var id = generateUUID();
+  var id = generateAttributeId();
   var datetime = getDateTimeISO();
 
   // Graphs are large and reconstructable, so we don't persist them.

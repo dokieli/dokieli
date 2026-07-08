@@ -21,9 +21,10 @@ import { i18n } from './i18n.js';
 import { getButtonHTML, updateButtons, setMenuButtonDisabled } from './ui/buttons.js';
 import { addMessageToLog, buildResourceView, copyRelativeResources, createFeedXML, createImmutableResource, createMutableResource, createNoteDataHTML, getAccessModeOptionsHTML, getBaseURLSelection, getDocument, getFeedFormatSelection, getLanguageOptionsHTML, getLicenseOptionsHTML, getResourceInfo, getSavePayload, isMarkdownTarget, rewriteBaseURL, setCopyToClipboard, setDocumentRelation, showActionMessage, showRobustLinksDecoration, showTimeMap, updateMutableResource, buildReferences, getDocumentConceptDefinitionsHTML, insertDocumentLevelHTML, insertTestCoverageToTable, diffRequirements, removeReferences, getStorageSelfDescription, getContactInformation, getPersistencePolicy, getODRLPolicies, updateResourceInfos, initCurrentStylesheet, setDate, showFragment, initCopyToClipboard, setDocumentURL, getAgentHTML } from './doc.js';
 import { removeNodesWithIds, createHTML, getFormValues } from './utils/html.js';
+import { createAnnotation } from '@dokieli/web-annotation';
 import { accessModeAllowed, accessModePossiblyAllowed } from './access.js';
 import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeObject, htmlEncode, sanitizeIRIs } from './utils/sanitization.js';
-import { escapeRDFLiteral, generateAttributeId, generateUUID } from './util.js';
+import { escapeRDFLiteral, generateAttributeId } from './util.js';
 import { setAcceptRDFTypes } from './fetcher.js';
 import { forceTrailingSlash, generateDataURI, getAbsoluteIRI, getBaseURL, isHttpOrHttpsProtocol, isFileProtocol, isUrl, stripFragmentFromString, getFragmentFromString, getURLLastPath, currentLocation } from './uri.js';
 import { getAccessSubjects, getACLResourceGraph, getAgentInbox, getAgentName, getAuthorizationsMatching, getGraphAuthors, getGraphContributors, getGraphEditors, getGraphImage, getGraphLabelOrIRI, getGraphPerformers, getGraphTypes, getLinkRelation, getLinkRelationFromHead, getResourceGraph, getUserContacts, getUserLabelOrIRI, serializeData, getSubjectInfo, getRDFSerializer } from './graph.js';
@@ -1531,31 +1532,25 @@ export function replyToResource(e, iri) {
     var attributeId = generateAttributeId()
 
     var motivatedBy = "oa:replying"
-    var noteData = {
-      "type": 'comment',
-      "mode": "write",
-      "motivatedByIRI": motivatedBy,
-      "id": attributeId,
-      // "iri": noteIRI, //e.g., https://example.org/path/to/article
-      "creator": {},
-      "datetime": datetime,
-      "target": {
-        "iri": iri
-      },
-      "body": [{ "value": note }],
-    }
-    if (Config.User.IRI) {
-      noteData.creator["iri"] = Config.User.IRI
-    }
-    if (Config.User.Name) {
-      noteData.creator["name"] = Config.User.Name
-    }
-    if (Config.User.Image) {
-      noteData.creator["image"] = Config.User.Image
-    }
-    if (Config.User.URL) {
-      noteData.creator["url"] = Config.User.URL
-    }
+    // dokieli maps its "reply" action to the oa:replying motivation and passes
+    // it directly to createAnnotation.
+    var noteData = createAnnotation({
+      motivatedBy,
+      type: 'comment',
+      id: attributeId,
+      refId: 'r-' + attributeId,
+      datetime,
+      target: { iri, renderedVia: { iri: 'https://dokie.li/#i', name: 'dokieli' } },
+      body: { content: note },
+      creator: {
+        iri: Config.User.IRI || undefined,
+        name: Config.User.Name || undefined,
+        image: Config.User.Image || undefined,
+        url: Config.User.URL || undefined,
+        type: Config.User.Types || undefined
+      }
+    })
+    noteData.mode = 'write'
 
     var language = document.querySelector('#reply-to-resource-language')
     if (language && language.length) {
@@ -1634,6 +1629,7 @@ export function replyToResource(e, iri) {
           "type": ['as:Announce'],
           "inbox": inboxURL,
           "object": noteIRI,
+          "note": Object.assign({}, noteData, { "iri": noteIRI }),
           "target": iri,
           "license": noteData.license,
           "statements": notificationStatements
@@ -2482,7 +2478,7 @@ function showCreateContainer(baseURL, id, action, e) {
   if (!e) {
     return;
   }
-  id = id || generateUUID();
+  id = id || generateAttributeId();
 
   var div = document.getElementById(id + '-create-container');
   if (div) {
@@ -4014,7 +4010,7 @@ export async function saveAsDocument(e) {
 
         if (Config.User.IRI && requestAccess) {
           document.querySelector('#save-as-document .response-message .request-access').addEventListener('click', (e) => {
-            var objectId = '#' + generateUUID();
+            var objectId = '#' + generateAttributeId();
 
             inboxURL = e.target.dataset.inbox;
             var accessTo = e.target.dataset.target;
@@ -4322,7 +4318,7 @@ function relayoutIfSingle() {
 }
 
 function newSlideFragment(template = 'normal') {
-  const id = 'slide-' + generateUUID();
+  const id = 'slide-' + generateAttributeId();
   const wrapper = (inner) => `<section class="slide" id="${id}" inlist="" rel="schema:hasPart" resource="#${id}" typeof="bibo:Slide">${inner}</section>`;
   switch (template) {
     case 'shout':
@@ -5242,7 +5238,7 @@ export function snapshotAtEndpoint(e, iri, endpoint, noteData, options = {}) {
       noteData = noteData || {
         "url": iri,
         "annotation": {
-          "@context": "http://www.w3.org/ns/anno.jsonld",
+          "@context": "https://www.w3.org/ns/anno.jsonld",
           "@type": "Annotation",
           "motivation": "linking",
           "target": iri,
@@ -6095,7 +6091,7 @@ export function processNotificationChannelMessage(data, options) {
 //     "https://www.w3.org/ns/activitystreams",
 //     "https://www.w3.org/ns/solid/notification/v1"
 //   ],
-//   "id": "urn:uuid:" + generateUUID(),
+//   "id": "urn:uuid:" + generateAttributeId(),
 //   "type": "Update",
 //   "object": "https://csarven.localhost:8443/foo.html",
 //   "state": "128f-MtYev",

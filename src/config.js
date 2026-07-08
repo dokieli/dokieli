@@ -264,6 +264,7 @@ export default {
     'references': { 'label': 'References', 'selector':'cite a', 'titleSelector': 'h2' }
   },
   CollectionItemsLimit: 50,
+  CollectionItemsConcurrency: 2,
   ContextLength: 32,
   NotificationLicense: 'https://creativecommons.org/publicdomain/zero/1.0/',
   License: {

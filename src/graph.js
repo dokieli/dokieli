@@ -24,6 +24,7 @@ import { escapeRegExp, scoreMatch, uniqueArray } from './util.js'
 import { domSanitize, safeObjectAssign, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeIRIOrBNode, sanitizeIRIs, sanitizeObject } from './utils/sanitization.js'
 import { parseMarkdown } from "./utils/html.js";
 import { getResource, setAcceptRDFTypes } from './fetcher.js'
+import { serializeAnnotationToJSONLD, parseAnnotation } from '@dokieli/web-annotation';
 import LinkHeader from "http-link-header";
 
 const ns = Config?.ns;
@@ -196,7 +197,8 @@ export function getSubjectInfo(subjectIRI, options = {}) {
         Occupations: getAgentOccupations(g),
         Skills: getGraphSkills(g),
         Publications: getAgentPublications(g),
-        Made: getAgentMade(g)
+        Made: getAgentMade(g),
+        Types: getGraphTypes(g)
       }
     })
   }
@@ -237,6 +239,15 @@ export function serializeDataToPreferredContentType(data, options) {
     case 'application/json':
     case '*/*':
     default:
+      // Prefer model-built JSON-LD when the caller supplies it (clean, no RDFa-derived
+      // langStrings): a pre-wrapped AS activity (activityJSONLD) or the annotation model
+      // (annotationObject) serialized directly. Fall back to the legacy RDFa → graph path.
+      if (options.activityJSONLD) {
+        return Promise.resolve(JSON.stringify(options.activityJSONLD));
+      }
+      if (options.annotationObject) {
+        return Promise.resolve(JSON.stringify(serializeAnnotationToJSONLD(options.annotationObject)));
+      }
       return serializeData(data, options['contentType'], 'application/ld+json', options);
   }
 }
@@ -474,6 +485,61 @@ function streamToString(stream) {
     stream.on('error', (err) => reject(err));
     stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
   })
+}
+
+/**
+ * Descends an LDN/ActivityStreams notification wrapper, following `as:object`
+ * (cycle-guarded) to the inner `oa:Annotation`, and returns its IRI. Unwrapping
+ * the notification envelope is dokieli's job, not the annotations library's, so
+ * we resolve it here before handing a plain annotation IRI to core's parser.
+ *
+ * @param {object} g - rdf-ext graph (grapoi dataset).
+ * @param {string} [annotationIRI] - wrapper or annotation IRI.
+ * @returns {string|undefined} The inner annotation IRI, or the input unchanged.
+ */
+function unwrapToAnnotationIRI(g, annotationIRI) {
+  if (!annotationIRI) { return annotationIRI; }
+
+  const seen = new Set();
+  let iri = annotationIRI;
+
+  while (iri && !seen.has(iri)) {
+    seen.add(iri);
+    const node = g.node(rdf.namedNode(iri));
+    if (node.out(ns.rdf.type).values.includes(ns.oa.Annotation.value)) { return iri; }
+    const object = node.out(ns.as.object).values[0];
+    if (!object) { break; }
+    iri = object;
+  }
+
+  return annotationIRI;
+}
+
+/**
+ * Parses an annotation out of an rdf-ext graph into an `@dokieli/web-annotation`
+ * `Annotation`, using core's `parseAnnotation` with a `JSONLDParser` backed by
+ * our rdf-ext serializer. Because the graph is already RDF (any source format —
+ * RDFa/Turtle/JSON-LD), this works regardless of how the resource was fetched.
+ *
+ * @param {object} g - rdf-ext graph (grapoi dataset).
+ * @param {string} [annotationIRI] - IRI to pick the annotation node (may be a notification wrapper); also set as `annotation.iri`.
+ * @returns {Promise<object|null>} The parsed Annotation, or null.
+ */
+export function parseAnnotationFromGraph(g, annotationIRI) {
+  const resolvedIRI = unwrapToAnnotationIRI(g, annotationIRI);
+
+  // The JSONLDParser: rdf-ext graph → JSON-LD. core maps it to an Annotation.
+  const parser = async (graph) => {
+    // Serialize the WHOLE dataset, not just the resource term's outbound quads.
+    // getResourceGraph scopes the grapoi to the resource IRI, so g.out().quads()
+    // emits only the annotation node's direct triples — dropping the target
+    // SpecificResource and the selector (separate subjects), which left annotations
+    // with no selector and therefore no mark. Re-wrap as a term-less grapoi.
+    const fullGraph = graph?.dataset ? rdf.grapoi({ dataset: graph.dataset }) : graph;
+    const jsonld = await serializeGraph(fullGraph, { contentType: 'application/ld+json' });
+    return jsonld ? JSON.parse(jsonld) : [];
+  };
+  return parseAnnotation(g, { parser, annotationIRI: resolvedIRI });
 }
 
 export function serializeGraph(g, options = {}) {
@@ -740,6 +806,16 @@ export function getResourceGraph(iri, headers, options = {}) {
       }
       else if (!Config.MediaTypes.RDF.includes(options['contentType'])) {
         return Promise.reject(new Error('Unsupported media type for RDF parsing: ' + options['contentType']));
+      }
+
+      if (['application/ld+json', 'application/activity+json'].includes(options['contentType'])) {
+        return response.text().then(text => {
+          try {
+            return JSON.stringify(transformJsonldContextURLScheme(JSON.parse(text)));
+          } catch (e) {
+            return text;
+          }
+        });
       }
 
       return response.text();

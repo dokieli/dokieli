@@ -15,12 +15,24 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { generateUUID } from "./../../util.js";
-import { tagsToBodyObjects } from "./../../doc.js";
+import { generateAttributeId } from "./../../util.js";
 import { fragmentFromString } from "../../utils/html.js";
 import { Icon } from "../../ui/icons.js";
 import Config from "../../config.js";
-import { generateDataURI } from "../../uri.js";
+import { generateDataURI, stripFragmentFromString } from "../../uri.js";
+import {
+  getSelectedParentElement,
+  rangeSelectsSingleNode,
+  exportSelection,
+  cloneSelection,
+  restoreSelection,
+  selectionToTextQuote,
+  selectionToSelectors,
+  setSelectionFromTextQuote,
+  setSelectionByOffset,
+  createAnnotation,
+  markSegmentHTML,
+} from '@dokieli/web-annotation';
 
 // 1. new annotation
 // replace the selection with fragment 
@@ -41,114 +53,34 @@ export function getTextQuoteHTML(refId, motivatedBy, selectedContent, docRefType
   if (typeof selectedContent !== "string") { throw new Error(`getTextQuoteHTML: selectedContent is of type ${typeof selectedContent}`) }
   if (!selectedContent.length) { throw new Error(`getTextQuoteHTML: selectedContent is empty`) }
 
-  refId = refId || generateUUID();
+  refId = refId || generateAttributeId();
   motivatedBy = motivatedBy || 'oa:replying';
   docRefType = docRefType || '';
   options = options || {};
 
-  var doMode = (options.do) ? ' do' : '';
-
-  var refOpen = '<span class="ref' + doMode + '" rel="schema:hasPart" resource="#' + refId + '" typeof="http://purl.org/dc/dcmitype/Text">';
-  var refClose = '</span>';
-  if (motivatedBy == 'oa:highlighting') {
-    refOpen = '<span class="ref' + doMode + '" rel="schema:hasPart" resource="#h-' + refId + '" typeof="oa:Annotation"><span rel="oa:motivatedBy" resource="oa:highlighting"></span><span rel="oa:hasTarget" resource="#' + refId + '" typeof="http://purl.org/dc/dcmitype/Text">';
-    refClose = '</span></span>';
-  }
-  var mark = '<mark datatype="rdf:HTML" id="' + refId + '" property="rdf:value">' + selectedContent + '</mark>';
-
-  return refOpen + mark + docRefType + refClose;
-}
-
-
-//Outputs:
-// {
-//   type: 'TextQuoteSelector',
-//   exact: 'ipsum',
-//   prefix: 'Lorem ',
-//   suffix: ' dolor'
-// }
-
-//From https://github.com/yabwe/medium-editor/blob/master/src/js/selection.js
-export function getSelectedParentElement(range) {
-  if (!range) {
-    return null;
-  }
-
-  // Selection encompasses a single element
-  if (rangeSelectsSingleNode(range) && range.startContainer.childNodes[range.startOffset].nodeType !== 3) {
-    return range.startContainer.childNodes[range.startOffset];
-  }
-
-  // Selection range starts inside a text node, so get its parent
-  if (range.startContainer.nodeType === 3) {
-    return range.startContainer.parentNode;
-  }
-
-  // Selection starts inside an element
-  return range.startContainer;
-}
-
-//From https://github.com/yabwe/medium-editor/blob/master/src/js/selection.js
-//http://stackoverflow.com/questions/15867542/range-object-get-selection-parent-node-chrome-vs-firefox
-export function rangeSelectsSingleNode(range) {
-  var startNode = range.startContainer;
-  return startNode === range.endContainer &&
-    startNode.hasChildNodes() &&
-    range.endOffset === range.startOffset + 1;
-}
-
-export function exportSelection(selectedParentElement, selection) {
-  if (!selection.rangeCount) return;
-
-  const ranges = [];
-
-  for (let i = 0; i < selection.rangeCount; i++) {
-    ranges.push(selection.getRangeAt(i));
-  }
-
-  const mergedRange = document.createRange();
-  mergedRange.setStart(ranges[0].startContainer, ranges[0].startOffset);
-  mergedRange.setEnd(ranges[ranges.length - 1].endContainer, ranges[ranges.length - 1].endOffset);
-
-  const preSelectionRange = mergedRange.cloneRange();
-  preSelectionRange.selectNodeContents(selectedParentElement);
-  preSelectionRange.setEnd(mergedRange.startContainer, mergedRange.startOffset);
-  const start = preSelectionRange.toString().length;
-
-  const selectionState = {
-    start: start,
-    end: start + mergedRange.toString().length
-  };
-
-  return selectionState;
-}
-
-export function cloneSelection() {
-  const selection = window.getSelection();
-  if (!selection.rangeCount) return null;
-
-  const clonedSelection = [];
-
-  for (let i = 0; i < selection.rangeCount; i++) {
-    const range = selection.getRangeAt(i).cloneRange();
-    const fragment = range.cloneContents();
-    clonedSelection.push({ range, fragment });
-  }
-
-  return clonedSelection;
-}
-
-//XXX: Note Firefox bug handling contenteditable true/false differently: https://bugzilla.mozilla.org/show_bug.cgi?id=818515
-export function restoreSelection(clonedSelection) {
-  const selection = window.getSelection();
-  selection.removeAllRanges(); // Clear existing selection
-
-  if (!clonedSelection) return;
-
-  clonedSelection.forEach(({ range }) => {
-    selection.addRange(range);
+  // The library builds the fragment markup (span dcterms:hasPart / mark rdf:value with id=refId);
+  // the reference marker (the <sup> tying it to the annotation) is passed as `reference`.
+  return markSegmentHTML(selectedContent, {
+    annotationUrl: options.annotationUrl || ('#' + refId),
+    id: refId,
+    className: options.do ? 'ref do' : 'ref',
+    reference: docRefType,
   });
 }
+
+
+export {
+  getSelectedParentElement,
+  rangeSelectsSingleNode,
+  exportSelection,
+  cloneSelection,
+  restoreSelection,
+  selectionToTextQuote,
+  setSelectionFromTextQuote,
+} from '@dokieli/web-annotation';
+
+// Re-exported under the original name for call sites that import setSelection
+export { setSelectionByOffset as setSelection } from '@dokieli/web-annotation';
 
 //FIXME: A bit hacky - should use RDF?
 //TODO: Move to inbox.js
@@ -207,6 +139,73 @@ export function createNoteData(annotation) {
       break;
   }
 
+  // dokieli maps its own UI action to a W3C motivation IRI (Config.ActionToMotivation,
+  // resolved by the caller into `motivatedBy`) and passes it directly to
+  // createAnnotation. The library no longer knows about dokieli "actions".
+  const annotationUser = {
+    iri: Config.User.IRI || undefined,
+    name: Config.User.Name || undefined,
+    // Never store the secret-agent placeholder; it's a display fallback the library adds
+    // (and dokieli re-adds when rendering an image-less annotation), not annotation data.
+    image: Config.User.Image || undefined,
+    url: Config.User.URL || undefined,
+    type: Config.User.Types || undefined
+  };
+
+  const textQuoteSelector = (selectionData && selectionData.selector) ? {
+    type: 'TextQuoteSelector',
+    exact: selectionData.selector.exact,
+    prefix: selectionData.selector.prefix,
+    suffix: selectionData.selector.suffix,
+    language: selectionLanguage
+  } : undefined;
+
+  // The library decides the selector shape from the live selection: a RangeSelector
+  // (XPath start/end refined by per-element TextQuotes) for cross-element selections,
+  // a FragmentSelector for same-element-with-id, else a plain TextQuoteSelector. It
+  // also captures each element's language. Fall back to the manual TextQuote when no
+  // live selection is available.
+  let targetSelector;
+  if (selectionData && selectionData.selection) {
+    try {
+      const { selectors = [] } = selectionToSelectors(selectionData.selection, {
+        container: selectionData.selectedParentElement,
+        contextLength: Config.ContextLength
+      }) || {};
+      targetSelector = selectors.find(s => s.type === 'RangeSelector')
+        || selectors.find(s => s.type === 'FragmentSelector')
+        || selectors.find(s => s.type === 'TextQuoteSelector');
+    } catch (e) {
+      // fall back to the manual TextQuoteSelector below
+    }
+  }
+
+  // Legacy fallback: anchor with a FragmentSelector (the element id) refined by the
+  // TextQuoteSelector when the target IRI carries a fragment, else the bare quote.
+  const targetFragment = (targetIRI && targetIRI.includes('#'))
+    ? targetIRI.substring(targetIRI.indexOf('#') + 1)
+    : null;
+
+  const fallbackSelector = textQuoteSelector
+    ? (targetFragment
+      ? {
+          type: 'FragmentSelector',
+          value: targetFragment,
+          conformsTo: 'https://tools.ietf.org/html/rfc3987',
+          refinedBy: textQuoteSelector
+        }
+      : textQuoteSelector)
+    : undefined;
+
+  const annotationTarget = {
+    iri: targetIRI,
+    source: resourceIRI,
+    language: targetLanguage,
+    selector: targetSelector || fallbackSelector,
+    renderedVia: { iri: 'https://dokie.li/#i', name: 'dokieli' }
+    //TODO: state
+  };
+
   switch (action) {
     // case 'sparkline':
     //   var figureIRI = generateAttributeId(null, opts.selectionDataSet);
@@ -220,60 +219,19 @@ export function createNoteData(annotation) {
       //XXX: No need to replace the nodes with itself.
       // ref = selectionData.selectedContent;
 
-      noteData = {
-        "type": action,
-        "mode": mode,
-        "motivatedByIRI": motivatedBy,
-        "id": id,
-        "canonical": 'urn:uuid:' + id,
-        "refId": refId,
-        "refLabel": refLabel,
-        // "iri": noteIRI, //e.g., https://example.org/path/to/article
-        "creator": {},
-        "datetime": datetime,
-        "target": {
-          "iri": targetIRI,
-          "source": resourceIRI,
-          "selector": {
-            "exact": selectionData.selector.exact,
-            "prefix": selectionData.selector.prefix,
-            "suffix": selectionData.selector.suffix,
-            "language": selectionLanguage
-          },
-          "language": targetLanguage
-          //TODO: state
-        }
-      };
-
-      var bodyObject = {
-        "value": content
-      };
-
-      if (language) {
-        noteData["language"] = language;
-        bodyObject["language"] = language;
-      }
-
-      if (license) {
-        noteData["rights"] = noteData["license"] = license;
-        bodyObject["rights"] = bodyObject["license"] = license;
-      }
-
-      noteData["body"] = [bodyObject].concat(tagsToBodyObjects(tagging));
-
-      if (Config.User.IRI) {
-        noteData.creator["iri"] = Config.User.IRI;
-      }
-
-      if (Config.User.Name) {
-        noteData.creator["name"] = Config.User.Name;
-      }
-
-      noteData.creator["image"] = Config.User.Image || Config.IconBase64['.fas.fa-user-secret'];
-
-      if (Config.User.URL) {
-        noteData.creator["url"] = Config.User.URL;
-      }
+      noteData = createAnnotation({
+        motivatedBy,
+        type: action,
+        id,
+        datetime,
+        language,
+        license,
+        rights: license,
+        target: annotationTarget,
+        body: { content, tags: tagging },
+        creator: annotationUser
+      });
+      noteData.mode = mode;
 
       if (annotationInboxLocation && Config.User.TypeIndex && Config.User.TypeIndex[ns.as.Announce.value]) {
         noteData.inbox = Config.User.TypeIndex[ns.as.Announce.value];
@@ -282,66 +240,22 @@ export function createNoteData(annotation) {
       break;
 
     case 'bookmark':
-      docRefType = '';
-
-      noteData = {
-        "type": action,
-        "mode": mode,
-        "motivatedByIRI": motivatedBy,
-        "id": id,
-        "canonical": 'urn:uuid:' + id,
-        "refId": refId,
-        "refLabel": refLabel,
-        // "iri": noteIRI, //e.g., https://example.org/path/to/article
-        "creator": {},
-        "datetime": datetime,
-        "target": {
-          "iri": targetIRI,
-          "source": resourceIRI,
-          "selector": {
-            "exact": selectionData.selector.exact,
-            "prefix": selectionData.selector.prefix,
-            "suffix": selectionData.selector.suffix,
-            "language": selectionLanguage
-          },
-          "language": targetLanguage
-          //TODO: state
-        }
-      };
-
-      var bodyObject = {
-        "purpose": "describing",
-        "value": content
-      };
-
-      if (language) {
-        noteData["language"] = language;
-        bodyObject["language"] = language;
-      }
-
-      if (license) {
-        noteData["rights"] = noteData["license"] = license;
-        bodyObject["rights"] = bodyObject["license"] = license;
-      }
-
-      noteData["body"] = [bodyObject].concat(tagsToBodyObjects(tagging));
-
-      if (Config.User.IRI) {
-        noteData.creator["iri"] = Config.User.IRI;
-      }
-
-      if (Config.User.Name) {
-        noteData.creator["name"] = Config.User.Name;
-      }
-
-      noteData.creator["image"] = Config.User.Image || Config.IconBase64['.fas.fa-user-secret'];
-
-      if (Config.User.URL) {
-        noteData.creator["url"] = Config.User.URL;
-      }
+      noteData = createAnnotation({
+        motivatedBy,
+        type: action,
+        id,
+        datetime,
+        language,
+        license,
+        rights: license,
+        target: annotationTarget,
+        body: { content, tags: tagging, purpose: 'describing' },
+        creator: annotationUser
+      });
+      noteData.mode = mode;
 
       // note = createNoteDataHTML(noteData);
-      ref = getTextQuoteHTML(refId, motivatedBy, selectionData.selectedContent, docRefType, { 'do': true });
+      ref = getTextQuoteHTML(refId, motivatedBy, selectionData.selectedContent, '', { 'do': true });
 
       break;
 
@@ -349,64 +263,22 @@ export function createNoteData(annotation) {
     case 'note':
       var docRefType = '<sup class="ref-comment"><a href="#' + id + '"rel="cito:isCitedBy">' + refLabel + '</a></sup>';
 
-      noteData = {
-        "type": action,
-        "mode": "read",
-        "motivatedByIRI": motivatedBy,
-        "id": id,
-        "canonical": 'urn:uuid:' + id,
-        "refId": refId,
-        "refLabel": refLabel,
-        // "iri": noteIRI, //e.g., https://example.org/path/to/article
-        "creator": {},
-        "datetime": datetime,
-        "target": {
-          "iri": targetIRI,
-          "source": resourceIRI,
-          "selector": {
-            "exact": selectionData.selector.exact,
-            "prefix": selectionData.selector.prefix,
-            "suffix": selectionData.selector.suffix,
-            "language": selectionLanguage
-          },
-          "language": targetLanguage
-          //TODO: state
-        }
-      };
-
-      var bodyObject = {
-        "purpose": "describing",
-        "value": content
-      };
-
-      if (language) {
-        noteData["language"] = language;
-        bodyObject["language"] = language;
-      }
-
-      if (license) {
-        noteData["rights"] = noteData["license"] = license;
-        bodyObject["rights"] = bodyObject["license"] = license;
-      }
-
-      noteData["body"] = [bodyObject].concat(tagsToBodyObjects(tagging));
-
-      if (Config.User.IRI) {
-        noteData.creator["iri"] = Config.User.IRI;
-      }
-
-      if (Config.User.Name) {
-        noteData.creator["name"] = Config.User.Name;
-      }
-
-      noteData.creator["image"] = Config.User.Image || Config.IconBase64['.fas.fa-user-secret'];
-
-      if (Config.User.URL) {
-        noteData.creator["url"] = Config.User.URL;
-      }
+      noteData = createAnnotation({
+        motivatedBy,
+        type: action,
+        id,
+        datetime,
+        language,
+        license,
+        rights: license,
+        target: annotationTarget,
+        body: { content, tags: tagging, purpose: 'describing' },
+        creator: annotationUser
+      });
+      noteData.mode = 'read';
 
       ref = getTextQuoteHTML(refId, motivatedBy, selectionData.selectedContent, docRefType);
-      Config.Editor.replaceSelectionWithFragment(fragmentFromString(ref));
+      Config.Editor.replaceSelectionWithInlineFragment(fragmentFromString(ref));
       break;
 
     case 'citation': //footnote reference
@@ -417,7 +289,7 @@ export function createNoteData(annotation) {
           noteData = {
             "type": refType,
             "mode": mode,
-            "motivatedByIRI": motivatedBy,
+            "motivatedBy": motivatedBy,
             "id": id,
             "refId": refId,
             "refLabel": refLabel,
@@ -451,7 +323,7 @@ export function createNoteData(annotation) {
 
       ref = getTextQuoteHTML(refId, motivatedBy, selectionData.selectedContent, docRefType);
 
-      Config.Editor.replaceSelectionWithFragment(fragmentFromString(ref));
+      Config.Editor.replaceSelectionWithInlineFragment(fragmentFromString(ref));
 
       break;
 
@@ -478,97 +350,26 @@ export function createNoteData(annotation) {
       break;
   }
 
-  // revisit when we refactor importTextQuoteSelector
-  // if (ref) {
-  //   // console.log(this.mode)
-  //   console.log(DO.Editor)
-  //   Config.Editor.replaceSelectionWithFragment(fragmentFromString(ref));
-  // }
+  // Annotation subject (about/@id), serializer-agnostic: write -> '' (resolves to the
+  // Location on POST), object -> relative '#id' (dokieli wraps it in a notification),
+  // read -> absolute documentURL#id (we already have the document URL).
+  if (noteData && noteData.id && noteData.mode) {
+    noteData.iri =
+      noteData.mode === 'write' ? ''
+      : noteData.mode === 'read' ? `${stripFragmentFromString(resourceIRI)}#${noteData.id}`
+      : `#${noteData.id}`;
+  }
 
   return noteData;
 }
 
-// Returns the text content of a node while skipping <sup> elements.
-// This is used so that annotation markup (<sup> labels) injected into the DOM
-// by previous showAnnotation calls does not shift character offsets for
-// subsequent annotations targeting the same passage.
+// textContent skipping <sup> subtrees, so reference markers injected by prior
+// annotations don't shift offsets across annotations on the same passage. dokieli
+// renders those markers; the @dokieli/web-annotation core is sup-agnostic.
 export function getTextContentExcludingSups(node) {
-  if (node.nodeType === Node.TEXT_NODE) return node.textContent;
+  if (node.nodeType === Node.TEXT_NODE) return node.textContent ?? '';
   if (node.tagName?.toUpperCase() === 'SUP') return '';
   let text = '';
-  for (const child of node.childNodes) {
-    text += getTextContentExcludingSups(child);
-  }
+  for (const child of node.childNodes) text += getTextContentExcludingSups(child);
   return text;
-}
-
-export function setSelection(start, end, containerNode) {
-  const range = document.createRange();
-  const selection = window.getSelection();
-
-  let currentNode = containerNode;
-  let charIndex = 0;
-
-  function traverseNodes(node) {
-    if (node.nodeType === Node.TEXT_NODE) {
-      let nextCharIndex = charIndex + node.textContent.length;
-      if (charIndex <= start && nextCharIndex >= start) {
-        range.setStart(node, start - charIndex);
-      }
-      if (charIndex <= end && nextCharIndex >= end) {
-        range.setEnd(node, end - charIndex);
-      }
-      charIndex = nextCharIndex;
-    }
-    else if (node.tagName?.toUpperCase() !== 'SUP') {
-      for (let i = 0; i < node.childNodes.length; i++) {
-        traverseNodes(node.childNodes[i]);
-      }
-    }
-  }
-
-  traverseNodes(currentNode);
-
-  selection.removeAllRanges();
-  selection.addRange(range);
-}
-
-const QUOTE_CONTEXT_LENGTH = 32;
-
-export function selectionToTextQuote(containerNode, selection) {
-  if (!selection.rangeCount) return null;
-  const range = selection.getRangeAt(0);
-  const exact = range.toString();
-
-  const preRange = document.createRange();
-  preRange.selectNodeContents(containerNode);
-  preRange.setEnd(range.startContainer, range.startOffset);
-  const prefix = preRange.toString().slice(-QUOTE_CONTEXT_LENGTH);
-
-  const postRange = document.createRange();
-  postRange.selectNodeContents(containerNode);
-  postRange.setStart(range.endContainer, range.endOffset);
-  const suffix = postRange.toString().slice(0, QUOTE_CONTEXT_LENGTH);
-
-  return { exact, prefix, suffix };
-}
-
-export function setSelectionFromTextQuote(containerNode, { exact, prefix, suffix }) {
-  const text = getTextContentExcludingSups(containerNode);
-  const search = (prefix || '') + exact + (suffix || '');
-
-  let start = -1;
-  if (search.length > 0) {
-    const idx = text.indexOf(search);
-    if (idx !== -1) start = idx + (prefix || '').length;
-  }
-
-  if (start === -1 && exact) {
-    start = text.indexOf(exact);
-  }
-
-  if (start === -1) return false;
-
-  setSelection(start, start + exact.length, containerNode);
-  return true;
 }

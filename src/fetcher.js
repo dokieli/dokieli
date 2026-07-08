@@ -16,7 +16,7 @@ limitations under the License.
 */
 
 import Config from './config.js'
-import { generateUUID } from './util.js'
+import { generateAttributeId } from './util.js'
 import { getProxyableIRI, currentLocation } from './uri.js'
 import { domSanitize } from './utils/sanitization.js'
 
@@ -458,7 +458,7 @@ function patchResourceGraph (url, patches, options = {}) {
 
     case 'text/n3':
     default :
-      var patchId = '_:' + generateUUID();
+      var patchId = '_:' + generateAttributeId();
       data += `${patchId} a solid:InsertDeletePatch .\n`;
       var deletes = '';
       patches.forEach(patch => {

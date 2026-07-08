@@ -509,6 +509,12 @@ export function createHTML(title, main, options) {
   lang = ' lang="' + lang + '" xml:lang="' + lang + '"';
   lang = ('omitLang' in options) ? '' : lang;
 
+  // `options.sanitized` lets a caller pass already-trusted generated markup (e.g. the
+  // annotation RDFa, where only the user input was sanitized at the boundary) so the
+  // whole document isn't re-sanitized - which both strips the wrapper down to <main>
+  // and can alter the generated RDFa. Default still sanitizes for untrusted callers.
+  var mainHTML = ('sanitized' in options) ? main : domSanitize(main);
+
   let html = `<!DOCTYPE html>
 <html${lang} xmlns="http://www.w3.org/1999/xhtml">
   <head>
@@ -517,7 +523,7 @@ export function createHTML(title, main, options) {
   </head>
   <body${prefix}>
     <main>
-${domSanitize(main)}
+${mainHTML}
     </main>
   </body>
 </html>

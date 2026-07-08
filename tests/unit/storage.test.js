@@ -32,7 +32,7 @@ vi.mock('src/util.js', async () => {
   return {
     ...actual,
     fragmentFromString: vi.fn(() => document.createElement('div')),
-    generateUUID: vi.fn(() => 'uuid-123'),
+    generateAttributeId: vi.fn(() => 'uuid-123'),
     getDateTimeISO: vi.fn(() => '2024-05-21T12:00:00Z'),
     getHash: vi.fn(() => Promise.resolve('hash123')),
   };

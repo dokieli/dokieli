@@ -290,6 +290,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@dokieli/web-annotation@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "@dokieli/web-annotation@npm:1.0.0"
+  checksum: 10c0/e054e78b4015b299271e0c2a90635f5fe053d3a2533da79287203d667901f78cb49d2dc5bf3b3c1b8fc298c14e9357d0c8612f660a014f856ce51f42473ebb54
+  languageName: node
+  linkType: hard
+
 "@emnapi/core@npm:1.10.0":
   version: 1.10.0
   resolution: "@emnapi/core@npm:1.10.0"
@@ -2097,6 +2104,7 @@ __metadata:
   resolution: "dokieli@workspace:."
   dependencies:
     "@axe-core/playwright": "npm:^4.9.1"
+    "@dokieli/web-annotation": "npm:^1.0.0"
     "@playwright/test": "npm:^1.44.1"
     "@uvdsl/solid-oidc-client-browser": "npm:^0.2.3"
     "@vitest/coverage-istanbul": "npm:^4.0.18"

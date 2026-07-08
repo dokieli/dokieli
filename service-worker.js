@@ -12,7 +12,9 @@ const APP_FILES = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(APP_FILES))
+    caches.open(CACHE_NAME).then(cache =>
+      Promise.allSettled(APP_FILES.map(f => cache.add(f)))
+    )
   );
   self.skipWaiting();
 });

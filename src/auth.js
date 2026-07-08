@@ -727,13 +727,25 @@ export function setUserInfo (subjectIRI, options = {}) {
   Config.User.IRI = subjectIRI;
 
   return getSubjectInfo(subjectIRI, options).then(subject => {
+    setPreferredLanguagesInfo(subject.Graph);
+
+    const restoredTypeIndex = Config.User.TypeIndex;
+    const restoredHasRegistrations = restoredTypeIndex && Object.values(restoredTypeIndex).some(v => v && Object.keys(v).length > 0);
+
     Object.keys(subject).forEach((key) => {
       Config.User[key] = subject[key];
     })
 
-    setPreferredLanguagesInfo(subject.Graph);
+    // getSubjectInfo returns an empty TypeIndex (registrations are fetched later by
+    // afterSetUserInfo). Don't let it clobber registrations already restored from
+    // device storage, otherwise a refresh drops them until the fetch re-runs.
+    const fetchedTypeIndex = subject.TypeIndex;
+    const fetchedHasRegistrations = fetchedTypeIndex && Object.values(fetchedTypeIndex).some(v => v && Object.keys(v).length > 0);
+    if (restoredHasRegistrations && !fetchedHasRegistrations) {
+      Config.User.TypeIndex = restoredTypeIndex;
+    }
 
-    updateDeviceStorageProfile(subject);
+    updateDeviceStorageProfile(Config.User);
   });
 }
 
@@ -758,9 +770,20 @@ export function afterSetUserInfo() {
   if (Config.User.Graph) {
     promises.push(getAgentTypeIndex(Config.User.Graph)
       .then(typeIndexes => {
+        Config.User.TypeIndex = Config.User.TypeIndex || {};
+        // Only overwrite a type index we actually fetched registrations for, so a
+        // transient empty fetch (e.g. auth not ready on refresh) doesn't drop the
+        // registrations already restored from device storage.
+        let changed = false;
         Object.keys(typeIndexes).forEach(typeIndexType => {
-          Config.User.TypeIndex[typeIndexType] = typeIndexes[typeIndexType];
+          if (typeIndexes[typeIndexType] && Object.keys(typeIndexes[typeIndexType]).length > 0) {
+            Config.User.TypeIndex[typeIndexType] = typeIndexes[typeIndexType];
+            changed = true;
+          }
         });
+        // Persist right after fetching so a refresh restores the registrations from
+        // device storage instead of relying on the fetch re-running.
+        if (changed) { updateDeviceStorageProfile(Config.User); }
       }));
 
     promises.push(getAgentPreferencesInfo(Config.User.Graph)
