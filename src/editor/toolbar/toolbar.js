@@ -20,8 +20,8 @@ import { NodeSelection } from "prosemirror-state"
 import { Icon } from "../../ui/icons.js"
 import { getButtonHTML, updateButtons } from "../../ui/buttons.js"
 import { getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getClassesOfProductsConcepts, getDocument, getLanguageOptionsHTML, getLicenseOptionsHTML, getReferenceLabel } from "../../doc.js";
-import { getTextQuoteHTML, cloneSelection, setSelection, selectionToTextQuote, setSelectionFromTextQuote, getSelectedParentElement, getTextContentExcludingSups } from "../utils/annotation.js";
-import { escapeRegExp, matchAllIndex } from "../../util.js";
+import { cloneSelection, selectionToTextQuote, setSelectionFromTextQuote, getSelectedParentElement } from "../utils/annotation.js";
+import { applyMarksFromTextQuote } from "@dokieli/web-annotation";
 import { fragmentFromString, getDocumentContentNode, selectArticleNode } from "../../utils/html.js";
 import { showUserIdentityInput } from "../../auth.js";
 import { getLinkRelation } from "../../graph.js";
@@ -234,12 +234,18 @@ export class ToolbarView {
       const margin = 10;
       const toolbarHeight = this.dom.offsetHeight;
       const toolbarWidth = this.dom.offsetWidth;
-      const selection = window.getSelection();
-      const range = selection.getRangeAt(0);
-      const selectionPosition = range.getBoundingClientRect();
 
       toolbarForm.style.left = `${(toolbarWidth / 2) - (toolbarForm.offsetWidth / 2)}px`;
       toolbarForm.style.right = 'initial';
+
+      const selection = window.getSelection();
+      if (!selection || !selection.rangeCount) {
+          toolbarForm.style.top = `${toolbarHeight + margin / 2}px`;
+          return;
+      }
+
+      const range = selection.getRangeAt(0);
+      const selectionPosition = range.getBoundingClientRect();
 
       if ((selectionPosition.top >= toolbarHeight + margin * 2) && (window.innerHeight - selectionPosition.bottom >= toolbarForm.offsetHeight + margin * 2)) {
           toolbarForm.style.top = `${toolbarHeight + selectionPosition.height + margin * 1.5}px`;
@@ -598,15 +604,9 @@ export class ToolbarView {
       }
 
 
-      //TODO: Revisit
-      // const allowMultiNodeSelection = false;
-      // if (allowMultiNodeSelection) {
-      //   return;
-      // }
-
-      if (isSelection && !this.isSelectionsStartEndRangesWithinSameParent(selection)) {
-        return;
-      }
+      // Cross-node selections are supported: the annotation uses a RangeSelector
+      // (XPath start/end refined by TextQuotes) so start and end may be in
+      // different parents. No same-parent restriction here.
 
       if (isSelection) {
         this.selection = cloneSelection();
@@ -729,15 +729,6 @@ export class ToolbarView {
     document.addEventListener("keydown", this.handleEscKey);
   }
 
-  isSelectionsStartEndRangesWithinSameParent(selection) {
-    selection = selection || window.getSelection();
-
-    const startParentNode = selection.getRangeAt(0).startContainer.parentNode;
-    const endParentNode = selection.getRangeAt(selection.rangeCount - 1).endContainer.parentNode;
-
-    return startParentNode === endParentNode; // Returns true if both are the same
-  }
-
   clearToolbarButton(button) {
     const btnNode = this.dom.querySelector(`#${'editor-button-' + button}`);
 
@@ -835,105 +826,8 @@ export class ToolbarView {
   
       var docRefType = '<sup class="ref-highlighting"><a rel="oa:hasTarget" href="#' + refId + '">' + refLabel + '</a></sup>';
   
-      var options = {
-        'do': true,
-        'mode': '#selector'
-      };
-      // console.log(selector)
-      // console.log(refId)
-      this.importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, options);
+      applyMarksFromTextQuote(containerNode, selector, { 'annotationUrl': '#' + refId, 'id': refId, 'className': 'ref do', 'reference': docRefType, 'excludeMatchesIn': '#document-notifications' });
     }
-  }
-
-  // TODO: refactor this to use replaceSelectionWithFragment
-  importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, options) {
-    // console.log(containerNode)
-    // console.log(selector)
-    // console.log(refId)
-    // console.log(motivatedBy)
-    // console.log(docRefType)
-    // console.log(options)
-    // Exclude <sup> elements so that annotation labels injected by prior showAnnotation calls don't shift character offsets and break phrase matching for subsequent annotations targeting the same passage.
-    var containerNodeTextContent = getTextContentExcludingSups(containerNode);
-      //XXX: Seems better?
-      // var containerNodeTextContent = fragmentFromString(getDocument(containerNode, documentOptions)).textContent.trim();
-    // console.log(containerNodeTextContent);
-    options = options || {};
-
-    // console.log(selector)
-    var prefix = selector.prefix || '';
-    var exact = selector.exact || '';
-    var suffix = selector.suffix || '';
-
-    var phrase = escapeRegExp(prefix.toString() + exact.toString() + suffix.toString());
-    // console.log(phrase);
-
-    var selectedParentNode;
-
-    var textMatches = matchAllIndex(containerNodeTextContent, new RegExp(phrase, 'g'));
-    // console.log(textMatches)
-
-    textMatches.forEach(item => {
-      // console.log('phrase:')
-      // console.log(phrase)
-      // console.log(item)
-      var selectorIndex = item.index;
-      // console.log('selectorIndex:')
-      // console.log(selectorIndex)
-      // var selectorIndex = containerNodeTextContent.indexOf(prefix + exact + suffix);
-      // console.log(selectorIndex);
-
-      // if (selectorIndex >= 0) {
-      var exactStart = selectorIndex + prefix.length
-      var exactEnd = selectorIndex + prefix.length + exact.length;
-      var selection = { start: exactStart, end: exactEnd };
-      // console.log('selection:')
-      // console.log(selection)
-      var ref = getTextQuoteHTML(refId, motivatedBy, exact, docRefType, options);
-      // console.log('containerNode:')
-      // console.log(containerNode)
-
-      // MediumEditor.selection.importSelection(selection, containerNode, document);
-      setSelection(exactStart, exactEnd, containerNode);
-
-
-      //XXX: Review
-      selection = window.getSelection();
-      var r = selection.getRangeAt(0);
-      selection.removeAllRanges();
-      selection.addRange(r);
-      r.collapse(true);
-
-      // Skip matches that fall inside the notifications panel
-      if (r.commonAncestorContainer.parentNode?.closest('#document-notifications')) {
-        return;
-      }
-
-      // If this text is already wrapped in a span.ref, the same passage already has at least one annotation. Reuse the existing mark and just append the new <sup>.
-      var existingRefSpan = r.commonAncestorContainer.parentNode?.closest('span.ref');
-      if (existingRefSpan) {
-        existingRefSpan.insertAdjacentHTML('beforeend', docRefType);
-        selectedParentNode = existingRefSpan;
-      }
-      else {
-        selectedParentNode = r.commonAncestorContainer.parentNode;
-        var selectedParentNodeValue = r.commonAncestorContainer.nodeValue;
-
-        var selectionUpdated = fragmentFromString(selectedParentNodeValue.substr(0, r.startOffset) + ref + selectedParentNodeValue.substr(r.startOffset + exact.length));
-
-        //XXX: Review. This feels a bit dirty
-        for(var i = 0; i < selectedParentNode.childNodes.length; i++) {
-          var n = selectedParentNode.childNodes[i];
-          if (n.nodeType === 3 && n.nodeValue === selectedParentNodeValue) {
-            selectedParentNode.replaceChild(selectionUpdated, n);
-          }
-        }
-      }
-
-      // console.log('---')
-    })
-
-    return selectedParentNode;
   }
 
   destroy() {
@@ -953,6 +847,9 @@ export class ToolbarView {
 
 // Consider putting this elsewhere or making it part of the class
 export function annotateFormControls(options) {
+  const locationHTML = getAnnotationLocationHTML(options.button);
+  // When location options exist but none are pre-checked, start with submit disabled.
+  const submitDisabled = (locationHTML.includes('type="checkbox"') && !locationHTML.includes('checked="checked"')) ? ' disabled=""' : '';
   return `
     <fieldset>
       <legend data-i18n="editor.toolbar.${options.button}.form.legend">${options.legend}</legend>
@@ -967,19 +864,36 @@ export function annotateFormControls(options) {
       <select class="editor-form-select" id="${options.button}-language" name="${options.button}-language">${getLanguageOptionsHTML()}</select>
       <label data-i18n="license.label" for="${options.button}-license">${i18n.t('license.label.textContent')}</label>
       <select class="editor-form-select" id="${options.button}-license" name="${options.button}-license">${getLicenseOptionsHTML()}</select>
-      <span class="annotation-location-selection">${getAnnotationLocationHTML(options.button)}</span>
+      <span class="annotation-location-selection">${locationHTML}</span>
       <span class="annotation-inbox">${getAnnotationInboxLocationHTML(options.button)}</span>
 
-      <button class="editor-form-submit" data-i18n="editor.toolbar.form.post.button" type="submit">${i18n.t('editor.toolbar.form.post.button.textContent')}</button>
+      <button class="editor-form-submit" data-i18n="editor.toolbar.form.post.button" type="submit"${submitDisabled}>${i18n.t('editor.toolbar.form.post.button.textContent')}</button>
       <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
     </fieldset>
   `
+}
+
+// Disable the annotate form's submit while no storage location is checked.
+export function updateAnnotateSubmitState(fieldset) {
+  if (!fieldset) return;
+  const submit = fieldset.querySelector('.editor-form-submit');
+  const checkboxes = fieldset.querySelectorAll('.annotation-location-selection input[type="checkbox"]');
+  if (!submit || !checkboxes.length) return;
+  submit.disabled = !Array.from(checkboxes).some(c => c.checked);
+}
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('change', (e) => {
+    const cb = e.target.closest && e.target.closest('.annotation-location-selection input[type="checkbox"]');
+    if (cb) updateAnnotateSubmitState(cb.closest('fieldset'));
+  });
 }
 
 export function updateAnnotationServiceForm(action) {
   var annotationServices = document.querySelectorAll('.do.editor-toolbar .annotation-location-selection');
   for (var i = 0; i < annotationServices.length; i++) {
     annotationServices[i].replaceChildren(fragmentFromString(getAnnotationLocationHTML(action)));
+    updateAnnotateSubmitState(annotationServices[i].closest('fieldset'));
   }
 };
 

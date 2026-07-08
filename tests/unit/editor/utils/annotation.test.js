@@ -21,6 +21,7 @@ import {
   getSelectedParentElement,
   exportSelection,
   cloneSelection,
+  getTextContentExcludingSups,
 } from "../../../../src/editor/utils/annotation";
 
 describe("getTextQuoteHTML", () => {
@@ -137,6 +138,26 @@ describe("exportSelection", () => {
 
     const result = exportSelection(el, selection);
     expect(result).toEqual({ start: 0, end: 5 });
+  });
+});
+
+describe("getTextContentExcludingSups", () => {
+  it("returns concatenated text from text nodes and non-SUP elements", () => {
+    const container = document.createElement("div");
+    container.innerHTML = "<p>Hello <em>world</em></p>";
+    expect(getTextContentExcludingSups(container)).toBe("Hello world");
+  });
+
+  it("skips contents of <sup> subtrees", () => {
+    const container = document.createElement("div");
+    container.innerHTML = "<p>Hello<sup>123</sup> world</p>";
+    expect(getTextContentExcludingSups(container)).toBe("Hello world");
+  });
+
+  it("skips nested <sup> within other elements", () => {
+    const container = document.createElement("div");
+    container.innerHTML = "<p>a <span>b<sup>X</sup>c</span> d</p>";
+    expect(getTextContentExcludingSups(container)).toBe("a bc d");
   });
 });
 

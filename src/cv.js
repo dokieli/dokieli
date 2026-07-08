@@ -20,7 +20,7 @@ import { fragmentFromString, selectArticleNode } from './utils/html.js';
 import { slugify } from './editor/plugins/autoId.js';
 import { registerDocumentTransform, registerEditorParseTransform } from './utils/documentTransforms.js';
 import { i18n } from './i18n.js';
-import { generateAttributeId, generateUUID } from './util.js';
+import { generateAttributeId } from './util.js';
 import { getCountryOptionsHTML, showLocationSuggestions, showSkillSuggestions, setupAutocomplete } from './doc.js';
 import { getWikidataResults, getEscoResults } from './graph.js';
 import { expandTerm, getPrefixes, collectTerms } from './utils/rdfa.js';

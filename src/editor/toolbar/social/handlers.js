@@ -18,10 +18,10 @@ limitations under the License.
 import { getSelectedParentElement, restoreSelection, getInboxOfClosestNodeWithSelector, createNoteData} from "../../utils/annotation.js";
 import { generateAttributeId, getDateTimeISO } from "../../../util.js"
 import { getNodeLanguage, getFormValues, createHTML } from "../../../utils/html.js";
-import { getReferenceLabel, createActivityHTML, createNoteDataHTML, } from "../../../doc.js";
+import { getReferenceLabel, createActivityHTML, createNoteDataHTML, getRegisteredAnnotationContainer } from "../../../doc.js";
 import { getAbsoluteIRI, stripFragmentFromString } from "../../../uri.js"
 import Config from "../../../config.js"
-import { notifyInbox, postActivity, showActivities, registerAnnotationInTypeIndex } from "../../../activity.js"
+import { notifyInbox, postActivity, showActivities, registerAnnotationInTypeIndex, markAnnotationTarget } from "../../../activity.js"
 import { shareResource } from "../../../dialog.js";
 import { domSanitize } from "../../../utils/sanitization.js";
 
@@ -86,10 +86,12 @@ export function formHandlerAnnotate(e, action) {
   };
 
   const annotationInboxLocation = formValues[`${action}-annotation-inbox`];
+  const annotationLocationAnnotationStore = formValues[`${action}-annotation-location-annotation-store`];
   const annotationLocationPersonalStorage = formValues[`${action}-annotation-location-personal-storage`];
-  const annotationLocationService = formValues[`${action}-annotation-location-service`];
+  const annotationLocationActivityOutbox = formValues[`${action}-annotation-location-activity-outbox`];
+  const annotationLocationService = formValues[`${action}-annotation-location-annotation-service`];
 
-  updateUserUI({ annotationInboxLocation, annotationLocationPersonalStorage, annotationLocationService }, formValues)
+  updateUserUI({ annotationInboxLocation, annotationLocationAnnotationStore, annotationLocationPersonalStorage, annotationLocationActivityOutbox, annotationLocationService })
 
   processAction(action, formValues, selectionData);
 
@@ -97,14 +99,9 @@ export function formHandlerAnnotate(e, action) {
 }
 
 
-function updateUserUI(fields, formValues) {
+function updateUserUI(fields) {
   Object.entries(fields).forEach(([key, value]) => {
-    const input = formValues[key];
-    Config.User.UI[key] = { checked: false };
-  
-    if (input) {
-      Config.User.UI[key].checked = input.checked;
-    }
+    Config.User.UI[key] = { checked: Boolean(value) };
   });
 }
 
@@ -113,6 +110,13 @@ export function processAction(action, formValues, selectionData) {
   //TODO:
 
   const data = getFormActionData(action, formValues, selectionData);
+
+  // Sanitize the user-supplied note body here, at the boundary. The generated
+  // annotation markup (lib RDFa + createHTML wrapper) is trusted and is NOT
+  // sanitized as a whole - only this user input is.
+  if (data.formData && typeof data.formData.content === 'string') {
+    data.formData.content = domSanitize(data.formData.content);
+  }
 
   const { annotationDistribution, ...otherFormData } = data;
 
@@ -130,7 +134,13 @@ export function processAction(action, formValues, selectionData) {
 
         var noteData = createNoteData(annotation);
 
-        annotation['motivatedByIRI'] = noteData['motivatedByIRI'];
+        // POST with a relative @id ('') so the stored annotation is addressed by its
+        // storage URL (the server resolves '' against it), not the urn:uuid. The urn
+        // stays as oa:canonical. This matches dokieli's long-standing RDFa form and
+        // keeps the mark/panel/delete references (all URL-based) consistent.
+        noteData.iri = '';
+
+        annotation['motivatedBy'] = noteData['motivatedBy'];
 
         if ('profile' in annotation && annotation.profile == 'https://www.w3.org/ns/activitystreams') {
           var notificationData = createActivityData(annotation, { 'relativeObject': true });
@@ -147,7 +157,10 @@ export function processAction(action, formValues, selectionData) {
         // console.log(data)
         // console.log(annotation)
 
-        postActivity(annotation['containerIRI'], annotation.id, noteHTML, annotation)
+        // Carry the structured annotation (noteData) so postActivity can
+        // serialize JSON-LD directly from it via @dokieli/web-annotation when the
+        // server prefers JSON-LD (instead of the RDFa → graph round-trip).
+        postActivity(annotation['containerIRI'], annotation.id, noteHTML, { ...annotation, annotationObject: noteData })
           .catch(error => {
             // console.log('Error serializing annotation:', error)
             // console.log(error)
@@ -164,6 +177,13 @@ export function processAction(action, formValues, selectionData) {
 
             if (annotation.canonical) {
               registerAnnotationInTypeIndex(annotation['containerIRI'], ns.oa.Annotation.value);
+
+              // Mark the passage now, from the in-memory selector - the re-fetch path
+              // (positionActivity -> showActivities) 429s under load, so the highlight
+              // must not depend on it. Idempotent against the re-fetch path. Uses the
+              // library-decided selector (RangeSelector for cross-node selections) so the
+              // highlight spans multiple nodes/sections, not just a single TextQuote match.
+              markAnnotationTarget(annotation['noteIRI'], noteData.target?.selector || annotation.selectionData?.selector, { motivatedBy: annotation.motivatedBy, id: annotation.id });
             }
 
             // console.log(annotation, data.options)
@@ -314,8 +334,10 @@ export function getAnnotationDistribution(action, data) {
   //This annotationInbox is about when the selected text is part of an existing Annotation, it gets that Annotation's own inbox which is used towards announcing the annotation that's about to be created. (This is not related to whether an inbox should be assigned to an annotation that's about to be created.)
   const annotationInbox =  getInboxOfClosestNodeWithSelector(selectedParentElement, '.do[typeof="oa:Annotation"]');
   //These are whether the user wants to send a copy of their annotation to a personal storage and/or to an annotation service.
-  const annotationLocationPersonalStorage = formData[`${action}-annotation-location-personal-storage`];
-  const annotationLocationService = formData[`${action}-annotation-location-service`];
+  const annotationLocationAnnotationStore = formData['annotation-location-annotation-store'];
+  const annotationLocationPersonalStorage = formData['annotation-location-personal-storage'];
+  const annotationLocationOutbox = formData['annotation-location-activity-outbox'];
+  const annotationLocationService = formData['annotation-location-annotation-service'];
 
   //Use if (activityIndex) when all action values are taken into account e.g., `note` in author mode
 
@@ -326,52 +348,30 @@ export function getAnnotationDistribution(action, data) {
   const activityIndex = Config.ActionActivityIndex[action];
 
   //XXX: Use TypeIndex location as canonical if available, otherwise storage. Note how noteIRI is treated later
-  if ((annotationLocationPersonalStorage && Config.User.TypeIndex) || (!annotationLocationPersonalStorage && !annotationLocationService && Config.User.TypeIndex)) {
-    //TODO: Preferring publicTypeIndex for now. Refactor this when the UI allows user to decide whether to have it public or private.
+  if (annotationLocationAnnotationStore && Config.User.TypeIndex) {
+    // Resolve the registered container from private or public TypeIndex for this action.
+    const registeredContainer = getRegisteredAnnotationContainer(action);
 
-    var publicTypeIndexes = Config.User.TypeIndex[ns.solid.publicTypeIndex.value];
-    var privateTypeIndexes = Config.User.TypeIndex[ns.solid.privateTypeIndex.value];
+    if (registeredContainer) {
+      activityTypeMatched = true;
 
-    if (publicTypeIndexes) {
-      var publicTIValues = Object.values(publicTypeIndexes);
-      // console.log(publicTIValues)
-      publicTIValues.forEach(ti => {
-        //XXX: For now, we are only sending the annotation to one location that's already matched
-        if (activityTypeMatched) return;
+      containerIRI = registeredContainer;
 
-        var forClass = ti[ns.solid.forClass.value];
-        var instanceContainer = ti[ns.solid.instanceContainer.value];
-        var instance = ti[ns.solid.instance.value];
+      fromContentType = 'text/html';
+      // contentType = 'text/html';
+      contentType = fromContentType;
 
-        if (activityIndex?.includes(forClass)) {
-          if (instanceContainer) {
-            activityTypeMatched = true;
+      noteURL = noteIRI = containerIRI + id;
+      contextProfile = {
+        // 'subjectURI': noteIRI,
+      };
+      aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true, 'annotationInbox': annotationInbox };
 
-            containerIRI = instanceContainer;
-
-            fromContentType = 'text/html';
-            // contentType = 'text/html';
-            contentType = fromContentType;
-
-            noteURL = noteIRI = containerIRI + id;
-            contextProfile = {
-              // 'subjectURI': noteIRI,
-            };
-            aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true, 'annotationInbox': annotationInbox };
-
-            annotationDistribution.push(aLS);
-          }
-          //TODO: Not handling `instance` yet.
-        }
-      })
-
-    }
-    else if (privateTypeIndexes) {
-
+      annotationDistribution.push(aLS);
     }
   }
 
-  if ((annotationLocationPersonalStorage && Config.User.Outbox) || (!annotationLocationPersonalStorage && !annotationLocationService && Config.User.Outbox)) {
+  if (annotationLocationOutbox && Config.User.Outbox) {
     containerIRI = Config.User.Outbox[0];
 
     fromContentType = 'text/html';
@@ -388,7 +388,8 @@ export function getAnnotationDistribution(action, data) {
       'profile': 'https://www.w3.org/ns/activitystreams'
     };
     aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'annotationInbox': annotationInbox };
-    if (typeof Config.User.Storage === 'undefined' && !activityTypeMatched) {
+    // Outbox is canonical only when no registered or personal storage copy is selected.
+    if (!activityTypeMatched && !annotationLocationPersonalStorage) {
       aLS['canonical'] = true;
     }
 
@@ -399,7 +400,7 @@ export function getAnnotationDistribution(action, data) {
     }
   }
 
-  if (!activityTypeMatched && ((annotationLocationPersonalStorage && Config.User.Storage) || (!annotationLocationPersonalStorage && !annotationLocationService && Config.User.Storage))) {
+  if (annotationLocationPersonalStorage && Config.User.Storage) {
     containerIRI = Config.User.Storage[0];
 
     fromContentType = 'text/html';
@@ -410,7 +411,8 @@ export function getAnnotationDistribution(action, data) {
     contextProfile = {
       // 'subjectURI': noteIRI,
     };
-    aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true, 'annotationInbox': annotationInbox };
+    // The registered (TypeIndex) location, when selected, is the canonical copy.
+    aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': !activityTypeMatched, 'annotationInbox': annotationInbox };
 
     if (!isDuplicateLocation(annotationDistribution, containerIRI)) {
       annotationDistribution.push(aLS);
@@ -425,18 +427,18 @@ export function getAnnotationDistribution(action, data) {
 
     contextProfile = {
       '@context': [
-        'http://www.w3.org/ns/anno.jsonld',
+        'https://www.w3.org/ns/anno.jsonld',
         { 'as': 'https://www.w3.org/ns/activitystreams#', 'schema': 'http://schema.org/' }
       ],
       // 'subjectURI': noteIRI,
-      'profile': 'http://www.w3.org/ns/anno.jsonld'
+      'profile': 'https://www.w3.org/ns/anno.jsonld'
     };
 
-    if (!annotationLocationPersonalStorage && annotationLocationService) {
+    if (!annotationLocationAnnotationStore && !annotationLocationPersonalStorage && !annotationLocationOutbox && annotationLocationService) {
       noteURL = noteIRI = containerIRI + id;
       aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true,'annotationInbox': annotationInbox };
     }
-    else if (annotationLocationPersonalStorage) {
+    else if (annotationLocationAnnotationStore || annotationLocationPersonalStorage || annotationLocationOutbox) {
       noteURL = containerIRI + id;
       aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'annotationInbox': annotationInbox };
     }
@@ -464,7 +466,7 @@ export function createActivityData(annotation, options = {}) {
 
   var notificationStatements = '    <dl about="' + noteIRI + '">\n\
 <dt>Object type</dt><dd><a about="' + noteIRI + '" typeof="oa:Annotation" href="' + ns.oa.Annotation.value + '">Annotation</a></dd>\n\
-<dt>Motivation</dt><dd><a href="' + Config.getPrefixURI(annotation.motivatedByIRI.split(':')[0]) + annotation.motivatedByIRI.split(':')[1] + '" property="oa:motivation">' + annotation.motivatedByIRI.split(':')[1] + '</a></dd>\n\
+<dt>Motivation</dt><dd><a href="' + Config.getPrefixURI(annotation.motivatedBy.split(':')[0]) + annotation.motivatedBy.split(':')[1] + '" property="oa:motivation">' + annotation.motivatedBy.split(':')[1] + '</a></dd>\n\
 </dl>\n\
 ';
 

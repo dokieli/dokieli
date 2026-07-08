@@ -16,20 +16,22 @@ limitations under the License.
 */
 
 import rdf from 'rdf-ext';
-import { createActivityHTML, showCitations, getReferenceLabel, createNoteDataHTML, handleDeleteNote } from './doc.js';
+import { createActivityHTML, createActivityJSONLD, showCitations, getReferenceLabel, createNoteDataHTML, handleDeleteNote } from './doc.js';
+import { applyMarksFromTextQuote, applyMarkFromSelector } from '@dokieli/web-annotation';
 var _deleteListenerAttached = false;
 import { createHTML } from './utils/html.js';
 import { Icon } from './ui/icons.js'
 import { getButtonHTML } from './ui/buttons.js'
 import { getAbsoluteIRI, getPathURL, isHttpOrHttpsProtocol, stripFragmentFromString, currentLocation, getFragmentFromString } from './uri.js';
-import { getLinkRelation, serializeDataToPreferredContentType, getGraphLanguage, getGraphLicense, getGraphRights, getGraphTypes, getGraphDate, getGraphImage, getResourceGraph, getResourceOnlyRDF, getAgentTypeIndex, getUserContacts, getAgentName, getSubjectInfo, getItemsList } from './graph.js';
+import { getLinkRelation, serializeDataToPreferredContentType, getGraphLanguage, getGraphLicense, getGraphRights, getGraphTypes, getGraphDate, getGraphImage, getResourceGraph, getResourceOnlyRDF, getAgentTypeIndex, getUserContacts, getAgentName, getSubjectInfo, getItemsList, parseAnnotationFromGraph } from './graph.js';
 import Config from './config.js';
 import { domSanitize, sanitizeInsertAdjacentHTML } from './utils/sanitization.js';
-import { generateUUID, uniqueArray, findPreviousDateTime } from './util.js';
+import { generateAttributeId, uniqueArray, findPreviousDateTime } from './util.js';
 import { fragmentFromString, getDocumentContentNode, selectArticleNode } from "./utils/html.js";
 import { getTextContentExcludingSups } from './editor/utils/annotation.js';
 import { i18n } from './i18n.js';
 import { showUserIdentityInput } from './auth.js';
+import { updateDeviceStorageProfile } from './storage.js';
 
 const ns = Config?.ns;
 
@@ -304,6 +306,11 @@ export function notifyInbox(o) {
     'profile': 'https://www.w3.org/ns/activitystreams'
   };
 
+  // Model-built JSON-LD for content-negotiated inboxes (avoids RDFa-derived langStrings).
+  if (o.note) {
+    options.activityJSONLD = createActivityJSONLD(o);
+  }
+
   return postActivity(inboxURL, slug, data, options);
 }
 export function postActivity(url, slug, data, options) {
@@ -346,7 +353,7 @@ export function registerAnnotationInTypeIndex(containerIRI, forClass) {
 
   _registeredTypeIndexKeys.add(forClass);
 
-  const registrationId = generateUUID();
+  const registrationId = generateAttributeId();
   const insert = `<#${registrationId}> a <http://www.w3.org/ns/solid/terms#TypeRegistration> ;\n` +
     `  <http://www.w3.org/ns/solid/terms#forClass> <${forClass}> ;\n` +
     `  <http://www.w3.org/ns/solid/terms#instanceContainer> <${containerIRI}> .\n`;
@@ -359,6 +366,8 @@ export function registerAnnotationInTypeIndex(containerIRI, forClass) {
         [ns.solid.forClass.value]: forClass,
         [ns.solid.instanceContainer.value]: containerIRI
       };
+      // Persist the new registration so it survives a refresh from device storage.
+      updateDeviceStorageProfile(Config.User);
     })
     .catch(e => console.log('Could not register annotation type in TypeIndex:', e));
 }
@@ -425,20 +434,25 @@ export function showNotificationSources(url) {
   );
 }
 
-export async function showActivitiesSources(url, options = {}) {
-  return getItemsList(url)
+async function showActivitiesSourcesUncached(url, options = {}) {
+  // The container listing itself gets rate-limited under load; retry it so today's
+  // annotations are actually enumerated instead of the whole scan coming up empty.
+  return withReadRetry(() => getItemsList(url))
     .then(items => {
-      var promises = [];
+      // Cap concurrency so a large collection doesn't fan out into dozens of parallel
+      // HEAD+GET fetches and trip the storage server's rate limiter (429).
+      var queue = items.slice(0, Config.CollectionItemsLimit);
+      var concurrency = Math.min(Config.CollectionItemsConcurrency, queue.length);
+      var cursor = 0;
 
-      for (var i = 0; i < items.length && i < Config.CollectionItemsLimit; i++) {
-        var pI = function(iri) {
-          return showActivities(iri, options);
+      var worker = async () => {
+        while (cursor < queue.length) {
+          var iri = queue[cursor++];
+          try { await showActivities(iri, options); } catch (e) {}
         }
+      };
 
-        promises.push(pI(items[i]));
-      }
-      // console.log(promises)
-      return Promise.allSettled(promises);
+      return Promise.all(Array.from({ length: concurrency }, worker));
     })
     .catch((error) => {
       console.log(error)
@@ -461,7 +475,95 @@ export async function showActivitiesSources(url, options = {}) {
 //   }
 // }
 
+// Global gate for activity/notification reads only. A document can fan out
+// into dozens of these at once (many callers, each looping), tripping storage
+// rate limiters (429) - which the browser surfaces as opaque CORS failures.
+// Bounding here (rather than in the fetcher) keeps the cap off the auth,
+// profile, and posting paths. The slot is held only for the duration of the
+// read, released before any recursive showActivities call, so there's no
+// nested-semaphore deadlock.
+let activityReadsActive = 0;
+const activityReadsQueue = [];
+
+function activityReadsDrain() {
+  while (activityReadsActive < Config.CollectionItemsConcurrency && activityReadsQueue.length) {
+    activityReadsActive++;
+    activityReadsQueue.shift()();
+  }
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Retries an activity read on failure with exponential backoff. The storage server
+// rate-limits bursts (429), which the browser usually surfaces as an opaque
+// CORS/network failure with no readable status - so retry on ANY rejection
+// (bounded), backing off to let the rate window clear. Honors Retry-After when the
+// 429 is actually readable. Run inside the read gate so backoff also frees a slot.
+async function withReadRetry(fn, attempts = 3) {
+  var delay = 600;
+  for (var i = 0; ; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (i >= attempts - 1) { throw error; }
+      var retryAfter = Number(error?.response?.headers?.get?.('Retry-After'));
+      var wait = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : delay;
+      await sleep(wait);
+      delay *= 2;
+    }
+  }
+}
+
+function gatedGetResourceOnlyRDF(url) {
+  return new Promise(resolve => {
+    activityReadsQueue.push(resolve);
+    activityReadsDrain();
+  }).then(() =>
+    withReadRetry(() => getResourceOnlyRDF(url)).finally(() => {
+      activityReadsActive--;
+      activityReadsDrain();
+    })
+  );
+}
+
+// Per-URL in-flight dedup for activity reads. A document fans out into many
+// overlapping scans (page load + every notifications-panel open; one
+// showActivitiesSources per type registration, often sharing a container; the
+// same annotation reachable via several activities), all hitting the same URLs.
+// Without this, those collapse onto the storage server at once and trip its rate
+// limiter (429), which the browser surfaces as opaque CORS failures - and the
+// duplicate processing also double-lists notes. Entries clear on settle, so a
+// later panel open still rescans (leaf annotations stay cached in Config.Activity,
+// so a rescan is cheap), while a single burst is collapsed to one fetch per URL.
+const showActivitiesInFlight = new Map();
+const showActivitiesSourcesInFlight = new Map();
+
 export function showActivities(url, options = {}) {
+  if (Config.Activity[url] || Config.Notification[url]) {
+    return Promise.reject([]);
+  }
+  if (showActivitiesInFlight.has(url)) {
+    return showActivitiesInFlight.get(url);
+  }
+  const p = showActivitiesUncached(url, options)
+    .finally(() => showActivitiesInFlight.delete(url));
+  showActivitiesInFlight.set(url, p);
+  return p;
+}
+
+export function showActivitiesSources(url, options = {}) {
+  if (showActivitiesSourcesInFlight.has(url)) {
+    return showActivitiesSourcesInFlight.get(url);
+  }
+  const p = showActivitiesSourcesUncached(url, options)
+    .finally(() => showActivitiesSourcesInFlight.delete(url));
+  showActivitiesSourcesInFlight.set(url, p);
+  return p;
+}
+
+function showActivitiesUncached(url, options = {}) {
   if (Config.Activity[url] || Config.Notification[url]) {
     return Promise.reject([]);
   }
@@ -470,7 +572,7 @@ export function showActivities(url, options = {}) {
 
   var documentTypes = Config.ActivitiesObjectTypes.concat(Object.keys(Config.ResourceType));
 
-  return getResourceOnlyRDF(url)
+  return gatedGetResourceOnlyRDF(url)
     //TODO: Needs throws handled from functions calling showActivities
     // .catch(e => {
     //   // return [];
@@ -526,7 +628,7 @@ export function showActivities(url, options = {}) {
                 var iri = s.term.value;
                 var targetIRI = object[0];
                 // var motivatedBy = 'oa:assessing';
-                var id = generateUUID(iri);
+                var id = generateAttributeId(iri);
                 var refId = 'r-' + id;
                 var refLabel = id;
 
@@ -536,7 +638,7 @@ export function showActivities(url, options = {}) {
                 var noteData = {
                   "type": bodyValue === 'Liked' ? 'approve' : 'disapprove',
                   "mode": "read",
-                  "motivatedByIRI": motivatedBy,
+                  "motivatedBy": motivatedBy,
                   "id": id,
                   "refId": refId,
                   "refLabel": refLabel,
@@ -727,7 +829,7 @@ export function showActivities(url, options = {}) {
             var iri = s.term.value;
             var targetIRI = s.out(ns.bookmark.recalls).values[0];
             var motivatedBy = 'bookmark:Bookmark';
-            var id = generateUUID(iri);
+            var id = generateAttributeId(iri);
             var refId = 'r-' + id;
             var refLabel = id;
 
@@ -736,7 +838,7 @@ export function showActivities(url, options = {}) {
             var noteData = {
               "type": 'bookmark',
               "mode": "read",
-              "motivatedByIRI": motivatedBy,
+              "motivatedBy": motivatedBy,
               "id": id,
               "refId": refId,
               "refLabel": refLabel,
@@ -998,7 +1100,50 @@ export async function positionInteraction(noteIRI, containerNode, options) {
   showAnnotation(noteIRI, g, containerNode, options);
 }
 
-export function showAnnotation(noteIRI, g, options) {
+// Finds the TextQuoteSelector within a typed Selector (annotations),
+// following oa:refinedBy (e.g. FragmentSelector → refinedBy → TextQuoteSelector).
+function textQuoteFromSelector(selector) {
+  if (!selector) { return undefined; }
+  if (selector.type === 'TextQuoteSelector') { return selector; }
+  if (selector.refinedBy) { return textQuoteFromSelector(selector.refinedBy); }
+  return undefined;
+}
+
+// Marks the annotated passage in the document at creation time, from the selector
+// dokieli already holds in memory. The re-fetch path (showActivities ->
+// showAnnotation) that normally draws the highlight needs a server round-trip,
+// which gets rate-limited (429) under load - so don't depend on it for the
+// just-created annotation. Idempotent: returns early if a mark for this annotation
+// already exists, so the re-fetch path (if it later succeeds) won't double-mark.
+export function markAnnotationTarget(noteIRI, selector, options = {}) {
+  if (!noteIRI || !selector) { return null; }
+
+  var containerNode = selectArticleNode(document);
+  if (!containerNode) { return null; }
+
+  // The annotation link now lives on the reference marker, so detect an existing mark by it.
+  if (containerNode.querySelector('[resource="' + noteIRI + '"]')) { return null; }
+
+  var motivatedBy = options.motivatedBy || 'oa:replying';
+  var id = options.id || generateAttributeId(noteIRI);
+  var refLabel = options.refLabel || getReferenceLabel(motivatedBy);
+  var docRefType = '<sup class="ref-annotation"><a href="#' + id + '" rel="cito:hasReplyFrom" resource="' + noteIRI + '">' + refLabel + '</a></sup>';
+
+  var markOptions = { 'annotationUrl': noteIRI, 'id': 'r-' + id, 'className': 'ref do', 'reference': docRefType, 'excludeMatchesIn': '#document-notifications', 'ignoreSelector': 'sup' };
+
+  // Cross-node selections use a RangeSelector (XPath start/end refined by TextQuotes);
+  // applyMarkFromSelector resolves it to a range and marks each text node it spans.
+  // A plain TextQuoteSelector marks every matching occurrence.
+  var isTextQuote = selector.type === 'TextQuoteSelector' || (!selector.type && selector.exact);
+  if (isTextQuote) {
+    if (!selector.exact) { return null; }
+    return applyMarksFromTextQuote(containerNode, { exact: selector.exact, prefix: selector.prefix, suffix: selector.suffix }, markOptions);
+  }
+
+  return applyMarkFromSelector(containerNode, selector, markOptions);
+}
+
+export async function showAnnotation(noteIRI, g, options) {
   // Use the document content node (main > article or main) rather than document.body
   // so that the notifications panel aside is excluded from text searches.
   var containerNode = selectArticleNode(document);
@@ -1014,7 +1159,7 @@ export function showAnnotation(noteIRI, g, options) {
   // console.log(note.toString())
   // console.log(note)
 
-  var id = generateUUID(noteIRI);
+  var id = generateAttributeId(noteIRI);
   var refId = 'r-' + id;
   var refLabel = id;
 
@@ -1181,39 +1326,28 @@ export function showAnnotation(noteIRI, g, options) {
       refLabel = getReferenceLabel(motivatedBy);
     }
 
-    var exact, prefix, suffix;
-    var selectorPtr = targetPtr.out(ns.oa.hasSelector);
-    var selector = selectorPtr.values[0];
-    if (selector) {
-      // selectorPtr already points at the selector node - no need to re-lookup by IRI
-      // console.log(selectorPtr);
+    // Resolve the selector via @dokieli/web-annotation's parser (rdf-ext graph →
+    // JSON-LD → Annotation). Core resolves the typed selector tree, including
+    // FragmentSelector → refinedBy → TextQuoteSelector, so we no longer walk it
+    // by hand. `parsedSelector` is the typed Selector union from core.
+    var exact, prefix, suffix, selector;
+    var parsedAnnotation = await parseAnnotationFromGraph(g, note.value || noteIRI);
+    var parsedSelector = parsedAnnotation?.target?.selector;
 
-      // console.log(selectorPtr.out(ns.rdf.type).values);
-      //FIXME: This is taking the first rdf:type. There could be multiple.
-      var selectorTypes = getGraphTypes(selectorPtr)[0];
-      // console.log(selectorTypes)
-      // console.log(selectorTypes == 'http://www.w3.org/ns/oa#FragmentSelector');
-      if (selectorTypes == ns.oa.TextQuoteSelector.value) {
-        exact = selectorPtr.out(ns.oa.exact).values[0];
-        prefix = selectorPtr.out(ns.oa.prefix).values[0];
-        suffix = selectorPtr.out(ns.oa.suffix).values[0];
-      }
-      else if (selectorTypes == ns.oa.FragmentSelector.value) {
-        var refinedByPtr = selectorPtr.out(ns.oa.refinedBy);
-        // console.log(refinedByPtr)
-        exact = refinedByPtr.out(ns.oa.exact).values[0];
-        prefix = refinedByPtr.out(ns.oa.prefix).values[0];
-        suffix = refinedByPtr.out(ns.oa.suffix).values[0];
-        // console.log(selectorPtr.rdfvalue)
-        if (selectorPtr.out(ns.rdf.value).values[0] && selectorPtr.out(ns.dcterms.conformsTo).values[0] && selectorPtr.out(ns.dcterms.conformsTo).values[0].endsWith('://tools.ietf.org/html/rfc3987')) {
-          var fragment = selectorPtr.out(ns.rdf.value).values[0];
-          // console.log(fragment)
-          fragment = (fragment.indexOf('#') == 0) ? getFragmentFromString(fragment) : fragment;
+    var textQuote = textQuoteFromSelector(parsedSelector);
+    if (textQuote) {
+      exact = textQuote.exact;
+      prefix = textQuote.prefix;
+      suffix = textQuote.suffix;
+    }
 
-          if (fragment !== '') {
-            containerNode = document.getElementById(fragment) || selectArticleNode(document);
-          }
-        }
+    if (parsedSelector?.type === 'FragmentSelector' && parsedSelector.value
+        && parsedSelector.conformsTo && parsedSelector.conformsTo.endsWith('://tools.ietf.org/html/rfc3987')) {
+      var fragment = parsedSelector.value;
+      fragment = (fragment.indexOf('#') == 0) ? getFragmentFromString(fragment) : fragment;
+
+      if (fragment !== '') {
+        containerNode = document.getElementById(fragment) || selectArticleNode(document);
       }
     }
     // console.log(exact);
@@ -1237,15 +1371,25 @@ export function showAnnotation(noteIRI, g, options) {
         "suffix": suffix
       };
 
-      var selectedParentNode = Config.Editor.importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, { 'do': true });
+      // ignoreSelector excludes prior annotations' <sup> reference markers from the
+      // library's text basis, matching getTextContentExcludingSups used above so the
+      // offsets agree. Without it, a marker landing inside the phrase breaks the match.
+      var markOptions = { 'annotationUrl': noteIRI, 'id': refId, 'className': 'ref do', 'reference': docRefType, 'excludeMatchesIn': '#document-notifications', 'ignoreSelector': 'sup' };
+      // Don't re-mark if the passage was already marked at creation time (detect by the reference link).
+      var existingMark = containerNode.querySelector('[resource="' + noteIRI + '"]');
+      var selectedParentNode = existingMark
+        ? existingMark.closest('[id]')
+        : (textQuote
+          ? applyMarksFromTextQuote(containerNode, selector, markOptions)
+          : (parsedSelector ? applyMarkFromSelector(containerNode, parsedSelector, markOptions) : null));
 
-      var parentNodeWithId = selectedParentNode.closest('[id]');
+      var parentNodeWithId = selectedParentNode?.closest('[id]');
       targetIRI = (parentNodeWithId) ? documentURL + '#' + parentNodeWithId.id : documentURL;
       // console.log(parentNodeWithId, targetIRI)
       var noteData = {
         "type": 'comment',
         "mode": "read",
-        "motivatedByIRI": motivatedBy,
+        "motivatedBy": motivatedBy,
         "id": id,
         "refId": refId,
         "iri": noteIRI, //e.g., https://example.org/path/to/article
@@ -1312,7 +1456,7 @@ export function showAnnotation(noteIRI, g, options) {
       noteData = {
         "type": 'comment',
         "mode": "read",
-        "motivatedByIRI": motivatedBy,
+        "motivatedBy": motivatedBy,
         "id": id,
         "refId": refId,
         "refLabel": refLabel,
@@ -1372,13 +1516,13 @@ export function showAnnotation(noteIRI, g, options) {
       noteData = {
         "type": 'comment',
         "mode": "read",
-        "motivatedByIRI": motivatedBy,
+        "motivatedBy": motivatedBy,
         "id": id,
         "refId": refId,
         "refLabel": refLabel,
         "iri": noteIRI,
         "creator": {},
-        "inReplyTo": {
+        "target": {
           'iri': inReplyTo,
           'rel': inReplyToRel
         }

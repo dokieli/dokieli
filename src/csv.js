@@ -17,7 +17,7 @@ limitations under the License.
 
 import Config from './config.js'
 import Papa from 'papaparse';
-import { generateUUID, getDateTimeISO } from './util.js';
+import { generateAttributeId, getDateTimeISO } from './util.js';
 import { sanitizeObject, domSanitize } from './utils/sanitization.js';
 import { createDateHTML, createLicenseHTML } from './doc.js';
 import uriTemplates from 'uri-templates';
@@ -91,7 +91,7 @@ export function jsonToHtmlTableString(csvTables, metadata = {}) {
     let licenseHTML = license ? createLicenseHTML(license["@id"], {rel:'dcterms:license', label:'License'}) : '';
     let modifiedHTML = modified ? createDateHTML({ 'property': 'dcterms:modified', 'title': 'Modified', 'datetime': new Date(tableMetadata ? tableMetadata['dcterms:modified']["@value"] : null) }) : '';
 
-    const activityGeneratedBy = generateUUID();
+    const activityGeneratedBy = generateAttributeId();
     const activityStartedAt = getDateTimeISO();
 
     const metadataColumns = tableMetadata?.tableSchema?.columns;
@@ -331,7 +331,7 @@ function generateProvenance (csvUrl, metadataUrl, activityGeneratedBy, activityS
 
   if (metadataUrl) {
     csvwTabularMetadataHTML = `            
-            <dl resource="#${generateUUID()}" typeof="prov:Usage">
+            <dl resource="#${generateAttributeId()}" typeof="prov:Usage">
               <dt>Entity</dt>
               <dd><a href="${metadataUrl}" rel="prov:entity">${metadataUrl}</a></dd>
               <dt>Role</dt>
@@ -352,7 +352,7 @@ function generateProvenance (csvUrl, metadataUrl, activityGeneratedBy, activityS
           <dd><time datetime="${activityEndedAt}" property="prov:endedAtTime">${activityEndedAt}</time></dd>
           <dt>Usage</dt>
           <dd rel="prov:qualifiedUsage">
-            <dl resource="#${generateUUID()}" typeof="prov:Usage">
+            <dl resource="#${generateAttributeId()}" typeof="prov:Usage">
               <dt>Entity</dt>
               <dd><a href="${csvUrl}" rel="prov:entity">${csvUrl}</a></dd>
               <dt>Role</dt>

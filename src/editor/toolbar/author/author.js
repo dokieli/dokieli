@@ -17,7 +17,7 @@ limitations under the License.
 
 import { toggleMark, setBlockType } from "prosemirror-commands"
 import { wrapInList, liftListItem } from "prosemirror-schema-list"
-import { DOMSerializer, DOMParser } from "prosemirror-model"
+import { DOMSerializer, DOMParser, Slice } from "prosemirror-model"
 import { TextSelection, NodeSelection } from "prosemirror-state"
 import { schema, allowedEmptyAttributes } from "./../../schema/base.js"
 import { formHandlerLanguage, formHandlerA, formHandlerAnnotate, formHandlerBlockquote, formHandlerImg, formHandlerQ, formHandlerCitation, formHandlerRequirement, formHandlerSemantics } from "./handlers.js"
@@ -635,6 +635,16 @@ nodeToHTML(node, schema) {
     let tr = state.tr.replaceSelectionWith(node);
     // console.log(tr)
     dispatch(tr);
+  }
+
+  // Like replaceSelectionWithFragment, but inserts the fragment as a closed slice so
+  // wrapper nodes survive. parseSlice returns an open slice, which flattens a single
+  // inline wrapper (e.g. the <span class="ref"> around a note/citation mark + sup)
+  // into the surrounding paragraph.
+  replaceSelectionWithInlineFragment(fragment) {
+    const { state, dispatch } = this.editorView;
+    const slice = DOMParser.fromSchema(state.schema).parseSlice(fragment);
+    dispatch(state.tr.replaceSelection(new Slice(slice.content, 0, 0)));
   }
 
   //Equivalent to insertAdjacentHTML('beforend') / appendChild?
@@ -1724,33 +1734,19 @@ async function getImageDimensions(blobUrl) {
 }
 
 //XXX: I don't know what to do with this thing yet - VB
-// I think this should actually be getClosestSectionNodeEndPos and return parentPos + parentNode.nodeSize (which is the position where the fragment should be inserted to resemble `beforeend`)
+// Position just after the selection's nearest section/container ancestor (resembles `beforeend`).
+// Walks ancestor depths so it never calls ResolvedPos.before() at the top level (which throws).
 function getClosestSectionNodeEndPos(view) {
-  const { from } = view.state.selection;
-  const nodePos = view.state.doc.resolve(from);
+  const $pos = view.state.doc.resolve(view.state.selection.from);
 
-  function findClosestAncestor(pos) {
-    let parentPos = pos.before();
-    let parentNode = view.state.doc.nodeAt(parentPos);
-
-    while (parentNode) {
-      // console.log("parentNode", parentNode)
-
-      var parentNodeName = parentNode.type.name.toLowerCase();
-
-      if (parentNodeName === 'section') {
-        return parentPos + parentNode.nodeSize;
-      }
-      else if (['div', 'article', 'main', 'body'].includes(parentNodeName)) {
-        return parentPos + parentNode.nodeSize;
-      }
-
-      parentPos = view.state.doc.resolve(parentPos).before();
-      parentNode = view.state.doc.nodeAt(parentPos);
+  for (let depth = $pos.depth; depth > 0; depth--) {
+    const node = $pos.node(depth);
+    const name = node.type.name.toLowerCase();
+    if (name === 'section' || ['div', 'article', 'main', 'body'].includes(name)) {
+      return $pos.before(depth) + node.nodeSize;
     }
-
-    return null;
   }
 
-  return findClosestAncestor(nodePos); 
+  // No container ancestor (e.g. selection resolves at the top level): append at document end.
+  return view.state.doc.content.size;
 }

@@ -91,8 +91,11 @@ class StorageBackend {
   patchWithConneg(_url, _patch, _options) {
     return Promise.reject(new Error("not implemented"));
   }
-  getAcceptPost(_url) {
-    return Promise.reject(new Error("not implemented"));
+  // Generic: query the endpoint's Accept-Post via OPTIONS, falling back to
+  // application/ld+json. Applies to any HTTP endpoint (e.g. plain HTTP inboxes),
+  // so it lives on the base rather than only SolidStorage.
+  getAcceptPost(url) {
+    return getAcceptPostPreference(url);
   }
 }
 
@@ -368,9 +371,6 @@ class SolidStorage extends StorageBackend {
   }
   patchWithConneg(url, patch, options) {
     return patchResourceWithAcceptPatch(url, patch, options);
-  }
-  getAcceptPost(url) {
-    return getAcceptPostPreference(url);
   }
 }
 

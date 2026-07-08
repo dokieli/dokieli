@@ -47,7 +47,7 @@ import { WebsocketProvider } from 'y-websocket'
 import { IndexeddbPersistence } from 'y-indexeddb'
 import { ySyncPlugin, yCursorPlugin, yUndoPlugin, undo, redo, initProseMirrorDoc, prosemirrorToYDoc } from 'y-prosemirror'
 import { currentLocation } from "../uri.js";
-import { getRandomIndex, stringToColor, generateUUID } from "../util.js";
+import { getRandomIndex, stringToColor } from "../util.js";
 import { defaultContentHTML } from "../cv.js";
 import { cvNavDecorationPlugin } from "./plugins/cvNavDecorations.js";
 import { protectPlaceholdersPlugin } from "./plugins/protectPlaceholders.js";
@@ -357,11 +357,6 @@ export class Editor {
   }
 
 
-  importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, options) {
-    const toolbarView = this.authorToolbarView || this.socialToolbarView;
-    return toolbarView?.importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, options)
-  }
-
   showTextQuoteSelectorFromLocation() {
     const toolbarView = this.authorToolbarView || this.socialToolbarView;
     return toolbarView?.showTextQuoteSelectorFromLocation();
@@ -384,6 +379,12 @@ export class Editor {
     // console.log('toolbar',toolbarView)
     // console.log(toolbarView?.replaceSelectionWithFragment)
     return toolbarView?.replaceSelectionWithNodeFromFragment(fragment)
+  }
+
+  // Inserts an inline fragment while keeping wrapper nodes (e.g. <span class="ref">) closed.
+  replaceSelectionWithInlineFragment(fragment){
+    const toolbarView = this.authorToolbarView || this.socialToolbarView;
+    return toolbarView?.replaceSelectionWithInlineFragment(fragment)
   }
 
 

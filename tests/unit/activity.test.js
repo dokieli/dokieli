@@ -15,10 +15,42 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { sendNotifications } from 'src/activity.js';  
-import { setupMockFetch, resetMockFetch } from '../utils/mockFetch';  
+import { sendNotifications, showActivities, showActivitiesSources } from 'src/activity.js';
+import { setupMockFetch, resetMockFetch } from '../utils/mockFetch';
 import Config from '../../src/config';
 import MockGrapoi from '../utils/mockGrapoi';
+
+describe('activity read dedup', () => {
+  beforeEach(() => {
+    resetMockFetch();
+    setupMockFetch({});
+  });
+
+  // Concurrent reads for the same URL must collapse to one in-flight promise so a
+  // document's overlapping scans don't storm the storage server into a 429.
+  test('showActivities returns the same in-flight promise for concurrent same-URL calls', () => {
+    const url = 'https://example.org/dedup/activity-' + Math.random();
+    const a = showActivities(url);
+    const b = showActivities(url);
+    a.catch(() => {}); b.catch(() => {});
+    expect(a).toBe(b);
+  });
+
+  test('showActivitiesSources returns the same in-flight promise for concurrent same-URL calls', () => {
+    const url = 'https://example.org/dedup/container-' + Math.random();
+    const a = showActivitiesSources(url);
+    const b = showActivitiesSources(url);
+    a.catch(() => {}); b.catch(() => {});
+    expect(a).toBe(b);
+  });
+
+  test('distinct URLs are not deduped against each other', () => {
+    const a = showActivitiesSources('https://example.org/dedup/c1-' + Math.random());
+    const b = showActivitiesSources('https://example.org/dedup/c2-' + Math.random());
+    a.catch(() => {}); b.catch(() => {});
+    expect(a).not.toBe(b);
+  });
+});
 
 describe('sendNotifications', () => {
   beforeEach(() => {
