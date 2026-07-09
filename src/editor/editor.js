@@ -45,7 +45,7 @@ import { domSanitize, domSanitizeHTMLBody } from "../utils/sanitization.js";
 import * as Y from 'yjs'
 import { WebsocketProvider } from 'y-websocket'
 import { IndexeddbPersistence } from 'y-indexeddb'
-import { ySyncPlugin, yCursorPlugin, yUndoPlugin, undo, redo, initProseMirrorDoc, prosemirrorToYDoc } from 'y-prosemirror'
+import { ySyncPlugin, yCursorPlugin, yUndoPlugin, undo, redo, initProseMirrorDoc, prosemirrorToYDoc, prosemirrorToYXmlFragment } from 'y-prosemirror'
 import { currentLocation } from "../uri.js";
 import { getRandomIndex, stringToColor } from "../util.js";
 import { defaultContentHTML } from "../cv.js";
@@ -63,6 +63,24 @@ let collabSaveHandler;
 let collabBeforeUnloadHandler;
 const YWEBSOCKET_URL = process.env.YWEBSOCKET_URL;
 const DEMO_URL = process.env.DEMO_URL;
+
+// Fixed clientID for seeding the initial document. prosemirrorToYDoc() builds a
+// fresh Y.Doc with a RANDOM clientID, so two clients seeding the same source HTML
+// produce different struct IDs — when those histories merge (IndexedDB vs server,
+// or two peers) Yjs can't dedupe them and the whole document appears twice.
+// Building the seed with a constant clientID makes the structs identical across
+// clients, so independent seeds of the same content converge instead of stacking.
+const SEED_CLIENT_ID = 0;
+
+// Deterministic Yjs update for the initial document, safe to apply on any client.
+function encodeDeterministicSeed(pmDoc) {
+  const seedDoc = new Y.Doc();
+  seedDoc.clientID = SEED_CLIENT_ID; // must be set before any content is created
+  prosemirrorToYXmlFragment(pmDoc, seedDoc.get('prosemirror', Y.XmlFragment));
+  const update = Y.encodeStateAsUpdate(seedDoc);
+  seedDoc.destroy();
+  return update;
+}
 
 export class Editor {
   constructor(mode, node) {
@@ -620,8 +638,7 @@ export class Editor {
           ydoc.getMap(VERSIONS_MAP).clear();
           ydoc.getMap('meta').clear();
         });
-        const seedDoc = prosemirrorToYDoc(originalDoc);
-        Y.applyUpdate(ydoc, Y.encodeStateAsUpdate(seedDoc));
+        Y.applyUpdate(ydoc, encodeDeterministicSeed(originalDoc));
       }
     }, { once: true });
 
@@ -693,54 +710,85 @@ export class Editor {
   this.slashMenu = new SlashMenu(this.editorView);
 
   if (!Config.Editor['new']) {
-    // Seed from originalDoc only if the room is truly empty (no local IndexedDB
-    // state AND no server state). Connect first so the server state arrives before
-    // we decide to seed — this prevents concurrent seeds from multiple clients
-    // each producing an extra copy of the document.
-    const seedIfEmpty = () => {
-      if (yXmlFragment.length > 0) {
-        if (provider) {
-          // Collab session: IDB + websocket state is authoritative.
-          // Don't overwrite collaborative changes with the local DOM.
-          return;
-        }
-        // Single-user: DOM is authoritative. Clear and re-seed from DOM.
-        // Must clear first: Y.applyUpdate is additive, not a replace.
-        ydoc.transact(() => { yXmlFragment.delete(0, yXmlFragment.length); });
-      }
-      const seedDoc = prosemirrorToYDoc(originalDoc);
-      Y.applyUpdate(ydoc, Y.encodeStateAsUpdate(seedDoc));
+    const meta = ydoc.getMap('meta');
+
+    // Seed the current DOM into the Yjs room, but NEVER additively over existing
+    // content: Y.applyUpdate appends (a fresh prosemirrorToYDoc has new struct
+    // IDs), so a second seed duplicates the whole document. A persisted 'seeded'
+    // marker travels via IndexedDB + the server, making seeding idempotent
+    // across reloads and clients.
+    const seedFromDom = () => {
+      if (yXmlFragment.length > 0 || meta.get('seeded')) return;
+      ydoc.transact(() => {
+        Y.applyUpdate(ydoc, encodeDeterministicSeed(originalDoc));
+        meta.set('seeded', true);
+      });
     };
 
     localProvider.whenSynced.then(() => {
       let done = false;
-      const doSeed = () => {
+      const finish = (collabReady) => {
         if (done) return;
         done = true;
-        seedIfEmpty();
         window.dispatchEvent(new CustomEvent('dokieli:editor-ready'));
+        if (collabReady) window.dispatchEvent(new CustomEvent('dokieli:collab-ready'));
       };
 
-      if (provider) {
-        provider.connect();
-
-        const onSync = (isSynced) => {
-          if (isSynced) {
-            provider.off('sync', onSync);
-            clearTimeout(fallback);
-            doSeed();
-            window.dispatchEvent(new CustomEvent('dokieli:collab-ready'));
-          }
-        };
-        provider.on('sync', onSync);
-
-        // Fallback: if the server is unreachable, seed after 5 s so the editor
-        // is not stuck empty when working offline.
-        const fallback = setTimeout(doSeed, 5000);
-      } else {
-        // No websocket — seed immediately from local IDB state.
-        doSeed();
+      if (!provider) {
+        // Single-user: local DOM is authoritative. Clear then reseed.
+        // (Clear first because Y.applyUpdate is additive, not a replace.)
+        if (yXmlFragment.length > 0) {
+          ydoc.transact(() => { yXmlFragment.delete(0, yXmlFragment.length); });
+        }
+        Y.applyUpdate(ydoc, encodeDeterministicSeed(originalDoc));
+        finish(false);
+        return;
       }
+
+      provider.connect();
+
+      // Decide whether to seed only after the initial server sync. Even then, an
+      // empty room may still receive the persisted document as a trailing update
+      // (the y-websocket/y-leveldb bindState load races 'sync'). Seeding the DOM
+      // in that window would merge on top of the arriving content and duplicate
+      // the whole document. So when the room looks empty, wait briefly for such
+      // an update before seeding; if it arrives (or a peer seeds first), back off.
+      const decideSeed = () => {
+        if (yXmlFragment.length > 0 || meta.get('seeded')) { finish(true); return; }
+
+        let settled = false;
+        const settle = (seed) => {
+          if (settled) return;
+          settled = true;
+          ydoc.off('update', onUpdate);
+          clearTimeout(graceTimer);
+          if (seed) seedFromDom();
+          finish(true);
+        };
+        const onUpdate = (_update, origin) => {
+          // A doc update from the provider means the server/a peer delivered
+          // content — do not seed the DOM on top of it.
+          if (origin === provider) settle(false);
+        };
+        ydoc.on('update', onUpdate);
+        const graceTimer = setTimeout(() => settle(true), 1000);
+      };
+
+      const onSync = (isSynced) => {
+        if (!isSynced) return;
+        provider.off('sync', onSync);
+        clearTimeout(fallback);
+        decideSeed();
+      };
+      provider.on('sync', onSync);
+
+      // Fallback: if the server is unreachable, seed after 5 s so the editor is
+      // not stuck empty when working offline.
+      const fallback = setTimeout(() => {
+        provider.off('sync', onSync);
+        seedFromDom();
+        finish(false);
+      }, 5000);
     });
   }
   }
