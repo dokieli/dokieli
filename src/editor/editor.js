@@ -503,18 +503,21 @@ export class Editor {
     awareness?.setLocalStateField('user', { name, color, avatar });
 
     const cursorPlugin = awareness ? yCursorPlugin(awareness, {
-      cursorBuilder: user => {
+      cursorBuilder: (user, clientId) => {
         const wrapper = document.createElement('span');
         wrapper.className = 'yjs-cursor do';
+        wrapper.dataset.yjsClientid = clientId;   // ← so we can find this node later
 
         // caret (vertical line)
         const caret = document.createElement('span');
         caret.className = 'yjs-caret';
         caret.style.borderLeftColor = user.color;
 
-        // label container
+        // Name label — revealed on activity, then CSS fades it out so it does
+        // not permanently cover the text. It is re-shown by retriggerLabel()
+        // below whenever this peer moves or types.
         const label = document.createElement('span');
-        label.className = 'yjs-label';
+        label.className = 'yjs-label yjs-label-active';
         label.style.backgroundColor = user.color;
 
         // avatar
@@ -536,7 +539,10 @@ export class Editor {
         wrapper.appendChild(label);
 
         return wrapper;
-      }
+      },
+      // Peer selections use the neutral browser selection color, not the
+      // peer's user/label color.
+      selectionBuilder: () => ({ class: 'yjs-selection' })
     }) : null;
 
     collabSaveHandler = () => {
@@ -555,6 +561,35 @@ export class Editor {
       });
     }
 
+    // ProseMirror caches each cursor widget's DOM by clientId, so cursorBuilder
+    // does NOT re-run while a peer moves or types. Restart the label's fade
+    // animation directly on the live node whenever that peer is active.
+    const retriggerLabel = (id) => {
+      if (!awareness || id === awareness.clientID) return;
+      document
+        .querySelectorAll(`.yjs-cursor[data-yjs-clientid="${id}"] .yjs-label`)
+        .forEach(label => {
+          label.classList.remove('yjs-label-active');
+          void label.offsetWidth;              // reflow → restart the animation
+          label.classList.add('yjs-label-active');
+        });
+    };
+
+    if (awareness) {
+      // Peer moved the caret or changed selection (no document edit).
+      awareness.on('change', ({ added, updated }) => {
+        for (const id of added.concat(updated)) retriggerLabel(id);
+      });
+      // Peer edited the document. Awareness 'change' is not a reliable signal
+      // while typing, so also key off the authors of each remote transaction
+      // (the clients whose clock advanced).
+      ydoc.on('afterTransaction', (tr) => {
+        if (tr.local) return;
+        for (const [id, clock] of tr.afterState) {
+          if ((tr.beforeState.get(id) ?? 0) < clock) retriggerLabel(id);
+        }
+      });
+    }
 
     function hasUnsavedCollabChanges() {
       if (yXmlFragment.length === 0) return false;

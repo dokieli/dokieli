@@ -200,11 +200,23 @@ export function stringToColor(str) {
   }
 
   const h = Math.abs(hash) % 360;
-  const s = 60 + (Math.abs(hash) % 20);  // 60–80%
-  const l = 40 + (Math.abs(hash >> 8) % 20); // 40–60%
-  const a = 0.9;
+  const s = 60 + (Math.abs(hash) % 20);       // 60–80%
+  const l = 40 + (Math.abs(hash >> 8) % 20);  // 40–60%
 
-  return `hsl(${h}, ${s}%, ${l}%, ${a})`;
+  // y-prosemirror requires a 6-digit hex color: it appends an alpha suffix
+  // (`${color}70`) to draw remote selections, which only works on hex.
+  return hslToHex(h, s, l);
+}
+
+function hslToHex(h, s, l) {
+  s /= 100; l /= 100;
+  const a = s * Math.min(l, 1 - l);
+  const f = n => {
+    const k = (n + h / 30) % 12;
+    const c = l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+    return Math.round(255 * c).toString(16).padStart(2, '0');
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
 }
 
 export function getRandomIndex(length) {

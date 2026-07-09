@@ -37,6 +37,27 @@ export class AuthorToolbar extends ToolbarView {
   constructor(mode, buttons, editorView) {
     super(mode, buttons, editorView)
     this.editorView = editorView;
+
+    // Clicking an existing link in edit mode opens the hyperlink form so the
+    // author can see and edit its URL (links aren't followable while editing).
+    this.handleLinkClick = this.handleLinkClick.bind(this);
+    this.editorView?.dom.addEventListener('click', this.handleLinkClick);
+  }
+
+  handleLinkClick(e) {
+    const view = this.editorView;
+    if (!view || !view.editable || e.button !== 0 || e.metaKey || e.ctrlKey) return;
+    if (!e.target.closest('a')) return;
+    const coords = view.posAtCoords({ left: e.clientX, top: e.clientY });
+    if (!coords) return;
+    const range = getMarkRange(view.state, coords.pos, schema.marks.a);
+    if (!range) return;
+    e.preventDefault();
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, range.from, range.to)));
+    view.focus();
+    if (!this.dom.querySelector('#editor-form-a')?.classList.contains('editor-form-active')) {
+      this.dom.querySelector('#editor-button-a')?.click();
+    }
   }
 
   //TODO: Create formValidationHandlers to handle `input` and `invalid` event handlers. Move oninput/oninvalid out of form's inline HTML
@@ -474,6 +495,12 @@ TODO:
   // Called when there is a state change, e.g., added something to the DOM or selection change.
   update(view) {
     this.selectionUpdate(view);
+    // When the toolbar's own form is focused (e.g. the user is filling in the
+    // hyperlink or semantics popup), the DOM selection is expectedly collapsed.
+    // A stray editor update — e.g. a Yjs awareness transaction dispatched on
+    // editor focusout in collab mode — must not be treated as "selection lost"
+    // and close the form.
+    if (this.dom.contains(document.activeElement)) return;
     const selection = window.getSelection();
     const isSelection = selection && !selection.isCollapsed;
     const isNodeSelection = view?.state?.selection instanceof NodeSelection;
@@ -1170,10 +1197,30 @@ nodeToHTML(node, schema) {
 
   getPopulateForms() {
     return {
+      a: this.populateFormA,
       img: this.populateFormImg,
       citation: this.populateFormCitation,
       requirement: this.populateFormRequirement,
     }
+  }
+
+  // Prefill the hyperlink form with the link mark touching the selection, so an
+  // existing link's URL/title is shown (and editable) rather than blank.
+  populateFormA(button, node, state) {
+    const hrefInput = node.querySelector('#a-href');
+    const titleInput = node.querySelector('#a-title');
+    if (!hrefInput) return;
+    const markType = schema.marks.a;
+    const { from, to, $from } = state.selection;
+    let mark = markType.isInSet($from.marks());
+    if (!mark) {
+      state.doc.nodesBetween(from, to, n => {
+        if (!mark) mark = markType.isInSet(n.marks);
+      });
+    }
+    const attrs = mark?.attrs?.originalAttributes || {};
+    hrefInput.value = attrs.href || '';
+    if (titleInput) titleInput.value = attrs.title || '';
   }
 
   updateButtonState(schema, buttonNode, button, editorView) {
@@ -1214,6 +1261,29 @@ nodeToHTML(node, schema) {
       }
     }
   }
+}
+
+// Range [from, to] of the contiguous run of `markType` covering `pos`, or null.
+function getMarkRange(state, pos, markType) {
+  const $pos = state.doc.resolve(pos);
+  const parent = $pos.parent;
+  const start = parent.childAfter($pos.parentOffset);
+  if (!start.node) return null;
+  const mark = markType.isInSet(start.node.marks);
+  if (!mark) return null;
+  let startIndex = $pos.index();
+  let startPos = $pos.start() + start.offset;
+  let endIndex = startIndex + 1;
+  let endPos = startPos + start.node.nodeSize;
+  while (startIndex > 0 && mark.isInSet(parent.child(startIndex - 1).marks)) {
+    startIndex -= 1;
+    startPos -= parent.child(startIndex).nodeSize;
+  }
+  while (endIndex < parent.childCount && mark.isInSet(parent.child(endIndex).marks)) {
+    endPos += parent.child(endIndex).nodeSize;
+    endIndex += 1;
+  }
+  return { from: startPos, to: endPos };
 }
 
 //Checks whether a given a mark schema is applied / active to the current selection.

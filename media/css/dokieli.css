@@ -5382,6 +5382,11 @@ button.editor-dropdown-item svg {
   display: inline-flex;
   list-style-type:none;
   margin:0;
+  padding:0;
+}
+#editor-area-toggle ul li {
+  margin:0;
+  padding:0;
 }
 
 #editor-area-toggle .mode-wysiwym,
@@ -5523,11 +5528,11 @@ font-size:2.25em;
       color: white; }
 /* XXX: MediumEditor above. This is automatically generated (using build.editor.sh) and inserted. Do not modify directly */
 .yjs-cursor {
-  position: relative;
+  position: absolute;
 }
 
 .yjs-caret {
-  border-left-width: 0.1em;
+  border-left-width: 0.2em;
   border-left-style: solid;
   height: 1em;
 }
@@ -5546,12 +5551,41 @@ font-size:2.25em;
   white-space: nowrap;
   padding:0.25em 0.5em;
   border-radius:0.75em;
+  opacity: 0;                    /* hidden until the peer is active */
+  transition: opacity 0.2s ease;
+  pointer-events: none;     
 }
 
 .yjs-avatar {
   width: max-content;
   height: 24px;
   border-radius: 50%;
+}
+
+.yjs-label.yjs-label-active {
+  animation: yjs-label-fade 2.5s ease forwards;
+}
+
+@keyframes yjs-label-fade {
+  0%, 70% { opacity: 1; }   /* visible while active + shortly after */
+  100%    { opacity: 0; }   /* fade out when idle */
+}
+
+/* Reveal a peer's name on demand by hovering their caret. */
+.yjs-cursor:hover .yjs-label {
+  opacity: 1;
+  animation: none;
+}
+
+/* Peer text selection: default browser selection color, not the peer color. */
+.yjs-selection {
+  background-color: rgba(0, 120, 215, 0.3);
+}
+
+@media (prefers-color-scheme: dark) {
+  .yjs-selection {
+    background-color: rgba(80, 160, 255, 0.4);
+  }
 }
 
 /* Slideshow CSS, originally derived from shower-material v1.0.11 (MIT,
