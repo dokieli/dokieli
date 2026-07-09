@@ -1,6 +1,6 @@
 {
   "name": "dokieli",
-  "version": "0.3.1474",
+  "version": "0.3.1475",
   "description": "dokieli is a clientside editor for decentralised article publishing, annotations, and social interactions.",
   "main": "./src/dokieli.js",
   "type": "module",
@@ -40,7 +40,7 @@
     "node": ">=22.0.0"
   },
   "dependencies": {
-    "@dokieli/web-annotation": "^1.0.0",
+    "@dokieli/web-annotation": "^1.0.1",
     "@uvdsl/solid-oidc-client-browser": "^0.2.3",
     "buffer": "^6.0.3",
     "d3-force": "^3.0.0",
@@ -112,5 +112,5 @@
     "minimatch": "^10.2.4",
     "lodash": "^4.18.0"
   },
-  "packageManager": "yarn@4.14.1"
+  "packageManager": "yarn@4.17.1"
 }
