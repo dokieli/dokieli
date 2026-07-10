@@ -45,7 +45,7 @@ import { domSanitize, domSanitizeHTMLBody } from "../utils/sanitization.js";
 import * as Y from 'yjs'
 import { WebsocketProvider } from 'y-websocket'
 import { IndexeddbPersistence } from 'y-indexeddb'
-import { ySyncPlugin, yCursorPlugin, yUndoPlugin, undo, redo, initProseMirrorDoc, prosemirrorToYDoc, prosemirrorToYXmlFragment } from 'y-prosemirror'
+import { ySyncPlugin, yCursorPlugin, yUndoPlugin, undo, redo, initProseMirrorDoc, prosemirrorToYDoc } from 'y-prosemirror'
 import { currentLocation } from "../uri.js";
 import { getRandomIndex, stringToColor } from "../util.js";
 import { defaultContentHTML } from "../cv.js";
@@ -64,22 +64,13 @@ let collabBeforeUnloadHandler;
 const YWEBSOCKET_URL = process.env.YWEBSOCKET_URL;
 const DEMO_URL = process.env.DEMO_URL;
 
-// Fixed clientID for seeding the initial document. prosemirrorToYDoc() builds a
-// fresh Y.Doc with a RANDOM clientID, so two clients seeding the same source HTML
-// produce different struct IDs — when those histories merge (IndexedDB vs server,
-// or two peers) Yjs can't dedupe them and the whole document appears twice.
-// Building the seed with a constant clientID makes the structs identical across
-// clients, so independent seeds of the same content converge instead of stacking.
-const SEED_CLIENT_ID = 0;
-
-// Deterministic Yjs update for the initial document, safe to apply on any client.
-function encodeDeterministicSeed(pmDoc) {
-  const seedDoc = new Y.Doc();
-  seedDoc.clientID = SEED_CLIENT_ID; // must be set before any content is created
-  prosemirrorToYXmlFragment(pmDoc, seedDoc.get('prosemirror', Y.XmlFragment));
-  const update = Y.encodeStateAsUpdate(seedDoc);
-  seedDoc.destroy();
-  return update;
+// Yjs update encoding the current DOM as the initial document. Uses a random
+// clientID (via prosemirrorToYDoc): each seed's structs are independent, so a
+// delete on one peer never tombstones another peer's content, and a subsequent
+// reseed always integrates. Duplication from concurrent seeds is prevented by
+// the 'seeded' marker + grace window below, NOT by sharing struct IDs.
+function encodeSeed(pmDoc) {
+  return Y.encodeStateAsUpdate(prosemirrorToYDoc(pmDoc));
 }
 
 export class Editor {
@@ -633,12 +624,13 @@ export class Editor {
     window.addEventListener('pagehide', (e) => {
       const alone = (provider?.awareness?.getStates().size ?? 0) <= 1;
       if (!e.persisted && alone && ydoc && !ydoc.isDestroyed && hasUnsavedCollabChanges()) {
+        console.warn('[seed] pagehide WIPE+reseed (alone, unsaved changes)');
         ydoc.transact(() => {
           yXmlFragment.delete(0, yXmlFragment.length);
           ydoc.getMap(VERSIONS_MAP).clear();
           ydoc.getMap('meta').clear();
         });
-        Y.applyUpdate(ydoc, encodeDeterministicSeed(originalDoc));
+        Y.applyUpdate(ydoc, encodeSeed(originalDoc));
       }
     }, { once: true });
 
@@ -712,15 +704,34 @@ export class Editor {
   if (!Config.Editor['new']) {
     const meta = ydoc.getMap('meta');
 
+    // TEMP diagnostics: report every change to the fragment length, and flag any
+    // transaction that empties it, with whether it was local (this client did it)
+    // or received from the provider, plus the origin. Remove once resolved.
+    let __seedPrevLen = yXmlFragment.length;
+    ydoc.on('afterTransaction', (tr) => {
+      const len = yXmlFragment.length;
+      if (len === __seedPrevLen) return;
+      const originName = tr.origin?.constructor?.name ?? String(tr.origin);
+      console.log(`[seed] fragment ${__seedPrevLen} -> ${len} local=${tr.local} origin=${originName} clientID=${ydoc.clientID}`);
+      if (len === 0 && __seedPrevLen > 0) {
+        console.warn('[seed] WIPE — fragment emptied', { local: tr.local, origin: tr.origin, seeded: meta.get('seeded') });
+      }
+      __seedPrevLen = len;
+    });
+
     // Seed the current DOM into the Yjs room, but NEVER additively over existing
     // content: Y.applyUpdate appends (a fresh prosemirrorToYDoc has new struct
     // IDs), so a second seed duplicates the whole document. A persisted 'seeded'
     // marker travels via IndexedDB + the server, making seeding idempotent
     // across reloads and clients.
     const seedFromDom = () => {
-      if (yXmlFragment.length > 0 || meta.get('seeded')) return;
+      if (yXmlFragment.length > 0 || meta.get('seeded')) {
+        console.log(`[seed] seedFromDom SKIP len=${yXmlFragment.length} seeded=${meta.get('seeded')}`);
+        return;
+      }
+      console.log('[seed] seedFromDom APPLY (room empty, unseeded)');
       ydoc.transact(() => {
-        Y.applyUpdate(ydoc, encodeDeterministicSeed(originalDoc));
+        Y.applyUpdate(ydoc, encodeSeed(originalDoc));
         meta.set('seeded', true);
       });
     };
@@ -734,13 +745,16 @@ export class Editor {
         if (collabReady) window.dispatchEvent(new CustomEvent('dokieli:collab-ready'));
       };
 
+      console.log(`[seed] whenSynced provider=${!!provider} len=${yXmlFragment.length} seeded=${meta.get('seeded')}`);
+
       if (!provider) {
         // Single-user: local DOM is authoritative. Clear then reseed.
         // (Clear first because Y.applyUpdate is additive, not a replace.)
+        console.log('[seed] single-user path: clear + reseed');
         if (yXmlFragment.length > 0) {
           ydoc.transact(() => { yXmlFragment.delete(0, yXmlFragment.length); });
         }
-        Y.applyUpdate(ydoc, encodeDeterministicSeed(originalDoc));
+        Y.applyUpdate(ydoc, encodeSeed(originalDoc));
         finish(false);
         return;
       }
@@ -754,6 +768,7 @@ export class Editor {
       // the whole document. So when the room looks empty, wait briefly for such
       // an update before seeding; if it arrives (or a peer seeds first), back off.
       const decideSeed = () => {
+        console.log(`[seed] decideSeed (after sync) len=${yXmlFragment.length} seeded=${meta.get('seeded')}`);
         if (yXmlFragment.length > 0 || meta.get('seeded')) { finish(true); return; }
 
         let settled = false;
@@ -762,6 +777,7 @@ export class Editor {
           settled = true;
           ydoc.off('update', onUpdate);
           clearTimeout(graceTimer);
+          console.log(`[seed] grace settled seed=${seed}`);
           if (seed) seedFromDom();
           finish(true);
         };
