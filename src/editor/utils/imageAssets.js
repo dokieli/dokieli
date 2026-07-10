@@ -119,6 +119,42 @@ export function rewriteBlobImagesToRelative(rootEl, used = new Set()) {
   return mapping;
 }
 
+// Default in-document target path for an inserted image file, e.g.
+// "media/images/diagram.png". This is what goes into the image form's URL field
+// and into the <img src> — a relative, collaboratively-resolvable location — not
+// a browser-local blob: URL.
+export function defaultImageTargetPath(file) {
+  const baseName = sanitizeFilename(file?.name || 'image');
+  let { stem, ext } = splitExt(baseName);
+  if (!ext) ext = extFromType(file?.type);
+  return getBaseURL(Config.DocumentURL) + `media/images/${stem}${ext || ''}`;
+}
+
+// A src that is not an absolute URL (nor data:/blob:) — a relative path.
+export function isRelativeTargetPath(src) {
+  return typeof src === 'string' && src.length > 0 && !/^([a-z][a-z0-9+.-]*:|\/\/)/i.test(src);
+}
+
+// True when we should upload the chosen file to `src`: a relative path, or an
+// absolute URL under the current document's container. (Not gated on sign-in —
+// whether the PUT is allowed is the storage backend's call, same as saving.)
+export function isUploadableTarget(src) {
+  if (!src) return false;
+  if (isRelativeTargetPath(src)) return true;
+  const base = getBaseURL(Config.DocumentURL);
+  return typeof base === 'string' && src.startsWith(base);
+}
+
+// PUT an image file to `pathOrURL` (relative paths resolve against the document).
+export async function uploadImageFile(pathOrURL, file, options = {}) {
+  const target = isRelativeTargetPath(pathOrURL)
+    ? getBaseURL(Config.DocumentURL) + pathOrURL
+    : pathOrURL;
+  const buffer = await file.arrayBuffer();
+  const contentType = file.type || 'application/octet-stream';
+  return Config.Storage.put(target, buffer, contentType, null, options);
+}
+
 export async function uploadBlobAssets(storageIRI, mapping, options = {}) {
   if (!mapping.length) return [];
   const baseURL = getBaseURL(storageIRI);

@@ -21,7 +21,7 @@ import { getFormValues } from "../../utils/html.js";
 import { schema } from "../schema/base.js";
 import { TextSelection } from "prosemirror-state";
 import Config from "../../config.js";
-import { describeBlobAsset } from "../utils/imageAssets.js";
+import { isUploadableTarget, uploadImageFile } from "../utils/imageAssets.js";
 
 export function formHandlerLanguage(e) {
   e.preventDefault();
@@ -134,7 +134,7 @@ export function formHandlerTestSuite(e) {
   this.hideMenu()
 }
 
-export function formHandlerImg(e) {
+export async function formHandlerImg(e) {
   e.preventDefault();
   e.stopPropagation();
 
@@ -154,10 +154,15 @@ export function formHandlerImg(e) {
     if (previewImg.height) attrs.height = String(previewImg.height);
   }
 
-  if (src.startsWith('blob:')) {
-    const blobAsset = describeBlobAsset(src);
-    if (blobAsset?.name) attrs['data-original-filename'] = blobAsset.name;
-    if (blobAsset?.type) attrs['data-content-type'] = blobAsset.type;
+  // Upload the chosen file to the target path first, so the inserted <img>
+  // resolves (for us and collaborators) instead of returning a 404.
+  const file = e.target.querySelector('[name="img-file"]')?.files?.[0];
+  if (file && isUploadableTarget(src)) {
+    try {
+      await uploadImageFile(src, file);
+    } catch (err) {
+      console.warn('Image upload failed:', err);
+    }
   }
 
   const { state, dispatch } = this.editorView;

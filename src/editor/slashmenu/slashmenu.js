@@ -22,7 +22,7 @@ import { TextSelection } from "prosemirror-state";
 import { DOMParser } from "prosemirror-model";
 import { i18n } from "../../i18n.js";
 import { fragmentFromString } from "../../utils/html.js";
-import { registerBlobAsset } from "../utils/imageAssets.js";
+import { defaultImageTargetPath } from "../utils/imageAssets.js";
 
 export class SlashMenu {
   constructor(editorView) {
@@ -344,11 +344,12 @@ export class SlashMenu {
           if (!file) return;
           preview.replaceChildren();
           const image = document.createElement("img");
-          image.src = URL.createObjectURL(file);
+          image.src = URL.createObjectURL(file); // local preview only
           image.alt = file.name;
           preview.appendChild(image);
-          srcInput.value = image.src;
-          registerBlobAsset(image.src, file);
+          // The field (and inserted src) default to the upload target path, not
+          // the browser-local blob URL; Save PUTs the file there.
+          srcInput.value = defaultImageTargetPath(file);
         });
       }
     }
