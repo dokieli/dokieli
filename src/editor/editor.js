@@ -61,6 +61,7 @@ let yXmlFragment;
 let originalDoc;
 let collabSaveHandler;
 let collabBeforeUnloadHandler;
+let collabAttentionButton;
 const YWEBSOCKET_URL = process.env.YWEBSOCKET_URL;
 const DEMO_URL = process.env.DEMO_URL;
 
@@ -598,6 +599,47 @@ export class Editor {
           if ((tr.beforeState.get(id) ?? 0) < clock) retriggerLabel(id);
         }
       });
+
+      // --- DIAGNOSTIC: "look here" re-added raw to surface the console error ---
+      console.log('[attention] setup begin; peers=', awareness.getStates().size);
+
+      const seenAttention = new Map();
+      awareness.on('change', ({ added, updated }) => {
+        console.log('[attention] change; added=', added, 'updated=', updated);
+        for (const id of added.concat(updated)) {
+          if (id === awareness.clientID) continue;
+          const n = awareness.getStates().get(id)?.attention;
+          if (n == null || seenAttention.get(id) === n) continue;
+          const isFirstSeen = !seenAttention.has(id);
+          seenAttention.set(id, n);
+          if (isFirstSeen) continue;
+          const caret = document.querySelector(`.yjs-cursor[data-yjs-clientid="${id}"]`);
+          if (!caret) continue;
+          caret.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          caret.classList.remove('yjs-attention');
+          void caret.offsetWidth;
+          caret.classList.add('yjs-attention');
+        }
+      });
+
+      collabAttentionButton = document.createElement('button');
+      collabAttentionButton.id = 'collab-attention';
+      collabAttentionButton.className = 'do';
+      collabAttentionButton.type = 'button';
+      collabAttentionButton.title = 'Scroll collaborators to your cursor';
+      collabAttentionButton.textContent = 'Look here';
+      collabAttentionButton.hidden = true;
+      collabAttentionButton.addEventListener('mousedown', (e) => e.preventDefault());
+      collabAttentionButton.addEventListener('click', () => requestCollabAttention());
+      document.body.appendChild(collabAttentionButton);
+      const syncAttentionButton = () => {
+        if (collabAttentionButton) collabAttentionButton.hidden = (awareness.getStates().size <= 1);
+      };
+      awareness.on('change', syncAttentionButton);
+      syncAttentionButton();
+
+      console.log('[attention] setup end');
+      // --- END DIAGNOSTIC ---
     }
 
     function hasUnsavedCollabChanges() {
@@ -616,6 +658,7 @@ export class Editor {
         e.returnValue = '';
       }
     };
+
     window.addEventListener('beforeunload', collabBeforeUnloadHandler);
 
     // pagehide fires only after the user confirmed leaving (not on "Stay").
@@ -829,6 +872,10 @@ export class Editor {
     if (collabBeforeUnloadHandler) {
       window.removeEventListener('beforeunload', collabBeforeUnloadHandler);
       collabBeforeUnloadHandler = null;
+    }
+    if (collabAttentionButton) {
+      collabAttentionButton.remove();
+      collabAttentionButton = null;
     }
 
     // Serialize content and destroy editorView first, so ySyncPlugin unregisters
@@ -1078,6 +1125,13 @@ export class Editor {
   //     setEditSelections();
   //   }
   // }
+}
+// One-shot "look here": bump this client's awareness `attention` nonce.
+export function requestCollabAttention() {
+  const awareness = provider?.awareness;
+  if (!awareness) return;
+  const n = (awareness.getLocalState()?.attention || 0) + 1;
+  awareness.setLocalStateField('attention', n);
 }
 
 // Update the Yjs awareness user field after sign-in so peers see the correct identity.
