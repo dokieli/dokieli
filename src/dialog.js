@@ -6415,15 +6415,18 @@ export function buildListOfStuff(id) {
       else {
         //TODO: Perhaps table-of-requirements and table-of-advisements could be consolidated / generalised.
 
-        if (id == 'table-of-requirements') {
+        let specRequirements = Config.Resource[documentURL]?.spec?.requirement || {};
+        let specAdvisements = Config.Resource[documentURL]?.spec?.advisement || {};
+
+        if (id == 'table-of-requirements' && Object.keys(specRequirements).length) {
 //TODO: Sort by requirementSubject then requirementLevel? or offer controls on the table.
 
           s += '<caption>Conformance Requirements and Test Coverage</caption>'
           s += '<thead><tr><th colspan="3">Requirement</th></tr><tr><th>Subject</th><th>Level</th><th>Statement</th></tr></thead>';
           s += '<tbody>';
-          Object.keys(Config.Resource[documentURL]['spec']['requirement']).forEach(i => {
+          Object.keys(specRequirements).forEach(i => {
 // console.log(Config.Resource[documentURL]['spec'][i])
-            var statement = Config.Resource[documentURL]['spec']['requirement'][i][ns.spec.statement.value] || i;
+            var statement = specRequirements[i][ns.spec.statement.value] || i;
             //FIXME: This selector is brittle.
             // var requirementIRI = document.querySelector('#document-identifier [rel="owl:sameAs"]');
             var requirementIRI = document.querySelector('#document-latest-published-version [rel~="rel:latest-version"]');
@@ -6432,14 +6435,14 @@ export function buildListOfStuff(id) {
             requirementIRI = i.replace(stripFragmentFromString(i), requirementIRI);
             statement = '<a href="' + requirementIRI + '">' + statement + '</a>';
 
-            var requirementSubjectIRI = Config.Resource[documentURL]['spec']['requirement'][i][ns.spec.requirementSubject.value];
+            var requirementSubjectIRI = specRequirements[i][ns.spec.requirementSubject.value];
             var requirementSubjectLabel = requirementSubjectIRI || '<span class="warning">?</span>';
             if (requirementSubjectLabel.startsWith('http')) {
               requirementSubjectLabel = getFragmentFromString(requirementSubjectIRI) || getURLLastPath(requirementSubjectIRI) || requirementSubjectLabel;
             }
             var requirementSubject = '<a href="' + requirementSubjectIRI + '">' + requirementSubjectLabel + '</a>';
 
-            var requirementLevelIRI = Config.Resource[documentURL]['spec']['requirement'][i][ns.spec.requirementLevel.value];
+            var requirementLevelIRI = specRequirements[i][ns.spec.requirementLevel.value];
             var requirementLevelLabel = requirementLevelIRI || '<span class="warning">?</span>';
             if (requirementLevelLabel.startsWith('http')) {
               requirementLevelLabel = getFragmentFromString(requirementLevelIRI) || getURLLastPath(requirementLevelIRI) || requirementLevelLabel;
@@ -6454,15 +6457,15 @@ export function buildListOfStuff(id) {
           });
           s += '</tbody>';
         }
-        else if (id == 'table-of-advisements') {
+        else if (id == 'table-of-advisements' && Object.keys(specAdvisements).length) {
 //TODO: Sort by advisementSubject then advisementLevel? or offer controls on the table.
 
           s += '<caption>Non-normative Advisements</caption>'
           s += '<thead><tr><th colspan="2">Advisement</th></tr><tr><th>Level</th><th>Statement</th></tr></thead>';
           s += '<tbody>';
-          Object.keys(Config.Resource[documentURL]['spec']['advisement']).forEach(i => {
-// console.log(Config.Resource[documentURL]['spec']['advisement'][i])
-            var statement = Config.Resource[documentURL]['spec']['advisement'][i][ns.spec.statement.value] || i;
+          Object.keys(specAdvisements).forEach(i => {
+// console.log(specAdvisements[i])
+            var statement = specAdvisements[i][ns.spec.statement.value] || i;
             //FIXME: This selector is brittle.
             //TODO: Revisit this:
             // var advisementIRI = document.querySelector('#document-identifier [rel="owl:sameAs"]');
@@ -6472,14 +6475,14 @@ export function buildListOfStuff(id) {
             advisementIRI = i.replace(stripFragmentFromString(i), advisementIRI);
             statement = '<a href="' + advisementIRI + '">' + statement + '</a>';
 
-            // var advisementSubjectIRI = Config.Resource[documentURL]['spec']['advisement'][i][ns.spec.advisementSubject.value];
+            // var advisementSubjectIRI = specAdvisements[i][ns.spec.advisementSubject.value];
             // var advisementSubjectLabel = advisementSubjectIRI || '<span class="warning">?</span>';
             // if (advisementSubjectLabel.startsWith('http')) {
             //   advisementSubjectLabel = getFragmentFromString(advisementSubjectIRI) || getURLLastPath(advisementSubjectIRI) || advisementSubjectLabel;
             // }
             // var advisementSubject = '<a href="' + advisementSubjectIRI + '">' + advisementSubjectLabel + '</a>';
 
-            var advisementLevelIRI = Config.Resource[documentURL]['spec']['advisement'][i][ns.spec.advisementLevel.value];
+            var advisementLevelIRI = specAdvisements[i][ns.spec.advisementLevel.value];
             var advisementLevelLabel = advisementLevelIRI || '<span class="warning">?</span>';
             if (advisementLevelLabel.startsWith('http')) {
               advisementLevelLabel = getFragmentFromString(advisementLevelIRI) || getURLLastPath(advisementLevelIRI) || advisementLevelLabel;
