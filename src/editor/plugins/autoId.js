@@ -16,6 +16,21 @@ limitations under the License.
 */
 
 import { Plugin } from "prosemirror-state";
+import Config from "../../config.js";
+
+//Section ids exempt from heading-based updates, per document rdf:type.
+const reservedSectionIds = {
+  "http://usefulinc.com/ns/doap#Specification": ["sotd"]
+};
+
+function getReservedSectionIds() {
+  const types = Config.Resource?.[Config.DocumentURL]?.rdftype || [];
+  const reserved = new Set();
+  types.forEach((type) => {
+    (reservedSectionIds[type] || []).forEach((id) => reserved.add(id));
+  });
+  return reserved;
+}
 
 export function slugify(text) {
   return text
@@ -48,9 +63,12 @@ export const autoIdPlugin = new Plugin({
       if (id) usedIds.add(id);
     });
 
+    const reservedIds = getReservedSectionIds();
+
     const updates = [];
     newState.doc.descendants((node, pos) => {
       if (node.type.name !== "section") return;
+      if (reservedIds.has(node.attrs?.originalAttributes?.id)) return;
       const heading = findFirstHeading(node);
       if (!heading) return;
 
