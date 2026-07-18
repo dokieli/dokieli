@@ -7074,6 +7074,12 @@ aside.do input:has(+ button.toggle-passphrase) {
   padding-right: 2.5em;
   width: calc(100% - 20em);
 }
+input.passphrase-match + button.toggle-passphrase svg {
+  fill: #080;
+}
+input.passphrase-mismatch + button.toggle-passphrase svg {
+  fill: #f00;
+}
 
 .editor-form .editor-form-encrypt-label .fas.fa-lock path,
 .editor-form .editor-form-encrypt-label .fas.fa-lock-open path {
