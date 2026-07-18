@@ -2143,7 +2143,7 @@ export async function createMutableResource(url, data, options) {
 
   // First serialize: document carries the mutableURL identifier (rel:latest-version).
   data = getDocument(null, documentOptions);
-  if (Config.User.Encryption?.Enabled) data = await encryptArticlePayload(data);
+  if (Config.User.Encryption?.Enabled && Config.User.Encryption?.DocumentEncrypt) data = await encryptArticlePayload(data);
 
   Config.Storage.save(containerIRI, uuid, data, options)
     .then((resolved) => handleActionMessage(resolved))
@@ -2156,7 +2156,7 @@ export async function createMutableResource(url, data, options) {
   setDocumentRelation(document, [r], o);
 
   data = getDocument(null, documentOptions);
-  if (Config.User.Encryption?.Enabled) data = await encryptArticlePayload(data);
+  if (Config.User.Encryption?.Enabled && Config.User.Encryption?.DocumentEncrypt) data = await encryptArticlePayload(data);
 
   Config.Storage.save(url, null, data, options)
     .then((resolved) => handleActionMessage(resolved))
@@ -2166,8 +2166,10 @@ export async function createMutableResource(url, data, options) {
     });
 }
 
-// Encrypts the innerHTML of the article node within a full HTML string.
-// The encrypted JWE is embedded as a <script id="dokieli-e2ee" type="application/jose"> tag.
+// Encrypts the innerHTML of the article node, along with the document title,
+// within a full HTML string. The JWE payload is a JSON envelope { title, body };
+// it is embedded as a <script id="dokieli-e2ee" type="application/jose"> tag and
+// the <title> text is masked so it does not leak the document's subject.
 // The outer <article> element and its attributes (RDFa, id, etc.) are preserved.
 // Returns the modified HTML string; returns the original unchanged if no article is found
 // or if the keystore is not unlocked.
@@ -2179,7 +2181,8 @@ export async function encryptArticlePayload(htmlString) {
   const article = selectArticleNode(parsed)
   if (!article) return htmlString
 
-  const plaintext = article.innerHTML
+  const titleNode = parsed.querySelector('head > title')
+  const plaintext = JSON.stringify({ title: titleNode?.textContent ?? null, body: article.innerHTML })
   const pubKey = getSessionPublicKey()
   const kid = getSessionKid()
   const jwe = await encryptContent(plaintext, [pubKey], kid)
@@ -2192,6 +2195,8 @@ export async function encryptArticlePayload(htmlString) {
   article.setAttribute('data-encrypted', 'true')
   article.innerHTML = ''
   article.appendChild(script)
+
+  if (titleNode) titleNode.textContent = i18n.t('encryption.encrypted-document-title.textContent')
 
   Config.User.Encryption.Document = true
 
@@ -2255,7 +2260,7 @@ export async function updateMutableResource(url, data, options) {
   data = payload.data;
   options.contentType = payload.contentType;
 
-  if (Config.User.Encryption?.Enabled) data = await encryptArticlePayload(data);
+  if (Config.User.Encryption?.Enabled && Config.User.Encryption?.DocumentEncrypt) data = await encryptArticlePayload(data);
 
   Config.Storage.save(url, null, data, options)
     .then(async (resolved) => {

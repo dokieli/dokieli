@@ -81,6 +81,8 @@ export function initButtons() {
       DocumentInfo: getButtonHTML({ key: "menu.document-info.button", button: "document-info", buttonClass: "document-info", buttonDisabled: true }),
       EditEnable: getButtonHTML({ key: "menu.edit-enable.button", button: "cursor", buttonClass: "editor-enable" }),
       EditDisable: getButtonHTML({ key: "menu.edit-disable.button", button: "cursor", buttonClass: "editor-disable" }),
+      EncryptEnable: getButtonHTML({ key: "menu.encrypt-enable.button", button: "lock-open", buttonClass: "encrypt-enable", buttonPressed: false }),
+      EncryptDisable: getButtonHTML({ key: "menu.encrypt-disable.button", button: "lock", buttonClass: "encrypt-disable", buttonPressed: true }),
       EditHistory: getButtonHTML({ key: "menu.edit-history.button", button: "edit-history", buttonClass: "edit-history", buttonDisabled: true }),
       EmbedData: getButtonHTML({ key: "menu.embed-data.button", button: "data-meta", buttonClass: "embed-data-meta" }),
       Export: getButtonHTML({ key: "menu.export.button", button: "export", buttonClass: "export-as-html" }),
@@ -114,6 +116,7 @@ export function getButtonHTML({
   key,
   buttonClass,
   buttonDisabled,
+  buttonPressed,
   buttonRel,
   buttonResource,
   buttonType,
@@ -139,6 +142,7 @@ export function getButtonHTML({
 
   const className = buttonClass ? ` class="${buttonClass}"` : '';
   const disabled = buttonDisabled ? ` disabled=""` : '';
+  const pressed = (buttonPressed !== undefined) ? ` aria-pressed="${buttonPressed}"` : '';
   let icon = buttonIcons[button]?.icon;
   let buttonDir = buttonIcons[button]?.dir;
   const rel = buttonRel ? ` rel="${buttonRel}"` : '';
@@ -161,7 +165,7 @@ export function getButtonHTML({
 
   buttonDir = buttonDir ? ` dir="${buttonDir}"` : '';
 
-  return `<button${ariaLabel}${dataI18n}${className}${disabled}${rel}${resource}${title}${type}${buttonDir}>${buttonContent}</button>`;
+  return `<button${ariaLabel}${dataI18n}${className}${disabled}${pressed}${rel}${resource}${title}${type}${buttonDir}>${buttonContent}</button>`;
 }
 
 
@@ -401,6 +405,12 @@ export const buttonIcons = {
   },
   'edit-history': {
     icon: Icon[".far.fa-clock-left"]
+  },
+  lock: {
+    icon: Icon[".fas.fa-lock"]
+  },
+  'lock-open': {
+    icon: Icon[".fas.fa-lock-open"]
   }
 }
 

@@ -543,13 +543,26 @@ export async function decryptArticleInPlace() {
   const jwe = encryptedScript.textContent.trim();
   const plaintext = await decryptContent(jwe, privateKey);
 
+  // The payload is a JSON envelope { title, body }; earlier payloads
+  // encrypted the article HTML directly.
+  let body = plaintext;
+  let title = null;
+  try {
+    const payload = JSON.parse(plaintext);
+    if (payload && typeof payload.body === 'string') {
+      ({ title, body } = payload);
+    }
+  } catch {}
+
   const article = encryptedScript.closest('[data-encrypted]') || encryptedScript.parentElement;
   article.removeAttribute('data-encrypted');
-  article.setHTMLUnsafe(plaintext);
+  article.setHTMLUnsafe(body);
+  if (title) document.title = title;
 
   Config.User.Encryption.Enabled = true;
   Config.User.Encryption.KeyId = getSessionKid();
   Config.User.Encryption.Document = true;
+  Config.User.Encryption.DocumentEncrypt = true;
 }
 
 // function initMath(config) {

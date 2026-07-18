@@ -2951,6 +2951,16 @@ background-color: #efe !important;
 transition: background-color 0.2s, color 0.2s, fill 0.2s;
 fill: #080;
 }
+
+#document-menu section button[aria-pressed="true"] {
+color: #080 !important;
+background-color: #efe !important;
+fill: #080;
+}
+
+#document-menu section button[aria-pressed="true"] svg path {
+fill: #080;
+}
 /* There is some meaning to the direction but it is mostly presentational and does not interfere with the concept.*/
 [dir="rtl"] svg.fa-bullhorn,
 [dir="rtl"] svg.fa-reply,
@@ -7047,13 +7057,29 @@ svg.leaflet-image-layer.leaflet-interactive path {
   border-right-color: #fff;
   }
 
-/* Lock icon path fill */
-.fas.fa-lock path,
-.fas.fa-lock-open path {
+button.toggle-passphrase {
+  background: transparent;
+  border: none;
+  padding: 0.25em;
+  cursor: pointer;
+  line-height: 1;
+  vertical-align: middle;
+  margin: 0 0 0 -3em;
+}
+button.toggle-passphrase svg {
+  width: 1.25em;
+  height: 1.25em;
+}
+aside.do input:has(+ button.toggle-passphrase) {
+  padding-right: 2.5em;
+  width: calc(100% - 20em);
+}
+
+.editor-form .editor-form-encrypt-label .fas.fa-lock path,
+.editor-form .editor-form-encrypt-label .fas.fa-lock-open path {
   fill: #fff;
 }
 
-/* Annotation encrypt toggle */
 .editor-form input.editor-form-encrypt {
   position: absolute;
   left: -9999px;

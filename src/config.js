@@ -43,7 +43,8 @@ export default {
     Encryption: {
       Enabled: false,
       KeyId: null,
-      Document: false
+      Document: false,
+      DocumentEncrypt: false
     },
     UI: {
       Language: 'en-GB', // default
