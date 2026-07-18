@@ -284,6 +284,7 @@ transition:opacity 1s ease-in-out;
 .do {
   font-family: 'Ubuntu', system-ui, sans-serif;
   font-size: 18px;
+  hyphens: none;
   line-height: 1.6;
 }
 
@@ -3583,7 +3584,6 @@ cursor:-webkit-grab;
 line-height:1;
 padding:0.25em;
 z-index:2147483647;
-hyphens:initial;
 }
 
 aside.do button + button {
