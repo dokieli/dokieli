@@ -361,8 +361,20 @@ function showDocumentTools(node) {
   sanitizeInsertAdjacentHTML(node, 'beforeend', s);
 }
 
+// Syncs the encrypt toggle button in the menu with the current
+// Config.User.Encryption.DocumentEncrypt state.
+function refreshEncryptToggle() {
+  const value = Config.User?.Encryption?.DocumentEncrypt;
+  const button = document.querySelector('#document-menu button.encrypt-enable, #document-menu button.encrypt-disable');
+  if (!button?.parentNode) return;
+  const expectedClass = value ? 'encrypt-disable' : 'encrypt-enable';
+  if (!button.classList.contains(expectedClass)) {
+    button.outerHTML = value ? Config.Button.Menu.EncryptDisable : Config.Button.Menu.EncryptEnable;
+  }
+}
+
 function showDocumentDo(node) {
-  if (document.getElementById('document-do')) { return; }
+  if (document.getElementById('document-do')) { refreshEncryptToggle(); return; }
 
   const documentOptions = {
     ...Config.DOMProcessing,
@@ -372,6 +384,7 @@ function showDocumentDo(node) {
   };
 
   const editToggle = Config.Editor.mode === 'author' ? Config.Button.Menu.EditDisable : Config.Button.Menu.EditEnable;
+  const encryptToggle = Config.User?.Encryption?.DocumentEncrypt ? Config.Button.Menu.EncryptDisable : Config.Button.Menu.EncryptEnable;
 
   const groups = [
     {
@@ -383,7 +396,7 @@ function showDocumentDo(node) {
       id: 'menu-group-document',
       summaryKey: 'menu.group.document',
       open: true,
-      buttons: [Config.Button.Menu.Save, Config.Button.Menu.SaveAs, Config.Button.Menu.Version, Config.Button.Menu.Immutable, Config.Button.Menu.Memento, Config.Button.Menu.EditHistory]
+      buttons: [Config.Button.Menu.Save, Config.Button.Menu.SaveAs, encryptToggle, Config.Button.Menu.Version, Config.Button.Menu.Immutable, Config.Button.Menu.Memento, Config.Button.Menu.EditHistory]
     },
     {
       id: 'menu-group-interactions',
@@ -460,6 +473,31 @@ export function initDocumentDoEvents() {
         Config.Editor.toggleEditor('author');
 
         enableAutoSave(Config.DocumentURL, {'method': 'IndexedDB'});
+      }
+    }
+
+    const setDocumentEncrypt = (value) => {
+      Config.User.Encryption.DocumentEncrypt = value;
+      refreshEncryptToggle();
+    };
+
+    b = e.target.closest('button.encrypt-enable');
+    if (b && b.isConnected) {
+      if (Config.User?.Encryption?.Enabled) {
+        setDocumentEncrypt(true);
+      }
+      else {
+        hasKeystore().then(exists => {
+          exists
+            ? showEncryptionUnlock(() => setDocumentEncrypt(true))
+            : showEncryptionSetup(() => setDocumentEncrypt(true));
+        });
+      }
+    }
+    else {
+      b = e.target.closest('button.encrypt-disable');
+      if (b && b.isConnected) {
+        setDocumentEncrypt(false);
       }
     }
 
@@ -7259,6 +7297,34 @@ export async function spawnDokieli(documentNode, data, contentTypes, iris, optio
   // console.log('//TODO: Handle server returning wrong or unknown Response/Content-Type for the Request/Accept');
 }
 
+// Returns an eye toggle button for revealing/hiding a passphrase input.
+// Place directly after the input; wire with initPassphraseToggles().
+function getPassphraseToggleHTML() {
+  const label = i18n.t('encryption.show-passphrase.title');
+  const icon = Icon['.fas.fa-eye'].replace('<svg ', '<svg aria-hidden="true" ');
+  return `<button type="button" class="toggle-passphrase" data-i18n="encryption.show-passphrase" aria-pressed="false" aria-label="${label}" title="${label}">${icon}</button>`;
+}
+
+function initPassphraseToggles(container) {
+  container.querySelectorAll('button.toggle-passphrase').forEach(button => {
+    button.addEventListener('click', () => {
+      const input = button.previousElementSibling;
+      if (input?.nodeName !== 'INPUT') return;
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      button.setAttribute('aria-pressed', String(show));
+      const baseKey = show ? 'encryption.hide-passphrase' : 'encryption.show-passphrase';
+      button.setAttribute('data-i18n', baseKey);
+      const label = i18n.t(`${baseKey}.title`);
+      button.setAttribute('aria-label', label);
+      button.setAttribute('title', label);
+      const icon = Icon[show ? '.fas.fa-eye-slash' : '.fas.fa-eye'].replace('<svg ', '<svg aria-hidden="true" ');
+      button.setHTMLUnsafe(domSanitize(icon));
+      input.focus();
+    });
+  });
+}
+
 // Shows the first-time encryption setup aside panel.
 // Prompts the user to choose a passphrase, generates their keypair, stores the
 // encrypted keystore in IndexedDB, and enables encryption on the session.
@@ -7269,16 +7335,22 @@ export function showEncryptionSetup(onSuccess) {
 
   var html = `
     <aside aria-labelledby="encryption-setup-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="encryption-setup" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}">
-      <h2 id="encryption-setup-label">Set up encryption</h2>
+      <h2 id="encryption-setup-label" data-i18n="encryption-setup.heading">${i18n.t('encryption-setup.heading.textContent')}</h2>
       ${buttonClose}
       <div class="info"></div>
-      <p>Choose a passphrase to protect your encryption key. You will be asked for it each session. <strong>There is no recovery if you forget it.</strong></p>
+      <p data-i18n="encryption-setup.description">${i18n.t('encryption-setup.description.textContent')}</p>
       <form id="encryption-setup-form">
-        <label for="encryption-passphrase">Passphrase</label>
-        <input id="encryption-passphrase" type="password" autocomplete="new-password" minlength="12" required />
-        <label for="encryption-passphrase-confirm">Confirm passphrase</label>
-        <input id="encryption-passphrase-confirm" type="password" autocomplete="new-password" minlength="12" required />
-        <button type="submit">Enable encryption</button>
+        <ul>
+          <li>
+            <label for="encryption-passphrase" data-i18n="encryption-setup.passphrase-label">${i18n.t('encryption-setup.passphrase-label.textContent')}</label>
+            <input id="encryption-passphrase" type="password" autocomplete="new-password" minlength="12" required />${getPassphraseToggleHTML()}
+          </li>
+          <li>
+            <label for="encryption-passphrase-confirm" data-i18n="encryption-setup.passphrase-confirm-label">${i18n.t('encryption-setup.passphrase-confirm-label.textContent')}</label>
+            <input id="encryption-passphrase-confirm" type="password" autocomplete="new-password" minlength="12" required />${getPassphraseToggleHTML()}
+          </li>
+        </ul>
+        <button type="submit" data-i18n="encryption-setup.submit-button" disabled="">${i18n.t('encryption-setup.submit-button.textContent')}</button>
       </form>
     </aside>`;
 
@@ -7288,35 +7360,62 @@ export function showEncryptionSetup(onSuccess) {
   var info = aside.querySelector('.info');
   var form = aside.querySelector('#encryption-setup-form');
 
+  initPassphraseToggles(form);
+
+  const passInput = form.querySelector('#encryption-passphrase');
+  const confirmInput = form.querySelector('#encryption-passphrase-confirm');
+  const submitButton = form.querySelector('button[type="submit"]');
+  const updateMatchState = () => {
+    confirmInput.classList.remove('passphrase-match', 'passphrase-mismatch');
+    const match = confirmInput.value.length && passInput.value === confirmInput.value;
+    submitButton.disabled = !match;
+    if (!confirmInput.value.length) return;
+    confirmInput.classList.add(match ? 'passphrase-match' : 'passphrase-mismatch');
+  };
+  passInput.addEventListener('input', updateMatchState);
+  confirmInput.addEventListener('input', updateMatchState);
+
   form.addEventListener('submit', async e => {
     e.preventDefault();
     var pass = form.querySelector('#encryption-passphrase').value;
     var confirm = form.querySelector('#encryption-passphrase-confirm').value;
 
     if (pass !== confirm) {
-      info.textContent = 'Passphrases do not match.';
+      info.textContent = i18n.t('encryption-setup.passphrases-mismatch.textContent');
       return;
     }
     if (pass.length < 12) {
-      info.textContent = 'Passphrase must be at least 12 characters.';
+      info.textContent = i18n.t('encryption-setup.passphrase-too-short.textContent');
       return;
     }
 
     form.querySelector('button[type="submit"]').disabled = true;
-    info.textContent = 'Generating key…';
+    aside.querySelector('p').remove();
+    form.remove();
+    const generatingMsg = document.createElement('p');
+    generatingMsg.setAttribute('data-i18n', 'encryption-setup.generating');
+    generatingMsg.textContent = i18n.t('encryption-setup.generating.textContent');
+    info.appendChild(generatingMsg);
 
     try {
       const publicKeyJWK = await createKeystore(pass);
       Config.User.Encryption.Enabled = true;
       Config.User.Encryption.KeyId = getSessionKid();
-      info.textContent = 'Encryption enabled. Annotations will be encrypted when posted.';
-      aside.querySelector('p').remove();
-      form.remove();
+      generatingMsg.remove();
+      const successMsg = document.createElement('p');
+      successMsg.setAttribute('data-i18n', 'encryption-setup.success');
+      successMsg.textContent = i18n.t('encryption-setup.success.textContent');
+      info.appendChild(successMsg);
       clearPendingEncryptedQueues();
       if (typeof onSuccess === 'function') onSuccess();
       // TODO Phase 2: publish publicKeyJWK to WebID profile
     } catch (err) {
-      info.textContent = 'Setup failed: ' + err.message;
+      generatingMsg.remove();
+      // No data-i18n here: the message carries dynamic error detail that a
+      // live language update would overwrite.
+      const errorMsg = document.createElement('p');
+      errorMsg.textContent = i18n.t('encryption-setup.error.textContent') + ' ' + err.message;
+      info.appendChild(errorMsg);
       form.querySelector('button[type="submit"]').disabled = false;
     }
   });
@@ -7332,16 +7431,20 @@ export function showEncryptionUnlock(onSuccess) {
 
   var html = `
     <aside aria-labelledby="encryption-unlock-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="encryption-unlock" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}">
-      <h2 id="encryption-unlock-label">Unlock encryption</h2>
+      <h2 id="encryption-unlock-label" data-i18n="encryption-unlock.heading">${i18n.t('encryption-unlock.heading.textContent')}</h2>
       ${buttonClose}
       <div class="info"></div>
-      <p>Enter your passphrase to unlock your encryption key for this session.</p>
+      <p data-i18n="encryption-unlock.description">${i18n.t('encryption-unlock.description.textContent')}</p>
       <form id="encryption-unlock-form">
-        <label for="encryption-unlock-passphrase">Passphrase</label>
-        <input id="encryption-unlock-passphrase" type="password" autocomplete="current-password" required />
-        <button type="submit">Unlock</button>
+        <ul>
+          <li>
+            <label for="encryption-unlock-passphrase" data-i18n="encryption-unlock.passphrase-label">${i18n.t('encryption-unlock.passphrase-label.textContent')}</label>
+            <input id="encryption-unlock-passphrase" type="password" autocomplete="current-password" required />${getPassphraseToggleHTML()}
+            <button type="submit" data-i18n="encryption-unlock.submit-button">${i18n.t('encryption-unlock.submit-button.textContent')}</button>
+          </li>
+        </ul>
+        <p><button class="setup-encryption" data-i18n="encryption-unlock.setup-link" type="button">${i18n.t('encryption-unlock.setup-link.textContent')}</button></p>
       </form>
-      <p><small>No encryption key yet? <button class="setup-encryption" type="button">Set up encryption</button></small></p>
     </aside>`;
 
   document.body.appendChild(fragmentFromString(html));
@@ -7349,6 +7452,8 @@ export function showEncryptionUnlock(onSuccess) {
   var aside = document.getElementById('encryption-unlock');
   var info = aside.querySelector('.info');
   var form = aside.querySelector('#encryption-unlock-form');
+
+  initPassphraseToggles(form);
 
   aside.querySelector('button.close').addEventListener('click', () => aside.remove());
 
@@ -7361,7 +7466,7 @@ export function showEncryptionUnlock(onSuccess) {
     e.preventDefault();
     var pass = form.querySelector('#encryption-unlock-passphrase').value;
     form.querySelector('button[type="submit"]').disabled = true;
-    info.textContent = 'Unlocking…';
+    info.textContent = i18n.t('encryption-unlock.unlocking.textContent');
 
     try {
       await unlockKeystore(pass);
@@ -7373,10 +7478,10 @@ export function showEncryptionUnlock(onSuccess) {
       await processPendingEncryptedNotes();
 
       if (typeof onSuccess === 'function') onSuccess();
-      info.textContent = 'Unlocked.';
+      info.textContent = i18n.t('encryption-unlock.unlocked.textContent');
       setTimeout(() => aside.remove(), 800);
     } catch (err) {
-      info.textContent = 'Wrong passphrase or no keystore found.';
+      info.textContent = i18n.t('encryption-unlock.error.textContent');
       form.querySelector('button[type="submit"]').disabled = false;
     }
   });

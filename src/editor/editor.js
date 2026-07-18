@@ -755,9 +755,9 @@ export class Editor {
       const len = yXmlFragment.length;
       if (len === __seedPrevLen) return;
       const originName = tr.origin?.constructor?.name ?? String(tr.origin);
-      console.log(`[seed] fragment ${__seedPrevLen} -> ${len} local=${tr.local} origin=${originName} clientID=${ydoc.clientID}`);
+      // console.log(`[seed] fragment ${__seedPrevLen} -> ${len} local=${tr.local} origin=${originName} clientID=${ydoc.clientID}`);
       if (len === 0 && __seedPrevLen > 0) {
-        console.warn('[seed] WIPE — fragment emptied', { local: tr.local, origin: tr.origin, seeded: meta.get('seeded') });
+        // console.warn('[seed] WIPE — fragment emptied', { local: tr.local, origin: tr.origin, seeded: meta.get('seeded') });
       }
       __seedPrevLen = len;
     });
@@ -769,10 +769,10 @@ export class Editor {
     // across reloads and clients.
     const seedFromDom = () => {
       if (yXmlFragment.length > 0 || meta.get('seeded')) {
-        console.log(`[seed] seedFromDom SKIP len=${yXmlFragment.length} seeded=${meta.get('seeded')}`);
+        // console.log(`[seed] seedFromDom SKIP len=${yXmlFragment.length} seeded=${meta.get('seeded')}`);
         return;
       }
-      console.log('[seed] seedFromDom APPLY (room empty, unseeded)');
+      // console.log('[seed] seedFromDom APPLY (room empty, unseeded)');
       ydoc.transact(() => {
         Y.applyUpdate(ydoc, encodeSeed(originalDoc));
         meta.set('seeded', true);
@@ -793,7 +793,7 @@ export class Editor {
       if (!provider) {
         // Single-user: local DOM is authoritative. Clear then reseed.
         // (Clear first because Y.applyUpdate is additive, not a replace.)
-        console.log('[seed] single-user path: clear + reseed');
+        // console.log('[seed] single-user path: clear + reseed');
         if (yXmlFragment.length > 0) {
           ydoc.transact(() => { yXmlFragment.delete(0, yXmlFragment.length); });
         }

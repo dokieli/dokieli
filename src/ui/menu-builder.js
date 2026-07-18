@@ -24,6 +24,10 @@ function renderDocumentDo() {
     ? Config.Button.Menu.EditDisable
     : Config.Button.Menu.EditEnable;
 
+  const encryptToggle = Config.User?.Encryption?.DocumentEncrypt
+    ? Config.Button.Menu.EncryptDisable
+    : Config.Button.Menu.EncryptEnable;
+
   const groups = [
     {
       id: 'menu-group-primary',
@@ -34,7 +38,7 @@ function renderDocumentDo() {
       id: 'menu-group-document',
       summaryKey: 'menu.group.document',
       open: true,
-      buttons: [Config.Button.Menu.Save, Config.Button.Menu.SaveAs, Config.Button.Menu.Version, Config.Button.Menu.Immutable, Config.Button.Menu.Memento, Config.Button.Menu.EditHistory]
+      buttons: [Config.Button.Menu.Save, Config.Button.Menu.SaveAs, encryptToggle, Config.Button.Menu.Version, Config.Button.Menu.Immutable, Config.Button.Menu.Memento, Config.Button.Menu.EditHistory]
     },
     {
       id: 'menu-group-interactions',
