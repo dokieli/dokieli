@@ -22,7 +22,7 @@ import LinkHeader from "http-link-header";
 import Config from './config.js'
 import { getDateTimeISO, generateAttributeId, uniqueArray, matchAllIndex, getRandomIndex, getHash, isValidISBN, getDateTimeISOFromMDY, debounce } from './util.js'
 import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath, getPrefixedNameFromIRI, generateDataURI, getProxyableIRI, getFragmentOrLastPath, currentLocation } from './uri.js'
-import { getResourceGraph, sortGraphTriples, getGraphContributors, getGraphAuthors, getGraphEditors, getGraphPerformers, getGraphPublishers, getGraphLabel, getGraphEmail, getGraphTitle, getGraphConceptLabel, getGraphPublished, getGraphUpdated, getGraphDescription, getGraphLicense, getGraphRights, getGraphFromData, getGraphAudience, getGraphTypes, getGraphLanguage, getGraphInbox, getUserLabelOrIRI, getGraphImage, getGraphDate, processResources, getAgentName } from './graph.js';
+import { getResourceGraph, sortGraphTriples, getGraphContributors, getGraphAuthors, getGraphEditors, getGraphPerformers, getGraphPublishers, getGraphLabel, getGraphEmail, getGraphTitle, getGraphConceptLabel, getGraphPublished, getGraphUpdated, getGraphDescription, getGraphLicense, getGraphRights, getGraphFromData, getGraphAudience, getGraphTypes, getGraphLanguage, getGraphInbox, getUserLabelOrIRI, getGraphImage, getGraphDate, processResources, getAgentName, getGraphCreators } from './graph.js';
 import { Icon } from './ui/icons.js';
 import { buttonIcons, getButtonHTML, updateButtons } from './ui/buttons.js'
 import { domSanitizeHTMLBody, domSanitize, sanitizeInsertAdjacentHTML, htmlEncode, sanitizeIRI } from './utils/sanitization.js';
@@ -33,6 +33,7 @@ import { i18n } from './i18n.js';
 import { rewriteBlobImagesToRelative, uploadBlobAssets, clearBlobAssets, hasUploadTarget } from './editor/utils/imageAssets.js';
 import { serializeAnnotationToHTML, serializeAnnotationToJSONLD } from '@dokieli/web-annotation';
 import { renderFootnote, renderCitation } from './editor/utils/reference-render.js';
+import { getResource } from "./fetcher.js";
 
 const ns = Config.ns;
 
@@ -1205,6 +1206,9 @@ export function getGraphContributorsRole(g, options) {
     case 'author':
       contributors = getGraphAuthors(g);
       break;
+    case 'creator':
+      contributors = getGraphCreators(g);
+      break;
     case 'editor':
       contributors = getGraphEditors(g);
       break;
@@ -1279,7 +1283,7 @@ export function getGraphData(s, options) {
   info['rights'] = getGraphRights(s);
   info['language'] = getGraphLanguage(s);
   // info['summary'] = graph.getGraphSummary(s);
-  // info['creator'] = graph.getGraphCreators(s);
+  info['creators'] = getGraphContributorsRole(s, { role: 'creator' });
   info['contributors'] = getGraphContributorsRole(s, { role: 'contributor' });
   info['authors'] = getGraphContributorsRole(s, { role: 'author' });
   info['editors'] = getGraphContributorsRole(s, { role: 'editor' });
@@ -1672,7 +1676,7 @@ export function processSupplementalInfoLinkHeaders(documentURL, options = {}) {
       var linkTarget = relationItem.uri;
       //TODO: GET acl linkTarget only if user/public has control permission.
       if ('followLinkRelationTypes' in options && options.followLinkRelationTypes.includes(relationType)) {
-        promises.push(getResourceGraph(linkTarget));
+        promises.push(getResource(linkTarget));
       }
     });
   }
@@ -1681,14 +1685,24 @@ export function processSupplementalInfoLinkHeaders(documentURL, options = {}) {
     .then(results => {
       results.forEach(result => {
         if (result.status !== 'fulfilled') return;
-        var g = result.value?.graph;
+          //FIXME: Consider the case where `linkTarget` URL is redirected and so may not be same as initial request target.
 
-        if (g) {
-          //FIXME: Consider the case where `linkTarget` URL is redirected and so may not be same as `s`.
-          var s = g.term.value;
-          Config['Resource'][s] = {};
-          Config['Resource'][s]['graph'] = g;
-        }
+          var response = result.value;
+
+          if (response) {
+            response.text()
+              .then(data => {
+                var cT = response.headers.get('Content-Type');
+                var options = {};
+                options['subjectURI'] = documentURL;
+                options['contentType'] = (cT) ? cT.split(';')[0].toLowerCase().trim() : 'text/turtle';
+
+                getResourceInfo(data, options)
+                  .then(info => {
+                    Config['Resource'][response.url] = info;
+                  })
+              });
+          }
       });
 
       return Config['Resource'][documentURL];

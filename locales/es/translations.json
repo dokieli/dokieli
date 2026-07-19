@@ -708,6 +708,7 @@
   "panel.document-metadata.citations.th.textContent": "Citas",
   "panel.document-metadata.concepts.th.textContent": "Conceptos",
   "panel.document-metadata.contributors.th.textContent": "Colaboradores",
+  "panel.document-metadata.creators.th.textContent": "Creadores",
   "panel.document-metadata.editors.th.textContent": "Editores",
   "panel.document-metadata.reading-time.th.textContent": "Tiempo de lectura",
   "panel.document-metadata.requirements.th.textContent": "Requisitos",

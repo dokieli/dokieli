@@ -27,7 +27,7 @@ import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeObject, h
 import { escapeRDFLiteral, generateAttributeId } from './util.js';
 import { setAcceptRDFTypes } from './fetcher.js';
 import { forceTrailingSlash, generateDataURI, getAbsoluteIRI, getBaseURL, isHttpOrHttpsProtocol, isFileProtocol, isUrl, stripFragmentFromString, getFragmentFromString, getURLLastPath, currentLocation } from './uri.js';
-import { getAccessSubjects, getACLResourceGraph, getAgentInbox, getAgentName, getAuthorizationsMatching, getGraphAuthors, getGraphContributors, getGraphEditors, getGraphImage, getGraphLabelOrIRI, getGraphPerformers, getGraphTypes, getLinkRelation, getLinkRelationFromHead, getResourceGraph, getUserContacts, getUserLabelOrIRI, serializeData, getSubjectInfo, getRDFSerializer } from './graph.js';
+import { getAccessSubjects, getACLResourceGraph, getAgentInbox, getAgentName, getAuthorizationsMatching, getGraphAuthors, getGraphContributors, getGraphEditors, getGraphImage, getGraphLabelOrIRI, getGraphPerformers, getGraphTypes, getLinkRelation, getLinkRelationFromHead, getResourceGraph, getUserContacts, getUserLabelOrIRI, serializeData, getSubjectInfo, getRDFSerializer, getGraphCreators } from './graph.js';
 import { notifyInbox, sendNotifications, showContactsActivities, initializeNotifications } from './activity.js';
 import Config from './config.js';
 const ns = Config.ns;
@@ -4536,7 +4536,7 @@ export function showDocumentMetadata(node) {
 
   var content = selectArticleNode(document);
   var count = contentCount(content);
-  var authors = [], contributors = [], editors = [], performers = [];
+  var creators = [], authors = [], contributors = [], editors = [], performers = [];
   var citationsTo = [];
   var requirements = [];
   var advisements = [];
@@ -4575,10 +4575,33 @@ export function showDocumentMetadata(node) {
   // TODO: Review grapoi . Check it matches expected
   var statements = `<tr class="statements"><th data-i18n="panel.document-metadata.statements.th">${i18n.t('panel.document-metadata.statements.th.textContent')}</th><td>${g.out().terms.length}</td></tr>`;
 
+  var graphCreators = getGraphCreators(g) || [];
+  if (Config.Resource[documentURL].headers?.linkHeaders?.has('rel', 'describedby')) {
+    let describedby = Config.Resource[documentURL].headers.linkHeaders.rel('describedby')[0].uri;
+    let describedbyGraph = Config.Resource[describedby]?.graph;
+
+    if (describedbyGraph) {
+      graphCreators = graphCreators.concat(getGraphCreators(describedbyGraph) || []);
+    }
+  }
+  graphCreators = graphCreators.length ? [...new Set(graphCreators)] : undefined;
+
   var graphEditors = getGraphEditors(g);
   var graphAuthors = getGraphAuthors(g);
   var graphContributors = getGraphContributors(g);
   var graphPerformers = getGraphPerformers(g);
+
+  if (graphCreators) {
+    graphCreators.forEach(i => {
+      var go = g.node(rdf.namedNode(i));
+      let name = getGraphLabelOrIRI(go);
+      name = (name === i) ? getUserLabelOrIRI(i) : name;
+      creators.push(`<li>${name}</li>`);
+    });
+    if (creators.length){
+      creators = `<tr class="people"><th data-i18n="panel.document-metadata.creators.th">${i18n.t('panel.document-metadata.creators.th.textContent')}</th><td><ul class="creators">${creators.join('')}</ul></td></tr>`;
+    }
+  }
 
   if (graphEditors) {
     graphEditors.forEach(i => {
@@ -4628,7 +4651,7 @@ export function showDocumentMetadata(node) {
     }
   }
 
-  var data = authors + editors + contributors + performers + citations + requirements + advisements + concepts + statements;
+  var data = creators + authors + editors + contributors + performers + citations + requirements + advisements + concepts + statements;
 
       // <tr><th>Lines</th><td>' + count.lines + '</td></tr>\n\
       // <tr><th>A4 Pages</th><td>' + count.pages.A4 + '</td></tr>\n\

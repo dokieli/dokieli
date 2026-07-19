@@ -711,6 +711,7 @@
   "panel.document-metadata.citations.th.textContent": "Citations",
   "panel.document-metadata.concepts.th.textContent": "Concepts",
   "panel.document-metadata.contributors.th.textContent": "Contributors",
+  "panel.document-metadata.creators.th.textContent": "Creators",
   "panel.document-metadata.editors.th.textContent": "Editors",
   "panel.document-metadata.reading-time.th.textContent": "Reading time",
   "panel.document-metadata.requirements.th.textContent": "Requirements",

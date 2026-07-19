@@ -1623,8 +1623,22 @@ export function getGraphEditors(s) {
 export function getGraphAuthors(s) {
   const props = [
     ns.schema.author,
+    ns.as.author
+  ];
+
+  for (const prop of props) {
+    let values = sanitizeIRIs(s.out(prop).values);
+    if (values.length) {
+      return values;
+    }
+  }
+
+  return undefined;
+}
+
+export function getGraphCreators(s) {
+  const props = [
     ns.schema.creator,
-    ns.as.author,
     ns.dcterms.creator
   ];
 
