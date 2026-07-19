@@ -1685,20 +1685,21 @@ export function processSupplementalInfoLinkHeaders(documentURL, options = {}) {
     .then(results => {
       results.forEach(result => {
         if (result.status !== 'fulfilled') return;
-          //FIXME: Consider the case where `linkTarget` URL is redirected and so may not be same as initial request target.
-
           var response = result.value;
 
           if (response) {
             response.text()
               .then(data => {
                 var cT = response.headers.get('Content-Type');
-                var options = {};
-                options['subjectURI'] = documentURL;
-                options['contentType'] = (cT) ? cT.split(';')[0].toLowerCase().trim() : 'text/turtle';
+                var o = {};
+                //XXX: Using the subject resource's URL (documentURL) as the focus of description resource.
+                //FIXME: ?
+                o['subjectURI'] = options.followLinkRelationTypes.includes('describedby') ? documentURL : response.url;
+                o['contentType'] = (cT) ? cT.split(';')[0].toLowerCase().trim() : 'text/turtle';
 
-                getResourceInfo(data, options)
+                getResourceInfo(data, o)
                   .then(info => {
+                    //FIXME: use response.url only if linkTarget is not going through proxy
                     Config['Resource'][response.url] = info;
                   })
               });
