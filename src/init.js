@@ -254,6 +254,12 @@ export async function initDocumentMode(mode) {
   }
 
   if (paramOpen.length) {
+    // Access-controlled resources need the restored session; auth runs in
+    // parallel with init and may not be live yet when #open= is processed.
+    if (Config.AuthReady) {
+      try { await Config.AuthReady } catch {}
+    }
+
     let openResources = paramOpen.map((url) => domSanitize(sanitizeIRI(url)));
 
     let spawnOptions = {};
@@ -294,7 +300,13 @@ export async function initDocumentMode(mode) {
       open = domSanitize(open);
       open = decodeURIComponent(open);
 
-      await openResource(open);
+      // Keep init alive on failure so the rest of the boot sequence
+      // (ready event, encrypted-document handling) still runs.
+      try {
+        await openResource(open);
+      } catch (e) {
+        console.warn('dokieli: could not open resource', open, e);
+      }
     }
 
     if (paramGraphView.length && paramGraphView[0].toLowerCase() == 'true') {
@@ -517,7 +529,7 @@ function initPrint() {
 // in place immediately. Otherwise surfaces the unlock/setup prompt via dialog.js so
 // the user can enter their passphrase, after which the caller should invoke
 // decryptArticleInPlace() once the keystore is unlocked.
-async function initEncryptedDocument() {
+export async function initEncryptedDocument() {
   const encryptedScript = document.getElementById('dokieli-e2ee');
   if (!encryptedScript) return;
 

@@ -84,7 +84,11 @@ DOMPurify.addHook('uponSanitizeElement', function(node, data) {
         node.remove();
       }
     } else {
-      node.remove();
+      const type = node.getAttribute('type')?.trim().toLowerCase();
+      // Keep inert data blocks (RDF, JWE) but not if their content could break out of the script element on reserialization
+      if (!type || !Config.DOMProcessing.allowedDataBlockTypes.includes(type) || /<\/script/i.test(node.textContent)) {
+        node.remove();
+      }
     }
   }
 });

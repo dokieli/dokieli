@@ -660,6 +660,7 @@
   "encryption-setup.generating.textContent": "Generando clave…",
   "encryption-setup.success.textContent": "Cifrado habilitado. Tus anotaciones y documentos se cifrarán al publicarlos.",
   "encryption-setup.error.textContent": "Falló la configuración:",
+  "encryption-setup.pod-sync-failed.textContent": "No se pudo guardar tu clave en tu almacenamiento. Se conserva en este dispositivo y se subirá la próxima vez que desbloquees con la sesión iniciada.",
   "encryption.encrypted-document-title.textContent": "Documento cifrado",
   "encryption.show-passphrase.title": "Mostrar contraseña",
   "encryption.show-passphrase.aria-label": "Mostrar contraseña",

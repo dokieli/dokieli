@@ -15,15 +15,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import rdf from 'rdf-ext'
+import Config from './config.js'
 import {
   generateEncryptionKeypair,
   exportPublicKeyJWK,
+  exportPrivateKeyJWK,
   importPublicKeyJWK,
-  deriveKEK,
-  wrapPrivateKey,
-  unwrapPrivateKey
+  importPrivateKeyJWK,
+  wrapPrivateKeyJWK,
+  unwrapPrivateKeyJWK
 } from './crypto.js'
-import { getEncryptedKeystore, setEncryptedKeystore } from './storage.js'
+import { getEncryptedKeystore, setEncryptedKeystore, setOrphanedEncryptedKeystore } from './storage.js'
+import { getResource, putResource, postResource, putResourceACL, patchResourceWithAcceptPatch } from './fetcher.js'
+import { getResourceGraph, getLinkRelationFromHead } from './graph.js'
+import { forceTrailingSlash, stripFragmentFromString } from './uri.js'
+import { escapeRDFLiteral } from './util.js'
 
 // In-memory session state. Cleared by lockKeystore() or on sign-out.
 // Private key is held as a non-extractable CryptoKey so it cannot be serialised.
@@ -32,32 +39,202 @@ let _sessionPublicKey = null   // CryptoKey — used to encrypt content
 let _sessionPublicKeyJWK = null  // plain JWK — used to publish to WebID profile
 let _sessionKid = null
 
-// Creates a new keystore: generates a keypair, derives a KEK from the passphrase,
-// wraps the private key, and persists the encrypted bundle to IndexedDB.
+let cachedKeystoreURL = null
+let podChecked = false
+
+// The pod copy (a v2 bundle) is the source of truth; IndexedDB is a cache.
+function buildKeystoreBundle(kid, publicKeyJWK, jwe, created) {
+  const now = new Date().toISOString()
+  return {
+    version: 2,
+    kid,
+    publicKeyJWK,
+    wrappings: [{ type: 'passphrase', jwe }],
+    created: created || now,
+    modified: now
+  }
+}
+
+function isValidBundle(bundle) {
+  if (!bundle || typeof bundle !== 'object' || !bundle.kid || !bundle.publicKeyJWK) return false
+  if (bundle.version === 2) {
+    return Array.isArray(bundle.wrappings) && bundle.wrappings.some(w => w.type === 'passphrase' && w.jwe)
+  }
+  return bundle.version === 1 && !!(bundle.wrappedKey && bundle.iv && bundle.salt)
+}
+
+function getDefaultKeystoreURL() {
+  const storage = Config.User?.Storage?.[0]
+  return storage ? forceTrailingSlash(storage) + 'dokieli/keystore.json' : null
+}
+
+async function readKeystoreDiscoveryTriple() {
+  const webid = Config.User?.IRI
+  if (!webid) return undefined
+  let graph = Config.User.Preferences?.graph
+  if (!graph) {
+    const prefsFile = Config.User.PreferencesFile?.[0]
+    if (!prefsFile) return undefined
+    try {
+      ({ graph } = await getResourceGraph(prefsFile))
+    } catch {
+      return undefined
+    }
+  }
+  try {
+    return graph?.node(rdf.namedNode(webid)).out(Config.ns.dokieli.keystore).values[0]
+  } catch {
+    return undefined
+  }
+}
+
+// Preferences triple wins over the default location; null when no pod is known.
+async function discoverKeystoreURL() {
+  if (cachedKeystoreURL) return cachedKeystoreURL
+  const url = await readKeystoreDiscoveryTriple() || getDefaultKeystoreURL()
+  if (url) {
+    cachedKeystoreURL = url
+    Config.User.Encryption.KeystoreURL = url
+  }
+  return url
+}
+
+// null when signed out, no pod, missing resource, network error, or invalid bundle.
+async function fetchPodKeystore() {
+  if (!Config.Session?.isActive) return null
+  try {
+    const url = await discoverKeystoreURL()
+    if (!url) return null
+    const response = await getResource(url, { 'Accept': 'application/json' }, { noCache: true })
+    const bundle = await response.json()
+    return isValidBundle(bundle) ? bundle : null
+  } catch {
+    return null
+  }
+}
+
+// Fallback for servers that do not create intermediate containers on PUT.
+function createKeystoreContainer(keystoreURL) {
+  const container = keystoreURL.substring(0, keystoreURL.lastIndexOf('/') + 1)
+  const root = forceTrailingSlash(Config.User.Storage[0])
+  const slug = container.replace(root, '').replace(/\/$/, '')
+  return postResource(root, slug, '', 'text/turtle', '<http://www.w3.org/ns/ldp#BasicContainer>; rel="type"')
+}
+
+async function setKeystoreACL(keystoreURL) {
+  const [aclURL] = await getLinkRelationFromHead('acl', keystoreURL)
+  return putResourceACL(keystoreURL, aclURL, {
+    u: { iri: [Config.User.IRI], mode: ['acl:Control', 'acl:Read', 'acl:Write'] }
+  })
+}
+
+// Insert-only; skipped when there is no preferences file or the triple is already current.
+async function writeKeystoreDiscovery(keystoreURL) {
+  const prefsFile = Config.User?.PreferencesFile?.[0]
+  if (!prefsFile) return null
+  const current = await readKeystoreDiscoveryTriple()
+  if (current === keystoreURL) return null
+  const insert = `<${Config.User.IRI}> <${Config.ns.dokieli.keystore.value}> <${keystoreURL}> .`
+  return patchResourceWithAcceptPatch(prefsFile, [{ insert }])
+}
+
+// PUT the bundle to the pod, then set the ACL and discovery triple (both warn-only).
+// ifNoneMatch guards against clobbering a keystore created by another device.
+async function savePodKeystore(bundle, { ifNoneMatch = false } = {}) {
+  if (!Config.Session?.isActive) return null
+  const url = await discoverKeystoreURL()
+  if (!url) return null
+
+  const data = JSON.stringify(bundle, null, 2)
+  const options = ifNoneMatch ? { headers: { 'If-None-Match': '*' } } : {}
+
+  try {
+    await putResource(url, data, 'application/json', null, options)
+  } catch (e) {
+    if (e.status === 412) {
+      console.warn('dokieli: keystore already exists on pod; local copy kept', e)
+      return null
+    }
+    if (e.status !== 404 && e.status !== 409) throw e
+    await createKeystoreContainer(url)
+    await putResource(url, data, 'application/json', null, ifNoneMatch ? { headers: { 'If-None-Match': '*' } } : {})
+  }
+
+  await setKeystoreACL(url).catch(e => console.warn('dokieli: keystore ACL not set', e))
+  await writeKeystoreDiscovery(url).catch(e => console.warn('dokieli: keystore discovery triple not written', e))
+  return url
+}
+
+// Pod copy preferred when reachable; refreshes the cache; a divergent local key is preserved.
+async function loadKeystoreBundle() {
+  const local = await getEncryptedKeystore()
+  const pod = await fetchPodKeystore()
+  if (pod) {
+    if (local && local.kid !== pod.kid) {
+      console.warn('dokieli: local keystore kid differs from pod copy; keeping orphaned local copy')
+      await setOrphanedEncryptedKeystore(local)
+    }
+    if (!local || local.kid !== pod.kid || local.modified !== pod.modified) {
+      await setEncryptedKeystore(pod)
+    }
+    return pod
+  }
+  return local || null
+}
+
+// PBKDF2 + AES-GCM unwrap of an unreleased v1 bundle; returns the private JWK for rewrapping.
+async function migrateV1Bundle(bundle, passphrase) {
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(passphrase),
+    'PBKDF2',
+    false,
+    ['deriveKey']
+  )
+  const kek = await crypto.subtle.deriveKey(
+    {
+      name: 'PBKDF2',
+      salt: b64ToBuf(bundle.salt),
+      iterations: bundle.kdfIterations || 600_000,
+      hash: bundle.kdfHash || 'SHA-256'
+    },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['unwrapKey']
+  )
+  const privateKey = await crypto.subtle.unwrapKey(
+    'jwk',
+    b64ToBuf(bundle.wrappedKey),
+    kek,
+    { name: 'AES-GCM', iv: b64ToBuf(bundle.iv) },
+    { name: 'ECDH', namedCurve: 'P-256' },
+    true,
+    ['deriveBits']
+  )
+  return exportPrivateKeyJWK(privateKey, bundle.kid)
+}
+
+// Creates a new keystore: generates a keypair, wraps the private JWK as a PBES2 JWE,
+// caches the bundle locally, and uploads it to the pod when signed in (warn-only).
 // Returns the public key JWK so the caller can publish it to the WebID profile.
 export async function createKeystore(passphrase) {
   const { publicKey, privateKey, kid } = await generateEncryptionKeypair()
-  const salt = crypto.getRandomValues(new Uint8Array(16))
-  const kek = await deriveKEK(passphrase, salt)
-  const { wrappedKey, iv } = await wrapPrivateKey(privateKey, kek)
   const publicKeyJWK = await exportPublicKeyJWK(publicKey, kid)
+  const privateKeyJWK = await exportPrivateKeyJWK(privateKey, kid)
+  const jwe = await wrapPrivateKeyJWK(privateKeyJWK, passphrase)
+  const bundle = buildKeystoreBundle(kid, publicKeyJWK, jwe)
 
-  const keystore = {
-    version: 1,
-    kid,
-    publicKeyJWK,
-    wrappedKey: bufToB64(wrappedKey),
-    iv: bufToB64(iv),
-    salt: bufToB64(salt),
-    kdf: 'PBKDF2',
-    kdfHash: 'SHA-256',
-    kdfIterations: 600_000,
-    created: new Date().toISOString()
+  await setEncryptedKeystore(bundle)
+  Config.User.Encryption.PodSyncFailed = false
+  try {
+    await savePodKeystore(bundle, { ifNoneMatch: true })
+  } catch (e) {
+    Config.User.Encryption.PodSyncFailed = true
+    console.warn('dokieli: keystore saved locally; pod save failed', e)
   }
 
-  await setEncryptedKeystore(keystore)
-
-  _sessionPrivateKey = privateKey
+  _sessionPrivateKey = await importPrivateKeyJWK(privateKeyJWK)
   _sessionPublicKey = publicKey
   _sessionPublicKeyJWK = publicKeyJWK
   _sessionKid = kid
@@ -65,25 +242,57 @@ export async function createKeystore(passphrase) {
   return publicKeyJWK
 }
 
-// Loads the encrypted keystore from IndexedDB, derives the KEK from the passphrase,
-// and unwraps the private key into session memory.
-// Throws if no keystore exists or if the passphrase is wrong (unwrap will reject).
+// Unlocks the keystore (pod copy preferred, local cache fallback) into session memory.
+// v1 bundles are migrated to v2 transparently using the entered passphrase.
+// Throws if no keystore exists or if the passphrase is wrong.
 export async function unlockKeystore(passphrase) {
-  const keystore = await getEncryptedKeystore()
-  if (!keystore) throw new Error('No keystore found. Set up encryption first.')
+  let bundle = await loadKeystoreBundle()
+  if (!bundle) throw new Error('No keystore found. Set up encryption first.')
 
-  const salt = b64ToBuf(keystore.salt)
-  const iv = b64ToBuf(keystore.iv)
-  const wrappedKey = b64ToBuf(keystore.wrappedKey)
+  let privateKeyJWK
+  if (bundle.version === 1) {
+    privateKeyJWK = await migrateV1Bundle(bundle, passphrase)
+    const jwe = await wrapPrivateKeyJWK(privateKeyJWK, passphrase)
+    bundle = buildKeystoreBundle(bundle.kid, bundle.publicKeyJWK, jwe, bundle.created)
+    await setEncryptedKeystore(bundle)
+  } else {
+    const wrapping = bundle.wrappings.find(w => w.type === 'passphrase')
+    privateKeyJWK = await unwrapPrivateKeyJWK(wrapping.jwe, passphrase)
+  }
 
-  const kek = await deriveKEK(passphrase, salt)
-  const privateKey = await unwrapPrivateKey(wrappedKey, iv, kek)
-  const publicKey = await importPublicKeyJWK(keystore.publicKeyJWK)
+  _sessionPrivateKey = await importPrivateKeyJWK(privateKeyJWK)
+  _sessionPublicKey = await importPublicKeyJWK(bundle.publicKeyJWK)
+  _sessionPublicKeyJWK = bundle.publicKeyJWK
+  _sessionKid = bundle.kid
 
-  _sessionPrivateKey = privateKey
-  _sessionPublicKey = publicKey
-  _sessionPublicKeyJWK = keystore.publicKeyJWK
-  _sessionKid = keystore.kid
+  // Upload when the pod copy is missing or stale (signed-out setup now signed in, or v1 just migrated).
+  fetchPodKeystore()
+    .then(pod => {
+      if (!pod || pod.modified !== bundle.modified) {
+        return savePodKeystore(bundle, { ifNoneMatch: !pod })
+      }
+    })
+    .catch(e => console.warn('dokieli: keystore pod sync failed', e))
+}
+
+// Publishes the session public key JWK to the WebID profile (insert-only, idempotent per kid).
+// Resolves null when signed out, locked, or the key is already published.
+export async function publishPublicKeyToProfile() {
+  if (!Config.Session?.isActive || !Config.User?.IRI || !_sessionPublicKeyJWK) return null
+  const webid = Config.User.IRI
+  const profileDoc = stripFragmentFromString(webid)
+  const keyIRI = `${profileDoc}#key-${_sessionKid}`
+  const published = Config.User.Graph?.out(Config.ns.sec.keyAgreementMethod).values || []
+  if (published.includes(keyIRI)) return null
+
+  const jwk = escapeRDFLiteral(JSON.stringify(_sessionPublicKeyJWK))
+  // sec:JsonWebKey is the current CID v1.0 type; JsonWebKey2020 kept for older consumers.
+  const insert = `<${webid}> <${Config.ns.sec.keyAgreementMethod.value}> <${keyIRI}> .
+<${keyIRI}> a <${Config.ns.sec.JsonWebKey.value}> , <${Config.ns.sec.JsonWebKey2020.value}> ;
+  <${Config.ns.sec.controller.value}> <${webid}> ;
+  <${Config.ns.sec.publicKeyJwk.value}> "${jwk}"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .`
+
+  return patchResourceWithAcceptPatch(profileDoc, [{ insert }])
 }
 
 // Clears all in-memory key material. Call on sign-out or explicit lock.
@@ -92,6 +301,8 @@ export function lockKeystore() {
   _sessionPublicKey = null
   _sessionPublicKeyJWK = null
   _sessionKid = null
+  cachedKeystoreURL = null
+  podChecked = false
 }
 
 export function isUnlocked() {
@@ -117,13 +328,18 @@ export function getSessionKid() {
   return _sessionKid
 }
 
+// Checks the local cache, then (once per session, when signed in) probes the pod
+// and seeds the cache so a new device gets the unlock prompt instead of setup.
 export async function hasKeystore() {
-  const keystore = await getEncryptedKeystore()
-  return keystore != null
-}
-
-function bufToB64(buffer) {
-  return btoa(String.fromCharCode(...new Uint8Array(buffer instanceof ArrayBuffer ? buffer : buffer.buffer)))
+  if (await getEncryptedKeystore()) return true
+  if (podChecked || !Config.Session?.isActive) return false
+  podChecked = true
+  const pod = await fetchPodKeystore()
+  if (pod) {
+    await setEncryptedKeystore(pod)
+    return true
+  }
+  return false
 }
 
 function b64ToBuf(b64) {
