@@ -298,6 +298,11 @@ export function removeEncryptedKeystore() {
   return del(E2EE_KEYSTORE_KEY)
 }
 
+// Preserves a local keystore whose kid diverges from the pod copy.
+export function setOrphanedEncryptedKeystore(keystore) {
+  return set(`${E2EE_KEYSTORE_KEY}.orphaned.${keystore.kid}`, keystore)
+}
+
 export function updateBrowserStorageOIDC() {
   return set('DO.Config.OIDC', Config.OIDC);
 }

@@ -43,6 +43,8 @@ export default {
     Encryption: {
       Enabled: false,
       KeyId: null,
+      KeystoreURL: null,
+      PodSyncFailed: false,
       Document: false,
       DocumentEncrypt: false
     },
@@ -103,7 +105,7 @@ export default {
       'wrapperSelector': '.do.ref',
       'contentSelector': 'mark'
     }],
-    'allowedDataBlockTypes': ['text/turtle', 'application/ld+json', 'application/activity+json', 'application/n-triples', 'application/trig', 'text/n3'],
+    'allowedDataBlockTypes': ['text/turtle', 'application/ld+json', 'application/activity+json', 'application/n-triples', 'application/trig', 'text/n3', 'application/jose'],
     'allowedDataMimeTypes': [ 'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml', 'image/x-icon'],
     'allowedScripts': {
       'https://www.w3.org/scripts/TR/2021/fixup.js': {
@@ -610,6 +612,7 @@ export default {
     doap: rdf.namespace('http://usefulinc.com/ns/doap#'),
     doc: rdf.namespace('http://www.w3.org/2000/10/swap/pim/doc#'),
     doco: rdf.namespace('http://purl.org/spar/doco/'),
+    dokieli: rdf.namespace('https://dokie.li/ns#'),
     dpv: rdf.namespace('https://w3id.org/dpv#'),
     earl: rdf.namespace('http://www.w3.org/ns/earl#'),
     ex: rdf.namespace('http://example.org/'),

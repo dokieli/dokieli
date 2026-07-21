@@ -24,6 +24,7 @@ import { escapeRegExp, scoreMatch, uniqueArray } from './util.js'
 import { domSanitize, safeObjectAssign, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeIRIOrBNode, sanitizeIRIs, sanitizeObject } from './utils/sanitization.js'
 import { parseMarkdown } from "./utils/html.js";
 import { getResource, setAcceptRDFTypes } from './fetcher.js'
+import { multikeyToJWK } from './crypto.js'
 import { serializeAnnotationToJSONLD, parseAnnotation } from '@dokieli/web-annotation';
 import LinkHeader from "http-link-header";
 
@@ -1539,6 +1540,43 @@ export function getAgentPrivateTypeIndex(s) {
 export function getAgentPreferencesFile(s) {
   const d = sanitizeIRIs(s.out(ns.ws.preferencesFile).values);
   return d.length ? d : undefined;
+}
+
+// Dereferences a WebID and returns its published public encryption JWKs.
+// Accepts JWK (sec:publicKeyJwk) and Multikey (sec:publicKeyMultibase) verification methods.
+// Rejects the document when it declares a primaryTopic that is not the given WebID
+// (Web-CID authoritativeness check against key substitution).
+export function getPublicKeysForWebId(webid) {
+  return getResourceGraph(webid).then(({ graph }) => {
+    const doc = stripFragmentFromString(webid);
+    const primaryTopics = graph.node(rdf.namedNode(doc)).out(ns.foaf.primaryTopic).values;
+    if (primaryTopics.length && !primaryTopics.includes(webid)) {
+      console.warn('dokieli: profile document primaryTopic does not match WebID; ignoring published keys', doc);
+      return [];
+    }
+
+    const s = graph.node(rdf.namedNode(webid));
+    const keyIRIs = sanitizeIRIs([
+      ...s.out(ns.sec.keyAgreementMethod).values,
+      ...s.out(ns.sec.verificationMethod).values
+    ]);
+    const jwks = [];
+    keyIRIs.forEach(iri => {
+      const key = graph.node(rdf.namedNode(iri));
+      const literal = key.out(ns.sec.publicKeyJwk).values[0];
+      let jwk = null;
+      if (literal) {
+        try { jwk = JSON.parse(literal); } catch {}
+      } else {
+        jwk = multikeyToJWK(key.out(ns.sec.publicKeyMultibase).values[0]);
+      }
+      if (jwk) {
+        if (!jwk.kid) jwk.kid = iri;
+        jwks.push(jwk);
+      }
+    });
+    return jwks;
+  });
 }
 
 export function getAgentLiked(s) {

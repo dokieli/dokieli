@@ -22,7 +22,7 @@ import { getAgentHTML, showActionMessage, getResourceSupplementalInfo, handleDel
 import { Icon } from './ui/icons.js';
 import { setPreferredPolicyInfo, getAgentTypeIndex, getAgentSupplementalInfo, getAgentSeeAlsoPrimaryTopicOf, getAgentPreferencesInfo, getSubjectInfo } from './graph.js';
 import { removeDeviceStorageAsSignOut, updateDeviceStorageProfile, updateBrowserStorageOIDC, setDeviceStorageItem } from './storage.js';
-import { hasKeystore, lockKeystore } from './keystore.js';
+import { hasKeystore, isUnlocked, lockKeystore } from './keystore.js';
 import { updateButtons, getButtonHTML } from './ui/buttons.js';
 import { SessionCore } from '@uvdsl/solid-oidc-client-browser/core';
 import { isCurrentScriptSameOrigin, isLocalhost } from './uri.js';
@@ -156,11 +156,13 @@ export async function signOut() {
   await signOutHttp();
 
   removeDeviceStorageAsSignOut();
+  // The encrypted keystore cache in IndexedDB is kept across sign-out: it is
+  // passphrase-protected and enables offline unlock on the next visit.
   lockKeystore();
 
   Config.User = {
     IRI: null,
-    Encryption: { Enabled: false, KeyId: null },
+    Encryption: { Enabled: false, KeyId: null, KeystoreURL: null, PodSyncFailed: false },
     UI: Config.User.UI
   }
 
@@ -869,13 +871,16 @@ export function afterSetUserInfo() {
     updateButtons();
   });
 
-  // Check for an existing keystore and surface the unlock prompt if found.
-  // Deferred so it does not block the rest of the sign-in flow.
-  hasKeystore().then(exists => {
-    if (exists) {
-      import('./dialog.js').then(({ showEncryptionUnlock }) => showEncryptionUnlock());
-    }
-  });
+  // Unlock is prompted on demand (encrypted document/note load, encrypt action),
+  // not on sign-in. Only re-surface it here when the open document is encrypted
+  // and still locked, e.g. the user dismissed the prompt before signing in.
+  if (document.getElementById('dokieli-e2ee') && !isUnlocked()) {
+    hasKeystore().then(exists => {
+      if (exists) {
+        import('./dialog.js').then(({ showEncryptionUnlock }) => showEncryptionUnlock());
+      }
+    });
+  }
 
   var promises = [];
 

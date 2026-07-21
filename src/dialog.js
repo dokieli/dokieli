@@ -45,7 +45,7 @@ import { generateGeoView } from './geo.js';
 import { csvStringToJson, jsonToHtmlTableString } from './csv.js';
 import { restoreYjsContent, addYjsVersion, getYjsVersions, getYjsVersionsFromIDB, getCurrentVersionKey, onYjsVersionsChanged } from "./editor/editor.js";
 import { rewriteBlobImagesToRelative, uploadBlobAssets, clearBlobAssets, hasUploadTarget, resolveAuthenticatedImages } from "./editor/utils/imageAssets.js";
-import { createKeystore, unlockKeystore, isUnlocked, getSessionKid, hasKeystore } from './keystore.js';
+import { createKeystore, unlockKeystore, isUnlocked, getSessionKid, hasKeystore, publishPublicKeyToProfile } from './keystore.js';
 
 const versionItemCache = new Map();
 let editHistoryAside = null;
@@ -7287,6 +7287,10 @@ export async function spawnDokieli(documentNode, data, contentTypes, iris, optio
     // initShowNotificationSources();
     // focusNote();
 
+    // Opened document may be encrypted; surface unlock or decrypt in place.
+    const { initEncryptedDocument } = await import('./init.js');
+    await initEncryptedDocument();
+
     // hideDocumentMenu();
     return;
   }
@@ -7398,7 +7402,7 @@ export function showEncryptionSetup(onSuccess) {
     info.appendChild(generatingMsg);
 
     try {
-      const publicKeyJWK = await createKeystore(pass);
+      await createKeystore(pass);
       Config.User.Encryption.Enabled = true;
       Config.User.Encryption.KeyId = getSessionKid();
       generatingMsg.remove();
@@ -7406,9 +7410,19 @@ export function showEncryptionSetup(onSuccess) {
       successMsg.setAttribute('data-i18n', 'encryption-setup.success');
       successMsg.textContent = i18n.t('encryption-setup.success.textContent');
       info.appendChild(successMsg);
+      if (Config.User.Encryption.PodSyncFailed) {
+        const syncMsg = document.createElement('p');
+        syncMsg.setAttribute('data-i18n', 'encryption-setup.pod-sync-failed');
+        syncMsg.textContent = i18n.t('encryption-setup.pod-sync-failed.textContent');
+        info.appendChild(syncMsg);
+      }
       clearPendingEncryptedQueues();
       if (typeof onSuccess === 'function') onSuccess();
-      // TODO Phase 2: publish publicKeyJWK to WebID profile
+      try {
+        await publishPublicKeyToProfile();
+      } catch (e) {
+        console.warn('dokieli: public key profile publication failed; encryption still works locally', e);
+      }
     } catch (err) {
       generatingMsg.remove();
       // No data-i18n here: the message carries dynamic error detail that a
@@ -7476,6 +7490,12 @@ export function showEncryptionUnlock(onSuccess) {
       const { decryptArticleInPlace } = await import('./init.js');
       await decryptArticleInPlace();
       await processPendingEncryptedNotes();
+
+      try {
+        await publishPublicKeyToProfile();
+      } catch (e) {
+        console.warn('dokieli: public key profile publication failed; encryption still works locally', e);
+      }
 
       if (typeof onSuccess === 'function') onSuccess();
       info.textContent = i18n.t('encryption-unlock.unlocked.textContent');

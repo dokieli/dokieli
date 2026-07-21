@@ -663,6 +663,7 @@
   "encryption-setup.generating.textContent": "Generating key…",
   "encryption-setup.success.textContent": "Encryption enabled. Your annotations and documents will be encrypted when posted.",
   "encryption-setup.error.textContent": "Setup failed:",
+  "encryption-setup.pod-sync-failed.textContent": "Your key could not be saved to your storage. It is kept on this device and will be uploaded next time you unlock while signed in.",
   "encryption.encrypted-document-title.textContent": "Encrypted document",
   "encryption.show-passphrase.title": "Show passphrase",
   "encryption.show-passphrase.aria-label": "Show passphrase",

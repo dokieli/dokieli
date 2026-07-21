@@ -15,27 +15,35 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { CompactEncrypt, compactDecrypt, GeneralEncrypt, generalDecrypt } from 'jose'
+import { CompactEncrypt, compactDecrypt, GeneralEncrypt, generalDecrypt, calculateJwkThumbprint } from 'jose'
 
 const CURVE = 'P-256'
 const ENC = 'A256GCM'
-const KDF_ITERATIONS = 600_000
+const PBES2_ALG = 'PBES2-HS512+A256KW'
+const PBES2_ITERATIONS = 210_000
 
-// Generates an ECDH P-256 keypair and a random key ID.
-// extractable:true on the private key is required for wrapKey during keystore creation;
-// subsequent sessions import the private key as non-extractable via unwrapPrivateKey.
+// Generates an ECDH P-256 keypair; the key ID is the RFC 7638 JWK thumbprint,
+// so consumers can verify the kid matches the key.
+// extractable:true is required to export the private JWK during keystore creation;
+// subsequent sessions import the private key as non-extractable via importPrivateKeyJWK.
 export async function generateEncryptionKeypair() {
   const { publicKey, privateKey } = await crypto.subtle.generateKey(
     { name: 'ECDH', namedCurve: CURVE },
     true,
     ['deriveBits']
   )
-  const kid = crypto.randomUUID()
+  const jwk = await crypto.subtle.exportKey('jwk', publicKey)
+  const kid = await calculateJwkThumbprint(jwk)
   return { publicKey, privateKey, kid }
 }
 
 export async function exportPublicKeyJWK(publicKey, kid) {
   const jwk = await crypto.subtle.exportKey('jwk', publicKey)
+  return kid ? { ...jwk, kid } : jwk
+}
+
+export async function exportPrivateKeyJWK(privateKey, kid) {
+  const jwk = await crypto.subtle.exportKey('jwk', privateKey)
   return kid ? { ...jwk, kid } : jwk
 }
 
@@ -60,43 +68,23 @@ export async function importPrivateKeyJWK(jwk) {
   )
 }
 
-// Derives a 256-bit AES-GCM key-encryption key from a passphrase + random salt via PBKDF2.
-export async function deriveKEK(passphrase, salt) {
-  const keyMaterial = await crypto.subtle.importKey(
-    'raw',
-    new TextEncoder().encode(passphrase),
-    'PBKDF2',
-    false,
-    ['deriveKey']
-  )
-  return crypto.subtle.deriveKey(
-    { name: 'PBKDF2', salt, iterations: KDF_ITERATIONS, hash: 'SHA-256' },
-    keyMaterial,
-    { name: 'AES-GCM', length: 256 },
-    false,
-    ['wrapKey', 'unwrapKey']
-  )
+// Wraps a private JWK as a compact JWE using a passphrase-derived key (PBES2).
+export async function wrapPrivateKeyJWK(privateKeyJWK, passphrase) {
+  return new CompactEncrypt(new TextEncoder().encode(JSON.stringify(privateKeyJWK)))
+    .setProtectedHeader({ alg: PBES2_ALG, enc: ENC, cty: 'jwk+json' })
+    .setKeyManagementParameters({ p2c: PBES2_ITERATIONS })
+    .encrypt(new TextEncoder().encode(passphrase))
 }
 
-// Wraps (encrypts) a private CryptoKey using AES-GCM with the given KEK.
-// Returns the ciphertext buffer and the IV used; both must be stored alongside the keystore.
-export async function wrapPrivateKey(privateKey, kek) {
-  const iv = crypto.getRandomValues(new Uint8Array(12))
-  const wrappedKey = await crypto.subtle.wrapKey('jwk', privateKey, kek, { name: 'AES-GCM', iv })
-  return { wrappedKey, iv }
-}
-
-// Unwraps a stored private key. The result is non-extractable (deriveKey usage only).
-export async function unwrapPrivateKey(wrappedKey, iv, kek) {
-  return crypto.subtle.unwrapKey(
-    'jwk',
-    wrappedKey,
-    kek,
-    { name: 'AES-GCM', iv },
-    { name: 'ECDH', namedCurve: CURVE },
-    false,
-    ['deriveBits']
-  )
+// Decrypts a PBES2 compact JWE back to a private JWK object. Rejects on wrong passphrase.
+// maxPBES2Count must exceed PBES2_ITERATIONS; jose's default cap is 10 000.
+export async function unwrapPrivateKeyJWK(jwe, passphrase) {
+  const { plaintext } = await compactDecrypt(jwe, new TextEncoder().encode(passphrase), {
+    keyManagementAlgorithms: [PBES2_ALG],
+    contentEncryptionAlgorithms: [ENC],
+    maxPBES2Count: 1_000_000
+  })
+  return JSON.parse(new TextDecoder().decode(plaintext))
 }
 
 // Encrypts plaintext to one or more recipient public keys (CryptoKey[]).
@@ -134,6 +122,102 @@ export async function decryptContent(jwe, privateKey) {
   }
   const { plaintext } = await compactDecrypt(trimmed, privateKey)
   return new TextDecoder().decode(plaintext)
+}
+
+const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
+
+function base58btcDecode(str) {
+  let value = 0n
+  for (const ch of str) {
+    const idx = BASE58_ALPHABET.indexOf(ch)
+    if (idx === -1) throw new Error('Invalid base58btc character')
+    value = value * 58n + BigInt(idx)
+  }
+  const bytes = []
+  while (value > 0n) {
+    bytes.unshift(Number(value & 0xffn))
+    value >>= 8n
+  }
+  for (const ch of str) {
+    if (ch !== '1') break
+    bytes.unshift(0)
+  }
+  return new Uint8Array(bytes)
+}
+
+const P256_P = BigInt('0xffffffff00000001000000000000000000000000ffffffffffffffffffffffff')
+const P256_B = BigInt('0x5ac635d8aa3a93e7b3ebbd55769886bc651d06b0cc53b0f63bce3c3e27d2604b')
+
+function modPow(base, exp, mod) {
+  let result = 1n
+  base %= mod
+  while (exp > 0n) {
+    if (exp & 1n) result = (result * base) % mod
+    base = (base * base) % mod
+    exp >>= 1n
+  }
+  return result
+}
+
+function bytesToBigInt(bytes) {
+  let value = 0n
+  for (const b of bytes) value = (value << 8n) | BigInt(b)
+  return value
+}
+
+function bigIntTo32Bytes(value) {
+  const bytes = new Uint8Array(32)
+  for (let i = 31; i >= 0; i--) {
+    bytes[i] = Number(value & 0xffn)
+    value >>= 8n
+  }
+  return bytes
+}
+
+function bytesToBase64url(bytes) {
+  return btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+// Recovers the y coordinate of a compressed SEC1 P-256 point (p ≡ 3 mod 4, so sqrt = c^((p+1)/4)).
+function decompressP256(compressed) {
+  const x = bytesToBigInt(compressed.subarray(1))
+  if (x >= P256_P) return null
+  const y2 = (((modPow(x, 3n, P256_P) - 3n * x % P256_P) % P256_P + P256_P) % P256_P + P256_B) % P256_P
+  const y = modPow(y2, (P256_P + 1n) / 4n, P256_P)
+  if ((y * y) % P256_P !== y2) return null
+  const yParity = BigInt(compressed[0] & 1)
+  return { x, y: (y & 1n) === yParity ? y : P256_P - y }
+}
+
+// Converts a CID Multikey publicKeyMultibase (base58btc, multicodec p256-pub) to an EC JWK.
+// Returns null for other encodings or curves; dokieli only encrypts to P-256.
+export function multikeyToJWK(multibase) {
+  if (typeof multibase !== 'string' || !multibase.startsWith('z')) return null
+  let data
+  try {
+    data = base58btcDecode(multibase.slice(1))
+  } catch {
+    return null
+  }
+  if (data.length < 2 || data[0] !== 0x80 || data[1] !== 0x24) return null
+  const key = data.subarray(2)
+  let x, y
+  if (key.length === 33 && (key[0] === 2 || key[0] === 3)) {
+    const point = decompressP256(key)
+    if (!point) return null
+    ;({ x, y } = point)
+  } else if (key.length === 65 && key[0] === 4) {
+    x = bytesToBigInt(key.subarray(1, 33))
+    y = bytesToBigInt(key.subarray(33))
+  } else {
+    return null
+  }
+  return {
+    kty: 'EC',
+    crv: CURVE,
+    x: bytesToBase64url(bigIntTo32Bytes(x)),
+    y: bytesToBase64url(bigIntTo32Bytes(y))
+  }
 }
 
 // Returns true when content looks like a compact JWE (five dot-separated base64url segments)
