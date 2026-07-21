@@ -27,10 +27,10 @@ import {
   unwrapPrivateKeyJWK
 } from './crypto.js'
 import { getEncryptedKeystore, setEncryptedKeystore, setOrphanedEncryptedKeystore } from './storage.js'
-import { getResource, putResource, postResource, putResourceACL, patchResourceWithAcceptPatch } from './fetcher.js'
+import { getResource, putResource, postResource, patchResourceWithAcceptPatch } from './fetcher.js'
 import { getResourceGraph, getLinkRelationFromHead } from './graph.js'
 import { forceTrailingSlash, stripFragmentFromString } from './uri.js'
-import { escapeRDFLiteral } from './util.js'
+import { escapeRDFLiteral, generateUUID } from './util.js'
 
 // In-memory session state. Cleared by lockKeystore() or on sign-out.
 // Private key is held as a non-extractable CryptoKey so it cannot be serialised.
@@ -63,9 +63,12 @@ function isValidBundle(bundle) {
   return bundle.version === 1 && !!(bundle.wrappedKey && bundle.iv && bundle.salt)
 }
 
-function getDefaultKeystoreURL() {
+// Mints a URL for a NEW keystore. The UUID filename is not guessable, so the
+// location is only recoverable through the discovery triple written on save;
+// there is deliberately no convention-based fallback for lookup.
+function mintKeystoreURL() {
   const storage = Config.User?.Storage?.[0]
-  return storage ? forceTrailingSlash(storage) + 'dokieli/keystore.json' : null
+  return storage ? forceTrailingSlash(storage) + `key/keystore-${generateUUID()}.json` : null
 }
 
 async function readKeystoreDiscoveryTriple() {
@@ -88,10 +91,11 @@ async function readKeystoreDiscoveryTriple() {
   }
 }
 
-// Preferences triple wins over the default location; null when no pod is known.
+// Locates an existing keystore via the preferences triple (or the session cache);
+// null when unknown. Does not mint a URL — creation is savePodKeystore's job.
 async function discoverKeystoreURL() {
   if (cachedKeystoreURL) return cachedKeystoreURL
-  const url = await readKeystoreDiscoveryTriple() || getDefaultKeystoreURL()
+  const url = await readKeystoreDiscoveryTriple()
   if (url) {
     cachedKeystoreURL = url
     Config.User.Encryption.KeystoreURL = url
@@ -121,11 +125,36 @@ function createKeystoreContainer(keystoreURL) {
   return postResource(root, slug, '', 'text/turtle', '<http://www.w3.org/ns/ldp#BasicContainer>; rel="type"')
 }
 
-async function setKeystoreACL(keystoreURL) {
-  const [aclURL] = await getLinkRelationFromHead('acl', keystoreURL)
-  return putResourceACL(keystoreURL, aclURL, {
-    u: { iri: [Config.User.IRI], mode: ['acl:Control', 'acl:Read', 'acl:Write'] }
-  })
+// Owner gets Read/Append/Control on the key container and Read (via acl:default)
+// on every key resource inside it, scoped to any client with an acl:ClientCondition
+// (mirroring how dokieli conditions client access elsewhere). Read-only defaults
+// make key resources immutable once written: keys are added under fresh URLs,
+// never overwritten.
+async function setKeystoreContainerACL(containerURL) {
+  const [aclURL] = await getLinkRelationFromHead('acl', containerURL)
+  const user = Config.User.IRI
+  const data = `@prefix acl: <http://www.w3.org/ns/auth/acl#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+
+<#owner>
+  a acl:Authorization ;
+  acl:accessTo <${containerURL}> ;
+  acl:agent <${user}> ;
+  acl:mode acl:Read, acl:Append, acl:Control ;
+  acl:condition <#anyClient> .
+
+<#keys>
+  a acl:Authorization ;
+  acl:default <${containerURL}> ;
+  acl:agent <${user}> ;
+  acl:mode acl:Read ;
+  acl:condition <#anyClient> .
+
+<#anyClient>
+  a acl:ClientCondition ;
+  acl:clientClass foaf:Agent .
+`
+  return putResource(aclURL, data, 'text/turtle; charset=utf-8')
 }
 
 // Insert-only; skipped when there is no preferences file or the triple is already current.
@@ -142,8 +171,13 @@ async function writeKeystoreDiscovery(keystoreURL) {
 // ifNoneMatch guards against clobbering a keystore created by another device.
 async function savePodKeystore(bundle, { ifNoneMatch = false } = {}) {
   if (!Config.Session?.isActive) return null
-  const url = await discoverKeystoreURL()
-  if (!url) return null
+  let url = await discoverKeystoreURL()
+  if (!url) {
+    url = mintKeystoreURL()
+    if (!url) return null
+    cachedKeystoreURL = url
+    Config.User.Encryption.KeystoreURL = url
+  }
 
   const data = JSON.stringify(bundle, null, 2)
   const options = ifNoneMatch ? { headers: { 'If-None-Match': '*' } } : {}
@@ -160,7 +194,8 @@ async function savePodKeystore(bundle, { ifNoneMatch = false } = {}) {
     await putResource(url, data, 'application/json', null, ifNoneMatch ? { headers: { 'If-None-Match': '*' } } : {})
   }
 
-  await setKeystoreACL(url).catch(e => console.warn('dokieli: keystore ACL not set', e))
+  const container = url.substring(0, url.lastIndexOf('/') + 1)
+  await setKeystoreContainerACL(container).catch(e => console.warn('dokieli: keystore container ACL not set', e))
   await writeKeystoreDiscovery(url).catch(e => console.warn('dokieli: keystore discovery triple not written', e))
   return url
 }
@@ -286,9 +321,9 @@ export async function publishPublicKeyToProfile() {
   if (published.includes(keyIRI)) return null
 
   const jwk = escapeRDFLiteral(JSON.stringify(_sessionPublicKeyJWK))
-  // sec:JsonWebKey is the current CID v1.0 type; JsonWebKey2020 kept for older consumers.
+  // sec:JsonWebKey is the CID v1.0 verification method type.
   const insert = `<${webid}> <${Config.ns.sec.keyAgreementMethod.value}> <${keyIRI}> .
-<${keyIRI}> a <${Config.ns.sec.JsonWebKey.value}> , <${Config.ns.sec.JsonWebKey2020.value}> ;
+<${keyIRI}> a <${Config.ns.sec.JsonWebKey.value}> ;
   <${Config.ns.sec.controller.value}> <${webid}> ;
   <${Config.ns.sec.publicKeyJwk.value}> "${jwk}"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .`
 

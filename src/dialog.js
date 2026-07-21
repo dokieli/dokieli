@@ -7410,18 +7410,24 @@ export function showEncryptionSetup(onSuccess) {
       successMsg.setAttribute('data-i18n', 'encryption-setup.success');
       successMsg.textContent = i18n.t('encryption-setup.success.textContent');
       info.appendChild(successMsg);
+      clearPendingEncryptedQueues();
+      if (typeof onSuccess === 'function') onSuccess();
       if (Config.User.Encryption.PodSyncFailed) {
+        // The keystore never reached the pod, so don't advertise the public key on
+        // the WebID profile yet: others (and the user's other devices) would encrypt
+        // to a key whose wrapped private half exists only in this browser's cache.
+        // Publication happens on a later unlock, once the pod keystore save succeeds.
         const syncMsg = document.createElement('p');
         syncMsg.setAttribute('data-i18n', 'encryption-setup.pod-sync-failed');
         syncMsg.textContent = i18n.t('encryption-setup.pod-sync-failed.textContent');
         info.appendChild(syncMsg);
       }
-      clearPendingEncryptedQueues();
-      if (typeof onSuccess === 'function') onSuccess();
-      try {
-        await publishPublicKeyToProfile();
-      } catch (e) {
-        console.warn('dokieli: public key profile publication failed; encryption still works locally', e);
+      else {
+        try {
+          await publishPublicKeyToProfile();
+        } catch (e) {
+          console.warn('dokieli: public key profile publication failed; encryption still works locally', e);
+        }
       }
     } catch (err) {
       generatingMsg.remove();
