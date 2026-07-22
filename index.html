@@ -8,7 +8,7 @@
     <link href="media/css/dokieli.css" media="all" rel="stylesheet" />
     <script src="scripts/dokieli.js"></script>
   </head>
-  <body about="" class="do-site" id="home" prefix="acl: http://www.w3.org/ns/auth/acl# as: https://www.w3.org/ns/activitystreams# bibo: http://purl.org/ontology/bibo/ cert: http://www.w3.org/ns/auth/cert# cito: http://purl.org/spar/cito/ csvw: http://www.w3.org/ns/csvw# dbp: http://dbpedia.org/property/ dbr: http://dbpedia.org/resource/ dcat: http://www.w3.org/ns/dcat# dcterms: http://purl.org/dc/terms/ dctypes: http://purl.org/dc/dcmitype/ deo: http://purl.org/spar/deo/ dio: https://w3id.org/dio# doap: http://usefulinc.com/ns/doap# doco: http://purl.org/spar/doco/ dpv: https://w3id.org/dpv# earl: http://www.w3.org/ns/earl# fabio: http://purl.org/spar/fabio/ foaf: http://xmlns.com/foaf/0.1/ ldp: http://www.w3.org/ns/ldp# mem: http://mementoweb.org/ns# oa: http://www.w3.org/ns/oa# odrl: http://www.w3.org/ns/odrl/2/ opmw: http://www.opmw.org/ontology/ owl: http://www.w3.org/2002/07/owl# prov: http://www.w3.org/ns/prov# qb: http://purl.org/linked-data/cube# rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns# rdfa: http://www.w3.org/ns/rdfa# rdfs: http://www.w3.org/2000/01/rdf-schema# rel: https://www.w3.org/ns/iana/link-relations/relation# risk: https://w3id.org/dpv/risk# rsa: http://www.w3.org/ns/auth/rsa# schema: http://schema.org/ sio: http://semanticscience.org/resource/ sioc: http://rdfs.org/sioc/ns# skos: http://www.w3.org/2004/02/skos/core# solid: http://www.w3.org/ns/solid/terms# spec: http://www.w3.org/ns/spec# void: http://rdfs.org/ns/void# wgs: http://www.w3.org/2003/01/geo/wgs84_pos# ws: http://www.w3.org/ns/pim/space# xsd: http://www.w3.org/2001/XMLSchema#" typeof="schema:CreativeWork prov:Entity">
+  <body about="" class="do-site" id="home" prefix="ac: https://www.w3.org/ns/ac# acl: http://www.w3.org/ns/auth/acl# as: https://www.w3.org/ns/activitystreams# bibo: http://purl.org/ontology/bibo/ cert: http://www.w3.org/ns/auth/cert# cito: http://purl.org/spar/cito/ csvw: http://www.w3.org/ns/csvw# dbp: http://dbpedia.org/property/ dbr: http://dbpedia.org/resource/ dcat: http://www.w3.org/ns/dcat# dcterms: http://purl.org/dc/terms/ dctypes: http://purl.org/dc/dcmitype/ deo: http://purl.org/spar/deo/ dio: https://w3id.org/dio# doap: http://usefulinc.com/ns/doap# doco: http://purl.org/spar/doco/ dpv: https://w3id.org/dpv# earl: http://www.w3.org/ns/earl# fabio: http://purl.org/spar/fabio/ foaf: http://xmlns.com/foaf/0.1/ ldp: http://www.w3.org/ns/ldp# mem: http://mementoweb.org/ns# oa: http://www.w3.org/ns/oa# odrl: http://www.w3.org/ns/odrl/2/ opmw: http://www.opmw.org/ontology/ owl: http://www.w3.org/2002/07/owl# prov: http://www.w3.org/ns/prov# qb: http://purl.org/linked-data/cube# rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns# rdfa: http://www.w3.org/ns/rdfa# rdfs: http://www.w3.org/2000/01/rdf-schema# rel: https://www.w3.org/ns/iana/link-relations/relation# risk: https://w3id.org/dpv/risk# rsa: http://www.w3.org/ns/auth/rsa# schema: http://schema.org/ sio: http://semanticscience.org/resource/ sioc: http://rdfs.org/sioc/ns# skos: http://www.w3.org/2004/02/skos/core# solid: http://www.w3.org/ns/solid/terms# spec: http://www.w3.org/ns/spec# void: http://rdfs.org/ns/void# wgs: http://www.w3.org/2003/01/geo/wgs84_pos# ws: http://www.w3.org/ns/pim/space# xsd: http://www.w3.org/2001/XMLSchema#" typeof="schema:CreativeWork prov:Entity">
     <header>
       <address><a href="/"><img alt="dokieli logo" height="64" src="media/images/logo.png" width="64" /> <span>dokieli</span></a></address>
       <nav>
@@ -344,6 +344,437 @@
           <dd><a href="https://dokie.li/docs#features">https://dokie.li/docs#features</a></dd>
           <dt id="privacy-policy">Privacy policy</dt>
           <dd><a href="https://dokie.li/docs#privacy-policy" rel="rel:privacy-policy">https://dokie.li/docs#privacy-policy</a></dd>
+          <dt id="capabilities">Capabilities</dt>
+          <dd>
+            <dl rel="ac:capability">
+              <dt about="#capability-annotate" property="dcterms:title">Annotate</dt>
+              <dd id="capability-annotate" resource="#capability-annotate" typeof="ac:Capability">
+                <dl>
+                  <dt>Subject</dt>
+                  <dd><a href="docs#annotation" rel="dcterms:subject">Annotation</a></dd>
+                  <dt>Accept</dt>
+                  <dd>
+                    <ul>
+                      <li property="ac:accept"><code>application/xhtml+xml</code></li>
+                      <li property="ac:accept"><code>text/html</code></li>
+                    </ul>
+                  </dd>
+                  <dt>Action</dt>
+                  <dd><a href="http://www.w3.org/ns/odrl/2/annotate" rel="ac:action">annotate</a></dd>
+                </dl>
+              </dd>
+              <dt about="#capability-delete" property="dcterms:title">Delete</dt>
+              <dd id="capability-delete" resource="#capability-delete" typeof="ac:Capability">
+                <dl>
+                  <dt>Subject</dt>
+                  <dd><a href="docs#feature-delete" rel="dcterms:subject">Delete</a></dd>
+                  <dt>Accept</dt>
+                  <dd>
+                    <ul>
+                      <li property="ac:accept"><code>application/xhtml+xml</code></li>
+                      <li property="ac:accept"><code>text/html</code></li>
+                    </ul>
+                  </dd>
+                  <dt>Action</dt>
+                  <dd><a href="http://www.w3.org/ns/odrl/2/delete" rel="ac:action">delete</a></dd>
+                </dl>
+              </dd>
+              <dt about="#capability-edit" property="dcterms:title">Edit</dt>
+              <dd id="capability-edit" resource="#capability-edit" typeof="ac:Capability">
+                <dl>
+                  <dt>Subject</dt>
+                  <dd><a href="docs#feature-edit" rel="dcterms:subject">Edit</a></dd>
+                  <dt>Accept</dt>
+                  <dd>
+                    <ul>
+                      <li property="ac:accept"><code>application/xhtml+xml</code></li>
+                      <li property="ac:accept"><code>text/html</code></li>
+                    </ul>
+                  </dd>
+                  <dt>Action</dt>
+                  <dd><a href="http://www.w3.org/ns/odrl/2/modify" rel="ac:action">modify</a></dd>
+                  <dt>Invocation</dt>
+                  <dd>
+                    <dl id="invoke-edit" rel="ac:invocation" resource="#invoke-edit" typeof="ac:UriTemplateInvocation">
+                      <dt>Template</dt>
+                      <dd><code property="ac:template">#author=true</code></dd>
+                      <dt>Mapping</dt>
+                      <dd>
+                        <dl id="mapping-author" rel="ac:mapping" resource="#mapping-author">
+                          <dt>Variable</dt>
+                          <dd property="ac:variable">author</dd>
+                          <dt>Property</dt>
+                          <dd rel="ac:property">
+                            <dl id="property-author" resource="#property-author" typeof="rdf:Property">
+                              <dt>Label</dt>
+                              <dd property="rdfs:label">author</dd>
+                              <dt>Definition</dt>
+                              <dd property="rdfs:comment">Enables dokieli's authoring (edit) mode when its value is <code>true</code>.</dd>
+                            </dl>
+                          </dd>
+                        </dl>
+                      </dd>
+                    </dl>
+                  </dd>
+                  <dt>Invocation</dt>
+                  <dd>
+                    <dl id="invoke-template" rel="ac:invocation" resource="#invoke-template" typeof="ac:UriTemplateInvocation">
+                      <dt>Template</dt>
+                      <dd><code property="ac:template">#template={template}</code></dd>
+                      <dt>Mapping</dt>
+                      <dd>
+                        <dl id="mapping-template" rel="ac:mapping" resource="#mapping-template">
+                          <dt>Variable</dt>
+                          <dd property="ac:variable"><code>template</code></dd>
+                          <dt>Property</dt>
+                          <dd rel="ac:property">
+                            <dl id="property-template" resource="#property-template" typeof="rdf:Property">
+                              <dt>Label</dt>
+                              <dd property="rdfs:label">template</dd>
+                              <dt>Definition</dt>
+                              <dd property="rdfs:comment">The name of a template to start a new document from, for example <code>slideshow</code>.</dd>
+                            </dl>
+                          </dd>
+                        </dl>
+                      </dd>
+                    </dl>
+                  </dd>
+                </dl>
+              </dd>
+              <dt about="#capability-login" property="dcterms:title">Login</dt>
+              <dd id="capability-login" resource="#capability-login" typeof="ac:Capability">
+                <dl>
+                  <dt>Subject</dt>
+                  <dd><a href="docs#feature-sign-in" rel="dcterms:subject">Sign in</a></dd>
+                  <dt>Action</dt>
+                  <dd><a href="http://schema.org/LoginAction" rel="ac:action">login</a></dd>
+                  <dt>Invocation</dt>
+                  <dd>
+                    <dl id="invoke-login" rel="ac:invocation" resource="#invoke-login" typeof="ac:UriTemplateInvocation">
+                      <dt>Template</dt>
+                      <dd><code property="ac:template">#login={login}</code></dd>
+                      <dt>Mapping</dt>
+                      <dd>
+                        <dl id="mapping-login" rel="ac:mapping" resource="#mapping-login">
+                          <dt>Variable</dt>
+                          <dd property="ac:variable"><code>login</code></dd>
+                          <dt>Property</dt>
+                          <dd><a href="https://www.w3.org/ns/ac#login" rel="ac:property">login</a></dd>
+                        </dl>
+                      </dd>
+                    </dl>
+                  </dd>
+                </dl>
+              </dd>
+              <dt about="#capability-notify" property="dcterms:title">Notify</dt>
+              <dd id="capability-notify" resource="#capability-notify" typeof="ac:Capability">
+                <dl>
+                  <dt>Subject</dt>
+                  <dd><a href="docs#notification" rel="dcterms:subject">Notification</a></dd>
+                  <dt>Accept</dt>
+                  <dd>
+                    <ul>
+                      <li property="ac:accept"><code>application/ld+json</code></li>
+                    </ul>
+                  </dd>
+                  <dt>Action</dt>
+                  <dd><a href="http://www.w3.org/ns/odrl/2/inform" rel="ac:action">inform</a></dd>
+                </dl>
+              </dd>
+              <dt about="#capability-open" property="dcterms:title">Open</dt>
+              <dd id="capability-open" resource="#capability-open" typeof="ac:Capability">
+                <dl>
+                  <dt>Subject</dt>
+                  <dd><a href="docs#feature-open" rel="dcterms:subject">Open</a></dd>
+                  <dt>Accept</dt>
+                  <dd>
+                    <ul>
+                      <li property="ac:accept"><code>application/activity+json</code></li>
+                      <li property="ac:accept"><code>application/gpx+xml</code></li>
+                      <li property="ac:accept"><code>application/ld+json</code></li>
+                      <li property="ac:accept"><code>application/rdf+xml</code></li>
+                      <li property="ac:accept"><code>application/trig</code></li>
+                      <li property="ac:accept"><code>application/xhtml+xml</code></li>
+                      <li property="ac:accept"><code>image/svg+xml</code></li>
+                      <li property="ac:accept"><code>text/csv</code></li>
+                      <li property="ac:accept"><code>text/html</code></li>
+                      <li property="ac:accept"><code>text/markdown</code></li>
+                      <li property="ac:accept"><code>text/turtle</code></li>
+                    </ul>
+                  </dd>
+                  <dt>Action</dt>
+                  <dd><a href="http://www.w3.org/ns/odrl/2/display" rel="ac:action">display</a></dd>
+                  <dt>Invocation</dt>
+                  <dd>
+                    <dl id="invoke-open" rel="ac:invocation" resource="#invoke-open" typeof="ac:UriTemplateInvocation">
+                      <dt>Template</dt>
+                      <dd><code property="ac:template">#open={open}</code></dd>
+                      <dt>Mapping</dt>
+                      <dd>
+                        <dl id="mapping-open" rel="ac:mapping" resource="#mapping-open">
+                          <dt>Variable</dt>
+                          <dd property="ac:variable"><code>open</code></dd>
+                          <dt>Property</dt>
+                          <dd><a href="https://www.w3.org/ns/ac#open" rel="ac:property">open</a></dd>
+                        </dl>
+                      </dd>
+                    </dl>
+                  </dd>
+                  <dt>Invocation</dt>
+                  <dd>
+                    <dl id="invoke-style" rel="ac:invocation" resource="#invoke-style" typeof="ac:UriTemplateInvocation">
+                      <dt>Template</dt>
+                      <dd><code property="ac:template">#style={style}</code></dd>
+                      <dt>Mapping</dt>
+                      <dd>
+                        <dl id="mapping-style" rel="ac:mapping" resource="#mapping-style">
+                          <dt>Variable</dt>
+                          <dd property="ac:variable"><code>style</code></dd>
+                          <dt>Property</dt>
+                          <dd rel="ac:property">
+                            <dl id="property-style" resource="#property-style" typeof="rdf:Property">
+                              <dt>Label</dt>
+                              <dd property="rdfs:label">style</dd>
+                              <dt>Definition</dt>
+                              <dd property="rdfs:comment">The IRI of a stylesheet to fetch and apply to the current document.</dd>
+                            </dl>
+                          </dd>
+                        </dl>
+                      </dd>
+                    </dl>
+                  </dd>
+                </dl>
+              </dd>
+              <dt about="#capability-print" property="dcterms:title">Print</dt>
+              <dd id="capability-print" resource="#capability-print" typeof="ac:Capability">
+                <dl>
+                  <dt>Subject</dt>
+                  <dd><a href="docs#feature-print" rel="dcterms:subject">Print</a></dd>
+                  <dt>Accept</dt>
+                  <dd>
+                    <ul>
+                      <li property="ac:accept"><code>application/xhtml+xml</code></li>
+                      <li property="ac:accept"><code>text/html</code></li>
+                    </ul>
+                  </dd>
+                  <dt>Action</dt>
+                  <dd><a href="http://www.w3.org/ns/odrl/2/print" rel="ac:action">print</a></dd>
+                </dl>
+              </dd>
+              <dt about="#capability-robustify" property="dcterms:title">Robustify</dt>
+              <dd id="capability-robustify" resource="#capability-robustify" typeof="ac:Capability">
+                <dl>
+                  <dt>Subject</dt>
+                  <dd><a href="docs#feature-robustify-links" rel="dcterms:subject">Robustify Links</a></dd>
+                  <dt>Accept</dt>
+                  <dd>
+                    <ul>
+                      <li property="ac:accept"><code>application/xhtml+xml</code></li>
+                      <li property="ac:accept"><code>text/html</code></li>
+                    </ul>
+                  </dd>
+                  <dt>Action</dt>
+                  <dd><a href="http://www.w3.org/ns/odrl/2/archive" rel="ac:action">archive</a></dd>
+                </dl>
+              </dd>
+              <dt about="#capability-save" property="dcterms:title">Save</dt>
+              <dd id="capability-save" resource="#capability-save" typeof="ac:Capability">
+                <dl>
+                  <dt>Subject</dt>
+                  <dd><a href="docs#feature-save" rel="dcterms:subject">Save</a></dd>
+                  <dt>Accept</dt>
+                  <dd>
+                    <ul>
+                      <li property="ac:accept"><code>application/xhtml+xml</code></li>
+                      <li property="ac:accept"><code>text/html</code></li>
+                    </ul>
+                  </dd>
+                  <dt>Action</dt>
+                  <dd><a href="http://www.w3.org/ns/odrl/2/reproduce" rel="ac:action">reproduce</a></dd>
+                </dl>
+              </dd>
+              <dt about="#capability-share" property="dcterms:title">Share</dt>
+              <dd id="capability-share" resource="#capability-share" typeof="ac:Capability">
+                <dl>
+                  <dt>Subject</dt>
+                  <dd><a href="docs#feature-share" rel="dcterms:subject">Share</a></dd>
+                  <dt>Accept</dt>
+                  <dd>
+                    <ul>
+                      <li property="ac:accept"><code>application/xhtml+xml</code></li>
+                      <li property="ac:accept"><code>text/html</code></li>
+                    </ul>
+                  </dd>
+                  <dt>Action</dt>
+                  <dd><a href="http://www.w3.org/ns/odrl/2/distribute" rel="ac:action">distribute</a></dd>
+                </dl>
+              </dd>
+              <dt about="#capability-transform-html" property="dcterms:title">Transform to HTML+RDFa</dt>
+              <dd id="capability-transform-html" resource="#capability-transform-html" typeof="ac:Capability">
+                <dl>
+                  <dt>Accept</dt>
+                  <dd>
+                    <ul>
+                      <li property="ac:accept"><code>application/ld+json</code></li>
+                      <li property="ac:accept"><code>text/csv</code></li>
+                      <li property="ac:accept"><code>text/markdown</code></li>
+                    </ul>
+                  </dd>
+                  <dt>Action</dt>
+                  <dd><a href="http://www.w3.org/ns/odrl/2/transform" rel="ac:action">transform</a></dd>
+                  <dt>Output</dt>
+                  <dd>
+                    <ul>
+                      <li property="ac:output"><code>text/html</code></li>
+                    </ul>
+                  </dd>
+                  <dt>Invocation</dt>
+                  <dd>
+                    <dl id="invoke-transform" rel="ac:invocation" resource="#invoke-transform" typeof="ac:UriTemplateInvocation">
+                      <dt>Template</dt>
+                      <dd><code property="ac:template">#open={open}&amp;output={output}</code></dd>
+                      <dt>Mapping</dt>
+                      <dd><a href="#mapping-open" rel="ac:mapping">open</a></dd>
+                      <dt>Mapping</dt>
+                      <dd>
+                        <dl id="mapping-output" rel="ac:mapping" resource="#mapping-output">
+                          <dt>Variable</dt>
+                          <dd property="ac:variable"><code>output</code></dd>
+                          <dt>Property</dt>
+                          <dd><a href="https://www.w3.org/ns/ac#output" rel="ac:property">output</a></dd>
+                        </dl>
+                      </dd>
+                    </dl>
+                  </dd>
+                </dl>
+              </dd>
+              <dt about="#capability-visualize" property="dcterms:title">Visualize</dt>
+              <dd id="capability-visualize" resource="#capability-visualize" typeof="ac:Capability">
+                <dl>
+                  <dt>Subject</dt>
+                  <dd><a href="docs#feature-graph-view" rel="dcterms:subject">Graph view</a></dd>
+                  <dt>Accept</dt>
+                  <dd>
+                    <ul>
+                      <li property="ac:accept"><code>application/ld+json</code></li>
+                      <li property="ac:accept"><code>application/rdf+xml</code></li>
+                      <li property="ac:accept"><code>application/trig</code></li>
+                      <li property="ac:accept"><code>application/xhtml+xml</code></li>
+                      <li property="ac:accept"><code>text/html</code></li>
+                      <li property="ac:accept"><code>text/turtle</code></li>
+                    </ul>
+                  </dd>
+                  <dt>Action</dt>
+                  <dd><a href="http://www.w3.org/ns/odrl/2/display" rel="ac:action">display</a></dd>
+                  <dt>Invocation</dt>
+                  <dd>
+                    <dl id="invoke-graph" rel="ac:invocation" resource="#invoke-graph" typeof="ac:UriTemplateInvocation">
+                      <dt>Template</dt>
+                      <dd><code property="ac:template">#graph={graph}</code></dd>
+                      <dt>Mapping</dt>
+                      <dd>
+                        <dl id="mapping-graph" rel="ac:mapping" resource="#mapping-graph">
+                          <dt>Variable</dt>
+                          <dd property="ac:variable"><code>graph</code></dd>
+                          <dt>Property</dt>
+                          <dd rel="ac:property">
+                            <dl id="property-graph" resource="#property-graph" typeof="rdf:Property">
+                              <dt>Label</dt>
+                              <dd property="rdfs:label">graph</dd>
+                              <dt>Definition</dt>
+                              <dd property="rdfs:comment">The IRI of an RDF dataset or named graph to load and render as a graph visualization.</dd>
+                            </dl>
+                          </dd>
+                        </dl>
+                      </dd>
+                    </dl>
+                  </dd>
+                  <dt>Invocation</dt>
+                  <dd>
+                    <dl id="invoke-graph-view" rel="ac:invocation" resource="#invoke-graph-view" typeof="ac:UriTemplateInvocation">
+                      <dt>Template</dt>
+                      <dd><code property="ac:template">#graph-view=true</code></dd>
+                      <dt>Mapping</dt>
+                      <dd>
+                        <dl id="mapping-graph-view" rel="ac:mapping" resource="#mapping-graph-view">
+                          <dt>Variable</dt>
+                          <dd property="ac:variable"><code>graph-view</code></dd>
+                          <dt>Property</dt>
+                          <dd rel="ac:property">
+                            <dl id="property-graph-view" resource="#property-graph-view" typeof="rdf:Property">
+                              <dt>Label</dt>
+                              <dd property="rdfs:label">graph-view</dd>
+                              <dt>Definition</dt>
+                              <dd property="rdfs:comment">Renders the current document as a graph visualization when its value is <code>true</code>.</dd>
+                            </dl>
+                          </dd>
+                        </dl>
+                      </dd>
+                    </dl>
+                  </dd>
+                </dl>
+              </dd>
+            </dl>
+          </dd>
+          <dt id="requirements">Requirements</dt>
+          <dd>
+            <dl rel="ac:requirement">
+              <dt>Clipboard</dt>
+              <dd id="requirement-clipboard" resource="#requirement-clipboard" typeof="ac:Requirement">
+                <dl>
+                  <dt>Browser permission</dt>
+                  <dd><code property="ac:browserPermission">clipboard-write</code></dd>
+                  <dt>Purpose</dt>
+                  <dd><a href="https://w3id.org/dpv#ServiceProvision" rel="dpv:hasPurpose">Service provision</a></dd>
+                </dl>
+              </dd>
+              <dt>Connections</dt>
+              <dd id="requirement-connect" resource="#requirement-connect" typeof="ac:Requirement">
+                <dl>
+                  <dt>CSP directive</dt>
+                  <dd><code property="ac:cspDirective">connect-src 'self' https:</code></dd>
+                  <dt>Purpose</dt>
+                  <dd><a href="https://w3id.org/dpv#ServiceProvision" rel="dpv:hasPurpose">Service provision</a></dd>
+                </dl>
+              </dd>
+              <dt>Fonts</dt>
+              <dd id="requirement-fonts" resource="#requirement-fonts" typeof="ac:Requirement">
+                <dl>
+                  <dt>CSP directive</dt>
+                  <dd><code property="ac:cspDirective">font-src 'self' https://dokie.li/media/font/</code></dd>
+                  <dt>Purpose</dt>
+                  <dd><a href="https://w3id.org/dpv#ServiceProvision" rel="dpv:hasPurpose">Service provision</a></dd>
+                </dl>
+              </dd>
+              <dt>Images</dt>
+              <dd id="requirement-images" resource="#requirement-images" typeof="ac:Requirement">
+                <dl>
+                  <dt>CSP directive</dt>
+                  <dd><code property="ac:cspDirective">img-src 'self' https: data: blob:</code></dd>
+                  <dt>Purpose</dt>
+                  <dd><a href="https://w3id.org/dpv#ServiceProvision" rel="dpv:hasPurpose">Service provision</a></dd>
+                </dl>
+              </dd>
+              <dt>Scripts</dt>
+              <dd id="requirement-scripts" resource="#requirement-scripts" typeof="ac:Requirement">
+                <dl>
+                  <dt>CSP directive</dt>
+                  <dd><code property="ac:cspDirective">script-src 'self' https://dokie.li/scripts/dokieli.js</code></dd>
+                  <dt>Purpose</dt>
+                  <dd><a href="https://w3id.org/dpv#ServiceProvision" rel="dpv:hasPurpose">Service provision</a></dd>
+                </dl>
+              </dd>
+              <dt>Styles</dt>
+              <dd id="requirement-styles" resource="#requirement-styles" typeof="ac:Requirement">
+                <dl>
+                  <dt>CSP directive</dt>
+                  <dd><code property="ac:cspDirective">style-src 'self' https://dokie.li/media/css/ 'unsafe-inline'</code></dd>
+                  <dt>Purpose</dt>
+                  <dd><a href="https://w3id.org/dpv#ServiceProvision" rel="dpv:hasPurpose">Service provision</a></dd>
+                </dl>
+              </dd>
+            </dl>
+          </dd>
         </dl>
       </details>
     </footer>

@@ -707,6 +707,9 @@ dl+hr:before {
 .do-site header:first-of-type:has(+ main) a:not([href]) {
   border-bottom: none;
 }
+.do-site main + footer:first-of-type code {
+background-color:#222;
+}
 
 .do-site #document-translations::before {
   display: inline-block;
