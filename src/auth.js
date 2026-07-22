@@ -28,7 +28,7 @@ import { isCurrentScriptSameOrigin, isLocalhost } from './uri.js';
 import { SessionIDB } from '@uvdsl/solid-oidc-client-browser';
 import { i18n } from './i18n.js';
 import { showGeneralMessages, setPreferredLanguagesInfo } from './actions.js';
-import { sanitizeInsertAdjacentHTML } from './utils/sanitization.js';
+import { sanitizeInsertAdjacentHTML, sanitizeIRI } from './utils/sanitization.js';
 import { updateCollabUserIdentity } from './editor/editor.js';
 
 const ns = Config.ns;
@@ -46,7 +46,7 @@ Config.OIDC['useStaticClientId'] = useStaticClientId;
 if (!Config['WebExtensionEnabled']) {
   Config['Session'] = useStaticClientId
     ? new SessionCore({ client_id: clientid }, { database: new SessionIDB() })
-    : new SessionCore({ redirect_uris: [window.location.href], client_name: "dokieli" }, { database: new SessionIDB() });
+    : new SessionCore({ redirect_uris: [window.location.href.split('#')[0]], client_name: "dokieli" }, { database: new SessionIDB() });
 }
 
 export async function restoreSession() {
@@ -437,6 +437,7 @@ function submitSignIn (url) {
       else if (Config.User.IRI) {
         signInWithOIDC()
           .catch(e => {
+            console.error('OIDC sign-in failed:', e);
             const message = {
               'content': `Cannot sign in. Using information from profile to personalise the UI.`,
               'type': 'info',
@@ -450,6 +451,105 @@ function submitSignIn (url) {
           })
       }
     })
+}
+
+// Handles the `login` invocation variable (Application Capability spec). The
+// value is a hint identifying who to authenticate as, never authentication
+// itself: a GitHub or Forgejo profile URL prompts for a Personal Access Token;
+// anything else goes through the Custom WebID flow (OIDC, or profile-only
+// fallback).
+export async function processLoginInvocation(url) {
+  if (Config.User?.IRI) {
+    console.log('login invocation ignored: already signed in as', Config.User.IRI);
+    return;
+  }
+
+  url = sanitizeIRI(String(url).trim());
+  if (!url || !url.match(/^https?:\/\//)) return;
+
+  const gitHubProfile = url.match(/^https?:\/\/(?:www\.)?github\.com\/([A-Za-z\d](?:[A-Za-z\d-]{0,37}[A-Za-z\d])?)\/?$/);
+  if (gitHubProfile) {
+    return showForgeTokenInput({ provider: 'github', host: 'github.com', server: 'https://github.com', username: gitHubProfile[1] });
+  }
+
+  const forgeProfile = await detectForgeProfile(url);
+  if (forgeProfile) {
+    return showForgeTokenInput(forgeProfile);
+  }
+
+  return submitSignIn(url);
+}
+
+// A Forgejo (or Gitea) profile URL is origin/{username}. Known forge hosts are
+// matched directly; unknown hosts are probed via the CORS-open users API.
+async function detectForgeProfile(url) {
+  let u;
+  try { u = new URL(url); } catch { return null; }
+
+  const segments = u.pathname.split('/').filter(Boolean);
+  if (segments.length !== 1 || u.search || u.hash) return null;
+  const username = segments[0];
+  if (!username.match(/^[A-Za-z\d][A-Za-z\d._-]*$/)) return null;
+
+  const profile = { provider: 'forgejo', host: u.host, server: u.origin, username };
+
+  const known = Config.Storage?.backend?.('gitforge')?.getHost?.(u.host);
+  if (known) {
+    return known.provider === 'forgejo' ? profile : null;
+  }
+
+  try {
+    const response = await fetch(`${u.origin}/api/v1/users/${encodeURIComponent(username)}`, { headers: { 'Accept': 'application/json' }, signal: AbortSignal.timeout(5000) });
+    if (!response.ok) return null;
+    const user = await response.json();
+    if (user?.login?.toLowerCase() !== username.toLowerCase()) return null;
+    return profile;
+  } catch {
+    return null;
+  }
+}
+
+function showForgeTokenInput({ provider, host, server, username }) {
+  if (document.getElementById('forge-token-input')) return;
+
+  var buttonClose = getButtonHTML({ key: 'dialog.signin.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
+
+  var isGitHub = provider === 'github';
+  var heading = isGitHub ? 'Sign in with GitHub' : `Sign in with ${host}`;
+  var tokenUrl = isGitHub ? 'https://github.com/settings/tokens' : `${server}/user/settings/applications/tokens/new`;
+  var tokenHelp = isGitHub
+    ? `Create a token at <a href="${tokenUrl}" rel="noopener" target="_blank">github.com/settings/tokens</a> with <code>repo</code> scope. The token is stored locally in your browser while signed in and removed on sign-out.`
+    : `Create a token at <a href="${tokenUrl}" rel="noopener" target="_blank">${host}/user/settings/applications/tokens/new</a> with scopes <code>read:user</code> and <code>write:repository</code> (or <code>read:repository</code> for read-only). The token is stored locally in your browser while signed in and removed on sign-out.`;
+
+  var code = `
+    <aside aria-labelledby="forge-token-input-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="forge-token-input" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}">
+      <h2 id="forge-token-input-label">${heading}</h2>
+      ${buttonClose}
+      <div class="info"></div>
+      <p>Signing in as <a href="${server}/${username}" rel="noopener" target="_blank">${username}</a>.</p>
+      <p><label for="forge-token">Personal Access Token</label></p>
+      <p><input id="forge-token" name="forge-token" placeholder="${isGitHub ? 'ghp_...' : 'access token'}" type="password" autocomplete="off"/> <button class="do-forge-token-go" type="button">Save</button></p>
+      <p>${tokenHelp}</p>
+    </aside>`;
+
+  document.body.appendChild(fragmentFromString(code));
+
+  var aside = document.getElementById('forge-token-input');
+  var input = aside.querySelector('input#forge-token');
+  input.focus();
+
+  var go = () => {
+    var token = input.value.trim();
+    if (!token) return;
+    if (isGitHub) {
+      signInWithGitHubPAT(token, aside);
+    } else {
+      signInWithForgejoPAT(server, token, aside);
+    }
+  };
+
+  aside.querySelector('button.do-forge-token-go').addEventListener('click', go);
+  input.addEventListener('keyup', e => { if (e.key === 'Enter') go(); });
 }
 
 const GIT_FORGE_HOSTS_KEY = 'DO.Config.GitForge.hosts';
@@ -629,6 +729,7 @@ async function signInWithOIDC() {
   // Redirects away from dokieli :( but hopefully only briefly :)
   Config['Session']?.login(idp, redirect_uri)
     .catch((e) => {
+      console.error('OIDC sign-in failed:', e);
       const message = {
         'content': `Cannot sign in. Using information from profile to personalise the UI.`,
         'type': 'info',
@@ -837,6 +938,7 @@ export function afterSetUserInfo() {
 
       // Signal that user info is ready. initAuth also fires this on page load,
       // but interactive sign-ins (custom WebID, GitHub) only reach it here.
+      Config['AuthReady'] = true;
       document.dispatchEvent(new Event('dokieli:auth-ready'));
 
       return updateDeviceStorageProfile(Config.User)

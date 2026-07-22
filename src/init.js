@@ -26,7 +26,7 @@ const GIT_FORGE_HOSTS_KEY = 'DO.Config.GitForge.hosts';
 const HTTP_ORIGINS_KEY = 'DO.Config.Http.origins';
 import { syncLocalRemoteResource, monitorNetworkStatus } from './sync.js';
 import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeObject } from './utils/sanitization.js';
-import { afterSetUserInfo, setUserInfo } from './auth.js';
+import { afterSetUserInfo, setUserInfo, processLoginInvocation } from './auth.js';
 import { showNotificationSources } from './activity.js';
 import { generateDataURI, getProxyableIRI, getUrlParams, stripFragmentFromString, stripUrlSearchHash } from './uri.js';
 import { SolidStorage, GitForgeStorage, HttpStorage, initStorage } from './storage/backend.js';
@@ -202,7 +202,7 @@ async function initSyncLocalRemoteResource() {
 }
 
 export function setDocumentModeParams() {
-  const params = ['author', 'graph', 'graph-view', 'open', 'output', 'social', 'style'];
+  const params = ['author', 'graph', 'graph-view', 'login', 'open', 'output', 'social', 'style'];
   Config['DocumentModes'] =  {};
   params.forEach((p) => Config['DocumentModes'][p] = getUrlParams(p));
 }
@@ -217,6 +217,7 @@ export async function initDocumentMode(mode) {
     normalize: true
   };
 
+  const paramLogin = Config['DocumentModes']['login'];
   const paramAuthor = Config['DocumentModes']['author'];
   const paramGraph = Config['DocumentModes']['graph'];
   const paramGraphView = Config['DocumentModes']['graph-view'];
@@ -340,6 +341,27 @@ export async function initDocumentMode(mode) {
     // stripUrlSearchHash();
   }
 
+
+  if (paramLogin.length) {
+    let loginValue = paramLogin[0];
+
+    // Query form (?login=https://example.org/profile#me): the browser splits
+    // at the first #, leaving the WebID's own fragment as the page hash.
+    const hash = window.location.hash;
+    if (hash.length > 1 && !hash.includes('=') && !loginValue.includes('#')) {
+      loginValue += hash;
+    }
+
+    // Wait for session restore so an existing sign-in isn't clobbered; the
+    // login value is only a hint of who to authenticate as.
+    const onAuthReady = () => processLoginInvocation(loginValue);
+    if (Config['AuthReady']) {
+      onAuthReady();
+    }
+    else {
+      document.addEventListener('dokieli:auth-ready', onAuthReady, { once: true });
+    }
+  }
 
   if (paramAuthor.length && paramAuthor[0] == 'true') {
     Config.Editor.mode = 'author';

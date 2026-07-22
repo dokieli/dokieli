@@ -99,6 +99,7 @@ const DO = window.DO ?? {
           }
         }
       }).finally(() => {
+        Config['AuthReady'] = true;
         document.dispatchEvent(new Event('dokieli:auth-ready'));
       })
     },

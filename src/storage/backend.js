@@ -420,6 +420,11 @@ class GitForgeStorage extends StorageBackend {
     return Array.from(this.#hosts.keys());
   }
 
+  getHost(host) {
+    const cfg = this.#hosts.get(host);
+    return cfg ? { apiBase: cfg.apiBase, rawHost: cfg.rawHost, provider: cfg.provider } : null;
+  }
+
   matches(host) {
     if (!host) return false;
     if (this.#hosts.has(host)) return true;

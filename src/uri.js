@@ -134,21 +134,27 @@ export function getFragmentFromString(string) {
 }
 
 export function getUrlParams(name) {
-  const rawParams = window.location.hash.startsWith('#')
-    ? window.location.hash.slice(1)
-    : window.location.search.slice(1);
+  const parse = (rawParams) => {
+    let processedParams = rawParams;
 
-  let processedParams = rawParams;
+    if (name === 'output') {
+      processedParams = rawParams.replace(
+        /([&?]output=)([^&]*)/g,
+        (match, prefix, value) => prefix + value.replace(/\+/g, '%2B')
+      );
+    }
 
-  if (name === 'output') {
-    processedParams = rawParams.replace(
-      /([&?]output=)([^&]*)/g, 
-      (match, prefix, value) => prefix + value.replace(/\+/g, '%2B')
-    );
+    return new URLSearchParams(processedParams).getAll(name);
+  };
+
+  const hash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : '';
+  let values = hash ? parse(hash) : [];
+
+  if (!values.length) {
+    values = parse(window.location.search.slice(1));
   }
-  
-  const searchParams = new URLSearchParams(processedParams);
-  return searchParams.getAll(name);
+
+  return values;
 }
 
 export function stripUrlParamsFromString(urlString, paramsToStrip = null, stripHash = false) {
