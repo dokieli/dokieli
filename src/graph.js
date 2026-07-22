@@ -1369,8 +1369,25 @@ export function getAgentPreferredPolicy(s) {
   return policies[0];
 }
 
-//TODO: Separate agent knows and preferred languages. Explictly Preferred language for all applications or a particular application (e.g., dokieli) will be used in the future.
+export function getListValues(ptr) {
+  try {
+    const list = ptr.list();
+    return list ? [...list].map(p => p.value) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+// solid:preferredLanguages is an ordered fallback list (RDF Collection) of BCP
+// 47 tags; the remaining terms express competence, not preference, and are
+// unordered, so they only serve as a fallback.
 export function getAgentPreferredLanguages(s) {
+  const preferredLanguages = getListValues(s.out(ns.solid.preferredLanguages));
+
+  if (preferredLanguages?.length) {
+    return preferredLanguages;
+  }
+
   var vcardLanguages = s.out(ns.vcard.language).values;
   var knowsLanguages = s.out(ns.schema.knowsLanguage).values;
   var solidPreferredLanguages = s.out(ns.solid.preferredLanguage).values;

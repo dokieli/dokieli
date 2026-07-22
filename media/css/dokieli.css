@@ -3159,13 +3159,18 @@ padding: 0.5em 1em;
 display:inline-block;
 }
 
-#document-menu #document-views button {
+#document-menu #document-views button,
+#document-menu #ui-language button {
 width:auto;
 height:auto;
 padding:0.5em;
 border:1px solid #eee;
 vertical-align:middle;
 float:none;
+margin-left: 3em;
+}
+#document-menu #ui-language ul li {
+display:inline-block;
 }
 
 #document-menu #ui-language {
@@ -3184,6 +3189,9 @@ font-weight: bold;
 }
 #document-menu #ui-language-select {
 width:calc(100% - 4em);
+}
+#document-menu #ui-language ul {
+margin-top:0.5em;
 }
 
 

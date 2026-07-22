@@ -442,12 +442,12 @@ function patchResourceGraph (url, patches, options = {}) {
   switch (options.headers['Content-Type']) {
     case 'application/sparql-update':
       if (patches[0].delete) {
-        operation = containsSPARQLVariable(patches[0].delete) ? 'DELETE' : 'DELETE DATA';
+        operation = (patches[0].where || containsSPARQLVariable(patches[0].delete)) ? 'DELETE' : 'DELETE DATA';
         data += `${operation} {\n${patches[0].delete}\n}\n`;
       }
 
       if (patches[0].insert) {
-        operation = containsSPARQLVariable(patches[0].insert) ? 'INSERT' : 'INSERT DATA';
+        operation = (patches[0].where || containsSPARQLVariable(patches[0].insert)) ? 'INSERT' : 'INSERT DATA';
         data += `${operation} {\n${patches[0].insert}\n}\n`;
       }
 

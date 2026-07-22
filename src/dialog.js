@@ -35,7 +35,7 @@ import { Icon } from './ui/icons.js';
 import { updateDeviceStorageProfile, getDeviceStorageItem  } from './storage.js';
 import { enableAutoSave, disableAutoSave, enableRemoteSync, disableRemoteSync, showResourceReviewChanges } from './sync.js';
 import { showVisualisationGraph } from './viz.js';
-import { exportAsDocument, updateUILanguage } from './actions.js';
+import { exportAsDocument, maybeAskPreferredLanguage, updateUILanguage } from './actions.js';
 import { parseMarkdown, htmlToMarkdown, fragmentFromString, removeSelectorFromNode, selectArticleNode, getNodeWithoutClasses } from "./utils/html.js";
 import { showUserSigninSignout } from './auth.js';
 import { initSlideshow } from './init.js';
@@ -284,6 +284,7 @@ function showLanguages(node) {
     e.stopPropagation();
 
     updateUILanguage(select.value);
+    maybeAskPreferredLanguage(select.value);
   });
 }
 
