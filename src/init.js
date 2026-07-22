@@ -34,7 +34,7 @@ import { initEditor } from './editor/initEditor.js';
 import { showGraph, showVisualisationGraph } from './viz.js';
 import * as Slideshow from './slideshow.js';
 import { initCV } from './cv.js';
-import { openResource, initDocumentMenu, spawnDokieli, showDocumentMenu, initSlideshowInteraction, initDocumentDoEvents, showNewDocument } from './dialog.js';
+import { openResource, initDocumentMenu, spawnDokieli, showDocumentMenu, initSlideshowInteraction, initDocumentDoEvents, showNewDocument, createNewDocument, createNewSlideshow, createNewCV } from './dialog.js';
 import { Icon } from './ui/icons.js';
 import { eventButtonClose, eventButtonSignIn, eventButtonSignOut, eventButtonNotificationsToggle, eventButtonInfo, emitDocEvent } from './events.js';
 import { hasNonWhitespaceText, getDocumentContentNode, selectArticleNode } from "./utils/html.js";
@@ -202,7 +202,7 @@ async function initSyncLocalRemoteResource() {
 }
 
 export function setDocumentModeParams() {
-  const params = ['author', 'graph', 'graph-view', 'login', 'open', 'output', 'social', 'style'];
+  const params = ['author', 'graph', 'graph-view', 'login', 'open', 'output', 'social', 'style', 'template'];
   Config['DocumentModes'] =  {};
   params.forEach((p) => Config['DocumentModes'][p] = getUrlParams(p));
 }
@@ -379,18 +379,20 @@ export async function initDocumentMode(mode) {
     var node = selectArticleNode(document);
     var hasContent = hasNonWhitespaceText(node);
 
-    if (!hasContent && !Config.EditorEnabled) {
-      const param = getUrlParams('template')[0];
-      let template;
-      if (!param) {
-        showNewDocument();
-      }
-      else {
-        template = param === 'slideshow' ? 'new-slideshow' : param;
-      }
-      Config.Editor.toggleEditor('author', { template });
+    const paramTemplate = Config['DocumentModes']['template'][0];
+    const templates = {
+      'article': createNewDocument,
+      'slideshow': createNewSlideshow,
+      'cv': createNewCV
+    };
+
+    if (templates[paramTemplate] && !paramOpen.length) {
+      templates[paramTemplate]();
+    }
+    else if (!hasContent && !Config.EditorEnabled) {
+      showNewDocument();
+      Config.Editor.toggleEditor('author');
       Config.DocumentAction = 'new';
-      if (template === 'new-slideshow') initSlideshow({ focusEditor: true });
     }
   // }
 }
