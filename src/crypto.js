@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { CompactEncrypt, compactDecrypt, GeneralEncrypt, generalDecrypt, calculateJwkThumbprint, decodeProtectedHeader } from 'jose';
+import { CompactEncrypt, compactDecrypt, FlattenedEncrypt, flattenedDecrypt, GeneralEncrypt, generalDecrypt, calculateJwkThumbprint, decodeProtectedHeader } from 'jose';
 
 const CURVE = 'P-256';
 const ENC = 'A256GCM';
@@ -64,8 +64,9 @@ export async function importPrivateKeyJWK(jwk) {
   );
 }
 
+// Returns a flattened JWE JSON object: an encrypted JWK per RFC 7517 section 7
 export async function wrapPrivateKeyJWK(privateKeyJWK, passphrase) {
-  return new CompactEncrypt(new TextEncoder().encode(JSON.stringify(privateKeyJWK)))
+  return new FlattenedEncrypt(new TextEncoder().encode(JSON.stringify(privateKeyJWK)))
     .setProtectedHeader({ alg: PBES2_ALG, enc: ENC, cty: 'jwk+json' })
     .setKeyManagementParameters({ p2c: PBES2_ITERATIONS })
     .encrypt(new TextEncoder().encode(passphrase));
@@ -73,7 +74,7 @@ export async function wrapPrivateKeyJWK(privateKeyJWK, passphrase) {
 
 // maxPBES2Count must exceed PBES2_ITERATIONS; jose's default cap is 10000
 export async function unwrapPrivateKeyJWK(jwe, passphrase) {
-  const { plaintext } = await compactDecrypt(jwe, new TextEncoder().encode(passphrase), {
+  const { plaintext } = await flattenedDecrypt(jwe, new TextEncoder().encode(passphrase), {
     keyManagementAlgorithms: [PBES2_ALG],
     contentEncryptionAlgorithms: [ENC],
     maxPBES2Count: 1000000

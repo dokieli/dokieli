@@ -543,15 +543,7 @@ export async function decryptArticleInPlace() {
   const jwe = encryptedScript.textContent.trim();
   const plaintext = await decryptWithSession(jwe);
 
-  // Earlier payloads encrypted the article HTML directly, without the { title, body } envelope
-  let body = plaintext;
-  let title = null;
-  try {
-    const payload = JSON.parse(plaintext);
-    if (payload && typeof payload.body === 'string') {
-      ({ title, body } = payload);
-    }
-  } catch {}
+  const { title, body } = JSON.parse(plaintext);
 
   const article = encryptedScript.closest('[data-encrypted]') || encryptedScript.parentElement;
   article.removeAttribute('data-encrypted');

@@ -612,7 +612,6 @@ export default {
     doap: rdf.namespace('http://usefulinc.com/ns/doap#'),
     doc: rdf.namespace('http://www.w3.org/2000/10/swap/pim/doc#'),
     doco: rdf.namespace('http://purl.org/spar/doco/'),
-    dokieli: rdf.namespace('https://dokie.li/ns#'),
     dpv: rdf.namespace('https://w3id.org/dpv#'),
     earl: rdf.namespace('http://www.w3.org/ns/earl#'),
     ex: rdf.namespace('http://example.org/'),
