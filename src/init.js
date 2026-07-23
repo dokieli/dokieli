@@ -38,8 +38,7 @@ import { openResource, initDocumentMenu, spawnDokieli, showDocumentMenu, initSli
 import { Icon } from './ui/icons.js';
 import { eventButtonClose, eventButtonSignIn, eventButtonSignOut, eventButtonNotificationsToggle, eventButtonInfo, emitDocEvent } from './events.js';
 import { hasNonWhitespaceText, getDocumentContentNode, selectArticleNode } from "./utils/html.js";
-import { decryptContent } from './crypto.js';
-import { isUnlocked, getSessionPrivateKey, getSessionKid, hasKeystore } from './keystore.js';
+import { isUnlocked, getSessionKid, hasKeystore, decryptWithSession } from './keystore.js';
 
 export async function init (url) {
   initServiceWorker();
@@ -549,11 +548,10 @@ export async function decryptArticleInPlace() {
   const encryptedScript = document.getElementById('dokieli-e2ee');
   if (!encryptedScript) return;
 
-  const privateKey = getSessionPrivateKey();
-  if (!privateKey) return;
+  if (!isUnlocked()) return;
 
   const jwe = encryptedScript.textContent.trim();
-  const plaintext = await decryptContent(jwe, privateKey);
+  const plaintext = await decryptWithSession(jwe);
 
   // The payload is a JSON envelope { title, body }; earlier payloads
   // encrypted the article HTML directly.

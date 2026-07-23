@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { CompactEncrypt, compactDecrypt, GeneralEncrypt, generalDecrypt, calculateJwkThumbprint } from 'jose'
+import { CompactEncrypt, compactDecrypt, GeneralEncrypt, generalDecrypt, calculateJwkThumbprint, decodeProtectedHeader } from 'jose'
 
 const CURVE = 'P-256'
 const ENC = 'A256GCM'
@@ -218,6 +218,28 @@ export function multikeyToJWK(multibase) {
     x: bytesToBase64url(bigIntTo32Bytes(x)),
     y: bytesToBase64url(bigIntTo32Bytes(y))
   }
+}
+
+// Extracts every recipient kid a JWE was encrypted to: the protected header kid
+// (compact/flattened) plus each recipient's unprotected header kid (general JSON).
+// Lets a holder of multiple keys pick the right one without trial decryption.
+export function getJWEKids(jwe) {
+  const kids = new Set()
+  let obj = jwe
+  if (typeof jwe === 'string' && jwe.trim().startsWith('{')) {
+    try { obj = JSON.parse(jwe) } catch { /* not JSON serialisation */ }
+  }
+  try {
+    const header = decodeProtectedHeader(obj)
+    if (header?.kid) kids.add(header.kid)
+  } catch { /* no or invalid protected header */ }
+  if (obj && typeof obj === 'object') {
+    if (obj.header?.kid) kids.add(obj.header.kid)
+    if (Array.isArray(obj.recipients)) {
+      obj.recipients.forEach(r => { if (r?.header?.kid) kids.add(r.header.kid) })
+    }
+  }
+  return [...kids]
 }
 
 // Returns true when content looks like a compact JWE (five dot-separated base64url segments)
