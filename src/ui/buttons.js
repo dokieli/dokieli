@@ -82,7 +82,7 @@ export function initButtons() {
       DocumentInfo: getButtonHTML({ key: "menu.document-info.button", button: "document-info", buttonClass: "document-info", buttonDisabled: true }),
       EditEnable: getButtonHTML({ key: "menu.edit-enable.button", button: "cursor", buttonClass: "editor-enable" }),
       EditDisable: getButtonHTML({ key: "menu.edit-disable.button", button: "cursor", buttonClass: "editor-disable" }),
-      EncryptEnable: getButtonHTML({ key: "menu.encrypt-enable.button", button: "lock-open", buttonClass: "encrypt-enable", buttonPressed: false }),
+      EncryptEnable: getButtonHTML({ key: "menu.encrypt-enable.button", button: "lock-open", buttonClass: "encrypt-enable", buttonPressed: false, buttonDisabled: true }),
       EncryptDisable: getButtonHTML({ key: "menu.encrypt-disable.button", button: "lock", buttonClass: "encrypt-disable", buttonPressed: true }),
       EditHistory: getButtonHTML({ key: "menu.edit-history.button", button: "edit-history", buttonClass: "edit-history", buttonDisabled: true }),
       EmbedData: getButtonHTML({ key: "menu.embed-data.button", button: "data-meta", buttonClass: "embed-data-meta" }),
@@ -451,6 +451,42 @@ const buttonState = {
   },
 
   '#document-menu .resource-save': ({ info, online, localhost, blob }) => {
+    if (blob) return false;
+
+    if (!online && !localhost) return false;
+
+    if (!accessModePossiblyAllowed(null, 'write')) {
+      return false;
+    }
+
+    if (info.odrl?.prohibitionActions &&
+        info.odrl.prohibitionAssignee === Config.User.IRI &&
+        info.odrl.prohibitionActions.includes(ns.odrl.modify.value)) {
+      return false;
+    }
+
+    return true;
+  },
+
+  '#document-menu .encrypt-enable': ({ info, online, localhost, blob }) => {
+    if (blob) return false;
+
+    if (!online && !localhost) return false;
+
+    if (!accessModePossiblyAllowed(null, 'write')) {
+      return false;
+    }
+
+    if (info.odrl?.prohibitionActions &&
+        info.odrl.prohibitionAssignee === Config.User.IRI &&
+        info.odrl.prohibitionActions.includes(ns.odrl.modify.value)) {
+      return false;
+    }
+
+    return true;
+  },
+
+  '#document-menu .encrypt-disable': ({ info, online, localhost, blob }) => {
     if (blob) return false;
 
     if (!online && !localhost) return false;

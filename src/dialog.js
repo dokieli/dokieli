@@ -407,6 +407,7 @@ function refreshEncryptToggle() {
   if (!button.classList.contains(expectedClass)) {
     button.outerHTML = value ? Config.Button.Menu.EncryptDisable : Config.Button.Menu.EncryptEnable;
   }
+  updateButtons(['#document-menu .encrypt-enable', '#document-menu .encrypt-disable']);
 }
 
 function showDocumentDo(node) {
