@@ -253,7 +253,7 @@
                 <div datatype="rdf:HTML" property="schema:description">
                   <dl>
                     <dt>Descripción</dt>
-                    <dd>Añadir cifrado del lado del cliente para todo el contenido compartido.</dd>
+                    <dd>Añadir cifrado del lado del cliente para todo el contenido compartido. Ya está disponible una primera implementación para documentos (véase <a href="#feature-encrypt">Cifrar</a>).</dd>
                     <dt>Previsto para</dt>
                     <dd><time>segundo trimestre de 2026</time>–<time>cuarto trimestre 2026</time></dd>
                     <dt>Contribuir</dt>
@@ -394,6 +394,12 @@
                         </video>
                         <figcaption><a href="https://dokie.li/media/video/dokieli-share.webm">Vídeo</a> (<a href="https://dokie.li/media/images/dokieli-share.jpg" rel="schema:thumbnailUrl">póster</a>) de dokieli Compartir [<time datatype="xsd:duration" datetime="PT22S" property="schema:duration">22s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
                       </figure>
+                    </dd>
+                    <dt about="#feature-encrypt" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-lock"></i><dfn id="feature-encrypt">Cifrar</dfn></dt>
+                    <dd about="#feature-encrypt" datatype="rdf:HTML" property="skos:definition">
+                      <p>Un artículo puede <em>cifrarse</em> de extremo a extremo para que solo el autor y los contactos con quienes se comparte puedan leerlo. El contenido y el título del artículo se cifran en el navegador antes de guardarse, de modo que el servidor que almacena el documento nunca ve el contenido legible. Los metadatos del documento, por ejemplo sus autores, identificadores y licencia, permanecen legibles para que el documento pueda seguir siendo descubierto e identificado.</p>
+                      <p>Para usar el cifrado, el usuario configura una clave de cifrado protegida por una frase de contraseña, ya sea desde la sección <em>Cifrado</em> en los ajustes del menú o al activar por primera vez <em>Cifrar documento</em>. La clave se guarda cifrada en el <a href="#personal-storage" rel="rdfs:seeAlso">almacenamiento personal</a> del usuario, y la parte pública se publica en su perfil <a href="#feature-webid" rel="rdfs:seeAlso">WebID</a>, que es la forma en que otros pueden cifrar documentos para esa persona. La frase de contraseña se solicita una vez por sesión para desbloquear la clave, y no hay recuperación si se olvida.</p>
+                      <p>Cuando un artículo cifrado se <a href="#feature-share" rel="rdfs:seeAlso">comparte</a>, dokieli cifra el documento con la clave publicada de cada contacto, les concede permiso de lectura sobre el documento y envía una <a href="#feature-notifications" rel="rdfs:seeAlso">notificación</a>. Solo se pueden seleccionar contactos que hayan publicado una clave de cifrado en su perfil, y la notificación no contiene material de claves. Al abrir el documento, el contacto <a href="#feature-sign-in" rel="rdfs:seeAlso">inicia sesión</a>, desbloquea su propia clave con su frase de contraseña y el artículo se descifra en el momento.</p>
                     </dd>
                     <dt about="#feature-reply" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-reply"></i><dfn id="feature-reply">Responder</dfn></dt>
                     <dd about="#feature-reply" property="skos:definition">Se puede responder a un artículo con una nota y tener su propio <a href="#feature-language" rel="rdfs:seeAlso">idioma</a> y <a href="#feature-license" rel="rdfs:seeAlso">licencia</a>. El usuario puede especificar dónde desea guardar su respuesta <a href="#feature-browser" rel="rdfs:seeAlso">navegando</a> hasta una ubicación en un <a href="#personal-storage" rel="rdfs:seeAlso">almacenamiento personal</a> o un <a href="#annotation-service" rel="rdfs:seeAlso">servicio de anotaciones</a>.</dd>
