@@ -38,7 +38,7 @@ export function eventButtonClose() {
     var button = e.target.closest('button.close')
     if (button) {
       var parent = button.parentNode;
-      parent.parentNode.removeChild(parent);
+      parent?.parentNode?.removeChild(parent);
     }
   });
 }

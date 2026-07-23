@@ -58,6 +58,7 @@ export function initButtons() {
       Derivation: getButtonHTML({ key: "info.derivation.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-derivation-data` }),
       Dokielize: getButtonHTML({ key: "info.dokielize.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-dokielize` }),
       EmbedData: getButtonHTML({ key: "info.embed-data.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-embed-data` }),
+      Encrypt: getButtonHTML({ key: "info.encrypt.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-encrypt` }),
       Inbox: getButtonHTML({ key: "info.inbox.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-set-inbox` }),
       GraphView: getButtonHTML({ key: "info.graph.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-graph-view` }),
       GenerateFeeds: getButtonHTML({ key: "info.feed.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-generate-feed` }),

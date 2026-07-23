@@ -586,6 +586,7 @@
   "info.derivation.button.title": "About Source History (Derivation)",
   "info.dokielize.button.title": "About Dokielize",
   "info.embed-data.button.title": "About Embed Data",
+  "info.encrypt.button.title": "About encryption",
   "info.feed.button.title": "About Generate Feed",
   "info.graph.button.title": "About Graph View",
   "info.inbox.button.title": "About Communication Inbox",

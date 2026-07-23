@@ -7484,8 +7484,9 @@ export function showEncryptionScopeChoice(onChosen) {
 
   const html = `
     <aside aria-labelledby="encryption-scope-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="encryption-scope" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}">
-      <h2 id="encryption-scope-label" data-i18n="encryption-scope.heading">${i18n.t('encryption-scope.heading.textContent')}</h2>
+      <h2 id="encryption-scope-label" data-i18n="encryption-scope.heading">${i18n.t('encryption-scope.heading.textContent')} ${Config.Button.Info.Encrypt}</h2>
       ${buttonClose}
+      <div class="info"></div>
       <form id="encryption-scope-form">
         <ul>
           <li>
@@ -7506,7 +7507,6 @@ export function showEncryptionScopeChoice(onChosen) {
   document.body.appendChild(fragmentFromString(html));
 
   const aside = document.getElementById('encryption-scope');
-  aside.querySelector('button.close').addEventListener('click', () => aside.remove());
 
   aside.querySelector('#encryption-scope-form').addEventListener('submit', e => {
     e.preventDefault();
@@ -7524,7 +7524,7 @@ export function showEncryptionSetup(onSuccess) {
 
   const html = `
     <aside aria-labelledby="encryption-setup-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="encryption-setup" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}">
-      <h2 id="encryption-setup-label" data-i18n="encryption-setup.heading">${i18n.t('encryption-setup.heading.textContent')}</h2>
+      <h2 id="encryption-setup-label" data-i18n="encryption-setup.heading">${i18n.t('encryption-setup.heading.textContent')} ${Config.Button.Info.Encrypt}</h2>
       ${buttonClose}
       <div class="info"></div>
       <p data-i18n="encryption-setup.description">${i18n.t('encryption-setup.description.textContent')}</p>
@@ -7644,7 +7644,7 @@ export function showEncryptionUnlock(onSuccess) {
 
   const html = `
     <aside aria-labelledby="encryption-unlock-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="encryption-unlock" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}">
-      <h2 id="encryption-unlock-label" data-i18n="encryption-unlock.heading">${i18n.t('encryption-unlock.heading.textContent')}</h2>
+      <h2 id="encryption-unlock-label" data-i18n="encryption-unlock.heading">${i18n.t('encryption-unlock.heading.textContent')} ${Config.Button.Info.Encrypt}</h2>
       ${buttonClose}
       <div class="info"></div>
       <p data-i18n="encryption-unlock.description">${i18n.t('encryption-unlock.description.textContent')}</p>
@@ -7667,8 +7667,6 @@ export function showEncryptionUnlock(onSuccess) {
   const form = aside.querySelector('#encryption-unlock-form');
 
   initPassphraseToggles(form);
-
-  aside.querySelector('button.close').addEventListener('click', () => aside.remove());
 
   aside.querySelector('button.setup-encryption').addEventListener('click', () => {
     aside.remove();
