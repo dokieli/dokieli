@@ -568,11 +568,27 @@ export async function decryptArticleInPlace() {
   const jwe = encryptedScript.textContent.trim();
   const plaintext = await decryptWithSession(jwe);
 
-  const { title, body } = JSON.parse(plaintext);
+  const payload = JSON.parse(plaintext);
+  const { title, body } = payload;
 
   const article = encryptedScript.closest('[data-encrypted]') || encryptedScript.parentElement;
-  article.removeAttribute('data-encrypted');
-  article.setHTMLUnsafe(body);
+
+  // Document scope: restore hidden head metadata and the original body, replacing the placeholder shell but leaving dokieli's runtime nodes alone
+  if (payload.scope === 'document') {
+    if (payload.head) {
+      document.head.insertAdjacentHTML('beforeend', payload.head);
+    }
+    const shell = article.closest('main') || article;
+    const tmpl = document.createElement('template');
+    tmpl.innerHTML = body;
+    shell.replaceWith(tmpl.content);
+    Config.User.Encryption.Scope = 'document';
+  }
+  else {
+    article.removeAttribute('data-encrypted');
+    article.setHTMLUnsafe(body);
+    Config.User.Encryption.Scope = 'article';
+  }
   if (title) document.title = title;
 
   Config.User.Encryption.Enabled = true;

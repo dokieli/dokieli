@@ -2166,7 +2166,8 @@ export async function createMutableResource(url, data, options) {
     });
 }
 
-// Replaces the article's innerHTML and the document title with a { title, body } JWE envelope; the outer <article> and its attributes are preserved
+// Replaces the article's innerHTML and the document title with a { title, body } JWE envelope; the outer <article> and its attributes are preserved.
+// Document scope also encrypts head metadata and the whole body, keeping only what is needed to load dokieli and decrypt (charset, scripts, stylesheets, the envelope itself)
 export async function encryptArticlePayload(htmlString) {
   if (!isUnlocked()) return htmlString;
 
@@ -2176,7 +2177,23 @@ export async function encryptArticlePayload(htmlString) {
   if (!article) return htmlString;
 
   const titleNode = parsed.querySelector('head > title');
-  const plaintext = JSON.stringify({ title: titleNode?.textContent ?? null, body: article.innerHTML });
+  const scope = Config.User.Encryption?.Scope === 'document' ? 'document' : 'article';
+
+  let plaintext;
+  let hiddenHeadNodes = [];
+  if (scope === 'document') {
+    hiddenHeadNodes = [...parsed.head.children].filter(node =>
+      node !== titleNode && !node.matches('script, link[rel~="stylesheet" i], meta[charset]'));
+    plaintext = JSON.stringify({
+      scope,
+      title: titleNode?.textContent ?? null,
+      head: hiddenHeadNodes.map(node => node.outerHTML).join('\n'),
+      body: parsed.body.innerHTML
+    });
+  }
+  else {
+    plaintext = JSON.stringify({ title: titleNode?.textContent ?? null, body: article.innerHTML });
+  }
 
   await syncDocumentRecipientsFromACL(Config.DocumentURL || currentLocation());
   const recipientKeys = [getSessionPublicKey(), ...getDocumentRecipientKeys()];
@@ -2187,9 +2204,20 @@ export async function encryptArticlePayload(htmlString) {
   script.type = 'application/jose';
   script.textContent = jwe;
 
-  article.setAttribute('data-encrypted', 'true');
-  article.innerHTML = '';
-  article.appendChild(script);
+  if (scope === 'document') {
+    hiddenHeadNodes.forEach(node => node.remove());
+    const shell = parsed.createElement('article');
+    shell.setAttribute('data-encrypted', 'true');
+    shell.appendChild(script);
+    const main = parsed.createElement('main');
+    main.appendChild(shell);
+    parsed.body.replaceChildren(main);
+  }
+  else {
+    article.setAttribute('data-encrypted', 'true');
+    article.innerHTML = '';
+    article.appendChild(script);
+  }
 
   if (titleNode) titleNode.textContent = i18n.t('encryption.encrypted-document-title.textContent');
 
