@@ -24,19 +24,23 @@ import {
   importPublicKeyJWK,
   importPrivateKeyJWK,
   wrapPrivateKeyJWK,
-  unwrapPrivateKeyJWK
+  unwrapPrivateKeyJWK,
+  decryptContent,
+  getJWEKids
 } from './crypto.js'
-import { getEncryptedKeystore, setEncryptedKeystore, setOrphanedEncryptedKeystore } from './storage.js'
+import { getEncryptedKeystore, setEncryptedKeystore, updateDeviceStorageProfile } from './storage.js'
 import { getResource, putResource, postResource, patchResourceWithAcceptPatch } from './fetcher.js'
 import { getResourceGraph, getLinkRelationFromHead } from './graph.js'
 import { forceTrailingSlash, stripFragmentFromString } from './uri.js'
 import { escapeRDFLiteral, generateUUID } from './util.js'
 
 // In-memory session state. Cleared by lockKeystore() or on sign-out.
-// Private key is held as a non-extractable CryptoKey so it cannot be serialised.
-let _sessionPrivateKey = null
-let _sessionPublicKey = null   // CryptoKey — used to encrypt content
-let _sessionPublicKeyJWK = null  // plain JWK — used to publish to WebID profile
+// Private keys are held as non-extractable CryptoKeys so they cannot be serialised.
+// Every key the user has ever held is unlocked (kid -> CryptoKey) so past content
+// stays decryptable; _sessionKid names the current key used for new encryption.
+let _sessionPrivateKeys = new Map()  // kid -> non-extractable CryptoKey
+let _sessionPublicKey = null   // CryptoKey (current) — used to encrypt content
+let _sessionPublicKeyJWK = null  // plain JWK (current) — used to publish to WebID profile
 let _sessionKid = null
 
 let cachedKeystoreURL = null
@@ -63,12 +67,17 @@ function isValidBundle(bundle) {
   return bundle.version === 1 && !!(bundle.wrappedKey && bundle.iv && bundle.salt)
 }
 
-// Mints a URL for a NEW keystore. The UUID filename is not guessable, so the
-// location is only recoverable through the discovery triple written on save;
-// there is deliberately no convention-based fallback for lookup.
-function mintKeystoreURL() {
+// The container that holds one JWE key resource per kid; the collection itself.
+function keyContainerURL() {
   const storage = Config.User?.Storage?.[0]
-  return storage ? forceTrailingSlash(storage) + `key/keystore-${generateUUID()}.json` : null
+  return storage ? forceTrailingSlash(storage) + 'key/' : null
+}
+
+// Key resources are named by kid (a public JWK thumbprint, already advertised on the
+// WebID profile), so a specific key is a direct GET — no container scan, no trial unlock.
+function keyResourceURL(kid) {
+  const container = keyContainerURL()
+  return container && kid ? container + encodeURIComponent(kid) + '.json' : null
 }
 
 async function readKeystoreDiscoveryTriple() {
@@ -91,23 +100,61 @@ async function readKeystoreDiscoveryTriple() {
   }
 }
 
-// Locates an existing keystore via the preferences triple (or the session cache);
-// null when unknown. Does not mint a URL — creation is savePodKeystore's job.
-async function discoverKeystoreURL() {
-  if (cachedKeystoreURL) return cachedKeystoreURL
-  const url = await readKeystoreDiscoveryTriple()
-  if (url) {
-    cachedKeystoreURL = url
-    Config.User.Encryption.KeystoreURL = url
+// Reads the key container IRI from the loaded private/public type index, or null.
+function findKeyContainer() {
+  const forClass = Config.ns.dokieli.EncryptionKey.value
+  const ti = Config.User?.TypeIndex || {}
+  const entries = {
+    ...(ti[Config.ns.solid.privateTypeIndex.value] || {}),
+    ...(ti[Config.ns.solid.publicTypeIndex.value] || {})
   }
-  return url
+  for (const entry of Object.values(entries)) {
+    if (entry[Config.ns.solid.forClass.value] === forClass) {
+      return entry[Config.ns.solid.instanceContainer.value] || entry[Config.ns.solid.instance.value] || null
+    }
+  }
+  return null
+}
+
+// Lists the .json key resources in the container (ldp:contains); [] on any error.
+async function listKeyResources(containerURL) {
+  try {
+    const { graph } = await getResourceGraph(containerURL)
+    const values = graph?.node(rdf.namedNode(containerURL)).out(Config.ns.ldp.contains).values || []
+    return values.filter(v => v.endsWith('.json'))
+  } catch {
+    return []
+  }
+}
+
+// Resolves the current keystore resource URL (session cache → type-index container
+// listing → legacy preferences triple); null when unknown. Does not mint.
+// XXX: single active key for now — members[0]; phase D selects by kid.
+async function resolveKeystoreResourceURL() {
+  if (cachedKeystoreURL) return cachedKeystoreURL
+  const container = findKeyContainer()
+  if (container) {
+    const members = await listKeyResources(container)
+    if (members.length) {
+      cachedKeystoreURL = members[0]
+      Config.User.Encryption.KeystoreURL = members[0]
+      return members[0]
+    }
+  }
+  const legacy = await readKeystoreDiscoveryTriple()
+  if (legacy) {
+    cachedKeystoreURL = legacy
+    Config.User.Encryption.KeystoreURL = legacy
+    return legacy
+  }
+  return null
 }
 
 // null when signed out, no pod, missing resource, network error, or invalid bundle.
 async function fetchPodKeystore() {
   if (!Config.Session?.isActive) return null
   try {
-    const url = await discoverKeystoreURL()
+    const url = await resolveKeystoreResourceURL()
     if (!url) return null
     const response = await getResource(url, { 'Accept': 'application/json' }, { noCache: true })
     const bundle = await response.json()
@@ -115,6 +162,37 @@ async function fetchPodKeystore() {
   } catch {
     return null
   }
+}
+
+// Every valid key bundle in the pod container (one per kid). Falls back to the
+// single-resource lookup when there is no type-index container (legacy/migration).
+async function fetchAllPodKeystoreBundles() {
+  if (!Config.Session?.isActive) return []
+  const container = findKeyContainer()
+  if (!container) {
+    const one = await fetchPodKeystore()
+    return one ? [one] : []
+  }
+  const members = await listKeyResources(container)
+  const bundles = []
+  for (const url of members) {
+    try {
+      const response = await getResource(url, { 'Accept': 'application/json' }, { noCache: true })
+      const bundle = await response.json()
+      if (isValidBundle(bundle)) bundles.push(bundle)
+    } catch { /* skip unreadable/invalid member */ }
+  }
+  return bundles
+}
+
+// All known key bundles (pod container ∪ local cache), deduped by kid. The local
+// cache holds only the current key, so full history relies on the pod copy.
+async function loadAllKeystoreBundles() {
+  const byKid = new Map()
+  for (const bundle of await fetchAllPodKeystoreBundles()) byKid.set(bundle.kid, bundle)
+  const local = await getEncryptedKeystore()
+  if (local && !byKid.has(local.kid)) byKid.set(local.kid, local)
+  return [...byKid.values()]
 }
 
 // Fallback for servers that do not create intermediate containers on PUT.
@@ -157,23 +235,45 @@ async function setKeystoreContainerACL(containerURL) {
   return putResource(aclURL, data, 'text/turtle; charset=utf-8')
 }
 
-// Insert-only; skipped when there is no preferences file or the triple is already current.
-async function writeKeystoreDiscovery(keystoreURL) {
-  const prefsFile = Config.User?.PreferencesFile?.[0]
-  if (!prefsFile) return null
-  const current = await readKeystoreDiscoveryTriple()
-  if (current === keystoreURL) return null
-  const insert = `<${Config.User.IRI}> <${Config.ns.dokieli.keystore.value}> <${keystoreURL}> .`
-  return patchResourceWithAcceptPatch(prefsFile, [{ insert }])
+// Registers the key container in the type index (private preferred, public fallback),
+// keyed by dokieli:EncryptionKey via solid:instanceContainer. Idempotent per class;
+// null when signed out or no type index is available.
+// XXX: duplicates the shape of activity.js registerAnnotationInTypeIndex — a shared
+// helper is a worthwhile follow-up once the keystore↔activity import cycle is untangled.
+async function registerKeyContainer(containerURL) {
+  const priv = Config.User?.PrivateTypeIndex
+  const pub = Config.User?.PublicTypeIndex
+  const usePrivate = priv?.length && Config.Session?.isActive
+  const typeIndexIRI = usePrivate ? priv[0] : pub?.[0]
+  if (!typeIndexIRI) return null
+  if (findKeyContainer()) return null
+
+  const forClass = Config.ns.dokieli.EncryptionKey.value
+  const registrationId = generateUUID()
+  const insert = `<#${registrationId}> a <${Config.ns.solid.TypeRegistration.value}> ;
+  <${Config.ns.solid.forClass.value}> <${forClass}> ;
+  <${Config.ns.solid.instanceContainer.value}> <${containerURL}> .`
+
+  await patchResourceWithAcceptPatch(typeIndexIRI, [{ insert }])
+
+  const typeIndexType = usePrivate ? Config.ns.solid.privateTypeIndex.value : Config.ns.solid.publicTypeIndex.value
+  Config.User.TypeIndex = Config.User.TypeIndex || {}
+  Config.User.TypeIndex[typeIndexType] = Config.User.TypeIndex[typeIndexType] || {}
+  Config.User.TypeIndex[typeIndexType][`${typeIndexIRI}#${registrationId}`] = {
+    [Config.ns.solid.forClass.value]: forClass,
+    [Config.ns.solid.instanceContainer.value]: containerURL
+  }
+  updateDeviceStorageProfile(Config.User)
+  return containerURL
 }
 
-// PUT the bundle to the pod, then set the ACL and discovery triple (both warn-only).
-// ifNoneMatch guards against clobbering a keystore created by another device.
+// PUT the bundle to the pod, then set the container ACL and type-index registration
+// (both warn-only). ifNoneMatch guards against clobbering a key created by another device.
 async function savePodKeystore(bundle, { ifNoneMatch = false } = {}) {
   if (!Config.Session?.isActive) return null
-  let url = await discoverKeystoreURL()
+  let url = await resolveKeystoreResourceURL()
   if (!url) {
-    url = mintKeystoreURL()
+    url = keyResourceURL(bundle.kid)
     if (!url) return null
     cachedKeystoreURL = url
     Config.User.Encryption.KeystoreURL = url
@@ -194,27 +294,10 @@ async function savePodKeystore(bundle, { ifNoneMatch = false } = {}) {
     await putResource(url, data, 'application/json', null, ifNoneMatch ? { headers: { 'If-None-Match': '*' } } : {})
   }
 
-  const container = url.substring(0, url.lastIndexOf('/') + 1)
+  const container = keyContainerURL() || url.substring(0, url.lastIndexOf('/') + 1)
   await setKeystoreContainerACL(container).catch(e => console.warn('dokieli: keystore container ACL not set', e))
-  await writeKeystoreDiscovery(url).catch(e => console.warn('dokieli: keystore discovery triple not written', e))
+  await registerKeyContainer(container).catch(e => console.warn('dokieli: keystore type-index registration not written', e))
   return url
-}
-
-// Pod copy preferred when reachable; refreshes the cache; a divergent local key is preserved.
-async function loadKeystoreBundle() {
-  const local = await getEncryptedKeystore()
-  const pod = await fetchPodKeystore()
-  if (pod) {
-    if (local && local.kid !== pod.kid) {
-      console.warn('dokieli: local keystore kid differs from pod copy; keeping orphaned local copy')
-      await setOrphanedEncryptedKeystore(local)
-    }
-    if (!local || local.kid !== pod.kid || local.modified !== pod.modified) {
-      await setEncryptedKeystore(pod)
-    }
-    return pod
-  }
-  return local || null
 }
 
 // PBKDF2 + AES-GCM unwrap of an unreleased v1 bundle; returns the private JWK for rewrapping.
@@ -269,7 +352,7 @@ export async function createKeystore(passphrase) {
     console.warn('dokieli: keystore saved locally; pod save failed', e)
   }
 
-  _sessionPrivateKey = await importPrivateKeyJWK(privateKeyJWK)
+  _sessionPrivateKeys.set(kid, await importPrivateKeyJWK(privateKeyJWK))
   _sessionPublicKey = publicKey
   _sessionPublicKeyJWK = publicKeyJWK
   _sessionKid = kid
@@ -277,37 +360,66 @@ export async function createKeystore(passphrase) {
   return publicKeyJWK
 }
 
-// Unlocks the keystore (pod copy preferred, local cache fallback) into session memory.
-// v1 bundles are migrated to v2 transparently using the entered passphrase.
-// Throws if no keystore exists or if the passphrase is wrong.
-export async function unlockKeystore(passphrase) {
-  let bundle = await loadKeystoreBundle()
-  if (!bundle) throw new Error('No keystore found. Set up encryption first.')
-
-  let privateKeyJWK
+// Unwraps a single bundle to its private JWK with the passphrase. v1 bundles are
+// migrated to v2 in place (returns the rewrapped bundle); rejects on wrong passphrase.
+async function unwrapBundle(bundle, passphrase) {
   if (bundle.version === 1) {
-    privateKeyJWK = await migrateV1Bundle(bundle, passphrase)
+    const privateKeyJWK = await migrateV1Bundle(bundle, passphrase)
     const jwe = await wrapPrivateKeyJWK(privateKeyJWK, passphrase)
-    bundle = buildKeystoreBundle(bundle.kid, bundle.publicKeyJWK, jwe, bundle.created)
-    await setEncryptedKeystore(bundle)
-  } else {
-    const wrapping = bundle.wrappings.find(w => w.type === 'passphrase')
-    privateKeyJWK = await unwrapPrivateKeyJWK(wrapping.jwe, passphrase)
+    return { privateKeyJWK, bundle: buildKeystoreBundle(bundle.kid, bundle.publicKeyJWK, jwe, bundle.created) }
+  }
+  const wrapping = bundle.wrappings.find(w => w.type === 'passphrase')
+  return { privateKeyJWK: await unwrapPrivateKeyJWK(wrapping.jwe, passphrase), bundle }
+}
+
+// Unlocks every key the user holds (pod container ∪ local cache) into session memory,
+// so content encrypted to any current or past key stays decryptable. The current key
+// (local cache, else newest by created) is used for new encryption and profile publish.
+// Throws if no keystore exists or if the passphrase unlocks none of them.
+export async function unlockKeystore(passphrase) {
+  const bundles = await loadAllKeystoreBundles()
+  if (!bundles.length) throw new Error('No keystore found. Set up encryption first.')
+
+  const local = await getEncryptedKeystore()
+  const currentKid = local?.kid
+    || bundles.slice().sort((a, b) => (b.created || '').localeCompare(a.created || ''))[0].kid
+
+  const keys = new Map()
+  const jwkByKid = new Map()
+  const bundleByKid = new Map()  // holds the unwrapped (possibly v1→v2 rewrapped) form
+  for (const b of bundles) {
+    try {
+      const { privateKeyJWK, bundle } = await unwrapBundle(b, passphrase)
+      keys.set(bundle.kid, await importPrivateKeyJWK(privateKeyJWK))
+      jwkByKid.set(bundle.kid, bundle.publicKeyJWK)
+      bundleByKid.set(bundle.kid, bundle)
+    } catch { /* wrong passphrase for this bundle or corrupt; skip */ }
+  }
+  if (!keys.size) throw new Error('Unable to unlock keystore with the given passphrase.')
+
+  _sessionPrivateKeys = keys
+  _sessionKid = keys.has(currentKid) ? currentKid : keys.keys().next().value
+  _sessionPublicKeyJWK = jwkByKid.get(_sessionKid) || null
+  _sessionPublicKey = _sessionPublicKeyJWK ? await importPublicKeyJWK(_sessionPublicKeyJWK) : null
+
+  // Cache the current key locally (its migrated v2 form when v1) so reloads and a fresh
+  // device work without a pod round-trip; only refresh when it actually changed.
+  const currentBundle = bundleByKid.get(_sessionKid) || null
+  if (currentBundle && (!local || local.kid !== currentBundle.kid || local.modified !== currentBundle.modified)) {
+    await setEncryptedKeystore(currentBundle)
   }
 
-  _sessionPrivateKey = await importPrivateKeyJWK(privateKeyJWK)
-  _sessionPublicKey = await importPublicKeyJWK(bundle.publicKeyJWK)
-  _sessionPublicKeyJWK = bundle.publicKeyJWK
-  _sessionKid = bundle.kid
-
-  // Upload when the pod copy is missing or stale (signed-out setup now signed in, or v1 just migrated).
-  fetchPodKeystore()
-    .then(pod => {
-      if (!pod || pod.modified !== bundle.modified) {
-        return savePodKeystore(bundle, { ifNoneMatch: !pod })
-      }
-    })
-    .catch(e => console.warn('dokieli: keystore pod sync failed', e))
+  // Upload the current bundle when the pod copy is missing or stale (signed-out setup now
+  // signed in, or v1 just migrated). Only the current key is synced from this device.
+  if (currentBundle) {
+    fetchPodKeystore()
+      .then(pod => {
+        if (!pod || pod.modified !== currentBundle.modified) {
+          return savePodKeystore(currentBundle, { ifNoneMatch: !pod })
+        }
+      })
+      .catch(e => console.warn('dokieli: keystore pod sync failed', e))
+  }
 }
 
 // Publishes the session public key JWK to the WebID profile (insert-only, idempotent per kid).
@@ -332,7 +444,7 @@ export async function publishPublicKeyToProfile() {
 
 // Clears all in-memory key material. Call on sign-out or explicit lock.
 export function lockKeystore() {
-  _sessionPrivateKey = null
+  _sessionPrivateKeys = new Map()
   _sessionPublicKey = null
   _sessionPublicKeyJWK = null
   _sessionKid = null
@@ -341,12 +453,27 @@ export function lockKeystore() {
 }
 
 export function isUnlocked() {
-  return _sessionPrivateKey !== null
+  return _sessionPrivateKeys.size > 0
 }
 
-// Returns the in-memory private CryptoKey for decryption, or null if locked.
-export function getSessionPrivateKey() {
-  return _sessionPrivateKey
+// Returns an unlocked private CryptoKey: the one for kid, or the current key when
+// kid is omitted; null if not held or locked.
+export function getSessionPrivateKey(kid) {
+  return _sessionPrivateKeys.get(kid || _sessionKid) || null
+}
+
+// Decrypts a JWE with whichever unlocked key it was encrypted to (selected by the
+// JWE's kid; falls back to trying each held key). Rejects if none can decrypt it.
+export async function decryptWithSession(jwe) {
+  for (const kid of getJWEKids(jwe)) {
+    const key = _sessionPrivateKeys.get(kid)
+    if (key) return decryptContent(jwe, key)
+  }
+  let lastError
+  for (const key of _sessionPrivateKeys.values()) {
+    try { return await decryptContent(jwe, key) } catch (e) { lastError = e }
+  }
+  throw lastError || new Error('No unlocked key can decrypt this content.')
 }
 
 // Returns the in-memory public CryptoKey for encryption, or null if locked.

@@ -31,8 +31,8 @@ import { getTextContentExcludingSups } from './editor/utils/annotation.js';
 import { i18n } from './i18n.js';
 import { showUserIdentityInput } from './auth.js';
 import { updateDeviceStorageProfile } from './storage.js';
-import { decryptContent, isJWE } from './crypto.js';
-import { isUnlocked, getSessionPrivateKey } from './keystore.js';
+import { isJWE } from './crypto.js';
+import { isUnlocked, decryptWithSession } from './keystore.js';
 
 var _deleteListenerAttached = false;
 let _pendingEncryptedAnnotations = [];
@@ -1342,7 +1342,7 @@ export async function showAnnotation(noteIRI, g, options) {
         if (isUnlocked()) {
           for (const b of encryptedBodyItems) {
             try {
-              b.value = await decryptContent(b.value, getSessionPrivateKey());
+              b.value = await decryptWithSession(b.value);
             } catch(e) {
               console.error('showAnnotation: body decrypt failed', e);
             }
@@ -1408,7 +1408,7 @@ export async function showAnnotation(noteIRI, g, options) {
 
     if ([exact, prefix, suffix].some(v => v && isJWE(v))) {
       if (isUnlocked()) {
-        const dec = async v => (v && isJWE(v)) ? decryptContent(v, getSessionPrivateKey()) : v;
+        const dec = async v => (v && isJWE(v)) ? decryptWithSession(v) : v;
         [exact, prefix, suffix] = await Promise.all([dec(exact), dec(prefix), dec(suffix)]);
       } else {
         if (!_pendingEncryptedAnnotations.some(p => p.noteIRI === noteIRI)) {
