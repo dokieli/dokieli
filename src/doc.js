@@ -35,7 +35,7 @@ import { serializeAnnotationToHTML, serializeAnnotationToJSONLD } from '@dokieli
 import { renderFootnote, renderCitation } from './editor/utils/reference-render.js';
 import { getResource } from "./fetcher.js";
 import { encryptContent } from './crypto.js';
-import { isUnlocked, getSessionPublicKey, getSessionKid } from './keystore.js';
+import { isUnlocked, getSessionPublicKey, getDocumentRecipientKeys, syncDocumentRecipientsFromACL } from './keystore.js';
 
 const ns = Config.ns;
 
@@ -2177,9 +2177,10 @@ export async function encryptArticlePayload(htmlString) {
 
   const titleNode = parsed.querySelector('head > title');
   const plaintext = JSON.stringify({ title: titleNode?.textContent ?? null, body: article.innerHTML });
-  const pubKey = getSessionPublicKey();
-  const kid = getSessionKid();
-  const jwe = await encryptContent(plaintext, [pubKey], kid);
+
+  await syncDocumentRecipientsFromACL(Config.DocumentURL || currentLocation());
+  const recipientKeys = [getSessionPublicKey(), ...getDocumentRecipientKeys()];
+  const jwe = await encryptContent(plaintext, recipientKeys);
 
   const script = parsed.createElement('script');
   script.id = 'dokieli-e2ee';

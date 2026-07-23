@@ -523,7 +523,12 @@ function initPrint() {
 
 export async function initEncryptedDocument() {
   const encryptedScript = document.getElementById('dokieli-e2ee');
-  if (!encryptedScript) return;
+  if (!encryptedScript) {
+    // Per-document state: a newly loaded document without an encrypted payload starts unencrypted regardless of the previous document's toggle
+    Config.User.Encryption.Document = false;
+    Config.User.Encryption.DocumentEncrypt = false;
+    return;
+  }
 
   if (isUnlocked()) {
     await decryptArticleInPlace();

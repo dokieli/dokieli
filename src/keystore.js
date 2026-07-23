@@ -30,7 +30,7 @@ import {
 } from './crypto.js';
 import { getEncryptedKeystore, setEncryptedKeystore, updateDeviceStorageProfile } from './storage.js';
 import { getResource, getResourceHead, putResource, postResource, patchResourceWithAcceptPatch } from './fetcher.js';
-import { getResourceGraph, getLinkRelationFromHead } from './graph.js';
+import { getResourceGraph, getLinkRelationFromHead, getACLResourceGraph, getAuthorizationsMatching } from './graph.js';
 import { forceTrailingSlash, stripFragmentFromString } from './uri.js';
 import { escapeRDFLiteral, generateUUID } from './util.js';
 
@@ -41,7 +41,10 @@ let sessionPublicKeyJWK = null;
 let sessionKid = null;
 
 let cachedKeystoreURL = null;
-let podChecked = false;
+let storageChecked = false;
+
+// Public encryption keys of agents the current document is shared with, by WebID
+let documentRecipients = new Map();
 
 // CID 1.0 JsonWebKey document (section 2.2.3); secretKeyJwk holds the passphrase-wrapped private JWK as a flattened JWE, not a plaintext JWK
 function buildKeyDocument(publicKeyJWK, secretKeyJwe) {
@@ -116,7 +119,7 @@ async function resolveKeystoreResourceURL() {
 }
 
 // With a kid the resource URL is computed directly; without one it falls back to container discovery
-async function fetchPodKeystore(kid) {
+async function fetchStorageKeystore(kid) {
   if (!Config.Session?.isActive) return null;
   try {
     const url = kid ? keyResourceURL(kid) : await resolveKeystoreResourceURL();
@@ -129,7 +132,7 @@ async function fetchPodKeystore(kid) {
   }
 }
 
-async function fetchAllPodKeyDocuments() {
+async function fetchAllStorageKeyDocuments() {
   if (!Config.Session?.isActive) return [];
   const container = findKeyContainer();
   if (!container) return [];
@@ -147,7 +150,7 @@ async function fetchAllPodKeyDocuments() {
 
 async function loadAllKeyDocuments() {
   const byKid = new Map();
-  for (const doc of await fetchAllPodKeyDocuments()) byKid.set(doc.publicKeyJwk.kid, doc);
+  for (const doc of await fetchAllStorageKeyDocuments()) byKid.set(doc.publicKeyJwk.kid, doc);
   const local = await getEncryptedKeystore();
   if (isValidKeyDocument(local) && !byKid.has(local.publicKeyJwk.kid)) byKid.set(local.publicKeyJwk.kid, local);
   return [...byKid.values()];
@@ -234,7 +237,7 @@ async function registerKeyContainer(containerURL) {
 }
 
 // The container ACL is set before the key upload and failure throws, so the caller keeps the key local-only; If-None-Match guards against clobbering another device's key
-async function savePodKeystore(doc, { ifNoneMatch = false } = {}) {
+async function saveStorageKeystore(doc, { ifNoneMatch = false } = {}) {
   if (!Config.Session?.isActive) return null;
   const url = keyResourceURL(doc.publicKeyJwk.kid);
   if (!url) return null;
@@ -252,7 +255,7 @@ async function savePodKeystore(doc, { ifNoneMatch = false } = {}) {
     await putResource(url, data, 'application/ld+json', null, options);
   } catch (e) {
     if (e.status === 412) {
-      console.warn('dokieli: keystore already exists on pod; local copy kept', e);
+      console.warn('dokieli: keystore already exists on storage; local copy kept', e);
       return null;
     }
     throw e;
@@ -271,12 +274,12 @@ export async function createKeystore(passphrase) {
   const doc = buildKeyDocument(publicKeyJWK, jwe);
 
   await setEncryptedKeystore(doc);
-  Config.User.Encryption.PodSyncFailed = false;
+  Config.User.Encryption.StorageSyncFailed = false;
   try {
-    await savePodKeystore(doc, { ifNoneMatch: true });
+    await saveStorageKeystore(doc, { ifNoneMatch: true });
   } catch (e) {
-    Config.User.Encryption.PodSyncFailed = true;
-    console.warn('dokieli: keystore saved locally; pod save failed', e);
+    Config.User.Encryption.StorageSyncFailed = true;
+    console.warn('dokieli: keystore saved locally; storage save failed', e);
   }
 
   sessionPrivateKeys.set(kid, await importPrivateKeyJWK(privateKeyJWK));
@@ -324,12 +327,12 @@ export async function unlockKeystore(passphrase) {
   }
   if (cacheStale) await setEncryptedKeystore(currentDoc);
 
-  // Upload when the pod copy is missing (signed-out setup now signed in); key documents are immutable per kid
-  fetchPodKeystore(sessionKid)
-    .then(pod => {
-      if (!pod) return savePodKeystore(currentDoc, { ifNoneMatch: true });
+  // Upload when the storage copy is missing (signed-out setup now signed in); key documents are immutable per kid
+  fetchStorageKeystore(sessionKid)
+    .then(storage => {
+      if (!storage) return saveStorageKeystore(currentDoc, { ifNoneMatch: true });
     })
-    .catch(e => console.warn('dokieli: keystore pod sync failed', e));
+    .catch(e => console.warn('dokieli: keystore storage sync failed', e));
 }
 
 export async function publishPublicKeyToProfile() {
@@ -350,13 +353,81 @@ export async function publishPublicKeyToProfile() {
   return patchResourceWithAcceptPatch(profileDoc, [{ insert }]);
 }
 
+export async function getAgentEncryptionKey(agentIRI) {
+  try {
+    const { graph } = await getResourceGraph(stripFragmentFromString(agentIRI));
+    if (!graph?.node) return null;
+    const keyIRIs = graph.node(rdf.namedNode(agentIRI)).out(Config.ns.sec.keyAgreementMethod).values;
+    for (const keyIRI of keyIRIs) {
+      const jwkValue = graph.node(rdf.namedNode(keyIRI)).out(Config.ns.sec.publicKeyJwk).values[0];
+      if (!jwkValue) continue;
+      const jwk = JSON.parse(jwkValue);
+      return { iri: keyIRI, jwk, key: await importPublicKeyJWK(jwk) };
+    }
+  } catch (e) {
+    console.warn('dokieli: could not read encryption key from ' + agentIRI, e);
+  }
+  return null;
+}
+
+// Checks a cached agent graph pointer (e.g. Config.User.Contacts[iri].Graph) without a network fetch
+export function agentHasPublishedEncryptionKey(agentGraph) {
+  return !!agentGraph?.out?.(Config.ns.sec.keyAgreementMethod).values.length;
+}
+
+export function addDocumentRecipient(agentIRI, key) {
+  documentRecipients.set(agentIRI, key);
+}
+
+export function getDocumentRecipients() {
+  return [...documentRecipients.keys()];
+}
+
+export function getDocumentRecipientKeys() {
+  return [...documentRecipients.values()];
+}
+
+// The ACL is the durable record of who a document is shared with; rebuild the recipient set from agents with Read access so re-saves keep encrypting to them
+export async function syncDocumentRecipientsFromACL(documentURL) {
+  if (!Config.Session?.isActive || !Config.User?.IRI) return;
+
+  let aclResourceGraph;
+  try {
+    aclResourceGraph = await getACLResourceGraph(documentURL);
+  } catch {
+    return;
+  }
+  const aclInfo = Config.Resource[documentURL]?.acl;
+  if (!aclResourceGraph?.node || !aclInfo?.effectiveACLResource) return;
+
+  const hasOwnACLResource = aclInfo.defaultACLResource == aclInfo.effectiveACLResource;
+  const matchers = hasOwnACLResource ? { 'accessTo': documentURL } : { 'default': aclInfo.effectiveContainer };
+  const authorizations = getAuthorizationsMatching(aclResourceGraph, matchers);
+
+  const agents = new Set();
+  Object.values(authorizations).forEach(authorization => {
+    if (authorization.mode.includes(Config.ns.acl.Read.value)) {
+      authorization.agent.forEach(agent => agents.add(agent));
+    }
+  });
+  agents.delete(Config.User.IRI);
+
+  for (const agent of agents) {
+    if (documentRecipients.has(agent)) continue;
+    const found = await getAgentEncryptionKey(agent);
+    if (found) documentRecipients.set(agent, found.key);
+    else console.warn('dokieli: no encryption key published for ' + agent + '; they will not be able to decrypt this document');
+  }
+}
+
 export function lockKeystore() {
   sessionPrivateKeys = new Map();
   sessionPublicKey = null;
   sessionPublicKeyJWK = null;
   sessionKid = null;
   cachedKeystoreURL = null;
-  podChecked = false;
+  storageChecked = false;
+  documentRecipients = new Map();
 }
 
 export function isUnlocked() {
@@ -392,14 +463,14 @@ export function getSessionKid() {
   return sessionKid;
 }
 
-// Probes the pod once per session so a new device gets the unlock prompt instead of setup
+// Probes the storage once per session so a new device gets the unlock prompt instead of setup
 export async function hasKeystore() {
   if (isValidKeyDocument(await getEncryptedKeystore())) return true;
-  if (podChecked || !Config.Session?.isActive) return false;
-  podChecked = true;
-  const pod = await fetchPodKeystore();
-  if (pod) {
-    await setEncryptedKeystore(pod);
+  if (storageChecked || !Config.Session?.isActive) return false;
+  storageChecked = true;
+  const storage = await fetchStorageKeystore();
+  if (storage) {
+    await setEncryptedKeystore(storage);
     return true;
   }
   return false;

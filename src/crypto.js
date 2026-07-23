@@ -82,22 +82,19 @@ export async function unwrapPrivateKeyJWK(jwe, passphrase) {
   return JSON.parse(new TextDecoder().decode(plaintext));
 }
 
-export async function encryptContent(plaintext, recipientPublicKeys, kid) {
+// No kid headers: recipient entries stay anonymous so the document does not leak who has access; decryption relies on trial unwrap
+export async function encryptContent(plaintext, recipientPublicKeys) {
   const data = new TextEncoder().encode(plaintext);
 
   if (recipientPublicKeys.length === 1) {
-    const header = { alg: 'ECDH-ES', enc: ENC };
-    if (kid) header.kid = kid;
     return new CompactEncrypt(data)
-      .setProtectedHeader(header)
+      .setProtectedHeader({ alg: 'ECDH-ES', enc: ENC })
       .encrypt(recipientPublicKeys[0]);
   }
 
   const ge = new GeneralEncrypt(data).setProtectedHeader({ enc: ENC });
   for (const pubKey of recipientPublicKeys) {
-    const recipientHeader = { alg: 'ECDH-ES+A256KW' };
-    if (kid) recipientHeader.kid = kid;
-    ge.addRecipient(pubKey).setUnprotectedHeader(recipientHeader);
+    ge.addRecipient(pubKey).setUnprotectedHeader({ alg: 'ECDH-ES+A256KW' });
   }
   return JSON.stringify(await ge.encrypt());
 }
