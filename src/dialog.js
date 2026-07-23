@@ -352,6 +352,7 @@ function showEncryptionSettings(node) {
     <p data-i18n="menu.encryption.description">${i18n.t('menu.encryption.description.textContent')}</p>
     <button class="setup-encryption-keys" data-i18n="menu.encryption.setup-button" title="${i18n.t('menu.encryption.setup-button.title')}" type="button">${i18n.t('menu.encryption.setup-button.textContent')}</button>
     <span class="response-message"></span>
+    <p data-i18n="menu.encryption.scope-note">${i18n.t('menu.encryption.scope-note.textContent')}</p>
   </section>
   `;
 
@@ -521,16 +522,19 @@ export function initDocumentDoEvents() {
 
     b = e.target.closest('button.encrypt-enable');
     if (b && b.isConnected) {
-      if (Config.User?.Encryption?.Enabled) {
-        setDocumentEncrypt(true);
-      }
-      else {
-        hasKeystore().then(exists => {
-          exists
-            ? showEncryptionUnlock(() => setDocumentEncrypt(true))
-            : showEncryptionSetup(() => setDocumentEncrypt(true));
-        });
-      }
+      // Choose how much to encrypt before any passphrase prompt; the passphrase step follows
+      showEncryptionScopeChoice(() => {
+        if (Config.User?.Encryption?.Enabled) {
+          setDocumentEncrypt(true);
+        }
+        else {
+          hasKeystore().then(exists => {
+            exists
+              ? showEncryptionUnlock(() => setDocumentEncrypt(true))
+              : showEncryptionSetup(() => setDocumentEncrypt(true));
+          });
+        }
+      });
     }
     else {
       b = e.target.closest('button.encrypt-disable');
@@ -7471,6 +7475,48 @@ function initPassphraseToggles(container) {
   });
 }
 
+// Asks whether to encrypt the article's content only or the whole document, then records the choice on Config.User.Encryption.Scope and continues (to the passphrase step)
+export function showEncryptionScopeChoice(onChosen) {
+  if (document.getElementById('encryption-scope')) return;
+
+  const currentScope = Config.User.Encryption?.Scope === 'document' ? 'document' : 'article';
+  const buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
+
+  const html = `
+    <aside aria-labelledby="encryption-scope-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="encryption-scope" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}">
+      <h2 id="encryption-scope-label" data-i18n="encryption-scope.heading">${i18n.t('encryption-scope.heading.textContent')}</h2>
+      ${buttonClose}
+      <form id="encryption-scope-form">
+        <ul>
+          <li>
+            <input type="radio" name="encryption-scope" id="encryption-scope-article" value="article"${currentScope === 'article' ? ' checked=""' : ''} />
+            <label for="encryption-scope-article" data-i18n="encryption-scope.article-label">${i18n.t('encryption-scope.article-label.textContent')}</label>
+            <p data-i18n="encryption-scope.article-description">${i18n.t('encryption-scope.article-description.textContent')}</p>
+          </li>
+          <li>
+            <input type="radio" name="encryption-scope" id="encryption-scope-document" value="document"${currentScope === 'document' ? ' checked=""' : ''} />
+            <label for="encryption-scope-document" data-i18n="encryption-scope.document-label">${i18n.t('encryption-scope.document-label.textContent')}</label>
+            <p class="warning" data-i18n="encryption-scope.document-description">${i18n.t('encryption-scope.document-description.textContent')}</p>
+          </li>
+        </ul>
+        <button type="submit" data-i18n="encryption-scope.submit-button">${i18n.t('encryption-scope.submit-button.textContent')}</button>
+      </form>
+    </aside>`;
+
+  document.body.appendChild(fragmentFromString(html));
+
+  const aside = document.getElementById('encryption-scope');
+  aside.querySelector('button.close').addEventListener('click', () => aside.remove());
+
+  aside.querySelector('#encryption-scope-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const selected = aside.querySelector('input[name="encryption-scope"]:checked')?.value;
+    Config.User.Encryption.Scope = selected === 'document' ? 'document' : 'article';
+    aside.remove();
+    onChosen?.();
+  });
+}
+
 export function showEncryptionSetup(onSuccess) {
   if (document.getElementById('encryption-setup')) return;
 
@@ -7568,6 +7614,7 @@ export function showEncryptionSetup(onSuccess) {
       if (Config.User.Encryption.StorageSyncFailed) {
         // Defer profile publication until the keystore reaches storage, on a later unlock
         const syncMsg = document.createElement('p');
+        syncMsg.setAttribute('class', 'warning');
         syncMsg.setAttribute('data-i18n', 'encryption-setup.storage-sync-failed');
         syncMsg.textContent = i18n.t('encryption-setup.storage-sync-failed.textContent');
         info.appendChild(syncMsg);
