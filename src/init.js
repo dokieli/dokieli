@@ -253,8 +253,7 @@ export async function initDocumentMode(mode) {
   }
 
   if (paramOpen.length) {
-    // Access-controlled resources need the restored session; auth runs in
-    // parallel with init and may not be live yet when #open= is processed.
+    // Access-controlled resources need the restored session; auth runs in parallel with init
     if (Config.AuthReady) {
       try { await Config.AuthReady } catch {}
     }
@@ -299,8 +298,7 @@ export async function initDocumentMode(mode) {
       open = domSanitize(open);
       open = decodeURIComponent(open);
 
-      // Keep init alive on failure so the rest of the boot sequence
-      // (ready event, encrypted-document handling) still runs.
+      // Keep init alive on failure so the rest of the boot sequence still runs
       try {
         await openResource(open);
       } catch (e) {
@@ -523,11 +521,6 @@ function initPrint() {
   });
 }
 
-// Checks whether the loaded document contains an encrypted article.
-// If the keystore is already unlocked (e.g. user signed in before load), decrypts
-// in place immediately. Otherwise surfaces the unlock/setup prompt via dialog.js so
-// the user can enter their passphrase, after which the caller should invoke
-// decryptArticleInPlace() once the keystore is unlocked.
 export async function initEncryptedDocument() {
   const encryptedScript = document.getElementById('dokieli-e2ee');
   if (!encryptedScript) return;
@@ -541,9 +534,6 @@ export async function initEncryptedDocument() {
   showEncryptionUnlock();
 }
 
-// Decrypts the JWE stored in #dokieli-e2ee and restores the article innerHTML.
-// Requires the keystore to be unlocked. Called from the unlock dialog on success
-// as well as from initEncryptedDocument when the keystore is already unlocked.
 export async function decryptArticleInPlace() {
   const encryptedScript = document.getElementById('dokieli-e2ee');
   if (!encryptedScript) return;
@@ -553,8 +543,7 @@ export async function decryptArticleInPlace() {
   const jwe = encryptedScript.textContent.trim();
   const plaintext = await decryptWithSession(jwe);
 
-  // The payload is a JSON envelope { title, body }; earlier payloads
-  // encrypted the article HTML directly.
+  // Earlier payloads encrypted the article HTML directly, without the { title, body } envelope
   let body = plaintext;
   let title = null;
   try {

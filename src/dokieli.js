@@ -63,8 +63,7 @@ const DO = window.DO ?? {
         DO.U.initUserLanguage().then(() => {
           const params = new URLSearchParams(window.location.search);
 
-          // Started before init() so document modes that fetch resources
-          // (e.g. #open= of an access-controlled document) can await a live session.
+          // Started before init() so document modes that fetch resources can await a live session
           Config.AuthReady = (params.has('code') && params.has('iss') && params.has('state'))
             ? DO.U.initAuth().then(() => DO.U.handleIncomingRedirect())
             : DO.U.initAuth();

@@ -361,8 +361,6 @@ function showDocumentTools(node) {
   sanitizeInsertAdjacentHTML(node, 'beforeend', s);
 }
 
-// Syncs the encrypt toggle button in the menu with the current
-// Config.User.Encryption.DocumentEncrypt state.
 function refreshEncryptToggle() {
   const value = Config.User?.Encryption?.DocumentEncrypt;
   const button = document.querySelector('#document-menu button.encrypt-enable, #document-menu button.encrypt-disable');
@@ -7287,7 +7285,6 @@ export async function spawnDokieli(documentNode, data, contentTypes, iris, optio
     // initShowNotificationSources();
     // focusNote();
 
-    // Opened document may be encrypted; surface unlock or decrypt in place.
     const { initEncryptedDocument } = await import('./init.js');
     await initEncryptedDocument();
 
@@ -7301,8 +7298,6 @@ export async function spawnDokieli(documentNode, data, contentTypes, iris, optio
   // console.log('//TODO: Handle server returning wrong or unknown Response/Content-Type for the Request/Accept');
 }
 
-// Returns an eye toggle button for revealing/hiding a passphrase input.
-// Place directly after the input; wire with initPassphraseToggles().
 function getPassphraseToggleHTML() {
   const label = i18n.t('encryption.show-passphrase.title');
   const icon = Icon['.fas.fa-eye'].replace('<svg ', '<svg aria-hidden="true" ');
@@ -7329,15 +7324,12 @@ function initPassphraseToggles(container) {
   });
 }
 
-// Shows the first-time encryption setup aside panel.
-// Prompts the user to choose a passphrase, generates their keypair, stores the
-// encrypted keystore in IndexedDB, and enables encryption on the session.
 export function showEncryptionSetup(onSuccess) {
   if (document.getElementById('encryption-setup')) return;
 
-  var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
+  const buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
-  var html = `
+  const html = `
     <aside aria-labelledby="encryption-setup-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="encryption-setup" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}">
       <h2 id="encryption-setup-label" data-i18n="encryption-setup.heading">${i18n.t('encryption-setup.heading.textContent')}</h2>
       ${buttonClose}
@@ -7360,9 +7352,9 @@ export function showEncryptionSetup(onSuccess) {
 
   document.body.appendChild(fragmentFromString(html));
 
-  var aside = document.getElementById('encryption-setup');
-  var info = aside.querySelector('.info');
-  var form = aside.querySelector('#encryption-setup-form');
+  const aside = document.getElementById('encryption-setup');
+  const info = aside.querySelector('.info');
+  const form = aside.querySelector('#encryption-setup-form');
 
   initPassphraseToggles(form);
 
@@ -7381,8 +7373,8 @@ export function showEncryptionSetup(onSuccess) {
 
   form.addEventListener('submit', async e => {
     e.preventDefault();
-    var pass = form.querySelector('#encryption-passphrase').value;
-    var confirm = form.querySelector('#encryption-passphrase-confirm').value;
+    const pass = form.querySelector('#encryption-passphrase').value;
+    const confirm = form.querySelector('#encryption-passphrase-confirm').value;
 
     if (pass !== confirm) {
       info.textContent = i18n.t('encryption-setup.passphrases-mismatch.textContent');
@@ -7411,12 +7403,9 @@ export function showEncryptionSetup(onSuccess) {
       successMsg.textContent = i18n.t('encryption-setup.success.textContent');
       info.appendChild(successMsg);
       clearPendingEncryptedQueues();
-      if (typeof onSuccess === 'function') onSuccess();
+      onSuccess?.();
       if (Config.User.Encryption.PodSyncFailed) {
-        // The keystore never reached the pod, so don't advertise the public key on
-        // the WebID profile yet: others (and the user's other devices) would encrypt
-        // to a key whose wrapped private half exists only in this browser's cache.
-        // Publication happens on a later unlock, once the pod keystore save succeeds.
+        // Defer profile publication until the keystore reaches the pod, on a later unlock
         const syncMsg = document.createElement('p');
         syncMsg.setAttribute('data-i18n', 'encryption-setup.pod-sync-failed');
         syncMsg.textContent = i18n.t('encryption-setup.pod-sync-failed.textContent');
@@ -7431,8 +7420,7 @@ export function showEncryptionSetup(onSuccess) {
       }
     } catch (err) {
       generatingMsg.remove();
-      // No data-i18n here: the message carries dynamic error detail that a
-      // live language update would overwrite.
+      // No data-i18n: the message carries dynamic error detail
       const errorMsg = document.createElement('p');
       errorMsg.textContent = i18n.t('encryption-setup.error.textContent') + ' ' + err.message;
       info.appendChild(errorMsg);
@@ -7441,15 +7429,12 @@ export function showEncryptionSetup(onSuccess) {
   });
 }
 
-// Shows the passphrase unlock aside panel for an existing keystore.
-// On success calls decryptArticleInPlace() if the document is encrypted,
-// then enables encryption on the session.
 export function showEncryptionUnlock(onSuccess) {
   if (document.getElementById('encryption-unlock')) return;
 
-  var buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
+  const buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
-  var html = `
+  const html = `
     <aside aria-labelledby="encryption-unlock-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="encryption-unlock" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}">
       <h2 id="encryption-unlock-label" data-i18n="encryption-unlock.heading">${i18n.t('encryption-unlock.heading.textContent')}</h2>
       ${buttonClose}
@@ -7469,9 +7454,9 @@ export function showEncryptionUnlock(onSuccess) {
 
   document.body.appendChild(fragmentFromString(html));
 
-  var aside = document.getElementById('encryption-unlock');
-  var info = aside.querySelector('.info');
-  var form = aside.querySelector('#encryption-unlock-form');
+  const aside = document.getElementById('encryption-unlock');
+  const info = aside.querySelector('.info');
+  const form = aside.querySelector('#encryption-unlock-form');
 
   initPassphraseToggles(form);
 
@@ -7484,7 +7469,7 @@ export function showEncryptionUnlock(onSuccess) {
 
   form.addEventListener('submit', async e => {
     e.preventDefault();
-    var pass = form.querySelector('#encryption-unlock-passphrase').value;
+    const pass = form.querySelector('#encryption-unlock-passphrase').value;
     form.querySelector('button[type="submit"]').disabled = true;
     info.textContent = i18n.t('encryption-unlock.unlocking.textContent');
 
@@ -7503,7 +7488,7 @@ export function showEncryptionUnlock(onSuccess) {
         console.warn('dokieli: public key profile publication failed; encryption still works locally', e);
       }
 
-      if (typeof onSuccess === 'function') onSuccess();
+      onSuccess?.();
       info.textContent = i18n.t('encryption-unlock.unlocked.textContent');
       setTimeout(() => aside.remove(), 800);
     } catch (err) {

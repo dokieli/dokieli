@@ -284,23 +284,18 @@ export function getDeviceStorageItem(key) {
   }
 }
 
-const E2EE_KEYSTORE_KEY = 'DO.Config.E2EE.Keystore'
+const E2EE_KEYSTORE_KEY = 'DO.Config.E2EE.Keystore';
 
 export function getEncryptedKeystore() {
-  return get(E2EE_KEYSTORE_KEY)
+  return get(E2EE_KEYSTORE_KEY);
 }
 
 export function setEncryptedKeystore(keystore) {
-  return set(E2EE_KEYSTORE_KEY, keystore)
+  return set(E2EE_KEYSTORE_KEY, keystore);
 }
 
 export function removeEncryptedKeystore() {
-  return del(E2EE_KEYSTORE_KEY)
-}
-
-// Preserves a local keystore whose kid diverges from the pod copy.
-export function setOrphanedEncryptedKeystore(keystore) {
-  return set(`${E2EE_KEYSTORE_KEY}.orphaned.${keystore.kid}`, keystore)
+  return del(E2EE_KEYSTORE_KEY);
 }
 
 export function updateBrowserStorageOIDC() {

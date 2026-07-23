@@ -2166,42 +2166,36 @@ export async function createMutableResource(url, data, options) {
     });
 }
 
-// Encrypts the innerHTML of the article node, along with the document title,
-// within a full HTML string. The JWE payload is a JSON envelope { title, body };
-// it is embedded as a <script id="dokieli-e2ee" type="application/jose"> tag and
-// the <title> text is masked so it does not leak the document's subject.
-// The outer <article> element and its attributes (RDFa, id, etc.) are preserved.
-// Returns the modified HTML string; returns the original unchanged if no article is found
-// or if the keystore is not unlocked.
+// Replaces the article's innerHTML and the document title with a { title, body } JWE envelope; the outer <article> and its attributes are preserved
 export async function encryptArticlePayload(htmlString) {
-  if (!isUnlocked()) return htmlString
+  if (!isUnlocked()) return htmlString;
 
-  const parser = new DOMParser()
-  const parsed = parser.parseFromString(htmlString, 'text/html')
-  const article = selectArticleNode(parsed)
-  if (!article) return htmlString
+  const parser = new DOMParser();
+  const parsed = parser.parseFromString(htmlString, 'text/html');
+  const article = selectArticleNode(parsed);
+  if (!article) return htmlString;
 
-  const titleNode = parsed.querySelector('head > title')
-  const plaintext = JSON.stringify({ title: titleNode?.textContent ?? null, body: article.innerHTML })
-  const pubKey = getSessionPublicKey()
-  const kid = getSessionKid()
-  const jwe = await encryptContent(plaintext, [pubKey], kid)
+  const titleNode = parsed.querySelector('head > title');
+  const plaintext = JSON.stringify({ title: titleNode?.textContent ?? null, body: article.innerHTML });
+  const pubKey = getSessionPublicKey();
+  const kid = getSessionKid();
+  const jwe = await encryptContent(plaintext, [pubKey], kid);
 
-  const script = parsed.createElement('script')
-  script.id = 'dokieli-e2ee'
-  script.type = 'application/jose'
-  script.textContent = jwe
+  const script = parsed.createElement('script');
+  script.id = 'dokieli-e2ee';
+  script.type = 'application/jose';
+  script.textContent = jwe;
 
-  article.setAttribute('data-encrypted', 'true')
-  article.innerHTML = ''
-  article.appendChild(script)
+  article.setAttribute('data-encrypted', 'true');
+  article.innerHTML = '';
+  article.appendChild(script);
 
-  if (titleNode) titleNode.textContent = i18n.t('encryption.encrypted-document-title.textContent')
+  if (titleNode) titleNode.textContent = i18n.t('encryption.encrypted-document-title.textContent');
 
-  Config.User.Encryption.Document = true
+  Config.User.Encryption.Document = true;
 
-  const doctype = getDoctype()
-  return (doctype ? doctype + '\n' : '') + parsed.documentElement.outerHTML
+  const doctype = getDoctype();
+  return (doctype ? doctype + '\n' : '') + parsed.documentElement.outerHTML;
 }
 
 export function isMarkdownTarget(url) {

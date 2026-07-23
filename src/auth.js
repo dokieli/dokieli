@@ -156,8 +156,7 @@ export async function signOut() {
   await signOutHttp();
 
   removeDeviceStorageAsSignOut();
-  // The encrypted keystore cache in IndexedDB is kept across sign-out: it is
-  // passphrase-protected and enables offline unlock on the next visit.
+  // The passphrase-protected keystore cache in IndexedDB is kept for offline unlock
   lockKeystore();
 
   Config.User = {
@@ -871,9 +870,7 @@ export function afterSetUserInfo() {
     updateButtons();
   });
 
-  // Unlock is prompted on demand (encrypted document/note load, encrypt action),
-  // not on sign-in. Only re-surface it here when the open document is encrypted
-  // and still locked, e.g. the user dismissed the prompt before signing in.
+  // Re-surface the on-demand unlock prompt when the open document is encrypted and still locked
   if (document.getElementById('dokieli-e2ee') && !isUnlocked()) {
     hasKeystore().then(exists => {
       if (exists) {
