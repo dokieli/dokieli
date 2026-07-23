@@ -34,23 +34,23 @@ import { updateDeviceStorageProfile } from './storage.js';
 import { isJWE } from './crypto.js';
 import { isUnlocked, decryptWithSession } from './keystore.js';
 
-var _deleteListenerAttached = false;
-let _pendingEncryptedAnnotations = [];
-let _onEncryptionNeeded = null;
+var deleteListenerAttached = false;
+let pendingEncryptedAnnotations = [];
+let encryptionNeededHandler = null;
 
 export function registerEncryptionUnlockHandler(fn) {
-  _onEncryptionNeeded = fn;
-  if (_pendingEncryptedAnnotations.length > 0 && !document.getElementById('encryption-unlock')) {
+  encryptionNeededHandler = fn;
+  if (pendingEncryptedAnnotations.length > 0 && !document.getElementById('encryption-unlock')) {
     fn();
   }
 }
 
 export function clearPendingEncryptedQueues() {
-  _pendingEncryptedAnnotations.length = 0;
+  pendingEncryptedAnnotations.length = 0;
 }
 
 export async function processPendingEncryptedNotes() {
-  const pending = _pendingEncryptedAnnotations.splice(0);
+  const pending = pendingEncryptedAnnotations.splice(0);
   for (const { noteIRI, g, options } of pending) {
     try {
       await showAnnotation(noteIRI, g, options);
@@ -172,8 +172,8 @@ export function initializeButtonMore(node) {
 export async function addNoteToNotifications(noteData) {
   if (document.getElementById(noteData.id)) return;
 
-  if (Config.User.IRI && !_deleteListenerAttached) {
-    _deleteListenerAttached = true;
+  if (Config.User.IRI && !deleteListenerAttached) {
+    deleteListenerAttached = true;
     document.addEventListener('click', (e) => {
       var button = e.target.closest('button.delete');
       if (button) handleDeleteNote(button);
@@ -1016,11 +1016,11 @@ export function showContactsActivities(onComplete) {
     .then(() => Promise.allSettled(promises))
     .then(() => {
       removeProgress();
-      if (typeof onComplete === 'function') onComplete();
+      onComplete?.();
     })
     .catch(() => {
       removeProgress();
-      if (typeof onComplete === 'function') onComplete();
+      onComplete?.();
     });
 }
 
@@ -1348,11 +1348,11 @@ export async function showAnnotation(noteIRI, g, options) {
             }
           }
         } else {
-          if (!_pendingEncryptedAnnotations.some(p => p.noteIRI === noteIRI)) {
-            _pendingEncryptedAnnotations.push({ noteIRI, g, options });
+          if (!pendingEncryptedAnnotations.some(p => p.noteIRI === noteIRI)) {
+            pendingEncryptedAnnotations.push({ noteIRI, g, options });
           }
-          if (_onEncryptionNeeded && !document.getElementById('encryption-unlock')) {
-            _onEncryptionNeeded();
+          if (encryptionNeededHandler && !document.getElementById('encryption-unlock')) {
+            encryptionNeededHandler();
           }
           return;
         }
@@ -1411,11 +1411,11 @@ export async function showAnnotation(noteIRI, g, options) {
         const dec = async v => (v && isJWE(v)) ? decryptWithSession(v) : v;
         [exact, prefix, suffix] = await Promise.all([dec(exact), dec(prefix), dec(suffix)]);
       } else {
-        if (!_pendingEncryptedAnnotations.some(p => p.noteIRI === noteIRI)) {
-          _pendingEncryptedAnnotations.push({ noteIRI, g, options });
+        if (!pendingEncryptedAnnotations.some(p => p.noteIRI === noteIRI)) {
+          pendingEncryptedAnnotations.push({ noteIRI, g, options });
         }
-        if (_onEncryptionNeeded && !document.getElementById('encryption-unlock')) {
-          _onEncryptionNeeded();
+        if (encryptionNeededHandler && !document.getElementById('encryption-unlock')) {
+          encryptionNeededHandler();
         }
         return;
       }

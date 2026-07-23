@@ -969,16 +969,14 @@ export function isEventType(s) {
   return Config.Event.Type.hasOwnProperty(s)
 }
 
-// Reads sec:publicKeyJwk from a parsed WebID profile graph for the given subject IRI.
-// Returns the parsed JWK object, or null if none is present.
 export function getAgentEncryptionPublicKey(g, subjectIRI) {
-  if (!g || !subjectIRI) return null
-  const quads = [...g.match(rdf.namedNode(subjectIRI), Config.ns.sec.publicKeyJwk, null)]
-  if (!quads.length) return null
+  if (!g || !subjectIRI) return null;
+  const quads = [...g.match(rdf.namedNode(subjectIRI), Config.ns.sec.publicKeyJwk, null)];
+  if (!quads.length) return null;
   try {
-    return JSON.parse(quads[0].object.value)
+    return JSON.parse(quads[0].object.value);
   } catch {
-    return null
+    return null;
   }
 }
 
@@ -1542,10 +1540,7 @@ export function getAgentPreferencesFile(s) {
   return d.length ? d : undefined;
 }
 
-// Dereferences a WebID and returns its published public encryption JWKs.
-// Accepts JWK (sec:publicKeyJwk) and Multikey (sec:publicKeyMultibase) verification methods.
-// Rejects the document when it declares a primaryTopic that is not the given WebID
-// (Web-CID authoritativeness check against key substitution).
+// The primaryTopic check guards Web-CID authoritativeness against key substitution
 export function getPublicKeysForWebId(webid) {
   return getResourceGraph(webid).then(({ graph }) => {
     const doc = stripFragmentFromString(webid);
