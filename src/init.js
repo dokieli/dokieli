@@ -535,6 +535,23 @@ export async function initEncryptedDocument() {
     return;
   }
 
+  // Auth restore runs in parallel with init; wait for it so the session state below is settled
+  if (Config.AuthReady) {
+    try { await Config.AuthReady } catch {}
+  }
+
+  if (isUnlocked()) {
+    await decryptArticleInPlace();
+    return;
+  }
+
+  // Without a session or a local keystore there is no way to reach any keys; sign in comes before the passphrase prompt
+  if (!Config.Session?.isActive && !(await hasKeystore())) {
+    const { showUserIdentityInput } = await import('./auth.js');
+    showUserIdentityInput();
+    return;
+  }
+
   const { showEncryptionUnlock } = await import('./dialog.js');
   showEncryptionUnlock();
 }
