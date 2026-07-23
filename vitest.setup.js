@@ -1,5 +1,8 @@
 import { JSDOM } from "jsdom";
 import { vi } from "vitest";
+import { webcrypto } from "node:crypto";
+import { Buffer } from "node:buffer";
+import { TextEncoder as NodeTextEncoder, TextDecoder as NodeTextDecoder } from "node:util";
 import {
   IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFactory, IDBIndex,
   IDBKeyRange, IDBObjectStore, IDBOpenDBRequest, IDBRequest,
@@ -12,6 +15,19 @@ vi.mock("./src/i18n", async () => {
 });
 
 vi.mock("leaflet-gpx", () => ({}));
+
+// jsdom has no SubtleCrypto; jose and src/crypto.js need it
+if (!globalThis.crypto?.subtle) {
+  vi.stubGlobal("crypto", webcrypto);
+}
+
+// The test environment injects another realm's Uint8Array/TextEncoder, breaking jose's instanceof checks
+const NodeUint8Array = Object.getPrototypeOf(Buffer.prototype).constructor;
+if (globalThis.Uint8Array !== NodeUint8Array) {
+  vi.stubGlobal("Uint8Array", NodeUint8Array);
+}
+vi.stubGlobal("TextEncoder", NodeTextEncoder);
+vi.stubGlobal("TextDecoder", NodeTextDecoder);
 
 const htmlContent = `
 <!DOCTYPE html>
