@@ -19,7 +19,7 @@ import rdf from 'rdf-ext';
 import LinkHeader from "http-link-header";
 import { i18n } from './i18n.js';
 import { getButtonHTML, updateButtons, setMenuButtonDisabled } from './ui/buttons.js';
-import { addMessageToLog, buildResourceView, copyRelativeResources, createFeedXML, createImmutableResource, createMutableResource, createNoteDataHTML, getAccessModeOptionsHTML, getBaseURLSelection, getDocument, getFeedFormatSelection, getLanguageOptionsHTML, getLicenseOptionsHTML, getResourceInfo, getSavePayload, isMarkdownTarget, rewriteBaseURL, setCopyToClipboard, setDocumentRelation, showActionMessage, showRobustLinksDecoration, showTimeMap, updateMutableResource, buildReferences, getDocumentConceptDefinitionsHTML, insertDocumentLevelHTML, insertTestCoverageToTable, diffRequirements, removeReferences, getStorageSelfDescription, getContactInformation, getPersistencePolicy, getODRLPolicies, updateResourceInfos, initCurrentStylesheet, setDate, showFragment, initCopyToClipboard, setDocumentURL, getAgentHTML } from './doc.js';
+import { addMessageToLog, buildResourceView, copyRelativeResources, createFeedXML, createImmutableResource, createMutableResource, createNoteDataHTML, encryptArticlePayload, getAccessModeOptionsHTML, getBaseURLSelection, getDocument, getFeedFormatSelection, getLanguageOptionsHTML, getLicenseOptionsHTML, getResourceInfo, getSavePayload, isMarkdownTarget, rewriteBaseURL, setCopyToClipboard, setDocumentRelation, showActionMessage, showRobustLinksDecoration, showTimeMap, updateMutableResource, buildReferences, getDocumentConceptDefinitionsHTML, insertDocumentLevelHTML, insertTestCoverageToTable, diffRequirements, removeReferences, getStorageSelfDescription, getContactInformation, getPersistencePolicy, getODRLPolicies, updateResourceInfos, initCurrentStylesheet, setDate, showFragment, initCopyToClipboard, setDocumentURL, getAgentHTML } from './doc.js';
 import { removeNodesWithIds, createHTML, getFormValues } from './utils/html.js';
 import { createAnnotation } from '@dokieli/web-annotation';
 import { accessModeAllowed, accessModePossiblyAllowed } from './access.js';
@@ -45,7 +45,7 @@ import { generateGeoView } from './geo.js';
 import { csvStringToJson, jsonToHtmlTableString } from './csv.js';
 import { restoreYjsContent, addYjsVersion, getYjsVersions, getYjsVersionsFromIDB, getCurrentVersionKey, onYjsVersionsChanged } from "./editor/editor.js";
 import { rewriteBlobImagesToRelative, uploadBlobAssets, clearBlobAssets, hasUploadTarget, resolveAuthenticatedImages } from "./editor/utils/imageAssets.js";
-import { createKeystore, unlockKeystore, isUnlocked, getSessionKid, hasKeystore, publishPublicKeyToProfile } from './keystore.js';
+import { createKeystore, unlockKeystore, isUnlocked, getSessionKid, hasKeystore, publishPublicKeyToProfile, getAgentEncryptionKey, addDocumentRecipient, agentHasPublishedEncryptionKey } from './keystore.js';
 
 const versionItemCache = new Map();
 let editHistoryAside = null;
@@ -148,6 +148,7 @@ export function showDocumentMenu(e) {
   showViews(tabTools);
   showLanguages(tabSettings);
   showAutoSave(tabSettings);
+  showEncryptionSettings(tabSettings);
   showAboutDokieli(dInfo);
 
   // var body = getDocumentContentNode(document);
@@ -341,6 +342,42 @@ export async function showAutoSave(node) {
   });
 }
 
+// Key setup/unlock and profile publication without having to encrypt a document first, so contacts can find this user as a share recipient
+function showEncryptionSettings(node) {
+  if (document.getElementById('document-encryption')) { return; }
+
+  const html = `
+  <section aria-labelledby="document-encryption-label" id="document-encryption" rel="schema:hasPart" resource="#document-encryption">
+    <h2 data-i18n="menu.encryption.h2" id="document-encryption-label" property="schema:name">${i18n.t('menu.encryption.h2.textContent')}</h2>
+    <p data-i18n="menu.encryption.description">${i18n.t('menu.encryption.description.textContent')}</p>
+    <button class="setup-encryption-keys" data-i18n="menu.encryption.setup-button" title="${i18n.t('menu.encryption.setup-button.title')}" type="button">${i18n.t('menu.encryption.setup-button.textContent')}</button>
+    <span class="response-message"></span>
+  </section>
+  `;
+
+  sanitizeInsertAdjacentHTML(node, 'beforeend', html);
+
+  node.querySelector('#document-encryption button.setup-encryption-keys').addEventListener('click', async (e) => {
+    const section = e.target.closest('#document-encryption');
+    const message = section.querySelector('.response-message');
+
+    if (isUnlocked()) {
+      try {
+        await publishPublicKeyToProfile();
+      }
+      catch (err) {
+        console.warn('dokieli: public key profile publication failed; encryption still works locally', err);
+      }
+      const key = Config.Session?.isActive ? 'menu.encryption.ready.textContent' : 'menu.encryption.ready-signin.textContent';
+      message.setHTMLUnsafe(domSanitize(Icon[".fas.fa-check-circle.fa-fw"] + ' ' + i18n.t(key)));
+      return;
+    }
+
+    const exists = await hasKeystore();
+    exists ? showEncryptionUnlock() : showEncryptionSetup();
+  });
+}
+
 function showDocumentTools(node) {
   if (document.getElementById('document-tools')) { return; }
 
@@ -477,6 +514,9 @@ export function initDocumentDoEvents() {
     const setDocumentEncrypt = (value) => {
       Config.User.Encryption.DocumentEncrypt = value;
       refreshEncryptToggle();
+      if (value) {
+        ensureEncryptedDocumentACL().catch(e => console.warn('dokieli: could not restrict access on encrypted document', e));
+      }
     };
 
     b = e.target.closest('button.encrypt-enable');
@@ -729,7 +769,8 @@ export function showNotifications() {
 export function shareResource(listenerEvent, iri) {
   if (document.querySelector('#share-resource.do.on')) { return; }
 
-  iri = iri || currentLocation();
+  // Config.DocumentURL is the opened document, which differs from the window location for open= resources
+  iri = iri || Config.DocumentURL || currentLocation();
   const documentURL = stripFragmentFromString(iri);
 
   var button = listenerEvent.target.closest('button');
@@ -1053,9 +1094,67 @@ export function shareResource(listenerEvent, iri) {
       }
       sanitizeInsertAdjacentHTML(shareResource, 'beforeend', '<div class="response-message"></div>');
 
-      return sendNotifications(tos, note, iri, shareResource)
+      return shareResourceWithAgents(tos, note, iri, shareResource);
     }
   });
+}
+
+// For encrypted documents: grant Read, re-encrypt to the recipients' published keys, then notify. Contacts without a published encryption key are skipped so they are not announced content they cannot decrypt
+async function shareResourceWithAgents(tos, note, iri, shareResourceNode) {
+  if (!(Config.User.Encryption?.Enabled && Config.User.Encryption?.DocumentEncrypt)) {
+    return sendNotifications(tos, note, iri, shareResourceNode);
+  }
+
+  const documentURL = stripFragmentFromString(iri);
+  const recipients = [];
+
+  for (const to of tos) {
+    const found = await getAgentEncryptionKey(to);
+    if (found) {
+      addDocumentRecipient(to, found.key);
+      recipients.push(to);
+    }
+    else {
+      const toInput = shareResourceNode.querySelector('[value="' + to + '"]');
+      if (toInput) {
+        sanitizeInsertAdjacentHTML(toInput.parentNode, 'beforeend',
+          '<span class="progress" data-to="' + to + '">' + Icon[".fas.fa-times-circle.fa-fw"] + ' ' + i18n.t('dialog.share-resource-encryption-no-key.textContent') + '</span>');
+      }
+    }
+  }
+
+  if (!recipients.length) {
+    const rm = shareResourceNode.querySelector('.response-message');
+    if (rm) {
+      rm.setHTMLUnsafe(domSanitize('<p>' + i18n.t('dialog.share-resource-encryption-no-recipients.textContent') + '</p>'));
+    }
+    return;
+  }
+
+  await ensureEncryptedDocumentACL(documentURL);
+
+  if (accessModeAllowed(documentURL, 'control')) {
+    for (const to of recipients) {
+      try {
+        await updateAuthorization('Share', ns.acl.Read.value, to, 'agent');
+        await getACLResourceGraph(documentURL);
+      }
+      catch (e) {
+        console.warn('dokieli: could not grant read access to ' + to, e);
+      }
+    }
+  }
+  else {
+    const rm = shareResourceNode.querySelector('.response-message');
+    if (rm) {
+      sanitizeInsertAdjacentHTML(rm, 'beforeend', '<p class="warning">' + Icon[".fas.fa-triangle-exclamation"] + ' ' + i18n.t('dialog.share-resource-encryption-no-control.textContent') + '</p>');
+    }
+  }
+
+  // Re-save so the stored JWE gains a wrapped-key entry for each new recipient
+  await updateMutableResource(documentURL);
+
+  return sendNotifications(recipients, note, iri, shareResourceNode);
 }
 
 export function selectContacts(node, url) {
@@ -1107,6 +1206,11 @@ export function updateContactsInfo(url, node, options) {
 export function addShareResourceContactInput(node, agent) {
   var iri = agent?.IRI
   var inbox = agent?.Inbox;
+
+  // An encrypted document can only be shared with agents whose profile publishes an encryption key
+  if (Config.User.Encryption?.Enabled && Config.User.Encryption?.DocumentEncrypt && !agentHasPublishedEncryptionKey(agent?.Graph)) {
+    return;
+  }
 
   if (inbox && inbox.length) {
     var id = encodeURIComponent(iri);
@@ -1166,7 +1270,7 @@ function addAccessSubjectItem(node, s, url) {
 
 function showAccessModeSelection(node, id, accessSubject, subjectType, options) {
   id = id || generateAttributeId('select-access-mode-');
-  const documentURL = currentLocation();
+  const documentURL = Config.DocumentURL || currentLocation();
   let disabled = '';
 
   options = options || {};
@@ -1215,9 +1319,49 @@ function showAccessModeSelection(node, id, accessSubject, subjectType, options) 
   });
 }
 
+// Encrypted documents must not be publicly readable; retract public access and keep the owner in control. ACLs also carry what encryption cannot: write protection and metadata privacy
+export async function ensureEncryptedDocumentACL(documentURL) {
+  documentURL = documentURL || Config.DocumentURL || currentLocation();
+  if (!Config.Session?.isActive || !Config.User?.IRI) return;
+  if (!accessModeAllowed(documentURL, 'control')) return;
+
+  let aclResourceGraph;
+  try {
+    aclResourceGraph = await getACLResourceGraph(documentURL);
+  } catch {
+    return;
+  }
+  const aclInfo = Config.Resource[documentURL]?.acl;
+  if (!aclResourceGraph?.node || !aclInfo?.effectiveACLResource) return;
+
+  const hasOwnACLResource = aclInfo.defaultACLResource == aclInfo.effectiveACLResource;
+  const matchers = hasOwnACLResource ? { 'accessTo': documentURL } : { 'default': aclInfo.effectiveContainer };
+  const authorizations = getAuthorizationsMatching(aclResourceGraph, matchers);
+
+  let ownerHasControl = false;
+  let publicHasAccess = false;
+  Object.values(authorizations).forEach(authorization => {
+    if (authorization.agent.includes(Config.User.IRI) && authorization.mode.includes(ns.acl.Control.value)) {
+      ownerHasControl = true;
+    }
+    if (authorization.agentClass.includes(ns.foaf.Agent.value)) {
+      publicHasAccess = true;
+    }
+  });
+
+  if (!ownerHasControl) {
+    await updateAuthorization('Share', ns.acl.Control.value, Config.User.IRI, 'agent');
+    await getACLResourceGraph(documentURL);
+  }
+  if (publicHasAccess) {
+    await updateAuthorization('Share', '', ns.foaf.Agent.value, 'agentClass');
+    await getACLResourceGraph(documentURL);
+  }
+}
+
 //TODO: Check environment variable for issuerCondition information that's enforced per dokieli instance.
 function updateAuthorization(accessContext, selectedMode, accessSubject, subjectType) {
-  var documentURL = currentLocation();
+  var documentURL = Config.DocumentURL || currentLocation();
 
   const { defaultACLResource, effectiveACLResource, effectiveContainer } = Config.Resource[documentURL].acl;
   const hasOwnACLResource = defaultACLResource == effectiveACLResource;
@@ -3964,6 +4108,9 @@ export async function saveAsDocument(e) {
       const payload = getSavePayload(storageIRI, documentOptions);
       saveData = payload.data;
       saveContentType = payload.contentType;
+    }
+    else if (Config.User.Encryption?.Enabled && Config.User.Encryption?.DocumentEncrypt) {
+      saveData = await encryptArticlePayload(saveData);
     }
 
     Config.Storage.put(storageIRI, saveData, saveContentType, null, { 'progress': progress, 'contentType': saveContentType })
@@ -7402,13 +7549,27 @@ export function showEncryptionSetup(onSuccess) {
       successMsg.setAttribute('data-i18n', 'encryption-setup.success');
       successMsg.textContent = i18n.t('encryption-setup.success.textContent');
       info.appendChild(successMsg);
+
+      const keystoreURL = Config.User.Encryption.KeystoreURL;
+      const locationMsg = document.createElement('p');
+      if (keystoreURL && !Config.User.Encryption.StorageSyncFailed) {
+        locationMsg.setAttribute('data-i18n', 'encryption-setup.saved-at');
+        locationMsg.setHTMLUnsafe(domSanitize(i18n.t('encryption-setup.saved-at.textContent') + ' <a href="' + keystoreURL + '" rel="noopener" target="_blank">' + keystoreURL + '</a>'));
+        info.appendChild(locationMsg);
+      }
+      else if (!keystoreURL) {
+        locationMsg.setAttribute('data-i18n', 'encryption-setup.saved-locally');
+        locationMsg.textContent = i18n.t('encryption-setup.saved-locally.textContent');
+        info.appendChild(locationMsg);
+      }
+
       clearPendingEncryptedQueues();
       onSuccess?.();
-      if (Config.User.Encryption.PodSyncFailed) {
-        // Defer profile publication until the keystore reaches the pod, on a later unlock
+      if (Config.User.Encryption.StorageSyncFailed) {
+        // Defer profile publication until the keystore reaches storage, on a later unlock
         const syncMsg = document.createElement('p');
-        syncMsg.setAttribute('data-i18n', 'encryption-setup.pod-sync-failed');
-        syncMsg.textContent = i18n.t('encryption-setup.pod-sync-failed.textContent');
+        syncMsg.setAttribute('data-i18n', 'encryption-setup.storage-sync-failed');
+        syncMsg.textContent = i18n.t('encryption-setup.storage-sync-failed.textContent');
         info.appendChild(syncMsg);
       }
       else {
