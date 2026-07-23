@@ -233,7 +233,7 @@
                 <div datatype="rdf:HTML" property="schema:description">
                   <dl>
                     <dt>Description</dt>
-                    <dd>Add client-side encryption for all shared content.</dd>
+                    <dd>Add client-side encryption for all shared content. An initial implementation for documents is available (see <a href="#feature-encrypt">Encrypt</a>).</dd>
                     <dt>Planned for</dt>
                     <dd><time>2026-Q2</time>–<time>2026-Q4</time></dd>
                     <dt>Contribute</dt>
@@ -374,6 +374,12 @@
                         </video>
                         <figcaption><a href="https://dokie.li/media/video/dokieli-share.webm">Video</a> (<a href="https://dokie.li/media/images/dokieli-share.jpg" rel="schema:thumbnailUrl">poster</a>) of dokieli Share [<time datatype="xsd:duration" datetime="PT22S" property="schema:duration">22s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
                       </figure>
+                    </dd>
+                    <dt about="#feature-encrypt" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-lock"></i><dfn id="feature-encrypt">Encrypt</dfn></dt>
+                    <dd about="#feature-encrypt" datatype="rdf:HTML" property="skos:definition">
+                      <p>An article can be <em>encrypted</em> end-to-end so that only the author and the contacts it is shared with can read it. The article's content and title are encrypted in the browser before saving, so the server storing the document never sees the readable content. The document's metadata, for example its authors, identifiers, and license, remains readable so that the document can still be discovered and identified.</p>
+                      <p>To use encryption, the user sets up an encryption key protected by a passphrase, either from the <em>Encryption</em> section in the menu's settings or when first turning on <em>Encrypt document</em>. The key is saved encrypted in the user's <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a>, and the public part is published in their <a href="#feature-webid" rel="rdfs:seeAlso">WebID</a> profile, which is how others can encrypt documents for them. The passphrase is required once per session to unlock the key, and there is no recovery if it is forgotten.</p>
+                      <p>When an encrypted article is <a href="#feature-share" rel="rdfs:seeAlso">shared</a>, dokieli encrypts the document to each recipient's published key, grants them permission to read the document, and sends a <a href="#feature-notifications" rel="rdfs:seeAlso">notification</a>. Only contacts that have published an encryption key in their profile can be selected, and the notification carries no key material. A recipient opening the document <a href="#feature-sign-in" rel="rdfs:seeAlso">signs in</a>, unlocks their own key with their passphrase, and the article is decrypted in place.</p>
                     </dd>
                     <dt about="#feature-reply" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-reply"></i><dfn id="feature-reply">Reply</dfn></dt>
                     <dd about="#feature-reply" property="skos:definition">An article can be replied with a note and have its own <a href="#feature-language" rel="rdfs:seeAlso">language</a> and <a href="#feature-license" rel="rdfs:seeAlso">license</a>. The user can specify where they want to save their reply by <a href="#feature-browser" rel="rdfs:seeAlso">browsing</a> to a location in a <a href="#personal-storage" rel="rdfs:seeAlso">personal storage</a> or an <a href="#annotation-service" rel="rdfs:seeAlso">annotation service</a>.</dd>
