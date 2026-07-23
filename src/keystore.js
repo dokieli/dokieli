@@ -171,49 +171,38 @@ async function ensureKeyContainer() {
 async function setKeystoreContainerACL(containerURL) {
   const [aclURL] = await getLinkRelationFromHead('acl', containerURL);
   const user = Config.User.IRI;
-  const data = `@prefix acl: <http://www.w3.org/ns/auth/acl#> .
-@prefix foaf: <http://xmlns.com/foaf/0.1/> .
-
-<#owner>
+  const insert = `<#owner>
   a acl:Authorization ;
   acl:accessTo <${containerURL}> ;
   acl:agent <${user}> ;
   acl:mode acl:Read, acl:Append, acl:Control ;
   acl:condition <#anyClient> .
-
 <#keys>
   a acl:Authorization ;
   acl:default <${containerURL}> ;
   acl:agent <${user}> ;
   acl:mode acl:Read, acl:Write ;
   acl:condition <#anyClient> .
-
 <#anyClient>
   a acl:ClientCondition ;
-  acl:clientClass foaf:Agent .
-`;
-  return putResource(aclURL, data, 'text/turtle; charset=utf-8');
+  acl:clientClass foaf:Agent .`;
+  return patchResourceWithAcceptPatch(aclURL, [{ insert }]);
 }
 
 // No acl:Write: the key resource cannot be modified or deleted without first changing this ACL via Control
 async function setKeyResourceACL(resourceURL) {
   const [aclURL] = await getLinkRelationFromHead('acl', resourceURL);
   const user = Config.User.IRI;
-  const data = `@prefix acl: <http://www.w3.org/ns/auth/acl#> .
-@prefix foaf: <http://xmlns.com/foaf/0.1/> .
-
-<#owner>
+  const insert = `<#owner>
   a acl:Authorization ;
   acl:accessTo <${resourceURL}> ;
   acl:agent <${user}> ;
   acl:mode acl:Read, acl:Control ;
   acl:condition <#anyClient> .
-
 <#anyClient>
   a acl:ClientCondition ;
-  acl:clientClass foaf:Agent .
-`;
-  return putResource(aclURL, data, 'text/turtle; charset=utf-8');
+  acl:clientClass foaf:Agent .`;
+  return patchResourceWithAcceptPatch(aclURL, [{ insert }]);
 }
 
 //XXX: mirrors registerAnnotationInTypeIndex in activity.js; share a helper once the import cycle is untangled
