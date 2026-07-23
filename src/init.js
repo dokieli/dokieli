@@ -545,15 +545,18 @@ export async function initEncryptedDocument() {
     return;
   }
 
+  const keystoreExists = await hasKeystore();
+
   // Without a session or a local keystore there is no way to reach any keys; sign in comes before the passphrase prompt
-  if (!Config.Session?.isActive && !(await hasKeystore())) {
+  if (!keystoreExists && !Config.Session?.isActive) {
     const { showUserIdentityInput } = await import('./auth.js');
     showUserIdentityInput();
     return;
   }
 
-  const { showEncryptionUnlock } = await import('./dialog.js');
-  showEncryptionUnlock();
+  // Only prompt for a passphrase when there are keys to unlock; otherwise offer setup
+  const { showEncryptionUnlock, showEncryptionSetup } = await import('./dialog.js');
+  keystoreExists ? showEncryptionUnlock() : showEncryptionSetup();
 }
 
 export async function decryptArticleInPlace() {
