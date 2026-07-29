@@ -39,7 +39,7 @@
           </dl>
           <dl id="document-modified">
             <dt>Modified</dt>
-            <dd><time content="2026-07-24T00:00:00Z" datatype="xsd:dateTime" datetime="2026-07-24T00:00:00Z" property="schema:dateModified">2026-07-24</time></dd>
+            <dd><time content="2026-07-29T00:00:00Z" datatype="xsd:dateTime" datetime="2026-07-29T00:00:00Z" property="schema:dateModified">2026-07-29</time></dd>
           </dl>
           <dl id="document-type">
             <dt>Document Type</dt>
@@ -731,13 +731,13 @@
               </section>
             </div>
           </section>
-          <section id="privacy-policy" inlist="" rel="schema:hasPart" resource="#privacy-policy">
+          <section id="privacy-policy" inlist="" rel="schema:hasPart" resource="#privacy-policy" typeof="odrl:Policy">
             <h2 property="schema:name">Privacy Policy</h2>
             <div datatype="rdf:HTML" property="schema:description">
               <section id="application-privacy" inlist="" rel="schema:hasPart" resource="#application-privacy">
                 <h3 property="schema:name">Application Privacy</h3>
                 <div datatype="rdf:HTML" property="schema:description">
-                  <p>dokieli is a client side application, and can be hosted from any web server. It does not collect, transmit, or store any data about its users on remote servers. No analytics, telemetry, or tracking is built into the application. All content produced using dokieli is directed entirely by the user to destinations of the user's own choosing.</p>
+                  <p>dokieli is a client side application, and can be hosted from any web server. It does not collect, transmit, or store any data about its users on remote servers, and it does not <span about="#privacy-policy" rel="odrl:prohibition" typeof="odrl:Prohibition"><span rel="odrl:action" resource="odrl:sell">sell</span> or <span rel="odrl:action" resource="odrl:distribute">distribute</span></span> data it processes. No analytics, telemetry, or tracking is built into the application. All content produced using dokieli is directed entirely by the user to destinations of the user's own choosing.</p>
                 </div>
               </section>
               <section id="cookies" inlist="" rel="schema:hasPart" resource="#cookies">
@@ -761,7 +761,7 @@
               <section id="privacy-local-storage" inlist="" rel="schema:hasPart" resource="#privacy-local-storage">
                 <h3 property="schema:name">Local storage</h3>
                 <div datatype="rdf:HTML" property="schema:description">
-                  <p>dokieli uses the browser's <a href="https://html.spec.whatwg.org/multipage/webstorage.html#webstorage">local storage</a> for autosave and offline access. When signed in, a refresh token is also stored to keep the session active without requiring repeated sign-ins. On a shared device, content and credentials held in local storage may be visible to others using the same browser profile. Signing out clears authentication credentials and session data, including any stored tokens, from local storage. In private or guest browsing mode, local storage is cleared automatically when the session ends. Users on shared devices should sign out when finished, or use private browsing mode, to ensure any remaining content is also removed. A UI language preference may be retained in browser storage between sessions as a convenience. It contains no identifying information and is not linked to any account or profile.</p>
+                  <p>dokieli uses the browser's <a href="https://html.spec.whatwg.org/multipage/webstorage.html#webstorage">local storage</a> for autosave and offline access. When signed in, a refresh token is also stored to keep the session active without requiring repeated sign-ins. On a shared device, content and credentials held in local storage may be visible to others using the same browser profile. Signing out <span about="#privacy-policy" rel="odrl:obligation" typeof="odrl:Duty"><span rel="odrl:action" resource="odrl:delete">clears</span></span> authentication credentials and session data, including any stored tokens, from local storage. In private or guest browsing mode, local storage is cleared automatically when the session ends. Users on shared devices should sign out when finished, or use private browsing mode, to ensure any remaining content is also removed. A UI language preference may be retained in browser storage between sessions as a convenience. It contains no identifying information and is not linked to any account or profile.</p>
                 </div>
               </section>
               <section id="privacy-service-worker" inlist="" rel="schema:hasPart" resource="#service-worker">

@@ -145,14 +145,12 @@ export async function showUserSigninSignout (node) {
 }
 
 export async function signOut() {
-  //TODO: Use the specific method that the user was signed in with
+  // Auth methods aren't mutually exclusive, so run every method's cleanup on sign-out. Each path is idempotent.
   if (Config['Session']?.isActive) {
     await Config['Session']?.logout();
   }
-  else {
-    await signOutGitForge();
-  }
 
+  await signOutGitForge();
   await signOutHttp();
 
   removeDeviceStorageAsSignOut();

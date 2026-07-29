@@ -22,6 +22,11 @@ export function uniqueArray(a) {
   return Array.from(new Set(a));
 }
 
+// Signed in by any method, not only a Solid-OIDC session. Use for "is authenticated" checks (e.g. private vs public TypeIndex).
+export function isUserAuthenticated() {
+  return !!(Config['Session']?.isActive || Config.User?.IRI);
+}
+
 export function getDateTimeISO() {
   var date = new Date();
   return date.toISOString();

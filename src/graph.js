@@ -20,7 +20,7 @@ import { RdfaParser } from "rdfa-streaming-parser";
 import { Readable } from "readable-stream";
 import Config from './config.js'
 import { stripFragmentFromString, getBaseURL, getPathURL, getAbsoluteIRI, getParentURLPath, currentLocation, getMediaTypeURIs, isUrl } from './uri.js'
-import { escapeRegExp, scoreMatch, uniqueArray } from './util.js'
+import { escapeRegExp, scoreMatch, uniqueArray, isUserAuthenticated } from './util.js'
 import { domSanitize, safeObjectAssign, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeIRIOrBNode, sanitizeIRIs, sanitizeObject } from './utils/sanitization.js'
 import { parseMarkdown } from "./utils/html.js";
 import { getResource, setAcceptRDFTypes } from './fetcher.js'
@@ -1320,7 +1320,7 @@ export function getAgentTypeIndex(s) {
     }
   }
 
-  if (privateTypeIndex?.length && Config['Session']?.isActive) {
+  if (privateTypeIndex?.length && isUserAuthenticated()) {
     for (const iri of privateTypeIndex) {
       promises.push(fetchTypeRegistration(iri, ns.solid.privateTypeIndex.value));
     }

@@ -172,7 +172,7 @@ function initLanguageHandler() {
     const lang = select.value;
     if (!lang) return;
 
-    await WebExtension.storage.sync.set({ 'DO.Config.UI.Language': lang });
+    await WebExtension.storage.local.set({ 'DO.Config.UI.Language': lang });
 
     await new Promise(resolve => i18next.changeLanguage(lang, () => resolve()));
     initButtons();
@@ -212,7 +212,7 @@ function initMenuActions() {
 async function init() {
   await i18nextInit();
 
-  const stored = await WebExtension.storage.sync.get('DO.Config.UI.Language');
+  const stored = await WebExtension.storage.local.get('DO.Config.UI.Language');
   const persistedLang = stored?.['DO.Config.UI.Language'];
   if (persistedLang) {
     await new Promise(resolve => i18next.changeLanguage(persistedLang, () => resolve()));

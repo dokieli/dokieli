@@ -16,7 +16,7 @@ limitations under the License.
 */
 
 import rdf from 'rdf-ext';
-import { createActivityHTML, createActivityJSONLD, showCitations, getReferenceLabel, createNoteDataHTML, handleDeleteNote } from './doc.js';
+import { createActivityHTML, createActivityJSONLD, showCitations, getReferenceLabel, createNoteDataHTML, handleDeleteNote, getItemVisibility } from './doc.js';
 import { applyMarksFromTextQuote, applyMarkFromSelector } from '@dokieli/web-annotation';
 import { createHTML } from './utils/html.js';
 import { Icon } from './ui/icons.js'
@@ -25,7 +25,7 @@ import { getAbsoluteIRI, getPathURL, isHttpOrHttpsProtocol, stripFragmentFromStr
 import { getLinkRelation, serializeDataToPreferredContentType, getGraphLanguage, getGraphLicense, getGraphRights, getGraphTypes, getGraphDate, getGraphImage, getResourceGraph, getResourceOnlyRDF, getAgentTypeIndex, getUserContacts, getAgentName, getSubjectInfo, getItemsList, parseAnnotationFromGraph } from './graph.js';
 import Config from './config.js';
 import { domSanitize, sanitizeInsertAdjacentHTML } from './utils/sanitization.js';
-import { generateAttributeId, uniqueArray, findPreviousDateTime } from './util.js';
+import { generateAttributeId, uniqueArray, findPreviousDateTime, isUserAuthenticated } from './util.js';
 import { fragmentFromString, getDocumentContentNode, selectArticleNode } from "./utils/html.js";
 import { getTextContentExcludingSups } from './editor/utils/annotation.js';
 import { i18n } from './i18n.js';
@@ -187,7 +187,10 @@ export async function addNoteToNotifications(noteData) {
 
   var datetime = noteData.datetime ? noteData.datetime : '1900-01-01T00:00:00.000Z';
 
-  var li = domSanitize('<li data-datetime="' + datetime + '"><blockquote cite="' + noteDataIRI + '">'+ note + '</blockquote></li>');
+  // Mark items so the UI can distinguish visibility: authoritative when discovery passed it (public/private TypeIndex), else derived from the item's container; undefined (no class) when unknown.
+  var visibility = noteData.visibility || getItemVisibility(noteDataIRI);
+  var liClass = visibility ? ' class="' + visibility + '-item"' : '';
+  var li = domSanitize('<li' + liClass + ' data-datetime="' + datetime + '"><blockquote cite="' + noteDataIRI + '">'+ note + '</blockquote></li>');
 // console.log(li);
   var aside = document.getElementById('document-notifications');
 
@@ -362,8 +365,8 @@ export function registerAnnotationInTypeIndex(containerIRI, forClass) {
   const privateTypeIndexIRIs = Config.User.PrivateTypeIndex;
   const publicTypeIndexIRIs = Config.User.PublicTypeIndex;
 
-  // Prefer private TypeIndex when session is active, fall back to public
-  const usePrivate = privateTypeIndexIRIs?.length && Config['Session']?.isActive;
+  // Use the private TypeIndex when one exists and the user is authenticated (any method, not only a Solid-OIDC session); else public.
+  const usePrivate = privateTypeIndexIRIs?.length && isUserAuthenticated();
   const typeIndexIRI = usePrivate ? privateTypeIndexIRIs[0] : publicTypeIndexIRIs?.[0];
   if (!typeIndexIRI) return Promise.resolve();
 
@@ -718,6 +721,7 @@ function showActivitiesUncached(url, options = {}) {
                   noteData['datetime'] = datetime;
                 }
 
+                noteData['visibility'] = options.visibility;
                 return addNoteToNotifications(noteData);
               }
             }
@@ -916,6 +920,7 @@ function showActivitiesUncached(url, options = {}) {
               noteData['rights'] = rights;
             }
 
+            noteData['visibility'] = options.visibility;
             return addNoteToNotifications(noteData);
           }
           else {
@@ -1055,29 +1060,32 @@ export function processAgentTypeIndex(agent) {
   var promises = [];
   var documentTypes = Config.ActivitiesObjectTypes.concat(Object.keys(Config.ResourceType));
 
-  var publicTypeIndexes = agent.TypeIndex[ns.solid.publicTypeIndex.value] || {};
-  var privateTypeIndexes = agent.TypeIndex[ns.solid.privateTypeIndex.value] || {};
-  //XXX: Perhaps these shouldn't be merged and kept apart or have the UI clarify what's public/private, and additional engagements keep that context
-  var typeIndexes = Object.assign({}, publicTypeIndexes, privateTypeIndexes);
+  // Keep public and private registrations apart so each item's visibility is carried through discovery (see addNoteToNotifications / the *-item marker) instead of lost in a merge.
+  var registries = [
+    ['public', agent.TypeIndex[ns.solid.publicTypeIndex.value] || {}],
+    ['private', agent.TypeIndex[ns.solid.privateTypeIndex.value] || {}]
+  ];
 
   var recognisedTypes = [];
 
-  Object.values(typeIndexes).forEach(typeRegistration => {
-    var forClass = typeRegistration[ns.solid.forClass.value];
-    var instance = typeRegistration[ns.solid.instance.value];
-    var instanceContainer = typeRegistration[ns.solid.instanceContainer.value];
+  registries.forEach(([visibility, registrations]) => {
+    Object.values(registrations).forEach(typeRegistration => {
+      var forClass = typeRegistration[ns.solid.forClass.value];
+      var instance = typeRegistration[ns.solid.instance.value];
+      var instanceContainer = typeRegistration[ns.solid.instanceContainer.value];
 
-    if (documentTypes.includes(forClass)) {
-      recognisedTypes.push(forClass);
+      if (documentTypes.includes(forClass)) {
+        recognisedTypes.push(forClass);
 
-      if (instance) {
-        promises.push(showActivities(instance, { excludeMarkup: true, agent: agent.IRI }));
+        if (instance) {
+          promises.push(showActivities(instance, { excludeMarkup: true, agent: agent.IRI, visibility }));
+        }
+
+        if (instanceContainer) {
+          promises.push(showActivitiesSources(instanceContainer, { activityType: 'instanceContainer', agent: agent.IRI, visibility }));
+        }
       }
-
-      if (instanceContainer) {
-        promises.push(showActivitiesSources(instanceContainer, { activityType: 'instanceContainer', agent: agent.IRI }));
-      }
-    }
+    });
   });
 
   //       TODO: Need proper filtering of storage/outbox matching an object of interest

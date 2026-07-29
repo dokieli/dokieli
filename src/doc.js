@@ -2795,6 +2795,24 @@ export function getAnnotationInboxLocationHTML(action) {
 // resolved for the given action's activity type. Checks the private TypeIndex first
 // (registerAnnotationInTypeIndex prefers it), then public. Returns undefined when no
 // matching registration with an instanceContainer exists.
+// 'private' or 'public' when iri's container is registered in the corresponding TypeIndex, else undefined (e.g. inbox-sourced or another agent's resource).
+export function getItemVisibility(iri) {
+  const typeIndex = Config.User.TypeIndex;
+  if (!iri || !typeIndex) return undefined;
+  const registries = [
+    ['private', typeIndex[ns.solid.privateTypeIndex.value]],
+    ['public', typeIndex[ns.solid.publicTypeIndex.value]]
+  ];
+  for (const [visibility, registrations] of registries) {
+    if (!registrations) continue;
+    for (const ti of Object.values(registrations)) {
+      const container = ti[ns.solid.instanceContainer.value];
+      if (container && iri.startsWith(container)) return visibility;
+    }
+  }
+  return undefined;
+}
+
 export function getRegisteredAnnotationContainer(action) {
   const typeIndex = Config.User.TypeIndex;
   const activityIndex = Config.ActionActivityIndex[action];

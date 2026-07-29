@@ -212,7 +212,7 @@ export function removeDeviceStorageItem(key) {
   if (Config.WebExtensionEnabled) {
     var browser = (typeof browser !== 'undefined') ? browser : chrome;
 
-    return browser.storage.sync.remove(key);
+    return browser.storage.local.remove(key);
   }
   else {
     return del(key);
@@ -265,11 +265,11 @@ export function getDeviceStorageItem(key) {
 
   if (Config.WebExtensionEnabled) {
     if (typeof browser !== 'undefined') {
-      return browser.storage.sync.get(key).then(o => { return o[key]; });
+      return browser.storage.local.get(key).then(o => { return o[key]; });
     }
     else {
       var value = {};
-      chrome.storage.sync.get(key, o => { value = o[key]; })
+      chrome.storage.local.get(key, o => { value = o[key]; })
 
        
       return new Promise((resolve, reject) => {
@@ -334,10 +334,10 @@ export function updateDeviceStorageProfile(User) {
 
   if (Config.WebExtensionEnabled) {
     if (typeof browser !== 'undefined') {
-      return browser.storage.sync.set({ [key]: object });
+      return browser.storage.local.set({ [key]: object });
     }
     else {
-      return Promise.resolve(chrome.storage.sync.set({ [key]: object }));
+      return Promise.resolve(chrome.storage.local.set({ [key]: object }));
     }
   }
   else {
