@@ -50,13 +50,13 @@ export function jsonToHtmlTableString(csvTables, metadata = {}) {
 
   if (metadata?.tables) {
     const orderMap = metadata.tables.reduce((acc, table, index) => {
-      acc[table['url']] = index;
+      acc[resolveUrl(table['url'], metadataUrl)] = index;
       return acc;
     }, {});
-  
+
     csvTables = csvTables.sort((a, b) => {
-      const ai = orderMap[a.url] ?? Number.MAX_SAFE_INTEGER;
-      const bi = orderMap[b.url] ?? Number.MAX_SAFE_INTEGER;
+      const ai = orderMap[resolveUrl(a.url, metadataUrl)] ?? Number.MAX_SAFE_INTEGER;
+      const bi = orderMap[resolveUrl(b.url, metadataUrl)] ?? Number.MAX_SAFE_INTEGER;
       return ai - bi;
     });
   }
@@ -72,7 +72,7 @@ export function jsonToHtmlTableString(csvTables, metadata = {}) {
   csvTables.forEach((obj) => {
     let tableMetadata;
     if (metadata?.tables) {
-      tableMetadata = tables.find((table) => table.url == obj.url);
+      tableMetadata = tables.find((table) => resolveUrl(table.url, metadataUrl) == resolveUrl(obj.url, metadataUrl));
     }
     else {
       tableMetadata = metadata;
@@ -128,7 +128,11 @@ export function jsonToHtmlTableString(csvTables, metadata = {}) {
   
     tableHTML += `<thead><tr>`;
     headers.forEach(header => {
-      tableHTML += `<th>${header}</th>`;
+      const columnMetadata = metadataColumns?.find(col => col.name === header);
+      let title = columnMetadata?.titles ?? header;
+      title = Array.isArray(title) ? title[0] : title;
+      title = isPlainObject(title) ? title['@value'] : title;
+      tableHTML += `<th>${title}</th>`;
     });
     tableHTML += `</tr></thead>`;
 
@@ -364,6 +368,16 @@ function generateProvenance (csvUrl, metadataUrl, activityGeneratedBy, activityS
     </dl>
   `
   return provenanceHTML;
+}
+
+// Resolve a (possibly relative) metadata table URL against the metadata document URL.
+function resolveUrl(url, base) {
+  if (!url) return url;
+  try {
+    return new URL(url, base || undefined).href;
+  } catch {
+    return url;
+  }
 }
 
 function getValueByHeader(row, headers, headerName) {
