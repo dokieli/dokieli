@@ -24,7 +24,7 @@ import { setWebExtensionURL } from './util.js';
 import { getDeviceStorageItem } from './storage.js';
 const GIT_FORGE_HOSTS_KEY = 'DO.Config.GitForge.hosts';
 const HTTP_ORIGINS_KEY = 'DO.Config.Http.origins';
-import { syncLocalRemoteResource, monitorNetworkStatus } from './sync.js';
+import { syncLocalRemoteResource, monitorNetworkStatus, showResourceReviewChanges } from './sync.js';
 import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeObject } from './utils/sanitization.js';
 import { afterSetUserInfo, setUserInfo, processLoginInvocation } from './auth.js';
 import { showNotificationSources, registerEncryptionUnlockHandler } from './activity.js';
@@ -210,7 +210,7 @@ async function initSyncLocalRemoteResource() {
 }
 
 export function setDocumentModeParams() {
-  const params = ['author', 'graph', 'graph-view', 'login', 'open', 'output', 'social', 'style', 'template'];
+  const params = ['author', 'diff', 'graph', 'graph-view', 'login', 'open', 'output', 'social', 'style', 'template'];
   Config['DocumentModes'] =  {};
   params.forEach((p) => Config['DocumentModes'][p] = getUrlParams(p));
 }
@@ -227,6 +227,7 @@ export async function initDocumentMode(mode) {
 
   const paramLogin = Config['DocumentModes']['login'];
   const paramAuthor = Config['DocumentModes']['author'];
+  const paramDiff = Config['DocumentModes']['diff'];
   const paramGraph = Config['DocumentModes']['graph'];
   const paramGraphView = Config['DocumentModes']['graph-view'];
   const paramOpen = Config['DocumentModes']['open'];
@@ -311,6 +312,60 @@ export async function initDocumentMode(mode) {
     }
 
     // stripUrlSearchHash();
+  }
+
+  if (paramDiff.length > 1) {
+    // Access-controlled resources need the restored session; auth runs in parallel with init
+    if (Config.AuthReady) {
+      try { await Config.AuthReady } catch {}
+    }
+
+    const diffResources = paramDiff.slice(0, 2).map((url) => domSanitize(sanitizeIRI(url)));
+    const anchors = diffResources.map((url) => `<a href="${url}" rel="noopener" target="_blank">${url}</a>`);
+
+    const messageObject = {
+      'content': `Comparing ${anchors[0]} with ${anchors[1]}`,
+      'type': 'info',
+      'timer': 3000
+    }
+
+    addMessageToLog(messageObject, Config.MessageLog);
+    showActionMessage(document.body, messageObject);
+
+    try {
+      const [fromContent, toContent] = await Promise.all(
+        diffResources.map((url) => Config.Storage.get(url, { 'Accept': 'text/html' }).then((response) => {
+          if (response.ok === false) {
+            throw new Error(`Failed to fetch ${url} (${response.status})`);
+          }
+          return response.text();
+        }))
+      );
+
+      const shown = showResourceReviewChanges(toContent, fromContent, null, {
+        mode: 'diff-resources',
+        message: `Comparing ${anchors[0]} with ${anchors[1]}`
+      });
+
+      if (!shown) {
+        const noDiffMessage = {
+          'content': `No differences found between ${anchors[0]} and ${anchors[1]}`,
+          'type': 'info',
+          'timer': 5000
+        }
+        addMessageToLog(noDiffMessage, Config.MessageLog);
+        showActionMessage(document.body, noDiffMessage);
+      }
+    } catch (e) {
+      console.warn('dokieli: could not compare resources', diffResources, e);
+      const errorMessage = {
+        'content': `Unable to compare ${anchors[0]} with ${anchors[1]}`,
+        'type': 'error',
+        'timer': 5000
+      }
+      addMessageToLog(errorMessage, Config.MessageLog);
+      showActionMessage(document.body, errorMessage);
+    }
   }
 
   if (paramGraphView.length && paramGraphView[0].toLowerCase() == 'true' && paramOpen.length == 0) {

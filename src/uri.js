@@ -48,7 +48,7 @@ export function currentLocation(options = {}) {
   }
 
   // Default params to remove
-  const defaultParams = ['author', 'social', 'graph', 'graph-view', 'open', 'style'];
+  const defaultParams = ['author', 'social', 'diff', 'graph', 'graph-view', 'open', 'style'];
 
   // Use provided keys or fallback to default
   const keysToRemove = options.removeParams || defaultParams;

@@ -363,6 +363,45 @@
                   <dd><a href="https://dokie.li/docs#annotation" rel="dcterms:subject">Annotation</a></dd>
                 </dl>
               </dd>
+              <dt about="#capability-compare" property="dcterms:title">Compare</dt>
+              <dd id="capability-compare" resource="#capability-compare" typeof="ac:Capability">
+                <dl>
+                  <dt>Accept</dt>
+                  <dd>
+                    <ul>
+                      <li property="ac:accept" lang="" xml:lang=""><code>application/xhtml+xml</code></li>
+                      <li property="ac:accept" lang="" xml:lang=""><code>text/html</code></li>
+                    </ul>
+                  </dd>
+                  <dt>Action</dt>
+                  <dd><a href="http://www.w3.org/ns/odrl/2/display" rel="ac:action">display</a></dd>
+                  <dt>Invocation</dt>
+                  <dd>
+                    <dl id="invoke-diff" rel="ac:invocation" resource="#invoke-diff" typeof="ac:UriTemplateInvocation">
+                      <dt>Template</dt>
+                      <dd><code property="ac:template" lang="" xml:lang="">#diff={diff}&amp;diff={diff}</code></dd>
+                      <dt>Mapping</dt>
+                      <dd>
+                        <dl id="mapping-diff" rel="ac:mapping" resource="#mapping-diff">
+                          <dt>Variable</dt>
+                          <dd property="ac:variable" lang="" xml:lang=""><code>diff</code></dd>
+                          <dt>Property</dt>
+                          <dd rel="ac:property">
+                            <dl id="property-diff" resource="#property-diff" typeof="rdf:Property">
+                              <dt>Label</dt>
+                              <dd property="rdfs:label">diff</dd>
+                              <dt>Definition</dt>
+                              <dd property="rdfs:comment">The IRI of a resource to compare. The parameter is repeated: the first value is the original version and the second value is the changed version. dokieli fetches both resources and displays their differences.</dd>
+                            </dl>
+                          </dd>
+                        </dl>
+                      </dd>
+                    </dl>
+                  </dd>
+                  <dt>Subject</dt>
+                  <dd><a href="https://dokie.li/docs#feature-review-changes" rel="dcterms:subject">Review Changes</a></dd>
+                </dl>
+              </dd>
               <dt about="#capability-delete" property="dcterms:title">Delete</dt>
               <dd id="capability-delete" resource="#capability-delete" typeof="ac:Capability">
                 <dl>

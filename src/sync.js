@@ -484,6 +484,7 @@ export function showResourceReviewChanges(localContent, remoteContent, response,
   if (!localContent.length || !remoteContent.length) return;
 
   const isVersionPreview = reviewOptions?.mode === 'edit-history-preview';
+  const isResourceDiff = reviewOptions?.mode === 'diff-resources';
 
   var tmplLocal = document.implementation.createHTMLDocument('template');
   tmplLocal.documentElement.setHTMLUnsafe(localContent);
@@ -518,15 +519,22 @@ export function showResourceReviewChanges(localContent, remoteContent, response,
     message = `<p>${reviewOptions?.message}</p>`;
   }
 
-  const panelTitle = isVersionPreview
-    ? `${i18n.t('dialog.edit-history-preview.h2.textContent')}`
-    : `${i18n.t('dialog.review-changes.h2.textContent')} ${Config.Button.Info.ReviewChanges}`;
+  let panelTitle = `${i18n.t('dialog.review-changes.h2.textContent')} ${Config.Button.Info.ReviewChanges}`;
+  let panelTitleI18n = 'dialog.review-changes.h2';
+  let buttonCloseKey = 'dialog.review-changes.close.button';
 
-  const panelTitleI18n = isVersionPreview ? 'dialog.edit-history-preview.h2' : 'dialog.review-changes.h2';
+  if (isVersionPreview) {
+    panelTitle = `${i18n.t('dialog.edit-history-preview.h2.textContent')}`;
+    panelTitleI18n = 'dialog.edit-history-preview.h2';
+    buttonCloseKey = 'dialog.edit-history-preview.close.button';
+  }
+  else if (isResourceDiff) {
+    panelTitle = `${i18n.t('dialog.diff-resources.h2.textContent')}`;
+    panelTitleI18n = 'dialog.diff-resources.h2';
+    buttonCloseKey = 'dialog.diff-resources.close.button';
+  }
 
-  var buttonClose = isVersionPreview
-    ? getButtonHTML({ key: 'dialog.edit-history-preview.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' })
-    : getButtonHTML({ key: 'dialog.review-changes.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
+  var buttonClose = getButtonHTML({ key: buttonCloseKey, button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
   document.body.appendChild(fragmentFromString(`
     <aside aria-labelledby="review-changes-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="review-changes" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#review-changes" xml:lang="${Config.User.UI.Language}">
@@ -544,12 +552,19 @@ export function showResourceReviewChanges(localContent, remoteContent, response,
     if (part.added) { eName = 'ins'; insCounter++; }
     else if (part.removed) { eName = 'del'; delCounter++; }
 
-    const val = part.value.join('');
-    if (eName) {
-      diffHTML.push(`<${eName}>${val}</${eName}>`);
-    } else {
-      diffHTML.push(val);
+    if (!eName) {
+      diffHTML.push(part.value.join(''));
+      return;
     }
+
+    // Only wrap text tokens; tag tokens inside ins/del break the markup on reparse
+    part.value.forEach(token => {
+      if (token.startsWith('<') || !token.trim().length) {
+        if (part.added) diffHTML.push(token);
+      } else {
+        diffHTML.push(`<${eName}>${token}</${eName}>`);
+      }
+    });
   });
 
   let detailsInsDel = `
@@ -589,6 +604,10 @@ export function showResourceReviewChanges(localContent, remoteContent, response,
       <div class="do-diff" dir="auto">${diffHTML.join('')}</div>
       <button class="version-restore" data-i18n="dialog.edit-history-preview.restore.button" title="${i18n.t('dialog.edit-history-preview.restore.button.title')}" type="button">${i18n.t('dialog.edit-history-preview.restore.button.textContent')}</button>
     `);
+  } else if (isResourceDiff) {
+    sanitizeInsertAdjacentHTML(node, 'beforeend', `
+      <div class="do-diff" dir="auto">${diffHTML.join('')}</div>
+    `);
   } else {
     sanitizeInsertAdjacentHTML(node, 'beforeend', `
       <div class="do-diff" dir="auto">${diffHTML.join('')}</div>
@@ -607,10 +626,14 @@ export function showResourceReviewChanges(localContent, remoteContent, response,
 
     if (button) {
       if (button.classList.contains('close')) {
-        if (!isVersionPreview) Config.Editor['review'] = false;
+        if (!isVersionPreview && !isResourceDiff) Config.Editor['review'] = false;
         return;
       }
       if (button.classList.contains('info')) {
+        return;
+      }
+
+      if (isResourceDiff) {
         return;
       }
 
@@ -664,6 +687,8 @@ export function showResourceReviewChanges(localContent, remoteContent, response,
       node.remove();
     }
   });
+
+  return true;
 }
 
 export function monitorNetworkStatus() {
