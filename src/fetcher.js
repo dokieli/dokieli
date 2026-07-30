@@ -681,6 +681,11 @@ function processSave(url, slug, data, options) {
                 ? postResource(url, slug, data)
                 : putResource(url, data)
 
+  return finalizeSave(request, url)
+}
+
+// Shared with backends that issue their own save request.
+function finalizeSave(request, url) {
   return request
     .then(response => {
       var location = response.headers.get('Location') || url;
@@ -762,6 +767,7 @@ export {
   putResource,
   putResourceACL,
   processSave,
+  finalizeSave,
   patchResourceWithAcceptPatch,
   putResourceWithAcceptPut,
   getN3PrefixesString,

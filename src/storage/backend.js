@@ -28,6 +28,7 @@ import {
   copyResource,
   getMultipleResources,
   processSave as fetcherProcessSave,
+  finalizeSave as fetcherFinalizeSave,
   patchResourceWithAcceptPatch,
   putResourceWithAcceptPut,
   getAcceptPostPreference,
@@ -270,6 +271,17 @@ class HttpStorage extends StorageBackend {
     options.headers["Content-Type"] =
       options.headers["Content-Type"] || "text/n3";
     return this._send(url, options, "Error patching resource");
+  }
+
+  // Goes through put/post so the request passes _fetch and gets the bearer token.
+  save(url, slug, data, options = {}) {
+    const contentType = options.contentType || this._defaultContentType;
+    // put/post mutate the options they are given.
+    const requestOptions = { ...options };
+    const request = slug
+      ? this.post(url, slug, data, contentType, null, requestOptions)
+      : this.put(url, data, contentType, null, requestOptions);
+    return fetcherFinalizeSave(request, url);
   }
 
   delete(url, options = {}) {

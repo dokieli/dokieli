@@ -25,7 +25,7 @@ import { removeDeviceStorageAsSignOut, updateDeviceStorageProfile, updateBrowser
 import { hasKeystore, isUnlocked, lockKeystore } from './keystore.js';
 import { updateButtons, getButtonHTML } from './ui/buttons.js';
 import { SessionCore } from '@uvdsl/solid-oidc-client-browser/core';
-import { isCurrentScriptSameOrigin, isLocalhost } from './uri.js';
+import { isCurrentScriptSameOrigin, isLocalhost, currentLocation } from './uri.js';
 import { SessionIDB } from '@uvdsl/solid-oidc-client-browser';
 import { i18n } from './i18n.js';
 import { showGeneralMessages, setPreferredLanguagesInfo } from './actions.js';
@@ -406,11 +406,14 @@ function submitSignIn (url) {
   var serverTokenInput = userIdentityInput?.querySelector('input#webid-server-token')
   var serverToken = serverTokenInput ? serverTokenInput.value.trim() : ''
 
+  var registeredServerToken = false
+
   //TODO: Consider throwing an error with setUserInfo where there is no profile, and so don't trigger signInWithOIDC at all.
   return setUserInfo(url)
     .then(async () => {
       if (serverToken) {
         await registerServerTokenForUser(url, serverToken)
+        registeredServerToken = true
       }
     })
     .then(() => {
@@ -424,7 +427,11 @@ function submitSignIn (url) {
         userIdentityInput.parentNode.removeChild(userIdentityInput)
       }
 
-      if (Config.User.IRI && !Config.User.OIDCIssuer) {
+      // Server token is enough; skip OIDC even if the profile advertises an issuer.
+      if (Config.User.IRI && registeredServerToken) {
+        afterSetUserInfo();
+      }
+      else if (Config.User.IRI && !Config.User.OIDCIssuer) {
         const message = {
           'content': `Cannot sign in. Using information from profile to personalise the UI.`,
           'type': 'info',
@@ -569,21 +576,33 @@ async function persistHttpOrigin(origin, cfg) {
 // for `https://example.org` will NOT fire on requests to `http://example.org`,
 // `https://other.com`, or any other origin — even if a careless caller passes
 // the wrong URL to Config.Storage. Falls back to the WebID's own origin only
-// if the profile doesn't declare a storage location.
+// if the profile doesn't declare a storage location, and also binds the origin
+// of the document being edited.
 async function registerServerTokenForUser(webIdUrl, token) {
-  let origin;
+  const origins = new Set();
+
   try {
     const storage = Config.User?.Storage?.[0];
-    origin = storage ? new URL(storage).origin : new URL(webIdUrl).origin;
-  } catch {
-    return;
-  }
-  if (!origin) return;
+    origins.add(new URL(storage || webIdUrl).origin);
+  } catch {}
 
-  const cfg = { token };
-  await persistHttpOrigin(origin, cfg);
+  // Also bind the document's own origin, which already holds the token anyway.
+  try {
+    const here = new URL(currentLocation());
+    if (here.protocol === 'http:' || here.protocol === 'https:') {
+      origins.add(here.origin);
+    }
+  } catch {}
+
+  if (!origins.size) return;
+
   const http = Config.Storage?.backend?.('http');
-  if (http?.addOrigin) http.addOrigin(origin, cfg);
+
+  for (const origin of origins) {
+    const cfg = { token };
+    await persistHttpOrigin(origin, cfg);
+    if (http?.addOrigin) http.addOrigin(origin, cfg);
+  }
 }
 
 export async function signOutHttp(origin) {
