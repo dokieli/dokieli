@@ -3072,7 +3072,9 @@ margin-left:0;
   grid-template-columns: 1fr 1fr;
 }
 #document-views ul {
-display:inline-block;
+float:left;
+width:80%;
+margin-bottom:1em;
 }
 #document-views ul li {
 display:inline-block;
@@ -3140,6 +3142,7 @@ margin:1em auto 0 auto;
 padding:1em 0;
 width:calc(100% - 2em);
 border-top:1px solid #ccc !important;
+clear:both;
 }
 #document-menu #about-dokieli dl {
 margin:0;
@@ -3178,14 +3181,14 @@ padding:0.5em;
 border:1px solid #eee;
 vertical-align:middle;
 float:none;
-margin-left: 3em;
 }
 #document-menu #ui-language ul li {
 display:inline-block;
+margin-left: 3em;
 }
 
 #document-menu #ui-language {
-margin-bottom:0.5em;
+margin-bottom:1em;
 }
 #document-menu #ui-language {
   display:block !important;
@@ -3194,7 +3197,8 @@ margin-bottom:0.5em;
 display:none;
 }
 #document-menu #document-views-label,
-#document-menu #ui-language-label {
+#document-menu #ui-language-label,
+#document-menu #document-encryption-label {
 display: block !important;
 font-weight: bold;
 }
@@ -3214,6 +3218,10 @@ margin-top:0.5em;
 #document-menu #document-views > svg.fas {
 margin:0 0.5em 0 0.75em;
 font-size:1.25em;
+}
+#document-menu #document-views > svg.fas {
+margin-top:0.5em;
+float:left;
 }
 
 #document-menu .editor-disable,
@@ -3424,6 +3432,7 @@ padding: 0;
 
 #document-views h2,
 #ui-language h2, 
+#document-encryption h2,
 #document-menu #document-do details.menu-group > summary {
 padding: 0.5em 1em 0.5em 1em;
 font-size: initial;

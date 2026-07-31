@@ -349,10 +349,8 @@ function showEncryptionSettings(node) {
   const html = `
   <section aria-labelledby="document-encryption-label" id="document-encryption" rel="schema:hasPart" resource="#document-encryption">
     <h2 data-i18n="menu.encryption.h2" id="document-encryption-label" property="schema:name">${i18n.t('menu.encryption.h2.textContent')}</h2>
-    <p data-i18n="menu.encryption.description">${i18n.t('menu.encryption.description.textContent')}</p>
-    <button class="setup-encryption-keys" data-i18n="menu.encryption.setup-button" title="${i18n.t('menu.encryption.setup-button.title')}" type="button">${i18n.t('menu.encryption.setup-button.textContent')}</button>
+    ${getButtonHTML({ key: "menu.encryption.setup-button", button: "lock-open", buttonClass: "setup-encryption-keys" })}
     <span class="response-message"></span>
-    <p data-i18n="menu.encryption.scope-note">${i18n.t('menu.encryption.scope-note.textContent')}</p>
   </section>
   `;
 
