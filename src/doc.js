@@ -32,6 +32,7 @@ import { formatHTML, fragmentFromString, getDoctype, getDocumentContentNode, sel
 import { i18n } from './i18n.js';
 import { rewriteBlobImagesToRelative, uploadBlobAssets, clearBlobAssets, hasUploadTarget } from './editor/utils/imageAssets.js';
 import { serializeAnnotationToHTML, serializeAnnotationToJSONLD } from '@dokieli/web-annotation';
+import { createNotification, serializeNotificationToJSONLD } from '@dokieli/notifications';
 import { renderFootnote, renderCitation } from './editor/utils/reference-render.js';
 import { getResource } from "./fetcher.js";
 import { encryptContent } from './crypto.js';
@@ -61,6 +62,23 @@ export function setDocumentURL(url) {
     console.warn(`Cannot use blob URL: ${url} . If using dokieli in an iframe with a blob URL, use 'src' with the source document URL instead so that operations on the document and related documents work as expected. See docs on using dokieli as an embeddable web application: https://dokie.li/docs#embeddable-web-application`);
   }
 
+}
+
+export function updateDocumentTitle(nodeDocument) {
+  const head = nodeDocument.querySelector('head');
+  if (!head) return;
+
+  const heading = nodeDocument.querySelector('h1')?.textContent.trim();
+  let title = head.querySelector('title');
+  const text = heading || title?.textContent.trim() || 'Untitled';
+
+  if (!title) {
+    title = nodeDocument.createElement('title');
+    head.appendChild(title);
+  }
+  if (title.textContent !== text) {
+    title.textContent = text;
+  }
 }
 
 export function getDocument(cn, options = {}) {
@@ -105,6 +123,8 @@ export function getDocument(cn, options = {}) {
   }
 
   applyDocumentTransforms(nodeDocument);
+
+  updateDocumentTitle(nodeDocument);
 
   nodeDocument = normalizeWhitespace(nodeDocument);
 
@@ -360,7 +380,7 @@ export function createActivityHTML(o) {
 
   var asObjectLicense = ''
   if ('object' in o && 'objectLicense' in o && o.objectLicense.length > 0) {
-    asObjectLicense = '<dl><dt>License</dt><dd><a about="' + o.object + '" href="' + o.objectLicense + '" property="schema:license">' + o.objectLicense + '</a></dd></dl>'
+    asObjectLicense = '<dl><dt>License</dt><dd><a about="' + o.object + '" href="' + o.objectLicense + '" property="dcterms:license">' + o.objectLicense + '</a></dd></dl>'
   }
 
   var asinReplyTo = ('inReplyTo' in o) ? '<dl><dt>In reply to</dt><dd><a about="' + o.object + '" href="' + o.inReplyTo + '" property="as:inReplyTo">' + o.inReplyTo + '</a></dd></dl>' : ''
@@ -380,7 +400,8 @@ export function createActivityHTML(o) {
 
   var asactor = (Config.User.IRI) ? '<dt>Actor</dt><dd><a href="' + Config.User.IRI + '" property="as:actor">' + Config.User.IRI + '</a></dd>' : ''
 
-  var license = '<dt>License</dt><dd><a href="' + Config.NotificationLicense + '" property="schema:license">' + Config.NotificationLicense + '</a></dd>'
+  var notificationLicense = o.license || Config.NotificationLicense
+  var license = notificationLicense ? '<dt>License</dt><dd><a href="' + notificationLicense + '" property="dcterms:license">' + notificationLicense + '</a></dd>' : ''
 
   var asto = ('to' in o && o.to.length > 0 && !o.to.match(/\s/g) && o.to.match(/^https?:\/\//gi)) ? '<dt>To</dt><dd><a href="' + o.to + '" property="as:to">' + o.to + '</a></dd>' : ''
 
@@ -429,46 +450,67 @@ export function createActivityHTML(o) {
   return data
 }
 
-// AS activity as a JSON-LD object. When o.note (the annotation model) is present its
-// object is the library's clean JSON-LD (serializeAnnotationToJSONLD, no RDFa-derived
-// langStrings); otherwise the object is the annotation IRI. Notification wrapping is
-// dokieli's responsibility; the library only serializes the annotation.
-export function createActivityJSONLD(o) {
-  const localName = (t) => (typeof t === 'string' && t.includes(':') ? t.split(':')[1] : t);
+// Object markup for the library's object.html: as:object link plus types, license, inReplyTo, statements RDFa
+export function createActivityObjectHTML(o) {
+  var rows = '';
 
-  const activity = {
-    '@context': 'https://www.w3.org/ns/activitystreams',
-    type: (o.type || []).map(localName),
-    updated: getDateTimeISO()
-  };
-
-  if (Config.User.IRI) { activity.actor = Config.User.IRI; }
-
-  if (o.note) {
-    activity.object = serializeAnnotationToJSONLD(o.note);
-  } else if (o.object) {
-    activity.object = o.object;
+  if ('objectTypes' in o && o.objectTypes.length > 0) {
+    rows += '<dt>Types</dt>';
+    o.objectTypes.forEach(t => {
+      rows += '<dd><a about="' + o.object + '" href="' + t + '" typeof="' + t + '">' + t + '</a></dd>';
+    });
   }
 
-  if (o.target && o.target.length) { activity.target = o.target; }
-  if (o.context && o.context.length) { activity.context = o.context; }
-  if (o.inReplyTo) { activity.inReplyTo = o.inReplyTo; }
-  if (o.summary && o.summary.length) { activity.summary = o.summary; }
-  if (o.content && o.content.length) { activity.content = o.content; }
-  if (o.to && typeof o.to === 'string' && /^https?:\/\//i.test(o.to) && !/\s/.test(o.to)) { activity.to = o.to; }
+  if ('statements' in o) {
+    var statements = o.statements.trim();
+    var wrapped = statements.match(/^<dl[^>]*>([\s\S]*)<\/dl>$/);
+    rows += wrapped ? wrapped[1].trim() : statements;
+  }
 
-  return activity;
+  if ('objectLicense' in o && o.objectLicense.length > 0) {
+    rows += '<dt>License</dt><dd><a href="' + o.objectLicense + '" property="dcterms:license">' + o.objectLicense + '</a></dd>';
+  }
+
+  if ('inReplyTo' in o) {
+    rows += '<dt>In reply to</dt><dd><a href="' + o.inReplyTo + '" property="as:inReplyTo">' + o.inReplyTo + '</a></dd>';
+  }
+
+  var objectProperties = rows ? '<dl about="' + o.object + '">' + rows + '</dl>' : '';
+
+  return '<a href="' + o.object + '" property="as:object">' + o.object + '</a>' + objectProperties;
+}
+
+// AS activity as JSON-LD; o.note embeds the annotation's JSON-LD, otherwise the object is the IRI
+export function createActivityJSONLD(o) {
+  const params = { type: o.type || [] };
+
+  if (Config.User.IRI) { params.actor = Config.User.IRI; }
+
+  if (o.note) {
+    params.object = { jsonld: serializeAnnotationToJSONLD(o.note) };
+  } else if (o.object) {
+    params.object = o.object;
+  }
+
+  if (o.target && o.target.length) { params.target = o.target; }
+  if (o.context && o.context.length) { params.context = o.context; }
+  if (o.summary && o.summary.length) { params.summary = o.summary; }
+  if (o.content && o.content.length) { params.content = o.content; }
+  if (o.to && typeof o.to === 'string' && /^https?:\/\//i.test(o.to) && !/\s/.test(o.to)) { params.to = o.to; }
+
+  const license = o.license || Config.NotificationLicense;
+  if (license) { params.license = license; }
+
+  const notification = createNotification(params);
+
+  return serializeNotificationToJSONLD(notification);
 }
 
 const OBJECT_ABOUT_MOTIVATIONS = new Set([
   'oa:replying', 'oa:assessing', 'oa:questioning', 'oa:bookmarking', 'as:Like', 'as:Dislike'
 ]);
 
-// dokieli maps its render context (n.mode) and ownership onto serialize options,
-// then delegates HTML generation to @dokieli/web-annotation. The library is
-// presentation-agnostic: dokieli decides the heading level and RDFa subject,
-// supplies license display names and avatar/name resolution, and injects the
-// delete control (a UI affordance the library does not emit).
+// Maps render context onto serialize options, then delegates to @dokieli/web-annotation
 export function createNoteDataHTML(n, serializerOptions = {}) {
   const mode = n.mode || 'write';
   const headingLevel = mode === 'read' ? 3 : mode === 'object' ? 2 : 1;
@@ -487,8 +529,7 @@ export function createNoteDataHTML(n, serializerOptions = {}) {
     ...serializerOptions
   };
 
-  // Embedded reference kinds are dokieli document composition, rendered here; everything
-  // else goes through the library's uniform annotation serialization.
+  // Embedded reference kinds render here; the rest goes through the library
   let note;
   if (n.type === 'ref-footnote') {
     note = renderFootnote(n);
@@ -496,8 +537,7 @@ export function createNoteDataHTML(n, serializerOptions = {}) {
     note = renderCitation(n, options);
   } else {
     note = serializeAnnotationToHTML(n, options);
-    // The library renders no avatar without an image. dokieli shows an anonymous
-    // placeholder (no rel, so display-only and never in the graph) for such creators.
+    // Anonymous placeholder avatar; display-only, never in the graph
     if (n.creator && !resolveAnnotationAvatar(n.creator, mode)) {
       const placeholder = '<img alt="" height="48" src="' + Config.IconBase64['.fas.fa-user-secret'] + '" width="48" /> ';
       note = note.replace(/(<span rel="dcterms:creator"><span about="[^"]*"[^>]*>)/, '$1' + placeholder);
@@ -512,11 +552,7 @@ export function createNoteDataHTML(n, serializerOptions = {}) {
   return note;
 }
 
-// Localized section labels for the rendered annotation. dokieli only maintains
-// translations for these label slots; every other label (motivation verbs,
-// selector/citation labels, etc.) falls back to the library's English defaults,
-// matching the prior hardcoded output. English defaultValue keeps missing
-// translations from leaking key strings.
+// Localized label slots; other labels use the library's English defaults
 function getAnnotationLabels() {
   return {
     language: i18n.t('language.label.textContent', { defaultValue: 'Language' }),
@@ -526,9 +562,7 @@ function getAnnotationLabels() {
   };
 }
 
-// RDFa subject for the annotation <article>. Read mode points at the stored IRI;
-// otherwise object-addressed motivations (and citations) only carry a fragment
-// subject when serialized as an ActivityStreams object, matching prior behavior.
+// RDFa subject for the annotation article: stored IRI in read mode, else fragment when AS-embedded
 function getAnnotationAbout(n, mode) {
   if (mode === 'read' && n.iri) return n.iri;
   const objectAbout = n.type === 'ref-citation' ||
@@ -537,8 +571,7 @@ function getAnnotationAbout(n, mode) {
   return '#' + n.id;
 }
 
-// Picks the creator avatar following dokieli's resolution order, proxying it in
-// read mode. Returns undefined to let the serializer fall back to its default.
+// Creator avatar per dokieli's resolution order; undefined falls back to the serializer default
 function resolveAnnotationAvatar(creator, mode) {
   let img;
   if (creator.image) {
@@ -2149,8 +2182,7 @@ export async function createMutableResource(url, data, options) {
     .then((resolved) => handleActionMessage(resolved))
     .catch((rejected) => handleActionMessage(null, rejected))
 
-  // setDocumentRelation synchronously mutates the live document, so a second
-  // serialize is required — this one carries the canonical url identifier (owl:sameAs).
+  // Second serialize carries the canonical url identifier (owl:sameAs)
   o = { 'id': 'document-identifier', 'title': 'Identifier' };
   r = { 'rel': 'owl:sameAs', 'href': url };
   setDocumentRelation(document, [r], o);
@@ -2166,8 +2198,7 @@ export async function createMutableResource(url, data, options) {
     });
 }
 
-// Replaces the article's innerHTML and the document title with a { title, body } JWE envelope; the outer <article> and its attributes are preserved.
-// Document scope also encrypts head metadata and the whole body, keeping only what is needed to load dokieli and decrypt (charset, scripts, stylesheets, the envelope itself)
+// Replaces article content and title with a JWE envelope; document scope also encrypts head metadata and body
 export async function encryptArticlePayload(htmlString) {
   if (!isUnlocked()) return htmlString;
 
@@ -2791,11 +2822,7 @@ export function getAnnotationInboxLocationHTML(action) {
   return s;
 }
 
-// Container the annotation would POST to when routed through the user's TypeIndex,
-// resolved for the given action's activity type. Checks the private TypeIndex first
-// (registerAnnotationInTypeIndex prefers it), then public. Returns undefined when no
-// matching registration with an instanceContainer exists.
-// 'private' or 'public' when iri's container is registered in the corresponding TypeIndex, else undefined (e.g. inbox-sourced or another agent's resource).
+// TypeIndex-registered annotation container for the action's activity type; private first, else public, else undefined
 export function getItemVisibility(iri) {
   const typeIndex = Config.User.TypeIndex;
   if (!iri || !typeIndex) return undefined;
@@ -2848,8 +2875,7 @@ export function getAnnotationLocationHTML(action) {
   // Show the container URL the annotation will POST to next to each label.
   const targetHTML = (url) => url ? ` <code>${htmlEncode(url)}</code>` : '';
 
-  // Nothing is checked by default; only a remembered choice (UI state) pre-checks.
-  // Labels come from the translation strings keyed by i18n.
+  // Only a remembered choice pre-checks
   const options = [
     { suffix: 'annotation-service', uiKey: 'annotationLocationService', url: (typeof Config.AnnotationService !== 'undefined') ? Config.AnnotationService : undefined },
     { suffix: 'annotation-store', uiKey: 'annotationLocationAnnotationStore', url: getRegisteredAnnotationContainer(action) },
@@ -3960,8 +3986,7 @@ export function buildResourceView(data, options) {
                 var items = [];
 
                 results.forEach(result => {
-                  // Rejected entries carry { response, graph: undefined, error };
-                  // surface the resource URL from the response when possible.
+                  // Surface the resource URL from the rejected entry's response when possible
                   if (result.status === 'rejected') {
                     var rejectedURL = result.reason?.response?.url;
                     if (rejectedURL) {
@@ -4818,11 +4843,7 @@ export function setDocumentString(node) {
 }
 
 
-// Floating autocomplete list under the location input. It lives in <body> (not
-// inside the editable article) so ProseMirror's MutationObserver doesn't revert
-// it. Mirrors the share panel's contacts suggestions. Picking an item fills the
-// input, tags the <dd> with the entity URI, and fires `change` so InputView
-// syncs the value for save.
+// Autocomplete list lives in <body> so ProseMirror's MutationObserver doesn't revert it
 function getSuggestionsElement(input, listId) {
   const container = input.closest('.autocomplete');
   let list = document.getElementById(listId);
@@ -4870,8 +4891,7 @@ export function setupAutocomplete(inputSelector, fetchFn, showFn, { listId, fetc
   document.addEventListener('input', (e) => {
     if (!e.target.matches(inputSelector)) return;
     closed = false;
-    // Editing invalidates a previously picked result: the value is now free text,
-    // so drop the pick-derived metadata (keep the data-autocomplete marker).
+    // Editing invalidates a pick: drop pick-derived metadata, keep the marker
     [...e.target.attributes].forEach(a => {
       if (a.name.startsWith('data-') && a.name !== 'data-autocomplete') e.target.removeAttribute(a.name);
     });

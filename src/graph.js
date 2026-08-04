@@ -30,6 +30,7 @@ import LinkHeader from "http-link-header";
 
 const ns = Config?.ns;
 const localhostUUID = 'http://localhost/d79351f4-cdb8-4228-b24f-3e9ac74a840d';
+const PARSER_MEDIA_TYPES = ['application/ld+json', 'text/turtle', 'application/activity+json', 'text/html'];
 
 //https://github.com/rdfjs-base/io
 // https://github.com/rdfjs-base/formats/
@@ -240,9 +241,7 @@ export function serializeDataToPreferredContentType(data, options) {
     case 'application/json':
     case '*/*':
     default:
-      // Prefer model-built JSON-LD when the caller supplies it (clean, no RDFa-derived
-      // langStrings): a pre-wrapped AS activity (activityJSONLD) or the annotation model
-      // (annotationObject) serialized directly. Fall back to the legacy RDFa → graph path.
+      // Prefer model-built JSON-LD when supplied; fall back to the RDFa graph path
       if (options.activityJSONLD) {
         return Promise.resolve(JSON.stringify(options.activityJSONLD));
       }
@@ -519,7 +518,7 @@ function unwrapToAnnotationIRI(g, annotationIRI) {
 /**
  * Parses an annotation out of an rdf-ext graph into an `@dokieli/web-annotation`
  * `Annotation`, using core's `parseAnnotation` with a `JSONLDParser` backed by
- * our rdf-ext serializer. Because the graph is already RDF (any source format —
+ * our rdf-ext serializer. Because the graph is already RDF (any source format,
  * RDFa/Turtle/JSON-LD), this works regardless of how the resource was fetched.
  *
  * @param {object} g - rdf-ext graph (grapoi dataset).
@@ -531,17 +530,52 @@ export function parseAnnotationFromGraph(g, annotationIRI) {
 
   // The JSONLDParser: rdf-ext graph → JSON-LD. core maps it to an Annotation.
   const parser = async (graph) => {
-    // Serialize the WHOLE dataset, not just the resource term's outbound quads.
-    // getResourceGraph scopes the grapoi to the resource IRI, so g.out().quads()
-    // emits only the annotation node's direct triples — dropping the target
-    // SpecificResource and the selector (separate subjects), which left annotations
-    // with no selector and therefore no mark. Re-wrap as a term-less grapoi.
+    // Serialize the whole dataset; scoping to the resource term drops selector subjects
     const fullGraph = graph?.dataset ? rdf.grapoi({ dataset: graph.dataset }) : graph;
     const jsonld = await serializeGraph(fullGraph, { contentType: 'application/ld+json' });
     return jsonld ? JSON.parse(jsonld) : [];
   };
   return parseAnnotation(g, { parser, annotationIRI: resolvedIRI });
 }
+
+// JSONLDParser for @dokieli/notifications: RDF in any serialization to JSON-LD nodes
+export async function jsonldNodesFromData(data, options = {}) {
+  if (typeof data !== 'string') { return data; }
+  const contentType = (options.contentType || 'text/turtle').split(';')[0].trim();
+  const g = await getGraphFromData(data, { contentType, subjectURI: options.baseIRI, documentURI: options.baseIRI });
+  const fullGraph = g?.dataset ? rdf.grapoi({ dataset: g.dataset }) : g;
+  const jsonld = await serializeGraph(fullGraph, { contentType: 'application/ld+json' });
+  return jsonld ? flattenJSONLDNodes(JSON.parse(jsonld)) : [];
+}
+
+// Merge the serializer's per-quad node objects into one node per subject
+function flattenJSONLDNodes(nodes) {
+  if (!Array.isArray(nodes)) { return nodes; }
+  const bySubject = new Map();
+  const merged = [];
+  nodes.forEach(node => {
+    const id = node?.['@id'];
+    const target = typeof id === 'string' ? bySubject.get(id) : undefined;
+    if (!target) {
+      const copy = { ...node };
+      merged.push(copy);
+      if (typeof id === 'string') { bySubject.set(id, copy); }
+      return;
+    }
+    Object.entries(node).forEach(([key, value]) => {
+      if (key === '@id') return;
+      if (!(key in target)) {
+        target[key] = value;
+        return;
+      }
+      const existing = Array.isArray(target[key]) ? target[key] : [target[key]];
+      target[key] = existing.concat(value);
+    });
+  });
+  return merged;
+}
+
+jsonldNodesFromData.mediaTypes = PARSER_MEDIA_TYPES;
 
 export function serializeGraph(g, options = {}) {
   if (!('contentType' in options)) {
@@ -748,8 +782,7 @@ export function traverseRDFList(g, resource) {
   return result;
 }
 
-// Success resolves with { response, graph, error: undefined }
-// Failure rejects with { response, graph: undefined, error }
+// Resolves { response, graph }; rejects { response, error }
 export function getResourceGraph(iri, headers, options = {}) {
   let wildCard = options.excludeMarkup ? '' : ',*/*;q=0.1';
   let defaultHeaders = {'Accept': setAcceptRDFTypes(options) + wildCard}
@@ -771,9 +804,7 @@ export function getResourceGraph(iri, headers, options = {}) {
       options['contentType'] = (cT) ? cT.split(';')[0].toLowerCase().trim() : 'text/turtle'
       options['subjectURI'] = iri
 
-      // Some servers serve RDF (e.g. WebID profiles) as the generic binary type.
-      // Sniff the body so it can still be parsed: JSON(-LD) starts with { or [,
-      // otherwise assume Turtle.
+      // Sniff RDF served as generic binary: JSON starts with { or [, else assume Turtle
       if (options['contentType'] === 'application/octet-stream') {
         return response.text().then(text => {
           const t = text.trimStart();
@@ -853,8 +884,7 @@ export function getResourceOnlyRDF(url) {
       });
     })
     .catch(rejected => {
-      // Already in our shape (e.g., from getResourceGraph): pass through.
-      // Otherwise (HEAD failure), wrap into the same shape.
+      // Pass through if already in shape; else wrap HEAD failures the same way
       if (rejected && 'graph' in rejected && 'error' in rejected) {
         return Promise.reject(rejected);
       }
@@ -1155,8 +1185,7 @@ export function getAgentSeeAlsoPrimaryTopicOf(g, subjectURI) {
         var promisesGetAgentSeeAlsoPrimaryTopicOf = [];
 
         results.forEach(result => {
-          // result.value is { response, graph, error: undefined } on fulfilled;
-          // rejected entries (same shape with error) are skipped.
+          // Rejected entries are skipped
           if (result.status !== 'fulfilled') return;
           var g = result.value?.graph;
 

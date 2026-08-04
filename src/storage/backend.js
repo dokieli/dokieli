@@ -49,72 +49,62 @@ class StorageBackend {
   get name() {
     return "abstract";
   }
-  supports(_cap) {
+  supports(cap) {
     return false;
   }
 
-  get(_url, _headers, _options) {
+  get(url, headers, options) {
     return Promise.reject(new Error("not implemented"));
   }
-  head(_url, _headers, _options) {
+  head(url, headers, options) {
     return Promise.reject(new Error("not implemented"));
   }
-  options(_url, _opts) {
+  options(url, opts) {
     return Promise.reject(new Error("not implemented"));
   }
-  put(_url, _data, _contentType, _links, _options) {
+  put(url, data, contentType, links, options) {
     return Promise.reject(new Error("not implemented"));
   }
-  post(_url, _slug, _data, _contentType, _links, _options) {
+  post(url, slug, data, contentType, links, options) {
     return Promise.reject(new Error("not implemented"));
   }
-  patch(_url, _data, _options) {
+  patch(url, data, options) {
     return Promise.reject(new Error("not implemented"));
   }
-  delete(_url, _options) {
+  delete(url, options) {
     return Promise.reject(new Error("not implemented"));
   }
-  copy(_fromURL, _toURL, _options) {
+  copy(fromURL, toURL, options) {
     return Promise.reject(new Error("not implemented"));
   }
-  getMultiple(_resources, _options) {
+  getMultiple(resources, options) {
     return Promise.reject(new Error("not implemented"));
   }
 
-  save(_url, _slug, _data, _options) {
+  save(url, slug, data, options) {
     return Promise.reject(new Error("not implemented"));
   }
 
   // Solid-specific
-  putWithConneg(_url, _data, _options) {
+  putWithConneg(url, data, options) {
     return Promise.reject(new Error("not implemented"));
   }
-  patchWithConneg(_url, _patch, _options) {
+  patchWithConneg(url, patch, options) {
     return Promise.reject(new Error("not implemented"));
   }
-  // Generic: query the endpoint's Accept-Post via OPTIONS, falling back to
-  // application/ld+json. Applies to any HTTP endpoint (e.g. plain HTTP inboxes),
-  // so it lives on the base rather than only SolidStorage.
+  // Accept-Post via OPTIONS, falling back to application/ld+json; applies to any HTTP endpoint
   getAcceptPost(url) {
     return getAcceptPostPreference(url);
   }
 }
 
-// Plain HTTP CRUD. No Solid session, LDP Link, or conneg handling.
-// Carries a per-origin token map so requests to registered origins get an
-// `Authorization: Bearer <token>` injected. Storage is keyed by full ORIGIN
-// (scheme + host + port) — a token bound to `https://example.org` will NOT
-// fire on `http://example.org`, `https://example.org:8443`, or any other
-// origin, even if the host matches. The router still dispatches by host
-// (matches() returns true if any registered origin has that host) to keep
-// the routing API symmetric with GitForgeStorage; the strict origin check
-// happens inside _fetch before any Bearer is added.
+// Plain HTTP CRUD with per-origin bearer tokens; tokens are origin-strict, dispatch is by host
 class HttpStorage extends StorageBackend {
   constructor({ authFetch, defaultContentType } = {}) {
     super();
-    this._authFetch = authFetch || null;
-    this._defaultContentType = defaultContentType || DEFAULT_CONTENT_TYPE;
-    this._origins = new Map();
+    this.authFetch = authFetch || null;
+    this.defaultContentType = defaultContentType || DEFAULT_CONTENT_TYPE;
+    this.originConfigs = new Map();
   }
 
   get name() {
@@ -125,7 +115,7 @@ class HttpStorage extends StorageBackend {
     return cap === CAPS.PATCH;
   }
 
-  _normalizeOrigin(origin) {
+  normalizeOrigin(origin) {
     try {
       return new URL(origin).origin;
     } catch {
@@ -134,34 +124,34 @@ class HttpStorage extends StorageBackend {
   }
 
   addOrigin(origin, cfg = {}) {
-    const normalized = this._normalizeOrigin(origin);
+    const normalized = this.normalizeOrigin(origin);
     if (!normalized) return;
-    const existing = this._origins.get(normalized) || {};
-    this._origins.set(normalized, { ...existing, ...cfg });
+    const existing = this.originConfigs.get(normalized) || {};
+    this.originConfigs.set(normalized, { ...existing, ...cfg });
   }
 
   setToken(origin, token) {
-    const normalized = this._normalizeOrigin(origin);
+    const normalized = this.normalizeOrigin(origin);
     if (!normalized) return;
     if (token == null) {
-      const existing = this._origins.get(normalized);
+      const existing = this.originConfigs.get(normalized);
       if (!existing) return;
       delete existing.token;
-      if (Object.keys(existing).length === 0) this._origins.delete(normalized);
+      if (Object.keys(existing).length === 0) this.originConfigs.delete(normalized);
       return;
     }
-    const existing = this._origins.get(normalized) || {};
-    this._origins.set(normalized, { ...existing, token });
+    const existing = this.originConfigs.get(normalized) || {};
+    this.originConfigs.set(normalized, { ...existing, token });
   }
 
   origins() {
-    return Array.from(this._origins.keys());
+    return Array.from(this.originConfigs.keys());
   }
 
-  // Loose host match for router dispatch — the strict origin check is in _fetch.
+  // Loose host match for router dispatch; the strict origin check is in fetchWithAuth.
   matches(host) {
     if (!host) return false;
-    for (const origin of this._origins.keys()) {
+    for (const origin of this.originConfigs.keys()) {
       try {
         if (new URL(origin).host === host) return true;
       } catch {}
@@ -169,20 +159,20 @@ class HttpStorage extends StorageBackend {
     return false;
   }
 
-  _tokenFor(url) {
+  tokenFor(url) {
     try {
       const requestOrigin = new URL(
         url,
         typeof location !== "undefined" ? location.href : undefined,
       ).origin;
-      return this._origins.get(requestOrigin)?.token || null;
+      return this.originConfigs.get(requestOrigin)?.token || null;
     } catch {
       return null;
     }
   }
 
-  _fetch(url, options = {}) {
-    const token = this._tokenFor(url);
+  fetchWithAuth(url, options = {}) {
+    const token = this.tokenFor(url);
     if (token) {
       const headers = new Headers(options.headers || {});
       if (!headers.has("Authorization")) {
@@ -190,13 +180,13 @@ class HttpStorage extends StorageBackend {
       }
       options = { ...options, headers };
     }
-    return this._authFetch
-      ? this._authFetch(url, options)
+    return this.authFetch
+      ? this.authFetch(url, options)
       : fetch(url, options);
   }
 
-  async _send(url, options, errorPrefix) {
-    const response = await this._fetch(url, options);
+  async send(url, options, errorPrefix) {
+    const response = await this.fetchWithAuth(url, options);
     if (!response.ok) {
       const error = new Error(
         `${errorPrefix}: ${response.status} ${response.statusText}`,
@@ -213,7 +203,7 @@ class HttpStorage extends StorageBackend {
     if (!headers["Accept"] && options.method !== "HEAD")
       headers["Accept"] = "*/*";
     options.headers = { ...headers };
-    return this._send(url, options, "Error fetching resource");
+    return this.send(url, options, "Error fetching resource");
   }
 
   head(url, headers = {}, options = {}) {
@@ -223,7 +213,7 @@ class HttpStorage extends StorageBackend {
 
   async options(url, options = {}) {
     options.method = "OPTIONS";
-    const response = await this._send(
+    const response = await this.send(
       url,
       options,
       "Error fetching resource OPTIONS",
@@ -243,25 +233,25 @@ class HttpStorage extends StorageBackend {
     return { headers: response.headers };
   }
 
-  put(url, data, contentType, _links, options = {}) {
+  put(url, data, contentType, links, options = {}) {
     if (!url)
       return Promise.reject(new Error("Cannot PUT resource - missing url"));
     options.method = "PUT";
     options.body = data;
     options.headers = options.headers || {};
-    options.headers["Content-Type"] = contentType || this._defaultContentType;
-    return this._send(url, options, "Error writing resource");
+    options.headers["Content-Type"] = contentType || this.defaultContentType;
+    return this.send(url, options, "Error writing resource");
   }
 
-  post(url, slug, data, contentType, _links, options = {}) {
+  post(url, slug, data, contentType, links, options = {}) {
     if (!url)
       return Promise.reject(new Error("Cannot POST resource - missing url"));
     options.method = "POST";
     options.body = data;
     options.headers = options.headers || {};
-    options.headers["Content-Type"] = contentType || this._defaultContentType;
+    options.headers["Content-Type"] = contentType || this.defaultContentType;
     if (slug) options.headers["Slug"] = slug;
-    return this._send(url, options, "Error creating resource");
+    return this.send(url, options, "Error creating resource");
   }
 
   patch(url, data, options = {}) {
@@ -270,12 +260,12 @@ class HttpStorage extends StorageBackend {
     options.headers = options.headers || {};
     options.headers["Content-Type"] =
       options.headers["Content-Type"] || "text/n3";
-    return this._send(url, options, "Error patching resource");
+    return this.send(url, options, "Error patching resource");
   }
 
-  // Goes through put/post so the request passes _fetch and gets the bearer token.
+  // Goes through put/post so the request passes fetchWithAuth and gets the bearer token.
   save(url, slug, data, options = {}) {
-    const contentType = options.contentType || this._defaultContentType;
+    const contentType = options.contentType || this.defaultContentType;
     // put/post mutate the options they are given.
     const requestOptions = { ...options };
     const request = slug
@@ -288,7 +278,7 @@ class HttpStorage extends StorageBackend {
     if (!url)
       return Promise.reject(new Error("Cannot DELETE resource - missing url"));
     options.method = "DELETE";
-    return this._send(url, options, "Error deleting resource");
+    return this.send(url, options, "Error deleting resource");
   }
 
   async copy(fromURL, toURL, options = {}) {
@@ -301,7 +291,7 @@ class HttpStorage extends StorageBackend {
     return this.put(toURL, contents, contentType, null, options);
   }
 
-  async getMultiple(resources, _options = {}) {
+  async getMultiple(resources, options = {}) {
     return Promise.all(
       resources.map(async (url) => {
         const response = await this.get(url);
@@ -408,7 +398,7 @@ class GitForgeStorage extends StorageBackend {
     return "gitforge";
   }
 
-  supports(_cap) {
+  supports(cap) {
     return false;
   }
 
@@ -447,7 +437,7 @@ class GitForgeStorage extends StorageBackend {
     return false;
   }
 
-  _configFor(url) {
+  configFor(url) {
     let u;
     try { u = new URL(url); } catch { return null; }
     if (this.#hosts.has(u.host)) return { host: u.host, ...this.#hosts.get(u.host) };
@@ -458,10 +448,10 @@ class GitForgeStorage extends StorageBackend {
     return null;
   }
 
-  _parse(url) {
+  parseUrl(url) {
     let u;
     try { u = new URL(url); } catch { return null; }
-    const cfg = this._configFor(url);
+    const cfg = this.configFor(url);
     if (!cfg) return null;
 
     const apiUrl = new URL(cfg.apiBase);
@@ -509,14 +499,14 @@ class GitForgeStorage extends StorageBackend {
     return { host: cfg.host, owner, repo, ref: "HEAD", path: after.join("/") };
   }
 
-  _contentsUrl({ host, owner, repo, ref, path }, { withRef = true } = {}) {
+  contentsUrl({ host, owner, repo, ref, path }, { withRef = true } = {}) {
     const cfg = this.#hosts.get(host);
     const u = new URL(`${cfg.apiBase}/repos/${owner}/${repo}/contents/${path}`);
     if (withRef && ref && ref !== "HEAD") u.searchParams.set("ref", ref);
     return u.toString();
   }
 
-  _headers(host, accept) {
+  apiHeaders(host, accept) {
     const cfg = this.#hosts.get(host) || {};
     const h = { "Accept": accept || (cfg.provider === "github" ? "application/vnd.github.v3+json" : "application/json") };
     if (cfg.token) {
@@ -525,7 +515,7 @@ class GitForgeStorage extends StorageBackend {
     return h;
   }
 
-  _encodeContent(data) {
+  encodeContent(data) {
     const bytes = typeof data === "string" ? new TextEncoder().encode(data) : new Uint8Array(data);
     let binary = "";
     const chunk = 0x8000;
@@ -535,25 +525,25 @@ class GitForgeStorage extends StorageBackend {
     return btoa(binary);
   }
 
-  async _resolveDefaultBranch(parsed) {
+  async resolveDefaultBranch(parsed) {
     const cfg = this.#hosts.get(parsed.host);
     const apiUrl = `${cfg.apiBase}/repos/${parsed.owner}/${parsed.repo}`;
-    const response = await fetch(apiUrl, { headers: this._headers(parsed.host) });
+    const response = await fetch(apiUrl, { headers: this.apiHeaders(parsed.host) });
     if (!response.ok) throw new Error(`Error resolving default branch: ${response.status} ${response.statusText}`);
     const payload = await response.json();
     return payload.default_branch || "main";
   }
 
-  async _getSha(parsed) {
-    const apiUrl = this._contentsUrl(parsed);
-    const response = await fetch(apiUrl, { headers: this._headers(parsed.host), cache: 'no-cache' });
+  async getSha(parsed) {
+    const apiUrl = this.contentsUrl(parsed);
+    const response = await fetch(apiUrl, { headers: this.apiHeaders(parsed.host), cache: 'no-cache' });
     if (response.status === 404) return null;
     if (!response.ok) throw new Error(`Error reading current sha: ${response.status} ${response.statusText}`);
     const payload = await response.json();
     return Array.isArray(payload) ? null : payload.sha;
   }
 
-  _sniffContentType(path) {
+  sniffContentType(path) {
     const ext = path.split(".").pop().toLowerCase();
     const map = {
       html: "text/html; charset=utf-8",
@@ -568,11 +558,11 @@ class GitForgeStorage extends StorageBackend {
     return map[ext] || "application/octet-stream";
   }
 
-  async get(url, _headers = {}, _options = {}) {
-    const parsed = this._parse(url);
+  async get(url, headers = {}, options = {}) {
+    const parsed = this.parseUrl(url);
     if (!parsed) throw new Error(`GitForgeStorage: cannot parse URL ${url}`);
-    const apiUrl = this._contentsUrl(parsed);
-    const response = await fetch(apiUrl, { headers: this._headers(parsed.host), cache: 'no-cache' });
+    const apiUrl = this.contentsUrl(parsed);
+    const response = await fetch(apiUrl, { headers: this.apiHeaders(parsed.host), cache: 'no-cache' });
     if (!response.ok) {
       const error = new Error(`Error fetching resource: ${response.status} ${response.statusText}`);
       error.status = response.status;
@@ -586,7 +576,7 @@ class GitForgeStorage extends StorageBackend {
     const body = payload.encoding === "base64"
       ? Uint8Array.from(atob(payload.content.replace(/\n/g, "")), c => c.charCodeAt(0))
       : payload.content;
-    const contentType = this._sniffContentType(parsed.path);
+    const contentType = this.sniffContentType(parsed.path);
     return new Response(body, {
       status: 200,
       headers: { "Content-Type": contentType, "ETag": payload.sha ? `"${payload.sha}"` : "" },
@@ -598,11 +588,11 @@ class GitForgeStorage extends StorageBackend {
     return new Response(null, { status: response.status, headers: response.headers });
   }
 
-  async options(_url, _opts = {}) {
+  async options(url, opts = {}) {
     return { headers: new Headers() };
   }
 
-  async getMultiple(resources, _options = {}) {
+  async getMultiple(resources, options = {}) {
     return Promise.all(resources.map(async (url) => {
       const response = await this.get(url);
       const contentType = response.headers.get("content-type") || "application/octet-stream";
@@ -614,13 +604,13 @@ class GitForgeStorage extends StorageBackend {
     }));
   }
 
-  async put(url, data, _contentType, _links, options = {}) {
-    const parsed = this._parse(url);
+  async put(url, data, contentType, links, options = {}) {
+    const parsed = this.parseUrl(url);
     if (!parsed) throw new Error(`GitForgeStorage: cannot parse URL ${url}`);
     if (parsed.ref === "HEAD") {
-      parsed.ref = await this._resolveDefaultBranch(parsed);
+      parsed.ref = await this.resolveDefaultBranch(parsed);
     }
-    const apiUrl = this._contentsUrl(parsed, { withRef: false });
+    const apiUrl = this.contentsUrl(parsed, { withRef: false });
     const cfg = this.#hosts.get(parsed.host) || {};
     const branch = parsed.ref.replace(/^refs\/(heads|tags)\//, "");
     const lockKey = `${parsed.host}/${parsed.owner}/${parsed.repo}@${branch}`;
@@ -628,23 +618,23 @@ class GitForgeStorage extends StorageBackend {
     const send = async (sha) => {
       const body = {
         message: options.message || `Update ${parsed.path}`,
-        content: this._encodeContent(data),
+        content: this.encodeContent(data),
         branch,
       };
       if (sha) body.sha = sha;
       const method = (cfg.provider === "forgejo" && !sha) ? "POST" : "PUT";
       return fetch(apiUrl, {
         method,
-        headers: { ...this._headers(parsed.host), "Content-Type": "application/json" },
+        headers: { ...this.apiHeaders(parsed.host), "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
     };
 
     return this.#withBranchLock(lockKey, async () => {
-      let sha = await this._getSha(parsed);
+      let sha = await this.getSha(parsed);
       let response = await send(sha);
       if (response.status === 409 || (response.status === 422 && !sha)) {
-        sha = await this._getSha(parsed);
+        sha = await this.getSha(parsed);
         if (sha) response = await send(sha);
       }
       if (!response.ok) {
@@ -653,12 +643,12 @@ class GitForgeStorage extends StorageBackend {
         error.response = response;
         throw error;
       }
-      const location = this._browseUrl(parsed) || url;
+      const location = this.browseUrl(parsed) || url;
       return new Response(null, { status: 201, headers: { "Location": location } });
     });
   }
 
-  _browseUrl({ host, owner, repo, ref, path }) {
+  browseUrl({ host, owner, repo, ref, path }) {
     const cfg = this.#hosts.get(host);
     if (!cfg) return null;
     const branch = (ref || "HEAD").replace(/^refs\/(heads|tags)\//, "");
@@ -668,24 +658,24 @@ class GitForgeStorage extends StorageBackend {
     return `https://${host}/${owner}/${repo}/blob/${branch}/${path}`;
   }
 
-  post(url, slug, data, contentType, _links, options = {}) {
+  post(url, slug, data, contentType, links, options = {}) {
     if (!url) return Promise.reject(new Error("Cannot POST resource - missing url"));
     const target = slug ? url.replace(/\/?$/, "/") + slug : url;
     return this.put(target, data, contentType, null, options);
   }
 
   async delete(url, options = {}) {
-    const parsed = this._parse(url);
+    const parsed = this.parseUrl(url);
     if (!parsed) throw new Error(`GitForgeStorage: cannot parse URL ${url}`);
     if (parsed.ref === "HEAD") {
-      parsed.ref = await this._resolveDefaultBranch(parsed);
+      parsed.ref = await this.resolveDefaultBranch(parsed);
     }
     const branch = parsed.ref.replace(/^refs\/(heads|tags)\//, "");
     const lockKey = `${parsed.host}/${parsed.owner}/${parsed.repo}@${branch}`;
-    const apiUrl = this._contentsUrl(parsed, { withRef: false });
+    const apiUrl = this.contentsUrl(parsed, { withRef: false });
 
     return this.#withBranchLock(lockKey, async () => {
-      const sha = await this._getSha(parsed);
+      const sha = await this.getSha(parsed);
       if (!sha) {
         const error = new Error(`Error deleting resource: 404 Not Found`);
         error.status = 404;
@@ -698,7 +688,7 @@ class GitForgeStorage extends StorageBackend {
       };
       const response = await fetch(apiUrl, {
         method: "DELETE",
-        headers: { ...this._headers(parsed.host), "Content-Type": "application/json" },
+        headers: { ...this.apiHeaders(parsed.host), "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
       if (!response.ok) {
@@ -721,17 +711,17 @@ class GitForgeStorage extends StorageBackend {
     return this.put(toURL, contents, null, null, options);
   }
 
-  _ensureExtension(target, contentType) {
+  ensureExtension(target, contentType) {
     const lastSegment = target.split("/").pop() || "";
     if (lastSegment.includes(".")) return target;
     const ext = contentType && contentType.startsWith("text/markdown") ? "md" : "html";
     return `${target}.${ext}`;
   }
 
-  _parseListTarget(url) {
+  parseListTarget(url) {
     let u;
     try { u = new URL(url); } catch { return null; }
-    const cfg = this._configFor(url);
+    const cfg = this.configFor(url);
     if (!cfg || u.host !== cfg.host) return null;
 
     const parts = u.pathname.replace(/^\//, "").replace(/\/$/, "").split("/").filter(Boolean);
@@ -759,7 +749,7 @@ class GitForgeStorage extends StorageBackend {
     return null;
   }
 
-  _treeUrl({ host, owner, repo, ref, path }) {
+  treeUrl({ host, owner, repo, ref, path }) {
     const cfg = this.#hosts.get(host);
     const base = cfg.provider === "forgejo"
       ? `https://${host}/${owner}/${repo}/src/branch/${ref}`
@@ -767,34 +757,34 @@ class GitForgeStorage extends StorageBackend {
     return path ? `${base}/${path}/` : `${base}/`;
   }
 
-  _repoBrowseUrl({ host, owner, repo }) {
+  repoBrowseUrl({ host, owner, repo }) {
     return `https://${host}/${owner}/${repo}/`;
   }
 
   canList(url) {
-    return !!this._parseListTarget(url);
+    return !!this.parseListTarget(url);
   }
 
   async list(url) {
-    const target = this._parseListTarget(url);
+    const target = this.parseListTarget(url);
     if (!target) throw new Error(`GitForgeStorage: cannot list ${url}`);
     const cfg = this.#hosts.get(target.host);
 
     if (target.kind === "user") {
       const apiUrl = `${cfg.apiBase}/users/${encodeURIComponent(target.login)}/repos?per_page=100&sort=updated`;
-      const response = await fetch(apiUrl, { headers: this._headers(target.host) });
+      const response = await fetch(apiUrl, { headers: this.apiHeaders(target.host) });
       if (!response.ok) throw new Error(`Error listing repos: ${response.status} ${response.statusText}`);
       const payload = await response.json();
       return payload.map(r => ({
         name: r.name,
         type: "dir",
-        url: this._repoBrowseUrl({ host: target.host, owner: r.owner?.login || target.login, repo: r.name }),
+        url: this.repoBrowseUrl({ host: target.host, owner: r.owner?.login || target.login, repo: r.name }),
       }));
     }
 
     let ref, path;
     if (target.kind === "repo") {
-      ref = await this._resolveDefaultBranch({ host: target.host, owner: target.owner, repo: target.repo });
+      ref = await this.resolveDefaultBranch({ host: target.host, owner: target.owner, repo: target.repo });
       path = "";
     } else {
       ref = target.ref;
@@ -802,7 +792,7 @@ class GitForgeStorage extends StorageBackend {
     }
 
     const apiUrl = `${cfg.apiBase}/repos/${target.owner}/${target.repo}/contents/${path}${ref ? `?ref=${encodeURIComponent(ref)}` : ""}`;
-    const response = await fetch(apiUrl, { headers: this._headers(target.host) });
+    const response = await fetch(apiUrl, { headers: this.apiHeaders(target.host) });
     if (!response.ok) throw new Error(`Error listing contents: ${response.status} ${response.statusText}`);
     const payload = await response.json();
     const items = Array.isArray(payload) ? payload : [payload];
@@ -811,7 +801,7 @@ class GitForgeStorage extends StorageBackend {
       name: it.name,
       type: it.type === "dir" ? "dir" : "file",
       url: it.type === "dir"
-        ? this._treeUrl({ ...parent, path: path ? `${path}/${it.name}` : it.name })
+        ? this.treeUrl({ ...parent, path: path ? `${path}/${it.name}` : it.name })
         : (cfg.provider === "forgejo"
             ? `https://${target.host}/${target.owner}/${target.repo}/src/branch/${ref}/${path ? `${path}/` : ""}${it.name}`
             : `https://${target.host}/${target.owner}/${target.repo}/blob/${ref}/${path ? `${path}/` : ""}${it.name}`),
@@ -820,7 +810,7 @@ class GitForgeStorage extends StorageBackend {
 
   async save(url, slug, data, options = {}) {
     let target = slug ? url.replace(/\/?$/, "/") + slug : url;
-    target = this._ensureExtension(target, options.contentType);
+    target = this.ensureExtension(target, options.contentType);
     await this.put(target, data, null, null, options);
     return {
       response: new Response(null, { status: 201, headers: { "Location": target } }),
@@ -831,39 +821,39 @@ class GitForgeStorage extends StorageBackend {
 
 class StorageRouter {
   constructor({ default: defaultBackend, backends = {} } = {}) {
-    this._default = defaultBackend;
-    this._backends = backends;
+    this.defaultBackend = defaultBackend;
+    this.backends = backends;
   }
 
   register(name, backend) {
-    this._backends[name] = backend;
+    this.backends[name] = backend;
     return this;
   }
 
   backend(name) {
-    return this._backends[name];
+    return this.backends[name];
   }
 
   for(url, options) {
-    if (options && options.backend && this._backends[options.backend]) {
-      return this._backends[options.backend];
+    if (options && options.backend && this.backends[options.backend]) {
+      return this.backends[options.backend];
     }
     if (url) {
       try {
         const host = new URL(url).host;
-        if (this._backends.http?.matches?.(host)) {
-          return this._backends.http;
+        if (this.backends.http?.matches?.(host)) {
+          return this.backends.http;
         }
-        if (this._backends.gitforge?.matches?.(host)) {
-          return this._backends.gitforge;
+        if (this.backends.gitforge?.matches?.(host)) {
+          return this.backends.gitforge;
         }
       } catch {}
     }
-    return this._default;
+    return this.defaultBackend;
   }
 
   get name() { return "router"; }
-  supports(cap) { return this._default.supports(cap); }
+  supports(cap) { return this.defaultBackend.supports(cap); }
 
   get(url, headers, options)                         { return this.for(url, options).get(url, headers, options); }
   head(url, headers, options)                        { return this.for(url, options).head(url, headers, options); }
@@ -880,20 +870,54 @@ class StorageRouter {
   getAcceptPost(url)                                 { return this.for(url).getAcceptPost(url); }
 }
 
-let _router = null;
+let storageRouter = null;
 
 function initStorage({ default: defaultBackend, backends = {} } = {}) {
-  if (_router) return _router;
+  if (storageRouter) return storageRouter;
   const router = new StorageRouter({ default: defaultBackend, backends });
-  Object.freeze(router._backends);
+  Object.freeze(router.backends);
   Object.freeze(router);
-  _router = router;
-  return _router;
+  storageRouter = router;
+  return storageRouter;
 }
 
 function storage() {
-  if (!_router) throw new Error("Storage not initialized; call initStorage() first");
-  return _router;
+  if (!storageRouter) throw new Error("Storage not initialized; call initStorage() first");
+  return storageRouter;
 }
 
-export { StorageBackend, HttpStorage, SolidStorage, GitForgeStorage, StorageRouter, CAPS, initStorage, storage };
+// adapter/bridge for @dokieli/notifications, which needs an (authenticated) fetch function. Our Storage does not expose it (but exposes .get(), .post(), etc. instead) so we need this adapter to make requests go through the storage router
+function storageFetch(url, init = {}) {
+  const method = (init.method || "GET").toUpperCase();
+  const headers =
+    init.headers instanceof Headers ? Object.fromEntries(init.headers) : { ...(init.headers || {}) };
+
+  if (method === "OPTIONS") {
+    return storage()
+      .options(url, { header: "Accept-Post" })
+      .then(({ headers: value }) =>
+        new Response(null, {
+          status: 204,
+          headers: typeof value === "string" ? { "Accept-Post": value } : {},
+        }),
+      )
+      .catch(() => new Response(null, { status: 204 }));
+  }
+
+  let promise;
+  if (method === "HEAD") {
+    promise = storage().head(url, headers);
+  } else if (method === "POST") {
+    const { Slug: slug, "Content-Type": contentType, ...rest } = headers;
+    promise = storage().post(url, slug, init.body, contentType, null, { headers: rest });
+  } else {
+    promise = storage().get(url, headers);
+  }
+
+  return promise.catch(error => {
+    if (error?.response) return error.response;
+    throw error;
+  });
+}
+
+export { StorageBackend, HttpStorage, SolidStorage, GitForgeStorage, StorageRouter, CAPS, initStorage, storage, storageFetch };

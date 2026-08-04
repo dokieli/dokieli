@@ -4677,8 +4677,7 @@ margin-top:0.25em;
 vertical-align:top;
 }
 
-.editor-form label[for^="ref-"],
-.editor-form label[for^="bookmark-"] {
+.editor-form label[for^="ref-"] {
 width:auto;
 font-size:1em;
 line-height:1;

@@ -657,7 +657,7 @@ export default {
                     'deo', 'dio', 'doap', 'doco', 'dpv', 'earl', 'fabio', 'foaf', 'ldp', 'mem',
                     'oa', 'odrl', 'opmw', 'owl', 'prov', 'qb', 'rdf', 'rdfa', 'rdfs',
                     'rel', 'risk', 'rsa', 'schema', 'sio', 'sioc', 'skos', 'solid', 'spec', 'void', 'wgs', 'ws', 'xsd'],
-    activity:      ['as', 'oa', 'rdf', 'schema'],
+    activity:      ['as', 'dcterms', 'oa', 'rdf', 'schema'],
     annotation:    ['as', 'dcterms', 'ldp', 'oa', 'rdf', 'schema'],
     visualization: ['dcterms', 'rdf', 'rdfs', 'xsd'],
     geo:           ['gi', 'sdmx-dimension', 'sdmx-measure', 'unit']

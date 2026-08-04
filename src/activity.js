@@ -16,15 +16,17 @@ limitations under the License.
 */
 
 import rdf from 'rdf-ext';
-import { createActivityHTML, createActivityJSONLD, showCitations, getReferenceLabel, createNoteDataHTML, handleDeleteNote, getItemVisibility } from './doc.js';
+import { createActivityObjectHTML, createActivityJSONLD, showCitations, getReferenceLabel, createNoteDataHTML, handleDeleteNote, getItemVisibility } from './doc.js';
 import { applyMarksFromTextQuote, applyMarkFromSelector } from '@dokieli/web-annotation';
-import { createHTML } from './utils/html.js';
 import { Icon } from './ui/icons.js'
 import { getButtonHTML } from './ui/buttons.js'
-import { getAbsoluteIRI, getPathURL, isHttpOrHttpsProtocol, stripFragmentFromString, currentLocation, getFragmentFromString } from './uri.js';
-import { getLinkRelation, serializeDataToPreferredContentType, getGraphLanguage, getGraphLicense, getGraphRights, getGraphTypes, getGraphDate, getGraphImage, getResourceGraph, getResourceOnlyRDF, getAgentTypeIndex, getUserContacts, getAgentName, getSubjectInfo, getItemsList, parseAnnotationFromGraph } from './graph.js';
+import { getPathURL, isHttpOrHttpsProtocol, stripFragmentFromString, currentLocation, getFragmentFromString } from './uri.js';
+import { serializeDataToPreferredContentType, getGraphLanguage, getGraphLicense, getGraphRights, getGraphTypes, getGraphDate, getGraphImage, getResourceGraph, getResourceOnlyRDF, getAgentTypeIndex, getUserContacts, getAgentName, getSubjectInfo, getItemsList, parseAnnotationFromGraph, jsonldNodesFromData } from './graph.js';
+import { activityTypeToken, createNotification, discoverInbox, getAcceptPost, getInboxContents, postNotification, serializeNotificationToHTML } from '@dokieli/notifications';
+import { storageFetch } from './storage/backend.js';
 import Config from './config.js';
 import { domSanitize, sanitizeInsertAdjacentHTML } from './utils/sanitization.js';
+import { formatHTMLString } from './utils/normalization.js';
 import { generateAttributeId, uniqueArray, findPreviousDateTime, isUserAuthenticated } from './util.js';
 import { fragmentFromString, getDocumentContentNode, selectArticleNode } from "./utils/html.js";
 import { getTextContentExcludingSups } from './editor/utils/annotation.js';
@@ -93,7 +95,6 @@ export function initializeNotifications(options = {}) {
   return aside;
 }
 
-const NotificationsWidthKey = 'dokieli-notifications-width';
 const NotificationsWidthProperty = '--dokieli-notifications-width';
 
 export function initializeNotificationsResize(aside) {
@@ -101,11 +102,6 @@ export function initializeNotificationsResize(aside) {
   if (!resizer) { return; }
 
   var root = document.documentElement;
-
-  var stored = window.localStorage.getItem(NotificationsWidthKey);
-  if (stored) {
-    root.style.setProperty(NotificationsWidthProperty, stored);
-  }
 
   var minWidth = 240;
 
@@ -127,11 +123,6 @@ export function initializeNotificationsResize(aside) {
       resizer.classList.remove('active');
       resizer.removeEventListener('pointermove', onMove);
       resizer.removeEventListener('pointerup', onUp);
-
-      var current = root.style.getPropertyValue(NotificationsWidthProperty).trim();
-      if (current) {
-        window.localStorage.setItem(NotificationsWidthKey, current);
-      }
     };
 
     resizer.addEventListener('pointermove', onMove);
@@ -140,7 +131,6 @@ export function initializeNotificationsResize(aside) {
 
   resizer.addEventListener('dblclick', () => {
     root.style.removeProperty(NotificationsWidthProperty);
-    window.localStorage.removeItem(NotificationsWidthKey);
   });
 }
 
@@ -269,11 +259,9 @@ export function sendNotifications(tos, note, iri, shareResource) {
           notificationData['inbox'] = inboxURL;
 
           notifyInbox(notificationData)
-            .then(response => {
-              var location = response.headers.get('Location');
-
-              if (location) {
-                location = domSanitize(getAbsoluteIRI(inboxURL, location));
+            .then(result => {
+              if (result.location) {
+                var location = domSanitize(result.location);
 
                 toInput
                   .parentNode
@@ -294,9 +282,12 @@ export function sendNotifications(tos, note, iri, shareResource) {
 }
 
 export function inboxResponse(to, toInput) {
-  return getLinkRelation(ns.ldp.inbox.value, to)
-    .then(inboxes => {
-      return inboxes[0]
+  return discoverInbox(to, { fetch: storageFetch, parser: jsonldNodesFromData })
+    .then(inbox => {
+      if (!inbox) {
+        return Promise.reject(new Error('No inbox found for ' + to));
+      }
+      return inbox;
     })
 
     .catch(error => {
@@ -307,6 +298,19 @@ export function inboxResponse(to, toInput) {
         .querySelector('.progress[data-to="' + to + '"]')
         .setHTMLUnsafe(domSanitize(Icon[".fas.fa-times-circle.fa-fw"] + ' Inbox not responding. Try later.'))
     });
+}
+
+// Accept-Post preference: HTML, then JSON-LD flavors, then other RDF serializations
+function preferredContentTypeFor(acceptPost) {
+  var bases = (acceptPost || []).map(t => t.split(';')[0].trim().toLowerCase());
+  if (bases.includes('text/html') || bases.includes('application/xhtml+xml')) {
+    return 'text/html';
+  }
+  if (['application/ld+json', 'application/json', 'application/activity+json', '*/*'].some(t => bases.includes(t))) {
+    return 'application/ld+json';
+  }
+  var rdfType = ['text/turtle', 'application/n-triples', 'application/n-quads', 'text/n3'].find(t => bases.includes(t));
+  return rdfType || 'application/ld+json';
 }
 
 export function notifyInbox(o) {
@@ -323,13 +327,32 @@ export function notifyInbox(o) {
     return Promise.reject(new Error('No inbox to send notification to'));
   }
 
-  //TODO title
-  var title = '';
-  var data = createActivityHTML(o);
+  var params = {
+    type: o.type,
+    object: { id: o.object, html: domSanitize(createActivityObjectHTML(o)) }
+  };
+  if (Config.User.IRI) { params.actor = Config.User.IRI; }
+  if (o.target && o.target.length) { params.target = o.target; }
+  if (o.context && o.context.length) { params.context = o.context; }
+  if (o.summary && o.summary.length) { params.summary = o.summary; }
+  if (o.content && o.content.length) { params.content = o.content; }
+  if (o.to && typeof o.to === 'string' && /^https?:\/\//i.test(o.to) && !/\s/.test(o.to)) { params.to = o.to; }
+  var notificationLicense = o.license || Config.NotificationLicense;
+  if (notificationLicense) { params.license = notificationLicense; }
 
-  data = createHTML(title, data, { prefix: Config.prefixStrings.activity });
+  var notification = createNotification(params);
 
-  data = domSanitize(data);
+  var titleLabel = 'Notification';
+  if (o.type.includes('as:Announce')) { titleLabel += ': Announced'; }
+  else if (o.type.includes('as:Create')) { titleLabel += ': Created'; }
+  else if (o.type.includes('as:Like')) { titleLabel += ': Liked'; }
+  else if (o.type.includes('as:Dislike')) { titleLabel += ': Disliked'; }
+  else if (o.type.includes('as:Add')) { titleLabel += ': Added'; }
+
+  var data = formatHTMLString(serializeNotificationToHTML(notification, {
+    prefixes: Config.prefixStrings.activity,
+    labels: { [activityTypeToken(String(o.type[0]))]: titleLabel }
+  }));
 
   var options = {
     'contentType': 'text/html',
@@ -341,7 +364,22 @@ export function notifyInbox(o) {
     options.activityJSONLD = createActivityJSONLD(o);
   }
 
-  return postActivity(inboxURL, slug, data, options);
+  return getAcceptPost(inboxURL, { fetch: storageFetch })
+    .catch(() => null)
+    .then(acceptPost => {
+      options['preferredContentType'] = preferredContentTypeFor(acceptPost);
+      return serializeDataToPreferredContentType(data, options);
+    })
+    .then(serializedData => {
+      var profile = ('profile' in options) ? '; profile="' + options.profile + '"' : '';
+      var contentType = options['preferredContentType'] + profile + '; charset=utf-8';
+
+      return postNotification(inboxURL, serializedData, {
+        fetch: storageFetch,
+        contentType: contentType,
+        headers: slug ? { 'Slug': slug } : {}
+      });
+    });
 }
 export function postActivity(url, slug, data, options) {
   return Config.Storage.getAcceptPost(url)
@@ -359,7 +397,7 @@ export function postActivity(url, slug, data, options) {
     });
 }
 
-const _registeredTypeIndexKeys = new Set();
+const registeredTypeIndexKeys = new Set();
 
 export function registerAnnotationInTypeIndex(containerIRI, forClass) {
   const privateTypeIndexIRIs = Config.User.PrivateTypeIndex;
@@ -371,7 +409,7 @@ export function registerAnnotationInTypeIndex(containerIRI, forClass) {
   if (!typeIndexIRI) return Promise.resolve();
 
   // Guard against duplicate registrations for the same type (one per forClass is enough)
-  if (_registeredTypeIndexKeys.has(forClass)) return Promise.resolve();
+  if (registeredTypeIndexKeys.has(forClass)) return Promise.resolve();
 
   // Check if this forClass is already registered in memory
   const privateEntries = Config.User.TypeIndex?.[ns.solid.privateTypeIndex.value] || {};
@@ -381,7 +419,7 @@ export function registerAnnotationInTypeIndex(containerIRI, forClass) {
   );
   if (alreadyRegistered) return Promise.resolve();
 
-  _registeredTypeIndexKeys.add(forClass);
+  registeredTypeIndexKeys.add(forClass);
 
   const registrationId = generateAttributeId();
   const insert = `<#${registrationId}> a <http://www.w3.org/ns/solid/terms#TypeRegistration> ;\n` +
@@ -404,25 +442,12 @@ export function registerAnnotationInTypeIndex(containerIRI, forClass) {
 
 export function getNotifications(url) {
   url = url || currentLocation();
-  var notifications = [];
 
   Config.Inbox[url] = {};
   Config.Inbox[url]['Notifications'] = [];
 
-  return getResourceGraph(url)
-    .then(({ graph: g }) => {
-      Config.Inbox[url]['Graph'] = g;
-
-      var s = g.node(rdf.namedNode(url));
-      s.out(ns.ldp.contains).values.forEach(resource => {
-// console.log(resource);
-        var types = getGraphTypes(s.node(rdf.namedNode(resource)));
-// console.log(types);
-        if(!types.includes(ns.ldp.Container.value)) {
-          notifications.push(resource);
-        }
-      });
-// console.log(notifications);
+  return getInboxContents(url, { fetch: storageFetch, parser: jsonldNodesFromData })
+    .then(notifications => {
       if (notifications.length) {
         Config.Inbox[url]['Notifications'] = notifications;
         return notifications;
@@ -465,12 +490,10 @@ export function showNotificationSources(url) {
 }
 
 async function showActivitiesSourcesUncached(url, options = {}) {
-  // The container listing itself gets rate-limited under load; retry it so today's
-  // annotations are actually enumerated instead of the whole scan coming up empty.
+  // Retry the container listing; rate limiting can return it empty under load
   return withReadRetry(() => getItemsList(url))
     .then(items => {
-      // Cap concurrency so a large collection doesn't fan out into dozens of parallel
-      // HEAD+GET fetches and trip the storage server's rate limiter (429).
+      // Cap concurrency to avoid tripping the storage server's rate limiter
       var queue = items.slice(0, Config.CollectionItemsLimit);
       var concurrency = Math.min(Config.CollectionItemsConcurrency, queue.length);
       var cursor = 0;
@@ -505,13 +528,7 @@ async function showActivitiesSourcesUncached(url, options = {}) {
 //   }
 // }
 
-// Global gate for activity/notification reads only. A document can fan out
-// into dozens of these at once (many callers, each looping), tripping storage
-// rate limiters (429) - which the browser surfaces as opaque CORS failures.
-// Bounding here (rather than in the fetcher) keeps the cap off the auth,
-// profile, and posting paths. The slot is held only for the duration of the
-// read, released before any recursive showActivities call, so there's no
-// nested-semaphore deadlock.
+// Bounded gate for activity/notification reads; slots release before recursive calls
 let activityReadsActive = 0;
 const activityReadsQueue = [];
 
@@ -526,11 +543,7 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Retries an activity read on failure with exponential backoff. The storage server
-// rate-limits bursts (429), which the browser usually surfaces as an opaque
-// CORS/network failure with no readable status - so retry on ANY rejection
-// (bounded), backing off to let the rate window clear. Honors Retry-After when the
-// 429 is actually readable. Run inside the read gate so backoff also frees a slot.
+// Retry with backoff on any rejection; 429s often surface as opaque network failures
 async function withReadRetry(fn, attempts = 3) {
   var delay = 600;
   for (var i = 0; ; i++) {
@@ -558,15 +571,7 @@ function gatedGetResourceOnlyRDF(url) {
   );
 }
 
-// Per-URL in-flight dedup for activity reads. A document fans out into many
-// overlapping scans (page load + every notifications-panel open; one
-// showActivitiesSources per type registration, often sharing a container; the
-// same annotation reachable via several activities), all hitting the same URLs.
-// Without this, those collapse onto the storage server at once and trip its rate
-// limiter (429), which the browser surfaces as opaque CORS failures - and the
-// duplicate processing also double-lists notes. Entries clear on settle, so a
-// later panel open still rescans (leaf annotations stay cached in Config.Activity,
-// so a rescan is cheap), while a single burst is collapsed to one fetch per URL.
+// Per-URL in-flight dedup; entries clear on settle so a later scan still refreshes
 const showActivitiesInFlight = new Map();
 const showActivitiesSourcesInFlight = new Map();
 
@@ -838,7 +843,6 @@ function showActivitiesUncached(url, options = {}) {
             }
           }
           else if (resourceTypes.includes(ns.oa.Annotation.value) && !subjectsReferences.includes(i)) {
-            // Chain through the grapoi pointer so blank-node targets are traversed correctly
             // oa:hasTarget may be an IRI or a blank node with oa:hasSource
             var targetPtr = s.out(ns.oa.hasTarget);
             var hasTargetValue = targetPtr.values[0];
@@ -1033,9 +1037,9 @@ export function processAgentActivities(agent) {
   if (agent.TypeIndex && Object.keys(agent.TypeIndex).length) {
     return processAgentTypeIndex(agent);
   }
-  else if (agent.Graph && (agent.PublicTypeIndex?.length || agent.PrivateTypeIndex?.length) && !agent._typeIndexAttempted) {
+  else if (agent.Graph && (agent.PublicTypeIndex?.length || agent.PrivateTypeIndex?.length) && !agent.typeIndexAttempted) {
     // Guard prevents infinite recursion when an unreadable TypeIndex returns 0 entries.
-    agent._typeIndexAttempted = true;
+    agent.typeIndexAttempted = true;
     return [getAgentTypeIndex(agent.Graph)
       .then(typeIndexes => {
         var keys = Object.keys(typeIndexes);
@@ -1142,8 +1146,7 @@ export async function positionInteraction(noteIRI, containerNode, options) {
   showAnnotation(noteIRI, g, containerNode, options);
 }
 
-// Finds the TextQuoteSelector within a typed Selector (annotations),
-// following oa:refinedBy (e.g. FragmentSelector → refinedBy → TextQuoteSelector).
+// Finds the TextQuoteSelector within a typed Selector, following oa:refinedBy
 function textQuoteFromSelector(selector) {
   if (!selector) { return undefined; }
   if (selector.type === 'TextQuoteSelector') { return selector; }
@@ -1151,12 +1154,7 @@ function textQuoteFromSelector(selector) {
   return undefined;
 }
 
-// Marks the annotated passage in the document at creation time, from the selector
-// dokieli already holds in memory. The re-fetch path (showActivities ->
-// showAnnotation) that normally draws the highlight needs a server round-trip,
-// which gets rate-limited (429) under load - so don't depend on it for the
-// just-created annotation. Idempotent: returns early if a mark for this annotation
-// already exists, so the re-fetch path (if it later succeeds) won't double-mark.
+// Marks the passage at creation time without waiting on the re-fetch path; idempotent
 export function markAnnotationTarget(noteIRI, selector, options = {}) {
   if (!noteIRI || !selector) { return null; }
 
@@ -1173,9 +1171,7 @@ export function markAnnotationTarget(noteIRI, selector, options = {}) {
 
   var markOptions = { 'annotationUrl': noteIRI, 'id': 'r-' + id, 'className': 'ref do', 'reference': docRefType, 'excludeMatchesIn': '#document-notifications', 'ignoreSelector': 'sup' };
 
-  // Cross-node selections use a RangeSelector (XPath start/end refined by TextQuotes);
-  // applyMarkFromSelector resolves it to a range and marks each text node it spans.
-  // A plain TextQuoteSelector marks every matching occurrence.
+  // RangeSelector marks the resolved range; TextQuoteSelector marks every match
   var isTextQuote = selector.type === 'TextQuoteSelector' || (!selector.type && selector.exact);
   if (isTextQuote) {
     if (!selector.exact) { return null; }
@@ -1186,8 +1182,7 @@ export function markAnnotationTarget(noteIRI, selector, options = {}) {
 }
 
 export async function showAnnotation(noteIRI, g, options) {
-  // Use the document content node (main > article or main) rather than document.body
-  // so that the notifications panel aside is excluded from text searches.
+  // Search within the content node so the notifications panel is excluded
   var containerNode = selectArticleNode(document);
   options = options || {};
 
@@ -1369,7 +1364,7 @@ export async function showAnnotation(noteIRI, g, options) {
     }
 
     // console.log(documentURL)
-    // Use pointer chaining so blank-node targets (oa:hasTarget as anonymous object) are traversed correctly
+    // Pointer chaining so blank-node targets are traversed correctly
     var targetPtr = note.out(ns.oa.hasTarget);
     var hasTarget = targetPtr.values[0];
     var targetIRI = hasTarget;
@@ -1389,10 +1384,7 @@ export async function showAnnotation(noteIRI, g, options) {
       refLabel = getReferenceLabel(motivatedBy);
     }
 
-    // Resolve the selector via @dokieli/web-annotation's parser (rdf-ext graph →
-    // JSON-LD → Annotation). Core resolves the typed selector tree, including
-    // FragmentSelector → refinedBy → TextQuoteSelector, so we no longer walk it
-    // by hand. `parsedSelector` is the typed Selector union from core.
+    // Resolve the typed selector tree via @dokieli/web-annotation
     var exact, prefix, suffix, selector;
     var parsedAnnotation = await parseAnnotationFromGraph(g, note.value || noteIRI);
     var parsedSelector = parsedAnnotation?.target?.selector;
@@ -1450,9 +1442,7 @@ export async function showAnnotation(noteIRI, g, options) {
         "suffix": suffix
       };
 
-      // ignoreSelector excludes prior annotations' <sup> reference markers from the
-      // library's text basis, matching getTextContentExcludingSups used above so the
-      // offsets agree. Without it, a marker landing inside the phrase breaks the match.
+      // Exclude sup reference markers so offsets match getTextContentExcludingSups
       var markOptions = { 'annotationUrl': noteIRI, 'id': refId, 'className': 'ref do', 'reference': docRefType, 'excludeMatchesIn': '#document-notifications', 'ignoreSelector': 'sup' };
       // Don't re-mark if the passage was already marked at creation time (detect by the reference link).
       var existingMark = containerNode.querySelector('[resource="' + noteIRI + '"]');
