@@ -24,6 +24,7 @@ import Config from "../../../config.js"
 import { notifyInbox, postActivity, showActivities, registerAnnotationInTypeIndex, markAnnotationTarget } from "../../../activity.js"
 import { shareResource } from "../../../dialog.js";
 import { domSanitize } from "../../../utils/sanitization.js";
+import { formatHTMLString } from "../../../utils/normalization.js";
 import { encryptContent } from "../../../crypto.js";
 import { isUnlocked, getSessionPublicKey, getSessionKid } from "../../../keystore.js";
 
@@ -113,9 +114,7 @@ export async function processAction(action, formValues, selectionData) {
 
   const data = getFormActionData(action, formValues, selectionData);
 
-  // Sanitize the user-supplied note body here, at the boundary. The generated
-  // annotation markup (lib RDFa + createHTML wrapper) is trusted and is NOT
-  // sanitized as a whole - only this user input is.
+  // Sanitize the user-supplied note body at the boundary; generated markup is trusted
   if (data.formData && typeof data.formData.content === 'string') {
     data.formData.content = domSanitize(data.formData.content);
   }
@@ -136,10 +135,7 @@ export async function processAction(action, formValues, selectionData) {
 
         var noteData = createNoteData(annotation);
 
-        // POST with a relative @id ('') so the stored annotation is addressed by its
-        // storage URL (the server resolves '' against it), not the urn:uuid. The urn
-        // stays as oa:canonical. This matches dokieli's long-standing RDFa form and
-        // keeps the mark/panel/delete references (all URL-based) consistent.
+        // POST with a relative @id so the annotation is addressed by its storage URL; the urn stays as oa:canonical
         noteData.iri = '';
 
         annotation['motivatedBy'] = noteData['motivatedBy'];
@@ -175,15 +171,13 @@ export async function processAction(action, formValues, selectionData) {
           note = createNoteDataHTML(noteData);
         }
 
-        noteHTML = createHTML('', note);
+        noteHTML = formatHTMLString(createHTML('', note));
 
         // console.log(noteData)
         // console.log(data)
         // console.log(annotation)
 
-        // Carry the structured annotation (noteData) so postActivity can
-        // serialize JSON-LD directly from it via @dokieli/web-annotation when the
-        // server prefers JSON-LD (instead of the RDFa → graph round-trip).
+        // noteData lets postActivity serialize JSON-LD directly when the server prefers it
         postActivity(annotation['containerIRI'], annotation.id, noteHTML, { ...annotation, annotationObject: noteData })
           .catch(error => {
             // console.log('Error serializing annotation:', error)
@@ -202,11 +196,7 @@ export async function processAction(action, formValues, selectionData) {
             if (annotation.canonical) {
               registerAnnotationInTypeIndex(annotation['containerIRI'], ns.oa.Annotation.value);
 
-              // Mark the passage now, from the in-memory selector - the re-fetch path
-              // (positionActivity -> showActivities) 429s under load, so the highlight
-              // must not depend on it. Idempotent against the re-fetch path. Uses the
-              // library-decided selector (RangeSelector for cross-node selections) so the
-              // highlight spans multiple nodes/sections, not just a single TextQuote match.
+              // Mark from the in-memory selector; the re-fetch path is rate-limited. Idempotent.
               markAnnotationTarget(annotation['noteIRI'], noteData.target?.selector || annotation.selectionData?.selector, { motivatedBy: annotation.motivatedBy, id: annotation.id });
             }
 
@@ -222,9 +212,7 @@ export async function processAction(action, formValues, selectionData) {
           })
 
           .catch(e => {  // catch-all
-            // suppress the error, it was already logged to the console above
-            // nothing else needs to be done, the loop will proceed
-            // to the next annotation
+            // already logged; continue with the next annotation
           });
       }
       break;

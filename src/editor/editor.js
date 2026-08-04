@@ -224,7 +224,7 @@ export class Editor {
   setTemplateNew(mode, options) {
     //Start with empty body. Reuse <head>, <html> will have its lang/xml:lang, <body> will have prefix.
     // Add initial nodes h1, p with no content.
-    // Update head > title to 'Untitled'. Make sure to have Save update head > title with h1 value (if specified).
+    // Update head > title to 'Untitled'. Save syncs head > title with h1 value (getDocument).
 
     document.documentElement.setAttribute("lang", `${Config.User.UI.Language}`);
     document.documentElement.setAttribute("xml:lang", `${Config.User.UI.Language}`);
@@ -295,7 +295,7 @@ export class Editor {
   setTemplateNewCV(mode, options) {
     //Start with empty body. Reuse <head>, <html> will have its lang/xml:lang, <body> will have prefix.
     // Add initial nodes h1, p with no content.
-    // Update head > title to 'Untitled'. Make sure to have Save update head > title with h1 value (if specified).
+    // Update head > title to 'Untitled'. Save syncs head > title with h1 value (getDocument).
 
     document.documentElement.setAttribute("lang", `${Config.User.UI.Language}`);
     document.documentElement.setAttribute("xml:lang", `${Config.User.UI.Language}`);
@@ -523,7 +523,7 @@ export class Editor {
         caret.className = 'yjs-caret';
         caret.style.borderLeftColor = user.color;
 
-        // Name label — revealed on activity, then CSS fades it out so it does
+        // Name label, revealed on activity, then CSS fades it out so it does
         // not permanently cover the text. It is re-shown by retriggerLabel()
         // below whenever this peer moves or types.
         const label = document.createElement('span');
@@ -806,9 +806,9 @@ export class Editor {
           if (seed) seedFromDom();
           finish(true);
         };
-        const onUpdate = (_update, origin) => {
+        const onUpdate = (update, origin) => {
           // A doc update from the provider means the server/a peer delivered
-          // content — do not seed the DOM on top of it.
+          // content; do not seed the DOM on top of it.
           if (origin === provider) settle(false);
         };
         ydoc.on('update', onUpdate);
@@ -972,13 +972,6 @@ export class Editor {
     }
   }
 
-
-  updateDocumentTitle() {
-    var h1 = document.querySelector('h1');
-    if (h1) {
-      document.title = h1.textContent.trim();
-    }
-  }
 
   //TODO: Port Contributor and Modified to slashmenu widget
   // setEditorDataItems(e) {
@@ -1186,7 +1179,7 @@ export function addYjsVersion(versionData) {
     versionsMap.set(key, { ...versionData, actor });
     ydoc.getMap('meta').set('currentVersionKey', key);
 
-    // Enforce max count — drop oldest entries beyond the limit.
+    // Enforce max count; drop oldest entries beyond the limit.
     if (versionsMap.size > MAX_VERSIONS) {
       const sorted = Array.from(versionsMap.keys()).sort();
       for (let i = 0; i < versionsMap.size - MAX_VERSIONS; i++) {

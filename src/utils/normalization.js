@@ -18,7 +18,7 @@ limitations under the License.
 import { DOMParser, DOMSerializer } from 'prosemirror-model';
 import Config from '../config.js';
 import { schema } from '../editor/schema/base.js';
-import { removeNodesWithSelector, removeClassValues, formatHTML, getFragmentOfNodesChildren } from './html.js';
+import { removeNodesWithSelector, removeClassValues, formatHTML, getFragmentOfNodesChildren, getDocumentNodeFromString } from './html.js';
 
 export function normalizeForDiff(node) {
   const doc = DOMParser.fromSchema(schema).parse(node);
@@ -259,6 +259,12 @@ export function cleanProseMirrorOutput(node) {
   });
 
   return getFragmentOfNodesChildren(element);
+}
+
+export function formatHTMLString(htmlString) {
+  const node = getDocumentNodeFromString(htmlString);
+  normalizeWhitespace(node.documentElement);
+  return '<!DOCTYPE html>\n' + formatHTML(node.documentElement);
 }
 
 export function normalizeWhitespace(root = document.documentElement) {

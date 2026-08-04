@@ -34,6 +34,7 @@ const ns = Config.ns;
 import { Icon } from './ui/icons.js';
 import { updateDeviceStorageProfile, getDeviceStorageItem  } from './storage.js';
 import { enableAutoSave, disableAutoSave, enableRemoteSync, disableRemoteSync, showResourceReviewChanges } from './sync.js';
+import { formatHTMLString } from './utils/normalization.js';
 import { showVisualisationGraph } from './viz.js';
 import { exportAsDocument, maybeAskPreferredLanguage, updateUILanguage } from './actions.js';
 import { parseMarkdown, htmlToMarkdown, fragmentFromString, removeSelectorFromNode, selectArticleNode, getNodeWithoutClasses } from "./utils/html.js";
@@ -54,9 +55,9 @@ let lastRestoredKey = null;
 window.addEventListener('dokieli:version-restored', (e) => { lastRestoredKey = e.detail?.key ?? null; });
 window.addEventListener('dokieli:editor-mode-changed', () => updateSlideshowControls());
 
-let _documentDoClickInit = false;
-let _documentMenuClickInit = false;
-let _autoSaveChangeInit = false;
+let documentDoClickInitialized = false;
+let documentMenuClickInitialized = false;
+let autoSaveChangeInitialized = false;
 
 export function initDocumentMenu(options = {}) {
   if (Config.HideInPageMenu) return;
@@ -98,8 +99,8 @@ export function initDocumentMenu(options = {}) {
     enableMenu();
   }, { once: true });
   
-  if (_documentMenuClickInit) return;
-  _documentMenuClickInit = true;
+  if (documentMenuClickInitialized) return;
+  documentMenuClickInitialized = true;
 
   document.addEventListener('click', (e) => {
     var button = e.target.closest('button');
@@ -184,8 +185,7 @@ export function hideDocumentMenu(e) {
   //   dMenu.querySelector('button.signin-user').disabled = false;
   // }
 
-   // Re-enable any menu buttons disabled while their dialog was open; the
-  // dialogs are torn down below, so their per-button close handlers won't run.
+  // Re-enable menu buttons whose dialogs are torn down below
   dMenu.querySelectorAll('button[disabled]').forEach(b => { b.disabled = false; });
   removeNodesWithIds(Config.DocumentDoItems);
 }
@@ -327,8 +327,8 @@ export async function showAutoSave(node) {
     return;
   }
 
-  if (_autoSaveChangeInit) return;
-  _autoSaveChangeInit = true;
+  if (autoSaveChangeInitialized) return;
+  autoSaveChangeInitialized = true;
 
   document.addEventListener('change', async (e) => {
     if (e.target.matches('#autosave-remote')) {
@@ -477,8 +477,8 @@ function showDocumentDo(node) {
 }
 
 export function initDocumentDoEvents() {
-  if (_documentDoClickInit) return;
-  _documentDoClickInit = true;
+  if (documentDoClickInitialized) return;
+  documentDoClickInitialized = true;
 
   document.addEventListener('click', e => {
     if (e.target.closest('.resource-share')) {
@@ -1723,8 +1723,7 @@ export function replyToResource(e, iri) {
     var attributeId = generateAttributeId()
 
     var motivatedBy = "oa:replying"
-    // dokieli maps its "reply" action to the oa:replying motivation and passes
-    // it directly to createAnnotation.
+    // The reply action maps to the oa:replying motivation
     var noteData = createAnnotation({
       motivatedBy,
       type: 'comment',
@@ -1757,7 +1756,7 @@ export function replyToResource(e, iri) {
 
     note = createNoteDataHTML(noteData)
 
-    var data = createHTML('', note)
+    var data = formatHTMLString(createHTML('', note))
 
     Config.Storage.put(noteIRI, data)
       .catch(error => {
@@ -1834,13 +1833,12 @@ export function replyToResource(e, iri) {
           })
       })
 
-      .then(response => {  // Success!
+      .then(result => {  // Success!
         var notificationSent = i18n.t('dialog.reply-to-resource.success.notification-sent.p.textContent');
-        var location = response.headers.get('Location');
         var notificationLink = '';
 
-        if (location) {
-          let locationUrl = domSanitize(getAbsoluteIRI(response.url, location.trim()));
+        if (result && result.location) {
+          let locationUrl = domSanitize(result.location);
           notificationLink = `<a href="${locationUrl}" rel="noopener" target="_blank">${locationUrl}</a>`;
         }
         // else {
@@ -3220,8 +3218,7 @@ export async function openResource(iri, options) {
 
       if (Config.MediaTypes.RDF.includes(options['contentType'])) {
         if (!isMarkdownSource) {
-          // For markdown-origin HTML, skip storeHash: the hash will be set correctly
-          // on first sync using the same normalized pipeline as syncLocalRemoteResource
+          // Markdown-origin HTML skips storeHash; first sync sets it via the normalized pipeline
           options['storeHash'] = true;
         }
         getResourceInfo(data, options);
@@ -3549,9 +3546,7 @@ export function toggleMarkdownMode(e) {
 
     if (wasAuthored) {
       Config.Editor['new'] = wasNew;
-      // New docs: reinit PM on the passed article node directly.
-      // Existing docs: pass no node so Editor falls back to the article node
-      // selected at construction time, which now contains the parsed HTML.
+      // New docs reinit on the passed node; existing docs fall back to the construction-time node
       Config.Editor.init('author', wasNew ? mdNode : undefined);
       Config.EditorEnabled = true;
       Config.EditorWasEnabled = true;
@@ -3573,10 +3568,7 @@ export function toggleMarkdownMode(e) {
 
     const markdown = htmlToMarkdown(sourceNode);
 
-    // Determine the content node to make editable.
-    // New docs: PM is on article -> editorView.dom.parentNode = article (use it directly).
-    // Existing docs: PM is on body -> editorView.dom.parentNode = body -> create a fresh
-    // <article> so we don't clobber body (which holds the toolbar and other .do nodes).
+    // Use the article node when PM is on it; when PM is on body, create a fresh article
     const pmParent = wasAuthored
       ? Config.Editor.editorView?.dom?.parentNode
       : null;
@@ -3585,8 +3577,7 @@ export function toggleMarkdownMode(e) {
         ? pmParent
         : document.createElement("article");
 
-    // Save toolbar before destroy: for body-mounted PM (existing docs),
-    // ToolbarView.destroy() removes it — detach first so we can re-insert it.
+    // Detach the toolbar before destroy so it can be re-inserted
     const editorToolbar = document.getElementById('document-editor');
     editorToolbar?.remove();
 
@@ -3600,7 +3591,7 @@ export function toggleMarkdownMode(e) {
       Config.EditorWasEnabled = true;
     }
 
-    // For existing docs contentNode is a new element not yet in the DOM — insert it.
+    // For existing docs contentNode is a new element not yet in the DOM; insert it.
     if (!contentNode.parentNode) {
       document.body.insertBefore(contentNode, document.body.firstChild);
     }
@@ -4241,12 +4232,11 @@ export async function saveAsDocument(e) {
                   .querySelector('.progress[data-to="' + inboxURL + '"]')
                   .setHTMLUnsafe(domSanitize(`${Icon[".fas.fa-times-circle.fa-fw"]} <span data-i18n="dialog.save-as-document.request-access.not-notified.span">${i18n.t('dialog.save-as-document.request-access.not-notified.span.textContent')}</span>`))
               })
-              .then(response => {
+              .then(result => {
                 var notificationSent = Icon[".fas.fa-check-circle.fa-fw"];
-                var location = response.headers.get('Location');
 
-                if (location) {
-                  let locationUrl = domSanitize(getAbsoluteIRI(response.url, location.trim()));
+                if (result && result.location) {
+                  let locationUrl = domSanitize(result.location);
                   notificationSent = `<a href="${locationUrl}" rel="noopener" "target="_blank">${Icon[".fas.fa-check-circle.fa-fw"]}</a>`;
                 }
 
@@ -4426,7 +4416,7 @@ function initSlideshowControlsHover(controls, indicator) {
       return;
     }
     if (e.target.closest('.slide-delete') && hoveredSlide) {
-      // Refuse to delete the only slide — a slideshow needs at least one.
+      // Refuse to delete the only slide; a slideshow needs at least one.
       const real = Array.from(document.querySelectorAll('.shower .slide'))
         .filter(s => !s.closest('#rail-active-placeholder'));
       if (real.length <= 1) return;
@@ -4565,8 +4555,7 @@ function ensureAuthorAndDo(action) {
     return;
   }
   Config.Editor.toggleEditor('author');
-  // PM mounts synchronously but in collab mode its doc binds to Yjs/IndexedDB
-  // which loads asynchronously; wait until slides appear in the PM state.
+  // In collab mode the doc binds asynchronously; wait until slides appear in PM state
   let attempts = 0;
   const tryRun = () => {
     const view = Config.Editor.authorToolbarView?.editorView;
@@ -4953,7 +4942,7 @@ export function initEditHistory() {
 
     const reviewPanel = document.getElementById('review-changes');
     if (!reviewPanel) {
-      // No diff — nothing to show, leave the button disabled.
+      // No diff; nothing to show, leave the button disabled.
       return;
     }
 

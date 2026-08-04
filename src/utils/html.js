@@ -241,10 +241,7 @@ export function removeChildren(node) {
 }
 
 export function getFormValues(form) {
-  // Prefer FormData when available and iterable. In Firefox content scripts
-  // the form lives in the page's Xray-wrapped world, which can make the
-  // FormData iterator invisible to the extension world. Fall back to reading
-  // named form elements directly when that happens.
+  // Firefox Xray wrapping can hide the FormData iterator; fall back to named elements
   try {
     const formData = new FormData(form);
     const entries = [...formData.entries()];
@@ -434,7 +431,7 @@ export function parseMarkdown(data, options) {
   return html;
 }
 
-function _hasSemanticAttrs(node) {
+function hasSemanticAttrs(node) {
   return Config.DOMProcessing.rdfaAttributes
           .filter(attr => !["href", "src"]
           .includes(attr))
@@ -452,9 +449,7 @@ export function htmlToMarkdown(node) {
     linkStyle: 'inlined'
   });
 
-  // ProseMirror wraps list item content in <p>. Strip that wrapper so Turndown
-  // produces tight lists (* item) instead of loose lists (* \n\n  item\n\n).
-  // Loose lists round-trip through micromark with extra empty paragraphs.
+  // Strip ProseMirror's <p> inside <li> so Turndown produces tight lists
   td.addRule('paragraphInListItem', {
     filter(node) {
       return node.nodeName.toLowerCase() === 'p' && node.parentNode?.nodeName?.toLowerCase() === 'li';
@@ -479,12 +474,12 @@ export function htmlToMarkdown(node) {
       const tag = el.nodeName.toLowerCase();
       if (alwaysPreserved.includes(tag)) return true;
       if (semanticOnly.includes(tag)) {
-        return _hasSemanticAttrs(el);
+        return hasSemanticAttrs(el);
       }
       return false;
     },
     replacement(content, node) {
-      if (_hasSemanticAttrs(node)) return node.outerHTML;
+      if (hasSemanticAttrs(node)) return node.outerHTML;
       const tag = node.nodeName.toLowerCase();
       const attrs = Array.from(node.attributes).map(a => ` ${a.name}="${a.value}"`).join('');
       const s = blockTags.includes(tag) ? '\n' : '';
@@ -500,8 +495,6 @@ export function htmlToMarkdown(node) {
 }
 
 export function createHTML(title, main, options) {
-  title = title || '';
-  title = domSanitize(title);
   options = options || {};
   //prefix should not be a user input for createHTML
   var prefix = options.prefix ? ` prefix="${options.prefix}"` : '';
@@ -509,11 +502,13 @@ export function createHTML(title, main, options) {
   lang = ' lang="' + lang + '" xml:lang="' + lang + '"';
   lang = ('omitLang' in options) ? '' : lang;
 
-  // `options.sanitized` lets a caller pass already-trusted generated markup (e.g. the
-  // annotation RDFa, where only the user input was sanitized at the boundary) so the
-  // whole document isn't re-sanitized - which both strips the wrapper down to <main>
-  // and can alter the generated RDFa. Default still sanitizes for untrusted callers.
+  // options.sanitized skips re-sanitizing markup whose inputs were sanitized at the boundary
   var mainHTML = ('sanitized' in options) ? main : domSanitize(main);
+
+  if (!title) {
+    title = fragmentFromString(mainHTML).querySelector('h1')?.textContent.trim() || 'Untitled';
+  }
+  title = domSanitize(title);
 
   let html = `<!DOCTYPE html>
 <html${lang} xmlns="http://www.w3.org/1999/xhtml">
