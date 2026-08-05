@@ -3704,6 +3704,9 @@ box-shadow: none !important;
 background-color: #fff;
 width: 4em;
 }
+pre + button.copy-to-clipboard {
+margin: 0 0 0 auto;
+}
 
 button.copy-to-clipboard > svg
 /* , 
