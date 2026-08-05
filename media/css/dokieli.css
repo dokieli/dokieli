@@ -1392,6 +1392,15 @@ box-sizing:border-box;
 #save-as-document .container-empty em {
 margin-left:1em;
 }
+.container-loading {
+display:flex;
+align-items:center;
+gap:0.5em;
+margin:0.5em 0;
+}
+.container-loading svg {
+fill:currentColor;
+}
 #save-as-document .save-as-cards {
 list-style:none;
 padding:0;

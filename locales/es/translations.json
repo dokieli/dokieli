@@ -25,6 +25,8 @@
   "browser.error.request-not-supported.p.textContent": "La solicitud no es compatible con el recurso solicitado.",
   "browser.error.unauthenticated.p.textContent": "No ha iniciado sesión. Por favor, intenta iniciar sesión.",
   "browser.filename.label.textContent": "Nombre de archivo",
+  "browser.loading.textContent": "Cargando",
+  "browser.loading-slow.textContent": "Está tardando mucho en cargar.",
   "button.a.title": "enlace",
   "button.activities.title": "Actividades",
   "button.align-center.textContent": "Centrar",

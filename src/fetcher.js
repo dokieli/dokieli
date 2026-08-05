@@ -302,6 +302,9 @@ function getResource (url, headers = {}, options = {}) {
         if (options.proxyForced) {
           throw new Error('Cannot fetch proxied URL: ' + url);
         }
+        if (options.noProxy) {
+          throw new Error('Error fetching resource', { cause: error });
+        }
         var pIRI = getProxyableIRI(url, {'forceProxy': true});
 
         if (pIRI !== url) {

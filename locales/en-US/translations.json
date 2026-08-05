@@ -28,6 +28,8 @@
   "browser.error.request-not-supported.p.textContent": "Request not supported on the target resource.",
   "browser.error.unauthenticated.p.textContent": "You are not authenticated. Please try signing in.",
   "browser.filename.label.textContent": "Filename",
+  "browser.loading.textContent": "Loading",
+  "browser.loading-slow.textContent": "It's taking a long time to load.",
   "button.a.title": "link",
   "button.activities.title": "Activities",
   "button.align-center.textContent": "Align center",

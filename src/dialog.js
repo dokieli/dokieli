@@ -2642,16 +2642,23 @@ function triggerBrowse(url, id, action){
     }
     var headers;
     headers = {'Accept': 'text/turtle, application/ld+json'};
-    getResourceGraph(url, headers).then(({ graph: g }) => {
+    setBrowserListLoading(id, true);
+    getResourceGraph(url, headers, { noProxy: true }).then(({ graph: g }) => {
+      if (!g) {
+        setBrowserListLoading(id, false);
+        return;
+      }
       generateBrowserList(g, url, id, action).then(l => {
         showStorageDescription(g, id, url);
         return l;
       },
       function(reason){
+        setBrowserListLoading(id, false);
         console.log('???? ' + reason); // Probably no reason for it to get to here
       });
     },
     function({ response } = {}){
+      setBrowserListLoading(id, false);
       var node = document.getElementById(id + '-ul');
 
       showErrorResponseMessage(node, response);
@@ -2744,6 +2751,8 @@ function showCreateContainer(baseURL, id, action, e) {
 }
 
 function showErrorResponseMessage(node, response, context) {
+  if (!node) return;
+  response = response || {};
   var statusCode = ('status' in response) ? response.status : 0;
   statusCode = (typeof statusCode === 'string') ? parseInt(response.slice(-3)) : statusCode;
   // console.log(statusCode);
@@ -2829,13 +2838,17 @@ function initBrowse(baseUrl, input, browseButton, createButton, id, action){
       });
   } else {
     var headers = {'Accept': 'text/turtle, application/ld+json'};
-    getResourceGraph(baseUrl, headers)
+    setBrowserListLoading(id, true);
+    getResourceGraph(baseUrl, headers, { noProxy: true })
       .then(({ graph: g }) => {
-        if (!g) return;
+        if (!g) {
+          setBrowserListLoading(id, false);
+          return;
+        }
         return generateBrowserList(g, baseUrl, id, action)
           .then(() => showStorageDescription(g, id, baseUrl));
       })
-      .catch(() => {})
+      .catch(() => setBrowserListLoading(id, false))
       .then(() => {
         let sampNode = document.getElementById(id + '-' + action);
         if (sampNode) {
@@ -2856,6 +2869,27 @@ function initBrowse(baseUrl, input, browseButton, createButton, id, action){
   }
 }
 
+var browserListLoadingTimers = {};
+
+function setBrowserListLoading(id, isLoading) {
+  var list = document.getElementById(id + '-ul');
+  if (!list || !list.parentNode) return;
+  clearTimeout(browserListLoadingTimers[id]);
+  delete browserListLoadingTimers[id];
+  list.parentNode.querySelectorAll('.container-loading').forEach(n => n.remove());
+  if (isLoading) {
+    sanitizeInsertAdjacentHTML(list, 'afterend', `<p class="container-loading">${Icon['.fas.fa-circle-notch.fa-spin.fa-fw']} <em data-i18n="browser.loading">${i18n.t('browser.loading.textContent')}</em></p>`);
+    browserListLoadingTimers[id] = setTimeout(() => {
+      delete browserListLoadingTimers[id];
+      var em = document.getElementById(id + '-ul')?.parentNode?.querySelector('.container-loading em');
+      if (em) {
+        em.setAttribute('data-i18n', 'browser.loading-slow');
+        em.textContent = i18n.t('browser.loading-slow.textContent');
+      }
+    }, 10000);
+  }
+}
+
 async function generateGitForgeBrowserList(url, id, action) {
   const gitforge = Config.Storage?.backend?.('gitforge');
   if (!gitforge) return;
@@ -2870,15 +2904,19 @@ async function generateGitForgeBrowserList(url, id, action) {
   if (createContainer) createContainer.replaceChildren();
 
   const list = document.getElementById(id + '-ul');
-  list.replaceChildren();
 
   let items;
+  setBrowserListLoading(id, true);
   try {
     items = await gitforge.list(url);
   } catch (e) {
+    setBrowserListLoading(id, false);
     sanitizeInsertAdjacentHTML(containerNode, 'beforeend', `<div class="response-message"><p class="error">${e.message}</p></div>`);
     return;
   }
+
+  list.replaceChildren();
+  list.parentNode.querySelectorAll('.container-empty, .container-loading').forEach(n => n.remove());
 
   try {
     const u = new URL(url);
@@ -2955,6 +2993,7 @@ function generateBrowserList(g, url, id, action) {
 
     var list = document.getElementById(id + '-ul');
     list.replaceChildren();
+    list.parentNode.querySelectorAll('.container-empty, .container-loading').forEach(n => n.remove());
 
     var urlPath = url.split("/");
     if (urlPath.length > 4){ // This means it's not the base URL
@@ -2993,7 +3032,7 @@ function generateBrowserList(g, url, id, action) {
     sanitizeInsertAdjacentHTML(list, 'beforeend', liHTML);
 
     var buttons = list.querySelectorAll('label');
-    if(buttons.length <= 1){
+    if(!contains.length){
       sanitizeInsertAdjacentHTML(list, 'afterend', '<p class="container-empty"><em>(empty)</em></p>');
     }
 
@@ -3027,13 +3066,19 @@ function nextLevelButton(button, url, id, action) {
     if(button.parentNode.classList.contains('container')){
       var headers;
       headers = {'Accept': 'text/turtle, application/ld+json'};
-      getResourceGraph(url, headers).then(({ graph: g }) => {
+      setBrowserListLoading(id, true);
+      getResourceGraph(url, headers, { noProxy: true }).then(({ graph: g }) => {
+          if (!g) {
+            setBrowserListLoading(id, false);
+            return;
+          }
           if (actionNode) {
             actionNode.textContent = (action == 'write') ? url + (document.getElementById(id + '-filename')?.value || generateAttributeId()) : url;
           }
           return generateBrowserList(g, url, id, action);
         },
         function({ response } = {}){
+          setBrowserListLoading(id, false);
           var node = document.getElementById(id);
 
           showErrorResponseMessage(node, response);
