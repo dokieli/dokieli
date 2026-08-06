@@ -21,7 +21,7 @@ import { Icon } from "../../ui/icons.js"
 import { getButtonHTML, updateButtons } from "../../ui/buttons.js"
 import { getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getClassesOfProductsConcepts, getDocument, getLanguageOptionsHTML, getLicenseOptionsHTML, getReferenceLabel } from "../../doc.js";
 import { cloneSelection, selectionToTextQuote, setSelectionFromTextQuote, getSelectedParentElement } from "../utils/annotation.js";
-import { applyMarksFromTextQuote } from "@dokieli/web-annotation";
+import { applyMarksFromTextQuote, applyMarkFromSelector } from "@dokieli/web-annotation";
 import { fragmentFromString, getDocumentContentNode, selectArticleNode } from "../../utils/html.js";
 import { showUserIdentityInput } from "../../auth.js";
 import { isUnlocked, hasKeystore } from '../../keystore.js';
@@ -835,25 +835,37 @@ export class ToolbarView {
       });
   }
 
-  showTextQuoteSelectorFromLocation(containerNode) {
+  showSelectorFromLocation(containerNode) {
     var motivatedBy = 'oa:highlighting';
-    var selector = getTextQuoteSelectorFromLocation(document.location);
+    var selector = getSelectorFromLocation(document.location);
 
-    if (selector && selector.exact && selector.exact.length) {
-      //XXX: TODO: Copied from showAnnotation
-  
-      var refId = document.location.hash.substring(1);
+    if (!selector) { return; }
 
-      //XXX: If already highlighted, don't run again.
-      if (document.getElementById(refId)) { return; }
+    // TextQuoteSelector marks every match; other selectors mark the resolved range
+    var isTextQuote = selector.type == 'TextQuoteSelector';
 
-      var refLabel = getReferenceLabel(motivatedBy);
-  
-      containerNode = containerNode || getDocumentContentNode(document);
-  
-      var docRefType = '<sup class="ref-highlighting"><a rel="oa:hasTarget" href="#' + refId + '">' + refLabel + '</a></sup>';
-  
-      applyMarksFromTextQuote(containerNode, selector, { 'annotationUrl': '#' + refId, 'id': refId, 'className': 'ref do', 'reference': docRefType, 'excludeMatchesIn': '#document-notifications' });
+    if (isTextQuote && !(selector.exact && selector.exact.length)) { return; }
+
+    //XXX: TODO: Copied from showAnnotation
+
+    var refId = document.location.hash.substring(1);
+
+    //XXX: If already highlighted, don't run again.
+    if (document.getElementById(refId)) { return; }
+
+    var refLabel = getReferenceLabel(motivatedBy);
+
+    containerNode = containerNode || getDocumentContentNode(document);
+
+    var docRefType = '<sup class="ref-highlighting"><a rel="oa:hasTarget" href="#' + refId + '">' + refLabel + '</a></sup>';
+
+    var markOptions = { 'annotationUrl': '#' + refId, 'id': refId, 'className': 'ref do', 'reference': docRefType, 'excludeMatchesIn': '#document-notifications' };
+
+    if (isTextQuote) {
+      applyMarksFromTextQuote(containerNode, selector, markOptions);
+    }
+    else {
+      applyMarkFromSelector(containerNode, selector, markOptions);
     }
   }
 
@@ -933,36 +945,70 @@ export function updateAnnotationInboxForm(action) {
   }
 };
 
-export function getTextQuoteSelectorFromLocation(location) {
-  var regexp = /#selector\(type=TextQuoteSelector,(.*)\)/;
-  const matches = location.hash.match(regexp);
+export function getSelectorFromLocation(location) {
+  const matches = location.hash.match(/^#(selector\(.*\))$/);
 
   if (matches) {
-    var selectorsArray = matches[1].split(',');
-
-    var selector = {
-      type: 'TextQuoteSelector'
-    };
-
-    selectorsArray.forEach(s => {
-      var kv = s.split('=');
-
-      if (kv.length == 2) {
-        switch(kv[0]) {
-          case 'prefix':
-            selector['prefix'] = decodeURIComponent(kv[1]);
-            break;
-          case 'exact':
-            selector['exact'] = decodeURIComponent(kv[1]);
-            break;
-          case 'suffix':
-            selector['suffix'] = decodeURIComponent(kv[1]);
-            break;
-        }
-      }
-
-    })
-
-    return selector;
+    return parseFunctionalSelector(matches[1]);
   }
+}
+
+// Parses the functional selector(...) fragment syntax of Selectors and States,
+// with nested selector(...) values for refinedBy, startSelector, and endSelector.
+// Examples:
+//   selector(type=TextQuoteSelector,prefix=dokieli%20is%20a%20,exact=clientside%20editor)
+//   selector(type=TextPositionSelector,start=299,end=323)
+//   selector(type=XPathSelector,value=//section[@id%3D'introduction']//p[1])
+//   selector(type=FragmentSelector,value=summary)
+//   selector(type=FragmentSelector,value=features,refinedBy=selector(type=TextQuoteSelector,exact=Share%20articles))
+//   selector(type=RangeSelector,startSelector=selector(type=XPathSelector,value=//section[@id%3D'introduction']//p[1]),endSelector=selector(type=XPathSelector,value=//section[@id%3D'introduction']//p[2]))
+//   selector(type=RangeSelector,startSelector=selector(type=TextQuoteSelector,exact=browser-based%20tool),endSelector=selector(type=TextQuoteSelector,exact=Share%20articles))
+function parseFunctionalSelector(input) {
+  if (!input.startsWith('selector(') || !input.endsWith(')')) { return undefined; }
+
+  var selector = {};
+  var fields = splitTopLevelFields(input.slice('selector('.length, -1));
+
+  fields.forEach(field => {
+    var eq = field.indexOf('=');
+    if (eq < 1) { return; }
+    var key = field.slice(0, eq);
+    var value = field.slice(eq + 1);
+
+    if (value.startsWith('selector(')) {
+      value = parseFunctionalSelector(value);
+    }
+    else if (key == 'start' || key == 'end') {
+      value = parseInt(value, 10);
+      if (isNaN(value)) { return; }
+    }
+    else {
+      try { value = decodeURIComponent(value); } catch { /* keep value as is */ }
+    }
+
+    if (value !== undefined) {
+      selector[key] = value;
+    }
+  })
+
+  return selector.type ? selector : undefined;
+}
+
+// Splits comma-separated fields, ignoring commas inside nested selector(…)
+function splitTopLevelFields(input) {
+  var fields = [];
+  var depth = 0, start = 0;
+
+  for (var i = 0; i < input.length; i++) {
+    var c = input[i];
+    if (c == '(') { depth++; }
+    else if (c == ')') { depth--; }
+    else if (c == ',' && depth === 0) {
+      fields.push(input.slice(start, i));
+      start = i + 1;
+    }
+  }
+  fields.push(input.slice(start));
+
+  return fields;
 }

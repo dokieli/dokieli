@@ -559,9 +559,18 @@
                   </dd>
                   <dt>Invocation</dt>
                   <dd>
-                    <dl id="invoke-selector" rel="ac:invocation" resource="#invoke-selector" typeof="ac:UriTemplateInvocation">
+                    <dl id="invoke-selector-text-quote" rel="ac:invocation" resource="#invoke-selector-text-quote" typeof="ac:UriTemplateInvocation">
                       <dt>Template</dt>
-                      <dd><code property="ac:template" lang="" xml:lang="">#selector(type=TextQuoteSelector,prefix={prefix},exact={exact},suffix={suffix})</code></dd>
+                      <dd><code property="ac:template" lang="" xml:lang="">#selector(type={type},prefix={prefix},exact={exact},suffix={suffix})</code></dd>
+                      <dt>Mapping</dt>
+                      <dd>
+                        <dl id="mapping-selector-type" rel="ac:mapping" resource="#mapping-selector-type">
+                          <dt>Variable</dt>
+                          <dd property="ac:variable" lang="" xml:lang=""><code>type</code></dd>
+                          <dt>Property</dt>
+                          <dd><a href="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" rel="ac:property">type</a></dd>
+                        </dl>
+                      </dd>
                       <dt>Mapping</dt>
                       <dd>
                         <dl id="mapping-selector-prefix" rel="ac:mapping" resource="#mapping-selector-prefix">
@@ -587,6 +596,87 @@
                           <dd property="ac:variable" lang="" xml:lang=""><code>suffix</code></dd>
                           <dt>Property</dt>
                           <dd><a href="http://www.w3.org/ns/oa#suffix" rel="ac:property">suffix</a></dd>
+                        </dl>
+                      </dd>
+                    </dl>
+                  </dd>
+                  <dt>Invocation</dt>
+                  <dd>
+                    <dl id="invoke-selector-text-position" rel="ac:invocation" resource="#invoke-selector-text-position" typeof="ac:UriTemplateInvocation">
+                      <dt>Template</dt>
+                      <dd><code property="ac:template" lang="" xml:lang="">#selector(type={type},start={start},end={end})</code></dd>
+                      <dt>Mapping</dt>
+                      <dd rel="ac:mapping" resource="#mapping-selector-type"><a href="#mapping-selector-type"><code>type</code></a></dd>
+                      <dt>Mapping</dt>
+                      <dd>
+                        <dl id="mapping-selector-start" rel="ac:mapping" resource="#mapping-selector-start">
+                          <dt>Variable</dt>
+                          <dd property="ac:variable" lang="" xml:lang=""><code>start</code></dd>
+                          <dt>Property</dt>
+                          <dd><a href="http://www.w3.org/ns/oa#start" rel="ac:property">start</a></dd>
+                        </dl>
+                      </dd>
+                      <dt>Mapping</dt>
+                      <dd>
+                        <dl id="mapping-selector-end" rel="ac:mapping" resource="#mapping-selector-end">
+                          <dt>Variable</dt>
+                          <dd property="ac:variable" lang="" xml:lang=""><code>end</code></dd>
+                          <dt>Property</dt>
+                          <dd><a href="http://www.w3.org/ns/oa#end" rel="ac:property">end</a></dd>
+                        </dl>
+                      </dd>
+                    </dl>
+                  </dd>
+                  <dt>Invocation</dt>
+                  <dd>
+                    <dl id="invoke-selector-value" rel="ac:invocation" resource="#invoke-selector-value" typeof="ac:UriTemplateInvocation">
+                      <dt>Template</dt>
+                      <dd><code property="ac:template" lang="" xml:lang="">#selector(type={type},value={value},refinedBy={+refinedBy})</code></dd>
+                      <dt>Mapping</dt>
+                      <dd rel="ac:mapping" resource="#mapping-selector-type"><a href="#mapping-selector-type"><code>type</code></a></dd>
+                      <dt>Mapping</dt>
+                      <dd>
+                        <dl id="mapping-selector-value" rel="ac:mapping" resource="#mapping-selector-value">
+                          <dt>Variable</dt>
+                          <dd property="ac:variable" lang="" xml:lang=""><code>value</code></dd>
+                          <dt>Property</dt>
+                          <dd><a href="http://www.w3.org/1999/02/22-rdf-syntax-ns#value" rel="ac:property">value</a></dd>
+                        </dl>
+                      </dd>
+                      <dt>Mapping</dt>
+                      <dd>
+                        <dl id="mapping-selector-refinedby" rel="ac:mapping" resource="#mapping-selector-refinedby">
+                          <dt>Variable</dt>
+                          <dd property="ac:variable" lang="" xml:lang=""><code>refinedBy</code></dd>
+                          <dt>Property</dt>
+                          <dd><a href="http://www.w3.org/ns/oa#refinedBy" rel="ac:property">refinedBy</a></dd>
+                        </dl>
+                      </dd>
+                    </dl>
+                  </dd>
+                  <dt>Invocation</dt>
+                  <dd>
+                    <dl id="invoke-selector-range" rel="ac:invocation" resource="#invoke-selector-range" typeof="ac:UriTemplateInvocation">
+                      <dt>Template</dt>
+                      <dd><code property="ac:template" lang="" xml:lang="">#selector(type={type},startSelector={+startSelector},endSelector={+endSelector})</code></dd>
+                      <dt>Mapping</dt>
+                      <dd rel="ac:mapping" resource="#mapping-selector-type"><a href="#mapping-selector-type"><code>type</code></a></dd>
+                      <dt>Mapping</dt>
+                      <dd>
+                        <dl id="mapping-selector-startselector" rel="ac:mapping" resource="#mapping-selector-startselector">
+                          <dt>Variable</dt>
+                          <dd property="ac:variable" lang="" xml:lang=""><code>startSelector</code></dd>
+                          <dt>Property</dt>
+                          <dd><a href="http://www.w3.org/ns/oa#hasStartSelector" rel="ac:property">hasStartSelector</a></dd>
+                        </dl>
+                      </dd>
+                      <dt>Mapping</dt>
+                      <dd>
+                        <dl id="mapping-selector-endselector" rel="ac:mapping" resource="#mapping-selector-endselector">
+                          <dt>Variable</dt>
+                          <dd property="ac:variable" lang="" xml:lang=""><code>endSelector</code></dd>
+                          <dt>Property</dt>
+                          <dd><a href="http://www.w3.org/ns/oa#hasEndSelector" rel="ac:property">hasEndSelector</a></dd>
                         </dl>
                       </dd>
                     </dl>

@@ -26,7 +26,7 @@ export function initEditor(options = {}) {
     Config.Editor.init('author', null, { template: tmpl });
   } else {
     Config.Editor.createSocialToolbar();
-    Config.Editor.showTextQuoteSelectorFromLocation();
-    Config.Editor.hasRunTextQuoteSelector = true;
+    Config.Editor.showSelectorFromLocation();
+    Config.Editor.hasRunSelectorFromLocation = true;
   }
 }

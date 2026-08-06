@@ -89,7 +89,7 @@ export class Editor {
     this.socialToolbarView = null;
     this.authorToolbarView = this.editorView?.pluginViews[0];
 
-    this.hasRunTextQuoteSelector = false;
+    this.hasRunSelectorFromLocation = false;
   }
 
   // Initialize editor and toolbar based on the default editor mode
@@ -127,9 +127,9 @@ export class Editor {
         }
     }
 
-    if (!this.hasRunTextQuoteSelector && (this.socialToolbarView || this.authorToolbarView)) {
-      this.showTextQuoteSelectorFromLocation();
-      this.hasRunTextQuoteSelector = true;
+    if (!this.hasRunSelectorFromLocation && (this.socialToolbarView || this.authorToolbarView)) {
+      this.showSelectorFromLocation();
+      this.hasRunSelectorFromLocation = true;
     }
 
     if (documentMode) {
@@ -367,9 +367,9 @@ export class Editor {
   }
 
 
-  showTextQuoteSelectorFromLocation() {
+  showSelectorFromLocation() {
     const toolbarView = this.authorToolbarView || this.socialToolbarView;
-    return toolbarView?.showTextQuoteSelectorFromLocation();
+    return toolbarView?.showSelectorFromLocation();
   }
 
   // Intended for inserting marks
