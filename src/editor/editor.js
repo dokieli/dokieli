@@ -744,7 +744,9 @@ export class Editor {
 
   this.slashMenu = new SlashMenu(this.editorView);
 
-  if (!Config.Editor['new']) {
+  // This used to be 'new' but now mirrors the collab/non-collab split above: in 'new' and 'review' modes
+  // ydoc/localProvider were never created, so there is nothing to seed.
+  if (Config.Editor['collab']) {
     const meta = ydoc.getMap('meta');
 
     // Seed the current DOM into the Yjs room, but NEVER additively over existing
