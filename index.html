@@ -402,6 +402,36 @@
                   <dd><a href="https://dokie.li/docs#feature-review-changes" rel="dcterms:subject">Review Changes</a></dd>
                 </dl>
               </dd>
+              <dt about="#capability-create" property="dcterms:title">Create</dt>
+              <dd id="capability-create" resource="#capability-create" typeof="ac:Capability">
+                <dl>
+                  <dt>Action</dt>
+                  <dd><a href="http://schema.org/CreateAction" rel="ac:action">CreateAction</a></dd>
+                  <dt>Invocation</dt>
+                  <dd>
+                    <dl id="invoke-template" rel="ac:invocation" resource="#invoke-template" typeof="ac:UriTemplateInvocation">
+                      <dt>Template</dt>
+                      <dd><code property="ac:template" lang="" xml:lang="">#template={template}</code></dd>
+                      <dt>Mapping</dt>
+                      <dd>
+                        <dl id="mapping-template" rel="ac:mapping" resource="#mapping-template">
+                          <dt>Variable</dt>
+                          <dd property="ac:variable" lang="" xml:lang=""><code>template</code></dd>
+                          <dt>Property</dt>
+                          <dd rel="ac:property">
+                            <dl id="property-template" resource="#property-template" typeof="rdf:Property">
+                              <dt>Label</dt>
+                              <dd property="rdfs:label">template</dd>
+                              <dt>Definition</dt>
+                              <dd property="rdfs:comment">The name of a template to start a new document from, e.g., <code>article</code>, <code>slideshow</code>, <code>cv</code>.</dd>
+                            </dl>
+                          </dd>
+                        </dl>
+                      </dd>
+                    </dl>
+                  </dd>
+                </dl>
+              </dd>
               <dt about="#capability-delete" property="dcterms:title">Delete</dt>
               <dd id="capability-delete" resource="#capability-delete" typeof="ac:Capability">
                 <dl>
@@ -453,110 +483,22 @@
                       </dd>
                     </dl>
                   </dd>
-                  <dt>Invocation</dt>
-                  <dd>
-                    <dl id="invoke-template" rel="ac:invocation" resource="#invoke-template" typeof="ac:UriTemplateInvocation">
-                      <dt>Template</dt>
-                      <dd><code property="ac:template" lang="" xml:lang="">#template={template}</code></dd>
-                      <dt>Mapping</dt>
-                      <dd>
-                        <dl id="mapping-template" rel="ac:mapping" resource="#mapping-template">
-                          <dt>Variable</dt>
-                          <dd property="ac:variable" lang="" xml:lang=""><code>template</code></dd>
-                          <dt>Property</dt>
-                          <dd rel="ac:property">
-                            <dl id="property-template" resource="#property-template" typeof="rdf:Property">
-                              <dt>Label</dt>
-                              <dd property="rdfs:label">template</dd>
-                              <dt>Definition</dt>
-                              <dd property="rdfs:comment">The name of a template to start a new document from, e.g., <code>article</code>, <code>slideshow</code>, <code>cv</code>.</dd>
-                            </dl>
-                          </dd>
-                        </dl>
-                      </dd>
-                    </dl>
-                  </dd>
                   <dt>Subject</dt>
                   <dd><a href="https://dokie.li/docs#feature-edit" rel="dcterms:subject">Edit</a></dd>
                 </dl>
               </dd>
-              <dt about="#capability-login" property="dcterms:title">Login</dt>
-              <dd id="capability-login" resource="#capability-login" typeof="ac:Capability">
-                <dl>
-                  <dt>Action</dt>
-                  <dd><a href="http://schema.org/LoginAction" rel="ac:action">login</a></dd>
-                  <dt>Invocation</dt>
-                  <dd>
-                    <dl id="invoke-login" rel="ac:invocation" resource="#invoke-login" typeof="ac:UriTemplateInvocation">
-                      <dt>Template</dt>
-                      <dd><code property="ac:template" lang="" xml:lang="">#login={login}</code></dd>
-                      <dt>Mapping</dt>
-                      <dd>
-                        <dl id="mapping-login" rel="ac:mapping" resource="#mapping-login">
-                          <dt>Variable</dt>
-                          <dd property="ac:variable" lang="" xml:lang=""><code>login</code></dd>
-                          <dt>Property</dt>
-                          <dd><a href="https://www.w3.org/ns/ac#login" rel="ac:property">login</a></dd>
-                        </dl>
-                      </dd>
-                    </dl>
-                  </dd>
-                  <dt>Subject</dt>
-                  <dd><a href="https://dokie.li/docs#feature-sign-in" rel="dcterms:subject">Sign in</a></dd>
-                </dl>
-              </dd>
-              <dt about="#capability-notify" property="dcterms:title">Notify</dt>
-              <dd id="capability-notify" resource="#capability-notify" typeof="ac:Capability">
+              <dt about="#capability-highlight" property="dcterms:title">Highlight</dt>
+              <dd id="capability-highlight" resource="#capability-highlight" typeof="ac:Capability">
                 <dl>
                   <dt>Accept</dt>
                   <dd>
                     <ul>
-                      <li property="ac:accept" lang="" xml:lang=""><code>application/ld+json</code></li>
-                    </ul>
-                  </dd>
-                  <dt>Action</dt>
-                  <dd><a href="http://www.w3.org/ns/odrl/2/inform" rel="ac:action">inform</a></dd>
-                  <dt>Subject</dt>
-                  <dd><a href="https://dokie.li/docs#notification" rel="dcterms:subject">Notification</a></dd>
-                </dl>
-              </dd>
-              <dt about="#capability-open" property="dcterms:title">Open</dt>
-              <dd id="capability-open" resource="#capability-open" typeof="ac:Capability">
-                <dl>
-                  <dt>Accept</dt>
-                  <dd>
-                    <ul>
-                      <li property="ac:accept" lang="" xml:lang=""><code>application/activity+json</code></li>
-                      <li property="ac:accept" lang="" xml:lang=""><code>application/gpx+xml</code></li>
-                      <li property="ac:accept" lang="" xml:lang=""><code>application/ld+json</code></li>
-                      <li property="ac:accept" lang="" xml:lang=""><code>application/rdf+xml</code></li>
-                      <li property="ac:accept" lang="" xml:lang=""><code>application/trig</code></li>
                       <li property="ac:accept" lang="" xml:lang=""><code>application/xhtml+xml</code></li>
-                      <li property="ac:accept" lang="" xml:lang=""><code>image/svg+xml</code></li>
-                      <li property="ac:accept" lang="" xml:lang=""><code>text/csv</code></li>
                       <li property="ac:accept" lang="" xml:lang=""><code>text/html</code></li>
-                      <li property="ac:accept" lang="" xml:lang=""><code>text/markdown</code></li>
-                      <li property="ac:accept" lang="" xml:lang=""><code>text/turtle</code></li>
                     </ul>
                   </dd>
                   <dt>Action</dt>
-                  <dd><a href="http://www.w3.org/ns/odrl/2/display" rel="ac:action">display</a></dd>
-                  <dt>Invocation</dt>
-                  <dd>
-                    <dl id="invoke-open" rel="ac:invocation" resource="#invoke-open" typeof="ac:UriTemplateInvocation">
-                      <dt>Template</dt>
-                      <dd><code property="ac:template" lang="" xml:lang="">#open={open}</code></dd>
-                      <dt>Mapping</dt>
-                      <dd>
-                        <dl id="mapping-open" rel="ac:mapping" resource="#mapping-open">
-                          <dt>Variable</dt>
-                          <dd property="ac:variable" lang="" xml:lang=""><code>open</code></dd>
-                          <dt>Property</dt>
-                          <dd><a href="https://www.w3.org/ns/ac#open" rel="ac:property">open</a></dd>
-                        </dl>
-                      </dd>
-                    </dl>
-                  </dd>
+                  <dd><a href="http://www.w3.org/ns/oa#highlighting" rel="ac:action">highlighting</a></dd>
                   <dt>Invocation</dt>
                   <dd>
                     <dl id="invoke-selector-text-quote" rel="ac:invocation" resource="#invoke-selector-text-quote" typeof="ac:UriTemplateInvocation">
@@ -681,25 +623,83 @@
                       </dd>
                     </dl>
                   </dd>
+                  <dt>Subject</dt>
+                  <dd><a href="https://dokie.li/docs#annotation" rel="dcterms:subject">Annotation</a></dd>
+                </dl>
+              </dd>
+              <dt about="#capability-login" property="dcterms:title">Login</dt>
+              <dd id="capability-login" resource="#capability-login" typeof="ac:Capability">
+                <dl>
+                  <dt>Action</dt>
+                  <dd><a href="http://schema.org/LoginAction" rel="ac:action">login</a></dd>
                   <dt>Invocation</dt>
                   <dd>
-                    <dl id="invoke-style" rel="ac:invocation" resource="#invoke-style" typeof="ac:UriTemplateInvocation">
+                    <dl id="invoke-login" rel="ac:invocation" resource="#invoke-login" typeof="ac:UriTemplateInvocation">
                       <dt>Template</dt>
-                      <dd><code property="ac:template" lang="" xml:lang="">#style={style}</code></dd>
+                      <dd><code property="ac:template" lang="" xml:lang="">#login={login}</code></dd>
                       <dt>Mapping</dt>
                       <dd>
-                        <dl id="mapping-style" rel="ac:mapping" resource="#mapping-style">
+                        <dl id="mapping-login" rel="ac:mapping" resource="#mapping-login">
                           <dt>Variable</dt>
-                          <dd property="ac:variable" lang="" xml:lang=""><code>style</code></dd>
+                          <dd property="ac:variable" lang="" xml:lang=""><code>login</code></dd>
                           <dt>Property</dt>
-                          <dd rel="ac:property">
-                            <dl id="property-style" resource="#property-style" typeof="rdf:Property">
-                              <dt>Label</dt>
-                              <dd property="rdfs:label">style</dd>
-                              <dt>Definition</dt>
-                              <dd property="rdfs:comment">The IRI of a stylesheet to fetch and apply to the current document.</dd>
-                            </dl>
-                          </dd>
+                          <dd><a href="https://www.w3.org/ns/ac#login" rel="ac:property">login</a></dd>
+                        </dl>
+                      </dd>
+                    </dl>
+                  </dd>
+                  <dt>Subject</dt>
+                  <dd><a href="https://dokie.li/docs#feature-sign-in" rel="dcterms:subject">Sign in</a></dd>
+                </dl>
+              </dd>
+              <dt about="#capability-notify" property="dcterms:title">Notify</dt>
+              <dd id="capability-notify" resource="#capability-notify" typeof="ac:Capability">
+                <dl>
+                  <dt>Accept</dt>
+                  <dd>
+                    <ul>
+                      <li property="ac:accept" lang="" xml:lang=""><code>application/ld+json</code></li>
+                    </ul>
+                  </dd>
+                  <dt>Action</dt>
+                  <dd><a href="http://www.w3.org/ns/odrl/2/inform" rel="ac:action">inform</a></dd>
+                  <dt>Subject</dt>
+                  <dd><a href="https://dokie.li/docs#notification" rel="dcterms:subject">Notification</a></dd>
+                </dl>
+              </dd>
+              <dt about="#capability-open" property="dcterms:title">Open</dt>
+              <dd id="capability-open" resource="#capability-open" typeof="ac:Capability">
+                <dl>
+                  <dt>Accept</dt>
+                  <dd>
+                    <ul>
+                      <li property="ac:accept" lang="" xml:lang=""><code>application/activity+json</code></li>
+                      <li property="ac:accept" lang="" xml:lang=""><code>application/gpx+xml</code></li>
+                      <li property="ac:accept" lang="" xml:lang=""><code>application/ld+json</code></li>
+                      <li property="ac:accept" lang="" xml:lang=""><code>application/rdf+xml</code></li>
+                      <li property="ac:accept" lang="" xml:lang=""><code>application/trig</code></li>
+                      <li property="ac:accept" lang="" xml:lang=""><code>application/xhtml+xml</code></li>
+                      <li property="ac:accept" lang="" xml:lang=""><code>image/svg+xml</code></li>
+                      <li property="ac:accept" lang="" xml:lang=""><code>text/csv</code></li>
+                      <li property="ac:accept" lang="" xml:lang=""><code>text/html</code></li>
+                      <li property="ac:accept" lang="" xml:lang=""><code>text/markdown</code></li>
+                      <li property="ac:accept" lang="" xml:lang=""><code>text/turtle</code></li>
+                    </ul>
+                  </dd>
+                  <dt>Action</dt>
+                  <dd><a href="http://www.w3.org/ns/odrl/2/display" rel="ac:action">display</a></dd>
+                  <dt>Invocation</dt>
+                  <dd>
+                    <dl id="invoke-open" rel="ac:invocation" resource="#invoke-open" typeof="ac:UriTemplateInvocation">
+                      <dt>Template</dt>
+                      <dd><code property="ac:template" lang="" xml:lang="">#open={open}</code></dd>
+                      <dt>Mapping</dt>
+                      <dd>
+                        <dl id="mapping-open" rel="ac:mapping" resource="#mapping-open">
+                          <dt>Variable</dt>
+                          <dd property="ac:variable" lang="" xml:lang=""><code>open</code></dd>
+                          <dt>Property</dt>
+                          <dd><a href="https://www.w3.org/ns/ac#open" rel="ac:property">open</a></dd>
                         </dl>
                       </dd>
                     </dl>
@@ -770,6 +770,42 @@
                   <dd><a href="http://www.w3.org/ns/odrl/2/distribute" rel="ac:action">distribute</a></dd>
                   <dt>Subject</dt>
                   <dd><a href="https://dokie.li/docs#feature-share" rel="dcterms:subject">Share</a></dd>
+                </dl>
+              </dd>
+              <dt about="#capability-style" property="dcterms:title">Style</dt>
+              <dd id="capability-style" resource="#capability-style" typeof="ac:Capability">
+                <dl>
+                  <dt>Accept</dt>
+                  <dd>
+                    <ul>
+                      <li property="ac:accept" lang="" xml:lang=""><code>text/css</code></li>
+                    </ul>
+                  </dd>
+                  <dt>Action</dt>
+                  <dd><a href="http://www.w3.org/ns/odrl/2/use" rel="ac:action">use</a></dd>
+                  <dt>Invocation</dt>
+                  <dd>
+                    <dl id="invoke-style" rel="ac:invocation" resource="#invoke-style" typeof="ac:UriTemplateInvocation">
+                      <dt>Template</dt>
+                      <dd><code property="ac:template" lang="" xml:lang="">#style={style}</code></dd>
+                      <dt>Mapping</dt>
+                      <dd>
+                        <dl id="mapping-style" rel="ac:mapping" resource="#mapping-style">
+                          <dt>Variable</dt>
+                          <dd property="ac:variable" lang="" xml:lang=""><code>style</code></dd>
+                          <dt>Property</dt>
+                          <dd rel="ac:property">
+                            <dl id="property-style" resource="#property-style" typeof="rdf:Property">
+                              <dt>Label</dt>
+                              <dd property="rdfs:label">style</dd>
+                              <dt>Definition</dt>
+                              <dd property="rdfs:comment">The IRI of a stylesheet to fetch and apply to the current document.</dd>
+                            </dl>
+                          </dd>
+                        </dl>
+                      </dd>
+                    </dl>
+                  </dd>
                 </dl>
               </dd>
               <dt about="#capability-transform-html" property="dcterms:title">Transform to HTML+RDFa</dt>
