@@ -237,7 +237,13 @@ export function refreshSectionsNav(config, root) {
   if (existing) { existing.replaceWith(nav); return; }
   const content = sectionsContent(config, root);
   const details = findOutsideDetails(root);
-  if (content) content.before(nav);
+  if (config.sectionsAtRoot) {
+    const firstSection = content?.querySelector(':scope > section');
+    if (firstSection) firstSection.before(nav);
+    else if (details) details.after(nav);
+    else root.prepend(nav);
+  }
+  else if (content) content.before(nav);
   else if (details) details.after(nav);
   else root.prepend(nav);
 }
@@ -263,20 +269,22 @@ export function addSection(config, root, type) {
   const content = sectionsContent(config, root);
 
   if (config.outside?.has(type)) {
-    // Lives before the sections container: at the start of div.head when present, else before content.
+    // Lives before the sections: at the start of div.head when present, else before them.
     if (editor) {
       if (!editor.insertFragmentAtStartOf('.head', fragmentFromString(html))) {
-        editor.insertFragmentBeforeNode(config.pmContentSelector || '#content', fragmentFromString(html));
+        editor.insertFragmentBeforeNode(config.sectionsAtRoot ? 'section' : (config.pmContentSelector || '#content'), fragmentFromString(html));
       }
     } else {
       const head = root.querySelector('.head');
       if (head) head.prepend(fragmentFromString(html));
+      else if (config.sectionsAtRoot) content?.querySelector(':scope > section')?.before(fragmentFromString(html));
       else if (content) content.before(fragmentFromString(html));
     }
   } else {
     const anchorId = insertionAnchorId(config, root, type);
     if (editor) {
       if (anchorId) editor.insertFragmentBeforeNodeById(anchorId, fragmentFromString(html));
+      else if (config.sectionsAtRoot) editor.insertFragmentAtEndOfDoc(fragmentFromString(html));
       else editor.insertFragmentAtEndOf(config.pmContentSelector || config.contentSelector, fragmentFromString(html));
     } else {
       if (!content) return;
@@ -320,14 +328,17 @@ export function addSubsection(config, root, parentType, type) {
 
   if (editor) {
     if (anchorId) editor.insertFragmentBeforeNodeById(anchorId, fragmentFromString(html));
-    // The description container parses as descriptionDiv in the editor schema.
+    // Subsections nest as section children (outline model); container-based
+    // templates use the description container.
+    else if (config.sectionsAtRoot) editor.insertFragmentAtEndOf(`#${parent.id}`, fragmentFromString(html));
     else editor.insertFragmentAtEndOfChild(`#${parent.id}`, ['descriptionDiv', 'div'], fragmentFromString(html));
   } else {
     const parentEl = findSection(config, root, parentType);
-    const container = parentEl?.querySelector(':scope > div');
-    if (!container) return;
-    const anchor = anchorId ? container.querySelector(`:scope > #${CSS.escape(anchorId)}`) : null;
-    container.insertBefore(fragmentFromString(html).firstElementChild, anchor);
+    if (!parentEl) return;
+    const anchor = anchorId ? parentEl.querySelector(`#${CSS.escape(anchorId)}`) : null;
+    if (anchor) anchor.before(fragmentFromString(html).firstElementChild);
+    else if (config.sectionsAtRoot) parentEl.append(fragmentFromString(html).firstElementChild);
+    else (parentEl.querySelector(':scope > div') || parentEl).append(fragmentFromString(html).firstElementChild);
   }
 
   refreshSectionsNav(config, root);
@@ -380,12 +391,20 @@ export function injectSectionsTOC(config, doc) {
   const html = publishedTOCHTML(config, article);
   if (!html) return;
 
-  content.parentNode.insertBefore(fragmentFromString(html), content);
+  if (config.sectionsAtRoot) {
+    const firstSection = content.querySelector(':scope > section');
+    if (firstSection) firstSection.before(fragmentFromString(html));
+    else content.append(fragmentFromString(html));
+  }
+  else {
+    content.parentNode.insertBefore(fragmentFromString(html), content);
+  }
 }
 
 // On author entry, drop the read-mode nav so PM doesn't parse it as content.
 export function stripSectionsTOC(config, root) {
   if (!root || !config.isDoc(root)) return;
   const content = sectionsContent(config, root);
-  (content?.parentNode || root).querySelectorAll(':scope > nav').forEach(n => n.remove());
+  const navParent = config.sectionsAtRoot ? (content || root) : (content?.parentNode || root);
+  navParent.querySelectorAll(':scope > nav').forEach(n => n.remove());
 }

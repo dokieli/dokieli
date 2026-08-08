@@ -771,6 +771,13 @@ margin:0.5em 0;
 width:auto;
 vertical-align:middle;
 }
+
+/* Placeholder-state paragraphs stay block-level: the inline dd/li p rule gives
+   the absolutely-positioned .editor-placeholder a zero-width containing block. */
+dd > p.editor-empty-node:first-child,
+li > p.editor-empty-node:first-child {
+display:block !important;
+}
 .section-remove,
 .subsection-remove {
 margin-left:0.4em;

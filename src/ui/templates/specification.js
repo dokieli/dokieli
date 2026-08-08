@@ -169,12 +169,10 @@ function headingText(section) {
   return section.querySelector(':scope > h1, :scope > h2, :scope > h3, :scope > h4, :scope > h5, :scope > h6')?.textContent || '';
 }
 
-// The sections container: the article's schema:description div that is not inside a section.
-const CONTENT_SELECTOR = 'div[datatype][property~="schema:description"]';
-
+// Sections are direct article children (the outline model); their parent is
+// the article, or the editor's wrapper element in author mode.
 function getContent(root) {
-  return Array.from(root.querySelectorAll(CONTENT_SELECTOR)).find(div => !div.closest('section')) ||
-    root.querySelector('#content');
+  return root.querySelector(':scope > .ProseMirror') || root;
 }
 
 // Present sections: Map(type -> { id, subs?: Map(subtype -> id) }), from the DOM.
@@ -189,7 +187,7 @@ function sectionEntries(root) {
     const info = { id: section.id || type };
     if (SPEC_SUBSECTIONS[type]) {
       info.subs = new Map();
-      section.querySelectorAll(':scope > div > section').forEach((sub) => {
+      section.querySelectorAll(':scope > section, :scope > div > section').forEach((sub) => {
         const subType = classifySpecificationSubsection(type, { id: sub.id, headingText: headingText(sub) });
         if (subType && !info.subs.has(subType)) info.subs.set(subType, sub.id);
       });
@@ -378,9 +376,8 @@ export const specificationSections = registerSectionsTemplate({
   sectionHTML: specificationSectionHTML,
   sectionEntries,
   removeLabel: (type) => i18n.t('specification.button.remove-section.aria-label', { label: sectionLabel(type) }),
-  contentSelector: CONTENT_SELECTOR,
   getContent,
-  pmContentSelector: 'descriptionDiv',
+  sectionsAtRoot: true,
   tocId: 'toc',
   tocLabel: () => i18n.t('specification.toc.h2.textContent'),
   unnumbered: new Set(['abstract', 'sotd']),
@@ -563,7 +560,7 @@ export function setTemplateNewSpecification(mode, options) {
     .map(specificationSectionHTML)
     .join('');
 
-  replaceDocumentBody(`<main><article about="" dir="auto" typeof="schema:Article doap:Specification"><h1 aria-label="${i18n.t('editor.new.h1.aria-label')}" property="schema:name"></h1>${specificationStatusHTML()}${documentDetailsBlockHTML()}<div datatype="rdf:HTML" property="schema:description">${sections}</div></article></main><p id="back-to-top" role="navigation"><a href="#toc"><abbr title="Back to top">↑</abbr></a></p>`);
+  replaceDocumentBody(`<main><article about="" dir="auto" typeof="schema:Article doap:Specification"><h1 aria-label="${i18n.t('editor.new.h1.aria-label')}" property="schema:name"></h1>${specificationStatusHTML()}${documentDetailsBlockHTML()}${sections}</article></main><p id="back-to-top" role="navigation"><a href="#toc"><abbr title="Back to top">↑</abbr></a></p>`);
 
   initSpecification();
 }

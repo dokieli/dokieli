@@ -325,6 +325,10 @@ export class Editor {
     return this.authorToolbarView?.insertFragmentAtStartOf(selector, fragment);
   }
 
+  insertFragmentAtEndOfDoc(fragment) {
+    return this.authorToolbarView?.insertFragmentAtEndOfDoc(fragment);
+  }
+
   //Creating a ProseMirror editor view at a specified this.node
   createEditor(options) {
     // TODO: think about a review mode of initializing and destroying editor

@@ -36,9 +36,10 @@ function isSectionOf(node, key) {
   return slugify(pmHeadingText(node).trim()) === key;
 }
 
-// The sections container: the article's top-level schema:description div.
+// Sections live at the doc top level (the outline model); the nav's fallback
+// anchor is the first section.
 function isSpecificationContent(node) {
-  return node.type.name === 'descriptionDiv';
+  return node.type.name === 'section';
 }
 
 // Present sections read from the PM doc (the DOM lags behind the widget render).
@@ -56,25 +57,22 @@ function sectionEntries(doc) {
       node.forEach((child) => { if (child.type.name === 'details') registerDetails(child); });
       return;
     }
-    if (!isSpecificationContent(node)) return;
-    node.forEach((child) => {
-      if (child.type.name !== 'section') return;
-      const id = child.attrs.originalAttributes?.id;
-      const type = classifySpecificationSection({ id, headingText: pmHeadingText(child) });
-      if (!type || entries.has(type)) return;
-      const info = { id: id || type };
-      if (SPEC_SUBSECTIONS[type]) {
-        info.subs = new Map();
-        child.descendants((sub) => {
-          if (sub.type.name !== 'section') return true;
-          const subId = sub.attrs.originalAttributes?.id;
-          const subType = classifySpecificationSubsection(type, { id: subId, headingText: pmHeadingText(sub) });
-          if (subType && !info.subs.has(subType)) info.subs.set(subType, subId || subType);
-          return false;
-        });
-      }
-      entries.set(type, info);
-    });
+    if (node.type.name !== 'section') return;
+    const id = node.attrs.originalAttributes?.id;
+    const type = classifySpecificationSection({ id, headingText: pmHeadingText(node) });
+    if (!type || entries.has(type)) return;
+    const info = { id: id || type };
+    if (SPEC_SUBSECTIONS[type]) {
+      info.subs = new Map();
+      node.descendants((sub) => {
+        if (sub.type.name !== 'section') return true;
+        const subId = sub.attrs.originalAttributes?.id;
+        const subType = classifySpecificationSubsection(type, { id: subId, headingText: pmHeadingText(sub) });
+        if (subType && !info.subs.has(subType)) info.subs.set(subType, subId || subType);
+        return false;
+      });
+    }
+    entries.set(type, info);
   });
   return entries;
 }

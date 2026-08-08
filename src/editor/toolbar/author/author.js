@@ -884,6 +884,14 @@ nodeToHTML(node, schema) {
     return true;
   }
 
+  // Insert a fragment at the end of the document.
+  insertFragmentAtEndOfDoc(fragment) {
+    const { state, dispatch } = this.editorView;
+    const node = DOMParser.fromSchema(schema).parse(fragment);
+    dispatch(state.tr.insert(state.doc.content.size, node));
+    return true;
+  }
+
   // Insert a fragment at the start of the first node matching the selector.
   insertFragmentAtStartOf(selector, fragment) {
     const { state, dispatch } = this.editorView;

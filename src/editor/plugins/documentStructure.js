@@ -56,6 +56,11 @@ function isOpaqueSection(node) {
   return isSection(node) && (hasClass(node, "slide") || findHeadingIndex(node) === -1);
 }
 
+// Template chrome stands outside the outline: head matter and editor-only blocks.
+function isStandalone(node) {
+  return hasClass(node, "head") || hasClass(node, "do") || node.type.name === "details";
+}
+
 // Attributes are keyed by their owning heading's index, so RDFa survives a rebuild.
 function flatten(fragment, items, meta, claim) {
   fragment.forEach((child) => {
@@ -150,8 +155,8 @@ function buildOutline(items, meta, schema) {
       return;
     }
 
-    // h1 titles the document; opaque sections stand on their own.
-    if (isHeading(node) || isSection(node)) {
+    // h1 titles the document; opaque sections and standalone blocks stand on their own.
+    if (isHeading(node) || isSection(node) || isStandalone(node)) {
       closeToRoot();
       flushBody(root, false);
       root.out.push(node);
