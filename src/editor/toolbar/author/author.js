@@ -97,6 +97,7 @@ export class AuthorToolbar extends ToolbarView {
       h2: toggleHeading(schema, 2),
       h3: toggleHeading(schema, 3),
       h4: toggleHeading(schema, 4),
+      h5: toggleHeading(schema, 5),
       em: toggleMark(schema.marks.em),
       strong: toggleMark(schema.marks.strong),
       ul: toggleList(schema, 'ul'),
@@ -517,6 +518,7 @@ TODO:
     }
     if (this.blocktypeSelect && view) {
       this.blocktypeSelect.value = this.getBlockTypeKey(view.state);
+      this.updateBlockTypeOptions(view.state);
     }
   }
 
@@ -527,9 +529,38 @@ TODO:
     const node = $from.node(depth);
     if (node.type === schema.nodes.heading) {
       const level = node.attrs.level;
-      if (level >= 1 && level <= 4) return `h${level}`;
+      if (level >= 1 && level <= 5) return `h${level}`;
     }
     return 'p';
+  }
+
+  // One h1 per document, and no jump past the preceding heading's level.
+  updateBlockTypeOptions(state) {
+    const { $from } = state.selection;
+    let depth = $from.depth;
+    while (depth > 0 && !$from.node(depth).isTextblock) depth--;
+    const node = $from.node(depth);
+    const blockStart = depth > 0 ? $from.before(depth) : 0;
+    const currentLevel = node.type === schema.nodes.heading ? node.attrs.level : null;
+
+    let precedingLevel = 0;
+    let hasOtherH1 = false;
+
+    state.doc.descendants((child, pos) => {
+      if (child.type !== schema.nodes.heading) return;
+      if (pos === blockStart) return false;
+      if (pos < blockStart) precedingLevel = child.attrs.level;
+      if (child.attrs.level === 1) hasOtherH1 = true;
+      return false;
+    });
+
+    Array.from(this.blocktypeSelect.options).forEach(option => {
+      const level = Number(/^h([1-6])$/.exec(option.value)?.[1]);
+      if (!level) return;
+      option.disabled = level === currentLevel ? false
+        : level === 1 ? hasOtherH1
+        : level > precedingLevel + 1;
+    });
   }
 
   updateToolbarVisibility(e) {
