@@ -481,6 +481,7 @@
   "dialog.storage-details.summary.textContent": "Detalles del almacenamiento",
   "dialog.storage-location.dt.textContent": "Ubicación del almacenamiento",
   "dialog.storage-self-description.dt.textContent": "Nombre del almacenamiento",
+  "editor.mentions.suggestions.aria-label": "Sugerencias de contactos",
   "editor.mode.author": "autor",
   "editor.mode.social": "social",
   "editor.mode.span.innerHTML": "Modo <em>{{mode}}</em> activado.",

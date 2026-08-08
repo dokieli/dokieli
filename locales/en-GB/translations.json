@@ -484,6 +484,7 @@
   "dialog.storage-details.summary.textContent": "Storage details",
   "dialog.storage-location.dt.textContent": "Storage location",
   "dialog.storage-self-description.dt.textContent": "Storage name",
+  "editor.mentions.suggestions.aria-label": "Contact suggestions",
   "editor.mode.author": "author",
   "editor.mode.social": "social",
   "editor.mode.span.innerHTML": "Activated <em>{{mode}}</em> mode.",

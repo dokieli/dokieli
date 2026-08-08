@@ -1839,6 +1839,26 @@ position: relative;
 .autocomplete p {
 margin-bottom:0;
 }
+.autocomplete.editor-mentions {
+position:absolute;
+z-index:10;
+width:20em;
+max-width:calc(100vw - 2em);
+}
+.autocomplete.editor-mentions[hidden] {
+display:none;
+}
+.autocomplete.editor-mentions ul.suggestions {
+width:100%;
+border-top:1px solid #ccc;
+border-top-left-radius: 0.5em;
+border-top-right-radius: 0.5em;
+}
+.autocomplete.editor-mentions ul.suggestions li {
+display:flex;
+align-items:center;
+gap:0.5em;
+}
 .suggestions {
 position: absolute;
 z-index: 1;
