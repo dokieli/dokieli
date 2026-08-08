@@ -19,7 +19,7 @@ import { schema } from "../schema/base.js"
 import { NodeSelection } from "prosemirror-state"
 import { Icon } from "../../ui/icons.js"
 import { getButtonHTML, updateButtons } from "../../ui/buttons.js"
-import { getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getClassesOfProductsConcepts, getDocument, getLanguageOptionsHTML, getLicenseOptionsHTML, getReferenceLabel } from "../../doc.js";
+import { getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getDocument, getLanguageOptionsHTML, getLicenseOptionsHTML, getReferenceLabel } from "../../doc.js";
 import { cloneSelection, selectionToTextQuote, setSelectionFromTextQuote, getSelectedParentElement } from "../utils/annotation.js";
 import { applyMarksFromTextQuote, applyMarkFromSelector } from "@dokieli/web-annotation";
 import { fragmentFromString, getDocumentContentNode, selectArticleNode } from "../../utils/html.js";
@@ -40,16 +40,11 @@ export class ToolbarView {
     this.toolbarPopups = this.getToolbarPopups()
     this.selection = null;
 
-    this.buttons = buttons.map(button => { 
-      let buttonDisabled = false;
-
-      if (button === 'requirement' && !getClassesOfProductsConcepts().length) {
-        buttonDisabled = true;
-      }
+    this.buttons = buttons.map(button => {
       return { 
         button, 
         command: this.toolbarCommands[button], 
-        dom: () => fragmentFromString(getButtonHTML({ button, buttonDisabled })).firstChild 
+        dom: () => fragmentFromString(getButtonHTML({ button })).firstChild 
       } 
     })
 

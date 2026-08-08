@@ -4343,7 +4343,8 @@ max-width:70%;
 
 #editor-form-requirement fieldset{
   display: grid;
-  grid-template-columns: auto 1fr 1fr 1fr;
+  min-inline-size: 0;
+  grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
   grid-template-rows: auto auto auto auto auto auto auto;
   grid-gap: 0.5em;
   border: none;
@@ -4353,9 +4354,9 @@ max-width:70%;
     "legend legend legend legend"
     "error error error error"
     "dl dl dl dl"
-    "label1 input1 . ."
-    "label2 input2 . ."
-    ". . button1 button2";
+    "label1 input1 input1 input1"
+    "label2 input2 input2 input2"
+    "button1 button1 button2 button2";
 
   legend {
     grid-area: legend;
@@ -4365,6 +4366,10 @@ max-width:70%;
     grid-area: error;
     display: flex;
     flex-direction: column;
+    min-width: 0;
+    margin: 0;
+    padding: 0.5em;
+    list-style-position: inside;
   }
 
   dl {
@@ -4389,9 +4394,13 @@ max-width:70%;
 
   button:nth-of-type(1) {
     grid-area: button1;
+    justify-self: end;
+    white-space: nowrap;
   }
   button:nth-of-type(2) {
     grid-area: button2;
+    justify-self: end;
+    white-space: nowrap;
   }
 }
 
@@ -4407,7 +4416,7 @@ max-width:70%;
     "legend legend legend legend"
     "label1 input1 input1 input1"
     "label2 input2 input2 input2"
-    ". . button1 button2";
+    "button1 button1 button2 button2";
 
   legend {
     grid-area: legend;

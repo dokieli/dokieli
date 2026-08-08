@@ -243,7 +243,9 @@ class MentionsView {
     const contact = Config.User.Contacts[iri] || {};
     const { state, dispatch } = this.editorView;
     const { from, to } = this.match;
-    const label = '@' + (contact.Name || iri);
+    // The typed `@query` (from includes the `@`) is replaced by the name alone,
+    // like the `/` command behaviour.
+    const label = contact.Name || iri;
     const mark = schema.marks.a.create({
       originalAttributes: { href: iri, rel: 'schema:mentions' }
     });

@@ -1002,6 +1002,8 @@ nodeToHTML(node, schema) {
     if (previousErrors.length) {
       previousErrors.forEach(error => error.remove());
       node.querySelector('.editor-form-submit').disabled = false;
+      node.querySelector('#requirement-subject').disabled = false;
+      node.querySelector('#requirement-level').disabled = false;
     }
 
     var selectedTextContent = state.doc.textBetween(state.selection.from, state.selection.to, "\n");
@@ -1011,6 +1013,11 @@ nodeToHTML(node, schema) {
 
     const requirementSubject = document.querySelector('#requirement-subject');
     const requirementLevel = document.querySelector('#requirement-level');
+
+    // The form is rendered at toolbar construction; the available product
+    // classes can change during the session, so refresh the subject options.
+    const currentSubject = requirementSubject.value;
+    requirementSubject.innerHTML = getRequirementSubjectOptionsHTML(currentSubject ? { selected: currentSubject } : {});
 
     //Build error
     const legend = node.querySelector('legend');
@@ -1027,14 +1034,40 @@ nodeToHTML(node, schema) {
       const classesOfProducts = requirementSubjectOptions.map(option => `<a href="${option.value}">${option.textContent}</a>`);
       const requirementLevels = requirementLevelOptions.map(option => `<a href="${option.value}">${option.textContent}</a>`);
 
-      if (!hasRequirementSubjectMatch) {
-        errorList.push(`Selected text does not include a product class, i.e., the requirement's subject, such as ${classesOfProducts.join(', ')}.`);
+      if (!requirementSubjectOptions.length) {
+        errorList.push(`This specification does not define any product classes yet, so the requirement's subject cannot be set. Add the Conformance section's Classes of Products, define at least one product class, and mention it in the text.`);
+      }
+      else if (!hasRequirementSubjectMatch) {
+        errorList.push(`Selected text does not include a product class, i.e., the requirement's subject, such as ${classesOfProducts.join(', ')}. Choose one from the Requirement Subject list, or edit the text to mention one and reselect it.`);
       }
 
       if (!hasRequirementLevelMatch) {
-        errorList.push(`Selected text does not include a normative keyword, i.e., the requirement's level, such as ${requirementLevels.sort(() => Math.random() - 0.5).slice(0, 3).join(', ')}, etc.`);
+        errorList.push(`Selected text does not include a normative keyword, i.e., the requirement's level, such as ${requirementLevels.sort(() => Math.random() - 0.5).slice(0, 3).join(', ')}, etc. Choose one from the Requirement Level list, or edit the text to include one and reselect it.`);
       }
     }
+
+    // The subject select is unusable only when the document defines no product
+    // classes; an unmatched selection is resolved by choosing from the list.
+    requirementSubject.disabled = !requirementSubjectOptions.length;
+    requirementLevel.disabled = false;
+
+    // Unmatched selects lead with a placeholder so picking a value fires change.
+    requirementLevel.querySelector('option[value=""]')?.remove();
+    if (!hasRequirementSubjectMatch && requirementSubjectOptions.length && !requirementSubject.querySelector('option[value=""]')) {
+      requirementSubject.insertAdjacentHTML('afterbegin', '<option selected="selected" value="">Choose a requirement subject</option>');
+    }
+    if (!hasRequirementLevelMatch) {
+      requirementLevel.insertAdjacentHTML('afterbegin', '<option selected="selected" value="">Choose a requirement level</option>');
+    }
+
+    // Save enables once every unmatched piece is resolved by a manual choice.
+    const unresolved = new Set();
+    if (!hasRequirementSubjectMatch) unresolved.add('subject');
+    if (!hasRequirementLevelMatch) unresolved.add('level');
+    const resolve = (piece) => {
+      unresolved.delete(piece);
+      if (!unresolved.size) node.querySelector('.editor-form-submit').disabled = false;
+    };
 
     if (errorList.length) {
       let errorListItems = [];
@@ -1057,14 +1090,8 @@ nodeToHTML(node, schema) {
       });
 
       requirementSubject.addEventListener('change', e => {
-        var selectedOptionValue = e.target.value;
-        var selectedOptionTextContent = e.target.querySelector(`[value="${selectedOptionValue}"]`).textContent.trim();
-
-        var requirementSubjectCurrentNode = node.querySelector('#requirement-preview-samp [rel="spec:requirementSubject"]');
-
-        requirementSubjectCurrentNode.setAttribute('resource', selectedOptionValue);
-        requirementSubjectCurrentNode.textContent = selectedOptionTextContent;
-        node.querySelector('.editor-form-submit').disabled = false;
+        resolve('subject');
+        renderPreview();
       });
     }
 
@@ -1081,14 +1108,8 @@ nodeToHTML(node, schema) {
       });
 
       requirementLevel.addEventListener('change', e => {
-        var selectedOptionValue = e.target.value;
-        var selectedOptionTextContent = e.target.querySelector(`[value="${selectedOptionValue}"]`).textContent.trim();
-
-        var requirementLevelCurrentNode = node.querySelector('#requirement-preview-samp [rel="spec:requirementLevel"]');
-
-        requirementLevelCurrentNode.setAttribute('resource', selectedOptionValue);
-        requirementLevelCurrentNode.textContent = selectedOptionTextContent;
-        node.querySelector('.editor-form-submit').disabled = false;
+        resolve('level');
+        renderPreview();
       });
     }
 
@@ -1119,16 +1140,6 @@ nodeToHTML(node, schema) {
       });
     }
 
-    var r = {};
-    r.subject = requirementSubjectURI;
-    r.level = requirementLevelURI;
-    r.prevSubjectLabel = prevRequirementSubjectLabel;
-    r.prevLevelLabel = prevRequirementLevelLabel;
-    r.selectedTextContent = selectedTextContent;
-    r.lang = selectedLanguage;
-    r.basedOnConsensus = requirementConsensus;
-
-    console.log(state.selection.content())
     const { $from, $to } = state.selection;
 
     let depth = $from.depth;
@@ -1144,15 +1155,28 @@ nodeToHTML(node, schema) {
     });
 
     const selectedHtmlString = wrapper.getHTML();
-    console.log(selectedHtmlString);
-    r.selectedHtmlString = selectedHtmlString;
 
-    var html = createRDFaHTMLRequirement(r, 'requirement')
+    // The preview is what gets inserted on Save; rebuild it from the current
+    // select values (initial matches or manual choices).
+    const renderPreview = () => {
+      var r = {};
+      r.subject = requirementSubject.value || undefined;
+      r.level = requirementLevel.value || undefined;
+      // prev labels locate the text to replace in the original selection, so
+      // they stay the text-matched labels; the chosen value supplies the new
+      // span (e.g. "MUST" in the text becomes the RECOMMENDED span).
+      r.prevSubjectLabel = prevRequirementSubjectLabel;
+      r.prevLevelLabel = prevRequirementLevelLabel;
+      r.selectedTextContent = selectedTextContent;
+      r.lang = selectedLanguage;
+      r.basedOnConsensus = requirementConsensus;
+      r.selectedHtmlString = selectedHtmlString;
 
-    // console.log(html)
+      var html = createRDFaHTMLRequirement(r, 'requirement');
+      document.querySelector('#requirement-preview-samp').replaceChildren(fragmentFromString(html));
+    };
 
-    var preview = document.querySelector('#requirement-preview-samp');
-    preview.replaceChildren(fragmentFromString(html));
+    renderPreview();
   }
 
   populateFormCitation(button, node, state) {

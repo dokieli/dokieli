@@ -1880,7 +1880,24 @@ export function getClassesOfProductsConcepts() {
     })
   }
 
+  // Live-DOM fallback: unsaved or edited documents whose parsed graph predates
+  // the currently defined product classes.
+  if (!concepts.length) {
+    document.querySelectorAll('#classes-of-products dl[rel~="skos:hasTopConcept"] > dt[about]').forEach(dt => {
+      try { concepts.push(new URL(dt.getAttribute('about'), Config.DocumentURL).href); } catch { /* skip unresolvable */ }
+    });
+  }
+
   return concepts;
+}
+
+// Live-DOM lookup for a product-class concept's label/definition (same fallback case as above).
+function getClassOfProductFromDOM(conceptIRI) {
+  const dt = Array.from(document.querySelectorAll('#classes-of-products dl[rel~="skos:hasTopConcept"] > dt[about]'))
+    .find(d => { try { return new URL(d.getAttribute('about'), Config.DocumentURL).href === conceptIRI; } catch { return false; } });
+  if (!dt) return null;
+  const dd = dt.nextElementSibling?.tagName === 'DD' ? dt.nextElementSibling : null;
+  return { label: dt.textContent.trim(), definition: dd?.textContent.trim() || '' };
 }
 
 
@@ -3075,18 +3092,26 @@ export function getRequirementSubjectOptionsHTML(options) {
   if (conceptIRIs.length) {
     conceptIRIs.forEach(conceptIRI => {
       var conceptData = Config.Resource[conceptIRI]?.skos?.data[conceptIRI];
+      var conceptLabel, title;
 
       if (conceptData) {
-        var conceptLabel = conceptData[ns.skos.prefLabel] || '';
-        var title = conceptData[ns.skos.definition] || '';
-        if (title) {
-          title = ` title="${htmlEncode(title)}"`;
-        }
-
-        var selected = (conceptIRI == selectedIRI) ? ' selected="selected"' : '';
-
-        s += '<option value="' + conceptIRI + '"' + selected + title + '>' + conceptLabel + '</option>';
+        conceptLabel = conceptData[ns.skos.prefLabel] || '';
+        title = conceptData[ns.skos.definition] || '';
       }
+      else {
+        var domConcept = getClassOfProductFromDOM(conceptIRI);
+        if (!domConcept) return;
+        conceptLabel = domConcept.label;
+        title = domConcept.definition;
+      }
+
+      if (title) {
+        title = ` title="${htmlEncode(title)}"`;
+      }
+
+      var selected = (conceptIRI == selectedIRI) ? ' selected="selected"' : '';
+
+      s += '<option value="' + conceptIRI + '"' + selected + title + '>' + conceptLabel + '</option>';
     })
   }
 
