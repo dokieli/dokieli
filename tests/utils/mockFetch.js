@@ -38,9 +38,12 @@ export const mockFetchHandler = (responses = {}) => {
         ok: true,
         status: 200,
         statusText: "OK",
+        headers: new Headers({
+          "Content-Type": responses[url].contentType || "text/turtle",
+        }),
         json: () => Promise.resolve({ data: responses[url].data }),
         text: () => Promise.resolve(responses[url].data),
-      });    
+      });
     }
 
     console.error(`Unhandled fetch: ${url}`);
@@ -54,4 +57,30 @@ export const setupMockFetch = (responses) => {
 
 export const resetMockFetch = () => {
   vi.clearAllMocks();
+};
+
+// Requests go through Config.Storage, which init() installs at runtime. Tests
+// get a router that just delegates to the mocked fetch.
+export const installStorageStub = (Config) => {
+  const send = (method) => (url, headers = {}, options = {}) =>
+    global.fetch(url, { ...options, method, headers: { ...headers } })
+      .then(response => {
+        if (response.ok === false) {
+          const error = new Error(`Error fetching resource: ${response.status}`);
+          error.response = response;
+          throw error;
+        }
+        return response;
+      });
+
+  Config.Storage = {
+    get: send("GET"),
+    head: send("HEAD"),
+    post: send("POST"),
+    put: send("PUT"),
+    patch: send("PATCH"),
+    delete: send("DELETE"),
+  };
+
+  return Config.Storage;
 };

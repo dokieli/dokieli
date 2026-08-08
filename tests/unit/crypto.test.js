@@ -130,21 +130,41 @@ describe('crypto.js', () => {
     });
   });
 
+  // Content JWEs stay anonymous: no kid for a reader or server to correlate.
+  // Decryption is trial-unwrap. Kids only appear in keystore documents.
   describe('getJWEKids', () => {
-    test('reads the kid from a compact JWE protected header', async () => {
-      const jwe = await encryptContent('x', [keypair.publicKey], keypair.kid);
-      expect(getJWEKids(jwe)).toEqual([keypair.kid]);
-    });
-
     test('returns an empty list when no kid is present', async () => {
       const jwe = await encryptContent('x', [keypair.publicKey]);
       expect(getJWEKids(jwe)).toEqual([]);
     });
 
-    test('reads recipient kids from a general JWE', async () => {
+    test('encryptContent leaves no kid in a compact JWE', async () => {
+      const jwe = await encryptContent('x', [keypair.publicKey]);
+      expect(getJWEKids(jwe)).toEqual([]);
+    });
+
+    test('encryptContent leaves no kid in a multi-recipient JWE', async () => {
       const other = await generateEncryptionKeypair();
-      const jwe = await encryptContent('x', [keypair.publicKey, other.publicKey], keypair.kid);
-      expect(getJWEKids(jwe)).toEqual([keypair.kid]);
+      const jwe = await encryptContent('x', [keypair.publicKey, other.publicKey]);
+      expect(JSON.parse(jwe).recipients).toHaveLength(2);
+      expect(getJWEKids(jwe)).toEqual([]);
+    });
+
+    test('reads a kid from an unprotected header when one is present', () => {
+      expect(getJWEKids({ header: { kid: 'key-1' } })).toEqual(['key-1']);
+    });
+
+    test('reads and dedupes recipient kids', () => {
+      const jwe = {
+        header: { kid: 'key-1' },
+        recipients: [{ header: { kid: 'key-1' } }, { header: { kid: 'key-2' } }, {}],
+      };
+      expect(getJWEKids(jwe)).toEqual(['key-1', 'key-2']);
+    });
+
+    test('accepts a serialized general JWE', () => {
+      expect(getJWEKids(JSON.stringify({ recipients: [{ header: { kid: 'key-3' } }] })))
+        .toEqual(['key-3']);
     });
   });
 

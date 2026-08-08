@@ -44,9 +44,11 @@ describe("getTextQuoteHTML", () => {
     );
   });
 
-  it("returns HTML with highlighting motivation", () => {
+  // The motivation lives on the annotation resource, not on the inline mark.
+  it("marks the quoted text and ties it to the given ref id", () => {
     const html = getTextQuoteHTML("123", "oa:highlighting", "highlighted text");
-    expect(html).toContain("oa:highlighting");
+    expect(html).toContain('resource="#123"');
+    expect(html).toContain('id="123"');
     expect(html).toContain("<mark");
     expect(html).toContain("highlighted text");
   });

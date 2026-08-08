@@ -15,10 +15,47 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { initLocalStorage } from "../../src/init";
-import Config from "../../src/config.js"
+import { describe, test, expect, vi, beforeEach } from 'vitest';
+import { initDeviceStorage } from "../../src/init";
+import Config from "../../src/config.js";
+import * as storage from "../../src/storage.js";
 
-test('initLocalStorage enables localStorage when available', () => {
-  initLocalStorage('test-key');
-  expect(Config.UseLocalStorage).toBe(true);
+describe('initDeviceStorage', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    Config.AutoSave.Items = {};
+  });
+
+  test('records the stored autoSave timestamp for the document', async () => {
+    Config.DocumentURL = 'https://example.org/doc';
+    vi.spyOn(storage, 'getDeviceStorageItem').mockResolvedValue({
+      autoSave: true,
+      updated: '2026-01-01T00:00:00Z'
+    });
+
+    initDeviceStorage();
+    await vi.waitFor(() => expect(Config.AutoSave.Items[Config.DocumentURL]).toBeDefined());
+
+    expect(Config.AutoSave.Items[Config.DocumentURL].IndexedDB.updated)
+      .toBe('2026-01-01T00:00:00Z');
+  });
+
+  test('leaves AutoSave alone when the document was never auto-saved', async () => {
+    Config.DocumentURL = 'https://example.org/other';
+    vi.spyOn(storage, 'getDeviceStorageItem').mockResolvedValue(undefined);
+
+    initDeviceStorage();
+    await Promise.resolve();
+
+    expect(Config.AutoSave.Items[Config.DocumentURL]).toBeUndefined();
+  });
+
+  test('skips blob: documents without touching storage', () => {
+    Config.DocumentURL = 'blob:https://example.org/1234';
+    const getItem = vi.spyOn(storage, 'getDeviceStorageItem');
+
+    initDeviceStorage();
+
+    expect(getItem).not.toHaveBeenCalled();
+  });
 });

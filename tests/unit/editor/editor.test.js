@@ -32,15 +32,20 @@ describe('Editor.setTemplateNew', () => {
     expect(document.title).toBe('Untitled');
   });
 
+  // Placeholder text is a decoration now (placeholderPlugin), not an attribute
+  // baked into the template.
   it('should inject expected HTML structure into body', () => {
     editor.setTemplateNew('author', { template: 'new' });
-    const h1 = document.querySelector('h1');
-    const p = document.querySelector('p');
+    const h1 = document.querySelector('main > article > h1');
+    const description = document.querySelector('main > article > div[property="schema:description"]');
 
     expect(h1).not.toBeNull();
-    expect(p).not.toBeNull();
-    expect(h1.getAttribute('data-placeholder')).toBe(editor.placeholder.h1);
-    expect(p.getAttribute('data-placeholder')).toBe(editor.placeholder.p);
+    expect(h1.getAttribute('property')).toBe('schema:name');
+    expect(h1.textContent).toBe('');
+
+    expect(description).not.toBeNull();
+    expect(description.getAttribute('datatype')).toBe('rdf:HTML');
+    expect(description.querySelector('p')).not.toBeNull();
   });
 });
 

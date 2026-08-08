@@ -77,15 +77,20 @@ describe("fetcher", () => {
     });
   });
 
+  // Asserted as rules rather than a frozen string: Config.MediaTypes.RDF changes.
   describe("setAcceptRDFTypes", () => {
+    const rdf = Config.MediaTypes.RDF;
+    const markup = Config.MediaTypes.Markup;
+
     test("should return the correct accept types", () => {
-      const options = {};
+      const result = setAcceptRDFTypes({});
+      const types = result.split(",");
 
-      const result = setAcceptRDFTypes(options);
-
-      expect(result).toEqual(
-        "text/turtle,application/ld+json,application/activity+json,text/html;q=0.9,image/svg+xml;q=0.9,application/rdf+xml"
-      );
+      expect(types).toHaveLength(rdf.length);
+      expect(types[0]).toBe(rdf[0]);
+      rdf.forEach((type) => {
+        expect(types).toContain(markup.includes(type) ? `${type};q=0.9` : type);
+      });
     });
 
     test("should return the correct accept types with options", () => {
@@ -101,13 +106,11 @@ describe("fetcher", () => {
       const resultWithExclude = setAcceptRDFTypes(excludeMarkupOptions);
       const resultDefaultWithoutExclude = setAcceptRDFTypes(defaultExcludeMarkupOptions);
 
-      expect(resultWithExclude).toEqual(
-        "text/turtle,application/ld+json,application/activity+json,application/rdf+xml"
-      );
+      const excluded = resultWithExclude.split(",");
+      expect(excluded).toEqual(rdf.filter((type) => !markup.includes(type)));
+      expect(resultWithExclude).not.toContain("q=0.9");
 
-      expect(resultDefaultWithoutExclude).toEqual(
-        "text/turtle,application/ld+json,application/activity+json,text/html;q=0.9,image/svg+xml;q=0.9,application/rdf+xml"
-      );
+      expect(resultDefaultWithoutExclude).toEqual(setAcceptRDFTypes({}));
     });
   });
 
@@ -234,7 +237,7 @@ describe('authFetch', () => {
       json: async () => ({ message: 'success' }),
     });
 
-    Config['Session']['authFetch'] = mockAuthFetch;
+    Config['Session'] = { authFetch: mockAuthFetch };
 
     const response = await authFetch(url, options);
 

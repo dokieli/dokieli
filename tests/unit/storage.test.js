@@ -22,7 +22,8 @@ import {
   enableAutoSave,
   disableAutoSave,
   removeLocalStorageDocumentItems,
-  updateLocalStorageProfile,
+  updateDeviceStorageProfile,
+  getDeviceStorageItem,
 } from '../../src/storage.js';
 import * as storage from '../../src/storage.js';
 import Config from '../../src/config.js';
@@ -109,7 +110,7 @@ describe('storage.js', () => {
     expect(localStorage.removeItem).toHaveBeenCalledWith('doc-url');
   });
 
-  test('updateLocalStorageProfile stores the user profile to storage', async () => {
+  test('updateDeviceStorageProfile stores the user profile without graphs', async () => {
     const User = {
       IRI: 'user-iri',
       Graph: {},
@@ -119,8 +120,21 @@ describe('storage.js', () => {
       }
     };
 
-    await expect(updateLocalStorageProfile(User)).resolves.toBeUndefined();
+    await updateDeviceStorageProfile(User);
 
-    expect(localStorage.setItem).toHaveBeenCalled();
+    const stored = await getDeviceStorageItem('DO.Config.User');
+    expect(stored.type).toBe('Update');
+    expect(stored.actor).toBe('user-iri');
+    expect(stored.object.describes.IRI).toBe('user-iri');
+    // Graphs are large and reconstructable, so they are never persisted.
+    expect(stored.object.describes.Graph).toBeUndefined();
+    expect(stored.object.describes.Preferences.graph).toBeUndefined();
+    expect(stored.object.describes.Contacts.c1.Graph).toBeUndefined();
+  });
+
+  test('updateDeviceStorageProfile resolves without storing when there is no IRI', async () => {
+    await expect(updateDeviceStorageProfile({})).resolves.toEqual({
+      message: 'User.IRI is not set'
+    });
   });
 });

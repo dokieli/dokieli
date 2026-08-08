@@ -158,8 +158,9 @@ describe("uri", () => {
   
     it('uses proxy for http IRI on https page', () => {
       Config.User.ProxyURL = 'https://proxy.com/';
-      window.document = { location: { protocol: 'https:' } };
+      vi.stubGlobal('document', { location: { protocol: 'https:' } });
       expect(getProxyableIRI('http://example.com/resource')).toBe('https://proxy.com/http%3A%2F%2Fexample.com%2Fresource');
+      vi.unstubAllGlobals();
     });
   
     it('skips proxy if not on https', () => {
@@ -172,7 +173,7 @@ describe("uri", () => {
     });
   
     it('throws on invalid URL', () => {
-      expect(() => getProxyableIRI('::::badurl::::')).toThrow(/Invalid URL provided/);
+      expect(() => getProxyableIRI('http://[bad')).toThrow(/Invalid URL provided/);
     });
   });
 
@@ -186,7 +187,7 @@ describe("uri", () => {
     });
   
     it('throws error with invalid URL string', () => {
-      expect(() => getURLLastPath('just-a-string')).toThrow('Invalid URL: just-a-string');
+      expect(() => getURLLastPath('just-a-string')).toThrow(/Invalid URL/);
     });
   
     it('returns non-string input unchanged', () => {

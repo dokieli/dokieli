@@ -19,26 +19,40 @@ import { describe, test, expect } from 'vitest';
 import { calculateDistance, roundValue } from 'src/geo.js';
 
 describe('geo.js', () => {
+  // (lat, lon, elevation) per point, returning the 3D chord in metres.
   describe('calculateDistance', () => {
     test('returns 0 for identical coordinates', () => {
-      const distance = calculateDistance(0, 0, 0, 0);
+      const distance = calculateDistance(0, 0, 0, 0, 0, 0);
       expect(distance).toBeCloseTo(0, 5);
     });
 
-    test('calculates distance between London and Paris (~343 km)', () => {
-      const london = [51.5074, -0.1278];
-      const paris = [48.8566, 2.3522];
-      const distance = calculateDistance(...london, ...paris);
-      expect(distance).toBeGreaterThan(340);
-      expect(distance).toBeLessThan(350);
+    test('measures a trackpoint-sized step (~11 m)', () => {
+      const distance = calculateDistance(51.5074, -0.1278, 0, 51.5075, -0.1278, 0);
+      expect(distance).toBeGreaterThan(10);
+      expect(distance).toBeLessThan(12);
     });
 
-    test('calculates distance between New York and Tokyo (~10800 km)', () => {
-      const ny = [40.7128, -74.0060];
-      const tokyo = [35.6895, 139.6917];
+    test('counts elevation difference alone', () => {
+      const distance = calculateDistance(10, 10, 0, 10, 10, 100);
+      expect(distance).toBeCloseTo(100, 3);
+    });
+
+    test('calculates distance between London and Paris (~344 km)', () => {
+      const london = [51.5074, -0.1278, 0];
+      const paris = [48.8566, 2.3522, 0];
+      const distance = calculateDistance(...london, ...paris);
+      expect(distance).toBeGreaterThan(343000);
+      expect(distance).toBeLessThan(345000);
+    });
+
+    // Chord, not great circle: the straight line cuts through the planet, so
+    // this is well short of the ~10800 km surface distance.
+    test('calculates distance between New York and Tokyo (~9608 km)', () => {
+      const ny = [40.7128, -74.0060, 0];
+      const tokyo = [35.6895, 139.6917, 0];
       const distance = calculateDistance(...ny, ...tokyo);
-      expect(distance).toBeGreaterThan(10700);
-      expect(distance).toBeLessThan(11000);
+      expect(distance).toBeGreaterThan(9600000);
+      expect(distance).toBeLessThan(9615000);
     });
   });
 

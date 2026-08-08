@@ -23,10 +23,8 @@ import { getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getDocument,
 import { cloneSelection, selectionToTextQuote, setSelectionFromTextQuote, getSelectedParentElement } from "../utils/annotation.js";
 import { applyMarksFromTextQuote, applyMarkFromSelector } from "@dokieli/web-annotation";
 import { fragmentFromString, getDocumentContentNode, selectArticleNode } from "../../utils/html.js";
-import { showUserIdentityInput } from "../../auth.js";
 import { isUnlocked, hasKeystore } from '../../keystore.js';
 import { getLinkRelation } from "../../graph.js";
-import { enableAutoSave } from "../../sync.js";
 import Config from "../../config.js";
 import { i18n } from "../../i18n.js";
 
@@ -492,7 +490,9 @@ export class ToolbarView {
 
       Config.Editor.toggleEditor(targetMode);
       if (targetMode === 'author') {
-        enableAutoSave(Config.DocumentURL, { method: 'IndexedDB' });
+        import('../../sync.js').then(({ enableAutoSave }) => {
+          enableAutoSave(Config.DocumentURL, { method: 'IndexedDB' });
+        });
       }
 
       if (textQuote && targetMode !== 'author') {
@@ -818,10 +818,13 @@ export class ToolbarView {
         Config.AnnotationService = url[0];
         updateAnnotationServiceForm(action);
       })
-      .catch(reason => {
+      .catch(async reason => {
         //TODO signinRequired
         // this check should be on the submit handler
         if (this.signInRequired(action) && !Config.User.IRI) {
+          // Imported here so toolbar.js doesn't statically depend on auth.js,
+          // which reaches back to this module's subclass via editor.js.
+          const { showUserIdentityInput } = await import('../../auth.js');
           showUserIdentityInput();
         }
         else {

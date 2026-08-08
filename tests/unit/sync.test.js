@@ -20,23 +20,37 @@ import {
   disableAutoSave,
   enableAutoSave
 } from '../../src/sync.js';
+import * as storage from '../../src/storage.js';
 import Config from '../../src/config.js';
 
-test('disableAutoSave clears intervals and deletes method', () => {
+test('disableAutoSave clears the interval and records autoSave off', async () => {
   global.clearInterval = vi.fn();
+  const updateItem = vi.spyOn(storage, 'updateDeviceStorageItem').mockResolvedValue(undefined);
 
   Config.AutoSave.Items['key'] = {
-    localStorage: { id: 123 },
+    IndexedDB: { id: 123 },
     http: { id: 456 },
   };
 
-  disableAutoSave('key', { method: 'localStorage' });
+  await disableAutoSave('key', { method: 'IndexedDB' });
   expect(global.clearInterval).toHaveBeenCalledWith(123);
-  expect(Config.AutoSave.Items['key'].localStorage).toBeUndefined();
 
-  disableAutoSave('key', { method: ['http'] });
+  await disableAutoSave('key', { method: ['http'] });
   expect(global.clearInterval).toHaveBeenCalledWith(456);
-  expect(Config.AutoSave.Items['key'].http).toBeUndefined();
+
+  expect(updateItem).toHaveBeenCalledWith('key', { autoSave: false });
+});
+
+test('disableAutoSave ignores keys and methods it never enabled', async () => {
+  global.clearInterval = vi.fn();
+  vi.spyOn(storage, 'updateDeviceStorageItem').mockResolvedValue(undefined);
+
+  await disableAutoSave('never-enabled', { method: 'IndexedDB' });
+
+  Config.AutoSave.Items['partial'] = { IndexedDB: { id: 1 } };
+  await disableAutoSave('partial', { method: 'http' });
+
+  expect(global.clearInterval).not.toHaveBeenCalled();
 });
 
 

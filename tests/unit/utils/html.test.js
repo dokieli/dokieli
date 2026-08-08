@@ -209,22 +209,24 @@ describe("parseMarkdown", () => {
   });
 });
 
+// Takes prefix names and resolves each against Config.ns.
 describe("getRDFaPrefixHTML", () => {
   it("should return formatted prefix HTML", () => {
-    const prefixes = {
-      foaf: "http://xmlns.com/foaf/0.1/",
-      rdf: "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-    };
-    const result = getRDFaPrefixHTML(prefixes);
+    const result = getRDFaPrefixHTML(["foaf", "rdf"]);
     expect(result).toContain("foaf: http://xmlns.com/foaf/0.1/");
     expect(result).toContain(
       "rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#"
     );
   });
 
-  it("should handle empty prefix object", () => {
-    const result = getRDFaPrefixHTML({});
-    expect(result).toBe("");
+  it("should sort the prefixes", () => {
+    expect(getRDFaPrefixHTML(["rdf", "foaf"])).toBe(
+      getRDFaPrefixHTML(["foaf", "rdf"])
+    );
+  });
+
+  it("should handle an empty list", () => {
+    expect(getRDFaPrefixHTML([])).toBe("");
   });
 });
 

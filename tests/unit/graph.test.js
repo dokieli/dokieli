@@ -24,7 +24,7 @@ import {
   serializeData
 } from "../../src/graph";
 import * as graphModule from "../../src/graph";
-import { setupMockFetch, resetMockFetch, mockFetch } from "../utils/mockFetch";
+import { setupMockFetch, resetMockFetch, mockFetch, installStorageStub } from "../utils/mockFetch";
 import MockGrapoi from "../utils/mockGrapoi";
 import Config from "../../src/config";
 import { Session } from "@uvdsl/solid-oidc-client-browser";
@@ -56,6 +56,7 @@ describe("graph", () => {
   describe("getResourceGraph", () => {
     beforeEach(() => {
       vi.spyOn(global, "fetch").mockImplementation(mockFetch);
+      installStorageStub(Config);
     });
 
     afterEach(() => {

@@ -94,7 +94,8 @@ describe('processAction annotation encryption', () => {
 
     const encrypted = noteData.body.filter(b => isJWE(b.value));
     expect(encrypted).toHaveLength(1);
-    expect(getJWEKids(encrypted[0].value)).toEqual([getSessionKid()]);
+    // Anonymous by design: no kid to correlate, the round-trip below proves the key.
+    expect(getJWEKids(encrypted[0].value)).toEqual([]);
     expect(await decryptWithSession(encrypted[0].value)).toBe('Confidential remark');
 
     const selector = noteData.target.selector;
