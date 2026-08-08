@@ -32,9 +32,10 @@ import { generateDataURI, getProxyableIRI, getUrlParams, stripFragmentFromString
 import { SolidStorage, GitForgeStorage, HttpStorage, initStorage } from './storage/backend.js';
 import { initEditor } from './editor/initEditor.js';
 import { showGraph, showVisualisationGraph } from './viz.js';
-import * as Slideshow from './slideshow.js';
-import { initCV } from './cv.js';
-import { openResource, initDocumentMenu, spawnDokieli, showDocumentMenu, initSlideshowInteraction, initDocumentDoEvents, showNewDocument, createNewDocument, createNewSlideshow, createNewCV } from './dialog.js';
+import * as Slideshow from './ui/templates/slideshow.js';
+import { initCV } from './ui/templates/cv.js';
+import { initSpecification } from './ui/templates/specification.js';
+import { openResource, initDocumentMenu, spawnDokieli, showDocumentMenu, initSlideshowInteraction, initDocumentDoEvents, showNewDocument, createNewDocument, createNewSlideshow, createNewCV, createNewSpecification } from './dialog.js';
 import { Icon } from './ui/icons.js';
 import { eventButtonClose, eventButtonSignIn, eventButtonSignOut, eventButtonNotificationsToggle, eventButtonInfo, emitDocEvent } from './events.js';
 import { hasNonWhitespaceText, getDocumentContentNode, selectArticleNode } from "./utils/html.js";
@@ -181,6 +182,7 @@ async function initDocumentActions() {
   showAsTabs();
   initSlideshow();
   initCV();
+  initSpecification();
   initCurrentStylesheet();
   registerEncryptionUnlockHandler(async () => {
     if (!document.getElementById('encryption-unlock') && await hasKeystore()) {
@@ -456,7 +458,8 @@ export async function initDocumentMode(mode) {
     const templates = {
       'article': createNewDocument,
       'slideshow': createNewSlideshow,
-      'cv': createNewCV
+      'cv': createNewCV,
+      'specification': createNewSpecification
     };
 
     if (templates[paramTemplate] && !paramOpen.length) {

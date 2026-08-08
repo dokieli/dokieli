@@ -614,6 +614,14 @@ let customNodes = {
     parseDOM: [{ tag: "select", getAttrs(node){ return getAttributes(node); }}],
     toDOM: toDOMWith("select")
   },
+  optgroup: {
+    content: "inline*",
+    group: "inline",
+    inline: true,
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "optgroup", getAttrs(node){ return getAttributes(node); }}],
+    toDOM: toDOMWith("optgroup")
+  },
   option: {
     content: "inline*",
     group: "inline",

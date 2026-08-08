@@ -702,10 +702,13 @@ main > article { position:relative; }
 font-family:inherit;
 }
 
-.cv-section-add,
-.cv-section-remove,
+.section-add,
+.section-remove,
+.subsection-add,
+.subsection-remove,
 .cv-entry-add,
-.cv-skill-add {
+.cv-skill-add,
+.dl-entry-add {
 border:1px dashed #080;
 border-radius:0.25em;
 background:none;
@@ -713,12 +716,16 @@ color:#333;
 cursor:pointer;
 font-size:inherit;
 }
-.cv-section-add:hover,
-.cv-section-add:focus-visible,
+.section-add:hover,
+.section-add:focus-visible,
+.subsection-add:hover,
+.subsection-add:focus-visible,
 .cv-entry-add:hover,
 .cv-entry-add:focus-visible,
 .cv-skill-add:hover,
-.cv-skill-add:focus-visible {
+.cv-skill-add:focus-visible,
+.dl-entry-add:hover,
+.dl-entry-add:focus-visible {
 border-style:solid;
 border-color:#080;
 background-color:#efe;
@@ -726,17 +733,52 @@ color:#080;
 outline:none;
 }
 .cv-entry-add,
-.cv-skill-add {
+.cv-skill-add,
+.dl-entry-add {
 display:inline-block;
-margin:0.5em 0;
+margin:1em 0;
 padding:0.25em;
 font-weight:bold;
 }
-.cv-section-remove {
+
+.category-checkboxes {
+display:flex;
+flex-wrap:wrap;
+gap:0.5em 1.25em;
+list-style:none;
+margin:0.5em 0;
+padding:0;
+}
+.category-checkboxes li {
+margin:0;
+white-space:nowrap;
+}
+.category-checkboxes label {
+cursor:pointer;
+margin-left:0.35em;
+width:auto;
+font-weight:normal;
+}
+
+.interoperability-add {
+display:inline-flex;
+align-items:center;
+gap:0.5em;
+margin:0.5em 0;
+}
+
+#specification-status.do label {
+width:auto;
+vertical-align:middle;
+}
+.section-remove,
+.subsection-remove {
 margin-left:0.4em;
 }
-.cv-section-remove:hover,
-.cv-section-remove:focus-visible {
+.section-remove:hover,
+.section-remove:focus-visible,
+.subsection-remove:hover,
+.subsection-remove:focus-visible {
 border-color:#c00;
 background:#fee;
 color:#c00;
@@ -744,7 +786,8 @@ color:#c00;
 
 /* Per-entry delete: small red button pinned to the entry's top-right corner. */
 #content section li,
-dd:has([class~="cv-entry-delete"]) {
+dd:has([class~="cv-entry-delete"]),
+dt:has([class~="entry-delete"]) {
 position:relative;
 }
 dd:has([class~="cv-entry-delete"]) {
@@ -759,7 +802,8 @@ margin-bottom:1em;
 }
 
 
-.cv-entry-delete {
+.cv-entry-delete,
+.entry-delete {
 position:absolute;
 top:0.5em;
 right:0.5em;
@@ -769,17 +813,21 @@ background:none;
 cursor:pointer;
 padding:0.25em;
 }
-.cv-entry-delete svg {
+.cv-entry-delete svg,
+.entry-delete svg {
 display:block;
 width:0.9em;
 height:0.9em;
 fill:#c00;
 }
 .cv-entry-delete:hover svg,
-.cv-entry-delete:focus-visible svg {
+.cv-entry-delete:focus-visible svg,
+.entry-delete:hover svg,
+.entry-delete:focus-visible svg {
 fill:#a00;
 }
-.cv-entry-delete:focus-visible {
+.cv-entry-delete:focus-visible,
+.entry-delete:focus-visible {
 outline:none;
 }
 
@@ -2440,12 +2488,12 @@ margin-bottom:1em;
   list-style: none;
   margin: 0 0 1em 0;
   padding: 0;
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 1em;
 }
 
 #new-document-fieldset ul li {
-  flex: 1;
   position: relative;
   margin: 0;
 }
@@ -4880,7 +4928,11 @@ max-width:none;
 .editor-empty-node {
   position: relative; }
   .editor-empty-node:has(br:only-child):after,
-  .editor-empty-node:empty:after {
+  .editor-empty-node:empty:after,
+  /* Editor widgets (e.g. the entry delete button) inside an otherwise empty
+     node must not suppress the hint; the class itself is only ever applied to
+     empty textblocks. */
+  .editor-empty-node:has(> .do):after {
     color: #777;
     content: attr(data-placeholder);
     font-style: italic;

@@ -15,15 +15,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import Config from './config.js';
-import { fragmentFromString, selectArticleNode } from './utils/html.js';
-import { slugify } from './editor/plugins/autoId.js';
-import { registerDocumentTransform, registerEditorParseTransform } from './utils/documentTransforms.js';
-import { i18n } from './i18n.js';
-import { generateAttributeId } from './util.js';
-import { getCountryOptionsHTML, showLocationSuggestions, showSkillSuggestions, setupAutocomplete } from './doc.js';
-import { getWikidataResults, getEscoResults } from './graph.js';
-import { expandTerm, getPrefixes, collectTerms } from './utils/rdfa.js';
+import Config from '../../config.js';
+import { fragmentFromString, selectArticleNode } from '../../utils/html.js';
+import { slugify } from '../../editor/plugins/autoId.js';
+import { registerDocumentTransform, registerEditorParseTransform } from '../../utils/documentTransforms.js';
+import { i18n } from '../../i18n.js';
+import { generateAttributeId } from '../../util.js';
+import { getCountryOptionsHTML, showLocationSuggestions, showSkillSuggestions, setupAutocomplete } from '../../doc.js';
+import { getWikidataResults, getEscoResults } from '../../graph.js';
+import { expandTerm, getPrefixes, collectTerms } from '../../utils/rdfa.js';
+import { isAuthorMode, pmEditor, prepareDocumentForTemplate, replaceDocumentBody, documentDetailsHTML } from './shared.js';
+import { registerSectionsTemplate, buildSectionsNav, refreshSectionsNav, addSection as addTemplateSection, removeSection as removeTemplateSection, injectSectionsTOC, stripSectionsTOC } from './sections.js';
 
 // Sections are identified from their entries' RDFa (see classifySection); data-cv-section is a transient author-mode aid, stripped on save.
 
@@ -75,10 +77,6 @@ const SEED_ENTRY = new Set(['scholarly-communication', 'technical-contributions'
 let clickHandlerAttached = false;
 let modeHandlerAttached = false;
 let authHandlerAttached = false;
-
-function isAuthorMode() {
-  return Config.Editor?.mode === 'author';
-}
 
 function getSection(type) {
   return SECTIONS[type] || null;
@@ -164,10 +162,6 @@ function findSection(root, type) {
   return sectionIndex(root).get(type) || null;
 }
 
-function sectionPresent(root, type) {
-  return !!findSection(root, type);
-}
-
 function sectionHTML(type) {
   const s = getSection(type);
   if (!s) {
@@ -200,11 +194,6 @@ function sectionHTML(type) {
     </section>`;
 }
 
-export function buildSection(type) {
-  const html = sectionHTML(type);
-  return html ? fragmentFromString(html).firstElementChild : null;
-}
-
 // Default sections, inlined by the template so they exist before PM mounts.
 export function defaultContentHTML() {
   return `<div id="content">${DEFAULT_SECTIONS.map(sectionHTML).join('')}</div>`;
@@ -224,150 +213,45 @@ function migrateSectionMarkers(root) {
 }
 registerEditorParseTransform(migrateSectionMarkers);
 
-// Null unless the author editor is live (section mutations must go through PM).
-function pmEditor() {
-  return Config.Editor?.authorToolbarView?.editorView ? Config.Editor : null;
-}
-
-// Read mode: links to present sections; author mode adds remove/add buttons. presentTypes (type -> section id) overrides DOM probing.
-export function buildTOC(root, presentTypes = null) {
-  const author = isAuthorMode();
-
-  const nav = document.createElement('nav');
-  // The author-mode widget keeps the editor id/class; the read/save nav is a clean <nav>.
-  if (author) {
-    nav.className = 'do';
-    nav.id = 'cv-toc';
-  }
-
-  const ul = document.createElement('ul');
-  nav.appendChild(ul);
-
-  const index = presentTypes ? null : sectionIndex(root);
-
-  Object.keys(SECTIONS).forEach(section => {
-    let present, sectionId;
-    if (presentTypes) {
-      present = presentTypes.has(section);
-      sectionId = present ? presentTypes.get(section) : null;
-    } else {
-      const el = index.get(section);
-      present = !!el;
-      sectionId = el?.id || null;
-    }
-    if (!present && !author) return;
-
-    const li = document.createElement('li');
-
-    if (present) {
-      const a = document.createElement('a');
-      a.href = `#${sectionId || section}`;
-      a.textContent = sectionLabel(section);
-      li.appendChild(a);
-
-      if (author) {
-        const remove = document.createElement('button');
-        remove.type = 'button';
-        remove.className = 'do cv-section-remove';
-        remove.dataset.type = section;
-        const removeLabel = i18n.t('cv.button.remove-section.aria-label', { label: sectionLabel(section) });
-        remove.title = removeLabel;
-        remove.setAttribute('aria-label', removeLabel);
-        remove.textContent = '−';
-        li.appendChild(remove);
-      }
-    } else {
-      const add = document.createElement('button');
-      add.type = 'button';
-      add.className = 'do cv-section-add';
-      add.dataset.type = section;
-      add.textContent = `+ ${sectionLabel(section)}`;
-      li.appendChild(add);
-    }
-
-    ul.appendChild(li);
-  });
-
-  return nav;
-}
-
-// The nav sits inside the article after <details>; it is .do (stripped on save), and in author mode PM's widget owns it so we leave it alone.
-function refreshTOC(root) {
-  const main = root.closest('main') || root.parentNode;
-  main.querySelector(':scope > #cv-toc')?.remove(); // drop a stale nav from the old <main> layout
-  if (pmEditor()) return;
-
-  const nav = buildTOC(root);
-  const existing = root.querySelector(':scope > nav');
-  if (existing) { existing.replaceWith(nav); return; }
-  const details = root.querySelector(':scope > details');
-  const content = root.querySelector(':scope > #content');
-  if (details) details.after(nav);
-  else if (content) content.before(nav);
-  else root.prepend(nav);
-}
-
-export function addSection(root, type) {
-  if (!getSection(type) || sectionPresent(root, type)) return;
-
-  const editor = pmEditor();
-  if (editor) {
-    editor.insertFragmentAtEndOf('#content', fragmentFromString(sectionHTML(type)));
-  } else {
-    const content = root.querySelector('#content');
-    if (!content) return;
-    const order = Object.keys(SECTIONS);
-    const idx = order.indexOf(type);
-    const after = Array.from(content.children).find(el => order.indexOf(getSectionType(el)) > idx);
-    content.insertBefore(buildSection(type), after || null);
-  }
-
-  refreshTOC(root);
-}
-
-export function removeSection(root, type) {
-  const section = findSection(root, type);
-  if (!section) return;
-  const editor = pmEditor();
-  if (editor) {
-    editor.deleteNodeById(section.id);
-  } else {
-    section.remove();
-  }
-  refreshTOC(root);
-}
-
 function isCV(root) {
   return !!root.querySelector('[rel~="rdf:type"][href*="CurriculumVitae"], [rel~="rdf:type"][resource*="CurriculumVitae"]');
 }
 
-// Save hook: the live nav is .do (stripped on save); add a clean links-only nav.
-function injectCVTOC(doc) {
-  const article = selectArticleNode(doc);
-  if (!article || !isCV(article)) return;
+// The CV's section-management config, running through the generic machinery in sections.js.
+const cvSections = registerSectionsTemplate({
+  templateId: 'cv',
+  getRoot: getCVRoot,
+  isDoc: isCV,
+  sections: SECTIONS,
+  sectionLabel,
+  sectionHTML,
+  sectionEntries: (root) => {
+    const entries = new Map();
+    sectionIndex(root).forEach((el, type) => entries.set(type, { id: el.id || type }));
+    return entries;
+  },
+  removeLabel: (type) => i18n.t('cv.button.remove-section.aria-label', { label: sectionLabel(type) }),
+});
 
-  const content = article.querySelector('#content');
-  if (!content) return;
-
-  article.querySelectorAll(':scope > nav').forEach(n => n.remove());
-
-  const index = sectionIndex(article);
-  const present = Object.keys(SECTIONS)
-    .map(type => ({ type, section: index.get(type) }))
-    .filter(x => x.section);
-  if (!present.length) return;
-
-  const lis = present.map(({ type, section }) => `<li><a href="#${section.id}">${sectionLabel(type)}</a></li>`).join('');
-  content.parentNode.insertBefore(fragmentFromString(`<nav><ul>${lis}</ul></nav>`), content);
+// Present sections (type -> { id }) override DOM probing (e.g. read from the PM doc).
+export function buildTOC(root, presentEntries = null) {
+  return buildSectionsNav(cvSections, root, presentEntries);
 }
 
-// On author entry, drop the read-mode nav so PM doesn't parse it as content; cvNavDecorationPlugin renders the author nav instead.
-function stripCVTOC(root) {
-  if (!root || !isCV(root)) return;
-  const content = root.querySelector('#content');
-  (content?.parentNode || root).querySelectorAll(':scope > nav').forEach(n => n.remove());
+function refreshTOC(root) {
+  refreshSectionsNav(cvSections, root);
 }
-registerEditorParseTransform(stripCVTOC);
+
+export function addSection(root, type) {
+  addTemplateSection(cvSections, root, type);
+}
+
+export function removeSection(root, type) {
+  removeTemplateSection(cvSections, root, type);
+}
+
+registerDocumentTransform((doc) => injectSectionsTOC(cvSections, doc));
+registerEditorParseTransform((root) => stripSectionsTOC(cvSections, root));
 
 function paragraphHTML() {
   return `<p property="schema:description" datatype="rdf:HTML"><br /></p>`;
@@ -502,8 +386,6 @@ function eventFieldHTML(key, eventId, sectionType = 'experience') {
   }
   return '';
 }
-
-registerDocumentTransform(injectCVTOC);
 
 // Save hook: collapse the editable date inputs back into <time>start</time>–<time>end</time>.
 function transformDateInputs(doc) {
@@ -941,6 +823,40 @@ function stripSectionMarkers(doc) {
 
 registerDocumentTransform(stripSectionMarkers);
 
+export function setTemplateNewCV(mode, options) {
+  // TODO: Remove aria-label when content is updated
+  prepareDocumentForTemplate();
+  replaceDocumentBody(`<main><article about="" dir="auto" typeof="schema:CreativeWork"><h1 aria-label="${i18n.t('editor.new.h1.aria-label')}" property="schema:name"></h1></article></main>`);
+
+  //TODO: i18n
+  let userDetails = {
+    IRI: Config.User.IRI || 'https://example.org/profile/card#me',
+    Name: Config.User.Name || 'Your Name',
+    Email: Config.User.Email || 'you@example.org',
+  };
+
+  const documentDetails = documentDetailsHTML([
+    { id: 'document-identifier', dt: 'Identifier', dds: [`<a href="${Config.DocumentURL}">${Config.DocumentURL}</a>`] },
+    { id: 'document-authors', dt: 'Author', dds: [`<a href="${userDetails.IRI}" rel="schema:creator schema:publisher schema:author" typeof="schema:Person">${userDetails.Name}</a>`] },
+    { id: 'document-primary-topic', dt: 'Topic', dds: [`
+      <p><a href="${userDetails.IRI}" rel="foaf:primaryTopic">${userDetails.Name}</a></p>
+      <dl>
+        <dt>WebID</dt>
+        <dd><a href="${userDetails.IRI}">${userDetails.IRI}</a></dd>
+        <dt>Email</dt>
+        <dd><a href="mailto:${userDetails.Email}">${userDetails.Email}</a></dd>
+      </dl>`] },
+    { id: 'document-type', dt: 'Document Type', dds: [
+      `<a href="http://xmlns.com/foaf/0.1/PersonalProfileDocument" rel="rdf:type">Personal Profile Document</a>`,
+      `<a href="http://w3id.org/roh#CurriculumVitae" rel="rdf:type">Curriculum Vitae</a>`,
+    ] },
+  ]);
+
+  const article = document.querySelector('main > article');
+  article.appendChild(fragmentFromString(documentDetails));
+  article.appendChild(fragmentFromString(defaultContentHTML()));
+}
+
 // Render the nav and wire add/remove. Safe to call repeatedly.
 export function initCV() {
   const root = getCVRoot();
@@ -950,14 +866,10 @@ export function initCV() {
 
   if (!clickHandlerAttached) {
     clickHandlerAttached = true;
+    // Section add/remove is handled by the generic sections.js click handler.
     document.addEventListener('click', (e) => {
       const root = getCVRoot();
       if (!root) return;
-      const add = e.target.closest('.cv-section-add');
-      if (add) { addSection(root, add.dataset.type); return; }
-      const remove = e.target.closest('.cv-section-remove');
-      if (remove) { removeSection(root, remove.dataset.type); }
-
       const addEntry = e.target.closest('.cv-entry-add');
       if (addEntry) {
         const type = addEntry.dataset.type;

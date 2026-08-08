@@ -18,7 +18,7 @@ limitations under the License.
 import { JSDOM } from "jsdom";
 import { describe, it, expect } from "vitest";
 import { expandTerm, expandTokens, collectTerms, getPrefixes } from "../../../src/utils/rdfa.js";
-import { classifySection } from "../../../src/cv.js";
+import { classifySection } from "../../../src/ui/templates/cv.js";
 
 const SCHEMA = "http://schema.org/";
 const FOAF = "http://xmlns.com/foaf/0.1/";
@@ -109,7 +109,7 @@ describe("classifySection precedence", () => {
   });
 
   it("identifies property-based sections by RDFa", () => {
-    expect(classifySection({ terms: t("property", "schema:knowsAbout") })).toBe("skills");
+    expect(classifySection({ terms: t("property", "schema:skills") })).toBe("skills");
     expect(classifySection({ terms: t("property", "schema:award") })).toBe("awards");
     expect(classifySection({ terms: t("property", "schema:abstract") })).toBe("summary");
     expect(classifySection({ terms: t("rel", "schema:hasCredential") })).toBe("credentials");

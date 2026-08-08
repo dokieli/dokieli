@@ -16,7 +16,7 @@ limitations under the License.
 */
 
 import rdf from "rdf-ext";
-import * as Slideshow from './slideshow.js';
+import * as Slideshow from './ui/templates/slideshow.js';
 import { diffChars } from 'diff';
 import LinkHeader from "http-link-header";
 import Config from './config.js'
@@ -27,7 +27,7 @@ import { Icon } from './ui/icons.js';
 import { buttonIcons, getButtonHTML, updateButtons } from './ui/buttons.js'
 import { domSanitizeHTMLBody, domSanitize, sanitizeInsertAdjacentHTML, htmlEncode, sanitizeIRI } from './utils/sanitization.js';
 import { cleanProseMirrorOutput, normalizeHTML, normalizeWhitespace } from './utils/normalization.js';
-import { applyDocumentTransforms } from './utils/documentTransforms.js';
+import { applyDocumentTransforms, registerDocumentTransform } from './utils/documentTransforms.js';
 import { formatHTML, fragmentFromString, getDoctype, getDocumentContentNode, selectArticleNode, getDocumentNodeFromString, stringFromFragment, createHTML, getOffset, htmlToMarkdown } from './utils/html.js';
 import { i18n } from './i18n.js';
 import { rewriteBlobImagesToRelative, uploadBlobAssets, clearBlobAssets, hasUploadTarget } from './editor/utils/imageAssets.js';
@@ -3676,22 +3676,57 @@ export function positionNote(refId, noteId, refLabel) {
   note.setAttribute('style', style);
 }
 
+// Deterministic stylesheet toggling: deactivate via media="not all" (original parked in data-media), activate by restoring media plus the legacy disabled toggle — titled-set flags alone are unreliable.
+function applyStylesheetState(stylesheet, rel, disabled) {
+  if (stylesheet.getAttribute('rel') !== rel) stylesheet.setAttribute('rel', rel);
+
+  if (disabled) {
+    if (stylesheet.getAttribute('media') !== 'not all') {
+      stylesheet.setAttribute('data-media', stylesheet.getAttribute('media') || '');
+      stylesheet.setAttribute('media', 'not all');
+    }
+    stylesheet.disabled = true;
+    if (stylesheet.sheet) stylesheet.sheet.disabled = true;
+  }
+  else {
+    if (stylesheet.getAttribute('media') === 'not all') {
+      const original = stylesheet.getAttribute('data-media');
+      if (original) stylesheet.setAttribute('media', original);
+      else stylesheet.removeAttribute('media');
+      stylesheet.removeAttribute('data-media');
+    }
+    stylesheet.disabled = true;
+    stylesheet.disabled = false;
+    if (stylesheet.sheet) stylesheet.sheet.disabled = false;
+  }
+}
+
+// Save hook: restore the parked media value so saved documents carry clean link markup.
+export function normalizeStylesheetLinks(doc) {
+  doc.querySelectorAll('head link[data-media]').forEach((link) => {
+    const original = link.getAttribute('data-media');
+    if (original) link.setAttribute('media', original);
+    else link.removeAttribute('media');
+    link.removeAttribute('data-media');
+  });
+}
+
+registerDocumentTransform(normalizeStylesheetLinks);
+
 export function updateSelectedStylesheets(stylesheets, selected) {
   selected = selected.toLowerCase();
 
   for (var j = 0; j < stylesheets.length; j++) {
     (function(stylesheet) {
       if (stylesheet.getAttribute('title').toLowerCase() != selected) {
-          stylesheet.disabled = true;
-          stylesheet.setAttribute('rel', 'stylesheet alternate');
+        applyStylesheetState(stylesheet, 'stylesheet alternate', true);
       }
     })(stylesheets[j]);
   }
   for (let j = 0; j < stylesheets.length; j++) {
     (function(stylesheet) {
       if (stylesheet.getAttribute('title').toLowerCase() == selected) {
-          stylesheet.setAttribute('rel', 'stylesheet');
-          stylesheet.disabled = false;
+        applyStylesheetState(stylesheet, 'stylesheet', false);
       }
     })(stylesheets[j]);
   }

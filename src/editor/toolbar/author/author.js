@@ -777,10 +777,11 @@ nodeToHTML(node, schema) {
   findFirstChildOfType(parentSelector, childType) {
     const parent = this.findNodeBySelector(parentSelector);
     if (!parent) return null;
+    const childTypes = Array.isArray(childType) ? childType : [childType];
     let found = null;
     parent.node.descendants((node, pos) => {
       if (found) return false;
-      if (node.type.name === childType) found = { node, pos: parent.pos + 1 + pos };
+      if (childTypes.includes(node.type.name)) found = { node, pos: parent.pos + 1 + pos };
     });
     return found;
   }
@@ -825,6 +826,36 @@ nodeToHTML(node, schema) {
     const target = this.findNodeById(id);
     if (!target) return;
     dispatch(state.tr.delete(target.pos, target.pos + target.node.nodeSize));
+  }
+
+  // Insert a fragment immediately before the node with the given id (targeted, not cursor-relative).
+  insertFragmentBeforeNodeById(id, fragment) {
+    const { state, dispatch } = this.editorView;
+    const target = this.findNodeById(id);
+    if (!target) return false;
+    const node = DOMParser.fromSchema(schema).parse(fragment);
+    dispatch(state.tr.insert(target.pos, node));
+    return true;
+  }
+
+  // Insert a fragment immediately before the first node matching the selector.
+  insertFragmentBeforeNode(selector, fragment) {
+    const { state, dispatch } = this.editorView;
+    const target = this.findNodeBySelector(selector);
+    if (!target) return false;
+    const node = DOMParser.fromSchema(schema).parse(fragment);
+    dispatch(state.tr.insert(target.pos, node));
+    return true;
+  }
+
+  // Insert a fragment at the start of the first node matching the selector.
+  insertFragmentAtStartOf(selector, fragment) {
+    const { state, dispatch } = this.editorView;
+    const target = this.findNodeBySelector(selector);
+    if (!target) return false;
+    const node = DOMParser.fromSchema(schema).parse(fragment);
+    dispatch(state.tr.insert(target.pos + 1, node));
+    return true;
   }
 
   moveSlide(fromId, toId, before = true) {

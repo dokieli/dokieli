@@ -48,8 +48,12 @@ import { IndexeddbPersistence } from 'y-indexeddb'
 import { ySyncPlugin, yCursorPlugin, yUndoPlugin, undo, redo, initProseMirrorDoc, prosemirrorToYDoc } from 'y-prosemirror'
 import { currentLocation } from "../uri.js";
 import { getRandomIndex, stringToColor } from "../util.js";
-import { defaultContentHTML } from "../cv.js";
+import { setTemplateNewCV } from "../ui/templates/cv.js";
+import { setTemplateNewSlideshow } from "../ui/templates/slideshow.js";
+import { setTemplateNewSpecification } from "../ui/templates/specification.js";
+import { prepareDocumentForTemplate, replaceDocumentBody } from "../ui/templates/shared.js";
 import { cvNavDecorationPlugin } from "./plugins/cvNavDecorations.js";
+import { specificationNavDecorationPlugin, specificationConceptSyncPlugin } from "./plugins/specificationNavDecorations.js";
 import { protectPlaceholdersPlugin } from "./plugins/protectPlaceholders.js";
 import { mentionsPlugin } from "./plugins/mentions.js";
 
@@ -181,7 +185,7 @@ export class Editor {
 
     let node;
 
-    if (options?.template === 'new' || options?.template === 'new-slideshow' || options?.template === 'new-cv') {
+    if (options?.template === 'new' || options?.template === 'new-slideshow' || options?.template === 'new-cv' || options?.template === 'new-specification') {
       Config.Editor['new'] = true;
       this.setTemplate(mode, options);
     }
@@ -214,43 +218,21 @@ export class Editor {
         this.setTemplateNew(mode, options);
         break;
       case 'new-slideshow':
-        this.setTemplateNewSlideshow(mode, options);
+        setTemplateNewSlideshow(mode, options);
         break;
       case 'new-cv':
-        this.setTemplateNewCV(mode, options);
+        setTemplateNewCV(mode, options);
+        break;
+      case 'new-specification':
+        setTemplateNewSpecification(mode, options);
         break;
     }
   }
 
   setTemplateNew(mode, options) {
-    //Start with empty body. Reuse <head>, <html> will have its lang/xml:lang, <body> will have prefix.
-    // Add initial nodes h1, p with no content.
-    // Update head > title to 'Untitled'. Save syncs head > title with h1 value (getDocument).
-
-    document.documentElement.setAttribute("lang", `${Config.User.UI.Language}`);
-    document.documentElement.setAttribute("xml:lang", `${Config.User.UI.Language}`);
-    document.documentElement.setAttribute("dir", `${Config.User.UI.LanguageDir}`);
-
-    const titleElement = document.querySelector('head title');
-
-    if (titleElement) {
-      titleElement.textContent = 'Untitled';
-    }
-    else {
-      const newTitle = document.createElement('title');
-      newTitle.textContent = 'Untitled';
-      document.head.appendChild(newTitle);
-    }
     // TODO: Remove aria-label when content is updated
-
-    var documentMenu = document.getElementById('document-menu');
-
-    document.body.replaceChildren(fragmentFromString(`<main><article dir="auto"><h1 aria-label="${i18n.t('editor.new.h1.aria-label')}" property="schema:name"></h1><div datatype="rdf:HTML" property="schema:description"><p></p></div></article></main>`));
-
-    if (documentMenu) document.body.prepend(documentMenu);
-
-    document.body.removeAttribute('id');
-    document.body.removeAttribute('class');
+    prepareDocumentForTemplate();
+    replaceDocumentBody(`<main><article dir="auto"><h1 aria-label="${i18n.t('editor.new.h1.aria-label')}" property="schema:name"></h1><div datatype="rdf:HTML" property="schema:description"><p></p></div></article></main>`);
 
     // If the initial nodes have no content, show placeholder text, else remove placeholder text.
 
@@ -261,112 +243,6 @@ export class Editor {
     Immutable, Version button states should be disabled/false
     */
   }
-
-  setTemplateNewSlideshow(mode, options) {
-    document.documentElement.setAttribute("lang", `${Config.User.UI.Language}`);
-    document.documentElement.setAttribute("xml:lang", `${Config.User.UI.Language}`);
-    document.documentElement.setAttribute("dir", `${Config.User.UI.LanguageDir}`);
-
-    const titleElement = document.querySelector('head title');
-
-    if (titleElement) {
-      titleElement.textContent = 'Untitled';
-    }
-    else {
-      const newTitle = document.createElement('title');
-      newTitle.textContent = 'Untitled';
-      document.head.appendChild(newTitle);
-    }
-
-    // FIXME: do we still need this? 
-    const documentMenu = document.getElementById('document-menu');
-    // Drop dynamic menu sections so they re-render in the correct order.
-    ['#document-do', '#document-autosave', '#document-views', '#about-dokieli', '#ui-language'].forEach(sel => {
-      documentMenu?.querySelector(sel)?.remove();
-    });
-
-    document.body.replaceChildren(fragmentFromString(`<main><article about="" dir="auto" typeof="schema:CreativeWork"><header class="caption"><h1 property="schema:name"></h1></header><section class="slide" id="cover" inlist="" rel="schema:hasPart" resource="#cover" typeof="bibo:Slide"><h2 aria-label="${i18n.t('editor.new-slideshow.h2.aria-label')}" property="schema:name"></h2><div datatype="rdf:HTML" property="schema:description"><p></p></div></section></article><div class="do progress"></div></main>`));
-
-    if (documentMenu) document.body.prepend(documentMenu);
-
-    document.body.removeAttribute('id');
-    document.body.className = 'shower single';
-  }
-
-  setTemplateNewCV(mode, options) {
-    //Start with empty body. Reuse <head>, <html> will have its lang/xml:lang, <body> will have prefix.
-    // Add initial nodes h1, p with no content.
-    // Update head > title to 'Untitled'. Save syncs head > title with h1 value (getDocument).
-
-    document.documentElement.setAttribute("lang", `${Config.User.UI.Language}`);
-    document.documentElement.setAttribute("xml:lang", `${Config.User.UI.Language}`);
-    document.documentElement.setAttribute("dir", `${Config.User.UI.LanguageDir}`);
-
-    const titleElement = document.querySelector('head title');
-
-    if (titleElement) {
-      titleElement.textContent = 'Untitled';
-    }
-    else {
-      const newTitle = document.createElement('title');
-      newTitle.textContent = 'Untitled';
-      document.head.appendChild(newTitle);
-    }
-    // TODO: Remove aria-label when content is updated
-
-    var documentMenu = document.getElementById('document-menu');
-
-    document.body.replaceChildren(fragmentFromString(`<main><article about="" dir="auto" typeof="schema:CreativeWork"><h1 aria-label="${i18n.t('editor.new.h1.aria-label')}" property="schema:name"></h1></article></main>`));
-
-    if (documentMenu) document.body.prepend(documentMenu);
-
-    document.body.removeAttribute('id');
-    document.body.removeAttribute('class');
-
-    //TOOD: i18n
-    let userDetails = {
-      IRI: Config.User.IRI || 'https://example.org/profile/card#me',
-      Name: Config.User.Name || 'Your Name',
-      Email: Config.User.Email || 'you@example.org',
-    };
-
-    //TODO: Move to separate micro template
-    let documentDetails = `
-<details open="">
-  <summary>More details about this document</summary>
-  <dl id="document-identifier">
-    <dt>Identifier</dt>
-    <dd><a href="${Config.DocumentURL}">${Config.DocumentURL}</a></dd>
-  </dl>
-  <dl id="document-authors">
-    <dt>Author</dt>
-    <dd><a href="${userDetails.IRI}" rel="schema:creator schema:publisher schema:author" typeof="schema:Person">${userDetails.Name}</a></dd>
-  </dl>
-  <dl id="document-primary-topic">
-    <dt>Topic</dt>
-    <dd>
-      <p><a href="${userDetails.IRI}" rel="foaf:primaryTopic">${userDetails.Name}</a></p>
-      <dl>
-        <dt>WebID</dt>
-        <dd><a href="${userDetails.IRI}">${userDetails.IRI}</a></dd>
-        <dt>Email</dt>
-        <dd><a href="mailto:${userDetails.Email}">${userDetails.Email}</a></dd>
-      </dl>
-    </dd>
-  </dl>
-  <dl id="document-type">
-    <dt>Document Type</dt>
-    <dd><a href="http://xmlns.com/foaf/0.1/PersonalProfileDocument" rel="rdf:type">Personal Profile Document</a></dd>
-    <dd><a href="http://w3id.org/roh#CurriculumVitae" rel="rdf:type">Curriculum Vitae</a></dd>
-  </dl>
-</details>
-    `
-
-    const article = document.querySelector('main > article');
-    article.appendChild(fragmentFromString(documentDetails));
-    article.appendChild(fragmentFromString(defaultContentHTML()));
-  }
-
 
   showSelectorFromLocation() {
     const toolbarView = this.authorToolbarView || this.socialToolbarView;
@@ -437,6 +313,18 @@ export class Editor {
     return this.authorToolbarView?.deleteNodeById(id);
   }
 
+  insertFragmentBeforeNodeById(id, fragment) {
+    return this.authorToolbarView?.insertFragmentBeforeNodeById(id, fragment);
+  }
+
+  insertFragmentBeforeNode(selector, fragment) {
+    return this.authorToolbarView?.insertFragmentBeforeNode(selector, fragment);
+  }
+
+  insertFragmentAtStartOf(selector, fragment) {
+    return this.authorToolbarView?.insertFragmentAtStartOf(selector, fragment);
+  }
+
   //Creating a ProseMirror editor view at a specified this.node
   createEditor(options) {
     // TODO: think about a review mode of initializing and destroying editor
@@ -480,7 +368,7 @@ export class Editor {
     // not a collaborative session): skip Yjs/IndexedDB/remote-sync entirely.
     Config.Editor['collab'] = false;
     pmDoc = originalDoc;
-    editorPlugins = [history(), mentionsPlugin, keymapPlugin, placeholderPlugin, slideStructurePlugin, slideshowDecorationsPlugin, cvNavDecorationPlugin, autoIdPlugin, protectPlaceholdersPlugin, editorToolbarPlugin];
+    editorPlugins = [history(), mentionsPlugin, keymapPlugin, placeholderPlugin, slideStructurePlugin, slideshowDecorationsPlugin, cvNavDecorationPlugin, specificationNavDecorationPlugin, specificationConceptSyncPlugin, autoIdPlugin, protectPlaceholdersPlugin, editorToolbarPlugin];
   } else {
     Config.Editor['collab'] = true;
     ydoc = new Y.Doc();
@@ -691,6 +579,8 @@ export class Editor {
       slideStructurePlugin,
       slideshowDecorationsPlugin,
       cvNavDecorationPlugin,
+      specificationNavDecorationPlugin,
+      specificationConceptSyncPlugin,
       autoIdPlugin,
       protectPlaceholdersPlugin,
       editorToolbarPlugin,

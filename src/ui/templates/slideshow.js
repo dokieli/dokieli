@@ -16,9 +16,24 @@ limitations under the License.
 */
 
 import { TextSelection } from 'prosemirror-state';
-import Config from './config.js';
-import { getDocumentContentNode } from './utils/html.js';
-import { setActiveSlideIndex, setSlideshowMode } from './editor/plugins/slideshowDecorations.js';
+import Config from '../../config.js';
+import { getDocumentContentNode } from '../../utils/html.js';
+import { setActiveSlideIndex, setSlideshowMode } from '../../editor/plugins/slideshowDecorations.js';
+import { i18n } from '../../i18n.js';
+import { prepareDocumentForTemplate, replaceDocumentBody } from './shared.js';
+
+export function setTemplateNewSlideshow(mode, options) {
+  prepareDocumentForTemplate();
+
+  // FIXME: do we still need this?
+  const documentMenu = document.getElementById('document-menu');
+  // Drop dynamic menu sections so they re-render in the correct order.
+  ['#document-do', '#document-autosave', '#document-views', '#about-dokieli', '#ui-language'].forEach(sel => {
+    documentMenu?.querySelector(sel)?.remove();
+  });
+
+  replaceDocumentBody(`<main><article about="" dir="auto" typeof="schema:CreativeWork"><header class="caption"><h1 property="schema:name"></h1></header><section class="slide" id="cover" inlist="" rel="schema:hasPart" resource="#cover" typeof="bibo:Slide"><h2 aria-label="${i18n.t('editor.new-slideshow.h2.aria-label')}" property="schema:name"></h2><div datatype="rdf:HTML" property="schema:description"><p></p></div></section></article><div class="do progress"></div></main>`, { bodyClass: 'shower single' });
+}
 
 const MODES = { FULL: 'full', SINGLE: 'single' };
 // Vertical thumbnail rail layout: each thumb's transformed height

@@ -40,8 +40,9 @@ import { exportAsDocument, maybeAskPreferredLanguage, updateUILanguage } from '.
 import { parseMarkdown, htmlToMarkdown, fragmentFromString, removeSelectorFromNode, selectArticleNode, getNodeWithoutClasses } from "./utils/html.js";
 import { showUserSigninSignout } from './auth.js';
 import { initSlideshow } from './init.js';
-import { initCV } from './cv.js';
-import * as Slideshow from './slideshow.js';
+import { initCV } from './ui/templates/cv.js';
+import { initSpecification } from './ui/templates/specification.js';
+import * as Slideshow from './ui/templates/slideshow.js';
 import { generateGeoView } from './geo.js';
 import { csvStringToJson, jsonToHtmlTableString } from './csv.js';
 import { restoreYjsContent, addYjsVersion, getYjsVersions, getYjsVersionsFromIDB, getCurrentVersionKey, onYjsVersionsChanged } from "./editor/editor.js";
@@ -658,7 +659,7 @@ export function initDocumentDoEvents() {
   });
 }
 
-function showViews(node) {
+export function showViews(node) {
   if(document.querySelector('#document-views')) { return; }
 
   var stylesheets = document.querySelectorAll('head link[rel~="stylesheet"][title]:not([href$="dokieli.css"])');
@@ -3332,6 +3333,7 @@ export function showNewDocument(e) {
             <li><input type="radio" id="${id}-article" name="${id}" value="${id}-article" checked="checked" /> <label for="${id}-article">${Icon['.fas.fa-newspaper']} <span class="${id}-article"><strong data-i18n="${id}-article.strong">${i18n.t(`${id}-article.strong.textContent`)}</strong> <span data-i18n="${id}-article.span">${i18n.t(`${id}-article.span.textContent`)}</span></span></label></li>
             <li><input type="radio" id="${id}-slideshow" name="${id}" value="${id}-slideshow" /> <label for="${id}-slideshow">${Icon['.fas.fa-slideshow']} <span class="${id}-slideshow"><strong data-i18n="${id}-slideshow.strong">${i18n.t(`${id}-slideshow.strong.textContent`)}</strong> <span data-i18n="${id}-slideshow.span">${i18n.t(`${id}-slideshow.span.textContent`)}</span></span></label></li>
             <li><input type="radio" id="${id}-cv" name="${id}" value="${id}-cv" /> <label for="${id}-cv">${Icon['.fas.fa-book-skull']} <span class="${id}-cv"><strong data-i18n="${id}-cv.strong">${i18n.t(`${id}-cv.strong.textContent`)}</strong> <span data-i18n="${id}-cv.span">${i18n.t(`${id}-cv.span.textContent`)}</span></span></label></li>
+            <li><input type="radio" id="${id}-specification" name="${id}" value="${id}-specification" /> <label for="${id}-specification">${Icon['.fas.fa-scroll']} <span class="${id}-specification"><strong data-i18n="${id}-specification.strong">${i18n.t(`${id}-specification.strong.textContent`)}</strong> <span data-i18n="${id}-specification.span">${i18n.t(`${id}-specification.span.textContent`)}</span></span></label></li>
           </ul>
           <button class="create ${id}" type="submit" data-i18n="dialog.${id}.create-template.button" title="${i18n.t(`dialog.${id}.create-template.button.title`)}">${i18n.t(`dialog.${id}.create-template.button.textContent`)}</button>
         </fieldset>
@@ -3371,6 +3373,9 @@ export function showNewDocument(e) {
         break;
       case 'new-document-cv':
         createNewCV();
+        break;
+      case 'new-document-specification':
+        createNewSpecification();
         break;
     }
   });
@@ -4308,6 +4313,20 @@ export function createNewCV(e) {
   updateButtons();
 
   initCV();
+}
+
+export function createNewSpecification(e) {
+  hideDocumentMenu();
+
+  Config.Editor.toggleEditor('author', { template: 'new-specification' });
+
+  Config.DocumentAction = 'new';
+
+  disableAutoSave(Config.DocumentURL, {'method': 'IndexedDB'});
+
+  updateButtons();
+
+  initSpecification();
 }
 
 export function createNewDocument(e) {

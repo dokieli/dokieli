@@ -15,79 +15,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { Plugin, PluginKey } from "prosemirror-state";
-import { Decoration, DecorationSet } from "prosemirror-view";
+import { Decoration } from "prosemirror-view";
 import { DOMParser } from "prosemirror-model";
-import Config from "../../config.js";
-import { buildTOC, classifySection, skillInputHTML } from "../../cv.js";
+import { buildTOC, classifySection, skillInputHTML } from "../../ui/templates/cv.js";
 import { collectTerms } from "../../utils/rdfa.js";
 import { Icon } from "../../ui/icons.js";
 import { fragmentFromString } from "../../utils/html.js";
 import { i18n } from "../../i18n.js";
+import { createSectionsNavPlugin, isContentDiv, isDocOfType, pmHeadingText, deleteWidget } from "./sectionsNavDecorations.js";
 
-// Renders the CV nav inside the article (after <details>, before #content) as a
-// widget decoration. PM owns the widget DOM, so it survives PM's redraws and
-// stays out of serialization — unlike raw DOM dropped into the editable region,
-// which PM's MutationObserver reverts. The nav is marked contenteditable=false
-// and its events are kept away from the editor; the add/remove buttons bubble to
-// the document-level handler wired in initCV().
-export const cvNavDecorationKey = new PluginKey("cvNavDecoration");
+// CV-specific decorations: the section nav (via the shared factory) plus entry add/delete and skill add widgets.
 
 // Sections that hold a list of entries and get an "+ add entry" button.
 const REPEATABLE = new Set(["experience", "education", "skills", "talks", "scholarly-communication", "technical-contributions", "awards", "credentials"]);
 
 // Singular entry noun per section, for the "+ Add <entry>" button label.
 const entryLabel = (type) => i18n.t(`cv.entry.${type}.label`);
-
-function isContentDiv(node) {
-  return node.type.name === "div" && node.attrs.originalAttributes?.id === "content";
-}
-
-// The doc top-level holds [details, div#content]; the nav goes right after the
-// details node, falling back to before #content when there is no details.
-function navPos(doc) {
-  let afterDetails = null;
-  let beforeContent = null;
-  doc.forEach((node, offset) => {
-    if (node.type.name === "details" && afterDetails === null) {
-      afterDetails = offset + node.nodeSize;
-    }
-    if (isContentDiv(node) && beforeContent === null) {
-      beforeContent = offset;
-    }
-  });
-  return afterDetails ?? beforeContent;
-}
-
-// Carries the CurriculumVitae rdf:type link somewhere in the document details.
-// The link is an <a> mark, not a node, so check both node attrs (for resource
-// on a wrapping element) and the marks on each node.
-function isCVType(a) {
-  return !!a && /\brdf:type\b/.test(a.rel || "") &&
-    /CurriculumVitae/.test(`${a.href || ""} ${a.resource || ""}`);
-}
-
-function isCVDoc(doc) {
-  let found = false;
-  doc.descendants((node) => {
-    if (found) return false;
-    if (isCVType(node.attrs?.originalAttributes) ||
-        node.marks.some((m) => isCVType(m.attrs?.originalAttributes))) {
-      found = true;
-    }
-    return !found;
-  });
-  return found;
-}
-
-// First heading's text inside a section node (for the classifier's slug fallback).
-function pmHeadingText(section) {
-  let text = "";
-  section.forEach((child) => {
-    if (!text && child.type.name === "heading") text = child.textContent;
-  });
-  return text;
-}
 
 // Identify a section PM node's type. The transient marker is preferred here: in
 // author mode it is present and authoritative, and it agrees with the RDFa
@@ -105,18 +48,15 @@ function pmSectionType(section) {
   return classifySection({ terms, headingText: pmHeadingText(section) });
 }
 
-// Present sections as [type, id] pairs, in document order, read from the PM doc
-// (the source of truth). type comes from pmSectionType, id is the heading-derived
-// anchor. buildTOC must not probe view.dom: the widget renders before the
-// #content sections after it are painted, so the DOM lags a step.
+// Present sections read from the PM doc (the DOM lags behind the widget render).
 function sectionEntries(doc) {
-  const entries = [];
+  const entries = new Map();
   doc.forEach((node) => {
     if (!isContentDiv(node)) return;
     node.forEach((child) => {
       if (child.type.name === "section") {
         const type = pmSectionType(child);
-        if (type) entries.push([type, child.attrs.originalAttributes?.id || ""]);
+        if (type && !entries.has(type)) entries.set(type, { id: child.attrs.originalAttributes?.id || "" });
       }
     });
   });
@@ -138,42 +78,6 @@ function skillCategoryNodes(doc) {
     return false;
   });
   return found;
-}
-
-// Cheap fingerprint of everything the nav's contents depend on: the present
-// sections (in order), the skill categories, and the editor mode. Rebuild the
-// DecorationSet only when this changes; otherwise map the existing one so we
-// don't re-render on every keystroke.
-function navSignature(doc) {
-  const cats = skillCategoryNodes(doc).map(c => c.end).join(",");
-  const secs = sectionEntries(doc).map(([t, id]) => `${t}:${id}`).join(",");
-  const entries = `${entryLiPositions(doc).length}/${skillDdPositions(doc).length}`;
-  return `${Config.Editor?.mode || ""}|${secs}|${cats}|${entries}`;
-}
-
-function buildDecorations(doc) {
-  if (!isCVDoc(doc)) return DecorationSet.empty;
-
-  const pos = navPos(doc);
-  if (pos === null) return DecorationSet.empty;
-
-  const presentTypes = new Map(sectionEntries(doc));
-  const widget = Decoration.widget(pos, (view) => {
-    const nav = buildTOC(view.dom, presentTypes);
-    nav.contentEditable = "false";
-    nav.setAttribute("contenteditable", "false");
-    return nav;
-  }, {
-    side: 1,
-    // Keep the cursor and selection out of the widget...
-    ignoreSelection: true,
-    // ...and let button clicks bubble to the document handler instead of being
-    // treated as editor input.
-    stopEvent: () => true,
-  });
-
-  const entryDecos = entryButtonDecorations(doc);
-  return DecorationSet.create(doc, [widget, ...entryDecos, ...skillButtonDecorations(doc), ...entryDeleteDecorations(doc)]);
 }
 
 // Position at the END of each entry <li>'s content (section > div > ul > li),
@@ -230,40 +134,10 @@ function skillDdPositions(doc) {
   return positions;
 }
 
-// A small red delete button pinned top-right of an entry. Placed at the entry's
-// content start; on click, resolves its live position and removes the nearest
-// enclosing node of targetType (the <li> entry, or a skill <dd>).
-function deleteWidget(pos, targetType, label) {
-  return Decoration.widget(pos, (view, getPos) => {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.className = "do cv-entry-delete";
-    b.title = label;
-    b.setAttribute("aria-label", label);
-    b.setAttribute("contenteditable", "false");
-    b.addEventListener("mousedown", (e) => e.preventDefault());
-    b.appendChild(fragmentFromString(Icon['.fas.fa-trash-alt']));
-    b.addEventListener("mousedown", (e) => e.preventDefault());
-    b.addEventListener("click", (e) => {
-      e.preventDefault();
-      const p = typeof getPos === "function" ? getPos() : null;
-      if (p == null) return;
-      const $p = view.state.doc.resolve(p);
-      for (let d = $p.depth; d > 0; d--) {
-        if ($p.node(d).type.name === targetType) {
-          view.dispatch(view.state.tr.delete($p.before(d), $p.after(d)).scrollIntoView());
-          return;
-        }
-      }
-    });
-    return b;
-  }, { side: -1, ignoreSelection: true, stopEvent: () => true });
-}
-
 function entryDeleteDecorations(doc) {
   const decos = [];
-  entryLiPositions(doc).forEach((end) => decos.push(deleteWidget(end, "li", i18n.t("cv.button.remove-entry.aria-label"))));
-  skillDdPositions(doc).forEach((end) => decos.push(deleteWidget(end, "dd", i18n.t("cv.button.remove-skill.aria-label"))));
+  entryLiPositions(doc).forEach((end) => decos.push(deleteWidget(end, "li", i18n.t("cv.button.remove-entry.aria-label"), "do cv-entry-delete")));
+  skillDdPositions(doc).forEach((end) => decos.push(deleteWidget(end, "dd", i18n.t("cv.button.remove-skill.aria-label"), "do cv-entry-delete")));
   return decos;
 }
 
@@ -288,29 +162,14 @@ function skillButtonDecorations(doc) {
     }, { side: 1, ignoreSelection: true, stopEvent: () => true }));
 }
 
-export const cvNavDecorationPlugin = new Plugin({
-  key: cvNavDecorationKey,
-  state: {
-    init(_, state) {
-      return {
-        signature: navSignature(state.doc),
-        decorations: buildDecorations(state.doc),
-      };
-    },
-    apply(tr, value, _oldState, newState) {
-      if (!tr.docChanged) return value;
-      const signature = navSignature(newState.doc);
-      if (signature === value.signature) {
-        return { signature, decorations: value.decorations.map(tr.mapping, tr.doc) };
-      }
-      return { signature, decorations: buildDecorations(newState.doc) };
-    },
-  },
-  props: {
-    decorations(state) {
-      return cvNavDecorationKey.getState(state).decorations;
-    },
-  },
+export const cvNavDecorationPlugin = createSectionsNavPlugin({
+  pluginKeyName: "cvNavDecoration",
+  isDoc: (doc) => isDocOfType(doc, /CurriculumVitae/),
+  entries: sectionEntries,
+  buildNav: (view, present) => buildTOC(view.dom, present),
+  // Fold the skill categories and entry/skill counts into the rebuild fingerprint.
+  signature: (doc) => `${skillCategoryNodes(doc).map(c => c.end).join(",")}|${entryLiPositions(doc).length}/${skillDdPositions(doc).length}`,
+  extraDecorations: (doc) => [...entryButtonDecorations(doc), ...skillButtonDecorations(doc), ...entryDeleteDecorations(doc)],
 });
 
 function entryButtonDecorations(doc) {

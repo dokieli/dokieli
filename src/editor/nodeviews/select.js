@@ -33,13 +33,27 @@ export class SelectView {
   }
 
   renderOptions() {
-    this.node.forEach((child) => {
-      if (child.type.name !== "option") return;
+    const renderOption = (node, parent) => {
       const opt = document.createElement("option");
-      const attrs = child.attrs.originalAttributes || {};
+      const attrs = node.attrs.originalAttributes || {};
       for (const [name, value] of Object.entries(attrs)) opt.setAttribute(name, value);
-      opt.textContent = child.textContent;
-      this.dom.appendChild(opt);
+      opt.textContent = node.textContent;
+      parent.appendChild(opt);
+    };
+
+    this.node.forEach((child) => {
+      if (child.type.name === "option") {
+        renderOption(child, this.dom);
+      }
+      else if (child.type.name === "optgroup") {
+        const group = document.createElement("optgroup");
+        const attrs = child.attrs.originalAttributes || {};
+        for (const [name, value] of Object.entries(attrs)) group.setAttribute(name, value);
+        child.forEach((grandchild) => {
+          if (grandchild.type.name === "option") renderOption(grandchild, group);
+        });
+        this.dom.appendChild(group);
+      }
     });
   }
 
