@@ -217,7 +217,7 @@ function restoreSpecificationStatus(root) {
   if (root.querySelector('#specification-status')) return;
   const h1 = root.querySelector('h1');
   if (!h1) return;
-  const value = document.head.querySelector(`link[href="${TR_BASE_CSS}"]`) ? 'w3c-base' : 'dokieli-basic';
+  const value = document.head.querySelector(`link[href="${TR_BASE_CSS}"], link[title="W3C-Base"], link[href*="/StyleSheets/TR/"][href$="base.css"]`) ? 'w3c-base' : 'dokieli-basic';
   h1.after(fragmentFromString(specificationStatusHTML(value)));
 }
 

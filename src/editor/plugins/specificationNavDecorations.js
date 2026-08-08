@@ -344,6 +344,15 @@ function mergeAttrs(node, wanted, managedKeys) {
 }
 
 export const specificationConceptSyncPlugin = new Plugin({
+  state: {
+    // Baseline the report type from the parsed document, so only genuine
+    // user changes after mount count as transitions.
+    init(_, state) {
+      lastReportTypeValue = reportTypeValue(state.doc);
+      return null;
+    },
+    apply() { return null; },
+  },
   props: {
     handleDOMEvents: {
       // Clicks outside the editable region don't move the selection; a blur ping syncs everything.
@@ -437,9 +446,15 @@ function reportTypeValue(doc) {
   return value;
 }
 
+// Transition-only: the document is the source of truth at rest.
+let lastReportTypeValue = null;
+
 function syncReportTypeChrome(newState, ensure) {
   const value = reportTypeValue(newState.doc);
   if (value === null) return;
+
+  if (value === lastReportTypeValue) return;
+  lastReportTypeValue = value;
 
   let head = null;
   let details = null;
