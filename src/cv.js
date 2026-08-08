@@ -25,14 +25,7 @@ import { getCountryOptionsHTML, showLocationSuggestions, showSkillSuggestions, s
 import { getWikidataResults, getEscoResults } from './graph.js';
 import { expandTerm, getPrefixes, collectTerms } from './utils/rdfa.js';
 
-// Sections are identified from the RDFa their entries carry — the entry type or
-// property is the signal, and the enclosing <section> is the CV section (see
-// classifySection / SECTION_SIGNALS). The data-cv-section marker is now only a
-// transient author-mode aid: it survives heading renames for sections whose RDFa
-// is editorialized away in author mode (skills become inputs, contributions lose
-// their rel/rev), and is stripped on save so it never persists. On reload, those
-// sections are re-identified from read-mode RDFa, or by heading slug as a last
-// resort (the path migrateSectionMarkers already used for legacy CVs).
+// Sections are identified from their entries' RDFa (see classifySection); data-cv-section is a transient author-mode aid, stripped on save.
 
 const SECTIONS = {
   summary: {
@@ -76,9 +69,7 @@ const SECTIONS = {
 // Placeheld in a new CV; the rest are offered as "+ add" in the nav.
 const DEFAULT_SECTIONS = ['summary', 'experience', 'skills'];
 
-// Simple list sections (plain <p> entries) seeded with one placeholder <li> so an
-// empty section shows a prompt as a proper list item, not a bare <ul>. The richer
-// sections (experience/education/talks/skills) start empty and rely on "+ add".
+// Simple list sections seeded with one placeholder <li>; richer sections start empty and rely on "+ add".
 const SEED_ENTRY = new Set(['scholarly-communication', 'technical-contributions', 'awards', 'credentials']);
 
 let clickHandlerAttached = false;
@@ -93,8 +84,7 @@ function getSection(type) {
   return SECTIONS[type] || null;
 }
 
-// Localized section label. SECTIONS[type].label stays the English reference that
-// migrateSectionMarkers slugs against; this is what gets displayed.
+// Localized section label; SECTIONS[type].label stays the English reference for slugging.
 function sectionLabel(type) {
   return i18n.t(`cv.section.${type}.label`);
 }
@@ -103,12 +93,7 @@ function getCVRoot() {
   return document.querySelector('main > article');
 }
 
-// RDFa signals that identify a section by its entries. Each section's entry
-// carries a distinguishing type (events) or property (skills, awards, summary,
-// credentials), so finding that term inside a <section> identifies the section.
-// scholarly-communication and technical-contributions are intentionally absent:
-// they share the same foaf:made/schema:contributor relations and so are not
-// distinguishable by RDFa — they fall back to the marker / heading slug.
+// RDFa terms that identify a section by its entries; scholarly-communication and technical-contributions are indistinguishable by RDFa and fall back to marker/heading slug.
 const SECTION_SIGNAL_TERMS = [
   ['experience', 'typeof', 'schema:BusinessEvent'],
   ['education', 'typeof', 'schema:EducationEvent'],
@@ -128,9 +113,7 @@ function sectionSignals() {
   return signalCache;
 }
 
-// Heading-text slug -> section type, for the last-resort fallback (legacy CVs and
-// sections whose RDFa is gone in author mode and whose marker was stripped). Both
-// the section key itself and the English label slug map to the type.
+// Heading-text slug -> section type, the last-resort fallback (legacy CVs, stripped markers).
 let labelSlugCache = null;
 function labelSlugToType() {
   if (!labelSlugCache) {
@@ -143,10 +126,7 @@ function labelSlugToType() {
   return labelSlugCache;
 }
 
-// Identify a section type from collected signals, in precedence order:
-// 1. RDFa term asserted by an entry, 2. transient data-cv-section marker,
-// 3. heading slug. `terms` is the { typeof, property, rel, rev } map of full IRIs
-// from collectTerms(); tree-agnostic so DOM and ProseMirror share one classifier.
+// Classify a section by RDFa term, then marker, then heading slug; tree-agnostic so DOM and ProseMirror share it.
 export function classifySection({ terms, marker, headingText } = {}) {
   for (const sig of sectionSignals()) {
     if (terms?.[sig.attr]?.has(sig.iri)) return sig.type;
@@ -157,8 +137,7 @@ export function classifySection({ terms, marker, headingText } = {}) {
   return null;
 }
 
-// DOM section classifier: gather the RDFa terms in the subtree, the marker, and
-// the heading text, then classify.
+// DOM section classifier: gather the subtree's RDFa terms, marker, and heading text, then classify.
 function getSectionType(section) {
   if (!section) return null;
   const terms = collectTerms(
@@ -231,9 +210,7 @@ export function defaultContentHTML() {
   return `<div id="content">${DEFAULT_SECTIONS.map(sectionHTML).join('')}</div>`;
 }
 
-// Back-fill the data-cv-section marker on CVs authored before it existed: derive
-// it from a section's id while the id still matches a section key or its default
-// heading slug. Runs on author entry; persists once the marker is set.
+// Back-fill the data-cv-section marker on legacy CVs from the section id.
 function migrateSectionMarkers(root) {
   if (!root || !isCV(root)) return;
   const byLabelSlug = {};
@@ -252,16 +229,12 @@ function pmEditor() {
   return Config.Editor?.authorToolbarView?.editorView ? Config.Editor : null;
 }
 
-// Read mode: links to present sections. Author mode: + remove/add buttons.
-// presentTypes, when given, is the authoritative Map of present section type ->
-// actual section id (e.g. read from the PM doc) and overrides DOM probing — needed
-// when the nav is rendered before the section DOM is painted.
+// Read mode: links to present sections; author mode adds remove/add buttons. presentTypes (type -> section id) overrides DOM probing.
 export function buildTOC(root, presentTypes = null) {
   const author = isAuthorMode();
 
   const nav = document.createElement('nav');
-  // The author-mode widget keeps the editor id/class; the read/save nav is a clean
-  // <nav> (managed structurally as the article's nav, see refreshTOC/stripCVTOC).
+  // The author-mode widget keeps the editor id/class; the read/save nav is a clean <nav>.
   if (author) {
     nav.className = 'do';
     nav.id = 'cv-toc';
@@ -318,10 +291,7 @@ export function buildTOC(root, presentTypes = null) {
   return nav;
 }
 
-// The nav sits inside the article, right after <details> (matching author mode,
-// where cvNavDecorationPlugin renders it there). It is a .do element: stripped on
-// save and removed from the parse root on entering author mode, so PM never owns
-// it. In author mode PM's widget is the nav, so here we just leave it alone.
+// The nav sits inside the article after <details>; it is .do (stripped on save), and in author mode PM's widget owns it so we leave it alone.
 function refreshTOC(root) {
   const main = root.closest('main') || root.parentNode;
   main.querySelector(':scope > #cv-toc')?.remove(); // drop a stale nav from the old <main> layout
@@ -391,8 +361,7 @@ function injectCVTOC(doc) {
   content.parentNode.insertBefore(fragmentFromString(`<nav><ul>${lis}</ul></nav>`), content);
 }
 
-// On author entry, drop the read-mode nav from the parse root so PM doesn't parse
-// it as content; cvNavDecorationPlugin renders the author nav (a widget) instead.
+// On author entry, drop the read-mode nav so PM doesn't parse it as content; cvNavDecorationPlugin renders the author nav instead.
 function stripCVTOC(root) {
   if (!root || !isCV(root)) return;
   const content = root.querySelector('#content');
@@ -435,25 +404,14 @@ function credentialHTML() {
   return `<li><p data-placeholder="${i18n.t('cv.placeholder.credential')}"></p></li>`;
 }
 
-// These sections relate the person (the <ul>'s about=WebID subject) to each
-// entry, so the relation belongs on the <ul> alongside about — and, like about,
-// only when signed in: without a subject the relation has nothing to attach to.
-// Baked in at section creation (sectionHTML) and (re)applied on sign-in (the
-// auth-ready handler), so it lives on the container throughout rather than being
-// lifted onto each <li>:
-//
-//   <ul about="https://csarven.ca/#i" rel="foaf:made">
-//     <li><a href="https://example.org/"></a></li>
-//     <li><a href="https://example.net/"></a></li>
-//   </ul>
+// Person-relation sections: the rel/rev lives on the <ul> alongside about, and only when signed in.
 const ITEM_RELATIONS = {
   'credentials': { rel: 'schema:hasCredential' },
   'scholarly-communication': { rev: 'schema:contributor', rel: 'foaf:made' },
   'technical-contributions': { rev: 'schema:contributor' },
 };
 
-// The rel/rev attribute string for a section's <ul>, '' when the section has no
-// person-relation. The caller gates on sign-in (see sectionHTML / auth-ready).
+// The rel/rev attribute string for a section's <ul>, '' when it has no person-relation; callers gate on sign-in.
 function itemRelationsAttr(type) {
   const rels = ITEM_RELATIONS[type];
   return rels ? Object.entries(rels).map(([k, v]) => ` ${k}="${v}"`).join('') : '';
@@ -461,8 +419,6 @@ function itemRelationsAttr(type) {
 
 //TODO Move this to somewhere else as it is not CV specific
 function eventHTML(options = {}) {
-  // console.log("eventHTML options", options);
-
   //TODO: Review article and slideshow rels b/c they may not be entirely accurate. Add other templates later.
   const templateEventRel = {
     article: 'schema:hasPart',
@@ -476,8 +432,6 @@ function eventHTML(options = {}) {
   const eventId = generateAttributeId();
   const fields = EVENT_FIELDS_ORDER.map((key) => eventFieldHTML(key, eventId, options.type)).join('\n    ');
 
-  // console.log(eventId, eventRel, eventType, fields)
-
   return `<li><dl id="${eventId}" rel="${eventRel}" resource="#${eventId}" typeof="${eventType}">
     ${fields}
   </dl></li>`;
@@ -485,8 +439,7 @@ function eventHTML(options = {}) {
 
 const EVENT_FIELDS_ORDER = ['name', 'organizer', 'location', 'date', 'description'];
 
-// Fallback selectors to detect an existing field by its dd's RDFa attributes,
-// for documents saved before the event-* classes were added to dt elements.
+// Fallback selectors to detect an existing field by its dd's RDFa, for documents saved before the event-* dt classes.
 const EVENT_FIELD_DD_SELECTOR = {
   name: ':scope > dd[property~="schema:name"]',
   organizer: ':scope > dd[rel~="schema:organizer"]',
@@ -507,21 +460,18 @@ const EVENT_SECTION_BY_TYPE = Object.fromEntries(
   Object.entries(EVENT_TYPE_BY_SECTION).map(([s, t]) => [t, s])
 );
 
-// Maps section type to the i18n key prefix used in placeholder keys.
-// talks -> 'talk' so keys read cv.placeholder.talk-name, not talks-name.
+// Section type -> i18n placeholder key prefix (talks -> 'talk').
 const EVENT_PLACEHOLDER_PREFIX = {
   experience: 'experience',
   education: 'education',
   talks: 'talk',
 };
 
-// Matches any event dl regardless of subtype, so prune/restore cover every
-// event-based section (experience, education, talks) and the generic case.
+// Matches any event dl regardless of subtype, so prune/restore cover every event-based section.
 const EVENT_SELECTOR = ['schema:Event', ...Object.values(EVENT_TYPE_BY_SECTION)]
   .map(t => `dl[typeof~="${t}"]`).join(', ');
 
-// One dt/dd pair of an event, in editable form. Shared by eventHTML and
-// restoreEventFields so re-created fields match freshly added ones.
+// One editable dt/dd pair of an event; shared by eventHTML and restoreEventFields.
 function eventFieldHTML(key, eventId, sectionType = 'experience') {
   const prefix = EVENT_PLACEHOLDER_PREFIX[sectionType] ?? 'experience';
   switch (key) {
@@ -555,9 +505,7 @@ function eventFieldHTML(key, eventId, sectionType = 'experience') {
 
 registerDocumentTransform(injectCVTOC);
 
-// Save hook: collapse the editable date inputs back into <time> elements, as in
-// a published CV. A date <dd> holds one or two <input type="date">; replace its
-// contents with <time>start</time>–<time>end</time>.
+// Save hook: collapse the editable date inputs back into <time>start</time>–<time>end</time>.
 function transformDateInputs(doc) {
   const article = selectArticleNode(doc);
   if (!article || !isCV(article)) return;
@@ -586,9 +534,7 @@ function transformDateInputs(doc) {
 
 registerDocumentTransform(transformDateInputs);
 
-// Editor hook (inverse of transformDateInputs): expand published <time> date
-// pairs back into the editable label+input form so saved CVs get the picker.
-// Acts only on a date <dd>, identified by a <time> carrying schema:startDate/End.
+// Editor hook (inverse): expand published <time> date pairs back into the editable label+input form.
 function dateInputHTML(kind, value) {
   const property = kind === 'start' ? 'schema:startDate' : 'schema:endDate';
   return `<label for="event-${kind}-date" data-i18n="event.date.${kind}-date.label">${i18n.t(`event.date.${kind}-date.label.textContent`)}</label><input data-i18n="event.date.${kind}-date.input" data-property="${property}" draggable="false" type="date" value="${value}" />`;
@@ -612,9 +558,7 @@ function transformDatesToInputs(root) {
 registerEditorParseTransform(transformDatesToInputs);
 
 
-// Save/read hook: collapse the editable country <select> into an <abbr> like a
-// published CV (<abbr title="Switzerland">CH</abbr>). The selected code lives in
-// data-value (synced by SelectView); the matching <option>'s text is the name.
+// Save/read hook: collapse the editable country <select> into an <abbr title="Switzerland">CH</abbr>.
 function transformCountrySelects(doc) {
   const article = selectArticleNode(doc);
   if (!article || !isCV(article)) return;
@@ -636,8 +580,7 @@ function transformCountrySelects(doc) {
 
 registerDocumentTransform(transformCountrySelects);
 
-// Editor hook (inverse): expand a published country <abbr> back into the
-// editable <select> with that country pre-selected.
+// Editor hook (inverse): expand a published country <abbr> back into the editable <select>.
 function countrySelectHTML(code) {
   const id = `${generateAttributeId()}-country`;
   return `<select id="${id}" name="${id}">${getCountryOptionsHTML({ selected: code })}</select>`;
@@ -896,10 +839,7 @@ function removePlaceholders(doc) {
   article.querySelectorAll('[data-placeholder]').forEach(el => el.removeAttribute('data-placeholder'));
 }
 
-// Inverse: re-add the editor-only hints when entering author mode (after a read
-// toggle or reopening a saved CV, where they were stripped). The plugin only
-// shows them on empty fields, so adding to all matching fields is harmless.
-// Event fields are handled by restoreEventFields (they are pruned in read mode).
+// Inverse: re-add the editor-only hints on entering author mode; event fields are handled by restoreEventFields.
 const PLACEHOLDERS = [
   ['[data-cv-section="skills"] dl > dt', 'Category name'],
 ];
@@ -915,8 +855,7 @@ function addPlaceholders(root) {
 
 registerEditorParseTransform(addPlaceholders);
 
-// Read mode prunes empty event fields, so on author switch re-add any missing
-// field (dt/dd pair) in canonical order, with its placeholder, ready to edit.
+// On author switch, re-add any missing event field (dt/dd pair) in canonical order with its placeholder.
 function restoreEventFields(root) {
   if (!root || !isCV(root)) return;
   root.querySelectorAll(EVENT_SELECTOR).forEach((dl) => {
@@ -938,8 +877,7 @@ function restoreEventFields(root) {
 
 registerEditorParseTransform(restoreEventFields);
 
-// True when an event <dd> carries no real value, ignoring label chrome and the
-// separators (date "–", address commas) that are always present.
+// True when an event <dd> carries no real value, ignoring label chrome and always-present separators.
 function isEventFieldEmpty(dd) {
   const clone = dd.cloneNode(true);
   clone.querySelectorAll('label').forEach(el => el.remove());
@@ -950,10 +888,7 @@ function isEventFieldEmpty(dd) {
   return true;
 }
 
-// Drop empty event fields so read mode only shows filled ones; restoreEventFields
-// re-adds them with placeholders on the next author switch. A field is the <dt>
-// plus its following <dd>; remove the pair when the <dd> is empty, and remove an
-// orphan <dt> whose <dd> was already stripped (e.g. by an earlier save).
+// Drop empty event fields (dt/dd pairs and orphan dts); restoreEventFields re-adds them on the next author switch.
 function pruneEmptyEventFields(dl) {
   Array.from(dl.children).forEach((dt) => {
     if (dt.tagName !== 'DT') return;
@@ -966,16 +901,12 @@ function pruneEmptyEventFields(dl) {
   });
 }
 
-// Drop items left completely empty (no text, no media): a skill with no value, a
-// category with no name or skills, an empty award/credential or list item. Loops
-// so emptying children can empty parents (e.g. last skill removed -> empty
-// category).
+// Drop completely empty items; loops so emptying children can empty parents.
 function pruneEmptyItems(doc) {
   const article = selectArticleNode(doc);
   if (!article) return;
 
-  // Event entries: prune each empty field, then drop the whole <li> if nothing
-  // is left, ignoring the <dt>/<label> chrome and leftover separators.
+  // Event entries: prune each empty field, then drop the whole <li> if nothing is left.
   article.querySelectorAll(EVENT_SELECTOR).forEach((dl) => {
     pruneEmptyEventFields(dl);
     const clone = dl.cloneNode(true);
@@ -988,8 +919,7 @@ function pruneEmptyItems(doc) {
 
   const keep = 'img, hr, input, time, iframe, audio, video, svg, object, embed';
   const isEmpty = (el) => !el.textContent.trim() && !el.querySelector(keep);
-  // p[rel] is scoped to award/credential entries — not event fields like the
-  // description <p rel="schema:performer">, which must survive as an editable field.
+  // p[rel] is scoped to award/credential entries, not event fields that must survive as editable.
   const selector = '[data-cv-section="skills"] dl dd, [data-cv-section="skills"] dl, li, p[property~="schema:award"], p[rel~="schema:hasCredential"]';
   let changed = true;
   while (changed) {
@@ -1002,10 +932,7 @@ function pruneEmptyItems(doc) {
 
 registerDocumentTransform(pruneEmptyItems);
 
-// data-cv-section is a transient author-mode marker (see top of file). Strip it on
-// save so it never reaches persisted markup — sections are re-identified from RDFa
-// or heading slug on reload. Registered last so the other save transforms above
-// (which may still resolve sections by marker) run while it is present.
+// Strip the transient data-cv-section marker on save; registered last so earlier save transforms can still resolve by marker.
 function stripSectionMarkers(doc) {
   const article = selectArticleNode(doc);
   if (!article || !isCV(article)) return;
@@ -1093,8 +1020,7 @@ export function initCV() {
     window.addEventListener('dokieli:editor-mode-changed', (e) => {
       const root = getCVRoot();
       if (!root || !isCV(root)) return;
-      // Leaving author mode: PM is already torn down, so the live DOM holds the
-      // date inputs (with synced values). Collapse them to <time>, as on save.
+      // Leaving author mode: collapse the live DOM's editable inputs, as on save.
       if (e.detail?.mode !== 'author') {
         transformDateInputs(document);
         transformCountrySelects(document);
