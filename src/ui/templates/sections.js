@@ -199,7 +199,7 @@ function publishedTOCHTML(config, root) {
       if (!info || config.outside?.has(type)) return;
       lis.push(`<li><a href="#${info.id}">${config.sectionLabel(type)}</a></li>`);
     });
-    return lis.length ? `<nav><ul>${lis.join('')}</ul></nav>` : null;
+    return lis.length ? `<nav class="do-toc"><ul>${lis.join('')}</ul></nav>` : null;
   }
 
   const tree = sectionTocTree(content);
@@ -214,7 +214,7 @@ function publishedTOCHTML(config, root) {
   });
 
   const label = config.tocLabel ? config.tocLabel() : 'Table of Contents';
-  return `<nav id="${config.tocId}"><h2>${escapeHTML(label)}</h2><div><ol class="toc">${tocLinesHTML(tree, { unnumberedIds })}</ol></div></nav>`;
+  return `<nav class="do-toc" id="${config.tocId}"><h2>${escapeHTML(label)}</h2><div><ol class="toc">${tocLinesHTML(tree, { unnumberedIds })}</ol></div></nav>`;
 }
 
 // Refresh the in-article nav: PM's widget owns it in author mode; read mode renders the published TOC.
@@ -223,17 +223,23 @@ export function refreshSectionsNav(config, root) {
   main.querySelector(`:scope > #${config.templateId}-toc`)?.remove(); // drop a stale nav from an old layout
   if (pmEditor()) return;
 
+  // An author's own nav (not dokieli-generated) is left untouched.
+  if (root.querySelector(':scope > nav:not(.do-toc)')) {
+    root.querySelector(':scope > nav.do-toc')?.remove();
+    return;
+  }
+
   let nav;
   if (isAuthorMode()) {
     nav = buildSectionsNav(config, root);
   }
   else {
     const html = publishedTOCHTML(config, root);
-    if (!html) { root.querySelector(':scope > nav')?.remove(); return; }
+    if (!html) { root.querySelector(':scope > nav.do-toc')?.remove(); return; }
     nav = fragmentFromString(html).firstElementChild;
   }
 
-  const existing = root.querySelector(':scope > nav');
+  const existing = root.querySelector(':scope > nav.do-toc');
   if (existing) { existing.replaceWith(nav); return; }
   const content = sectionsContent(config, root);
   const details = findOutsideDetails(root);
@@ -385,7 +391,9 @@ export function injectSectionsTOC(config, doc) {
   const content = sectionsContent(config, article);
   if (!content) return;
 
-  article.querySelectorAll(':scope > nav').forEach(n => n.remove());
+  // Leave an author-supplied nav in place; only manage dokieli's own.
+  if (article.querySelector(':scope > nav:not(.do-toc)')) return;
+  article.querySelectorAll(':scope > nav.do-toc').forEach(n => n.remove());
 
   const html = publishedTOCHTML(config, article);
   if (!html) return;
@@ -400,10 +408,11 @@ export function injectSectionsTOC(config, doc) {
   }
 }
 
-// On author entry, drop the read-mode nav so PM doesn't parse it as content.
+// On author entry, drop dokieli's own read-mode nav so PM doesn't parse it as
+// content; an author-supplied nav is left for PM to keep as content.
 export function stripSectionsTOC(config, root) {
   if (!root || !config.isDoc(root)) return;
   const content = sectionsContent(config, root);
   const navParent = config.sectionsAtRoot ? (content || root) : (content?.parentNode || root);
-  navParent.querySelectorAll(':scope > nav').forEach(n => n.remove());
+  navParent.querySelectorAll(':scope > nav.do-toc').forEach(n => n.remove());
 }
