@@ -18,15 +18,15 @@ limitations under the License.
 import { Plugin } from "prosemirror-state";
 import { Decoration } from "prosemirror-view";
 import { DOMParser } from "prosemirror-model";
-import { createSectionsNavPlugin, isDocOfType, pmHeadingText, dlEntryAddDecorations, dlPairDeleteDecorations, widgetButton } from "./sectionsNavDecorations.js";
+import { createSectionsNavPlugin, isDocOfType, pmHeadingText, dlEntryAddDecorations, dlPairDeleteDecorations, deleteWidget, widgetButton } from "./sectionsNavDecorations.js";
 import { slugify } from "./autoId.js";
 import { fragmentFromString } from "../../utils/html.js";
 import { i18n } from "../../i18n.js";
 import { buildSectionsNav } from "../../ui/templates/sections.js";
 import {
   specificationSections, isSpecification, classifySpecificationSection, classifySpecificationSubsection, SPEC_SUBSECTIONS,
-  SPEC_CATEGORIES, categoryDefinitionHTML, considerationsDefinitionHTML, termEntryHTML, productClassEntryHTML, interoperabilityEntryHTML,
-  conceptId, interoperabilityId, applyReportTypeChrome,
+  SPEC_CATEGORIES, categoryDefinitionHTML, considerationsDefinitionHTML, termEntryHTML, productClassEntryHTML, interoperabilityEntryHTML, acknowledgementsPersonHTML,
+  conceptId, interoperabilityId, personId, applyReportTypeChrome,
 } from "../../ui/templates/specification.js";
 
 // A section PM node matching a well-known key, by id or heading slug.
@@ -36,8 +36,7 @@ function isSectionOf(node, key) {
   return slugify(pmHeadingText(node).trim()) === key;
 }
 
-// Sections live at the doc top level (the outline model); the nav's fallback
-// anchor is the first section.
+// Sections live at the doc top level (the outline model); nav falls back to the first section.
 function isSpecificationContent(node) {
   return node.type.name === 'section';
 }
@@ -249,9 +248,36 @@ function extraDecorations(doc) {
         matchSection: (node) => isSectionOf(node, key),
         label: i18n.t('specification.button.remove-entry.aria-label'),
       })),
+    ...dlEntryAddDecorations(doc, {
+      matchSection: (node) => isSectionOf(node, 'acknowledgements'),
+      label: i18n.t('specification.button.add-person.textContent'),
+      entryHTML: acknowledgementsPersonHTML,
+      listType: 'ul',
+    }),
+    ...acknowledgementsDeleteDecorations(doc),
     ...categoryCheckboxDecorations(doc),
     ...interoperabilityDecorations(doc),
   ];
+}
+
+// Per-person delete widgets in the Acknowledgements list.
+function acknowledgementsDeleteDecorations(doc) {
+  const decos = [];
+  doc.descendants((node, pos) => {
+    if (node.type.name !== 'section') return true;
+    if (!isSectionOf(node, 'acknowledgements')) return true;
+    node.descendants((child, childPos) => {
+      if (child.type.name !== 'ul') return true;
+      let off = pos + 1 + childPos + 1;
+      child.forEach((li) => {
+        if (li.type.name === 'li') decos.push(deleteWidget(off + li.nodeSize - 1, 'li', i18n.t('specification.button.remove-entry.aria-label')));
+        off += li.nodeSize;
+      });
+      return false;
+    });
+    return false;
+  });
+  return decos;
 }
 
 // Fold product classes, category selection, and managed-dl state into the rebuild fingerprint.
@@ -271,13 +297,19 @@ function extraSignature(doc) {
     dts.push(`${node.attrs.originalAttributes?.about || ''}~${markId}`);
     return true;
   });
-  // Include the report-type state so the head wrap/unwrap always rebuilds
-  // decorations (mapping across the structural replace can drop widgets).
+  // Include the report-type state so the head wrap/unwrap always rebuilds decorations.
   let headPresent = false;
   doc.forEach((node) => {
     if (node.type.name === 'div' && /\bhead\b/.test(node.attrs.originalAttributes?.class || '')) headPresent = true;
   });
-  return `${classes};${categories};${dts.join(',')};${reportTypeValue(doc)}:${headPresent}`;
+  const ackEntries = [];
+  doc.descendants((node) => {
+    if (node.type.name !== 'section') return true;
+    if (!isSectionOf(node, 'acknowledgements')) return true;
+    node.descendants((child) => { if (child.type.name === 'li') ackEntries.push(child.textContent.trim()); return true; });
+    return false;
+  });
+  return `${classes};${categories};${dts.join(',')};${reportTypeValue(doc)}:${headPresent};ack:${ackEntries.join('|')}`;
 }
 
 // The article's typeof lives on the mount element; check it alongside the in-doc rdf:type links.
@@ -345,8 +377,7 @@ function mergeAttrs(node, wanted, managedKeys) {
 
 export const specificationConceptSyncPlugin = new Plugin({
   state: {
-    // Baseline the report type from the parsed document, so only genuine
-    // user changes after mount count as transitions.
+    // Baseline from the parsed document, so only user changes after mount count as transitions.
     init(_, state) {
       lastReportTypeValue = reportTypeValue(state.doc);
       return null;
@@ -374,6 +405,7 @@ export const specificationConceptSyncPlugin = new Plugin({
 
     let tr = null;
     const ensure = () => (tr ||= newState.tr);
+    const liveDoc = () => (tr ? tr.doc : newState.doc);
 
     const syncPair = (kind, dt, dd) => {
       const start = dt.pos + 1;
@@ -424,6 +456,9 @@ export const specificationConceptSyncPlugin = new Plugin({
     });
 
     syncConsiderationsDefinition(newState, sel, blurred, ensure);
+    // Markup then ordering, both against the live tr doc, so ordering keeps the fresh marks.
+    syncAcknowledgementsMarkup(newState, liveDoc, sel, blurred, ensure);
+    syncAcknowledgementsOrder(newState, liveDoc, sel, blurred, ensure);
     syncReportTypeChrome(newState, ensure);
 
     if (!tr) return null;
@@ -444,6 +479,106 @@ function reportTypeValue(doc) {
     return true;
   });
   return value;
+}
+
+// Keep the Acknowledgements list alphabetical on focus-out; empty entries stay at the end.
+function acknowledgementsList(doc) {
+  let found = null;
+  doc.descendants((node, pos) => {
+    if (found) return false;
+    if (node.type.name !== 'section') return true;
+    if (!isSectionOf(node, 'acknowledgements')) return true;
+    node.descendants((child, childPos) => {
+      if (found) return false;
+      if (child.type.name === 'ul') found = { node: child, pos: pos + 1 + childPos };
+      return !found;
+    });
+    return false;
+  });
+  return found;
+}
+
+// Live RDFa: on focus-out, wrap each unlinked name in <a about property="schema:name">; linked names are left alone.
+function syncAcknowledgementsMarkup(newState, liveDoc, sel, blurred, ensure) {
+  const list = acknowledgementsList(liveDoc());
+  if (!list) return;
+  const aType = newState.schema.marks.a;
+  if (!aType) return;
+
+  let off = list.pos + 1;
+  list.node.forEach((li) => {
+    const liStart = off;
+    const liEnd = off + li.nodeSize;
+    off = liEnd;
+
+    // Leave the entry alone while the cursor is in it, or a selection spans it even on blur (e.g. adding a link).
+    const selInLi = sel.from <= liEnd && sel.to >= liStart;
+    if (selInLi && (!blurred || sel.from !== sel.to)) return;
+
+    const para = li.firstChild;
+    if (!para || !para.isTextblock) return;
+    const name = para.textContent.trim();
+    if (!name) return;
+
+    const start = liStart + 2; // inside li, inside paragraph
+    const end = start + para.content.size;
+
+    let hasHref = false;
+    let hrefValue = null;
+    let hrefHasRel = false;
+    let currentAbout = null;
+    para.forEach((child) => {
+      child.marks.forEach((m) => {
+        if (m.type !== aType) return;
+        const oa = m.attrs.originalAttributes || {};
+        if (oa.href) { hasHref = true; hrefValue = oa.href; if (oa.rel) hrefHasRel = true; }
+        currentAbout = oa.about ?? currentAbout;
+      });
+    });
+
+    // A linked name is a contributor here, not a mention: keep the href, drop any rel.
+    if (hasHref) {
+      if (!hrefHasRel) return;
+      const t = ensure();
+      t.removeMark(start, end, aType);
+      t.addMark(start, end, aType.create({ originalAttributes: { href: hrefValue } }));
+      return;
+    }
+
+    const wantAbout = `#${personId(name)}`;
+    const everyCharMarked = (() => {
+      let ok = true;
+      para.forEach((child) => {
+        if (!child.isText) return;
+        if (!child.marks.some((m) => m.type === aType && m.attrs.originalAttributes?.about === wantAbout)) ok = false;
+      });
+      return ok;
+    })();
+    if (currentAbout === wantAbout && everyCharMarked) return;
+
+    const t = ensure();
+    t.removeMark(start, end, aType);
+    t.addMark(start, end, aType.create({ originalAttributes: { about: wantAbout, lang: '', property: 'schema:name', 'xml:lang': '' } }));
+  });
+}
+
+function syncAcknowledgementsOrder(newState, liveDoc, sel, blurred, ensure) {
+  const list = acknowledgementsList(liveDoc());
+  if (!list) return;
+  const start = list.pos + 1;
+  const end = start + list.node.content.size;
+  if (!blurred && sel.from <= end && sel.to >= start) return;
+
+  const items = [];
+  list.node.forEach((li) => items.push(li));
+  const named = items.filter((li) => li.textContent.trim());
+  const empty = items.filter((li) => !li.textContent.trim());
+  const sorted = named
+    .slice()
+    .sort((a, b) => a.textContent.trim().localeCompare(b.textContent.trim(), undefined, { sensitivity: 'base' }))
+    .concat(empty);
+  if (!sorted.some((li, i) => li !== items[i])) return;
+  ensure().replaceWith(start, end, sorted);
 }
 
 // Transition-only: the document is the source of truth at rest.

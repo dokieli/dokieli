@@ -115,6 +115,33 @@ export function productClassEntryHTML() {
   return `<dt data-placeholder="${i18n.t('specification.placeholder.class-of-product-name')}"></dt><dd><p data-placeholder="${i18n.t('specification.placeholder.class-of-product-definition')}"></p></dd>`;
 }
 
+export function acknowledgementsPersonHTML() {
+  return `<li><p data-placeholder="${i18n.t('specification.placeholder.acknowledgements-person')}"></p></li>`;
+}
+
+// Person fragment id: spaces to hyphens, case and diacritics preserved (LDN style).
+export function personId(name) {
+  return name.trim().replace(/\s+/g, '-');
+}
+
+// Save: a named person becomes an <a property="schema:name"> (LDN markup); a linked one keeps its href.
+function upgradeAcknowledgementsPerson(doc, li) {
+  const name = li.textContent.trim();
+  if (!name) return;
+  const link = li.querySelector('a[href]');
+  const a = doc.createElement('a');
+  if (link) {
+    a.setAttribute('href', link.getAttribute('href'));
+  } else {
+    a.setAttribute('about', `#${personId(name)}`);
+    a.setAttribute('lang', '');
+    a.setAttribute('property', 'schema:name');
+    a.setAttribute('xml:lang', '');
+  }
+  a.textContent = name;
+  li.replaceChildren(a);
+}
+
 export function interoperabilityEntryHTML(a, b) {
   return `<dt>${a}–${b} interoperability</dt><dd><p data-placeholder="${i18n.t('specification.placeholder.interoperability')}"></p></dd>`;
 }
@@ -169,8 +196,7 @@ function headingText(section) {
   return section.querySelector(':scope > h1, :scope > h2, :scope > h3, :scope > h4, :scope > h5, :scope > h6')?.textContent || '';
 }
 
-// Sections are direct article children (the outline model); their parent is
-// the article, or the editor's wrapper element in author mode.
+// Sections are direct article children (outline model); parent is the article, or the PM wrapper in author mode.
 function getContent(root) {
   return root.querySelector(':scope > .ProseMirror') || root;
 }
@@ -349,7 +375,15 @@ function specificationSectionHTML(type) {
     case 'changelog':
       return sectionHTML({ id: 'changelog', className: 'appendix', heading: sectionLabel('changelog'), content: '<p></p>' });
     case 'acknowledgements':
-      return sectionHTML({ id: 'acknowledgements', className: 'appendix', heading: sectionLabel('acknowledgements'), content: `<p data-placeholder="${i18n.t('specification.placeholder.acknowledgements')}"></p>` });
+      return sectionHTML({
+        id: 'acknowledgements',
+        className: 'appendix',
+        heading: sectionLabel('acknowledgements'),
+        content:
+          `<p>${i18n.t('specification.acknowledgements.influences.p.textContent')}</p>` +
+          `<p>${i18n.t('specification.acknowledgements.contributors.p.textContent')}</p>` +
+          `<ul about="" rel="schema:contributor">${acknowledgementsPersonHTML()}</ul>`,
+      });
     case 'references':
       return referencesHTML();
   }
@@ -465,6 +499,18 @@ function upgradeSpecificationDlEntries(doc) {
 
     if (!dl.children.length) dl.remove();
   });
+
+  // Acknowledgements: prune empty person entries, order alphabetically, drop the list if none remain.
+  const acknowledgements = findSpecificationSectionElement(article, 'acknowledgements');
+  acknowledgements?.querySelectorAll('ul').forEach((ul) => {
+    ul.querySelectorAll(':scope > li').forEach((li) => { if (!li.textContent.trim()) li.remove(); });
+    Array.from(ul.children)
+      .sort((a, b) => a.textContent.trim().localeCompare(b.textContent.trim(), undefined, { sensitivity: 'base' }))
+      .forEach((li) => ul.appendChild(li));
+    if (!ul.children.length) { ul.remove(); return; }
+    ul.querySelectorAll(':scope > li').forEach((li) => upgradeAcknowledgementsPerson(doc, li));
+    if (!ul.getAttribute('rel')) { ul.setAttribute('about', ''); ul.setAttribute('rel', 'schema:contributor'); }
+  });
 }
 
 registerDocumentTransform(upgradeSpecificationDlEntries);
@@ -475,8 +521,7 @@ const FIXUP_SRC = 'https://www.w3.org/scripts/TR/2021/fixup.js';
 const TR_BASE_CSS = 'https://www.w3.org/StyleSheets/TR/2021/base.css';
 const TR_DARK_CSS = 'https://www.w3.org/StyleSheets/TR/2021/dark.css';
 
-// Refresh only the Display Modes menu section (the one that lists stylesheets):
-// rebuilt in place when the menu is open, else on the next open.
+// Refresh only the Display Modes menu section: rebuilt in place when open, else on next open.
 function refreshDisplayModes() {
   const documentMenu = document.getElementById('document-menu');
   if (!documentMenu) return;

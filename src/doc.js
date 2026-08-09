@@ -1880,8 +1880,7 @@ export function getClassesOfProductsConcepts() {
     })
   }
 
-  // Live-DOM fallback: unsaved or edited documents whose parsed graph predates
-  // the currently defined product classes.
+  // Live-DOM fallback: documents whose parsed graph predates the currently defined product classes.
   if (!concepts.length) {
     document.querySelectorAll('#classes-of-products dl[rel~="skos:hasTopConcept"] > dt[about]').forEach(dt => {
       try { concepts.push(new URL(dt.getAttribute('about'), Config.DocumentURL).href); } catch { /* skip unresolvable */ }

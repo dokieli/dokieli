@@ -328,8 +328,7 @@ export function addSubsection(config, root, parentType, type) {
 
   if (editor) {
     if (anchorId) editor.insertFragmentBeforeNodeById(anchorId, fragmentFromString(html));
-    // Subsections nest as section children (outline model); container-based
-    // templates use the description container.
+    // Subsections nest as section children (outline model); container templates use the description div.
     else if (config.sectionsAtRoot) editor.insertFragmentAtEndOf(`#${parent.id}`, fragmentFromString(html));
     else editor.insertFragmentAtEndOfChild(`#${parent.id}`, ['descriptionDiv', 'div'], fragmentFromString(html));
   } else {

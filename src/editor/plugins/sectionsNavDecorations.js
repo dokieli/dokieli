@@ -81,20 +81,20 @@ export function widgetButton({ className, label, title = null, onClick }) {
   return b;
 }
 
-// "+ Add <entry>" widget at the end of a matched section's <dl>, inserting entryHTML (wrapping a fresh <dl> when the section has none).
-export function dlEntryAddDecorations(doc, { matchSection, label, entryHTML, className = "do dl-entry-add", transactionMeta = null }) {
+// "+ Add <entry>" widget at the end of a matched section's list (dl or ul), inserting entryHTML (wrapping a fresh list when the section has none).
+export function dlEntryAddDecorations(doc, { matchSection, label, entryHTML, className = "do dl-entry-add", transactionMeta = null, listType = "dl" }) {
   const decos = [];
   doc.descendants((node, pos) => {
     if (node.type.name !== "section") return true;
     if (!matchSection(node)) return true;
 
-    let dlEnd = null;
+    let listEnd = null;
     node.descendants((child, childPos) => {
-      if (child.type.name === "dl") { dlEnd = pos + 1 + childPos + 1 + child.content.size; return false; }
+      if (child.type.name === listType) { listEnd = pos + 1 + childPos + 1 + child.content.size; return false; }
       return true;
     });
-    const wrap = dlEnd === null;
-    const insertPos = wrap ? pos + 1 + node.content.size : dlEnd;
+    const wrap = listEnd === null;
+    const insertPos = wrap ? pos + 1 + node.content.size : listEnd;
 
     decos.push(Decoration.widget(insertPos, (view, getPos) =>
       widgetButton({
@@ -104,7 +104,7 @@ export function dlEntryAddDecorations(doc, { matchSection, label, entryHTML, cla
           e.preventDefault();
           const p = typeof getPos === "function" ? getPos() : null;
           if (p == null) return;
-          const html = wrap ? `<dl>${entryHTML()}</dl>` : entryHTML();
+          const html = wrap ? `<${listType}>${entryHTML()}</${listType}>` : entryHTML();
           const parsed = DOMParser.fromSchema(view.state.schema).parse(fragmentFromString(html));
           const tr = view.state.tr.insert(p, parsed).scrollIntoView();
           if (transactionMeta) tr.setMeta(transactionMeta, true);

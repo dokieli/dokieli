@@ -772,12 +772,6 @@ width:auto;
 vertical-align:middle;
 }
 
-/* Placeholder-state paragraphs stay block-level: the inline dd/li p rule gives
-   the absolutely-positioned .editor-placeholder a zero-width containing block. */
-dd > p.editor-empty-node:first-child,
-li > p.editor-empty-node:first-child {
-display:block !important;
-}
 .section-remove,
 .subsection-remove {
 margin-left:0.4em;
@@ -793,6 +787,7 @@ color:#c00;
 
 /* Per-entry delete: small red button pinned to the entry's top-right corner. */
 #content section li,
+li:has(> [class~="entry-delete"]),
 dd:has([class~="cv-entry-delete"]),
 dt:has([class~="entry-delete"]) {
 position:relative;
@@ -4950,6 +4945,8 @@ max-width:none;
   position: absolute;
   left: 0;
   top: 0;
+  /* The hint's containing block can be a zero-width inline (dd/li wrapper p). */
+  white-space: nowrap;
 }
 
 .editor-empty-node {
