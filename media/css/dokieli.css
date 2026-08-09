@@ -4942,7 +4942,7 @@ max-width:none;
   }
 
 .editor-placeholder {
-  color: #999;
+  color: #333;
   font-style: italic;
   pointer-events: none;
   user-select: none;

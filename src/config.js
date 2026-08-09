@@ -99,7 +99,7 @@ export default {
     'sortAttributes': true,
     'removeAttributes': ['contenteditable', 'data-placeholder', 'draggable', 'spellcheck', 'style'],
     'removeCommentNodes': false,
-    'removeNodesWithSelector': ['.do', '.ProseMirror-trailingBreak'],
+    'removeNodesWithSelector': ['.do', '.ProseMirror-trailingBreak', '.ProseMirror-widget', '.ProseMirror-separator'],
     'removeClassValues': [],
     'removeWrapper': [{
       'wrapperSelector': '.do.ref',
