@@ -708,7 +708,8 @@ font-family:inherit;
 .subsection-remove,
 .cv-entry-add,
 .cv-skill-add,
-.dl-entry-add {
+.dl-entry-add,
+.subdivision-add-button {
 border:1px dashed #080;
 border-radius:0.25em;
 background:none;
@@ -725,7 +726,9 @@ font-size:inherit;
 .cv-skill-add:hover,
 .cv-skill-add:focus-visible,
 .dl-entry-add:hover,
-.dl-entry-add:focus-visible {
+.dl-entry-add:focus-visible,
+.subdivision-add-button:hover:not([disabled]),
+.subdivision-add-button:focus-visible {
 border-style:solid;
 border-color:#080;
 background-color:#efe;
@@ -760,11 +763,20 @@ width:auto;
 font-weight:normal;
 }
 
-.interoperability-add {
+.interoperability-add,
+.subdivision-add {
 display:inline-flex;
 align-items:center;
 gap:0.5em;
 margin:0.5em 0;
+}
+.subdivision-add-button {
+padding:0.25em;
+font-weight:bold;
+}
+.subdivision-add-button[disabled] {
+opacity:0.5;
+cursor:not-allowed;
 }
 
 #specification-status.do label {

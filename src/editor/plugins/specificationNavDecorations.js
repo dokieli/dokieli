@@ -27,6 +27,7 @@ import {
   specificationSections, isSpecification, classifySpecificationSection, classifySpecificationSubsection, SPEC_SUBSECTIONS,
   SPEC_CATEGORIES, categoryDefinitionHTML, considerationsDefinitionHTML, termEntryHTML, productClassEntryHTML, interoperabilityEntryHTML, acknowledgementsPersonHTML,
   conceptId, interoperabilityId, personId, applyReportTypeChrome,
+  SPEC_SUBDIVISIONS, SPEC_SUBDIVISION_KEYS, SPEC_SUBDIVISION_REL, subdivisionEntryHTML, subdivisionPairHTML, subdivisionDlHTML, subdivisionsDefinitionHTML,
 } from "../../ui/templates/specification.js";
 
 // A section PM node matching a well-known key, by id or heading slug.
@@ -137,7 +138,9 @@ function categoryCheckboxDecorations(doc) {
     wrapper.className = 'do category-checkboxes';
     wrapper.setAttribute('contenteditable', 'false');
 
-    Object.entries(SPEC_CATEGORIES).forEach(([key, labelText]) => {
+    Object.entries(SPEC_CATEGORIES)
+      .sort((a, b) => a[1].localeCompare(b[1], undefined, { sensitivity: 'base' }))
+      .forEach(([key, labelText]) => {
       const id = `spec-category-${key}`;
       const li = document.createElement('li');
 
@@ -257,7 +260,176 @@ function extraDecorations(doc) {
     ...acknowledgementsDeleteDecorations(doc),
     ...categoryCheckboxDecorations(doc),
     ...interoperabilityDecorations(doc),
+    ...subdivisionAddDecorations(doc),
+    ...subdivisionDeleteDecorations(doc),
   ];
+}
+
+// Each subdivision list in the Subdivisions section, as { rel, type, ulEnd, liEnds }.
+function subdivisionLists(doc) {
+  const lists = [];
+  doc.descendants((node, pos) => {
+    if (node.type.name !== 'section' || !isSectionOf(node, 'subdivisions')) return true;
+    node.descendants((child, childPos) => {
+      if (child.type.name !== 'ul') return true;
+      const rel = child.attrs.originalAttributes?.rel;
+      const type = SPEC_SUBDIVISION_REL[rel];
+      if (!type) return false;
+      const base = pos + 1 + childPos + 1;
+      const liEnds = [];
+      let off = base;
+      child.forEach((li) => {
+        if (li.type.name === 'li') liEnds.push(off + li.nodeSize - 1);
+        off += li.nodeSize;
+      });
+      lists.push({ type, ulEnd: base + child.content.size, liEnds });
+      return false;
+    });
+    return false;
+  });
+  return lists;
+}
+
+// Editor-only type-select at the end of the Subdivisions section: pick a type and add an entry, creating that type's list on first use.
+function subdivisionAddDecorations(doc) {
+  const def = subdivisionsDefinition(doc);
+  const anchor = def ? def.pos + def.node.nodeSize : subdivisionsBodyEnd(doc);
+  if (anchor == null) return [];
+  return [Decoration.widget(anchor, (view) => subdivisionAddWidget(view), { side: 1, ignoreSelection: true, stopEvent: () => true })];
+}
+
+// The Subdivisions lead <p> (its node/pos) plus the anchors and text it currently shows.
+function subdivisionsDefinition(doc) {
+  let found = null;
+  doc.descendants((node, pos) => {
+    if (found) return false;
+    if (node.type.name !== 'section' || !isSectionOf(node, 'subdivisions')) return true;
+    node.descendants((child, childPos) => {
+      if (found) return false;
+      if (child.isTextblock && child.attrs.originalAttributes?.id === 'subdivisions-definition') {
+        found = { node: child, pos: pos + 1 + childPos };
+      }
+      return !found;
+    });
+    return false;
+  });
+  if (!found) return null;
+  const hrefs = [];
+  found.node.descendants((child) => {
+    child.marks.forEach((m) => {
+      const href = m.attrs?.originalAttributes?.href;
+      if (m.type.name === 'a' && href) hrefs.push(href);
+    });
+    return true;
+  });
+  return { ...found, text: found.node.textContent, hrefs };
+}
+
+// End position of the Subdivisions section body (inside its schema:description div, or the section itself if unwrapped) where lists live and the add control sits.
+function subdivisionsBodyEnd(doc) {
+  let end = null;
+  doc.descendants((node, pos) => {
+    if (end != null) return false;
+    if (node.type.name !== 'section' || !isSectionOf(node, 'subdivisions')) return true;
+    node.forEach((child, offset) => {
+      if (end == null && child.type.name === 'descriptionDiv') end = pos + 1 + offset + 1 + child.content.size;
+    });
+    if (end == null) end = pos + 1 + node.content.size;
+    return false;
+  });
+  return end;
+}
+
+// The select + "+ Add {type}" control; the button label tracks the selection.
+function subdivisionAddWidget(view) {
+  const wrap = document.createElement('div');
+  wrap.className = 'do subdivision-add';
+  wrap.setAttribute('contenteditable', 'false');
+  wrap.addEventListener('mousedown', (e) => e.preventDefault());
+
+  const select = document.createElement('select');
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = i18n.t('specification.select.subdivision-type');
+  select.appendChild(placeholder);
+  SPEC_SUBDIVISION_KEYS.forEach((type) => {
+    const opt = document.createElement('option');
+    opt.value = type;
+    opt.textContent = i18n.t(`specification.subdivision.${type}.option`);
+    select.appendChild(opt);
+  });
+
+  const addLabel = (type) => type
+    ? i18n.t('specification.button.add-subdivision.textContent', { type: i18n.t(`specification.subdivision.${type}.option`).toLowerCase() })
+    : i18n.t('specification.button.add-subdivision-generic.textContent');
+
+  const button = widgetButton({
+    className: 'subdivision-add-button',
+    label: addLabel(''),
+    onClick: (e) => { e.preventDefault(); if (select.value) addSubdivisionEntry(view, select.value); },
+  });
+  button.disabled = true;
+
+  select.addEventListener('mousedown', (e) => e.stopPropagation());
+  select.addEventListener('change', () => {
+    button.textContent = addLabel(select.value);
+    button.disabled = !select.value;
+  });
+
+  wrap.append(select, button);
+  return wrap;
+}
+
+// Add to the Subdivisions section: append an entry to the type's list if present,
+// else add the type's dt/dd pair to the shared <dl> (creating the <dl> on first use).
+function addSubdivisionEntry(view, type) {
+  const rel = SPEC_SUBDIVISIONS[type].rel;
+  const { state } = view;
+  let ulEnd = null, dlEnd = null;
+  state.doc.descendants((node, pos) => {
+    if (node.type.name !== 'section' || !isSectionOf(node, 'subdivisions')) return true;
+    node.descendants((child, childPos) => {
+      if (child.type.name === 'dl') { dlEnd = pos + 1 + childPos + 1 + child.content.size; return true; }
+      if (child.type.name === 'ul') {
+        if (child.attrs.originalAttributes?.rel === rel) ulEnd = pos + 1 + childPos + 1 + child.content.size;
+        return false;
+      }
+      return true;
+    });
+    return false;
+  });
+
+  let html, at;
+  if (ulEnd != null) { html = subdivisionEntryHTML(); at = ulEnd; }
+  else if (dlEnd != null) { html = subdivisionPairHTML(type); at = dlEnd; }
+  else { html = subdivisionDlHTML(type); at = subdivisionsBodyEnd(state.doc); }
+  if (at == null) return;
+  const parsed = DOMParser.fromSchema(state.schema).parse(fragmentFromString(html));
+  view.dispatch(state.tr.insert(at, parsed).scrollIntoView().setMeta(SYNC_META, true));
+}
+
+// Per-entry delete widgets in each subdivision list.
+function subdivisionDeleteDecorations(doc) {
+  return subdivisionLists(doc).flatMap(({ liEnds }) =>
+    liEnds.map((end) => deleteWidget(end, 'li', i18n.t('specification.button.remove-entry.aria-label'))));
+}
+
+// Keep the Subdivisions lead sentence in step with the present type lists (default "can be subdivided" phrasing when none).
+function syncSubdivisionsDefinition(newState, sel, blurred, ensure) {
+  const def = subdivisionsDefinition(newState.doc);
+  if (!def) return;
+  if (!blurred && sel.from <= def.pos + def.node.nodeSize && sel.to >= def.pos) return;
+
+  const existing = new Set(subdivisionLists(newState.doc).map((l) => l.type));
+  const present = SPEC_SUBDIVISION_KEYS.filter((t) => existing.has(t));
+  const desiredActive = present.length > 0;
+  const desiredHrefs = (desiredActive ? present : SPEC_SUBDIVISION_KEYS).map((t) => SPEC_SUBDIVISIONS[t].anchor);
+
+  const currentActive = /^This specification is subdivided/.test(def.text);
+  if (currentActive === desiredActive && desiredHrefs.length === def.hrefs.length && desiredHrefs.every((h, i) => h === def.hrefs[i])) return;
+
+  const parsed = DOMParser.fromSchema(newState.schema).parse(fragmentFromString(subdivisionsDefinitionHTML(present)));
+  ensure().replaceWith(def.pos, def.pos + def.node.nodeSize, parsed.content);
 }
 
 // Per-person delete widgets in the Acknowledgements list.
@@ -283,7 +455,10 @@ function acknowledgementsDeleteDecorations(doc) {
 // Fold product classes, category selection, and managed-dl state into the rebuild fingerprint.
 function extraSignature(doc) {
   const classes = productClassNames(doc).join('|');
-  const categories = Array.from(categoryDefinition(doc)?.selected || []).join('|');
+  // Track the definition's position too: an outline restructure can move it and
+  // map away the checkbox widget without otherwise changing the fingerprint.
+  const catDef = categoryDefinition(doc);
+  const categories = catDef ? `${catDef.pos}:${Array.from(catDef.selected).join('|')}` : '';
   // Fingerprint each dt's about/dfn id: the sync rewrites them and widgets inside must rebuild.
   const dts = [];
   doc.descendants((node) => {
@@ -309,7 +484,9 @@ function extraSignature(doc) {
     node.descendants((child) => { if (child.type.name === 'li') ackEntries.push(child.textContent.trim()); return true; });
     return false;
   });
-  return `${classes};${categories};${dts.join(',')};${reportTypeValue(doc)}:${headPresent};ack:${ackEntries.join('|')}`;
+  // Subdivision lists and entry counts, so add/delete widgets rebuild.
+  const subs = subdivisionLists(doc).map((l) => `${l.type}:${l.liEnds.length}`);
+  return `${classes};${categories};${dts.join(',')};${reportTypeValue(doc)}:${headPresent};ack:${ackEntries.join('|')};sub:${subs.join('|')}`;
 }
 
 // The article's typeof lives on the mount element; check it alongside the in-doc rdf:type links.
@@ -456,6 +633,7 @@ export const specificationConceptSyncPlugin = new Plugin({
     });
 
     syncConsiderationsDefinition(newState, sel, blurred, ensure);
+    syncSubdivisionsDefinition(newState, sel, blurred, ensure);
     // Markup then ordering, both against the live tr doc, so ordering keeps the fresh marks.
     syncAcknowledgementsMarkup(newState, liveDoc, sel, blurred, ensure);
     syncAcknowledgementsOrder(newState, liveDoc, sel, blurred, ensure);

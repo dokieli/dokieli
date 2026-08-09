@@ -31,10 +31,10 @@ const SECTIONS = {
   'document-details': { label: 'More details about this document' },
   'abstract': { label: 'Abstract' },
   'sotd': { label: 'Status of This Document' },
+  'explainer': { label: 'Explainer' },
   'introduction': { label: 'Introduction' },
   'terminology': { label: 'Terminology' },
   'conformance': { label: 'Conformance' },
-  'explainer': { label: 'Explainer' },
   'use-cases': { label: 'Use Cases' },
   'considerations': { label: 'Considerations' },
   'changelog': { label: 'Changelog' },
@@ -42,10 +42,21 @@ const SECTIONS = {
   'references': { label: 'References' },
 };
 
+// Conformance's core subsections, present by default; Subdivisions is offered as "+ add".
+export const CONFORMANCE_SUBSECTIONS = ['normative-informative-content', 'specification-category', 'classes-of-products', 'interoperability', 'subdivisions'];
+const CONFORMANCE_DEFAULT_SUBSECTIONS = CONFORMANCE_SUBSECTIONS.filter((t) => t !== 'subdivisions');
+
 const DEFAULT_SECTIONS = ['document-details', 'abstract', 'sotd', 'introduction', 'references'];
 
 // Considerations subsections (the AC set minus Application Considerations); typeof carries the spec: class where one exists.
 export const SPEC_SUBSECTIONS = {
+  'conformance': {
+    'normative-informative-content': { label: 'Normative and Informative Content' },
+    'specification-category': { label: 'Specification Category' },
+    'classes-of-products': { label: 'Classes of Products' },
+    'interoperability': { label: 'Interoperability' },
+    'subdivisions': { label: 'Subdivisions' },
+  },
   'considerations': {
     'security-considerations': { label: 'Security Considerations', typeof: 'spec:SecurityConsiderations' },
     'privacy-considerations': { label: 'Privacy Considerations', typeof: 'spec:PrivacyConsiderations' },
@@ -117,6 +128,69 @@ export function productClassEntryHTML() {
 
 export function acknowledgementsPersonHTML() {
   return `<li><p data-placeholder="${i18n.t('specification.placeholder.acknowledgements-person')}"></p></li>`;
+}
+
+// Variability subdivisions off the spec: spec:module/profile/functionalLevel + their Conformance* class; members via schema:hasPart.
+export const SPEC_SUBDIVISIONS = {
+  'module': { rel: 'spec:module', typeOf: 'spec:ConformanceModule', anchor: 'https://www.w3.org/TR/spec-variability/#subdivision-module' },
+  'profile': { rel: 'spec:profile', typeOf: 'spec:ConformanceProfile', anchor: 'https://www.w3.org/TR/spec-variability/#subdivision-profile' },
+  'functional-level': { rel: 'spec:functionalLevel', typeOf: 'spec:ConformanceFunctionalLevel', anchor: 'https://www.w3.org/TR/spec-variability/#subdivision-level' },
+};
+
+export const SPEC_SUBDIVISION_KEYS = Object.keys(SPEC_SUBDIVISIONS);
+
+// Fragment id for a subdivision instance from its text (type-prefixed slug).
+export function subdivisionId(type, text) {
+  return `${type}-${slugify(text)}`;
+}
+
+export function subdivisionEntryHTML() {
+  return `<li><p data-placeholder="${i18n.t('specification.placeholder.subdivision-entry')}"></p></li>`;
+}
+
+// rel -> subdivision type, for finding a type's list by its ul's rel.
+export const SPEC_SUBDIVISION_REL = Object.fromEntries(SPEC_SUBDIVISION_KEYS.map((t) => [SPEC_SUBDIVISIONS[t].rel, t]));
+
+// One type's dt/dd pair in the shared subdivisions <dl>: a linked label term and its spec:<rel> list, seeded with one entry.
+export function subdivisionPairHTML(type) {
+  const { rel, anchor } = SPEC_SUBDIVISIONS[type];
+  const label = i18n.t(`specification.subdivision.${type}.option`);
+  return `<dt><a href="${anchor}">${label}</a></dt><dd><ul about="" rel="${rel}">${subdivisionEntryHTML()}</ul></dd>`;
+}
+
+// The shared subdivisions <dl>, created with the first type's pair.
+export function subdivisionDlHTML(type) {
+  return `<dl class="subdivisions">${subdivisionPairHTML(type)}</dl>`;
+}
+
+// Subdivision type's prose label (lower-cased option), linked to its Variability definition.
+function subdivisionLink(type) {
+  return `<a href="${SPEC_SUBDIVISIONS[type].anchor}">${i18n.t(`specification.subdivision.${type}.option`).toLowerCase()}</a>`;
+}
+
+// Section lead sentence: lists the present subdivision types, or offers the options when none exist yet. Rewritten by the sync plugin as types change.
+export function subdivisionsDefinitionHTML(present = []) {
+  const types = SPEC_SUBDIVISION_KEYS.filter((t) => present.includes(t));
+  if (!types.length) {
+    const links = SPEC_SUBDIVISION_KEYS.map(subdivisionLink);
+    return `<p id="subdivisions-definition">This specification can be subdivided into ${links.slice(0, -1).join(', ')}, or ${links[links.length - 1]}.</p>`;
+  }
+  const links = types.map(subdivisionLink);
+  const list = links.length === 1 ? links[0]
+    : links.length === 2 ? `${links[0]} and ${links[1]}`
+    : `${links.slice(0, -1).join(', ')}, and ${links[links.length - 1]}`;
+  return `<p id="subdivisions-definition">This specification is subdivided into ${list}.</p>`;
+}
+
+// The Subdivisions section (addable under Conformance). Type lists are added on
+// demand via the editor-only type-select widget, not seeded.
+export function subdivisionsSectionHTML() {
+  return sectionHTML({
+    id: 'subdivisions',
+    level: 3,
+    heading: i18n.t('specification.section.subdivisions.label'),
+    content: subdivisionsDefinitionHTML(),
+  });
 }
 
 // Person fragment id: spaces to hyphens, case and diacritics preserved (LDN style).
@@ -284,45 +358,59 @@ function explainerHTML() {
   return sectionHTML({ id: 'explainer', heading: sectionLabel('explainer'), content: nonNormative + `<p data-placeholder="${i18n.t('specification.placeholder.explainer')}"></p>` });
 }
 
+// One Conformance subsection's markup, by type; the Subdivisions builder lives below.
+function conformanceSubsectionHTML(type) {
+  switch (type) {
+    case 'normative-informative-content':
+      return sectionHTML({
+        id: 'normative-informative-content',
+        level: 3,
+        heading: sectionLabel('normative-informative-content'),
+        content:
+          `<p id="normative-informative-sections">All assertions, diagrams, examples, and notes are non-normative, as are all sections explicitly marked non-normative. Everything else is normative.</p>` +
+          `<p id="requirement-levels">The key words "<span rel="dcterms:subject" resource="spec:MUST">MUST</span>", "<span rel="dcterms:subject" resource="spec:MUSTNOT">MUST NOT</span>", "<span rel="dcterms:subject" resource="spec:SHOULD">SHOULD</span>", and "<span rel="dcterms:subject" resource="spec:MAY">MAY</span>" are to be interpreted as described in <a href="https://www.rfc-editor.org/info/bcp14">BCP 14</a> [<cite><a class="bibref" href="#bib-rfc2119">RFC2119</a></cite>] [<cite><a class="bibref" href="#bib-rfc8174">RFC8174</a></cite>] when, and only when, they appear in all capitals, as shown here.</p>` +
+          `<p id="advisement-levels">The key words "<span rel="dcterms:subject" resource="spec:StronglyEncouraged">strongly encouraged</span>", "<span rel="dcterms:subject" resource="spec:StronglyDiscouraged">strongly discouraged</span>", "<span rel="dcterms:subject" resource="spec:Encouraged">encouraged</span>", "<span rel="dcterms:subject" resource="spec:Discouraged">discouraged</span>", "<span rel="dcterms:subject" resource="spec:Can">can</span>", "<span rel="dcterms:subject" resource="spec:Cannot">cannot</span>", "<span rel="dcterms:subject" resource="spec:Could">could</span>", "<span rel="dcterms:subject" resource="spec:CouldNot">could not</span>", "<span rel="dcterms:subject" resource="spec:Might">might</span>", and "<span rel="dcterms:subject" resource="spec:MightNot">might not</span>" are used for non-normative content.</p>`,
+      });
+    case 'specification-category':
+      return sectionHTML({
+        id: 'specification-category',
+        level: 3,
+        heading: sectionLabel('specification-category'),
+        headingProperty: 'schema:name skos:prefLabel',
+        rel: 'schema:hasPart spec:specificationCategory',
+        attrs: ' typeof="skos:ConceptScheme"',
+        content: categoryDefinitionHTML(),
+      });
+    case 'classes-of-products':
+      return sectionHTML({
+        id: 'classes-of-products',
+        level: 3,
+        heading: sectionLabel('classes-of-products'),
+        headingProperty: 'schema:name skos:prefLabel',
+        attrs: ' typeof="skos:ConceptScheme"',
+        content:
+          `<p property="skos:definition">This <span about="" rel="spec:classesOfProducts" resource="#classes-of-products">specification identifies</span> the following <cite><a href="https://www.w3.org/TR/qaframe-spec/#cop-def" rel="dcterms:subject" resource="spec:ClassesOfProducts">Classes of Products</a></cite> for conforming implementations.</p>` +
+          `<p>A single implementation can fulfil more than one role simultaneously.</p>` +
+          `<dl rel="skos:hasTopConcept">${productClassEntryHTML()}</dl>`,
+      });
+    case 'interoperability':
+      return sectionHTML({
+        id: 'interoperability',
+        level: 3,
+        heading: sectionLabel('interoperability'),
+        headingProperty: 'schema:name skos:prefLabel',
+        content:
+          `<p property="skos:definition">In this specification, interoperability occurs between the <a href="#classes-of-products" rel="rdfs:seeAlso">Classes of Products</a> defined by this specification.</p>`,
+      });
+    case 'subdivisions':
+      return subdivisionsSectionHTML();
+  }
+  return '';
+}
+
 function conformanceHTML() {
   const content = `<p>This section describes the <span about="" rel="spec:conformance" resource="#conformance">conformance model of this specification</span>.</p>` +
-    sectionHTML({
-      id: 'normative-and-informative-content',
-      level: 3,
-      heading: 'Normative and Informative Content',
-      content:
-        `<p id="normative-informative-sections">All assertions, diagrams, examples, and notes are non-normative, as are all sections explicitly marked non-normative. Everything else is normative.</p>` +
-        `<p id="requirement-levels">The key words "<span rel="dcterms:subject" resource="spec:MUST">MUST</span>", "<span rel="dcterms:subject" resource="spec:MUSTNOT">MUST NOT</span>", "<span rel="dcterms:subject" resource="spec:SHOULD">SHOULD</span>", and "<span rel="dcterms:subject" resource="spec:MAY">MAY</span>" are to be interpreted as described in <a href="https://www.rfc-editor.org/info/bcp14">BCP 14</a> [<cite><a class="bibref" href="#bib-rfc2119">RFC2119</a></cite>] [<cite><a class="bibref" href="#bib-rfc8174">RFC8174</a></cite>] when, and only when, they appear in all capitals, as shown here.</p>` +
-        `<p id="advisement-levels">The key words "<span rel="dcterms:subject" resource="spec:StronglyEncouraged">strongly encouraged</span>", "<span rel="dcterms:subject" resource="spec:StronglyDiscouraged">strongly discouraged</span>", "<span rel="dcterms:subject" resource="spec:Encouraged">encouraged</span>", "<span rel="dcterms:subject" resource="spec:Discouraged">discouraged</span>", "<span rel="dcterms:subject" resource="spec:Can">can</span>", "<span rel="dcterms:subject" resource="spec:Cannot">cannot</span>", "<span rel="dcterms:subject" resource="spec:Could">could</span>", "<span rel="dcterms:subject" resource="spec:CouldNot">could not</span>", "<span rel="dcterms:subject" resource="spec:Might">might</span>", and "<span rel="dcterms:subject" resource="spec:MightNot">might not</span>" are used for non-normative content.</p>`,
-    }) +
-    sectionHTML({
-      id: 'specification-category',
-      level: 3,
-      heading: 'Specification Category',
-      headingProperty: 'schema:name skos:prefLabel',
-      rel: 'schema:hasPart spec:specificationCategory',
-      attrs: ' typeof="skos:ConceptScheme"',
-      content: categoryDefinitionHTML(),
-    }) +
-    sectionHTML({
-      id: 'classes-of-products',
-      level: 3,
-      heading: 'Classes of Products',
-      headingProperty: 'schema:name skos:prefLabel',
-      attrs: ' typeof="skos:ConceptScheme"',
-      content:
-        `<p property="skos:definition">This <span about="" rel="spec:classesOfProducts" resource="#classes-of-products">specification identifies</span> the following <cite><a href="https://www.w3.org/TR/qaframe-spec/#cop-def" rel="dcterms:subject" resource="spec:ClassesOfProducts">Classes of Products</a></cite> for conforming implementations.</p>` +
-        `<p>A single implementation can fulfil more than one role simultaneously.</p>` +
-        `<dl rel="skos:hasTopConcept">${productClassEntryHTML()}</dl>`,
-    }) +
-    sectionHTML({
-      id: 'interoperability',
-      level: 3,
-      heading: 'Interoperability',
-      headingProperty: 'schema:name skos:prefLabel',
-      content:
-        `<p property="skos:definition">In this specification, interoperability occurs between the <a href="#classes-of-products" rel="rdfs:seeAlso">Classes of Products</a> defined by this specification.</p>`,
-    });
+    CONFORMANCE_DEFAULT_SUBSECTIONS.map(conformanceSubsectionHTML).join('');
 
   return sectionHTML({ id: 'conformance', heading: sectionLabel('conformance'), content });
 }
@@ -422,6 +510,11 @@ export const specificationSections = registerSectionsTemplate({
       sectionLabel,
       sectionHTML: considerationsSubsectionHTML,
     },
+    'conformance': {
+      sections: SPEC_SUBSECTIONS['conformance'],
+      sectionLabel,
+      sectionHTML: conformanceSubsectionHTML,
+    },
   },
 });
 
@@ -500,6 +593,8 @@ function upgradeSpecificationDlEntries(doc) {
     if (!dl.children.length) dl.remove();
   });
 
+  upgradeSubdivisions(article);
+
   // Acknowledgements: prune empty person entries, order alphabetically, drop the list if none remain.
   const acknowledgements = findSpecificationSectionElement(article, 'acknowledgements');
   acknowledgements?.querySelectorAll('ul').forEach((ul) => {
@@ -511,6 +606,43 @@ function upgradeSpecificationDlEntries(doc) {
     ul.querySelectorAll(':scope > li').forEach((li) => upgradeAcknowledgementsPerson(doc, li));
     if (!ul.getAttribute('rel')) { ul.setAttribute('about', ''); ul.setAttribute('rel', 'schema:contributor'); }
   });
+}
+
+// Apply a subdivision entry's RDFa: resource id + typeof, and schema:hasPart on its section links.
+export function upgradeSubdivisionEntry(li, type) {
+  const text = li.textContent.trim();
+  if (!text) return;
+  if (!li.getAttribute('resource')) {
+    li.setAttribute('resource', `#${subdivisionId(type, text)}`);
+    li.setAttribute('typeof', SPEC_SUBDIVISIONS[type].typeOf);
+  }
+  li.querySelectorAll('a[href^="#"]').forEach((a) => {
+    if (!a.getAttribute('rel')) a.setAttribute('rel', 'schema:hasPart');
+  });
+}
+
+// Save hook: in the Subdivisions section, prune empty entries; drop an empty
+// type's dt/dd pair; apply RDFa to the rest; remove the <dl> if nothing remains.
+function upgradeSubdivisions(article) {
+  const section = findSpecificationSectionElement(article, 'subdivisions');
+  if (!section) return;
+  const dl = section.querySelector('dl.subdivisions');
+  if (!dl) return;
+  dl.querySelectorAll('ul[rel]').forEach((ul) => {
+    const type = SPEC_SUBDIVISION_REL[ul.getAttribute('rel')];
+    if (!type) return;
+    ul.querySelectorAll(':scope > li').forEach((li) => {
+      if (!li.textContent.trim()) li.remove();
+      else upgradeSubdivisionEntry(li, type);
+    });
+    if (!ul.querySelector(':scope > li')) {
+      const dd = ul.closest('dd');
+      const dt = dd?.previousElementSibling?.tagName === 'DT' ? dd.previousElementSibling : null;
+      dt?.remove();
+      dd?.remove();
+    }
+  });
+  if (!dl.querySelector('dd')) dl.remove();
 }
 
 registerDocumentTransform(upgradeSpecificationDlEntries);

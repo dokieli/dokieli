@@ -20,13 +20,24 @@ import Config from "../../config.js";
 
 //Section ids exempt from heading-based updates, per document rdf:type.
 const reservedSectionIds = {
-  "http://usefulinc.com/ns/doap#Specification": ["sotd"]
+  "http://usefulinc.com/ns/doap#Specification": ["sotd", "normative-informative-content", "security-privacy-review", "societal-impact-review"]
 };
 
+// Document types, matched from the parsed graph or (for unsaved templates whose
+// graph isn't populated yet) the live article's typeof / rdf:type link.
+function getDocumentTypes() {
+  const types = new Set(Config.Resource?.[Config.DocumentURL]?.rdftype || []);
+  const article = document.querySelector('main > article');
+  if (article?.matches?.('[typeof~="doap:Specification"]') ||
+      article?.querySelector('[rel~="rdf:type"][href*="doap#Specification"], [rel~="rdf:type"][resource*="doap#Specification"]')) {
+    types.add("http://usefulinc.com/ns/doap#Specification");
+  }
+  return types;
+}
+
 function getReservedSectionIds() {
-  const types = Config.Resource?.[Config.DocumentURL]?.rdftype || [];
   const reserved = new Set();
-  types.forEach((type) => {
+  getDocumentTypes().forEach((type) => {
     (reservedSectionIds[type] || []).forEach((id) => reserved.add(id));
   });
   return reserved;
