@@ -75,10 +75,13 @@ export async function select(page, selector) {
   // Click and drag on text to select it
   const text = page.locator(selector);
   const box = await text.boundingBox();
+  const y = box.y + Math.min(10, box.height / 2);
 
-  await text.click();
+  // Drag forwards with intermediate moves: a single jump never extends a
+  // selection, so the toolbar would never be triggered.
+  await page.mouse.move(box.x + 5, y);
   await page.mouse.down();
-  await page.mouse.move(box.x + 30, box.y + box.height / 2);
+  await page.mouse.move(box.x + Math.min(400, box.width - 10), y, { steps: 10 });
   await page.mouse.up();
 
   // Wait for the toolbar to be visible

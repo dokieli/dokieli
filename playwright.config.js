@@ -6,9 +6,9 @@ envConfig();
 const config = {
   workers: process.env.CI ? 2 : '75%',
   testDir: "./tests/e2e/browser",
-  // FIXME: temp increase timeout - this is needed to complete login. Look into improving without increasing the timeout so much.
-  timeout: 10000,
-  // timeout: 120 * 1000,
+  // A real OIDC round trip against the IDP takes ~40s under recording, and the
+  // worker's login is charged to the first test that triggers it.
+  timeout: 120000,
   expect: {
     timeout: 5000,
   },
@@ -33,8 +33,6 @@ const config = {
     baseURL: "http://localhost:3000",
     trace: "retain-on-failure",
     video: "retain-on-failure",
-    trace: "on",
-    video: "on"
   },
   projects: [
     {

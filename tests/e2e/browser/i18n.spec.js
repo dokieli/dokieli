@@ -18,7 +18,8 @@ limitations under the License.
 import { test, expect } from "./fixtures";
 import { select } from "./utils";
 
-test.only("language switching updates visible strings", async ({ page }) => {
+
+test("language switching updates visible strings", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator('[id="document-menu"]')).not.toBeVisible();
 
@@ -189,14 +190,6 @@ test("preferred language from user profile is used", async ({ page, auth }) => {
   await auth.login();
   await page.waitForLoadState("load");
 
-  // Wait until console shows we're logged in
-  await new Promise((resolve) => {
-    page.on("console", (msg) => {
-      if (msg.text().includes(process.env.WEBID)) {
-        resolve();
-      }
-    });
-  });
 
   await expect(page.locator("[id=document-menu]")).not.toBeVisible();
 

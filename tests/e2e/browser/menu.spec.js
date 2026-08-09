@@ -17,6 +17,15 @@ limitations under the License.
 
 import { test, expect } from "./fixtures";
 import AxeBuilder from "@axe-core/playwright";
+import { select } from "./utils";
+
+// The menu is tabbed (Actions / Tools / Settings); buttons in an unselected tab
+// are not clickable.
+async function openMenuTab(page, name) {
+  await page.locator("#document-menu button").first().click();
+  await expect(page.locator("[id=document-menu]")).toBeVisible();
+  await page.locator(`#document-menu nav a:text-is("${name}")`).click();
+}
 
 test("menu should not have any automatically detectable accessibility issues", async ({ page }) => {
   await page.goto("/");
@@ -123,6 +132,11 @@ test("clicking on the new button displays creates new document", async ({
 
   const newBtn = page.locator("[class=resource-new]");
   await newBtn.click();
+
+  // New opens a template chooser; the document exists once one is created.
+  await page.locator("#new-document-article").check();
+  await page.locator("#new-document button.create").click();
+
   const newDoc = page.locator(".do-new");
   await expect(newDoc).toBeEditable();
 });
@@ -240,9 +254,7 @@ test("clicking on the source button displays source modal", async ({
   await page.goto("/");
   await expect(page.locator("[id=document-menu]")).not.toBeVisible();
 
-  await page.locator("#document-menu button").click();
-  const menu = page.locator("[id=document-menu]");
-  await expect(menu).toBeVisible();
+  await openMenuTab(page, "Tools");
 
   const sourceBtn = page.locator("[class=resource-source]");
   await sourceBtn.click();
@@ -263,6 +275,9 @@ test("clicking on the embed button embed data modal", async ({
 
   const editButton = page.locator(".editor-enable");
   await editButton.click();
+
+  // Enabling the editor closes the menu; embed lives under the Tools tab.
+  await openMenuTab(page, "Tools");
 
   const embedBtn = page.locator("[class=embed-data-meta]");
   await embedBtn.click();

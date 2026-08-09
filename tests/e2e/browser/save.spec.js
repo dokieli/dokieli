@@ -17,18 +17,11 @@ limitations under the License.
 
 import { test, expect } from "./fixtures";
 
+
 test.beforeEach(async ({ auth, page }) => {
   await auth.login();
   await page.waitForLoadState("load");
 
-  // FIXME: This is needed to make sure we're effectively finished logging in, it should not be necessary.
-  await new Promise((resolve) => {
-    page.on("console", (msg) => {
-      if (msg.text().includes(process.env.WEBID)) {
-        resolve();
-      }
-    });
-  });
 });
 test("saves changes to existing documents", async ({ page }) => {
   await page.waitForLoadState("load");

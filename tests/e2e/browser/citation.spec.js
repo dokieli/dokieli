@@ -19,18 +19,11 @@ import { test, expect } from "./fixtures";
 import AxeBuilder from "@axe-core/playwright";
 import { select } from "./utils";
 
+
 test.beforeEach(async ({ auth, page }) => {
   await auth.login();
   await page.waitForLoadState("load");
 
-  // FIXME: This is needed to make sure we're effectively finished logging in, it should not be necessary.
-  await new Promise((resolve) => {
-    page.on("console", (msg) => {
-      if (msg.text().includes(process.env.WEBID)) {
-        resolve();
-      }
-    });
-  });
 
   const documentMenu = page.locator("[id=document-menu]");
   await documentMenu.locator("button").first().click();

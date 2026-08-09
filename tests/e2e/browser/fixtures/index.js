@@ -143,42 +143,60 @@ export const extensionTest = base.test.extend({
 
 export class Auth {
   constructor(page, isMobile) {
-    
     this.page = page;
     this.isMobile = isMobile;
   }
 
+  // Waits for the menu to show a signed-in user, which is what the WEBID
+  // console line used to stand in for. A restored session never logs it.
+  async waitForSignedIn() {
+    await this.page.waitForFunction(() => !!window.DO?.C?.User?.IRI, null, {
+      timeout: 60000,
+    });
+  }
+
   async login() {
     await this.page.goto("/");
+
+    // dokieli wires up auth asynchronously; clicking through the provider
+    // dialog before that lands leaves the "go" click doing nothing.
+    await this.page.waitForFunction(() => window.DO?.C?.AuthReady === true, null, {
+      timeout: 30000,
+    });
+
     await this.page.locator("#document-menu > button").click();
 
     const signinbtn = "button.signin-user";
     await this.page.waitForSelector(signinbtn);
     await this.page.click(signinbtn);
 
-    await this.page.fill('input[id="webid"]', process.env.WEBID);
-    await this.page.click('button[class="signin"]');
-
-    // click login btn
-    await this.page.waitForSelector("button[type=submit]");
-    await this.page.click("button[type=submit]");
+    // Sign-in is a provider list now: pick Solid, then give it the issuer.
+    const dialog = this.page.locator("#user-identity-input");
+    await dialog.waitFor({ state: "visible" });
+    await dialog.locator('button.do-signin-provider[data-provider="solid"]').click();
+    await dialog.locator("#solid-provider-url").waitFor({ state: "visible" });
+    await dialog.locator("#solid-provider-url").fill(process.env.IDP);
+    await dialog.locator('button.do-signin-provider-go[data-provider="solid"]').click();
+    // The click stores OIDC state before navigating; give it that beat.
+    await this.page.waitForTimeout(1000);
 
     // account page to enter credentials and login
 
-    await this.page.waitForURL(/https:\/\/[^/]+\/\.account\/login\/password\/?/, {
-      timeout: 10000,
-    });
-    await this.page.waitForSelector("input#email");
+    await this.page.waitForURL(
+      /https:\/\/[^/]+\/\.account\/(login\/password|oidc\/consent)\/?/,
+      { timeout: 60000 }
+    );
 
-    await this.page.fill("#email", process.env.LOGIN_ID);
-    await this.page.fill("#password", process.env.LOGIN_PASSWORD);
-    await this.page.click("button[type=submit]");
+    if (/login\/password/.test(this.page.url())) {
+      await this.page.waitForSelector("input#email");
+      await this.page.fill("#email", process.env.LOGIN_ID);
+      await this.page.fill("#password", process.env.LOGIN_PASSWORD);
+      await this.page.click("button[type=submit]");
 
-
-    // consent page to authorize the client
-    await this.page.waitForURL(/https:\/\/[^/]+\/\.account\/oidc\/consent\/?/, {
-      timeout: 10000,
-    });
+      await this.page.waitForURL(/https:\/\/[^/]+\/\.account\/oidc\/consent\/?/, {
+        timeout: 60000,
+      });
+    }
     // wait until page fully loaded (last item to appear is ID)
     await this.page.waitForSelector('[id="client"]');
 
@@ -190,20 +208,12 @@ export class Auth {
 
 
     // await redirect
-    await this.page.waitForURL('**', { timeout: 10000 });  
+    await this.page.waitForURL('**', { timeout: 60000 });  
 
     // wait to redirect to homepage
     await this.page.waitForURL("http://localhost:3000/");
 
-    // Listen for console messages to make sure we are logged in // FIX THIS: ideally we would check something in the UI
-    await this.page.on("console", async (msg) => {
-      await new Promise(async (resolve) => {
-          if (msg.text().includes(process.env.WEBID)) {
-            resolve();
-          }
-      });
-    });
-
+    await this.waitForSignedIn();
   }
 }
 

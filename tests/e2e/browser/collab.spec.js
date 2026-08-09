@@ -20,18 +20,28 @@ import path from "path";
 import fs from "fs";
 
 const localScriptContent = fs.readFileSync(path.resolve("./scripts/dokieli.js"), "utf8");
-const augmentedScript = localScriptContent.replace(
-  "window.DO = DO;",
-  `window.DO = DO;
-window.doCollabTest = {
-  showReviewPanel: showResourceReviewChanges,
-  addYjsVersion,
-  getYjsVersions,
-  restoreYjsContent,
-  showEditHistory,
-  getCurrentVersionKey,
-};`
-);
+
+// Bundled cross-module bindings are renamed (showResourceReviewChanges is
+// reached as sync.fx), so these names do not exist at `window.DO = DO;`. They
+// are all hoisted function declarations, so expose each where it is declared.
+const TEST_HOOKS = {
+  showReviewPanel: "showResourceReviewChanges",
+  addYjsVersion: "addYjsVersion",
+  getYjsVersions: "getYjsVersions",
+  restoreYjsContent: "restoreYjsContent",
+  showEditHistory: "showEditHistory",
+  getCurrentVersionKey: "getCurrentVersionKey",
+};
+
+const augmentedScript = Object.entries(TEST_HOOKS).reduce((script, [hook, fn]) => {
+  const found = script.indexOf(`function ${fn}(`);
+  if (found === -1) {
+    throw new Error(`collab test hook missing from the bundle: ${fn}`);
+  }
+  // Insert ahead of `async`, not between it and `function`.
+  const at = script.slice(found - 6, found) === "async " ? found - 6 : found;
+  return `${script.slice(0, at)}(window.doCollabTest ??= {}).${hook} = ${fn};\n${script.slice(at)}`;
+}, localScriptContent);
 
 async function setupRoutes(page, { augment = false } = {}) {
   await page.route("https://dokie.li/**", (route) => route.abort());
@@ -73,7 +83,7 @@ test.describe("collab mode initialization", () => {
   });
 
   test("disables Yjs collab for new documents", async ({ page }) => {
-    await page.goto("/new");
+    await page.goto("/new?template=article");
     await page.waitForLoadState("domcontentloaded");
     await expect(page.locator(".ProseMirror")).toBeVisible({ timeout: 8000 });
 
@@ -100,7 +110,7 @@ test.describe("collab mode initialization", () => {
   });
 
   test("new document editor has do-new CSS class", async ({ page }) => {
-    await page.goto("/new");
+    await page.goto("/new?template=article");
     await page.waitForLoadState("domcontentloaded");
     await expect(page.locator(".ProseMirror")).toBeVisible({ timeout: 8000 });
 
@@ -126,7 +136,7 @@ test.describe("review changes panel", () => {
   test.beforeEach(async ({ page }) => {
     await setupRoutes(page, { augment: true });
 
-    await page.goto("/new");
+    await page.goto("/new?template=article");
     await page.waitForLoadState("domcontentloaded");
     await expect(page.locator(".ProseMirror")).toBeVisible({ timeout: 8000 });
   });
