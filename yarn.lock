@@ -336,10 +336,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@dokieli/notifications@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "@dokieli/notifications@npm:1.0.0"
-  checksum: 10c0/be4d5a206f34c8c6ccebf47d832c5d12eba775b1dbc4492e837be5c92c50f286df366a3e8c356015b7826c15467e81ea0e27534cbf2a6d9aebce7e1773b8c3da
+"@dokieli/notifications@npm:^1.0.1":
+  version: 1.0.1
+  resolution: "@dokieli/notifications@npm:1.0.1"
+  checksum: 10c0/0a5e55fd9f4c50f0985ec02eacf61c3b64c45affbf9ec66363c02162a0632c97f7bf449af0d3df3f3d010912c0311a213a1f668f37b6f5b55c298c19323e4ccf
   languageName: node
   linkType: hard
 
@@ -2081,7 +2081,7 @@ __metadata:
   resolution: "dokieli@workspace:."
   dependencies:
     "@axe-core/playwright": "npm:^4.9.1"
-    "@dokieli/notifications": "npm:^1.0.0"
+    "@dokieli/notifications": "npm:^1.0.1"
     "@dokieli/web-annotation": "npm:^1.0.1"
     "@playwright/test": "npm:^1.44.1"
     "@uvdsl/solid-oidc-client-browser": "npm:^0.2.3"
