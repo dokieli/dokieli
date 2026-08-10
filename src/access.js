@@ -15,26 +15,28 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import { allows } from '@dokieli/web-access-control';
 import Config from "./config.js";
 
-export function accessModeAllowed(documentURL, mode) {
+function asAccessMode(mode) {
+  return mode.charAt(0).toUpperCase() + mode.slice(1).toLowerCase();
+}
+
+function wacAllowFor(documentURL) {
   documentURL = documentURL || Config.DocumentURL;
+  return Config.Resource?.[documentURL]?.headers?.['wac-allow']?.permissionGroup;
+}
 
-  const wac = Config.Resource?.[documentURL]?.headers?.['wac-allow']?.permissionGroup;
-  if (!wac) return false;
+export function accessModeAllowed(documentURL, mode) {
+  const wacAllow = wacAllowFor(documentURL);
+  if (!wacAllow) return false;
 
-  return (
-    (wac.user && wac.user.includes(mode)) ||
-    (wac.public && wac.public.includes(mode))
-  );
+  return allows(wacAllow, asAccessMode(mode));
 }
 
 export function accessModePossiblyAllowed(documentURL, mode) {
-  documentURL = documentURL || Config.DocumentURL;
+  const wacAllow = wacAllowFor(documentURL);
+  if (!wacAllow) return true;
 
-  const wac = Config.Resource?.[documentURL]?.headers?.['wac-allow']?.permissionGroup;
-
-  if (!wac) return true;
-
-  return accessModeAllowed(documentURL, mode);
+  return allows(wacAllow, asAccessMode(mode));
 }

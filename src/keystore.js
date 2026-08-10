@@ -30,7 +30,9 @@ import {
 } from './crypto.js';
 import { getEncryptedKeystore, setEncryptedKeystore, updateDeviceStorageProfile } from './storage.js';
 import { getResource, getResourceHead, putResource, postResource, patchResourceWithAcceptPatch } from './fetcher.js';
-import { getResourceGraph, getLinkRelationFromHead, getACLResourceGraph, getAuthorizationsMatching } from './graph.js';
+import { getResourceGraph, getLinkRelationFromHead } from './graph.js';
+import { agentsWithMode, buildACLContext, planContainerACL, planGrant } from '@dokieli/web-access-control';
+import { applyACLPlan, getACLContext } from './wac.js';
 import { forceTrailingSlash, stripFragmentFromString } from './uri.js';
 import { escapeRDFLiteral, generateUUID } from './util.js';
 
@@ -173,39 +175,31 @@ async function ensureKeyContainer() {
 // Owner-only. The Read+Write default lets the owner create key resources; each resource then gets its own Read+Control ACL that makes it immutable
 async function setKeystoreContainerACL(containerURL) {
   const [aclURL] = await getLinkRelationFromHead('acl', containerURL);
-  const user = Config.User.IRI;
-  const insert = `<#owner>
-  a acl:Authorization ;
-  acl:accessTo <${containerURL}> ;
-  acl:agent <${user}> ;
-  acl:mode acl:Read, acl:Append, acl:Control ;
-  acl:condition <#anyClient> .
-<#keys>
-  a acl:Authorization ;
-  acl:default <${containerURL}> ;
-  acl:agent <${user}> ;
-  acl:mode acl:Read, acl:Write ;
-  acl:condition <#anyClient> .
-<#anyClient>
-  a acl:ClientCondition ;
-  acl:clientClass foaf:Agent .`;
-  return patchResourceWithAcceptPatch(aclURL, [{ insert }]);
+  const plan = planContainerACL({
+    aclURL: new URL(aclURL, containerURL).href,
+    containerURL,
+    owner: Config.User.IRI,
+    ownerModes: ['Read', 'Append', 'Control'],
+    defaultModes: ['Read', 'Write'],
+    conditions: 'anyClient'
+  });
+  return applyACLPlan(plan);
 }
 
 // No acl:Write: the key resource cannot be modified or deleted without first changing this ACL via Control
 async function setKeyResourceACL(resourceURL) {
   const [aclURL] = await getLinkRelationFromHead('acl', resourceURL);
-  const user = Config.User.IRI;
-  const insert = `<#owner>
-  a acl:Authorization ;
-  acl:accessTo <${resourceURL}> ;
-  acl:agent <${user}> ;
-  acl:mode acl:Read, acl:Control ;
-  acl:condition <#anyClient> .
-<#anyClient>
-  a acl:ClientCondition ;
-  acl:clientClass foaf:Agent .`;
-  return patchResourceWithAcceptPatch(aclURL, [{ insert }]);
+  const aclResource = new URL(aclURL, resourceURL).href;
+  // a non-empty conditions list makes planGrant attach a ClientCondition
+  const ctx = buildACLContext({
+    resource: resourceURL,
+    defaultACLResource: aclResource,
+    effectiveACLResource: aclResource,
+    conditions: ['anyClient'],
+    dataset: []
+  });
+  const plan = planGrant(ctx, { 'type': 'agent', 'iri': Config.User.IRI }, ['Read', 'Control']);
+  return applyACLPlan(plan);
 }
 
 //XXX: mirrors registerAnnotationInTypeIndex in activity.js; share a helper once the import cycle is untangled
@@ -391,25 +385,14 @@ export function getDocumentRecipientKeys() {
 export async function syncDocumentRecipientsFromACL(documentURL) {
   if (!Config.Session?.isActive || !Config.User?.IRI) return;
 
-  let aclResourceGraph;
+  let ctx;
   try {
-    aclResourceGraph = await getACLResourceGraph(documentURL);
+    ctx = await getACLContext(documentURL);
   } catch {
     return;
   }
-  const aclInfo = Config.Resource[documentURL]?.acl;
-  if (!aclResourceGraph?.node || !aclInfo?.effectiveACLResource) return;
 
-  const hasOwnACLResource = aclInfo.defaultACLResource == aclInfo.effectiveACLResource;
-  const matchers = hasOwnACLResource ? { 'accessTo': documentURL } : { 'default': aclInfo.effectiveContainer };
-  const authorizations = getAuthorizationsMatching(aclResourceGraph, matchers);
-
-  const agents = new Set();
-  Object.values(authorizations).forEach(authorization => {
-    if (authorization.mode.includes(Config.ns.acl.Read.value)) {
-      authorization.agent.forEach(agent => agents.add(agent));
-    }
-  });
+  const agents = new Set(agentsWithMode(ctx, 'Read'));
   agents.delete(Config.User.IRI);
 
   for (const agent of agents) {
