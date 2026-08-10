@@ -20,7 +20,8 @@ import * as Slideshow from './ui/templates/slideshow.js';
 import { diffChars } from 'diff';
 import LinkHeader from "http-link-header";
 import Config from './config.js'
-import { getDateTimeISO, generateAttributeId, uniqueArray, matchAllIndex, getRandomIndex, getHash, isValidISBN, getDateTimeISOFromMDY, debounce } from './util.js'
+import { getDateTimeISO, generateAttributeId, uniqueArray, getRandomIndex, getHash, isValidISBN, getDateTimeISOFromMDY, debounce } from './util.js'
+import { parseWacAllow } from '@dokieli/web-access-control';
 import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath, getPrefixedNameFromIRI, generateDataURI, getProxyableIRI, getFragmentOrLastPath, currentLocation } from './uri.js'
 import { getResourceGraph, sortGraphTriples, getGraphContributors, getGraphAuthors, getGraphEditors, getGraphPerformers, getGraphPublishers, getGraphLabel, getGraphEmail, getGraphTitle, getGraphConceptLabel, getGraphPublished, getGraphUpdated, getGraphDescription, getGraphLicense, getGraphRights, getGraphFromData, getGraphAudience, getGraphTypes, getGraphLanguage, getGraphInbox, getUserLabelOrIRI, getGraphImage, getGraphDate, processResources, getAgentName, getGraphCreators } from './graph.js';
 import { Icon } from './ui/icons.js';
@@ -1633,18 +1634,7 @@ export function updateSupplementalInfo(response, options = {}) {
       Config['Resource'][documentURL]['headers'][header] = { 'field-value': headerValue };
 
       if (header == 'wac-allow') {
-        var permissionGroups = Config['Resource'][documentURL]['headers']['wac-allow']['field-value'];
-        var wacAllowRegex = new RegExp(/(\w+)\s*=\s*"?\s*((?:\s*[^",\s]+)*)\s*"?/, 'ig');
-        var wacAllowMatches = matchAllIndex(permissionGroups, wacAllowRegex);
-
-        Config['Resource'][documentURL]['headers']['wac-allow']['permissionGroup'] = {};
-
-        wacAllowMatches.forEach(match => {
-          var modesString = match[2] || '';
-          var accessModes = uniqueArray(modesString.toLowerCase().split(/\s+/));
-
-          Config['Resource'][documentURL]['headers']['wac-allow']['permissionGroup'][match[1]] = accessModes;
-        });
+        Config['Resource'][documentURL]['headers']['wac-allow']['permissionGroup'] = parseWacAllow(headerValue);
       }
 
       else if (header == 'link') {

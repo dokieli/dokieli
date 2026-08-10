@@ -622,62 +622,6 @@ function putResource (url, data, contentType, links, options = {}) {
     })
 }
 
-/**
- * putResourceACL
- *
- * TODO: This doesn't seem to be used anywhere...
- *
- * @param accessToURL
- * @param aclURL
- * @param acl
- *
- * @returns {Promise<Response|null>}
- */
-function putResourceACL (accessToURL, aclURL, acl) {
-  if (!Config.User.IRI) {
-    console.log('Go through sign-in or do: Config.User.IRI = "https://example.org/#i";')
-    return Promise.resolve(null)
-  }
-
-  acl = acl || {
-    'u': { 'iri': [Config.User.IRI], 'mode': ['acl:Control', 'acl:Read', 'acl:Write'] },
-    'g': { 'iri': ['http://xmlns.com/foaf/0.1/Agent'], 'mode': ['acl:Read'] },
-    'o': { 'iri': [], 'mode': [] }
-  }
-
-  let agent, agentClass, mode
-
-  if ('u' in acl && 'iri' in acl.u && 'mode' in acl.u) {
-    agent = '<' + acl.u.iri.join('> , <') + '>'
-    mode = acl.u.mode.join(' , ')
-  } else {
-    agent = '<' + Config.User.IRI + '>'
-    mode = 'acl:Control , acl:Read , acl:Write'
-  }
-
-  let authorizations = []
-
-  authorizations.push(
-    '[ a acl:Authorization ; acl:accessTo <' +
-    accessToURL + '> ; acl:accessTo <' + aclURL + '> ; acl:mode ' + mode +
-    ' ; acl:agent ' + agent + ' ] .'
-  )
-
-  if ('g' in acl && 'iri' in acl.g && acl.g.iri.length >= 0) {
-    agentClass = '<' + acl.g.iri.join('> , <') + '>'
-    mode = acl.g.mode.join(' , ')
-    authorizations.push(
-      '[ a acl:Authorization ; acl:accessTo <' + accessToURL +
-      '> ; acl:mode ' + mode + ' ; acl:agentClass ' + agentClass + ' ] .'
-    )
-  }
-
-  let data = '@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n' +
-    authorizations.join('\n') + '\n'
-
-  return putResource(aclURL, data, 'text/turtle; charset=utf-8')
-}
-
 function processSave(url, slug, data, options) {
   options = options || {};
   var request = (slug)
@@ -768,7 +712,6 @@ export {
   patchResourceGraph,
   postResource,
   putResource,
-  putResourceACL,
   processSave,
   finalizeSave,
   patchResourceWithAcceptPatch,

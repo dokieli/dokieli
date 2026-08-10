@@ -26,8 +26,10 @@ import { accessModeAllowed, accessModePossiblyAllowed } from './access.js';
 import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeObject, htmlEncode, sanitizeIRIs } from './utils/sanitization.js';
 import { escapeRDFLiteral, generateAttributeId } from './util.js';
 import { setAcceptRDFTypes } from './fetcher.js';
-import { forceTrailingSlash, generateDataURI, getAbsoluteIRI, getBaseURL, isHttpOrHttpsProtocol, isFileProtocol, isUrl, stripFragmentFromString, getFragmentFromString, getURLLastPath, currentLocation } from './uri.js';
-import { getAccessSubjects, getACLResourceGraph, getAgentInbox, getAgentName, getAuthorizationsMatching, getGraphAuthors, getGraphContributors, getGraphEditors, getGraphImage, getGraphLabelOrIRI, getGraphPerformers, getGraphTypes, getLinkRelation, getLinkRelationFromHead, getResourceGraph, getUserContacts, getUserLabelOrIRI, serializeData, getSubjectInfo, getRDFSerializer, getGraphCreators } from './graph.js';
+import { forceTrailingSlash, generateDataURI, getBaseURL, isHttpOrHttpsProtocol, isFileProtocol, stripFragmentFromString, getFragmentFromString, getURLLastPath, currentLocation } from './uri.js';
+import { getAgentInbox, getAgentName, getGraphAuthors, getGraphContributors, getGraphEditors, getGraphImage, getGraphLabelOrIRI, getGraphPerformers, getGraphTypes, getLinkRelation, getLinkRelationFromHead, getResourceGraph, getUserContacts, getUserLabelOrIRI, serializeData, getSubjectInfo, getRDFSerializer, getGraphCreators } from './graph.js';
+import { hasControl, planGrant, planOwnerControl, planRevoke, Public } from '@dokieli/web-access-control';
+import { applyACLPlan, cachedACLContext, expandAccessMode, getACLContext } from './wac.js';
 import { notifyInbox, sendNotifications, showContactsActivities, initializeNotifications, registerEncryptionUnlockHandler, processPendingEncryptedNotes, clearPendingEncryptedQueues } from './activity.js';
 import Config from './config.js';
 const ns = Config.ns;
@@ -873,31 +875,31 @@ export function shareResource(listenerEvent, iri) {
     var accessPermissionsNode = document.getElementById('share-resource-permissions');
     var accessPermissionFetchingIndicator = accessPermissionsNode.querySelector('.progress');
 
-    getACLResourceGraph(documentURL)
+    getACLContext(documentURL)
       .catch(e => {
         accessPermissionsNode.removeChild(accessPermissionFetchingIndicator);
 
         console.log('XXX: Cannot access effectiveACLResource', e);
       })
-      .then(aclResourceGraph => {
+      .then(ctx => {
+        if (!ctx) { return; }
+
         accessPermissionsNode.removeChild(accessPermissionFetchingIndicator);
 
-        const { defaultACLResource, effectiveACLResource, effectiveContainer } = Config.Resource[documentURL].acl;
-        const hasOwnACLResource = defaultACLResource == effectiveACLResource;
-
-        var matchers = {};
-
-        if (hasOwnACLResource) {
-          matchers['accessTo'] = documentURL;
-        }
-        else {
-          matchers['default'] = effectiveContainer;
-        }
-
-        var authorizations = getAuthorizationsMatching(aclResourceGraph, matchers);
-// console.log(authorizations)
-        const subjectsWithAccess = getAccessSubjects(authorizations);
-// console.log(subjectsWithAccess)
+        const subjectsWithAccess = {};
+        ctx.authorizations.forEach(authorization => {
+          ['agent', 'agentClass', 'agentGroup'].forEach(subjectType => {
+            authorization[subjectType].forEach(accessSubject => {
+              subjectsWithAccess[accessSubject] = subjectsWithAccess[accessSubject] || { 'subjectType': subjectType, 'mode': [] };
+              authorization.mode.forEach(mode => {
+                const modeIRI = ns.acl[mode].value;
+                if (!subjectsWithAccess[accessSubject].mode.includes(modeIRI)) {
+                  subjectsWithAccess[accessSubject].mode.push(modeIRI);
+                }
+              });
+            });
+          });
+        });
 
         const input = document.getElementById('share-resource-search-contacts');
         const suggestions = document.querySelector('#share-resource-permissions .suggestions');
@@ -953,18 +955,19 @@ export function shareResource(listenerEvent, iri) {
               var options = {};
               options['accessContext'] = 'Share';
               options['selectedAccessMode'] = ns.acl.Read.value;
+              options['documentURL'] = documentURL;
               showAccessModeSelection(li, '', contact, 'agent', options);
 
               var select = document.querySelector('[id="' + li.id + '"] select');
               select.disabled = true;
               sanitizeInsertAdjacentHTML(select, 'afterend', `<span class="progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]}</span>`);
 
-              updateAuthorization(options.accessContext, options.selectedAccessMode, contact, 'agent')
+              updateAuthorization(documentURL, options.selectedAccessMode, contact, 'agent')
                 .catch(error => {
                   console.log(error)
                 })
                 .then(response => {
-                  getACLResourceGraph(documentURL)
+                  getACLContext(documentURL)
                     .catch(g => {
                       removeProgressIndicator(select);
                     })
@@ -995,21 +998,7 @@ export function shareResource(listenerEvent, iri) {
             //XXX: Relies on knowledge in addAcessSubjectItem where it inserts li with a particular id
             var li = document.getElementById('share-resource-access-subject-' + encodeURIComponent(accessSubject));
 
-            var verifiedAccessModes = [];
-
-            Object.keys(authorizations).forEach(authorization => {
-              var authorizationModes = authorizations[authorization].mode;
-              if (authorizations[authorization].agent.includes(accessSubject) ||
-                  authorizations[authorization].agentClass.includes(accessSubject) ||
-                  authorizations[authorization].agentGroup.includes(accessSubject)) {
-                authorizationModes.forEach(grantedMode => {
-                  if (accessContextModes.includes(grantedMode)) {
-                    verifiedAccessModes.push(grantedMode);
-                  }
-                });
-              }
-            })
-// console.log(verifiedAccessModes)
+            var verifiedAccessModes = subjectsWithAccess[accessSubject]['mode'].filter(mode => accessContextModes.includes(mode));
 
             const selectedAccessMode =
               (verifiedAccessModes.includes(ns.acl.Control.value) && ns.acl.Control.value) ||
@@ -1020,6 +1009,7 @@ export function shareResource(listenerEvent, iri) {
             var options = options || {};
             options['accessContext'] = 'Share';
             options['selectedAccessMode'] = selectedAccessMode;
+            options['documentURL'] = documentURL;
             if (accessSubject === Config.User.IRI) {
               options['disabled'] = true;
             }
@@ -1140,8 +1130,8 @@ async function shareResourceWithAgents(tos, note, iri, shareResourceNode) {
   if (accessModeAllowed(documentURL, 'control')) {
     for (const to of recipients) {
       try {
-        await updateAuthorization('Share', ns.acl.Read.value, to, 'agent');
-        await getACLResourceGraph(documentURL);
+        await updateAuthorization(documentURL, ns.acl.Read.value, to, 'agent');
+        await getACLContext(documentURL);
       }
       catch (e) {
         console.warn('dokieli: could not grant read access to ' + to, e);
@@ -1274,7 +1264,7 @@ function addAccessSubjectItem(node, s, url) {
 
 function showAccessModeSelection(node, id, accessSubject, subjectType, options) {
   id = id || generateAttributeId('select-access-mode-');
-  const documentURL = Config.DocumentURL || currentLocation();
+  const documentURL = options?.documentURL || Config.DocumentURL || currentLocation();
   let disabled = '';
 
   options = options || {};
@@ -1299,16 +1289,14 @@ function showAccessModeSelection(node, id, accessSubject, subjectType, options) 
       e.target.disabled = true;
       sanitizeInsertAdjacentHTML(e.target, 'afterend', `<span class="progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]}</span>`);
 
-      updateAuthorization(options.accessContext, selectedMode, accessSubject, subjectType)
+      updateAuthorization(documentURL, selectedMode, accessSubject, subjectType)
         .catch(error => {
           console.log(error);
           removeProgressIndicator(e.target);
         })
         .then(response => {
-// console.log(response)
-
           //This also ensures that we track the current resource's effective ACL resource
-          getACLResourceGraph(documentURL)
+          getACLContext(documentURL)
             .catch(g => {
               removeProgressIndicator(select);
             })
@@ -1329,297 +1317,40 @@ export async function ensureEncryptedDocumentACL(documentURL) {
   if (!Config.Session?.isActive || !Config.User?.IRI) return;
   if (!accessModeAllowed(documentURL, 'control')) return;
 
-  let aclResourceGraph;
+  let ctx;
   try {
-    aclResourceGraph = await getACLResourceGraph(documentURL);
+    ctx = await getACLContext(documentURL);
   } catch {
     return;
   }
-  const aclInfo = Config.Resource[documentURL]?.acl;
-  if (!aclResourceGraph?.node || !aclInfo?.effectiveACLResource) return;
 
-  const hasOwnACLResource = aclInfo.defaultACLResource == aclInfo.effectiveACLResource;
-  const matchers = hasOwnACLResource ? { 'accessTo': documentURL } : { 'default': aclInfo.effectiveContainer };
-  const authorizations = getAuthorizationsMatching(aclResourceGraph, matchers);
-
-  let ownerHasControl = false;
-  let publicHasAccess = false;
-  Object.values(authorizations).forEach(authorization => {
-    if (authorization.agent.includes(Config.User.IRI) && authorization.mode.includes(ns.acl.Control.value)) {
-      ownerHasControl = true;
-    }
-    if (authorization.agentClass.includes(ns.foaf.Agent.value)) {
-      publicHasAccess = true;
-    }
-  });
-
-  if (!ownerHasControl) {
-    await updateAuthorization('Share', ns.acl.Control.value, Config.User.IRI, 'agent');
-    await getACLResourceGraph(documentURL);
+  if (!hasControl(ctx, { 'type': 'agent', 'iri': Config.User.IRI })) {
+    await applyACLPlan(planOwnerControl(ctx, Config.User.IRI));
+    ctx = await getACLContext(documentURL);
   }
+
+  const publicHasAccess = ctx.authorizations.some(authorization => authorization.agentClass.includes(Public.iri));
   if (publicHasAccess) {
-    await updateAuthorization('Share', '', ns.foaf.Agent.value, 'agentClass');
-    await getACLResourceGraph(documentURL);
+    await applyACLPlan(planRevoke(ctx, Public));
+    await getACLContext(documentURL);
   }
 }
 
 //TODO: Check environment variable for issuerCondition information that's enforced per dokieli instance.
-function updateAuthorization(accessContext, selectedMode, accessSubject, subjectType) {
-  var documentURL = Config.DocumentURL || currentLocation();
+//An empty selectedMode means no access. planGrant reuses an existing Authorization for the access subject instead of adding a duplicate rule, splits a rule shared by several access subjects, and copies the container's Authorizations into a new ACL resource when the effective one is inherited. https://solid.github.io/web-access-control-spec/#authorization-rule
+function updateAuthorization(documentURL, selectedMode, accessSubject, subjectType) {
+  const ctx = cachedACLContext(documentURL);
 
-  const { defaultACLResource, effectiveACLResource, effectiveContainer } = Config.Resource[documentURL].acl;
-  const hasOwnACLResource = defaultACLResource == effectiveACLResource;
-  const patchACLResource = defaultACLResource;
-
-  var aclResourceGraph = Config.Resource[effectiveACLResource].graph;
-
-  var matchers = {};
-
-  if (hasOwnACLResource) {
-    matchers['accessTo'] = documentURL;
-  }
-  else {
-    matchers['default'] = effectiveContainer;
+  if (!ctx) {
+    return Promise.reject(new Error('No ACL context for ' + documentURL));
   }
 
-  var authorizations = getAuthorizationsMatching(aclResourceGraph, matchers);
+  const subject = { 'type': subjectType, 'iri': accessSubject };
+  const plan = selectedMode.length
+    ? planGrant(ctx, subject, expandAccessMode(selectedMode))
+    : planRevoke(ctx, subject);
 
-  // console.log(authorizations);
-
-  var insertGraph = '';
-  var deleteGraph = '';
-  // var whereGraph = '';
-  var authorizationSubject;
-  var authorizationCondition;
-
-  var authorizationForAccessSubjectInserted = false;
-
-  var patches = [];
-
-  var updatedMode;
-
-  switch (selectedMode) {
-    case ns.acl.Read.value:
-      updatedMode = [ns.acl.Read.value];
-      break;
-    case ns.acl.Write.value:
-      updatedMode = [ns.acl.Read.value, ns.acl.Write.value];
-      break;
-    case ns.acl.Control.value:
-      updatedMode = [ns.acl.Read.value, ns.acl.Write.value, ns.acl.Control.value];
-      break;
-  }
-
-  if (hasOwnACLResource) {
-    //Updates existing authorizations
-    Object.keys(authorizations).forEach(authorization => {
-      // console.log(authorizations[authorization], selectedMode, accessSubject, subjectType);
-      //This is for the specific access subject that was selected
-      if (authorizations[authorization][subjectType].includes(accessSubject)) {
-        // console.log(authorizations[authorization][subjectType])
-        var multipleAccessSubjects = (authorizations[authorization][subjectType].length > 1) ? true : false;
-        var deleteAccessObjectProperty = (hasOwnACLResource) ? 'accessTo' : 'default';
-
-        var deleteAccessSubjectProperty = subjectType;
-        var deleteAccessSubject = accessSubject;
-
-        var accessModes = authorizations[authorization].mode;
-        var deleteAccessModes = '<' + accessModes.join('>, <') + '>';
-
-        if (!multipleAccessSubjects && selectedMode.length) {
-          //Only the acl:mode triples change, the rest is untouched
-          authorizationForAccessSubjectInserted = true;
-          patches.push({
-            'delete': `\n<${authorization}> acl:mode ${deleteAccessModes} .\n`,
-            'insert': `\n<${authorization}> acl:mode <${updatedMode.join('>, <')}> .\n`
-          });
-        }
-        else {
-          var accessConditions = authorizations[authorization].condition;
-
-          //When only one particular agent uses this Authorization, remove the whole
-          if (!multipleAccessSubjects) {
-            deleteGraph += `
-<${authorization}>
-a acl:Authorization ;
-acl:${deleteAccessObjectProperty} <${documentURL}> ;
-acl:mode ${deleteAccessModes} ;
-acl:${deleteAccessSubjectProperty} <${deleteAccessSubject}> .
-`;
-            accessConditions.forEach(condition => {
-              if (typeof condition !== 'object') return;
-              const condParts = [];
-              Object.entries(condition).forEach(([predIRI, objects]) => {
-                if (predIRI === 'id') return;
-                const values = Array.isArray(objects) ? objects : [objects];
-                condParts.push(`<${predIRI}> <${values.join('>, <')}>`);
-              });
-              if (isUrl(condition.id)) {
-                deleteGraph += `\n<${authorization}> acl:condition <${condition.id}> .\n`;
-                deleteGraph += `<${condition.id}>\n${condParts.join(' ;\n')} .\n`;
-              }
-              /* XXX: Do not remove this comment
-              Blank node deleting via SPARQL Update or Solid Protocol N3 Patch (or another protocol) is not guaranteed to work. Worst case here is that there is dangling, e.g., <${authorization} acl:condition [ ... ] but it is not effective since it doesn't conform to https://solid.github.io/web-access-control-spec/#authorization-conformance . It'll never be matched with the exception of clients reusing the same Authorization IRI in the future to add the other parts of the Authorization rule. Even in this case access
-              Alternatively, TODO: modify the triple directly and use PUT instead
-              // else {
-              //   deleteGraph += `\n<${authorization}> acl:condition [ ${condParts.join(' ; ')} ] .\n`;
-              // }
-              */
-            });
-          }
-          //When we need to remove the access of only one of the access subjects from an Authorization (and leave the rest untouched)
-          else {
-            deleteGraph += `
-<${authorization}>
-acl:${deleteAccessSubjectProperty} <${deleteAccessSubject}> .
-`;
-          }
-
-          patches.push({ 'delete': deleteGraph });
-        }
-      }
-
-    })
-
-    // console.log(authorizationForAccessSubjectInserted)
-
-    //Only insert new Authorization if we did not change an existing Authorization from earlier (so we don't have duplicates)
-    //https://solid.github.io/web-access-control-spec/#authorization-rule
-    if (selectedMode.length && !authorizationForAccessSubjectInserted) {
-      authorizationSubject = '#' + generateAttributeId();
-
-      insertGraph = `
-<${authorizationSubject}>
-a acl:Authorization ;
-acl:accessTo <${documentURL}> ;
-acl:mode <${updatedMode.join('>, <')}> ;
-acl:${subjectType} <${accessSubject}> .
-`;
-
-      if (Config.Resource[effectiveACLResource]?.conditions?.length) {
-        authorizationCondition = '#' + generateAttributeId();
-        insertGraph += `
-<${authorizationSubject}> acl:condition <${authorizationCondition}> .
-<${authorizationCondition}>
-a acl:ClientCondition ;
-acl:clientClass foaf:Agent .
-`;
-      }
-
-      patches.push({ 'insert': insertGraph });
-    }
-  }
-  //When the effective ACL resource is from a parent or ancestor container resource
-  //Copy the Authorizations from the effective ACL resource that needs to be preserved for the ACL resource that will be created later
-  else {
-    var updatedAuthorizations = structuredClone(authorizations);
-
-    Object.keys(updatedAuthorizations).forEach(authorization => {
-      //If there are existing Authorizations in the effective ACL resource that has same access subject as the one in which we want to update its access.
-      if (updatedAuthorizations[authorization][subjectType].includes(accessSubject)) {
-        const multipleAccessSubjects = updatedAuthorizations[authorization][subjectType].length > 1;
-
-        if (multipleAccessSubjects) {
-          //Remove only this subject from the authorization, leaving the others untouched
-          updatedAuthorizations[authorization][subjectType] = updatedAuthorizations[authorization][subjectType].filter(s => s !== accessSubject);
-          //If updating mode: authorizationForAccessSubjectInserted stays false so the insert block below creates a fresh authorization for this subject with the new mode
-          //If removing access: removing the subject from the list is sufficient, no new authorization needed
-        }
-        //Removes access mode (when selection is no access)
-        else {
-          //Update mode in place so condition and other properties are preserved through the additionalProperties serialization
-          if (selectedMode.length) {
-            updatedAuthorizations[authorization].mode = updatedMode;
-            authorizationForAccessSubjectInserted = true;
-          }
-          //Removes access (when selection is no access)
-          else {
-            delete updatedAuthorizations[authorization];
-          }
-        }
-      }
-    });
-
-    //XXX: updatedAuthorizations may have different authorization objects with the same properties and values. This is essentially just duplicate authorization rules.
-
-    // console.log(updatedAuthorizations);
-
-    //First we insert the Authorizations from the effective ACL resource towards the new ACL resource
-    //https://solid.github.io/web-access-control-spec/#authorization-rule
-    insertGraph = '';
-    Object.keys(updatedAuthorizations).forEach(authorization => {
-      // console.log(authorization)
-      authorizationSubject = '#' + generateAttributeId();
-
-      var additionalProperties = [];
-      var conditionInserts = '';
-      ['agent', 'agentClass', 'agentGroup', 'origin', 'condition'].forEach(key => {
-        if (updatedAuthorizations[authorization][key] && updatedAuthorizations[authorization][key].length) {
-          if (key === 'condition') {
-            if (Config.Resource[effectiveACLResource]?.conditions?.length) {
-              Object.values(updatedAuthorizations[authorization][key]).forEach((condition) => {
-                authorizationCondition = '#' + generateAttributeId();
-                additionalProperties.push(`acl:condition <${authorizationCondition}>`);
-                const condParts = [];
-                Object.entries(condition).forEach(([predIRI, objects]) => {
-                  if (predIRI === 'id') return;
-                  const values = Array.isArray(objects) ? objects : [objects];
-                  condParts.push(`<${predIRI}> <${values.join('>, <')}>`);
-                });
-                conditionInserts += `\n<${authorizationCondition}>\n${condParts.join(' ;\n')} .\n`;
-              });
-            }
-          }
-          else {
-            additionalProperties.push(`acl:${key} <${updatedAuthorizations[authorization][key].join('>, <')}>`);
-          }
-        }
-      })
-      additionalProperties = additionalProperties.join(';\n');
-
-      insertGraph += `
-<${authorizationSubject}>
-a acl:Authorization ;
-acl:accessTo <${documentURL}> ;
-acl:mode <${updatedAuthorizations[authorization].mode.join('>, <')}> ;
-${additionalProperties} .
-`;
-      insertGraph += conditionInserts;
-    });
-
-    //Here we add the new Authorization that needs to be added as per user's selection
-    if (selectedMode.length && !authorizationForAccessSubjectInserted) {
-      authorizationSubject = '#' + generateAttributeId();
-
-      insertGraph += `
-<${authorizationSubject}>
-a acl:Authorization ;
-acl:accessTo <${documentURL}> ;
-acl:mode <${updatedMode.join('>, <')}> ;
-acl:${subjectType} <${accessSubject}> .
-`;
-
-      if (Config.Resource[effectiveACLResource]?.conditions?.length) {
-        authorizationCondition = '#' + generateAttributeId();
-        insertGraph += `
-<${authorizationSubject}> acl:condition <${authorizationCondition}> .
-<${authorizationCondition}>
-a acl:ClientCondition ;
-acl:clientClass foaf:Agent .
-`;
-      }
-    }
-
-    patches.push({ 'insert': insertGraph });
-  }
-
-  // console.log(patches)
-  if (!patches.length) {
-    throw new Error("Check why the patch payload wasn't constructed in updateAuthorization." + patches);
-  }
-  else {
-    return Config.Storage.patchWithConneg(patchACLResource, patches);
-  }
+  return applyACLPlan(plan);
 }
 
 function removeProgressIndicator(node) {

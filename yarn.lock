@@ -343,6 +343,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@dokieli/web-access-control@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "@dokieli/web-access-control@npm:1.0.0"
+  dependencies:
+    "@rdfjs/data-model": "npm:^2.1.1"
+    "@rdfjs/types": "npm:^2.0.1"
+    n3: "npm:^2.2.0"
+  checksum: 10c0/1385cc4eeb3cf5d3a6f21d95b327b976dbf0c5efce1375ca5394544847159e9e395ac88c70a6e08c080eb9309e2cc29bc4fbce7ac99197da010716b7290d9dcb
+  languageName: node
+  linkType: hard
+
 "@dokieli/web-annotation@npm:^1.0.1":
   version: 1.0.1
   resolution: "@dokieli/web-annotation@npm:1.0.1"
@@ -640,6 +651,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@rdfjs/data-model@npm:^2.1.1":
+  version: 2.1.2
+  resolution: "@rdfjs/data-model@npm:2.1.2"
+  bin:
+    rdfjs-data-model-test: bin/test.js
+  checksum: 10c0/e9e10821154d9a855212736458b549a67c318144be4fcdffe41b708ef6059ee4ce0b6ca5452ce39d5dd00c47d585794bd59a80c98ccfd03bb75d6b99e637c6ad
+  languageName: node
+  linkType: hard
+
 "@rdfjs/dataset@npm:^2.0.1":
   version: 2.0.2
   resolution: "@rdfjs/dataset@npm:2.0.2"
@@ -869,7 +889,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rdfjs/types@npm:^2.0.0":
+"@rdfjs/types@npm:^2.0.0, @rdfjs/types@npm:^2.0.1":
   version: 2.0.1
   resolution: "@rdfjs/types@npm:2.0.1"
   dependencies:
@@ -2082,6 +2102,7 @@ __metadata:
   dependencies:
     "@axe-core/playwright": "npm:^4.9.1"
     "@dokieli/notifications": "npm:^1.0.1"
+    "@dokieli/web-access-control": "npm:^1.0.0"
     "@dokieli/web-annotation": "npm:^1.0.1"
     "@playwright/test": "npm:^1.44.1"
     "@uvdsl/solid-oidc-client-browser": "npm:^0.2.3"
@@ -4039,6 +4060,16 @@ __metadata:
     buffer: "npm:^6.0.3"
     readable-stream: "npm:^4.0.0"
   checksum: 10c0/e8a399f9295ccbd4008113bebdbdb15e5ef824e2d396a94d70cc7c1a94261a72869622bd1d78b3e94ea48056d5cd1b42e3b6d8acd1e0261f387e94ac6403013d
+  languageName: node
+  linkType: hard
+
+"n3@npm:^2.2.0":
+  version: 2.2.5
+  resolution: "n3@npm:2.2.5"
+  dependencies:
+    buffer: "npm:^6.0.3"
+    readable-stream: "npm:^4.0.0"
+  checksum: 10c0/3495ac7f14187d366ecad6b53311ee80486ec68ec51c039221a394afebd31d3445e58a003e3d1383be9b49afb9e1af0d49f5321606cdd705ae58078a9cd6c4f4
   languageName: node
   linkType: hard
 
