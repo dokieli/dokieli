@@ -18,9 +18,22 @@ limitations under the License.
 import Config from './config.js'
 import Papa from 'papaparse';
 import { generateAttributeId, getDateTimeISO } from './util.js';
-import { sanitizeObject, domSanitize } from './utils/sanitization.js';
+import { sanitizeObject } from './utils/sanitization.js';
 import { createDateHTML, createLicenseHTML } from './doc.js';
+import { renderCellHTML } from './table.js';
 import uriTemplates from 'uri-templates';
+
+// STRIDE assessments encode the threat type as a single letter, which is only
+// meaningful once expanded. Passed to the cell emitter as a value mapper so
+// the emitter itself stays free of column-name special cases.
+function strideValueMapper(column, cell) {
+  if (column.name !== 'strideThreatType' || !column.valueUrl) return null;
+
+  const threatType = Config.STRIDEThreatTypes[column.valueUrl.slice(1)];
+  if (!threatType) return null;
+
+  return { text: threatType.name, valueUrl: threatType.uri };
+}
 
 export function csvStringToJson(str) {
   return Papa.parse(str.trim());
@@ -45,8 +58,6 @@ export function jsonToHtmlTableString(csvTables, metadata = {}) {
   if (!metadata?.tables && metadata && metadata["@type"] == "Table") {
     tables = metadata;
   }
-
-  const uriTemplateProperties = ['aboutUrl', 'propertyUrl', 'valueUrl'];
 
   if (metadata?.tables) {
     const orderMap = metadata.tables.reduce((acc, table, index) => {
@@ -169,120 +180,30 @@ export function jsonToHtmlTableString(csvTables, metadata = {}) {
 
         cell = cell.trim();
 
-        const currentColumnMetadataOriginal = metadataColumns?.find(col => col.name === columnName);
-        const currentColumnMetadata = { ...currentColumnMetadataOriginal };
-        
-        const nullValues = currentColumnMetadata?.null || [''];
+        const columnMetadata = metadataColumns?.find(col => col.name === columnName);
 
         const cellFillValues = headers.reduce((acc, header) => {
-          let val = getValueByHeader(row, headers, header);
-          acc[header] = val;
+          acc[header] = getValueByHeader(row, headers, header);
           return acc;
         }, {});
 
-        fillValues['_row'] = rowIndex + 1;
+        cellFillValues['_row'] = rowIndex + 1;
 
-        let isInForeignKeys = !!foreignKeys.includes(currentColumnMetadata?.name)
-
-        let skipProperty = false;
-
-        Object.keys(currentColumnMetadata).forEach(key => {
-          if (uriTemplateProperties.includes(key)) {
-            const uriTemplate = uriTemplates(currentColumnMetadata[key]);
-            let isNull = false;
-            uriTemplate.varNames.forEach((v) => {
-              if (foreignKeys.includes(v) && v !== currentColumnMetadata.name) {
-                isInForeignKeys = true;
-                isNull = nullValues.includes(cellFillValues[v]);
-                if (isNull) {
-                  skipProperty = true;
-                }
-              }
-            })
-
-            currentColumnMetadata[key] = isNull ? null : domSanitize(uriTemplate.fill(cellFillValues));
-          }
-        })
-
-        const attributes = []
-
-        if (currentColumnMetadata.aboutUrl) {
-          attributes.push(`about="${currentColumnMetadata.aboutUrl}"`);
-
-          if (!isInForeignKeys) {
-            attributes.push(`id="${currentColumnMetadata.aboutUrl.slice(1)}"`);
-          }
+        // No metadata at all: fall back to a document-relative property named
+        // after the column, so a bare CSV still says something.
+        if (!columnMetadata) {
+          const child = URL.canParse(cell) ? 'a' : 'span';
+          const href = child === 'a' ? ` href="${new URL(cell)}"` : '';
+          tableHTML += `<td><${child}${href} property="#${columnName}">${cell}</${child}></td>`;
+          return;
         }
 
-        let childWithAttribute;
-
-        if (currentColumnMetadata.propertyUrl) {
-          if (currentColumnMetadata.propertyUrl == 'rdf:type') {
-            let aboutUrl = currentColumnMetadata.aboutUrl || tableSchemaAboutUrlValue;
-
-            attributes.push(`about="${aboutUrl}"`);
-
-            if (!tableSchemaAboutUrlValue && !isInForeignKeys) {
-              attributes.push(`id="${aboutUrl.slice(1)}"`);
-            }
-            
-            if (currentColumnMetadata.valueUrl) {
-              attributes.push(`typeof="${currentColumnMetadata.valueUrl}"`);
-            }
-            else {
-              attributes.push(`typeof="${cell}"`);
-            }
-          }
-
-          if (currentColumnMetadata.propertyUrl == 'dcterms:description' && !nullValues.includes(cell)) {
-            attributes.push(`property="${currentColumnMetadata.propertyUrl}"`);
-          }
-
-          if (currentColumnMetadata.propertyUrl !== 'rdf:type' && currentColumnMetadata.propertyUrl !== 'dcterms:description' && currentColumnMetadata.valueUrl) {
-            if (currentColumnMetadata.name == 'strideThreatType') {
-              let valueUrlSliced = currentColumnMetadata.valueUrl.slice(1);
-              let strideThreatType = Config.STRIDEThreatTypes[valueUrlSliced];
-
-              if (strideThreatType) {
-                cell = strideThreatType.name;
-                currentColumnMetadata.valueUrl = strideThreatType.uri;
-              }
-            }
-
-            let hrefValue;
-            let relAttribute = '';
-
-            if ((currentColumnMetadata.propertyUrl == 'dcterms:subject' || currentColumnMetadata.propertyUrl == 'rdfs:seeAlso') && URL.canParse(cell)) {
-              hrefValue = cell;
-            }
-
-            if (!skipProperty) {
-              relAttribute = ` rel="${currentColumnMetadata.propertyUrl}"`;
-            }
-
-            childWithAttribute = `<a href="${hrefValue ?? currentColumnMetadata.valueUrl}"${relAttribute}>${cell}</a>`;
-          }
-          else {
-            childWithAttribute = cell;
-          }
-        }
-        else {
-          let hrefValue;
-
-          if (URL.canParse(cell)) {
-            hrefValue = new URL(cell);
-            childWithAttribute = `<a href="${hrefValue}" property="#${columnName}">${cell}</a>`;
-          } else {
-            childWithAttribute = `<span property="#${columnName}">${cell}</span>`;
-          }
-        }
-
-        if (nullValues.includes(cell)) {
-          tableHTML += `<td>${cell}</td>`;
-        }
-        else {
-          tableHTML += `<td ${attributes.join(' ')}>${childWithAttribute}</td>`;
-        }
+        tableHTML += renderCellHTML(columnMetadata, cell, {
+          rowSubject: tableSchemaAboutUrlValue,
+          fillValues: cellFillValues,
+          foreignKeys,
+          valueMapper: strideValueMapper
+        });
       })
       tableHTML += `</tr>`;
     });
