@@ -22,6 +22,10 @@ import { schema } from "../schema/base.js";
 import { TextSelection } from "prosemirror-state";
 import Config from "../../config.js";
 import { isUploadableTarget, uploadImageFile } from "../utils/imageAssets.js";
+import { insertTable } from "../commands/table.js";
+import { getLookupService } from "../../services.js";
+import { csvStringToJson } from "../../csv.js";
+import { fromCSVWTableSchema } from "../../table.js";
 
 export function formHandlerLanguage(e) {
   e.preventDefault();
@@ -132,6 +136,99 @@ export function formHandlerTestSuite(e) {
 
   this.replaceSelectionWithFragment(fragmentFromString(htmlString));
   this.hideMenu()
+}
+
+/**
+ * A CSVW metadata document describes one or more tables; pick the entry for the
+ * CSV that was imported, falling back to the only table it describes.
+ */
+function csvwTableFor(metadata, csvName) {
+  if (!metadata) return null;
+  const tables = Array.isArray(metadata.tables) ? metadata.tables : [metadata];
+  const named = tables.find((table) => table.url && csvName && table.url.split('/').pop() === csvName);
+  return named || tables[0] || null;
+}
+
+async function readImportedCSV(form) {
+  const csvFile = form.querySelector('#table-csv-file')?.files?.[0];
+  if (!csvFile) return null;
+
+  const parsed = csvStringToJson(await csvFile.text());
+  const rows = (parsed?.data || []).filter((row) => row.some((cell) => String(cell ?? '').trim()));
+  if (!rows.length) return null;
+
+  const [headers, ...data] = rows;
+
+  const metadataFile = form.querySelector('#table-metadata-file')?.files?.[0];
+  let columnSchemas = [];
+  let tableSchema = null;
+
+  if (metadataFile) {
+    try {
+      const csvw = csvwTableFor(JSON.parse(await metadataFile.text()), csvFile.name);
+      const converted = fromCSVWTableSchema(csvw?.tableSchema);
+      columnSchemas = converted.columns;
+      tableSchema = converted.tableSchema;
+    }
+    catch (error) {
+      console.warn('Could not read the CSVW metadata:', error?.message || error);
+    }
+  }
+
+  return { headers, data, columnSchemas, tableSchema };
+}
+
+export async function formHandlerTable(e) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const formValues = getFormValues(e.target);
+
+  // Blank, a template, or an imported CSV: one of the three, never a blend.
+  const start = formValues['table-start'] || 'blank';
+
+  const imported = start === 'import' ? await readImportedCSV(e.target) : null;
+  if (start === 'import' && !imported) return;
+
+  // Each card carries its own rows field, so the visible one is the one meant.
+  const rowsField = start === 'template' ? formValues['table-rows-template'] : formValues['table-rows'];
+  const rows = Math.max(1, Math.min(parseInt(rowsField, 10) || 3, 100));
+
+  // A template brings its own column set, so the table arrives already mapped
+  // and ready to autofill.
+  const service = start === 'template' ? getLookupService(formValues['table-service']) : null;
+  const serviceColumns = service?.columns || [];
+
+  const columns = imported?.headers.length || (serviceColumns.length
+    ? serviceColumns.length
+    : Math.max(1, Math.min(parseInt(formValues['table-columns'], 10) || 3, 30)));
+
+  const { state, dispatch } = this.editorView;
+  const { selection } = state;
+
+  // Drop the "/" that opened the menu.
+  const newSelection = TextSelection.create(state.doc, Math.max(selection.from - 1, 0), selection.from);
+  dispatch(state.tr.setSelection(newSelection));
+
+  insertTable({
+    rows: imported?.data.length || rows,
+    columns,
+    headers: imported?.headers || [],
+    data: imported?.data || [],
+    tableSchema: imported?.tableSchema || null,
+    columnSchemas: imported?.columnSchemas?.length ? imported.columnSchemas : serviceColumns,
+    lookup: service
+      ? {
+          service: formValues['table-service'],
+          url: service.url,
+          format: service.format,
+          record: service.record,
+          subject: service.subject
+        }
+      : null
+  })(this.editorView.state, this.editorView.dispatch);
+
+  this.hideMenu();
 }
 
 export async function formHandlerImg(e) {

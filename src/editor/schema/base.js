@@ -646,71 +646,71 @@ let customNodes = {
     toDOM: toDOMWith("textarea")
   },
 
+  // Table nodes are structurally typed so that row/column commands can rely on
+  // the shape, and so a stray block can't land between a table and its cells.
+  // They are deliberately not in the "block" group: each may only appear where
+  // a parent names it.
   table: {
-    content: "block*",
+    content: "caption? colgroup? (thead | tbody | tfoot | tr)+",
     group: "block",
+    isolating: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "table", getAttrs(node){ return getAttributes(node); }}],
     toDOM: toDOMWith("table")
   },
   thead: {
-    content: "block*",
-    group: "block",
+    content: "tr+",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "thead", getAttrs(node){ return getAttributes(node); }}],
     toDOM: toDOMWith("thead")
   },
   tbody: {
-    content: "block*",
-    group: "block",
+    content: "tr+",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "tbody", getAttrs(node){ return getAttributes(node); }}],
     toDOM: toDOMWith("tbody")
   },
   tfoot: {
-    content: "block*",
-    group: "block",
+    content: "tr+",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "tfoot", getAttrs(node){ return getAttributes(node); }}],
     toDOM: toDOMWith("tfoot")
   },
   caption: {
     content: "inline*",
-    group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "caption", getAttrs(node){ return getAttributes(node); }}],
     toDOM: toDOMWith("caption")
   },
   tr: {
-    content: "block*",
-    group: "block",
+    content: "(th | td)+",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "tr", getAttrs(node){ return getAttributes(node); }}],
     toDOM: toDOMWith("tr")
   },
+  // block+ rather than block* so an empty cell can still hold a cursor. The
+  // resulting lone <p> is unwrapped on save by cleanProseMirrorOutput().
   th: {
-    content: "block*",
-    group: "block",
+    content: "block+",
+    isolating: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "th", getAttrs(node){ return getAttributes(node); }}],
     toDOM: toDOMWith("th")
   },
   td: {
-    content: "block*",
-    group: "block",
+    content: "block+",
+    isolating: true,
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "td", getAttrs(node){ return getAttributes(node); }}],
     toDOM: toDOMWith("td")
   },
   colgroup: {
-    content: "block*",
-    group: "block",
+    content: "col*",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "colgroup", getAttrs(node){ return getAttributes(node); }}],
     toDOM: toDOMWith("colgroup")
   },
   col: {
-    group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "col", getAttrs(node){ return getAttributes(node); }}],
     toDOM: toDOMWith("col", {skipContentHole: true})

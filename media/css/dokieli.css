@@ -1968,6 +1968,545 @@ color: #555;
 font-variant: small-caps;
 }
 
+/* Table tools */
+.editor-table-tools {
+position:absolute;
+z-index:10;
+display:flex;
+align-items:center;
+flex-wrap:wrap;
+gap:0.5em;
+background-color:#fff;
+border:1px solid #ccc;
+border-radius:0.5em;
+box-shadow:0.25em 0.25em 0.25em rgba(0,0,0,0.1);
+padding:0.25em;
+white-space:nowrap;
+}
+.editor-table-tools-group + .editor-table-tools-group {
+border-left:1px solid #ddd;
+padding-left:0.5em;
+}
+.editor-table-tools[hidden] {
+display:none;
+}
+.editor-table-tools-group {
+display:flex;
+align-items:center;
+gap:0.125em;
+}
+.editor-table-tools button {
+background:none;
+border:1px solid transparent;
+border-radius:0.25em;
+cursor:pointer;
+padding:0.25em 0.5em;
+font-size:0.875em;
+line-height:1.4;
+color:#333;
+white-space:nowrap;
+}
+.editor-table-tools button:hover:enabled {
+background-color:#eee;
+border-color:#ccc;
+}
+.editor-table-tools button:disabled {
+opacity:0.4;
+cursor:default;
+}
+.editor-table-tools button.mapped {
+color:#080;
+font-weight:bold;
+}
+
+/* Positioning only. Everything else about these forms -- padding, labels,
+   inputs, buttons -- comes from .editor-form, like every other popup. */
+.editor-table-panel {
+position:absolute;
+z-index:11;
+width:24em;
+max-width:calc(100vw - 2em);
+max-height:70vh;
+overflow-y:auto;
+}
+.editor-table-panel > .editor-form {
+/* editor-form-active positions absolutely, which would take the form out of
+   flow and collapse the panel around it. In here the panel does the placing. */
+position:static;
+display:block;
+}
+.editor-table-panel .autocomplete {
+position:relative;
+}
+.editor-table-panel .autocomplete .suggestions {
+width:100%;
+}
+.editor-table-panel [hidden] {
+display:none;
+}
+
+
+.editor-slashmenu-search {
+display:block;
+width:100%;
+box-sizing:border-box;
+margin:0 0 0.5em;
+padding:0.35em 0.5em;
+border:1px solid #ccc;
+border-radius:0.25em;
+font-size:0.9375em;
+}
+.editor-slashmenu li[hidden] {
+display:none;
+}
+
+/* Card-style choices in editor forms, matching the Save As asset handling. */
+/* The card list needs a real width: an absolutely positioned form otherwise
+   shrink-wraps to its narrowest content. */
+#document-slashmenu:has(.editor-form-cards),
+.editor-form:has(.editor-form-cards) {
+width:min(38em, 92vw);
+box-sizing:border-box;
+}
+.editor-form:has(.editor-form-cards) fieldset {
+min-width:0;
+}
+.editor-form-cards {
+list-style:none;
+padding:0;
+margin:0 0 0.75em;
+display:flex;
+flex-direction:column;
+gap:0.5em;
+}
+.editor-form-cards input[type="radio"] {
+position:absolute;
+opacity:0;
+pointer-events:none;
+}
+.editor-form-cards > li > label {
+display:flex !important;
+flex-direction:row;
+align-items:center;
+gap:0.85em;
+padding:0.75em 1em;
+border:1px solid #ccc;
+border-radius:0.25em;
+background:#fff;
+cursor:pointer;
+min-width:0;
+margin-left:0;
+}
+.editor-form-cards > li > label:hover {
+border-color:#080;
+}
+.editor-form-cards > li > input:checked + label {
+border-color:#080;
+background:#efe;
+}
+.editor-form-cards > li > input:focus-visible + label {
+outline:2px solid #080;
+outline-offset:2px;
+}
+.editor-form-cards > li > label > svg {
+flex-shrink:0;
+display:inline-flex;
+align-items:center;
+justify-content:center;
+width:1.5em;
+height:1.5em;
+fill:#333;
+}
+.editor-form-cards > li > input:checked + label > svg {
+fill:#080;
+}
+.editor-form-card-text {
+flex:1;
+min-width:0;
+display:flex;
+flex-direction:column;
+gap:0.2em;
+}
+.editor-form-card-text strong {
+font-weight:bold;
+color:#000;
+}
+.editor-form-card-text span {
+font-weight:normal;
+color:#555;
+font-size:0.9em;
+}
+/* A card's own options, revealed under it when that card is chosen. */
+.editor-form-card-fields {
+padding:0.7em 1em 0.8em 3.35em;
+/* The card's label is offset by `.editor-form input + label`; match it. */
+margin-left:0.25em;
+margin-top:-0.35em;
+border:1px solid #080;
+border-top:0;
+border-radius:0 0 0.25em 0.25em;
+background:#fafafa;
+display:grid;
+grid-template-columns:max-content minmax(6em, 1fr);
+align-items:center;
+gap:0.5em 0.75em;
+padding:1em !important;
+}
+.editor-form-card-fields[hidden] {
+display:none;
+}
+.editor-form-cards input:checked + label {
+border-radius:0.25em 0.25em 0 0;
+}
+.editor-form-cards > li:has(.editor-form-card-fields[hidden]) > input:checked + label,
+.editor-form-cards > li > input:not(:checked) + label {
+border-radius:0.25em;
+}
+.editor-form-field-row {
+display:grid;
+grid-template-columns:max-content minmax(6em, 1fr);
+align-items:center;
+gap:0.5em 0.75em;
+margin:0 0 0.75em;
+}
+.editor-form fieldset .editor-form-field-row label {
+display:block;
+}
+.editor-form-field-row .editor-form-input {
+width:100%;
+min-width:0;
+box-sizing:border-box;
+padding:0.35em 0.5em;
+border-width:1px;
+border-radius:0.25em;
+font-size:0.9375em;
+}
+.editor-form fieldset .editor-form-field-label {
+display:block;
+margin:0;
+padding:0;
+border:0;
+background:none;
+font-size:0.875em;
+font-weight:normal !important;
+color:#333;
+white-space:nowrap;
+}
+.editor-form-card-fields .editor-form-input,
+.editor-form-card-fields .editor-form-select {
+width:100%;
+min-width:0;
+box-sizing:border-box;
+padding:0.35em 0.5em;
+border-width:1px;
+border-radius:0.25em;
+font-size:0.9375em;
+}
+/* Counts need a couple of digits, not the whole row. */
+.editor-form-card-fields input[type="number"] {
+width:5em;
+justify-self:start;
+}
+.editor-form-card-fields input[type="file"] {
+font-size:0.875em;
+}
+
+.editor-form-cards > li > label svg.fa-check {
+width:1em;
+height:1em;
+fill:#080;
+visibility:hidden;
+}
+.editor-form-cards > li > input:checked + label svg.fa-check {
+visibility:visible;
+}
+
+.editor-form [data-when-start][hidden] {
+display:none;
+}
+
+.ProseMirror th,
+.ProseMirror td {
+border:1px dotted;
+}
+/* An empty caption is a zero-height box behind a ::before, so there is nothing
+   to click. Give it a line of its own to put the caret in. */
+.ProseMirror caption {
+cursor:text;
+min-height:1.4em;
+}
+/* Sits after the "Table N." the counter renders, on the same line. ProseMirror
+   fills an empty textblock with a trailing <br>, which would break that line. */
+.ProseMirror caption[data-placeholder] > br {
+display:none;
+}
+.ProseMirror caption[data-placeholder]::after {
+content:attr(data-placeholder);
+color:#999;
+font-style:italic;
+pointer-events:none;
+}
+/* Image cells are thumbnails: a book cover should not set the row height. */
+.ProseMirror td img,
+table td img {
+max-width:6em;
+max-height:8em;
+width:auto;
+height:auto;
+display:block;
+}
+
+/* The cell being typed in, so the caret's column is never in doubt. */
+.ProseMirror td.table-cell-active,
+.ProseMirror th.table-cell-active {
+outline:2px solid #080;
+outline-offset:-2px;
+}
+
+.ProseMirror th.table-identifier-column {
+position:relative;
+}
+.ProseMirror th.table-identifier-column::after {
+content:"";
+position:absolute;
+top:0.1em;
+right:0.1em;
+width:0.5em;
+height:0.5em;
+border-radius:50%;
+background-color:#080;
+}
+
+/* What an empty identifier cell expects, without occupying the document. */
+.ProseMirror td.table-identifier-cell[data-hint]::before {
+content:attr(data-hint);
+color:#999;
+font-style:italic;
+pointer-events:none;
+}
+
+.editor-table-advanced {
+margin:0.5em 0;
+}
+.editor-table-advanced summary {
+cursor:pointer;
+font-size:0.875em;
+}
+.editor-table-panel [data-when-source][hidden] {
+display:none;
+}
+
+/* Row states while an identifier lookup fills the row's columns. */
+.ProseMirror tr.table-lookup-pending > td {
+position:relative;
+background-image:linear-gradient(90deg, rgba(0,0,0,0.04) 25%, rgba(0,0,0,0.10) 50%, rgba(0,0,0,0.04) 75%);
+background-size:200% 100%;
+animation:table-lookup-shimmer 1.2s ease-in-out infinite;
+}
+.ProseMirror tr.table-lookup-pending > td:first-child::after {
+content:"";
+position:absolute;
+top:50%;
+right:0.35em;
+width:0.7em;
+height:0.7em;
+margin-top:-0.35em;
+box-sizing:border-box;
+border:2px solid rgba(0,0,0,0.15);
+border-top-color:rgba(0,0,0,0.55);
+border-radius:50%;
+animation:table-lookup-spin 0.7s linear infinite;
+}
+.ProseMirror tr.table-lookup-empty > td {
+background-color:rgba(255,204,0,0.12);
+}
+.ProseMirror tr.table-lookup-mismatch > td {
+background-color:rgba(255,204,0,0.12);
+}
+.ProseMirror tr.table-lookup-error > td {
+background-color:rgba(204,0,0,0.1);
+}
+@keyframes table-lookup-shimmer {
+from { background-position:200% 0; }
+to { background-position:-200% 0; }
+}
+@keyframes table-lookup-spin {
+to { transform:rotate(360deg); }
+}
+@media (prefers-reduced-motion:reduce) {
+.ProseMirror tr.table-lookup-pending > td,
+.ProseMirror tr.table-lookup-pending > td:first-child::after {
+animation:none;
+}
+}
+.suggestions .term-curie {
+font-family:monospace;
+color:#080;
+}
+.suggestions .term-label {
+margin-left:0.5em;
+}
+.suggestions .term-source {
+float:right;
+font-size:0.8125em;
+color:#888;
+font-variant:small-caps;
+}
+.suggestions .term-description {
+display:block;
+font-size:0.8125em;
+color:#666;
+overflow:hidden;
+text-overflow:ellipsis;
+white-space:nowrap;
+}
+
+/* Drag to reorder columns and rows */
+/* Width must match HANDLE_WIDTH in tableTools.js */
+/* A grip is a quiet line until the pointer reaches it, then a dotted button.
+   Both states occupy the same box, so the target never moves under the cursor. */
+.editor-table-row-handle,
+.editor-table-column-handle {
+position:absolute;
+z-index:9;
+box-sizing:border-box;
+display:flex;
+align-items:center;
+justify-content:center;
+cursor:grab;
+border:0;
+background:none;
+transition:background-color 120ms ease, border-radius 120ms ease;
+}
+.editor-table-row-handle::before,
+.editor-table-column-handle::before {
+content:"";
+border-radius:0.25em;
+background-color:#777;
+transition:width 120ms ease, height 120ms ease, background-color 120ms ease, background-image 120ms ease;
+}
+.editor-table-column-handle {
+height:1em;
+}
+.editor-table-column-handle::before {
+width:1.75em;
+height:4px;
+}
+.editor-table-row-handle {
+width:1em;
+}
+.editor-table-row-handle::before {
+width:0.25em;
+height:1.25em;
+}
+
+/* Hovered: a rounded button carrying a single line of three dots. Each tile is
+   a third of the grip, so the gradient repeats exactly three times. */
+.editor-table-row-handle:hover::before,
+.editor-table-column-handle:hover::before,
+body.editor-table-dragging .editor-table-row-handle::before,
+body.editor-table-dragging .editor-table-column-handle::before {
+width:1.75em;
+height:14px;
+border-radius:0.25em;
+background-color:#080;
+background-image:radial-gradient(#fff 1px, transparent 1.1px);
+background-size:33.333% 100%;
+background-position:center;
+background-repeat:repeat-x;
+}
+.editor-table-row-handle:hover::before,
+body.editor-table-dragging .editor-table-row-handle::before {
+width:14px;
+height:1.75em;
+background-size:100% 33.333%;
+background-repeat:repeat-y;
+}
+body.editor-table-dragging .editor-table-row-handle,
+body.editor-table-dragging .editor-table-column-handle {
+cursor:grabbing;
+}
+
+/* What is moving, while it moves. */
+.ProseMirror td.table-column-dragging,
+.ProseMirror th.table-column-dragging {
+box-shadow:inset 2px 0 0 #080, inset -2px 0 0 #080;
+background-color:rgba(0,136,0,0.06);
+}
+.ProseMirror th.table-column-dragging-first {
+box-shadow:inset 2px 0 0 #080, inset -2px 0 0 #080, inset 0 2px 0 #080;
+}
+.ProseMirror tr.table-row-dragging > td,
+.ProseMirror tr.table-row-dragging > th {
+box-shadow:inset 0 2px 0 #080, inset 0 -2px 0 #080;
+background-color:rgba(0,136,0,0.06);
+}
+.editor-table-drop-indicator {
+position:absolute;
+z-index:12;
+background-color:#080;
+pointer-events:none;
+}
+.editor-table-drop-indicator.column {
+width:3px;
+border-radius:2px;
+}
+.editor-table-drop-indicator.row {
+height:3px;
+border-radius:2px;
+}
+body.editor-table-dragging {
+cursor:grabbing;
+user-select:none;
+}
+/* contenteditable opts back into selection, so say it again for the content. */
+body.editor-table-dragging .ProseMirror,
+body.editor-table-dragging .ProseMirror * {
+user-select:none;
+-webkit-user-select:none;
+}
+body.editor-table-dragging .editor-table-row-handle {
+cursor:grabbing;
+}
+
+
+.editor-table-suggestions {
+position:absolute;
+z-index:11;
+max-width:calc(100vw - 2em);
+}
+.editor-table-suggestions ul.suggestions {
+width:100%;
+position:static;
+border:1px solid #ccc;
+border-radius:0.5em;
+}
+
+/* Row states while an identifier is being looked up */
+tr.table-lookup-pending td {
+opacity:0.6;
+}
+tr.table-lookup-pending td:first-child {
+background-image:linear-gradient(90deg, rgba(0,136,0,0.15) 0 50%, transparent 50% 100%);
+background-size:200% 100%;
+animation:table-lookup-progress 1.2s linear infinite;
+}
+@keyframes table-lookup-progress {
+from { background-position:100% 0; }
+to { background-position:0 0; }
+}
+tr.table-lookup-empty td {
+background-color:#ffd;
+}
+tr.table-lookup-error td {
+background-color:#fdd;
+}
+@media (prefers-reduced-motion: reduce) {
+tr.table-lookup-pending td:first-child {
+animation:none;
+}
+}
+
 /* .suggestions .region-code:before,
 .suggestions .country-code:before {
 content: ", ";

@@ -21,6 +21,7 @@ import { TextSelection } from "prosemirror-state";
 import { undo, redo } from "prosemirror-history";
 import Config from "../../../config.js";
 import { eventDlAt, moveField } from "../../eventFieldNav.js";
+import { findCell, goToCaption, goToCellBelow, goToFirstCell } from "../../commands/table.js";
 
 let Slash;
 
@@ -252,15 +253,47 @@ function eventFieldArrow(dir) {
   };
 }
 
+// In a table Enter means "next row, same column"; a line break inside a cell
+// is Shift-Enter. Everywhere else both fall through to the usual behaviour.
+function tableAwareEnter(state, dispatch, view) {
+  if (!findCell(state)) return customEnterCommand(state, dispatch, view);
+  return goToCellBelow(1)(state, dispatch);
+}
+
+// Up and down move between cells in the same column. Browsers left to
+// themselves walk the caret through the document instead: Chrome lands in the
+// last cell of the row above, Firefox leaves the table altogether.
+function tableAwareArrow(direction) {
+  return (state, dispatch, view) => {
+    // The caption is the one textblock in a table that is not a cell; down
+    // from it enters the grid.
+    if (!findCell(state)) {
+      if (direction > 0 && goToFirstCell()(state, dispatch)) return true;
+      return eventFieldArrow(direction)(state, dispatch, view);
+    }
+
+    // A cell can hold several lines, so only leave it from its first or last.
+    if (view && !view.endOfTextblock(direction > 0 ? 'down' : 'up')) return false;
+
+    if (goToCellBelow(direction, { addRow: false })(state, dispatch)) return true;
+
+    // Off the top of the grid: the caption, rather than whatever precedes the table.
+    if (direction < 0 && goToCaption()(state, dispatch)) return true;
+
+    return eventFieldArrow(direction)(state, dispatch, view);
+  };
+}
+
 export const keymapPlugin = keymap({
   "Backspace": customBackspaceCommand,
-  "Enter": customEnterCommand,
+  "Enter": tableAwareEnter,
+  "Shift-Enter": customEnterCommand,
   "/": (state, dispatch, view) => customSlashCommand(state, dispatch, view),
   "Tab": eventFieldTab(1),
   "Shift-Tab": eventFieldTab(-1),
-  "ArrowDown": eventFieldArrow(1),
+  "ArrowDown": tableAwareArrow(1),
   "ArrowRight": eventFieldArrow(1),
-  "ArrowUp": eventFieldArrow(-1),
+  "ArrowUp": tableAwareArrow(-1),
   "ArrowLeft": eventFieldArrow(-1),
   "Mod-z": undo,
   "Mod-y": redo,

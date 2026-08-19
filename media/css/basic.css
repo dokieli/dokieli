@@ -1042,7 +1042,8 @@ tbody th[scope="rowgroup"] {
   border-bottom: 3pt double #000;
 }
 
-tr {
+thead tr,
+tbody tr {
   border-bottom: 1pt solid #ccc;
 }
 
