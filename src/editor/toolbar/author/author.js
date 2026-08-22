@@ -168,7 +168,7 @@ export class AuthorToolbar extends ToolbarView {
       blockquote: (options) => `
         <fieldset>
           <legend data-i18n="editor.toolbar.blockquote.form.legend">${options.legend}</legend>
-          <label for="blockquote-cite">URL</label> <input class="editor-form-input" data-i18n="editor.toolbar.form.url.input" dir="ltr"  id="blockquote-cite" name="blockquote-cite" pattern="https?://.+" placeholder="${i18n.t('editor.toolbar.form.url.input.placeholder')}" type="url" value="" />
+          <label for="blockquote-cite">URL</label> <input class="editor-form-input" data-i18n="editor.toolbar.form.url.input" dir="ltr" id="blockquote-cite" name="blockquote-cite" pattern="https?://.+" placeholder="${i18n.t('editor.toolbar.form.url.input.placeholder')}" type="url" value="" />
           <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
           <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
         </fieldset>
@@ -353,6 +353,13 @@ TODO:
             label: "Image",
             action: () => {
               this.dom.querySelector("#editor-button-img")?.click();
+            },
+          },
+          {
+            icon: buttonIcons["table"]?.icon,
+            label: "Table",
+            action: () => {
+              Config.Editor.slashMenu?.showForm("table");
             },
           },
           { icon: buttonIcons['ul']?.icon,         label: 'Bullet List',   action: () => { this.dom.querySelector('#editor-button-ul')?.click(); } },

@@ -2024,9 +2024,8 @@ font-weight:bold;
 .editor-table-panel {
 position:absolute;
 z-index:11;
-width:24em;
+width:30em;
 max-width:calc(100vw - 2em);
-max-height:70vh;
 overflow-y:auto;
 }
 .editor-table-panel > .editor-form {
@@ -2277,14 +2276,6 @@ border-radius:50%;
 background-color:#080;
 }
 
-/* What an empty identifier cell expects, without occupying the document. */
-.ProseMirror td.table-identifier-cell[data-hint]::before {
-content:attr(data-hint);
-color:#999;
-font-style:italic;
-pointer-events:none;
-}
-
 .editor-table-advanced {
 margin:0.5em 0;
 }
@@ -2296,26 +2287,17 @@ font-size:0.875em;
 display:none;
 }
 
-/* Row states while an identifier lookup fills the row's columns. */
-.ProseMirror tr.table-lookup-pending > td {
+/* While an identifier lookup runs, the shared spinner on the cell that started it. */
+.ProseMirror tr.table-lookup-pending > td:first-child {
 position:relative;
-background-image:linear-gradient(90deg, rgba(0,0,0,0.04) 25%, rgba(0,0,0,0.10) 50%, rgba(0,0,0,0.04) 75%);
-background-size:200% 100%;
-animation:table-lookup-shimmer 1.2s ease-in-out infinite;
 }
-.ProseMirror tr.table-lookup-pending > td:first-child::after {
-content:"";
+.ProseMirror tr.table-lookup-pending > td:first-child .progress {
 position:absolute;
 top:50%;
 right:0.35em;
-width:0.7em;
-height:0.7em;
-margin-top:-0.35em;
-box-sizing:border-box;
-border:2px solid rgba(0,0,0,0.15);
-border-top-color:rgba(0,0,0,0.55);
-border-radius:50%;
-animation:table-lookup-spin 0.7s linear infinite;
+transform:translateY(-50%);
+line-height:1;
+pointer-events:none;
 }
 .ProseMirror tr.table-lookup-empty > td {
 background-color:rgba(255,204,0,0.12);
@@ -2326,16 +2308,8 @@ background-color:rgba(255,204,0,0.12);
 .ProseMirror tr.table-lookup-error > td {
 background-color:rgba(204,0,0,0.1);
 }
-@keyframes table-lookup-shimmer {
-from { background-position:200% 0; }
-to { background-position:-200% 0; }
-}
-@keyframes table-lookup-spin {
-to { transform:rotate(360deg); }
-}
 @media (prefers-reduced-motion:reduce) {
-.ProseMirror tr.table-lookup-pending > td,
-.ProseMirror tr.table-lookup-pending > td:first-child::after {
+.ProseMirror tr.table-lookup-pending .fa-spin {
 animation:none;
 }
 }
@@ -2480,31 +2454,6 @@ width:100%;
 position:static;
 border:1px solid #ccc;
 border-radius:0.5em;
-}
-
-/* Row states while an identifier is being looked up */
-tr.table-lookup-pending td {
-opacity:0.6;
-}
-tr.table-lookup-pending td:first-child {
-background-image:linear-gradient(90deg, rgba(0,136,0,0.15) 0 50%, transparent 50% 100%);
-background-size:200% 100%;
-animation:table-lookup-progress 1.2s linear infinite;
-}
-@keyframes table-lookup-progress {
-from { background-position:100% 0; }
-to { background-position:0 0; }
-}
-tr.table-lookup-empty td {
-background-color:#ffd;
-}
-tr.table-lookup-error td {
-background-color:#fdd;
-}
-@media (prefers-reduced-motion: reduce) {
-tr.table-lookup-pending td:first-child {
-animation:none;
-}
 }
 
 /* .suggestions .region-code:before,
@@ -4764,8 +4713,9 @@ button[type="button"]:focus {
 /* Basic default for all fieldsets in forms  */
 .editor-form fieldset {
   display: flex;
-  flex-direction: column;  
+  flex-direction: column;
   border: none;
+  padding:0;
 }
 
 
@@ -4781,7 +4731,6 @@ button[type="button"]:focus {
   grid-template-rows: repeat(11, auto);
   grid-gap: 0.5em;
   border: none;
-  padding-block: 0;
   grid-template-areas:
   "legend legend"
   "info info"
@@ -5967,12 +5916,12 @@ padding:0 0.5em;
 }
 .editor-dropdown-item-label {
   font-weight: bold;
-  margin-bottom:0.5em;
   color: #000;
 }
 .editor-dropdown-item-desc {
   color: #333;
   line-height:1.2;
+  margin-top:0.5em;
 }
 
 .editor-dropdown-panel li button.editor-dropdown-item.editor-dropdown-item-current {

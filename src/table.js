@@ -28,9 +28,13 @@ const COLUMN_KEYS = {
   titles: 'data-titles',
   propertyUrl: 'data-property-url',
   valueUrl: 'data-value-url',
+  // dokieli extension: predicate for the link when propertyUrl stays on the text.
+  valueRel: 'data-value-rel',
   aboutUrl: 'data-about-url',
   datatype: 'data-datatype',
   image: 'data-image',
+  // dokieli extension: the value is temporal, so it renders inside <time>.
+  time: 'data-time',
   lang: 'data-lang',
   virtual: 'data-virtual',
   suppressOutput: 'data-suppress-output'
@@ -61,6 +65,8 @@ const TABLE_LOOKUP_KEYS = {
 // row: it offers suggestions for this column's cells and links what is picked.
 const COLUMN_LOOKUP_KEYS = {
   source: 'data-lookup-source',
+  // A result field holding the value's own page, which becomes the cell's link.
+  urlSource: 'data-lookup-url-source',
   service: 'data-lookup-service'
 };
 
@@ -242,7 +248,7 @@ function isNullValue(column, value) {
  * context: { rowSubject, fillValues, foreignKeys, valueMapper }
  */
 export function buildCellRDFa(column, cellValue, context = {}) {
-  const { rowSubject, fillValues = {}, foreignKeys = [], valueMapper } = context;
+  const { rowSubject, fillValues = {}, foreignKeys = [], valueMapper, imageSize, textValues } = context;
 
   let text = String(cellValue ?? '').trim();
 
@@ -308,6 +314,10 @@ export function buildCellRDFa(column, cellValue, context = {}) {
     if (!src) return { attributes, child: null, text };
 
     const child = { tag: 'img', attributes: { src, alt: '' }, text: '' };
+    if (imageSize?.width && imageSize?.height) {
+      child.attributes.width = String(imageSize.width);
+      child.attributes.height = String(imageSize.height);
+    }
     if (!skipProperty && resolved.propertyUrl) child.attributes.property = resolved.propertyUrl;
 
     return { attributes, child, text };
@@ -319,7 +329,43 @@ export function buildCellRDFa(column, cellValue, context = {}) {
       : resolved.valueUrl;
 
     const child = { tag: 'a', attributes: { href }, text };
-    if (!skipProperty && resolved.propertyUrl) child.attributes.rel = resolved.propertyUrl;
+
+    // An <a> with both @rel and @property links via valueRel and keeps the text a literal.
+    if (!skipProperty) {
+      const rel = resolved.valueRel || resolved.propertyUrl;
+      if (rel) child.attributes.rel = rel;
+      if (resolved.valueRel && resolved.propertyUrl) child.attributes.property = resolved.propertyUrl;
+    }
+
+    return { attributes, child, text };
+  }
+
+  // A multi-valued result states one triple per value, each in its own <span>.
+  if (textValues?.length > 1 && resolved.propertyUrl && !skipProperty && !resolved.time) {
+    const datatype = toDatatypeCurie(resolved.datatype);
+    const children = textValues.map((value) => ({
+      tag: 'span',
+      attributes: {
+        property: resolved.propertyUrl,
+        ...(datatype ? { datatype } : {}),
+        ...(resolved.lang ? { lang: resolved.lang } : {})
+      },
+      text: value
+    }));
+
+    return { attributes, children, text };
+  }
+
+  // A temporal value sits in <time>; a recognised format carries its datatype.
+  if (resolved.time || isTimeDatatype(resolved.datatype)) {
+    const child = { tag: 'time', attributes: {}, text };
+    const datatype = inferTimeDatatype(text);
+
+    if (datatype) child.attributes.datetime = text;
+    if (!skipProperty && resolved.propertyUrl) {
+      child.attributes.property = resolved.propertyUrl;
+      if (datatype) child.attributes.datatype = datatype;
+    }
 
     return { attributes, child, text };
   }
@@ -331,6 +377,26 @@ export function buildCellRDFa(column, cellValue, context = {}) {
   }
 
   return { attributes, child: null, text };
+}
+
+// xsd temporal types by lexical form, most specific first; each form is also a
+// valid HTML @datetime value.
+const TIME_DATATYPES = [
+  ['xsd:dateTime', /^\d{4,}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})?$/],
+  ['xsd:date', /^\d{4,}-\d{2}-\d{2}$/],
+  ['xsd:gYearMonth', /^\d{4,}-\d{2}$/],
+  ['xsd:gYear', /^\d{4,}$/],
+  ['xsd:time', /^\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/],
+  ['xsd:duration', /^-?P(?=.)(\d+Y)?(\d+M)?(\d+D)?(T(?=.)(\d+H)?(\d+M)?(\d+(\.\d+)?S)?)?$/]
+];
+
+function inferTimeDatatype(text) {
+  return TIME_DATATYPES.find(([, pattern]) => pattern.test(text))?.[0] ?? null;
+}
+
+function isTimeDatatype(datatype) {
+  const curie = toDatatypeCurie(datatype);
+  return !!curie && TIME_DATATYPES.some(([name]) => name === curie);
 }
 
 function isSelfReferencingProperty(propertyUrl) {
@@ -347,8 +413,13 @@ function toDatatypeCurie(datatype) {
 }
 
 export function renderCellHTML(column, cellValue, context) {
-  const { attributes, child, text } = buildCellRDFa(column, cellValue, context);
+  const { attributes, child, children, text } = buildCellRDFa(column, cellValue, context);
   const attributeString = serializeAttributes(attributes);
+
+  if (children) {
+    const items = children.map((c) => `<${c.tag}${serializeAttributes(c.attributes)}>${c.text}</${c.tag}>`);
+    return `<td${attributeString}>${items.join(', ')}</td>`;
+  }
 
   if (!child) return `<td${attributeString}>${text}</td>`;
 
@@ -356,8 +427,9 @@ export function renderCellHTML(column, cellValue, context) {
 }
 
 function serializeAttributes(attributes) {
+  // An empty alt is meaningful -- it marks the image decorative -- so it stays.
   return Object.entries(attributes)
-    .filter(([, v]) => v !== undefined && v !== null && v !== '')
+    .filter(([k, v]) => v !== undefined && v !== null && (v !== '' || k === 'alt'))
     .map(([k, v]) => ` ${k}="${v}"`)
     .join('');
 }
@@ -433,7 +505,7 @@ export function getPrefixesUsed(tableSchema, columns) {
 
   const collect = (o) => {
     if (!o) return;
-    [o.propertyUrl, o.valueUrl, o.typeof, toDatatypeCurie(o.datatype)].forEach((t) => {
+    [o.propertyUrl, o.valueUrl, o.valueRel, o.typeof, toDatatypeCurie(o.datatype)].forEach((t) => {
       if (t && typeof t === 'string' && t.includes(':') && !t.startsWith('#')) terms.push(t);
     });
   };

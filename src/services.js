@@ -51,13 +51,17 @@ export const LookupServices = {
     scan: 'isbn',
     identifierClean: /[^0-9Xx]/g,
     identifierPattern: /(?:97[89])?\d{9}[\dXx]/,
+    // An ISBN does not say what kind of material it names, so the generic type.
+    tableSchema: {
+      typeof: 'schema:CreativeWork',
+      aboutUrl: 'urn:isbn:{isbn}'
+    },
     columns: [
-      { titles: 'ISBN', propertyUrl: 'schema:isbn', identifier: true },
-      { titles: 'Title', propertyUrl: 'schema:name', lookup: { source: 'title' } },
+      { name: 'isbn', titles: 'ISBN', propertyUrl: 'schema:isbn', identifier: true },
+      { titles: 'Title', propertyUrl: 'schema:name', valueRel: 'schema:url', lookup: { source: 'title', urlSource: 'url' } },
       { titles: 'Author', propertyUrl: 'schema:author', lookup: { source: 'authors.*.name' } },
       { titles: 'Publisher', propertyUrl: 'schema:publisher', lookup: { source: 'publishers.*.name' } },
-      { titles: 'Published', propertyUrl: 'schema:datePublished', lookup: { source: 'publish_date' } },
-      { titles: 'Pages', propertyUrl: 'schema:numberOfPages', datatype: 'integer', lookup: { source: 'number_of_pages' } },
+      { titles: 'Published', propertyUrl: 'schema:datePublished', time: true, lookup: { source: 'publish_date' } },
       { titles: 'Cover', propertyUrl: 'schema:image', image: true, lookup: { source: 'cover.medium' } }
     ]
   },
@@ -70,6 +74,7 @@ export const LookupServices = {
     record: '{id}',
     accept: 'application/json',
     search: 'specref',
+    tableSchema: { typeof: 'schema:CreativeWork' },
     columns: [
       // Typing a title here searches; picking a result fills Reference with its id.
       { titles: 'Title', propertyUrl: 'schema:name', identifier: true, lookup: { source: 'title' } },
@@ -77,7 +82,7 @@ export const LookupServices = {
       { titles: 'Authors', propertyUrl: 'schema:author', lookup: { source: 'authors.*' } },
       { titles: 'Publisher', propertyUrl: 'schema:publisher', lookup: { source: 'publisher' } },
       { titles: 'Status', propertyUrl: 'schema:creativeWorkStatus', lookup: { source: 'status' } },
-      { titles: 'Date', propertyUrl: 'schema:datePublished', lookup: { source: 'date' } },
+      { titles: 'Date', propertyUrl: 'schema:datePublished', time: true, lookup: { source: 'date' } },
       { name: 'url', titles: 'URL', propertyUrl: 'schema:url', valueUrl: '{url}', lookup: { source: 'href' } }
     ]
   },
@@ -91,11 +96,12 @@ export const LookupServices = {
     format: 'rdf',
     subject: 'https://doi.org/{+id}',
     identifierPattern: /10\.\d{4,9}\/[^\s?#]+/,
+    tableSchema: { typeof: 'schema:CreativeWork' },
     columns: [
       { titles: 'DOI', propertyUrl: 'bibo:doi', identifier: true },
       { titles: 'Title', propertyUrl: 'schema:name' },
       { titles: 'Author', propertyUrl: 'schema:author' },
-      { titles: 'Published', propertyUrl: 'schema:datePublished' }
+      { titles: 'Published', propertyUrl: 'schema:datePublished', time: true }
     ]
   },
 
@@ -130,6 +136,7 @@ export const LookupServices = {
     subject: 'https://orcid.org/{id}',
     accept: 'text/turtle',
     identifierPattern: /\d{4}-\d{4}-\d{4}-\d{3}[\dXx]/,
+    tableSchema: { typeof: 'schema:Person' },
     columns: [
       { titles: 'ORCID', propertyUrl: 'schema:identifier', identifier: true },
       { titles: 'Name', propertyUrl: 'rdfs:label' },
@@ -355,8 +362,8 @@ export const SUBJECT_SOURCE = '@id';
  *   authors.*.name     -> "Ursula K. Le Guin, …"
  *   cover.medium
  */
-export function extractJSONValue(record, path) {
-  if (!record || !path) return null;
+export function extractJSONValues(record, path) {
+  if (!record || !path) return [];
 
   const values = path
     .split('.')
@@ -374,9 +381,12 @@ export function extractJSONValue(record, path) {
     .flatMap((v) => (Array.isArray(v) ? v : [v]))
     .filter((v) => v !== undefined && v !== null && typeof v !== 'object');
 
-  if (!values.length) return null;
+  return [...new Set(values.map(String))];
+}
 
-  return [...new Set(values.map(String))].join(', ');
+export function extractJSONValue(record, path) {
+  const values = extractJSONValues(record, path);
+  return values.length ? values.join(', ') : null;
 }
 
 // The prefix map has to be consulted before URL.canParse, which reports true
@@ -418,8 +428,11 @@ export function extractRDFValues(graph, subject, columns) {
     const inLanguage = literals.filter((t) => t.language?.startsWith(preferred));
     const chosen = inLanguage.length ? inLanguage : literals.length ? literals : terms;
 
+    const texts = [...new Set(chosen.map((t) => labelFor(graph, t, preferred)))];
+
     values[column.name] = {
-      text: [...new Set(chosen.map((t) => labelFor(graph, t, preferred)))].join(', '),
+      text: texts.join(', '),
+      values: texts.length > 1 ? texts : undefined,
       valueUrl: chosen[0]?.termType === 'NamedNode' ? chosen[0].value : null
     };
   });
@@ -496,12 +509,18 @@ export async function lookupIdentifier(tableSchema, columns, identifier, options
     const source = column.lookup?.source;
     if (!source || source === SUBJECT_SOURCE) return;
 
-    const text = extractJSONValue(record, source);
-    if (text === null) return;
+    const texts = extractJSONValues(record, source);
+    if (!texts.length) return;
+
+    const text = texts.join(', ');
+
+    // urlSource names a result field holding the value's own page.
+    const url = column.lookup.urlSource ? extractJSONValue(record, column.lookup.urlSource) : null;
 
     values[column.name] = {
       text,
-      valueUrl: isHttpUrl(text) ? text : null
+      values: texts.length > 1 ? texts : undefined,
+      valueUrl: isHttpUrl(url) ? url : isHttpUrl(text) ? text : null
     };
   });
 
