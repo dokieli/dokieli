@@ -1015,12 +1015,12 @@ caption {
 }
 
 caption,
+thead,
 tbody,
 tfoot {
   border-bottom: 2pt solid #000;
 }
 
-thead,
 thead th[colspan] {
   border-bottom: 1pt solid #000;
 }

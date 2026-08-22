@@ -42,7 +42,7 @@ export const LookupServices = {
   // the redirect carries no CORS header, so a browser blocks the chain before
   // the RDF arrives. The JSON API answers directly with Access-Control-Allow-Origin.
   openlibrary: {
-    label: 'Open Library (ISBN)',
+    label: 'Open Library (openlibrary.org)',
     identifier: 'ISBN',
     url: 'https://openlibrary.org/api/books?bibkeys=ISBN:{id}&format=json&jscmd=data',
     format: 'json',
@@ -51,23 +51,24 @@ export const LookupServices = {
     scan: 'isbn',
     identifierClean: /[^0-9Xx]/g,
     identifierPattern: /(?:97[89])?\d{9}[\dXx]/,
+    identifierValid: isValidISBN,
     // An ISBN does not say what kind of material it names, so the generic type.
     tableSchema: {
       typeof: 'schema:CreativeWork',
       aboutUrl: 'urn:isbn:{isbn}'
     },
     columns: [
-      { name: 'isbn', titles: 'ISBN', propertyUrl: 'schema:isbn', identifier: true },
+      { name: 'isbn', titles: 'ISBN', propertyUrl: 'schema:isbn', lang: '', identifier: true },
       { titles: 'Title', propertyUrl: 'schema:name', valueRel: 'schema:url', lookup: { source: 'title', urlSource: 'url' } },
-      { titles: 'Author', propertyUrl: 'schema:author', lookup: { source: 'authors.*.name' } },
-      { titles: 'Publisher', propertyUrl: 'schema:publisher', lookup: { source: 'publishers.*.name' } },
+      { titles: 'Author', propertyUrl: 'schema:author', lang: '', lookup: { source: 'authors.*.name' } },
+      { titles: 'Publisher', propertyUrl: 'schema:publisher', lang: '', lookup: { source: 'publishers.*.name' } },
       { titles: 'Published', propertyUrl: 'schema:datePublished', time: true, lookup: { source: 'publish_date' } },
       { titles: 'Cover', propertyUrl: 'schema:image', image: true, lookup: { source: 'cover.medium' } }
     ]
   },
 
   specref: {
-    label: 'Specref (specifications)',
+    label: 'Specref (specref.org)',
     identifier: 'Reference',
     url: 'https://api.specref.org/bibrefs?refs={id}',
     format: 'json',
@@ -78,9 +79,9 @@ export const LookupServices = {
     columns: [
       // Typing a title here searches; picking a result fills Reference with its id.
       { titles: 'Title', propertyUrl: 'schema:name', identifier: true, lookup: { source: 'title' } },
-      { titles: 'Reference', propertyUrl: 'schema:identifier', lookup: { source: 'id' } },
-      { titles: 'Authors', propertyUrl: 'schema:author', lookup: { source: 'authors.*' } },
-      { titles: 'Publisher', propertyUrl: 'schema:publisher', lookup: { source: 'publisher' } },
+      { titles: 'Reference', propertyUrl: 'schema:identifier', lang: '', lookup: { source: 'id' } },
+      { titles: 'Authors', propertyUrl: 'schema:author', lang: '', lookup: { source: 'authors.*' } },
+      { titles: 'Publisher', propertyUrl: 'schema:publisher', lang: '', lookup: { source: 'publisher' } },
       { titles: 'Status', propertyUrl: 'schema:creativeWorkStatus', lookup: { source: 'status' } },
       { titles: 'Date', propertyUrl: 'schema:datePublished', time: true, lookup: { source: 'date' } },
       { name: 'url', titles: 'URL', propertyUrl: 'schema:url', valueUrl: '{url}', lookup: { source: 'href' } }
@@ -88,7 +89,7 @@ export const LookupServices = {
   },
 
   doi: {
-    label: 'DOI',
+    label: 'DOI (doi.org)',
     identifier: 'DOI',
     // {+id} rather than {id}: a DOI contains "/", which simple expansion would
     // percent-encode into a URL doi.org does not resolve.
@@ -98,15 +99,15 @@ export const LookupServices = {
     identifierPattern: /10\.\d{4,9}\/[^\s?#]+/,
     tableSchema: { typeof: 'schema:CreativeWork' },
     columns: [
-      { titles: 'DOI', propertyUrl: 'bibo:doi', identifier: true },
+      { titles: 'DOI', propertyUrl: 'bibo:doi', lang: '', identifier: true },
       { titles: 'Title', propertyUrl: 'schema:name' },
-      { titles: 'Author', propertyUrl: 'schema:author' },
+      { titles: 'Author', propertyUrl: 'schema:author', lang: '' },
       { titles: 'Published', propertyUrl: 'schema:datePublished', time: true }
     ]
   },
 
   wikidata: {
-    label: 'Wikidata entity',
+    label: 'Wikidata (wikidata.org)',
     identifier: 'Q-id',
     url: 'https://www.wikidata.org/wiki/Special:EntityData/{id}.ttl',
     format: 'rdf',
@@ -129,7 +130,7 @@ export const LookupServices = {
   // The subject in the payload is still https://orcid.org/{id}.
   // ORCID's vocabulary here is rdfs/foaf, not schema.org.
   orcid: {
-    label: 'ORCID',
+    label: 'ORCID (orcid.org)',
     identifier: 'ORCID',
     url: 'https://pub.orcid.org/experimental_rdf_v1/{id}',
     format: 'rdf',
@@ -138,10 +139,10 @@ export const LookupServices = {
     identifierPattern: /\d{4}-\d{4}-\d{4}-\d{3}[\dXx]/,
     tableSchema: { typeof: 'schema:Person' },
     columns: [
-      { titles: 'ORCID', propertyUrl: 'schema:identifier', identifier: true },
-      { titles: 'Name', propertyUrl: 'rdfs:label' },
-      { titles: 'Given name', propertyUrl: 'foaf:givenName' },
-      { titles: 'Family name', propertyUrl: 'foaf:familyName' }
+      { titles: 'ORCID', propertyUrl: 'schema:identifier', lang: '', identifier: true },
+      { titles: 'Name', propertyUrl: 'rdfs:label', lang: '' },
+      { titles: 'Given name', propertyUrl: 'foaf:givenName', lang: '' },
+      { titles: 'Family name', propertyUrl: 'foaf:familyName', lang: '' }
     ]
   },
 
@@ -347,7 +348,28 @@ export function looksLikeIdentifier(lookup, value) {
   const service = getLookupService(lookup?.service);
   if (!service?.identifierPattern) return true;
 
-  return service.identifierPattern.test(normalizeIdentifier(service, value));
+  const id = normalizeIdentifier(service, value);
+  if (!service.identifierPattern.test(id)) return false;
+
+  // A shape can carry a check digit; a service that can verify it, does.
+  return service.identifierValid ? service.identifierValid(id) : true;
+}
+
+// ISBN-10 (X-check allowed) and ISBN-13 check digits, per ISO 2108.
+export function isValidISBN(value) {
+  const id = String(value ?? '').replace(/[^0-9Xx]/g, '');
+
+  if (/^\d{9}[\dXx]$/.test(id)) {
+    const sum = [...id].reduce((total, c, i) => total + (c.toUpperCase() === 'X' ? 10 : +c) * (10 - i), 0);
+    return sum % 11 === 0;
+  }
+
+  if (/^97[89]\d{10}$/.test(id)) {
+    const sum = [...id].reduce((total, c, i) => total + +c * (i % 2 ? 3 : 1), 0);
+    return sum % 10 === 0;
+  }
+
+  return false;
 }
 
 // Reserved source: the resource the lookup resolved to, rather than one of its

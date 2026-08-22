@@ -105,6 +105,9 @@ export function getColumnSchema(source) {
   const attrs = toAttributes(source);
   const column = readKeys(attrs, COLUMN_KEYS);
 
+  // lang '' is a statement -- explicitly no language -- not an absence.
+  if (attrs[COLUMN_KEYS.lang] === '') column.lang = '';
+
   if (attrs[NULL_ATTR] !== undefined) {
     column.null = attrs[NULL_ATTR].split(NULL_SEPARATOR);
   }
@@ -117,6 +120,8 @@ export function getColumnSchema(source) {
 
 export function getColumnAttributes(column) {
   const attrs = writeKeys(column, COLUMN_KEYS);
+
+  if (column?.lang === '') attrs[COLUMN_KEYS.lang] = '';
 
   if (Array.isArray(column?.null) && column.null.length) {
     attrs[NULL_ATTR] = column.null.join(NULL_SEPARATOR);
@@ -348,7 +353,8 @@ export function buildCellRDFa(column, cellValue, context = {}) {
       attributes: {
         property: resolved.propertyUrl,
         ...(datatype ? { datatype } : {}),
-        ...(resolved.lang ? { lang: resolved.lang } : {})
+        ...(resolved.lang !== undefined && resolved.lang !== null
+          ? { lang: resolved.lang, 'xml:lang': resolved.lang } : {})
       },
       text: value
     }));
@@ -373,7 +379,11 @@ export function buildCellRDFa(column, cellValue, context = {}) {
   if (resolved.propertyUrl && !skipProperty) {
     attributes.property = resolved.propertyUrl;
     if (resolved.datatype) attributes.datatype = toDatatypeCurie(resolved.datatype);
-    if (resolved.lang) attributes.lang = resolved.lang;
+    // '' is deliberate: it stops a surrounding language from tagging the literal.
+    if (resolved.lang !== undefined && resolved.lang !== null) {
+      attributes.lang = resolved.lang;
+      attributes['xml:lang'] = resolved.lang;
+    }
   }
 
   return { attributes, child: null, text };
@@ -427,9 +437,10 @@ export function renderCellHTML(column, cellValue, context) {
 }
 
 function serializeAttributes(attributes) {
-  // An empty alt is meaningful -- it marks the image decorative -- so it stays.
+  // Some empty attributes are statements: alt="" marks a decorative image,
+  // lang=""/xml:lang="" stop language inheritance.
   return Object.entries(attributes)
-    .filter(([k, v]) => v !== undefined && v !== null && (v !== '' || k === 'alt'))
+    .filter(([k, v]) => v !== undefined && v !== null && (v !== '' || ['alt', 'lang', 'xml:lang'].includes(k)))
     .map(([k, v]) => ` ${k}="${v}"`)
     .join('');
 }

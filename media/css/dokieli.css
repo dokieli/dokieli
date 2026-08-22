@@ -2281,7 +2281,6 @@ margin:0.5em 0;
 }
 .editor-table-advanced summary {
 cursor:pointer;
-font-size:0.875em;
 }
 .editor-table-panel [data-when-source][hidden] {
 display:none;
@@ -2294,8 +2293,9 @@ position:relative;
 .ProseMirror tr.table-lookup-pending > td:first-child .progress {
 position:absolute;
 top:50%;
-right:0.35em;
+inset-inline-end:0.25em;
 transform:translateY(-50%);
+margin:0;
 line-height:1;
 pointer-events:none;
 }
@@ -2303,7 +2303,7 @@ pointer-events:none;
 background-color:rgba(255,204,0,0.12);
 }
 .ProseMirror tr.table-lookup-mismatch > td {
-background-color:rgba(255,204,0,0.12);
+background-color:#fee;
 }
 .ProseMirror tr.table-lookup-error > td {
 background-color:rgba(204,0,0,0.1);
@@ -2319,12 +2319,6 @@ color:#080;
 }
 .suggestions .term-label {
 margin-left:0.5em;
-}
-.suggestions .term-source {
-float:right;
-font-size:0.8125em;
-color:#888;
-font-variant:small-caps;
 }
 .suggestions .term-description {
 display:block;
@@ -4715,6 +4709,7 @@ button[type="button"]:focus {
   display: flex;
   flex-direction: column;
   border: none;
+  margin:0;
   padding:0;
 }
 

@@ -15,13 +15,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { deleteSelection, splitBlock, newlineInCode, joinBackward } from "prosemirror-commands";
+import { deleteSelection, splitBlock, newlineInCode, joinBackward, selectAll } from "prosemirror-commands";
 import { keymap } from "prosemirror-keymap";
 import { TextSelection } from "prosemirror-state";
 import { undo, redo } from "prosemirror-history";
 import Config from "../../../config.js";
 import { eventDlAt, moveField } from "../../eventFieldNav.js";
 import { findCell, goToCaption, goToCellBelow, goToFirstCell } from "../../commands/table.js";
+import { tableSuggestionKeydown } from "../../plugins/tableTools.js";
 
 let Slash;
 
@@ -180,6 +181,40 @@ function checkForSlashCommand(view) {
   }
 }
 
+// Deleting a selection that spans cells erases the selected text and keeps
+// the cells: the default replace stitches across the boundary, pulling the
+// next cell's content into the previous one.
+function deleteAcrossCells(state, dispatch) {
+  const { selection } = state;
+  if (selection.empty) return false;
+
+  const fromCell = findCell(state, selection.$from);
+  const toCell = findCell(state, selection.$to);
+  if (!fromCell || !toCell || fromCell.pos === toCell.pos) return false;
+
+  if (dispatch) {
+    const ranges = [];
+
+    // Per-textblock intersections: text goes, every node around it stays.
+    state.doc.nodesBetween(selection.from, selection.to, (node, pos) => {
+      if (!node.isTextblock) return true;
+
+      const from = Math.max(selection.from, pos + 1);
+      const to = Math.min(selection.to, pos + node.nodeSize - 1);
+      if (from < to) ranges.push({ from, to });
+
+      return false;
+    });
+
+    const tr = state.tr;
+    ranges.sort((a, b) => b.from - a.from).forEach(({ from, to }) => tr.delete(from, to));
+    tr.setSelection(TextSelection.create(tr.doc, tr.mapping.map(selection.from)));
+    dispatch(tr);
+  }
+
+  return true;
+}
+
 function customBackspaceCommand(state, dispatch) {
   const { selection } = state;
   const { $from } = selection;
@@ -256,8 +291,39 @@ function eventFieldArrow(dir) {
 // In a table Enter means "next row, same column"; a line break inside a cell
 // is Shift-Enter. Everywhere else both fall through to the usual behaviour.
 function tableAwareEnter(state, dispatch, view) {
+  // The suggestion list owns Enter while an item is highlighted.
+  if (view && tableSuggestionKeydown(view, 'Enter')) return true;
+
   if (!findCell(state)) return customEnterCommand(state, dispatch, view);
   return goToCellBelow(1)(state, dispatch);
+}
+
+// Select-all in a cell or caption takes that content first; pressing again
+// takes the document. Selecting everything stays one keystroke away, and a
+// stray Mod-A inside a cell no longer puts the whole document under the caret.
+function scopedSelectAll(state, dispatch) {
+  const { $from } = state.selection;
+
+  let scope = null;
+  for (let depth = $from.depth; depth > 0; depth--) {
+    const name = $from.node(depth).type.name;
+    if (name === 'th' || name === 'td' || name === 'caption') {
+      scope = { from: $from.start(depth), to: $from.end(depth) };
+      break;
+    }
+  }
+
+  if (!scope) return selectAll(state, dispatch);
+
+  const selection = TextSelection.between(state.doc.resolve(scope.from), state.doc.resolve(scope.to));
+
+  // Already holding the whole scope: the second press means the document.
+  if (state.selection.from <= selection.from && state.selection.to >= selection.to) {
+    return selectAll(state, dispatch);
+  }
+
+  if (dispatch) dispatch(state.tr.setSelection(selection));
+  return true;
 }
 
 // Up and down move between cells in the same column. Browsers left to
@@ -265,6 +331,9 @@ function tableAwareEnter(state, dispatch, view) {
 // last cell of the row above, Firefox leaves the table altogether.
 function tableAwareArrow(direction) {
   return (state, dispatch, view) => {
+    // The suggestion list owns the arrows while it is open.
+    if (view && tableSuggestionKeydown(view, direction > 0 ? 'ArrowDown' : 'ArrowUp')) return true;
+
     // The caption is the one textblock in a table that is not a cell; down
     // from it enters the grid.
     if (!findCell(state)) {
@@ -285,16 +354,18 @@ function tableAwareArrow(direction) {
 }
 
 export const keymapPlugin = keymap({
-  "Backspace": customBackspaceCommand,
+  "Backspace": (state, dispatch, view) => deleteAcrossCells(state, dispatch) || customBackspaceCommand(state, dispatch, view),
+  "Delete": deleteAcrossCells,
   "Enter": tableAwareEnter,
   "Shift-Enter": customEnterCommand,
   "/": (state, dispatch, view) => customSlashCommand(state, dispatch, view),
-  "Tab": eventFieldTab(1),
+  "Tab": (state, dispatch, view) => (view && tableSuggestionKeydown(view, 'Tab')) || eventFieldTab(1)(state, dispatch, view),
   "Shift-Tab": eventFieldTab(-1),
   "ArrowDown": tableAwareArrow(1),
   "ArrowRight": eventFieldArrow(1),
   "ArrowUp": tableAwareArrow(-1),
   "ArrowLeft": eventFieldArrow(-1),
+  "Mod-a": scopedSelectAll,
   "Mod-z": undo,
   "Mod-y": redo,
 });
