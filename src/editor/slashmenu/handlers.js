@@ -206,16 +206,22 @@ export async function formHandlerTable(e) {
   const { state, dispatch } = this.editorView;
   const { selection } = state;
 
-  // Drop the "/" that opened the menu.
-  const newSelection = TextSelection.create(state.doc, Math.max(selection.from - 1, 0), selection.from);
-  dispatch(state.tr.setSelection(newSelection));
+  // Selected text names the table: it becomes the caption of what replaces it.
+  const caption = selection.empty ? '' : state.doc.textBetween(selection.from, selection.to, ' ').trim();
+
+  // Drop the "/" when one opened the menu; the toolbar path has no slash.
+  if (this.openedWithSlash) {
+    const newSelection = TextSelection.create(state.doc, Math.max(selection.from - 1, 0), selection.from);
+    dispatch(state.tr.setSelection(newSelection));
+  }
 
   insertTable({
     rows: imported?.data.length || rows,
     columns,
+    caption,
     headers: imported?.headers || [],
     data: imported?.data || [],
-    tableSchema: imported?.tableSchema || null,
+    tableSchema: imported?.tableSchema || service?.tableSchema || null,
     columnSchemas: imported?.columnSchemas?.length ? imported.columnSchemas : serviceColumns,
     lookup: service
       ? {
@@ -264,9 +270,11 @@ export async function formHandlerImg(e) {
 
   const { state, dispatch } = this.editorView;
   const { selection } = state;
-  const newSelection = TextSelection.create(state.doc, Math.max(selection.from - 1, 0), selection.from);
   const imageNode = schema.nodes.img.create({ originalAttributes: attrs });
-  const tr = state.tr.setSelection(newSelection).replaceSelectionWith(imageNode);
+  // Drop the "/" when one opened the menu; the toolbar path has no slash.
+  const tr = this.openedWithSlash
+    ? state.tr.setSelection(TextSelection.create(state.doc, Math.max(selection.from - 1, 0), selection.from)).replaceSelectionWith(imageNode)
+    : state.tr.replaceSelectionWith(imageNode);
   dispatch(tr);
 
   this.hideMenu();

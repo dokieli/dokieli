@@ -37,6 +37,27 @@ function cellText(cell) {
   return cell.textContent.trim();
 }
 
+// True when inline content in the cell carries its own RDFa property or rel.
+function contentStatesProperty(cell) {
+  let found = false;
+
+  cell.descendants((node) => {
+    if (found) return false;
+
+    const attrs = node.attrs?.originalAttributes;
+    if (attrs?.property || attrs?.rel) found = true;
+
+    (node.marks || []).forEach((mark) => {
+      const markAttrs = mark.attrs?.originalAttributes;
+      if (markAttrs?.property || markAttrs?.rel) found = true;
+    });
+
+    return !found;
+  });
+
+  return found;
+}
+
 /**
  * Recompute row and cell RDFa for one table from its column configuration.
  *
@@ -95,6 +116,14 @@ export function reconcileTable(tr, table, tablePos, mapPos = (p) => p) {
         fillValues,
         foreignKeys
       });
+
+      // Content that already states the property -- a filled link, a <time>,
+      // per-value spans -- must not have the cell repeat it as a second triple.
+      if (contentStatesProperty(cell)) {
+        delete attributes.property;
+        delete attributes.datatype;
+        delete attributes.lang;
+      }
 
       // A linked column carries rel/href on a child <a>, so the cell itself
       // keeps only what buildCellRDFa put on it.

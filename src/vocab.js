@@ -207,6 +207,7 @@ export function searchLocalTerms(keyword) {
 }
 
 // https://lov.linkeddata.es/dataset/lov/api
+// XXX :Endpoint is too slow!
 export async function searchLOVTerms(keyword, options = {}) {
   const termType = options.termType === 'class' ? 'class' : 'property';
   const url = `https://lov.linkeddata.es/dataset/lov/api/v2/term/search?q=${encodeURIComponent(keyword)}&type=${termType}&page_size=15`;
@@ -342,7 +343,8 @@ function stripPrefix(curie) {
  */
 export async function searchProperties(keyword, options = {}) {
   const {
-    sources = ['local', 'lov', 'wikidata'],
+    // LOV is not searched by default: the endpoint is too slow for as-you-type search.
+    sources = ['local', 'wikidata'],
     vocabularies = [],
     limit = 20
   } = options;
@@ -379,7 +381,7 @@ export async function searchClasses(keyword, options = {}) {
     ...options,
     termType: 'class',
     // Wikidata's property search returns no classes.
-    sources: (options.sources || ['local', 'lov']).filter((s) => s !== 'wikidata')
+    sources: (options.sources || ['local']).filter((s) => s !== 'wikidata')
   });
 }
 

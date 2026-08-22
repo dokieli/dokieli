@@ -21,6 +21,7 @@ import { schema } from '../schema/base.js';
 import Config from '../../config.js';
 import { i18n } from '../../i18n.js';
 import { sanitizeInsertAdjacentHTML, htmlEncode } from '../../utils/sanitization.js';
+import { Icon } from '../../ui/icons.js';
 import { debounce, generateAttributeId } from '../../util.js';
 import {
   findTable,
@@ -62,19 +63,29 @@ export const tableToolsPluginKey = new PluginKey('tableTools');
 
 const instances = new WeakMap();
 
-const DATATYPES = [
-  ['', 'Any'],
-  ['string', 'Text'],
-  ['integer', 'Whole number'],
-  ['decimal', 'Decimal number'],
-  ['double', 'Floating-point number'],
-  ['boolean', 'True or false'],
-  ['date', 'Date'],
-  ['dateTime', 'Date and time'],
-  ['time', 'Time'],
-  ['duration', 'Duration'],
-  ['anyURI', 'URL'],
-  ['gYear', 'Year']
+const DATATYPE_GROUPS = [
+  ['Text', [
+    ['string', 'String']
+  ]],
+  ['Number', [
+    ['integer', 'Integer'],
+    ['nonNegativeInteger', 'Non-negative integer'],
+    ['decimal', 'Decimal'],
+    ['double', 'Double']
+  ]],
+  ['Time', [
+    ['date', 'Date'],
+    ['dateTime', 'Date and time'],
+    ['time', 'Time'],
+    ['duration', 'Duration'],
+    ['gYear', 'Year']
+  ]],
+  ['Boolean', [
+    ['boolean', 'Boolean']
+  ]],
+  ['URL', [
+    ['anyURI', 'URI']
+  ]]
 ];
 
 function datatypeLabel(name, label) {
@@ -114,11 +125,6 @@ function tableSubjectFrom(tableNode) {
   return '#' + generateAttributeId(null, caption || 'table');
 }
 
-function t(key, fallback, vars) {
-  const value = i18n.t(key, vars);
-  return value === key ? fallback : value;
-}
-
 /**
  * Mark the identifier column and hint at what an empty cell in it expects.
  *
@@ -139,8 +145,8 @@ function identifierDecorations(state) {
 
   const service = getLookupService(tableSchema.lookup?.service);
   const hint = getIdentifierSearch(tableSchema.lookup)
-    ? t('editor.table.cell.search.hint', 'Type to search…')
-    : t('editor.table.cell.identifier.hint', `Enter ${service?.identifier || idColumn}`, { identifier: service?.identifier || idColumn });
+    ? i18n.t('editor.table.cell.search.hint')
+    : i18n.t('editor.table.cell.identifier.hint', { identifier: service?.identifier || idColumn });
 
   const decorations = [];
 
@@ -154,10 +160,9 @@ function identifierDecorations(state) {
 
     // A tooltip rather than rendered text: the cell already shows the editor's
     // own placeholder, and a second one competes with it for the same space.
-    decorations.push(Decoration.node(cellPos, cellPos + cell.nodeSize, {
-      class: isHeader ? 'table-identifier-column' : 'table-identifier-cell',
-      title: hint
-    }));
+    decorations.push(Decoration.node(cellPos, cellPos + cell.nodeSize, isHeader
+      ? { class: 'table-identifier-column', title: hint }
+      : { title: hint }));
   });
 
   return decorations;
@@ -212,7 +217,7 @@ function dragDecorations(state, drag) {
  */
 function captionPlaceholderDecoration(state) {
   const decorations = [];
-  const hint = t('editor.table.caption.placeholder', 'name this table');
+  const hint = i18n.t('editor.table.caption.placeholder');
 
   state.doc.descendants((node, pos) => {
     if (node.type.name !== 'table') return true;
@@ -260,15 +265,22 @@ export function tableToolsPlugin() {
         if (!action) return { status, drag };
 
         if (action.clearStatus !== undefined) {
-          status = status.remove(status.find(action.clearStatus, action.clearStatus + 1));
+          // The row's span, so the spinner widget inside it is removed too.
+          const row = tr.doc.nodeAt(action.clearStatus);
+          status = status.remove(status.find(action.clearStatus, action.clearStatus + (row?.nodeSize ?? 1)));
         }
 
         if (action.status && action.pos !== undefined) {
           const row = tr.doc.nodeAt(action.pos);
           if (row) {
-            status = status.add(tr.doc, [
-              Decoration.node(action.pos, action.pos + row.nodeSize, { class: action.status })
-            ]);
+            const added = [Decoration.node(action.pos, action.pos + row.nodeSize, { class: action.status })];
+
+            // The UI's shared spinner, inside the row's first cell.
+            if (action.status === 'table-lookup-pending') {
+              added.push(Decoration.widget(action.pos + 2, lookupSpinner, { key: 'table-lookup-progress' }));
+            }
+
+            status = status.add(tr.doc, added);
           }
         }
 
@@ -456,24 +468,24 @@ class TableToolsView {
       `<button type="button" data-table-action="${action}" title="${htmlEncode(label)}" aria-label="${htmlEncode(label)}">${icon ?? htmlEncode(label)}</button>`;
 
     const html = `
-      <div class="editor-table-tools-group" role="group" aria-label="${htmlEncode(t('editor.table.toolbar.row.aria-label', 'Row'))}">
-        ${button('row-before', t('editor.table.row-before', 'Insert row above'), '↑+')}
-        ${button('row-after', t('editor.table.row-after', 'Insert row below'), '↓+')}
-        ${button('row-delete', t('editor.table.row-delete', 'Delete row'), '↕−')}
-        ${button('row-up', t('editor.table.row-up', 'Move row up'), '⇡')}
-        ${button('row-down', t('editor.table.row-down', 'Move row down'), '⇣')}
+      <div class="editor-table-tools-group" role="group" aria-label="${htmlEncode(i18n.t('editor.table.toolbar.row.aria-label'))}">
+        ${button('row-before', i18n.t('editor.table.row-before'), '↑+')}
+        ${button('row-after', i18n.t('editor.table.row-after'), '↓+')}
+        ${button('row-delete', i18n.t('editor.table.row-delete'), '↕−')}
+        ${button('row-up', i18n.t('editor.table.row-up'), '⇡')}
+        ${button('row-down', i18n.t('editor.table.row-down'), '⇣')}
       </div>
-      <div class="editor-table-tools-group" role="group" aria-label="${htmlEncode(t('editor.table.toolbar.column.aria-label', 'Column'))}">
-        ${button('column-before', t('editor.table.column-before', 'Insert column before'), '←+')}
-        ${button('column-after', t('editor.table.column-after', 'Insert column after'), '→+')}
-        ${button('column-delete', t('editor.table.column-delete', 'Delete column'), '↔−')}
-        ${button('column-left', t('editor.table.column-left', 'Move column left'), '⇠')}
-        ${button('column-right', t('editor.table.column-right', 'Move column right'), '⇢')}
-        ${button('column-settings', t('editor.table.column-settings', 'Column settings'), t('editor.table.column-settings.label', 'Column…'))}
+      <div class="editor-table-tools-group" role="group" aria-label="${htmlEncode(i18n.t('editor.table.toolbar.column.aria-label'))}">
+        ${button('column-before', i18n.t('editor.table.column-before'), '←+')}
+        ${button('column-after', i18n.t('editor.table.column-after'), '→+')}
+        ${button('column-delete', i18n.t('editor.table.column-delete'), '↔−')}
+        ${button('column-left', i18n.t('editor.table.column-left'), '⇠')}
+        ${button('column-right', i18n.t('editor.table.column-right'), '⇢')}
+        ${button('column-settings', i18n.t('editor.table.column-settings'), i18n.t('editor.table.column-settings.label'))}
       </div>
-      <div class="editor-table-tools-group" role="group" aria-label="${htmlEncode(t('editor.table.toolbar.table.aria-label', 'Table'))}">
-        ${button('table-settings', t('editor.table.table-settings', 'Table settings'), t('editor.table.table-settings.label', 'Table…'))}
-        ${button('table-delete', t('editor.table.delete', 'Delete table'), '✕')}
+      <div class="editor-table-tools-group" role="group" aria-label="${htmlEncode(i18n.t('editor.table.toolbar.table.aria-label'))}">
+        ${button('table-settings', i18n.t('editor.table.table-settings'), i18n.t('editor.table.table-settings.label'))}
+        ${button('table-delete', i18n.t('editor.table.delete'), '✕')}
       </div>
     `;
 
@@ -739,7 +751,7 @@ class TableToolsView {
     const handle = document.createElement('div');
     handle.className = 'editor-table-column-handle';
     handle.setAttribute('contenteditable', 'false');
-    handle.title = t('editor.table.column-drag', 'Drag to reorder column');
+    handle.title = i18n.t('editor.table.column-drag');
 
     handle.addEventListener('mousedown', (e) => {
       if (e.button !== 0) return;
@@ -821,7 +833,7 @@ class TableToolsView {
     const handle = document.createElement('div');
     handle.className = 'editor-table-row-handle';
     handle.setAttribute('contenteditable', 'false');
-    handle.title = t('editor.table.row-drag', 'Drag to reorder row');
+    handle.title = i18n.t('editor.table.row-drag');
 
     handle.addEventListener('mousedown', (e) => {
       if (e.button !== 0) return;
@@ -940,60 +952,61 @@ class TableToolsView {
     const panel = this.openPanel(`
       <form class="editor-form editor-form-active" id="editor-form-table-column-settings">
         <fieldset>
-          <legend>${htmlEncode(t('editor.table.column.legend', 'Column'))}</legend>
+          <legend>${htmlEncode(i18n.t('editor.table.column.legend'))}</legend>
 
-          <label for="table-column-title">${htmlEncode(t('editor.table.column.title.label', 'Header'))}</label>
+          <label for="table-column-title">${htmlEncode(i18n.t('editor.table.column.title.label'))}</label>
           <input class="editor-form-input" dir="auto" id="table-column-title" name="title" type="text" value="${htmlEncode(getColumnTitle(column, ''))}" />
 
           <div class="autocomplete">
-            <label for="table-column-property">${htmlEncode(t('editor.table.column.property.label', 'Property'))}</label>
+            <label for="table-column-property">${htmlEncode(i18n.t('editor.table.column.property.label'))}</label>
             <input autocomplete="off" class="editor-form-input" dir="ltr" id="table-column-property" name="property" placeholder="schema:name" type="text" value="${htmlEncode(column.propertyUrl || '')}" />
           </div>
 
-          <label for="table-column-kind">${htmlEncode(t('editor.table.column.kind.label', 'Value'))}</label>
+          <label for="table-column-kind">${htmlEncode(i18n.t('editor.table.column.kind.label'))}</label>
           <select class="editor-form-select" id="table-column-kind" name="kind">
-            <option value="literal"${kind === 'literal' ? ' selected=""' : ''}>${htmlEncode(t('editor.table.column.kind.literal', 'Text'))}</option>
-            <option value="link"${kind === 'link' ? ' selected=""' : ''}>${htmlEncode(t('editor.table.column.kind.link', 'Link'))}</option>
-            <option value="type"${kind === 'type' ? ' selected=""' : ''}>${htmlEncode(t('editor.table.column.kind.type', 'Type'))}</option>
-            <option value="image"${kind === 'image' ? ' selected=""' : ''}>${htmlEncode(t('editor.table.column.kind.image', 'Image'))}</option>
+            <option value="literal"${kind === 'literal' ? ' selected=""' : ''}>${htmlEncode(i18n.t('editor.table.column.kind.literal'))}</option>
+            <option value="link"${kind === 'link' ? ' selected=""' : ''}>${htmlEncode(i18n.t('editor.table.column.kind.link'))}</option>
+            <option value="type"${kind === 'type' ? ' selected=""' : ''}>${htmlEncode(i18n.t('editor.table.column.kind.type'))}</option>
+            <option value="image"${kind === 'image' ? ' selected=""' : ''}>${htmlEncode(i18n.t('editor.table.column.kind.image'))}</option>
           </select>
 
           <div data-when-kind="literal">
-            <label for="table-column-datatype">${htmlEncode(t('editor.table.column.datatype.label', 'Datatype'))}</label>
+            <label for="table-column-datatype">${htmlEncode(i18n.t('editor.table.column.datatype.label'))}</label>
             <select class="editor-form-select" id="table-column-datatype" name="datatype">
-              ${DATATYPES.map(([d, label]) => `<option value="${d}"${matchesDatatype(column.datatype, d) ? ' selected=""' : ''}>${htmlEncode(datatypeLabel(d, label))}</option>`).join('')}
+              <option value=""${matchesDatatype(column.datatype, '') ? ' selected=""' : ''}>${htmlEncode(i18n.t('editor.table.column.datatype.any'))}</option>
+              ${DATATYPE_GROUPS.map(([group, entries]) => `<optgroup label="${htmlEncode(group)}">${entries.map(([d, label]) => `<option value="${d}"${matchesDatatype(column.datatype, d) ? ' selected=""' : ''}>${htmlEncode(datatypeLabel(d, label))}</option>`).join('')}</optgroup>`).join('')}
             </select>
           </div>
 
           <div data-when-kind="link type image">
-            <label for="table-column-value-url">${htmlEncode(t('editor.table.column.value-url.label', 'Value URL'))}</label>
+            <label for="table-column-value-url">${htmlEncode(i18n.t('editor.table.column.value-url.label'))}</label>
             <input class="editor-form-input" dir="ltr" id="table-column-value-url" name="valueUrl" placeholder="{${htmlEncode(column.name || 'value')}}" type="text" value="${htmlEncode(column.valueUrl || '')}" />
           </div>
 
-          <label for="table-column-about-url">${htmlEncode(t('editor.table.column.about-url.label', 'Subject'))}</label>
-          <input class="editor-form-input" dir="ltr" id="table-column-about-url" name="aboutUrl" placeholder="${htmlEncode(t('editor.table.column.about-url.placeholder', 'defaults to the row subject'))}" type="text" value="${htmlEncode(column.aboutUrl || '')}" />
+          <label for="table-column-about-url">${htmlEncode(i18n.t('editor.table.column.about-url.label'))}</label>
+          <input class="editor-form-input" dir="ltr" id="table-column-about-url" name="aboutUrl" placeholder="${htmlEncode(i18n.t('editor.table.column.about-url.placeholder'))}" type="text" value="${htmlEncode(column.aboutUrl || '')}" />
 
           ${isJSONLookup ? `
-            <label for="table-column-source">${htmlEncode(t('editor.table.column.source.label', 'Fill from result field'))}</label>
+            <label for="table-column-source">${htmlEncode(i18n.t('editor.table.column.source.label'))}</label>
             <input class="editor-form-input" dir="ltr" id="table-column-source" name="source" placeholder="authors.*.name" type="text" value="${htmlEncode(column.lookup?.source || '')}" />
           ` : ''}
 
           ${isIdentifier
-            ? `<p class="info">${htmlEncode(t('editor.table.column.identifier.info', 'This column identifies each row and fills the others. Change it in Table settings.'))}</p>`
+            ? `<p class="info">${htmlEncode(i18n.t('editor.table.column.identifier.info'))}</p>`
             : `
-              <label for="table-column-service">${htmlEncode(t('editor.table.column.service.label', 'Suggest values from'))}</label>
+              <label for="table-column-service">${htmlEncode(i18n.t('editor.table.column.service.label'))}</label>
               <select class="editor-form-select" id="table-column-service" name="columnService">
-                <option value="">${htmlEncode(t('editor.table.lookup.service.none', 'None'))}</option>
+                <option value="">${htmlEncode(i18n.t('editor.table.lookup.service.none'))}</option>
                 ${Object.entries(LookupServices).filter(([, service]) => service.search).map(([name, service]) =>
                   `<option value="${name}"${column.lookup?.service === name ? ' selected=""' : ''}>${htmlEncode(service.label)}</option>`).join('')}
               </select>
-              <p class="info">${htmlEncode(t('editor.table.column.service.info', 'Typing in this column offers matches to pick from, and links what is chosen. It does not fill the rest of the row.'))}</p>
+              <p class="info">${htmlEncode(i18n.t('editor.table.column.service.info'))}</p>
             `}
 
           <div class="editor-form-actions-row">
-            <button class="editor-form-submit" type="submit">${htmlEncode(t('editor.table.apply', 'Apply'))}</button>
-            <button class="editor-form-secondary" name="apply-all" type="button">${htmlEncode(t('editor.table.apply-all', 'Apply to all rows'))}</button>
-            <button class="editor-form-cancel" type="button">${htmlEncode(t('editor.toolbar.form.cancel.button.textContent', 'Cancel'))}</button>
+            <button class="editor-form-submit" type="submit">${htmlEncode(i18n.t('editor.table.apply'))}</button>
+            <button class="editor-form-secondary" name="apply-all" type="button">${htmlEncode(i18n.t('editor.table.apply-all'))}</button>
+            <button class="editor-form-cancel" type="button">${htmlEncode(i18n.t('editor.toolbar.form.cancel.button.textContent'))}</button>
           </div>
         </fieldset>
       </form>
@@ -1145,28 +1158,28 @@ class TableToolsView {
     const panel = this.openPanel(`
       <form class="editor-form editor-form-active" id="editor-form-table-settings">
         <fieldset>
-          <legend>${htmlEncode(t('editor.table.settings.legend', 'Table'))}</legend>
+          <legend>${htmlEncode(i18n.t('editor.table.settings.legend'))}</legend>
 
           <div class="autocomplete">
-            <label for="table-typeof">${htmlEncode(t('editor.table.typeof.label', 'Each row describes a'))}</label>
+            <label for="table-typeof">${htmlEncode(i18n.t('editor.table.typeof.label'))}</label>
             <input autocomplete="off" class="editor-form-input" dir="ltr" id="table-typeof" list="table-typeof-options" name="typeof" placeholder="schema:Book" type="text" value="${htmlEncode(tableSchema.typeof || '')}" />
             <datalist id="table-typeof-options">${COMMON_TYPES.map((c) => `<option value="${c}"></option>`).join('')}</datalist>
           </div>
 
-          <label for="table-lookup-service">${htmlEncode(t('editor.table.lookup.service.label', 'Data source'))}</label>
+          <label for="table-lookup-service">${htmlEncode(i18n.t('editor.table.lookup.service.label'))}</label>
           <select class="editor-form-select" id="table-lookup-service" name="service"${lookup.service ? ' disabled=""' : ''}>
-            <option value="">${htmlEncode(t('editor.table.lookup.service.none', 'None'))}</option>
+            <option value="">${htmlEncode(i18n.t('editor.table.lookup.service.none'))}</option>
             ${Object.entries(LookupServices).map(([name, s]) =>
               `<option value="${name}"${lookup.service === name ? ' selected=""' : ''}>${htmlEncode(s.label)}</option>`).join('')}
           </select>
 
           ${lookup.service ? `
-            <p class="info">${htmlEncode(t('editor.table.lookup.service.locked', 'The columns are mapped to this source. Changing it clears every value the table holds.'))}</p>
-            <button class="editor-form-secondary" name="change-service" type="button">${htmlEncode(t('editor.table.lookup.service.change', 'Change data source…'))}</button>
+            <p class="info">${htmlEncode(i18n.t('editor.table.lookup.service.locked'))}</p>
+            <button class="editor-form-secondary" name="change-service" type="button">${htmlEncode(i18n.t('editor.table.lookup.service.change'))}</button>
           ` : ''}
 
           <div data-when-source="on">
-            <label for="table-lookup-id-column">${htmlEncode(t('editor.table.lookup.id-column.label', 'Look rows up by'))}</label>
+            <label for="table-lookup-id-column">${htmlEncode(i18n.t('editor.table.lookup.id-column.label'))}</label>
             <select class="editor-form-select" id="table-lookup-id-column" name="idColumn">
               <option value="">—</option>
               ${identifierColumnCandidates(lookup, columns).map((c) =>
@@ -1174,45 +1187,45 @@ class TableToolsView {
             </select>
             <p class="info">${htmlEncode(
               getLookupService(lookup.service)?.identifier
-                ? t('editor.table.lookup.id-column.info-identifier', `Typing in this column fills the rest of the row. ${getLookupService(lookup.service).identifier} is what this source looks rows up by.`)
-                : t('editor.table.lookup.id-column.info', 'Typing in this column fills the rest of the row from the data source.'))}</p>
+                ? i18n.t('editor.table.lookup.id-column.info-identifier', { identifier: getLookupService(lookup.service).identifier })
+                : i18n.t('editor.table.lookup.id-column.info'))}</p>
           </div>
 
           <details class="editor-table-advanced"${tableSchema.propertyUrl || tableSchema.aboutUrl || lookup.url ? ' open=""' : ''}>
-            <summary>${htmlEncode(t('editor.table.advanced.summary', 'Advanced'))}</summary>
+            <summary>${htmlEncode(i18n.t('editor.table.advanced.summary'))}</summary>
 
             <div class="autocomplete">
-              <label for="table-property">${htmlEncode(t('editor.table.property.label', 'Rows are linked by'))}</label>
+              <label for="table-property">${htmlEncode(i18n.t('editor.table.property.label'))}</label>
               <input autocomplete="off" class="editor-form-input" dir="ltr" id="table-property" name="propertyUrl" placeholder="schema:hasPart" type="text" value="${htmlEncode(tableSchema.propertyUrl || '')}" />
             </div>
 
-            <label for="table-about-url">${htmlEncode(t('editor.table.about-url.label', 'Row subject'))}</label>
+            <label for="table-about-url">${htmlEncode(i18n.t('editor.table.about-url.label'))}</label>
             <input class="editor-form-input" dir="ltr" id="table-about-url" name="aboutUrl" placeholder="#row/{_row}" type="text" value="${htmlEncode(tableSchema.aboutUrl || '')}" />
 
-            <label for="table-lookup-url">${htmlEncode(t('editor.table.lookup.url.label', 'Request URL'))}</label>
+            <label for="table-lookup-url">${htmlEncode(i18n.t('editor.table.lookup.url.label'))}</label>
             <input class="editor-form-input" dir="ltr" id="table-lookup-url" name="url" placeholder="https://example.org/item/{id}.json" type="text" value="${htmlEncode(lookup.url || '')}" />
 
-            <label for="table-lookup-format">${htmlEncode(t('editor.table.lookup.format.label', 'Response'))}</label>
+            <label for="table-lookup-format">${htmlEncode(i18n.t('editor.table.lookup.format.label'))}</label>
             <select class="editor-form-select" id="table-lookup-format" name="format">
-              <option value="json"${format === 'json' ? ' selected=""' : ''}>${htmlEncode(t('editor.table.lookup.format.record', 'One record per row'))}</option>
-              <option value="rdf"${format === 'rdf' ? ' selected=""' : ''}>${htmlEncode(t('editor.table.lookup.format.linked-data', 'Linked data'))}</option>
+              <option value="json"${format === 'json' ? ' selected=""' : ''}>${htmlEncode(i18n.t('editor.table.lookup.format.record'))}</option>
+              <option value="rdf"${format === 'rdf' ? ' selected=""' : ''}>${htmlEncode(i18n.t('editor.table.lookup.format.linked-data'))}</option>
             </select>
 
             <div data-when-format="json">
-              <label for="table-lookup-record">${htmlEncode(t('editor.table.lookup.record.label', 'Record path'))}</label>
+              <label for="table-lookup-record">${htmlEncode(i18n.t('editor.table.lookup.record.label'))}</label>
               <input class="editor-form-input" dir="ltr" id="table-lookup-record" name="record" placeholder="ISBN:{id}" type="text" value="${htmlEncode(lookup.record || '')}" />
             </div>
 
             <div data-when-format="rdf">
-              <label for="table-lookup-subject">${htmlEncode(t('editor.table.lookup.subject.label', 'Result subject'))}</label>
+              <label for="table-lookup-subject">${htmlEncode(i18n.t('editor.table.lookup.subject.label'))}</label>
               <input class="editor-form-input" dir="ltr" id="table-lookup-subject" name="lookupSubject" placeholder="https://example.org/item/{id}" type="text" value="${htmlEncode(lookup.subject || '')}" />
-              <p class="info">${htmlEncode(t('editor.table.lookup.rdf.info', 'Each column is filled from the property it is mapped to.'))}</p>
+              <p class="info">${htmlEncode(i18n.t('editor.table.lookup.rdf.info'))}</p>
             </div>
           </details>
 
           <div class="editor-form-actions-row">
-            <button class="editor-form-submit" type="submit">${htmlEncode(t('editor.table.apply', 'Apply'))}</button>
-            <button class="editor-form-cancel" type="button">${htmlEncode(t('editor.toolbar.form.cancel.button.textContent', 'Cancel'))}</button>
+            <button class="editor-form-submit" type="submit">${htmlEncode(i18n.t('editor.table.apply'))}</button>
+            <button class="editor-form-cancel" type="button">${htmlEncode(i18n.t('editor.toolbar.form.cancel.button.textContent'))}</button>
           </div>
         </fieldset>
       </form>
@@ -1237,6 +1250,13 @@ class TableToolsView {
       panel.querySelector('[name="format"]').value = service.format || 'json';
       panel.querySelector('[name="record"]').value = service.record || '';
       panel.querySelector('[name="lookupSubject"]').value = service.subject || '';
+
+      // The service's suggested row semantics fill in only where nothing is authored.
+      Object.entries(service.tableSchema || {}).forEach(([key, value]) => {
+        const field = panel.querySelector(`[name="${key}"]`);
+        if (field && !field.value.trim()) field.value = value;
+      });
+
       syncFormat();
 
       const applyColumns = panel.querySelector('[name="apply-service-columns"]');
@@ -1249,7 +1269,7 @@ class TableToolsView {
     // not answer, so it is a deliberate act that takes the data with it.
     panel.querySelector('[name="change-service"]')?.addEventListener('click', () => {
       const confirmed = window.confirm(
-        t('editor.table.lookup.service.confirm', 'Change the data source and clear every value in the table?'));
+        i18n.t('editor.table.lookup.service.confirm'));
       if (!confirmed) return;
 
       panel.querySelector('[name="service"]').disabled = false;
@@ -1380,9 +1400,8 @@ class TableToolsView {
         li.tabIndex = -1;
 
         sanitizeInsertAdjacentHTML(li, 'afterbegin',
-          `<span class="term-curie">${htmlEncode(term.curie)}</span>` +
+          `<span class="term-curie"${term.iri ? ` title="${htmlEncode(term.iri)}"` : ''}>${htmlEncode(term.curie)}</span>` +
           `<span class="term-label">${htmlEncode(term.label || '')}</span>` +
-          (term.source ? `<span class="term-source">${htmlEncode(term.source)}</span>` : '') +
           (term.description ? `<span class="term-description">${htmlEncode(term.description)}</span>` : '')
         );
 
@@ -1422,6 +1441,14 @@ class TableToolsView {
     input.addEventListener('blur', () => setTimeout(close, 150));
 
     input.addEventListener('keydown', (e) => {
+      // Enter only ever picks a highlighted suggestion; it never submits the form.
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const chosen = list && [...list.children].find((li) => li.classList.contains('active'));
+        if (chosen) chosen.dispatchEvent(new MouseEvent('mousedown'));
+        return;
+      }
+
       if (!list) return;
 
       const items = [...list.children];
@@ -1435,9 +1462,6 @@ class TableToolsView {
           : (active <= 0 ? items.length : active) - 1;
         items[next].classList.add('active');
         items[next].setAttribute('aria-selected', 'true');
-      } else if (e.key === 'Enter' && active > -1) {
-        e.preventDefault();
-        items[active].dispatchEvent(new MouseEvent('mousedown'));
       } else if (e.key === 'Escape') {
         e.stopPropagation();
         close();
@@ -1619,11 +1643,19 @@ class TableToolsView {
       ? { rowPos: cell.rowPos, columnIndex: cell.columnIndex, value: cell.node.textContent.trim(), tablePos: table.pos }
       : null;
 
+    const sameCell = !!(current && previous
+      && current.rowPos === previous.rowPos && current.columnIndex === previous.columnIndex);
+
+    // The value the caret found when it entered the cell, kept while it stays.
+    if (current) current.entryValue = sameCell ? previous.entryValue : current.value;
+
     this.watchedCell = current;
 
-    if (!previous) return;
-    if (current && current.rowPos === previous.rowPos && current.columnIndex === previous.columnIndex) return;
+    if (!previous || sameCell) return;
     if (!previous.value) return;
+
+    // Only a visit that changed the value asks the source again.
+    if (previous.value === previous.entryValue) return;
 
     const previousTable = view.state.doc.nodeAt(previous.tablePos);
     if (!previousTable || previousTable.type.name !== 'table') return;
@@ -1672,6 +1704,8 @@ class TableToolsView {
         return;
       }
 
+      await this.measureImageValues(columns, result.values);
+
       this.setRowStatus(rowPos, null);
       this.fillRow(tablePos, rowPos, result.values);
     } catch (e) {
@@ -1699,6 +1733,16 @@ class TableToolsView {
       if (!this.editorView?.state?.doc?.nodeAt(rowPos)) return;
       this.editorView.dispatch(this.editorView.state.tr.setMeta(tableToolsPluginKey, { clearStatus: rowPos }));
     }, clearAfter);
+  }
+
+  /** Known dimensions let an image occupy its space before it loads. */
+  async measureImageValues(columns, values) {
+    await Promise.all(columns
+      .filter((column) => column.image && values[column.name]?.text)
+      .map(async (column) => {
+        const size = await loadImageSize(values[column.name].text);
+        if (size) Object.assign(values[column.name], size);
+      }));
   }
 
   /** Write looked-up values into the row, leaving anything already typed. */
@@ -1764,7 +1808,13 @@ class TableToolsView {
       const built = buildCellRDFa(
         { ...column, valueUrl: column.valueUrl || value.valueUrl || undefined },
         value.text,
-        { rowSubject, fillValues, foreignKeys: [] }
+        {
+          rowSubject,
+          fillValues,
+          foreignKeys: [],
+          textValues: value.values,
+          imageSize: value.width && value.height ? { width: value.width, height: value.height } : undefined
+        }
       );
 
       edits.push({ from: at + 1, to: at + cell.nodeSize - 1, built });
@@ -1800,9 +1850,44 @@ function findTableAt(state, pos) {
   return node?.type.name === 'table' ? node : null;
 }
 
-// Cell content for a built RDFa description: a linked value becomes an <a>.
+function lookupSpinner() {
+  const span = document.createElement('span');
+  span.className = 'progress';
+  sanitizeInsertAdjacentHTML(span, 'afterbegin', Icon['.fas.fa-circle-notch.fa-spin.fa-fw']);
+  return span;
+}
+
+// Dimensions are a nicety: resolve null on error or delay rather than fail.
+function loadImageSize(src, timeout = 2500) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const timer = setTimeout(() => resolve(null), timeout);
+
+    img.onload = () => {
+      clearTimeout(timer);
+      resolve(img.naturalWidth ? { width: img.naturalWidth, height: img.naturalHeight } : null);
+    };
+    img.onerror = () => {
+      clearTimeout(timer);
+      resolve(null);
+    };
+    img.src = src;
+  });
+}
+
+// Cell content for a built RDFa description: linked and typed values become
+// inline elements; a multi-valued cell gets one per value.
 function buildCellContent(built) {
   const text = built.text || '';
+
+  if (built.children) {
+    const inline = [];
+    built.children.forEach((child, i) => {
+      if (i) inline.push(schema.text(', '));
+      inline.push(inlineCellContent(child));
+    });
+    return schema.nodes.p.create(null, inline);
+  }
 
   if (!built.child) {
     return schema.nodes.p.create(null, text ? schema.text(text) : null);
@@ -1812,13 +1897,16 @@ function buildCellContent(built) {
     return schema.nodes.p.create(null, schema.nodes.img.create({ originalAttributes: built.child.attributes }));
   }
 
-  const mark = schema.marks.a?.create({ originalAttributes: built.child.attributes });
+  return schema.nodes.p.create(null, inlineCellContent({ ...built.child, text: built.child.text || text }));
+}
 
-  if (mark) {
-    return schema.nodes.p.create(null, schema.text(text, [mark]));
-  }
+// An inline element node (span, time) when the schema has one; a mark (a) otherwise.
+function inlineCellContent({ tag, attributes, text }) {
+  const node = schema.nodes[tag];
+  if (node) return node.create({ originalAttributes: attributes }, text ? schema.text(text) : null);
 
-  return schema.nodes.p.create(null, schema.text(text));
+  const mark = schema.marks[tag]?.create({ originalAttributes: attributes });
+  return schema.text(text, mark ? [mark] : undefined);
 }
 
 export { reconcileTable };

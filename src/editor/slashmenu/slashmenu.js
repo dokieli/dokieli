@@ -71,6 +71,7 @@ export class SlashMenu {
   }
 
   showMenu(cursorX, cursorY) {
+    this.openedWithSlash = true;
     this.createMenuItems();
     this.menuContainer.style.display = "block";
 
@@ -131,6 +132,18 @@ export class SlashMenu {
     };
 
     document.addEventListener("keydown", this.menuKeyHandler);
+  }
+
+  /** Open one feature's form directly at the caret, e.g. from the toolbar; no "/" involved. */
+  showForm(button) {
+    this.openedWithSlash = false;
+
+    const coords = this.editorView.coordsAtPos(this.editorView.state.selection.from);
+    this.menuContainer.style.display = "block";
+    this.menuContainer.style.left = `${coords.left + window.scrollX}px`;
+    this.menuContainer.style.top = `${coords.bottom + window.scrollY}px`;
+
+    this.handlePopups(button);
   }
 
   hideMenu() {
