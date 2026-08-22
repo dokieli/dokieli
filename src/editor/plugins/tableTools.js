@@ -55,7 +55,7 @@ import {
   getPrefixesUsed,
   ensureDocumentPrefixes
 } from '../../table.js';
-import { reconcileTable, reconcileSelectedTable } from './tableRDFa.js';
+import { reconcileTable, reconcileSelectedTable, contentStatesProperty } from './tableRDFa.js';
 import { searchClasses, searchProperties } from '../../vocab.js';
 import { LookupServices, getLookupService, identifierColumnCandidates, lookupIdentifier, getIdentifierSearch, looksLikeIdentifier, needsIdentifierPick } from '../../services.js';
 
@@ -63,10 +63,18 @@ export const tableToolsPluginKey = new PluginKey('tableTools');
 
 const instances = new WeakMap();
 
+/**
+ * Let a keymap defer to the open identifier-suggestion list. Keymaps run
+ * before this plugin's own key handling, so without this ArrowDown moves the
+ * caret to the next row while the list is showing.
+ */
+export function tableSuggestionKeydown(view, key) {
+  const instance = instances.get(view);
+  if (!instance?.suggestions) return false;
+  return instance.handleSuggestionKey({ key });
+}
+
 const DATATYPE_GROUPS = [
-  ['Text', [
-    ['string', 'String']
-  ]],
   ['Number', [
     ['integer', 'Integer'],
     ['nonNegativeInteger', 'Non-negative integer'],
@@ -82,11 +90,18 @@ const DATATYPE_GROUPS = [
   ]],
   ['Boolean', [
     ['boolean', 'Boolean']
-  ]],
-  ['URL', [
-    ['anyURI', 'URI']
   ]]
 ];
+
+// The merged Value select mixes literal datatypes with resource kinds.
+function kindOfValue(value) {
+  return ['link', 'type', 'image'].includes(value) ? value : 'literal';
+}
+
+// Titles match loosely: "Author(s)" should find a service's "Author".
+function titleKey(title) {
+  return String(title || '').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '').replace(/s$/, '');
+}
 
 function datatypeLabel(name, label) {
   return name ? `${label} (xsd:${name})` : label;
@@ -955,90 +970,84 @@ class TableToolsView {
           <legend>${htmlEncode(i18n.t('editor.table.column.legend'))}</legend>
 
           <label for="table-column-title">${htmlEncode(i18n.t('editor.table.column.title.label'))}</label>
-          <input class="editor-form-input" dir="auto" id="table-column-title" name="title" type="text" value="${htmlEncode(getColumnTitle(column, ''))}" />
+          <input class="editor-form-input" dir="auto" id="table-column-title" name="table-column-title" type="text" value="${htmlEncode(getColumnTitle(column, ''))}" />
 
           <div class="autocomplete">
             <label for="table-column-property">${htmlEncode(i18n.t('editor.table.column.property.label'))}</label>
-            <input autocomplete="off" class="editor-form-input" dir="ltr" id="table-column-property" name="property" placeholder="schema:name" type="text" value="${htmlEncode(column.propertyUrl || '')}" />
+            <input autocomplete="off" class="editor-form-input" dir="ltr" id="table-column-property" name="table-column-property" placeholder="schema:name" type="text" value="${htmlEncode(column.propertyUrl || '')}" />
           </div>
 
-          <label for="table-column-kind">${htmlEncode(i18n.t('editor.table.column.kind.label'))}</label>
-          <select class="editor-form-select" id="table-column-kind" name="kind">
-            <option value="literal"${kind === 'literal' ? ' selected=""' : ''}>${htmlEncode(i18n.t('editor.table.column.kind.literal'))}</option>
-            <option value="link"${kind === 'link' ? ' selected=""' : ''}>${htmlEncode(i18n.t('editor.table.column.kind.link'))}</option>
-            <option value="type"${kind === 'type' ? ' selected=""' : ''}>${htmlEncode(i18n.t('editor.table.column.kind.type'))}</option>
-            <option value="image"${kind === 'image' ? ' selected=""' : ''}>${htmlEncode(i18n.t('editor.table.column.kind.image'))}</option>
+          <label for="table-column-value">${htmlEncode(i18n.t('editor.table.column.kind.label'))}</label>
+          <select class="editor-form-select" id="table-column-value" name="table-column-value">
+            <option value=""${kind === 'literal' && matchesDatatype(column.datatype, '') ? ' selected=""' : ''}>${htmlEncode(i18n.t('editor.table.column.kind.literal'))}</option>
+            ${DATATYPE_GROUPS.map(([group, entries]) => `<optgroup label="${htmlEncode(group)}">${entries.map(([d, label]) => `<option value="${d}"${kind === 'literal' && matchesDatatype(column.datatype, d) ? ' selected=""' : ''}>${htmlEncode(datatypeLabel(d, label))}</option>`).join('')}</optgroup>`).join('')}
+            <optgroup label="Resource">
+              <option value="link"${kind === 'link' ? ' selected=""' : ''}>${htmlEncode(i18n.t('editor.table.column.kind.link'))}</option>
+              <option value="type"${kind === 'type' ? ' selected=""' : ''}>${htmlEncode(i18n.t('editor.table.column.kind.type'))}</option>
+              <option value="image"${kind === 'image' ? ' selected=""' : ''}>${htmlEncode(i18n.t('editor.table.column.kind.image'))}</option>
+            </optgroup>
           </select>
-
-          <div data-when-kind="literal">
-            <label for="table-column-datatype">${htmlEncode(i18n.t('editor.table.column.datatype.label'))}</label>
-            <select class="editor-form-select" id="table-column-datatype" name="datatype">
-              <option value=""${matchesDatatype(column.datatype, '') ? ' selected=""' : ''}>${htmlEncode(i18n.t('editor.table.column.datatype.any'))}</option>
-              ${DATATYPE_GROUPS.map(([group, entries]) => `<optgroup label="${htmlEncode(group)}">${entries.map(([d, label]) => `<option value="${d}"${matchesDatatype(column.datatype, d) ? ' selected=""' : ''}>${htmlEncode(datatypeLabel(d, label))}</option>`).join('')}</optgroup>`).join('')}
-            </select>
-          </div>
 
           <div data-when-kind="link type image">
             <label for="table-column-value-url">${htmlEncode(i18n.t('editor.table.column.value-url.label'))}</label>
-            <input class="editor-form-input" dir="ltr" id="table-column-value-url" name="valueUrl" placeholder="{${htmlEncode(column.name || 'value')}}" type="text" value="${htmlEncode(column.valueUrl || '')}" />
+            <input class="editor-form-input" dir="ltr" id="table-column-value-url" name="table-column-value-url" placeholder="{${htmlEncode(column.name || 'value')}}" type="text" value="${htmlEncode(column.valueUrl || '')}" />
           </div>
 
-          <label for="table-column-about-url">${htmlEncode(i18n.t('editor.table.column.about-url.label'))}</label>
-          <input class="editor-form-input" dir="ltr" id="table-column-about-url" name="aboutUrl" placeholder="${htmlEncode(i18n.t('editor.table.column.about-url.placeholder'))}" type="text" value="${htmlEncode(column.aboutUrl || '')}" />
+          ${isIdentifier ? `<p class="info">${htmlEncode(i18n.t('editor.table.column.identifier.info'))}</p>` : ''}
 
-          ${isJSONLookup ? `
-            <label for="table-column-source">${htmlEncode(i18n.t('editor.table.column.source.label'))}</label>
-            <input class="editor-form-input" dir="ltr" id="table-column-source" name="source" placeholder="authors.*.name" type="text" value="${htmlEncode(column.lookup?.source || '')}" />
-          ` : ''}
+          <details class="editor-table-advanced"${column.aboutUrl || column.lookup?.source || column.lookup?.service ? ' open=""' : ''}>
+            <summary>${htmlEncode(i18n.t('editor.table.advanced.summary'))}</summary>
 
-          ${isIdentifier
-            ? `<p class="info">${htmlEncode(i18n.t('editor.table.column.identifier.info'))}</p>`
-            : `
+            <label for="table-column-about-url">${htmlEncode(i18n.t('editor.table.column.about-url.label'))}</label>
+            <input class="editor-form-input" dir="ltr" id="table-column-about-url" name="table-column-about-url" placeholder="${htmlEncode(i18n.t('editor.table.column.about-url.placeholder'))}" type="text" value="${htmlEncode(column.aboutUrl || '')}" />
+
+            ${isJSONLookup ? `
+              <label for="table-column-source">${htmlEncode(i18n.t('editor.table.column.source.label'))}</label>
+              <input class="editor-form-input" dir="ltr" id="table-column-source" name="table-column-source" placeholder="authors.*.name" type="text" value="${htmlEncode(column.lookup?.source || '')}" />
+            ` : ''}
+
+            ${isIdentifier ? '' : `
               <label for="table-column-service">${htmlEncode(i18n.t('editor.table.column.service.label'))}</label>
-              <select class="editor-form-select" id="table-column-service" name="columnService">
+              <select class="editor-form-select" id="table-column-service" name="table-column-service">
                 <option value="">${htmlEncode(i18n.t('editor.table.lookup.service.none'))}</option>
                 ${Object.entries(LookupServices).filter(([, service]) => service.search).map(([name, service]) =>
                   `<option value="${name}"${column.lookup?.service === name ? ' selected=""' : ''}>${htmlEncode(service.label)}</option>`).join('')}
               </select>
               <p class="info">${htmlEncode(i18n.t('editor.table.column.service.info'))}</p>
             `}
+          </details>
 
           <div class="editor-form-actions-row">
             <button class="editor-form-submit" type="submit">${htmlEncode(i18n.t('editor.table.apply'))}</button>
-            <button class="editor-form-secondary" name="apply-all" type="button">${htmlEncode(i18n.t('editor.table.apply-all'))}</button>
             <button class="editor-form-cancel" type="button">${htmlEncode(i18n.t('editor.toolbar.form.cancel.button.textContent'))}</button>
           </div>
         </fieldset>
       </form>
     `);
 
-    const kindSelect = panel.querySelector('[name="kind"]');
+    const valueSelect = panel.querySelector('[name="table-column-value"]');
     const syncKind = () => {
       panel.querySelectorAll('[data-when-kind]').forEach((el) => {
-        el.hidden = !el.dataset.whenKind.split(' ').includes(kindSelect.value);
+        el.hidden = !el.dataset.whenKind.split(' ').includes(kindOfValue(valueSelect.value));
       });
     };
-    kindSelect.addEventListener('change', syncKind);
+    valueSelect.addEventListener('change', syncKind);
     syncKind();
 
-    this.attachPropertyAutocomplete(panel.querySelector('[name="property"]'));
+    this.attachPropertyAutocomplete(panel.querySelector('[name="table-column-property"]'));
 
     panel.querySelector('.editor-form-cancel').addEventListener('click', () => {
       this.closePanel();
       this.editorView.focus();
     });
 
-    panel.querySelector('[name="apply-all"]').addEventListener('click', () => {
-      this.applyColumnSettings(panel, index, { applyToAllRows: true });
-    });
-
     panel.addEventListener('submit', (e) => {
       e.preventDefault();
-      this.applyColumnSettings(panel, index, { applyToAllRows: false });
+      this.applyColumnSettings(panel, index);
     });
   }
 
-  applyColumnSettings(panel, index, { applyToAllRows }) {
+  applyColumnSettings(panel, index) {
     const table = findTable(this.editorView.state);
     if (!table) return;
 
@@ -1046,23 +1055,40 @@ class TableToolsView {
     const columns = getColumns(table.node);
     const existing = columns[index] || {};
 
-    const kind = read('kind');
-    const title = read('title');
+    const value = read('table-column-value');
+    const kind = kindOfValue(value);
+    const title = read('table-column-title');
 
     const column = {
       name: existing.name || toColumnName(title, index, columns.map((c) => c.name)),
       titles: title || undefined,
-      propertyUrl: kind === 'type' ? 'rdf:type' : read('property') || undefined,
-      aboutUrl: read('aboutUrl') || undefined,
-      datatype: kind === 'literal' ? read('datatype') || undefined : undefined,
+      propertyUrl: kind === 'type' ? 'rdf:type' : read('table-column-property') || undefined,
+      aboutUrl: read('table-column-about-url') || undefined,
+      datatype: kind === 'literal' ? value || undefined : undefined,
       image: kind === 'image' || undefined,
-      valueUrl: kind === 'link' || kind === 'type' || kind === 'image' ? read('valueUrl') || undefined : undefined
+      valueUrl: kind === 'literal' ? undefined : read('table-column-value-url') || undefined,
+      // Not asked in the form; carried so applying settings does not shed them.
+      time: existing.time,
+      valueRel: existing.valueRel,
+      lang: existing.lang,
+      null: existing.null,
+      virtual: existing.virtual,
+      suppressOutput: existing.suppressOutput
     };
 
-    const source = read('source');
-    const columnService = read('columnService');
-    if (source || columnService) {
-      column.lookup = { ...(source ? { source } : {}), ...(columnService ? { service: columnService } : {}) };
+    // A field the panel did not render keeps what the column already had.
+    const sourceField = panel.querySelector('[name="table-column-source"]');
+    const source = sourceField ? sourceField.value.trim() : existing.lookup?.source;
+    const serviceField = panel.querySelector('[name="table-column-service"]');
+    const columnService = serviceField ? serviceField.value.trim() : existing.lookup?.service;
+    const urlSource = existing.lookup?.urlSource;
+
+    if (source || columnService || urlSource) {
+      column.lookup = {
+        ...(source ? { source } : {}),
+        ...(urlSource ? { urlSource } : {}),
+        ...(columnService ? { service: columnService } : {})
+      };
     }
 
     const tr = this.editorView.state.tr;
@@ -1090,16 +1116,16 @@ class TableToolsView {
 
     ensureDocumentPrefixes(getPrefixesUsed(null, [column]));
 
-    if (applyToAllRows) this.rewriteColumnCells(index);
+    this.rewriteColumnCells(index);
 
     this.closePanel();
     this.editorView.focus();
   }
 
   /**
-   * Rewrite every data cell in a column so linked columns actually get their
-   * <a rel=… href=…>. Attribute-only reconciliation cannot do this, because
-   * replacing cell content underneath a live caret is disruptive.
+   * Give plain cells in a column the structure its configuration calls for --
+   * the <a>, <img> or <time> that attribute reconciliation cannot add. Cells
+   * whose content already states RDFa (an earlier fill or pick) are left alone.
    */
   rewriteColumnCells(index) {
     const table = findTable(this.editorView.state);
@@ -1128,13 +1154,16 @@ class TableToolsView {
 
       const cell = row.child(index);
       const text = cell.textContent.trim();
-      if (!text) return;
+      if (!text || contentStatesProperty(cell)) return;
 
       const built = buildCellRDFa(column, text, {
         rowSubject: computeRowSubject(tableSchema, fillValues, null),
         fillValues,
         foreignKeys: []
       });
+
+      // Attributes alone are reconciliation's job; only structure warrants a rewrite.
+      if (!built.child && !built.children) return;
 
       edits.push({ from: cellPos + 1, to: cellPos + cell.nodeSize - 1, built });
     });
@@ -1162,12 +1191,12 @@ class TableToolsView {
 
           <div class="autocomplete">
             <label for="table-typeof">${htmlEncode(i18n.t('editor.table.typeof.label'))}</label>
-            <input autocomplete="off" class="editor-form-input" dir="ltr" id="table-typeof" list="table-typeof-options" name="typeof" placeholder="schema:Book" type="text" value="${htmlEncode(tableSchema.typeof || '')}" />
+            <input autocomplete="off" class="editor-form-input" dir="ltr" id="table-typeof" list="table-typeof-options" name="table-typeof" placeholder="schema:Thing" type="text" value="${htmlEncode(tableSchema.typeof || '')}" />
             <datalist id="table-typeof-options">${COMMON_TYPES.map((c) => `<option value="${c}"></option>`).join('')}</datalist>
           </div>
 
           <label for="table-lookup-service">${htmlEncode(i18n.t('editor.table.lookup.service.label'))}</label>
-          <select class="editor-form-select" id="table-lookup-service" name="service"${lookup.service ? ' disabled=""' : ''}>
+          <select class="editor-form-select" id="table-lookup-service" name="table-lookup-service"${lookup.service ? ' disabled=""' : ''}>
             <option value="">${htmlEncode(i18n.t('editor.table.lookup.service.none'))}</option>
             ${Object.entries(LookupServices).map(([name, s]) =>
               `<option value="${name}"${lookup.service === name ? ' selected=""' : ''}>${htmlEncode(s.label)}</option>`).join('')}
@@ -1180,7 +1209,7 @@ class TableToolsView {
 
           <div data-when-source="on">
             <label for="table-lookup-id-column">${htmlEncode(i18n.t('editor.table.lookup.id-column.label'))}</label>
-            <select class="editor-form-select" id="table-lookup-id-column" name="idColumn">
+            <select class="editor-form-select" id="table-lookup-id-column" name="table-lookup-id-column">
               <option value="">—</option>
               ${identifierColumnCandidates(lookup, columns).map((c) =>
                 `<option value="${htmlEncode(c.name)}"${lookup.idColumn === c.name ? ' selected=""' : ''}>${htmlEncode(getColumnTitle(c, c.name))}</option>`).join('')}
@@ -1191,36 +1220,38 @@ class TableToolsView {
                 : i18n.t('editor.table.lookup.id-column.info'))}</p>
           </div>
 
-          <details class="editor-table-advanced"${tableSchema.propertyUrl || tableSchema.aboutUrl || lookup.url ? ' open=""' : ''}>
-            <summary>${htmlEncode(i18n.t('editor.table.advanced.summary'))}</summary>
-
-            <div class="autocomplete">
-              <label for="table-property">${htmlEncode(i18n.t('editor.table.property.label'))}</label>
-              <input autocomplete="off" class="editor-form-input" dir="ltr" id="table-property" name="propertyUrl" placeholder="schema:hasPart" type="text" value="${htmlEncode(tableSchema.propertyUrl || '')}" />
-            </div>
-
-            <label for="table-about-url">${htmlEncode(i18n.t('editor.table.about-url.label'))}</label>
-            <input class="editor-form-input" dir="ltr" id="table-about-url" name="aboutUrl" placeholder="#row/{_row}" type="text" value="${htmlEncode(tableSchema.aboutUrl || '')}" />
-
+          <div data-when-custom="">
             <label for="table-lookup-url">${htmlEncode(i18n.t('editor.table.lookup.url.label'))}</label>
-            <input class="editor-form-input" dir="ltr" id="table-lookup-url" name="url" placeholder="https://example.org/item/{id}.json" type="text" value="${htmlEncode(lookup.url || '')}" />
+            <input class="editor-form-input" dir="ltr" id="table-lookup-url" name="table-lookup-url" placeholder="https://example.org/item/{id}.json" type="text" value="${htmlEncode(lookup.url || '')}" />
 
             <label for="table-lookup-format">${htmlEncode(i18n.t('editor.table.lookup.format.label'))}</label>
-            <select class="editor-form-select" id="table-lookup-format" name="format">
+            <select class="editor-form-select" id="table-lookup-format" name="table-lookup-format">
               <option value="json"${format === 'json' ? ' selected=""' : ''}>${htmlEncode(i18n.t('editor.table.lookup.format.record'))}</option>
               <option value="rdf"${format === 'rdf' ? ' selected=""' : ''}>${htmlEncode(i18n.t('editor.table.lookup.format.linked-data'))}</option>
             </select>
 
             <div data-when-format="json">
               <label for="table-lookup-record">${htmlEncode(i18n.t('editor.table.lookup.record.label'))}</label>
-              <input class="editor-form-input" dir="ltr" id="table-lookup-record" name="record" placeholder="ISBN:{id}" type="text" value="${htmlEncode(lookup.record || '')}" />
+              <input class="editor-form-input" dir="ltr" id="table-lookup-record" name="table-lookup-record" placeholder="ISBN:{id}" type="text" value="${htmlEncode(lookup.record || '')}" />
             </div>
 
             <div data-when-format="rdf">
               <label for="table-lookup-subject">${htmlEncode(i18n.t('editor.table.lookup.subject.label'))}</label>
-              <input class="editor-form-input" dir="ltr" id="table-lookup-subject" name="lookupSubject" placeholder="https://example.org/item/{id}" type="text" value="${htmlEncode(lookup.subject || '')}" />
+              <input class="editor-form-input" dir="ltr" id="table-lookup-subject" name="table-lookup-subject" placeholder="https://example.org/item/{id}" type="text" value="${htmlEncode(lookup.subject || '')}" />
               <p class="info">${htmlEncode(i18n.t('editor.table.lookup.rdf.info'))}</p>
             </div>
+          </div>
+
+          <details class="editor-table-advanced"${tableSchema.propertyUrl || tableSchema.aboutUrl ? ' open=""' : ''}>
+            <summary>${htmlEncode(i18n.t('editor.table.advanced.summary'))}</summary>
+
+            <div class="autocomplete">
+              <label for="table-property">${htmlEncode(i18n.t('editor.table.property.label'))}</label>
+              <input autocomplete="off" class="editor-form-input" dir="ltr" id="table-property" name="table-property" placeholder="schema:hasPart" type="text" value="${htmlEncode(tableSchema.propertyUrl || '')}" />
+            </div>
+
+            <label for="table-about-url">${htmlEncode(i18n.t('editor.table.about-url.label'))}</label>
+            <input class="editor-form-input" dir="ltr" id="table-about-url" name="table-about-url" placeholder="#row/{_row}" type="text" value="${htmlEncode(tableSchema.aboutUrl || '')}" />
           </details>
 
           <div class="editor-form-actions-row">
@@ -1231,7 +1262,7 @@ class TableToolsView {
       </form>
     `);
 
-    const formatSelect = panel.querySelector('[name="format"]');
+    const formatSelect = panel.querySelector('[name="table-lookup-format"]');
     const syncFormat = () => {
       panel.querySelectorAll('[data-when-format]').forEach((el) => {
         el.hidden = el.dataset.whenFormat !== formatSelect.value;
@@ -1242,18 +1273,19 @@ class TableToolsView {
 
     // Choosing a preset fills the request fields and, on an empty table,
     // offers its suggested columns.
-    panel.querySelector('[name="service"]').addEventListener('change', (e) => {
+    panel.querySelector('[name="table-lookup-service"]').addEventListener('change', (e) => {
       const service = getLookupService(e.target.value);
       if (!service) return;
 
-      panel.querySelector('[name="url"]').value = service.url || '';
-      panel.querySelector('[name="format"]').value = service.format || 'json';
-      panel.querySelector('[name="record"]').value = service.record || '';
-      panel.querySelector('[name="lookupSubject"]').value = service.subject || '';
+      panel.querySelector('[name="table-lookup-url"]').value = service.url || '';
+      panel.querySelector('[name="table-lookup-format"]').value = service.format || 'json';
+      panel.querySelector('[name="table-lookup-record"]').value = service.record || '';
+      panel.querySelector('[name="table-lookup-subject"]').value = service.subject || '';
 
       // The service's suggested row semantics fill in only where nothing is authored.
+      const schemaFields = { typeof: 'table-typeof', propertyUrl: 'table-property', aboutUrl: 'table-about-url' };
       Object.entries(service.tableSchema || {}).forEach(([key, value]) => {
-        const field = panel.querySelector(`[name="${key}"]`);
+        const field = panel.querySelector(`[name="${schemaFields[key]}"]`);
         if (field && !field.value.trim()) field.value = value;
       });
 
@@ -1272,22 +1304,29 @@ class TableToolsView {
         i18n.t('editor.table.lookup.service.confirm'));
       if (!confirmed) return;
 
-      panel.querySelector('[name="service"]').disabled = false;
+      panel.querySelector('[name="table-lookup-service"]').disabled = false;
       panel.dataset.clearOnApply = 'true';
-      panel.querySelector('[name="service"]').focus();
+      panel.querySelector('[name="table-lookup-service"]').focus();
     });
 
-    const serviceSelect = panel.querySelector('[name="service"]');
+    const serviceSelect = panel.querySelector('[name="table-lookup-service"]');
     const syncSource = () => {
-      const on = !!(serviceSelect.value || panel.querySelector('[name="url"]')?.value.trim());
+      const on = !!(serviceSelect.value || panel.querySelector('[name="table-lookup-url"]')?.value.trim());
       panel.querySelectorAll('[data-when-source]').forEach((el) => { el.hidden = !on; });
     };
-    serviceSelect.addEventListener('change', syncSource);
-    panel.querySelector('[name="url"]')?.addEventListener('input', syncSource);
+    // Endpoint plumbing is only the author's business for a custom source.
+    const syncCustom = () => {
+      const custom = serviceSelect.value === 'custom'
+        || (!serviceSelect.value && !!panel.querySelector('[name="table-lookup-url"]')?.value.trim());
+      panel.querySelectorAll('[data-when-custom]').forEach((el) => { el.hidden = !custom; });
+    };
+    serviceSelect.addEventListener('change', () => { syncSource(); syncCustom(); });
+    panel.querySelector('[name="table-lookup-url"]')?.addEventListener('input', () => { syncSource(); syncCustom(); });
     syncSource();
+    syncCustom();
 
-    this.attachPropertyAutocomplete(panel.querySelector('[name="propertyUrl"]'));
-    this.attachPropertyAutocomplete(panel.querySelector('[name="typeof"]'), { termType: 'class' });
+    this.attachPropertyAutocomplete(panel.querySelector('[name="table-property"]'));
+    this.attachPropertyAutocomplete(panel.querySelector('[name="table-typeof"]'), { termType: 'class' });
 
     panel.querySelector('.editor-form-cancel').addEventListener('click', () => {
       this.closePanel();
@@ -1307,34 +1346,47 @@ class TableToolsView {
     const read = (name) => panel.querySelector(`[name="${name}"]`)?.value?.trim() || '';
     const existing = getTableSchema(table.node.attrs.originalAttributes);
 
-    const propertyUrl = read('propertyUrl') || undefined;
+    const propertyUrl = read('table-property') || undefined;
 
     const tableSchema = {
       // Not authored: the caption names the table, so derive the subject from it.
       subject: existing.subject || tableSubjectFrom(table.node),
       propertyUrl,
-      aboutUrl: read('aboutUrl') || undefined,
-      typeof: read('typeof') || undefined
+      aboutUrl: read('table-about-url') || undefined,
+      typeof: read('table-typeof') || undefined
     };
 
     // Rows belong to the table; without a stated relationship, say so generically.
     if (!tableSchema.propertyUrl && tableSchema.subject) tableSchema.propertyUrl = DEFAULT_ROW_PROPERTY;
 
-    const service = read('service');
-    const url = read('url');
+    const service = read('table-lookup-service');
+    const url = read('table-lookup-url');
 
     if (service || url) {
       tableSchema.lookup = {
         service: service || undefined,
-        idColumn: read('idColumn') || undefined,
+        idColumn: read('table-lookup-id-column') || undefined,
         url: url || undefined,
-        format: read('format') || undefined,
-        record: read('record') || undefined,
-        subject: read('lookupSubject') || undefined
+        format: read('table-lookup-format') || undefined,
+        record: read('table-lookup-record') || undefined,
+        subject: read('table-lookup-subject') || undefined
       };
     }
 
+    // A changed binding is the statement "resolve these rows against this source".
+    const bindingChanged = !!(tableSchema.lookup?.url && tableSchema.lookup.idColumn) && (
+      tableSchema.lookup.service !== existing.lookup?.service
+      || tableSchema.lookup.url !== existing.lookup?.url
+      || tableSchema.lookup.idColumn !== existing.lookup?.idColumn
+    );
+
     const tr = this.editorView.state.tr;
+
+    // A newly wired source maps matching columns, so lookups have somewhere to land.
+    if (tableSchema.lookup?.service && tableSchema.lookup.service !== existing.lookup?.service) {
+      this.adoptServiceColumns(tr, table, tableSchema);
+    }
+
     setTableAttributes(tr, table.node, table.pos, tableSchema);
 
     if (panel.dataset.clearOnApply === 'true') this.clearBodyCells(tr, table);
@@ -1352,8 +1404,46 @@ class TableToolsView {
       }
     }
 
+    if (bindingChanged) this.lookupAllRows(table.pos);
+
     this.closePanel();
     this.editorView.focus();
+  }
+
+  /**
+   * Adopt the service's column configuration onto unmapped columns whose
+   * titles match, so a plain (e.g. imported) table can answer to lookups.
+   * Mapped columns are someone's authored statements and stay as they are.
+   */
+  adoptServiceColumns(tr, table, tableSchema) {
+    const service = getLookupService(tableSchema.lookup?.service);
+    if (!service?.columns?.length) return;
+
+    const columns = getColumns(table.node);
+    const renames = {};
+
+    columns.forEach((column, index) => {
+      if (isColumnMapped(column) || column.lookup) return;
+
+      const match = service.columns.find((candidate) =>
+        titleKey(getColumnTitle(candidate, candidate.name)) === titleKey(getColumnTitle(column, column.name)));
+      if (!match) return;
+
+      const { identifier, ...adopted } = match;
+      const name = adopted.name || column.name;
+      if (column.name && name !== column.name) renames[column.name] = name;
+
+      setColumnAttributes(tr, table.node, table.pos, index, {
+        ...adopted,
+        name,
+        // The author's own header text stays.
+        titles: column.titles || adopted.titles
+      });
+    });
+
+    // The identifier binding follows a renamed column, as does the row subject.
+    const idColumn = tableSchema.lookup.idColumn;
+    if (idColumn && renames[idColumn]) tableSchema.lookup.idColumn = renames[idColumn];
   }
 
   /** Empty every body cell, for when the table's data no longer answers to its source. */
@@ -1410,7 +1500,7 @@ class TableToolsView {
           input.value = term.curie;
 
           // A suggested datatype is a good default, never an override.
-          const datatype = input.closest('form')?.querySelector('[name="datatype"]');
+          const datatype = input.closest('form')?.querySelector('[name="table-column-value"]');
           if (datatype && term.datatype && !datatype.value) {
             const suggested = term.datatype.replace(/^xsd:/, '');
             if ([...datatype.options].some((o) => o.value === suggested)) datatype.value = suggested;
@@ -1533,7 +1623,10 @@ class TableToolsView {
   }
 
   showIdentifierSuggestions(results, query, cellPos, rowPos, tablePos, options = {}) {
-    this.closeSuggestions();
+    // Replace the list without forgetting the query: resetting it makes every
+    // later selection change look like a new query and re-fires the search.
+    this.suggestions?.remove();
+    this.suggestions = null;
     if (!results.length) return;
 
     const cellDOM = this.editorView.nodeDOM(cellPos);
@@ -1553,9 +1646,10 @@ class TableToolsView {
       li.setAttribute('role', 'option');
       if (i === 0) li.classList.add('active');
 
+      if (result.uri || result.id) li.setAttribute('title', result.uri || result.id);
+
       sanitizeInsertAdjacentHTML(li, 'afterbegin',
         `<span class="term-label">${htmlEncode(result.label)}</span>` +
-        `<span class="term-source">${htmlEncode(result.id)}</span>` +
         (result.description ? `<span class="term-description">${htmlEncode(result.description)}</span>` : '')
       );
 
@@ -1733,6 +1827,88 @@ class TableToolsView {
       if (!this.editorView?.state?.doc?.nodeAt(rowPos)) return;
       this.editorView.dispatch(this.editorView.state.tr.setMeta(tableToolsPluginKey, { clearStatus: rowPos }));
     }, clearAfter);
+  }
+
+  /**
+   * Resolve every row against a newly bound source. Rows whose identifier is
+   * empty or a search term are skipped; invalid identifiers are flagged and
+   * not fetched. Sequential on purpose: each fill shifts positions, so every
+   * row is located fresh, and the endpoint sees one request at a time.
+   */
+  async lookupAllRows(tablePos) {
+    const table = this.editorView.state.doc.nodeAt(tablePos);
+    if (!table || table.type.name !== 'table') return;
+
+    const tableSchema = getTableSchema(table.attrs.originalAttributes);
+    const idColumn = tableSchema.lookup?.idColumn;
+    if (!tableSchema.lookup?.url || !idColumn) return;
+
+    const columns = getColumns(table);
+    const index = columns.findIndex((c) => c.name === idColumn);
+    if (index < 0) return;
+
+    const candidates = [];
+    let ordinal = -1;
+
+    forEachRow(table, tablePos, (row, rowPos, isHeader) => {
+      if (isHeader) return;
+      ordinal++;
+      if (index >= row.childCount) return;
+
+      const identifier = row.child(index).textContent.trim();
+      if (!identifier || needsIdentifierPick(tableSchema.lookup, identifier)) return;
+
+      let hasFedContent = false;
+      row.forEach((cell, offset, i) => {
+        const column = columns[i];
+        if (i === index || !column || !(column.lookup?.source || isColumnMapped(column))) return;
+        if (cell.textContent.trim()) hasFedContent = true;
+      });
+
+      candidates.push({
+        ordinal,
+        identifier,
+        valid: looksLikeIdentifier(tableSchema.lookup, identifier),
+        hasFedContent
+      });
+    });
+
+    if (!candidates.length) return;
+
+    // Filling empty cells needs no blessing; replacing typed values does.
+    if (candidates.some((c) => c.valid && c.hasFedContent)) {
+      const total = candidates.filter((c) => c.valid).length;
+      if (!window.confirm(i18n.t('editor.table.lookup.fill-all.confirm', { total }))) return;
+    }
+
+    for (const { ordinal: at, identifier, valid } of candidates) {
+      const rowPos = this.rowPosAt(tablePos, at);
+      if (rowPos === null) continue;
+
+      if (!valid) {
+        this.setRowStatus(rowPos, 'table-lookup-mismatch', 2500);
+        continue;
+      }
+
+      await this.runLookup(tablePos, rowPos, identifier);
+    }
+  }
+
+  /** A row's position by its body ordinal, fresh from the current document. */
+  rowPosAt(tablePos, ordinal) {
+    const table = this.editorView.state.doc.nodeAt(tablePos);
+    if (!table || table.type.name !== 'table') return null;
+
+    let pos = null;
+    let i = -1;
+
+    forEachRow(table, tablePos, (row, rowPos, isHeader) => {
+      if (isHeader) return;
+      i++;
+      if (i === ordinal) pos = rowPos;
+    });
+
+    return pos;
   }
 
   /** Known dimensions let an image occupy its space before it loads. */

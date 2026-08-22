@@ -20,7 +20,7 @@ import { getColumns, findTable, forEachRow } from '../commands/table.js';
 
 // Attributes the column configuration owns. Anything else on a cell (class,
 // colspan, a manually set attribute) is left alone.
-const MANAGED_CELL_ATTRIBUTES = ['about', 'id', 'property', 'datatype', 'typeof', 'lang'];
+const MANAGED_CELL_ATTRIBUTES = ['about', 'id', 'property', 'datatype', 'typeof', 'lang', 'xml:lang'];
 const MANAGED_ROW_ATTRIBUTES = ['about', 'id', 'typeof'];
 
 function withoutManaged(attrs, managed) {
@@ -38,7 +38,7 @@ function cellText(cell) {
 }
 
 // True when inline content in the cell carries its own RDFa property or rel.
-function contentStatesProperty(cell) {
+export function contentStatesProperty(cell) {
   let found = false;
 
   cell.descendants((node) => {
@@ -123,6 +123,7 @@ export function reconcileTable(tr, table, tablePos, mapPos = (p) => p) {
         delete attributes.property;
         delete attributes.datatype;
         delete attributes.lang;
+        delete attributes['xml:lang'];
       }
 
       // A linked column carries rel/href on a child <a>, so the cell itself

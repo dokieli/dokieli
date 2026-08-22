@@ -328,14 +328,15 @@ export function addRow(side = 'after') {
 
     const tr = state.tr;
 
-    if (isHeaderRow && side === 'after') {
-      const body = findBodyInsertPosition(table.node, table.pos);
-      tr.insert(body !== null ? body : at, newRow);
-    } else {
-      tr.insert(at, newRow);
-    }
+    const insertAt = isHeaderRow && side === 'after'
+      ? findBodyInsertPosition(table.node, table.pos) ?? at
+      : at;
 
-    const target = findFirstTextPosition(tr.doc, tr.mapping.map(at));
+    tr.insert(insertAt, newRow);
+
+    // The new row begins exactly at the insert position; mapping the position
+    // through the insertion would land after the row, not inside it.
+    const target = findFirstTextPosition(tr.doc, insertAt);
     if (target !== null) tr.setSelection(TextSelection.create(tr.doc, target));
 
     dispatch(tr.scrollIntoView());
