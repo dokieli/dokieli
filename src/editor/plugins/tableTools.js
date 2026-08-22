@@ -63,11 +63,7 @@ export const tableToolsPluginKey = new PluginKey('tableTools');
 
 const instances = new WeakMap();
 
-/**
- * Let a keymap defer to the open identifier-suggestion list. Keymaps run
- * before this plugin's own key handling, so without this ArrowDown moves the
- * caret to the next row while the list is showing.
- */
+// Lets a keymap defer to the open suggestion list, which its bindings would otherwise shadow.
 export function tableSuggestionKeydown(view, key) {
   const instance = instances.get(view);
   if (!instance?.suggestions) return false;
@@ -110,8 +106,7 @@ function datatypeLabel(name, label) {
 // Keep in step with .editor-table-row-handle width in dokieli.css.
 const HANDLE_WIDTH = 16;
 
-// How far a grip sits outside the table, identical for rows and columns so the
-// two read as the same affordance.
+// How far a grip sits outside the table, identical for rows and columns.
 const HANDLE_OFFSET = 17;
 
 function isNear(e, rect, padding) {
@@ -127,10 +122,7 @@ const COMMON_TYPES = [
 
 const DEFAULT_ROW_PROPERTY = 'schema:hasPart';
 
-/**
- * A table's subject, derived rather than authored: the caption normalised into
- * a fragment, or a generated one when there is no caption.
- */
+// A table's subject, derived from the caption or generated when there is none.
 function tableSubjectFrom(tableNode) {
   let caption = '';
   tableNode.forEach((child) => {
@@ -140,12 +132,7 @@ function tableSubjectFrom(tableNode) {
   return '#' + generateAttributeId(null, caption || 'table');
 }
 
-/**
- * Mark the identifier column and hint at what an empty cell in it expects.
- *
- * Decorations rather than direct DOM writes: the table's DOM belongs to
- * ProseMirror, and mutating it makes the observer re-parse the node.
- */
+// Mark the identifier column via decorations; direct DOM writes make ProseMirror re-parse.
 function identifierDecorations(state) {
   const table = findTable(state);
   if (!table) return [];
@@ -173,8 +160,7 @@ function identifierDecorations(state) {
 
     const cell = row.child(index);
 
-    // A tooltip rather than rendered text: the cell already shows the editor's
-    // own placeholder, and a second one competes with it for the same space.
+    // A tooltip rather than rendered text, which would compete with the editor's placeholder.
     decorations.push(Decoration.node(cellPos, cellPos + cell.nodeSize, isHeader
       ? { class: 'table-identifier-column', title: hint }
       : { title: hint }));
@@ -225,11 +211,7 @@ function dragDecorations(state, drag) {
   return decorations;
 }
 
-/**
- * An empty caption already renders "Table N." from CSS; say what goes after it.
- * Every table, not only the one holding the selection: the hint is there to be
- * noticed before anyone clicks.
- */
+// Hint at what follows the CSS-rendered "Table N." in every empty caption.
 function captionPlaceholderDecoration(state) {
   const decorations = [];
   const hint = i18n.t('editor.table.caption.placeholder');
@@ -240,8 +222,7 @@ function captionPlaceholderDecoration(state) {
     const caption = node.firstChild;
     if (caption?.type.name !== 'caption' || caption.textContent.trim()) return false;
 
-    // The caption holds inline content directly, so an empty one has no child
-    // to hang this on: it goes on the caption itself.
+    // An empty caption has no child to hang this on, so it goes on the caption itself.
     const from = pos + 1;
     decorations.push(Decoration.node(from, from + caption.nodeSize, { 'data-placeholder': hint }));
 
@@ -264,9 +245,7 @@ export function tableToolsPlugin() {
   return new Plugin({
     key: tableToolsPluginKey,
 
-    // Lookup status per row. Held as decorations rather than classes written
-    // onto the row's DOM: ProseMirror re-renders that DOM whenever anything
-    // else changes, which silently removed them.
+    // Lookup status per row, held as decorations; classes written to the DOM get re-rendered away.
     state: {
       init() {
         return { status: DecorationSet.empty, drag: null };
@@ -330,8 +309,7 @@ export function tableToolsPlugin() {
 
         if (!findCell(view.state)) return false;
 
-        // A table swallows Enter and Tab, so there has to be a way out that is
-        // not reaching for the mouse.
+        // A table swallows Enter and Tab, so offer a way out without the mouse.
         if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
           const left = exitTable(event.shiftKey ? 'before' : 'after')(view.state, view.dispatch);
           if (left) {
@@ -459,8 +437,7 @@ class TableToolsView {
     this.container.remove();
   }
 
-  // The row grip is driven by hover, not by the selection, so it outlives the
-  // toolbar being hidden.
+  // The row grip is hover-driven, so it outlives the toolbar being hidden.
   hide() {
     this.container.hidden = true;
     this.closePanel();
@@ -567,12 +544,7 @@ class TableToolsView {
 
   // --- drag to reorder ------------------------------------------------------
 
-  /**
-   * Reordering is pointer-driven rather than HTML5 drag-and-drop, which is
-   * unreliable inside contenteditable. A drag only begins once the pointer has
-   * moved past a threshold, so an ordinary click still places the caret in the
-   * header cell.
-   */
+  // Pointer-driven reordering; HTML5 drag-and-drop is unreliable inside contenteditable.
   installDragHandlers() {
     this.dragCandidate = null;
     this.drag = null;
@@ -602,9 +574,7 @@ class TableToolsView {
       this.dragCandidate = null;
     };
 
-    // Reordering a column starts on a header cell that may hold selected text,
-    // and the browser would rather drag that text out of the document. While a
-    // column drag is pending or running, that native drag is not what was meant.
+    // While a column drag is pending, the browser's native text drag is not what was meant.
     this.onDragStart = (e) => {
       if (this.drag || this.dragCandidate) e.preventDefault();
     };
@@ -652,8 +622,7 @@ class TableToolsView {
   }
 
   columnIndexAt(tableDOM, x) {
-    // The header row, not merely the first row: a column can only be dropped
-    // where another column already is, so the header defines the slots.
+    // The header row defines the drop slots, so use it rather than the first row.
     const headerRow = tableDOM.querySelector('thead tr') || tableDOM.querySelector('tr');
     const headerCells = [...(headerRow?.children || [])];
     if (!headerCells.length) return null;
@@ -811,8 +780,7 @@ class TableToolsView {
 
     this.handleColumnCell = headerCell;
 
-    // Above the header cell, not above the table: a caption sits inside the
-    // table element, so the table's top edge can be well clear of the headers.
+    // Above the header cell, not the table: the caption can push the table's top edge well clear.
     const rect = headerCell.getBoundingClientRect();
 
     this.columnHandle.dataset.columnIndex = String(index);
@@ -839,11 +807,7 @@ class TableToolsView {
     }
   }
 
-  /**
-   * The grip sits outside the table, so it lives in <body> rather than in the
-   * editor DOM -- which means it needs its own mousedown listener, and it must
-   * survive the pointer crossing the gap between the row and itself.
-   */
+  // The grip lives in <body>, needs its own mousedown, and must survive the gap to the row.
   createRowHandle() {
     const handle = document.createElement('div');
     handle.className = 'editor-table-row-handle';
@@ -854,8 +818,7 @@ class TableToolsView {
       if (e.button !== 0) return;
       e.preventDefault();
 
-      // Every table command resolves its table from the selection, and the
-      // caret may be somewhere else entirely -- so put it in this row first.
+      // Table commands resolve their table from the selection, so put the caret in this row first.
       if (!this.selectHandleRow()) return;
 
       this.dragCandidate = {
@@ -874,8 +837,7 @@ class TableToolsView {
   updateRowHandle(e) {
     if (!this.editorView.editable || this.drag || this.dragCandidate) return;
 
-    // Reaching for the grip means leaving the row, so keep it alive while the
-    // pointer is on or near it instead of hiding the moment the row is exited.
+    // Keep the grip alive while the pointer is on or near it; reaching it means leaving the row.
     if (this.rowHandle && isNear(e, this.rowHandle.getBoundingClientRect(), 12)) return;
 
     const row = e.target.closest?.('tr');
@@ -1104,8 +1066,7 @@ class TableToolsView {
       tr.replaceWith(cellPos + 1, cellPos + cell.nodeSize - 1, schema.nodes.p.create(null, schema.text(title)));
     }
 
-    // The identifier column is chosen in Table settings; renaming a column has
-    // to follow it there so the binding does not dangle.
+    // The identifier binding in Table settings follows a renamed column.
     const tableSchema = getTableSchema(table.node.attrs.originalAttributes);
     if (existing.name && tableSchema.lookup?.idColumn === existing.name && column.name !== existing.name) {
       tableSchema.lookup = { ...tableSchema.lookup, idColumn: column.name };
@@ -1122,11 +1083,7 @@ class TableToolsView {
     this.editorView.focus();
   }
 
-  /**
-   * Give plain cells in a column the structure its configuration calls for --
-   * the <a>, <img> or <time> that attribute reconciliation cannot add. Cells
-   * whose content already states RDFa (an earlier fill or pick) are left alone.
-   */
+  // Give plain cells the structure their configuration calls for; cells already stating RDFa stay.
   rewriteColumnCells(index) {
     const table = findTable(this.editorView.state);
     if (!table) return;
@@ -1271,8 +1228,7 @@ class TableToolsView {
     formatSelect.addEventListener('change', syncFormat);
     syncFormat();
 
-    // Choosing a preset fills the request fields and, on an empty table,
-    // offers its suggested columns.
+    // Choosing a preset fills the request fields and offers its suggested columns.
     panel.querySelector('[name="table-lookup-service"]').addEventListener('change', (e) => {
       const service = getLookupService(e.target.value);
       if (!service) return;
@@ -1297,8 +1253,7 @@ class TableToolsView {
       panel.querySelectorAll('[data-when-source]').forEach((el) => { el.hidden = false; });
     });
 
-    // Swapping the source leaves columns mapped to properties the new one does
-    // not answer, so it is a deliberate act that takes the data with it.
+    // Swapping the source is a deliberate act that takes the data with it.
     panel.querySelector('[name="change-service"]')?.addEventListener('click', () => {
       const confirmed = window.confirm(
         i18n.t('editor.table.lookup.service.confirm'));
@@ -1410,11 +1365,7 @@ class TableToolsView {
     this.editorView.focus();
   }
 
-  /**
-   * Adopt the service's column configuration onto unmapped columns whose
-   * titles match, so a plain (e.g. imported) table can answer to lookups.
-   * Mapped columns are someone's authored statements and stay as they are.
-   */
+  // Unmapped columns whose titles match adopt the service's configuration; mapped columns stay.
   adoptServiceColumns(tr, table, tableSchema) {
     const service = getLookupService(tableSchema.lookup?.service);
     if (!service?.columns?.length) return;
@@ -1567,11 +1518,7 @@ class TableToolsView {
     this.suggestionQuery = null;
   }
 
-  /**
-   * When a service can search by label, offer real choices in the identifier
-   * cell instead of silently taking the top hit for an ambiguous term.
-   * Picking one skips the resolver, so the lookup uses exactly that entity.
-   */
+  // Offer real choices for an ambiguous identifier; picking one skips the resolver.
   maybeSuggestIdentifiers(view) {
     const cell = findCell(view.state);
     const table = findTable(view.state);
@@ -1585,8 +1532,7 @@ class TableToolsView {
     const columns = getColumns(table.node);
     const column = columns[cell.columnIndex];
 
-    // The identifier column resolves the whole row. Any other column may still
-    // name a service of its own, which only suggests values for its own cells.
+    // The identifier column resolves the whole row; another column's service only feeds its own cells.
     const isIdentifier = !!column?.name && column.name === tableSchema.lookup?.idColumn;
     const search = isIdentifier
       ? getIdentifierSearch(tableSchema.lookup)
@@ -1623,8 +1569,7 @@ class TableToolsView {
   }
 
   showIdentifierSuggestions(results, query, cellPos, rowPos, tablePos, options = {}) {
-    // Replace the list without forgetting the query: resetting it makes every
-    // later selection change look like a new query and re-fires the search.
+    // Replace the list without forgetting the query, or every selection change re-fires the search.
     this.suggestions?.remove();
     this.suggestions = null;
     if (!results.length) return;
@@ -1673,11 +1618,7 @@ class TableToolsView {
     });
   }
 
-  /**
-   * Write the chosen label into the cell. From the identifier column that also
-   * fills the row; from any other column the pick is just this cell's value,
-   * linked to whatever it resolved to.
-   */
+  // Write the chosen label into the cell; only the identifier column also fills the row.
   acceptIdentifier(result, cellPos, rowPos, tablePos, options = {}) {
     const view = this.editorView;
     const cell = view.state.doc.nodeAt(cellPos);
@@ -1723,11 +1664,7 @@ class TableToolsView {
 
   // --- autofill -------------------------------------------------------------
 
-  /**
-   * Fire a lookup when the caret leaves a non-empty identifier cell whose value
-   * changed. Leaving the cell is the commit signal: Tab, click elsewhere, or
-   * arrow keys all work without a dedicated button.
-   */
+  // Leaving a changed identifier cell is the commit signal that fires the lookup.
   maybeAutofill(view, prevState) {
     const previous = this.watchedCell;
     const cell = findCell(view.state);
@@ -1760,12 +1697,10 @@ class TableToolsView {
     const columns = getColumns(previousTable);
     if (columns[previous.columnIndex]?.name !== tableSchema.lookup.idColumn) return;
 
-    // A search term for a searchable service is ambiguous; let the suggestion
-    // list decide rather than silently taking the top hit.
+    // A search term is ambiguous; the suggestion list decides, not the top hit.
     if (needsIdentifierPick(tableSchema.lookup, previous.value)) return;
 
-    // Nothing this service can answer: asking anyway spends a request and
-    // reports an empty result, which reads as a failure rather than a mismatch.
+    // Nothing this service can answer; asking would just report a failure-looking empty result.
     if (!looksLikeIdentifier(tableSchema.lookup, previous.value)) {
       this.setRowStatus(previous.rowPos, 'table-lookup-mismatch', 2500);
       return;
@@ -1808,10 +1743,7 @@ class TableToolsView {
     }
   }
 
-  /**
-   * Flag a row while its lookup runs, or briefly after it comes back empty or
-   * fails. `clearAfter` schedules the flag's removal.
-   */
+  // Flag a row while its lookup runs; clearAfter schedules the flag's removal.
   setRowStatus(rowPos, status, clearAfter) {
     const view = this.editorView;
     if (!view.state.doc.nodeAt(rowPos)) return;
@@ -1829,12 +1761,7 @@ class TableToolsView {
     }, clearAfter);
   }
 
-  /**
-   * Resolve every row against a newly bound source. Rows whose identifier is
-   * empty or a search term are skipped; invalid identifiers are flagged and
-   * not fetched. Sequential on purpose: each fill shifts positions, so every
-   * row is located fresh, and the endpoint sees one request at a time.
-   */
+  // Resolve every row against a newly bound source, sequentially so positions stay fresh.
   async lookupAllRows(tablePos) {
     const table = this.editorView.state.doc.nodeAt(tablePos);
     if (!table || table.type.name !== 'table') return;
@@ -1939,8 +1866,7 @@ class TableToolsView {
       if (pos === rowPos) rowIndex = counted;
     });
 
-    // A lookup describes one entity, so a later lookup for a different
-    // identifier replaces everything it feeds; anything else stays as typed.
+    // A lookup describes one entity: it replaces everything it feeds, the rest stays as typed.
     const idColumn = tableSchema.lookup?.idColumn;
     const isFed = (column) => !!column?.name && column.name !== idColumn &&
       (Object.hasOwn(values, column.name) || !!column.lookup?.source);
@@ -2012,9 +1938,7 @@ class TableToolsView {
   }
 }
 
-// A column's datatype may be a bare CSVW name ("integer"), a CURIE
-// ("xsd:integer") or CSVW's object form ({ base: "integer" }); the select
-// options are bare names.
+// A datatype may be a bare CSVW name, a CURIE or CSVW's object form; options are bare names.
 function matchesDatatype(datatype, option) {
   const name = typeof datatype === 'object' ? datatype?.base ?? datatype?.['@id'] : datatype;
   if (!name) return option === '';
@@ -2051,8 +1975,7 @@ function loadImageSize(src, timeout = 2500) {
   });
 }
 
-// Cell content for a built RDFa description: linked and typed values become
-// inline elements; a multi-valued cell gets one per value.
+// Cell content for a built RDFa description; a multi-valued cell gets one element per value.
 function buildCellContent(built) {
   const text = built.text || '';
 

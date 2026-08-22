@@ -19,10 +19,7 @@ import Config from './config.js';
 import uriTemplates from 'uri-templates';
 import { domSanitize } from './utils/sanitization.js';
 
-// A column's authoring config is a CSVW column object serialised onto the <th>.
-// CSVW keys map to data-* using the same names; keys under `lookup` are a
-// dokieli extension (CSVW has no notion of dereferencing an identifier).
-// https://www.w3.org/TR/tabular-metadata/#columns
+// CSVW column config serialised onto the <th> as data-*; lookup is a dokieli extension (https://www.w3.org/TR/tabular-metadata/#columns).
 const COLUMN_KEYS = {
   name: 'data-name',
   titles: 'data-titles',
@@ -40,9 +37,7 @@ const COLUMN_KEYS = {
   suppressOutput: 'data-suppress-output'
 };
 
-// aboutUrl is the per-row subject template (CSVW tableSchema.aboutUrl).
-// subject + propertyUrl are the table's own subject and the predicate linking
-// it to each row, which CSVW expresses as a virtual column.
+// aboutUrl is the per-row subject template; subject and propertyUrl link the table's subject to rows.
 const TABLE_KEYS = {
   aboutUrl: 'data-about-url',
   subject: 'data-subject',
@@ -61,8 +56,7 @@ const TABLE_LOOKUP_KEYS = {
   subject: 'data-lookup-subject'
 };
 
-// A column may name its own service. Unlike the table's, it does not fill the
-// row: it offers suggestions for this column's cells and links what is picked.
+// A column's own service suggests values for its cells only; it does not fill the row.
 const COLUMN_LOOKUP_KEYS = {
   source: 'data-lookup-source',
   // A result field holding the value's own page, which becomes the cell's link.
@@ -99,8 +93,7 @@ function writeKeys(o, keyMap) {
   return attrs;
 }
 
-// Attribute bag -> column object. Accepts a DOM element, a ProseMirror
-// node's originalAttributes, or a plain object.
+// Attribute bag -> column object; accepts a DOM element, PM originalAttributes, or a plain object.
 export function getColumnSchema(source) {
   const attrs = toAttributes(source);
   const column = readKeys(attrs, COLUMN_KEYS);
@@ -229,8 +222,7 @@ export function computeRowSubject(tableSchema, fillValues, fallback) {
 
   const filled = fillTemplate(aboutUrl, fillValues);
 
-  // An unresolved template variable produces a subject that collides across
-  // rows, so fall back rather than mint a bad IRI.
+  // An unresolved variable would mint a subject that collides across rows, so fall back.
   return filled && !getTemplateVariables(aboutUrl).some((v) => isEmpty(fillValues[v]))
     ? filled
     : fallback;
@@ -245,13 +237,7 @@ function isNullValue(column, value) {
   return nullValues.includes(String(value ?? '').trim());
 }
 
-/**
- * The shared cell emitter. Returns a description rather than markup so that
- * csv.js can render it to an HTML string and the editor can render it to
- * ProseMirror nodes.
- *
- * context: { rowSubject, fillValues, foreignKeys, valueMapper }
- */
+// The shared cell emitter: returns a description that csv.js and the editor each render.
 export function buildCellRDFa(column, cellValue, context = {}) {
   const { rowSubject, fillValues = {}, foreignKeys = [], valueMapper, imageSize, textValues } = context;
 
@@ -294,8 +280,7 @@ export function buildCellRDFa(column, cellValue, context = {}) {
 
   if (resolved.aboutUrl) {
     attributes.about = resolved.aboutUrl;
-    // A foreign-key reference points at a resource described elsewhere, so
-    // minting an id here would duplicate it.
+    // A foreign-key reference is described elsewhere; minting an id here would duplicate it.
     if (!isForeignKeyReference && resolved.aboutUrl.startsWith('#')) {
       attributes.id = resolved.aboutUrl.slice(1);
     }
@@ -312,8 +297,7 @@ export function buildCellRDFa(column, cellValue, context = {}) {
     return { attributes, child: null, text };
   }
 
-  // An image column names a picture, so show it rather than a link to it.
-  // RDFa reads @src as the object, so the property goes on the img itself.
+  // An image column shows the picture; RDFa reads @src, so property goes on the img.
   if (resolved.image) {
     const src = URL.canParse(text) ? text : resolved.valueUrl;
     if (!src) return { attributes, child: null, text };
@@ -389,8 +373,7 @@ export function buildCellRDFa(column, cellValue, context = {}) {
   return { attributes, child: null, text };
 }
 
-// xsd temporal types by lexical form, most specific first; each form is also a
-// valid HTML @datetime value.
+// xsd temporal types by lexical form, most specific first; each is a valid HTML @datetime.
 const TIME_DATATYPES = [
   ['xsd:dateTime', /^\d{4,}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})?$/],
   ['xsd:date', /^\d{4,}-\d{2}-\d{2}$/],
@@ -413,9 +396,7 @@ function isSelfReferencingProperty(propertyUrl) {
   return propertyUrl === 'dcterms:subject' || propertyUrl === 'rdfs:seeAlso';
 }
 
-// CSVW datatypes are XML Schema names; RDFa wants a term or CURIE.
-// xsd:string is the default for a plain literal in RDF 1.1, so stating it adds
-// markup without adding meaning.
+// CSVW datatype names become CURIEs; xsd:string is RDF 1.1's default and stays unstated.
 function toDatatypeCurie(datatype) {
   const name = typeof datatype === 'object' ? datatype?.base ?? datatype?.['@id'] : datatype;
   if (!name || name === 'string' || name === 'xsd:string') return null;
@@ -437,8 +418,7 @@ export function renderCellHTML(column, cellValue, context) {
 }
 
 function serializeAttributes(attributes) {
-  // Some empty attributes are statements: alt="" marks a decorative image,
-  // lang=""/xml:lang="" stop language inheritance.
+  // Empty alt (decorative) and lang/xml:lang (no language) are statements and stay.
   return Object.entries(attributes)
     .filter(([k, v]) => v !== undefined && v !== null && (v !== '' || ['alt', 'lang', 'xml:lang'].includes(k)))
     .map(([k, v]) => ` ${k}="${v}"`)
@@ -504,13 +484,7 @@ export function fromCSVWTableSchema(csvwTableSchema) {
   return { tableSchema, columns };
 }
 
-/**
- * Prefixes the configuration relies on, so the document can declare them.
- *
- * A CURIE cannot be told from an absolute IRI with URL.canParse -- "schema:Book"
- * parses as a URI whose scheme is "schema". Membership in Config.ns is the
- * test that actually distinguishes them.
- */
+// Prefixes the configuration relies on; membership in Config.ns tells a CURIE from an IRI.
 export function getPrefixesUsed(tableSchema, columns) {
   const terms = [];
 
@@ -531,10 +505,7 @@ export function getPrefixesUsed(tableSchema, columns) {
   )];
 }
 
-/**
- * Declare any prefix a table's CURIEs depend on, so the RDFa resolves once the
- * document is saved and read back somewhere else.
- */
+// Declare any prefix the table's CURIEs depend on, so the saved RDFa resolves elsewhere.
 export function ensureDocumentPrefixes(prefixes) {
   if (!prefixes?.length || typeof document === 'undefined') return;
 

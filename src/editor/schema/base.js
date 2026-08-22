@@ -646,10 +646,7 @@ let customNodes = {
     toDOM: toDOMWith("textarea")
   },
 
-  // Table nodes are structurally typed so that row/column commands can rely on
-  // the shape, and so a stray block can't land between a table and its cells.
-  // They are deliberately not in the "block" group: each may only appear where
-  // a parent names it.
+  // Table nodes are structurally typed and kept out of the "block" group; parents name them.
   table: {
     content: "caption? colgroup? (thead | tbody | tfoot | tr)+",
     group: "block",
@@ -688,8 +685,7 @@ let customNodes = {
     parseDOM: [{ tag: "tr", getAttrs(node){ return getAttributes(node); }}],
     toDOM: toDOMWith("tr")
   },
-  // block+ rather than block* so an empty cell can still hold a cursor. The
-  // resulting lone <p> is unwrapped on save by cleanProseMirrorOutput().
+  // block+ rather than block* so an empty cell can hold a cursor; the lone <p> is unwrapped on save.
   th: {
     content: "block+",
     isolating: true,

@@ -72,8 +72,7 @@ export function findCell(state, $pos) {
   return null;
 }
 
-// Walk every row in the table, reporting the position before each row and
-// whether it belongs to a header section.
+// Walks every row, reporting its position and whether it is in a header section.
 export function forEachRow(table, tablePos, fn) {
   let offset = tablePos + 1;
 
@@ -190,13 +189,7 @@ function createRow(cellType, count, attrsFor = () => ({})) {
   return schema.nodes.tr.create(null, cells);
 }
 
-/**
- * Insert a table with a header row.
- *
- * Columns start unmapped unless `columnSchemas` supplies them, which is how a
- * lookup preset arrives already configured. `lookup` binds the table to a
- * service so the identifier column autofills the rest.
- */
+// Insert a table with a header row; columnSchemas preconfigures columns, lookup binds the service.
 export function insertTable({
   rows = 3,
   columns = 3,
@@ -256,8 +249,7 @@ export function insertTable({
     }
 
     const children = [];
-    // Always present: tables need captions, and the numbering comes from CSS
-    // whether or not anything has been typed into it yet.
+    // Tables always get captions; CSS numbers them even while empty.
     children.push(caption
       ? schema.nodes.caption.create(null, schema.text(caption))
       : schema.nodes.caption.createAndFill());
@@ -273,8 +265,7 @@ export function insertTable({
 
     const tr = state.tr.replaceSelectionWith(table);
 
-    // Bias to the start of the replacement: mapping the old position forward
-    // lands past the table, and the first textblock inside one is the caption.
+    // Bias to the replacement's start; the first textblock inside is the caption.
     const tableStart = tr.mapping.map(state.selection.from, -1);
     const target = findFirstCellTextPosition(tr.doc, tableStart, table.nodeSize);
     if (target !== null) tr.setSelection(TextSelection.create(tr.doc, target));
@@ -334,8 +325,7 @@ export function addRow(side = 'after') {
 
     tr.insert(insertAt, newRow);
 
-    // The new row begins exactly at the insert position; mapping the position
-    // through the insertion would land after the row, not inside it.
+    // The new row begins at the insert position; mapping past the insertion would land after it.
     const target = findFirstTextPosition(tr.doc, insertAt);
     if (target !== null) tr.setSelection(TextSelection.create(tr.doc, target));
 
@@ -372,8 +362,7 @@ export function deleteRow() {
     const section = findAncestorNode(state, SECTIONS);
     const tr = state.tr;
 
-    // Removing the only row of a section would leave it invalid, so drop the
-    // section with it.
+    // Drop the section too when its only row goes, else it is left invalid.
     if (section && section.node.childCount === 1) {
       tr.delete(section.pos, section.pos + section.node.nodeSize);
     } else {
@@ -455,13 +444,7 @@ function reorder(items, from, to) {
   return next;
 }
 
-/**
- * Move a column to an arbitrary index, taking every row's cell with it.
- *
- * Each row's cell list is rebuilt and written back as one replacement rather
- * than swapping positions pairwise, so it handles a drag across several
- * columns as easily as a single step.
- */
+// Move a column to an index, rebuilding each row's cell list in one replacement.
 export function moveColumnTo(from, to) {
   return (state, dispatch) => {
     const table = findTable(state);
@@ -472,8 +455,7 @@ export function moveColumnTo(from, to) {
     if (from >= columnCount || to >= columnCount) return false;
     if (!dispatch) return true;
 
-    // Every row moves together or none does: reordering only the rows wide
-    // enough would leave the rest misaligned with the header.
+    // Every row moves together or none does, else rows misalign with the header.
     let ragged = false;
     forEachRow(table.node, table.pos, (row) => {
       if (from >= row.childCount || to >= row.childCount) ragged = true;
@@ -642,10 +624,7 @@ function cellTextPosition(doc, rowPos, columnIndex) {
   return findFirstTextPosition(doc, pos);
 }
 
-/**
- * Enter commits the cell and carries on down the same column, adding a row
- * when there is none below. Shift-Enter is what breaks a line inside a cell.
- */
+// Enter commits the cell and moves down the column, adding a row at the end; Shift-Enter breaks a line.
 export function goToCellBelow(direction = 1, { addRow: addRowAtEnd = true } = {}) {
   return (state, dispatch) => {
     const cell = findCell(state);
@@ -725,10 +704,7 @@ export function goToFirstCell() {
   };
 }
 
-/**
- * Leave the table: put the caret in the block after it, adding an empty
- * paragraph when the table is the last thing in the document.
- */
+// Leave the table into the block after it, adding a paragraph when it is the last node.
 export function exitTable(side = 'after') {
   return (state, dispatch) => {
     const table = findTable(state);

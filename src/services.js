@@ -21,26 +21,9 @@ import Config from './config.js';
 import { getResource } from './fetcher.js';
 import { getResourceGraph } from './graph.js';
 
-/**
- * Lookup services bind an identifier column to a remote description of the
- * thing it identifies. CSVW stops at the table; this is the extension.
- *
- * url      RFC 6570 template; {id} is the identifier cell, other column names
- *          are available as variables.
- * format   'json' or 'rdf'. For 'rdf' the column's own propertyUrl selects the
- *          value, so columns need no per-column source.
- * record   For 'json', a template locating the record within the response.
- * columns  Suggested column set offered when the service is chosen.
- *
- * identifierClean / identifierPattern normalise whatever gets pasted into the
- * identifier cell -- a bare id, a full URL, a hyphenated ISBN -- down to the
- * form the template expects. Without this, pasting "https://orcid.org/0009-..."
- * into an ORCID column percent-encodes the whole URL into the {id} slot.
- */
+// Lookup services bind an identifier column to a remote description of what it identifies; CSVW stops at the table, this is the extension.
 export const LookupServices = {
-  // openlibrary.org/isbn/{id}.rdf serves RDF, but 302s to /books/OL...M.rdf and
-  // the redirect carries no CORS header, so a browser blocks the chain before
-  // the RDF arrives. The JSON API answers directly with Access-Control-Allow-Origin.
+  // The RDF endpoint 302s without CORS on the redirect; the JSON API answers directly.
   openlibrary: {
     label: 'Open Library (openlibrary.org)',
     identifier: 'ISBN',
@@ -91,8 +74,7 @@ export const LookupServices = {
   doi: {
     label: 'DOI (doi.org)',
     identifier: 'DOI',
-    // {+id} rather than {id}: a DOI contains "/", which simple expansion would
-    // percent-encode into a URL doi.org does not resolve.
+    // {+id}: a DOI contains "/", which simple expansion would percent-encode.
     url: 'https://doi.org/{+id}',
     format: 'rdf',
     subject: 'https://doi.org/{+id}',
@@ -123,12 +105,7 @@ export const LookupServices = {
     ]
   },
 
-  // Requests the RDF endpoint directly rather than orcid.org/{id}: that URL
-  // 302s twice, and a browser applies the CORS check to every response in a
-  // redirect chain, not just the last one. Only the final 200 carries
-  // Access-Control-Allow-Origin, so the redirect itself is what gets blocked.
-  // The subject in the payload is still https://orcid.org/{id}.
-  // ORCID's vocabulary here is rdfs/foaf, not schema.org.
+  // orcid.org/{id} 302s twice and CORS applies per hop, so request the rdfs/foaf RDF endpoint directly.
   orcid: {
     label: 'ORCID (orcid.org)',
     identifier: 'ORCID',
@@ -175,24 +152,14 @@ function fill(template, values) {
   }
 }
 
-// URL.canParse accepts any scheme, so "urn:isbn:1", "mailto:a@b" and the CURIE
-// "rdfs:label" all pass. Where the question is really "is this a link someone
-// can follow", require http(s).
+// URL.canParse accepts any scheme; "is this a followable link" means http(s).
 function isHttpUrl(value) {
   if (!URL.canParse(value)) return false;
   const protocol = new URL(value).protocol;
   return protocol === 'http:' || protocol === 'https:';
 }
 
-/**
- * Reduce a pasted identifier to the form the URL template expects.
- *
- * People paste whole URLs, hyphenated ISBNs, and "doi:" prefixes. Feeding any
- * of those to {id} percent-encodes them into a nonsense URL, so normalise
- * first: strip separators the service declares noise, then pull out the first
- * substring matching its identifier shape. With no declared shape, fall back
- * to the last path segment of a URL, or the value as typed.
- */
+// Reduce a pasted identifier (URL, hyphenated ISBN, "doi:") to the form the template expects.
 export function normalizeIdentifier(service, raw) {
   let value = String(raw ?? '').trim();
   if (!value) return '';
@@ -204,9 +171,7 @@ export function normalizeIdentifier(service, raw) {
   const segment = lastPathSegment(value);
 
   if (service?.identifierPattern) {
-    // The whole value first, so an unanchored pattern like a DOI's
-    // "10.x/rest" wins over the URL's trailing segment; then the segment, so
-    // an anchored pattern like ^Q\d+$ can still match inside a wiki URL.
+    // Whole value first so unanchored patterns win; then the segment for anchored ones.
     for (const candidate of [value, segment]) {
       const match = candidate?.match(service.identifierPattern);
       if (match) return match[0];
@@ -225,13 +190,7 @@ function lastPathSegment(value) {
   return segments.length ? decodeURIComponent(segments[segments.length - 1]) : null;
 }
 
-/**
- * Turn a search term into an entity id, so an identifier column can be filled
- * by typing "Cat" instead of looking up Q146 by hand. Anything already in
- * identifier form is passed straight through.
- *
- * https://www.wikidata.org/w/api.php?action=help&modules=wbsearchentities
- */
+// Turn a search term into an entity id; anything already in identifier form passes through.
 async function resolveWikidataEntity(value, options = {}) {
   if (/^[QP]\d+$/i.test(value)) return value.toUpperCase();
 
@@ -239,11 +198,7 @@ async function resolveWikidataEntity(value, options = {}) {
   return results[0]?.id || null;
 }
 
-/**
- * Label search, so an identifier column can offer real choices instead of
- * silently taking the top hit for an ambiguous term like "Cat".
- * https://www.wikidata.org/w/api.php?action=help&modules=wbsearchentities
- */
+// Label search, so the identifier column offers real choices for ambiguous terms.
 export async function searchWikidataEntities(keyword, options = {}) {
   const term = String(keyword ?? '').trim();
   if (!term) return [];
@@ -310,11 +265,7 @@ export function getIdentifierSearch(lookup) {
   return name ? IDENTIFIER_SEARCHERS[name] || null : null;
 }
 
-/**
- * True when the value is a search term rather than an identifier, for a
- * service that can search. Autofilling those silently picks the top hit for
- * something like "Cat", so the suggestion list should decide instead.
- */
+// True when the value is a search term, so the suggestion list decides rather than the top hit.
 export function needsIdentifierPick(lookup, value) {
   if (!getIdentifierSearch(lookup)) return false;
 
@@ -324,12 +275,7 @@ export function needsIdentifierPick(lookup, value) {
   return !service.identifierPattern.test(String(value ?? '').trim());
 }
 
-/**
- * Columns that could drive this service's lookups. A service's template names
- * the property its identifier carries -- an ISBN, a DOI -- and only a column
- * mapped to that property can answer for it. Services that name none, or a
- * table whose columns match none, place no restriction.
- */
+// Columns able to drive lookups: those mapped to the service's identifier property, else all.
 export function identifierColumnCandidates(lookup, columns) {
   const service = getLookupService(lookup?.service);
   const template = service?.columns?.find((column) => column.identifier);
@@ -339,11 +285,7 @@ export function identifierColumnCandidates(lookup, columns) {
   return matching.length ? matching : columns;
 }
 
-/**
- * Could this value be an identifier for the service at all? A service that
- * declares a shape -- an ISBN, a DOI, a Q-id -- cannot answer to anything else,
- * so asking is a wasted request and an error the caller cannot act on.
- */
+// Whether the value can be an identifier at all; asking otherwise is a wasted request.
 export function looksLikeIdentifier(lookup, value) {
   const service = getLookupService(lookup?.service);
   if (!service?.identifierPattern) return true;
@@ -372,18 +314,10 @@ export function isValidISBN(value) {
   return false;
 }
 
-// Reserved source: the resource the lookup resolved to, rather than one of its
-// properties. Lets a search-by-label column report which entity it matched.
+// Reserved source: the resource the lookup resolved to rather than one of its properties.
 export const SUBJECT_SOURCE = '@id';
 
-/**
- * Read a value out of a JSON record.
- *
- * Supports dotted paths, numeric indices, and `*` to map across an array:
- *   title              -> "The Dispossessed"
- *   authors.*.name     -> "Ursula K. Le Guin, …"
- *   cover.medium
- */
+// Read values out of a JSON record via dotted paths, with * mapping across arrays.
 export function extractJSONValues(record, path) {
   if (!record || !path) return [];
 
@@ -411,8 +345,7 @@ export function extractJSONValue(record, path) {
   return values.length ? values.join(', ') : null;
 }
 
-// The prefix map has to be consulted before URL.canParse, which reports true
-// for a CURIE -- "rdfs:label" is a valid URI whose scheme is "rdfs".
+// Consult the prefix map before URL.canParse, which accepts CURIEs as URIs.
 function expandTerm(term) {
   if (!term || typeof term !== 'string') return null;
 
@@ -424,14 +357,7 @@ function expandTerm(term) {
   return URL.canParse(term) ? term : null;
 }
 
-/**
- * Read values for each column straight off the graph, using the column's own
- * propertyUrl as the selector. This is why RDF responses need no per-column
- * source configuration.
- *
- * `graph` is the grapoi pointer from getResourceGraph, which returns
- * { response, graph, error } -- not a bare dataset.
- */
+// Read each column's value off the graph by its propertyUrl; graph is a grapoi pointer.
 export function extractRDFValues(graph, subject, columns) {
   if (!graph?.node) return {};
 
@@ -475,11 +401,7 @@ function labelFor(graph, term, preferred) {
   return (inLanguage || labels[0])?.value || term.value;
 }
 
-/**
- * Run a lookup for one identifier.
- *
- * Returns { values: { <columnName>: { text, valueUrl } }, subject } or null.
- */
+// Run a lookup for one identifier; returns { values, subject } or null.
 export async function lookupIdentifier(tableSchema, columns, identifier, options = {}) {
   const lookup = tableSchema?.lookup;
   if (!lookup?.url || !identifier) return null;
@@ -487,8 +409,7 @@ export async function lookupIdentifier(tableSchema, columns, identifier, options
   const service = getLookupService(lookup.service);
   const format = lookup.format || service?.format || 'json';
 
-  // options.resolvedId short-circuits the resolver when the caller already
-  // knows the entity, e.g. the user picked it from the suggestion list.
+  // options.resolvedId short-circuits the resolver, e.g. after a suggestion pick.
   let id = options.resolvedId || normalizeIdentifier(service, identifier);
   if (!id) return null;
 
@@ -568,11 +489,7 @@ function resolveRecord(data, path) {
   return path.split('.').reduce((acc, segment) => (acc ? acc[segment] : undefined), data);
 }
 
-/**
- * Suggest a JSON path for each column by matching column titles against the
- * keys of a sample record, so configuring a custom endpoint doesn't require
- * hand-writing every path.
- */
+// Suggest a JSON path per column by matching titles against a sample record's keys.
 export function suggestSources(record, columns) {
   const paths = collectPaths(record);
 

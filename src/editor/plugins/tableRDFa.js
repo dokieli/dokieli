@@ -18,8 +18,7 @@ limitations under the License.
 import { buildCellRDFa, computeRowSubject, isColumnMapped, getTableSchema } from '../../table.js';
 import { getColumns, findTable, forEachRow } from '../commands/table.js';
 
-// Attributes the column configuration owns. Anything else on a cell (class,
-// colspan, a manually set attribute) is left alone.
+// Attributes the column configuration owns; anything else on a cell is left alone.
 const MANAGED_CELL_ATTRIBUTES = ['about', 'id', 'property', 'datatype', 'typeof', 'lang', 'xml:lang'];
 const MANAGED_ROW_ATTRIBUTES = ['about', 'id', 'typeof'];
 
@@ -58,14 +57,7 @@ export function contentStatesProperty(cell) {
   return found;
 }
 
-/**
- * Recompute row and cell RDFa for one table from its column configuration.
- *
- * Only attributes are reconciled, never structure: rewriting a cell's content
- * (to add the <a> a linked column needs) while someone is typing in it would
- * fight the caret. Link columns get their markup when a row is autofilled or
- * when the column settings are explicitly applied to all rows.
- */
+// Recompute row and cell RDFa from the column configuration; attributes only, never structure.
 export function reconcileTable(tr, table, tablePos, mapPos = (p) => p) {
   const tableSchema = getTableSchema(table.attrs.originalAttributes);
   const columns = getColumns(table);
@@ -117,8 +109,7 @@ export function reconcileTable(tr, table, tablePos, mapPos = (p) => p) {
         foreignKeys
       });
 
-      // Content that already states the property -- a filled link, a <time>,
-      // per-value spans -- must not have the cell repeat it as a second triple.
+      // Content that already states the property must not have the cell repeat it.
       if (contentStatesProperty(cell)) {
         delete attributes.property;
         delete attributes.datatype;
@@ -126,8 +117,7 @@ export function reconcileTable(tr, table, tablePos, mapPos = (p) => p) {
         delete attributes['xml:lang'];
       }
 
-      // A linked column carries rel/href on a child <a>, so the cell itself
-      // keeps only what buildCellRDFa put on it.
+      // A linked column carries rel/href on a child <a>; the cell keeps only its own attributes.
       const next = { ...withoutManaged(cell.attrs.originalAttributes, MANAGED_CELL_ATTRIBUTES), ...attributes };
 
       if (sameAttributes(next, cell.attrs.originalAttributes)) return;
@@ -164,11 +154,7 @@ export function reconcileTable(tr, table, tablePos, mapPos = (p) => p) {
   return changed;
 }
 
-/**
- * Keep the table under the caret consistent as it is edited. Scoped to that
- * one table: every other way a table changes (autofill, applying column
- * settings) reconciles explicitly.
- */
+// Keep the table under the caret consistent as it is edited.
 export function reconcileSelectedTable(transactions, oldState, newState) {
   if (!transactions.some((t) => t.docChanged)) return null;
 

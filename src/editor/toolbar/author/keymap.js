@@ -181,9 +181,7 @@ function checkForSlashCommand(view) {
   }
 }
 
-// Deleting a selection that spans cells erases the selected text and keeps
-// the cells: the default replace stitches across the boundary, pulling the
-// next cell's content into the previous one.
+// Deleting across cells erases the selected text; the default replace merges the cells.
 function deleteAcrossCells(state, dispatch) {
   const { selection } = state;
   if (selection.empty) return false;
@@ -288,8 +286,7 @@ function eventFieldArrow(dir) {
   };
 }
 
-// In a table Enter means "next row, same column"; a line break inside a cell
-// is Shift-Enter. Everywhere else both fall through to the usual behaviour.
+// In a table Enter means "next row, same column"; Shift-Enter breaks a line.
 function tableAwareEnter(state, dispatch, view) {
   // The suggestion list owns Enter while an item is highlighted.
   if (view && tableSuggestionKeydown(view, 'Enter')) return true;
@@ -298,9 +295,7 @@ function tableAwareEnter(state, dispatch, view) {
   return goToCellBelow(1)(state, dispatch);
 }
 
-// Select-all in a cell or caption takes that content first; pressing again
-// takes the document. Selecting everything stays one keystroke away, and a
-// stray Mod-A inside a cell no longer puts the whole document under the caret.
+// Select-all takes the cell or caption first; a second press takes the document.
 function scopedSelectAll(state, dispatch) {
   const { $from } = state.selection;
 
@@ -326,16 +321,13 @@ function scopedSelectAll(state, dispatch) {
   return true;
 }
 
-// Up and down move between cells in the same column. Browsers left to
-// themselves walk the caret through the document instead: Chrome lands in the
-// last cell of the row above, Firefox leaves the table altogether.
+// Up and down move between cells in the same column; browsers walk the caret out of the table.
 function tableAwareArrow(direction) {
   return (state, dispatch, view) => {
     // The suggestion list owns the arrows while it is open.
     if (view && tableSuggestionKeydown(view, direction > 0 ? 'ArrowDown' : 'ArrowUp')) return true;
 
-    // The caption is the one textblock in a table that is not a cell; down
-    // from it enters the grid.
+    // The caption is the one non-cell textblock; down from it enters the grid.
     if (!findCell(state)) {
       if (direction > 0 && goToFirstCell()(state, dispatch)) return true;
       return eventFieldArrow(direction)(state, dispatch, view);

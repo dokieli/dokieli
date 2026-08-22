@@ -21,8 +21,7 @@ import { getResource } from './fetcher.js';
 import { getResourceGraph } from './graph.js';
 import { scoreMatch } from './util.js';
 
-// Properties dokieli already emits, so the common case resolves offline and
-// ranks above anything the remote sources return.
+// Properties dokieli already emits, resolving offline and ranking above remote results.
 const LOCAL_TERMS = [
   ['dcterms:title', 'title'],
   ['dcterms:creator', 'creator'],
@@ -176,8 +175,7 @@ export function toCurie(iri) {
   if (!iri || typeof iri !== 'string') return iri;
   if (!URL.canParse(iri)) return iri;
 
-  // Longest namespace wins, so a prefix that is a substring of another
-  // (dcelements vs dcterms) doesn't shadow it.
+  // Longest namespace wins, so a prefix that prefixes another does not shadow it.
   const match = Object.entries(Config.ns)
     .map(([prefix, namespace]) => [prefix, namespace('').value])
     .filter(([, base]) => base && iri.startsWith(base) && iri.length > base.length)
@@ -206,8 +204,7 @@ export function searchLocalTerms(keyword) {
     .map(({ term }) => term);
 }
 
-// https://lov.linkeddata.es/dataset/lov/api
-// XXX :Endpoint is too slow!
+// https://lov.linkeddata.es/dataset/lov/api -- endpoint is too slow for as-you-type search.
 export async function searchLOVTerms(keyword, options = {}) {
   const termType = options.termType === 'class' ? 'class' : 'property';
   const url = `https://lov.linkeddata.es/dataset/lov/api/v2/term/search?q=${encodeURIComponent(keyword)}&type=${termType}&page_size=15`;
@@ -273,8 +270,7 @@ export async function loadVocabularyTerms(vocabularyUrl, options = {}) {
 
   const promise = (async () => {
     try {
-      // getResourceGraph resolves { response, graph, error }; graph is a grapoi
-      // pointer, not a dataset.
+      // getResourceGraph resolves { response, graph, error }; graph is a grapoi pointer, not a dataset.
       const { graph, error } = await getResourceGraph(vocabularyUrl, null, options);
       if (error || !graph?.dataset) return [];
 
@@ -336,11 +332,7 @@ function stripPrefix(curie) {
   return typeof curie === 'string' && curie.includes(':') ? curie.split(':').slice(1).join(':') : curie;
 }
 
-/**
- * Search every enabled source. Local terms resolve synchronously and come
- * first; remote sources are merged in as they are available, deduplicated by
- * IRI so the local (labelled, datatype-carrying) entry wins.
- */
+// Search every enabled source; local terms come first and win IRI dedup over remote results.
 export async function searchProperties(keyword, options = {}) {
   const {
     // LOV is not searched by default: the endpoint is too slow for as-you-type search.

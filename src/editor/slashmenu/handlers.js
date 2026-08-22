@@ -138,10 +138,7 @@ export function formHandlerTestSuite(e) {
   this.hideMenu()
 }
 
-/**
- * A CSVW metadata document describes one or more tables; pick the entry for the
- * CSV that was imported, falling back to the only table it describes.
- */
+// Pick the metadata entry for the imported CSV, falling back to the only table described.
 function csvwTableFor(metadata, csvName) {
   if (!metadata) return null;
   const tables = Array.isArray(metadata.tables) ? metadata.tables : [metadata];
@@ -194,8 +191,7 @@ export async function formHandlerTable(e) {
   const rowsField = start === 'template' ? formValues['table-rows-template'] : formValues['table-rows'];
   const rows = Math.max(1, Math.min(parseInt(rowsField, 10) || 3, 100));
 
-  // A template brings its own column set, so the table arrives already mapped
-  // and ready to autofill.
+  // A template brings its own column set, arriving mapped and ready to autofill.
   const service = start === 'template' ? getLookupService(formValues['table-service']) : null;
   const serviceColumns = service?.columns || [];
 

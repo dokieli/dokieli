@@ -84,8 +84,7 @@ export class SlashMenu {
     this.menuKeyHandler = (event) => {
       if (this.menuContainer.style.display === "none") return;
 
-      // Once the search box is open the list is a filtered view, so read it
-      // fresh rather than the set that existed when the menu opened.
+      // The list is a filtered view once the search box is open, so read it fresh.
       const buttons = this.visibleMenuButtons();
       const inSearch = document.activeElement === this.menuSearch;
       const idx = buttons.indexOf(document.activeElement);
