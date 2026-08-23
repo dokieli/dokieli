@@ -37,6 +37,7 @@ import { AutocompleteView } from "./nodeviews/autocomplete.js";
 import Config from "./../config.js";
 import { addMessageToLog, showActionMessage, initCopyToClipboard, showRobustLinksDecoration } from "../doc.js";
 import { initTableSort } from "../tableSort.js";
+import { normalizeTableMarkup } from "../utils/normalization.js";
 import { fragmentFromString, hasNonWhitespaceText, selectArticleNode } from "./../utils/html.js";
 import { updateDeviceStorageProfile } from "../storage.js";
 import { updateButtons } from "../ui/buttons.js";
@@ -126,6 +127,8 @@ export class Editor {
         default: {
           if (this.editorView) {
             this.destroyEditor();
+            // Reading mode carries the information, not the authoring state.
+            normalizeTableMarkup(document);
             showRobustLinksDecoration();
             initCopyToClipboard();
             initTableSort();

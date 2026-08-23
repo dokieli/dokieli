@@ -2272,6 +2272,15 @@ outline-offset:-2px;
 text-decoration: 2px underline #080;
 }
 
+/* A select is as wide as its widest option; cap it so the table stays in the writing area. */
+.ProseMirror td select[data-select],
+.ProseMirror th select[data-select] {
+max-width:14em;
+width:100%;
+min-width:0;
+text-overflow:ellipsis;
+}
+
 .editor-table-advanced {
 margin:0.5em 0;
 }
@@ -2282,6 +2291,9 @@ cursor:pointer;
 display:none;
 }
 
+th:has(.table-sort) {
+position:relative;
+}
 th button.table-sort {
 background:none;
 border:0;
@@ -2298,6 +2310,7 @@ vertical-align:middle;
 th button.table-sort svg {
 fill:#080;
 }
+
 
 .ProseMirror tr.table-lookup-pending > td:first-child {
 position:relative;

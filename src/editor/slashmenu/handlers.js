@@ -222,7 +222,8 @@ export async function formHandlerTable(e) {
     data: imported?.data || [],
     tableSchema,
     columnSchemas,
-    lookup: service
+    // A template without an endpoint configures columns but binds no lookup.
+    lookup: service?.url
       ? {
           service: formValues['table-service'],
           url: service.url,
@@ -233,7 +234,7 @@ export async function formHandlerTable(e) {
       : null
   })(this.editorView.state, this.editorView.dispatch);
 
-  ensureDocumentPrefixes(getPrefixesUsed(tableSchema, columnSchemas));
+  ensureDocumentPrefixes([...getPrefixesUsed(tableSchema, columnSchemas), ...(service?.prefixes || [])]);
 
   this.hideMenu();
 }

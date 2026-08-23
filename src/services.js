@@ -129,6 +129,25 @@ export const LookupServices = {
     ]
   },
 
+  // A template rather than a lookup: no endpoint, the selects carry the vocabulary.
+  threatmodel: {
+    label: 'Threat Model (STRIDE/LINDDUN)',
+    identifier: 'Feature',
+    url: '',
+    format: 'json',
+    // dcat only appears in the saved markup, so the columns alone would not declare it.
+    prefixes: ['dcat'],
+    tableSchema: { typeof: 'dpv:Risk', aboutUrl: '#risk-{_slug_threat}' },
+    columns: [
+      { name: 'feature', titles: 'Feature', propertyUrl: 'dcterms:subject', valueUrl: '{+_fragment_feature}' },
+      { name: 'threat', titles: 'Threat', propertyUrl: 'dcterms:description' },
+      { name: 'type', titles: 'STRIDE type', select: 'threat-type', kindSelect: true },
+      { name: 'element', titles: 'Threat-model element', select: 'threat-element' },
+      { name: 'risk', titles: 'Risk level', select: 'risk-level' },
+      { name: 'mitigation', titles: 'Mitigation', propertyUrl: 'dpv:isMitigatedByMeasure', valueUrl: '#mitigation-{_slug_threat}' }
+    ]
+  },
+
   custom: {
     label: 'Custom endpoint',
     identifier: 'Identifier',

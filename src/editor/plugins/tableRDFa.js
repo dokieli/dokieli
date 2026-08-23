@@ -15,12 +15,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { buildCellRDFa, computeRowSubject, isColumnMapped, getTableSchema, subjectFromCaption, DEFAULT_ROW_PROPERTY } from '../../table.js';
+import { buildCellRDFa, computeRowSubject, isColumnMapped, getTableSchema, subjectFromCaption, withSlugValues, getTemplateVariables, DEFAULT_ROW_PROPERTY } from '../../table.js';
 import { getColumns, findTable, forEachRow } from '../commands/table.js';
 import { generateAttributeId } from '../../util.js';
 
 // Attributes the column configuration owns; anything else on a cell is left alone.
-const MANAGED_CELL_ATTRIBUTES = ['about', 'id', 'property', 'datatype', 'typeof', 'lang', 'xml:lang'];
+const MANAGED_CELL_ATTRIBUTES = ['about', 'id', 'property', 'datatype', 'typeof', 'lang', 'xml:lang', 'rel', 'resource'];
 const MANAGED_ROW_ATTRIBUTES = ['about', 'id', 'typeof'];
 const MANAGED_TABLE_ATTRIBUTES = ['about', 'id', 'rel', 'resource', 'typeof'];
 
@@ -38,16 +38,28 @@ function cellText(cell) {
   return cell.textContent.trim();
 }
 
-// A row without any data must not assert an empty typed entity.
+// A row without data asserts nothing; a select counts only once a choice is made.
 function rowHasData(row) {
   let found = false;
 
   row.forEach((cell) => {
     if (found) return;
-    if (cell.textContent.trim()) { found = true; return; }
 
     cell.descendants((node) => {
+      if (found) return false;
+
+      if (node.type.name === 'select') {
+        node.descendants((option) => {
+          if (option.type.name === 'option'
+            && 'selected' in (option.attrs.originalAttributes || {})
+            && option.attrs.originalAttributes.value) found = true;
+          return !found;
+        });
+        return false;
+      }
+
       if (node.type.name === 'img') found = true;
+      if (node.isText && node.text.trim()) found = true;
       return !found;
     });
   });
@@ -99,6 +111,7 @@ export function reconcileTable(tr, table, tablePos, mapPos = (p) => p) {
       const column = columns[index];
       if (column?.name) fillValues[column.name] = cellText(cell);
     });
+    const values = withSlugValues(fillValues);
 
     const hasData = rowHasData(row);
     const rowSubject = hasData ? computeRowSubject(tableSchema, fillValues, null) : null;
@@ -123,11 +136,21 @@ export function reconcileTable(tr, table, tablePos, mapPos = (p) => p) {
 
       if (!column || !isColumnMapped(column)) return;
 
-      const { attributes } = buildCellRDFa(column, cellText(cell), {
+      const built = buildCellRDFa(column, cellText(cell), {
         rowSubject,
-        fillValues,
+        fillValues: values,
         foreignKeys
       });
+      const attributes = built.attributes;
+
+      // A plain-text link cell states its triple as attributes; the save pass renders the anchor.
+      const templateReady = !getTemplateVariables(column.valueUrl || '')
+        .some((v) => !String(values[v] ?? '').trim());
+      if (built.child?.tag === 'a' && column.valueUrl && !column.valueRel
+        && templateReady && !contentStatesProperty(cell)) {
+        attributes.rel = column.propertyUrl;
+        attributes.resource = built.child.attributes.href;
+      }
 
       // Content that already states the property must not have the cell repeat it.
       if (contentStatesProperty(cell)) {

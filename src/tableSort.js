@@ -18,6 +18,7 @@ limitations under the License.
 import { i18n } from './i18n.js';
 import { Icon } from './ui/icons.js';
 import { sanitizeInsertAdjacentHTML } from './utils/sanitization.js';
+import { threatValueRank } from './threatModel.js';
 
 // Each click advances the column: original -> ascending -> descending -> original.
 const NEXT = { none: 'ascending', ascending: 'descending', descending: 'none' };
@@ -79,11 +80,29 @@ function cycleSort(table, headerRow, th, index) {
   updateSortTitles(headerRow);
 }
 
+// A vocabulary cell sorts by its value's rank in the vocabulary, not alphabetically.
+function cellRank(cell) {
+  const a = cell?.querySelector('a[rel]');
+  if (!a) return null;
+
+  const rank = threatValueRank(a.getAttribute('rel'), a.getAttribute('href'));
+  return rank >= 0 ? rank : null;
+}
+
 // Sorted from the original order, so equal values keep their document order.
 function sortRows(base, index, state) {
   const direction = state === 'ascending' ? 1 : -1;
-  return [...base].sort((a, b) =>
-    direction * collator.compare(a.cells[index]?.textContent.trim() ?? '', b.cells[index]?.textContent.trim() ?? ''));
+
+  return [...base].sort((a, b) => {
+    const rankA = cellRank(a.cells[index]);
+    const rankB = cellRank(b.cells[index]);
+
+    if (rankA !== null || rankB !== null) {
+      return direction * ((rankA ?? Number.MAX_SAFE_INTEGER) - (rankB ?? Number.MAX_SAFE_INTEGER));
+    }
+
+    return direction * collator.compare(a.cells[index]?.textContent.trim() ?? '', b.cells[index]?.textContent.trim() ?? '');
+  });
 }
 
 const STATE_ICON = { none: '.fas.fa-sort', ascending: '.fas.fa-sort-up', descending: '.fas.fa-sort-down' };

@@ -227,15 +227,42 @@ export function subjectFromCaption(text) {
   return slug ? `#${slug}` : null;
 }
 
+// A fragment-safe slug of a value's first clause.
+export function slugFromText(text) {
+  return String(text || '').split('.')[0].trim().toLowerCase()
+    .replace(/\W+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60).replace(/-+$/, '');
+}
+
+// A bare token names a fragment of this document; anything reference-shaped passes through.
+function fragmentFromValue(value) {
+  const v = String(value || '').trim();
+  if (!v || v.startsWith('#') || v.startsWith('/') || URL.canParse(v)) return v;
+  return `#${v}`;
+}
+
+// {_slug_column} is the column's value as a slug; {_fragment_column} as a reference.
+export function withSlugValues(fillValues) {
+  const extended = { ...fillValues };
+
+  Object.keys(fillValues).forEach((key) => {
+    if (key.startsWith('_')) return;
+    extended[`_slug_${key}`] = slugFromText(fillValues[key]);
+    extended[`_fragment_${key}`] = fragmentFromValue(fillValues[key]);
+  });
+
+  return extended;
+}
+
 // Subject the row's statements hang off.
 export function computeRowSubject(tableSchema, fillValues, fallback) {
   const aboutUrl = tableSchema?.aboutUrl;
   if (!aboutUrl) return fallback;
 
-  const filled = fillTemplate(aboutUrl, fillValues);
+  const values = withSlugValues(fillValues);
+  const filled = fillTemplate(aboutUrl, values);
 
   // An unresolved variable would mint a subject that collides across rows, so fall back.
-  return filled && !getTemplateVariables(aboutUrl).some((v) => isEmpty(fillValues[v]))
+  return filled && !getTemplateVariables(aboutUrl).some((v) => isEmpty(values[v]))
     ? filled
     : fallback;
 }

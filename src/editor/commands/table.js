@@ -18,6 +18,8 @@ limitations under the License.
 import { TextSelection } from 'prosemirror-state';
 import { Fragment } from 'prosemirror-model';
 import { schema } from '../schema/base.js';
+import { threatSelectGroups } from '../../threatModel.js';
+import { i18n } from '../../i18n.js';
 import {
   getColumnSchema,
   getColumnAttributes,
@@ -186,6 +188,186 @@ function createCell(type, attrs = {}) {
   return schema.nodes[type].createAndFill({ originalAttributes: attrs });
 }
 
+// A controlled-vocabulary cell: its select carries the options, the marker names the relation.
+export function threatSelectNode(kind, framework = 'stride', chosenValue = null) {
+  const optionNode = ({ value, label }) => schema.nodes.option.create(
+    { originalAttributes: { value, ...(chosenValue === value ? { selected: 'selected' } : {}) } },
+    label ? schema.text(label) : null
+  );
+
+  const groups = threatSelectGroups(kind, framework).flatMap((group) => group.label
+    ? [schema.nodes.optgroup.create({ originalAttributes: { label: group.label } }, group.options.map(optionNode))]
+    : group.options.map(optionNode));
+
+  // The kind select is a choice between frameworks, never empty; the others invite one.
+  const placeholder = kind === 'threat-model-kind'
+    ? []
+    : [schema.nodes.option.create({ originalAttributes: { value: '' } },
+        schema.text(i18n.t(`editor.table.threat.select.${kind}`)))];
+
+  // The framework attribute makes a swapped select a different node, forcing a DOM rebuild.
+  return schema.nodes.select.create(
+    { originalAttributes: {
+      'data-select': kind,
+      ...(kind === 'threat-type' ? { 'data-framework': framework } : {})
+    } },
+    [...placeholder, ...groups]
+  );
+}
+
+function selectCell(kind, framework = 'stride') {
+  return schema.nodes.td.createAndFill(
+    { originalAttributes: {} },
+    schema.nodes.p.create(null, threatSelectNode(kind, framework))
+  );
+}
+
+function findSelectNode(cell) {
+  let found = null;
+
+  cell.descendants((node) => {
+    if (found) return false;
+    if (node.type.name === 'select') { found = node; return false; }
+    return true;
+  });
+
+  return found;
+}
+
+function clearedSelectChild(node) {
+  if (node.type.name === 'optgroup') {
+    const inner = [];
+    node.forEach((child) => inner.push(clearedSelectChild(child)));
+    return node.type.create(node.attrs, inner);
+  }
+
+  if (node.type.name === 'option') {
+    const { selected, ...rest } = node.attrs.originalAttributes || {};
+    return node.type.create({ ...node.attrs, originalAttributes: rest }, node.content);
+  }
+
+  return node;
+}
+
+function clearedSelect(select) {
+  const content = [];
+  select.forEach((child) => content.push(clearedSelectChild(child)));
+  return schema.nodes.select.create(select.attrs, content);
+}
+
+// Mark the option matching value as selected; a blank value clears the choice.
+export function selectOptionInTr(tr, selectNode, selectPos, value) {
+  selectNode.descendants((node, offset) => {
+    if (node.type.name !== 'option') return true;
+
+    const attrs = { ...node.attrs.originalAttributes };
+    const chosen = value !== '' && (attrs.value ?? '') === value;
+
+    if (chosen && !('selected' in attrs)) {
+      tr.setNodeMarkup(tr.mapping.map(selectPos + 1 + offset), null,
+        { ...node.attrs, originalAttributes: { ...attrs, selected: 'selected' } });
+    } else if (!chosen && 'selected' in attrs) {
+      delete attrs.selected;
+      tr.setNodeMarkup(tr.mapping.map(selectPos + 1 + offset), null,
+        { ...node.attrs, originalAttributes: attrs });
+    }
+
+    return false;
+  });
+
+  return tr;
+}
+
+// Every select in one column's body cells, with its document position.
+export function columnBodySelects(table, tablePos, index) {
+  const selects = [];
+
+  forEachRow(table, tablePos, (row, rowPos, isHeader, section) => {
+    if (isHeader || section === 'tfoot' || index >= row.childCount) return;
+
+    let cellPos = rowPos + 1;
+    for (let i = 0; i < index; i++) cellPos += row.child(i).nodeSize;
+
+    row.child(index).descendants((node, offset) => {
+      if (node.type.name !== 'select') return true;
+      selects.push({ node, pos: cellPos + 1 + offset });
+      return false;
+    });
+  });
+
+  return selects;
+}
+
+// The first select in a cell, with its document position.
+export function findSelectWithPos(cell, cellPos) {
+  let found = null;
+
+  cell.descendants((node, offset) => {
+    if (found) return false;
+    if (node.type.name === 'select') found = { node, pos: cellPos + 1 + offset };
+    return !found;
+  });
+
+  return found;
+}
+
+// Every body select of one marker kind in the table, with its position.
+export function tableSelectsByKind(table, tablePos, kind) {
+  const selects = [];
+
+  forEachRow(table, tablePos, (row, rowPos, isHeader, section) => {
+    if (isHeader || section === 'tfoot') return;
+
+    let cellPos = rowPos + 1;
+    row.forEach((cell) => {
+      cell.descendants((node, offset) => {
+        if (node.type.name !== 'select') return true;
+        if ((node.attrs.originalAttributes || {})['data-select'] === kind) {
+          selects.push({ node, pos: cellPos + 1 + offset });
+        }
+        return false;
+      });
+      cellPos += cell.nodeSize;
+    });
+  });
+
+  return selects;
+}
+
+export function selectHasChoice(selectNode) {
+  let chosen = false;
+
+  selectNode.descendants((option) => {
+    if (option.type.name === 'option'
+      && 'selected' in (option.attrs.originalAttributes || {})
+      && option.attrs.originalAttributes.value) chosen = true;
+    return !chosen;
+  });
+
+  return chosen;
+}
+
+// New rows repeat the structural cells (selects) of existing rows, cleared.
+function rowLikeFirstBodyRow(table, tablePos, columns) {
+  let template = null;
+  forEachRow(table, tablePos, (row, rowPos, isHeader, section) => {
+    if (!template && !isHeader && section !== 'tfoot') template = row;
+  });
+
+  if (!template) return createRow('td', columns);
+
+  const cells = [];
+  for (let i = 0; i < columns; i++) {
+    const cell = template.maybeChild(i);
+    const select = cell && findSelectNode(cell);
+    cells.push(select
+      ? schema.nodes.td.createAndFill({ originalAttributes: {} }, schema.nodes.p.create(null, clearedSelect(select)))
+      : createCell('td'));
+  }
+
+  return schema.nodes.tr.create(null, cells);
+}
+
 function createRow(cellType, count, attrsFor = () => ({})) {
   const cells = [];
   for (let i = 0; i < count; i++) cells.push(createCell(cellType, attrsFor(i)));
@@ -221,11 +403,14 @@ export function insertTable({
 
       if (preset?.identifier) identifierColumn = name;
 
-      const { identifier, ...columnSchema } = preset || {};
+      const { identifier, select, kindSelect, ...columnSchema } = preset || {};
 
+      // A kind-select header chooses the framework; it stands in for the title text.
       const cell = schema.nodes.th.createAndFill(
         { originalAttributes: getColumnAttributes({ ...columnSchema, name, titles: title || undefined }) },
-        title ? schema.nodes.p.create(null, schema.text(title)) : null
+        kindSelect
+          ? schema.nodes.p.create(null, threatSelectNode('threat-model-kind', 'stride', 'stride'))
+          : title ? schema.nodes.p.create(null, schema.text(title)) : null
       );
 
       headerCells.push(cell);
@@ -236,7 +421,10 @@ export function insertTable({
     for (let r = 0; r < rowCount; r++) {
       const values = data[r];
       if (!values) {
-        bodyRows.push(createRow('td', columnCount));
+        bodyRows.push(columnSchemas.some((c) => c?.select)
+          ? schema.nodes.tr.create(null, Array.from({ length: columnCount }, (_, c) =>
+              columnSchemas[c]?.select ? selectCell(columnSchemas[c].select) : createCell('td')))
+          : createRow('td', columnCount));
         continue;
       }
 
@@ -317,7 +505,7 @@ export function addRow(side = 'after') {
     const isHeaderRow = row.child(0).type.name === 'th';
 
     // A new row is always body content, even when added from the header row.
-    const newRow = createRow('td', columns);
+    const newRow = rowLikeFirstBodyRow(table.node, table.pos, columns);
     const at = side === 'after' ? cell.rowPos + row.nodeSize : cell.rowPos;
 
     const tr = state.tr;

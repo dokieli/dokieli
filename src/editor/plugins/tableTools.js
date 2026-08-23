@@ -44,7 +44,13 @@ import {
   moveColumnTo,
   moveRowTo,
   getRowIndex,
-  getBodyRowCount
+  getBodyRowCount,
+  threatSelectNode,
+  selectOptionInTr,
+  columnBodySelects,
+  tableSelectsByKind,
+  selectHasChoice,
+  findSelectWithPos
 } from '../commands/table.js';
 import {
   getTableSchema,
@@ -60,6 +66,7 @@ import {
 import { reconcileTable, reconcileSelectedTable, contentStatesProperty } from './tableRDFa.js';
 import { searchClasses, searchProperties } from '../../vocab.js';
 import { listLookupServices, getLookupService, identifierColumnCandidates, lookupIdentifier, getIdentifierSearch, looksLikeIdentifier, needsIdentifierPick } from '../../services.js';
+import { THREAT_SELECT_RELS, threatValueRank } from '../../threatModel.js';
 
 export const tableToolsPluginKey = new PluginKey('tableTools');
 
@@ -121,6 +128,137 @@ const COMMON_TYPES = [
   'schema:Article', 'schema:Event', 'schema:Place', 'schema:Product',
   'schema:Dataset', 'foaf:Person', 'skos:Concept', 'csvw:Row'
 ];
+
+// The first anchor mark's attributes within a cell.
+function cellLinkMark(cell) {
+  let found = null;
+
+  cell.descendants((node) => {
+    if (found) return false;
+    const mark = (node.marks || []).find((m) => m.type.name === 'a');
+    if (mark) found = mark.attrs.originalAttributes || {};
+    return !found;
+  });
+
+  return found;
+}
+
+function findSelectInCell(cell) {
+  let found = false;
+
+  cell.descendants((node) => {
+    if (node.type.name === 'select') found = true;
+    return !found;
+  });
+
+  return found;
+}
+
+// The select of the cell holding the caret (or the given position), if any.
+function selectAtCaret(state, pos = null) {
+  const $pos = pos === null ? undefined : state.doc.resolve(pos);
+  const cell = findCell(state, $pos);
+  return cell ? findSelectWithPos(cell.node, cell.pos) : null;
+}
+
+function focusSelectDOM(view, pos) {
+  const dom = view.nodeDOM?.(pos);
+  if (dom instanceof HTMLSelectElement) dom.focus();
+}
+
+// Recover a threat table's column configuration and selects from its markup alone.
+export function recognizeThreatTable(tr, table) {
+  const columns = getColumns(table.node);
+  const tableSchema = getTableSchema(table.node.attrs.originalAttributes);
+  if (columns.some(isColumnMapped) || tableSchema.lookup) return false;
+
+  const service = getLookupService('threatmodel');
+
+  // The first non-empty body cell of each column names the column's relation.
+  const signals = [];
+  forEachRow(table.node, table.pos, (row, rowPos, isHeader, section) => {
+    if (isHeader || section === 'tfoot') return;
+
+    row.forEach((cell, offset, index) => {
+      if (signals[index]) return;
+
+      const attrs = cell.attrs.originalAttributes || {};
+      const link = cellLinkMark(cell);
+      const signal = attrs.rel || link?.rel || attrs.property;
+      if (signal) signals[index] = { signal, href: link?.href };
+    });
+  });
+
+  const expected = (column) => column.select
+    ? THREAT_SELECT_RELS[column.select]
+    : column.propertyUrl;
+
+  const assigned = new Map();
+  signals.forEach((found, index) => {
+    if (!found) return;
+    const match = service.columns.find((column) =>
+      expected(column) === found.signal && ![...assigned.values()].includes(column));
+    if (match) assigned.set(index, match);
+  });
+
+  const matchedSignals = [...assigned.values()].map(expected);
+  const distinctive = matchedSignals.includes('dpv:hasImpact') || matchedSignals.includes('dpv:hasRiskLevel');
+  if (!distinctive || assigned.size < 2) return false;
+
+  // The type column's references say which framework the table uses.
+  let framework = 'stride';
+  assigned.forEach((column, index) => {
+    if (column.select === 'threat-type' && signals[index]?.href?.includes('linddun.org')) framework = 'linddun';
+  });
+
+  const header = getHeaderRowPos(table.node, table.pos);
+
+  assigned.forEach((column, index) => {
+    const title = header?.row.child(index)?.textContent.trim();
+    setColumnAttributes(tr, table.node, table.pos, index, { ...column, titles: title || column.titles });
+  });
+
+  setTableAttributes(tr, table.node, table.pos, {
+    ...tableSchema,
+    subject: tableSchema.subject || table.node.attrs.originalAttributes?.resource,
+    typeof: tableSchema.typeof || service.tableSchema.typeof,
+    aboutUrl: tableSchema.aboutUrl || service.tableSchema.aboutUrl
+  });
+
+  // Reference cells become selects again, chosen from their anchors; back to front.
+  const replacements = [];
+
+  assigned.forEach((column, index) => {
+    if (!column.select) return;
+
+    forEachRow(table.node, table.pos, (row, rowPos, isHeader, section) => {
+      if (section === 'tfoot' || index >= row.childCount) return;
+
+      let cellPos = rowPos + 1;
+      for (let i = 0; i < index; i++) cellPos += row.child(i).nodeSize;
+      const cell = row.child(index);
+
+      if (isHeader) {
+        if (column.kindSelect) {
+          replacements.push({ from: cellPos + 1, to: cellPos + cell.nodeSize - 1,
+            content: schema.nodes.p.create(null, threatSelectNode('threat-model-kind', 'stride', framework)) });
+        }
+        return;
+      }
+
+      if (findSelectInCell(cell)) return;
+      const chosen = cellLinkMark(cell)?.href || null;
+      replacements.push({ from: cellPos + 1, to: cellPos + cell.nodeSize - 1,
+        content: schema.nodes.p.create(null, threatSelectNode(column.select, framework, chosen)) });
+    });
+  });
+
+  replacements.sort((a, b) => b.from - a.from).forEach(({ from, to, content }) => {
+    tr.replaceWith(from, to, content);
+  });
+
+  return true;
+}
 
 // A table's subject: what the reconcile pass already emitted, else caption-derived, else generated.
 function tableSubjectFrom(tableNode) {
@@ -370,7 +508,19 @@ export function tableToolsPlugin() {
         return set.add(state.doc, tableDecorations(state, drag, sort));
       },
 
+      // A select cell is a form control: typing hands over to the select instead.
+      handleTextInput(view, from) {
+        const select = selectAtCaret(view.state, from);
+        if (!select) return false;
+
+        focusSelectDOM(view, select.pos);
+        return true;
+      },
+
       handleKeyDown(view, event) {
+        // Keys inside a focused select belong to the control and its own handler.
+        if (event.target instanceof HTMLSelectElement) return false;
+
         const instance = instances.get(view);
 
         // The suggestion list owns the arrow keys and Enter while it is open.
@@ -394,10 +544,28 @@ export function tableToolsPlugin() {
           return left;
         }
 
+        // In a select cell: Space or Enter enters the control, Backspace clears it.
+        const select = selectAtCaret(view.state);
+        if (select && (event.key === ' ' || event.key === 'Enter')) {
+          event.preventDefault();
+          focusSelectDOM(view, select.pos);
+          return true;
+        }
+        if (select && (event.key === 'Backspace' || event.key === 'Delete')) {
+          event.preventDefault();
+          view.dispatch(selectOptionInTr(view.state.tr, select.node, select.pos, ''));
+          return true;
+        }
+
         if (event.key !== 'Tab') return false;
 
         const handled = goToNextCell(event.shiftKey ? -1 : 1)(view.state, view.dispatch);
-        if (handled) event.preventDefault();
+        if (handled) {
+          event.preventDefault();
+          // Arriving at a select cell focuses the control, as tabbing to a select does.
+          const arrived = selectAtCaret(view.state);
+          if (arrived) focusSelectDOM(view, arrived.pos);
+        }
         return handled;
       }
     },
@@ -408,7 +576,7 @@ export function tableToolsPlugin() {
   });
 }
 
-class TableToolsView {
+export class TableToolsView {
   constructor(editorView) {
     this.editorView = editorView;
     this.table = null;
@@ -439,6 +607,17 @@ class TableToolsView {
       }
     };
 
+    // Native selects inside cells: their state lives in the document, not the DOM.
+    this.selectChangeHandler = (e) => this.handleCellSelectChange(e);
+    this.editorView.dom.addEventListener('change', this.selectChangeHandler);
+
+    // Tab continues cell navigation from a focused select; Escape returns to the text.
+    this.selectKeydownHandler = (e) => this.handleSelectKeydown(e);
+    this.editorView.dom.addEventListener('keydown', this.selectKeydownHandler);
+
+    // Tables carry their configuration in their markup; read it back once mounted.
+    this.recognizeTimer = setTimeout(() => this.recognizeTables(), 0);
+
     window.addEventListener('scroll', this.repositionHandler, true);
     window.addEventListener('resize', this.repositionHandler);
     document.addEventListener('mousedown', this.documentClickHandler);
@@ -447,6 +626,156 @@ class TableToolsView {
     this.installDragHandlers();
 
     instances.set(editorView, this);
+  }
+
+  // --- threat model selects ---------------------------------------------------
+
+  // Persist a select's choice as the option's selected attribute.
+  handleCellSelectChange(e) {
+    const target = e.target;
+    if (!(target instanceof HTMLSelectElement) || !target.dataset.select) return;
+
+    const view = this.editorView;
+    const found = this.findSelectAtDOM(target);
+    if (!found) return;
+
+    if (target.dataset.select === 'threat-model-kind') {
+      this.switchThreatKind(target, found);
+      return;
+    }
+
+    view.dispatch(selectOptionInTr(view.state.tr, found.node, found.pos, target.value));
+  }
+
+  // From a focused select, Tab continues cell navigation and Escape returns to the text.
+  handleSelectKeydown(e) {
+    const target = e.target;
+    if (!(target instanceof HTMLSelectElement) || !target.dataset.select) return;
+
+    const view = this.editorView;
+
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const found = this.findSelectAtDOM(target);
+      if (!found) return;
+
+      // The caret into the select's cell, then on to the neighbouring cell.
+      view.dispatch(view.state.tr.setSelection(TextSelection.near(view.state.doc.resolve(found.pos))));
+      view.focus();
+
+      const moved = goToNextCell(e.shiftKey ? -1 : 1)(view.state, view.dispatch);
+      if (moved) {
+        const arrived = selectAtCaret(view.state);
+        if (arrived) focusSelectDOM(view, arrived.pos);
+      }
+      return;
+    }
+
+    if (e.key === 'Escape') {
+      const found = this.findSelectAtDOM(target);
+      if (found) {
+        view.dispatch(view.state.tr.setSelection(TextSelection.near(view.state.doc.resolve(found.pos))));
+      }
+      view.focus();
+    }
+  }
+
+  // A non-editable island resists posAtDOM from within; anchor on its parent instead.
+  findSelectAtDOM(target) {
+    const parent = target.parentNode;
+    if (!parent) return null;
+
+    let pos;
+    try {
+      pos = this.editorView.posAtDOM(parent, Array.prototype.indexOf.call(parent.childNodes, target));
+    } catch {
+      return null;
+    }
+    if (pos == null || pos < 0 || pos > this.editorView.state.doc.content.size) return null;
+
+    const node = this.editorView.state.doc.nodeAt(pos);
+    if (node?.type.name === 'select') return { node, pos };
+
+    const $pos = this.editorView.state.doc.resolve(pos);
+    for (let depth = $pos.depth; depth > 0; depth--) {
+      if ($pos.node(depth).type.name === 'select') {
+        return { node: $pos.node(depth), pos: $pos.before(depth) };
+      }
+    }
+
+    return null;
+  }
+
+  // Rebuild authoring state from the markup for tables without stored configuration.
+  recognizeTables() {
+    const view = this.editorView;
+    const tables = [];
+
+    view.state.doc.descendants((node, pos) => {
+      if (node.type.name === 'table') { tables.push({ node, pos }); return false; }
+      return true;
+    });
+
+    const tr = view.state.tr;
+    let changed = false;
+
+    tables.forEach((table) => {
+      if (recognizeThreatTable(tr, table)) changed = true;
+    });
+
+    if (changed) {
+      tr.setMeta('addToHistory', false);
+      view.dispatch(tr);
+    }
+  }
+
+  // The header select chooses the framework; switching replaces the column's selects.
+  switchThreatKind(target, found) {
+    const view = this.editorView;
+    const framework = target.value;
+
+    const table = findTable(view.state, view.state.doc.resolve(found.pos));
+    if (!table) return;
+
+    // Only the type column's own selects; element and risk choices stay valid.
+    const bodySelects = tableSelectsByKind(table.node, table.pos, 'threat-type');
+    const hasChoices = bodySelects.some(({ node }) => selectHasChoice(node));
+
+    if (hasChoices && !window.confirm(i18n.t('editor.table.threat-kind.confirm'))) {
+      // Declined: put the DOM select back to what the document says.
+      target.value = framework === 'stride' ? 'linddun' : 'stride';
+      return;
+    }
+
+    const tr = view.state.tr;
+
+    // Back to front, so earlier positions stay valid.
+    bodySelects
+      .sort((a, b) => b.pos - a.pos)
+      .forEach(({ node, pos }) => {
+        tr.replaceWith(pos, pos + node.nodeSize, threatSelectNode('threat-type', framework));
+      });
+
+    selectOptionInTr(tr, found.node, found.pos, framework);
+
+    // The column holding the type selects, located from one of its own cells.
+    const anchorPos = bodySelects[0]?.pos ?? found.pos;
+    const index = findCell(view.state, view.state.doc.resolve(anchorPos))?.columnIndex;
+    const columns = getColumns(table.node);
+    if (index !== undefined && columns[index]) {
+      setColumnAttributes(tr, table.node, table.pos, index, {
+        ...columns[index],
+        titles: framework === 'linddun' ? 'LINDDUN type' : 'STRIDE type'
+      });
+    }
+
+    view.dispatch(tr);
+
+    // The reused DOM selects must show the fresh, unchosen state.
+    bodySelects.forEach(({ pos }) => {
+      const dom = view.nodeDOM?.(tr.mapping.map(pos, -1));
+      if (dom instanceof HTMLSelectElement) dom.selectedIndex = 0;
+    });
   }
 
   handleSuggestionKey(event) {
@@ -502,6 +831,9 @@ class TableToolsView {
 
   destroy() {
     clearTimeout(this.typedLookupTimer);
+    clearTimeout(this.recognizeTimer);
+    this.editorView.dom.removeEventListener('change', this.selectChangeHandler);
+    this.editorView.dom.removeEventListener('keydown', this.selectKeydownHandler);
     window.removeEventListener('scroll', this.repositionHandler, true);
     window.removeEventListener('resize', this.repositionHandler);
     document.removeEventListener('mousedown', this.documentClickHandler);
@@ -2149,10 +2481,52 @@ function captureRowOrder(table) {
 // Numeric-aware, so ratings and ranks order as numbers; ties keep the base order.
 const sortCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
 
+// A vocabulary cell sorts by its value's rank in the vocabulary, not alphabetically.
+function cellSortRank(cell) {
+  if (!cell) return null;
+
+  let rank = null;
+  cell.descendants((node) => {
+    if (rank !== null) return false;
+
+    if (node.type.name === 'select') {
+      let ordinal = 0;
+      let chosen = null;
+      node.descendants((option) => {
+        if (option.type.name !== 'option') return true;
+        const attrs = option.attrs.originalAttributes || {};
+        if ('selected' in attrs && attrs.value) chosen = ordinal;
+        ordinal++;
+        return true;
+      });
+      rank = chosen === null ? Number.MAX_SAFE_INTEGER : chosen;
+      return false;
+    }
+
+    return true;
+  });
+  if (rank !== null) return rank;
+
+  const link = cellLinkMark(cell);
+  const vocabRank = link?.rel ? threatValueRank(link.rel, link.href) : -1;
+  return vocabRank >= 0 ? vocabRank : null;
+}
+
 function sortTableRows(rows, columnIndex, direction) {
   const dir = direction === 'ascending' ? 1 : -1;
-  const text = (row) => columnIndex < row.childCount ? row.child(columnIndex).textContent.trim() : '';
-  return [...rows].sort((a, b) => dir * sortCollator.compare(text(a), text(b)));
+  const cellAt = (row) => columnIndex < row.childCount ? row.child(columnIndex) : null;
+  const text = (row) => cellAt(row)?.textContent.trim() ?? '';
+
+  return [...rows].sort((a, b) => {
+    const rankA = cellSortRank(cellAt(a));
+    const rankB = cellSortRank(cellAt(b));
+
+    if (rankA !== null || rankB !== null) {
+      return dir * ((rankA ?? Number.MAX_SAFE_INTEGER) - (rankB ?? Number.MAX_SAFE_INTEGER));
+    }
+
+    return dir * sortCollator.compare(text(a), text(b));
+  });
 }
 
 function lookupSpinner() {

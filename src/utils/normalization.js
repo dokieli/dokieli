@@ -19,6 +19,9 @@ import { DOMParser, DOMSerializer } from 'prosemirror-model';
 import Config from '../config.js';
 import { schema } from '../editor/schema/base.js';
 import { removeNodesWithSelector, removeClassValues, formatHTML, getFragmentOfNodesChildren, getDocumentNodeFromString } from './html.js';
+import { generateAttributeId } from '../util.js';
+import { THREAT_SELECT_RELS } from '../threatModel.js';
+import { slugFromText, getTableAttributeNames, getColumnAttributeNames } from '../table.js';
 
 export function normalizeForDiff(node) {
   const doc = DOMParser.fromSchema(schema).parse(node);
@@ -156,6 +159,73 @@ export function normalizeHTML(node, options) {
     }
   });
 
+  normalizeTableMarkup(node);
+
+  return node;
+}
+
+//Converts a managed table's authoring state into plain markup, on save and on leaving author mode.
+export function normalizeTableMarkup(node) {
+  //A mitigation cell becomes the nested measure pattern with its own typed span.
+  node.querySelectorAll('table[typeof~="schema:Table"] td[rel="dpv:isMitigatedByMeasure"][resource]').forEach(td => {
+    if (td.querySelector('span[typeof]')) return;
+
+    const container = td.querySelector('p') || td;
+    const text = container.textContent.trim();
+    const resource = td.getAttribute('resource');
+    td.removeAttribute('resource');
+    if (!text) { td.removeAttribute('rel'); return; }
+
+    const span = td.ownerDocument.createElement('span');
+    span.setAttribute('about', resource);
+    if (resource.startsWith('#')) span.setAttribute('id', resource.slice(1));
+    span.setAttribute('property', 'dcterms:description');
+    span.setAttribute('typeof', 'dpv:RiskMitigationMeasure');
+    span.textContent = text;
+
+    container.textContent = '';
+    container.appendChild(span);
+  });
+
+  //A link cell stated as attributes becomes a real anchor.
+  node.querySelectorAll('table[typeof~="schema:Table"] td[rel][resource]').forEach(td => {
+    if (td.querySelector('a, select')) return;
+
+    const container = td.querySelector('p') || td;
+    const a = td.ownerDocument.createElement('a');
+    a.setAttribute('href', td.getAttribute('resource'));
+    a.setAttribute('rel', td.getAttribute('rel'));
+    a.textContent = container.textContent.trim();
+
+    container.textContent = '';
+    container.appendChild(a);
+    td.removeAttribute('rel');
+    td.removeAttribute('resource');
+  });
+
+  //Converts controlled-vocabulary selects into their chosen references.
+  node.querySelectorAll('table[typeof~="schema:Table"] select[data-select]').forEach(select => {
+    const doc = select.ownerDocument;
+    const kind = select.getAttribute('data-select');
+    const chosen = [...select.querySelectorAll('option')]
+      .find(option => option.hasAttribute('selected') && option.getAttribute('value'));
+
+    //The header select names the column; its choice becomes the title text.
+    if (kind === 'threat-model-kind' || select.closest('th')) {
+      const label = (chosen || select.querySelector('option'))?.textContent.trim() || '';
+      select.replaceWith(doc.createTextNode(label));
+      return;
+    }
+
+    if (!chosen) { select.remove(); return; }
+
+    const a = doc.createElement('a');
+    a.setAttribute('href', chosen.getAttribute('value'));
+    if (THREAT_SELECT_RELS[kind]) a.setAttribute('rel', THREAT_SELECT_RELS[kind]);
+    a.textContent = chosen.textContent.trim();
+    select.replaceWith(a);
+  });
+
   //Removes a managed data table's body and footer rows that carry no data.
   node.querySelectorAll('table[typeof~="schema:Table"] :is(tbody, tfoot) tr').forEach(row => {
     const cells = [...row.children].filter(cell => cell.matches('td, th'));
@@ -168,6 +238,30 @@ export function normalizeHTML(node, options) {
   //A footer emptied of its rows has nothing left to say.
   node.querySelectorAll('table[typeof~="schema:Table"] tfoot').forEach(tfoot => {
     if (!tfoot.querySelector('tr')) tfoot.remove();
+  });
+
+  //Mints subjects for threat rows the editor could not derive one for.
+  const usedRiskIds = new Set();
+  node.querySelectorAll('tr[typeof~="dpv:Risk"]:not([about])').forEach(row => {
+    const text = row.querySelector('[property~="dcterms:description"]')?.textContent || '';
+    const slug = slugFromText(text);
+
+    const base = slug ? `risk-${slug}` : `risk-${generateAttributeId()}`;
+    let id = base;
+    let n = 2;
+    while (usedRiskIds.has(id) || node.querySelector(`[id="${id}"]`)) id = `${base}-${n++}`;
+
+    usedRiskIds.add(id);
+    row.setAttribute('about', `#${id}`);
+    row.setAttribute('id', id);
+  });
+
+  //The configuration is authoring state; the markup carries the information.
+  const configAttributes = [...getTableAttributeNames(), ...getColumnAttributeNames()];
+  node.querySelectorAll('table').forEach(table => {
+    [table, ...table.querySelectorAll('th, td, tr')].forEach(el => {
+      configAttributes.forEach(attr => el.removeAttribute(attr));
+    });
   });
 
   return node;
