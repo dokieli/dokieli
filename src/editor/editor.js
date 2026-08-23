@@ -36,6 +36,7 @@ import { SelectView } from "./nodeviews/select.js";
 import { AutocompleteView } from "./nodeviews/autocomplete.js";
 import Config from "./../config.js";
 import { addMessageToLog, showActionMessage, initCopyToClipboard, showRobustLinksDecoration } from "../doc.js";
+import { initTableSort } from "../tableSort.js";
 import { fragmentFromString, hasNonWhitespaceText, selectArticleNode } from "./../utils/html.js";
 import { updateDeviceStorageProfile } from "../storage.js";
 import { updateButtons } from "../ui/buttons.js";
@@ -127,6 +128,7 @@ export class Editor {
             this.destroyEditor();
             showRobustLinksDecoration();
             initCopyToClipboard();
+            initTableSort();
           }
           this.createSocialToolbar();
           break;
@@ -495,11 +497,11 @@ export class Editor {
       });
 
       // --- DIAGNOSTIC: "look here" re-added raw to surface the console error ---
-      console.log('[attention] setup begin; peers=', awareness.getStates().size);
+      // console.log('[attention] setup begin; peers=', awareness.getStates().size);
 
       const seenAttention = new Map();
       awareness.on('change', ({ added, updated }) => {
-        console.log('[attention] change; added=', added, 'updated=', updated);
+        // console.log('[attention] change; added=', added, 'updated=', updated);
         for (const id of added.concat(updated)) {
           if (id === awareness.clientID) continue;
           const n = awareness.getStates().get(id)?.attention;
@@ -532,7 +534,7 @@ export class Editor {
       awareness.on('change', syncAttentionButton);
       syncAttentionButton();
 
-      console.log('[attention] setup end');
+      // console.log('[attention] setup end');
       // --- END DIAGNOSTIC ---
     }
 

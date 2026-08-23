@@ -2227,6 +2227,7 @@ display:none;
 .ProseMirror th,
 .ProseMirror td {
 border:1px dotted;
+position:relative;
 }
 /* An empty caption is a zero-height box behind a ::before, so there is nothing
    to click. Give it a line of its own to put the caret in. */
@@ -2262,9 +2263,6 @@ outline:2px solid #080;
 outline-offset:-2px;
 }
 
-.ProseMirror th.table-identifier-column {
-position:relative;
-}
 .ProseMirror th.table-identifier-column::after {
 content:"";
 position:absolute;
@@ -2286,7 +2284,20 @@ cursor:pointer;
 display:none;
 }
 
-/* While an identifier lookup runs, the shared spinner on the cell that started it. */
+th button.table-sort {
+background:none;
+border:0;
+cursor:pointer;
+padding:0;
+margin:0 0.5em;
+font-size:1em;
+line-height:1;
+vertical-align:middle;
+}
+th button.table-sort svg {
+fill:#080;
+}
+
 .ProseMirror tr.table-lookup-pending > td:first-child {
 position:relative;
 }

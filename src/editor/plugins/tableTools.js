@@ -16,6 +16,7 @@ limitations under the License.
 */
 
 import { Plugin, PluginKey, TextSelection } from 'prosemirror-state';
+import { Fragment } from 'prosemirror-model';
 import { Decoration, DecorationSet } from 'prosemirror-view';
 import { schema } from '../schema/base.js';
 import Config from '../../config.js';
@@ -232,13 +233,72 @@ function captionPlaceholderDecoration(state) {
   return decorations;
 }
 
-function tableDecorations(state, drag) {
+function tableDecorations(state, drag, sort) {
   return [
     ...identifierDecorations(state),
     ...activeCellDecoration(state),
     ...captionPlaceholderDecoration(state),
-    ...dragDecorations(state, drag)
+    ...dragDecorations(state, drag),
+    ...headerSortDecorations(state, sort)
   ];
+}
+
+const SORT_NEXT = { none: 'ascending', ascending: 'descending', descending: 'none' };
+const SORT_ICON = { none: '.fas.fa-sort', ascending: '.fas.fa-sort-up', descending: '.fas.fa-sort-down' };
+
+// Sort controls sit in the header row of the table under the caret.
+function headerSortDecorations(state, sort) {
+  const table = findTable(state);
+  if (!table) return [];
+
+  const header = getHeaderRowPos(table.node, table.pos);
+  if (!header) return [];
+
+  let bodyRowCount = 0;
+  forEachRow(table.node, table.pos, (row, rowPos, isHeader) => { if (!isHeader) bodyRowCount++; });
+  if (bodyRowCount < 2) return [];
+
+  const active = sort && sort.pos === table.pos ? sort : null;
+  const decorations = [];
+  let cellPos = header.pos + 1;
+
+  header.row.forEach((cell, offset, index) => {
+    const direction = active && active.columnIndex === index ? active.direction : 'none';
+
+    if (direction !== 'none') {
+      decorations.push(Decoration.node(cellPos, cellPos + cell.nodeSize, { 'aria-sort': direction }));
+    }
+
+    decorations.push(Decoration.widget(cellPos + cell.nodeSize - 1, sortButton(table.pos, index, direction), {
+      key: `table-sort-${index}-${direction}`,
+      ignoreSelection: true
+    }));
+
+    cellPos += cell.nodeSize;
+  });
+
+  return decorations;
+}
+
+function sortButton(tablePos, columnIndex, direction) {
+  return (view) => {
+    const button = document.createElement('button');
+    button.className = 'do table-sort';
+    button.type = 'button';
+
+    const title = i18n.t(`table.sort.${SORT_NEXT[direction]}`);
+    button.setAttribute('title', title);
+    button.setAttribute('aria-label', title);
+    sanitizeInsertAdjacentHTML(button, 'afterbegin', Icon[SORT_ICON[direction]]);
+
+    button.addEventListener('mousedown', (e) => e.preventDefault());
+    button.addEventListener('click', (e) => {
+      e.preventDefault();
+      instances.get(view)?.cycleColumnSort(tablePos, columnIndex);
+    });
+
+    return button;
+  };
 }
 
 export function tableToolsPlugin() {
@@ -248,15 +308,26 @@ export function tableToolsPlugin() {
     // Lookup status per row, held as decorations; classes written to the DOM get re-rendered away.
     state: {
       init() {
-        return { status: DecorationSet.empty, drag: null };
+        return { status: DecorationSet.empty, drag: null, sort: null };
       },
 
       apply(tr, value) {
         let status = value.status.map(tr.mapping, tr.doc);
         let drag = value.drag;
+        let sort = value.sort;
 
         const action = tr.getMeta(tableToolsPluginKey);
-        if (!action) return { status, drag };
+
+        if (action && 'sort' in action) {
+          sort = action.sort;
+        } else if (sort && tr.docChanged) {
+          // Attribute reconciliation keeps the sort; any authored change drops it.
+          sort = tr.getMeta('addToHistory') === false
+            ? { ...sort, pos: tr.mapping.map(sort.pos) }
+            : null;
+        }
+
+        if (!action) return { status, drag, sort };
 
         if (action.clearStatus !== undefined) {
           // The row's span, so the spinner widget inside it is removed too.
@@ -280,7 +351,7 @@ export function tableToolsPlugin() {
 
         if ('drag' in action) drag = action.drag;
 
-        return { status, drag };
+        return { status, drag, sort };
       }
     },
 
@@ -290,9 +361,9 @@ export function tableToolsPlugin() {
 
     props: {
       decorations(state) {
-        const { status, drag } = tableToolsPluginKey.getState(state) ?? {};
+        const { status, drag, sort } = tableToolsPluginKey.getState(state) ?? {};
         const set = status ?? DecorationSet.empty;
-        return set.add(state.doc, tableDecorations(state, drag));
+        return set.add(state.doc, tableDecorations(state, drag, sort));
       },
 
       handleKeyDown(view, event) {
@@ -409,6 +480,9 @@ class TableToolsView {
 
     this.maybeAutofill(view, prevState);
     this.maybeSuggestIdentifiers(view);
+
+    // No sorted column, nothing to restore to.
+    if (!tableToolsPluginKey.getState(view.state)?.sort) this.sortMemory = null;
 
     if (!table || !view.editable) {
       this.table = null;
@@ -1838,6 +1912,51 @@ class TableToolsView {
     return pos;
   }
 
+  // Ascending, descending, then back to the order the first sort found.
+  cycleColumnSort(tablePos, columnIndex) {
+    const view = this.editorView;
+    const table = view.state.doc.nodeAt(tablePos);
+    if (!table || table.type.name !== 'table') return;
+
+    const current = tableToolsPluginKey.getState(view.state)?.sort;
+    const active = current && current.pos === tablePos && current.columnIndex === columnIndex;
+    const direction = SORT_NEXT[active ? current.direction : 'none'];
+
+    // First sort of an unsorted table captures the order the third state restores.
+    if (!current || current.pos !== tablePos) {
+      this.sortMemory = { pos: tablePos, tbodies: captureRowOrder(table) };
+    }
+
+    const memory = this.sortMemory?.pos === tablePos ? this.sortMemory : null;
+    if (direction === 'none' && !memory) return;
+
+    const tbodies = [];
+    let offset = tablePos + 1;
+    table.forEach((child) => {
+      if (child.type.name === 'tbody') tbodies.push({ node: child, pos: offset, index: tbodies.length });
+      offset += child.nodeSize;
+    });
+
+    const tr = view.state.tr;
+
+    [...tbodies].reverse().forEach(({ node, pos, index }) => {
+      const rows = [];
+      node.forEach((row) => rows.push(row));
+
+      const base = memory?.tbodies[index]?.length === rows.length ? memory.tbodies[index] : rows;
+      const ordered = direction === 'none' ? base : sortTableRows(base, columnIndex, direction);
+      if (ordered.length !== rows.length) return;
+
+      tr.replaceWith(pos + 1, pos + node.nodeSize - 1, Fragment.from(ordered));
+    });
+
+    tr.setMeta(tableToolsPluginKey, {
+      sort: direction === 'none' ? null : { pos: tablePos, columnIndex, direction }
+    });
+
+    view.dispatch(tr);
+  }
+
   /** Known dimensions let an image occupy its space before it loads. */
   async measureImageValues(columns, values) {
     await Promise.all(columns
@@ -1948,6 +2067,26 @@ function matchesDatatype(datatype, option) {
 function findTableAt(state, pos) {
   const node = state.doc.nodeAt(pos);
   return node?.type.name === 'table' ? node : null;
+}
+
+function captureRowOrder(table) {
+  const tbodies = [];
+  table.forEach((child) => {
+    if (child.type.name !== 'tbody') return;
+    const rows = [];
+    child.forEach((row) => rows.push(row));
+    tbodies.push(rows);
+  });
+  return tbodies;
+}
+
+// Numeric-aware, so ratings and ranks order as numbers; ties keep the base order.
+const sortCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+
+function sortTableRows(rows, columnIndex, direction) {
+  const dir = direction === 'ascending' ? 1 : -1;
+  const text = (row) => columnIndex < row.childCount ? row.child(columnIndex).textContent.trim() : '';
+  return [...rows].sort((a, b) => dir * sortCollator.compare(text(a), text(b)));
 }
 
 function lookupSpinner() {

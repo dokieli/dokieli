@@ -40,6 +40,7 @@ import { Icon } from './ui/icons.js';
 import { eventButtonClose, eventButtonSignIn, eventButtonSignOut, eventButtonNotificationsToggle, eventButtonInfo, emitDocEvent } from './events.js';
 import { hasNonWhitespaceText, getDocumentContentNode, selectArticleNode } from "./utils/html.js";
 import { isUnlocked, getSessionKid, hasKeystore, decryptWithSession } from './keystore.js';
+import { initTableSort } from './tableSort.js';
 
 export async function init (url) {
   initServiceWorker();
@@ -193,6 +194,7 @@ async function initDocumentActions() {
   initShowNotificationSources();
   focusNote();
   setDocRefType();
+  initTableSort();
 }
 
 function initShowNotificationSources() {

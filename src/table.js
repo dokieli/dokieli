@@ -190,7 +190,11 @@ export function toColumnName(title, index, taken = []) {
     .replace(/[^\p{L}\p{N}]/gu, '');
 
   if (!name || /^\p{N}/u.test(name)) name = `column${index + 1}`;
-  name = name[0].toLowerCase() + name.slice(1);
+  // A leading acronym lowercases whole: ISBN -> isbn, DOIRef -> doiRef.
+  name = name.replace(/^\p{Lu}+/u, (run) =>
+    run.length > 1 && /\p{Ll}/u.test(name.charAt(run.length))
+      ? run.slice(0, -1).toLowerCase() + run.slice(-1)
+      : run.toLowerCase());
 
   let candidate = name;
   let n = 2;
