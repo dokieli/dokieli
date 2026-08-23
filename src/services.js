@@ -43,7 +43,7 @@ export const LookupServices = {
     columns: [
       { name: 'isbn', titles: 'ISBN', propertyUrl: 'schema:isbn', lang: '', identifier: true },
       { titles: 'Title', propertyUrl: 'schema:name', valueRel: 'schema:url', lookup: { source: 'title', urlSource: 'url' } },
-      { titles: 'Author', propertyUrl: 'schema:author', lang: '', lookup: { source: 'authors.*.name' } },
+      { titles: 'Authors', propertyUrl: 'schema:author', lang: '', lookup: { source: 'authors.*.name' } },
       { titles: 'Publisher', propertyUrl: 'schema:publisher', lang: '', lookup: { source: 'publishers.*.name' } },
       { titles: 'Published', propertyUrl: 'schema:datePublished', time: true, lookup: { source: 'publish_date' } },
       { titles: 'Cover', propertyUrl: 'schema:image', image: true, lookup: { source: 'cover.medium' } }
@@ -58,7 +58,8 @@ export const LookupServices = {
     record: '{id}',
     accept: 'application/json',
     search: 'specref',
-    tableSchema: { typeof: 'schema:CreativeWork' },
+    // The row's claims attach to the spec itself; no subject until the URL cell is filled.
+    tableSchema: { typeof: 'doap:Specification', aboutUrl: '{+url}' },
     columns: [
       // Typing a title here searches; picking a result fills Reference with its id.
       { titles: 'Title', propertyUrl: 'schema:name', identifier: true, lookup: { source: 'title' } },
@@ -79,12 +80,14 @@ export const LookupServices = {
     format: 'rdf',
     subject: 'https://doi.org/{+id}',
     identifierPattern: /10\.\d{4,9}\/[^\s?#]+/,
-    tableSchema: { typeof: 'schema:CreativeWork' },
+    tableSchema: { typeof: 'schema:CreativeWork', aboutUrl: 'https://doi.org/{+doi}' },
+    // lookup.source: predicates Crossref answers with; DataCite uses schema.org, the propertyUrl fallback.
     columns: [
-      { titles: 'DOI', propertyUrl: 'bibo:doi', lang: '', identifier: true },
-      { titles: 'Title', propertyUrl: 'schema:name' },
-      { titles: 'Author', propertyUrl: 'schema:author', lang: '' },
-      { titles: 'Published', propertyUrl: 'schema:datePublished', time: true }
+      { name: 'doi', titles: 'DOI', propertyUrl: 'bibo:doi', lang: '', identifier: true, valueRel: 'schema:url', valueUrl: 'https://doi.org/{+doi}' },
+      { titles: 'Title', propertyUrl: 'schema:name', lookup: { source: 'dcterms:title' } },
+      { titles: 'Authors', propertyUrl: 'schema:author', lang: '', lookup: { source: 'dcterms:creator' } },
+      { titles: 'Publisher', propertyUrl: 'schema:publisher', lang: '', lookup: { source: 'dcterms:publisher' } },
+      { titles: 'Published', propertyUrl: 'schema:datePublished', time: true, lookup: { source: 'dcterms:date' } }
     ]
   },
 
@@ -96,12 +99,14 @@ export const LookupServices = {
     subject: 'http://www.wikidata.org/entity/{id}',
     identifierPattern: /^[QP]\d+$/i,
     search: 'wikidata',
+    // The entity IRI is canonically http:, as Wikidata's own RDF states it.
+    tableSchema: { aboutUrl: '{+entity}' },
     columns: [
       // Typing a label here searches; picking a result resolves it to an entity.
       { titles: 'Label', propertyUrl: 'rdfs:label', identifier: true },
       { titles: 'Description', propertyUrl: 'schema:description' },
       // SUBJECT_SOURCE fills this with the entity the search resolved to.
-      { titles: 'Entity', propertyUrl: 'owl:sameAs', lookup: { source: '@id' } }
+      { name: 'entity', titles: 'Entity', propertyUrl: 'owl:sameAs', lookup: { source: '@id' } }
     ]
   },
 
@@ -114,9 +119,10 @@ export const LookupServices = {
     subject: 'https://orcid.org/{id}',
     accept: 'text/turtle',
     identifierPattern: /\d{4}-\d{4}-\d{4}-\d{3}[\dXx]/,
-    tableSchema: { typeof: 'schema:Person' },
+    // The type ORCID's own RDF asserts of the iD; ORCID names people only, organisations use ROR.
+    tableSchema: { typeof: 'foaf:Person', aboutUrl: 'https://orcid.org/{orcid}' },
     columns: [
-      { titles: 'ORCID', propertyUrl: 'schema:identifier', lang: '', identifier: true },
+      { name: 'orcid', titles: 'ORCID', propertyUrl: 'schema:identifier', lang: '', identifier: true },
       { titles: 'Name', propertyUrl: 'rdfs:label', lang: '' },
       { titles: 'Given name', propertyUrl: 'foaf:givenName', lang: '' },
       { titles: 'Family name', propertyUrl: 'foaf:familyName', lang: '' }
@@ -134,6 +140,12 @@ export const LookupServices = {
 
 export function getLookupService(name) {
   return LookupServices[name] || null;
+}
+
+// Selection lists show sources alphabetically; the custom escape hatch stays last.
+export function listLookupServices() {
+  return Object.entries(LookupServices).sort(([a, serviceA], [b, serviceB]) =>
+    (a === 'custom') - (b === 'custom') || serviceA.label.localeCompare(serviceB.label));
 }
 
 // Services whose identifiers can come off a barcode.
@@ -244,7 +256,7 @@ export async function searchSpecrefEntries(keyword, options = {}) {
       .map(([id, ref]) => ({
         id,
         label: ref.title,
-        description: [ref.publisher, ref.status, ref.date].filter(Boolean).join(', '),
+        description: [`[${id}]`, [ref.publisher, ref.status, ref.date].filter(Boolean).join(', ')].filter(Boolean).join(' '),
         uri: ref.href || `https://api.specref.org/bibrefs?refs=${encodeURIComponent(id)}`
       }));
   } catch (e) {
@@ -366,10 +378,15 @@ export function extractRDFValues(graph, subject, columns) {
   const values = {};
 
   columns.forEach((column) => {
-    const predicate = expandTerm(column.propertyUrl);
-    if (!predicate) return;
+    // lookup.source names the response's own predicate(s); the output property is the fallback.
+    const predicates = [column.lookup?.source, column.propertyUrl].flat().map(expandTerm).filter(Boolean);
+    if (!predicates.length) return;
 
-    const terms = [...node.out(rdf.namedNode(predicate)).terms];
+    let terms = [];
+    for (const predicate of predicates) {
+      terms = [...node.out(rdf.namedNode(predicate)).terms];
+      if (terms.length) break;
+    }
     if (!terms.length) return;
 
     const literals = terms.filter((t) => t.termType === 'Literal');
@@ -381,11 +398,26 @@ export function extractRDFValues(graph, subject, columns) {
     values[column.name] = {
       text: texts.join(', '),
       values: texts.length > 1 ? texts : undefined,
-      valueUrl: chosen[0]?.termType === 'NamedNode' ? chosen[0].value : null
+      // A cell of several labelled resources must not link wholesale to the first one.
+      valueUrl: texts.length === 1 && chosen[0]?.termType === 'NamedNode' ? chosen[0].value : null
     };
   });
 
   return values;
+}
+
+// The response may describe the entity under another IRI form than the template, e.g. dx.doi.org for doi.org.
+export function resolveGraphSubject(graph, subject, id) {
+  if (!graph?.dataset || !subject) return subject;
+  if (graph.dataset.match(rdf.namedNode(subject)).size) return subject;
+
+  for (const quad of graph.dataset) {
+    const s = quad.subject;
+    if (s.termType !== 'NamedNode') continue;
+    if (id && (s.value.includes(id) || s.value.includes(encodeURIComponent(id)))) return s.value;
+  }
+
+  return subject;
 }
 
 // A named node is more useful with its label than as a bare IRI.
@@ -435,7 +467,7 @@ export async function lookupIdentifier(tableSchema, columns, identifier, options
     const { graph, error } = await getResourceGraph(url, accept ? { Accept: accept } : null, options);
     if (error || !graph) return null;
 
-    const values = extractRDFValues(graph, subject || url, columns);
+    const values = extractRDFValues(graph, resolveGraphSubject(graph, subject || url, id), columns);
     return { values: withSubjectValues(values, columns, subject || url), subject, id };
   }
 

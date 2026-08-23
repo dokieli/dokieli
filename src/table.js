@@ -219,6 +219,14 @@ export function getTemplateVariables(template) {
   }
 }
 
+export const DEFAULT_ROW_PROPERTY = 'schema:about';
+
+// A caption-derived fragment subject; pure text, no document lookups.
+export function subjectFromCaption(text) {
+  const slug = String(text || '').trim().toLowerCase().replace(/\W+/g, '-').replace(/^-+|-+$/g, '');
+  return slug ? `#${slug}` : null;
+}
+
 // Subject the row's statements hang off.
 export function computeRowSubject(tableSchema, fillValues, fallback) {
   const aboutUrl = tableSchema?.aboutUrl;
@@ -327,7 +335,13 @@ export function buildCellRDFa(column, cellValue, context = {}) {
     if (!skipProperty) {
       const rel = resolved.valueRel || resolved.propertyUrl;
       if (rel) child.attributes.rel = rel;
-      if (resolved.valueRel && resolved.propertyUrl) child.attributes.property = resolved.propertyUrl;
+      if (resolved.valueRel && resolved.propertyUrl) {
+        child.attributes.property = resolved.propertyUrl;
+        if (resolved.lang !== undefined && resolved.lang !== null) {
+          child.attributes.lang = resolved.lang;
+          child.attributes['xml:lang'] = resolved.lang;
+        }
+      }
     }
 
     return { attributes, child, text };

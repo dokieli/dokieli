@@ -58,6 +58,8 @@ export function findCell(state, $pos) {
     const node = $from.node(depth);
     if (!CELLS.includes(node.type.name)) continue;
 
+    const sectionNode = depth >= 2 ? $from.node(depth - 2) : null;
+
     return {
       node,
       depth,
@@ -65,7 +67,8 @@ export function findCell(state, $pos) {
       start: $from.start(depth),
       columnIndex: $from.index(depth - 1),
       row: $from.node(depth - 1),
-      rowPos: $from.before(depth - 1)
+      rowPos: $from.before(depth - 1),
+      section: SECTIONS.includes(sectionNode?.type.name) ? sectionNode.type.name : null
     };
   }
 
@@ -80,11 +83,11 @@ export function forEachRow(table, tablePos, fn) {
     const name = child.type.name;
 
     if (name === 'tr') {
-      fn(child, offset, false);
+      fn(child, offset, false, null);
     } else if (SECTIONS.includes(name)) {
       let rowOffset = offset + 1;
       child.forEach((row) => {
-        if (row.type.name === 'tr') fn(row, rowOffset, name === 'thead');
+        if (row.type.name === 'tr') fn(row, rowOffset, name === 'thead', name);
         rowOffset += row.nodeSize;
       });
     }
@@ -404,6 +407,11 @@ export function addColumn(side = 'after') {
       .forEach(({ offset, headerCell }) => {
         tr.insert(offset, createCell(headerCell ? 'th' : 'td', headerCell ? getColumnAttributes({ name }) : {}));
       });
+
+    // The caret lands in the new column's first cell, ready for its title.
+    const first = Math.min(...insertions.map((i) => i.offset));
+    const target = findFirstTextPosition(tr.doc, first);
+    if (target !== null) tr.setSelection(TextSelection.create(tr.doc, target));
 
     dispatch(tr.scrollIntoView());
     return true;

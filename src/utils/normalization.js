@@ -156,6 +156,20 @@ export function normalizeHTML(node, options) {
     }
   });
 
+  //Removes a managed data table's body and footer rows that carry no data.
+  node.querySelectorAll('table[typeof~="schema:Table"] :is(tbody, tfoot) tr').forEach(row => {
+    const cells = [...row.children].filter(cell => cell.matches('td, th'));
+    if (!cells.length) return;
+
+    const hasData = cells.some(cell => cell.textContent.trim() || cell.querySelector('img'));
+    if (!hasData) row.remove();
+  });
+
+  //A footer emptied of its rows has nothing left to say.
+  node.querySelectorAll('table[typeof~="schema:Table"] tfoot').forEach(tfoot => {
+    if (!tfoot.querySelector('tr')) tfoot.remove();
+  });
+
   return node;
 }
 

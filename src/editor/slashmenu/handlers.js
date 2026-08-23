@@ -25,7 +25,7 @@ import { isUploadableTarget, uploadImageFile } from "../utils/imageAssets.js";
 import { insertTable } from "../commands/table.js";
 import { getLookupService } from "../../services.js";
 import { csvStringToJson } from "../../csv.js";
-import { fromCSVWTableSchema } from "../../table.js";
+import { fromCSVWTableSchema, getPrefixesUsed, ensureDocumentPrefixes } from "../../table.js";
 
 export function formHandlerLanguage(e) {
   e.preventDefault();
@@ -211,14 +211,17 @@ export async function formHandlerTable(e) {
     dispatch(state.tr.setSelection(newSelection));
   }
 
+  const tableSchema = imported?.tableSchema || service?.tableSchema || null;
+  const columnSchemas = imported?.columnSchemas?.length ? imported.columnSchemas : serviceColumns;
+
   insertTable({
     rows: imported?.data.length || rows,
     columns,
     caption,
     headers: imported?.headers || [],
     data: imported?.data || [],
-    tableSchema: imported?.tableSchema || service?.tableSchema || null,
-    columnSchemas: imported?.columnSchemas?.length ? imported.columnSchemas : serviceColumns,
+    tableSchema,
+    columnSchemas,
     lookup: service
       ? {
           service: formValues['table-service'],
@@ -229,6 +232,8 @@ export async function formHandlerTable(e) {
         }
       : null
   })(this.editorView.state, this.editorView.dispatch);
+
+  ensureDocumentPrefixes(getPrefixesUsed(tableSchema, columnSchemas));
 
   this.hideMenu();
 }

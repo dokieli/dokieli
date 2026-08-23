@@ -54,11 +54,12 @@ import {
   computeRowSubject,
   isColumnMapped,
   getPrefixesUsed,
-  ensureDocumentPrefixes
+  ensureDocumentPrefixes,
+  DEFAULT_ROW_PROPERTY
 } from '../../table.js';
 import { reconcileTable, reconcileSelectedTable, contentStatesProperty } from './tableRDFa.js';
 import { searchClasses, searchProperties } from '../../vocab.js';
-import { LookupServices, getLookupService, identifierColumnCandidates, lookupIdentifier, getIdentifierSearch, looksLikeIdentifier, needsIdentifierPick } from '../../services.js';
+import { listLookupServices, getLookupService, identifierColumnCandidates, lookupIdentifier, getIdentifierSearch, looksLikeIdentifier, needsIdentifierPick } from '../../services.js';
 
 export const tableToolsPluginKey = new PluginKey('tableTools');
 
@@ -121,16 +122,17 @@ const COMMON_TYPES = [
   'schema:Dataset', 'foaf:Person', 'skos:Concept', 'csvw:Row'
 ];
 
-const DEFAULT_ROW_PROPERTY = 'schema:hasPart';
-
-// A table's subject, derived from the caption or generated when there is none.
+// A table's subject: what the reconcile pass already emitted, else caption-derived, else generated.
 function tableSubjectFrom(tableNode) {
+  const emitted = tableNode.attrs.originalAttributes?.resource;
+  if (emitted) return emitted;
+
   let caption = '';
   tableNode.forEach((child) => {
     if (child.type.name === 'caption') caption = child.textContent.trim();
   });
 
-  return '#' + generateAttributeId(null, caption || 'table');
+  return '#' + generateAttributeId(null, (caption || 'table').toLowerCase());
 }
 
 // Mark the identifier column via decorations; direct DOM writes make ProseMirror re-parse.
@@ -153,8 +155,8 @@ function identifierDecorations(state) {
 
   const decorations = [];
 
-  forEachRow(table.node, table.pos, (row, rowPos, isHeader) => {
-    if (index >= row.childCount) return;
+  forEachRow(table.node, table.pos, (row, rowPos, isHeader, section) => {
+    if (section === 'tfoot' || index >= row.childCount) return;
 
     let cellPos = rowPos + 1;
     for (let i = 0; i < index; i++) cellPos += row.child(i).nodeSize;
@@ -255,7 +257,9 @@ function headerSortDecorations(state, sort) {
   if (!header) return [];
 
   let bodyRowCount = 0;
-  forEachRow(table.node, table.pos, (row, rowPos, isHeader) => { if (!isHeader) bodyRowCount++; });
+  forEachRow(table.node, table.pos, (row, rowPos, isHeader, section) => {
+    if (!isHeader && section !== 'tfoot') bodyRowCount++;
+  });
   if (bodyRowCount < 2) return [];
 
   const active = sort && sort.pos === table.pos ? sort : null;
@@ -497,6 +501,7 @@ class TableToolsView {
   }
 
   destroy() {
+    clearTimeout(this.typedLookupTimer);
     window.removeEventListener('scroll', this.repositionHandler, true);
     window.removeEventListener('resize', this.repositionHandler);
     document.removeEventListener('mousedown', this.documentClickHandler);
@@ -1046,7 +1051,7 @@ class TableToolsView {
               <label for="table-column-service">${htmlEncode(i18n.t('editor.table.column.service.label'))}</label>
               <select class="editor-form-select" id="table-column-service" name="table-column-service">
                 <option value="">${htmlEncode(i18n.t('editor.table.lookup.service.none'))}</option>
-                ${Object.entries(LookupServices).filter(([, service]) => service.search).map(([name, service]) =>
+                ${listLookupServices().filter(([, service]) => service.search).map(([name, service]) =>
                   `<option value="${name}"${column.lookup?.service === name ? ' selected=""' : ''}>${htmlEncode(service.label)}</option>`).join('')}
               </select>
               <p class="info">${htmlEncode(i18n.t('editor.table.column.service.info'))}</p>
@@ -1171,8 +1176,8 @@ class TableToolsView {
     const edits = [];
     let rowIndex = 0;
 
-    forEachRow(table.node, table.pos, (row, rowPos, isHeader) => {
-      if (isHeader || index >= row.childCount) return;
+    forEachRow(table.node, table.pos, (row, rowPos, isHeader, section) => {
+      if (isHeader || section === 'tfoot' || index >= row.childCount) return;
       rowIndex++;
 
       const fillValues = { _row: rowIndex };
@@ -1229,7 +1234,7 @@ class TableToolsView {
           <label for="table-lookup-service">${htmlEncode(i18n.t('editor.table.lookup.service.label'))}</label>
           <select class="editor-form-select" id="table-lookup-service" name="table-lookup-service"${lookup.service ? ' disabled=""' : ''}>
             <option value="">${htmlEncode(i18n.t('editor.table.lookup.service.none'))}</option>
-            ${Object.entries(LookupServices).map(([name, s]) =>
+            ${listLookupServices().map(([name, s]) =>
               `<option value="${name}"${lookup.service === name ? ' selected=""' : ''}>${htmlEncode(s.label)}</option>`).join('')}
           </select>
 
@@ -1278,11 +1283,11 @@ class TableToolsView {
 
             <div class="autocomplete">
               <label for="table-property">${htmlEncode(i18n.t('editor.table.property.label'))}</label>
-              <input autocomplete="off" class="editor-form-input" dir="ltr" id="table-property" name="table-property" placeholder="schema:hasPart" type="text" value="${htmlEncode(tableSchema.propertyUrl || '')}" />
+              <input autocomplete="off" class="editor-form-input" dir="ltr" id="table-property" name="table-property" placeholder="schema:about" type="text" value="${htmlEncode(tableSchema.propertyUrl || '')}" />
             </div>
 
             <label for="table-about-url">${htmlEncode(i18n.t('editor.table.about-url.label'))}</label>
-            <input class="editor-form-input" dir="ltr" id="table-about-url" name="table-about-url" placeholder="#row/{_row}" type="text" value="${htmlEncode(tableSchema.aboutUrl || '')}" />
+            <input class="editor-form-input" dir="ltr" id="table-about-url" name="table-about-url" placeholder="#isbn-{isbn}" type="text" value="${htmlEncode(tableSchema.aboutUrl || '')}" />
           </details>
 
           <div class="editor-form-actions-row">
@@ -1416,6 +1421,14 @@ class TableToolsView {
       this.adoptServiceColumns(tr, table, tableSchema);
     }
 
+    // Empty about and typeof fall back to the source's defaults, about further to a local fragment.
+    const serviceSchema = tableSchema.lookup?.service && getLookupService(tableSchema.lookup.service)?.tableSchema;
+    if (!tableSchema.aboutUrl && serviceSchema) tableSchema.aboutUrl = serviceSchema.aboutUrl;
+    if (!tableSchema.typeof && serviceSchema) tableSchema.typeof = serviceSchema.typeof;
+    if (!tableSchema.aboutUrl && tableSchema.lookup?.idColumn) {
+      tableSchema.aboutUrl = `#${tableSchema.lookup.idColumn}-{${tableSchema.lookup.idColumn}}`;
+    }
+
     setTableAttributes(tr, table.node, table.pos, tableSchema);
 
     if (panel.dataset.clearOnApply === 'true') this.clearBodyCells(tr, table);
@@ -1475,8 +1488,8 @@ class TableToolsView {
   clearBodyCells(tr, table) {
     const edits = [];
 
-    forEachRow(table.node, table.pos, (row, rowPos, isHeader) => {
-      if (isHeader) return;
+    forEachRow(table.node, table.pos, (row, rowPos, isHeader, section) => {
+      if (isHeader || section === 'tfoot') return;
 
       let cellPos = rowPos + 1;
       row.forEach((cell) => {
@@ -1597,7 +1610,8 @@ class TableToolsView {
     const cell = findCell(view.state);
     const table = findTable(view.state);
 
-    if (!cell || !table || !view.editable || !view.hasFocus()) {
+    if (!cell || !table || !view.editable || !view.hasFocus()
+      || cell.section === 'thead' || cell.section === 'tfoot') {
       this.closeSuggestions();
       return;
     }
@@ -1636,7 +1650,7 @@ class TableToolsView {
         const results = await fn(q);
         if (this.suggestionQuery !== q) return;
         this.showIdentifierSuggestions(results, q, cp, rp, tp, opts);
-      }, 300);
+      }, 1000);
     }
 
     this.debouncedIdentifierSearch(search, query, cellPos, rowPos, tablePos, options);
@@ -1745,7 +1759,7 @@ class TableToolsView {
     const table = findTable(view.state);
 
     const current = cell && table
-      ? { rowPos: cell.rowPos, columnIndex: cell.columnIndex, value: cell.node.textContent.trim(), tablePos: table.pos }
+      ? { rowPos: cell.rowPos, columnIndex: cell.columnIndex, value: cell.node.textContent.trim(), tablePos: table.pos, section: cell.section }
       : null;
 
     const sameCell = !!(current && previous
@@ -1756,8 +1770,15 @@ class TableToolsView {
 
     this.watchedCell = current;
 
+    // A typed value that already passes the identifier test need not wait for the caret to leave.
+    if (sameCell && current.value && current.value !== current.entryValue) {
+      this.scheduleTypedLookup(current);
+    }
+
     if (!previous || sameCell) return;
     if (!previous.value) return;
+    // Only body cells identify anything; header titles and footer notes do not.
+    if (previous.section === 'thead' || previous.section === 'tfoot') return;
 
     // Only a visit that changed the value asks the source again.
     if (previous.value === previous.entryValue) return;
@@ -1781,6 +1802,42 @@ class TableToolsView {
     }
 
     this.runLookup(previous.tablePos, previous.rowPos, previous.value);
+  }
+
+  scheduleTypedLookup(cell) {
+    clearTimeout(this.typedLookupTimer);
+
+    if (cell.section === 'thead' || cell.section === 'tfoot') return;
+
+    const table = this.editorView.state.doc.nodeAt(cell.tablePos);
+    if (!table || table.type.name !== 'table') return;
+
+    const tableSchema = getTableSchema(table.attrs.originalAttributes);
+    if (!tableSchema.lookup?.url || !tableSchema.lookup.idColumn) return;
+
+    // Without a recognisable shape, only leaving the cell commits.
+    const service = getLookupService(tableSchema.lookup.service);
+    if (!service?.identifierPattern) return;
+
+    const columns = getColumns(table);
+    if (columns[cell.columnIndex]?.name !== tableSchema.lookup.idColumn) return;
+
+    // Search services suggest instead; an incomplete identifier is not an error while typing.
+    if (needsIdentifierPick(tableSchema.lookup, cell.value)) return;
+    if (!looksLikeIdentifier(tableSchema.lookup, cell.value)) return;
+
+    // A check digit proves the identifier complete; a bare pattern cannot, so it waits longer.
+    const delay = service.identifierValid ? 1000 : 3000;
+
+    this.typedLookupTimer = setTimeout(() => {
+      const current = this.watchedCell;
+      if (!current || current.rowPos !== cell.rowPos || current.columnIndex !== cell.columnIndex) return;
+      if (current.value !== cell.value) return;
+
+      // Leaving the cell now would only repeat this very request.
+      current.entryValue = current.value;
+      this.runLookup(current.tablePos, current.rowPos, current.value);
+    }, delay);
   }
 
   async runLookup(tablePos, rowPos, identifier, lookupOptions = {}) {
@@ -1810,7 +1867,7 @@ class TableToolsView {
       await this.measureImageValues(columns, result.values);
 
       this.setRowStatus(rowPos, null);
-      this.fillRow(tablePos, rowPos, result.values);
+      this.fillRow(tablePos, rowPos, result.values, result.id);
     } catch (e) {
       console.warn(`Lookup failed for ${identifier}:`, e?.message || e);
       this.setRowStatus(rowPos, 'table-lookup-error', 3000);
@@ -1851,8 +1908,8 @@ class TableToolsView {
     const candidates = [];
     let ordinal = -1;
 
-    forEachRow(table, tablePos, (row, rowPos, isHeader) => {
-      if (isHeader) return;
+    forEachRow(table, tablePos, (row, rowPos, isHeader, section) => {
+      if (isHeader || section === 'tfoot') return;
       ordinal++;
       if (index >= row.childCount) return;
 
@@ -1903,8 +1960,8 @@ class TableToolsView {
     let pos = null;
     let i = -1;
 
-    forEachRow(table, tablePos, (row, rowPos, isHeader) => {
-      if (isHeader) return;
+    forEachRow(table, tablePos, (row, rowPos, isHeader, section) => {
+      if (isHeader || section === 'tfoot') return;
       i++;
       if (i === ordinal) pos = rowPos;
     });
@@ -1968,7 +2025,7 @@ class TableToolsView {
   }
 
   /** Write looked-up values into the row, leaving anything already typed. */
-  fillRow(tablePos, rowPos, values) {
+  fillRow(tablePos, rowPos, values, resolvedId = null) {
     const view = this.editorView;
     const table = view.state.doc.nodeAt(tablePos);
     const row = view.state.doc.nodeAt(rowPos);
@@ -1979,8 +2036,8 @@ class TableToolsView {
 
     let rowIndex = 0;
     let counted = 0;
-    forEachRow(table, tablePos, (candidate, pos, isHeader) => {
-      if (isHeader || rowIndex) return;
+    forEachRow(table, tablePos, (candidate, pos, isHeader, section) => {
+      if (isHeader || section === 'tfoot' || rowIndex) return;
       counted++;
       if (pos === rowPos) rowIndex = counted;
     });
@@ -2015,6 +2072,14 @@ class TableToolsView {
       const fed = isFed(column);
       const existing = cell.textContent.trim();
 
+      // The identifier cell keeps its text as typed but gains its link once the lookup answers.
+      if (column.name === idColumn && existing && (column.valueUrl || column.valueRel)) {
+        const hrefValues = resolvedId ? { ...fillValues, [idColumn]: resolvedId } : fillValues;
+        const built = buildCellRDFa(column, existing, { rowSubject, fillValues: hrefValues, foreignKeys: [] });
+        edits.push({ from: at + 1, to: at + cell.nodeSize - 1, built });
+        return;
+      }
+
       // Never clobber what someone typed into a column the lookup does not feed.
       if (!fed && existing) return;
 
@@ -2027,7 +2092,8 @@ class TableToolsView {
       }
 
       const built = buildCellRDFa(
-        { ...column, valueUrl: column.valueUrl || value.valueUrl || undefined },
+        // A column set to an explicit literal datatype declines the result's link.
+        { ...column, valueUrl: column.valueUrl || (column.datatype ? undefined : value.valueUrl) || undefined },
         value.text,
         {
           rowSubject,

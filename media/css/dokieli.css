@@ -2229,6 +2229,11 @@ display:none;
 border:1px dotted;
 position:relative;
 }
+.ProseMirror thead th:has(.table-sort) {
+padding-right:2em;
+}
+
+
 /* An empty caption is a zero-height box behind a ::before, so there is nothing
    to click. Give it a line of its own to put the caret in. */
 .ProseMirror caption {
@@ -2242,7 +2247,7 @@ display:none;
 }
 .ProseMirror caption[data-placeholder]::after {
 content:attr(data-placeholder);
-color:#999;
+color:#333;
 font-style:italic;
 pointer-events:none;
 }
@@ -2263,15 +2268,8 @@ outline:2px solid #080;
 outline-offset:-2px;
 }
 
-.ProseMirror th.table-identifier-column::after {
-content:"";
-position:absolute;
-top:0.1em;
-right:0.1em;
-width:0.5em;
-height:0.5em;
-border-radius:50%;
-background-color:#080;
+.ProseMirror th.table-identifier-column {
+text-decoration: 2px underline #080;
 }
 
 .editor-table-advanced {
@@ -2288,8 +2286,11 @@ th button.table-sort {
 background:none;
 border:0;
 cursor:pointer;
-padding:0;
-margin:0 0.5em;
+padding:0.25em;
+margin:0;
+position:absolute;
+top:0.25em;
+right:0.25em;
 font-size:1em;
 line-height:1;
 vertical-align:middle;
@@ -2327,9 +2328,7 @@ animation:none;
 .suggestions .term-curie {
 font-family:monospace;
 color:#080;
-}
-.suggestions .term-label {
-margin-left:0.5em;
+margin-right:0.5em;
 }
 .suggestions .term-description {
 display:block;

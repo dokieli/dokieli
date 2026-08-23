@@ -15,12 +15,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { buildCellRDFa, computeRowSubject, isColumnMapped, getTableSchema } from '../../table.js';
+import { buildCellRDFa, computeRowSubject, isColumnMapped, getTableSchema, subjectFromCaption, DEFAULT_ROW_PROPERTY } from '../../table.js';
 import { getColumns, findTable, forEachRow } from '../commands/table.js';
+import { generateAttributeId } from '../../util.js';
 
 // Attributes the column configuration owns; anything else on a cell is left alone.
 const MANAGED_CELL_ATTRIBUTES = ['about', 'id', 'property', 'datatype', 'typeof', 'lang', 'xml:lang'];
 const MANAGED_ROW_ATTRIBUTES = ['about', 'id', 'typeof'];
+const MANAGED_TABLE_ATTRIBUTES = ['about', 'id', 'rel', 'resource', 'typeof'];
 
 function withoutManaged(attrs, managed) {
   return Object.fromEntries(Object.entries(attrs || {}).filter(([k]) => !managed.includes(k)));
@@ -34,6 +36,23 @@ function sameAttributes(a, b) {
 
 function cellText(cell) {
   return cell.textContent.trim();
+}
+
+// A row without any data must not assert an empty typed entity.
+function rowHasData(row) {
+  let found = false;
+
+  row.forEach((cell) => {
+    if (found) return;
+    if (cell.textContent.trim()) { found = true; return; }
+
+    cell.descendants((node) => {
+      if (node.type.name === 'img') found = true;
+      return !found;
+    });
+  });
+
+  return found;
 }
 
 // True when inline content in the cell carries its own RDFa property or rel.
@@ -71,8 +90,8 @@ export function reconcileTable(tr, table, tablePos, mapPos = (p) => p) {
   let changed = false;
   let rowIndex = 0;
 
-  forEachRow(table, tablePos, (row, rowPos, isHeader) => {
-    if (isHeader) return;
+  forEachRow(table, tablePos, (row, rowPos, isHeader, section) => {
+    if (isHeader || section === 'tfoot') return;
     rowIndex++;
 
     const fillValues = { _row: rowIndex };
@@ -81,14 +100,15 @@ export function reconcileTable(tr, table, tablePos, mapPos = (p) => p) {
       if (column?.name) fillValues[column.name] = cellText(cell);
     });
 
-    const rowSubject = computeRowSubject(tableSchema, fillValues, null);
+    const hasData = rowHasData(row);
+    const rowSubject = hasData ? computeRowSubject(tableSchema, fillValues, null) : null;
 
     const rowAttrs = withoutManaged(row.attrs.originalAttributes, MANAGED_ROW_ATTRIBUTES);
     if (rowSubject) {
       rowAttrs.about = rowSubject;
       if (rowSubject.startsWith('#')) rowAttrs.id = rowSubject.slice(1);
     }
-    if (tableSchema.typeof) rowAttrs.typeof = tableSchema.typeof;
+    if (tableSchema.typeof && hasData) rowAttrs.typeof = tableSchema.typeof;
 
     if (!sameAttributes(rowAttrs, row.attrs.originalAttributes)) {
       tr.setNodeMarkup(mapPos(rowPos), null, { ...row.attrs, originalAttributes: rowAttrs });
@@ -127,28 +147,56 @@ export function reconcileTable(tr, table, tablePos, mapPos = (p) => p) {
     });
   });
 
-  // The predicate linking the table subject to each row lives on the section.
-  if (tableSchema.propertyUrl) {
-    let offset = tablePos + 1;
-    table.forEach((child) => {
-      const at = offset;
-      offset += child.nodeSize;
-      if (child.type.name !== 'tbody') return;
+  // The table's subject: pinned by settings, else derived live from the caption.
+  let captionText = '';
+  table.forEach((child) => {
+    if (child.type.name === 'caption') captionText = child.textContent.trim();
+  });
 
-      const attrs = { ...child.attrs.originalAttributes, rel: tableSchema.propertyUrl };
-      if (attrs.rel === child.attrs.originalAttributes?.rel) return;
+  // Precedence: pinned by settings, else the caption, else what an earlier pass
+  // emitted, else minted fresh -- a mapped table always has a subject.
+  const tableSubject = tableSchema.subject || subjectFromCaption(captionText)
+    || table.attrs.originalAttributes?.resource
+    || '#' + generateAttributeId();
+  const rowRel = tableSchema.propertyUrl || DEFAULT_ROW_PROPERTY;
 
-      tr.setNodeMarkup(mapPos(at), null, { ...child.attrs, originalAttributes: attrs });
-      changed = true;
-    });
+  // The predicate linking the table subject to each row lives on the section;
+  // the caption names the table subject.
+  let offset = tablePos + 1;
+  table.forEach((child) => {
+    const at = offset;
+    offset += child.nodeSize;
+
+    let attrs = null;
+
+    if (child.type.name === 'tbody') {
+      attrs = withoutManaged(child.attrs.originalAttributes, ['rel']);
+      if (rowRel) attrs.rel = rowRel;
+    }
+
+    // An empty caption must not assert an empty name literal.
+    if (child.type.name === 'caption') {
+      attrs = withoutManaged(child.attrs.originalAttributes, ['property']);
+      if (captionText) attrs.property = 'schema:name';
+    }
+
+    if (!attrs || sameAttributes(attrs, child.attrs.originalAttributes || {})) return;
+    tr.setNodeMarkup(mapPos(at), null, { ...child.attrs, originalAttributes: attrs });
+    changed = true;
+  });
+
+  // The table is part of its surrounding subject; its own subject carries the type and name.
+  const tableAttrs = withoutManaged(table.attrs.originalAttributes, MANAGED_TABLE_ATTRIBUTES);
+  if (tableSubject) {
+    tableAttrs.rel = 'schema:hasPart';
+    tableAttrs.resource = tableSubject;
+    tableAttrs.typeof = 'schema:Table';
+    if (tableSubject.startsWith('#')) tableAttrs.id = tableSubject.slice(1);
   }
 
-  if (tableSchema.subject) {
-    const attrs = { ...table.attrs.originalAttributes, about: tableSchema.subject };
-    if (attrs.about !== table.attrs.originalAttributes?.about) {
-      tr.setNodeMarkup(mapPos(tablePos), null, { ...table.attrs, originalAttributes: attrs });
-      changed = true;
-    }
+  if (!sameAttributes(tableAttrs, table.attrs.originalAttributes || {})) {
+    tr.setNodeMarkup(mapPos(tablePos), null, { ...table.attrs, originalAttributes: tableAttrs });
+    changed = true;
   }
 
   return changed;

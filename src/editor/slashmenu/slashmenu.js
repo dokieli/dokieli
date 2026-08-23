@@ -19,7 +19,7 @@ import { getLanguageOptionsHTML, getLicenseOptionsHTML, getPublicationStatusOpti
 import { getButtonHTML } from "../../ui/buttons.js";
 import { Icon } from "../../ui/icons.js";
 import { formHandlerLanguage, formHandlerLicense, formHandlerInbox, formHandlerInReplyTo, formHandlerPublicationStatus, formHandlerResourceType, formHandlerTestSuite, formHandlerImg, formHandlerTable } from "./handlers.js";
-import { LookupServices } from "../../services.js";
+import { listLookupServices } from "../../services.js";
 import { TextSelection } from "prosemirror-state";
 import { DOMParser } from "prosemirror-model";
 import { i18n } from "../../i18n.js";
@@ -285,7 +285,7 @@ export class SlashMenu {
           ${card('template', Icon['.fas.fa-list-check'], false, `
             <label data-i18n="editor.table.form.service.label" for="table-service" class="editor-form-field-label">${i18n.t('editor.table.form.service.label.textContent')}</label>
             <select class="editor-form-select" id="table-service" name="table-service">
-              ${Object.entries(LookupServices).filter(([, s]) => s.columns.length).map(([name, s]) => `<option value="${name}">${s.label}</option>`).join('')}
+              ${listLookupServices().filter(([, s]) => s.columns.length).map(([name, s]) => `<option value="${name}"${name === 'openlibrary' ? ' selected=""' : ''}>${s.label}</option>`).join('')}
             </select>
             <label data-i18n="editor.table.form.rows.label" for="table-rows-template" class="editor-form-field-label">${i18n.t('editor.table.form.rows.label.textContent')}</label>
             <input class="editor-form-input" id="table-rows-template" max="100" min="1" name="table-rows-template" type="number" value="3" />
