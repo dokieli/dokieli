@@ -1904,7 +1904,7 @@ margin-bottom:0;
 .autocomplete.editor-mentions {
 position:absolute;
 z-index:10;
-width:20em;
+width:30em;
 max-width:calc(100vw - 2em);
 }
 .autocomplete.editor-mentions[hidden] {
@@ -1915,6 +1915,7 @@ width:100%;
 border-top:1px solid #ccc;
 border-top-left-radius: 0.5em;
 border-top-right-radius: 0.5em;
+padding:0;
 }
 .autocomplete.editor-mentions ul.suggestions li {
 display:flex;
@@ -4285,14 +4286,11 @@ resize:both;
     }
 button.copy-to-clipboard {
 display:block;
-margin:-2.5em 0 2.5em auto;
+margin: 0 0 0 auto;
 border: none !important;
 box-shadow: none !important;
 background-color: transparent;
 width: 4em;
-}
-pre + button.copy-to-clipboard {
-margin: 0 0 0 auto;
 }
 
 button.copy-to-clipboard > svg

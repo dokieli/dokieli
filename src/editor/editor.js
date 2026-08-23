@@ -58,6 +58,7 @@ import { cvNavDecorationPlugin } from "./plugins/cvNavDecorations.js";
 import { specificationNavDecorationPlugin, specificationConceptSyncPlugin } from "./plugins/specificationNavDecorations.js";
 import { protectPlaceholdersPlugin } from "./plugins/protectPlaceholders.js";
 import { mentionsPlugin } from "./plugins/mentions.js";
+import { fragmentLinksPlugin } from "./plugins/fragmentLinks.js";
 import { tableToolsPlugin } from "./plugins/tableTools.js";
 
 const ns = Config.ns;
@@ -378,7 +379,7 @@ export class Editor {
     // not a collaborative session): skip Yjs/IndexedDB/remote-sync entirely.
     Config.Editor['collab'] = false;
     pmDoc = originalDoc;
-    editorPlugins = [history(), mentionsPlugin, keymapPlugin, placeholderPlugin, documentStructurePlugin, slideshowDecorationsPlugin, cvNavDecorationPlugin, specificationNavDecorationPlugin, specificationConceptSyncPlugin, autoIdPlugin, protectPlaceholdersPlugin, tableToolsPlugin(), editorToolbarPlugin];
+    editorPlugins = [history(), mentionsPlugin, fragmentLinksPlugin, keymapPlugin, placeholderPlugin, documentStructurePlugin, slideshowDecorationsPlugin, cvNavDecorationPlugin, specificationNavDecorationPlugin, specificationConceptSyncPlugin, autoIdPlugin, protectPlaceholdersPlugin, tableToolsPlugin(), editorToolbarPlugin];
   } else {
     Config.Editor['collab'] = true;
     ydoc = new Y.Doc();
@@ -584,6 +585,7 @@ export class Editor {
       yUndoPlugin(),
       history(),
       mentionsPlugin,
+      fragmentLinksPlugin,
       keymapPlugin,
       placeholderPlugin,
       documentStructurePlugin,
