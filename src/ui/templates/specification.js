@@ -24,6 +24,7 @@ import { showViews } from '../../dialog.js';
 import { registerDocumentTransform, registerEditorParseTransform } from '../../utils/documentTransforms.js';
 import { prepareDocumentForTemplate, replaceDocumentBody, documentDetailsHTML, sectionHTML } from './shared.js';
 import { registerSectionsTemplate, refreshSectionsNav, injectSectionsTOC, stripSectionsTOC, findOutsideDetails } from './sections.js';
+import { threatModelTableHTML, threatModelDefinitionHTML, threatTableRef, defaultThreatCaption } from '../../threatModel.js';
 
 // Specification template: sections managed from the top nav (sections.js); identity is the section id, with the English label slug as fallback.
 
@@ -480,12 +481,20 @@ function specificationSectionHTML(type) {
 
 function considerationsSubsectionHTML(type) {
   const typeOf = SPEC_SUBSECTIONS['considerations'][type]?.typeof;
+
+  // A threat model starts with its definition sentence and a table to fill in.
+  const content = type === 'threat-model'
+    ? nonNormative
+      + threatModelDefinitionHTML([threatTableRef(defaultThreatCaption(), 'stride')])
+      + threatModelTableHTML({ rows: 2 })
+    : nonNormative + '<p></p>';
+
   return sectionHTML({
     id: type,
     level: 3,
     heading: sectionLabel(type),
     attrs: typeOf ? ` typeof="${typeOf}"` : '',
-    content: nonNormative + '<p></p>',
+    content,
   });
 }
 

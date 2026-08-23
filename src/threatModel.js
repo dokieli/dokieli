@@ -16,6 +16,10 @@ limitations under the License.
 */
 
 import Config from './config.js';
+import { i18n } from './i18n.js';
+import { htmlEncode } from './utils/sanitization.js';
+import { getTableAttributes, getColumnAttributes, getPrefixesUsed, ensureDocumentPrefixes, subjectFromCaption } from './table.js';
+import { getLookupService } from './services.js';
 
 // Vocabulary for threat model tables: STRIDE and LINDDUN threat types, the
 // elements of the W3C Threat Model for the Web, and DPV RISK levels.
@@ -117,6 +121,113 @@ export function threatModelElementGroups() {
     { label: 'High-Level Web Threat Model', options: THREAT_MODEL_ELEMENTS.highLevel.map(asOption) },
     { label: 'Web Browser Threat Model', options: THREAT_MODEL_ELEMENTS.browser.map(asOption) }
   ];
+}
+
+function attrString(attrs) {
+  return Object.entries(attrs)
+    .map(([name, value]) => `${name}="${htmlEncode(String(value), { mode: 'attribute', attributeName: name })}"`)
+    .join(' ');
+}
+
+// The select as markup, mirroring the node builder in the editor commands.
+export function threatSelectHTML(kind, framework = 'stride', chosenValue = null) {
+  const chosen = kind === 'threat-model-kind' ? (chosenValue || framework) : chosenValue;
+
+  const optionHTML = ({ value, label }) =>
+    `<option value="${htmlEncode(value, { mode: 'attribute', attributeName: 'value' })}"${value === chosen ? ' selected="selected"' : ''}>${htmlEncode(label)}</option>`;
+
+  const groups = threatSelectGroups(kind, framework).map((group) => group.label
+    ? `<optgroup label="${htmlEncode(group.label, { mode: 'attribute', attributeName: 'label' })}">${group.options.map(optionHTML).join('')}</optgroup>`
+    : group.options.map(optionHTML).join('')).join('');
+
+  const placeholder = kind === 'threat-model-kind'
+    ? ''
+    : `<option value="">${htmlEncode(i18n.t(`editor.table.threat.select.${kind}`))}</option>`;
+
+  const marker = kind === 'threat-type' ? ` data-framework="${framework}"` : '';
+
+  return `<select data-select="${kind}"${marker}>${placeholder}${groups}</select>`;
+}
+
+export function defaultThreatCaption(framework = 'stride') {
+  return framework === 'linddun' ? 'Privacy Threats and Mitigations' : 'Security Threats and Mitigations';
+}
+
+// A table reference for the definition sentence: identifier, caption, framework.
+export function threatTableRef(caption, framework = 'stride') {
+  return { id: (subjectFromCaption(caption) || '#').slice(1), caption, framework };
+}
+
+// The classification sentence for the threat tables present, per the AC pattern.
+export function threatClassificationSentence(tables = []) {
+  const attr = (value, name) => htmlEncode(String(value), { mode: 'attribute', attributeName: name });
+  const tableRef = (table, label) =>
+    `<a href="#${attr(table.id, 'href')}" rel="rdfs:seeAlso" title="${attr(table.caption, 'title')}">${label}</a>`;
+
+  const stride = tables.find((t) => t.framework === 'stride' && t.id);
+  const linddun = tables.find((t) => t.framework === 'linddun' && t.id);
+
+  const strideBy = 'classified by a <a href="https://en.wikipedia.org/wiki/STRIDE_model" rel="rdfs:seeAlso" resource="http://www.wikidata.org/entity/Q7394815">STRIDE</a> threat type';
+  const linddunBy = 'a <a href="https://linddun.org/" rel="rdfs:seeAlso">LINDDUN</a> threat type';
+
+  if (stride && linddun) {
+    return `${tableRef(stride, 'Security Threats')} are ${strideBy} and ${tableRef(linddun, 'Privacy Threats')} by ${linddunBy}.`;
+  }
+  if (stride) return `${tableRef(stride, 'Security Threats')} are ${strideBy}.`;
+  if (linddun) return `${tableRef(linddun, 'Privacy Threats')} are classified by ${linddunBy}.`;
+  return '';
+}
+
+// The machine-managed definition paragraph; the classification sentence follows the tables.
+export function threatModelDefinitionHTML(tables = []) {
+  const classification = threatClassificationSentence(tables);
+
+  return '<p id="threat-model-definition">'
+    + 'This threat analysis follows the framework of the <cite><a href="https://www.w3.org/TR/threat-model-web/" rel="cito:obtainsBackgroundFrom">W3C Threat Model for the Web</a></cite> [<cite><a class="bibref" href="#bib-threat-model-web">THREAT-MODEL-WEB</a></cite>]'
+    + ' and draws on terminology from the <cite><a href="https://www.w3.org/TR/privacy-principles/" rel="cito:obtainsBackgroundFrom">Privacy Principles</a></cite> [<cite><a class="bibref" href="#bib-privacy-principles">PRIVACY-PRINCIPLES</a></cite>].'
+    + (classification ? ` ${classification}` : '')
+    + ' Each threat is assigned a risk level from the <cite><a href="https://w3id.org/dpv/risk">RISK Extension</a></cite> to DPV taxonomy [<cite><a class="bibref" href="#bib-dpv-risk">DPV-RISK</a></cite>].'
+    + '</p>';
+}
+
+// The works the definition paragraph cites, as Informative References entries.
+export const THREAT_MODEL_REFERENCES = [
+  {
+    key: 'dpv-risk',
+    html: '<dt id="bib-dpv-risk">[DPV-RISK]</dt>'
+      + '<dd><cite><a href="https://w3id.org/dpv/risk" rel="cito:citesAsPotentialSolution">Risk Extension</a></cite>. Harshvardhan J. Pandit.  W3C Data Privacy Vocabularies and Controls Community Group. 25 February 2026. Final Community Group Report. URL: <a href="https://w3id.org/dpv/risk">https://w3id.org/dpv/risk</a></dd>'
+  },
+  {
+    key: 'privacy-principles',
+    html: '<dt id="bib-privacy-principles">[PRIVACY-PRINCIPLES]</dt>'
+      + '<dd><cite><a href="https://www.w3.org/TR/privacy-principles/" rel="cito:citesAsPotentialSolution">Privacy Principles</a></cite>. Robin Berjon; Jeffrey Yasskin.  W3C. 15 May 2025. W3C Statement. URL: <a href="https://www.w3.org/TR/privacy-principles/">https://www.w3.org/TR/privacy-principles/</a></dd>'
+  },
+  {
+    key: 'threat-model-web',
+    html: '<dt id="bib-threat-model-web">[THREAT-MODEL-WEB]</dt>'
+      + '<dd><cite><a href="https://www.w3.org/TR/threat-model-web/" rel="cito:obtainsBackgroundFrom">Threat Model for the Web</a></cite>. Simone Onofri; Joe Andrieu; Giovanni Corti.  W3C. 21 July 2026. W3C Group Note Draft. URL: <a href="https://www.w3.org/TR/threat-model-web/">https://www.w3.org/TR/threat-model-web/</a></dd>'
+  }
+];
+
+// A ready-to-edit threat model table, for templates that start a section with one.
+export function threatModelTableHTML({ caption = defaultThreatCaption(), rows = 1 } = {}) {
+  const service = getLookupService('threatmodel');
+
+  ensureDocumentPrefixes([...getPrefixesUsed(service.tableSchema, service.columns), ...(service.prefixes || [])]);
+
+  const headers = service.columns.map((column) => {
+    const { identifier, select, kindSelect, ...schema } = column;
+    const inner = kindSelect ? threatSelectHTML('threat-model-kind') : htmlEncode(column.titles);
+    return `<th ${attrString(getColumnAttributes(schema))}>${inner}</th>`;
+  }).join('');
+
+  const bodyRow = `<tr>${service.columns.map((column) =>
+    `<td>${column.select ? threatSelectHTML(column.select) : ''}</td>`).join('')}</tr>`;
+
+  return `<table ${attrString(getTableAttributes(service.tableSchema))}>` +
+    `<caption>${htmlEncode(caption)}</caption>` +
+    `<thead><tr>${headers}</tr></thead>` +
+    `<tbody>${Array.from({ length: rows }, () => bodyRow).join('')}</tbody></table>`;
 }
 
 // Rank of a reference within its vocabulary's declared order, -1 when unknown.

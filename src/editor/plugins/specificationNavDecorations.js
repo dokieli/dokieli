@@ -17,10 +17,12 @@ limitations under the License.
 
 import { Plugin } from "prosemirror-state";
 import { Decoration } from "prosemirror-view";
-import { DOMParser } from "prosemirror-model";
+import { DOMParser, Fragment } from "prosemirror-model";
 import { createSectionsNavPlugin, isDocOfType, pmHeadingText, dlEntryAddDecorations, dlPairDeleteDecorations, deleteWidget, widgetButton } from "./sectionsNavDecorations.js";
 import { slugify } from "./autoId.js";
 import { fragmentFromString } from "../../utils/html.js";
+import { threatModelDefinitionHTML, THREAT_MODEL_REFERENCES } from "../../threatModel.js";
+import { subjectFromCaption } from "../../table.js";
 import { i18n } from "../../i18n.js";
 import { buildSectionsNav } from "../../ui/templates/sections.js";
 import {
@@ -637,6 +639,8 @@ export const specificationConceptSyncPlugin = new Plugin({
     // Markup then ordering, both against the live tr doc, so ordering keeps the fresh marks.
     syncAcknowledgementsMarkup(newState, liveDoc, sel, blurred, ensure);
     syncAcknowledgementsOrder(newState, liveDoc, sel, blurred, ensure);
+    syncThreatModelDefinition(newState, liveDoc, sel, blurred, ensure);
+    syncThreatModelReferences(newState, liveDoc, sel, blurred, ensure);
     syncReportTypeChrome(newState, ensure);
 
     if (!tr) return null;
@@ -823,6 +827,153 @@ function considerationsDefinition(doc) {
     return true;
   });
   return { ...found, hrefs };
+}
+
+// The Threat Model definition <p> and the reference marks it currently carries.
+function threatModelDefinition(doc) {
+  let found = null;
+  doc.descendants((node, pos) => {
+    if (found) return false;
+    if (node.isTextblock && node.attrs.originalAttributes?.id === 'threat-model-definition') {
+      found = { node, pos };
+      return false;
+    }
+    return true;
+  });
+  if (!found) return null;
+
+  const refs = [];
+  found.node.descendants((child) => {
+    child.marks.forEach((m) => {
+      const attrs = m.attrs?.originalAttributes;
+      if (m.type.name === 'a' && attrs?.href) refs.push(`${attrs.href}|${attrs.title || ''}`);
+    });
+    return true;
+  });
+  return { ...found, refs };
+}
+
+// Which framework a threat table's selects declare, if any.
+function threatTableFramework(table) {
+  let framework = null;
+  table.descendants((node) => {
+    if (framework) return false;
+    const attrs = node.attrs?.originalAttributes || {};
+
+    if (node.type.name === 'select' && attrs['data-select'] === 'threat-model-kind') {
+      node.descendants((option) => {
+        const o = option.attrs?.originalAttributes || {};
+        if (option.type.name === 'option' && 'selected' in o && o.value) framework = o.value;
+        return !framework;
+      });
+      return false;
+    }
+    if (node.type.name === 'select' && attrs['data-framework']) {
+      framework = attrs['data-framework'];
+      return false;
+    }
+    return true;
+  });
+  return framework;
+}
+
+// The threat tables in the section holding the definition, in document order.
+function threatTablesAround(doc, defPos) {
+  const $def = doc.resolve(defPos);
+  let scope = doc;
+  for (let depth = $def.depth; depth > 0; depth--) {
+    if ($def.node(depth).type.name === 'section') { scope = $def.node(depth); break; }
+  }
+
+  const tables = [];
+  scope.descendants((node) => {
+    if (node.type.name !== 'table') return true;
+    const framework = threatTableFramework(node);
+    if (framework) {
+      const caption = node.firstChild?.type.name === 'caption' ? node.firstChild.textContent.trim() : '';
+      const id = (node.attrs.originalAttributes?.resource || subjectFromCaption(caption) || '').slice(1);
+      if (id) tables.push({ id, caption, framework });
+    }
+    return false;
+  });
+  return tables;
+}
+
+// Keep the Threat Model definition sentence in step with the tables it describes.
+// Positions come from the live tr doc: earlier syncs may already have resized it.
+function syncThreatModelDefinition(newState, liveDoc, sel, blurred, ensure) {
+  const doc = liveDoc();
+  const def = threatModelDefinition(doc);
+  if (!def) return;
+  if (!blurred && sel.from <= def.pos + def.node.nodeSize && sel.to >= def.pos) return;
+
+  const tables = threatTablesAround(doc, def.pos);
+  const desired = DOMParser.fromSchema(newState.schema).parse(fragmentFromString(threatModelDefinitionHTML(tables)));
+
+  const desiredRefs = [];
+  desired.descendants((child) => {
+    child.marks.forEach((m) => {
+      const attrs = m.attrs?.originalAttributes;
+      if (m.type.name === 'a' && attrs?.href) desiredRefs.push(`${attrs.href}|${attrs.title || ''}`);
+    });
+    return true;
+  });
+  if (desiredRefs.length === def.refs.length && desiredRefs.every((r, i) => r === def.refs[i])) return;
+
+  ensure().replaceWith(def.pos, def.pos + def.node.nodeSize, desired.content);
+}
+
+// A threat model's cited works belong in Informative References; add what is missing.
+function syncThreatModelReferences(newState, liveDoc, sel, blurred, ensure) {
+  const doc = liveDoc();
+  if (!threatModelDefinition(doc)) return;
+
+  let section = null;
+  doc.descendants((node, pos) => {
+    if (section) return false;
+    if (node.type.name === 'section' && node.attrs.originalAttributes?.id === 'informative-references') {
+      section = { node, pos };
+      return false;
+    }
+    return true;
+  });
+  if (!section) return;
+  if (!blurred && sel.from <= section.pos + section.node.nodeSize && sel.to >= section.pos) return;
+
+  const present = new Set();
+  section.node.descendants((node) => {
+    const id = node.attrs?.originalAttributes?.id;
+    if (node.type.name === 'dt' && id) present.add(id);
+    return true;
+  });
+
+  const missing = THREAT_MODEL_REFERENCES.filter((ref) => !present.has(`bib-${ref.key}`));
+  if (!missing.length) return;
+
+  const entries = missing.map((ref) =>
+    DOMParser.fromSchema(newState.schema).parse(fragmentFromString(`<dl>${ref.html}</dl>`)).firstChild.content);
+  const content = entries.reduce((all, one) => all.append(one), Fragment.empty);
+
+  let dl = null;
+  section.node.descendants((node, pos) => {
+    if (!dl && node.type.name === 'dl') dl = { node, pos: section.pos + 1 + pos };
+    return !dl;
+  });
+
+  if (dl) {
+    ensure().insert(dl.pos + dl.node.nodeSize - 1, content);
+    return;
+  }
+
+  // No bibliography yet: one goes at the end of the section's description.
+  const dlNode = newState.schema.nodes.dl?.createAndFill({ originalAttributes: { class: 'bibliography' } }, content);
+  if (!dlNode) return;
+
+  let target = section.pos + section.node.nodeSize - 1;
+  section.node.forEach((child, offset) => {
+    if (child.type.name === 'div') target = section.pos + 1 + offset + child.nodeSize - 1;
+  });
+  ensure().insert(target, dlNode);
 }
 
 // Keep the machine-managed Considerations definition sentence in step with the present subsections.

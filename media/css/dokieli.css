@@ -4288,7 +4288,7 @@ display:block;
 margin:-2.5em 0 2.5em auto;
 border: none !important;
 box-shadow: none !important;
-background-color: #fff;
+background-color: transparent;
 width: 4em;
 }
 pre + button.copy-to-clipboard {

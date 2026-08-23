@@ -66,7 +66,7 @@ import {
 import { reconcileTable, reconcileSelectedTable, contentStatesProperty } from './tableRDFa.js';
 import { searchClasses, searchProperties } from '../../vocab.js';
 import { listLookupServices, getLookupService, identifierColumnCandidates, lookupIdentifier, getIdentifierSearch, looksLikeIdentifier, needsIdentifierPick } from '../../services.js';
-import { THREAT_SELECT_RELS, threatValueRank } from '../../threatModel.js';
+import { THREAT_SELECT_RELS, threatValueRank, defaultThreatCaption } from '../../threatModel.js';
 
 export const tableToolsPluginKey = new PluginKey('tableTools');
 
@@ -767,6 +767,17 @@ export class TableToolsView {
         ...columns[index],
         titles: framework === 'linddun' ? 'LINDDUN type' : 'STRIDE type'
       });
+    }
+
+    // An empty or default caption follows the framework; an authored one stays.
+    const caption = table.node.firstChild;
+    if (caption?.type.name === 'caption') {
+      const text = caption.textContent.trim();
+      const desired = defaultThreatCaption(framework);
+      const followable = !text || text === defaultThreatCaption('stride') || text === defaultThreatCaption('linddun');
+      if (followable && text !== desired) {
+        tr.replaceWith(table.pos + 2, table.pos + 2 + caption.content.size, schema.text(desired));
+      }
     }
 
     view.dispatch(tr);

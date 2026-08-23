@@ -26,6 +26,7 @@ import { insertTable } from "../commands/table.js";
 import { getLookupService } from "../../services.js";
 import { csvStringToJson } from "../../csv.js";
 import { fromCSVWTableSchema, getPrefixesUsed, ensureDocumentPrefixes } from "../../table.js";
+import { defaultThreatCaption } from "../../threatModel.js";
 
 export function formHandlerLanguage(e) {
   e.preventDefault();
@@ -203,7 +204,7 @@ export async function formHandlerTable(e) {
   const { selection } = state;
 
   // Selected text names the table: it becomes the caption of what replaces it.
-  const caption = selection.empty ? '' : state.doc.textBetween(selection.from, selection.to, ' ').trim();
+  let caption = selection.empty ? '' : state.doc.textBetween(selection.from, selection.to, ' ').trim();
 
   // Drop the "/" when one opened the menu; the toolbar path has no slash.
   if (this.openedWithSlash) {
@@ -213,6 +214,9 @@ export async function formHandlerTable(e) {
 
   const tableSchema = imported?.tableSchema || service?.tableSchema || null;
   const columnSchemas = imported?.columnSchemas?.length ? imported.columnSchemas : serviceColumns;
+
+  // A threat table without an authored caption starts with the framework's default.
+  if (!caption && formValues['table-service'] === 'threatmodel') caption = defaultThreatCaption();
 
   insertTable({
     rows: imported?.data.length || rows,
