@@ -24,8 +24,8 @@ export const fragmentLinksPluginKey = new PluginKey("fragmentLinks");
 
 const MAX_SUGGESTIONS = 20;
 const MAX_QUERY_LENGTH = 64;
-// Leading `#` with at least one character, so URLs and a bare `#` are left alone.
-const FRAGMENT_RE = /(?:^|[\s(\[{<"'‘“])#([^\s#]+)$/;
+// Leading `#` only, so `page#section` in a URL is left alone.
+const FRAGMENT_RE = /(?:^|[\s(\[{<"'‘“])#([^\s#]*)$/;
 
 const instances = new WeakMap();
 
@@ -34,7 +34,8 @@ export function getFragmentMatch(state) {
   if (!selection.empty) return null;
 
   const { $from } = selection;
-  if (!$from.parent.isTextblock) return null;
+  // Inline nodes (anchor, time, span) hold text without being textblocks.
+  if (!$from.parent.inlineContent) return null;
 
   const textBefore = $from.parent.textBetween(0, $from.parentOffset, null, "￼");
   const match = FRAGMENT_RE.exec(textBefore);
@@ -90,6 +91,17 @@ function collectDocumentIds(doc) {
   });
 
   return items;
+}
+
+// A link inside a link is invalid, so a pick made within an `a` lands after it.
+function anchorEnd(doc, pos) {
+  const $pos = doc.resolve(pos);
+
+  for (let depth = $pos.depth; depth > 0; depth--) {
+    if ($pos.node(depth).type.name === 'anchor') return $pos.after(depth);
+  }
+
+  return null;
 }
 
 // Earliest match position wins, then the ids in order.
@@ -239,10 +251,23 @@ class FragmentLinksView {
     const label = `#${item.id}`;
     const mark = schema.marks.a.create({ originalAttributes: { href: `#${item.id}` } });
 
-    const tr = state.tr
-      .replaceWith(from, to, schema.text(label, [mark]))
-      .setStoredMarks([]);
-    tr.setSelection(TextSelection.create(tr.doc, from + label.length));
+    const outside = anchorEnd(state.doc, from);
+    let tr = state.tr;
+    let end;
+
+    if (outside === null) {
+      tr = tr.replaceWith(from, to, schema.text(label, [mark]));
+      end = from + label.length;
+    }
+    else {
+      tr = tr.delete(from, to);
+      const at = tr.mapping.map(outside);
+      tr = tr.insert(at, schema.text(label, [mark]));
+      end = at + label.length;
+    }
+
+    tr = tr.setStoredMarks([]);
+    tr.setSelection(TextSelection.create(tr.doc, end));
 
     // The inserted text still reads as a trigger; a pick dismisses this `#`.
     this.dismissedFrom = from;

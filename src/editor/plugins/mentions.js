@@ -61,7 +61,8 @@ function getMentionMatch(state) {
   if (!selection.empty) return null;
 
   const { $from } = selection;
-  if (!$from.parent.isTextblock) return null;
+  // Inline nodes (anchor, time, span) hold text without being textblocks.
+  if (!$from.parent.inlineContent) return null;
 
   const textBefore = $from.parent.textBetween(0, $from.parentOffset, null, "￼");
   const match = MENTION_RE.exec(textBefore);
@@ -75,6 +76,17 @@ function getMentionMatch(state) {
   if (from < 0 || state.doc.textBetween(from, $from.pos) !== '@' + query) return null;
 
   return { query, from, to: $from.pos };
+}
+
+// A link inside a link is invalid, so a pick made within an `a` lands after it.
+function anchorEnd(doc, pos) {
+  const $pos = doc.resolve(pos);
+
+  for (let depth = $pos.depth; depth > 0; depth--) {
+    if ($pos.node(depth).type.name === 'anchor') return $pos.after(depth);
+  }
+
+  return null;
 }
 
 function getFilteredContacts(query) {
@@ -103,6 +115,9 @@ class MentionsView {
     this.items = [];
     this.activeIndex = -1;
     this.dismissedFrom = null;
+
+    // Warm the cache now; the first `@` is too late to wait on the network.
+    fetchContacts();
 
     document.getElementById('editor-mentions')?.remove();
 
@@ -250,10 +265,22 @@ class MentionsView {
       originalAttributes: { href: iri, rel: 'schema:mentions' }
     });
 
-    const followedBySpace = state.doc.textBetween(to, Math.min(to + 1, state.doc.content.size)) === ' ';
+    const outside = anchorEnd(state.doc, from);
+    let tr = state.tr;
+    let end;
 
-    let tr = state.tr.replaceWith(from, to, schema.text(label, [mark]));
-    const end = from + label.length;
+    if (outside === null) {
+      tr = tr.replaceWith(from, to, schema.text(label, [mark]));
+      end = from + label.length;
+    }
+    else {
+      tr = tr.delete(from, to);
+      const at = tr.mapping.map(outside);
+      tr = tr.insert(at, schema.text(label, [mark]));
+      end = at + label.length;
+    }
+
+    const followedBySpace = tr.doc.textBetween(end, Math.min(end + 1, tr.doc.content.size)) === ' ';
     if (!followedBySpace) tr = tr.insertText(' ', end);
     tr = tr.setSelection(TextSelection.create(tr.doc, end + 1)).setStoredMarks([]);
 

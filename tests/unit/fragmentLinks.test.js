@@ -10,6 +10,20 @@ function docFrom(html) {
   return PMDOMParser.fromSchema(schema).parse(dom);
 }
 
+// Position just past `text` wherever it appears in the doc.
+function caretAfter(doc, text) {
+  let pos = null;
+
+  doc.descendants((node, p) => {
+    if (pos === null && node.isText && node.text.includes(text)) {
+      pos = p + node.text.indexOf(text) + text.length;
+    }
+    return pos === null;
+  });
+
+  return pos;
+}
+
 describe('fragment link suggestions', () => {
   const doc = docFrom(`
     <section id="discovery" typeof="spec:SecurityConsiderations"><h2>Discovery</h2><p>About discovery.</p></section>
@@ -28,6 +42,11 @@ describe('fragment link suggestions', () => {
     expect(all.map((i) => i.id)).toEqual(['requirements', 'risk-description-substitution', 'discovery']);
   });
 
+  it('lists every id for an empty query, so a bare # offers the lot', () => {
+    expect(filteredIds(doc, '').map((i) => i.id))
+      .toEqual(['discovery', 'requirements', 'risk-description-substitution']);
+  });
+
   it('excludes dokieli chrome ids', () => {
     expect(filteredIds(doc, 'menu')).toHaveLength(0);
   });
@@ -42,8 +61,20 @@ describe('fragment link suggestions', () => {
     const match = getFragmentMatch(state);
     expect(match?.query).toBe('disc');
 
-    // A bare '#' does not trigger.
+    // A bare '#' triggers with an empty query, like a bare '@' does.
     const bare = EditorState.create({ schema, doc, selection: TextSelection.create(doc, pos - 4) });
-    expect(getFragmentMatch(bare)).toBeNull();
+    expect(getFragmentMatch(bare)?.query).toBe('');
+  });
+
+  it('leaves a # inside a URL alone', () => {
+    const urlDoc = docFrom('<p>See https://example.org/page#sec</p>');
+    const state = EditorState.create({ schema, doc: urlDoc, selection: TextSelection.create(urlDoc, caretAfter(urlDoc, '#sec')) });
+    expect(getFragmentMatch(state)).toBeNull();
+  });
+
+  it('matches inside an inline node, such as a link wrapping a time', () => {
+    const inlineDoc = docFrom('<p>At <a href="https://example.org/x"><time datetime="2020-01-01">2020 #disc</time></a></p>');
+    const state = EditorState.create({ schema, doc: inlineDoc, selection: TextSelection.create(inlineDoc, caretAfter(inlineDoc, '#disc')) });
+    expect(getFragmentMatch(state)?.query).toBe('disc');
   });
 });
