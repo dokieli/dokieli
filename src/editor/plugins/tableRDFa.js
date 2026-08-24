@@ -17,6 +17,7 @@ limitations under the License.
 
 import { buildCellRDFa, computeRowSubject, isColumnMapped, getTableSchema, subjectFromCaption, withSlugValues, getTemplateVariables, DEFAULT_ROW_PROPERTY } from '../../table.js';
 import { getColumns, findTable, forEachRow } from '../commands/table.js';
+import { getLookupService } from '../../services.js';
 import { generateAttributeId } from '../../util.js';
 
 // Attributes the column configuration owns; anything else on a cell is left alone.
@@ -90,7 +91,14 @@ export function contentStatesProperty(cell) {
 
 // Recompute row and cell RDFa from the column configuration; attributes only, never structure.
 export function reconcileTable(tr, table, tablePos, mapPos = (p) => p) {
-  const tableSchema = getTableSchema(table.attrs.originalAttributes);
+  const stored = getTableSchema(table.attrs.originalAttributes);
+  // Tables configured before a service gained defaults heal from the service.
+  const service = getLookupService(stored.lookup?.service);
+  const tableSchema = {
+    ...stored,
+    aboutUrl: stored.aboutUrl || service?.tableSchema?.aboutUrl,
+    typeof: stored.typeof || service?.tableSchema?.typeof
+  };
   const columns = getColumns(table);
 
   const hasMapping =

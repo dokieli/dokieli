@@ -62,13 +62,14 @@ export const LookupServices = {
     tableSchema: { typeof: 'doap:Specification', aboutUrl: '{+url}' },
     columns: [
       // Typing a title here searches; picking a result fills Reference with its id.
-      { titles: 'Title', propertyUrl: 'schema:name', identifier: true, lookup: { source: 'title' } },
+      { titles: 'Title', propertyUrl: 'schema:name', valueRel: 'schema:url', identifier: true, lookup: { source: 'title', urlSource: 'href' } },
       { titles: 'Reference', propertyUrl: 'schema:identifier', lang: '', lookup: { source: 'id' } },
       { titles: 'Authors', propertyUrl: 'schema:author', lang: '', lookup: { source: 'authors.*' } },
       { titles: 'Publisher', propertyUrl: 'schema:publisher', lang: '', lookup: { source: 'publisher' } },
       { titles: 'Status', propertyUrl: 'schema:creativeWorkStatus', lookup: { source: 'status' } },
       { titles: 'Date', propertyUrl: 'schema:datePublished', time: true, lookup: { source: 'date' } },
-      { name: 'url', titles: 'URL', propertyUrl: 'schema:url', valueUrl: '{url}', lookup: { source: 'href' } }
+      // {+url}: reserved expansion, else the href is percent-encoded.
+      { name: 'url', titles: 'URL', propertyUrl: 'schema:url', valueUrl: '{+url}', lookup: { source: 'href' } }
     ]
   },
 

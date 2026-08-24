@@ -1,0 +1,97 @@
+<https://id.crossref.org/contributor/ruben-verborgh-dq16vwt752h0>
+        a       <http://xmlns.com/foaf/0.1/Person> ;
+        <http://xmlns.com/foaf/0.1/familyName>
+                "Verborgh" ;
+        <http://xmlns.com/foaf/0.1/givenName>
+                "Ruben" ;
+        <http://xmlns.com/foaf/0.1/name>
+                "Ruben Verborgh" .
+
+<https://id.crossref.org/contributor/tim-berners-lee-dq16vwt752h0>
+        a       <http://xmlns.com/foaf/0.1/Person> ;
+        <http://xmlns.com/foaf/0.1/familyName>
+                "Berners-Lee" ;
+        <http://xmlns.com/foaf/0.1/givenName>
+                "Tim" ;
+        <http://xmlns.com/foaf/0.1/name>
+                "Tim Berners-Lee" .
+
+<https://id.crossref.org/issn/0302-9743>
+        a       <http://purl.org/ontology/bibo/Journal> ;
+        <http://prismstandard.org/namespaces/basic/2.1/issn>
+                "1611-3349" , "0302-9743" ;
+        <http://purl.org/dc/terms/title>
+                "Lecture Notes in Computer Science" ;
+        <http://purl.org/ontology/bibo/issn>
+                "1611-3349" , "0302-9743" ;
+        <http://www.w3.org/2002/07/owl#sameAs>
+                "urn:issn:1611-3349" , "urn:issn:0302-9743" .
+
+<https://id.crossref.org/contributor/sarven-capadisli-dq16vwt752h0>
+        a       <http://xmlns.com/foaf/0.1/Person> ;
+        <http://xmlns.com/foaf/0.1/familyName>
+                "Capadisli" ;
+        <http://xmlns.com/foaf/0.1/givenName>
+                "Sarven" ;
+        <http://xmlns.com/foaf/0.1/name>
+                "Sarven Capadisli" .
+
+<https://id.crossref.org/isbn/9783319601304>
+        a       <http://purl.org/ontology/bibo/Book> ;
+        <http://purl.org/dc/terms/title>
+                "Lecture Notes in Computer Science" .
+
+<https://id.crossref.org/contributor/amy-guy-dq16vwt752h0>
+        a       <http://xmlns.com/foaf/0.1/Person> ;
+        <http://xmlns.com/foaf/0.1/familyName>
+                "Guy" ;
+        <http://xmlns.com/foaf/0.1/givenName>
+                "Amy" ;
+        <http://xmlns.com/foaf/0.1/name>
+                "Amy Guy" .
+
+<http://dx.doi.org/10.1007/978-3-319-60131-1_33>
+        <http://prismstandard.org/namespaces/basic/2.1/doi>
+                "10.1007/978-3-319-60131-1_33" ;
+        <http://prismstandard.org/namespaces/basic/2.1/endingPage>
+                "481" ;
+        <http://prismstandard.org/namespaces/basic/2.1/startingPage>
+                "469" ;
+        <http://purl.org/dc/terms/creator>
+                <https://id.crossref.org/contributor/ruben-verborgh-dq16vwt752h0> , <https://id.crossref.org/contributor/soren-auer-dq16vwt752h0> , <https://id.crossref.org/contributor/sarven-capadisli-dq16vwt752h0> , <https://id.crossref.org/contributor/tim-berners-lee-dq16vwt752h0> , <https://id.crossref.org/contributor/amy-guy-dq16vwt752h0> , <https://id.crossref.org/contributor/christoph-lange-dq16vwt752h0> ;
+        <http://purl.org/dc/terms/date>
+                "2017"^^<http://www.w3.org/2001/XMLSchema#gYear> ;
+        <http://purl.org/dc/terms/identifier>
+                "10.1007/978-3-319-60131-1_33" ;
+        <http://purl.org/dc/terms/isPartOf>
+                <https://id.crossref.org/isbn/9783319601304> , <https://id.crossref.org/issn/0302-9743> ;
+        <http://purl.org/dc/terms/publisher>
+                "Springer International Publishing" ;
+        <http://purl.org/dc/terms/title>
+                "Decentralised Authoring, Annotations and Notifications for a Read-Write Web with dokieli" ;
+        <http://purl.org/ontology/bibo/doi>
+                "10.1007/978-3-319-60131-1_33" ;
+        <http://purl.org/ontology/bibo/pageEnd>
+                "481" ;
+        <http://purl.org/ontology/bibo/pageStart>
+                "469" ;
+        <http://www.w3.org/2002/07/owl#sameAs>
+                <doi:10.1007/978-3-319-60131-1_33> , <info:doi/10.1007/978-3-319-60131-1_33> .
+
+<https://id.crossref.org/contributor/christoph-lange-dq16vwt752h0>
+        a       <http://xmlns.com/foaf/0.1/Person> ;
+        <http://xmlns.com/foaf/0.1/familyName>
+                "Lange" ;
+        <http://xmlns.com/foaf/0.1/givenName>
+                "Christoph" ;
+        <http://xmlns.com/foaf/0.1/name>
+                "Christoph Lange" .
+
+<https://id.crossref.org/contributor/soren-auer-dq16vwt752h0>
+        a       <http://xmlns.com/foaf/0.1/Person> ;
+        <http://xmlns.com/foaf/0.1/familyName>
+                "Auer" ;
+        <http://xmlns.com/foaf/0.1/givenName>
+                "Sören" ;
+        <http://xmlns.com/foaf/0.1/name>
+                "Sören Auer" .

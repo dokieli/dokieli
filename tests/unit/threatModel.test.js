@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { strideTypes, linddunTypes, riskLevels, threatModelElementGroups, THREAT_SELECT_RELS, threatModelTableHTML, threatClassificationSentence, threatModelDefinitionHTML, threatTableRef, defaultThreatCaption } from '../../src/threatModel.js';
-import { normalizeHTML } from '../../src/utils/normalization.js';
+import { normalizeHTML, cleanProseMirrorOutput } from '../../src/utils/normalization.js';
+import Config from '../../src/config.js';
 
 describe('threat model vocabulary', () => {
   it('offers the six STRIDE types as Wikidata entities', () => {
@@ -187,6 +188,31 @@ describe('threat model save conversion', () => {
 
     expect(root.querySelectorAll('td select[data-select="threat-element"] optgroup')).toHaveLength(2);
     expect(root.querySelectorAll('td select[data-select="risk-level"] option')).toHaveLength(8);
+  });
+
+  it('strips decoration classes and hint titles from the output', () => {
+    const root = document.createElement('div');
+    root.innerHTML = `
+      <table typeof="schema:Table">
+        <thead><tr><th class="table-identifier-column" title="Type an ISBN">ISBN</th></tr></thead>
+        <tbody><tr class="table-lookup-pending"><td class="table-cell-active" title="Type an ISBN">9780262561006</td></tr></tbody>
+      </table>`;
+    const out = normalizeHTML(root, Config.DOMNormalisation);
+
+    expect(out.querySelector('.table-cell-active, .table-identifier-column, .table-lookup-pending')).toBeNull();
+    expect(out.querySelector('[title]')).toBeNull();
+    expect(out.querySelector('td').textContent).toBe('9780262561006');
+  });
+
+  it('unwraps cell paragraphs even when editor widgets sit beside them', () => {
+    const div = document.createElement('div');
+    div.innerHTML = '<table><thead><tr><th><p>Title</p><button class="do table-sort">sort</button></th></tr></thead>'
+      + '<tbody><tr><td><p>x</p></td></tr></tbody></table>';
+    const out = cleanProseMirrorOutput(div);
+
+    expect(out.querySelector('th p')).toBeNull();
+    expect(out.querySelector('td p')).toBeNull();
+    expect(out.querySelector('th').textContent).toContain('Title');
   });
 
   it('maps each select kind to its relation', () => {

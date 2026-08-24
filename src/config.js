@@ -106,7 +106,11 @@ export default {
       'data-lookup-source', 'data-lookup-url-source'],
     'removeCommentNodes': false,
     'removeNodesWithSelector': ['.do', '.ProseMirror-trailingBreak', '.ProseMirror-widget', '.ProseMirror-separator'],
-    'removeClassValues': [],
+    // Editor decoration classes; they render into the live DOM a save serializes.
+    'removeClassValues': ['table-cell-active', 'table-identifier-column',
+      'table-lookup-pending', 'table-lookup-empty', 'table-lookup-mismatch', 'table-lookup-error',
+      'table-column-dragging', 'table-column-dragging-first', 'table-row-dragging',
+      'editor-empty-node'],
     'removeWrapper': [{
       'wrapperSelector': '.do.ref',
       'contentSelector': 'mark'

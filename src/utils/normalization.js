@@ -264,6 +264,11 @@ export function normalizeTableMarkup(node) {
     });
   });
 
+  //The identifier hints are decoration titles, not content.
+  node.querySelectorAll('table[typeof~="schema:Table"] :is(th, td)').forEach(cell => {
+    cell.removeAttribute('title');
+  });
+
   return node;
 }
 
@@ -283,8 +288,10 @@ export function cleanProseMirrorOutput(node) {
 
   tags.forEach(tag => {
     element.querySelectorAll(tag).forEach(el => {
-      if (el.children.length === 1 && el.firstElementChild.tagName.toLowerCase() === 'p') {
-        const p = el.firstElementChild;
+      // Editor widgets (.do, e.g. sort buttons) are removed later; they must not block the unwrap.
+      const children = [...el.children].filter(child => !child.classList.contains('do'));
+      if (children.length === 1 && children[0].tagName.toLowerCase() === 'p') {
+        const p = children[0];
         // Move all children of <p> to <li>/<dd>
         while (p.firstChild) el.insertBefore(p.firstChild, p);
         p.remove(); // remove the now-empty <p>
