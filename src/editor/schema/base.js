@@ -733,6 +733,26 @@ Config.DOMProcessing.inlineElements.filter(el => !Config.DOMProcessing.proseMirr
   }
 });
 
+const INLINE_NODE_SELECTOR = Config.DOMProcessing.inlineElements
+  .filter(el => !Config.DOMProcessing.proseMirrorMarks.includes(el))
+  .join(',');
+
+// A mark cannot hold an anchor wrapping inline nodes; false falls back to it.
+customNodes.anchor = {
+  inline: true,
+  group: "inline",
+  content: "inline*",
+  attrs: { originalAttributes: { default: {} } },
+  parseDOM: [{
+    tag: "a",
+    priority: 60,
+    getAttrs(node) {
+      return node.querySelector(INLINE_NODE_SELECTOR) ? getAttributes(node) : false;
+    }
+  }],
+  toDOM: toDOMWith("a")
+};
+
 const customMarks = {};
 
 Config?.DOMProcessing.proseMirrorMarks.forEach(tagName => {
