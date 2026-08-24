@@ -253,7 +253,6 @@ export function withSlugValues(fillValues) {
   return extended;
 }
 
-// Subject the row's statements hang off.
 export function computeRowSubject(tableSchema, fillValues, fallback) {
   const aboutUrl = tableSchema?.aboutUrl;
   if (!aboutUrl) return fallback;

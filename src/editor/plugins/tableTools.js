@@ -63,7 +63,7 @@ import {
   ensureDocumentPrefixes,
   DEFAULT_ROW_PROPERTY
 } from '../../table.js';
-import { reconcileTable, reconcileSelectedTable, contentStatesProperty } from './tableRDFa.js';
+import { reconcileTable, reconcileSelectedTable, contentStatesProperty, rowHasData } from './tableRDFa.js';
 import { searchClasses, searchProperties } from '../../vocab.js';
 import { listLookupServices, getLookupService, identifierColumnCandidates, lookupIdentifier, getIdentifierSearch, looksLikeIdentifier, needsIdentifierPick } from '../../services.js';
 import { THREAT_SELECT_RELS, threatValueRank, defaultThreatCaption } from '../../threatModel.js';
@@ -129,7 +129,6 @@ const COMMON_TYPES = [
   'schema:Dataset', 'foaf:Person', 'skos:Concept', 'csvw:Row'
 ];
 
-// The first anchor mark's attributes within a cell.
 function cellLinkMark(cell) {
   let found = null;
 
@@ -154,7 +153,6 @@ function findSelectInCell(cell) {
   return found;
 }
 
-// The select of the cell holding the caret (or the given position), if any.
 function selectAtCaret(state, pos = null) {
   const $pos = pos === null ? undefined : state.doc.resolve(pos);
   const cell = findCell(state, $pos);
@@ -288,8 +286,8 @@ function identifierDecorations(state) {
 
   const service = getLookupService(tableSchema.lookup?.service);
   const hint = getIdentifierSearch(tableSchema.lookup)
-    ? i18n.t('editor.table.cell.search.hint')
-    : i18n.t('editor.table.cell.identifier.hint', { identifier: service?.identifier || idColumn });
+    ? i18n.t('editor.table.cell.search.title')
+    : i18n.t('editor.table.cell.identifier.title', { identifier: service?.identifier || idColumn });
 
   const decorations = [];
 
@@ -355,7 +353,7 @@ function dragDecorations(state, drag) {
 // Hint at what follows the CSS-rendered "Table N." in every empty caption.
 function captionPlaceholderDecoration(state) {
   const decorations = [];
-  const hint = i18n.t('editor.table.caption.placeholder');
+  const hint = i18n.t('editor.table.caption.data-placeholder');
 
   state.doc.descendants((node, pos) => {
     if (node.type.name !== 'table') return true;
@@ -386,7 +384,6 @@ function tableDecorations(state, drag, sort) {
 const SORT_NEXT = { none: 'ascending', ascending: 'descending', descending: 'none' };
 const SORT_ICON = { none: '.fas.fa-sort', ascending: '.fas.fa-sort-up', descending: '.fas.fa-sort-down' };
 
-// Sort controls sit in the header row of the table under the caret.
 function headerSortDecorations(state, sort) {
   const table = findTable(state);
   if (!table) return [];
@@ -428,7 +425,7 @@ function sortButton(tablePos, columnIndex, direction) {
     button.className = 'do table-sort';
     button.type = 'button';
 
-    const title = i18n.t(`table.sort.${SORT_NEXT[direction]}`);
+    const title = i18n.t(`table.sort.${SORT_NEXT[direction]}.title`);
     button.setAttribute('title', title);
     button.setAttribute('aria-label', title);
     sanitizeInsertAdjacentHTML(button, 'afterbegin', Icon[SORT_ICON[direction]]);
@@ -482,7 +479,6 @@ export function tableToolsPlugin() {
           if (row) {
             const added = [Decoration.node(action.pos, action.pos + row.nodeSize, { class: action.status })];
 
-            // The UI's shared spinner, inside the row's first cell.
             if (action.status === 'table-lookup-pending') {
               added.push(Decoration.widget(action.pos + 2, lookupSpinner, { key: 'table-lookup-progress' }));
             }
@@ -741,7 +737,7 @@ export class TableToolsView {
     const bodySelects = tableSelectsByKind(table.node, table.pos, 'threat-type');
     const hasChoices = bodySelects.some(({ node }) => selectHasChoice(node));
 
-    if (hasChoices && !window.confirm(i18n.t('editor.table.threat-kind.confirm'))) {
+    if (hasChoices && !window.confirm(i18n.t('editor.table.threat-kind.confirm.textContent'))) {
       // Declined: put the DOM select back to what the document says.
       target.value = framework === 'stride' ? 'linddun' : 'stride';
       return;
@@ -825,7 +821,6 @@ export class TableToolsView {
     this.maybeAutofill(view, prevState);
     this.maybeSuggestIdentifiers(view);
 
-    // No sorted column, nothing to restore to.
     if (!tableToolsPluginKey.getState(view.state)?.sort) this.sortMemory = null;
 
     if (!table || !view.editable) {
@@ -883,23 +878,23 @@ export class TableToolsView {
 
     const html = `
       <div class="editor-table-tools-group" role="group" aria-label="${htmlEncode(i18n.t('editor.table.toolbar.row.aria-label'))}">
-        ${button('row-before', i18n.t('editor.table.row-before'), '↑+')}
-        ${button('row-after', i18n.t('editor.table.row-after'), '↓+')}
-        ${button('row-delete', i18n.t('editor.table.row-delete'), '↕−')}
-        ${button('row-up', i18n.t('editor.table.row-up'), '⇡')}
-        ${button('row-down', i18n.t('editor.table.row-down'), '⇣')}
+        ${button('row-before', i18n.t('editor.table.row-before.title'), '↑+')}
+        ${button('row-after', i18n.t('editor.table.row-after.title'), '↓+')}
+        ${button('row-delete', i18n.t('editor.table.row-delete.title'), '↕−')}
+        ${button('row-up', i18n.t('editor.table.row-up.title'), '⇡')}
+        ${button('row-down', i18n.t('editor.table.row-down.title'), '⇣')}
       </div>
       <div class="editor-table-tools-group" role="group" aria-label="${htmlEncode(i18n.t('editor.table.toolbar.column.aria-label'))}">
-        ${button('column-before', i18n.t('editor.table.column-before'), '←+')}
-        ${button('column-after', i18n.t('editor.table.column-after'), '→+')}
-        ${button('column-delete', i18n.t('editor.table.column-delete'), '↔−')}
-        ${button('column-left', i18n.t('editor.table.column-left'), '⇠')}
-        ${button('column-right', i18n.t('editor.table.column-right'), '⇢')}
-        ${button('column-settings', i18n.t('editor.table.column-settings'), i18n.t('editor.table.column-settings.label'))}
+        ${button('column-before', i18n.t('editor.table.column-before.title'), '←+')}
+        ${button('column-after', i18n.t('editor.table.column-after.title'), '→+')}
+        ${button('column-delete', i18n.t('editor.table.column-delete.title'), '↔−')}
+        ${button('column-left', i18n.t('editor.table.column-left.title'), '⇠')}
+        ${button('column-right', i18n.t('editor.table.column-right.title'), '⇢')}
+        ${button('column-settings', i18n.t('editor.table.column-settings.title'), i18n.t('editor.table.column-settings.textContent'))}
       </div>
       <div class="editor-table-tools-group" role="group" aria-label="${htmlEncode(i18n.t('editor.table.toolbar.table.aria-label'))}">
-        ${button('table-settings', i18n.t('editor.table.table-settings'), i18n.t('editor.table.table-settings.label'))}
-        ${button('table-delete', i18n.t('editor.table.delete'), '✕')}
+        ${button('table-settings', i18n.t('editor.table.table-settings.title'), i18n.t('editor.table.table-settings.textContent'))}
+        ${button('table-delete', i18n.t('editor.table.delete.title'), '✕')}
       </div>
     `;
 
@@ -1157,7 +1152,7 @@ export class TableToolsView {
     const handle = document.createElement('div');
     handle.className = 'editor-table-column-handle';
     handle.setAttribute('contenteditable', 'false');
-    handle.title = i18n.t('editor.table.column-drag');
+    handle.title = i18n.t('editor.table.column-drag.title');
 
     handle.addEventListener('mousedown', (e) => {
       if (e.button !== 0) return;
@@ -1234,7 +1229,7 @@ export class TableToolsView {
     const handle = document.createElement('div');
     handle.className = 'editor-table-row-handle';
     handle.setAttribute('contenteditable', 'false');
-    handle.title = i18n.t('editor.table.row-drag');
+    handle.title = i18n.t('editor.table.row-drag.title');
 
     handle.addEventListener('mousedown', (e) => {
       if (e.button !== 0) return;
@@ -1351,7 +1346,7 @@ export class TableToolsView {
     const panel = this.openPanel(`
       <form class="editor-form editor-form-active" id="editor-form-table-column-settings">
         <fieldset>
-          <legend>${htmlEncode(i18n.t('editor.table.column.legend'))}</legend>
+          <legend>${htmlEncode(i18n.t('editor.table.column.legend.textContent'))}</legend>
 
           <label for="table-column-title">${htmlEncode(i18n.t('editor.table.column.title.label'))}</label>
           <input class="editor-form-input" dir="auto" id="table-column-title" name="table-column-title" type="text" value="${htmlEncode(getColumnTitle(column, ''))}" />
@@ -1363,12 +1358,12 @@ export class TableToolsView {
 
           <label for="table-column-value">${htmlEncode(i18n.t('editor.table.column.kind.label'))}</label>
           <select class="editor-form-select" id="table-column-value" name="table-column-value">
-            <option value=""${kind === 'literal' && matchesDatatype(column.datatype, '') ? ' selected=""' : ''}>${htmlEncode(i18n.t('editor.table.column.kind.literal'))}</option>
+            <option value=""${kind === 'literal' && matchesDatatype(column.datatype, '') ? ' selected=""' : ''}>${htmlEncode(i18n.t('editor.table.column.kind.literal.textContent'))}</option>
             ${DATATYPE_GROUPS.map(([group, entries]) => `<optgroup label="${htmlEncode(group)}">${entries.map(([d, label]) => `<option value="${d}"${kind === 'literal' && matchesDatatype(column.datatype, d) ? ' selected=""' : ''}>${htmlEncode(datatypeLabel(d, label))}</option>`).join('')}</optgroup>`).join('')}
             <optgroup label="Resource">
-              <option value="link"${kind === 'link' ? ' selected=""' : ''}>${htmlEncode(i18n.t('editor.table.column.kind.link'))}</option>
-              <option value="type"${kind === 'type' ? ' selected=""' : ''}>${htmlEncode(i18n.t('editor.table.column.kind.type'))}</option>
-              <option value="image"${kind === 'image' ? ' selected=""' : ''}>${htmlEncode(i18n.t('editor.table.column.kind.image'))}</option>
+              <option value="link"${kind === 'link' ? ' selected=""' : ''}>${htmlEncode(i18n.t('editor.table.column.kind.link.textContent'))}</option>
+              <option value="type"${kind === 'type' ? ' selected=""' : ''}>${htmlEncode(i18n.t('editor.table.column.kind.type.textContent'))}</option>
+              <option value="image"${kind === 'image' ? ' selected=""' : ''}>${htmlEncode(i18n.t('editor.table.column.kind.image.textContent'))}</option>
             </optgroup>
           </select>
 
@@ -1377,10 +1372,10 @@ export class TableToolsView {
             <input class="editor-form-input" dir="ltr" id="table-column-value-url" name="table-column-value-url" placeholder="{${htmlEncode(column.name || 'value')}}" type="text" value="${htmlEncode(column.valueUrl || '')}" />
           </div>
 
-          ${isIdentifier ? `<p class="info">${htmlEncode(i18n.t('editor.table.column.identifier.info'))}</p>` : ''}
+          ${isIdentifier ? `<p class="info">${htmlEncode(i18n.t('editor.table.column.identifier.info.textContent'))}</p>` : ''}
 
           <details class="editor-table-advanced"${column.aboutUrl || column.lookup?.source || column.lookup?.service ? ' open=""' : ''}>
-            <summary>${htmlEncode(i18n.t('editor.table.advanced.summary'))}</summary>
+            <summary>${htmlEncode(i18n.t('editor.table.advanced.summary.textContent'))}</summary>
 
             <label for="table-column-about-url">${htmlEncode(i18n.t('editor.table.column.about-url.label'))}</label>
             <input class="editor-form-input" dir="ltr" id="table-column-about-url" name="table-column-about-url" placeholder="${htmlEncode(i18n.t('editor.table.column.about-url.placeholder'))}" type="text" value="${htmlEncode(column.aboutUrl || '')}" />
@@ -1393,16 +1388,16 @@ export class TableToolsView {
             ${isIdentifier ? '' : `
               <label for="table-column-service">${htmlEncode(i18n.t('editor.table.column.service.label'))}</label>
               <select class="editor-form-select" id="table-column-service" name="table-column-service">
-                <option value="">${htmlEncode(i18n.t('editor.table.lookup.service.none'))}</option>
+                <option value="">${htmlEncode(i18n.t('editor.table.lookup.service.none.textContent'))}</option>
                 ${listLookupServices().filter(([, service]) => service.search).map(([name, service]) =>
                   `<option value="${name}"${column.lookup?.service === name ? ' selected=""' : ''}>${htmlEncode(service.label)}</option>`).join('')}
               </select>
-              <p class="info">${htmlEncode(i18n.t('editor.table.column.service.info'))}</p>
+              <p class="info">${htmlEncode(i18n.t('editor.table.column.service.info.textContent'))}</p>
             `}
           </details>
 
           <div class="editor-form-actions-row">
-            <button class="editor-form-submit" type="submit">${htmlEncode(i18n.t('editor.table.apply'))}</button>
+            <button class="editor-form-submit" type="submit">${htmlEncode(i18n.t('editor.table.apply.textContent'))}</button>
             <button class="editor-form-cancel" type="button">${htmlEncode(i18n.t('editor.toolbar.form.cancel.button.textContent'))}</button>
           </div>
         </fieldset>
@@ -1479,7 +1474,6 @@ export class TableToolsView {
 
     setColumnAttributes(tr, table.node, table.pos, index, column);
 
-    // The header cell's text is the column title.
     const header = getHeaderRowPos(table.node, table.pos);
     if (header && title && header.row.child(index)?.textContent.trim() !== title) {
       let cellPos = header.pos + 1;
@@ -1566,7 +1560,7 @@ export class TableToolsView {
     const panel = this.openPanel(`
       <form class="editor-form editor-form-active" id="editor-form-table-settings">
         <fieldset>
-          <legend>${htmlEncode(i18n.t('editor.table.settings.legend'))}</legend>
+          <legend>${htmlEncode(i18n.t('editor.table.settings.legend.textContent'))}</legend>
 
           <div class="autocomplete">
             <label for="table-typeof">${htmlEncode(i18n.t('editor.table.typeof.label'))}</label>
@@ -1576,14 +1570,14 @@ export class TableToolsView {
 
           <label for="table-lookup-service">${htmlEncode(i18n.t('editor.table.lookup.service.label'))}</label>
           <select class="editor-form-select" id="table-lookup-service" name="table-lookup-service"${lookup.service ? ' disabled=""' : ''}>
-            <option value="">${htmlEncode(i18n.t('editor.table.lookup.service.none'))}</option>
+            <option value="">${htmlEncode(i18n.t('editor.table.lookup.service.none.textContent'))}</option>
             ${listLookupServices().map(([name, s]) =>
               `<option value="${name}"${lookup.service === name ? ' selected=""' : ''}>${htmlEncode(s.label)}</option>`).join('')}
           </select>
 
           ${lookup.service ? `
-            <p class="info">${htmlEncode(i18n.t('editor.table.lookup.service.locked'))}</p>
-            <button class="editor-form-secondary" name="change-service" type="button">${htmlEncode(i18n.t('editor.table.lookup.service.change'))}</button>
+            <p class="info">${htmlEncode(i18n.t('editor.table.lookup.service.locked.textContent'))}</p>
+            <button class="editor-form-secondary" name="change-service" type="button">${htmlEncode(i18n.t('editor.table.lookup.service.change.textContent'))}</button>
           ` : ''}
 
           <div data-when-source="on">
@@ -1595,8 +1589,8 @@ export class TableToolsView {
             </select>
             <p class="info">${htmlEncode(
               getLookupService(lookup.service)?.identifier
-                ? i18n.t('editor.table.lookup.id-column.info-identifier', { identifier: getLookupService(lookup.service).identifier })
-                : i18n.t('editor.table.lookup.id-column.info'))}</p>
+                ? i18n.t('editor.table.lookup.id-column.info-identifier.textContent', { identifier: getLookupService(lookup.service).identifier })
+                : i18n.t('editor.table.lookup.id-column.info.textContent'))}</p>
           </div>
 
           <div data-when-custom="">
@@ -1605,8 +1599,8 @@ export class TableToolsView {
 
             <label for="table-lookup-format">${htmlEncode(i18n.t('editor.table.lookup.format.label'))}</label>
             <select class="editor-form-select" id="table-lookup-format" name="table-lookup-format">
-              <option value="json"${format === 'json' ? ' selected=""' : ''}>${htmlEncode(i18n.t('editor.table.lookup.format.record'))}</option>
-              <option value="rdf"${format === 'rdf' ? ' selected=""' : ''}>${htmlEncode(i18n.t('editor.table.lookup.format.linked-data'))}</option>
+              <option value="json"${format === 'json' ? ' selected=""' : ''}>${htmlEncode(i18n.t('editor.table.lookup.format.record.textContent'))}</option>
+              <option value="rdf"${format === 'rdf' ? ' selected=""' : ''}>${htmlEncode(i18n.t('editor.table.lookup.format.linked-data.textContent'))}</option>
             </select>
 
             <div data-when-format="json">
@@ -1617,12 +1611,12 @@ export class TableToolsView {
             <div data-when-format="rdf">
               <label for="table-lookup-subject">${htmlEncode(i18n.t('editor.table.lookup.subject.label'))}</label>
               <input class="editor-form-input" dir="ltr" id="table-lookup-subject" name="table-lookup-subject" placeholder="https://example.org/item/{id}" type="text" value="${htmlEncode(lookup.subject || '')}" />
-              <p class="info">${htmlEncode(i18n.t('editor.table.lookup.rdf.info'))}</p>
+              <p class="info">${htmlEncode(i18n.t('editor.table.lookup.rdf.info.textContent'))}</p>
             </div>
           </div>
 
           <details class="editor-table-advanced"${tableSchema.propertyUrl || tableSchema.aboutUrl ? ' open=""' : ''}>
-            <summary>${htmlEncode(i18n.t('editor.table.advanced.summary'))}</summary>
+            <summary>${htmlEncode(i18n.t('editor.table.advanced.summary.textContent'))}</summary>
 
             <div class="autocomplete">
               <label for="table-property">${htmlEncode(i18n.t('editor.table.property.label'))}</label>
@@ -1634,7 +1628,7 @@ export class TableToolsView {
           </details>
 
           <div class="editor-form-actions-row">
-            <button class="editor-form-submit" type="submit">${htmlEncode(i18n.t('editor.table.apply'))}</button>
+            <button class="editor-form-submit" type="submit">${htmlEncode(i18n.t('editor.table.apply.textContent'))}</button>
             <button class="editor-form-cancel" type="button">${htmlEncode(i18n.t('editor.toolbar.form.cancel.button.textContent'))}</button>
           </div>
         </fieldset>
@@ -1678,7 +1672,7 @@ export class TableToolsView {
     // Swapping the source is a deliberate act that takes the data with it.
     panel.querySelector('[name="change-service"]')?.addEventListener('click', () => {
       const confirmed = window.confirm(
-        i18n.t('editor.table.lookup.service.confirm'));
+        i18n.t('editor.table.lookup.service.confirm.textContent'));
       if (!confirmed) return;
 
       panel.querySelector('[name="table-lookup-service"]').disabled = false;
@@ -2279,7 +2273,7 @@ export class TableToolsView {
     // Filling empty cells needs no blessing; replacing typed values does.
     if (candidates.some((c) => c.valid && c.hasFedContent)) {
       const total = candidates.filter((c) => c.valid).length;
-      if (!window.confirm(i18n.t('editor.table.lookup.fill-all.confirm', { total }))) return;
+      if (!window.confirm(i18n.t('editor.table.lookup.fill-all.confirm.textContent', { total }))) return;
     }
 
     for (const { ordinal: at, identifier, valid } of candidates) {
@@ -2527,8 +2521,12 @@ function sortTableRows(rows, columnIndex, direction) {
   const dir = direction === 'ascending' ? 1 : -1;
   const cellAt = (row) => columnIndex < row.childCount ? row.child(columnIndex) : null;
   const text = (row) => cellAt(row)?.textContent.trim() ?? '';
+  const empty = new Map(rows.map((row) => [row, !rowHasData(row)]));
 
   return [...rows].sort((a, b) => {
+    // Rows without data sink to the bottom, whatever the direction.
+    if (empty.get(a) !== empty.get(b)) return empty.get(a) ? 1 : -1;
+
     const rankA = cellSortRank(cellAt(a));
     const rankB = cellSortRank(cellAt(b));
 

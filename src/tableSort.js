@@ -20,7 +20,6 @@ import { Icon } from './ui/icons.js';
 import { sanitizeInsertAdjacentHTML } from './utils/sanitization.js';
 import { threatValueRank } from './threatModel.js';
 
-// Each click advances the column: original -> ascending -> descending -> original.
 const NEXT = { none: 'ascending', ascending: 'descending', descending: 'none' };
 
 // Numeric-aware, so "2823" sorts after "92" and mixed text still compares sanely.
@@ -89,11 +88,20 @@ function cellRank(cell) {
   return rank >= 0 ? rank : null;
 }
 
+function rowIsEmpty(row) {
+  return ![...row.cells].some((cell) => cell.textContent.trim() || cell.querySelector('img'));
+}
+
 // Sorted from the original order, so equal values keep their document order.
 function sortRows(base, index, state) {
   const direction = state === 'ascending' ? 1 : -1;
 
   return [...base].sort((a, b) => {
+    // Rows without data sink to the bottom, whatever the direction.
+    const emptyA = rowIsEmpty(a);
+    const emptyB = rowIsEmpty(b);
+    if (emptyA !== emptyB) return emptyA ? 1 : -1;
+
     const rankA = cellRank(a.cells[index]);
     const rankB = cellRank(b.cells[index]);
 
@@ -114,7 +122,7 @@ function updateSortTitles(headerRow) {
     if (!button) return;
 
     const state = cell.getAttribute('aria-sort') || 'none';
-    const title = i18n.t(`table.sort.${NEXT[state]}`);
+    const title = i18n.t(`table.sort.${NEXT[state]}.title`);
     button.setAttribute('title', title);
     button.setAttribute('aria-label', title);
     button.replaceChildren();

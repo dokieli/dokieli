@@ -829,7 +829,6 @@ function considerationsDefinition(doc) {
   return { ...found, hrefs };
 }
 
-// The Threat Model definition <p> and the reference marks it currently carries.
 function threatModelDefinition(doc) {
   let found = null;
   doc.descendants((node, pos) => {
@@ -853,7 +852,6 @@ function threatModelDefinition(doc) {
   return { ...found, refs };
 }
 
-// Which framework a threat table's selects declare, if any.
 function threatTableFramework(table) {
   let framework = null;
   table.descendants((node) => {
@@ -877,7 +875,6 @@ function threatTableFramework(table) {
   return framework;
 }
 
-// The threat tables in the section holding the definition, in document order.
 function threatTablesAround(doc, defPos) {
   const $def = doc.resolve(defPos);
   let scope = doc;
@@ -899,7 +896,6 @@ function threatTablesAround(doc, defPos) {
   return tables;
 }
 
-// Keep the Threat Model definition sentence in step with the tables it describes.
 // Positions come from the live tr doc: earlier syncs may already have resized it.
 function syncThreatModelDefinition(newState, liveDoc, sel, blurred, ensure) {
   const doc = liveDoc();

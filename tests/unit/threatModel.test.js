@@ -96,6 +96,26 @@ describe('threat model save conversion', () => {
     expect(rows[1].getAttribute('about')).toBe('#risk-description-substitution-2');
   });
 
+  it('moves the cell rel onto an anchor that already targets the resource', () => {
+    const root = document.createElement('div');
+    root.innerHTML = `
+      <table typeof="schema:Table">
+        <tbody><tr typeof="dpv:Risk">
+          <td rel="dcterms:subject" resource="#feature-x"><p><a href="#feature-x">#feature-x</a></p></td>
+          <td rel="dcterms:subject" resource="#other"><p><a href="#elsewhere">text</a></p></td>
+        </tr></tbody>
+      </table>`;
+    const out = normalizeHTML(root, {});
+
+    const cells = out.querySelectorAll('td');
+    expect(cells[0].hasAttribute('rel')).toBe(false);
+    expect(cells[0].hasAttribute('resource')).toBe(false);
+    expect(cells[0].querySelector('a').getAttribute('rel')).toBe('dcterms:subject');
+
+    expect(cells[1].getAttribute('resource')).toBe('#other');
+    expect(cells[1].querySelector('a').hasAttribute('rel')).toBe(false);
+  });
+
   it('renders an attribute-stated mitigation as the nested measure pattern', () => {
     const root = document.createElement('div');
     root.innerHTML = `

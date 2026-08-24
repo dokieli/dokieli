@@ -52,7 +52,6 @@ export function findTable(state, $pos) {
   return findAncestorNode(state, 'table', $pos);
 }
 
-// Which column the selection is in, and where its cell sits.
 export function findCell(state, $pos) {
   const $from = $pos || state.selection.$from;
 
@@ -77,7 +76,6 @@ export function findCell(state, $pos) {
   return null;
 }
 
-// Walks every row, reporting its position and whether it is in a header section.
 export function forEachRow(table, tablePos, fn) {
   let offset = tablePos + 1;
 
@@ -134,7 +132,6 @@ export function getHeaderRowPos(table, tablePos) {
   return first && first.row.child(0).type.name === 'th' ? first : null;
 }
 
-// The table's column configuration, read off the header cells.
 export function getColumns(table) {
   const header = getHeaderRow(table);
   if (!header) return [];
@@ -203,7 +200,7 @@ export function threatSelectNode(kind, framework = 'stride', chosenValue = null)
   const placeholder = kind === 'threat-model-kind'
     ? []
     : [schema.nodes.option.create({ originalAttributes: { value: '' } },
-        schema.text(i18n.t(`editor.table.threat.select.${kind}`)))];
+        schema.text(i18n.t(`editor.table.threat.select.${kind}.textContent`)))];
 
   // The framework attribute makes a swapped select a different node, forcing a DOM rebuild.
   return schema.nodes.select.create(
@@ -278,7 +275,6 @@ export function selectOptionInTr(tr, selectNode, selectPos, value) {
   return tr;
 }
 
-// Every select in one column's body cells, with its document position.
 export function columnBodySelects(table, tablePos, index) {
   const selects = [];
 
@@ -298,7 +294,6 @@ export function columnBodySelects(table, tablePos, index) {
   return selects;
 }
 
-// The first select in a cell, with its document position.
 export function findSelectWithPos(cell, cellPos) {
   let found = null;
 
@@ -311,7 +306,6 @@ export function findSelectWithPos(cell, cellPos) {
   return found;
 }
 
-// Every body select of one marker kind in the table, with its position.
 export function tableSelectsByKind(table, tablePos, kind) {
   const selects = [];
 
@@ -596,7 +590,6 @@ export function addColumn(side = 'after') {
         tr.insert(offset, createCell(headerCell ? 'th' : 'td', headerCell ? getColumnAttributes({ name }) : {}));
       });
 
-    // The caret lands in the new column's first cell, ready for its title.
     const first = Math.min(...insertions.map((i) => i.offset));
     const target = findFirstTextPosition(tr.doc, first);
     if (target !== null) tr.setSelection(TextSelection.create(tr.doc, target));
@@ -640,7 +633,6 @@ function reorder(items, from, to) {
   return next;
 }
 
-// Move a column to an index, rebuilding each row's cell list in one replacement.
 export function moveColumnTo(from, to) {
   return (state, dispatch) => {
     const table = findTable(state);

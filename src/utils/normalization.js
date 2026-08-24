@@ -189,7 +189,18 @@ export function normalizeTableMarkup(node) {
 
   //A link cell stated as attributes becomes a real anchor.
   node.querySelectorAll('table[typeof~="schema:Table"] td[rel][resource]').forEach(td => {
-    if (td.querySelector('a, select')) return;
+    if (td.querySelector('select')) return;
+
+    //An anchor already targeting the resource carries the rel itself.
+    const anchor = td.querySelector('a');
+    if (anchor) {
+      if (anchor.getAttribute('href') === td.getAttribute('resource')) {
+        anchor.setAttribute('rel', td.getAttribute('rel'));
+        td.removeAttribute('rel');
+        td.removeAttribute('resource');
+      }
+      return;
+    }
 
     const container = td.querySelector('p') || td;
     const a = td.ownerDocument.createElement('a');
@@ -235,7 +246,6 @@ export function normalizeTableMarkup(node) {
     if (!hasData) row.remove();
   });
 
-  //A footer emptied of its rows has nothing left to say.
   node.querySelectorAll('table[typeof~="schema:Table"] tfoot').forEach(tfoot => {
     if (!tfoot.querySelector('tr')) tfoot.remove();
   });

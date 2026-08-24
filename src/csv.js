@@ -23,9 +23,7 @@ import { createDateHTML, createLicenseHTML } from './doc.js';
 import { renderCellHTML } from './table.js';
 import uriTemplates from 'uri-templates';
 
-// STRIDE assessments encode the threat type as a single letter, which is only
-// meaningful once expanded. Passed to the cell emitter as a value mapper so
-// the emitter itself stays free of column-name special cases.
+// Expands single-letter STRIDE types so the cell emitter stays free of column special cases.
 function strideValueMapper(column, cell) {
   if (column.name !== 'strideThreatType' || !column.valueUrl) return null;
 
@@ -189,8 +187,7 @@ export function jsonToHtmlTableString(csvTables, metadata = {}) {
 
         cellFillValues['_row'] = rowIndex + 1;
 
-        // No metadata at all: fall back to a document-relative property named
-        // after the column, so a bare CSV still says something.
+        // No metadata: a document-relative property named after the column, so a bare CSV still says something.
         if (!columnMetadata) {
           const child = URL.canParse(cell) ? 'a' : 'span';
           const href = child === 'a' ? ` href="${new URL(cell)}"` : '';

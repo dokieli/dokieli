@@ -1972,7 +1972,6 @@ color: #555;
 font-variant: small-caps;
 }
 
-/* Table tools */
 .editor-table-tools {
 position:absolute;
 z-index:10;
@@ -2023,8 +2022,6 @@ color:#080;
 font-weight:bold;
 }
 
-/* Positioning only. Everything else about these forms -- padding, labels,
-   inputs, buttons -- comes from .editor-form, like every other popup. */
 .editor-table-panel {
 position:absolute;
 z-index:11;
@@ -2033,8 +2030,6 @@ max-width:calc(100vw - 2em);
 overflow-y:auto;
 }
 .editor-table-panel > .editor-form {
-/* editor-form-active positions absolutely, which would take the form out of
-   flow and collapse the panel around it. In here the panel does the placing. */
 position:static;
 display:block;
 }
@@ -2063,9 +2058,6 @@ font-size:0.9375em;
 display:none;
 }
 
-/* Card-style choices in editor forms, matching the Save As asset handling. */
-/* The card list needs a real width: an absolutely positioned form otherwise
-   shrink-wraps to its narrowest content. */
 #document-slashmenu:has(.editor-form-cards),
 .editor-form:has(.editor-form-cards) {
 width:min(38em, 92vw);
@@ -2139,10 +2131,8 @@ font-weight:normal;
 color:#555;
 font-size:0.9em;
 }
-/* A card's own options, revealed under it when that card is chosen. */
 .editor-form-card-fields {
 padding:0.7em 1em 0.8em 3.35em;
-/* The card's label is offset by `.editor-form input + label`; match it. */
 margin-left:0.25em;
 margin-top:-0.35em;
 border:1px solid #080;
@@ -2196,7 +2186,6 @@ color:#333;
 white-space:nowrap;
 }
 
-/* Counts need a couple of digits, not the whole row. */
 .editor-form-card-fields input[type="number"] {
 width:5em;
 justify-self:start;
@@ -2229,14 +2218,10 @@ padding-right:2em;
 }
 
 
-/* An empty caption is a zero-height box behind a ::before, so there is nothing
-   to click. Give it a line of its own to put the caret in. */
 .ProseMirror caption {
 cursor:text;
 min-height:1.4em;
 }
-/* Sits after the "Table N." the counter renders, on the same line. ProseMirror
-   fills an empty textblock with a trailing <br>, which would break that line. */
 .ProseMirror caption[data-placeholder] > br {
 display:none;
 }
@@ -2246,7 +2231,6 @@ color:#333;
 font-style:italic;
 pointer-events:none;
 }
-/* Image cells are thumbnails: a book cover should not set the row height. */
 .ProseMirror td img,
 table td img {
 max-width:6em;
@@ -2256,7 +2240,6 @@ height:auto;
 display:block;
 }
 
-/* The cell being typed in, so the caret's column is never in doubt. */
 .ProseMirror td.table-cell-active,
 .ProseMirror th.table-cell-active {
 outline:2px solid #080;
@@ -2267,7 +2250,6 @@ outline-offset:-2px;
 text-decoration: 2px underline #080;
 }
 
-/* A select is as wide as its widest option; cap it so the table stays in the writing area. */
 .ProseMirror td select[data-select],
 .ProseMirror th select[data-select] {
 max-width:14em;
@@ -2347,10 +2329,6 @@ text-overflow:ellipsis;
 white-space:nowrap;
 }
 
-/* Drag to reorder columns and rows */
-/* Width must match HANDLE_WIDTH in tableTools.js */
-/* A grip is a quiet line until the pointer reaches it, then a dotted button.
-   Both states occupy the same box, so the target never moves under the cursor. */
 .editor-table-row-handle,
 .editor-table-column-handle {
 position:absolute;
@@ -2386,8 +2364,6 @@ width:0.25em;
 height:1.25em;
 }
 
-/* Hovered: a rounded button carrying a single line of three dots. Each tile is
-   a third of the grip, so the gradient repeats exactly three times. */
 .editor-table-row-handle:hover::before,
 .editor-table-column-handle:hover::before,
 body.editor-table-dragging .editor-table-row-handle::before,
@@ -2413,7 +2389,6 @@ body.editor-table-dragging .editor-table-column-handle {
 cursor:grabbing;
 }
 
-/* What is moving, while it moves. */
 .ProseMirror td.table-column-dragging,
 .ProseMirror th.table-column-dragging {
 box-shadow:inset 2px 0 0 #080, inset -2px 0 0 #080;
@@ -2445,7 +2420,6 @@ body.editor-table-dragging {
 cursor:grabbing;
 user-select:none;
 }
-/* contenteditable opts back into selection, so say it again for the content. */
 body.editor-table-dragging .ProseMirror,
 body.editor-table-dragging .ProseMirror * {
 user-select:none;

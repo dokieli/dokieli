@@ -21,8 +21,6 @@ import { htmlEncode } from './utils/sanitization.js';
 import { getTableAttributes, getColumnAttributes, getPrefixesUsed, ensureDocumentPrefixes, subjectFromCaption } from './table.js';
 import { getLookupService } from './services.js';
 
-// Vocabulary for threat model tables: STRIDE and LINDDUN threat types, the
-// elements of the W3C Threat Model for the Web, and DPV RISK levels.
 
 export const THREAT_MODEL_WEB = 'https://www.w3.org/TR/threat-model-web/';
 
@@ -142,7 +140,7 @@ export function threatSelectHTML(kind, framework = 'stride', chosenValue = null)
 
   const placeholder = kind === 'threat-model-kind'
     ? ''
-    : `<option value="">${htmlEncode(i18n.t(`editor.table.threat.select.${kind}`))}</option>`;
+    : `<option value="">${htmlEncode(i18n.t(`editor.table.threat.select.${kind}.textContent`))}</option>`;
 
   const marker = kind === 'threat-type' ? ` data-framework="${framework}"` : '';
 
@@ -158,7 +156,6 @@ export function threatTableRef(caption, framework = 'stride') {
   return { id: (subjectFromCaption(caption) || '#').slice(1), caption, framework };
 }
 
-// The classification sentence for the threat tables present, per the AC pattern.
 export function threatClassificationSentence(tables = []) {
   const attr = (value, name) => htmlEncode(String(value), { mode: 'attribute', attributeName: name });
   const tableRef = (table, label) =>
@@ -190,7 +187,6 @@ export function threatModelDefinitionHTML(tables = []) {
     + '</p>';
 }
 
-// The works the definition paragraph cites, as Informative References entries.
 export const THREAT_MODEL_REFERENCES = [
   {
     key: 'dpv-risk',
@@ -242,7 +238,6 @@ export function threatValueRank(rel, href) {
   return values.indexOf(href);
 }
 
-// Option sets by select marker; threat-type varies by the chosen framework.
 export function threatSelectGroups(kind, framework = 'stride') {
   switch (kind) {
     case 'threat-model-kind':

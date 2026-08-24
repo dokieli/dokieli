@@ -40,7 +40,7 @@ function cellText(cell) {
 }
 
 // A row without data asserts nothing; a select counts only once a choice is made.
-function rowHasData(row) {
+export function rowHasData(row) {
   let found = false;
 
   row.forEach((cell) => {
@@ -68,7 +68,6 @@ function rowHasData(row) {
   return found;
 }
 
-// True when inline content in the cell carries its own RDFa property or rel.
 export function contentStatesProperty(cell) {
   let found = false;
 
@@ -178,21 +177,18 @@ export function reconcileTable(tr, table, tablePos, mapPos = (p) => p) {
     });
   });
 
-  // The table's subject: pinned by settings, else derived live from the caption.
   let captionText = '';
   table.forEach((child) => {
     if (child.type.name === 'caption') captionText = child.textContent.trim();
   });
 
-  // Precedence: pinned by settings, else the caption, else what an earlier pass
-  // emitted, else minted fresh -- a mapped table always has a subject.
+  // Subject precedence: settings, caption, earlier emission, minted; a mapped table always has one.
   const tableSubject = tableSchema.subject || subjectFromCaption(captionText)
     || table.attrs.originalAttributes?.resource
     || '#' + generateAttributeId();
   const rowRel = tableSchema.propertyUrl || DEFAULT_ROW_PROPERTY;
 
-  // The predicate linking the table subject to each row lives on the section;
-  // the caption names the table subject.
+  // The row-linking predicate lives on the section; the caption names the table subject.
   let offset = tablePos + 1;
   table.forEach((child) => {
     const at = offset;
