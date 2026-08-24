@@ -898,6 +898,9 @@ padding:0;
 /* font-weight:normal !important; */
 padding:0;
 }
+.do legend {
+margin-bottom:1em;
+}
 
 #document-menu.do,
 aside.do {
@@ -2192,16 +2195,7 @@ font-weight:normal !important;
 color:#333;
 white-space:nowrap;
 }
-.editor-form-card-fields .editor-form-input,
-.editor-form-card-fields .editor-form-select {
-width:100%;
-min-width:0;
-box-sizing:border-box;
-padding:0.35em 0.5em;
-border-width:1px;
-border-radius:0.25em;
-font-size:0.9375em;
-}
+
 /* Counts need a couple of digits, not the whole row. */
 .editor-form-card-fields input[type="number"] {
 width:5em;
