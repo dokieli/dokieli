@@ -461,17 +461,11 @@ function extraSignature(doc) {
   // map away the checkbox widget without otherwise changing the fingerprint.
   const catDef = categoryDefinition(doc);
   const categories = catDef ? `${catDef.pos}:${Array.from(catDef.selected).join('|')}` : '';
-  // Fingerprint each dt's about/dfn id: the sync rewrites them and widgets inside must rebuild.
+  // Fingerprint each dt's about/id: the sync rewrites them and widgets inside must rebuild.
   const dts = [];
   doc.descendants((node) => {
     if (node.type.name !== 'dt') return true;
-    let markId = '';
-    node.forEach((child) => {
-      if (markId) return;
-      const dfn = child.marks.find((m) => m.type.name === 'dfn');
-      markId = dfn?.attrs.originalAttributes?.id || '';
-    });
-    dts.push(`${node.attrs.originalAttributes?.about || ''}~${markId}`);
+    dts.push(`${node.attrs.originalAttributes?.about || ''}~${node.attrs.originalAttributes?.id || ''}`);
     return true;
   });
   // Include the report-type state so the head wrap/unwrap always rebuilds decorations.
@@ -519,23 +513,24 @@ const SYNC_KINDS = [
 const SYNC_META = 'specification-concept-sync';
 
 function desiredFor(kind, text) {
-  if (!text) return { markId: null, dtAttrs: {}, ddAttrs: {} };
+  if (!text) return { wantDfn: false, dtAttrs: {}, ddAttrs: {} };
   const id = kind === 'term' ? `dfn-${slugify(text)}`
     : kind === 'concept' ? conceptId(text)
     : interoperabilityId(text);
   return {
-    markId: id,
-    dtAttrs: { about: `#${id}`, property: 'skos:prefLabel', typeof: 'skos:Concept' },
+    wantDfn: true,
+    // The id lives on the dt itself, so it is a discoverable, labellable anchor; the dfn mark stays purely semantic.
+    dtAttrs: { id, about: `#${id}`, property: 'skos:prefLabel', typeof: 'skos:Concept' },
     ddAttrs: { about: `#${id}`, property: 'skos:definition' },
   };
 }
 
-// Whether every inline child of the dt carries exactly the wanted dfn mark.
-function dfnMarkMatches(dtNode, dfnType, markId) {
+// Whether every inline child of the dt carries (or lacks, when unwanted) the dfn mark.
+function dfnMarkMatches(dtNode, dfnType, wantDfn) {
   let ok = true;
   dtNode.forEach((child) => {
-    const mark = child.marks.find((m) => m.type === dfnType);
-    if (markId === null ? mark : (!mark || mark.attrs.originalAttributes?.id !== markId)) ok = false;
+    const has = child.marks.some((m) => m.type === dfnType);
+    if (has !== wantDfn) ok = false;
   });
   return ok;
 }
@@ -593,14 +588,14 @@ export const specificationConceptSyncPlugin = new Plugin({
       if (!blurred && sel.from <= end && sel.to >= start) return;
 
       const text = dt.node.textContent.trim();
-      const { markId, dtAttrs, ddAttrs } = desiredFor(kind, text);
+      const { wantDfn, dtAttrs, ddAttrs } = desiredFor(kind, text);
 
-      if (!dfnMarkMatches(dt.node, dfnType, markId)) {
+      if (!dfnMarkMatches(dt.node, dfnType, wantDfn)) {
         ensure().removeMark(start, end, dfnType);
-        if (markId) tr.addMark(start, end, dfnType.create({ originalAttributes: { id: markId } }));
+        if (wantDfn) tr.addMark(start, end, dfnType.create({ originalAttributes: {} }));
       }
-      if (!attrsMatch(dt.node, dtAttrs, ['about', 'property', 'typeof'])) {
-        ensure().setNodeMarkup(dt.pos, null, mergeAttrs(dt.node, dtAttrs, ['about', 'property', 'typeof']));
+      if (!attrsMatch(dt.node, dtAttrs, ['id', 'about', 'property', 'typeof'])) {
+        ensure().setNodeMarkup(dt.pos, null, mergeAttrs(dt.node, dtAttrs, ['id', 'about', 'property', 'typeof']));
       }
       if (dd && !attrsMatch(dd.node, ddAttrs, ['about', 'property'])) {
         ensure().setNodeMarkup(dd.pos, null, mergeAttrs(dd.node, ddAttrs, ['about', 'property']));

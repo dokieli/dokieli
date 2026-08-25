@@ -62,7 +62,9 @@ function labelForNode(node) {
     return !heading;
   });
 
-  return (heading || node.textContent.trim()).slice(0, 60);
+  // A block separator, else adjacent children with no whitespace between them (e.g. dt+dd) read as one run-on word.
+  const text = heading || node.textBetween(0, node.content.size, ' ').replace(/\s+/g, ' ').trim();
+  return text.slice(0, 60);
 }
 
 // dokieli's own widgets carry the do class; their ids are chrome, not content.

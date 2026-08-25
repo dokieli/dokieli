@@ -550,12 +550,13 @@ export function interoperabilityId(text) {
 }
 
 function upgradeConceptPair(doc, dt, dd, id) {
+  // The id lives on the dt itself, so it is a discoverable, labellable anchor; the dfn stays purely semantic.
+  dt.setAttribute('id', id);
   dt.setAttribute('about', `#${id}`);
   dt.setAttribute('property', 'skos:prefLabel');
   dt.setAttribute('typeof', 'skos:Concept');
   if (!dt.querySelector('dfn')) {
     const dfn = doc.createElement('dfn');
-    dfn.setAttribute('id', id);
     dfn.append(...Array.from(dt.childNodes));
     dt.replaceChildren(dfn);
   }
@@ -566,7 +567,7 @@ function upgradeConceptPair(doc, dt, dd, id) {
 }
 
 // Save hook: prune empty pairs in the managed <dl>s, then upgrade entries to the AC RDFa markup.
-function upgradeSpecificationDlEntries(doc) {
+export function upgradeSpecificationDlEntries(doc) {
   const article = selectArticleNode(doc);
   if (!article || !isSpecification(article)) return;
 
@@ -592,7 +593,15 @@ function upgradeSpecificationDlEntries(doc) {
         dt.after(dd);
       }
 
-      if (dt.getAttribute('about')) return;
+      if (dt.getAttribute('about')) {
+        // Already upgraded by an earlier version: move the dfn's id onto the dt so it becomes a labellable anchor.
+        if (!dt.id) {
+          const dfn = dt.querySelector('dfn');
+          dt.id = dfn?.getAttribute('id') || dt.getAttribute('about').replace(/^#/, '');
+          dfn?.removeAttribute('id');
+        }
+        return;
+      }
       const text = dt.textContent.trim();
       if (key === 'terminology') upgradeConceptPair(doc, dt, dd, `dfn-${slugify(text)}`);
       else if (key === 'classes-of-products') upgradeConceptPair(doc, dt, dd, conceptId(text));

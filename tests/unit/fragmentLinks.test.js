@@ -72,6 +72,12 @@ describe('fragment link suggestions', () => {
     expect(getFragmentMatch(state)).toBeNull();
   });
 
+  it('separates adjacent children with no whitespace between them, like a dt immediately followed by a dd', () => {
+    const dlDoc = docFrom('<dl id="document-published"><dt>Published</dt><dd><time datetime="2026-08-25">2026-8-25</time></dd></dl>');
+    const items = filteredIds(dlDoc, 'document-published');
+    expect(items[0].label).toBe('Published 2026-8-25');
+  });
+
   it('matches inside an inline node, such as a link wrapping a time', () => {
     const inlineDoc = docFrom('<p>At <a href="https://example.org/x"><time datetime="2020-01-01">2020 #disc</time></a></p>');
     const state = EditorState.create({ schema, doc: inlineDoc, selection: TextSelection.create(inlineDoc, caretAfter(inlineDoc, '#disc')) });
