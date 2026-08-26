@@ -22,7 +22,6 @@ import { i18n } from "../../i18n.js";
 
 export const fragmentLinksPluginKey = new PluginKey("fragmentLinks");
 
-const MAX_SUGGESTIONS = 20;
 const MAX_QUERY_LENGTH = 64;
 // Leading `#` only, so `page#section` in a URL is left alone.
 const FRAGMENT_RE = /(?:^|[\s(\[{<"'‘“])#([^\s#]*)$/;
@@ -114,8 +113,7 @@ export function filteredIds(doc, query) {
     .map((item) => ({ item, index: item.id.toLowerCase().indexOf(q) }))
     .filter(({ index }) => index >= 0)
     .sort((a, b) => (a.index - b.index) || a.item.id.localeCompare(b.item.id))
-    .map(({ item }) => item)
-    .slice(0, MAX_SUGGESTIONS);
+    .map(({ item }) => item);
 }
 
 class FragmentLinksView {
