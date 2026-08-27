@@ -753,6 +753,24 @@ customNodes.anchor = {
   toDOM: toDOMWith("a")
 };
 
+// A mark would split at each inner mark boundary and repeat its attributes (a duplicated id,
+// for citation markup). A span with element children or an id is a node; plain text stays a mark.
+customNodes.inlineSpan = {
+  inline: true,
+  group: "inline",
+  content: "inline*",
+  attrs: { originalAttributes: { default: {} } },
+  parseDOM: [{
+    tag: "span",
+    priority: 60,
+    getAttrs(node) {
+      if (node.classList?.contains('do')) return false;
+      return (node.children.length || node.getAttribute('id')) ? getAttributes(node) : false;
+    }
+  }],
+  toDOM: toDOMWith("span")
+};
+
 const customMarks = {};
 
 Config?.DOMProcessing.proseMirrorMarks.forEach(tagName => {
@@ -771,7 +789,12 @@ Config?.DOMProcessing.proseMirrorMarks.forEach(tagName => {
 
   customMarks[tagName] = {
     attrs: { originalAttributes: { default: {} } },
-    parseDOM: [{ tag: tagName, preserveWhitespace: true, getAttrs(node){ return getAttributes(node); }}],
+    parseDOM: [{ tag: tagName, preserveWhitespace: true, getAttrs(node){
+      // .do is removed with its content on save, and an annotation highlight is a span.ref.do
+      // around the annotated mark: parsing it would take the text out with it.
+      if (node.classList?.contains('do')) return false;
+      return getAttributes(node);
+    }}],
     // toDOM(node) { return [namespace + tagName, { ...node.attrs.originalAttributes }, 0]; },
     toDOM,
     inclusive: false,

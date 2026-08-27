@@ -7726,3 +7726,104 @@ input.passphrase-mismatch + button.toggle-passphrase svg {
   outline: 2px solid #080;
   outline-offset: 3px;
 }
+
+/* self-links */
+.self-link {
+  display: inline-block;
+  margin-right: 0.25em;
+  user-select: none;
+  font-family: monospace;
+  font-style: normal;
+  font-weight: bold;
+  outline: none;
+  text-align: left;
+  text-decoration: underline;
+  border: 0;
+  background-color: transparent;
+  line-height: 1;
+  vertical-align: initial;
+}
+.self-link:after {
+  content: "#";
+  font-size: initial;
+}
+aside > .self-link:after {
+  content: "|";
+}
+dl > .self-link:after {
+  content: "☝";
+}
+nav > .self-link:after {
+  content: "☛";
+}
+p > .self-link:after {
+  content: "¶";
+}
+section > .self-link:after {
+  content: "§";
+}
+figure > .self-link:after {
+  content: "❦";
+}
+table > .self-link:after {
+  content: "𝄜";
+}
+[rel~="spec:requirement"] .self-link:after {
+  content: "◎";
+}
+[rel~="spec:advisement"] .self-link:after {
+  content: "✪";
+}
+
+.self-link + h2,
+.self-link + h3,
+.self-link + h4,
+.self-link + h5,
+.self-link + h6,
+.self-link + dt {
+  display: inline-block;
+  margin-block: 0;
+  margin-bottom: 0.5rem;
+}
+/* Each TOC starts its own count; only the outermost list resets, so nested "1.1" still
+   reads off the ancestor's counter. */
+nav > ol.toc,
+nav > div > ol.toc {
+  counter-reset: s;
+}
+
+/* section nav: drag to reorder, Enter to add */
+nav.do[id$="-toc"] li.tocline.drop-before {
+  box-shadow: 0 -2px 0 0 rgba(0,128,0,0.6);
+}
+nav.do[id$="-toc"] li.tocline.drop-after {
+  box-shadow: 0 2px 0 0 rgba(0,128,0,0.6);
+}
+
+/* A document that does not number its sections lists them as plain bullets; .toc otherwise
+   strips the marker and leaves nothing, since its numbering comes from the data-id counters. */
+nav.do[id$="-toc"][data-toc-scheme="none"] > ol.toc {
+  margin-left: 1em;
+}
+nav.do[id$="-toc"][data-toc-scheme="none"] > ol.toc > li.tocline {
+  list-style: disc outside;
+}
+
+/* the drag handle only shows on hover, so the row stays plain text to click into */
+nav.do[id$="-toc"] li.tocline > .section-drag {
+  visibility: hidden;
+  cursor: grab;
+  user-select: none;
+  display: inline-block;
+  width: 1em;
+  margin-right: 0.25em;
+  margin-left: -1em;
+  padding: 0;
+}
+nav.do[id$="-toc"] li.tocline:hover > .section-drag,
+nav.do[id$="-toc"] li.tocline:focus-within > .section-drag {
+  visibility: visible;
+}
+nav.do[id$="-toc"] li.tocline > a.tocxref {
+  cursor: text;
+}

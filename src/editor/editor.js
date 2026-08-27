@@ -27,6 +27,8 @@ import { SlashMenu } from "./slashmenu/slashmenu.js";
 import { applyEditorParseTransforms } from "./../utils/documentTransforms.js";
 import { placeholderPlugin } from "./plugins/placeholder.js";
 import { autoIdPlugin } from "./plugins/autoId.js";
+import { documentAnchorsPlugin } from "./plugins/documentAnchors.js";
+import { refreshDocumentAnchors } from "../ui/anchors.js";
 import { documentStructurePlugin } from "./plugins/documentStructure.js";
 import { slideshowDecorationsPlugin } from "./plugins/slideshowDecorations.js";
 import { ImageResizeView } from "./nodeviews/imageResize.js";
@@ -379,7 +381,7 @@ export class Editor {
     // not a collaborative session): skip Yjs/IndexedDB/remote-sync entirely.
     Config.Editor['collab'] = false;
     pmDoc = originalDoc;
-    editorPlugins = [history(), mentionsPlugin, fragmentLinksPlugin, keymapPlugin, placeholderPlugin, documentStructurePlugin, slideshowDecorationsPlugin, cvNavDecorationPlugin, specificationNavDecorationPlugin, specificationConceptSyncPlugin, autoIdPlugin, protectPlaceholdersPlugin, tableToolsPlugin(), editorToolbarPlugin];
+    editorPlugins = [history(), mentionsPlugin, fragmentLinksPlugin, keymapPlugin, placeholderPlugin, documentStructurePlugin, slideshowDecorationsPlugin, cvNavDecorationPlugin, specificationNavDecorationPlugin, specificationConceptSyncPlugin, autoIdPlugin, documentAnchorsPlugin, protectPlaceholdersPlugin, tableToolsPlugin(), editorToolbarPlugin];
   } else {
     Config.Editor['collab'] = true;
     ydoc = new Y.Doc();
@@ -594,6 +596,7 @@ export class Editor {
       specificationNavDecorationPlugin,
       specificationConceptSyncPlugin,
       autoIdPlugin,
+      documentAnchorsPlugin,
       protectPlaceholdersPlugin,
       tableToolsPlugin(),
       editorToolbarPlugin,
@@ -852,6 +855,9 @@ export class Editor {
       } else {
         document.body.replaceChildren(...prependNodes, ...newBodyContent, ...appendNodes, ...this.allowedScriptElements);
       }
+      // Read mode gets the generated section numbers and self-links back as markup.
+      refreshDocumentAnchors(selectArticleNode(document));
+
       // this.restrictedNodes.forEach(node => {
       //   document.body.appendChild(node);
       // });

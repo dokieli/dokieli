@@ -91,7 +91,8 @@ export default {
   DOMProcessing: {
     'rdfaAttributes': ['about', 'content', 'datatype', 'href', 'lang', 'inlist', 'prefix', 'property', 'rel', 'resource', 'rev', 'src', 'typeof', 'vocab', 'xml:lang'],
     'inlineElements': ['span', 'progress', 'del', 'ins', 'data', 'datalist', 'mark', 'cite', 'q', 'sup', 'sub', 'a', 'time', 'em', 'strong', 'b', 'i', 'u', 's', 'strike', 'dfn', 'abbr', 'var', 'samp', 'kbd', 'bdi', 'math', 'mrow', 'mi', 'mo', 'mfrac', 'embed', 'img', 'wbr', 'code', 'meta', 'link', 'button', 'svg', 'title', 'metadata', 'defs', 'marker', 'g', 'line', 'circle', 'path', 'tspan', 'text'],
-    'proseMirrorMarks': ['del', 'ins', 'mark', 'cite', 'q', 'sup', 'sub', 'a', 'em', 'strong', 'dfn', 'abbr'],
+    //`span` is last so it nests innermost, keeping `a > span` in that order on the way out.
+    'proseMirrorMarks': ['del', 'ins', 'mark', 'cite', 'q', 'sup', 'sub', 'a', 'em', 'strong', 'dfn', 'abbr', 'span'],
     'voidElements': ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source', 'track', 'wbr'],
     'selfClosing': ['circle', 'ellipse', 'line', 'path', 'polygon', 'polyline', 'rect', 'stop', 'use'],
     'urlAttributes': ['href', 'src', 'data-versionurl', 'about', 'rel', 'rev', 'typeof', 'property', 'resource', 'datatype', 'vocab', 'xmlns', 'action', 'formaction', 'cite', 'data', 'poster', 'manifest', 'longdesc', 'profile', 'background', 'icon', 'usemap'],

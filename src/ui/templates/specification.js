@@ -226,9 +226,16 @@ function getSpecificationRoot() {
 }
 
 // The article's own typeof is the primary marker (survives removal of the details block).
+const SPECIFICATION_TYPE_SELECTOR = [
+  '[typeof~="doap:Specification"]', '[typeof~="spec:Specification"]', '[typeof~="dcat:Standard"]',
+  '[rel~="rdf:type"][href*="doap#Specification"]', '[rel~="rdf:type"][resource*="doap#Specification"]',
+  '[rel~="rdf:type"][href*="spec#Specification"]', '[rel~="rdf:type"][resource*="spec#Specification"]',
+  '[rel~="rdf:type"][href*="dcat#Standard"]', '[rel~="rdf:type"][resource*="dcat#Standard"]',
+].join(', ');
+
 export function isSpecification(root) {
-  return root.matches?.('[typeof~="doap:Specification"]') ||
-    !!root.querySelector('[typeof~="doap:Specification"], [rel~="rdf:type"][href*="doap#Specification"], [rel~="rdf:type"][resource*="doap#Specification"]');
+  return root.matches?.('[typeof~="doap:Specification"], [typeof~="spec:Specification"], [typeof~="dcat:Standard"]') ||
+    !!root.querySelector(SPECIFICATION_TYPE_SELECTOR);
 }
 
 function sectionLabel(type) {
@@ -251,16 +258,19 @@ function slugToType() {
 }
 
 // Classify by id, then heading slug. Tree-agnostic so DOM and PM share it.
-export function classifySpecificationSection({ id, headingText } = {}) {
+export function classifySpecificationSection({ marker, id, headingText } = {}) {
+  // The marker is the identity: it survives a retitle, and the id rewrite that follows.
+  if (marker && SECTIONS[marker]) return marker;
   if (id && SECTIONS[id]) return id;
   const slug = headingText ? slugify(headingText.trim()) : '';
   const type = slug ? slugToType()[slug] : null;
   return type && SECTIONS[type] ? type : null;
 }
 
-export function classifySpecificationSubsection(parentType, { id, headingText } = {}) {
+export function classifySpecificationSubsection(parentType, { marker, id, headingText } = {}) {
   const registry = SPEC_SUBSECTIONS[parentType];
   if (!registry) return null;
+  if (marker && registry[marker]) return marker;
   if (id && registry[id]) return id;
   const slug = headingText ? slugify(headingText.trim()) : '';
   const type = slug ? slugToType()[slug] : null;
@@ -283,13 +293,13 @@ function sectionEntries(root) {
   if (details) entries.set('document-details', { id: details.id || 'document-details' });
 
   getContent(root)?.querySelectorAll(':scope > section').forEach((section) => {
-    const type = classifySpecificationSection({ id: section.id, headingText: headingText(section) });
+    const type = classifySpecificationSection({ marker: section.getAttribute(SECTION_MARKER), id: section.id, headingText: headingText(section) });
     if (!type || entries.has(type)) return;
     const info = { id: section.id || type };
     if (SPEC_SUBSECTIONS[type]) {
       info.subs = new Map();
       section.querySelectorAll(':scope > section, :scope > div > section').forEach((sub) => {
-        const subType = classifySpecificationSubsection(type, { id: sub.id, headingText: headingText(sub) });
+        const subType = classifySpecificationSubsection(type, { marker: sub.getAttribute(SECTION_MARKER), id: sub.id, headingText: headingText(sub) });
         if (subType && !info.subs.has(subType)) info.subs.set(subType, sub.id);
       });
     }
@@ -361,6 +371,10 @@ function explainerHTML() {
 
 // One Conformance subsection's markup, by type; the Subdivisions builder lives below.
 function conformanceSubsectionHTML(type) {
+  return withSectionMarker(buildConformanceSubsectionHTML(type), type);
+}
+
+function buildConformanceSubsectionHTML(type) {
   switch (type) {
     case 'normative-informative-content':
       return sectionHTML({
@@ -441,14 +455,25 @@ function referencesHTML() {
   return sectionHTML({ id: 'references', className: 'appendix', heading: sectionLabel('references'), content });
 }
 
+export const SECTION_MARKER = 'data-spec-section';
+
+// Stamped on the generated section so it stays identifiable after a retitle.
+function withSectionMarker(html, type) {
+  return html.replace(/^<section/, `<section ${SECTION_MARKER}="${type}"`);
+}
+
 function specificationSectionHTML(type) {
+  return withSectionMarker(buildSpecificationSectionHTML(type), type);
+}
+
+function buildSpecificationSectionHTML(type) {
   switch (type) {
     case 'document-details':
       return documentDetailsBlockHTML();
     case 'abstract':
-      return `<section id="abstract"><h2>${sectionLabel('abstract')}</h2><div datatype="rdf:HTML" property="schema:abstract"><p data-placeholder="${i18n.t('specification.placeholder.abstract')}"></p></div></section>`;
+      return `<section class="introductory" id="abstract"><h2>${sectionLabel('abstract')}</h2><div datatype="rdf:HTML" property="schema:abstract"><p data-placeholder="${i18n.t('specification.placeholder.abstract')}"></p></div></section>`;
     case 'sotd':
-      return sectionHTML({ id: 'sotd', heading: sectionLabel('sotd'), content: `<p data-placeholder="${i18n.t('specification.placeholder.sotd')}"></p>` });
+      return sectionHTML({ id: 'sotd', className: 'introductory', heading: sectionLabel('sotd'), content: `<p data-placeholder="${i18n.t('specification.placeholder.sotd')}"></p>` });
     case 'introduction':
       return sectionHTML({ id: 'introduction', heading: sectionLabel('introduction'), content: nonNormative + `<p data-placeholder="${i18n.t('specification.placeholder.introduction')}"></p>` });
     case 'terminology':
@@ -480,6 +505,10 @@ function specificationSectionHTML(type) {
 }
 
 function considerationsSubsectionHTML(type) {
+  return withSectionMarker(buildConsiderationsSubsectionHTML(type), type);
+}
+
+function buildConsiderationsSubsectionHTML(type) {
   const typeOf = SPEC_SUBSECTIONS['considerations'][type]?.typeof;
 
   // A threat model starts with its definition sentence and a table to fill in.
@@ -511,6 +540,10 @@ export const specificationSections = registerSectionsTemplate({
   sectionsAtRoot: true,
   tocId: 'toc',
   tocLabel: () => i18n.t('specification.toc.h2.textContent'),
+  tocScheme: 'w3c',
+  selfLinks: true,
+  sectionNumbers: true,
+  markerAttribute: SECTION_MARKER,
   unnumbered: new Set(['abstract', 'sotd']),
   outside: new Set(['document-details']),
   subsections: {
@@ -530,9 +563,28 @@ export const specificationSections = registerSectionsTemplate({
 registerDocumentTransform((doc) => injectSectionsTOC(specificationSections, doc));
 registerEditorParseTransform((root) => stripSectionsTOC(specificationSections, root));
 
+// Back-fill on specs written before the marker existed, while id or heading still match.
+function migrateSpecificationSectionMarkers(root) {
+  if (!root || !isSpecification(root)) return;
+  root.querySelectorAll('section').forEach((section) => {
+    if (section.getAttribute(SECTION_MARKER)) return;
+    const type = classifySpecificationSection({ id: section.id, headingText: headingText(section) });
+    if (type) { section.setAttribute(SECTION_MARKER, type); return; }
+    const parent = section.parentNode?.closest?.('section');
+    const parentType = parent && (parent.getAttribute(SECTION_MARKER) ||
+      classifySpecificationSection({ id: parent.id, headingText: headingText(parent) }));
+    if (!parentType) return;
+    const subType = classifySpecificationSubsection(parentType, { id: section.id, headingText: headingText(section) });
+    if (subType) section.setAttribute(SECTION_MARKER, subType);
+  });
+}
+registerEditorParseTransform(migrateSpecificationSectionMarkers);
+
+
 // Section element by key: id match, then heading slug (ids can be rewritten by autoId).
 function findSpecificationSectionElement(article, key) {
-  return article.querySelector(`section#${CSS.escape(key)}`) ||
+  return article.querySelector(`section[${SECTION_MARKER}="${key}"]`) ||
+    article.querySelector(`section#${CSS.escape(key)}`) ||
     Array.from(article.querySelectorAll('section')).find(s => slugify(headingText(s).trim()) === key) || null;
 }
 

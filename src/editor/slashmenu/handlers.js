@@ -285,3 +285,4 @@ export async function formHandlerImg(e) {
 
   this.hideMenu();
 }
+

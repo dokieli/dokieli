@@ -341,6 +341,9 @@ export const buttonIcons = {
   table: {
     icon: Icon [".fas.fa-table"]
   },
+  toc: {
+    icon: Icon [".fas.fa-list-check"]
+  },
   source: {
     icon: Icon[".fas.fa-code"]
   },

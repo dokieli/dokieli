@@ -26,7 +26,7 @@ import { subjectFromCaption } from "../../table.js";
 import { i18n } from "../../i18n.js";
 import { buildSectionsNav } from "../../ui/templates/sections.js";
 import {
-  specificationSections, isSpecification, classifySpecificationSection, classifySpecificationSubsection, SPEC_SUBSECTIONS,
+  specificationSections, isSpecification, classifySpecificationSection, classifySpecificationSubsection, SPEC_SUBSECTIONS, SECTION_MARKER,
   SPEC_CATEGORIES, categoryDefinitionHTML, considerationsDefinitionHTML, termEntryHTML, productClassEntryHTML, interoperabilityEntryHTML, acknowledgementsPersonHTML,
   conceptId, interoperabilityId, personId, applyReportTypeChrome,
   SPEC_SUBDIVISIONS, SPEC_SUBDIVISION_KEYS, SPEC_SUBDIVISION_REL, subdivisionEntryHTML, subdivisionPairHTML, subdivisionDlHTML, subdivisionsDefinitionHTML,
@@ -61,16 +61,26 @@ function sectionEntries(doc) {
     }
     if (node.type.name !== 'section') return;
     const id = node.attrs.originalAttributes?.id;
-    const type = classifySpecificationSection({ id, headingText: pmHeadingText(node) });
+    const marker = node.attrs.originalAttributes?.[SECTION_MARKER];
+    const type = classifySpecificationSection({ marker, id, headingText: pmHeadingText(node) });
     if (!type || entries.has(type)) return;
-    const info = { id: id || type };
+    const info = { id: id || type, heading: pmHeadingText(node).trim() };
     if (SPEC_SUBSECTIONS[type]) {
       info.subs = new Map();
+      // Live heading text, so the nav can show a renamed subsection.
+      info.subHeadings = new Map();
       node.descendants((sub) => {
         if (sub.type.name !== 'section') return true;
         const subId = sub.attrs.originalAttributes?.id;
-        const subType = classifySpecificationSubsection(type, { id: subId, headingText: pmHeadingText(sub) });
-        if (subType && !info.subs.has(subType)) info.subs.set(subType, subId || subType);
+        const subType = classifySpecificationSubsection(type, {
+          marker: sub.attrs.originalAttributes?.[SECTION_MARKER],
+          id: subId,
+          headingText: pmHeadingText(sub),
+        });
+        if (subType && !info.subs.has(subType)) {
+          info.subs.set(subType, subId || subType);
+          info.subHeadings.set(subType, pmHeadingText(sub).trim());
+        }
         return false;
       });
     }
@@ -497,7 +507,7 @@ export const specificationNavDecorationPlugin = createSectionsNavPlugin({
   isDoc: isSpecificationDoc,
   isContentNode: isSpecificationContent,
   entries: sectionEntries,
-  buildNav: (view, present) => buildSectionsNav(specificationSections, view.dom, present),
+  buildNav: (view, present, doc) => buildSectionsNav(specificationSections, view.dom, present, doc),
   signature: extraSignature,
   extraDecorations,
 });

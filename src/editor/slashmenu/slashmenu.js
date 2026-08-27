@@ -25,6 +25,9 @@ import { DOMParser } from "prosemirror-model";
 import { i18n } from "../../i18n.js";
 import { fragmentFromString } from "../../utils/html.js";
 import { defaultImageTargetPath } from "../utils/imageAssets.js";
+import { selectArticleNode } from "../../utils/html.js";
+import { toggleTOCForRoot } from "../../ui/templates/sections.js";
+import { documentAnchorsPluginKey } from "../plugins/documentAnchors.js";
 
 export class SlashMenu {
   constructor(editorView) {
@@ -35,7 +38,7 @@ export class SlashMenu {
     this.menuContainer.style.display = "none";
     this.menuContainer.style.position = "absolute";
 
-    this.slashMenuButtons = ['img', 'table', 'language', 'license', 'inbox', 'in-reply-to', 'publication-status', 'resource-type', 'test-suite'].map(button => ({
+    this.slashMenuButtons = ['img', 'table', 'toc', 'language', 'license', 'inbox', 'in-reply-to', 'publication-status', 'resource-type', 'test-suite'].map(button => ({
       button,
       dom: () => fragmentFromString(getButtonHTML({ button } )).firstChild,
     }));
@@ -123,6 +126,8 @@ export class SlashMenu {
           break;
         }
         case "Escape": {
+          event.preventDefault();
+          event.stopPropagation();
           this.hideMenu();
           this.editorView.focus();
           break;
@@ -130,7 +135,7 @@ export class SlashMenu {
       }
     };
 
-    document.addEventListener("keydown", this.menuKeyHandler);
+    document.addEventListener("keydown", this.menuKeyHandler, true);
   }
 
   /** Open one feature's form directly at the caret, e.g. from the toolbar; no "/" involved. */
@@ -151,11 +156,11 @@ export class SlashMenu {
     this.menuSearch = null;
     this.menuList = null;
     if (this.menuKeyHandler) {
-      document.removeEventListener("keydown", this.menuKeyHandler);
+      document.removeEventListener("keydown", this.menuKeyHandler, true);
       this.menuKeyHandler = null;
     }
     if (this.popupKeyHandler) {
-      document.removeEventListener("keydown", this.popupKeyHandler);
+      document.removeEventListener("keydown", this.popupKeyHandler, true);
       this.popupKeyHandler = null;
     }
   }
@@ -236,6 +241,8 @@ export class SlashMenu {
   }
 
   handlePopups(button) {
+    if (button === 'toc') return this.toggleTOC();
+
     let popupContent = {
       img: this.createImgWidgetHTML(),
       table: this.createTableWidgetHTML(),
@@ -250,6 +257,26 @@ export class SlashMenu {
 
     const popup = fragmentFromString(`<form class="editor-form editor-form-active">${popupContent[button]}</form>`);
     this.openPopup(popup, button);
+  }
+
+  // The menu item is the toggle; with no sections yet the heading still shows.
+  toggleTOC() {
+    toggleTOCForRoot(selectArticleNode(document));
+
+    const { state, dispatch } = this.editorView;
+    const { selection } = state;
+    let tr = state.tr;
+
+    // Nothing is inserted to consume the "/", so drop it.
+    const from = Math.max(selection.from - 1, 0);
+    if (this.openedWithSlash && state.doc.textBetween(from, selection.from) === '/') {
+      tr = tr.delete(from, selection.from);
+    }
+
+    dispatch(tr.setMeta(documentAnchorsPluginKey, true));
+
+    this.hideMenu();
+    this.editorView.focus();
   }
 
   createTableWidgetHTML() {
@@ -433,7 +460,7 @@ export class SlashMenu {
 
   openPopup(popup, button) {
     if (this.menuKeyHandler) {
-      document.removeEventListener("keydown", this.menuKeyHandler);
+      document.removeEventListener("keydown", this.menuKeyHandler, true);
       this.menuKeyHandler = null;
     }
 
@@ -498,10 +525,12 @@ export class SlashMenu {
 
     this.popupKeyHandler = (event) => {
       if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
       this.hideMenu();
       this.editorView.focus();
     };
-    document.addEventListener("keydown", this.popupKeyHandler);
+    document.addEventListener("keydown", this.popupKeyHandler, true);
   }
 
   // this function is duplicated from the Author toolbar. The reason is that 1. the editor instance is not accessible from everywhere (although that could be solved) and 2. the toolbar might not be initialized when we trigger this menu yet. it might be better to keep this somewhere common to every menu/toolbar using the author mode functions (prosemirror transactions) and re-use. and 3. for the specific case of the slash menu i need to update the selection so that it includes (and replaces) the slash

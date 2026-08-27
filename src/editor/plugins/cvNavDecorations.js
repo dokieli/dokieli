@@ -56,7 +56,7 @@ function sectionEntries(doc) {
     node.forEach((child) => {
       if (child.type.name === "section") {
         const type = pmSectionType(child);
-        if (type && !entries.has(type)) entries.set(type, { id: child.attrs.originalAttributes?.id || "" });
+        if (type && !entries.has(type)) entries.set(type, { id: child.attrs.originalAttributes?.id || "", heading: pmHeadingText(child).trim() });
       }
     });
   });
@@ -166,7 +166,7 @@ export const cvNavDecorationPlugin = createSectionsNavPlugin({
   pluginKeyName: "cvNavDecoration",
   isDoc: (doc) => isDocOfType(doc, /CurriculumVitae/),
   entries: sectionEntries,
-  buildNav: (view, present) => buildTOC(view.dom, present),
+  buildNav: (view, present, doc) => buildTOC(view.dom, present, doc),
   // Fold the skill categories and entry/skill counts into the rebuild fingerprint.
   signature: (doc) => `${skillCategoryNodes(doc).map(c => c.end).join(",")}|${entryLiPositions(doc).length}/${skillDdPositions(doc).length}`,
   extraDecorations: (doc) => [...entryButtonDecorations(doc), ...skillButtonDecorations(doc), ...entryDeleteDecorations(doc)],

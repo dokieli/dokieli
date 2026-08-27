@@ -38,6 +38,7 @@ import { renderFootnote, renderCitation } from './editor/utils/reference-render.
 import { getResource } from "./fetcher.js";
 import { encryptContent } from './crypto.js';
 import { isUnlocked, getSessionPublicKey, getDocumentRecipientKeys, syncDocumentRecipientsFromACL } from './keystore.js';
+import { selfLinkHost } from './ui/selfLinks.js';
 
 const ns = Config.ns;
 
@@ -3833,12 +3834,26 @@ export function showFragment(selector) {
 
   for(var i = 0; i < ids.length; i++){
     ids[i].addEventListener('mouseenter', (e) => {
-      var fragment = document.querySelector('*[id="' + e.target.id + '"] > .do.fragment');
+      // A details keeps its self-link, and so the wrapper, inside its summary.
+      var host = selfLinkHost(e.target);
+      var fragment = host.querySelector(':scope > .do.fragment');
       if (!fragment && e.target.parentNode.nodeName.toLowerCase() != 'aside'){
-        const sign = getSelectorSign(e.target);
+        // The self-link is already in the document, so borrow it rather than add a second.
+        const selfLink = host.querySelector(':scope > a.self-link');
 
-        sanitizeInsertAdjacentHTML(e.target, 'afterbegin', '<span class="do fragment"><a href="#' + e.target.id + '">' + sign + '</a></span>');
-        fragment = document.querySelector('[id="' + e.target.id + '"] > .do.fragment');
+        if (selfLink) {
+          fragment = document.createElement('span');
+          fragment.className = 'do fragment';
+          selfLink.before(fragment);
+          fragment.appendChild(selfLink);
+        }
+        else {
+          const sign = getSelectorSign(e.target);
+
+          sanitizeInsertAdjacentHTML(host, 'afterbegin', '<span class="do fragment"><a href="#' + e.target.id + '">' + sign + '</a></span>');
+          fragment = host.querySelector(':scope > .do.fragment');
+        }
+
         var fragmentClientWidth = fragment.clientWidth;
 
         var fragmentOffsetLeft = getOffset(e.target).left;
@@ -3857,8 +3872,11 @@ export function showFragment(selector) {
     });
 
     ids[i].addEventListener('mouseleave', (e) => {
-      var fragment = document.querySelector('[id="' + e.target.id + '"] > .do.fragment');
+      var fragment = selfLinkHost(e.target).querySelector(':scope > .do.fragment');
       if (fragment && fragment.parentNode) {
+        // The self-link belongs to the document; only the wrapper goes.
+        const selfLink = fragment.querySelector(':scope > a.self-link');
+        if (selfLink) fragment.before(selfLink);
         fragment.parentNode.removeChild(fragment);
       }
     });

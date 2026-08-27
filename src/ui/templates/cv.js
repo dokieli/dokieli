@@ -27,7 +27,8 @@ import { expandTerm, getPrefixes, collectTerms } from '../../utils/rdfa.js';
 import { isAuthorMode, pmEditor, prepareDocumentForTemplate, replaceDocumentBody, documentDetailsHTML } from './shared.js';
 import { registerSectionsTemplate, buildSectionsNav, refreshSectionsNav, addSection as addTemplateSection, removeSection as removeTemplateSection, injectSectionsTOC, stripSectionsTOC } from './sections.js';
 
-// Sections are identified from their entries' RDFa (see classifySection); data-cv-section is a transient author-mode aid, stripped on save.
+// Sections are identified from their entries' RDFa (see classifySection), then from
+// data-cv-section. The marker is saved: it is the only identifier that survives a retitle.
 
 const SECTIONS = {
   summary: {
@@ -231,11 +232,13 @@ const cvSections = registerSectionsTemplate({
     return entries;
   },
   removeLabel: (type) => i18n.t('cv.button.remove-section.aria-label', { label: sectionLabel(type) }),
+  tocId: 'toc',
+  markerAttribute: 'data-cv-section',
 });
 
 // Present sections (type -> { id }) override DOM probing (e.g. read from the PM doc).
-export function buildTOC(root, presentEntries = null) {
-  return buildSectionsNav(cvSections, root, presentEntries);
+export function buildTOC(root, presentEntries = null, doc = null) {
+  return buildSectionsNav(cvSections, root, presentEntries, doc);
 }
 
 function refreshTOC(root) {
@@ -814,15 +817,6 @@ function pruneEmptyItems(doc) {
 
 registerDocumentTransform(pruneEmptyItems);
 
-// Strip the transient data-cv-section marker on save; registered last so earlier save transforms can still resolve by marker.
-function stripSectionMarkers(doc) {
-  const article = selectArticleNode(doc);
-  if (!article || !isCV(article)) return;
-  article.querySelectorAll('#content > section[data-cv-section]').forEach((s) => s.removeAttribute('data-cv-section'));
-}
-
-registerDocumentTransform(stripSectionMarkers);
-
 export function setTemplateNewCV(mode, options) {
   // TODO: Remove aria-label when content is updated
   prepareDocumentForTemplate();
@@ -941,7 +935,6 @@ export function initCV() {
         transformOrganizerInputs(document);
         removePlaceholders(document);
         pruneEmptyItems(document);
-        stripSectionMarkers(document);
       }
       refreshTOC(root);
   });

@@ -50,7 +50,8 @@ function getPlaceholder(node, $pos) {
     if (hasClass(parent, "slide")) {
       return i18n.t("editor.new-slideshow.h2.data-placeholder");
     }
-    return i18n.t("editor.new.h1.data-placeholder");
+    // "Title" is the document's h1; a section names its own level (h5/h6 share h4's).
+    return i18n.t(`editor.new.h${Math.min(node.attrs.level, 4)}.data-placeholder`);
   }
 
   if (

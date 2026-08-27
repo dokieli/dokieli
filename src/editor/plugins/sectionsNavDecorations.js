@@ -202,19 +202,41 @@ function pairDeleteWidget(pos, label, className) {
 }
 
 // Serialize present entries (Map(type -> { id, subs? })) into a signature chunk.
+// By id and name, so a section added or renamed rebuilds the nav even when not the template's.
+export function sectionsSignature(doc) {
+  const parts = [];
+  doc.descendants((node) => {
+    if (node.type.name !== "section") return true;
+    parts.push(`${node.attrs.originalAttributes?.id || ""}=${pmHeadingText(node).trim()}`);
+    return true;
+  });
+  return parts.join(",");
+}
+
 export function entriesSignature(entries) {
   return Array.from(entries, ([t, info]) => {
-    const subs = info.subs ? Array.from(info.subs, ([st, sid]) => `${st}:${sid}`).join('+') : '';
-    return `${t}:${info.id}${subs ? `(${subs})` : ''}`;
+    const subs = info.subs
+      ? Array.from(info.subs, ([st, sid]) => `${st}:${sid}=${info.subHeadings?.get(st) || ''}`).join('+')
+      : '';
+    // Heading text included, so renaming a section rebuilds the nav as it is typed.
+    return `${t}:${info.id}=${info.heading || ''}${subs ? `(${subs})` : ''}`;
   }).join(',');
 }
 
-// Generic section-nav widget plugin; config: pluginKeyName, isDoc(doc), entries(doc), buildNav(view, entries), signature(doc), extraDecorations(doc).
+// While a name is being typed, a rebuild would replace the element holding the caret. A
+// focused button is not editing: it changes the document, so the nav must redraw.
+function navNameBeingEdited() {
+  const active = document.activeElement;
+  return !!active?.isContentEditable && !!active.closest?.('nav.do[id$="-toc"]');
+}
+
+// Generic section-nav widget plugin; config: pluginKeyName, isDoc(doc), entries(doc), buildNav(view, entries, doc), signature(doc), extraDecorations(doc).
 export function createSectionsNavPlugin(config) {
   const pluginKey = new PluginKey(config.pluginKeyName);
 
   const signature = (doc) => {
-    const base = `${Config.Editor?.mode || ""}|${entriesSignature(config.entries(doc))}`;
+    // navPos included, so a structural shift rebuilds the widget where it now belongs.
+    const base = `${Config.Editor?.mode || ""}|${navPos(doc, config.isContentNode || isContentDiv)}|${sectionsSignature(doc)}|${entriesSignature(config.entries(doc))}`;
     return config.signature ? `${base}|${config.signature(doc)}` : base;
   };
 
@@ -226,7 +248,7 @@ export function createSectionsNavPlugin(config) {
 
     const present = config.entries(doc);
     const widget = Decoration.widget(pos, (view) => {
-      const nav = config.buildNav(view, present);
+      const nav = config.buildNav(view, present, doc);
       nav.contentEditable = "false";
       nav.setAttribute("contenteditable", "false");
       return nav;
@@ -253,6 +275,9 @@ export function createSectionsNavPlugin(config) {
       },
       apply(tr, value, _oldState, newState) {
         if (!tr.docChanged) return value;
+        if (navNameBeingEdited()) {
+          return { signature: signature(newState.doc), decorations: value.decorations.map(tr.mapping, tr.doc) };
+        }
         const sig = signature(newState.doc);
         if (sig === value.signature) {
           return { signature: sig, decorations: value.decorations.map(tr.mapping, tr.doc) };

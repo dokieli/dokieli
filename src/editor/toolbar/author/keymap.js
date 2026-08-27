@@ -53,6 +53,53 @@ function handleSectionHeadingEnter(state, dispatch) {
   return true;
 }
 
+// Enter in a section's trailing empty paragraph starts the next one: the body is isolating,
+// so without this there is no gesture for leaving a section.
+function handleSectionExitEnter(state, dispatch) {
+  const { $from } = state.selection;
+  if (!state.selection.empty) return false;
+  if ($from.parent.type.name !== 'p' || $from.parent.content.size !== 0) return false;
+  if ($from.depth < 2) return false;
+
+  const descDiv = $from.node($from.depth - 1);
+  if (descDiv.type.name !== 'descriptionDiv') return false;
+  // The first Enter adds the paragraph; the second leaves.
+  if (descDiv.childCount < 2) return false;
+  if ($from.index($from.depth - 1) !== descDiv.childCount - 1) return false;
+
+  const section = $from.node($from.depth - 2);
+  if (section.type.name !== 'section') return false;
+  if ($from.index($from.depth - 2) !== section.childCount - 1) return false;
+
+  if (dispatch) {
+    const { schema } = state;
+    const heading = section.child(0);
+    const level = heading?.type.name === 'heading' ? heading.attrs.level : 2;
+
+    const newSection = schema.nodes.section.create(
+      { originalAttributes: { inlist: '', rel: 'schema:hasPart' } },
+      [
+        schema.nodes.heading.create({ level }),
+        schema.nodes.descriptionDiv.create(
+          { originalAttributes: { datatype: 'rdf:HTML', property: 'schema:description' } },
+          schema.nodes.p.create()
+        ),
+      ]
+    );
+
+    const paraStart = $from.before($from.depth);
+    const sectionEnd = $from.after($from.depth - 2);
+
+    let tr = state.tr.delete(paraStart, paraStart + $from.parent.nodeSize);
+    const insertAt = tr.mapping.map(sectionEnd);
+    tr = tr.insert(insertAt, newSection);
+    // Caret in the new heading.
+    tr = tr.setSelection(TextSelection.create(tr.doc, insertAt + 2)).scrollIntoView();
+    dispatch(tr);
+  }
+  return true;
+}
+
 function handleEmptyDescBackspace(state, dispatch) {
   const { $from } = state.selection;
   if (!state.selection.empty) return false;
@@ -121,6 +168,8 @@ function customEnterCommand(state, dispatch) {
   }
 
   if (handleSectionHeadingEnter(state, dispatch)) return true;
+
+  if (handleSectionExitEnter(state, dispatch)) return true;
 
   if (isListItem && listItemDepth !== null) {
     let liType = node.type;
@@ -213,6 +262,40 @@ function deleteAcrossCells(state, dispatch) {
   return true;
 }
 
+// Nothing but empty blocks: no text, no atom.
+function isEmptySection(section) {
+  if (section.textContent.trim()) return false;
+  let hasAtom = false;
+  section.descendants((node) => {
+    if (hasAtom) return false;
+    if (node.isAtom || node.isLeaf) hasAtom = true;
+    return !hasAtom;
+  });
+  return !hasAtom;
+}
+
+// Backspace at the start of an empty section's heading removes the section. joinBackward
+// would instead dump its heading and paragraph into the previous section.
+function handleEmptySectionBackspace(state, dispatch) {
+  const { $from } = state.selection;
+  if ($from.parentOffset !== 0 || $from.parent.type.name !== "heading") return false;
+
+  const depth = $from.depth - 1;
+  if (depth < 0) return false;
+
+  const section = $from.node(depth);
+  if (section.type.name !== "section") return false;
+  if ($from.index(depth) !== 0 || !isEmptySection(section)) return false;
+
+  if (dispatch) {
+    const from = $from.before(depth);
+    const tr = state.tr.delete(from, from + section.nodeSize);
+    const $at = tr.doc.resolve(Math.min(Math.max(from - 1, 0), tr.doc.content.size));
+    dispatch(tr.setSelection(TextSelection.near($at, -1)).scrollIntoView());
+  }
+  return true;
+}
+
 function customBackspaceCommand(state, dispatch) {
   const { selection } = state;
   const { $from } = selection;
@@ -227,6 +310,8 @@ function customBackspaceCommand(state, dispatch) {
   }
 
   if (handleEmptyDescBackspace(state, dispatch)) return true;
+
+  if (handleEmptySectionBackspace(state, dispatch)) return true;
 
   // A template placeholder paragraph (event card name/organizer/department/
   // description) is protected: edit its text, but never remove, merge or lift it.

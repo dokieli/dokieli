@@ -1005,5 +1005,8 @@
   "unit.m.abbr.title": "meters",
   "unit.meters-per-second.textContent": "meters per second",
   "unit.meters.textContent": "meters",
-  "unit.revolutions-per-minute.textContent": "revolutions per minute"
+  "unit.revolutions-per-minute.textContent": "revolutions per minute",
+  "button.toc.textContent": "Table of Contents",
+  "button.toc.title": "Table of contents",
+  "toc.h2.textContent": "Table of Contents"
 }
