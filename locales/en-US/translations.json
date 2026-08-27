@@ -907,6 +907,8 @@
   "resource-type.choose.option.textContent": "Choose a resource type",
   "resource-type.course.option.textContent": "Course",
   "resource-type.course.option.title": "A description of an educational course.",
+  "resource-type.curriculum-vitae.option.textContent": "Curriculum Vitae",
+  "resource-type.curriculum-vitae.option.title": "A curriculum vitae, a resume.",
   "resource-type.guide.option.textContent": "Guide",
   "resource-type.guide.option.title": "A page or article that recommends specific products or services, or aspects of a topic for the user to consider.",
   "resource-type.news-article.option.textContent": "News article",
