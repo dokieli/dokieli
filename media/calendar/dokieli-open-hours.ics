@@ -1,0 +1,44 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//dokie.li//dokieli Open Hours//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:dokieli Open Hours (doh!)
+X-WR-TIMEZONE:Europe/Zurich
+BEGIN:VTIMEZONE
+TZID:Europe/Zurich
+BEGIN:DAYLIGHT
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0200
+TZNAME:CEST
+DTSTART:19700329T020000
+RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU
+END:DAYLIGHT
+BEGIN:STANDARD
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0100
+TZNAME:CET
+DTSTART:19701025T030000
+RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU
+END:STANDARD
+END:VTIMEZONE
+BEGIN:VEVENT
+UID:dc9ccb13-8259-40e5-9602-ae5791ef8ce6
+DTSTAMP:20260831T104521Z
+SEQUENCE:0
+SUMMARY:dokieli Open Hours (doh!)
+DTSTART;TZID=Europe/Zurich:20260904T150000
+DTEND;TZID=Europe/Zurich:20260904T160000
+RRULE:FREQ=WEEKLY;BYDAY=FR
+LOCATION:https://meet.jit.si/dokieli
+URL:https://dokie.li/events#dokieli-open-hours
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+CLASS:PUBLIC
+DESCRIPTION:Weekly open hours for anyone using or contributing to dokieli.
+  Ask questions\, report what is not working\, walk through an authoring or
+  annotation workflow\, or discuss the underlying standards. No agenda is r
+ equired and no registration is needed.\n\nJoin link: https://meet.jit.si/d
+ okieli\n\nWebsite: https://dokie.li/\n\nGit: https://git.dokie.li/
+END:VEVENT
+END:VCALENDAR
