@@ -7782,7 +7782,6 @@ table > .self-link:after {
 .self-link + h6,
 .self-link + dt {
   display: inline-block;
-  margin-block: 0;
   margin-bottom: 0.5rem;
 }
 /* Each TOC starts its own count; only the outermost list resets, so nested "1.1" still
