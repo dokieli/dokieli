@@ -7816,7 +7816,6 @@ nav.do[id$="-toc"] li.tocline > .section-drag {
   display: inline-block;
   width: 1em;
   margin-right: 0.25em;
-  margin-left: -1em;
   padding: 0;
 }
 nav.do[id$="-toc"] li.tocline:hover > .section-drag,
