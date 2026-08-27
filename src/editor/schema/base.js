@@ -733,9 +733,24 @@ Config.DOMProcessing.inlineElements.filter(el => !Config.DOMProcessing.proseMirr
   }
 });
 
-const INLINE_NODE_SELECTOR = Config.DOMProcessing.inlineElements
-  .filter(el => !Config.DOMProcessing.proseMirrorMarks.includes(el))
-  .join(',');
+// Would this element parse as an inline node rather than a mark?
+function parsesAsInlineNode(el) {
+  if (el.classList?.contains('do')) return false;
+  const tagName = el.tagName.toLowerCase();
+  if (!Config.DOMProcessing.proseMirrorMarks.includes(tagName)) {
+    return Config.DOMProcessing.inlineElements.includes(tagName);
+  }
+  // Mirrors inlineSpan below; the other mark tags become nodes only by containing one,
+  // and whatever they contain is a descendant here too.
+  return tagName === 'span' && !!(el.children.length || el.getAttribute('id'));
+}
+
+// Marks survive the Yjs round trip only on text: y-prosemirror's createTypeFromElementNode
+// copies a node's attrs and drops its marks, so a mark wrapping an inline node is lost. An
+// element that holds an inline node therefore has to be a node itself.
+function containsInlineNode(el) {
+  return [...el.querySelectorAll('*')].some(d => !d.closest('.do') && parsesAsInlineNode(d));
+}
 
 // A mark cannot hold an anchor wrapping inline nodes; false falls back to it.
 customNodes.anchor = {
@@ -747,7 +762,7 @@ customNodes.anchor = {
     tag: "a",
     priority: 60,
     getAttrs(node) {
-      return node.querySelector(INLINE_NODE_SELECTOR) ? getAttributes(node) : false;
+      return containsInlineNode(node) ? getAttributes(node) : false;
     }
   }],
   toDOM: toDOMWith("a")
@@ -770,6 +785,28 @@ customNodes.inlineSpan = {
   }],
   toDOM: toDOMWith("span")
 };
+
+// Same reason as anchor, for the remaining mark tags: <cite><a …><span …>…</span></a></cite>
+// keeps its cite instead of dropping it off the anchor node.
+Config.DOMProcessing.proseMirrorMarks
+  .filter(tagName => tagName !== 'a' && tagName !== 'span')
+  .forEach(tagName => {
+    customNodes[`inline${tagName.charAt(0).toUpperCase()}${tagName.slice(1)}`] = {
+      inline: true,
+      group: "inline",
+      content: "inline*",
+      attrs: { originalAttributes: { default: {} } },
+      parseDOM: [{
+        tag: tagName,
+        priority: 60,
+        getAttrs(node) {
+          if (node.classList?.contains('do')) return false;
+          return containsInlineNode(node) ? getAttributes(node) : false;
+        }
+      }],
+      toDOM: toDOMWith(tagName)
+    };
+  });
 
 const customMarks = {};
 
