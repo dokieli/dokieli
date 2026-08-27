@@ -566,7 +566,9 @@ function addSectionAfter(config, root, index) {
 
 function focusNavLabel(config, index) {
   const nav = document.getElementById(`${config.templateId}-toc`);
-  const label = nav?.querySelectorAll('li.tocline > a.tocxref')[index];
+  const xref = nav?.querySelectorAll('li.tocline > a.tocxref')[index];
+  // The name span is what's editable; the anchor around it takes focus without a caret.
+  const label = xref?.querySelector('[contenteditable="true"]') || xref;
   if (!label) return;
   label.focus();
   const range = document.createRange();
