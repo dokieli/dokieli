@@ -225,17 +225,31 @@ function getSpecificationRoot() {
   return document.querySelector('main > article');
 }
 
-// The article's own typeof is the primary marker (survives removal of the details block).
+const SPECIFICATION_TYPES = [
+  Config.ns.doap.Specification.value,
+  Config.ns.spec.Specification.value,
+  Config.ns.dcat.Standard.value,
+];
+
+// The document's own rdf:type in the parsed graph decides; a descendant typed as a
+// Specification is a cited spec, not this document.
+function hasSpecificationTypeInGraph() {
+  const rdftype = Config.Resource?.[Config.DocumentURL]?.rdftype;
+  return Array.isArray(rdftype) && rdftype.some(t => SPECIFICATION_TYPES.includes(t));
+}
+
+// Fallback for documents not (yet) reparsed, e.g. one just created from the template.
+// rel="rdf:type" only: a bare typeof on a descendant belongs to a cited resource.
 const SPECIFICATION_TYPE_SELECTOR = [
-  '[typeof~="doap:Specification"]', '[typeof~="spec:Specification"]', '[typeof~="dcat:Standard"]',
   '[rel~="rdf:type"][href*="doap#Specification"]', '[rel~="rdf:type"][resource*="doap#Specification"]',
   '[rel~="rdf:type"][href*="spec#Specification"]', '[rel~="rdf:type"][resource*="spec#Specification"]',
   '[rel~="rdf:type"][href*="dcat#Standard"]', '[rel~="rdf:type"][resource*="dcat#Standard"]',
 ].join(', ');
 
 export function isSpecification(root) {
+  if (hasSpecificationTypeInGraph()) return true;
   return root.matches?.('[typeof~="doap:Specification"], [typeof~="spec:Specification"], [typeof~="dcat:Standard"]') ||
-    !!root.querySelector(SPECIFICATION_TYPE_SELECTOR);
+    !!root.querySelector?.(SPECIFICATION_TYPE_SELECTOR);
 }
 
 function sectionLabel(type) {
