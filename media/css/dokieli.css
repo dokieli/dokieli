@@ -298,7 +298,7 @@ transition:opacity 1s ease-in-out;
 
 [contenteditable=true] {
 outline-color:#080;
-outline-offset: 0.5em;
+outline-offset: 1em;
 /* padding: 0 0.5em; */
 }
 
@@ -7806,6 +7806,14 @@ nav.do[id$="-toc"][data-toc-scheme="none"] > ol.toc {
 }
 nav.do[id$="-toc"][data-toc-scheme="none"] > ol.toc > li.tocline {
   list-style: disc outside;
+  position:relative;
+}
+nav.do[id$="-toc"][data-toc-scheme="none"] > ol.toc > li.tocline .section-drag {
+margin-left:0;
+margin-right:0;
+position:absolute;
+left:-2em;
+padding-right:1em;
 }
 
 /* the drag handle only shows on hover, so the row stays plain text to click into */
@@ -7823,6 +7831,7 @@ nav.do[id$="-toc"] li.tocline:hover > .section-drag,
 nav.do[id$="-toc"] li.tocline:focus-within > .section-drag {
   visibility: visible;
 }
+
 nav.do[id$="-toc"] li.tocline > a.tocxref {
   cursor: text;
 }
