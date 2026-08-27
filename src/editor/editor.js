@@ -338,6 +338,18 @@ export class Editor {
     return this.authorToolbarView?.insertFragmentAtEndOfDoc(fragment);
   }
 
+  // Nested .do widgets (the robustlinks popup, copy-to-clipboard) are UI, not content: a
+  // parse rule that only declines them keeps their children, spilling buttons and version
+  // spans into the document. They are regenerated on the way back to social mode. An
+  // annotation highlight (span.ref.do) wraps real content, so it is unwrapped instead.
+  removeEditorWidgets(root) {
+    root.querySelectorAll('.do').forEach(el => {
+      if (!root.contains(el)) return;
+      if (el.classList.contains('ref')) el.replaceWith(...el.childNodes);
+      else el.remove();
+    });
+  }
+
   //Creating a ProseMirror editor view at a specified this.node
   createEditor(options) {
     // TODO: think about a review mode of initializing and destroying editor
@@ -370,6 +382,7 @@ export class Editor {
 
   const parseRoot = this.node.cloneNode(true);
   parseRoot.querySelectorAll('#document-editor, #review-changes').forEach(n => n.remove());
+  this.removeEditorWidgets(parseRoot);
   applyEditorParseTransforms(parseRoot);
   originalDoc = DOMParser.fromSchema(schema).parse(parseRoot);
 
