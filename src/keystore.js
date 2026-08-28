@@ -26,7 +26,10 @@ import {
   wrapPrivateKeyJWK,
   unwrapPrivateKeyJWK,
   decryptContent,
-  getJWEKids
+  getJWEKids,
+  privateKeyJWKToPEM,
+  publicKeyJWKToPEM,
+  privateKeyPEMToJWK
 } from './crypto.js';
 import { getEncryptedKeystore, setEncryptedKeystore, updateDeviceStorageProfile } from './storage.js';
 import { getResource, getResourceHead, putResource, postResource, patchResourceWithAcceptPatch } from './fetcher.js';
@@ -444,6 +447,68 @@ export function getSessionPublicKeyJWK() {
 
 export function getSessionKid() {
   return sessionKid;
+}
+
+// Private key stays passphrase-wrapped, so the file is safe to keep as a backup
+function noKeysError() {
+  const error = new Error('No keys found on this device.');
+  error.code = 'no-keys';
+  return error;
+}
+
+export async function exportKeyDocuments() {
+  const docs = await loadAllKeyDocuments();
+  if (!docs.length) throw noKeysError();
+  return docs;
+}
+
+// Accepts one key document or an array; unlocking still needs their original passphrase
+export async function importKeyDocuments(input) {
+  const docs = (Array.isArray(input) ? input : [input]).filter(isValidKeyDocument);
+  if (!docs.length) throw new Error('No usable key document found.');
+
+  const known = new Set((await loadAllKeyDocuments()).map(d => d.publicKeyJwk.kid));
+  const added = docs.filter(d => !known.has(d.publicKeyJwk.kid)).length;
+
+  //XXX: one document per device keystore, so the rest survive only on storage
+  await setEncryptedKeystore(docs[0]);
+
+  // Returns null when there is no session or the key is already there, so count the URL
+  let stored = 0;
+  for (const doc of docs) {
+    try {
+      if (await saveStorageKeystore(doc, { ifNoneMatch: true })) stored++;
+    }
+    catch (e) {
+      console.warn('dokieli: imported key kept locally; storage save failed', e);
+    }
+  }
+
+  return { imported: docs.length, added, stored, local: docs.length - stored };
+}
+
+// Needs the passphrase, and what it returns is unprotected
+export async function exportKeyPair(passphrase, kid) {
+  const docs = await loadAllKeyDocuments();
+  const doc = kid
+    ? docs.find(d => d.publicKeyJwk.kid === kid)
+    : docs.find(d => d.publicKeyJwk.kid === sessionKid) || docs[0];
+  if (!doc) throw noKeysError();
+
+  const privateKeyJWK = await unwrapPrivateKeyJWK(doc.secretKeyJwk, passphrase);
+
+  return {
+    kid: doc.publicKeyJwk.kid,
+    privateKeyPEM: await privateKeyJWKToPEM(privateKeyJWK),
+    publicKeyPEM: await publicKeyJWKToPEM(doc.publicKeyJwk)
+  };
+}
+
+// A PEM has no passphrase of its own, so the caller supplies one
+export async function importPrivateKeyPEM(pem, passphrase) {
+  const { privateKeyJWK, publicKeyJWK } = await privateKeyPEMToJWK(pem);
+  const jwe = await wrapPrivateKeyJWK(privateKeyJWK, passphrase);
+  return importKeyDocuments(buildKeyDocument(publicKeyJWK, jwe));
 }
 
 // Probes the storage once per session so a new device gets the unlock prompt instead of setup

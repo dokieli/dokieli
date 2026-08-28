@@ -64,6 +64,39 @@ export async function importPrivateKeyJWK(jwk) {
   );
 }
 
+function toPEM(buffer, label) {
+  const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+  return `-----BEGIN ${label}-----\n${base64.match(/.{1,64}/g).join('\n')}\n-----END ${label}-----\n`;
+}
+
+function fromPEM(pem) {
+  const base64 = pem.replace(/-----[^-]+-----/g, '').replace(/\s+/g, '');
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
+}
+
+// EC private JWK carries x and y, so the public key needs no second file
+export async function privateKeyPEMToJWK(pem) {
+  const key = await crypto.subtle.importKey('pkcs8', fromPEM(pem), { name: 'ECDH', namedCurve: CURVE }, true, ['deriveBits']);
+  const jwk = await crypto.subtle.exportKey('jwk', key);
+  const publicKeyJWK = { crv: jwk.crv, ext: true, key_ops: [], kty: jwk.kty, x: jwk.x, y: jwk.y };
+  const kid = await calculateJwkThumbprint(publicKeyJWK);
+  return { privateKeyJWK: { ...jwk, kid }, publicKeyJWK: { ...publicKeyJWK, kid } };
+}
+
+// Extractable, unlike importPrivateKeyJWK: this key is handed to the user
+export async function privateKeyJWKToPEM(privateKeyJWK) {
+  const key = await crypto.subtle.importKey('jwk', privateKeyJWK, { name: 'ECDH', namedCurve: CURVE }, true, ['deriveBits']);
+  return toPEM(await crypto.subtle.exportKey('pkcs8', key), 'PRIVATE KEY');
+}
+
+export async function publicKeyJWKToPEM(publicKeyJWK) {
+  const key = await importPublicKeyJWK(publicKeyJWK);
+  return toPEM(await crypto.subtle.exportKey('spki', key), 'PUBLIC KEY');
+}
+
 // Returns a flattened JWE JSON object: an encrypted JWK per RFC 7517 section 7
 export async function wrapPrivateKeyJWK(privateKeyJWK, passphrase) {
   return new FlattenedEncrypt(new TextEncoder().encode(JSON.stringify(privateKeyJWK)))

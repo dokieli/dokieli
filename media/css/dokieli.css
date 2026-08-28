@@ -1466,7 +1466,8 @@ margin:0.5em 0;
 .container-loading svg {
 fill:currentColor;
 }
-#save-as-document .save-as-cards {
+#save-as-document .save-as-cards,
+#key-export .save-as-cards {
 list-style:none;
 padding:0;
 margin:0;
@@ -1475,12 +1476,15 @@ flex-direction:column;
 gap:0.5em;
 }
 #save-as-document .save-as-cards input[type="radio"],
-#save-as-document .save-as-cards input[type="checkbox"] {
+#save-as-document .save-as-cards input[type="checkbox"],
+#key-export .save-as-cards input[type="radio"],
+#key-export .save-as-cards input[type="checkbox"] {
 position:absolute;
 opacity:0;
 pointer-events:none;
 }
-#save-as-document .save-as-cards label {
+#save-as-document .save-as-cards label,
+#key-export .save-as-cards label {
 display:flex !important;
 flex-direction:row;
 align-items:center;
@@ -1492,18 +1496,22 @@ background:#fff;
 cursor:pointer;
 min-width:0;
 }
-#save-as-document .save-as-cards label:hover {
+#save-as-document .save-as-cards label:hover,
+#key-export .save-as-cards label:hover {
 border-color:#080;
 }
-#save-as-document .save-as-cards input:checked + label {
+#save-as-document .save-as-cards input:checked + label,
+#key-export .save-as-cards input:checked + label {
 border-color:#080;
 background:#efe;
 }
-#save-as-document .save-as-cards input:focus-visible + label {
+#save-as-document .save-as-cards input:focus-visible + label,
+#key-export .save-as-cards input:focus-visible + label {
 outline:2px solid #080;
 outline-offset:2px;
 }
-#save-as-document .save-as-cards label > svg {
+#save-as-document .save-as-cards label > svg,
+#key-export .save-as-cards label > svg {
 flex-shrink:0;
 display:inline-flex;
 align-items:center;
@@ -1512,40 +1520,53 @@ width:1.5em;
 height:1.5em;
 fill:#333;
 }
-#save-as-document .save-as-cards input:checked + label > svg {
+#save-as-document .save-as-cards input:checked + label > svg,
+#key-export .save-as-cards input:checked + label > svg {
 fill:#080;
 }
-#save-as-document .save-as-cards .save-as-card-text {
+#save-as-document .save-as-cards .save-as-card-text,
+#key-export .save-as-cards .save-as-card-text {
 flex:1;
 min-width:0;
 display:flex;
 flex-direction:column;
 gap:0.2em;
 }
-#save-as-document .save-as-cards .save-as-card-text strong {
+#save-as-document .save-as-cards .save-as-card-text strong,
+#key-export .save-as-cards .save-as-card-text strong {
 font-weight:bold;
 color:#000;
 }
-#save-as-document .save-as-cards .save-as-card-text span {
+#save-as-document .save-as-cards .save-as-card-text span,
+#key-export .save-as-cards .save-as-card-text span {
 font-weight:normal;
 color:#555;
 font-size:0.9em;
 }
-#save-as-document .save-as-cards .save-as-card-check {
+#save-as-document .save-as-cards .save-as-card-check,
+#key-export .save-as-cards .save-as-card-check {
 flex-shrink:0;
 display:inline-flex;
 align-items:center;
 justify-content:center;
 visibility:hidden;
 }
-#save-as-document .save-as-cards label svg.fa-check {
+#save-as-document .save-as-cards label svg.fa-check,
+#key-export .save-as-cards label svg.fa-check {
 width:1em;
 height:1em;
 fill:#080;
 visibility:hidden;
 }
-#save-as-document .save-as-cards input:checked + label svg.fa-check {
+#save-as-document .save-as-cards input:checked + label svg.fa-check,
+#key-export .save-as-cards input:checked + label svg.fa-check {
 visibility:visible;
+}
+aside.do div.info button.open-key-import {
+margin:0.5em 0 0;
+padding:0.4em 0.8em;
+font-size:0.9em;
+box-shadow:none;
 }
 #save-as-document .save-as-filename-row {
 display:flex;

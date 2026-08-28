@@ -49,7 +49,7 @@ import { generateGeoView } from './geo.js';
 import { csvStringToJson, jsonToHtmlTableString } from './csv.js';
 import { restoreYjsContent, addYjsVersion, getYjsVersions, getYjsVersionsFromIDB, getCurrentVersionKey, onYjsVersionsChanged } from "./editor/editor.js";
 import { rewriteBlobImagesToRelative, uploadBlobAssets, clearBlobAssets, hasUploadTarget, resolveAuthenticatedImages } from "./editor/utils/imageAssets.js";
-import { createKeystore, unlockKeystore, isUnlocked, getSessionKid, hasKeystore, publishPublicKeyToProfile, getAgentEncryptionKey, addDocumentRecipient, agentHasPublishedEncryptionKey } from './keystore.js';
+import { createKeystore, unlockKeystore, isUnlocked, getSessionKid, hasKeystore, publishPublicKeyToProfile, getAgentEncryptionKey, addDocumentRecipient, agentHasPublishedEncryptionKey, exportKeyDocuments, exportKeyPair, importKeyDocuments, importPrivateKeyPEM } from './keystore.js';
 
 const versionItemCache = new Map();
 let editHistoryAside = null;
@@ -345,6 +345,42 @@ export async function showAutoSave(node) {
   });
 }
 
+async function downloadKeyBackup() {
+  const docs = await exportKeyDocuments();
+  const data = docs.length === 1 ? docs[0] : docs;
+  const suffix = docs.length === 1 ? docs[0].publicKeyJwk.kid.slice(0, 8) : 'keys';
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/ld+json' });
+  downloadBlobAsFile(blob, `dokieli-key-${suffix}.json`);
+  return docs.length;
+}
+
+function setKeyMessage(node, icon, text) {
+  node.setHTMLUnsafe(domSanitize(Icon[icon] + ' ' + text));
+}
+
+function setKeyStatus(node, text, kind = 'success') {
+  const p = document.createElement('p');
+  p.setAttribute('class', kind);
+  p.textContent = text;
+  node.replaceChildren(p);
+  return p;
+}
+
+// Shown wherever keys are expected but missing, so a downloaded file is a way back
+function appendKeyImportOffer(node) {
+  if (node.querySelector('button.open-key-import')) return;
+  sanitizeInsertAdjacentHTML(node, 'beforeend',
+    `<p><button class="open-key-import" data-i18n="key-import.open-button" type="button">${i18n.t('key-import.open-button.textContent')}</button></p>`);
+  node.querySelector('button.open-key-import').addEventListener('click', () => showKeyImport());
+}
+
+function reportKeyError(node, messageKey, error) {
+  console.warn('dokieli: key operation failed', error);
+  // Missing keys are recoverable, so warn rather than error
+  setKeyStatus(node, i18n.t(messageKey) + ' ' + error.message, error.code === 'no-keys' ? 'warning' : 'error');
+  if (error.code === 'no-keys') appendKeyImportOffer(node);
+}
+
 // Key setup/unlock and profile publication without having to encrypt a document first, so contacts can find this user as a share recipient
 function showEncryptionSettings(node) {
   if (document.getElementById('document-encryption')) { return; }
@@ -353,13 +389,20 @@ function showEncryptionSettings(node) {
   <section aria-labelledby="document-encryption-label" id="document-encryption" rel="schema:hasPart" resource="#document-encryption">
     <h2 data-i18n="menu.encryption.h2" id="document-encryption-label" property="schema:name">${i18n.t('menu.encryption.h2.textContent')}</h2>
     ${getButtonHTML({ key: "menu.encryption.setup-button", button: "lock-open", buttonClass: "setup-encryption-keys" })}
+    ${getButtonHTML({ key: "menu.encryption.download-button", button: "download", buttonClass: "download-encryption-keys" })}
+    ${getButtonHTML({ key: "menu.encryption.import-button", button: "upload", buttonClass: "import-encryption-keys" })}
     <span class="response-message"></span>
   </section>
   `;
 
   sanitizeInsertAdjacentHTML(node, 'beforeend', html);
 
-  node.querySelector('#document-encryption button.setup-encryption-keys').addEventListener('click', async (e) => {
+  const encryptionSection = node.querySelector('#document-encryption');
+
+  encryptionSection.querySelector('button.download-encryption-keys').addEventListener('click', () => showKeyExport());
+  encryptionSection.querySelector('button.import-encryption-keys').addEventListener('click', () => showKeyImport());
+
+  encryptionSection.querySelector('button.setup-encryption-keys').addEventListener('click', async (e) => {
     const section = e.target.closest('#document-encryption');
     const message = section.querySelector('.response-message');
 
@@ -2141,6 +2184,30 @@ function createZipBlob(files) {
   chunks.push(new Uint8Array(eocd));
 
   return new Blob(chunks, { type: 'application/zip' });
+}
+
+// Reads the stored (method 0) entries createZipBlob writes; deflate is unsupported
+function readZipEntries(buffer) {
+  const view = new DataView(buffer);
+  const bytes = new Uint8Array(buffer);
+  const decoder = new TextDecoder();
+  const entries = [];
+  let offset = 0;
+
+  while (offset + 30 <= bytes.length && view.getUint32(offset, true) === 0x04034b50) {
+    const method = view.getUint16(offset + 8, true);
+    const size = view.getUint32(offset + 18, true);
+    const nameLength = view.getUint16(offset + 26, true);
+    const dataStart = offset + 30 + nameLength + view.getUint16(offset + 28, true);
+    if (method !== 0) throw new Error('This zip is compressed; extract it and choose the file inside.');
+    entries.push({
+      name: decoder.decode(bytes.subarray(offset + 30, offset + 30 + nameLength)),
+      text: decoder.decode(bytes.subarray(dataStart, dataStart + size))
+    });
+    offset = dataStart + size;
+  }
+
+  return entries;
 }
 
 function downloadBlobAsFile(blob, filename) {
@@ -7329,7 +7396,7 @@ export function showEncryptionSetup(onSuccess) {
   document.body.appendChild(fragmentFromString(html));
 
   const aside = document.getElementById('encryption-setup');
-  const info = aside.querySelector('.info');
+  const info = aside.querySelector('div.info');
   const form = aside.querySelector('#encryption-setup-form');
 
   initPassphraseToggles(form);
@@ -7392,6 +7459,24 @@ export function showEncryptionSetup(onSuccess) {
         info.appendChild(locationMsg);
       }
 
+      // Only point where the key is known to be new, and may be the user's only copy
+      sanitizeInsertAdjacentHTML(info, 'beforeend',
+        `<p data-i18n="encryption-setup.download-description">${i18n.t('encryption-setup.download-description.textContent')}</p>
+         <p><button class="download-encryption-keys" data-i18n="encryption-setup.download-button" type="button">${i18n.t('encryption-setup.download-button.textContent')}</button></p>`);
+
+      const downloadButton = info.querySelector('button.download-encryption-keys');
+      downloadButton.addEventListener('click', async () => {
+        const status = document.createElement('p');
+        try {
+          await downloadKeyBackup();
+          status.textContent = i18n.t('menu.encryption.download-ready.textContent');
+        }
+        catch (err) {
+          status.textContent = i18n.t('menu.encryption.download-failed.textContent') + ' ' + err.message;
+        }
+        downloadButton.parentNode.replaceWith(status);
+      });
+
       clearPendingEncryptedQueues();
       onSuccess?.();
       if (Config.User.Encryption.StorageSyncFailed) {
@@ -7417,6 +7502,194 @@ export function showEncryptionSetup(onSuccess) {
       info.appendChild(errorMsg);
       form.querySelector('button[type="submit"]').disabled = false;
     }
+  });
+}
+
+export function showKeyExport() {
+  if (document.getElementById('key-export')) return;
+
+  const buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
+
+  const html = `
+    <aside aria-labelledby="key-export-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="key-export" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}">
+      <h2 id="key-export-label" data-i18n="key-export.heading">${i18n.t('key-export.heading.textContent')} ${Config.Button.Info.Encrypt}</h2>
+      ${buttonClose}
+      <div class="info"></div>
+      <form id="key-export-form">
+        <ul class="save-as-cards">
+          <li>
+            <input type="radio" id="key-export-backup" name="key-export-format" value="backup" checked="checked" />
+            <label for="key-export-backup">
+              ${Icon['.fas.fa-download']}
+              <span class="save-as-card-text">
+                <strong data-i18n="key-export.backup.label.strong">${i18n.t('key-export.backup.label.strong.textContent')}</strong>
+                <span data-i18n="key-export.backup.desc.span">${i18n.t('key-export.backup.desc.span.textContent')}</span>
+              </span>
+              ${Icon['.fas.fa-check']}
+            </label>
+          </li>
+          <li>
+            <input type="radio" id="key-export-pem" name="key-export-format" value="pem" />
+            <label for="key-export-pem">
+              ${Icon['.fas.fa-file']}
+              <span class="save-as-card-text">
+                <strong data-i18n="key-export.pem.label.strong">${i18n.t('key-export.pem.label.strong.textContent')}</strong>
+                <span data-i18n="key-export.pem.desc.span">${i18n.t('key-export.pem.desc.span.textContent')}</span>
+              </span>
+              ${Icon['.fas.fa-check']}
+            </label>
+          </li>
+        </ul>
+        <p class="key-export-passphrase-row" hidden="">
+          <label for="key-export-passphrase" data-i18n="key-export.passphrase-label">${i18n.t('key-export.passphrase-label.textContent')}</label>
+          <input id="key-export-passphrase" type="password" autocomplete="current-password" />${getPassphraseToggleHTML()}
+        </p>
+        <button type="submit" data-i18n="key-export.submit-button">${i18n.t('key-export.submit-button.textContent')}</button>
+      </form>
+    </aside>`;
+
+  document.body.appendChild(fragmentFromString(html));
+
+  const aside = document.getElementById('key-export');
+  const info = aside.querySelector('div.info');
+  const form = aside.querySelector('#key-export-form');
+  const passphraseRow = form.querySelector('.key-export-passphrase-row');
+  const passphraseInput = form.querySelector('#key-export-passphrase');
+
+  initPassphraseToggles(form);
+
+  // Only the bare key needs unwrapping; the backup is already encrypted
+  form.querySelectorAll('input[name="key-export-format"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      const needsPassphrase = form.querySelector('input[name="key-export-format"]:checked').value === 'pem';
+      passphraseRow.hidden = !needsPassphrase;
+      passphraseInput.required = needsPassphrase;
+      info.replaceChildren();
+    });
+  });
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const submit = form.querySelector('button[type="submit"]');
+    submit.disabled = true;
+    info.replaceChildren();
+
+    try {
+      if (form.querySelector('input[name="key-export-format"]:checked').value === 'backup') {
+        const count = await downloadKeyBackup();
+        setKeyStatus(info, i18n.t(count === 1 ? 'menu.encryption.download-ready.textContent' : 'menu.encryption.download-ready-many.textContent'));
+      }
+      else {
+        const keyPair = await exportKeyPair(passphraseInput.value);
+        const name = `dokieli-key-${keyPair.kid.slice(0, 8)}`;
+        downloadBlobAsFile(createZipBlob([
+          { name: `${name}.pem`, content: keyPair.privateKeyPEM },
+          { name: `${name}.pub.pem`, content: keyPair.publicKeyPEM }
+        ]), `${name}.zip`);
+        setKeyStatus(info, i18n.t('key-export.pem-ready.textContent'), 'warning');
+      }
+    }
+    catch (err) {
+      reportKeyError(info, 'key-export.error.textContent', err);
+    }
+
+    submit.disabled = false;
+  });
+}
+
+// Accepts the wrapped backup document or a bare private key PEM
+export function showKeyImport() {
+  document.getElementById('key-export')?.remove();
+  if (document.getElementById('key-import')) return;
+
+  const buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
+
+  const html = `
+    <aside aria-labelledby="key-import-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="key-import" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}">
+      <h2 id="key-import-label" data-i18n="key-import.heading">${i18n.t('key-import.heading.textContent')} ${Config.Button.Info.Encrypt}</h2>
+      ${buttonClose}
+      <div class="info"></div>
+      <p data-i18n="key-import.description">${i18n.t('key-import.description.textContent')}</p>
+      <form id="key-import-form">
+        <ul>
+          <li>
+            <label for="key-import-file" data-i18n="key-import.file-label">${i18n.t('key-import.file-label.textContent')}</label>
+            <input id="key-import-file" type="file" accept=".json,.jsonld,.pem,.zip,application/json,application/ld+json,application/zip" required="" />
+          </li>
+        </ul>
+        <p class="key-import-passphrase-row" hidden="">
+          <span data-i18n="key-import.passphrase-description">${i18n.t('key-import.passphrase-description.textContent')}</span>
+          <label for="key-import-passphrase" data-i18n="key-import.passphrase-label">${i18n.t('key-import.passphrase-label.textContent')}</label>
+          <input id="key-import-passphrase" type="password" autocomplete="new-password" minlength="12" />${getPassphraseToggleHTML()}
+        </p>
+        <button type="submit" data-i18n="key-import.submit-button">${i18n.t('key-import.submit-button.textContent')}</button>
+      </form>
+    </aside>`;
+
+  document.body.appendChild(fragmentFromString(html));
+
+  const aside = document.getElementById('key-import');
+  const info = aside.querySelector('div.info');
+  const form = aside.querySelector('#key-import-form');
+  const fileInput = form.querySelector('#key-import-file');
+  const passphraseRow = form.querySelector('.key-import-passphrase-row');
+  const passphraseInput = form.querySelector('#key-import-passphrase');
+
+  initPassphraseToggles(form);
+
+  let fileText = '';
+  let isPEM = false;
+
+  fileInput.addEventListener('change', async () => {
+    info.replaceChildren();
+    fileText = '';
+    isPEM = false;
+
+    const file = fileInput.files?.[0];
+    if (file) {
+      try {
+        const buffer = await file.arrayBuffer();
+        const bytes = new Uint8Array(buffer);
+        // The private key alone rebuilds both, so pick it out of the pair
+        if (bytes[0] === 0x50 && bytes[1] === 0x4b) {
+          const entries = readZipEntries(buffer);
+          const found = entries.find(e => e.text.includes('-----BEGIN PRIVATE KEY-----')) || entries.find(e => e.name.endsWith('.json'));
+          if (!found) throw new Error('No key file inside this zip.');
+          fileText = found.text;
+        }
+        else {
+          fileText = new TextDecoder().decode(bytes);
+        }
+        isPEM = fileText.trimStart().startsWith('-----BEGIN');
+      }
+      catch (err) {
+        reportKeyError(info, 'menu.encryption.import-failed.textContent', err);
+      }
+    }
+
+    passphraseRow.hidden = !isPEM;
+    passphraseInput.required = isPEM;
+  });
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const submit = form.querySelector('button[type="submit"]');
+    submit.disabled = true;
+    info.replaceChildren();
+
+    try {
+      const result = isPEM
+        ? await importPrivateKeyPEM(fileText, passphraseInput.value)
+        : await importKeyDocuments(JSON.parse(fileText));
+      setKeyStatus(info, i18n.t(!result.added ? 'menu.encryption.import-known.textContent'
+        : result.local ? 'menu.encryption.import-local.textContent'
+        : 'menu.encryption.import-success.textContent'));
+    }
+    catch (err) {
+      reportKeyError(info, 'menu.encryption.import-failed.textContent', err);
+    }
+
+    submit.disabled = false;
   });
 }
 
@@ -7446,7 +7719,7 @@ export function showEncryptionUnlock(onSuccess) {
   document.body.appendChild(fragmentFromString(html));
 
   const aside = document.getElementById('encryption-unlock');
-  const info = aside.querySelector('.info');
+  const info = aside.querySelector('div.info');
   const form = aside.querySelector('#encryption-unlock-form');
 
   initPassphraseToggles(form);
@@ -7481,7 +7754,9 @@ export function showEncryptionUnlock(onSuccess) {
       info.textContent = i18n.t('encryption-unlock.unlocked.textContent');
       setTimeout(() => aside.remove(), 800);
     } catch (err) {
-      info.textContent = i18n.t('encryption-unlock.error.textContent');
+      setKeyStatus(info, i18n.t('encryption-unlock.error.textContent'), 'error');
+      // May be a missing keystore rather than a wrong passphrase
+      appendKeyImportOffer(info);
       form.querySelector('button[type="submit"]').disabled = false;
     }
   });
