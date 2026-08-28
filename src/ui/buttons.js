@@ -371,6 +371,12 @@ export const buttonIcons = {
   export: {
     icon: Icon[".fas.fa-external-link-alt"]
   },
+  download: {
+    icon: Icon[".fas.fa-download"]
+  },
+  upload: {
+    icon: Icon[".fas.fa-upload"]
+  },
   cursor: {
     icon: Icon[".fas.fa-i-cursor"]
   },
