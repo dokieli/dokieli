@@ -19,7 +19,7 @@ import { fragmentFromString, selectArticleNode } from '../../utils/html.js';
 import { isAuthorMode, pmEditor } from './shared.js';
 import { DEFAULT_TOC_SCHEME, getTOCScheme, numberTree, sectionHeadingElement, sectionTOCLabel, sectionTree, setTOCEnabled, setTOCScheme, tocEnabledAttribute, tocHTML } from '../toc.js';
 import Config from '../../config.js';
-import { DOMParser as PMDOMParser } from 'prosemirror-model';
+import { DOMParser as PMDOMParser, Fragment } from 'prosemirror-model';
 
 // Template-agnostic section management: each template registers a config (registry, labels, markup builders, probes) and shares the nav, add/remove, and TOC machinery here.
 
@@ -577,26 +577,46 @@ function focusNavLabel(config, index) {
   selection.addRange(range);
 }
 
-// Reorder: the section moves with its subsections.
-function moveSection(config, root, fromIndex, toIndex, after) {
+// A section subtree with every heading level shifted by delta (clamped to h2..h6), so it renests at a new depth.
+function shiftHeadingLevels(node, delta) {
+  if (node.type.name === 'heading') {
+    const level = Math.min(6, Math.max(2, node.attrs.level + delta));
+    return level === node.attrs.level ? node : node.type.create({ ...node.attrs, level }, node.content, node.marks);
+  }
+  if (node.childCount === 0) return node;
+  const children = [];
+  node.forEach((child) => children.push(shiftHeadingLevels(child, delta)));
+  return node.copy(Fragment.fromArray(children));
+}
+
+// Rearrange: the section moves with its subsections. zone is 'before'/'after' (sibling of target) or 'into'
+// (its subsection). The moved subtree's heading levels shift to match, so it renests at the drop depth.
+function moveSection(config, root, fromIndex, toIndex, zone) {
   const view = pmView();
 
   if (view) {
     const source = pmSectionAt(view.state.doc, fromIndex);
     const target = pmSectionAt(view.state.doc, toIndex);
-    if (!source || !target) return;
+    if (!source?.heading || !target?.heading) return;
     // Dropping into its own subtree would delete the target with it.
     if (target.pos > source.pos && target.pos < source.pos + source.node.nodeSize) return;
-    let tr = view.state.tr.delete(source.pos, source.pos + source.node.nodeSize);
-    const at = tr.mapping.map(after ? target.pos + target.node.nodeSize : target.pos);
-    view.dispatch(tr.insert(at, source.node).scrollIntoView());
+
+    const newLevel = zone === 'into' ? target.heading.attrs.level + 1 : target.heading.attrs.level;
+    const moved = shiftHeadingLevels(source.node, newLevel - source.heading.attrs.level);
+    const tr = view.state.tr.delete(source.pos, source.pos + source.node.nodeSize);
+    const at = tr.mapping.map(
+      zone === 'into' ? target.pos + target.node.nodeSize - 1
+      : zone === 'after' ? target.pos + target.node.nodeSize
+      : target.pos
+    );
+    view.dispatch(tr.insert(at, moved).scrollIntoView());
     return;
   }
 
   const source = domSectionAt(config, root, fromIndex);
   const target = domSectionAt(config, root, toIndex);
   if (!source || !target || source === target || source.contains(target)) return;
-  if (after) target.after(source);
+  if (zone === 'after') target.after(source);
   else target.before(source);
   refreshSectionsNav(config, root);
 }
@@ -692,26 +712,31 @@ function dragHandle(index) {
   handle.addEventListener('dragend', (e) => {
     e.stopPropagation();
     dragSourceIndex = null;
-    document.querySelectorAll('li.tocline.drop-before, li.tocline.drop-after')
-      .forEach((li) => li.classList.remove('drop-before', 'drop-after'));
+    document.querySelectorAll('li.tocline.drop-before, li.tocline.drop-into, li.tocline.drop-after')
+      .forEach((li) => li.classList.remove('drop-before', 'drop-into', 'drop-after'));
   });
   return handle;
 }
 
+// Top third drops before the target, bottom third after, the middle nests it in as a subsection.
+function dropZone(li, e) {
+  const box = li.getBoundingClientRect();
+  const y = (e.clientY - box.top) / box.height;
+  return y < 1 / 3 ? 'before' : y > 2 / 3 ? 'after' : 'into';
+}
+
 function wireNavItemDrop(config, root, li, index) {
-  const clear = () => li.classList.remove('drop-before', 'drop-after');
-  const dropsAfter = (e) => {
-    const box = li.getBoundingClientRect();
-    return e.clientY > box.top + box.height / 2;
-  };
+  const clear = () => li.classList.remove('drop-before', 'drop-into', 'drop-after');
 
   li.addEventListener('dragover', (e) => {
     if (dragSourceIndex === null) return;
     e.preventDefault();
     e.stopPropagation();
     if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
-    li.classList.toggle('drop-after', dropsAfter(e));
-    li.classList.toggle('drop-before', !dropsAfter(e));
+    const zone = dropZone(li, e);
+    li.classList.toggle('drop-before', zone === 'before');
+    li.classList.toggle('drop-into', zone === 'into');
+    li.classList.toggle('drop-after', zone === 'after');
   });
 
   li.addEventListener('dragleave', clear);
@@ -720,10 +745,11 @@ function wireNavItemDrop(config, root, li, index) {
     if (dragSourceIndex === null) return;
     e.preventDefault();
     e.stopPropagation();
+    const zone = dropZone(li, e);
     clear();
     const from = dragSourceIndex;
     dragSourceIndex = null;
-    if (from !== index) moveSection(config, root, from, index, dropsAfter(e));
+    if (from !== index) moveSection(config, root, from, index, zone);
   });
 }
 
