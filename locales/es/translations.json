@@ -890,6 +890,7 @@
   "specification.placeholder.explainer": "Resume la propuesta: el problema, los objetivos y el enfoque.",
   "specification.placeholder.interoperability": "Describe cómo se evalúa la interoperabilidad entre las clases de productos.",
   "specification.placeholder.introduction": "Presenta la motivación, el contexto y el alcance.",
+  "specification.placeholder.review-answer": "Respuesta para esta especificación.",
   "specification.placeholder.sotd": "Describe el estado de este documento en el momento de su publicación.",
   "specification.placeholder.subdivision-entry": "Nómbralo y enlaza sus secciones",
   "specification.placeholder.term": "Término",

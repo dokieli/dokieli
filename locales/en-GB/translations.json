@@ -976,6 +976,7 @@
   "specification.placeholder.explainer": "Summarise the proposal: the problem, goals, and approach.",
   "specification.placeholder.interoperability": "Describe how interoperability is tested between the classes of products.",
   "specification.placeholder.introduction": "Introduce the motivation, context, and scope.",
+  "specification.placeholder.review-answer": "Answer for this specification.",
   "specification.placeholder.sotd": "Describe the status of this document at the time of publication.",
   "specification.placeholder.subdivision-entry": "Name it and link its sections",
   "specification.placeholder.term": "Term",

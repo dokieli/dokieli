@@ -516,6 +516,75 @@ function buildSpecificationSectionHTML(type) {
   return '';
 }
 
+// Self-review questionnaires: each entry is [key, question]; key is both the URL fragment and the id suffix.
+const SECURITY_PRIVACY_REVIEW_QUESTIONS = [
+  ['purpose', 'What information does this feature expose, and for what purposes?'],
+  ['minimum-data', 'Do features in your specification expose the minimum amount of information necessary to implement the intended functionality?'],
+  ['personal-data', 'Do the features in your specification expose personal information, personally-identifiable information (PII), or information derived from either?'],
+  ['sensitive-data', 'How do the features in your specification deal with sensitive information?'],
+  ['hidden-data', 'Does data exposed by your specification carry related but distinct information that may not be obvious to users?'],
+  ['persistent-origin-specific-state', 'Do the features in your specification introduce state that persists across browsing sessions?'],
+  ['underlying-platform-data', 'Do the features in your specification expose information about the underlying platform to origins?'],
+  ['send-to-platform', 'Does this specification allow an origin to send data to the underlying platform?'],
+  ['sensor-data', 'Do features in this specification enable access to device sensors?'],
+  ['string-to-script', 'Do features in this specification enable new script execution/loading mechanisms?'],
+  ['remote-device', 'Do features in this specification allow an origin to access other devices?'],
+  ['native-ui', 'Do features in this specification allow an origin some measure of control over a user agent\'s native UI?'],
+  ['temporary-id', 'What temporary identifiers do the features in this specification create or expose to the web?'],
+  ['first-third-party', 'How does this specification distinguish between behavior in first-party and third-party contexts?'],
+  ['private-browsing', 'How do the features in this specification work in the context of a browser\'s Private Browsing or Incognito mode?'],
+  ['considerations', 'Does this specification have both "Security Considerations" and "Privacy Considerations" sections?'],
+  ['relaxed-sop', 'Do features in your specification enable origins to downgrade default security protections?'],
+  ['bfcache', 'What happens when a document that uses your feature is kept alive in BFCache (instead of getting destroyed) after navigation, and potentially gets reused on future navigations back to the document?'],
+  ['non-fully-active', 'What happens when a document that uses your feature gets disconnected?'],
+  ['error-handling', 'Does your spec define when and how new kinds of errors should be raised?'],
+  ['accessibility-devices', 'Does your feature allow sites to learn about the user\'s use of assistive technology?'],
+  ['missing-questions', 'What should this questionnaire have asked?'],
+];
+
+const SOCIETAL_IMPACT_REVIEW_QUESTIONS = [
+  ['critical-part', 'What kinds of activities do you anticipate your specification becoming a critical part of?'],
+  ['unexpected-use', 'What kinds of activities could your specification become a part of that you are not designing for?'],
+  ['use-case-diversity', 'Have you considered whether your use cases are sufficiently diverse?'],
+  ['misuse', 'What risks do you see in features of your specification being misused, or used differently from how you intended?'],
+  ['opt-out', 'Can users of the Web Platform choose not to use features of your specification?'],
+  ['excluded', 'What groups of people are excluded from using features of your specification?'],
+  ['minority-groups', 'What effect may features of your specification have on minority groups?'],
+  ['well-being', 'How might features of your specification affect individuals\' psychological well-being, including stress, social interactions, or susceptibility to compulsive use?'],
+  ['power-dynamics', 'What are the power dynamics at play in implementations of your specification?'],
+  ['centralization', 'What points of centralization does your feature bring to the web platform?'],
+  ['surveillance', 'How does your new technology open up ways in which people might be surveilled?'],
+  ['environment', 'To what extent do the features in your specification impact the natural environment?'],
+  ['lifetime', 'What is the expected lifetime of your specification feature(s)?'],
+  ['security-and-privacy', 'Have you completed the Security &amp; Privacy Self-review Questionnaire?'],
+];
+
+// The two self-review subsections: intro sentence (with bibref) plus a questionnaire whose answers are left for the author to fill.
+const REVIEW_QUESTIONNAIRES = {
+  'security-privacy-review': {
+    base: 'https://www.w3.org/TR/security-privacy-questionnaire/',
+    intro: 'These questions provide an overview of security and privacy considerations for this specification as guided by [<cite><a class="bibref" href="#bib-security-privacy-questionnaire">SECURITY-PRIVACY-QUESTIONNAIRE</a></cite>].',
+    questions: SECURITY_PRIVACY_REVIEW_QUESTIONS,
+  },
+  'societal-impact-review': {
+    base: 'https://www.w3.org/TR/societal-impact-questionnaire/',
+    intro: 'These questions provide an overview of ethical considerations and societal impact as guided by [<cite><a class="bibref" href="#bib-societal-impact-questionnaire">SOCIETAL-IMPACT-QUESTIONNAIRE</a></cite>].',
+    questions: SOCIETAL_IMPACT_REVIEW_QUESTIONS,
+  },
+};
+
+// Question list as a dl: each dt links to the questionnaire item, each dd is an empty placeholder for the author's answer.
+function reviewQuestionnaireHTML(type) {
+  const { base, intro, questions } = REVIEW_QUESTIONNAIRES[type];
+  const placeholder = i18n.t('specification.placeholder.review-answer');
+  const items = questions.map(([key, question]) => {
+    const id = `${type}-${key}`;
+    return `<dt about="#${id}" id="${id}"><a href="${base}#${key}" rel="cito:repliesTo">${question}</a></dt>`
+      + `<dd about="#${id}" datatype="rdf:HTML" property="schema:description"><p data-placeholder="${placeholder}"></p></dd>`;
+  }).join('');
+  return `<p>${intro}</p><dl>${items}</dl>`;
+}
+
 function considerationsSubsectionHTML(type) {
   return withSectionMarker(buildConsiderationsSubsectionHTML(type), type);
 }
@@ -523,11 +592,13 @@ function considerationsSubsectionHTML(type) {
 function buildConsiderationsSubsectionHTML(type) {
   const typeOf = SPEC_SUBSECTIONS['considerations'][type]?.typeof;
 
-  // A threat model starts with its definition sentence and a table to fill in.
+  // A threat model starts with its definition sentence and a table to fill in; the reviews start with their questionnaire.
   const content = type === 'threat-model'
     ? nonNormative
       + threatModelDefinitionHTML([threatTableRef(defaultThreatCaption(), 'stride')])
       + threatModelTableHTML({ rows: 2 })
+    : REVIEW_QUESTIONNAIRES[type]
+    ? nonNormative + reviewQuestionnaireHTML(type)
     : nonNormative + '<p></p>';
 
   return sectionHTML({
