@@ -49,7 +49,6 @@ const CONFORMANCE_DEFAULT_SUBSECTIONS = CONFORMANCE_SUBSECTIONS.filter((t) => t 
 
 const DEFAULT_SECTIONS = ['document-details', 'abstract', 'sotd', 'introduction', 'references'];
 
-// Considerations subsections (the AC set minus Application Considerations); typeof carries the spec: class where one exists.
 export const SPEC_SUBSECTIONS = {
   'conformance': {
     'normative-informative-content': { label: 'Normative and Informative Content' },
@@ -59,27 +58,26 @@ export const SPEC_SUBSECTIONS = {
     'subdivisions': { label: 'Subdivisions' },
   },
   'considerations': {
+    'accessibility-considerations': { label: 'Accessibility Considerations', typeof: 'spec:AccessibilityConsiderations' },
+    'internationalization-considerations': { label: 'Internationalization Considerations', typeof: 'spec:InternationalizationConsiderations' },
     'security-considerations': { label: 'Security Considerations', typeof: 'spec:SecurityConsiderations' },
     'privacy-considerations': { label: 'Privacy Considerations', typeof: 'spec:PrivacyConsiderations' },
     'threat-model': { label: 'Threat Model' },
     'security-privacy-review': { label: 'Security and Privacy Review', typeof: 'spec:SelfReviewQuestionnaireSecurityPrivacy' },
     'societal-impact-review': { label: 'Societal Impact Review', typeof: 'spec:SelfReviewQuestionnaireSocietalImpact' },
-    'accessibility-considerations': { label: 'Accessibility Considerations', typeof: 'spec:AccessibilityConsiderations' },
-    'internationalization-considerations': { label: 'Internationalization Considerations', typeof: 'spec:InternationalizationConsiderations' },
   },
 };
 
 const nonNormative = `<p><em>This section is non-normative.</em></p>`;
 
-// Sentence fragment per Considerations subsection, for the definition sentence (AC phrasing).
 const CONSIDERATION_PHRASES = {
+  'accessibility-considerations': (href) => `<a href="${href}">accessibility</a> considerations`,
+  'internationalization-considerations': (href) => `<a href="${href}">internationalization</a> considerations`,
   'security-considerations': (href) => `<a href="${href}">security</a> considerations`,
   'privacy-considerations': (href) => `<a href="${href}">privacy</a> considerations`,
   'threat-model': (href) => `a <a href="${href}">threat model</a>`,
   'security-privacy-review': (href) => `a <a href="${href}">security and privacy review</a>`,
   'societal-impact-review': (href) => `a <a href="${href}">societal impact review</a>`,
-  'accessibility-considerations': (href) => `<a href="${href}">accessibility</a> considerations`,
-  'internationalization-considerations': (href) => `<a href="${href}">internationalization</a> considerations`,
 };
 
 // Considerations definition sentence: present subsections as links in a spec:consideration span; rewritten by the sync plugin. subs: [{ type, id }].
@@ -115,7 +113,7 @@ export function categoryDefinitionHTML(selected = []) {
     .filter((key) => SPEC_CATEGORIES[key])
     .map((key) => `<span rel="skos:hasTopConcept" resource="spec:${key}">${SPEC_CATEGORIES[key]}</span>`)
     .join(', ');
-  return `<p id="specification-category-definition" property="skos:definition">This <span about="" rel="spec:specificationCategory" resource="#specification-category">specification identifies</span> the following <cite><a href="https://www.w3.org/TR/spec-variability/#spec-cat" rel="dcterms:subject" resource="spec:SpecificationCategory">Specification Category</a></cite> to distinguish the types of conformance${list ? `: ${list}.` : ':'}</p>`;
+  return `<p id="specification-category-definition" property="skos:definition">This <span about="" rel="spec:specificationCategory" resource="#specification-category">specification identifies</span> the following <cite><a href="https://www.w3.org/TR/spec-variability/#spec-cat" rel="dcterms:subject" resource="spec:SpecificationCategory">Specification Category</a></cite> [<cite><a class="bibref" href="#bib-spec-variability">SPEC-VARIABILITY</a></cite>] to distinguish the types of conformance${list ? `: ${list}.` : ':'}</p>`;
 }
 
 // Editable dt/dd pairs for the widgets; the dd hint sits on an inner <p> since only empty textblocks display data-placeholder.
