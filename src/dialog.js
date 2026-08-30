@@ -49,7 +49,7 @@ import { generateGeoView } from './geo.js';
 import { csvStringToJson, jsonToHtmlTableString } from './csv.js';
 import { restoreYjsContent, addYjsVersion, getYjsVersions, getYjsVersionsFromIDB, getCurrentVersionKey, onYjsVersionsChanged } from "./editor/editor.js";
 import { rewriteBlobImagesToRelative, uploadBlobAssets, clearBlobAssets, hasUploadTarget, resolveAuthenticatedImages } from "./editor/utils/imageAssets.js";
-import { createKeystore, unlockKeystore, isUnlocked, getSessionKid, hasKeystore, publishPublicKeyToProfile, getAgentEncryptionKey, addDocumentRecipient, agentHasPublishedEncryptionKey, exportKeyDocuments, exportKeyPair, importKeyDocuments, importPrivateKeyPEM } from './keystore.js';
+import { createKeystore, unlockKeystore, isUnlocked, getSessionKid, hasKeystore, publishPublicKeyToProfile, getAgentEncryptionKey, addDocumentRecipient, agentHasPublishedEncryptionKey, exportKeyDocument, exportKeyDocuments, exportKeyPair, importKeyDocuments, importPrivateKeyPEM } from './keystore.js';
 
 const versionItemCache = new Map();
 let editHistoryAside = null;
@@ -345,12 +345,13 @@ export async function showAutoSave(node) {
   });
 }
 
-async function downloadKeyBackup() {
-  const docs = await exportKeyDocuments();
+// With a kid only that key is written, so setting up a new key backs up just the key it created
+async function downloadKeyBackup(kid) {
+  const docs = kid ? [await exportKeyDocument(kid)] : await exportKeyDocuments();
   const data = docs.length === 1 ? docs[0] : docs;
-  const suffix = docs.length === 1 ? docs[0].publicKeyJwk.kid.slice(0, 8) : 'keys';
+  const suffix = docs.length === 1 ? docs[0].publicKeyJwk.kid.slice(0, 8) : 'all';
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/ld+json' });
-  downloadBlobAsFile(blob, `dokieli-key-${suffix}.json`);
+  downloadBlobAsFile(blob, `dokieli-keys-${suffix}.json`);
   return docs.length;
 }
 
@@ -7464,11 +7465,12 @@ export function showEncryptionSetup(onSuccess) {
         `<p data-i18n="encryption-setup.download-description">${i18n.t('encryption-setup.download-description.textContent')}</p>
          <p><button class="download-encryption-keys" data-i18n="encryption-setup.download-button" type="button">${i18n.t('encryption-setup.download-button.textContent')}</button></p>`);
 
+      const newKid = getSessionKid();
       const downloadButton = info.querySelector('button.download-encryption-keys');
       downloadButton.addEventListener('click', async () => {
         const status = document.createElement('p');
         try {
-          await downloadKeyBackup();
+          await downloadKeyBackup(newKid);
           status.textContent = i18n.t('menu.encryption.download-ready.textContent');
         }
         catch (err) {

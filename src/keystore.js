@@ -51,11 +51,13 @@ let storageChecked = false;
 // Public encryption keys of agents the current document is shared with, by WebID
 let documentRecipients = new Map();
 
+const CID_CONTEXT = 'https://www.w3.org/ns/cid/v1';
+
 // CID 1.0 JsonWebKey document (section 2.2.3); secretKeyJwk holds the passphrase-wrapped private JWK as a flattened JWE, not a plaintext JWK
 function buildKeyDocument(publicKeyJWK, secretKeyJwe) {
   const webid = Config.User?.IRI;
   const doc = {
-    '@context': 'https://www.w3.org/ns/cid/v1',
+    '@context': CID_CONTEXT,
     type: 'JsonWebKey',
     publicKeyJwk: publicKeyJWK,
     secretKeyJwk: secretKeyJwe
@@ -449,17 +451,23 @@ export function getSessionKid() {
   return sessionKid;
 }
 
-// Private key stays passphrase-wrapped, so the file is safe to keep as a backup
 function noKeysError() {
   const error = new Error('No keys found on this device.');
   error.code = 'no-keys';
   return error;
 }
 
+// Private key stays passphrase-wrapped, so the file is safe to keep as a backup
 export async function exportKeyDocuments() {
   const docs = await loadAllKeyDocuments();
   if (!docs.length) throw noKeysError();
   return docs;
+}
+
+export async function exportKeyDocument(kid) {
+  const doc = (await loadAllKeyDocuments()).find(d => d.publicKeyJwk.kid === kid);
+  if (!doc) throw noKeysError();
+  return doc;
 }
 
 // Accepts one key document or an array; unlocking still needs their original passphrase
