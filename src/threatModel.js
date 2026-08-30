@@ -20,6 +20,7 @@ import { i18n } from './i18n.js';
 import { htmlEncode } from './utils/sanitization.js';
 import { getTableAttributes, getColumnAttributes, getPrefixesUsed, ensureDocumentPrefixes, subjectFromCaption } from './table.js';
 import { getLookupService } from './services.js';
+import { bibref, bibliographyEntry } from './bibliography.js';
 
 
 export const THREAT_MODEL_WEB = 'https://www.w3.org/TR/threat-model-web/';
@@ -176,34 +177,27 @@ export function threatClassificationSentence(tables = []) {
 }
 
 // The machine-managed definition paragraph; the classification sentence follows the tables.
+const THREAT_MODEL_BIBS = {
+  'dpv-risk': { id: 'dpv-risk', shortName: 'DPV-RISK', title: 'Risk Extension', url: 'https://w3id.org/dpv/risk', rel: 'cito:citesAsPotentialSolution', authors: 'Harshvardhan J. Pandit', publisher: 'W3C Data Privacy Vocabularies and Controls Community Group', date: '25 February 2026', status: 'Final Community Group Report' },
+  'privacy-principles': { id: 'privacy-principles', shortName: 'PRIVACY-PRINCIPLES', title: 'Privacy Principles', url: 'https://www.w3.org/TR/privacy-principles/', rel: 'cito:citesAsPotentialSolution', authors: 'Robin Berjon; Jeffrey Yasskin', publisher: 'W3C', date: '15 May 2025', status: 'W3C Statement' },
+  'threat-model-web': { id: 'threat-model-web', shortName: 'THREAT-MODEL-WEB', title: 'Threat Model for the Web', url: 'https://www.w3.org/TR/threat-model-web/', rel: 'cito:obtainsBackgroundFrom', authors: 'Simone Onofri; Joe Andrieu; Giovanni Corti', publisher: 'W3C', date: '21 July 2026', status: 'W3C Group Note Draft' },
+};
+
 export function threatModelDefinitionHTML(tables = []) {
   const classification = threatClassificationSentence(tables);
 
   return '<p id="threat-model-definition">'
-    + 'This threat analysis follows the framework of the <cite><a href="https://www.w3.org/TR/threat-model-web/" rel="cito:obtainsBackgroundFrom">W3C Threat Model for the Web</a></cite> [<cite><a class="bibref" href="#bib-threat-model-web">THREAT-MODEL-WEB</a></cite>]'
-    + ' and draws on terminology from the <cite><a href="https://www.w3.org/TR/privacy-principles/" rel="cito:obtainsBackgroundFrom">Privacy Principles</a></cite> [<cite><a class="bibref" href="#bib-privacy-principles">PRIVACY-PRINCIPLES</a></cite>].'
+    + `This threat analysis follows the framework of the <cite><a href="https://www.w3.org/TR/threat-model-web/" rel="cito:obtainsBackgroundFrom">W3C Threat Model for the Web</a></cite> ${bibref(THREAT_MODEL_BIBS['threat-model-web'])}`
+    + ` and draws on terminology from the <cite><a href="https://www.w3.org/TR/privacy-principles/" rel="cito:obtainsBackgroundFrom">Privacy Principles</a></cite> ${bibref(THREAT_MODEL_BIBS['privacy-principles'])}.`
     + (classification ? ` ${classification}` : '')
-    + ' Each threat is assigned a risk level from the <cite><a href="https://w3id.org/dpv/risk">RISK Extension</a></cite> to DPV taxonomy [<cite><a class="bibref" href="#bib-dpv-risk">DPV-RISK</a></cite>].'
+    + ` Each threat is assigned a risk level from the <cite><a href="https://w3id.org/dpv/risk">RISK Extension</a></cite> to DPV taxonomy ${bibref(THREAT_MODEL_BIBS['dpv-risk'])}.`
     + '</p>';
 }
 
-export const THREAT_MODEL_REFERENCES = [
-  {
-    key: 'dpv-risk',
-    html: '<dt id="bib-dpv-risk">[DPV-RISK]</dt>'
-      + '<dd><cite><a href="https://w3id.org/dpv/risk" rel="cito:citesAsPotentialSolution">Risk Extension</a></cite>. Harshvardhan J. Pandit.  W3C Data Privacy Vocabularies and Controls Community Group. 25 February 2026. Final Community Group Report. URL: <a href="https://w3id.org/dpv/risk">https://w3id.org/dpv/risk</a></dd>'
-  },
-  {
-    key: 'privacy-principles',
-    html: '<dt id="bib-privacy-principles">[PRIVACY-PRINCIPLES]</dt>'
-      + '<dd><cite><a href="https://www.w3.org/TR/privacy-principles/" rel="cito:citesAsPotentialSolution">Privacy Principles</a></cite>. Robin Berjon; Jeffrey Yasskin.  W3C. 15 May 2025. W3C Statement. URL: <a href="https://www.w3.org/TR/privacy-principles/">https://www.w3.org/TR/privacy-principles/</a></dd>'
-  },
-  {
-    key: 'threat-model-web',
-    html: '<dt id="bib-threat-model-web">[THREAT-MODEL-WEB]</dt>'
-      + '<dd><cite><a href="https://www.w3.org/TR/threat-model-web/" rel="cito:obtainsBackgroundFrom">Threat Model for the Web</a></cite>. Simone Onofri; Joe Andrieu; Giovanni Corti.  W3C. 21 July 2026. W3C Group Note Draft. URL: <a href="https://www.w3.org/TR/threat-model-web/">https://www.w3.org/TR/threat-model-web/</a></dd>'
-  }
-];
+export const THREAT_MODEL_REFERENCES = Object.values(THREAT_MODEL_BIBS).map((bib) => ({
+  key: bib.id,
+  html: bibliographyEntry(bib),
+}));
 
 // A ready-to-edit threat model table, for templates that start a section with one.
 export function threatModelTableHTML({ caption = defaultThreatCaption(), rows = 1 } = {}) {
