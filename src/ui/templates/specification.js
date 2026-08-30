@@ -25,6 +25,7 @@ import { registerDocumentTransform, registerEditorParseTransform } from '../../u
 import { prepareDocumentForTemplate, replaceDocumentBody, documentDetailsHTML, sectionHTML } from './shared.js';
 import { registerSectionsTemplate, refreshSectionsNav, injectSectionsTOC, stripSectionsTOC, findOutsideDetails } from './sections.js';
 import { threatModelTableHTML, threatModelDefinitionHTML, threatTableRef, defaultThreatCaption } from '../../threatModel.js';
+import { headingLabel } from '../toc.js';
 
 // Specification template: sections managed from the top nav (sections.js); identity is the section id, with the English label slug as fallback.
 
@@ -289,8 +290,9 @@ export function classifySpecificationSubsection(parentType, { marker, id, headin
   return type && registry[type] ? type : null;
 }
 
+// Heading text without generated bits (bdi.secno, self-link), so section numbering never leaks into a slug or id.
 function headingText(section) {
-  return section.querySelector(':scope > h1, :scope > h2, :scope > h3, :scope > h4, :scope > h5, :scope > h6')?.textContent || '';
+  return headingLabel(section.querySelector(':scope > h1, :scope > h2, :scope > h3, :scope > h4, :scope > h5, :scope > h6'));
 }
 
 // Sections are direct article children (outline model); parent is the article, or the PM wrapper in author mode.

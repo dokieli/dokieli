@@ -26,6 +26,7 @@ import { getWikidataResults, getEscoResults } from '../../graph.js';
 import { expandTerm, getPrefixes, collectTerms } from '../../utils/rdfa.js';
 import { isAuthorMode, pmEditor, prepareDocumentForTemplate, replaceDocumentBody, documentDetailsHTML } from './shared.js';
 import { registerSectionsTemplate, buildSectionsNav, refreshSectionsNav, addSection as addTemplateSection, removeSection as removeTemplateSection, injectSectionsTOC, stripSectionsTOC } from './sections.js';
+import { headingLabel } from '../toc.js';
 
 // Sections are identified from their entries' RDFa (see classifySection), then from
 // data-cv-section. The marker is saved: it is the only identifier that survives a retitle.
@@ -144,7 +145,8 @@ function getSectionType(section) {
     (el, name) => el.getAttribute(name)
   );
   const heading = section.querySelector(':scope > h1, :scope > h2, :scope > h3, :scope > h4, :scope > h5, :scope > h6');
-  return classifySection({ terms, marker: section.getAttribute('data-cv-section'), headingText: heading?.textContent || '' });
+  // headingLabel drops generated bits (bdi.secno, self-link) so numbering never leaks into the slug.
+  return classifySection({ terms, marker: section.getAttribute('data-cv-section'), headingText: headingLabel(heading) });
 }
 
 // type -> section element, in document order (first match wins per type).
