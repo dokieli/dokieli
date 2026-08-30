@@ -17,6 +17,8 @@ limitations under the License.
 
 import { Plugin, Selection } from "prosemirror-state";
 import { Fragment } from "prosemirror-model";
+import { isDocOfType } from "./sectionsNavDecorations.js";
+import { templateForRoot } from "../../ui/templates/sections.js";
 
 const DESCRIPTION_ATTRS = { datatype: "rdf:HTML", property: "schema:description" };
 const SECTION_ATTRS = { inlist: "", rel: "schema:hasPart" };
@@ -110,28 +112,39 @@ function sectionAttributes(attrs) {
 }
 
 function buildOutline(items, meta, schema) {
-  const root = { level: 0, out: [], body: [], sections: 0, description: meta.description.get(-1) };
+  const root = { level: 0, out: [], body: [], description: meta.description.get(-1) };
   const stack = [root];
   const top = () => stack[stack.length - 1];
 
-  const flushBody = (frame, force) => {
-    if (!frame.body.length && !force) return;
-    const content = frame.body.length ? frame.body : [schema.nodes.p.create()];
-    frame.out.push(schema.nodes.descriptionDiv.create(
-      frame.description || { originalAttributes: { ...DESCRIPTION_ATTRS } },
-      content
-    ));
+  // Prose becomes description content; a section keeps it in its own div, the root wraps stray prose.
+  const flushBody = (frame) => {
+    if (!frame.body.length) return;
+    if (frame.level === 0) {
+      frame.out.push(schema.nodes.descriptionDiv.create(
+        frame.description || { originalAttributes: { ...DESCRIPTION_ATTRS } },
+        frame.body
+      ));
+    } else {
+      frame.content.push(...frame.body);
+    }
     frame.body = [];
   };
 
   const closeSection = () => {
     const frame = stack.pop();
-    flushBody(frame, frame.sections === 0);
+    flushBody(frame);
     const heading = withOriginalAttributes(frame.heading, { property: HEADING_PROPERTY });
     if (heading !== frame.heading) meta.replaced.set(frame.heading, heading);
+    // One description div per section holds its prose and any subsections.
+    const content = frame.content.length ? frame.content : [schema.nodes.p.create()];
+    const div = schema.nodes.descriptionDiv.create(
+      frame.description || { originalAttributes: { ...DESCRIPTION_ATTRS } },
+      content
+    );
+    const section = schema.nodes.section.create(sectionAttributes(frame.attrs), [heading, div]);
     const parent = top();
-    parent.out.push(schema.nodes.section.create(sectionAttributes(frame.attrs), [heading, ...frame.out]));
-    parent.sections += 1;
+    if (parent.level === 0) parent.out.push(section);
+    else parent.content.push(section);
   };
 
   const closeToRoot = () => {
@@ -142,15 +155,14 @@ function buildOutline(items, meta, schema) {
     if (isHeading(node) && node.attrs.level > 1) {
       // Equal level lands as a sibling, deeper as a subsection.
       while (stack.length > 1 && top().level >= node.attrs.level) closeSection();
-      flushBody(top(), false);
+      flushBody(top());
       stack.push({
         level: node.attrs.level,
         heading: node,
         attrs: meta.section.get(index),
         description: meta.description.get(index),
-        out: [],
         body: [],
-        sections: 0,
+        content: [],
       });
       return;
     }
@@ -158,7 +170,7 @@ function buildOutline(items, meta, schema) {
     // h1 titles the document; opaque sections and standalone blocks stand on their own.
     if (isHeading(node) || isSection(node) || isStandalone(node)) {
       closeToRoot();
-      flushBody(root, false);
+      flushBody(root);
       root.out.push(node);
       return;
     }
@@ -167,7 +179,7 @@ function buildOutline(items, meta, schema) {
   });
 
   closeToRoot();
-  flushBody(root, false);
+  flushBody(root);
 
   return root.out;
 }
@@ -270,6 +282,13 @@ function replaceChangedRange(tr, doc, next) {
   return tr.replaceWith(from, to, replacement);
 }
 
+// Only reshape documents dokieli manages via a template; anything else keeps its authored structure.
+function isManagedDoc(doc) {
+  if (isDocOfType(doc, /doap#Specification/) || isDocOfType(doc, /CurriculumVitae/)) return true;
+  const article = typeof document !== "undefined" ? document.querySelector("main > article") : null;
+  return !!(article && templateForRoot(article));
+}
+
 export const documentStructurePlugin = new Plugin({
   appendTransaction(transactions, oldState, newState) {
     if (!transactions.length) return null;
@@ -277,6 +296,7 @@ export const documentStructurePlugin = new Plugin({
     const { schema, doc } = newState;
     if (doc === lastCheckedDoc) return null;
     lastCheckedDoc = doc;
+    if (!isManagedDoc(doc)) return null;
 
     const outline = outlineContent(doc, schema);
 

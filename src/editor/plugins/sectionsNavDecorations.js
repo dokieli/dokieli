@@ -280,7 +280,13 @@ export function createSectionsNavPlugin(config) {
         }
         const sig = signature(newState.doc);
         if (sig === value.signature) {
-          return { signature: sig, decorations: value.decorations.map(tr.mapping, tr.doc) };
+          const mapped = value.decorations.map(tr.mapping, tr.doc);
+          // A structural normalization can drop the widget without changing the signature; rebuild if it went missing.
+          const pos = navPos(newState.doc, config.isContentNode || isContentDiv);
+          if (pos !== null && config.isDoc(newState.doc) && !mapped.find(pos, pos).length) {
+            return { signature: sig, decorations: buildDecorations(newState.doc) };
+          }
+          return { signature: sig, decorations: mapped };
         }
         return { signature: sig, decorations: buildDecorations(newState.doc) };
       },

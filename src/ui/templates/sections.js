@@ -444,15 +444,13 @@ export function addSubsection(config, root, parentType, type) {
 
   if (editor) {
     if (anchorId) editor.insertFragmentBeforeNodeById(anchorId, fragmentFromString(html));
-    // Subsections nest as section children (outline model); container templates use the description div.
-    else if (config.sectionsAtRoot) editor.insertFragmentAtEndOf(`#${parent.id}`, fragmentFromString(html));
+    // Subsections live inside the parent's description div (outline model).
     else editor.insertFragmentAtEndOfChild(`#${parent.id}`, ['descriptionDiv', 'div'], fragmentFromString(html));
   } else {
     const parentEl = findSection(config, root, parentType);
     if (!parentEl) return;
     const anchor = anchorId ? parentEl.querySelector(`#${CSS.escape(anchorId)}`) : null;
     if (anchor) anchor.before(fragmentFromString(html).firstElementChild);
-    else if (config.sectionsAtRoot) parentEl.append(fragmentFromString(html).firstElementChild);
     else (parentEl.querySelector(':scope > div') || parentEl).append(fragmentFromString(html).firstElementChild);
   }
 
