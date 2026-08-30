@@ -575,13 +575,13 @@ const REVIEW_QUESTIONNAIRES = {
   },
 };
 
-// Question list as a dl: each dt links to the questionnaire item, each dd is an empty placeholder for the author's answer.
+// Question list as a dl: section schema:hasPart each Q/A, dt cito:repliesTo the question, dd holds the answer.
 function reviewQuestionnaireHTML(type) {
   const { base, intro, questions } = REVIEW_QUESTIONNAIRES[type];
   const placeholder = i18n.t('specification.placeholder.review-answer');
   const items = questions.map(([key, question]) => {
     const id = `${type}-${key}`;
-    return `<dt about="#${id}" id="${id}"><a href="${base}#${key}" rel="cito:repliesTo">${question}</a></dt>`
+    return `<dt id="${id}" inlist="" rel="schema:hasPart" resource="#${id}"><a about="#${id}" href="${base}#${key}" rel="cito:repliesTo">${question}</a></dt>`
       + `<dd about="#${id}" datatype="rdf:HTML" property="schema:description"><p data-placeholder="${placeholder}"></p></dd>`;
   }).join('');
   return `<p>${intro}</p><dl>${items}</dl>`;

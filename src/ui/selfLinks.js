@@ -24,21 +24,28 @@ const SKIP_TAGS = new Set([
   'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param',
   'source', 'track', 'wbr', 'script', 'style', 'template', 'textarea', 'select', 'option',
   'svg', 'math', 'iframe', 'audio', 'video', 'canvas', 'object', 'a', 'button', 'form',
-  'html', 'head', 'body', 'title', 'main'
+  'html', 'head', 'body', 'title', 'main',
+  // Table rows/groups hold only cells; the table's anchor goes in its caption (see selfLinkHost).
+  'thead', 'tbody', 'tfoot', 'tr', 'colgroup'
 ]);
 
 export function canHaveSelfLink(element) {
   if (!element?.id) return false;
   if (SKIP_TAGS.has(element.localName)) return false;
+  // A table's anchor lives in its caption (see selfLinkHost); without one there is no valid host.
+  if (element.localName === 'table' && !element.querySelector(':scope > caption')) return false;
   if (element.classList.contains('do') || element.closest('.do')) return false;
   if (element.closest('#document-menu, #document-editor, .editor-toolbar')) return false;
   return true;
 }
 
-// A details hands its anchor to its summary, which has to stay the details' first child.
+// A details hands its anchor to its summary, and a table to its caption; each has to stay its first child.
 export function selfLinkHost(element) {
   if (element.localName === 'details') {
     return element.querySelector(':scope > summary') || element;
+  }
+  if (element.localName === 'table') {
+    return element.querySelector(':scope > caption') || element;
   }
   return element;
 }

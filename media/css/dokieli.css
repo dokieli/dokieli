@@ -7786,7 +7786,7 @@ section > .self-link:after {
 figure > .self-link:after {
   content: "❦";
 }
-table > .self-link:after {
+caption > .self-link:after {
   content: "𝄜";
 }
 [rel~="spec:requirement"] .self-link:after {

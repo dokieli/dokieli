@@ -32,8 +32,9 @@ export const documentAnchorsPluginKey = new PluginKey("documentAnchors");
 // Wrappers a section can sit inside; template markup nests subsections in a descriptionDiv.
 const CONTAINER_TYPES = new Set(["div", "descriptionDiv", "header", "main", "article", "body"]);
 
-// Would render an anchor where it cannot live.
-const SKIP_TYPES = new Set(["text", "img", "br", "hr", "input", "select", "textarea", "a", "anchor", "button", "form"]);
+// Would render an anchor where it cannot live; table rows/groups hold only cells.
+const SKIP_TYPES = new Set(["text", "img", "br", "hr", "input", "select", "textarea", "a", "anchor", "button", "form",
+  "thead", "tbody", "tfoot", "tr", "colgroup", "col"]);
 
 function nodeId(node) {
   return node.attrs?.originalAttributes?.id || null;
@@ -112,6 +113,17 @@ function summaryPos(details, detailsPos) {
   return result;
 }
 
+// Just inside a table's caption, where its self-link goes.
+function captionPos(table, tablePos) {
+  let result = null;
+  table.forEach((child, offset) => {
+    if (result === null && child.type.name === "caption") {
+      result = tablePos + 1 + offset + 1;
+    }
+  });
+  return result;
+}
+
 function secnoWidget(secno) {
   const bdi = document.createElement("bdi");
   bdi.className = "secno";
@@ -182,6 +194,14 @@ function anchorDecorations(doc) {
         decos.push(Decoration.widget(summary, () => selfLinkWidget(id), { side: -2, ignoreSelection: true, key: `self-link-${id}`, stopEvent: () => true }));
         return true;
       }
+    }
+    // A table hands its anchor to its caption; without one it gets none.
+    if (node.type.name === "table") {
+      const caption = captionPos(node, pos);
+      if (caption !== null) {
+        decos.push(Decoration.widget(caption, () => selfLinkWidget(id), { side: -2, ignoreSelection: true, key: `self-link-${id}`, stopEvent: () => true }));
+      }
+      return true;
     }
     // side -2 keeps it ahead of a section number at the same position.
     decos.push(Decoration.widget(pos + 1, () => selfLinkWidget(id), { side: -2, ignoreSelection: true, key: `self-link-${id}`, stopEvent: () => true }));
