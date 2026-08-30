@@ -575,6 +575,20 @@ const REVIEW_QUESTIONNAIRES = {
   },
 };
 
+// Informative References entry added when the matching review subsection is present.
+export const REVIEW_REFERENCES = [
+  {
+    sectionId: 'security-privacy-review',
+    id: 'bib-security-privacy-questionnaire',
+    html: `<dt id="bib-security-privacy-questionnaire">[SECURITY-PRIVACY-QUESTIONNAIRE]</dt><dd><cite><a href="https://www.w3.org/TR/security-privacy-questionnaire/" rel="cito:citesAsPotentialSolution">Self-Review Questionnaire: Security and Privacy</a></cite>. Theresa O'Connor; Peter Snyder.  W3C. 18 April 2025. W3C Group Note. URL: <a href="https://www.w3.org/TR/security-privacy-questionnaire/">https://www.w3.org/TR/security-privacy-questionnaire/</a></dd>`,
+  },
+  {
+    sectionId: 'societal-impact-review',
+    id: 'bib-societal-impact-questionnaire',
+    html: `<dt id="bib-societal-impact-questionnaire">[SOCIETAL-IMPACT-QUESTIONNAIRE]</dt><dd><cite><a href="https://www.w3.org/TR/societal-impact-questionnaire/" rel="cito:citesAsPotentialSolution">Self-Review Questionnaire: Societal Impact</a></cite>. Sarven Capadisli; Lola Odelola.  W3C. 19 March 2026. W3C Group Draft Note. URL: <a href="https://www.w3.org/TR/societal-impact-questionnaire/">https://www.w3.org/TR/societal-impact-questionnaire/</a></dd>`,
+  },
+];
+
 // Question list as a dl: section schema:hasPart each Q/A, dt cito:repliesTo the question, dd holds the answer.
 function reviewQuestionnaireHTML(type) {
   const { base, intro, questions } = REVIEW_QUESTIONNAIRES[type];

@@ -30,6 +30,7 @@ import {
   SPEC_CATEGORIES, categoryDefinitionHTML, considerationsDefinitionHTML, termEntryHTML, productClassEntryHTML, interoperabilityEntryHTML, acknowledgementsPersonHTML,
   conceptId, interoperabilityId, personId, applyReportTypeChrome,
   SPEC_SUBDIVISIONS, SPEC_SUBDIVISION_KEYS, SPEC_SUBDIVISION_REL, subdivisionEntryHTML, subdivisionPairHTML, subdivisionDlHTML, subdivisionsDefinitionHTML,
+  REVIEW_REFERENCES,
 } from "../../ui/templates/specification.js";
 
 // A section PM node matching a well-known key, by id or heading slug.
@@ -646,6 +647,7 @@ export const specificationConceptSyncPlugin = new Plugin({
     syncAcknowledgementsOrder(newState, liveDoc, sel, blurred, ensure);
     syncThreatModelDefinition(newState, liveDoc, sel, blurred, ensure);
     syncThreatModelReferences(newState, liveDoc, sel, blurred, ensure);
+    syncReviewReferences(newState, liveDoc, sel, blurred, ensure);
     syncReportTypeChrome(newState, ensure);
 
     if (!tr) return null;
@@ -924,10 +926,9 @@ function syncThreatModelDefinition(newState, liveDoc, sel, blurred, ensure) {
   ensure().replaceWith(def.pos, def.pos + def.node.nodeSize, desired.content);
 }
 
-// A threat model's cited works belong in Informative References; add what is missing.
-function syncThreatModelReferences(newState, liveDoc, sel, blurred, ensure) {
-  const doc = liveDoc();
-  if (!threatModelDefinition(doc)) return;
+// Add any missing [{ id, html }] bibliography entries to Informative References.
+function ensureInformativeReferences(newState, doc, sel, blurred, ensure, required) {
+  if (!required.length) return;
 
   let section = null;
   doc.descendants((node, pos) => {
@@ -948,7 +949,7 @@ function syncThreatModelReferences(newState, liveDoc, sel, blurred, ensure) {
     return true;
   });
 
-  const missing = THREAT_MODEL_REFERENCES.filter((ref) => !present.has(`bib-${ref.key}`));
+  const missing = required.filter((ref) => !present.has(ref.id));
   if (!missing.length) return;
 
   const entries = missing.map((ref) =>
@@ -975,6 +976,26 @@ function syncThreatModelReferences(newState, liveDoc, sel, blurred, ensure) {
     if (child.type.name === 'div') target = section.pos + 1 + offset + child.nodeSize - 1;
   });
   ensure().insert(target, dlNode);
+}
+
+// A threat model's cited works belong in Informative References; add what is missing.
+function syncThreatModelReferences(newState, liveDoc, sel, blurred, ensure) {
+  const doc = liveDoc();
+  if (!threatModelDefinition(doc)) return;
+  const required = THREAT_MODEL_REFERENCES.map((ref) => ({ id: `bib-${ref.key}`, html: ref.html }));
+  ensureInformativeReferences(newState, doc, sel, blurred, ensure, required);
+}
+
+// Each self-review subsection cites its questionnaire; add that reference when the section is present.
+function syncReviewReferences(newState, liveDoc, sel, blurred, ensure) {
+  const doc = liveDoc();
+  const present = new Set();
+  doc.descendants((node) => {
+    if (node.type.name === 'section' && node.attrs.originalAttributes?.id) present.add(node.attrs.originalAttributes.id);
+    return true;
+  });
+  const required = REVIEW_REFERENCES.filter((ref) => present.has(ref.sectionId));
+  ensureInformativeReferences(newState, doc, sel, blurred, ensure, required);
 }
 
 // Keep the machine-managed Considerations definition sentence in step with the present subsections.
