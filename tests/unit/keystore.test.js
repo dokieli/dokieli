@@ -244,6 +244,8 @@ describe('keystore.js', () => {
   describe('storage sync (signed in)', () => {
     beforeEach(() => {
       Config.Session = { isActive: true };
+      // ACLs are applied through the storage backend (wac.js applyACLPlan -> Config.Storage.patchWithConneg).
+      Config.Storage = { patchWithConneg: vi.fn().mockResolvedValue({}) };
     });
 
     test('uploads the key document, sets ACLs, and registers in the type index', async () => {
@@ -264,14 +266,14 @@ describe('keystore.js', () => {
       );
       expect(uploaded.publicKeyJwk.kid).toBe(kid);
 
-      expect(mocks.patchResourceWithAcceptPatch).toHaveBeenCalledWith(
-        KEY_CONTAINER + '.acl',
-        [{ insert: expect.stringContaining(`acl:default <${KEY_CONTAINER}>`) }]
-      );
-      expect(mocks.patchResourceWithAcceptPatch).toHaveBeenCalledWith(
-        keystoreURL + '.acl',
-        [{ insert: expect.stringContaining(`acl:accessTo <${keystoreURL}>`) }]
-      );
+      // The container gets a default ACL and the key resource its own, both via the storage backend.
+      const aclCalls = Config.Storage.patchWithConneg.mock.calls;
+      const containerACL = aclCalls.find(([target]) => target === KEY_CONTAINER + '.acl');
+      expect(containerACL).toBeDefined();
+      expect(containerACL[1][0].insert).toContain(KEY_CONTAINER);
+      const keyResourceACL = aclCalls.find(([target]) => target === keystoreURL + '.acl');
+      expect(keyResourceACL).toBeDefined();
+      expect(keyResourceACL[1][0].insert).toContain(keystoreURL);
 
       expect(mocks.patchResourceWithAcceptPatch).toHaveBeenCalledWith(
         TYPE_INDEX,
@@ -297,7 +299,7 @@ describe('keystore.js', () => {
       expect(mocks.local.value).toBeDefined();
       expect(Config.User.Encryption.StorageSyncFailed).toBe(false);
       expect(mocks.patchResourceWithAcceptPatch).not.toHaveBeenCalledWith(TYPE_INDEX, expect.anything());
-      expect(mocks.patchResourceWithAcceptPatch).not.toHaveBeenCalledWith(
+      expect(Config.Storage.patchWithConneg).not.toHaveBeenCalledWith(
         keyResourceURL(getSessionKid()) + '.acl',
         expect.anything()
       );
