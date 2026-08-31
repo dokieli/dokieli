@@ -60,73 +60,52 @@
           </dl>
           <dl id="document-feedback">
             <dt>Comentarios</dt>
-            <dd><a href="https://git.dokie.li/" rel="doap:repository">Repositorio Git</a> (<a href="https://github.com/dokieli/dokieli/pulls">solicitudes de extracción</a>, <a href="https://github.com/dokieli/dokieli/issues/new">nuevos problemas</a>, <a href="https://github.com/dokieli/dokieli/issues" rel="doap:bug-database">problemas abiertos</a>)</dd>
+            <dd><a href="https://git.dokie.li/" rel="doap:repository">Repositorio Git</a> (<a href="https://git.dokie.li/dokieli/pulls">solicitudes de extracción</a>, <a href="https://git.dokie.li/dokieli/issues/new">nuevos problemas</a>, <a href="https://git.dokie.li/dokieli/issues" rel="doap:bug-database">problemas abiertos</a>)</dd>
           </dl>
-          <nav id="table-of-contents">
-            <h2>Contenido</h2>
-            <div>
-              <ol class="toc">
-                <li data-id="upcoming">
-                  <p><a href="#upcoming">Próximos</a></p>
-                  <ol>
-                    <li data-id="dokieli-open-hours"><a href="#dokieli-open-hours">dokieli Open Hours (doh!)</a></li>
-                  </ol>
-                </li>
-              </ol>
-            </div>
-          </nav>
         </details>
-        <div datatype="rdf:HTML" id="content" property="schema:description">
+        <div datatype="rdf:HTML" property="schema:description">
           <p id="summary" property="schema:summary">Eventos organizados por el proyecto dokieli.</p>
-
-          <section id="upcoming" inlist="" rel="schema:hasPart" resource="#upcoming">
-            <h2 property="schema:name">Próximos</h2>
-            <div datatype="rdf:HTML" property="schema:description">
-              <ul about="" rel="schema:hasPart">
-                <li>
-                  <dl id="dokieli-open-hours" resource="https://dokie.li/events#dokieli-open-hours" typeof="schema:EventSeries">
-                    <dt>Título</dt>
-                    <dd property="schema:name" lang="en" xml:lang="en">dokieli Open Hours (doh!)</dd>
-                    <dt>Organizador</dt>
-                    <dd rel="schema:organizer" resource="https://dokie.li/#i" typeof="doap:Project schema:Organization"><a href="https://dokie.li/" property="schema:name" rel="schema:url">dokieli</a></dd>
-                    <dt>Lugar</dt>
-                    <dd rel="schema:location" resource="https://dokie.li/events#dokieli-open-hours-location" typeof="schema:VirtualLocation"><span property="schema:name">En línea</span> en <a href="https://meet.jit.si/dokieli" rel="schema:url">https://meet.jit.si/dokieli</a></dd>
-                    <dt>Modalidad</dt>
-                    <dd><a href="http://schema.org/OnlineEventAttendanceMode" rel="schema:eventAttendanceMode">En línea</a></dd>
-                    <dt>Estado</dt>
-                    <dd><a href="http://schema.org/EventScheduled" rel="schema:eventStatus">Programado</a></dd>
-                    <dt>Periodicidad</dt>
-                    <dd rel="schema:eventSchedule">
-                      <dl id="dokieli-open-hours-schedule" resource="https://dokie.li/events#dokieli-open-hours-schedule" typeof="schema:Schedule">
-                        <dt>Se repite</dt>
-                        <dd><span content="P1W" datatype="xsd:duration" property="schema:repeatFrequency">Semanalmente</span></dd>
-                        <dt>Día</dt>
-                        <dd><a href="http://schema.org/Friday" rel="schema:byDay">Viernes</a></dd>
-                        <dt>Hora</dt>
-                        <dd><time content="15:00:00" datatype="xsd:time" datetime="15:00" property="schema:startTime">15:00</time>–<time content="16:00:00" datatype="xsd:time" datetime="16:00" property="schema:endTime">16:00</time></dd>
-                        <dt>Zona horaria</dt>
-                        <dd><span content="Europe/Zurich" lang="" property="schema:scheduleTimezone" xml:lang="">Europe/Zurich</span> (<abbr title="Hora de verano de Europa central">CEST</abbr>/<abbr title="Hora de Europa central">CET</abbr>)</dd>
-                        <dt>Duración</dt>
-                        <dd><time datatype="xsd:duration" datetime="PT1H" property="schema:duration">1 hora</time></dd>
-                        <dt>Primera fecha</dt>
-                        <dd><time content="2026-09-04" datatype="xsd:date" datetime="2026-09-04" property="schema:startDate">04/09/2026</time></dd>
-                      </dl>
-                    </dd>
-                    <dt>Calendario</dt>
-                    <dd><a href="../media/calendar/dokieli-open-hours.ics" rel="dcterms:hasFormat" type="text/calendar">dokieli-open-hours.ics</a> (<span lang="" property="schema:encodingFormat" xml:lang="">text/calendar</span>)</dd>
-                    <dt>Idioma</dt>
-                    <dd><span content="en" lang="" property="schema:inLanguage" xml:lang="">Inglés</span></dd>
-                    <dt>Descripción</dt>
-                    <dd datatype="rdf:HTML" property="schema:description">
-                      <p>Horas de consulta abiertas, cada semana, para cualquier persona que use dokieli o contribuya al proyecto. Pregunta lo que quieras, cuenta qué no te funciona, repasa un flujo de autoría o de anotación, o discute los estándares en los que se apoya. No hace falta agenda ni inscripción.</p>
-                      <p>La reunión es a las <time datatype="xsd:time" datetime="15:00">15:00</time>, hora local de <span lang="" xml:lang="">Europe/Zurich</span>, durante todo el año. Eso son las <time datatype="xsd:time" datetime="13:00">13:00</time> <abbr title="Tiempo universal coordinado">UTC</abbr> mientras rige el horario de verano (<abbr title="Hora de verano de Europa central">CEST</abbr>), y las <time datatype="xsd:time" datetime="14:00">14:00</time> <abbr title="Tiempo universal coordinado">UTC</abbr> tras el cambio al horario de invierno (<abbr title="Hora de Europa central">CET</abbr>) a finales de octubre.</p>
-                      <p>Añádelo a tu calendario con el <a href="../media/calendar/dokieli-open-hours.ics" type="text/calendar">archivo iCalendar</a>, que incluye la regla de repetición y la zona horaria, así que el desfase respecto a <abbr title="Tiempo universal coordinado">UTC</abbr> se resuelve solo.</p>
-                    </dd>
+          <ul id="event-series" rel="schema:hasPart" resource="#event-series">
+            <li rel="schema:subEvent">
+              <dl id="dokieli-open-hours" resource="https://dokie.li/events#dokieli-open-hours" typeof="schema:Event">
+                <dt>Título</dt>
+                <dd property="schema:name" lang="en" xml:lang="en">dokieli Open Hours (doh!)</dd>
+                <dt>Organizador</dt>
+                <dd rel="schema:organizer" resource="https://dokie.li/#i" typeof="doap:Project schema:Organization"><a href="https://dokie.li/" property="schema:name" rel="schema:url">dokieli</a></dd>
+                <dt>Lugar</dt>
+                <dd rel="schema:location" resource="https://dokie.li/events#dokieli-open-hours-location" typeof="schema:VirtualLocation"><span property="schema:name">En línea</span> en <a href="https://meet.jit.si/dokieli" rel="schema:url">https://meet.jit.si/dokieli</a></dd>
+                <dt>Modalidad</dt>
+                <dd><a href="http://schema.org/OnlineEventAttendanceMode" rel="schema:eventAttendanceMode">En línea</a></dd>
+                <dt>Periodicidad</dt>
+                <dd rel="schema:eventSchedule">
+                  <dl id="dokieli-open-hours-schedule" resource="https://dokie.li/events#dokieli-open-hours-schedule" typeof="schema:Schedule">
+                    <dt>Se repite</dt>
+                    <dd><span content="P1W" datatype="xsd:duration" property="schema:repeatFrequency">Semanalmente</span></dd>
+                    <dt>Día</dt>
+                    <dd><a href="http://schema.org/Friday" rel="schema:byDay">Viernes</a></dd>
+                    <dt>Hora</dt>
+                    <dd><time content="15:00:00" datatype="xsd:time" datetime="15:00" property="schema:startTime">15:00</time>–<time content="16:00:00" datatype="xsd:time" datetime="16:00" property="schema:endTime">16:00</time></dd>
+                    <dt>Zona horaria</dt>
+                    <dd><span content="Europe/Zurich" lang="" property="schema:scheduleTimezone" xml:lang="">Europe/Zurich</span> (<abbr title="Hora de verano de Europa central">CEST</abbr>/<abbr title="Hora de Europa central">CET</abbr>)</dd>
+                    <dt>Duración</dt>
+                    <dd><time datatype="xsd:duration" datetime="PT1H" property="schema:duration">1 hora</time></dd>
+                    <dt>Primera fecha</dt>
+                    <dd><time content="2026-09-04" datatype="xsd:date" datetime="2026-09-04" property="schema:startDate">04/09/2026</time></dd>
                   </dl>
-                </li>
-              </ul>
-            </div>
-          </section>
+                </dd>
+                <dt>Calendario</dt>
+                <dd><a href="../media/calendar/dokieli-open-hours.ics" rel="dcterms:hasFormat" type="text/calendar">dokieli-open-hours.ics</a> (<span lang="" property="schema:encodingFormat" xml:lang="">text/calendar</span>)</dd>
+                <dt>Idioma</dt>
+                <dd><span content="en" lang="" property="schema:inLanguage" xml:lang="">Inglés</span></dd>
+                <dt>Descripción</dt>
+                <dd datatype="rdf:HTML" property="schema:description">
+                  <p>Horas de consulta abiertas, cada semana, para cualquier persona que use dokieli o contribuya al proyecto. Pregunta lo que quieras, cuenta qué no te funciona, repasa un flujo de autoría o de anotación, o discute los estándares en los que se apoya. No hace falta agenda ni inscripción.</p>
+                  <p>La reunión es a las <time>15:00</time>, hora local de <span lang="" xml:lang="">Europe/Zurich</span>, durante todo el año. Eso son las <time>13:00</time> <abbr title="Tiempo universal coordinado">UTC</abbr> mientras rige el horario de verano (<abbr title="Hora de verano de Europa central">CEST</abbr>), y las <time>14:00</time> <abbr title="Tiempo universal coordinado">UTC</abbr> tras el cambio al horario de invierno (<abbr title="Hora de Europa central">CET</abbr>) a finales de octubre.</p>
+                  <p>Añádelo a tu calendario con el <a href="../media/calendar/dokieli-open-hours.ics" type="text/calendar">archivo iCalendar</a>, que incluye la regla de repetición y la zona horaria, así que el desfase respecto a <abbr title="Tiempo universal coordinado">UTC</abbr> se resuelve solo.</p>
+                </dd>
+              </dl>
+            </li>
+          </ul>
         </div>
       </article>
     </main>
