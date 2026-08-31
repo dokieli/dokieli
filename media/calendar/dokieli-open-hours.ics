@@ -35,11 +35,11 @@ URL:https://dokie.li/events#dokieli-open-hours
 STATUS:CONFIRMED
 TRANSP:OPAQUE
 CLASS:PUBLIC
-DESCRIPTION:Weekly open hours for anyone using or contributing to dokieli.
-  Ask questions\, report what is not working\, walk through an authoring or
-  annotation workflow\, or discuss the underlying standards. No agenda is r
- equired and no registration is needed.\n\nJoin link: https://meet.jit.si/d
- okieli\n\nWebsite: https://dokie.li/\n\nGit: https://git.dokie.li/\n\nCode
- of Conduct: https://github.com/dokieli/dokieli/blob/main/CODE-OF-CONDUCT.md
+DESCRIPTION:Weekly open hours for anyone using or contributing to dokieli. 
+ Ask questions\, report what is not working\, walk through an authoring or 
+ annotation workflow\, or discuss the underlying standards. No agenda is re
+ quired and no registration is needed.\n\nJoin: https://meet.jit.si/dokieli
+ \n\nCode of Conduct: https://github.com/dokieli/dokieli/blob/main/CODE-OF-
+ CONDUCT.md\n\nWebsite: https://dokie.li/\n\nGit: https://git.dokie.li/
 END:VEVENT
 END:VCALENDAR
