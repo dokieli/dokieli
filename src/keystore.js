@@ -19,6 +19,7 @@ import rdf from 'rdf-ext';
 import Config from './config.js';
 import {
   generateEncryptionKeypair,
+  generateSigningKeypair,
   exportPublicKeyJWK,
   exportPrivateKeyJWK,
   importPublicKeyJWK,
@@ -39,19 +40,31 @@ import { applyACLPlan, getACLContext } from './wac.js';
 import { forceTrailingSlash, stripFragmentFromString } from './uri.js';
 import { escapeRDFLiteral, generateUUID } from './util.js';
 
-// Non-extractable private keys by kid; sessionKid is the current key used for new encryption
-let sessionPrivateKeys = new Map();
-let sessionPublicKey = null;
-let sessionPublicKeyJWK = null;
-let sessionKid = null;
+export const KEY_AGREEMENT = 'keyAgreement';
+export const ASSERTION = 'assertion';
+const PURPOSES = [KEY_AGREEMENT, ASSERTION];
 
-let cachedKeystoreURL = null;
-let storageChecked = false;
+// Non-extractable private keys by kid; kid is the current key used for new operations of that purpose
+function newSession() {
+  return { privateKeys: new Map(), publicKey: null, publicKeyJWK: null, kid: null, keystoreURL: null, storageChecked: false };
+}
+
+let sessions = { [KEY_AGREEMENT]: newSession(), [ASSERTION]: newSession() };
 
 // Public encryption keys of agents the current document is shared with, by WebID
 let documentRecipients = new Map();
 
 const CID_CONTEXT = 'https://www.w3.org/ns/cid/v1';
+
+// Keys predating the signing work carry no use, and everything back then was for key agreement
+function purposeOf(doc) {
+  return doc?.publicKeyJwk?.use === 'sig' ? ASSERTION : KEY_AGREEMENT;
+}
+
+function keyConfig(purpose) {
+  const keys = Config.User?.Keys;
+  return (purpose === ASSERTION ? keys?.Signing : keys?.Encryption) || {};
+}
 
 // CID 1.0 JsonWebKey document (section 2.2.3); secretKeyJwk holds the passphrase-wrapped private JWK as a flattened JWE, not a plaintext JWK
 function buildKeyDocument(publicKeyJWK, secretKeyJwe) {
@@ -111,25 +124,19 @@ async function listKeyResources(containerURL) {
   }
 }
 
-//XXX: single active key for now (members[0]); selecting by kid can come later
-async function resolveKeystoreResourceURL() {
-  if (cachedKeystoreURL) return cachedKeystoreURL;
-  const container = findKeyContainer();
-  if (!container) return null;
-  const members = await listKeyResources(container);
-  if (members.length) {
-    cachedKeystoreURL = members[0];
-    Config.User.Encryption.KeystoreURL = members[0];
-    return members[0];
-  }
-  return null;
-}
-
-// With a kid the resource URL is computed directly; without one it falls back to container discovery
-async function fetchStorageKeystore(kid) {
+// With a kid the resource URL is computed directly; without one the first stored key of that purpose is used
+async function fetchStorageKeystore(kid, purpose = KEY_AGREEMENT) {
   if (!Config.Session?.isActive) return null;
   try {
-    const url = kid ? keyResourceURL(kid) : await resolveKeystoreResourceURL();
+    if (!kid) {
+      const [doc] = await fetchStorageKeyDocuments(purpose);
+      if (doc) {
+        sessions[purpose].keystoreURL = keyResourceURL(doc.publicKeyJwk.kid);
+        keyConfig(purpose).KeystoreURL = sessions[purpose].keystoreURL;
+      }
+      return doc || null;
+    }
+    const url = keyResourceURL(kid);
     if (!url) return null;
     const response = await getResource(url, { 'Accept': 'application/ld+json' }, { noCache: true });
     const doc = await response.json();
@@ -139,7 +146,7 @@ async function fetchStorageKeystore(kid) {
   }
 }
 
-async function fetchAllStorageKeyDocuments() {
+async function fetchStorageKeyDocuments(purpose) {
   if (!Config.Session?.isActive) return [];
   const container = findKeyContainer();
   if (!container) return [];
@@ -149,17 +156,20 @@ async function fetchAllStorageKeyDocuments() {
     try {
       const response = await getResource(url, { 'Accept': 'application/ld+json' }, { noCache: true });
       const doc = await response.json();
-      if (isValidKeyDocument(doc)) docs.push(doc);
+      if (isValidKeyDocument(doc) && (!purpose || purposeOf(doc) === purpose)) docs.push(doc);
     } catch {}
   }
   return docs;
 }
 
-async function loadAllKeyDocuments() {
+// Both purposes share the key/ container and are told apart by use, so no second type index registration
+async function loadAllKeyDocuments(purpose) {
   const byKid = new Map();
-  for (const doc of await fetchAllStorageKeyDocuments()) byKid.set(doc.publicKeyJwk.kid, doc);
-  const local = await getEncryptedKeystore();
-  if (isValidKeyDocument(local) && !byKid.has(local.publicKeyJwk.kid)) byKid.set(local.publicKeyJwk.kid, local);
+  for (const doc of await fetchStorageKeyDocuments(purpose)) byKid.set(doc.publicKeyJwk.kid, doc);
+  for (const p of purpose ? [purpose] : PURPOSES) {
+    const local = await getEncryptedKeystore(p);
+    if (isValidKeyDocument(local) && !byKid.has(local.publicKeyJwk.kid)) byKid.set(local.publicKeyJwk.kid, local);
+  }
   return [...byKid.values()];
 }
 
@@ -244,8 +254,9 @@ async function saveStorageKeystore(doc, { ifNoneMatch = false } = {}) {
   const container = await ensureKeyContainer();
   await setKeystoreContainerACL(container);
 
-  cachedKeystoreURL = url;
-  Config.User.Encryption.KeystoreURL = url;
+  const purpose = purposeOf(doc);
+  sessions[purpose].keystoreURL = url;
+  keyConfig(purpose).KeystoreURL = url;
 
   const data = JSON.stringify(doc, null, 2);
   const options = ifNoneMatch ? { headers: { 'If-None-Match': '*' } } : {};
@@ -265,86 +276,97 @@ async function saveStorageKeystore(doc, { ifNoneMatch = false } = {}) {
   return url;
 }
 
-export async function createKeystore(passphrase) {
-  const { publicKey, privateKey, kid } = await generateEncryptionKeypair();
+export async function createKeystore(passphrase, purpose = KEY_AGREEMENT) {
+  const generate = purpose === ASSERTION ? generateSigningKeypair : generateEncryptionKeypair;
+  const { publicKey, privateKey, kid } = await generate();
   const publicKeyJWK = await exportPublicKeyJWK(publicKey, kid);
   const privateKeyJWK = await exportPrivateKeyJWK(privateKey, kid);
   const jwe = await wrapPrivateKeyJWK(privateKeyJWK, passphrase);
   const doc = buildKeyDocument(publicKeyJWK, jwe);
 
-  await setEncryptedKeystore(doc);
-  Config.User.Encryption.StorageSyncFailed = false;
+  await setEncryptedKeystore(doc, purpose);
+  keyConfig(purpose).StorageSyncFailed = false;
   try {
     await saveStorageKeystore(doc, { ifNoneMatch: true });
   } catch (e) {
-    Config.User.Encryption.StorageSyncFailed = true;
+    keyConfig(purpose).StorageSyncFailed = true;
     console.warn('dokieli: keystore saved locally; storage save failed', e);
   }
 
-  sessionPrivateKeys.set(kid, await importPrivateKeyJWK(privateKeyJWK));
-  sessionPublicKey = publicKey;
-  sessionPublicKeyJWK = publicKeyJWK;
-  sessionKid = kid;
+  const session = sessions[purpose];
+  session.privateKeys.set(kid, await importPrivateKeyJWK(privateKeyJWK));
+  session.publicKey = publicKey;
+  session.publicKeyJWK = publicKeyJWK;
+  session.kid = kid;
 
   return publicKeyJWK;
 }
 
-// Unlocks every key the user holds so content encrypted to a past key stays decryptable
+// Unlocks every key the user holds, of both purposes, so content encrypted to a past key stays decryptable
 export async function unlockKeystore(passphrase) {
   const docs = await loadAllKeyDocuments();
   if (!docs.length) throw new Error('No keystore found. Set up encryption first.');
 
-  const local = await getEncryptedKeystore();
-  const localKid = isValidKeyDocument(local) ? local.publicKeyJwk.kid : null;
-
-  const keys = new Map();
+  const unlocked = { [KEY_AGREEMENT]: new Map(), [ASSERTION]: new Map() };
   const docByKid = new Map();
   for (const doc of docs) {
     try {
       const kid = doc.publicKeyJwk.kid;
       const privateKeyJWK = await unwrapPrivateKeyJWK(doc.secretKeyJwk, passphrase);
-      keys.set(kid, await importPrivateKeyJWK(privateKeyJWK));
+      unlocked[purposeOf(doc)].set(kid, await importPrivateKeyJWK(privateKeyJWK));
       docByKid.set(kid, doc);
     } catch {}
   }
-  if (!keys.size) throw new Error('Unable to unlock keystore with the given passphrase.');
+  if (!docByKid.size) throw new Error('Unable to unlock keystore with the given passphrase.');
 
-  sessionPrivateKeys = keys;
-  sessionKid = (localKid && keys.has(localKid)) ? localKid : keys.keys().next().value;
-  sessionPublicKeyJWK = docByKid.get(sessionKid)?.publicKeyJwk || null;
-  sessionPublicKey = sessionPublicKeyJWK ? await importPublicKeyJWK(sessionPublicKeyJWK) : null;
+  for (const purpose of PURPOSES) {
+    const keys = unlocked[purpose];
+    if (!keys.size) continue;
 
-  const currentDoc = docByKid.get(sessionKid) || null;
-  if (!currentDoc) return;
+    const local = await getEncryptedKeystore(purpose);
+    const localKid = isValidKeyDocument(local) ? local.publicKeyJwk.kid : null;
+    const session = sessions[purpose];
 
-  // A document created while signed out has no id or controller yet
-  let cacheStale = localKid !== sessionKid;
-  if (Config.User?.IRI && !currentDoc.controller) {
-    currentDoc.controller = Config.User.IRI;
-    currentDoc.id = `${stripFragmentFromString(Config.User.IRI)}#key-${sessionKid}`;
-    cacheStale = true;
+    session.privateKeys = keys;
+    session.kid = (localKid && keys.has(localKid)) ? localKid : keys.keys().next().value;
+    session.publicKeyJWK = docByKid.get(session.kid)?.publicKeyJwk || null;
+    session.publicKey = session.publicKeyJWK ? await importPublicKeyJWK(session.publicKeyJWK) : null;
+
+    const currentDoc = docByKid.get(session.kid) || null;
+    if (!currentDoc) continue;
+
+    // A document created while signed out has no id or controller yet
+    let cacheStale = localKid !== session.kid;
+    if (Config.User?.IRI && !currentDoc.controller) {
+      currentDoc.controller = Config.User.IRI;
+      currentDoc.id = `${stripFragmentFromString(Config.User.IRI)}#key-${session.kid}`;
+      cacheStale = true;
+    }
+    if (cacheStale) await setEncryptedKeystore(currentDoc, purpose);
+
+    // Upload when the storage copy is missing (signed-out setup now signed in); key documents are immutable per kid
+    fetchStorageKeystore(session.kid, purpose)
+      .then(storage => {
+        if (!storage) return saveStorageKeystore(currentDoc, { ifNoneMatch: true });
+      })
+      .catch(e => console.warn('dokieli: keystore storage sync failed', e));
   }
-  if (cacheStale) await setEncryptedKeystore(currentDoc);
-
-  // Upload when the storage copy is missing (signed-out setup now signed in); key documents are immutable per kid
-  fetchStorageKeystore(sessionKid)
-    .then(storage => {
-      if (!storage) return saveStorageKeystore(currentDoc, { ifNoneMatch: true });
-    })
-    .catch(e => console.warn('dokieli: keystore storage sync failed', e));
 }
 
-export async function publishPublicKeyToProfile() {
-  if (!Config.Session?.isActive || !Config.User?.IRI || !sessionPublicKeyJWK) return null;
+// Key agreement keys let others encrypt to the user; assertion keys let others verify their signatures
+export async function publishPublicKeyToProfile(purpose = KEY_AGREEMENT) {
+  const session = sessions[purpose];
+  if (!Config.Session?.isActive || !Config.User?.IRI || !session.publicKeyJWK) return null;
+  const relation = purpose === ASSERTION ? Config.ns.sec.assertionMethod : Config.ns.sec.keyAgreementMethod;
   const webid = Config.User.IRI;
   const profileDoc = stripFragmentFromString(webid);
-  const keyIRI = `${profileDoc}#key-${sessionKid}`;
-  const published = Config.User.Graph?.out(Config.ns.sec.keyAgreementMethod).values || [];
+  const keyIRI = `${profileDoc}#key-${session.kid}`;
+  const published = Config.User.Graph?.out(relation).values || [];
   if (published.includes(keyIRI)) return null;
 
-  const jwk = escapeRDFLiteral(JSON.stringify(sessionPublicKeyJWK));
+  const jwk = escapeRDFLiteral(JSON.stringify(session.publicKeyJWK));
   // sec:JsonWebKey is the CID v1.0 verification method type
-  const insert = `<${webid}> <${Config.ns.sec.keyAgreementMethod.value}> <${keyIRI}> .
+  const insert = `<${webid}> <${relation.value}> <${keyIRI}> .
 <${keyIRI}> a <${Config.ns.sec.JsonWebKey.value}> ;
   <${Config.ns.sec.controller.value}> <${webid}> ;
   <${Config.ns.sec.publicKeyJwk.value}> "${jwk}"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .`;
@@ -409,46 +431,43 @@ export async function syncDocumentRecipientsFromACL(documentURL) {
 }
 
 export function lockKeystore() {
-  sessionPrivateKeys = new Map();
-  sessionPublicKey = null;
-  sessionPublicKeyJWK = null;
-  sessionKid = null;
-  cachedKeystoreURL = null;
-  storageChecked = false;
+  sessions = { [KEY_AGREEMENT]: newSession(), [ASSERTION]: newSession() };
   documentRecipients = new Map();
 }
 
-export function isUnlocked() {
-  return sessionPrivateKeys.size > 0;
+export function isUnlocked(purpose = KEY_AGREEMENT) {
+  return sessions[purpose].privateKeys.size > 0;
 }
 
-export function getSessionPrivateKey(kid) {
-  return sessionPrivateKeys.get(kid || sessionKid) || null;
+export function getSessionPrivateKey(kid, purpose = KEY_AGREEMENT) {
+  const session = sessions[purpose];
+  return session.privateKeys.get(kid || session.kid) || null;
 }
 
 // Selects the key by the JWE's kid, falling back to trying each held key
 export async function decryptWithSession(jwe) {
+  const { privateKeys } = sessions[KEY_AGREEMENT];
   for (const kid of getJWEKids(jwe)) {
-    const key = sessionPrivateKeys.get(kid);
+    const key = privateKeys.get(kid);
     if (key) return decryptContent(jwe, key);
   }
   let lastError;
-  for (const key of sessionPrivateKeys.values()) {
+  for (const key of privateKeys.values()) {
     try { return await decryptContent(jwe, key); } catch (e) { lastError = e; }
   }
   throw lastError || new Error('No unlocked key can decrypt this content.');
 }
 
-export function getSessionPublicKey() {
-  return sessionPublicKey;
+export function getSessionPublicKey(purpose = KEY_AGREEMENT) {
+  return sessions[purpose].publicKey;
 }
 
-export function getSessionPublicKeyJWK() {
-  return sessionPublicKeyJWK;
+export function getSessionPublicKeyJWK(purpose = KEY_AGREEMENT) {
+  return sessions[purpose].publicKeyJWK;
 }
 
-export function getSessionKid() {
-  return sessionKid;
+export function getSessionKid(purpose = KEY_AGREEMENT) {
+  return sessions[purpose].kid;
 }
 
 function noKeysError() {
@@ -478,8 +497,11 @@ export async function importKeyDocuments(input) {
   const known = new Set((await loadAllKeyDocuments()).map(d => d.publicKeyJwk.kid));
   const added = docs.filter(d => !known.has(d.publicKeyJwk.kid)).length;
 
-  //XXX: one document per device keystore, so the rest survive only on storage
-  await setEncryptedKeystore(docs[0]);
+  //XXX: one document per purpose on the device, so the rest survive only on storage
+  for (const purpose of PURPOSES) {
+    const doc = docs.find(d => purposeOf(d) === purpose);
+    if (doc) await setEncryptedKeystore(doc, purpose);
+  }
 
   // Returns null when there is no session or the key is already there, so count the URL
   let stored = 0;
@@ -496,11 +518,11 @@ export async function importKeyDocuments(input) {
 }
 
 // Needs the passphrase, and what it returns is unprotected
-export async function exportKeyPair(passphrase, kid) {
-  const docs = await loadAllKeyDocuments();
+export async function exportKeyPair(passphrase, kid, purpose = KEY_AGREEMENT) {
+  const docs = await loadAllKeyDocuments(purpose);
   const doc = kid
     ? docs.find(d => d.publicKeyJwk.kid === kid)
-    : docs.find(d => d.publicKeyJwk.kid === sessionKid) || docs[0];
+    : docs.find(d => d.publicKeyJwk.kid === sessions[purpose].kid) || docs[0];
   if (!doc) throw noKeysError();
 
   const privateKeyJWK = await unwrapPrivateKeyJWK(doc.secretKeyJwk, passphrase);
@@ -520,13 +542,14 @@ export async function importPrivateKeyPEM(pem, passphrase) {
 }
 
 // Probes the storage once per session so a new device gets the unlock prompt instead of setup
-export async function hasKeystore() {
-  if (isValidKeyDocument(await getEncryptedKeystore())) return true;
-  if (storageChecked || !Config.Session?.isActive) return false;
-  storageChecked = true;
-  const storage = await fetchStorageKeystore();
+export async function hasKeystore(purpose = KEY_AGREEMENT) {
+  if (isValidKeyDocument(await getEncryptedKeystore(purpose))) return true;
+  const session = sessions[purpose];
+  if (session.storageChecked || !Config.Session?.isActive) return false;
+  session.storageChecked = true;
+  const storage = await fetchStorageKeystore(null, purpose);
   if (storage) {
-    await setEncryptedKeystore(storage);
+    await setEncryptedKeystore(storage, purpose);
     return true;
   }
   return false;

@@ -2183,7 +2183,7 @@ export async function createMutableResource(url, data, options) {
 
   // First serialize: document carries the mutableURL identifier (rel:latest-version).
   data = getDocument(null, documentOptions);
-  if (Config.User.Encryption?.Enabled && Config.User.Encryption?.DocumentEncrypt) data = await encryptArticlePayload(data);
+  if (Config.User.Keys?.Encryption?.Enabled && Config.User.Keys?.Encryption?.DocumentEncrypt) data = await encryptArticlePayload(data);
 
   Config.Storage.save(containerIRI, uuid, data, options)
     .then((resolved) => handleActionMessage(resolved))
@@ -2195,7 +2195,7 @@ export async function createMutableResource(url, data, options) {
   setDocumentRelation(document, [r], o);
 
   data = getDocument(null, documentOptions);
-  if (Config.User.Encryption?.Enabled && Config.User.Encryption?.DocumentEncrypt) data = await encryptArticlePayload(data);
+  if (Config.User.Keys?.Encryption?.Enabled && Config.User.Keys?.Encryption?.DocumentEncrypt) data = await encryptArticlePayload(data);
 
   Config.Storage.save(url, null, data, options)
     .then((resolved) => handleActionMessage(resolved))
@@ -2215,7 +2215,7 @@ export async function encryptArticlePayload(htmlString) {
   if (!article) return htmlString;
 
   const titleNode = parsed.querySelector('head > title');
-  const scope = Config.User.Encryption?.Scope === 'document' ? 'document' : 'article';
+  const scope = Config.User.Keys?.Encryption?.Scope === 'document' ? 'document' : 'article';
 
   let plaintext;
   let hiddenHeadNodes = [];
@@ -2259,7 +2259,7 @@ export async function encryptArticlePayload(htmlString) {
 
   if (titleNode) titleNode.textContent = i18n.t('encryption.encrypted-document-title.textContent');
 
-  Config.User.Encryption.Document = true;
+  Config.User.Keys.Encryption.Document = true;
 
   const doctype = getDoctype();
   return (doctype ? doctype + '\n' : '') + parsed.documentElement.outerHTML;
@@ -2321,7 +2321,7 @@ export async function updateMutableResource(url, data, options) {
   data = payload.data;
   options.contentType = payload.contentType;
 
-  if (Config.User.Encryption?.Enabled && Config.User.Encryption?.DocumentEncrypt) data = await encryptArticlePayload(data);
+  if (Config.User.Keys?.Encryption?.Enabled && Config.User.Keys?.Encryption?.DocumentEncrypt) data = await encryptArticlePayload(data);
 
   Config.Storage.save(url, null, data, options)
     .then(async (resolved) => {

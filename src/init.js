@@ -140,7 +140,7 @@ function initUser() {
       // user.object.describes.Role = (Config.User.IRI && user.object.describes.Role) ? user.object.describes.Role : 'social';
 
       // Restore user info only, do not fetch profile or TypeIndex here. Auth (restoreSession) runs in parallel and may not have completed yet, so any authenticated fetch here gets a 401. The dokieli:auth-ready event fires after initAuth completes and triggers setUserInfo + afterSetUserInfo with a live session.
-      Config.User = { Encryption: { Enabled: false, KeyId: null }, ...sanitizeObject(user.object.describes) };
+      Config.User = { Keys: { Encryption: { Enabled: false, KeyId: null }, Signing: { Enabled: false, KeyId: null } }, ...sanitizeObject(user.object.describes) };
     }
   })
 }
@@ -586,8 +586,8 @@ export async function initEncryptedDocument() {
   const encryptedScript = document.getElementById('dokieli-e2ee');
   if (!encryptedScript) {
     // Per-document state: a newly loaded document without an encrypted payload starts unencrypted regardless of the previous document's toggle
-    Config.User.Encryption.Document = false;
-    Config.User.Encryption.DocumentEncrypt = false;
+    Config.User.Keys.Encryption.Document = false;
+    Config.User.Keys.Encryption.DocumentEncrypt = false;
     return;
   }
 
@@ -643,19 +643,19 @@ export async function decryptArticleInPlace() {
     const tmpl = document.createElement('template');
     tmpl.innerHTML = body;
     shell.replaceWith(tmpl.content);
-    Config.User.Encryption.Scope = 'document';
+    Config.User.Keys.Encryption.Scope = 'document';
   }
   else {
     article.removeAttribute('data-encrypted');
     article.setHTMLUnsafe(body);
-    Config.User.Encryption.Scope = 'article';
+    Config.User.Keys.Encryption.Scope = 'article';
   }
   if (title) document.title = title;
 
-  Config.User.Encryption.Enabled = true;
-  Config.User.Encryption.KeyId = getSessionKid();
-  Config.User.Encryption.Document = true;
-  Config.User.Encryption.DocumentEncrypt = true;
+  Config.User.Keys.Encryption.Enabled = true;
+  Config.User.Keys.Encryption.KeyId = getSessionKid();
+  Config.User.Keys.Encryption.Document = true;
+  Config.User.Keys.Encryption.DocumentEncrypt = true;
 }
 
 // function initMath(config) {

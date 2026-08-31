@@ -159,7 +159,10 @@ export async function signOut() {
 
   Config.User = {
     IRI: null,
-    Encryption: { Enabled: false, KeyId: null, KeystoreURL: null, PodSyncFailed: false },
+    Keys: {
+      Encryption: { Enabled: false, KeyId: null, KeystoreURL: null, StorageSyncFailed: false },
+      Signing: { Enabled: false, KeyId: null, KeystoreURL: null, StorageSyncFailed: false }
+    },
     UI: Config.User.UI
   }
 

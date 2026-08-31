@@ -34,9 +34,23 @@ export async function generateEncryptionKeypair() {
   return { publicKey, privateKey, kid };
 }
 
+// RSA-2048 with SHA-256 is what the nanopub network verifies signatures with
+export async function generateSigningKeypair() {
+  const { publicKey, privateKey } = await crypto.subtle.generateKey(
+    { name: 'RSASSA-PKCS1-v1_5', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' },
+    true,
+    ['sign', 'verify']
+  );
+  const jwk = await crypto.subtle.exportKey('jwk', publicKey);
+  const kid = await calculateJwkThumbprint(jwk);
+  return { publicKey, privateKey, kid };
+}
+
+// use records what the key is for; the thumbprint covers only required members, so kid is unaffected
 export async function exportPublicKeyJWK(publicKey, kid) {
   const jwk = await crypto.subtle.exportKey('jwk', publicKey);
-  return kid ? { ...jwk, kid } : jwk;
+  const use = jwk.kty === 'RSA' ? 'sig' : 'enc';
+  return kid ? { ...jwk, use, kid } : { ...jwk, use };
 }
 
 export async function exportPrivateKeyJWK(privateKey, kid) {
@@ -44,24 +58,21 @@ export async function exportPrivateKeyJWK(privateKey, kid) {
   return kid ? { ...jwk, kid } : jwk;
 }
 
+// EC keys are for key agreement, RSA keys for nanopub signatures
+function algorithmFor(jwk) {
+  return jwk?.kty === 'RSA'
+    ? { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }
+    : { name: 'ECDH', namedCurve: CURVE };
+}
+
 export async function importPublicKeyJWK(jwk) {
-  return crypto.subtle.importKey(
-    'jwk',
-    jwk,
-    { name: 'ECDH', namedCurve: CURVE },
-    true,
-    []
-  );
+  const usages = jwk?.kty === 'RSA' ? ['verify'] : [];
+  return crypto.subtle.importKey('jwk', jwk, algorithmFor(jwk), true, usages);
 }
 
 export async function importPrivateKeyJWK(jwk) {
-  return crypto.subtle.importKey(
-    'jwk',
-    jwk,
-    { name: 'ECDH', namedCurve: CURVE },
-    false,
-    ['deriveBits']
-  );
+  const usages = jwk?.kty === 'RSA' ? ['sign'] : ['deriveBits'];
+  return crypto.subtle.importKey('jwk', jwk, algorithmFor(jwk), false, usages);
 }
 
 function toPEM(buffer, label) {
@@ -77,18 +88,30 @@ function fromPEM(pem) {
   return bytes.buffer;
 }
 
-// EC private JWK carries x and y, so the public key needs no second file
+// PKCS#8 does not say which algorithm to import as, so try key agreement first and fall back to signing
+async function importPKCS8(pem) {
+  const der = fromPEM(pem);
+  try {
+    return await crypto.subtle.importKey('pkcs8', der, { name: 'ECDH', namedCurve: CURVE }, true, ['deriveBits']);
+  } catch {
+    return crypto.subtle.importKey('pkcs8', der, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, true, ['sign']);
+  }
+}
+
+// The private JWK carries the public members too, so the public key needs no second file
 export async function privateKeyPEMToJWK(pem) {
-  const key = await crypto.subtle.importKey('pkcs8', fromPEM(pem), { name: 'ECDH', namedCurve: CURVE }, true, ['deriveBits']);
-  const jwk = await crypto.subtle.exportKey('jwk', key);
-  const publicKeyJWK = { crv: jwk.crv, ext: true, key_ops: [], kty: jwk.kty, x: jwk.x, y: jwk.y };
+  const jwk = await crypto.subtle.exportKey('jwk', await importPKCS8(pem));
+  const publicKeyJWK = jwk.kty === 'RSA'
+    ? { e: jwk.e, ext: true, key_ops: [], kty: jwk.kty, n: jwk.n, use: 'sig' }
+    : { crv: jwk.crv, ext: true, key_ops: [], kty: jwk.kty, use: 'enc', x: jwk.x, y: jwk.y };
   const kid = await calculateJwkThumbprint(publicKeyJWK);
   return { privateKeyJWK: { ...jwk, kid }, publicKeyJWK: { ...publicKeyJWK, kid } };
 }
 
 // Extractable, unlike importPrivateKeyJWK: this key is handed to the user
 export async function privateKeyJWKToPEM(privateKeyJWK) {
-  const key = await crypto.subtle.importKey('jwk', privateKeyJWK, { name: 'ECDH', namedCurve: CURVE }, true, ['deriveBits']);
+  const usages = privateKeyJWK?.kty === 'RSA' ? ['sign'] : ['deriveBits'];
+  const key = await crypto.subtle.importKey('jwk', privateKeyJWK, algorithmFor(privateKeyJWK), true, usages);
   return toPEM(await crypto.subtle.exportKey('pkcs8', key), 'PRIVATE KEY');
 }
 
