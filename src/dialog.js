@@ -559,7 +559,7 @@ export function initDocumentDoEvents() {
     }
 
     const setDocumentEncrypt = (value) => {
-      Config.User.Encryption.DocumentEncrypt = value;
+      Config.User.Keys.Encryption.DocumentEncrypt = value;
       refreshEncryptToggle();
       if (value) {
         ensureEncryptedDocumentACL().catch(e => console.warn('dokieli: could not restrict access on encrypted document', e));
@@ -1148,7 +1148,7 @@ export function shareResource(listenerEvent, iri) {
 
 // For encrypted documents: grant Read, re-encrypt to the recipients' published keys, then notify. Contacts without a published encryption key are skipped so they are not announced content they cannot decrypt
 async function shareResourceWithAgents(tos, note, iri, shareResourceNode) {
-  if (!(Config.User.Encryption?.Enabled && Config.User.Encryption?.DocumentEncrypt)) {
+  if (!(Config.User.Keys?.Encryption?.Enabled && Config.User.Keys?.Encryption?.DocumentEncrypt)) {
     return sendNotifications(tos, note, iri, shareResourceNode);
   }
 
@@ -1255,7 +1255,7 @@ export function addShareResourceContactInput(node, agent) {
   var inbox = agent?.Inbox;
 
   // An encrypted document can only be shared with agents whose profile publishes an encryption key
-  if (Config.User.Encryption?.Enabled && Config.User.Encryption?.DocumentEncrypt && !agentHasPublishedEncryptionKey(agent?.Graph)) {
+  if (Config.User.Keys?.Encryption?.Enabled && Config.User.Keys?.Encryption?.DocumentEncrypt && !agentHasPublishedEncryptionKey(agent?.Graph)) {
     return;
   }
 
@@ -3961,7 +3961,7 @@ export async function saveAsDocument(e) {
       saveData = payload.data;
       saveContentType = payload.contentType;
     }
-    else if (Config.User.Encryption?.Enabled && Config.User.Encryption?.DocumentEncrypt) {
+    else if (Config.User.Keys?.Encryption?.Enabled && Config.User.Keys?.Encryption?.DocumentEncrypt) {
       saveData = await encryptArticlePayload(saveData);
     }
 
@@ -7335,11 +7335,11 @@ function initPassphraseToggles(container) {
   });
 }
 
-// Asks whether to encrypt the article's content only or the whole document, then records the choice on Config.User.Encryption.Scope and continues (to the passphrase step)
+// Asks whether to encrypt the article's content only or the whole document, then records the choice on Config.User.Keys.Encryption.Scope and continues (to the passphrase step)
 export function showEncryptionScopeChoice(onChosen) {
   if (document.getElementById('encryption-scope')) return;
 
-  const currentScope = Config.User.Encryption?.Scope === 'document' ? 'document' : 'article';
+  const currentScope = Config.User.Keys?.Encryption?.Scope === 'document' ? 'document' : 'article';
   const buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
   const html = `
@@ -7371,7 +7371,7 @@ export function showEncryptionScopeChoice(onChosen) {
   aside.querySelector('#encryption-scope-form').addEventListener('submit', e => {
     e.preventDefault();
     const selected = aside.querySelector('input[name="encryption-scope"]:checked')?.value;
-    Config.User.Encryption.Scope = selected === 'document' ? 'document' : 'article';
+    Config.User.Keys.Encryption.Scope = selected === 'document' ? 'document' : 'article';
     aside.remove();
     onChosen?.();
   });
@@ -7448,17 +7448,17 @@ export function showEncryptionSetup(onSuccess) {
 
     try {
       await createKeystore(pass);
-      Config.User.Encryption.Enabled = true;
-      Config.User.Encryption.KeyId = getSessionKid();
+      Config.User.Keys.Encryption.Enabled = true;
+      Config.User.Keys.Encryption.KeyId = getSessionKid();
       generatingMsg.remove();
       const successMsg = document.createElement('p');
       successMsg.setAttribute('data-i18n', 'encryption-setup.success');
       successMsg.textContent = i18n.t('encryption-setup.success.textContent');
       info.appendChild(successMsg);
 
-      const keystoreURL = Config.User.Encryption.KeystoreURL;
+      const keystoreURL = Config.User.Keys.Encryption.KeystoreURL;
       const locationMsg = document.createElement('p');
-      if (keystoreURL && !Config.User.Encryption.StorageSyncFailed) {
+      if (keystoreURL && !Config.User.Keys.Encryption.StorageSyncFailed) {
         locationMsg.setAttribute('data-i18n', 'encryption-setup.saved-at');
         locationMsg.setHTMLUnsafe(domSanitize(i18n.t('encryption-setup.saved-at.textContent') + ' <a href="' + keystoreURL + '" rel="noopener" target="_blank">' + keystoreURL + '</a>'));
         info.appendChild(locationMsg);
@@ -7490,7 +7490,7 @@ export function showEncryptionSetup(onSuccess) {
 
       clearPendingEncryptedQueues();
       onSuccess?.();
-      if (Config.User.Encryption.StorageSyncFailed) {
+      if (Config.User.Keys.Encryption.StorageSyncFailed) {
         // Defer profile publication until the keystore reaches storage, on a later unlock
         const syncMsg = document.createElement('p');
         syncMsg.setAttribute('class', 'warning');
@@ -7748,8 +7748,8 @@ export function showEncryptionUnlock(onSuccess) {
 
     try {
       await unlockKeystore(pass);
-      Config.User.Encryption.Enabled = true;
-      Config.User.Encryption.KeyId = getSessionKid();
+      Config.User.Keys.Encryption.Enabled = true;
+      Config.User.Keys.Encryption.KeyId = getSessionKid();
 
       const { decryptArticleInPlace } = await import('./init.js');
       await decryptArticleInPlace();

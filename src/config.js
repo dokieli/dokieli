@@ -40,13 +40,22 @@ export default {
   User: {
     IRI: null,
     Role: null,
-    Encryption: {
-      Enabled: false,
-      KeyId: null,
-      KeystoreURL: null,
-      PodSyncFailed: false,
-      Document: false,
-      DocumentEncrypt: false
+    Keys: {
+      Encryption: {
+        Enabled: false,
+        KeyId: null,
+        KeystoreURL: null,
+        StorageSyncFailed: false,
+        Document: false,
+        DocumentEncrypt: false,
+        Scope: 'article'
+      },
+      Signing: {
+        Enabled: false,
+        KeyId: null,
+        KeystoreURL: null,
+        StorageSyncFailed: false
+      }
     },
     UI: {
       Language: 'en-GB', // default

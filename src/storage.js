@@ -284,18 +284,22 @@ export function getDeviceStorageItem(key) {
   }
 }
 
-const E2EE_KEYSTORE_KEY = 'DO.Config.E2EE.Keystore';
+// Encrypted at rest whatever the key is for; keyAgreement keeps its original slot so existing devices still find their key
+const KEYSTORE_KEYS = {
+  keyAgreement: 'DO.Config.E2EE.Keystore',
+  assertion: 'DO.Config.Signing.Keystore'
+};
 
-export function getEncryptedKeystore() {
-  return get(E2EE_KEYSTORE_KEY);
+export function getEncryptedKeystore(purpose = 'keyAgreement') {
+  return get(KEYSTORE_KEYS[purpose]);
 }
 
-export function setEncryptedKeystore(keystore) {
-  return set(E2EE_KEYSTORE_KEY, keystore);
+export function setEncryptedKeystore(keystore, purpose = 'keyAgreement') {
+  return set(KEYSTORE_KEYS[purpose], keystore);
 }
 
-export function removeEncryptedKeystore() {
-  return del(E2EE_KEYSTORE_KEY);
+export function removeEncryptedKeystore(purpose = 'keyAgreement') {
+  return del(KEYSTORE_KEYS[purpose]);
 }
 
 export function updateBrowserStorageOIDC() {
