@@ -513,6 +513,12 @@ dl dl {
   margin-left: 1em;
 }
 
+li:has(>dl[typeof~="schema:Event"]) {
+margin-left:1em;
+list-style-position: outside;
+}
+
+
 h1+#authors,
 h1+#document-identifier {
   margin-top: 1em;
