@@ -118,6 +118,11 @@ limitations under the License.
   }
 }
 
+/* Manual theme: make color-scheme track the choice so native controls,
+   scrollbars and default link colours match (auto stays `light dark`). */
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+
 /* Manual dark (Display Modes → Dark) */
 :root[data-theme="dark"] {
   --do-color-bg: #1a1a1a;
@@ -754,6 +759,14 @@ max-height:inherit;
 
 #graph-view button.export {
   margin:-0.5em 0 0 0;
+}
+
+#graph-view .graph-resources,
+#graph-view .graph-statements,
+#graph-view .graph-nodes-unique,
+#graph-view .graph-creator,
+#graph-view .graph-license {
+  fill: var(--do-color-fg);
 }
 
 svg[typeof="http://purl.org/dc/dcmitype/Image"] {
@@ -3683,6 +3696,7 @@ fill: var(--do-color-accent-strong);
 }
 
 #document-menu section button[aria-pressed="true"],
+#document-menu #document-views button[disabled],
 #document-menu #document-theme li input:checked + label {
 color: var(--do-color-link) !important;
 background-color: var(--do-color-accent-bg) !important;
@@ -3937,6 +3951,7 @@ border:1px solid var(--do-color-border);
 vertical-align:middle;
 float:none;
 }
+#document-menu #document-views button[disabled],
 #document-menu #document-theme li input:checked + label {
 border-color:var(--do-color-accent);
 }
@@ -4397,6 +4412,7 @@ padding:0 !important;
 border: none !important;
 box-shadow: none !important;
 background-color: var(--do-color-bg) !important;
+color: var(--do-color-fg) !important;
 }
 [dir="rtl"] button.close {
 right:initial;

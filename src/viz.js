@@ -566,7 +566,7 @@ export function showVisualisationGraph(url, data, selector, options) {
     function drawCanvasLegend(go) {
       var x = 12, y = 20;
       ctx.font = '16px monospace';
-      ctx.fillStyle = '#000';
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--do-color-fg').trim() || '#000';
       ctx.fillText('Resources: ' + go.resources.join(', '), x, y);
       ctx.fillText('Statements: ' + go.bilinks.length, x, y + 22);
       ctx.fillText('Nodes: ' + nodes.length + ' (unique)', x, y + 44);
@@ -744,9 +744,20 @@ export function showVisualisationGraph(url, data, selector, options) {
       }
     });
 
+    // Repaint on theme change, but only while this graph canvas is in the DOM.
+    function onThemeChanged() {
+      if (!canvas.isConnected) {
+        document.removeEventListener('do-theme-changed', onThemeChanged);
+        return;
+      }
+      draw();
+    }
+    document.addEventListener('do-theme-changed', onThemeChanged);
+
     function cleanup() {
       window.removeEventListener('mousemove', onWindowMouseMove);
       window.removeEventListener('mouseup', onWindowMouseUp);
+      document.removeEventListener('do-theme-changed', onThemeChanged);
     }
 
     return { draw, cleanup };

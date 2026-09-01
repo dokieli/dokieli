@@ -37,6 +37,8 @@ export function applyTheme(theme) {
     Config.User.UI.Theme = t;
   }
 
+  document.dispatchEvent(new CustomEvent('do-theme-changed', { detail: { theme: t } }));
+
   return t;
 }
 
