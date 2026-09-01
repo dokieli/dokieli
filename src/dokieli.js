@@ -23,6 +23,7 @@ import { i18n, i18nextInit } from './i18n.js'
 import { init } from './init.js'
 import { getDocumentContentNode } from './utils/html.js';
 import { showDocumentMenu } from './dialog.js';
+import { initTheme } from './theme.js';
 import { updateUILanguage } from './actions.js';
 import { getButtonStates } from './ui/buttons.js';
 
@@ -59,6 +60,8 @@ const DO = window.DO ?? {
     },
 
     load: function() {
+      initTheme();
+
       document.addEventListener('i18n-ready', () => {
         DO.U.initUserLanguage().then(() => {
           const params = new URLSearchParams(window.location.search);

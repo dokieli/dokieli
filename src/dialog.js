@@ -738,6 +738,15 @@ export function showViews(node) {
   s += `<li><button class="resource-edit-custom-style" data-i18n="menu.document-views.custom.button" title="${i18n.t('menu.document-views.custom.button.title')}">${i18n.t('menu.document-views.custom.button.textContent')}</button></li>`;
 
   s += '</ul></section>';
+
+  const currentTheme = Config.User?.UI?.Theme || 'auto';
+  const themeOption = (value) => `<li><input type="radio" id="do-theme-${value}" name="do-display-theme" value="${value}"${value === currentTheme ? ' checked=""' : ''}><label for="do-theme-${value}" data-i18n="menu.display-theme.${value}">${i18n.t(`menu.display-theme.${value}.textContent`)}</label></li>`;
+  s += `
+    <section aria-labelledby="document-theme-label" id="document-theme" rel="schema:hasPart" resource="#document-theme">
+      <h2 data-i18n="menu.document-theme.h2" id="document-theme-label" property="schema:name">${i18n.t('menu.document-theme.h2.textContent')}</h2>
+      ${Icon['.fas.fa-circle-half-stroke']}
+      <ul>${themeOption('light')}${themeOption('dark')}${themeOption('auto')}</ul>
+    </section>`;
   sanitizeInsertAdjacentHTML(node, 'beforeend', s);
 
   // var viewButtons = document.querySelectorAll('#document-views button:not([class~="resource-visualise"])');

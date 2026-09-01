@@ -111,6 +111,21 @@ function renderDocumentViews() {
     </section>`;
 }
 
+function renderDocumentTheme() {
+  const current = Config.User?.UI?.Theme || 'auto';
+  const option = (value) => {
+    const checked = (value === current) ? ' checked=""' : '';
+    return `<li><input type="radio" id="do-theme-${value}" name="do-display-theme" value="${value}"${checked}><label for="do-theme-${value}" data-i18n="menu.display-theme.${value}">${i18n.t(`menu.display-theme.${value}.textContent`)}</label></li>`;
+  };
+
+  return `
+    <section aria-labelledby="document-theme-label" id="document-theme" rel="schema:hasPart" resource="#document-theme">
+      <h2 id="document-theme-label" property="schema:name" data-i18n="menu.document-theme.h2">${i18n.t('menu.document-theme.h2.textContent')}</h2>
+      ${Icon['.fas.fa-circle-half-stroke']}
+      <ul>${option('light')}${option('dark')}${option('auto')}</ul>
+    </section>`;
+}
+
 function renderAboutDokieli() {
   return `
     <section id="about-dokieli">
@@ -168,7 +183,7 @@ function renderTabs() {
         </ul>
       </nav>
       <section class="selected" id="menu-actions">${renderDocumentDo()}</section>
-      <section id="menu-tools">${renderDocumentTools()}${renderDocumentViews()}</section>
+      <section id="menu-tools">${renderDocumentTools()}${renderDocumentViews()}${renderDocumentTheme()}</section>
       <section id="menu-settings">${renderSettings()}</section>
     </div>`;
 }

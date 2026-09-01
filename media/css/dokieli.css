@@ -81,7 +81,7 @@ limitations under the License.
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     /* Neutrals */
     --do-color-bg: #1a1a1a;
     --do-color-bg-subtle: #2e2e2e;
@@ -116,6 +116,30 @@ limitations under the License.
     /* Links */
     --do-color-link-visited: #c58af9;
   }
+}
+
+/* Manual dark (Display Modes → Dark) */
+:root[data-theme="dark"] {
+  --do-color-bg: #1a1a1a;
+  --do-color-bg-subtle: #2e2e2e;
+  --do-color-border: #4a4a4a;
+  --do-color-fg-faint: #6e6e6e;
+  --do-color-fg-subtle: #9a9a9a;
+  --do-color-fg-muted: #b6b6b6;
+  --do-color-fg-secondary: #d0d0d0;
+  --do-color-fg: #e8e8e8;
+  --do-color-inverse-bg: #313131;
+  --do-color-accent-strong: #19a000;
+  --do-color-accent-bg: #132a10;
+  --do-color-error: #ff6b6b;
+  --do-color-error-solid: #cc0000;
+  --do-color-error-bg: #2a1414;
+  --do-color-warning: #e8c14a;
+  --do-color-warning-bg: #2a2410;
+  --do-color-info: #5ab0e8;
+  --do-color-info-solid: #0067a8;
+  --do-color-info-bg: #12212e;
+  --do-color-link-visited: #c58af9;
 }
 
 @font-face {
@@ -3636,7 +3660,8 @@ padding: 0;
 display:none;
 margin-bottom:1em;
 }
-#document-menu section button {
+#document-menu section button,
+#document-menu #document-theme li label {
 color:var(--do-color-fg) !important;
 background-color:var(--do-color-bg) !important;
 display: flex;
@@ -3648,7 +3673,8 @@ border-radius: 0.25em;
 }
 
 #document-menu section button:not([disabled]):hover,
-#document-menu section button:not([disabled]):focus {
+#document-menu section button:not([disabled]):focus,
+#document-menu #document-theme li label:hover {
 cursor:pointer !important;
 color: var(--do-color-accent-strong) !important;
 background-color: var(--do-color-accent-bg) !important;
@@ -3656,10 +3682,33 @@ transition: background-color 0.2s, color 0.2s, fill 0.2s;
 fill: var(--do-color-accent-strong);
 }
 
-#document-menu section button[aria-pressed="true"] {
+#document-menu section button[aria-pressed="true"],
+#document-menu #document-theme li input:checked + label {
 color: var(--do-color-link) !important;
 background-color: var(--do-color-accent-bg) !important;
 fill: var(--do-color-accent);
+}
+
+#document-theme ul {
+float:left;
+width:80%;
+margin-bottom:1em;
+list-style-type:none;
+margin-left:0;
+}
+#document-theme ul li {
+display:inline-block;
+}
+#document-theme li input[type="radio"] {
+position: absolute;
+width: 1px;
+height: 1px;
+opacity: 0;
+margin: 0;
+}
+#document-theme li input:focus-visible + label {
+outline: 2px solid var(--do-color-accent-strong);
+outline-offset: -2px;
 }
 
 #document-menu section button[aria-pressed="true"] svg path {
@@ -3823,7 +3872,8 @@ content: ", ";
 content: "";
 }
 
-#document-menu #document-views {
+#document-menu #document-views,
+#document-menu #document-theme {
 margin:1em 0;
 }
 
@@ -3878,13 +3928,17 @@ display:inline-block;
 }
 
 #document-menu #document-views button,
-#document-menu #ui-language button {
+#document-menu #ui-language button,
+#document-menu #document-theme li label {
 width:auto;
 height:auto;
 padding:0.5em;
 border:1px solid var(--do-color-border);
 vertical-align:middle;
 float:none;
+}
+#document-menu #document-theme li input:checked + label {
+border-color:var(--do-color-accent);
 }
 #document-menu #ui-language ul li {
 display:inline-block;
@@ -3902,7 +3956,8 @@ display:none;
 }
 #document-menu #document-views-label,
 #document-menu #ui-language-label,
-#document-menu #document-encryption-label {
+#document-menu #document-encryption-label,
+#document-menu #document-theme-label {
 display: block !important;
 font-weight: bold;
 }
@@ -3915,15 +3970,18 @@ margin-top:0.5em;
 
 
 #document-menu #document-views > svg.fas,
+#document-menu #document-theme > svg.fas,
 #document-menu #ui-language svg.fas {
   vertical-align: middle;
 }
 #document-menu #ui-language svg.fas,
-#document-menu #document-views > svg.fas {
+#document-menu #document-views > svg.fas,
+#document-menu #document-theme > svg.fas {
 margin:0 0.5em 0 0.75em;
 font-size:1.25em;
 }
-#document-menu #document-views > svg.fas {
+#document-menu #document-views > svg.fas,
+#document-menu #document-theme > svg.fas {
 margin-top:0.5em;
 float:left;
 }
@@ -4134,7 +4192,8 @@ padding: 0;
 }
 
 #document-views h2,
-#ui-language h2, 
+#document-theme h2,
+#ui-language h2,
 #document-encryption h2,
 #document-menu #document-do details.menu-group > summary {
 padding: 0.5em 1em 0.5em 1em;
