@@ -530,7 +530,7 @@ a {
 }
 
 a:hover {
-  background-color: var(--do-color-warning-bg);
+  background-color: var(--do-color-accent-bg);
   border-bottom-width: 3px;
 }
 
@@ -757,7 +757,7 @@ background-color:var(--do-color-inverse-bg-strong);
   padding: 0.25em 2.5em 0.25em 0.5em;
 }
 .do-site #document-translations li:has(a:not([href])) {
-  background-color: var(--do-color-bg-muted);
+  background-color: var(--do-color-bg-subtle);
 }
 .do-site #document-translations li:has(a[href]):hover {
   background-color: var(--do-color-accent-solid);
@@ -1155,7 +1155,7 @@ tfoot dd+dt {
 
 [class~="earl:inapplicable"],
 [resource~="earl:inapplicable"] {
-  background-color: var(--do-color-bg-muted);
+  background-color: var(--do-color-bg-subtle);
   color: var(--do-color-fg);
   text-align: center;
   vertical-align: middle;
@@ -1197,8 +1197,8 @@ table[typeof~="qb:DataSet"] tbody tr:not([typeof~="earl:Assertion"]) td {
 table[typeof~="qb:DataSet"] tbody tr:not([typeof~="earl:Assertion"]) th,
 table[typeof~="qb:DataSet"] tbody tr:not([typeof~="earl:Assertion"]) td {
   border: 1px solid var(--do-color-border);
-  border-left-color: var(--do-color-border-subtle);
-  border-right-color: var(--do-color-border-subtle);
+  border-left-color: var(--do-color-border);
+  border-right-color: var(--do-color-border);
 }
 
 .toc,
@@ -1411,7 +1411,7 @@ margin-bottom:0;
 }
 
 #home #features {
-  background-color: var(--do-color-bg-muted);
+  background-color: var(--do-color-bg-subtle);
   padding:2em 0;
 }
 #home #features ul {
@@ -1425,7 +1425,7 @@ margin-bottom:0;
 }
 
 .do-callout {
-  background-color: var(--do-color-bg-muted);
+  background-color: var(--do-color-bg-subtle);
   text-align: center;
   font-size: 2em;
 }
