@@ -3691,9 +3691,9 @@ fill: var(--do-color-accent-strong);
 #document-menu section button[aria-pressed="true"],
 #document-menu #document-views button[disabled],
 #document-menu #document-theme li input:checked + label {
-color: var(--do-color-link) !important;
+color: var(--do-color-accent-strong) !important;
 background-color: var(--do-color-accent-bg) !important;
-fill: var(--do-color-accent);
+fill: var(--do-color-accent-strong);
 }
 
 #document-theme ul {
@@ -3946,7 +3946,8 @@ float:none;
 }
 #document-menu #document-views button[disabled],
 #document-menu #document-theme li input:checked + label {
-border-color:var(--do-color-accent);
+border-color:var(--do-color-accent-strong);
+cursor:default !important;
 }
 #document-menu #ui-language ul li {
 display:inline-block;
