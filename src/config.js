@@ -99,7 +99,7 @@ export default {
     'urlAttributes': ['href', 'src', 'data-versionurl', 'about', 'rel', 'rev', 'typeof', 'property', 'resource', 'datatype', 'vocab', 'xmlns', 'action', 'formaction', 'cite', 'data', 'poster', 'manifest', 'longdesc', 'profile', 'background', 'icon', 'usemap'],
     'multiTermAttributes': ['prefix', 'property', 'rel', 'resource', 'rev', 'typeof'],
     'sortAttributes': true,
-    'removeAttributes': ['contenteditable', 'data-placeholder', 'draggable', 'spellcheck', 'style',
+    'removeAttributes': ['contenteditable', 'data-theme', 'data-placeholder', 'draggable', 'spellcheck', 'style',
       // Table authoring configuration; the saved document keeps only its RDFa.
       'data-name', 'data-titles', 'data-property-url', 'data-value-url', 'data-value-rel', 'data-about-url',
       'data-datatype', 'data-image', 'data-time', 'data-lang', 'data-virtual', 'data-suppress-output', 'data-null',
