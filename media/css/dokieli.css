@@ -15,44 +15,29 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-/* ==========================================================================
-   Colour palette (CSS custom properties)
-   Light values live in :root; the prefers-color-scheme block below overrides
-   them for dark mode. All text/accent pairings are checked for WCAG 2.1 AA.
-   Categorical RDFa type/marker badges keep a constant hue across themes and
-   carry their own contrasting text.
-   ========================================================================== */
 :root {
   color-scheme: light dark;
 
   /* Neutrals */
   --do-color-bg: #fff;
-  --do-color-bg-subtle: #f5f5f5;
-  --do-color-bg-muted: #eee;
-  --do-color-border-subtle: #ddd;
+  --do-color-bg-subtle: #eee;
   --do-color-border: #ccc;
   --do-color-fg-faint: #aaa;
   --do-color-fg-subtle: #767676;
   --do-color-fg-muted: #555;
   --do-color-fg-secondary: #333;
-  --do-color-fg-strong: #1a1a1a;
   --do-color-fg: #000;
   --do-color-on-color: #fff;
   --do-color-on-badge-dark: #000;
 
-  /* Inverse surfaces (dark UI in both themes) */
+  /* Inverse surfaces */
   --do-color-inverse-bg: #242424;
   --do-color-inverse-bg-strong: #000;
 
-  /* Brand green.
-     accent/accent-solid = brand green (#1CAD00) used everywhere; solid
-     surfaces carry dark text for AA. link = green button labels + hyperlinks
-     (slightly darker for legibility). *-hover = lighter than the base. */
-  --do-color-accent: #1cad00;
-  /* accent-strong: higher-contrast green, AA-safe for body text/links (e.g.
-     in-page fragment links). Dark value stays bright for dark backgrounds. */
+  /* Brand green */
+  --do-color-accent: #19a000;
   --do-color-accent-strong: #008800;
-  --do-color-accent-solid: #1cad00;
+  --do-color-accent-solid: #19a000;
   --do-color-accent-hover: #33c21a;
   --do-color-accent-bg: #f2fff2;
   --do-color-link: #19a000;
@@ -77,7 +62,7 @@ limitations under the License.
   /* Links */
   --do-color-link-visited: #551a8b;
 
-  /* Categorical RDFa type badges (constant hue; built-in contrasting text) */
+  /* Type badges */
   --do-color-type-spec: #ff00ff;
   --do-color-type-skos: #d1001c;
   --do-color-type-event: #ffb900;
@@ -97,26 +82,21 @@ limitations under the License.
 
 @media (prefers-color-scheme: dark) {
   :root {
-    /* Neutrals (ramp inverted) */
+    /* Neutrals */
     --do-color-bg: #1a1a1a;
-    --do-color-bg-subtle: #242424;
-    --do-color-bg-muted: #2e2e2e;
-    --do-color-border-subtle: #3a3a3a;
+    --do-color-bg-subtle: #2e2e2e;
     --do-color-border: #4a4a4a;
     --do-color-fg-faint: #6e6e6e;
     --do-color-fg-subtle: #9a9a9a;
     --do-color-fg-muted: #b6b6b6;
     --do-color-fg-secondary: #d0d0d0;
-    --do-color-fg-strong: #f2f2f2;
     --do-color-fg: #e8e8e8;
-    /* on-color / on-badge-dark stay constant (text on fixed-hue surfaces) */
 
     /* Inverse surfaces */
     --do-color-inverse-bg: #313131;
 
-    /* Brand green: #1CAD00 works on light and dark; accent/accent-solid/link/
-       *-hover inherit from :root. Only the tint and structural shade differ. */
-    --do-color-accent-strong: #1cad00;
+    /* Brand green */
+    --do-color-accent-strong: #19a000;
     --do-color-accent-bg: #132a10;
 
     /* Error */
@@ -393,9 +373,7 @@ width: 25%;
 }
 
 @media screen {
-/* Anchor the page surface to the palette so system dark mode flips the
-   background and base text together. Not !important, so documents that set
-   their own background/color keep it. */
+/* Base page surface */
 html {
   background-color: var(--do-color-bg);
   color: var(--do-color-fg);
@@ -563,6 +541,11 @@ outline-offset: 1em;
 .do-loading rect:nth-child(2) { animation-delay: 0.2s; }
 .do-loading rect:nth-child(3) { animation-delay: 0.4s; }
 
+
+/* Default icon fill */
+svg.fa, svg.fas, svg.far, svg.fab {
+fill: currentColor;
+}
 
 svg.fa-fw, i.fa-fw {
 text-align: center;
@@ -1450,7 +1433,7 @@ position:relative;
 .do-signin-webid-where dd a {
 display:block;
 padding:0.75em 1em;
-border:0.1em solid var(--do-color-border-subtle);
+border:0.1em solid var(--do-color-border);
 border-radius:0.25em;
 text-decoration:none;
 color:var(--do-color-fg);
@@ -2106,7 +2089,7 @@ border-bottom-left-radius: 0.5em;
 border-bottom-right-radius: 0.5em;
 }
 .suggestions li:hover {
-background-color:var(--do-color-bg-muted);
+background-color:var(--do-color-bg-subtle);
 }
 .suggestions li.active {
 background-color: var(--do-color-accent-bg);
@@ -2138,7 +2121,7 @@ padding:0.25em;
 white-space:nowrap;
 }
 .editor-table-tools-group + .editor-table-tools-group {
-border-left:1px solid var(--do-color-border-subtle);
+border-left:1px solid var(--do-color-border);
 padding-left:0.5em;
 }
 .editor-table-tools[hidden] {
@@ -2161,7 +2144,7 @@ color:var(--do-color-fg-secondary);
 white-space:nowrap;
 }
 .editor-table-tools button:hover:enabled {
-background-color:var(--do-color-bg-muted);
+background-color:var(--do-color-bg-subtle);
 border-color:var(--do-color-border);
 }
 .editor-table-tools button:disabled {
@@ -2711,7 +2694,7 @@ height: 100%;
 padding:0.5em !important;
 }
 #document-edit-history .versions li.selected {
-background-color: var(--do-color-bg-muted);
+background-color: var(--do-color-bg-subtle);
 border-radius: 0.5em;
 border: 1px solid var(--do-color-border);
 }
@@ -3152,7 +3135,7 @@ margin-bottom:1em;
   box-sizing: border-box;
   padding: 1.25em;
   margin: 0;
-  border: 1px solid var(--do-color-border-subtle);
+  border: 1px solid var(--do-color-border);
   border-radius: 0.75em;
   cursor: pointer;
   user-select: none;
@@ -3175,7 +3158,7 @@ margin-bottom:1em;
   display: block;
   margin-bottom: 0.35em;
   font-size: 1.05em;
-  color: var(--do-color-fg-strong);
+  color: var(--do-color-fg);
 }
 
 #new-document-fieldset ul li label span span {
@@ -3197,7 +3180,7 @@ margin-bottom:1em;
 }
 #new-document-fieldset ul li input[type="radio"]:checked + label svg {
   background: var(--do-color-accent-solid);
-  fill: var(--do-color-on-badge-dark);
+  fill: var(--do-color-on-color);
 }
 #new-document-fieldset ul li input[type="radio"]:checked + label::after {
   background-color: var(--do-color-accent-solid);
@@ -3734,6 +3717,7 @@ flex-shrink: 0;
 width: 1.25em;
 height: 1.25em;
 margin: 0;
+fill: currentColor;
 }
 
 #document-menu #user-info {
@@ -3898,7 +3882,7 @@ display:inline-block;
 width:auto;
 height:auto;
 padding:0.5em;
-border:1px solid var(--do-color-border-subtle);
+border:1px solid var(--do-color-border);
 vertical-align:middle;
 float:none;
 }
@@ -3946,7 +3930,7 @@ float:left;
 
 #document-menu .editor-disable,
 #document-menu .review-disable {
-background-color:var(--do-color-bg-muted) !important;
+background-color:var(--do-color-bg-subtle) !important;
 }
 
 #document-menu #document-autosave {
@@ -4102,12 +4086,12 @@ border-top-left-radius: 0.25em;
 border-top-right-radius: 0.25em;
 text-align: center;
 margin-right: 2px;
-border-bottom-color: var(--do-color-border-subtle);
+border-bottom-color: var(--do-color-border);
 }
 #document-menu #document-menu-tabs > nav li a:hover,
 #document-menu #document-menu-tabs > nav li a:focus {
 color: var(--do-color-fg);
-background-color: var(--do-color-bg-muted);
+background-color: var(--do-color-bg-subtle);
 border-color: var(--do-color-fg);
 }
 #document-menu #document-menu-tabs > nav li a:focus {
@@ -4158,17 +4142,17 @@ font-size: initial;
 font-weight: bold;
 color: var(--do-color-fg-secondary);
 list-style: none;
-background-color: var(--do-color-bg-muted);
+background-color: var(--do-color-bg-subtle);
 border-radius: 0.25em;
 }
 #document-menu #document-do details.menu-group[open] > summary {
-border-bottom: 1px solid var(--do-color-border-subtle);
+border-bottom: 1px solid var(--do-color-border);
 border-bottom-left-radius: 0;
 border-bottom-right-radius: 0;
 }
 #document-menu #document-do details.menu-group > summary:hover,
 #document-menu #document-do details.menu-group > summary:focus {
-background-color: var(--do-color-bg-muted);
+background-color: var(--do-color-bg-subtle);
 color: var(--do-color-fg);
 /*! border: 1px solid #ccc; */
 }
@@ -4206,7 +4190,7 @@ border:2px solid var(--do-color-border);
 border-bottom-color:var(--do-color-on-color);
 }
 .tabs nav ul li a {
-background-color:var(--do-color-bg-muted);
+background-color:var(--do-color-bg-subtle);
 color:var(--do-color-fg);
 text-decoration:none;
 display:block;
@@ -4377,7 +4361,7 @@ font-size: 1em;
 font-weight: bold;
 margin: 1em 0;
 padding: 0.9em 1.25em;
-color: var(--do-color-on-badge-dark);
+color: var(--do-color-on-color);
 border:none;
 transition: opacity 0.3s;
 }
@@ -4487,7 +4471,7 @@ background-color:var(--do-color-info-bg);
 background-color:var(--do-color-error-bg);
 }
 .outline {
-background-color:var(--do-color-bg-muted);
+background-color:var(--do-color-bg-subtle);
 }
 .notes {
 background-color:var(--do-color-warning-bg);
@@ -5536,7 +5520,7 @@ max-width:none;
   visibility: visible; }
 
 .editor-dragover {
-  background: var(--do-color-bg-muted); }
+  background: var(--do-color-bg-subtle); }
 
 .editor-image-loading {
   -webkit-animation: editor-image-loading 1s infinite ease-in-out;
@@ -5830,7 +5814,7 @@ height:auto;
   -webkit-transition: background-color .2s ease-in;
           transition: background-color .2s ease-in; }
   .editor-toolbar li button:not(:disabled):hover{
-    background-color: var(--do-color-bg-muted);
+    background-color: var(--do-color-bg-subtle);
     color: var(--do-color-link-hover);
    }
 
@@ -5938,7 +5922,7 @@ height:auto;
 }
 .editor-toolbar .editor-form-actions li.editor-dropdown-menu .editor-dropdown-trigger:hover,
 .editor-toolbar .editor-form-actions li.editor-dropdown-menu .editor-dropdown-trigger.editor-button-active {
-  background-color: var(--do-color-bg-muted);
+  background-color: var(--do-color-bg-subtle);
   color: var(--do-color-link-hover);
 }
 .editor-toolbar .editor-form-actions li.editor-dropdown-menu .editor-dropdown-trigger:hover svg,
@@ -5966,7 +5950,7 @@ padding:0 0.5em;
 
 }
 .editor-blocktype-menu:hover {
-  background: var(--do-color-bg-muted);
+  background: var(--do-color-bg-subtle);
   color: var(--do-color-link-hover);
 }
 .editor-blocktype-menu select:focus {
@@ -5984,7 +5968,7 @@ padding:0 0.5em;
   cursor: pointer;
   min-width: 7.5em;
   border-radius: 0.25em 0 0 0.25em;
-  color: var(--do-color-fg-strong);
+  color: var(--do-color-fg);
   outline: none;
 }
 
@@ -6007,7 +5991,7 @@ padding:0 0.5em;
   list-style: none;
   margin: 4px 0 0;
   flex-direction: column;
-  color: var(--do-color-fg-strong);
+  color: var(--do-color-fg);
 }
 
 #editor-dropdown-panel-meta .editor-dropdown-section-label {
@@ -6041,7 +6025,7 @@ padding:0 0.5em;
   font-family: inherit;
   font-size: 1em;
   font-weight: normal;
-  color: var(--do-color-fg-strong);
+  color: var(--do-color-fg);
   transition: background-color 0.1s;
 }
 .editor-dropdown-panel li button.editor-dropdown-item:hover {
@@ -6077,12 +6061,12 @@ padding:0 0.5em;
 .editor-toolbar .editor-form-actions li button svg {
   width: 1en;
   height: 1em;
-  fill: var(--do-color-fg-strong);
+  fill: var(--do-color-fg);
   flex-shrink: 0;
 }
 .editor-toolbar .editor-form-actions li button svg[stroke] {
   fill: none;
-  stroke: var(--do-color-fg-strong);
+  stroke: var(--do-color-fg);
 }
 .editor-toolbar .editor-form-actions li button:hover svg,
 .editor-toolbar .editor-form-actions li button.editor-button-active svg {
@@ -6133,7 +6117,7 @@ button.editor-dropdown-item svg {
 }
 .editor-toolbar .editor-form-actions li.editor-mode-toggle .editor-mode-toggle-btn:hover {
   /* opacity: 1; */
-  background-color: var(--do-color-bg-muted);
+  background-color: var(--do-color-bg-subtle);
   color: var(--do-color-link-hover);
 }
 
@@ -6197,7 +6181,7 @@ font-size:2.25em;
 
 #editor-area-toggle .mode-wysiwym[aria-pressed="false"]:hover,
 #editor-area-toggle .mode-markdown[aria-pressed="false"]:hover {
-  background-color: var(--do-color-bg-muted);
+  background-color: var(--do-color-bg-subtle);
   fill: var(--do-color-fg-secondary);
   cursor:pointer;
 }
@@ -6266,10 +6250,10 @@ font-size:2.25em;
   margin: 0;
   width: 16px; }
   .editor-table-builder-cell.active {
-    background-color: var(--do-color-bg-muted); }
+    background-color: var(--do-color-bg-subtle); }
 
 .editor-table-builder-cell:hover {
-  background-color: var(--do-color-bg-muted); }
+  background-color: var(--do-color-bg-subtle); }
 
 .editor-table {
   border-collapse: collapse;
@@ -6278,7 +6262,7 @@ font-size:2.25em;
 
 .editor-table,
 .editor-table td {
-  border: 1px dashed var(--do-color-border-subtle); }
+  border: 1px dashed var(--do-color-border); }
 
 .editor-table-builder-toolbar {
   display: block;
@@ -6430,7 +6414,7 @@ user-select: none;
 .shower blockquote, .shower q { quotes: none; }
 
 .shower {
-  color: var(--do-color-fg-strong);
+  color: var(--do-color-fg);
   font-family: 'Ubuntu', system-ui, sans-serif;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
@@ -6444,7 +6428,7 @@ user-select: none;
   padding: 1em;
   width: 100%;
 }
-.shower .caption h1 { color: var(--do-color-fg-strong); }
+.shower .caption h1 { color: var(--do-color-fg); }
 .shower .caption a { color: inherit; }
 
 /* Slide canvas: 1024x640 reference geometry; scaled by .single/.full. */
@@ -6461,7 +6445,7 @@ user-select: none;
 }
 .shower .slide h2 {
   margin-bottom: 32px;
-  color: var(--do-color-fg-strong);
+  color: var(--do-color-fg);
   font: 48px/1 'Roboto Light', sans-serif;
 }
 .shower .slide p { margin-bottom: 1em; }
@@ -6601,7 +6585,7 @@ user-select: none;
     width: 100%;
     display: flex;
     flex-wrap: wrap;
-    background: var(--do-color-bg-muted);
+    background: var(--do-color-bg-subtle);
   }
 }
 
@@ -6646,7 +6630,7 @@ user-select: none;
   display: block;
   position: relative;
   min-height: 100vh;
-  background: var(--do-color-bg-muted);
+  background: var(--do-color-bg-subtle);
   padding: 24px 24px 24px 260px;
 }
 .shower.single > main > article > .ProseMirror {
@@ -6737,7 +6721,7 @@ flex-wrap:wrap;
 .shower {
 margin: 0;
 max-width: initial;
-background-color:var(--do-color-bg-muted);
+background-color:var(--do-color-bg-subtle);
 }
 .shower>main,
 .shower>main>article {
@@ -6755,7 +6739,7 @@ position: relative;
 padding-top:24px;
 display:flex;
 flex-wrap:wrap;
-background:var(--do-color-bg-muted);
+background:var(--do-color-bg-subtle);
 }
 .shower .slide {
 padding: 2em 2.5em 0 2.5em;
@@ -6797,7 +6781,7 @@ color:initial;
 color: initial;
 }
 .shower .slide a[href^="#"]:not(:focus):not(:visited) {
-color: var(--do-color-link-hover);
+color: var(--do-color-accent-strong);
 }
 .shower .progress {
 background: var(--do-color-accent-solid);
@@ -6810,7 +6794,7 @@ clear:both;
 }
 .shower .slide footer {
 /*background:#EFF1E8;*/
-background: var(--do-color-bg-muted);
+background: var(--do-color-bg-subtle);
 }
 .shower .slide footer img {
 vertical-align: middle;
@@ -7416,7 +7400,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
 /* visual tweaks */
 
 .leaflet-container {
-  background: var(--do-color-bg-muted);
+  background: var(--do-color-bg-subtle);
   outline-offset: 1px;
   }
 .leaflet-container a {
@@ -7556,7 +7540,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   }
 .leaflet-control-layers-separator {
   height: 0;
-  border-top: 1px solid var(--do-color-border-subtle);
+  border-top: 1px solid var(--do-color-border);
   margin: 5px -10px 5px -6px;
   }
 
@@ -7738,7 +7722,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   background-color: var(--do-color-bg);
   border: 1px solid var(--do-color-on-color);
   border-radius: 3px;
-  color: var(--do-color-fg-strong);
+  color: var(--do-color-fg);
   white-space: nowrap;
   -webkit-user-select: none;
   -moz-user-select: none;
