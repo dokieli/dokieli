@@ -59,9 +59,6 @@ limitations under the License.
   --do-color-info-solid: #0067a8;
   --do-color-info-bg: #e6f0fb;
 
-  /* Links */
-  --do-color-link-visited: #551a8b;
-
   /* Type badges */
   --do-color-type-spec: #ff00ff;
   --do-color-type-skos: #d1001c;
@@ -112,9 +109,6 @@ limitations under the License.
     --do-color-info: #5ab0e8;
     --do-color-info-solid: #0067a8;
     --do-color-info-bg: #12212e;
-
-    /* Links */
-    --do-color-link-visited: #c58af9;
   }
 }
 
@@ -144,7 +138,6 @@ limitations under the License.
   --do-color-info: #5ab0e8;
   --do-color-info-solid: #0067a8;
   --do-color-info-bg: #12212e;
-  --do-color-link-visited: #c58af9;
 }
 
 @font-face {
