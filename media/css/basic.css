@@ -1508,6 +1508,15 @@ margin-right:4.5em;
   padding-bottom: 2em;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) img[src$="nlnet.svg"] {
+    filter: invert(1);
+  }
+}
+:root[data-theme="dark"] img[src$="nlnet.svg"] {
+  filter: invert(1);
+}
+
 #home #for-everyone {
   margin:2em 0;
 }

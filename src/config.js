@@ -50,7 +50,8 @@ export default {
     },
     UI: {
       Language: 'en-GB', // default
-      LanguageDir: 'ltr'
+      LanguageDir: 'ltr',
+      Theme: 'auto' // 'light' | 'dark' | 'auto' (follow system)
     }
   },
   ContributorRoles: ['author', 'editor'],
