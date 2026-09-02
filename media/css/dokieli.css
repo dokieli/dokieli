@@ -4436,7 +4436,8 @@ transition: opacity 0.3s;
 }
 aside.do button[disabled]:not(:has(svg)),
 .editor-form:not(.editor-slashmenu) button[disabled] {
-  background-color: var(--do-color-fg-muted);
+  background-color: var(--do-color-bg-muted);
+  color: var(--do-color-fg-muted);
   cursor: not-allowed;
 }
 
