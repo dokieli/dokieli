@@ -18,7 +18,7 @@ limitations under the License.
 import { getSelectedParentElement, restoreSelection, getInboxOfClosestNodeWithSelector, createNoteData} from "../../utils/annotation.js";
 import { generateAttributeId, getDateTimeISO } from "../../../util.js"
 import { getNodeLanguage, getFormValues, createHTML } from "../../../utils/html.js";
-import { getReferenceLabel, createActivityHTML, createNoteDataHTML, getRegisteredAnnotationContainer } from "../../../doc.js";
+import { getReferenceLabel, createActivityHTML, createNoteDataHTML, getRegisteredAnnotationContainer, getPreferredTargetIRI } from "../../../doc.js";
 import { getAbsoluteIRI, stripFragmentFromString } from "../../../uri.js"
 import Config from "../../../config.js"
 import { notifyInbox, postActivity, showActivities, registerAnnotationInTypeIndex, markAnnotationTarget } from "../../../activity.js"
@@ -294,18 +294,14 @@ export function getFormActionData(action, formValues, selectionData) {
   data.refId = 'r-' + data.id;
   data.targetIRI = (data.parentNodeWithId) ? data.resourceIRI + '#' + data.parentNodeWithId.id : data.resourceIRI;
 
-  data.latestVersion = Config.Resource[data.resourceIRI].graph.out(ns.rel['latest-version']).values[0];
+  //Preferred target: cite-as, then latest-version (see https://github.com/dokieli/dokieli/issues/420)
+  data.preferredTargetIRI = getPreferredTargetIRI(data.resourceIRI);
 
-  //XXX: This needs to be revisited. Perhaps showAnnotations is not checking the latestVersion?
-  if (data.latestVersion) {
-    data.resourceIRI = data.latestVersion;
-    data.targetIRI = (data.parentNodeWithId) ? data.latestVersion + '#' + data.parentNodeWithId.id : data.latestVersion;
-    data.options.targetInMemento = true;
+  if (data.preferredTargetIRI && data.preferredTargetIRI != data.resourceIRI) {
+    data.resourceIRI = data.preferredTargetIRI;
+    data.targetIRI = (data.parentNodeWithId) ? data.preferredTargetIRI + '#' + data.parentNodeWithId.id : data.preferredTargetIRI;
+    data.options.targetInPreferredIRI = true;
   }
-
-  // console.log(latestVersion)
-  // console.log(resourceIRI)
-  // console.log(targetIRI)
 
   data.targetLanguage = getNodeLanguage(data.parentNodeWithId);
   data.selectionLanguage = getNodeLanguage(data.selectionData.selectedParentElement);

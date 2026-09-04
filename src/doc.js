@@ -1299,6 +1299,31 @@ export function getGraphContributorsRole(g, options) {
   return contributorData;
 }
 
+//Preferred IRI to use as an annotation target for a resource (RFC 8574 cite-as, then latest-version), from Link headers and the resource's graph.
+export function getPreferredTargetIRI(documentURL) {
+  documentURL = documentURL || Config.DocumentURL;
+  var resource = Config.Resource?.[documentURL];
+  if (!resource) return undefined;
+
+  var linkHeaders = resource.headers?.linkHeaders;
+  var graph = resource.graph;
+
+  var fromLinkHeader = (rel) => {
+    if (linkHeaders?.has('rel', rel)) {
+      return sanitizeIRI(linkHeaders.rel(rel)[0].uri);
+    }
+  };
+  var fromGraph = (rel) => {
+    var values = graph?.node(rdf.namedNode(documentURL)).out(ns.rel[rel]).values;
+    return values?.length ? sanitizeIRI(values[0]) : undefined;
+  };
+
+  for (var rel of ['cite-as', 'latest-version']) {
+    var iri = fromLinkHeader(rel) || fromGraph(rel);
+    if (iri) return iri;
+  }
+}
+
 //TODO: Rename this to avoid confusion with graph.getGraphFromData
 export function getGraphData(s, options) {
   var documentURL = options['subjectURI'];
@@ -1366,6 +1391,11 @@ export function getGraphData(s, options) {
     info['profile'] = ns.mem.Memento.value;
     info['original'] = original[0];
     info['memento'] = memento[0];
+  }
+
+  var citeAs = s.out(ns.rel['cite-as']).values;
+  if (citeAs.length) {
+    info['cite-as'] = citeAs[0];
   }
 
   var latestVersion = s.out(ns.rel['latest-version']).values;

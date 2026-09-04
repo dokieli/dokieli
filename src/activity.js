@@ -16,7 +16,7 @@ limitations under the License.
 */
 
 import rdf from 'rdf-ext';
-import { createActivityObjectHTML, createActivityJSONLD, showCitations, getReferenceLabel, createNoteDataHTML, handleDeleteNote, getItemVisibility } from './doc.js';
+import { createActivityObjectHTML, createActivityJSONLD, showCitations, getReferenceLabel, createNoteDataHTML, handleDeleteNote, getItemVisibility, getPreferredTargetIRI } from './doc.js';
 import { applyMarksFromTextQuote, applyMarkFromSelector } from '@dokieli/web-annotation';
 import { Icon } from './ui/icons.js'
 import { getButtonHTML } from './ui/buttons.js'
@@ -604,6 +604,7 @@ function showActivitiesUncached(url, options = {}) {
   }
 
   var documentURL = Config.DocumentURL;
+  var preferredTargetIRI = getPreferredTargetIRI(documentURL);
 
   var documentTypes = Config.ActivitiesObjectTypes.concat(Object.keys(Config.ResourceType));
 
@@ -757,14 +758,14 @@ function showActivitiesUncached(url, options = {}) {
               if (targetPathURL == currentPathURL) {
                 o['targetInOriginalResource'] = true;
               }
-              else if (Config.Resource[documentURL].graph.out(ns.rel['latest-version']).values.length && targetPathURL == getPathURL(Config.Resource[documentURL].graph.out(ns.rel['latest-version']).values[0])) {
-                o['targetInMemento'] = true;
+              else if (preferredTargetIRI && targetPathURL == getPathURL(preferredTargetIRI)) {
+                o['targetInPreferredIRI'] = true;
               }
               else if (Config.Resource[documentURL].graph.out(ns.owl.sameAs).values.length && Config.Resource[documentURL].graph.out(ns.owl.sameAs).values[0] == targetPathURL) {
                 o['targetInSameAs'] = true;
               }
 
-              if (o['targetInOriginalResource'] || o['targetInMemento'] || o['targetInSameAs']) {
+              if (o['targetInOriginalResource'] || o['targetInPreferredIRI'] || o['targetInSameAs']) {
                 subjectsReferences.push(object);
 
                 if (options.notification) {
@@ -1373,7 +1374,7 @@ export async function showAnnotation(noteIRI, g, options) {
     var source = targetPtr.out(ns.oa.hasSource).values[0];
     // oa:hasTarget may be a blank node with oa:hasSource pointing to the document
     var targetOrSource = source || hasTarget;
-    if (targetOrSource && !(targetOrSource.startsWith(documentURL) || 'targetInMemento' in options || 'targetInSameAs' in options)){
+    if (targetOrSource && !(targetOrSource.startsWith(documentURL) || 'targetInPreferredIRI' in options || 'targetInSameAs' in options)){
       // return Promise.reject();
       return;
     }
