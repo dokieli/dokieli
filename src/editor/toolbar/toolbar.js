@@ -30,6 +30,9 @@ import { i18n } from "../../i18n.js";
 
 const ns = Config.ns;
 
+// Keep in sync with the matching @media block in dokieli.css
+export const COMPACT_LAYOUT_QUERY = '(pointer: coarse), (max-width: 768px)';
+
 export class ToolbarView {
   constructor(mode, buttons, editorView) {
     this.mode = mode;
@@ -74,33 +77,83 @@ export class ToolbarView {
     this.dom.setAttribute('xml:lang', Config.User.UI.Language);
     this.dom.setAttribute('dir', Config.User.UI.LanguageDir);
 
+    // Must precede addToolbar(), which branches on it
+    this.compactLayoutQuery = window.matchMedia?.(COMPACT_LAYOUT_QUERY) ?? null;
+    this.isCompactLayout = this.compactLayoutQuery?.matches ?? false;
+
     this.addToolbar();
 
     this.selectionHandler = (e) => this.selectionUpdate(editorView);
 
     this.updateToolbarVisibilityHandler = (e) => this.updateToolbarVisibility(e);
-    // Attach the event listener only in social mode, find a better way of doing this
-    // this is still being attached on author mode, or not cleaned up properly
-    // if (mode !== "author") {
-    //   document.addEventListener("selectionchange", this.selectionHandler);
-    // }
+
+    // Touch selection never fires mouseup; debounced since selectionchange fires per character
+    this.selectionChangeHandler = () => {
+      clearTimeout(this.selectionChangeTimer);
+      this.selectionChangeTimer = setTimeout(() => this.selectionUpdate(editorView), 150);
+    };
 
     document.removeEventListener("keyup", this.selectionHandler);
     document.removeEventListener("mouseup", this.selectionHandler);
+    document.removeEventListener("selectionchange", this.selectionChangeHandler);
+    document.removeEventListener("touchend", this.selectionChangeHandler);
 
+    document.addEventListener("keyup", this.selectionHandler);
+    document.addEventListener("mouseup", this.selectionHandler);
 
-    document.addEventListener("keyup", this.selectionHandler); 
-    document.addEventListener("mouseup", this.selectionHandler); 
+    if (this.isCompactLayout) {
+      document.addEventListener("selectionchange", this.selectionChangeHandler);
+      document.addEventListener("touchend", this.selectionChangeHandler);
+    }
+
     this.updateToolbarVisibility = this.updateToolbarVisibility.bind(this);
     this.formClickHandler = this.formClickHandler.bind(this);
     this.selectionUpdate = this.selectionUpdate.bind(this);
     // this.cleanupToolbar = this.cleanupToolbar.bind(this);
     // this.clearToolbarForm = this.clearToolbarForm.bind(this);
 
-    document.removeEventListener("mousedown", this.updateToolbarVisibilityHandler);
-    document.addEventListener("mousedown", this.updateToolbarVisibilityHandler);
+    // On touch, mousedown arrives after the tap has already collapsed the selection
+    document.removeEventListener("pointerdown", this.updateToolbarVisibilityHandler);
+    document.addEventListener("pointerdown", this.updateToolbarVisibilityHandler);
 
-    
+    this.preserveSelectionHandler = (e) => {
+      if (e.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+      e.preventDefault();
+    };
+    this.dom.addEventListener("mousedown", this.preserveSelectionHandler);
+
+    if (this.isCompactLayout) {
+      this.trackViewportInset();
+    }
+
+    // Layout is decided at build time, so crossing the breakpoint rebuilds the bar
+    this.compactLayoutChangeHandler = (e) => {
+      const selection = window.getSelection();
+      const wasOpen = this.dom.classList.contains('editor-form-active');
+      const keepOpen = wasOpen && !!selection?.rangeCount && !selection.isCollapsed;
+
+      this.isCompactLayout = e.matches;
+      this.cleanupToolbar();
+
+      if (e.matches) {
+        document.addEventListener("selectionchange", this.selectionChangeHandler);
+        document.addEventListener("touchend", this.selectionChangeHandler);
+        this.trackViewportInset();
+      }
+      else {
+        document.removeEventListener("selectionchange", this.selectionChangeHandler);
+        document.removeEventListener("touchend", this.selectionChangeHandler);
+        this.stopTrackingViewportInset();
+        ['bottom', 'left', 'width', 'top', 'right'].forEach(p => this.dom.style.removeProperty(p));
+      }
+
+      this.addToolbar();
+
+      if (keepOpen) {
+        this.selectionUpdate(this.editorView);
+      }
+    };
+    this.compactLayoutQuery?.addEventListener('change', this.compactLayoutChangeHandler);
   }
 
   initializeButtons(buttons) {
@@ -108,7 +161,7 @@ export class ToolbarView {
         const buttonNode = this.createButtonNode(button, dom);
         const listItem = document.createElement("li");
         listItem.appendChild(buttonNode);
-        document.querySelector('.editor-form-actions').appendChild(listItem);
+        this.ul.appendChild(listItem);
 
         this.updateButtonState(schema, buttonNode, button, this.editorView);
         this.setupPopup(button);
@@ -140,8 +193,19 @@ export class ToolbarView {
     }
   }
 
+  // Touch taps can collapse the selection before the handler runs; ProseMirror owns author mode's
+  restoreLostSelection() {
+      if (this.mode !== 'social' || !this.selectionTextQuote) return;
+      const selection = window.getSelection();
+      if (selection?.rangeCount && !selection.isCollapsed) return;
+      const article = selectArticleNode(document);
+      if (article) setSelectionFromTextQuote(article, this.selectionTextQuote);
+  }
+
   attachButtonHandler(buttonNode, button, command) {
-      const handler = this.toolbarButtonClickHandlers[button] || ((e) => {
+      const custom = this.toolbarButtonClickHandlers[button];
+      const handler = custom ? ((e) => { this.restoreLostSelection(); return custom(e); }) : ((e) => {
+          this.restoreLostSelection();
           e.preventDefault();
           e.stopPropagation();
           if (this.signInRequired(button)) {
@@ -224,7 +288,37 @@ export class ToolbarView {
       });
   }
 
+  // position:fixed uses the layout viewport, which ignores the soft keyboard and horizontal overflow
+  trackViewportInset() {
+      const vv = window.visualViewport;
+      if (!vv) return;
+
+      const apply = () => {
+        if (!this.isCompactLayout) return;
+        const inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+        this.dom.style.setProperty('bottom', `${inset}px`, 'important');
+        this.dom.style.setProperty('left', `${vv.offsetLeft}px`, 'important');
+        this.dom.style.setProperty('width', `${vv.width}px`, 'important');
+      };
+
+      if (!this.viewportInsetHandler) {
+        this.viewportInsetHandler = apply;
+        vv.addEventListener('resize', this.viewportInsetHandler);
+        vv.addEventListener('scroll', this.viewportInsetHandler);
+      }
+
+      apply();
+  }
+
+  stopTrackingViewportInset() {
+      if (!this.viewportInsetHandler || !window.visualViewport) return;
+      window.visualViewport.removeEventListener('resize', this.viewportInsetHandler);
+      window.visualViewport.removeEventListener('scroll', this.viewportInsetHandler);
+      this.viewportInsetHandler = null;
+  }
+
   positionPopup(toolbarForm) {
+      if (this.isCompactLayout) return;
       const margin = 10;
       const toolbarHeight = this.dom.offsetHeight;
       const toolbarWidth = this.dom.offsetWidth;
@@ -306,17 +400,8 @@ export class ToolbarView {
       documentEditor.remove();
     }
 
-    var ul = document.querySelector('.editor-form-actions');
-
-    if (ul) {
-      ul.parentNode.removeChild(ul);
-    }
-
-    const toolbarForms = this.dom.getElementsByClassName('editor-form');
-
-    Array.from(toolbarForms).forEach((form) => {
-      this.dom.removeChild(form);
-    });
+    // Full reset, otherwise rebuilding duplicates the dropdown panels
+    this.dom.replaceChildren();
 
     this.ul = document.createElement('ul');
     this.ul.classList.add('editor-form-actions');
@@ -338,8 +423,9 @@ export class ToolbarView {
 
     this.initializeDropdownMenus(this.getDropdownMenus());
 
+    // On touch the toggle lives in the more/meta sheet
     const modeToggle = this.getModeToggle();
-    if (modeToggle) this.addModeToggleButton(modeToggle);
+    if (modeToggle && !this.isCompactLayout) this.addModeToggleButton(modeToggle);
   }
 
   getSubmenuButtons() { return []; }
@@ -380,6 +466,13 @@ export class ToolbarView {
       }
 
       config.items.forEach(item => {
+        if (item.section) {
+          const sectionLi = document.createElement('li');
+          sectionLi.className = 'editor-dropdown-section-label';
+          sectionLi.textContent = item.section;
+          panel.appendChild(sectionLi);
+        }
+
         const itemLi = document.createElement('li');
         const itemBtn = document.createElement('button');
         itemBtn.type = 'button';
@@ -387,32 +480,27 @@ export class ToolbarView {
 
         if (item.icon) {
           itemBtn.appendChild(fragmentFromString(item.icon));
-
-          const textSpan = document.createElement('span');
-          textSpan.className = 'editor-dropdown-item-text';
-          const labelSpan = document.createElement('span');
-          labelSpan.className = 'editor-dropdown-item-label';
-          labelSpan.textContent = item.label;
-          textSpan.appendChild(labelSpan);
-          if (item.description) {
-            const descSpan = document.createElement('span');
-            descSpan.className = 'editor-dropdown-item-desc';
-            descSpan.textContent = item.description;
-            textSpan.appendChild(descSpan);
-          }
-          itemBtn.appendChild(textSpan);
-        } else {
-          const labelSpan = document.createElement('span');
-          labelSpan.className = 'editor-dropdown-item-label';
-          labelSpan.textContent = item.label;
-          itemBtn.appendChild(labelSpan);
-          if (item.description) {
-            const descSpan = document.createElement('span');
-            descSpan.className = 'editor-dropdown-item-desc';
-            descSpan.textContent = item.description;
-            itemBtn.appendChild(descSpan);
-          }
         }
+        else {
+          const iconPlaceholder = document.createElement('span');
+          iconPlaceholder.className = 'editor-dropdown-item-icon-placeholder';
+          iconPlaceholder.setAttribute('aria-hidden', 'true');
+          itemBtn.appendChild(iconPlaceholder);
+        }
+
+        const textSpan = document.createElement('span');
+        textSpan.className = 'editor-dropdown-item-text';
+        const labelSpan = document.createElement('span');
+        labelSpan.className = 'editor-dropdown-item-label';
+        labelSpan.textContent = item.label;
+        textSpan.appendChild(labelSpan);
+        if (item.description) {
+          const descSpan = document.createElement('span');
+          descSpan.className = 'editor-dropdown-item-desc';
+          descSpan.textContent = item.description;
+          textSpan.appendChild(descSpan);
+        }
+        itemBtn.appendChild(textSpan);
 
         itemBtn.addEventListener('mousedown', (e) => e.preventDefault());
         itemBtn.addEventListener('click', (e) => {
@@ -450,6 +538,7 @@ export class ToolbarView {
   }
 
   positionDropdownPanel(trigger, panel) {
+    if (this.isCompactLayout) return;
     const triggerRect = trigger.getBoundingClientRect();
     const toolbarRect = this.dom.getBoundingClientRect();
     let left = triggerRect.left - toolbarRect.left;
@@ -470,6 +559,14 @@ export class ToolbarView {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
+      this.switchMode(targetMode);
+    });
+
+    li.appendChild(btn);
+    this.ul.appendChild(li);
+  }
+
+  switchMode(targetMode) {
       const sel = window.getSelection();
       const article = selectArticleNode(document);
       const textQuote = (sel?.rangeCount && article) ? selectionToTextQuote(article, sel) : null;
@@ -498,10 +595,6 @@ export class ToolbarView {
       if (textQuote && targetMode !== 'author') {
         requestAnimationFrame(restoreSelection);
       }
-    });
-
-    li.appendChild(btn);
-    this.ul.appendChild(li);
   }
 
   closeAllDropdowns() {
@@ -606,6 +699,8 @@ export class ToolbarView {
 
       if (isSelection) {
         this.selection = cloneSelection();
+        const article = selectArticleNode(document);
+        this.selectionTextQuote = article ? selectionToTextQuote(article, selection) : null;
       }
 
       //Get information on the selection to position the toolbar.
@@ -636,7 +731,15 @@ export class ToolbarView {
       if (this.blocktypeSelect && this.editorView && this.getBlockTypeKey) {
         this.blocktypeSelect.value = this.getBlockTypeKey(this.editorView.state);
       }
-      
+
+      if (this.isCompactLayout) {
+        this.dom.classList.remove("toolbar-arrow-over", "toolbar-arrow-under");
+        this.dom.style.removeProperty('top');
+        this.dom.style.removeProperty('right');
+        this.trackViewportInset();
+      }
+      else {
+
       const rawLeft = selectedPosition.left + (selectedPosition.width / 2) - (toolbarWidth / 2);
       const clampedLeft = Math.max(0, Math.min(rawLeft, window.innerWidth - toolbarWidth));
 
@@ -674,10 +777,11 @@ export class ToolbarView {
       }
 
       this.dom.style.right = 'initial';
+      }
     // }
 
 
-    if (shouldFocus) {    
+    if (shouldFocus) {
       const handleTab = (event) => {
         
         if (event.key === "Tab") {
@@ -874,7 +978,15 @@ export class ToolbarView {
       return;
     }
     this.documentBody.removeChild(this.dom);
-    document.removeEventListener("selectionchange", this.selectionHandler);
+    clearTimeout(this.selectionChangeTimer);
+    document.removeEventListener("keyup", this.selectionHandler);
+    document.removeEventListener("mouseup", this.selectionHandler);
+    document.removeEventListener("selectionchange", this.selectionChangeHandler);
+    document.removeEventListener("touchend", this.selectionChangeHandler);
+    document.removeEventListener("pointerdown", this.updateToolbarVisibilityHandler);
+    this.dom.removeEventListener("mousedown", this.preserveSelectionHandler);
+    this.compactLayoutQuery?.removeEventListener('change', this.compactLayoutChangeHandler);
+    this.stopTrackingViewportInset();
     if (this.handleEscKey) {
       document.removeEventListener("keydown", this.handleEscKey);
       this.handleEscKey = null;

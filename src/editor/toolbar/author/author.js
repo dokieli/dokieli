@@ -29,6 +29,7 @@ import { registerBlobAsset } from "../../utils/imageAssets.js";
 import { i18n } from "../../../i18n.js"
 import { htmlEncode, sanitizeInsertAdjacentHTML } from "../../../utils/sanitization.js";
 import { buttonIcons, getButtonHTML } from "../../../ui/buttons.js";
+import { Icon } from "../../../ui/icons.js";
 import { toggleMarkdownMode } from "../../../dialog.js";
 
 const ns = Config.ns;
@@ -281,7 +282,7 @@ TODO:
   }
 
   getModeToggle() {
-    return { label: 'Back to Reading', targetMode: 'social' };
+    return { label: 'Back to Reading', icon: '.fas.fa-glasses', targetMode: 'social' };
   }
 
   afterButtons() {
@@ -333,6 +334,28 @@ TODO:
   }
 
   getDropdownMenus() {
+    const menus = this.getDesktopDropdownMenus();
+    if (!this.isCompactLayout) return menus;
+
+    // Align and insert menus collapse into one sheet on the pinned bar
+    const modeToggle = this.getModeToggle();
+    const sectioned = (menu, section) => menu.items.map((item, i) => i === 0 ? { ...item, section } : item);
+
+    return {
+      meta: {
+        ...menus.meta,
+        sectionLabel: undefined,
+        items: [
+          { icon: Icon[modeToggle.icon], label: modeToggle.label, description: 'Exit editing mode', action: () => this.switchMode(modeToggle.targetMode) },
+          ...sectioned(menus.align, 'Align'),
+          ...sectioned(menus.plus, 'Insert'),
+          ...sectioned(menus.meta, menus.meta.sectionLabel),
+        ],
+      },
+    };
+  }
+
+  getDesktopDropdownMenus() {
     return {
       align: {
         icon: buttonIcons['align-center']?.icon,
