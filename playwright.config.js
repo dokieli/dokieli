@@ -37,8 +37,16 @@ const config = {
   projects: [
     {
       name: "chromium",
+      testIgnore: /toolbar-mobile\.spec\.js/,
       use: {
         ...devices["Desktop Chrome"],
+      },
+    },
+    {
+      name: "mobile-chrome",
+      testMatch: /toolbar-mobile\.spec\.js/,
+      use: {
+        ...devices["Pixel 5"],
       },
     },
     // {

@@ -444,6 +444,9 @@ export class ToolbarView {
       trigger.className = 'editor-dropdown-trigger';
       trigger.type = 'button';
       trigger.setAttribute('title', config.title || config.label);
+      trigger.setAttribute('aria-haspopup', 'menu');
+      trigger.setAttribute('aria-expanded', 'false');
+      trigger.setAttribute('aria-controls', `editor-dropdown-panel-${name}`);
 
       if (config.icon) {
         trigger.appendChild(fragmentFromString(config.icon));
@@ -480,6 +483,7 @@ export class ToolbarView {
 
         if (item.icon) {
           itemBtn.appendChild(fragmentFromString(item.icon));
+          itemBtn.querySelector('svg')?.setAttribute('aria-hidden', 'true');
         }
         else {
           const iconPlaceholder = document.createElement('span');
@@ -527,6 +531,7 @@ export class ToolbarView {
         if (!isActive) {
           panel.classList.add('editor-dropdown-panel-active');
           trigger.classList.add('editor-button-active');
+          trigger.setAttribute('aria-expanded', 'true');
           this.positionDropdownPanel(trigger, panel);
         }
       });
@@ -603,6 +608,7 @@ export class ToolbarView {
     });
     this.dom.querySelectorAll('.editor-dropdown-trigger').forEach(t => {
       t.classList.remove('editor-button-active');
+      t.setAttribute('aria-expanded', 'false');
     });
     // Also close any open popup forms
     this.dom.querySelectorAll('.editor-form.editor-form-active').forEach(f => {
