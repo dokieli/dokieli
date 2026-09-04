@@ -384,3 +384,84 @@ test.describe("author mode", () => {
     }
   });
 });
+
+test.describe("layout", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/");
+    await page.waitForLoadState("load");
+    await select(page, "#summary");
+  });
+
+  test("mode toggle is a labelled button in the bar, not a sheet item", async ({ page }) => {
+    const toggle = page.locator(".editor-toolbar li.editor-mode-toggle button");
+    await expect(toggle).toBeVisible();
+    await expect(toggle).toHaveText("Switch to Edit");
+
+    await page.locator("#editor-dropdown-trigger-more").click();
+    await expect(page.locator("#editor-dropdown-panel-more")).toBeVisible();
+    await expect(page.locator("#editor-dropdown-panel-more .editor-dropdown-item", { hasText: "Switch to Edit" })).toHaveCount(0);
+  });
+
+  test("dropdown trigger exposes menu state through ARIA", async ({ page }) => {
+    const trigger = page.locator("#editor-dropdown-trigger-more");
+    await expect(trigger).toHaveAttribute("aria-haspopup", "menu");
+    await expect(trigger).toHaveAttribute("aria-controls", "editor-dropdown-panel-more");
+    await expect(trigger).toHaveAttribute("aria-expanded", "false");
+
+    await trigger.click();
+    await expect(trigger).toHaveAttribute("aria-expanded", "true");
+    await expect(page.locator("#editor-dropdown-panel-more")).toBeVisible();
+
+    await trigger.click();
+    await expect(trigger).toHaveAttribute("aria-expanded", "false");
+    await expect(page.locator("#editor-dropdown-panel-more")).not.toBeVisible();
+  });
+
+  test("toolbar floats next to the selection on a wide viewport", async ({ page }) => {
+    const viewport = page.viewportSize();
+    const box = await page.locator(".editor-toolbar").boundingBox();
+    expect(box.width).toBeLessThan(viewport.width);
+    expect(box.y + box.height).toBeLessThan(viewport.height - 1);
+  });
+
+  test("narrowing the window switches to the pinned layout and back", async ({ page }) => {
+    await page.setViewportSize({ width: 500, height: 800 });
+    await expect(page.locator(".editor-toolbar li.editor-mode-toggle")).toHaveCount(0);
+    const pinned = await page.locator(".editor-toolbar").boundingBox();
+    expect(pinned.x).toBe(0);
+    expect(pinned.width).toBe(500);
+    expect(Math.abs(pinned.y + pinned.height - 800)).toBeLessThanOrEqual(1);
+
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await expect(page.locator(".editor-toolbar li.editor-mode-toggle")).toHaveCount(1);
+    const floating = await page.locator(".editor-toolbar").boundingBox();
+    expect(floating.width).toBeLessThan(1280);
+  });
+});
+
+test.describe("dark theme", () => {
+  test.use({ colorScheme: "dark" });
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/");
+    await page.waitForLoadState("load");
+    await select(page, "#summary");
+  });
+
+  test("toolbar and dropdown have a visible border", async ({ page }) => {
+    const shadow = await page.locator(".editor-toolbar").evaluate((el) => getComputedStyle(el).boxShadow);
+    expect(shadow).toContain("rgb(74, 74, 74)");
+
+    await page.locator("#editor-dropdown-trigger-more").click();
+    const border = await page.locator("#editor-dropdown-panel-more").evaluate((el) => getComputedStyle(el).borderTopColor);
+    expect(border).toBe("rgb(74, 74, 74)");
+  });
+
+  test("toolbar has no WCAG A or AA violations", async ({ page }) => {
+    const results = await new AxeBuilder({ page })
+      .include(".editor-toolbar")
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+      .analyze();
+    expect(results.violations).toEqual([]);
+  });
+});

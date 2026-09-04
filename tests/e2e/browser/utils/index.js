@@ -89,6 +89,27 @@ export async function select(page, selector) {
   await expect(toolbar).toBeVisible();
 }
 
+// Touch selection never fires mouseup, so this goes through selectionchange and touchend
+export async function selectByTouch(page, selector) {
+  await page.locator(".editor-toolbar").waitFor({ state: "attached" });
+
+  await page.evaluate((selector) => {
+    const node = document.querySelector(selector);
+    const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+    const textNode = walker.nextNode();
+    const range = document.createRange();
+    range.setStart(textNode, 0);
+    range.setEnd(textNode, Math.min(20, textNode.length));
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    document.dispatchEvent(new TouchEvent("touchend", { bubbles: true }));
+  }, selector);
+
+  const toolbar = page.locator(".editor-toolbar");
+  await expect(toolbar).toBeVisible();
+}
+
 export async function toggleMode(page, mode) {
   await page.locator("#document-menu button").click();
   const menu = page.locator("[id=document-menu]");
