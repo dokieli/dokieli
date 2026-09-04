@@ -5940,6 +5940,22 @@ height:auto;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.07);
 }
 
+/* The black-alpha ring and panel border are invisible on dark backgrounds */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) #document-editor.editor-toolbar {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--do-color-border);
+  }
+  :root:not([data-theme="light"]) .editor-dropdown-panel {
+    border-color: var(--do-color-border);
+  }
+}
+:root[data-theme="dark"] #document-editor.editor-toolbar {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--do-color-border);
+}
+:root[data-theme="dark"] .editor-dropdown-panel {
+  border-color: var(--do-color-border);
+}
+
 .editor-toolbar .editor-form-actions {
   align-items: stretch;
   overflow-y: hidden;
@@ -6064,7 +6080,7 @@ padding:0 0.5em;
   color: var(--do-color-fg);
 }
 
-#editor-dropdown-panel-meta .editor-dropdown-section-label {
+.editor-dropdown-panel .editor-dropdown-section-label {
   padding: 0.25em;
   font-weight: bold;
   color: var(--do-color-fg-subtle);
@@ -6167,6 +6183,11 @@ button.editor-dropdown-item svg {
 .editor-dropdown-item-text {
   display: flex;
   flex-direction: column;
+}
+/* Matches the 1.25em width of .editor-toolbar svg.fas */
+.editor-dropdown-item-icon-placeholder {
+  flex-shrink: 0;
+  width: 1.25em;
 }
 .editor-dropdown-panel li button.editor-dropdown-item:hover svg {
   color: var(--do-color-accent-strong);
@@ -8041,4 +8062,147 @@ nav.do[id$="-toc"] li.tocline:focus-within > .section-drag {
 
 nav.do[id$="-toc"] li.tocline > a.tocxref {
   cursor: text;
+}
+
+/* Pinned toolbar for touch devices, keeps it out from under the native selection bar */
+@media (pointer: coarse), (max-width: 768px) {
+  .editor-toolbar {
+    position: fixed;
+    top: auto !important;
+    left: 0 !important;
+    right: auto !important;
+    bottom: 0;
+    width: 100vw;
+    max-width: none;
+    box-sizing: border-box;
+    border-radius: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-shadow: none;
+  }
+  #document-editor.editor-toolbar {
+    max-width: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  :root[data-theme="dark"] #document-editor.editor-toolbar {
+    box-shadow: none;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) #document-editor.editor-toolbar {
+      box-shadow: none;
+    }
+  }
+
+  .toolbar-arrow-over:before,
+  .toolbar-arrow-under:after {
+    display: none;
+  }
+
+  /* Above the pinned bar: 50px buttons + 1px border */
+  #editor-area-toggle {
+    bottom: calc(51px + 1em + env(safe-area-inset-bottom, 0px));
+  }
+
+  .editor-toolbar .editor-form-actions {
+    overflow-x: hidden;
+    width: 100%;
+    box-sizing: border-box;
+    border-top: 1px solid var(--do-color-border);
+  }
+  .editor-toolbar .editor-form-actions li.editor-mode-toggle {
+    display: none;
+  }
+  .editor-toolbar .editor-form-actions li {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .editor-toolbar .editor-form-actions li button,
+  .editor-toolbar .editor-form-actions li .editor-dropdown-trigger {
+    width: 100%;
+    min-width: 0;
+    padding: 0;
+    border-radius: 0 !important;
+    touch-action: manipulation;
+    justify-content: center;
+  }
+  .editor-toolbar .editor-form-actions .editor-blocktype-menu {
+    flex: 2 1 0;
+    padding: 0;
+  }
+  .editor-toolbar .editor-form-actions .editor-blocktype-menu select {
+    min-width: 0;
+    width: 100%;
+    padding: 0 0.5em;
+    text-overflow: ellipsis;
+  }
+  .editor-toolbar .editor-form-actions li button span,
+  .editor-toolbar .editor-form-actions li .editor-dropdown-trigger span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Dropdowns become bottom sheets */
+  .editor-toolbar .editor-dropdown-panel {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 100%;
+    top: auto !important;
+    width: 100%;
+    max-height: 60vh;
+    overflow-y: auto;
+    margin: 0;
+    border-radius: 0.75em 0.75em 0 0;
+    border-bottom: 0;
+  }
+  .editor-toolbar .editor-dropdown-panel li button.editor-dropdown-item {
+    padding: 1em 1.25em;
+  }
+
+  .editor-toolbar .editor-form.editor-form-active {
+    position: fixed;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 100%;
+    top: auto !important;
+    width: 100%;
+    max-height: 60vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
+  }
+  /* Single column: the two-select row overflows a narrow viewport */
+  #editor-form-approve fieldset,
+  #editor-form-disapprove fieldset,
+  #editor-form-bookmark fieldset,
+  #editor-form-note fieldset,
+  #editor-form-comment fieldset,
+  #editor-form-specificity fieldset {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+    "legend"
+    "info"
+    "label1"
+    "textarea"
+    "label2"
+    "input1"
+    "label3"
+    "select1"
+    "label4"
+    "select2"
+    "span1"
+    "span2"
+    "button1"
+    "button2";
+  }
+  .editor-toolbar .editor-form textarea,
+  .editor-toolbar .editor-form select,
+  .editor-toolbar .editor-form input[type="text"],
+  .editor-toolbar .editor-form input[type="url"] {
+    width: 100%;
+    min-width: 0;
+    max-width: 100% !important;
+    box-sizing: border-box;
+  }
 }
