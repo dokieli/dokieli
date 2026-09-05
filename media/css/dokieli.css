@@ -8041,4 +8041,9 @@ nav.do[id$="-toc"] li.tocline:focus-within > .section-drag {
 
 nav.do[id$="-toc"] li.tocline > a.tocxref {
   cursor: text;
+  display:inline-block;
+  color: initial;
+  border: initial;
+  transition: initial;
+  text-decoration: initial;
 }

@@ -836,6 +836,7 @@ function refreshDisplayModes() {
   const documentMenu = document.getElementById('document-menu');
   if (!documentMenu) return;
   documentMenu.querySelector('#document-views')?.remove();
+  documentMenu.querySelector('#document-theme')?.remove();
   if (documentMenu.classList.contains('on')) {
     const tabTools = documentMenu.querySelector('#menu-tools');
     if (tabTools) showViews(tabTools);
