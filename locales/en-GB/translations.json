@@ -8,6 +8,7 @@
   "annotation-location.personal-storage.label.textContent": "Personal storage",
   "annotation.delete.button.aria-label": "Delete annotation",
   "annotation.delete.button.title": "Delete",
+  "annotation.notify-inbox.failed.textContent": "Your annotation was saved at <a href=\"{{- annotation}}\">{{- annotation}}</a>, but the document inbox <a href=\"{{- inbox}}\">{{- inbox}}</a> could not be notified. Error: {{- error}}",
   "browser.browse-location.button.textContent": "Browse",
   "browser.browse-location.button.title": "Browse location",
   "browser.create-container-name.button.textContent": "Create",
