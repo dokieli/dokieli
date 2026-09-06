@@ -19,7 +19,7 @@ import rdf from 'rdf-ext';
 import LinkHeader from "http-link-header";
 import { i18n } from './i18n.js';
 import { getButtonHTML, updateButtons, setMenuButtonDisabled } from './ui/buttons.js';
-import { addMessageToLog, buildResourceView, copyRelativeResources, createFeedXML, createImmutableResource, createMutableResource, createNoteDataHTML, encryptArticlePayload, getAccessModeOptionsHTML, getBaseURLSelection, getDocument, getFeedFormatSelection, getLanguageOptionsHTML, getLicenseOptionsHTML, getResourceInfo, getSavePayload, isMarkdownTarget, rewriteBaseURL, setCopyToClipboard, setDocumentRelation, showActionMessage, showRobustLinksDecoration, showTimeMap, updateMutableResource, buildReferences, getDocumentConceptDefinitionsHTML, insertDocumentLevelHTML, insertTestCoverageToTable, diffRequirements, removeReferences, getStorageSelfDescription, getContactInformation, getPersistencePolicy, getODRLPolicies, updateResourceInfos, initCurrentStylesheet, setDate, showFragment, initCopyToClipboard, setDocumentURL, getAgentHTML } from './doc.js';
+import { addMessageToLog, buildResourceView, copyRelativeResources, createFeedXML, createImmutableResource, createMutableResource, createNoteDataHTML, encryptArticlePayload, getAccessModeOptionsHTML, getBaseURLSelection, getDocument, getFeedFormatSelection, getLanguageOptionsHTML, getLicenseOptionsHTML, getResourceInfo, getSavePayload, isMarkdownTarget, rewriteBaseURL, setCopyToClipboard, setDocumentRelation, showActionMessage, showRobustLinksDecoration, showTimeMap, updateMutableResource, buildReferences, getDocumentConceptDefinitionsHTML, insertDocumentLevelHTML, insertTestCoverageToTable, diffRequirements, removeReferences, getStorageSelfDescription, getContactInformation, getPersistencePolicy, getODRLPolicies, updateResourceInfos, updateSupplementalInfo, initCurrentStylesheet, setDate, showFragment, initCopyToClipboard, setDocumentURL, getAgentHTML } from './doc.js';
 import { removeNodesWithIds, createHTML, getFormValues } from './utils/html.js';
 import { createAnnotation } from '@dokieli/web-annotation';
 import { accessModeAllowed, accessModePossiblyAllowed } from './access.js';
@@ -3058,6 +3058,7 @@ export async function openResource(iri, options) {
       setDocumentURL(iri);
       var documentURL = Config.DocumentURL;
       Config['Resource'][documentURL] = Config['Resource'][documentURL] || {};
+      updateSupplementalInfo(response, { documentURL });
 
       var spawnOptions = {};
 
@@ -3075,7 +3076,7 @@ export async function openResource(iri, options) {
           // Markdown-origin HTML skips storeHash; first sync sets it via the normalized pipeline
           options['storeHash'] = true;
         }
-        getResourceInfo(data, options);
+        await getResourceInfo(data, options);
       }
 
       const o = await buildResourceView(data, options)
@@ -7293,11 +7294,11 @@ export async function spawnDokieli(documentNode, data, contentTypes, iris, optio
     initSlideshow();
     // setDocRefType();
     // initCurrentStylesheet();
-    // initShowNotificationSources();
     // focusNote();
 
-    const { initEncryptedDocument } = await import('./init.js');
+    const { initEncryptedDocument, initShowNotificationSources } = await import('./init.js');
     await initEncryptedDocument();
+    initShowNotificationSources();
 
     // hideDocumentMenu();
     return;
