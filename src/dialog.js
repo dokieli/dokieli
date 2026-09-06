@@ -24,7 +24,7 @@ import { removeNodesWithIds, createHTML, getFormValues } from './utils/html.js';
 import { createAnnotation } from '@dokieli/web-annotation';
 import { accessModeAllowed, accessModePossiblyAllowed } from './access.js';
 import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeObject, htmlEncode, sanitizeIRIs } from './utils/sanitization.js';
-import { escapeRDFLiteral, generateAttributeId } from './util.js';
+import { escapeRDFLiteral, generateAttributeId, getDefaultDocumentBasename } from './util.js';
 import { setAcceptRDFTypes } from './fetcher.js';
 import { forceTrailingSlash, generateDataURI, getBaseURL, isHttpOrHttpsProtocol, isFileProtocol, stripFragmentFromString, getFragmentFromString, getURLLastPath, currentLocation } from './uri.js';
 import { getAgentInbox, getAgentName, getGraphAuthors, getGraphContributors, getGraphEditors, getGraphImage, getGraphLabelOrIRI, getGraphPerformers, getGraphTypes, getLinkRelation, getLinkRelationFromHead, getResourceGraph, getUserContacts, getUserLabelOrIRI, serializeData, getSubjectInfo, getRDFSerializer, getGraphCreators } from './graph.js';
@@ -1678,7 +1678,7 @@ function setupResourceBrowser(parent, id, action){
     var inMarkdownMode = !!document.querySelector('[data-markdown-mode]');
     var preferredExt = inMarkdownMode ? 'md' : 'html';
     if (!defaultFilename) {
-      defaultFilename = generateAttributeId() + '.' + preferredExt;
+      defaultFilename = getDefaultDocumentBasename(selectArticleNode(document)) + '.' + preferredExt;
     } else if (inMarkdownMode) {
       defaultFilename = defaultFilename.replace(/\.[^./]+$/, '') + '.md';
     }
@@ -3659,15 +3659,15 @@ export async function saveAsDocument(e) {
 
   var currentURL = (Config.DocumentURL && /^https?:\/\//.test(Config.DocumentURL)) ? Config.DocumentURL : '';
 
-  var defaultLocalFilename = 'document';
+  var defaultLocalFilename = '';
   try {
     if (currentURL) {
       var lu = new URL(currentURL);
       var lastSeg = lu.pathname.split('/').pop();
-      var base = (lastSeg || '').replace(/\.[^./]+$/, '');
-      if (base) defaultLocalFilename = base;
+      defaultLocalFilename = (lastSeg || '').replace(/\.[^./]+$/, '');
     }
   } catch {}
+  if (!defaultLocalFilename) defaultLocalFilename = getDefaultDocumentBasename(selectArticleNode(document));
 
   var id = 'location-save-as';
   var action = 'write';

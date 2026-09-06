@@ -165,6 +165,21 @@ export function generateId(prefix, string, suffix) {
   }
 }
 
+export function slugify(text, maxLength) {
+  let s = (text || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  if (maxLength) s = s.slice(0, maxLength);
+  return s.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
+// H1 slug, else first 15 characters of text, else a generated id
+export function getDefaultDocumentBasename(articleNode) {
+  const node = articleNode || document.body;
+  const h1 = node.querySelector('h1');
+  let base = slugify(h1?.textContent?.trim());
+  if (!base) base = slugify((node.textContent || '').trim(), 15);
+  return base || generateAttributeId();
+}
+
 export function generateAttributeId(prefix, string, suffix) {
   const id = generateId(prefix, string, suffix);
   if (/^\d/.test(id)) {
