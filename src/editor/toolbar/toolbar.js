@@ -229,7 +229,11 @@ export class ToolbarView {
       const toolbarHeight = this.dom.offsetHeight;
       const toolbarWidth = this.dom.offsetWidth;
 
-      toolbarForm.style.left = `${(toolbarWidth / 2) - (toolbarForm.offsetWidth / 2)}px`;
+      const toolbarRect = this.dom.getBoundingClientRect();
+      const formWidth = toolbarForm.offsetWidth;
+      const centeredLeft = toolbarRect.left + (toolbarWidth / 2) - (formWidth / 2);
+      const clampedLeft = Math.max(margin, Math.min(centeredLeft, window.innerWidth - formWidth - margin));
+      toolbarForm.style.left = `${clampedLeft - toolbarRect.left}px`;
       toolbarForm.style.right = 'initial';
 
       const selection = window.getSelection();
