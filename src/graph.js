@@ -866,25 +866,10 @@ export function getResourceGraph(iri, headers, options = {}) {
     }));
 }
 export function getResourceOnlyRDF(url) {
-  return Config.Storage.head(url)
-    .then(response => {
-      var cT = response.headers.get('Content-Type');
-      var options = {};
-      options['contentType'] = (cT) ? cT.split(';')[0].toLowerCase().trim() : '';
-
-      if (Config.MediaTypes.RDF.includes(options['contentType'])) {
-        var headers = { 'Accept': setAcceptRDFTypes() };
-        return getResourceGraph(url, headers);
-      }
-
-      return Promise.reject({
-        response,
-        graph: undefined,
-        error: new Error('Unsupported media type for RDF parsing: ' + options['contentType'])
-      });
-    })
+  // One GET; a HEAD first doubled requests and tripped rate limiters
+  return getResourceGraph(url, { 'Accept': setAcceptRDFTypes() })
     .catch(rejected => {
-      // Pass through if already in shape; else wrap HEAD failures the same way
+      // Pass through if already in shape; else wrap fetch failures the same way
       if (rejected && 'graph' in rejected && 'error' in rejected) {
         return Promise.reject(rejected);
       }
@@ -2000,6 +1985,8 @@ export function getItemsList(url, options) {
                 
                 if (mediaTypeFound || !hasPrefix) {
                   options.resourceItems.push(resource);
+                  options.resourceModified = options.resourceModified || {};
+                  options.resourceModified[resource] = r.out(ns.dcterms.modified).values[0] || r.out(ns.as.updated).values[0] || r.out(ns.as.published).values[0] || '';
                 }
               }
             }
@@ -2016,7 +2003,9 @@ export function getItemsList(url, options) {
           return getItemsList(next[0], options);
         }
         else {
-          return uniqueArray(options.resourceItems);
+          // Newest first so the item cap keeps recent annotations
+          var modified = options.resourceModified || {};
+          return uniqueArray(options.resourceItems).sort((a, b) => (modified[b] || '').localeCompare(modified[a] || ''));
         }
       })
     .catch (e => {
