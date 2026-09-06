@@ -27,7 +27,7 @@ const HTTP_ORIGINS_KEY = 'DO.Config.Http.origins';
 import { syncLocalRemoteResource, monitorNetworkStatus, showResourceReviewChanges } from './sync.js';
 import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeObject } from './utils/sanitization.js';
 import { afterSetUserInfo, setUserInfo, processLoginInvocation } from './auth.js';
-import { showNotificationSources, registerEncryptionUnlockHandler } from './activity.js';
+import { showNotificationSources, showActivitiesSources, processAgentActivities, registerEncryptionUnlockHandler } from './activity.js';
 import { generateDataURI, getProxyableIRI, getUrlParams, stripFragmentFromString, stripUrlSearchHash } from './uri.js';
 import { SolidStorage, GitForgeStorage, HttpStorage, initStorage } from './storage/backend.js';
 import { initEditor } from './editor/initEditor.js';
@@ -201,11 +201,30 @@ async function initDocumentActions() {
 export function initShowNotificationSources() {
   var documentURL = Config.DocumentURL;
 
+  if (documentURL.startsWith('blob:')) return;
+
   // On open= pages wait for spawnDokieli to call this with the opened resource
   var openTargets = (Config.DocumentModes?.open || []).map(u => stripFragmentFromString(encodeURI(u)));
   if (openTargets.length && !openTargets.includes(documentURL)) return;
+
   if (Config.Resource[documentURL].inbox?.length && !Config.Inbox[Config.Resource[documentURL].inbox[0]]) {
     showNotificationSources(Config.Resource[documentURL].inbox[0]);
+  }
+
+  (Config.Resource[documentURL].annotationService || []).forEach(service => {
+    showActivitiesSources(service, { activityType: 'instanceContainer' });
+  });
+
+  var showUserActivities = () => {
+    if (Config.User.IRI) {
+      Promise.allSettled(processAgentActivities(Config.User));
+    }
+  };
+
+  // auth-ready fires after the TypeIndex loads, on page load and later sign-ins
+  document.addEventListener('dokieli:auth-ready', showUserActivities);
+  if (Config.AuthReady === true) {
+    showUserActivities();
   }
 }
 
