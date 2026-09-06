@@ -198,9 +198,12 @@ async function initDocumentActions() {
   initTableSort();
 }
 
-function initShowNotificationSources() {
+export function initShowNotificationSources() {
   var documentURL = Config.DocumentURL;
 
+  // On open= pages wait for spawnDokieli to call this with the opened resource
+  var openTargets = (Config.DocumentModes?.open || []).map(u => stripFragmentFromString(encodeURI(u)));
+  if (openTargets.length && !openTargets.includes(documentURL)) return;
   if (Config.Resource[documentURL].inbox?.length && !Config.Inbox[Config.Resource[documentURL].inbox[0]]) {
     showNotificationSources(Config.Resource[documentURL].inbox[0]);
   }

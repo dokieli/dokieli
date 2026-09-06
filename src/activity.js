@@ -628,7 +628,7 @@ function showActivitiesUncached(url, options = {}) {
         Config.Activity[url]['Graph'] = g;
       }
 
-      var currentPathURL = currentLocation();
+      var currentPathURL = getPathURL(documentURL);
 
       var subjectsReferences = [];
       var subjects = [];
@@ -733,7 +733,7 @@ function showActivitiesUncached(url, options = {}) {
             }
           }
           else if (resourceTypes.includes(ns.as.Relationship.value)) {
-            if (s.out(ns.as.subject).values.length && as.out(as.relationship).values.length && s.out(ns.as.object).values.length && getPathURL(s.out(ns.as.object).values[0]) == currentPathURL) {
+            if (s.out(ns.as.subject).values.length && s.out(ns.as.relationship).values.length && s.out(ns.as.object).values.length && getPathURL(s.out(ns.as.object).values[0]) == currentPathURL) {
               var subject = s.out(ns.as.subject).values[0];
               subjectsReferences.push(subject);
               return showActivities(subject)
@@ -1375,7 +1375,6 @@ export async function showAnnotation(noteIRI, g, options) {
     // oa:hasTarget may be a blank node with oa:hasSource pointing to the document
     var targetOrSource = source || hasTarget;
     if (targetOrSource && !(targetOrSource.startsWith(documentURL) || 'targetInPreferredIRI' in options || 'targetInSameAs' in options)){
-      // return Promise.reject();
       return;
     }
     // console.log(source);
@@ -1582,7 +1581,7 @@ export async function showAnnotation(noteIRI, g, options) {
       inReplyToRel = 'sioc:reply_of';
     }
 
-    if (inReplyTo && inReplyTo.includes(currentLocation())) {
+    if (inReplyTo && inReplyTo.includes(documentURL)) {
       noteData = {
         "type": 'comment',
         "mode": "read",
