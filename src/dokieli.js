@@ -16,7 +16,7 @@ limitations under the License.
 */
 
 import { showActionMessage, addMessageToLog } from './doc.js'
-import { getDeviceStorageItem, removeDeviceStorageItem } from './storage.js'
+import { getDeviceStorageItem } from './storage.js'
 import { restoreSession, setUserInfo, afterSetUserInfo, showUserIdentityInput } from './auth.js'
 import Config from './config.js';
 import { i18n, i18nextInit } from './i18n.js'
@@ -36,7 +36,7 @@ const DO = window.DO ?? {
 
       getDeviceStorageItem('DO.Config.OIDC').then(OIDC => {
         // console.log(OIDC)
-        if (OIDC?.authStartLocation && OIDC.authStartLocation !== window.location.href.split('#')[0]) {
+        if (OIDC?.authStartLocation && OIDC.authStartLocation !== window.location.href) {
           var urlsHtml = `<a href="${OIDC.authStartLocation}" rel="noopener" target="_blank">${OIDC.authStartLocation}</a>`
           var message = `Hang on tight, redirecting you to where you want to be ${urlsHtml}`;
           var actionMessage = `Redirecting to ${urlsHtml}`;
@@ -50,7 +50,7 @@ const DO = window.DO ?? {
           addMessageToLog({...messageObject, content: message}, Config.MessageLog);
           const messageId = showActionMessage(document.body, messageObject);
 
-          removeDeviceStorageItem('DO.Config.OIDC');
+          // Kept until init restores the editor state on the next load
           window.location.replace(OIDC.authStartLocation);
         }
         else {

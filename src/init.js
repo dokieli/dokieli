@@ -21,7 +21,7 @@ const ns = Config.ns;
 import { highlightItems, updateSelectedStylesheets, initCurrentStylesheet, showActionMessage, addMessageToLog, initCopyToClipboard, showFragment, setDocRefType, showRobustLinksDecoration, focusNote, showAsTabs, setDocumentString, setDocumentURL, getDocument } from './doc.js';
 import { initButtons } from './ui/buttons.js'
 import { setWebExtensionURL } from './util.js';
-import { getDeviceStorageItem } from './storage.js';
+import { getDeviceStorageItem, removeDeviceStorageItem } from './storage.js';
 const GIT_FORGE_HOSTS_KEY = 'DO.Config.GitForge.hosts';
 const HTTP_ORIGINS_KEY = 'DO.Config.Http.origins';
 import { syncLocalRemoteResource, monitorNetworkStatus, showResourceReviewChanges, enableLocalBackup, disableLocalBackup } from './sync.js';
@@ -66,6 +66,7 @@ export async function init (url) {
     initEditor();
 
     await initSyncLocalRemoteResource();
+    await restoreEditorAfterSignIn();
 
     await initDocumentActions();
     await initDocumentMode();
@@ -235,6 +236,21 @@ export function initShowNotificationSources() {
   if (Config.AuthReady === true) {
     showUserActivities();
   }
+}
+
+// After a sign-in redirect, re-enter the editor as it was
+async function restoreEditorAfterSignIn() {
+  const OIDC = await getDeviceStorageItem('DO.Config.OIDC');
+  if (!OIDC?.editor || OIDC.authStartLocation !== window.location.href) return;
+
+  if (OIDC.editor.mode === 'author' && Config.Editor?.mode !== 'author') {
+    Config.Editor.toggleEditor('author');
+  }
+  Config.Editor['new'] = !!OIDC.editor.isNew;
+
+  delete Config.OIDC.authStartLocation;
+  delete Config.OIDC.editor;
+  await removeDeviceStorageItem('DO.Config.OIDC');
 }
 
 async function initSyncLocalRemoteResource() {
