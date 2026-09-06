@@ -25,7 +25,8 @@ import { removeDeviceStorageAsSignOut, updateDeviceStorageProfile, updateBrowser
 import { hasKeystore, isUnlocked, lockKeystore } from './keystore.js';
 import { updateButtons, getButtonHTML } from './ui/buttons.js';
 import { SessionCore } from '@uvdsl/solid-oidc-client-browser/core';
-import { isCurrentScriptSameOrigin, isLocalhost, currentLocation } from './uri.js';
+import { isCurrentScriptSameOrigin, isLocalhost, currentLocation, isHttpOrHttpsProtocol } from './uri.js';
+import { autoSave } from './sync.js';
 import { SessionIDB } from '@uvdsl/solid-oidc-client-browser';
 import { i18n } from './i18n.js';
 import { showGeneralMessages, setPreferredLanguagesInfo } from './actions.js';
@@ -715,9 +716,18 @@ export async function signOutGitForge(host) {
   }
 }
 
+// Snapshot edits and the full location so the return trip lands on the same document
+async function rememberAuthStart() {
+  Config.OIDC['authStartLocation'] = window.location.href;
+  Config.OIDC['editor'] = { mode: Config.Editor?.mode, isNew: !!Config.Editor?.['new'] };
+  await updateBrowserStorageOIDC();
+  if (Config.Editor?.mode === 'author' && isHttpOrHttpsProtocol(Config.DocumentURL)) {
+    await autoSave(Config.DocumentURL, { method: 'IndexedDB' }).catch(() => {});
+  }
+}
+
 async function loginWithIDP(idpUrl) {
-  Config.OIDC['authStartLocation'] = Config.OIDC.useStaticClientId ? window.location.href.split('#')[0] : null;
-  updateBrowserStorageOIDC();
+  await rememberAuthStart();
   if (Config['WebExtensionEnabled']) {
     return extensionLogin(idpUrl);
   }
@@ -744,11 +754,10 @@ async function signInWithOIDC() {
     return extensionLogin(idp);
   }
 
-  Config.OIDC['authStartLocation'] = window.location.href.split('#')[0];
-  updateBrowserStorageOIDC();
+  await rememberAuthStart();
 
   let redirect_uri = process.env.OIDC_REDIRECT_URI || (window.location.origin + '/');
-  redirect_uri = Config.OIDC.useStaticClientId ? redirect_uri :  window.location.href.split('#')[0];
+  redirect_uri = Config.OIDC.useStaticClientId ? redirect_uri : window.location.href.split('#')[0];
 
   // Redirects away from dokieli :( but hopefully only briefly :)
   Config['Session']?.login(idp, redirect_uri)

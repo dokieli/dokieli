@@ -334,6 +334,14 @@ export async function syncLocalRemoteResource(options = {}) {
         if (etagsMatch || previousRemoteHash === undefined || previousRemoteHash == remoteHash) {
           console.log(`Local unpublished changes. Remote unchanged (200). Should update remote.`);
 
+          // Show local edits even when they cannot be pushed
+          try {
+            const tmplLocalUnpublished = document.implementation.createHTMLDocument('template');
+            tmplLocalUnpublished.documentElement.setHTMLUnsafe(localContent);
+            Config.Editor.replaceContent(Config.Editor.mode, tmplLocalUnpublished.body);
+            Config.Editor.init(Config.Editor.mode, document.body);
+          } catch (e) {}
+
           if (!remoteAutoSaveEnabled) {
             console.log(`remoteAutoSave is disabled.`);
             return;
