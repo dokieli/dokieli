@@ -24,7 +24,7 @@ import { setWebExtensionURL } from './util.js';
 import { getDeviceStorageItem } from './storage.js';
 const GIT_FORGE_HOSTS_KEY = 'DO.Config.GitForge.hosts';
 const HTTP_ORIGINS_KEY = 'DO.Config.Http.origins';
-import { syncLocalRemoteResource, monitorNetworkStatus, showResourceReviewChanges } from './sync.js';
+import { syncLocalRemoteResource, monitorNetworkStatus, showResourceReviewChanges, enableLocalBackup, disableLocalBackup } from './sync.js';
 import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeObject } from './utils/sanitization.js';
 import { afterSetUserInfo, setUserInfo, processLoginInvocation } from './auth.js';
 import { showNotificationSources, showActivitiesSources, processAgentActivities, registerEncryptionUnlockHandler } from './activity.js';
@@ -167,6 +167,15 @@ export function initDeviceStorage() {
 }
 
 async function initEvents() {
+  // Local backup of edits for everyone in edit mode
+  window.addEventListener('dokieli:editor-mode-changed', (e) => {
+    if (e.detail?.mode === 'author') {
+      enableLocalBackup(Config.DocumentURL);
+    }
+    else {
+      disableLocalBackup(Config.DocumentURL, { saveSnapshot: true });
+    }
+  });
   eventButtonClose();
   eventButtonInfo();
   eventButtonSignIn();

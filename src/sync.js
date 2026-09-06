@@ -871,9 +871,53 @@ export async function enableAutoSave(key, options = {}) {
   }
 
   // TODO: check remote in intervals if no input
+  // Replace a previous handler so saves don't stack
+  removeAutoSaveHandler(key, options.method);
+  Config.AutoSave.Items[key][options.method].handler = handleInputPaste;
   document.addEventListener('input', handleInputPaste);
   document.addEventListener('paste', handleInputPaste);
   document.addEventListener('keydown', handleInputPaste);
+}
+
+// Debounced local snapshot, independent of the remote autosave toggle
+export function enableLocalBackup(key) {
+  if (!key || key.startsWith('blob:')) return;
+  disableLocalBackup(key);
+
+  let timeout;
+  const handler = (e) => {
+    if (!e.target.closest?.('.ProseMirror[contenteditable]')) return;
+    clearTimeout(timeout);
+    timeout = setTimeout(() => autoSave(key, { method: 'IndexedDB' }), Config.AutoSave.Timer);
+  };
+
+  Config.AutoSave.Items[key] ||= {};
+  Config.AutoSave.Items[key]['IndexedDB'] ||= {};
+  Config.AutoSave.Items[key]['IndexedDB'].backupHandler = handler;
+  document.addEventListener('input', handler);
+  document.addEventListener('paste', handler);
+  document.addEventListener('keydown', handler);
+}
+
+export async function disableLocalBackup(key, options = {}) {
+  const handler = Config.AutoSave.Items[key]?.['IndexedDB']?.backupHandler;
+  if (!handler) return;
+  document.removeEventListener('input', handler);
+  document.removeEventListener('paste', handler);
+  document.removeEventListener('keydown', handler);
+  delete Config.AutoSave.Items[key]['IndexedDB'].backupHandler;
+  if (options.saveSnapshot) {
+    await autoSave(key, { method: 'IndexedDB' });
+  }
+}
+
+function removeAutoSaveHandler(key, method) {
+  const handler = Config.AutoSave.Items[key]?.[method]?.handler;
+  if (!handler) return;
+  document.removeEventListener('input', handler);
+  document.removeEventListener('paste', handler);
+  document.removeEventListener('keydown', handler);
+  delete Config.AutoSave.Items[key][method].handler;
 }
 
 export async function disableAutoSave(key, options = {}) {
@@ -892,8 +936,7 @@ export async function disableAutoSave(key, options = {}) {
         await autoSave(key, options);
       }
 
-      clearInterval(Config.AutoSave.Items[key][method].id);
-      // Config.AutoSave.Items[key][method] = undefined;
+      removeAutoSaveHandler(key, method);
 
       await updateDeviceStorageItem(key, { autoSave: false });
 
