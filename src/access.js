@@ -27,6 +27,10 @@ function wacAllowFor(documentURL) {
   return Config.Resource?.[documentURL]?.headers?.['wac-allow']?.permissionGroup;
 }
 
+export function isPublicRead(documentURL) {
+  return wacAllowFor(documentURL)?.public?.has('Read') === true;
+}
+
 export function accessModeAllowed(documentURL, mode) {
   const wacAllow = wacAllowFor(documentURL);
   if (!wacAllow) return false;

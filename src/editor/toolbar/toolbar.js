@@ -24,6 +24,7 @@ import { cloneSelection, selectionToTextQuote, setSelectionFromTextQuote, getSel
 import { applyMarksFromTextQuote, applyMarkFromSelector } from "@dokieli/web-annotation";
 import { fragmentFromString, getDocumentContentNode, selectArticleNode } from "../../utils/html.js";
 import { isUnlocked, hasKeystore } from '../../keystore.js';
+import { isPublicRead } from '../../access.js';
 import { getLinkRelation } from "../../graph.js";
 import Config from "../../config.js";
 import { i18n } from "../../i18n.js";
@@ -907,6 +908,11 @@ export function annotateFormControls(options) {
       <select class="editor-form-select" id="${options.button}-license" name="${options.button}-license">${getLicenseOptionsHTML()}</select>
       <span class="annotation-location-selection">${locationHTML}</span>
       <span class="annotation-inbox">${getAnnotationInboxLocationHTML(options.button)}</span>
+      <span class="annotation-access">
+        <span class="annotation-access-label" data-i18n="annotation-access.label" id="${options.button}-access-label">${i18n.t('annotation-access.label.textContent')}</span>
+        <input type="checkbox" class="editor-form-access" id="${options.button}-access-public" name="${options.button}-access-public" role="switch" value="true"${isPublicRead(Config.DocumentURL) ? ' checked="checked"' : ''} aria-labelledby="${options.button}-access-label" />
+        <label class="editor-form-access-label" for="${options.button}-access-public" title="${i18n.t('annotation-access.toggle.title')}">${Icon['.fas.fa-eye-slash']}${Icon['.fas.fa-globe']}</label>
+      </span>
 
       <input type="checkbox" class="editor-form-encrypt" id="${options.button}-encrypt" name="${options.button}-encrypt" value="true"${isUnlocked() ? ' checked="checked"' : ''} />
       <label class="editor-form-encrypt-label" for="${options.button}-encrypt" title="Encrypt this annotation">${Icon['.fas.fa-lock-open']}${Icon['.fas.fa-lock']}</label>

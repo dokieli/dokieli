@@ -1,4 +1,6 @@
 {
+  "annotation-access.label.textContent": "Visibilidad",
+  "annotation-access.toggle.title": "Cambiar entre público y privado",
   "annotation-inbox.label.textContent": "Bandeja de entrada",
   "annotation-location-selection.store-at.span.textContent": "Almacenar en:",
   "annotation-location.annotation-service.label.textContent": "Servicio de anotaciones",
