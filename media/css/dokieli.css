@@ -7932,6 +7932,7 @@ input.passphrase-mismatch + button.toggle-passphrase svg {
 }
 
 /* visibility switch, same control as the encrypt toggle */
+.editor-form .annotation-encrypt,
 .editor-form .annotation-access {
   display: inline-flex;
   align-items: center;
