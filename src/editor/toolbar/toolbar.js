@@ -932,10 +932,15 @@ if (typeof document !== 'undefined') {
   });
 }
 
+// Each popup uses its own action so input ids stay unique
+function formAction(node, fallback) {
+  return node.closest('form')?.id?.replace(/^editor-form-/, '') || fallback;
+}
+
 export function updateAnnotationServiceForm(action) {
   var annotationServices = document.querySelectorAll('.do.editor-toolbar .annotation-location-selection');
   for (var i = 0; i < annotationServices.length; i++) {
-    annotationServices[i].replaceChildren(fragmentFromString(getAnnotationLocationHTML(action)));
+    annotationServices[i].replaceChildren(fragmentFromString(getAnnotationLocationHTML(formAction(annotationServices[i], action))));
     updateAnnotateSubmitState(annotationServices[i].closest('fieldset'));
   }
 };
@@ -943,7 +948,7 @@ export function updateAnnotationServiceForm(action) {
 export function updateAnnotationInboxForm(action) {
   var annotationInbox = document.querySelectorAll('.do.editor-toolbar .annotation-inbox');
   for (var i = 0; i < annotationInbox.length; i++) {
-    annotationInbox[i].replaceChildren(fragmentFromString(getAnnotationInboxLocationHTML(action)));
+    annotationInbox[i].replaceChildren(fragmentFromString(getAnnotationInboxLocationHTML(formAction(annotationInbox[i], action))));
   }
 };
 
