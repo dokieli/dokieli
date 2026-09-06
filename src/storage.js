@@ -68,7 +68,6 @@ export async function updateDeviceStorageDocumentWithItem(key, data, options = {
 
   var datetime = getDateTimeISO();
 
-  let isInitialSave = false;
   if (!collection) {
     collection = {
       "@context": [
@@ -80,14 +79,10 @@ export async function updateDeviceStorageDocumentWithItem(key, data, options = {
       items: [],
       autoSave: true
     }
-
-    isInitialSave = true;
   }
 
+  // Only baselines are published; a first edit stays restorable
   const itemOptions = { ...options, datetime: options.datetime || datetime, collectionKey: key };
-  if (isInitialSave) {
-    itemOptions['init'] = true;
-  }
 
   collection['updated'] = itemOptions.datetime;
   collection.autoSave = (itemOptions.autoSave !== undefined) ? itemOptions.autoSave : collection.autoSave;
@@ -147,8 +142,8 @@ export async function addDeviceStorageDocumentItem(id, data, options = {}) {
     partOf: options.collectionKey
   };
 
-  if (options['init'] || options['published']) {
-    item['published'] = options['published'] || datetime;
+  if (options['published']) {
+    item['published'] = options['published'];
   }
 
   if (Config.User) {
