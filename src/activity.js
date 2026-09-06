@@ -27,12 +27,13 @@ import { storageFetch } from './storage/backend.js';
 import Config from './config.js';
 import { domSanitize, sanitizeInsertAdjacentHTML } from './utils/sanitization.js';
 import { formatHTMLString } from './utils/normalization.js';
-import { generateAttributeId, uniqueArray, findPreviousDateTime, isUserAuthenticated } from './util.js';
+import { generateAttributeId, uniqueArray, findPreviousDateTime } from './util.js';
 import { fragmentFromString, getDocumentContentNode, selectArticleNode } from "./utils/html.js";
 import { getTextContentExcludingSups } from './editor/utils/annotation.js';
 import { i18n } from './i18n.js';
 import { showUserIdentityInput } from './auth.js';
 import { updateDeviceStorageProfile } from './storage.js';
+import { parseWacAllow } from '@dokieli/web-access-control';
 import { isJWE } from './crypto.js';
 import { isUnlocked, decryptWithSession } from './keystore.js';
 
@@ -399,45 +400,107 @@ export function postActivity(url, slug, data, options) {
 
 const registeredTypeIndexKeys = new Set();
 
-export function registerAnnotationInTypeIndex(containerIRI, forClass) {
-  const privateTypeIndexIRIs = Config.User.PrivateTypeIndex;
-  const publicTypeIndexIRIs = Config.User.PublicTypeIndex;
+function isContainerPublicReadable(containerIRI) {
+  return Config.Storage.head(containerIRI)
+    .then(response => parseWacAllow(response.headers.get('WAC-Allow'))?.public?.has('Read') === true)
+    .catch(() => false);
+}
 
-  // Use the private TypeIndex when one exists and the user is authenticated (any method, not only a Solid-OIDC session); else public.
-  const usePrivate = privateTypeIndexIRIs?.length && isUserAuthenticated();
-  const typeIndexIRI = usePrivate ? privateTypeIndexIRIs[0] : publicTypeIndexIRIs?.[0];
-  if (!typeIndexIRI) return Promise.resolve();
+function typeRegistrationTriples(subject, forClass, containerIRI) {
+  return `<${subject}> a <${ns.solid.TypeRegistration.value}> ;\n` +
+    `  <${ns.solid.forClass.value}> <${forClass}> ;\n` +
+    `  <${ns.solid.instanceContainer.value}> <${containerIRI}> .\n`;
+}
 
-  // Guard against duplicate registrations for the same type (one per forClass is enough)
-  if (registeredTypeIndexKeys.has(forClass)) return Promise.resolve();
+function showAnnotationStoreDialog(containerIRI, mode) {
+  const id = 'annotation-store-dialog';
+  document.getElementById(id)?.remove();
 
-  // Check if this forClass is already registered in memory
-  const privateEntries = Config.User.TypeIndex?.[ns.solid.privateTypeIndex.value] || {};
-  const publicEntries = Config.User.TypeIndex?.[ns.solid.publicTypeIndex.value] || {};
-  const alreadyRegistered = Object.values({ ...privateEntries, ...publicEntries }).some(entry =>
-    entry[ns.solid.forClass.value] === forClass
-  );
-  if (alreadyRegistered) return Promise.resolve();
+  const submitKey = mode === 'publish' ? 'publish' : 'add';
+  const buttonClose = getButtonHTML({ key: 'dialog.annotation-store.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
+
+  document.body.appendChild(fragmentFromString(`
+    <aside aria-labelledby="${id}-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="${id}" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#${id}" xml:lang="${Config.User.UI.Language}">
+      <h2 data-i18n="dialog.annotation-store.h2" id="${id}-label" property="schema:name">${i18n.t('dialog.annotation-store.h2.textContent')}</h2>
+      ${buttonClose}
+      <div class="info"></div>
+      <div>
+        <p data-i18n="dialog.annotation-store.${mode}.p">${i18n.t(`dialog.annotation-store.${mode}.p.textContent`, { url: containerIRI })}</p>
+      </div>
+      <button class="cancel" data-i18n="dialog.annotation-store.cancel.button" title="${i18n.t('dialog.annotation-store.cancel.button.title')}" type="button">${i18n.t('dialog.annotation-store.cancel.button.textContent')}</button>
+      <button class="submit" data-i18n="dialog.annotation-store.${submitKey}.button" title="${i18n.t(`dialog.annotation-store.${submitKey}.button.title`)}" type="button">${i18n.t(`dialog.annotation-store.${submitKey}.button.textContent`)}</button>
+    </aside>
+  `));
+
+  return new Promise(resolve => {
+    const dialog = document.getElementById(id);
+    dialog.addEventListener('click', (e) => {
+      const accepted = !!e.target.closest('button.submit');
+      const dismissed = e.target.closest('button.close') || e.target.closest('button.cancel');
+      if (!accepted && !dismissed) return;
+      e.preventDefault();
+      e.stopPropagation();
+      dialog.remove();
+      resolve(accepted);
+    });
+  });
+}
+
+// Public type index when the container is publicly readable, else private
+export async function registerAnnotationInTypeIndex(containerIRI, forClass) {
+  const privateTypeIndexIRI = Config.User.PrivateTypeIndex?.[0];
+  const publicTypeIndexIRI = Config.User.PublicTypeIndex?.[0];
+  if (!privateTypeIndexIRI && !publicTypeIndexIRI) return;
+  if (registeredTypeIndexKeys.has(forClass)) return;
+
+  Config.User.TypeIndex = Config.User.TypeIndex || {};
+  const privateEntries = Config.User.TypeIndex[ns.solid.privateTypeIndex.value] || {};
+  const publicEntries = Config.User.TypeIndex[ns.solid.publicTypeIndex.value] || {};
+  const findRegistration = (entries) => Object.entries(entries).find(([, entry]) => entry[ns.solid.forClass.value] === forClass);
+
+  if (findRegistration(publicEntries)) return;
 
   registeredTypeIndexKeys.add(forClass);
 
-  const registrationId = generateAttributeId();
-  const insert = `<#${registrationId}> a <http://www.w3.org/ns/solid/terms#TypeRegistration> ;\n` +
-    `  <http://www.w3.org/ns/solid/terms#forClass> <${forClass}> ;\n` +
-    `  <http://www.w3.org/ns/solid/terms#instanceContainer> <${containerIRI}> .\n`;
+  try {
+    const existingPrivate = findRegistration(privateEntries);
 
-  return Config.Storage.patchWithConneg(typeIndexIRI, { insert })
-    .then(() => {
-      const typeIndexType = usePrivate ? ns.solid.privateTypeIndex.value : ns.solid.publicTypeIndex.value;
-      Config.User.TypeIndex[typeIndexType] = Config.User.TypeIndex[typeIndexType] || {};
-      Config.User.TypeIndex[typeIndexType][`${typeIndexIRI}#${registrationId}`] = {
-        [ns.solid.forClass.value]: forClass,
-        [ns.solid.instanceContainer.value]: containerIRI
-      };
-      // Persist the new registration so it survives a refresh from device storage.
+    if (existingPrivate) {
+      const [subject, entry] = existingPrivate;
+      const container = entry[ns.solid.instanceContainer.value];
+      if (!publicTypeIndexIRI || !container || !(await isContainerPublicReadable(container))) return;
+      if (!(await showAnnotationStoreDialog(container, 'publish'))) return;
+
+      const registrationId = generateAttributeId();
+      const insert = typeRegistrationTriples(`#${registrationId}`, forClass, container);
+      await Config.Storage.patchWithConneg(publicTypeIndexIRI, { insert });
+      await Config.Storage.patchWithConneg(privateTypeIndexIRI, { delete: typeRegistrationTriples(subject, forClass, container) }).catch(() => {});
+
+      delete privateEntries[subject];
+      Config.User.TypeIndex[ns.solid.publicTypeIndex.value] = { ...publicEntries, [`${publicTypeIndexIRI}#${registrationId}`]: { [ns.solid.forClass.value]: forClass, [ns.solid.instanceContainer.value]: container } };
       updateDeviceStorageProfile(Config.User);
-    })
-    .catch(e => console.log('Could not register annotation type in TypeIndex:', e));
+      return;
+    }
+
+    const publicReadable = publicTypeIndexIRI && await isContainerPublicReadable(containerIRI);
+    const usePublic = publicReadable || !privateTypeIndexIRI;
+    if (!(await showAnnotationStoreDialog(containerIRI, usePublic ? 'add-public' : 'add-private'))) return;
+
+    const typeIndexIRI = usePublic ? publicTypeIndexIRI : privateTypeIndexIRI;
+    const typeIndexType = usePublic ? ns.solid.publicTypeIndex.value : ns.solid.privateTypeIndex.value;
+    const registrationId = generateAttributeId();
+    await Config.Storage.patchWithConneg(typeIndexIRI, { insert: typeRegistrationTriples(`#${registrationId}`, forClass, containerIRI) });
+
+    Config.User.TypeIndex[typeIndexType] = Config.User.TypeIndex[typeIndexType] || {};
+    Config.User.TypeIndex[typeIndexType][`${typeIndexIRI}#${registrationId}`] = {
+      [ns.solid.forClass.value]: forClass,
+      [ns.solid.instanceContainer.value]: containerIRI
+    };
+    updateDeviceStorageProfile(Config.User);
+  }
+  catch (e) {
+    console.log('Could not register annotation type in TypeIndex:', e);
+  }
 }
 
 export function getNotifications(url) {
