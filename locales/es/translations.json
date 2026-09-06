@@ -5,6 +5,7 @@
   "annotation-location.personal-storage.label.textContent": "Almacenamiento personal",
   "annotation.delete.button.aria-label": "Eliminar anotación",
   "annotation.delete.button.title": "Eliminar",
+  "annotation.notify-inbox.failed.textContent": "Tu anotación se guardó en <a href=\"{{- annotation}}\">{{- annotation}}</a>, pero no se pudo notificar la bandeja de entrada del documento <a href=\"{{- inbox}}\">{{- inbox}}</a>. Error: {{- error}}",
   "browser.browse-location.button.textContent": "Explorar",
   "browser.browse-location.button.title": "Explorar ubicación",
   "browser.create-container-name.button.textContent": "Crear",

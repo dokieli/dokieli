@@ -17,8 +17,9 @@ limitations under the License.
 
 import { getSelectedParentElement, restoreSelection, getInboxOfClosestNodeWithSelector, createNoteData} from "../../utils/annotation.js";
 import { generateAttributeId, getDateTimeISO } from "../../../util.js"
-import { getReferenceLabel, createActivityHTML, createNoteDataHTML, getRegisteredAnnotationContainer, getPreferredTargetIRI } from "../../../doc.js";
 import { getNodeLanguage, getFormValues, createHTML, selectArticleNode } from "../../../utils/html.js";
+import { getReferenceLabel, createActivityHTML, createNoteDataHTML, getRegisteredAnnotationContainer, getPreferredTargetIRI, showActionMessage, addMessageToLog } from "../../../doc.js";
+import { i18n } from "../../../i18n.js";
 import { getAbsoluteIRI, stripFragmentFromString } from "../../../uri.js"
 import Config from "../../../config.js"
 import { notifyInbox, postActivity, showActivities, registerAnnotationInTypeIndex, markAnnotationTarget } from "../../../activity.js"
@@ -604,6 +605,14 @@ function sendNotification(annotation, options) {
         return notifyInbox(notificationData)
           .catch(error => {
             console.log('Error notifying the inbox:', error)
+            var detail = [error?.status, error?.message].filter(Boolean).join(' ');
+            var message = {
+              'content': i18n.t('annotation.notify-inbox.failed.textContent', { inbox: inboxes[0], annotation: annotation.noteIRI, error: detail }),
+              'type': 'warning',
+              'timer': 15000
+            };
+            addMessageToLog(message, Config.MessageLog);
+            showActionMessage(document.body, message);
           })
       }
     })
