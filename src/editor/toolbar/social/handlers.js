@@ -17,8 +17,8 @@ limitations under the License.
 
 import { getSelectedParentElement, restoreSelection, getInboxOfClosestNodeWithSelector, createNoteData} from "../../utils/annotation.js";
 import { generateAttributeId, getDateTimeISO } from "../../../util.js"
-import { getNodeLanguage, getFormValues, createHTML } from "../../../utils/html.js";
 import { getReferenceLabel, createActivityHTML, createNoteDataHTML, getRegisteredAnnotationContainer, getPreferredTargetIRI } from "../../../doc.js";
+import { getNodeLanguage, getFormValues, createHTML, selectArticleNode } from "../../../utils/html.js";
 import { getAbsoluteIRI, stripFragmentFromString } from "../../../uri.js"
 import Config from "../../../config.js"
 import { notifyInbox, postActivity, showActivities, registerAnnotationInTypeIndex, markAnnotationTarget } from "../../../activity.js"
@@ -545,6 +545,15 @@ export function positionActivity(annotation, options) {
 
 
 
+// An inbox inserted this session may not be parsed or saved yet
+function getDocumentInboxFromDOM() {
+  const article = selectArticleNode(document) || document.body;
+  const node = Array.from(article.querySelectorAll('[rel~="ldp:inbox"], [rel~="as:inbox"]')).find(n => !n.closest('.do'));
+  const value = node?.getAttribute('href') || node?.getAttribute('resource');
+  if (!value) return;
+  try { return new URL(value, Config.DocumentURL).href; } catch { return; }
+}
+
 function sendNotification(annotation, options) {
   const documentURL = Config.DocumentURL;
 
@@ -553,12 +562,17 @@ function sendNotification(annotation, options) {
   }
 
   var inboxPromise;
+  const domInbox = getDocumentInboxFromDOM();
 
   if (annotation.annotationInbox) {
     inboxPromise = Promise.resolve([annotation.annotationInbox])
   }
+  else if (domInbox) {
+    Config.Resource[documentURL].inbox = [domInbox];
+    inboxPromise = Promise.resolve([domInbox]);
+  }
   else {
-    if ('inbox' in Config.Resource[documentURL] && Config.Resource[documentURL].inbox.length) {
+    if (Config.Resource[documentURL].inbox?.length) {
       inboxPromise = Promise.resolve(Config.Resource[documentURL].inbox)
     }
     else {
