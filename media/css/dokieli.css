@@ -7931,6 +7931,61 @@ input.passphrase-mismatch + button.toggle-passphrase svg {
   outline-offset: 3px;
 }
 
+/* visibility switch, same control as the encrypt toggle */
+.editor-form .annotation-access {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  margin: 0.25em 1em 0 0;
+  vertical-align: top;
+}
+.editor-form .annotation-access-label {
+  font-weight: bold;
+}
+.editor-form .editor-form-access-label .fas.fa-globe path,
+.editor-form .editor-form-access-label .fas.fa-eye-slash path {
+  fill: var(--do-color-on-color);
+}
+.editor-form input.editor-form-access {
+  position: absolute;
+  left: -9999px;
+}
+.editor-form .editor-form-access-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 3.5em;
+  height: 1.75em;
+  background: var(--do-color-fg-subtle);
+  border-radius: 1em;
+  cursor: pointer;
+  padding: 0 0.25em;
+  box-sizing: border-box;
+  transition: background 0.2s;
+  vertical-align: middle;
+}
+.editor-form .editor-form-access-label svg {
+  width: 1em;
+  height: 1em;
+}
+.editor-form .editor-form-access-label .fas.fa-globe {
+  display: none;
+}
+.editor-form input.editor-form-access:checked + .editor-form-access-label {
+  background: var(--do-color-accent-solid);
+  justify-content: flex-end;
+}
+.editor-form input.editor-form-access:checked + .editor-form-access-label .fas.fa-globe {
+  display: block;
+}
+.editor-form input.editor-form-access:checked + .editor-form-access-label .fas.fa-eye-slash {
+  display: none;
+}
+.editor-form input.editor-form-access:focus + .editor-form-access-label {
+  outline: 2px solid var(--do-color-accent-hover);
+  outline-offset: 3px;
+}
+
 /* self-links */
 .self-link {
   display: inline-block;

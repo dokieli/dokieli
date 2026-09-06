@@ -1,4 +1,6 @@
 {
+  "annotation-access.label.textContent": "Visibility",
+  "annotation-access.toggle.title": "Switch between public and private",
   "annotation-inbox.label.textContent": "Inbox",
   "annotation-location-selection.not-found.p.textContent": "Location to store annotation not found. Please ensure you have a place to store your annotation, re-signin, and try again.",
   "annotation-location-selection.store-at.span.textContent": "Store at:",

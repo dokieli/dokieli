@@ -18,7 +18,7 @@ limitations under the License.
 // Adapter between dokieli and @dokieli/web-access-control: storage-backed
 // fetch, rdf-ext parsing, ACL context caching, and plan application.
 
-import { findEffectiveACL, modeFromIRI, toTurtle } from '@dokieli/web-access-control';
+import { findEffectiveACL, modeFromIRI, toTurtle, planPublicRead } from '@dokieli/web-access-control';
 import Config from './config.js';
 import { getGraphFromData } from './graph.js';
 import { isHttpOrHttpsProtocol } from './uri.js';
@@ -75,6 +75,14 @@ export async function getACLContext(documentURL) {
   };
 
   return ctx;
+}
+
+// Inherited ACLs are copied into a resource-specific one by the planner
+export async function setPublicRead(resourceURL, enabled) {
+  const ctx = await getACLContext(resourceURL);
+  const plan = planPublicRead(ctx, enabled);
+  if (!plan.inserts.length && !plan.deletes.length) return;
+  return applyACLPlan(plan);
 }
 
 export function cachedACLContext(documentURL) {

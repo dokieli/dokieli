@@ -28,6 +28,7 @@ import { domSanitize } from "../../../utils/sanitization.js";
 import { formatHTMLString } from "../../../utils/normalization.js";
 import { encryptContent } from "../../../crypto.js";
 import { isUnlocked, getSessionPublicKey, getSessionKid } from "../../../keystore.js";
+import { setPublicRead } from "../../../wac.js";
 
 const ns = Config.ns;
 
@@ -141,7 +142,10 @@ export async function processAction(action, formValues, selectionData) {
 
         annotation['motivatedBy'] = noteData['motivatedBy'];
 
-        if (formValues[`${action}-encrypt`] === 'true' && isUnlocked()) {
+        const encrypted = formValues[`${action}-encrypt`] === 'true' && isUnlocked();
+        const publicAccess = formValues[`${action}-access-public`] === 'true' && !encrypted;
+
+        if (encrypted) {
           const pubKey = getSessionPublicKey();
           const kid = getSessionKid();
           const enc = async v => v ? encryptContent(v, [pubKey], kid) : v;
@@ -192,6 +196,12 @@ export async function processAction(action, formValues, selectionData) {
             if (location) {
               location = domSanitize(getAbsoluteIRI(annotation['containerIRI'], location));
               annotation['noteIRI'] = annotation['noteURL'] = location;
+            }
+
+            // Public read is not inherited from the container on every server
+            if (publicAccess) {
+              setPublicRead(annotation['noteIRI'], true)
+                .catch(e => console.log('Could not make annotation public:', e));
             }
 
             if (annotation.canonical) {
