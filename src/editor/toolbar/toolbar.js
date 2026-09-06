@@ -914,8 +914,11 @@ export function annotateFormControls(options) {
         <label class="editor-form-access-label" for="${options.button}-access-public" title="${i18n.t('annotation-access.toggle.title')}">${Icon['.fas.fa-eye-slash']}${Icon['.fas.fa-globe']}</label>
       </span>
 
-      <input type="checkbox" class="editor-form-encrypt" id="${options.button}-encrypt" name="${options.button}-encrypt" value="true"${isUnlocked() ? ' checked="checked"' : ''} />
-      <label class="editor-form-encrypt-label" for="${options.button}-encrypt" title="Encrypt this annotation">${Icon['.fas.fa-lock-open']}${Icon['.fas.fa-lock']}</label>
+      <span class="annotation-encrypt">
+        <span class="annotation-access-label" data-i18n="annotation-encrypt.label" id="${options.button}-encrypt-label">${i18n.t('annotation-encrypt.label.textContent')}</span>
+        <input type="checkbox" class="editor-form-encrypt" id="${options.button}-encrypt" name="${options.button}-encrypt" role="switch" value="true"${isUnlocked() ? ' checked="checked"' : ''} aria-labelledby="${options.button}-encrypt-label" />
+        <label class="editor-form-encrypt-label" for="${options.button}-encrypt" title="${i18n.t('annotation-encrypt.toggle.title')}">${Icon['.fas.fa-lock-open']}${Icon['.fas.fa-lock']}</label>
+      </span>
       <button class="editor-form-submit" data-i18n="editor.toolbar.form.post.button" type="submit"${submitDisabled}>${i18n.t('editor.toolbar.form.post.button.textContent')}</button>
       <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
     </fieldset>
