@@ -990,36 +990,33 @@ export function showContactsActivities(onComplete) {
     await Promise.all(workers);
   };
 
+  var hasTypeIndex = (agent) => agent?.TypeIndex && Object.values(agent.TypeIndex).some(v => v && Object.keys(v).length);
+
+  // Cached contacts lose their Graph, so only reuse ones with a persisted TypeIndex
   var processContacts = (contacts) =>
     runContactsBounded(contacts, async (url) => {
-      var subject = await getSubjectInfo(url, { 'fetchIndexes': true });
-      if (subject.Graph) {
-        Config.User['Contacts'] = Config.User['Contacts'] || {};
+      Config.User['Contacts'] = Config.User['Contacts'] || {};
+      var subject = Config.User.Contacts[url];
+      if (!hasTypeIndex(subject)) {
+        subject = await getSubjectInfo(url, { 'fetchIndexes': true });
+        if (!subject.Graph) return;
         Config.User.Contacts[url] = subject;
-        await Promise.allSettled(processAgentActivities(subject));
       }
-    });
-
-  var processExistingContacts = (contacts) =>
-    runContactsBounded(Object.keys(contacts), async (iri) => {
-      var contact = Config.User.Contacts[iri];
-      if (contact.IRI) {
-        await Promise.allSettled(processAgentActivities(contact));
-      }
+      await Promise.allSettled(processAgentActivities(subject));
     });
 
   function getContactsAndActivities() {
-    if (Config.User.Contacts && Object.keys(Config.User.Contacts).length) {
-      return processExistingContacts(Config.User.Contacts);
-    } else if (Config.User.IRI) {
-      return getUserContacts(Config.User.IRI).then(c => {
-        // Drop http: contacts on https: pages - mixed-content blocks them.
-        var pageIsHttps = window.location.protocol === 'https:';
-        var filtered = pageIsHttps ? c.filter(iri => !iri.toLowerCase().startsWith('http:')) : c;
-        return processContacts(filtered);
-      });
-    }
-    return Promise.resolve();
+    if (!Config.User.IRI) return Promise.resolve();
+
+    // Re-read the profile so newly added contacts are included
+    return getUserContacts(Config.User.IRI).then(c => {
+      var known = Object.keys(Config.User.Contacts || {});
+      var contacts = uniqueArray(c.concat(known));
+      // Drop http: contacts on https: pages, mixed content blocks them
+      var pageIsHttps = window.location.protocol === 'https:';
+      var filtered = pageIsHttps ? contacts.filter(iri => !iri.toLowerCase().startsWith('http:')) : contacts;
+      return processContacts(filtered);
+    });
   }
 
   getContactsAndActivities()
@@ -1035,7 +1032,7 @@ export function showContactsActivities(onComplete) {
 }
 
 export function processAgentActivities(agent) {
-  if (agent.TypeIndex && Object.keys(agent.TypeIndex).length) {
+  if (Object.values(agent.TypeIndex || {}).some(v => v && Object.keys(v).length)) {
     return processAgentTypeIndex(agent);
   }
   else if (agent.Graph && (agent.PublicTypeIndex?.length || agent.PrivateTypeIndex?.length) && !agent.typeIndexAttempted) {
@@ -1045,6 +1042,7 @@ export function processAgentActivities(agent) {
       .then(typeIndexes => {
         var keys = Object.keys(typeIndexes);
         if (keys.length === 0) return;
+        agent.TypeIndex = agent.TypeIndex || {};
         keys.forEach(typeIndexType => {
           agent.TypeIndex[typeIndexType] = typeIndexes[typeIndexType];
         });
