@@ -77,7 +77,6 @@ export class ToolbarView {
     this.dom.setAttribute('xml:lang', Config.User.UI.Language);
     this.dom.setAttribute('dir', Config.User.UI.LanguageDir);
 
-    // Must precede addToolbar(), which branches on it
     this.compactLayoutQuery = window.matchMedia?.(COMPACT_LAYOUT_QUERY) ?? null;
     this.isCompactLayout = this.compactLayoutQuery?.matches ?? false;
 
@@ -126,9 +125,7 @@ export class ToolbarView {
       this.trackViewportInset();
     }
 
-    // The markup is identical in both layouts; CSS restyles it at the breakpoint. Only
-    // behavior crosses over here: selection listeners, viewport tracking, inline
-    // geometry, and text too small for CSS to reach (select option labels).
+    // Markup is shared; CSS restyles it at the breakpoint, only behavior switches here
     this.compactLayoutChangeHandler = (e) => {
       const selection = window.getSelection();
       const wasOpen = this.dom.classList.contains('editor-form-active');
@@ -150,7 +147,6 @@ export class ToolbarView {
 
       this.updateCompactPresentation();
 
-      // Reposition for the new layout; the open state itself survives the restyle.
       if (keepOpen) {
         this.selectionUpdate(this.editorView);
       }
@@ -160,7 +156,7 @@ export class ToolbarView {
     this.updateCompactPresentation();
   }
 
-  // Presentation details CSS cannot express (a select's option text). Subclasses extend.
+  // Presentation CSS cannot express, e.g. option text; subclasses override
   updateCompactPresentation() {}
 
   initializeButtons(buttons) {
@@ -200,7 +196,7 @@ export class ToolbarView {
     }
   }
 
-  // Touch taps can collapse the selection before the handler runs; ProseMirror owns author mode's
+  // Touch taps can collapse the selection before the handler runs; author mode is ProseMirror's
   restoreLostSelection() {
       if (this.mode !== 'social' || !this.selectionTextQuote) return;
       const selection = window.getSelection();

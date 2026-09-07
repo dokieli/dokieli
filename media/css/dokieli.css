@@ -8145,9 +8145,7 @@ nav.do[id$="-toc"] li.tocline > a.tocxref {
     white-space: nowrap;
   }
 
-  /* Dropdowns become bottom sheets. The inline offsets are !important-proofed: with no
-     rebuild at the breakpoint, a panel positioned as a desktop dropdown keeps its
-     inline left/top when the layout flips. */
+  /* Bottom sheets; !important beats inline offsets left over from the desktop dropdown */
   .editor-toolbar .editor-dropdown-panel {
     position: fixed;
     left: 0 !important;
