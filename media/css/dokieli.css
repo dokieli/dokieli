@@ -21,6 +21,7 @@ limitations under the License.
   /* Neutrals */
   --do-color-bg: #fff;
   --do-color-bg-subtle: #eee;
+  --do-color-bg-muted: #e0e0e0;
   --do-color-border: #ccc;
   --do-color-fg-faint: #aaa;
   --do-color-fg-subtle: #767676;
@@ -82,6 +83,7 @@ limitations under the License.
     /* Neutrals */
     --do-color-bg: #1a1a1a;
     --do-color-bg-subtle: #2e2e2e;
+    --do-color-bg-muted: #333333;
     --do-color-border: #4a4a4a;
     --do-color-fg-faint: #6e6e6e;
     --do-color-fg-subtle: #9a9a9a;
@@ -121,6 +123,7 @@ limitations under the License.
 :root[data-theme="dark"] {
   --do-color-bg: #1a1a1a;
   --do-color-bg-subtle: #2e2e2e;
+  --do-color-bg-muted: #333333;
   --do-color-border: #4a4a4a;
   --do-color-fg-faint: #6e6e6e;
   --do-color-fg-subtle: #9a9a9a;
