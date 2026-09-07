@@ -16,7 +16,7 @@ limitations under the License.
 */
 
 import rdf from 'rdf-ext';
-import { createActivityObjectHTML, createActivityJSONLD, showCitations, getReferenceLabel, createNoteDataHTML, handleDeleteNote, getItemVisibility, getPreferredTargetIRI } from './doc.js';
+import { createActivityObjectHTML, createActivityJSONLD, showCitations, getReferenceLabel, createNoteDataHTML, handleDeleteNote, getItemVisibility, getPreferredTargetIRI, showActionMessage, addMessageToLog } from './doc.js';
 import { applyMarksFromTextQuote, applyMarkFromSelector } from '@dokieli/web-annotation';
 import { Icon } from './ui/icons.js'
 import { getButtonHTML } from './ui/buttons.js'
@@ -552,12 +552,21 @@ export function showNotificationSources(url) {
   );
 }
 
+const collectionLimitNoticeShown = new Set();
+
 async function showActivitiesSourcesUncached(url, options = {}) {
   // Retry the container listing; rate limiting can return it empty under load
   return withReadRetry(() => getItemsList(url))
     .then(items => {
       // Cap concurrency to avoid tripping the storage server's rate limiter
       var queue = items.slice(0, Config.CollectionItemsLimit);
+      // Until servers can be queried (e.g. SPARQL) the cap is the only way to stay under rate limits
+      if (items.length > queue.length && !collectionLimitNoticeShown.has(url)) {
+        collectionLimitNoticeShown.add(url);
+        var message = { 'content': i18n.t('activities.collection-limit.textContent', { url, count: queue.length }), 'type': 'info', 'timer': 10000 };
+        addMessageToLog(message, Config.MessageLog);
+        showActionMessage(document.body, message);
+      }
       var concurrency = Math.min(Config.CollectionItemsConcurrency, queue.length);
       var cursor = 0;
 

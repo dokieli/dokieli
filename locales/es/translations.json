@@ -1,4 +1,5 @@
 {
+  "activities.collection-limit.textContent": "Solo se revisaron los {{count}} elementos más recientes de <a href=\"{{- url}}\">{{- url}}</a> en busca de anotaciones. Tiene demasiados para cargarlos todos.",
   "annotation-access.label.textContent": "Visibilidad",
   "annotation-access.toggle.title": "Cambiar entre público y privado",
   "annotation-encrypt.label.textContent": "Cifrado",

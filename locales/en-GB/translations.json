@@ -1,4 +1,5 @@
 {
+  "activities.collection-limit.textContent": "Only the {{count}} most recent items in <a href=\"{{- url}}\">{{- url}}</a> were checked for annotations. It has too many to load them all.",
   "annotation-access.label.textContent": "Visibility",
   "annotation-access.toggle.title": "Switch between public and private",
   "annotation-encrypt.label.textContent": "Encryption",
