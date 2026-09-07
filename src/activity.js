@@ -20,7 +20,7 @@ import { createActivityObjectHTML, createActivityJSONLD, showCitations, getRefer
 import { applyMarksFromTextQuote, applyMarkFromSelector } from '@dokieli/web-annotation';
 import { Icon } from './ui/icons.js'
 import { getButtonHTML } from './ui/buttons.js'
-import { getPathURL, isHttpOrHttpsProtocol, stripFragmentFromString, currentLocation, getFragmentFromString } from './uri.js';
+import { getPathURL, isHttpOrHttpsProtocol, stripFragmentFromString, currentLocation, getFragmentFromString, forceTrailingSlash } from './uri.js';
 import { serializeDataToPreferredContentType, getGraphLanguage, getGraphLicense, getGraphRights, getGraphTypes, getGraphDate, getGraphImage, getResourceGraph, getResourceOnlyRDF, getAgentTypeIndex, getUserContacts, getAgentName, getSubjectInfo, getItemsList, parseAnnotationFromGraph, jsonldNodesFromData } from './graph.js';
 import { activityTypeToken, createNotification, discoverInbox, getAcceptPost, getInboxContents, postNotification, serializeNotificationToHTML } from '@dokieli/notifications';
 import { storageFetch } from './storage/backend.js';
@@ -34,6 +34,7 @@ import { i18n } from './i18n.js';
 import { showUserIdentityInput } from './auth.js';
 import { updateDeviceStorageProfile } from './storage.js';
 import { parseWacAllow } from '@dokieli/web-access-control';
+import { setPublicRead } from './wac.js';
 import { isJWE } from './crypto.js';
 import { isUnlocked, decryptWithSession } from './keystore.js';
 
@@ -446,11 +447,31 @@ function showAnnotationStoreDialog(containerIRI, mode) {
   });
 }
 
+// Fresh pods ship without type indexes; create one under the storage root and link it from the profile
+async function ensureTypeIndex(kind) {
+  const key = kind === 'public' ? 'PublicTypeIndex' : 'PrivateTypeIndex';
+  if (Config.User[key]?.[0]) return Config.User[key][0];
+  const root = Config.User.Storage?.[0];
+  if (!root) return;
+
+  const url = forceTrailingSlash(root) + `settings/${kind}TypeIndex.ttl`;
+  const listed = kind === 'public' ? ns.solid.ListedDocument.value : ns.solid.UnlistedDocument.value;
+  await Config.Storage.put(url, `<> a <${ns.solid.TypeIndex.value}>, <${listed}> .\n`, 'text/turtle');
+  await setPublicRead(url, kind === 'public').catch(e => console.log('Could not set type index access:', e));
+
+  const predicate = kind === 'public' ? ns.solid.publicTypeIndex.value : ns.solid.privateTypeIndex.value;
+  await Config.Storage.patchWithConneg(stripFragmentFromString(Config.User.IRI), { insert: `<${Config.User.IRI}> <${predicate}> <${url}> .\n` });
+
+  Config.User[key] = [url];
+  updateDeviceStorageProfile(Config.User);
+  return url;
+}
+
 // Public type index when the container is publicly readable, else private
 export async function registerAnnotationInTypeIndex(containerIRI, forClass) {
   const privateTypeIndexIRI = Config.User.PrivateTypeIndex?.[0];
   const publicTypeIndexIRI = Config.User.PublicTypeIndex?.[0];
-  if (!privateTypeIndexIRI && !publicTypeIndexIRI) return;
+  if (!privateTypeIndexIRI && !publicTypeIndexIRI && !Config.User.Storage?.[0]) return;
   if (registeredTypeIndexKeys.has(forClass)) return;
 
   Config.User.TypeIndex = Config.User.TypeIndex || {};
@@ -468,9 +489,11 @@ export async function registerAnnotationInTypeIndex(containerIRI, forClass) {
     if (existingPrivate) {
       const [subject, entry] = existingPrivate;
       const container = entry[ns.solid.instanceContainer.value];
-      if (!publicTypeIndexIRI || !container || !(await isContainerPublicReadable(container))) return;
+      if (!container || !(await isContainerPublicReadable(container))) return;
       if (!(await showAnnotationStoreDialog(container, 'publish'))) return;
 
+      const publicTypeIndexIRI = await ensureTypeIndex('public');
+      if (!publicTypeIndexIRI) return;
       const registrationId = generateAttributeId();
       const insert = typeRegistrationTriples(`#${registrationId}`, forClass, container);
       await Config.Storage.patchWithConneg(publicTypeIndexIRI, { insert });
@@ -482,11 +505,12 @@ export async function registerAnnotationInTypeIndex(containerIRI, forClass) {
       return;
     }
 
-    const publicReadable = publicTypeIndexIRI && await isContainerPublicReadable(containerIRI);
-    const usePublic = publicReadable || !privateTypeIndexIRI;
+    const publicReadable = await isContainerPublicReadable(containerIRI);
+    const usePublic = publicReadable || (!privateTypeIndexIRI && !!publicTypeIndexIRI);
     if (!(await showAnnotationStoreDialog(containerIRI, usePublic ? 'add-public' : 'add-private'))) return;
 
-    const typeIndexIRI = usePublic ? publicTypeIndexIRI : privateTypeIndexIRI;
+    const typeIndexIRI = await ensureTypeIndex(usePublic ? 'public' : 'private');
+    if (!typeIndexIRI) return;
     const typeIndexType = usePublic ? ns.solid.publicTypeIndex.value : ns.solid.privateTypeIndex.value;
     const registrationId = generateAttributeId();
     await Config.Storage.patchWithConneg(typeIndexIRI, { insert: typeRegistrationTriples(`#${registrationId}`, forClass, containerIRI) });
