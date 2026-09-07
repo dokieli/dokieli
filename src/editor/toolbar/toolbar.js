@@ -127,14 +127,15 @@ export class ToolbarView {
       this.trackViewportInset();
     }
 
-    // Layout is decided at build time, so crossing the breakpoint rebuilds the bar
+    // The markup is identical in both layouts; CSS restyles it at the breakpoint. Only
+    // behavior crosses over here: selection listeners, viewport tracking, inline
+    // geometry, and text too small for CSS to reach (select option labels).
     this.compactLayoutChangeHandler = (e) => {
       const selection = window.getSelection();
       const wasOpen = this.dom.classList.contains('editor-form-active');
       const keepOpen = wasOpen && !!selection?.rangeCount && !selection.isCollapsed;
 
       this.isCompactLayout = e.matches;
-      this.cleanupToolbar();
 
       if (e.matches) {
         document.addEventListener("selectionchange", this.selectionChangeHandler);
@@ -148,14 +149,20 @@ export class ToolbarView {
         ['bottom', 'left', 'width', 'top', 'right'].forEach(p => this.dom.style.removeProperty(p));
       }
 
-      this.addToolbar();
+      this.updateCompactPresentation();
 
+      // Reposition for the new layout; the open state itself survives the restyle.
       if (keepOpen) {
         this.selectionUpdate(this.editorView);
       }
     };
     this.compactLayoutQuery?.addEventListener('change', this.compactLayoutChangeHandler);
+
+    this.updateCompactPresentation();
   }
+
+  // Presentation details CSS cannot express (a select's option text). Subclasses extend.
+  updateCompactPresentation() {}
 
   initializeButtons(buttons) {
     buttons.forEach(({ button, command, dom }) => {
@@ -428,9 +435,8 @@ export class ToolbarView {
 
     this.initializeDropdownMenus(this.getDropdownMenus());
 
-    // On touch the toggle lives in the more/meta sheet
     const modeToggle = this.getModeToggle();
-    if (modeToggle && !this.isCompactLayout) this.addModeToggleButton(modeToggle);
+    if (modeToggle) this.addModeToggleButton(modeToggle);
   }
 
   getSubmenuButtons() { return []; }
@@ -557,14 +563,23 @@ export class ToolbarView {
     panel.style.top = `${this.dom.offsetHeight}px`;
   }
 
-  addModeToggleButton({ label, targetMode }) {
+  addModeToggleButton({ label, targetMode, icon }) {
     const li = document.createElement('li');
     li.className = 'editor-mode-toggle';
 
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'editor-mode-toggle-btn';
-    btn.textContent = label;
+    btn.setAttribute('title', label);
+    btn.setAttribute('aria-label', label);
+    const iconMarkup = Icon[icon] || icon;
+    if (iconMarkup) {
+      btn.appendChild(fragmentFromString(iconMarkup));
+    }
+    const labelSpan = document.createElement('span');
+    labelSpan.className = 'editor-mode-toggle-label';
+    labelSpan.textContent = label;
+    btn.appendChild(labelSpan);
     btn.addEventListener('mousedown', (e) => e.preventDefault());
     btn.addEventListener('click', (e) => {
       e.preventDefault();

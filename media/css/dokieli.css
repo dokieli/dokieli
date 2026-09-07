@@ -6203,6 +6203,7 @@ button.editor-dropdown-item svg {
 .editor-toolbar .editor-form-actions li.editor-mode-toggle .editor-mode-toggle-btn {
   display: flex;
   align-items: center;
+  gap: 0.5em;
   height: 50px;
   box-sizing: border-box;
   white-space: nowrap;
@@ -8177,7 +8178,8 @@ nav.do[id$="-toc"] li.tocline > a.tocxref {
     box-sizing: border-box;
     border-top: 1px solid var(--do-color-border);
   }
-  .editor-toolbar .editor-form-actions li.editor-mode-toggle {
+  /* Same button in both layouts; compact keeps the icon and sheds the text */
+  .editor-toolbar .editor-form-actions li.editor-mode-toggle .editor-mode-toggle-label {
     display: none;
   }
   .editor-toolbar .editor-form-actions li {
@@ -8193,8 +8195,9 @@ nav.do[id$="-toc"] li.tocline > a.tocxref {
     touch-action: manipulation;
     justify-content: center;
   }
+  /* Short option labels (P, H1) let this share the width evenly */
   .editor-toolbar .editor-form-actions .editor-blocktype-menu {
-    flex: 2 1 0;
+    flex: 1 1 0;
     padding: 0;
   }
   .editor-toolbar .editor-form-actions .editor-blocktype-menu select {
@@ -8210,11 +8213,13 @@ nav.do[id$="-toc"] li.tocline > a.tocxref {
     white-space: nowrap;
   }
 
-  /* Dropdowns become bottom sheets */
+  /* Dropdowns become bottom sheets. The inline offsets are !important-proofed: with no
+     rebuild at the breakpoint, a panel positioned as a desktop dropdown keeps its
+     inline left/top when the layout flips. */
   .editor-toolbar .editor-dropdown-panel {
     position: fixed;
-    left: 0;
-    right: 0;
+    left: 0 !important;
+    right: 0 !important;
     bottom: 100%;
     top: auto !important;
     width: 100%;
@@ -8222,7 +8227,7 @@ nav.do[id$="-toc"] li.tocline > a.tocxref {
     overflow-y: auto;
     margin: 0;
     border-radius: 0.75em 0.75em 0 0;
-    border-bottom: 0;
+    border-bottom: 1px solid var(--do-color-border);
   }
   .editor-toolbar .editor-dropdown-panel li button.editor-dropdown-item {
     padding: 1em 1.25em;
