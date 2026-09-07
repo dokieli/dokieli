@@ -559,11 +559,18 @@ function nextBatchSize(size) {
   return size < 50 ? 50 : size < 100 ? 100 : size * 2;
 }
 
-function offerMoreActivities(url, state) {
-  const remaining = state.items.length - state.offset;
-  const count = Math.min(state.batch, remaining);
-  const button = `<button class="load-more-activities" data-url="${url}" type="button">${i18n.t('activities.collection-limit.more.button.textContent', { count })}</button>`;
-  const message = { 'content': i18n.t('activities.collection-limit.textContent', { url, total: state.items.length, checked: state.offset }) + ' ' + button, 'type': 'info', 'timer': null };
+function offerActivities(url, state) {
+  let text, label;
+  if (state.items) {
+    text = i18n.t('activities.collection-limit.textContent', { url, total: state.items.length, checked: state.offset });
+    label = i18n.t('activities.collection-limit.more.button.textContent', { count: Math.min(state.batch, state.items.length - state.offset) });
+  }
+  else {
+    text = i18n.t('activities.collection-pending.textContent', { url });
+    label = i18n.t('activities.collection-pending.button.textContent', { count: state.batch });
+  }
+  const button = `<button class="load-more-activities" data-url="${url}" type="button">${label}</button>`;
+  const message = { 'content': text + ' ' + button, 'type': 'info', 'timer': null };
   addMessageToLog(message, Config.MessageLog);
   state.messageId = showActionMessage(document.body, message);
 }
@@ -573,16 +580,24 @@ document.addEventListener('click', (e) => {
   if (!button) return;
   const url = button.dataset.url;
   const state = collectionScans.get(url);
-  document.getElementById(state?.messageId)?.remove();
+  if (!state || (state.items && state.offset >= state.items.length)) return;
+  document.getElementById(state.messageId)?.remove();
   const aside = document.getElementById('document-action-message');
   if (aside && !aside.querySelector('ul[role="log"] > li')) aside.remove();
-  if (state) showActivitiesSources(url, { ...state.options, more: true });
+  showActivitiesSources(url, { ...state.options, more: true });
 });
 
 async function showActivitiesSourcesUncached(url, options = {}) {
-  const state = collectionScans.get(url) || { items: null, offset: 0, batch: Config.CollectionItemsLimit, options };
-  if (state.items && !options.more) return;
-  collectionScans.set(url, state);
+  // Containers are only scanned on request; inbox notifications still arrive on their own
+  if (!options.more) {
+    if (collectionScans.has(url)) return;
+    const state = { items: null, offset: 0, batch: Config.CollectionItemsLimit, options };
+    collectionScans.set(url, state);
+    offerActivities(url, state);
+    return;
+  }
+
+  const state = collectionScans.get(url);
 
   try {
     // Retry the container listing; rate limiting can return it empty under load
@@ -611,7 +626,7 @@ async function showActivitiesSourcesUncached(url, options = {}) {
 
   await Promise.all(Array.from({ length: concurrency }, worker));
 
-  if (state.offset < state.items.length) offerMoreActivities(url, state);
+  if (state.offset < state.items.length) offerActivities(url, state);
 }
 
 // export function getActivities(url, options) {
