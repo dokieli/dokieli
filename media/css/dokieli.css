@@ -3504,9 +3504,13 @@ position: absolute;
 #document-action-message > ul > li {
 font-weight: normal;
 }
-#document-action-message li :last-child {
+#document-action-message li :last-child:not(button) {
 margin-bottom:0 !important;
 padding-bottom:0 !important;
+}
+#document-action-message .load-more-activities {
+display:block;
+width:fit-content;
 }
 
 #document-action-message li[class] > svg {

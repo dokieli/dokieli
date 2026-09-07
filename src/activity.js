@@ -574,6 +574,8 @@ document.addEventListener('click', (e) => {
   const url = button.dataset.url;
   const state = collectionScans.get(url);
   document.getElementById(state?.messageId)?.remove();
+  const aside = document.getElementById('document-action-message');
+  if (aside && !aside.querySelector('ul[role="log"] > li')) aside.remove();
   if (state) showActivitiesSources(url, { ...state.options, more: true });
 });
 
