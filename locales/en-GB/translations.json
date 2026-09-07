@@ -1,5 +1,6 @@
 {
-  "activities.collection-limit.textContent": "Only the {{count}} most recent items in <a href=\"{{- url}}\">{{- url}}</a> were checked for annotations. It has too many to load them all.",
+  "activities.collection-limit.textContent": "<a href=\"{{- url}}\">{{- url}}</a> has {{total}} items, too many to load at once. The {{checked}} most recent were checked for annotations.",
+  "activities.collection-limit.more.button.textContent": "Look through the next {{count}}",
   "annotation-access.label.textContent": "Visibility",
   "annotation-access.toggle.title": "Switch between public and private",
   "annotation-encrypt.label.textContent": "Encryption",

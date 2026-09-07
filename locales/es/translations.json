@@ -1,5 +1,6 @@
 {
-  "activities.collection-limit.textContent": "Solo se revisaron los {{count}} elementos más recientes de <a href=\"{{- url}}\">{{- url}}</a> en busca de anotaciones. Tiene demasiados para cargarlos todos.",
+  "activities.collection-limit.textContent": "<a href=\"{{- url}}\">{{- url}}</a> tiene {{total}} elementos, demasiados para cargarlos de una vez. Se revisaron los {{checked}} más recientes en busca de anotaciones.",
+  "activities.collection-limit.more.button.textContent": "Revisar los siguientes {{count}}",
   "annotation-access.label.textContent": "Visibilidad",
   "annotation-access.toggle.title": "Cambiar entre público y privado",
   "annotation-encrypt.label.textContent": "Cifrado",
