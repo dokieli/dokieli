@@ -22,7 +22,6 @@ import { exportSelection, getSelectedParentElement, restoreSelection } from "../
 import { htmlEncode } from "../../../utils/sanitization.js";
 import { i18n } from "../../../i18n.js";
 import { buttonIcons } from "../../../ui/buttons.js";
-import { Icon } from "../../../ui/icons.js";
 import { isUnlocked } from "../../../keystore.js";
 
 const ns = Config.ns;
@@ -52,16 +51,11 @@ export class SocialToolbar extends ToolbarView {
   }
 
   getDropdownMenus() {
-    const modeToggle = this.getModeToggle();
-
     return {
       more: {
         label: '…',
         title: 'More options',
         items: [
-          ...(this.isCompactLayout
-            ? [{ icon: Icon[modeToggle.icon], label: modeToggle.label, description: 'Enter editing mode', action: () => this.switchMode(modeToggle.targetMode) }]
-            : []),
           {
             icon: buttonIcons['share']?.icon,
             label: 'Share Selection',

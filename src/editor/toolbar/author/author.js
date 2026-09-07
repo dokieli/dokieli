@@ -29,7 +29,6 @@ import { registerBlobAsset } from "../../utils/imageAssets.js";
 import { i18n } from "../../../i18n.js"
 import { htmlEncode, sanitizeInsertAdjacentHTML } from "../../../utils/sanitization.js";
 import { buttonIcons, getButtonHTML } from "../../../ui/buttons.js";
-import { Icon } from "../../../ui/icons.js";
 import { toggleMarkdownMode } from "../../../dialog.js";
 
 const ns = Config.ns;
@@ -282,7 +281,7 @@ TODO:
   }
 
   getModeToggle() {
-    return { label: 'Back to Reading', icon: '.fas.fa-glasses', targetMode: 'social' };
+    return { label: 'Back to Reading', icon: '.fas.fa-goal-net', targetMode: 'social' };
   }
 
   afterButtons() {
@@ -333,29 +332,15 @@ TODO:
     });
   }
 
-  getDropdownMenus() {
-    const menus = this.getDesktopDropdownMenus();
-    if (!this.isCompactLayout) return menus;
-
-    // Align and insert menus collapse into one sheet on the pinned bar
-    const modeToggle = this.getModeToggle();
-    const sectioned = (menu, section) => menu.items.map((item, i) => i === 0 ? { ...item, section } : item);
-
-    return {
-      meta: {
-        ...menus.meta,
-        sectionLabel: undefined,
-        items: [
-          { icon: Icon[modeToggle.icon], label: modeToggle.label, description: 'Exit editing mode', action: () => this.switchMode(modeToggle.targetMode) },
-          ...sectioned(menus.align, 'Align'),
-          ...sectioned(menus.plus, 'Insert'),
-          ...sectioned(menus.meta, menus.meta.sectionLabel),
-        ],
-      },
-    };
+  // Option text is out of CSS's reach, so the compact bar's "P"/"H1" labels swap here.
+  updateCompactPresentation() {
+    if (!this.blocktypeSelect) return;
+    Array.from(this.blocktypeSelect.options).forEach(option => {
+      option.textContent = this.isCompactLayout ? option.dataset.shortLabel : option.dataset.label;
+    });
   }
 
-  getDesktopDropdownMenus() {
+  getDropdownMenus() {
     return {
       align: {
         icon: buttonIcons['align-center']?.icon,
@@ -479,16 +464,18 @@ TODO:
     this.blocktypeSelect.setAttribute('aria-label', 'Block type');
 
     [
-      { label: 'Paragraph', value: 'p' },
-      { label: 'Heading 1', value: 'h1' },
-      { label: 'Heading 2', value: 'h2' },
-      { label: 'Heading 3', value: 'h3' },
-      { label: 'Heading 4', value: 'h4' },
-      { label: 'Heading 5', value: 'h5' },
-    ].forEach(({ label, value }) => {
+      { label: 'Paragraph', short: 'P', value: 'p' },
+      { label: 'Heading 1', short: 'H1', value: 'h1' },
+      { label: 'Heading 2', short: 'H2', value: 'h2' },
+      { label: 'Heading 3', short: 'H3', value: 'h3' },
+      { label: 'Heading 4', short: 'H4', value: 'h4' },
+      { label: 'Heading 5', short: 'H5', value: 'h5' },
+    ].forEach(({ label, short, value }) => {
       const option = document.createElement('option');
       option.value = value;
       option.textContent = label;
+      option.dataset.label = label;
+      option.dataset.shortLabel = short;
       this.blocktypeSelect.appendChild(option);
     });
 
