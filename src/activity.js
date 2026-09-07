@@ -552,38 +552,64 @@ export function showNotificationSources(url) {
   );
 }
 
-const collectionLimitNoticeShown = new Set();
+// One scan per container per session; the offset moves as the user asks for more
+const collectionScans = new Map();
+
+function nextBatchSize(size) {
+  return size < 50 ? 50 : size < 100 ? 100 : size * 2;
+}
+
+function offerMoreActivities(url, state) {
+  const remaining = state.items.length - state.offset;
+  const count = Math.min(state.batch, remaining);
+  const button = `<button class="load-more-activities" data-url="${url}" type="button">${i18n.t('activities.collection-limit.more.button.textContent', { count })}</button>`;
+  const message = { 'content': i18n.t('activities.collection-limit.textContent', { url, total: state.items.length, checked: state.offset }) + ' ' + button, 'type': 'info', 'timer': null };
+  addMessageToLog(message, Config.MessageLog);
+  state.messageId = showActionMessage(document.body, message);
+}
+
+document.addEventListener('click', (e) => {
+  const button = e.target.closest?.('button.load-more-activities');
+  if (!button) return;
+  const url = button.dataset.url;
+  const state = collectionScans.get(url);
+  document.getElementById(state?.messageId)?.remove();
+  if (state) showActivitiesSources(url, { ...state.options, more: true });
+});
 
 async function showActivitiesSourcesUncached(url, options = {}) {
-  // Retry the container listing; rate limiting can return it empty under load
-  return withReadRetry(() => getItemsList(url))
-    .then(items => {
-      // Cap concurrency to avoid tripping the storage server's rate limiter
-      var queue = items.slice(0, Config.CollectionItemsLimit);
-      // Until servers can be queried (e.g. SPARQL) the cap is the only way to stay under rate limits
-      if (items.length > queue.length && !collectionLimitNoticeShown.has(url)) {
-        collectionLimitNoticeShown.add(url);
-        var message = { 'content': i18n.t('activities.collection-limit.textContent', { url, count: queue.length }), 'type': 'info', 'timer': 10000 };
-        addMessageToLog(message, Config.MessageLog);
-        showActionMessage(document.body, message);
-      }
-      var concurrency = Math.min(Config.CollectionItemsConcurrency, queue.length);
-      var cursor = 0;
+  const state = collectionScans.get(url) || { items: null, offset: 0, batch: Config.CollectionItemsLimit, options };
+  if (state.items && !options.more) return;
+  collectionScans.set(url, state);
 
-      var worker = async () => {
-        while (cursor < queue.length) {
-          var iri = queue[cursor++];
-          try { await showActivities(iri, options); } catch (e) {}
-        }
-      };
+  try {
+    // Retry the container listing; rate limiting can return it empty under load
+    state.items = state.items || await withReadRetry(() => getItemsList(url));
+  }
+  catch (error) {
+    console.log(url + ' has no activities.');
+    return;
+  }
 
-      return Promise.all(Array.from({ length: concurrency }, worker));
-    })
-    .catch((error) => {
-      console.log(error)
-      console.log(url + ' has no activities.');
-      // return error;
-    });
+  // Until servers can be queried (e.g. SPARQL) the cap keeps requests under rate limits and the UI responsive
+  const queue = state.items.slice(state.offset, state.offset + state.batch);
+  state.offset += queue.length;
+  state.batch = nextBatchSize(state.batch);
+
+  // Cap concurrency to avoid tripping the storage server's rate limiter
+  const concurrency = Math.min(Config.CollectionItemsConcurrency, queue.length);
+  let cursor = 0;
+
+  const worker = async () => {
+    while (cursor < queue.length) {
+      const iri = queue[cursor++];
+      try { await showActivities(iri, options); } catch (e) {}
+    }
+  };
+
+  await Promise.all(Array.from({ length: concurrency }, worker));
+
+  if (state.offset < state.items.length) offerMoreActivities(url, state);
 }
 
 // export function getActivities(url, options) {
