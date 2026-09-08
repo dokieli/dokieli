@@ -49,7 +49,7 @@ import { generateGeoView } from './geo.js';
 import { csvStringToJson, jsonToHtmlTableString } from './csv.js';
 import { restoreYjsContent, addYjsVersion, getYjsVersions, getYjsVersionsFromIDB, getCurrentVersionKey, onYjsVersionsChanged } from "./editor/editor.js";
 import { rewriteBlobImagesToRelative, uploadBlobAssets, clearBlobAssets, hasUploadTarget, resolveAuthenticatedImages } from "./editor/utils/imageAssets.js";
-import { createKeystore, unlockKeystore, isUnlocked, getSessionKid, hasKeystore, publishPublicKeyToProfile, getAgentEncryptionKey, addDocumentRecipient, agentHasPublishedEncryptionKey, exportKeyDocument, exportKeyDocuments, exportKeyPair, importKeyDocuments, importPrivateKeyPEM, verifyPassphrase, hasAnyKeys, listKeys, ASSERTION } from './keystore.js';
+import { createKeystore, unlockKeystore, isUnlocked, getSessionKid, hasKeystore, publishPublicKeyToProfile, getAgentEncryptionKey, addDocumentRecipient, agentHasPublishedEncryptionKey, exportKeyDocument, exportKeyDocuments, exportKeyPair, importKeyDocuments, importPrivateKeyPEM, verifyPassphrase, hasAnyKeys, listKeys, KEY_AGREEMENT, ASSERTION } from './keystore.js';
 
 const versionItemCache = new Map();
 let editHistoryAside = null;
@@ -360,6 +360,33 @@ function setKeyMessage(node, icon, text) {
   node.setHTMLUnsafe(domSanitize(Icon[icon] + ' ' + text));
 }
 
+function appendKeyLocation(info, keyConfig) {
+  if (keyConfig.KeystoreURL && !keyConfig.StorageSyncFailed) {
+    sanitizeInsertAdjacentHTML(info, 'beforeend',
+      `<p data-i18n="encryption-setup.saved-at">${i18n.t('encryption-setup.saved-at.textContent')} <a href="${keyConfig.KeystoreURL}" rel="noopener" target="_blank">${keyConfig.KeystoreURL}</a></p>`);
+  }
+  else if (!keyConfig.KeystoreURL) {
+    sanitizeInsertAdjacentHTML(info, 'beforeend',
+      `<p data-i18n="encryption-setup.saved-locally">${i18n.t('encryption-setup.saved-locally.textContent')}</p>`);
+  }
+}
+
+// On success the prompt to download is spent, so it gives way to the outcome
+async function runKeyDownload(info, button, kid) {
+  const status = document.createElement('p');
+  try {
+    await downloadKeyBackup(kid);
+    status.setAttribute('class', 'success');
+    status.textContent = i18n.t('menu.encryption.download-ready.textContent');
+    info.querySelector('p[data-i18n="encryption-setup.download-description"]')?.remove();
+  }
+  catch (err) {
+    status.setAttribute('class', 'error');
+    status.textContent = i18n.t('menu.encryption.download-failed.textContent') + ' ' + err.message;
+  }
+  button.parentNode.replaceWith(status);
+}
+
 function setKeyStatus(node, text, kind = 'success') {
   const p = document.createElement('p');
   p.setAttribute('class', kind);
@@ -415,6 +442,28 @@ function showKeysSettings(node) {
 
   keysSection.querySelector('button.download-keys').addEventListener('click', () => showKeyExport());
   keysSection.querySelector('button.import-keys').addEventListener('click', () => showKeyImport());
+
+  // The button says what is actually available: set up, unlock, or nothing left to do
+  const refreshKeyButton = async (purpose, sectionId, buttonClass) => {
+    const section = keysSection.querySelector(sectionId);
+    const button = section.querySelector(buttonClass);
+    const label = button.querySelector('span');
+    if (!label) return;
+
+    if (isUnlocked(purpose)) {
+      label.textContent = i18n.t(purpose === ASSERTION ? 'menu.signing.ready-button.textContent' : 'menu.encryption.ready-button.textContent');
+      button.disabled = true;
+      return;
+    }
+    if (await hasKeystore(purpose)) {
+      label.textContent = i18n.t('menu.keys.unlock-button.textContent');
+    }
+  };
+
+  refreshKeyButton(KEY_AGREEMENT, '#document-keys-encryption', 'button.setup-encryption-keys')
+    .catch(e => console.warn('dokieli: could not read encryption key state', e));
+  refreshKeyButton(ASSERTION, '#document-keys-signing', 'button.setup-signing-keys')
+    .catch(e => console.warn('dokieli: could not read signing key state', e));
 
   keysSection.querySelector('button.setup-encryption-keys').addEventListener('click', async () => {
     const message = keysSection.querySelector('#document-keys-encryption .response-message');
@@ -7490,7 +7539,9 @@ export async function showSigningSetup(onSuccess) {
       Config.User.Keys.Signing.KeyId = getSessionKid(ASSERTION);
 
       form.remove();
+      aside.querySelector('p[data-i18n^="signing-setup.passphrase-"]')?.remove();
       setKeyStatus(info, i18n.t('signing-setup.success.textContent'), 'success');
+      appendKeyLocation(info, Config.User.Keys.Signing);
 
       if (Config.User.Keys.Signing.StorageSyncFailed) {
         sanitizeInsertAdjacentHTML(info, 'beforeend', `<p class="warning" data-i18n="encryption-setup.storage-sync-failed">${i18n.t('encryption-setup.storage-sync-failed.textContent')}</p>`);
@@ -7511,17 +7562,7 @@ export async function showSigningSetup(onSuccess) {
 
       const newKid = getSessionKid(ASSERTION);
       const downloadButton = info.querySelector('button.download-signing-key');
-      downloadButton.addEventListener('click', async () => {
-        const status = document.createElement('p');
-        try {
-          await downloadKeyBackup(newKid);
-          status.textContent = i18n.t('menu.encryption.download-ready.textContent');
-        }
-        catch (err) {
-          status.textContent = i18n.t('menu.encryption.download-failed.textContent') + ' ' + err.message;
-        }
-        downloadButton.parentNode.replaceWith(status);
-      });
+      downloadButton.addEventListener('click', () => runKeyDownload(info, downloadButton, newKid));
 
       onSuccess?.();
     }
@@ -7611,18 +7652,7 @@ export function showEncryptionSetup(onSuccess) {
       successMsg.textContent = i18n.t('encryption-setup.success.textContent');
       info.appendChild(successMsg);
 
-      const keystoreURL = Config.User.Keys.Encryption.KeystoreURL;
-      const locationMsg = document.createElement('p');
-      if (keystoreURL && !Config.User.Keys.Encryption.StorageSyncFailed) {
-        locationMsg.setAttribute('data-i18n', 'encryption-setup.saved-at');
-        locationMsg.setHTMLUnsafe(domSanitize(i18n.t('encryption-setup.saved-at.textContent') + ' <a href="' + keystoreURL + '" rel="noopener" target="_blank">' + keystoreURL + '</a>'));
-        info.appendChild(locationMsg);
-      }
-      else if (!keystoreURL) {
-        locationMsg.setAttribute('data-i18n', 'encryption-setup.saved-locally');
-        locationMsg.textContent = i18n.t('encryption-setup.saved-locally.textContent');
-        info.appendChild(locationMsg);
-      }
+      appendKeyLocation(info, Config.User.Keys.Encryption);
 
       // Only point where the key is known to be new, and may be the user's only copy
       sanitizeInsertAdjacentHTML(info, 'beforeend',
@@ -7631,17 +7661,7 @@ export function showEncryptionSetup(onSuccess) {
 
       const newKid = getSessionKid();
       const downloadButton = info.querySelector('button.download-encryption-keys');
-      downloadButton.addEventListener('click', async () => {
-        const status = document.createElement('p');
-        try {
-          await downloadKeyBackup(newKid);
-          status.textContent = i18n.t('menu.encryption.download-ready.textContent');
-        }
-        catch (err) {
-          status.textContent = i18n.t('menu.encryption.download-failed.textContent') + ' ' + err.message;
-        }
-        downloadButton.parentNode.replaceWith(status);
-      });
+      downloadButton.addEventListener('click', () => runKeyDownload(info, downloadButton, newKid));
 
       clearPendingEncryptedQueues();
       onSuccess?.();
