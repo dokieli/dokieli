@@ -21,7 +21,7 @@ import { DOMSerializer, DOMParser, Slice } from "prosemirror-model"
 import { TextSelection, NodeSelection } from "prosemirror-state"
 import { schema, allowedEmptyAttributes } from "./../../schema/base.js"
 import { formHandlerLanguage, formHandlerA, formHandlerAnnotate, formHandlerBlockquote, formHandlerImg, formHandlerQ, formHandlerCitation, formHandlerRequirement, formHandlerSemantics } from "./handlers.js"
-import { ToolbarView, annotateFormControls } from "../toolbar.js"
+import { ToolbarView, annotateFormControls, advancedFieldsHTML, formFooterHTML } from "../toolbar.js"
 import { createRDFaHTMLRequirement, getCitationOptionsHTML, getLanguageOptionsHTML, getRequirementLevelOptionsHTML, getRequirementSubjectOptionsHTML } from "../../../doc.js"
 import Config from "../../../config.js";
 import { fragmentFromString } from "../../../utils/html.js";
@@ -153,15 +153,12 @@ export class AuthorToolbar extends ToolbarView {
 
       a: (options) => `
         <fieldset>
-          <legend data-i18n="editor.toolbar.a.form.legend">${options.legend}</legend>
-          <dl class="info">
-            <dt class="required">*</dt>
-            <dd data-i18n="info.required">${i18n.t('info.required.textContent')}</dd>
-          </dl>
-          <label for="a-href">URL</label> <input class="editor-form-input" data-i18n="editor.toolbar.form.url.input" dir="ltr" id="a-href" name="a-href" pattern="https?://.+" placeholder="${i18n.t('editor.toolbar.form.url.input.placeholder')}" required="" type="url" value="" />
+          <legend><span data-i18n="editor.toolbar.a.form.legend">${options.legend}</span> <span class="editor-form-required-note"><span class="required">*</span> <span data-i18n="info.required">${i18n.t('info.required.textContent')}</span></span></legend>
+          <label class="editor-form-visually-hidden" for="a-href">URL</label> <span class="editor-form-required-field"><input class="editor-form-input" data-i18n="editor.toolbar.form.url.input" dir="ltr" id="a-href" name="a-href" pattern="https?://.+" placeholder="${i18n.t('editor.toolbar.form.url.input.placeholder')}" required="" type="url" value="" /><span class="required" aria-hidden="true">*</span></span>
+          ${advancedFieldsHTML(`
           <label data-i18n="editor.toolbar.a.form.a-title.label" for="a-title">${i18n.t('editor.toolbar.a.form.a-title.label.textContent')}</label> <input class="editor-form-input" data-i18n="editor.toolbar.a.form.a-title.input" dir="auto" id="a-title" name="a-title" placeholder="${i18n.t('editor.toolbar.a.form.a-title.input.placeholder')}" type="text" />
-          <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
-          <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
+          `)}
+          ${formFooterHTML({ action: 'save' })}
         </fieldset>
       `,
 
@@ -190,11 +187,12 @@ export class AuthorToolbar extends ToolbarView {
           <legend data-i18n="editor.toolbar.img.form.legend">${options.legend}</legend>
           <figure class="img-preview"></figure>
           <label data-i18n="editor.toolbar.img.form.img-file.label" for="img-file">${i18n.t('editor.toolbar.img.form.img-file.label.textContent')}</label> <input class="editor-form-input" id="img-file" name="img-file" type="file" />
-          <label for="img-src">URL</label> <input class="editor-form-input" dir="ltr" id="img-src" name="img-src" placeholder="${i18n.t('editor.toolbar.form.url.input.placeholder')}" type="text" value="" />
+          <label class="editor-form-visually-hidden" for="img-src">URL</label> <input class="editor-form-input" dir="ltr" id="img-src" name="img-src" placeholder="${i18n.t('editor.toolbar.form.url.input.placeholder')}" type="text" value="" />
+          ${advancedFieldsHTML(`
           <label data-i18n="editor.toolbar.img.form.img-alt.label" for="img-alt">${i18n.t('editor.toolbar.img.form.img-alt.label.textContent')}</label> <input class="editor-form-input" data-i18n="editor.toolbar.img.form.img-alt.input" dir="auto" id="img-alt" name="img-alt" placeholder="${i18n.t('editor.toolbar.img.form.img-alt.input.placeholder')}" type="text" value="" />
           <label data-i18n="editor.toolbar.img.form.img-figcaption" for="img-figcaption">${i18n.t('editor.toolbar.img.form.img-figcaption.label.textContent')}</label> <input class="editor-form-input" data-i18n="editor.toolbar.img.form.img-figcaption.input" id="img-figcaption" name="img-figcaption" placeholder="${i18n.t('editor.toolbar.img.form.img-alt.label.textContent')}" type="text" value="" />
-          <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
-          <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
+          `)}
+          ${formFooterHTML({ action: 'save' })}
         </fieldset>
       `,
 
@@ -205,20 +203,21 @@ export class AuthorToolbar extends ToolbarView {
           <legend data-i18n="editor.toolbar.citation.form.legend">${options.legend}</legend>
           <label data-i18n="editor.toolbar.citation.form.specref-search.label" for="citation-specref-search">${i18n.t('editor.toolbar.citation.form.specref-search.label.textContent')} <a href="https://www.specref.org/" rel="noopener" target="_blank">specref.org</a></label> <input class="editor-form-input" data-i18n="editor.toolbar.citation.form.specref-search.input" id="citation-specref-search" name="citation-specref-search" placeholder="${i18n.t('editor.toolbar.citation.form.specref-search.input.placeholder')}" type="text" value="" />
           <input data-i18n="editor.toolbar.form.search.button" id="citation-specref-search-submit" name="citation-specref-search-submit" type="submit" value="${i18n.t('editor.toolbar.form.search.button.value')}" />
+          <label class="editor-form-visually-hidden" for="citation-url">URL</label>
+          <input class="editor-form-input" data-i18n="editor.toolbar.form.url.input" dir="ltr" id="citation-url" name="citation-url" pattern="https?://.+" placeholder="${i18n.t('editor.toolbar.form.url.input.placeholder')}" type="url" value="" />
+          ${advancedFieldsHTML(`
           <span>
           <input id="ref-footnote" name="citation-ref-type" type="radio" value="ref-footnote" /> <label data-i18n="editor.toolbar.citation.form.ref-footnote.form.label" for="ref-footnote">${i18n.t('editor.toolbar.citation.form.ref-footnote.label.textContent')}</label>
           <input id="ref-reference" name="citation-ref-type" type="radio" value="ref-reference" /> <label data-i18n="editor.toolbar.citation.form.ref-reference.label" for="ref-reference">${i18n.t('editor.toolbar.citation.form.ref-reference.label.textContent')}</label>
           </span>
           <label data-i18n="editor.toolbar.citation.form.citation-relation.label" for="citation-relation">${i18n.t('editor.toolbar.citation.form.citation-relation.label.textContent')}</label>
           <select class="editor-form-select" id="citation-relation" name="citation-relation">${getCitationOptionsHTML({ 'selected': '' })}</select>
-          <label for="citation-url">URL</label>
-          <input class="editor-form-input" data-i18n="editor.toolbar.form.url.input" dir="ltr" id="citation-url" name="citation-url" pattern="https?://.+" placeholder="${i18n.t('editor.toolbar.form.url.input.placeholder')}" type="url" value="" />
           <label data-i18n="editor.toolbar.note.form.label" for="citation-content">${i18n.t('editor.toolbar.note.form.label.textContent')}</label>
           <textarea class="editor-form-textarea" cols="20" data-i18n="editor.toolbar.${options.button}.form.textarea" dir="auto" id="citation-content" name="citation-content" rows="3" placeholder="${options.placeholder}"></textarea>
           <label data-i18n="language.label" for="citation-language">${i18n.t('language.label.textContent')}</label>
           <select class="editor-form-select" id="citation-language" name="citation-language">${getLanguageOptionsHTML()}</select>
-          <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
-          <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
+          `)}
+          ${formFooterHTML({ action: 'save' })}
           <div class="specref-search-results"></div>
         </fieldset>
       `,
@@ -250,14 +249,15 @@ export class AuthorToolbar extends ToolbarView {
           <label for="semantics-about">about</label> <input class="editor-form-input" dir="ltr" id="semantics-about" name="semantics-about" placeholder="Enter URL, e.g., https://example.net/foo#bar" type="url" value="" />
           <label for="semantics-resource">resource</label> <input class="editor-form-input" dir="ltr" id="semantics-resource" name="semantics-resource" placeholder="Enter URL, e.g., https://example.net/foo#bar" type="url" value="" />
           <label for="semantics-typeof">typeof</label> <input class="editor-form-input" dir="ltr" id="semantics-typeof" name="semantics-typeof" placeholder="Enter URL, e.g., https://example.net/foo#Baz" type="url" value="" />
+          ${advancedFieldsHTML(`
           <label for="semantics-rel">rel</label> <input class="editor-form-input" id="semantics-rel" name="semantics-rel" placeholder="schema:url" type="url" value="" />
           <label for="semantics-property">property</label> <input class="editor-form-input" name="semantics-property" id="semantics-property" placeholder="schema:name" type="url" value="" />
           <label for="semantics-href">href</label> <input class="editor-form-input" dir="ltr" id="semantics-href" name="semantics-href" placeholder="Enter URL, e.g., https://example.net/foo" type="url" value="" />
           <label for="semantics-content">content</label> <input class="editor-form-input" id="semantics-content" name="semantics-content" placeholder="Enter content, e.g., 'Baz'" type="url" value="" />
           <label for="semantics-lang">lang</label> <input class="editor-form-input" name="semantics-lang" id="semantics-lang" placeholder="Enter language code, e.g., en" type="url" value="" />
           <label for="semantics-datatype">datatype</label> <input class="editor-form-input" name="semantics-datatype" id="semantics-datatype" placeholder="Enter URL, e.g., https://example.net/qux" type="url" value="" />
-          <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
-          <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
+          `)}
+          ${formFooterHTML({ action: 'save' })}
         </fieldset>
       `
 
