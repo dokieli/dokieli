@@ -7698,7 +7698,7 @@ export function showKeyExport() {
 
   const html = `
     <aside aria-labelledby="key-export-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="key-export" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}">
-      <h2 id="key-export-label" data-i18n="key-export.heading">${i18n.t('key-export.heading.textContent')} ${Config.Button.Info.Encrypt}</h2>
+      <h2 id="key-export-label" data-i18n="key-export.heading">${i18n.t('key-export.heading.textContent')} ${Config.Button.Info.Keys}</h2>
       ${buttonClose}
       <div class="info"></div>
       <form id="key-export-form">
@@ -7816,7 +7816,7 @@ export function showKeyImport() {
 
   const html = `
     <aside aria-labelledby="key-import-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="key-import" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}">
-      <h2 id="key-import-label" data-i18n="key-import.heading">${i18n.t('key-import.heading.textContent')} ${Config.Button.Info.Encrypt}</h2>
+      <h2 id="key-import-label" data-i18n="key-import.heading">${i18n.t('key-import.heading.textContent')} ${Config.Button.Info.Keys}</h2>
       ${buttonClose}
       <div class="info"></div>
       <p data-i18n="key-import.description">${i18n.t('key-import.description.textContent')}</p>
