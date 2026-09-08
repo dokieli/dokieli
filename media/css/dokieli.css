@@ -1621,6 +1621,10 @@ display:flex;
 flex-direction:column;
 gap:0.5em;
 }
+#save-as-document .save-as-cards + p,
+#key-export .save-as-cards + p {
+margin-top:1em !important;
+}
 #save-as-document .save-as-cards input[type="radio"],
 #save-as-document .save-as-cards input[type="checkbox"],
 #key-export .save-as-cards input[type="radio"],
@@ -1686,7 +1690,7 @@ color:var(--do-color-fg);
 #save-as-document .save-as-cards .save-as-card-text span,
 #key-export .save-as-cards .save-as-card-text span {
 font-weight:normal;
-color:var(--do-color-fg-muted);
+color:var(--do-color-fg-secondary);
 font-size:0.9em;
 }
 #save-as-document .save-as-cards .save-as-card-check,
