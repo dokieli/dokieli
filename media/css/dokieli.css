@@ -3970,9 +3970,41 @@ margin-bottom:1em;
 #document-menu #ui-language label {
 display:none;
 }
+/* overrides #document-menu p, which sets these to inherit with !important */
+#document-keys > p,
+#document-keys > div > p {
+padding:0 1em !important;
+margin:0 0 0.75em 0;
+font-size:0.9em !important;
+line-height:1.5 !important;
+color:var(--do-color-fg-secondary);
+}
+#document-keys > p {
+margin-bottom:1.25em;
+}
+#document-keys h3 {
+padding:0 1em;
+margin:0 0 0.25em 0;
+font-size:initial;
+font-weight:bold;
+color:var(--do-color-fg);
+}
+#document-keys > div + div,
+#document-keys #document-keys-actions {
+margin-top:1.25em;
+}
+#document-keys #document-keys-actions {
+padding-top:0.75em;
+border-top:1px solid var(--do-color-border);
+}
+#document-keys .response-message:not(:empty) {
+display:block;
+padding:0.25em 1em 0 1em;
+font-size:0.9em;
+}
 #document-menu #document-views-label,
 #document-menu #ui-language-label,
-#document-menu #document-encryption-label,
+#document-menu #document-keys-label,
 #document-menu #document-theme-label {
 display: block !important;
 font-weight: bold;
@@ -4210,7 +4242,7 @@ padding: 0;
 #document-views h2,
 #document-theme h2,
 #ui-language h2,
-#document-encryption h2,
+#document-keys h2,
 #document-menu #document-do details.menu-group > summary {
 padding: 0.5em 1em 0.5em 1em;
 font-size: initial;

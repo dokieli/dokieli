@@ -49,7 +49,7 @@ import { generateGeoView } from './geo.js';
 import { csvStringToJson, jsonToHtmlTableString } from './csv.js';
 import { restoreYjsContent, addYjsVersion, getYjsVersions, getYjsVersionsFromIDB, getCurrentVersionKey, onYjsVersionsChanged } from "./editor/editor.js";
 import { rewriteBlobImagesToRelative, uploadBlobAssets, clearBlobAssets, hasUploadTarget, resolveAuthenticatedImages } from "./editor/utils/imageAssets.js";
-import { createKeystore, unlockKeystore, isUnlocked, getSessionKid, hasKeystore, publishPublicKeyToProfile, getAgentEncryptionKey, addDocumentRecipient, agentHasPublishedEncryptionKey, exportKeyDocument, exportKeyDocuments, exportKeyPair, importKeyDocuments, importPrivateKeyPEM } from './keystore.js';
+import { createKeystore, unlockKeystore, isUnlocked, getSessionKid, hasKeystore, publishPublicKeyToProfile, getAgentEncryptionKey, addDocumentRecipient, agentHasPublishedEncryptionKey, exportKeyDocument, exportKeyDocuments, exportKeyPair, importKeyDocuments, importPrivateKeyPEM, verifyPassphrase, hasAnyKeys, listKeys, ASSERTION } from './keystore.js';
 
 const versionItemCache = new Map();
 let editHistoryAside = null;
@@ -58,6 +58,7 @@ let lastRestoredKey = null;
 window.addEventListener('dokieli:version-restored', (e) => { lastRestoredKey = e.detail?.key ?? null; });
 window.addEventListener('dokieli:editor-mode-changed', () => updateSlideshowControls());
 
+let signingSetupOpening = false;
 let documentDoClickInitialized = false;
 let documentMenuClickInitialized = false;
 let autoSaveChangeInitialized = false;
@@ -152,7 +153,7 @@ export function showDocumentMenu(e) {
   showViews(tabTools);
   showLanguages(tabSettings);
   showAutoSave(tabSettings);
-  showEncryptionSettings(tabSettings);
+  showKeysSettings(tabSettings);
   showAboutDokieli(dInfo);
 
   // var body = getDocumentContentNode(document);
@@ -382,30 +383,41 @@ function reportKeyError(node, messageKey, error) {
   if (error.code === 'no-keys') appendKeyImportOffer(node);
 }
 
-// Key setup/unlock and profile publication without having to encrypt a document first, so contacts can find this user as a share recipient
-function showEncryptionSettings(node) {
-  if (document.getElementById('document-encryption')) { return; }
+function showKeysSettings(node) {
+  if (document.getElementById('document-keys')) { return; }
 
   const html = `
-  <section aria-labelledby="document-encryption-label" id="document-encryption" rel="schema:hasPart" resource="#document-encryption">
-    <h2 data-i18n="menu.encryption.h2" id="document-encryption-label" property="schema:name">${i18n.t('menu.encryption.h2.textContent')}</h2>
-    ${getButtonHTML({ key: "menu.encryption.setup-button", button: "lock-open", buttonClass: "setup-encryption-keys" })}
-    ${getButtonHTML({ key: "menu.encryption.download-button", button: "download", buttonClass: "download-encryption-keys" })}
-    ${getButtonHTML({ key: "menu.encryption.import-button", button: "upload", buttonClass: "import-encryption-keys" })}
-    <span class="response-message"></span>
+  <section aria-labelledby="document-keys-label" id="document-keys" rel="schema:hasPart" resource="#document-keys">
+    <h2 data-i18n="menu.keys.h2" id="document-keys-label" property="schema:name">${i18n.t('menu.keys.h2.textContent')}</h2>
+    <p data-i18n="menu.keys.description">${i18n.t('menu.keys.description.textContent')}</p>
+    <div id="document-keys-encryption">
+      <h3 data-i18n="menu.keys.encryption.h3">${i18n.t('menu.keys.encryption.h3.textContent')}</h3>
+      <p data-i18n="menu.keys.encryption.description">${i18n.t('menu.keys.encryption.description.textContent')}</p>
+      ${getButtonHTML({ key: "menu.encryption.setup-button", button: "lock-open", buttonClass: "setup-encryption-keys" })}
+      <span class="response-message"></span>
+    </div>
+    <div id="document-keys-signing">
+      <h3 data-i18n="menu.keys.signing.h3">${i18n.t('menu.keys.signing.h3.textContent')}</h3>
+      <p data-i18n="menu.keys.signing.description">${i18n.t('menu.keys.signing.description.textContent')}</p>
+      ${getButtonHTML({ key: "menu.signing.setup-button", button: "lock-open", buttonClass: "setup-signing-keys" })}
+      <span class="response-message"></span>
+    </div>
+    <div id="document-keys-actions">
+      ${getButtonHTML({ key: "menu.keys.download-button", button: "download", buttonClass: "download-keys" })}
+      ${getButtonHTML({ key: "menu.keys.import-button", button: "upload", buttonClass: "import-keys" })}
+    </div>
   </section>
   `;
 
   sanitizeInsertAdjacentHTML(node, 'beforeend', html);
 
-  const encryptionSection = node.querySelector('#document-encryption');
+  const keysSection = node.querySelector('#document-keys');
 
-  encryptionSection.querySelector('button.download-encryption-keys').addEventListener('click', () => showKeyExport());
-  encryptionSection.querySelector('button.import-encryption-keys').addEventListener('click', () => showKeyImport());
+  keysSection.querySelector('button.download-keys').addEventListener('click', () => showKeyExport());
+  keysSection.querySelector('button.import-keys').addEventListener('click', () => showKeyImport());
 
-  encryptionSection.querySelector('button.setup-encryption-keys').addEventListener('click', async (e) => {
-    const section = e.target.closest('#document-encryption');
-    const message = section.querySelector('.response-message');
+  keysSection.querySelector('button.setup-encryption-keys').addEventListener('click', async () => {
+    const message = keysSection.querySelector('#document-keys-encryption .response-message');
 
     if (isUnlocked()) {
       try {
@@ -421,6 +433,30 @@ function showEncryptionSettings(node) {
 
     const exists = await hasKeystore();
     exists ? showEncryptionUnlock() : showEncryptionSetup();
+  });
+
+  keysSection.querySelector('button.setup-signing-keys').addEventListener('click', async () => {
+    const message = keysSection.querySelector('#document-keys-signing .response-message');
+
+    if (isUnlocked(ASSERTION)) {
+      try {
+        await publishPublicKeyToProfile(ASSERTION);
+      }
+      catch (err) {
+        console.warn('dokieli: signing key profile publication failed; signing still works locally', err);
+      }
+      const key = Config.Session?.isActive ? 'menu.signing.ready.textContent' : 'menu.signing.ready-signin.textContent';
+      message.setHTMLUnsafe(domSanitize(Icon[".fas.fa-check-circle.fa-fw"] + ' ' + i18n.t(key)));
+      return;
+    }
+
+    // Unlock covers every purpose at once
+    if (await hasKeystore(ASSERTION)) {
+      showEncryptionUnlock();
+      return;
+    }
+
+    showSigningSetup();
   });
 }
 
@@ -7378,6 +7414,124 @@ export function showEncryptionScopeChoice(onChosen) {
   });
 }
 
+// New passphrase for the first key on the device, the existing one otherwise
+export async function showSigningSetup(onSuccess) {
+  if (document.getElementById('signing-setup') || signingSetupOpening) return;
+
+  // hasAnyKeys can reach the network, so a second click would open a second dialog
+  signingSetupOpening = true;
+  let reusePassphrase;
+  try {
+    reusePassphrase = await hasAnyKeys();
+  }
+  finally {
+    signingSetupOpening = false;
+  }
+  const buttonClose = getButtonHTML({ button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
+  const confirmField = reusePassphrase ? '' : `
+          <li>
+            <label for="signing-passphrase-confirm" data-i18n="signing-setup.passphrase-confirm-label">${i18n.t('signing-setup.passphrase-confirm-label.textContent')}</label>
+            <input id="signing-passphrase-confirm" type="password" autocomplete="new-password" minlength="12" required />${getPassphraseToggleHTML()}
+          </li>`;
+
+  const html = `
+    <aside aria-labelledby="signing-setup-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="signing-setup" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}">
+      <h2 id="signing-setup-label" data-i18n="signing-setup.heading">${i18n.t('signing-setup.heading.textContent')} ${Config.Button.Info.Sign}</h2>
+      ${buttonClose}
+      <div class="info"></div>
+      <p data-i18n="${reusePassphrase ? 'signing-setup.passphrase-existing' : 'signing-setup.passphrase-new'}">${i18n.t(reusePassphrase ? 'signing-setup.passphrase-existing.textContent' : 'signing-setup.passphrase-new.textContent')}</p>
+      <form id="signing-setup-form">
+        <ul>
+          <li>
+            <label for="signing-passphrase" data-i18n="signing-setup.passphrase-label">${i18n.t('signing-setup.passphrase-label.textContent')}</label>
+            <input id="signing-passphrase" type="password" autocomplete="${reusePassphrase ? 'current-password' : 'new-password'}" minlength="12" required />${getPassphraseToggleHTML()}
+          </li>${confirmField}
+        </ul>
+        <button type="submit" data-i18n="signing-setup.submit-button">${i18n.t('signing-setup.submit-button.textContent')}</button>
+      </form>
+    </aside>`;
+
+  document.body.appendChild(fragmentFromString(html));
+
+  const aside = document.getElementById('signing-setup');
+  const info = aside.querySelector('div.info');
+  const form = aside.querySelector('#signing-setup-form');
+  const passInput = form.querySelector('#signing-passphrase');
+
+  initPassphraseToggles(form);
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const submit = form.querySelector('button[type="submit"]');
+    const pass = passInput.value;
+
+    if (!reusePassphrase && pass !== form.querySelector('#signing-passphrase-confirm').value) {
+      setKeyStatus(info, i18n.t('encryption-setup.passphrases-mismatch.textContent'), 'error');
+      return;
+    }
+    if (pass.length < 12) {
+      setKeyStatus(info, i18n.t('encryption-setup.passphrase-too-short.textContent'), 'error');
+      return;
+    }
+
+    submit.disabled = true;
+    setKeyStatus(info, i18n.t('signing-setup.generating.textContent'), 'info');
+
+    try {
+      // A different passphrase would leave the keys unlockable only one at a time
+      if (reusePassphrase && !await verifyPassphrase(pass)) {
+        setKeyStatus(info, i18n.t('signing-setup.passphrase-mismatch-existing.textContent'), 'error');
+        submit.disabled = false;
+        return;
+      }
+
+      await createKeystore(pass, ASSERTION);
+      Config.User.Keys.Signing.Enabled = true;
+      Config.User.Keys.Signing.KeyId = getSessionKid(ASSERTION);
+
+      form.remove();
+      setKeyStatus(info, i18n.t('signing-setup.success.textContent'), 'success');
+
+      if (Config.User.Keys.Signing.StorageSyncFailed) {
+        sanitizeInsertAdjacentHTML(info, 'beforeend', `<p class="warning" data-i18n="encryption-setup.storage-sync-failed">${i18n.t('encryption-setup.storage-sync-failed.textContent')}</p>`);
+      }
+      else {
+        try {
+          await publishPublicKeyToProfile(ASSERTION);
+        }
+        catch (err) {
+          console.warn('dokieli: signing key profile publication failed; signing still works locally', err);
+        }
+      }
+
+      // Only point where the key is known to be new, and may be the user's only copy
+      sanitizeInsertAdjacentHTML(info, 'beforeend',
+        `<p data-i18n="encryption-setup.download-description">${i18n.t('encryption-setup.download-description.textContent')}</p>
+         <p><button class="download-signing-key" data-i18n="encryption-setup.download-button" type="button">${i18n.t('encryption-setup.download-button.textContent')}</button></p>`);
+
+      const newKid = getSessionKid(ASSERTION);
+      const downloadButton = info.querySelector('button.download-signing-key');
+      downloadButton.addEventListener('click', async () => {
+        const status = document.createElement('p');
+        try {
+          await downloadKeyBackup(newKid);
+          status.textContent = i18n.t('menu.encryption.download-ready.textContent');
+        }
+        catch (err) {
+          status.textContent = i18n.t('menu.encryption.download-failed.textContent') + ' ' + err.message;
+        }
+        downloadButton.parentNode.replaceWith(status);
+      });
+
+      onSuccess?.();
+    }
+    catch (err) {
+      reportKeyError(info, 'signing-setup.error.textContent', err);
+      submit.disabled = false;
+    }
+  });
+}
+
 export function showEncryptionSetup(onSuccess) {
   if (document.getElementById('encryption-setup')) return;
 
@@ -7552,6 +7706,10 @@ export function showKeyExport() {
             </label>
           </li>
         </ul>
+        <p class="key-export-key-row" hidden="">
+          <label for="key-export-key" data-i18n="key-export.key-label">${i18n.t('key-export.key-label.textContent')}</label>
+          <select id="key-export-key"></select>
+        </p>
         <p class="key-export-passphrase-row" hidden="">
           <label for="key-export-passphrase" data-i18n="key-export.passphrase-label">${i18n.t('key-export.passphrase-label.textContent')}</label>
           <input id="key-export-passphrase" type="password" autocomplete="current-password" />${getPassphraseToggleHTML()}
@@ -7567,15 +7725,35 @@ export function showKeyExport() {
   const form = aside.querySelector('#key-export-form');
   const passphraseRow = form.querySelector('.key-export-passphrase-row');
   const passphraseInput = form.querySelector('#key-export-passphrase');
+  const keyRow = form.querySelector('.key-export-key-row');
+  const keySelect = form.querySelector('#key-export-key');
 
   initPassphraseToggles(form);
 
   // Only the bare key needs unwrapping; the backup is already encrypted
+  const updateFormatFields = () => {
+    const isPEM = form.querySelector('input[name="key-export-format"]:checked').value === 'pem';
+    passphraseRow.hidden = !isPEM;
+    passphraseInput.required = isPEM;
+    keyRow.hidden = !isPEM || keySelect.options.length < 2;
+  };
+
+  // The listing arrives after the dialog, so re-evaluate once it does
+  listKeys()
+    .then(keys => {
+      for (const { kid, purpose } of keys) {
+        const option = document.createElement('option');
+        option.value = kid;
+        option.textContent = `${i18n.t(purpose === ASSERTION ? 'key-export.key-signing.textContent' : 'key-export.key-encryption.textContent')} (${kid.slice(0, 8)})`;
+        keySelect.appendChild(option);
+      }
+      updateFormatFields();
+    })
+    .catch(e => console.warn('dokieli: could not list keys for export', e));
+
   form.querySelectorAll('input[name="key-export-format"]').forEach(radio => {
     radio.addEventListener('change', () => {
-      const needsPassphrase = form.querySelector('input[name="key-export-format"]:checked').value === 'pem';
-      passphraseRow.hidden = !needsPassphrase;
-      passphraseInput.required = needsPassphrase;
+      updateFormatFields();
       info.replaceChildren();
     });
   });
@@ -7592,7 +7770,7 @@ export function showKeyExport() {
         setKeyStatus(info, i18n.t(count === 1 ? 'menu.encryption.download-ready.textContent' : 'menu.encryption.download-ready-many.textContent'));
       }
       else {
-        const keyPair = await exportKeyPair(passphraseInput.value);
+        const keyPair = await exportKeyPair(passphraseInput.value, keySelect.value || undefined);
         const name = `dokieli-key-${keyPair.kid.slice(0, 8)}`;
         downloadBlobAsFile(createZipBlob([
           { name: `${name}.pem`, content: keyPair.privateKeyPEM },

@@ -26,6 +26,25 @@ import { parseISODuration, uniqueArray } from "./util.js";
 
 const ns = Config.ns;
 
+// Description HTML comes from the docs, so its relative links need that base
+function rebaseDescriptionLinks(html, base) {
+  if (!html || !base) return html;
+  const template = document.createElement('template');
+  template.innerHTML = html;
+  template.content.querySelectorAll('a[href]').forEach(a => {
+    try {
+      a.setAttribute('href', new URL(a.getAttribute('href'), base).href);
+    }
+    catch {}
+    if (!a.hasAttribute('target')) {
+      a.setAttribute('target', '_blank');
+      const rel = a.getAttribute('rel');
+      a.setAttribute('rel', rel && !rel.includes('noopener') ? rel + ' noopener' : rel || 'noopener');
+    }
+  });
+  return template.innerHTML;
+}
+
 export function emitDocEvent(name, detail = {}) {
   document.dispatchEvent(new CustomEvent(`dokieli:${name}`, {
     bubbles: true,
@@ -166,7 +185,7 @@ export function eventButtonInfo() {
           var infoG = g.node(rdf.namedNode(resource));
           // console.log(infoG.dataset.toCanonical())
           title = getGraphTitle(infoG);
-          description = getGraphDescription(infoG);
+          description = rebaseDescriptionLinks(getGraphDescription(infoG), url);
           // console.log(title, description)
 
           let imageUrl = getGraphImage(infoG);

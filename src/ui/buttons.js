@@ -71,6 +71,7 @@ export function initButtons() {
       RobustLinks: getButtonHTML({ key: "info.robustify-links.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-robustify-links` }),
       SaveAs: getButtonHTML({ key: "info.save-as.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-save-as` }),
       Share: getButtonHTML({ key: "info.share.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-share` }),
+      Sign: getButtonHTML({ key: "info.sign.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-sign` }),
       SignIn: getButtonHTML({ key: "info.signin.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-sign-in` }),
       Source: getButtonHTML({ key: "info.source.button", button: "info", buttonClass: "info", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-source` }),
       WebId: `<button class="info" data-i18n="dialog.signin.about.button" rel="rel:help" resource="${docsBaseURL}#feature-webid" title="${i18n.t('dialog.signin.about.button.title')}" type="button">${Icon['.fas.fa-circle-info']}<span data-i18n="dialog.signin.about.button.span">${i18n.t('dialog.signin.about.button.span.textContent')}</span></button>`
