@@ -476,6 +476,25 @@ function noKeysError() {
   return error;
 }
 
+// One passphrase covers every key on the device
+export async function verifyPassphrase(passphrase) {
+  for (const doc of await loadAllKeyDocuments()) {
+    try {
+      await unwrapPrivateKeyJWK(doc.secretKeyJwk, passphrase);
+      return true;
+    }
+    catch {}
+  }
+  return false;
+}
+
+export async function hasAnyKeys() {
+  for (const purpose of PURPOSES) {
+    if (await hasKeystore(purpose)) return true;
+  }
+  return false;
+}
+
 // Private key stays passphrase-wrapped, so the file is safe to keep as a backup
 export async function exportKeyDocuments() {
   const docs = await loadAllKeyDocuments();
@@ -517,9 +536,13 @@ export async function importKeyDocuments(input) {
   return { imported: docs.length, added, stored, local: docs.length - stored };
 }
 
-// Needs the passphrase, and what it returns is unprotected
+export async function listKeys() {
+  return (await loadAllKeyDocuments()).map(doc => ({ kid: doc.publicKeyJwk.kid, purpose: purposeOf(doc) }));
+}
+
+// A kid identifies the key on its own; purpose only narrows the search without one
 export async function exportKeyPair(passphrase, kid, purpose = KEY_AGREEMENT) {
-  const docs = await loadAllKeyDocuments(purpose);
+  const docs = await loadAllKeyDocuments(kid ? undefined : purpose);
   const doc = kid
     ? docs.find(d => d.publicKeyJwk.kid === kid)
     : docs.find(d => d.publicKeyJwk.kid === sessions[purpose].kid) || docs[0];
