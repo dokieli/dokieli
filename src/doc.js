@@ -2912,7 +2912,6 @@ export function getAnnotationLocationHTML(action) {
   // Show the container URL the annotation will POST to next to each label.
   const targetHTML = (url) => url ? ` <code>${htmlEncode(url)}</code>` : '';
 
-  // Only a remembered choice pre-checks
   const options = [
     { suffix: 'annotation-service', uiKey: 'annotationLocationService', url: (typeof Config.AnnotationService !== 'undefined') ? Config.AnnotationService : undefined },
     { suffix: 'annotation-store', uiKey: 'annotationLocationAnnotationStore', url: getRegisteredAnnotationContainer(action) },
@@ -2920,11 +2919,17 @@ export function getAnnotationLocationHTML(action) {
     { suffix: 'activity-outbox', uiKey: 'annotationLocationActivityOutbox', url: (Config.User.Outbox && Config.User.Outbox.length > 0) ? Config.User.Outbox[0] : undefined },
   ];
 
+  // A remembered choice pre-checks; otherwise fall back to the most relevant available location.
+  const remembered = options.some(({ uiKey }) => ui[uiKey] && ui[uiKey].checked);
+  const defaultOrder = ['annotation-store', 'annotation-service', 'activity-outbox', 'personal-storage'];
+  const defaultSuffix = remembered ? undefined : defaultOrder.find((suffix) => options.some((o) => o.suffix === suffix && o.url));
+
   options.forEach(({ suffix, uiKey, url }) => {
     if (!url) return;
     const id = `${action}-annotation-location-${suffix}`;
     const labelI18n = `annotation-location.${suffix}.label`;
-    const checked = (ui[uiKey] && ui[uiKey].checked) ? ' checked="checked"' : '';
+    const isChecked = (ui[uiKey] && ui[uiKey].checked) || suffix === defaultSuffix;
+    const checked = isChecked ? ' checked="checked"' : '';
     inputs.push(`<li><input type="checkbox" id="${id}" name="${id}"${checked} /><label data-i18n="${labelI18n}" for="${id}">${i18n.t(labelI18n + '.textContent')}</label>${targetHTML(url)}</li>`);
   });
 
