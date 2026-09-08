@@ -195,6 +195,43 @@ export class ToolbarView {
         toolbarForm.addEventListener(event, callback);
       });
     }
+
+    const disclosures = FORM_DISCLOSURES
+      .map(([toggleSelector, fieldsSelector]) => ({
+        toggle: toolbarForm.querySelector(toggleSelector),
+        fields: toolbarForm.querySelector(fieldsSelector),
+      }))
+      .filter(({ toggle, fields }) => toggle && fields);
+
+    const setDisclosure = ({ toggle, fields }, open) => {
+      toggle.setAttribute('aria-expanded', String(open));
+      toggle.classList.toggle('editor-form-icon-toggle-active', open);
+      fields.hidden = !open;
+    };
+
+    [
+      ['.editor-form-access', 'Public', 'Private'],
+      ['.editor-form-encrypt', 'Encrypted', 'Not encrypted'],
+    ].forEach(([selector, onTitle, offTitle]) => {
+      const input = toolbarForm.querySelector(selector);
+      const switchLabel = input && toolbarForm.querySelector(`label[for="${input.id}"]`);
+      if (!input || !switchLabel) return;
+      const syncTitle = () => { switchLabel.title = input.checked ? onTitle : offTitle; };
+      input.addEventListener('change', syncTitle);
+      syncTitle();
+    });
+
+    disclosures.forEach((disclosure) => {
+      disclosure.toggle.addEventListener('click', (e) => {
+        e.preventDefault();
+        const open = disclosure.toggle.getAttribute('aria-expanded') !== 'true';
+        // Sections are exclusive: opening one closes the other
+        disclosures.forEach((other) => setDisclosure(other, other === disclosure && open));
+        if (open) {
+          disclosure.fields.querySelector('input, select, textarea')?.focus();
+        }
+      });
+    });
   }
 
   // Touch taps can collapse the selection before the handler runs; author mode is ProseMirror's
@@ -868,6 +905,15 @@ export class ToolbarView {
     toolbarForm.classList.remove('editor-form-active');
     toolbarForm.removeAttribute('style');
     toolbarForm.reset();
+
+    FORM_DISCLOSURES.forEach(([toggleSelector, fieldsSelector]) => {
+      const toggle = toolbarForm.querySelector(toggleSelector);
+      const fields = toolbarForm.querySelector(fieldsSelector);
+      if (!toggle || !fields) return;
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.classList.remove('editor-form-icon-toggle-active');
+      fields.hidden = true;
+    });
     // TOD
     // if (toolbarForm is editor mode) {
     // this.editorView.focus();
@@ -1017,19 +1063,44 @@ export class ToolbarView {
 }
 
 // Consider putting this elsewhere or making it part of the class
+// Non-essential fields live here, revealed by the footer's + toggle
+export function advancedFieldsHTML(content) {
+  return `<div class="editor-form-advanced" hidden="">${content}</div>`;
+}
+
+export function formFooterHTML({ action = 'post', advanced = true, controls = '', submitDisabled = '' } = {}) {
+  return `
+    <div class="editor-form-footer">
+      <span class="editor-form-footer-controls">
+        ${advanced ? `<button class="editor-form-icon-toggle editor-form-advanced-toggle" type="button" aria-expanded="false" aria-label="More options" title="More options">${Icon['.fas.fa-plus'] || '+'}</button>` : ''}
+        ${controls}
+      </span>
+      <span class="editor-form-footer-actions">
+        <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
+        <button class="editor-form-submit" data-i18n="editor.toolbar.form.${action}.button" type="submit"${submitDisabled}>${i18n.t(`editor.toolbar.form.${action}.button.textContent`)}</button>
+      </span>
+    </div>
+  `;
+}
+
+// Toggle pairs wired by setupPopup and reset by clearToolbarForm
+const FORM_DISCLOSURES = [
+  ['.editor-form-advanced-toggle', '.editor-form-advanced'],
+];
+
 export function annotateFormControls(options) {
   const locationHTML = getAnnotationLocationHTML(options.button);
   // When location options exist but none are pre-checked, start with submit disabled.
   const submitDisabled = (locationHTML.includes('type="checkbox"') && !locationHTML.includes('checked="checked"')) ? ' disabled=""' : '';
   return `
     <fieldset>
-      <legend data-i18n="editor.toolbar.${options.button}.form.legend">${options.legend}</legend>
-      <dl class="info">
-        <dt class="required">*</dt>
-        <dd data-i18n="info.required">${i18n.t("info.required.textContent")}</dd>
-      </dl>
-      <label data-i18n="editor.toolbar.note.form.label" for="${options.button}-content">${i18n.t('editor.toolbar.note.form.label.textContent')}</label>
+      <legend><span data-i18n="editor.toolbar.${options.button}.form.legend">${options.legend}</span> <span class="editor-form-required-note"><span class="required">*</span> <span data-i18n="info.required">${i18n.t("info.required.textContent")}</span></span></legend>
+      <label class="editor-form-visually-hidden" data-i18n="editor.toolbar.note.form.label" for="${options.button}-content">${i18n.t('editor.toolbar.note.form.label.textContent')}</label>
+      <span class="editor-form-required-field">
       <textarea class="editor-form-textarea" cols="20" data-i18n="editor.toolbar.${options.button}.form.textarea" dir="auto" id="${options.button}-content" name="${options.button}-content" placeholder="${options.placeholder}" required="" rows="5"></textarea>
+      <span class="required" aria-hidden="true">*</span>
+      </span>
+      ${advancedFieldsHTML(`
       <label data-i18n="tags.label" for="${options.button}-tagging">${i18n.t('tags.label.textContent')}</label> <input class="editor-form-input" id="${options.button}-tagging" name="${options.button}-tagging" data-i18n="tags.input" placeholder="${i18n.t('tags.input.placeholder')}" type="text" />
       <label data-i18n="language.label" for="${options.button}-language">${i18n.t('language.label.textContent')}</label>
       <select class="editor-form-select" id="${options.button}-language" name="${options.button}-language">${getLanguageOptionsHTML()}</select>
@@ -1037,19 +1108,17 @@ export function annotateFormControls(options) {
       <select class="editor-form-select" id="${options.button}-license" name="${options.button}-license">${getLicenseOptionsHTML()}</select>
       <span class="annotation-location-selection">${locationHTML}</span>
       <span class="annotation-inbox">${getAnnotationInboxLocationHTML(options.button)}</span>
+      `)}
+      ${formFooterHTML({ action: 'post', submitDisabled, controls: `
       <span class="annotation-access">
-        <span class="annotation-access-label" data-i18n="annotation-access.label" id="${options.button}-access-label">${i18n.t('annotation-access.label.textContent')}</span>
-        <input type="checkbox" class="editor-form-access" id="${options.button}-access-public" name="${options.button}-access-public" role="switch" value="true"${isPublicRead(Config.DocumentURL) ? ' checked="checked"' : ''} aria-labelledby="${options.button}-access-label" />
-        <label class="editor-form-access-label" for="${options.button}-access-public" title="${i18n.t('annotation-access.toggle.title')}">${Icon['.fas.fa-eye-slash']}${Icon['.fas.fa-globe']}</label>
+        <input type="checkbox" class="editor-form-access" id="${options.button}-access-public" name="${options.button}-access-public" role="switch" value="true"${isPublicRead(Config.DocumentURL) ? ' checked="checked"' : ''} aria-label="${i18n.t('annotation-access.label.textContent')}" />
+        <label class="editor-form-icon-toggle editor-form-access-label" for="${options.button}-access-public">${Icon['.fas.fa-eye-slash']}${Icon['.fas.fa-globe']}</label>
       </span>
-
       <span class="annotation-encrypt">
-        <span class="annotation-access-label" data-i18n="annotation-encrypt.label" id="${options.button}-encrypt-label">${i18n.t('annotation-encrypt.label.textContent')}</span>
-        <input type="checkbox" class="editor-form-encrypt" id="${options.button}-encrypt" name="${options.button}-encrypt" role="switch" value="true"${isUnlocked() ? ' checked="checked"' : ''} aria-labelledby="${options.button}-encrypt-label" />
-        <label class="editor-form-encrypt-label" for="${options.button}-encrypt" title="${i18n.t('annotation-encrypt.toggle.title')}">${Icon['.fas.fa-lock-open']}${Icon['.fas.fa-lock']}</label>
+        <input type="checkbox" class="editor-form-encrypt" id="${options.button}-encrypt" name="${options.button}-encrypt" role="switch" value="true"${isUnlocked() ? ' checked="checked"' : ''} aria-label="${i18n.t('annotation-encrypt.label.textContent')}" />
+        <label class="editor-form-icon-toggle editor-form-encrypt-label" for="${options.button}-encrypt">${Icon['.fas.fa-lock-open']}${Icon['.fas.fa-lock']}</label>
       </span>
-      <button class="editor-form-submit" data-i18n="editor.toolbar.form.post.button" type="submit"${submitDisabled}>${i18n.t('editor.toolbar.form.post.button.textContent')}</button>
-      <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
+      ` })}
     </fieldset>
   `
 }
