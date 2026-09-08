@@ -1888,3 +1888,20 @@ display: block;
     content: "";
   }
 }
+
+/* Narrow viewports: logo shares the first row with dokieli's fixed menu button; the nav wraps to its own full-width row */
+@media (pointer: coarse), (max-width: 768px) {
+  .do-site header:first-of-type:has(+ main) {
+    flex-wrap: wrap;
+    row-gap: 0.5em;
+  }
+  .do-site header:first-of-type:has(+ main) nav {
+    flex-basis: 100%;
+    margin-right: 0;
+  }
+  .do-site header:first-of-type:has(+ main) nav > ul {
+    gap: 1em;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
