@@ -133,6 +133,30 @@ function handleEmptyDescBackspace(state, dispatch) {
   return true;
 }
 
+// Enter in an empty last entry leaves the list.
+function handleEmptyEntryExitEnter(state, dispatch, entryDepth) {
+  const { $from } = state.selection;
+  if (!state.selection.empty || entryDepth < 1) return false;
+
+  const entry = $from.node(entryDepth);
+  if (entry.type.name !== 'dt' && entry.type.name !== 'dd') return false;
+  if (!isEmptySection(entry)) return false;
+
+  const list = $from.node(entryDepth - 1);
+  if (list.type.name !== 'dl' || list.childCount < 2) return false;
+  if ($from.index(entryDepth - 1) !== list.childCount - 1) return false;
+
+  if (dispatch) {
+    const entryStart = $from.before(entryDepth);
+    const listEnd = $from.after(entryDepth - 1);
+    const tr = state.tr.delete(entryStart, entryStart + entry.nodeSize);
+    const insertAt = tr.mapping.map(listEnd);
+    tr.insert(insertAt, state.schema.nodes.p.create());
+    dispatch(tr.setSelection(TextSelection.create(tr.doc, insertAt + 1)).scrollIntoView());
+  }
+  return true;
+}
+
 function customEnterCommand(state, dispatch) {
   const { selection } = state;
   const { $from } = selection;
@@ -172,6 +196,8 @@ function customEnterCommand(state, dispatch) {
   if (handleSectionExitEnter(state, dispatch)) return true;
 
   if (isListItem && listItemDepth !== null) {
+    if (handleEmptyEntryExitEnter(state, dispatch, listItemDepth)) return true;
+
     let liType = node.type;
 
     switch (node.type) {
@@ -322,6 +348,16 @@ function customBackspaceCommand(state, dispatch) {
       dispatch(state.tr.delete($from.pos - 1, $from.pos).scrollIntoView());
     }
     return true;
+  }
+
+  // Native deletion drops inline-styled blocks once emptied.
+  if ($from.parentOffset > 0 && $from.parentOffset === $from.parent.content.size) {
+    const text = $from.parent.textBetween(0, $from.parentOffset, null, '￼');
+    const last = /[\uD800-\uDBFF][\uDC00-\uDFFF]$/.test(text) ? 2 : 1;
+    if (text.length === last && $from.parent.content.size === last) {
+      if (dispatch) dispatch(state.tr.delete($from.pos - last, $from.pos).scrollIntoView());
+      return true;
+    }
   }
 
   // A plain paragraph whose previous sibling is a placeholder anchor merges into it
