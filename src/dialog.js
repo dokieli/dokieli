@@ -154,6 +154,7 @@ export function showDocumentMenu(e) {
   showLanguages(tabSettings);
   showAutoSave(tabSettings);
   showKeysSettings(tabSettings);
+  showInstallApp(tabSettings);
   showAboutDokieli(dInfo);
 
   // var body = getDocumentContentNode(document);
@@ -408,6 +409,30 @@ function reportKeyError(node, messageKey, error) {
   // Missing keys are recoverable, so warn rather than error
   setKeyStatus(node, i18n.t(messageKey) + ' ' + error.message, error.code === 'no-keys' ? 'warning' : 'error');
   if (error.code === 'no-keys') appendKeyImportOffer(node);
+}
+
+function showInstallApp(node) {
+  document.getElementById('install-app')?.remove();
+  if (!Config.InstallPrompt) return;
+
+  const html = `
+  <section aria-labelledby="install-app-label" id="install-app">
+    <h2 data-i18n="menu.install-app.h2" id="install-app-label">${i18n.t('menu.install-app.h2.textContent')}</h2>
+    <p data-i18n="menu.install-app.description">${i18n.t('menu.install-app.description.textContent')}</p>
+    ${getButtonHTML({ key: "menu.install-app.button", button: "download", buttonClass: "install-app" })}
+  </section>
+  `;
+
+  sanitizeInsertAdjacentHTML(node, 'beforeend', html);
+
+  node.querySelector('button.install-app').addEventListener('click', async () => {
+    const prompt = Config.InstallPrompt;
+    if (!prompt) return;
+    prompt.prompt();
+    await prompt.userChoice;
+    Config.InstallPrompt = null;
+    document.getElementById('install-app')?.remove();
+  });
 }
 
 function showKeysSettings(node) {

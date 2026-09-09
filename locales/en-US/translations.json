@@ -1097,5 +1097,9 @@
   "unit.revolutions-per-minute.textContent": "revolutions per minute",
   "button.toc.textContent": "Table of Contents",
   "button.toc.title": "Table of contents",
-  "toc.h2.textContent": "Table of Contents"
+  "toc.h2.textContent": "Table of Contents",
+  "menu.install-app.h2.textContent": "Install",
+  "menu.install-app.description.textContent": "Install dokieli as an app for quicker access and offline use.",
+  "menu.install-app.button.textContent": "Install app",
+  "menu.install-app.button.title": "Install dokieli as an app"
 }
