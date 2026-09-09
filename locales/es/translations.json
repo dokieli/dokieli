@@ -1005,5 +1005,9 @@
   "unit.m.abbr.title": "metros",
   "unit.meters-per-second.textContent": "metros por segundo",
   "unit.meters.textContent": "metros",
-  "unit.revolutions-per-minute.textContent": "revoluciones por minuto"
+  "unit.revolutions-per-minute.textContent": "revoluciones por minuto",
+  "menu.install-app.h2.textContent": "Instalar",
+  "menu.install-app.description.textContent": "Instala dokieli como aplicación para un acceso más rápido y uso sin conexión.",
+  "menu.install-app.button.textContent": "Instalar aplicación",
+  "menu.install-app.button.title": "Instalar dokieli como aplicación"
 }

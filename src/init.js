@@ -45,6 +45,8 @@ import { initTableSort } from './tableSort.js';
 
 export async function init (url) {
   initServiceWorker();
+  initWebManifest();
+  initInstallPrompt();
   await initStorageBackend();
 
   var contentNode = getDocumentContentNode(document);
@@ -133,6 +135,37 @@ function initServiceWorker() {
         // SW not available on this domain, silently skip
       });
   }
+}
+
+// Same posture as initServiceWorker: probe the host, silently skip if absent
+function initWebManifest() {
+  if (Config.WebExtensionEnabled) return;
+  if (document.querySelector('link[rel="manifest"]')) return;
+
+  fetch('/app.webmanifest', { method: 'HEAD' })
+    .then(res => {
+      if (!res.ok) return;
+      const link = document.createElement('link');
+      link.rel = 'manifest';
+      link.href = '/app.webmanifest';
+      link.crossOrigin = 'use-credentials';
+      document.head.appendChild(link);
+    })
+    .catch(() => {});
+}
+
+function initInstallPrompt() {
+  if (Config.WebExtensionEnabled) return;
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    Config.InstallPrompt = e;
+  });
+
+  window.addEventListener('appinstalled', () => {
+    Config.InstallPrompt = null;
+    document.getElementById('install-app')?.remove();
+  });
 }
 
 function initUser() {
