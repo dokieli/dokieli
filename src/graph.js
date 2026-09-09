@@ -783,6 +783,8 @@ export function traverseRDFList(g, resource) {
 }
 
 // Resolves { response, graph }; rejects { response, error }
+const inFlightGraphs = new Map();
+
 export function getResourceGraph(iri, headers, options = {}) {
   let wildCard = options.excludeMarkup ? '' : ',*/*;q=0.1';
   let defaultHeaders = {'Accept': setAcceptRDFTypes(options) + wildCard}
@@ -791,11 +793,16 @@ export function getResourceGraph(iri, headers, options = {}) {
     headers['Accept'] = defaultHeaders['Accept'];
   }
 
+  // Collapse concurrent identical GETs into one request
+  const dedupable = !options.noCache && !options.noStore && !headers['If-None-Match'] && !headers['If-Modified-Since'];
+  const dedupKey = iri + '\n' + headers['Accept'];
+  if (dedupable && inFlightGraphs.has(dedupKey)) return inFlightGraphs.get(dedupKey);
+
   const isWebExtensionURL = Config.WebExtensionBaseURL ? iri.startsWith(Config.WebExtensionBaseURL) : false;
 
   let savedResponse;
 
-  return Config.Storage.get(iri, headers, options)
+  const result = Config.Storage.get(iri, headers, options)
     .then(response => {
       savedResponse = response;
       let cT = response.headers.get('Content-Type');
@@ -864,6 +871,14 @@ export function getResourceGraph(iri, headers, options = {}) {
       graph: undefined,
       error
     }));
+
+  if (dedupable) {
+    inFlightGraphs.set(dedupKey, result);
+    const clear = () => inFlightGraphs.delete(dedupKey);
+    result.then(clear, clear);
+  }
+
+  return result;
 }
 export function getResourceOnlyRDF(url) {
   // One GET; a HEAD first doubled requests and tripped rate limiters
