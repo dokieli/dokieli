@@ -53,7 +53,7 @@ export class SocialToolbar extends ToolbarView {
   getDropdownMenus() {
     return {
       more: {
-        label: '…',
+        label: '⋯',
         title: 'More options',
         items: [
           {

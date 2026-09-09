@@ -705,6 +705,7 @@ i.fas.fa-link { mask-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.
 i.fas.fa-link-ol { mask-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3e%3cpath d='M3.263 139.527c0-7.477 3.917-11.572 11.573-11.572h15.131V88.078c0-5.163.534-10.503.534-10.503h-.356s-1.779 2.67-2.848 3.738c-4.451 4.273-10.504 4.451-15.666-1.068l-5.518-6.231c-5.342-5.341-4.984-11.216.534-16.379l21.72-19.938C32.815 33.602 36.732 32 42.785 32H54.89c7.656 0 11.749 3.916 11.749 11.572v84.384h15.488c7.655 0 11.572 4.094 11.572 11.572v8.901c0 7.477-3.917 11.572-11.572 11.572H14.836c-7.656 0-11.573-4.095-11.573-11.572v-8.902zM2.211 304.591c0-47.278 50.955-56.383 50.955-69.165 0-7.18-5.954-8.755-9.28-8.755-3.153 0-6.479 1.051-9.455 3.852-5.079 4.903-10.507 7.004-16.111 2.451l-8.579-6.829c-5.779-4.553-7.18-9.805-2.803-15.409C13.592 201.981 26.025 192 47.387 192c19.437 0 44.476 10.506 44.476 39.573 0 38.347-46.753 46.402-48.679 56.909h39.049c7.529 0 11.557 4.027 11.557 11.382v8.755c0 7.354-4.028 11.382-11.557 11.382h-67.94c-7.005 0-12.083-4.028-12.083-11.382v-4.028zM5.654 454.61l5.603-9.28c3.853-6.654 9.105-7.004 15.584-3.152 4.903 2.101 9.63 3.152 14.359 3.152 10.155 0 14.358-3.502 14.358-8.23 0-6.654-5.604-9.106-15.934-9.106h-4.728c-5.954 0-9.28-2.101-12.258-7.88l-1.05-1.926c-2.451-4.728-1.226-9.806 2.801-14.884l5.604-7.004c6.829-8.405 12.257-13.483 12.257-13.483v-.35s-4.203 1.051-12.608 1.051H16.685c-7.53 0-11.383-4.028-11.383-11.382v-8.755c0-7.53 3.853-11.382 11.383-11.382h58.484c7.529 0 11.382 4.027 11.382 11.382v3.327c0 5.778-1.401 9.806-5.079 14.183l-17.509 20.137c19.611 5.078 28.716 20.487 28.716 34.845 0 21.363-14.358 44.126-48.503 44.126-16.636 0-28.192-4.728-35.896-9.455-5.779-4.202-6.304-9.805-2.626-15.934zM144 132h352c8.837 0 16-7.163 16-16V76c0-8.837-7.163-16-16-16H144c-8.837 0-16 7.163-16 16v40c0 8.837 7.163 16 16 16zm0 160h352c8.837 0 16-7.163 16-16v-40c0-8.837-7.163-16-16-16H144c-8.837 0-16 7.163-16 16v40c0 8.837 7.163 16 16 16zm0 160h352c8.837 0 16-7.163 16-16v-40c0-8.837-7.163-16-16-16H144c-8.837 0-16 7.163-16 16v40c0 8.837 7.163 16 16 16z'/%3e%3c/svg%3e"); }
 i.fas.fa-link-ul { mask-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3e%3cpath d='M96 96c0 26.51-21.49 48-48 48S0 122.51 0 96s21.49-48 48-48 48 21.49 48 48zM48 208c-26.51 0-48 21.49-48 48s21.49 48 48 48 48-21.49 48-48-21.49-48-48-48zm0 160c-26.51 0-48 21.49-48 48s21.49 48 48 48 48-21.49 48-48-21.49-48-48-48zm96-236h352c8.837 0 16-7.163 16-16V76c0-8.837-7.163-16-16-16H144c-8.837 0-16 7.163-16 16v40c0 8.837 7.163 16 16 16zm0 160h352c8.837 0 16-7.163 16-16v-40c0-8.837-7.163-16-16-16H144c-8.837 0-16 7.163-16 16v40c0 8.837 7.163 16 16 16zm0 160h352c8.837 0 16-7.163 16-16v-40c0-8.837-7.163-16-16-16H144c-8.837 0-16 7.163-16 16v40c0 8.837 7.163 16 16 16z'/%3e%3c/svg%3e"); }
 i.fas.fa-key { mask-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 640'%3e%3cpath d='M400 416C497.2 416 576 337.2 576 240C576 142.8 497.2 64 400 64C302.8 64 224 142.8 224 240C224 258.7 226.9 276.8 232.3 293.7L71 455C66.5 459.5 64 465.6 64 472L64 552C64 565.3 74.7 576 88 576L168 576C181.3 576 192 565.3 192 552L192 512L232 512C245.3 512 256 501.3 256 488L256 448L296 448C302.4 448 308.5 445.5 313 441L346.3 407.7C363.2 413.1 381.3 416 400 416zM440 160C462.1 160 480 177.9 480 200C480 222.1 462.1 240 440 240C417.9 240 400 222.1 400 200C400 177.9 417.9 160 440 160z'/%3e%3c/svg%3e"); }
+i.fas.fa-paint-roller { mask-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 640'%3e%3cpath d='M64 128C64 92.7 92.7 64 128 64L416 64C451.3 64 480 92.7 480 128L496 128C540.2 128 576 163.8 576 208L576 304C576 348.2 540.2 384 496 384L336 384C327.2 384 320 391.2 320 400L320 418.7C338.6 425.3 352 443.1 352 464L352 560C352 586.5 330.5 608 304 608L272 608C245.5 608 224 586.5 224 560L224 464C224 443.1 237.4 425.3 256 418.7L256 400C256 355.8 291.8 320 336 320L496 320C504.8 320 512 312.8 512 304L512 208C512 199.2 504.8 192 496 192L480 192C480 227.3 451.3 256 416 256L128 256C92.7 256 64 227.3 64 192L64 128z'/%3e%3c/svg%3e"); }
 i.fas.fa-pen-clip { mask-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 640'%3e%3cpath d='M468 64C487.2 64 505.6 71.6 519.1 85.2L554.8 120.9C568.4 134.4 576 152.8 576 172C576 191.2 568.4 209.6 554.8 223.1L509.9 268L372 130.1L416.9 85.2C430.4 71.6 448.8 64 468 64zM338.1 164L338.1 164L476 301.9L260.9 517C250.2 527.7 236.8 535.5 222.2 539.6L94.4 575.1C86.1 577.4 77.1 575.1 71 568.9C64.9 562.7 62.5 553.8 64.8 545.5L100.4 417.8C104.5 403.2 112.2 389.9 123 379.1L304.1 197.9L287 180.9C277.6 171.5 262.4 171.5 253.1 180.9L153 281C143.6 290.4 128.4 290.4 119.1 281C109.8 271.6 109.7 256.4 119.1 247.1L219.1 146.9C247.2 118.8 292.8 118.8 320.9 146.9L338.1 164z'/%3e%3c/svg%3e"); }
 i.fas.fa-lock-open { mask-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 -32 576 544'%3e%3cpath d='M384 96c0-35.3 28.7-64 64-64s64 28.7 64 64l0 32c0 17.7 14.3 32 32 32s32-14.3 32-32l0-32c0-70.7-57.3-128-128-128S320 25.3 320 96l0 64-160 0c-35.3 0-64 28.7-64 64l0 224c0 35.3 28.7 64 64 64l256 0c35.3 0 64-28.7 64-64l0-224c0-35.3-28.7-64-64-64l-32 0 0-64z'/%3e%3c/svg%3e"); }
 i.fas.fa-lock { mask-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 -32 384 544'%3e%3cpath d='M128 96l0 64 128 0 0-64c0-35.3-28.7-64-64-64s-64 28.7-64 64zM64 160l0-64C64 25.3 121.3-32 192-32S320 25.3 320 96l0 64c35.3 0 64 28.7 64 64l0 224c0 35.3-28.7 64-64 64L64 512c-35.3 0-64-28.7-64-64L0 224c0-35.3 28.7-64 64-64z'/%3e%3c/svg%3e"); }
@@ -3253,6 +3254,14 @@ margin-bottom:1em;
 .error { background-color:var(--do-color-error-solid); color:var(--do-color-on-color); font-weight:bold; }
 .required { background-color:var(--do-color-bg); color: var(--do-color-error); }
 
+.do.on p.success,
+.do.on p.warning,
+.do.on p.error,
+.do.on p.required {
+padding: 0.25em !important;
+border-radius: 0.25rem;
+}
+
 aside .info {
   font-weight: unset;
 }
@@ -5084,104 +5093,25 @@ button[type="button"]:focus {
 /* styles for specific popups */
 
 #editor-form-q fieldset {
-  display: grid;
-  grid-template-columns: auto auto auto auto;
-  grid-template-rows: auto auto auto;
-  grid-gap: 0.5em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
   border: none;
   padding-block: 0;
-  
-  grid-template-areas: 
-    "legend legend legend legend"
-    "label1 input1 input1 input1"
-    ". . button1 button2";
+}
 
-  legend {
-    grid-area: legend;
-  }
-
-  label:nth-of-type(1) {
-    grid-area: label1;
-  }
-
-  input:nth-of-type(1) {
-    grid-area: input1;
-  }
-
-  button:nth-of-type(1) {
-    grid-area: button1;
-  }
-  button:nth-of-type(2) {
-    grid-area: button2;
-  }
-  }
-
+/* Desktop centering only; the compact rule stretches it full width */
 #editor-form-requirement {
 left:15%;
 max-width:70%;
 }
 
-#editor-form-requirement fieldset{
-  display: grid;
-  min-inline-size: 0;
-  grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
-  grid-template-rows: auto auto auto auto auto auto auto;
-  grid-gap: 0.5em;
+#editor-form-requirement fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
   border: none;
   padding-block: 0;
-  
-  grid-template-areas: 
-    "legend legend legend legend"
-    "error error error error"
-    "dl dl dl dl"
-    "label1 input1 input1 input1"
-    "label2 input2 input2 input2"
-    "button1 button1 button2 button2";
-
-  legend {
-    grid-area: legend;
-  }
-
-  .error {
-    grid-area: error;
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    margin: 0;
-    padding: 0.5em;
-    list-style-position: inside;
-  }
-
-  dl {
-    grid-area: dl;
-  }
-
-  label:nth-of-type(1) {
-    grid-area: label1;
-  }
-  label:nth-of-type(2) {
-    grid-area: label2;
-  }
-  label:nth-of-type(3) {
-    grid-area: label3;
-  }
-  select:nth-of-type(1) {
-    grid-area: input1;
-  }
-  select:nth-of-type(2) {
-    grid-area: input2;
-  }
-
-  button:nth-of-type(1) {
-    grid-area: button1;
-    justify-self: end;
-    white-space: nowrap;
-  }
-  button:nth-of-type(2) {
-    grid-area: button2;
-    justify-self: end;
-    white-space: nowrap;
-  }
 }
 
 #editor-form-a fieldset {
@@ -5572,10 +5502,13 @@ h1 + div p:first-child {
   z-index: 2000; }
   .editor-toolbar ul,
   .editor-toolbar ol {
-    display: flex;
-    flex-wrap: nowrap;
     margin: 0;
     padding: 0;
+  }
+  /* Only the button bar is a row; content lists in popups flow as columns */
+  .editor-toolbar .editor-form-actions {
+    display: flex;
+    flex-wrap: nowrap;
     overflow-x: auto;
   }
   .editor-toolbar .editor-form-actions li {
@@ -7926,7 +7859,7 @@ nav.do[id$="-toc"] li.tocline > a.tocxref {
 }
 
 /* Pinned toolbar for touch devices, keeps it out from under the native selection bar */
-@media (pointer: coarse), (max-width: 768px) {
+@media (max-width: 768px) {
   .editor-toolbar {
     position: fixed;
     top: auto !important;
@@ -7998,21 +7931,16 @@ nav.do[id$="-toc"] li.tocline > a.tocxref {
     padding: 0 0.5em;
     text-overflow: ellipsis;
   }
-  .editor-toolbar .editor-form-actions li button span,
-  .editor-toolbar .editor-form-actions li .editor-dropdown-trigger span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
 
   /* Bottom sheets; !important beats inline offsets left over from the desktop dropdown */
   .editor-toolbar .editor-dropdown-panel {
-    position: fixed;
+    position: absolute;
     left: 0 !important;
     right: 0 !important;
     bottom: 100%;
     top: auto !important;
     width: 100%;
+    box-sizing: border-box;
     max-height: 60vh;
     overflow-y: auto;
     margin: 0;
@@ -8024,12 +7952,14 @@ nav.do[id$="-toc"] li.tocline > a.tocxref {
   }
 
   .editor-toolbar .editor-form.editor-form-active {
-    position: fixed;
+    position: absolute;
     left: 0 !important;
     right: 0 !important;
     bottom: 100%;
     top: auto !important;
     width: 100%;
+    max-width: none !important;
+    box-sizing: border-box;
     max-height: 60vh;
     overflow-y: auto;
     overflow-x: hidden;
@@ -8044,4 +7974,230 @@ nav.do[id$="-toc"] li.tocline > a.tocxref {
     max-width: 100% !important;
     box-sizing: border-box;
   }
+}
+
+/* Popup fixes: citation radios in a row, label whitespace, results as a column, footer last */
+.editor-form fieldset label {
+  gap: 0.25em;
+}
+.editor-form .editor-form-radio-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25em;
+}
+.editor-form .editor-form-radio-row label {
+  margin-inline-end: 1em;
+}
+#editor-form-citation input[type="submit"] {
+  padding: 0.75em;
+  margin-bottom: 0.5em;
+}
+/* When results are shown, the advanced fields follow them */
+.editor-form fieldset > .editor-form-advanced {
+  order: 2;
+}
+.editor-toolbar .specref-search-results ul {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  overflow-x: visible;
+  gap: 0.5em;
+}
+.editor-form fieldset > .editor-form-footer {
+  order: 99;
+}
+.editor-form .img-preview {
+  margin: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .editor-form fieldset {
+    min-width: 0;
+  }
+  .editor-form input[type="file"] {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+}
+
+/* Result label text flows inline after the link, so no line starts with the period */
+.editor-toolbar .specref-search-results label {
+  display: inline;
+}
+
+/* Slash menu (a body child placed at the cursor) pins to the bottom edge on compact */
+@media (max-width: 768px) {
+  /* The inner form is an absolute flyout; in the pinned sheet it must flow */
+  #document-slashmenu .editor-form {
+    position: static !important;
+    top: auto !important;
+    left: auto !important;
+    width: 100% !important;
+    max-width: none !important;
+    box-sizing: border-box;
+  }
+  #document-slashmenu {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    bottom: 0;
+    width: 100%;
+    max-width: none !important;
+    box-sizing: border-box;
+    max-height: 60vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border-radius: 0.75em 0.75em 0 0;
+  }
+}
+
+/* Dialog inputs: the desktop calc(100% - 14em) leaves slivers on a phone */
+@media (max-width: 768px) {
+  aside.do input[type="text"],
+  aside.do input[type="url"],
+  aside.do input[type="password"] {
+    width: 100%;
+    box-sizing: border-box;
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
+
+/* Segmented tabs keep equal height when one label wraps to two lines */
+#save-as-document .save-as-tabs nav ul {
+  align-items: stretch;
+}
+#save-as-document .save-as-tabs nav ul li {
+  display: flex;
+}
+#save-as-document .save-as-tabs nav ul li a {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  /* One template tile per row */
+  #new-document-fieldset ul {
+    grid-template-columns: 1fr;
+  }
+  /* Checkbox and its label stay on the same line and wrap as a unit */
+  /* important + id to outrank the legacy !important li display rules */
+  aside.do li:has(> input[type="checkbox"]),
+  #save-as-document ul.save-as-options > li:has(> input[type="checkbox"]) {
+    display: flex !important;
+    align-items: flex-start;
+    gap: 0.5em;
+  }
+  aside.do li:has(> input[type="checkbox"]) > label {
+    flex: 1;
+    min-width: 0;
+  }
+  /* Source view spans the viewport like the other dialogs */
+  #source-view {
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  #source-view textarea {
+    width: 100% !important;
+    box-sizing: border-box;
+  }
+}
+
+/* Stack dialog fields; :not(id) matches the desktop rule's specificity */
+@media (max-width: 768px) {
+  aside.do.on:not([id="document-info"]) label {
+    display: block;
+    margin: 0.75em 0 0.25em 0;
+  }
+  /* A label directly after its checkbox or radio stays beside it */
+  aside.do.on:not([id="document-info"]) input + label {
+    display: inline-block;
+    margin: 0 0 0 0.25em;
+  }
+  aside.do.on:not([id="document-info"]) li:has(> input[type="checkbox"]) > label {
+    display: block;
+    margin: 0;
+  }
+}
+
+/* Breathing room between an inline label and its control */
+aside.do.on:not([id="document-info"]) label {
+  margin-right: 0.5em;
+}
+/* Same label gap as the text inputs, which carry margin: 0.5em */
+aside.do.on:not([id="document-info"]) select {
+  margin: 0.5em;
+}
+
+/* Advanced toggle: bordered like Cancel, with a caret, unlike the toolbar's flat + */
+.editor-form button.editor-form-advanced-toggle {
+  width: auto;
+  padding: 0 0.5em;
+  gap: 0.25em;
+  border: 1px solid rgba(0, 0, 0, 0.35);
+}
+.editor-form button.editor-form-advanced-toggle .editor-form-advanced-toggle-caret {
+  display: inline-flex;
+  align-items: center;
+}
+.editor-form button.editor-form-advanced-toggle .editor-form-advanced-toggle-caret svg {
+  width: 0.625em;
+  height: 0.625em;
+  transition: transform .2s ease-in;
+}
+.editor-form button.editor-form-advanced-toggle.editor-form-icon-toggle-active .editor-form-advanced-toggle-caret svg {
+  transform: rotate(180deg);
+}
+
+/* Every menu opener carries the same caret; never let it clip */
+.editor-dropdown-trigger-caret {
+  flex-shrink: 0;
+}
+/* Block-type select: swap the native arrow for the shared caret */
+.editor-toolbar .editor-form-actions .editor-blocktype-menu {
+  position: relative;
+}
+.editor-toolbar .editor-form-actions .editor-blocktype-menu::after {
+  content: "";
+  position: absolute;
+  right: 0.5em;
+  top: 50%;
+  width: 0.85em;
+  height: 0.85em;
+  transform: translateY(-50%);
+  background-color: var(--do-color-fg-subtle);
+  -webkit-mask-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 512'%3e%3cpath d='M137.4 374.6c12.5 12.5 32.8 12.5 45.3 0l128-128c9.2-9.2 11.9-22.9 6.9-34.9s-16.6-19.8-29.6-19.8L32 192c-12.9 0-24.6 7.8-29.6 19.8s-2.2 25.7 6.9 34.9l128 128z'/%3e%3c/svg%3e");
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+  mask-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 512'%3e%3cpath d='M137.4 374.6c12.5 12.5 32.8 12.5 45.3 0l128-128c9.2-9.2 11.9-22.9 6.9-34.9s-16.6-19.8-29.6-19.8L32 192c-12.9 0-24.6 7.8-29.6 19.8s-2.2 25.7 6.9 34.9l128 128z'/%3e%3c/svg%3e");
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  pointer-events: none;
+}
+.editor-toolbar .editor-form-actions .editor-blocktype-menu select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 1.5em;
+  text-align: center;
+  text-align-last: center;
+}
+
+/* Center label glyphs (…, +) with the caret next to them */
+.editor-dropdown-trigger > span:not(.editor-dropdown-trigger-caret) {
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
 }
