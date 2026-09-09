@@ -1,4 +1,6 @@
-const CACHE_NAME = 'dokieli-app-cache-v1';
+const CACHE_NAME = 'dokieli-app-cache-v5';
+
+const OFFLINE_SHELL = '/offline.html';
 
 const APP_FILES = [
   '/',
@@ -12,9 +14,17 @@ const APP_FILES = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache =>
-      Promise.allSettled(APP_FILES.map(f => cache.add(f)))
-    )
+    caches.open(CACHE_NAME).then(async (cache) => {
+      await Promise.allSettled(APP_FILES.map(f => cache.add(f)));
+      // Re-wrap to drop any redirect flag; redirected responses are rejected for navigations
+      try {
+        const response = await fetch(OFFLINE_SHELL);
+        if (response.ok) {
+          const body = await response.blob();
+          await cache.put(OFFLINE_SHELL, new Response(body, { headers: { 'Content-Type': 'text/html; charset=utf-8' } }));
+        }
+      } catch {}
+    })
   );
   self.skipWaiting();
 });
@@ -40,7 +50,16 @@ self.addEventListener('fetch', (event) => {
 
   if (req.method !== 'GET') return;
   if (url.origin !== self.location.origin) return;
-  if (!APP_FILES.includes(url.pathname)) return; 
+
+  // Offline navigations fall back to the shell, which restores the device copy
+  if (!APP_FILES.includes(url.pathname)) {
+    if (req.mode === 'navigate') {
+      event.respondWith(
+        fetch(req).catch(() => caches.match(OFFLINE_SHELL))
+      );
+    }
+    return;
+  }
 
   event.respondWith(
     (async () => {

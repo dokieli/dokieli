@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport" />
+    <title>dokieli</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body {
+        font-family: 'Ubuntu', "Helvetica Neue", Helvetica, Arial, sans-serif;
+        margin: 0;
+        padding: 2em 1em;
+        background: #fff;
+        color: #24292f;
+      }
+      main { max-width: 36em; margin: 0 auto; }
+      h1 { font-size: 1.5em; }
+      ul { padding-left: 1.25em; }
+      li { margin: 0.5em 0; }
+      a { color: #19a000; }
+      .updated { color: #57606a; font-size: 0.85em; margin-left: 0.5em; }
+      @media (prefers-color-scheme: dark) {
+        body { background: #1a1a1a; color: #ddd; }
+        .updated { color: #999; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>You are offline</h1>
+      <p id="offline-status">Looking for a copy of this document on your device&hellip;</p>
+      <div id="offline-copies" hidden>
+        <p>Documents available on this device:</p>
+        <ul id="offline-copies-list"></ul>
+      </div>
+      <p><a href="/">dokieli home</a></p>
+    </main>
+    <script>
+      (async () => {
+        const status = document.getElementById('offline-status');
+
+        const idb = await new Promise((resolve) => {
+          const request = indexedDB.open('dokieli');
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => resolve(null);
+        });
+
+        const get = (key) => new Promise((resolve) => {
+          try {
+            const request = idb.transaction('keyval').objectStore('keyval').get(key);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => resolve(null);
+          } catch { resolve(null); }
+        });
+
+        const getAllKeys = () => new Promise((resolve) => {
+          try {
+            const request = idb.transaction('keyval').objectStore('keyval').getAllKeys();
+            request.onsuccess = () => resolve(request.result || []);
+            request.onerror = () => resolve([]);
+          } catch { resolve([]); }
+        });
+
+        if (!idb) {
+          status.textContent = 'This document is not available offline.';
+          return;
+        }
+
+        const url = location.href.replace(/#.*$/, '');
+        const visitedDirectly = /^\/offline(\.html)?$/.test(location.pathname);
+
+        if (!visitedDirectly) {
+          const collection = await get(url);
+
+          if (collection?.items?.length) {
+            const item = await get(collection.items[0]);
+            if (item?.content) {
+              document.open();
+              document.write(item.content);
+              document.close();
+              return;
+            }
+          }
+        }
+
+        if (visitedDirectly) {
+          document.querySelector('h1').textContent = 'Documents on this device';
+          status.hidden = true;
+        }
+        else {
+          status.textContent = 'This document is not available offline.';
+        }
+
+        const keys = (await getAllKeys()).filter((k) =>
+          typeof k === 'string' && k.startsWith('http') && !k.includes('#') && k !== url);
+
+        const list = document.getElementById('offline-copies-list');
+        for (const key of keys) {
+          const c = await get(key);
+          if (!c?.items?.length) continue;
+          const li = document.createElement('li');
+          const a = document.createElement('a');
+          // Cross-origin copies open through the app; navigation cannot reach them offline
+          a.href = key.startsWith(location.origin) ? key : '/?open=' + encodeURIComponent(key);
+          a.textContent = key;
+          li.appendChild(a);
+          if (c.updated) {
+            const span = document.createElement('span');
+            span.className = 'updated';
+            span.textContent = c.updated;
+            li.appendChild(span);
+          }
+          list.appendChild(li);
+        }
+        if (list.children.length) {
+          document.getElementById('offline-copies').hidden = false;
+        }
+      })();
+    </script>
+  </body>
+</html>
