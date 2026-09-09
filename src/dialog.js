@@ -96,6 +96,7 @@ export function initDocumentMenu(options = {}) {
   document.addEventListener('dokieli:ready', () => {
     docReady = true;
     enableMenu();
+    handleEntryRoutes();
   }, { once: true });
 
   document.addEventListener('dokieli:auth-ready', () => {
@@ -118,6 +119,42 @@ export function initDocumentMenu(options = {}) {
     }
   });
   
+}
+
+// App shortcut and share_target entry points, e.g. /?open, /?inbox, /?url=<shared>
+function handleEntryRoutes() {
+  const params = new URLSearchParams(window.location.search);
+  const routeKeys = ['open', 'inbox', 'url', 'text', 'title'];
+  if (!routeKeys.some(k => params.has(k))) return;
+
+  const sharedText = params.get('text') || '';
+  const sharedURL = params.get('url') || sharedText.match(/https?:\/\/\S+/)?.[0];
+  const openTarget = params.get('open') || sharedURL;
+  const wantsInbox = params.has('inbox');
+  const wantsOpenDialog = params.has('open') && !params.get('open');
+
+  routeKeys.forEach(k => params.delete(k));
+  const query = params.toString();
+  history.replaceState(null, '', window.location.pathname + (query ? '?' + query : ''));
+
+  if (wantsInbox) {
+    showNotifications();
+    return;
+  }
+
+  if (openTarget && !wantsOpenDialog) {
+    try {
+      const u = new URL(openTarget);
+      if (u.protocol === 'http:' || u.protocol === 'https:') {
+        openResource(u.href);
+        return;
+      }
+    } catch {}
+  }
+
+  if (wantsOpenDialog || params.size === 0) {
+    openDocument();
+  }
 }
 
 export function showDocumentMenu(e) {
