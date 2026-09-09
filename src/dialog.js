@@ -3171,12 +3171,32 @@ export async function openResource(iri, options) {
         response = await Config.Storage.get(iri, {}, options);
       } catch(e2) {
         error = e2;
-        // console.log(error)
-        // console.log(error.status)
-        // console.log(error.response)
+
+        // Offline or unreachable: fall back to the latest device copy
+        const collection = await getDeviceStorageItem(stripFragmentFromString(iri)).catch(() => null);
+        const latestItemId = collection?.items?.[0];
+        const localItem = latestItemId ? await getDeviceStorageItem(latestItemId).catch(() => null) : null;
+
+        if (localItem?.content) {
+          response = new Response(localItem.content, { headers: { 'Content-Type': localItem.mediaType || 'text/html' } });
+
+          const localCopyMessage = {
+            'content': `Showing a copy of <a href="${iri}" rel="noopener" target="_blank">${iri}</a> saved on this device (${localItem.updated || 'date unknown'}).`,
+            'type': 'info',
+            'timer': 10000
+          }
+          addMessageToLog(localCopyMessage, Config.MessageLog);
+          showActionMessage(document.body, localCopyMessage, { clearId: messageId });
+        }
+        else {
 
         var message = `Unable to open <a href="${iri}" rel="noopener" target="_blank">${iri}</a>.`;
         var actionMessage = `Unable to open <a href="${iri}" rel="noopener" target="_blank">${iri}</a>.`;
+
+        // Network failure rather than an HTTP error, so point at the device copies
+        if (!error.status) {
+          actionMessage += ` <a href="/offline.html">See documents available on this device</a>.`;
+        }
 
         const messageObject = {
           'content': actionMessage,
@@ -3189,6 +3209,7 @@ export async function openResource(iri, options) {
         showActionMessage(document.body, messageObject, { clearId: messageId });
 
         throw error
+        }
       }
     }
 
