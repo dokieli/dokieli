@@ -798,7 +798,7 @@ export function showViews(node) {
   var s = `
     <section aria-labelledby="document-views-label" id="document-views" rel="schema:hasPart" resource="#document-views">
       <h2 data-i18n="menu.document-views.h2" id="document-views-label" property="schema:name">${i18n.t('menu.document-views.h2.textContent')}</h2>
-      ${Icon[".fas.fa-magic"]}
+      ${Icon[".fas.fa-paint-roller"]}
       <ul>`;
 
   if (Config.GraphViewerAvailable) {

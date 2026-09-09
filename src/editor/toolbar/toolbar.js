@@ -31,8 +31,8 @@ import { i18n } from "../../i18n.js";
 
 const ns = Config.ns;
 
-// Keep in sync with the matching @media block in dokieli.css
-export const COMPACT_LAYOUT_QUERY = '(pointer: coarse), (max-width: 768px)';
+// Keep in sync with the matching @media blocks in dokieli.css and basic.css
+export const COMPACT_LAYOUT_QUERY = '(max-width: 768px)';
 
 export class ToolbarView {
   constructor(mode, buttons, editorView) {
@@ -144,6 +144,9 @@ export class ToolbarView {
         document.removeEventListener("touchend", this.selectionChangeHandler);
         this.stopTrackingViewportInset();
         ['bottom', 'left', 'width', 'top', 'right'].forEach(p => this.dom.style.removeProperty(p));
+        this.dom.querySelectorAll('.editor-form, .editor-dropdown-panel').forEach(el => {
+          el.style.removeProperty('max-height');
+        });
       }
 
       this.updateCompactPresentation();
@@ -340,6 +343,21 @@ export class ToolbarView {
         this.dom.style.setProperty('bottom', `${inset}px`, 'important');
         this.dom.style.setProperty('left', `${vv.offsetLeft}px`, 'important');
         this.dom.style.setProperty('width', `${vv.width}px`, 'important');
+
+        // Popups inherit the toolbar's width; the cap keeps them above the keyboard
+        const availableHeight = Math.max(180, vv.height - this.dom.offsetHeight - 12);
+        this.dom.querySelectorAll('.editor-form, .editor-dropdown-panel').forEach(el => {
+          el.style.setProperty('max-height', `${availableHeight}px`, 'important');
+        });
+
+        // Slash menu is a body child at the cursor; pin it above the bar and keyboard
+        const slashMenu = document.getElementById('document-slashmenu');
+        if (slashMenu) {
+          slashMenu.style.setProperty('bottom', `${inset + this.dom.offsetHeight}px`, 'important');
+          slashMenu.style.setProperty('left', `${vv.offsetLeft}px`, 'important');
+          slashMenu.style.setProperty('width', `${vv.width}px`, 'important');
+          slashMenu.style.setProperty('max-height', `${availableHeight}px`, 'important');
+        }
       };
 
       if (!this.viewportInsetHandler) {
@@ -359,7 +377,11 @@ export class ToolbarView {
   }
 
   positionPopup(toolbarForm) {
-      if (this.isCompactLayout) return;
+      // Reapply popup sizing: clearToolbarForm strips the inline styles on close
+      if (this.isCompactLayout) {
+        this.trackViewportInset();
+        return;
+      }
       const margin = 10;
       const toolbarHeight = this.dom.offsetHeight;
       const toolbarWidth = this.dom.offsetWidth;
@@ -494,12 +516,12 @@ export class ToolbarView {
 
       if (config.icon) {
         trigger.appendChild(fragmentFromString(config.icon));
-        trigger.appendChild(fragmentFromString(`<span class="editor-dropdown-trigger-caret">${Icon['.fas.fa-caret-down']}</span>`));
       } else {
         const triggerLabel = document.createElement('span');
         triggerLabel.textContent = config.label;
         trigger.appendChild(triggerLabel);
       }
+      trigger.appendChild(fragmentFromString(`<span class="editor-dropdown-trigger-caret">${Icon['.fas.fa-caret-down']}</span>`));
 
       const panel = document.createElement('ul');
       panel.className = 'editor-dropdown-panel';
@@ -587,7 +609,10 @@ export class ToolbarView {
   }
 
   positionDropdownPanel(trigger, panel) {
-    if (this.isCompactLayout) return;
+    if (this.isCompactLayout) {
+      this.trackViewportInset();
+      return;
+    }
     const triggerRect = trigger.getBoundingClientRect();
     const toolbarRect = this.dom.getBoundingClientRect();
     let left = triggerRect.left - toolbarRect.left;
@@ -1072,7 +1097,7 @@ export function formFooterHTML({ action = 'post', advanced = true, controls = ''
   return `
     <div class="editor-form-footer">
       <span class="editor-form-footer-controls">
-        ${advanced ? `<button class="editor-form-icon-toggle editor-form-advanced-toggle" type="button" aria-expanded="false" aria-label="More options" title="More options">${Icon['.fas.fa-plus'] || '+'}</button>` : ''}
+        ${advanced ? `<button class="editor-form-icon-toggle editor-form-advanced-toggle" type="button" aria-expanded="false" aria-label="More options" title="More options">${Icon['.fas.fa-plus'] || '+'}<span class="editor-form-advanced-toggle-caret">${Icon['.fas.fa-caret-down']}</span></button>` : ''}
         ${controls}
       </span>
       <span class="editor-form-footer-actions">

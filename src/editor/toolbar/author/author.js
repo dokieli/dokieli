@@ -24,6 +24,7 @@ import { formHandlerLanguage, formHandlerA, formHandlerAnnotate, formHandlerBloc
 import { ToolbarView, annotateFormControls, advancedFieldsHTML, formFooterHTML } from "../toolbar.js"
 import { createRDFaHTMLRequirement, getCitationOptionsHTML, getLanguageOptionsHTML, getRequirementLevelOptionsHTML, getRequirementSubjectOptionsHTML } from "../../../doc.js"
 import Config from "../../../config.js";
+import { Icon } from "../../../ui/icons.js";
 import { fragmentFromString } from "../../../utils/html.js";
 import { registerBlobAsset } from "../../utils/imageAssets.js";
 import { i18n } from "../../../i18n.js"
@@ -146,8 +147,7 @@ export class AuthorToolbar extends ToolbarView {
           <legend data-i18n="editor.toolbar.set-lang.form.legend">${options.legend}</legend>
           <label data-i18n="language.label" for="set-lang">${i18n.t('language.label.textContent')}</label>
           <select class="editor-form-select" id="set-lang" name="set-lang">${getLanguageOptionsHTML()}</select>
-          <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
-          <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
+          ${formFooterHTML({ action: 'save', advanced: false })}
         </fieldset>
       `,
 
@@ -166,8 +166,7 @@ export class AuthorToolbar extends ToolbarView {
         <fieldset>
           <legend data-i18n="editor.toolbar.blockquote.form.legend">${options.legend}</legend>
           <label for="blockquote-cite">URL</label> <input class="editor-form-input" data-i18n="editor.toolbar.form.url.input" dir="ltr" id="blockquote-cite" name="blockquote-cite" pattern="https?://.+" placeholder="${i18n.t('editor.toolbar.form.url.input.placeholder')}" type="url" value="" />
-          <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
-          <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
+          ${formFooterHTML({ action: 'save', advanced: false })}
         </fieldset>
       `,
 
@@ -175,8 +174,7 @@ export class AuthorToolbar extends ToolbarView {
         <fieldset>
           <legend data-i18n="editor.toolbar.q.form.legend">${options.legend}</legend>
           <label for="q-cite">URL</label> <input class="editor-form-input" data-i18n="editor.toolbar.form.url.input" dir="ltr" id="q-cite" name="q-cite" pattern="https?://.+" placeholder="${i18n.t('editor.toolbar.form.url.input.placeholder')}" type="url" value="" />
-          <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
-          <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
+          ${formFooterHTML({ action: 'save', advanced: false })}
         </fieldset>
       `,
 
@@ -205,13 +203,13 @@ export class AuthorToolbar extends ToolbarView {
           <input data-i18n="editor.toolbar.form.search.button" id="citation-specref-search-submit" name="citation-specref-search-submit" type="submit" value="${i18n.t('editor.toolbar.form.search.button.value')}" />
           <label class="editor-form-visually-hidden" for="citation-url">URL</label>
           <input class="editor-form-input" data-i18n="editor.toolbar.form.url.input" dir="ltr" id="citation-url" name="citation-url" pattern="https?://.+" placeholder="${i18n.t('editor.toolbar.form.url.input.placeholder')}" type="url" value="" />
-          ${advancedFieldsHTML(`
-          <span>
+          <span class="editor-form-radio-row">
           <input id="ref-footnote" name="citation-ref-type" type="radio" value="ref-footnote" /> <label data-i18n="editor.toolbar.citation.form.ref-footnote.form.label" for="ref-footnote">${i18n.t('editor.toolbar.citation.form.ref-footnote.label.textContent')}</label>
           <input id="ref-reference" name="citation-ref-type" type="radio" value="ref-reference" /> <label data-i18n="editor.toolbar.citation.form.ref-reference.label" for="ref-reference">${i18n.t('editor.toolbar.citation.form.ref-reference.label.textContent')}</label>
           </span>
           <label data-i18n="editor.toolbar.citation.form.citation-relation.label" for="citation-relation">${i18n.t('editor.toolbar.citation.form.citation-relation.label.textContent')}</label>
           <select class="editor-form-select" id="citation-relation" name="citation-relation">${getCitationOptionsHTML({ 'selected': '' })}</select>
+          ${advancedFieldsHTML(`
           <label data-i18n="editor.toolbar.note.form.label" for="citation-content">${i18n.t('editor.toolbar.note.form.label.textContent')}</label>
           <textarea class="editor-form-textarea" cols="20" data-i18n="editor.toolbar.${options.button}.form.textarea" dir="auto" id="citation-content" name="citation-content" rows="3" placeholder="${options.placeholder}"></textarea>
           <label data-i18n="language.label" for="citation-language">${i18n.t('language.label.textContent')}</label>
@@ -233,8 +231,7 @@ export class AuthorToolbar extends ToolbarView {
           <select class="editor-form-select" id="requirement-subject" name="requirement-subject">${getRequirementSubjectOptionsHTML(options)}</select>
           <label data-i18n="editor.toolbar.requirement.form.level.dt" for="requirement-level">${i18n.t('editor.toolbar.requirement.form.level.dt.textContent')}</label>
           <select class="editor-form-select" id="requirement-level" name="requirement-level">${getRequirementLevelOptionsHTML(options)}</select>
-          <button class="editor-form-submit" data-i18n="editor.toolbar.form.save.button" type="submit">${i18n.t('editor.toolbar.form.save.button.textContent')}</button>
-          <button class="editor-form-cancel" data-i18n="editor.toolbar.form.cancel.button" type="button">${i18n.t('editor.toolbar.form.cancel.button.textContent')}</button>
+          ${formFooterHTML({ action: 'save', advanced: false })}
         </fieldset>
       `,
 
@@ -403,7 +400,8 @@ TODO:
         ],
       },
       meta: {
-        label: "…",
+        icon: Icon['.fas.fa-magic'],
+        label: "⋯",
         title: "More options",
         sectionLabel: "Structure and Semantics",
         items: [
