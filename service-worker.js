@@ -2,7 +2,8 @@ const CACHE_NAME = 'dokieli-app-cache-v5';
 
 const OFFLINE_SHELL = '/offline.html';
 
-const APP_FILES = [
+// Precached on install.
+const APP_SHELL = [
   '/',
   '/index.html',
   '/docs',
@@ -12,10 +13,25 @@ const APP_FILES = [
   '/scripts/dokieli.js'
 ];
 
+// Cache-first, revalidated against the server in the background.
+const STATIC_ASSETS = new Set([
+  '/media/css/basic.css',
+  '/media/css/dokieli.css',
+  '/media/images/logo.png',
+  '/scripts/dokieli.js'
+]);
+
+// Network-first, cache only as an offline fallback.
+const HTML_PAGES = new Set([
+  '/',
+  '/index.html',
+  '/docs'
+]);
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(async (cache) => {
-      await Promise.allSettled(APP_FILES.map(f => cache.add(f)));
+      await Promise.allSettled(APP_SHELL.map(f => cache.add(f)));
       // Re-wrap to drop any redirect flag; redirected responses are rejected for navigations
       try {
         const response = await fetch(OFFLINE_SHELL);
@@ -31,58 +47,67 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-        })
-      )
-    ).then(() => self.clients.claim())
+    caches.keys()
+      .then(keys => Promise.all(keys.map(key => key !== CACHE_NAME ? caches.delete(key) : undefined)))
+      .then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
-  const url = new URL(req.url);
-  const cacheKey = url.pathname;
-
   if (req.method !== 'GET') return;
+
+  const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
-  // Offline navigations fall back to the shell, which restores the device copy
-  if (!APP_FILES.includes(url.pathname)) {
-    if (req.mode === 'navigate') {
-      event.respondWith(
-        fetch(req).catch(() => caches.match(OFFLINE_SHELL))
-      );
-    }
-    return;
-  }
+  const path = url.pathname;
 
-  event.respondWith(
-    (async () => {
-      try {
-        // console.log("fetching: ", req.url);
-        const networkResponse = await fetch(req);
-        const responseClone = networkResponse.clone();
-        const cache = await caches.open(CACHE_NAME);
-        // console.log("caching response for ", req.url);
-        await cache.put(cacheKey, responseClone);
-        return networkResponse;
-      } catch (err) {
-        // console.log(err)
-        // console.log(req)
-        const cached = await caches.match(cacheKey);
-        // console.log(cached)
-        // console.log("fetch failed, serving from cache: ", req.url);
-        if (cached) return cached;
-        else {
-          throw new Error(err)
-          // console.log(req.url)
-        }
-      }
-    })()
-  );
+  if (STATIC_ASSETS.has(path)) {
+    event.respondWith(staleWhileRevalidate(req, path));
+  }
+  else if (HTML_PAGES.has(path)) {
+    event.respondWith(networkFirst(req, path));
+  }
+  // Offline navigations fall back to the shell, which restores the device copy
+  else if (req.mode === 'navigate') {
+    event.respondWith(
+      fetch(req).catch(() => caches.match(OFFLINE_SHELL))
+    );
+  }
+  // Anything else: no interception, let the browser handle it normally.
 });
+
+// Serve from cache immediately; revalidate against the server regardless of HTTP freshness.
+async function staleWhileRevalidate(req, key) {
+  const cache = await caches.open(CACHE_NAME);
+  const cached = await cache.match(key);
+
+  const networked = fetch(req, { cache: 'no-cache' })
+    .then(response => {
+      if (response && response.ok) {
+        cache.put(key, response.clone());
+      }
+      return response;
+    })
+    .catch(() => null);
+
+  return cached || (await networked) || Response.error();
+}
+
+// Prefer the network; fall back to the cached copy when offline.
+async function networkFirst(req, key) {
+  const cache = await caches.open(CACHE_NAME);
+
+  try {
+    const response = await fetch(req);
+    if (response && response.ok) {
+      cache.put(key, response.clone());
+    }
+    return response;
+  }
+  catch (err) {
+    const cached = await cache.match(key);
+    if (cached) return cached;
+    throw err;
+  }
+}
