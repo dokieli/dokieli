@@ -15,7 +15,7 @@
   "shortcuts": [
     { "name": "New document", "url": "/new" },
     { "name": "Open", "url": "/?open" },
-    { "name": "Notifications", "url": "/?inbox" }
+    { "name": "Notifications", "url": "/?notifications" }
   ],
   "share_target": {
     "action": "/",
