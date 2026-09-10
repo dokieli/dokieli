@@ -118,6 +118,8 @@ export class ToolbarView {
 
     this.preserveSelectionHandler = (e) => {
       if (e.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+      // Keep the selection when pressing buttons; popup text stays selectable
+      if (e.target.closest('.editor-form') && !e.target.closest('button')) return;
       e.preventDefault();
     };
     this.dom.addEventListener("mousedown", this.preserveSelectionHandler);
@@ -755,6 +757,11 @@ export class ToolbarView {
         return;
       }
 
+      // Repositioning while a popup is open moves controls out from under the pointer
+      if (this.dom.querySelector('.editor-form.editor-form-active')) {
+        return;
+      }
+
       const selection = window.getSelection();
       const isSelection = selection && !selection.isCollapsed;
       const pmSelection = this.editorView?.state?.selection;
@@ -947,7 +954,10 @@ export class ToolbarView {
 
   formClickHandler(e, button) {
     var buttonNode = e.target.closest('button');
-    
+
+    // Info and help-back buttons are handled by the document-level delegate; let them bubble
+    if (buttonNode?.classList.contains('info') || buttonNode?.classList.contains('do-info-back')) return;
+
     if (buttonNode) {
       var buttonClasses = buttonNode.classList;
       
@@ -1111,6 +1121,7 @@ export function formFooterHTML({ action = 'post', advanced = true, controls = ''
 // Toggle pairs wired by setupPopup and reset by clearToolbarForm
 const FORM_DISCLOSURES = [
   ['.editor-form-advanced-toggle', '.editor-form-advanced'],
+  ['.editor-form-sources-toggle', '.editor-form-sources'],
 ];
 
 export function annotateFormControls(options) {

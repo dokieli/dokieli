@@ -356,7 +356,7 @@ export function processAction(action, formValues, selectionData, storedSelection
 
     case 'citation': //footnote reference
     noteData = createNoteData(data);
-      let { 'ref-type': refType, url: citationUrl, relation: citationRelation, content: citationContent, language: citationLanguage } = formData;
+      let { 'ref-type': refType, url: citationUrl, reason: citationReason, content: citationContent, language: citationLanguage } = formData;
 
       //TODO: Refactor this what's in positionInteraction
       switch(refType) {
@@ -380,7 +380,7 @@ export function processAction(action, formValues, selectionData, storedSelection
           citationUrl = citationUrl.trim(); //XXX: Perhaps use htmlEncode()?
           options['citationId'] = citationUrl;
           options['refId'] = refId;
-          options['citationRelation'] = citationRelation;
+          options['citationReason'] = citationReason;
 
           //TODO: offline mode
           //TODO Move getCitation
@@ -444,8 +444,8 @@ export function processAction(action, formValues, selectionData, storedSelection
                   <dl about="${citedBy}">
                     <dt>Action</dt><dd>Citation</dd>
                     <dt>Cited by</dt><dd><a href="${citedBy}">${citedBy}</a></dd>
-                    <dt>Citation type</dt><dd><a href="${citationUrl}">${Config.Citation[options.citationRelation]}</a></dd>
-                    <dt>Cites</dt><dd><a href="${citationUrl}" property="${options.citationRelation}">${citationUrl}</a></dd>
+                    <dt>Citation type</dt><dd><a href="${citationUrl}">${Config.Citation[options.citationReason]}</a></dd>
+                    <dt>Cites</dt><dd><a href="${citationUrl}" property="${options.citationReason}">${citationUrl}</a></dd>
                   </dl>
                 `;
 

@@ -285,6 +285,132 @@ export async function searchSpecrefEntries(keyword, options = {}) {
   }
 }
 
+// https://openlibrary.org/dev/docs/api/search
+export async function searchOpenLibraryEntries(keyword, options = {}) {
+  const term = String(keyword ?? '').trim();
+  if (!term) return [];
+
+  // Quoted phrase search; the plain q matches loosely, e.g. "formats" hits "formation"
+  const url = `https://openlibrary.org/search.json?q=${encodeURIComponent('"' + term.replace(/"/g, '') + '"')}&limit=${options.limit || 10}&fields=key,title,author_name,first_publish_year`;
+
+  try {
+    const response = await getResource(url, { Accept: 'application/json' }, options);
+    const data = await response.json();
+
+    return (data?.docs || []).map((doc) => ({
+      id: doc.key,
+      label: doc.title,
+      description: [doc.author_name?.join(', '), doc.first_publish_year].filter(Boolean).join(', '),
+      uri: `https://openlibrary.org${doc.key}`
+    }));
+  } catch (e) {
+    console.warn('Open Library search failed:', e?.message || e);
+    return [];
+  }
+}
+
+// Fetch metadata for an identifier, reusing the table lookup
+async function describeIdentifier(name, id, options = {}) {
+  const service = LookupServices[name];
+  const columns = (service.columns || []).map((column) => ({ ...column, name: column.name || column.titles }));
+  const lookup = { service: name, url: service.url, format: service.format, accept: service.accept, record: service.record, subject: service.subject };
+
+  try {
+    const result = await lookupIdentifier({ lookup }, columns, id, { ...options, resolvedId: id });
+    const text = (key) => result?.values?.[key]?.text;
+    const label = text('Title') || text('Name') || [text('Given name'), text('Family name')].filter(Boolean).join(' ') || text('Label');
+    const description = [text('Authors'), text('Publisher'), text('Published'), text('Description')].filter(Boolean).join(', ');
+    if (label) return { label, description };
+  } catch (e) {
+    console.warn(`${name} identifier lookup failed:`, e?.message || e);
+  }
+
+  return null;
+}
+
+const IDENTIFIER_URI_TEMPLATES = [
+  ['openlibrary', (id) => `https://openlibrary.org/isbn/${id}`],
+  ['doi', (id) => `https://doi.org/${id}`],
+  ['orcid', (id) => `https://orcid.org/${id}`],
+  ['wikidata', (id) => `http://www.wikidata.org/entity/${id.toUpperCase()}`]
+];
+
+function matchedIdentifierServices(term, options = {}) {
+  const wanted = options.sources?.length ? new Set(options.sources) : null;
+
+  return IDENTIFIER_URI_TEMPLATES.filter(([name]) => {
+    if (wanted && !wanted.has(name)) return false;
+    const service = LookupServices[name];
+    const id = normalizeIdentifier(service, term);
+    if (!service.identifierPattern.test(id)) return false;
+    return !service.identifierValid || service.identifierValid(id);
+  });
+}
+
+async function resolveIdentifierEntry(name, toURI, term, options = {}) {
+  const service = LookupServices[name];
+  const id = normalizeIdentifier(service, term);
+  const described = await describeIdentifier(name, id, options);
+
+  return {
+    id,
+    label: described?.label || `${service.identifier} ${id}`,
+    description: [described?.description, `${service.identifier} ${id}`].filter(Boolean).join('. '),
+    uri: toURI(id),
+    source: name
+  };
+}
+
+// Input matching an identifier pattern links directly to it
+export async function resolveIdentifierSources(term, options = {}) {
+  return Promise.all(matchedIdentifierServices(term, options)
+    .map(([name, toURI]) => resolveIdentifierEntry(name, toURI, term, options)));
+}
+
+// One promise per source so results can render as they arrive
+export function searchSourceStreams(keyword, options = {}) {
+  const term = String(keyword ?? '').trim();
+  if (!term) return [];
+
+  const wanted = options.sources?.length ? new Set(options.sources) : null;
+  const streams = matchedIdentifierServices(term, options).map(([name, toURI]) => ({
+    source: name,
+    promise: resolveIdentifierEntry(name, toURI, term, options).then(entry => [entry])
+  }));
+
+  [
+    ['specref', searchSpecrefEntries],
+    ['wikidata', searchWikidataEntities],
+    ['openlibrary', searchOpenLibraryEntries]
+  ].filter(([source]) => !wanted || wanted.has(source)).forEach(([source, search]) => {
+    streams.push({ source, promise: search(term, options).then(items => items.map(item => ({ ...item, source }))) });
+  });
+
+  return streams;
+}
+
+// One query across every source; identifiers first, then keyword matches
+export async function searchSources(keyword, options = {}) {
+  const term = String(keyword ?? '').trim();
+  if (!term) return [];
+
+  const wanted = options.sources?.length ? new Set(options.sources) : null;
+  const keywordSearches = [
+    ['specref', searchSpecrefEntries],
+    ['wikidata', searchWikidataEntities],
+    ['openlibrary', searchOpenLibraryEntries]
+  ].filter(([source]) => !wanted || wanted.has(source));
+
+  const [identified, ...searchedAll] = await Promise.all([
+    resolveIdentifierSources(term, options),
+    ...keywordSearches.map(([source, search]) =>
+      search(term, options).then(items => items.map(item => ({ ...item, source })))
+    )
+  ]);
+
+  return [...identified, ...searchedAll.flat()];
+}
+
 const IDENTIFIER_SEARCHERS = {
   wikidata: searchWikidataEntities,
   specref: searchSpecrefEntries

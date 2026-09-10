@@ -609,7 +609,7 @@
   "editor.toolbar.blockquote.form.legend.textContent": "Add the source of the blockquote",
   "editor.toolbar.bookmark.form.legend.textContent": "Bookmark",
   "editor.toolbar.bookmark.form.textarea.placeholder": "For future reference…",
-  "editor.toolbar.citation.form.citation-relation.label.textContent": "Relation",
+  "editor.toolbar.citation.form.citation-reason.label.textContent": "Reason",
   "editor.toolbar.citation.form.legend.textContent": "Add a citation",
   "editor.toolbar.citation.form.ref-footnote.label.textContent": "Footnote",
   "editor.toolbar.citation.form.ref-reference.label.textContent": "Reference",
@@ -1101,5 +1101,6 @@
   "menu.install-app.h2.textContent": "Install",
   "menu.install-app.description.textContent": "Install dokieli as an app for quicker access and offline use.",
   "menu.install-app.button.textContent": "Install app",
-  "menu.install-app.button.title": "Install dokieli as an app"
+  "menu.install-app.button.title": "Install dokieli as an app",
+  "info.search-sources.button.title": "About data sources"
 }

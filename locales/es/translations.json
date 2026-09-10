@@ -525,7 +525,7 @@
   "editor.toolbar.blockquote.form.legend.textContent": "Agregar la fuente de la cita en bloque",
   "editor.toolbar.bookmark.form.legend.textContent": "Agregar marcador",
   "editor.toolbar.bookmark.form.textarea.placeholder": "Para referencia futura…",
-  "editor.toolbar.citation.form.citation-relation.label.textContent": "Relación",
+  "editor.toolbar.citation.form.citation-reason.label.textContent": "Razón",
   "editor.toolbar.citation.form.legend.textContent": "Agregar una referencia",
   "editor.toolbar.citation.form.ref-footnote.label.textContent": "Nota al pie",
   "editor.toolbar.citation.form.ref-reference.label.textContent": "Referencia",
@@ -1009,5 +1009,6 @@
   "menu.install-app.h2.textContent": "Instalar",
   "menu.install-app.description.textContent": "Instala dokieli como aplicación para un acceso más rápido y uso sin conexión.",
   "menu.install-app.button.textContent": "Instalar aplicación",
-  "menu.install-app.button.title": "Instalar dokieli como aplicación"
+  "menu.install-app.button.title": "Instalar dokieli como aplicación",
+  "info.search-sources.button.title": "Acerca de las fuentes de datos"
 }

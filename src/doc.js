@@ -4896,9 +4896,9 @@ export function getCitationHTML(citationGraph, citationURI, options) {
 
   var content = ('content' in options && options.content.length) ? options.content + ', ' : '';
 
-  var citationReason = (options.citationRelation && Config.Citation[options.citationRelation]) ? `, Citation Reason: ${Config.Citation[options.citationRelation]}` : '';
+  var citationReason = (options.citationReason && Config.Citation[options.citationReason]) ? `, Citation Reason: ${Config.Citation[options.citationReason]}` : '';
 
-  var anchorTitle = Config.Citation[options.citationRelation] ? ` title="${Config.Citation[options.citationRelation]}"` : '';
+  var anchorTitle = Config.Citation[options.citationReason] ? ` title="${Config.Citation[options.citationReason]}"` : '';
 
   var citationIdLabel = citationURI;
   var prefixCitationLink = '';
@@ -4916,7 +4916,7 @@ export function getCitationHTML(citationGraph, citationURI, options) {
     citationIdLabel = citationURI;
   }
 
-  var citationHTML = authors + title + datePublished + content + prefixCitationLink + '<a about="#' + options.refId + '"' + dataVersionDate + dataVersionURL + ' href="' + citationURI + '" rel="schema:citation ' + options.citationRelation  + '"' + anchorTitle + '>' + citationIdLabel + '</a> [' + dateAccessed + citationReason + ']';
+  var citationHTML = authors + title + datePublished + content + prefixCitationLink + '<a about="#' + options.refId + '"' + dataVersionDate + dataVersionURL + ' href="' + citationURI + '" rel="schema:citation ' + options.citationReason  + '"' + anchorTitle + '>' + citationIdLabel + '</a> [' + dateAccessed + citationReason + ']';
   //console.log(citationHTML);
   return citationHTML;
 }

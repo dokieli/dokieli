@@ -1096,6 +1096,10 @@ max-width:inherit !important;
   outline-offset: 5px;
   transition: outline-offset .2s linear;
 }
+.do a:focus-visible {
+  outline-color: var(--do-color-accent-hover);
+  outline-offset: 2px;
+}
 
 aside.do.on {
 border:1px solid var(--do-color-border);
@@ -1145,7 +1149,7 @@ vertical-align: middle;
 
 aside.do input,
 .editor-form input {
-padding:0.2em;
+padding:0.25em;
 }
 aside.do input[type="checkbox"],
 .editor-form input[type="checkbox"] {
@@ -1442,6 +1446,19 @@ color:var(--do-color-link);
 font-size:1em;
 text-decoration:underline;
 font-weight:normal;
+}
+/* Specificity to beat the editor form's accent button rule */
+.editor-form:not(.editor-slashmenu) button.do-info-back {
+background:none;
+background-color:transparent;
+border:none;
+box-shadow:none;
+padding:0;
+margin-bottom:1em;
+color:var(--do-color-link);
+text-decoration:underline;
+font-weight:normal;
+width:auto;
 }
 .do-info-panel h3 {
 margin-top:0;
@@ -4938,6 +4955,7 @@ border-color: transparent transparent transparent #009000 !important;
 .editor-form fieldset label  {
   display: flex;
   align-content: center;
+  align-items: center;
   flex-wrap: wrap;
 }
 .editor-form fieldset button {
@@ -4952,7 +4970,6 @@ button[type="button"]:focus {
   outline-color: var(--do-color-fg);
 }
 
-/* Basic default for all fieldsets in forms  */
 .editor-form fieldset {
   display: flex;
   flex-direction: column;
@@ -4961,19 +4978,15 @@ button[type="button"]:focus {
   padding:0;
 }
 
-/* Simplified popup card: essentials up top, the rest behind the + toggle */
-/* Small required note on its own line under the form title */
 .editor-form legend .editor-form-required-note {
   display: block;
   margin: 0.25em 0 0 0;
-  font-size: 0.85em;
   font-weight: normal;
-  color: var(--do-color-fg-subtle);
+  color: var(--do-color-fg-secondary);
 }
 .editor-form legend .editor-form-required-note .required {
   background: none;
 }
-/* Persistent required marker in the field's top corner */
 .editor-form .editor-form-required-field {
   position: relative;
   display: flex;
@@ -5133,9 +5146,31 @@ max-width:70%;
 .specref-search-results {
   display: flex;
   flex-direction: column;
+  max-height: 18em;
+  overflow-y: auto;
+  dl {
+    margin: 0 0 0.5em 0;
+  }
+  dt {
+    margin-bottom:0.5em;
+  }
+  dd {
+    margin: 0;
+  }
+  .progress {
+    align-self: center;
+    margin-bottom: 1em;
+  }
   ul li { 
     display: flex;
-    margin: 0.5em 0;  
+    margin: 0 0 1em 0;  
+  }
+  input[type="radio"] {
+    align-self: center;
+  }
+  input[type="radio"]:focus-visible {
+    outline: 2px solid var(--do-color-accent-hover);
+    outline-offset: 2px;
   }
 }
 
@@ -5193,7 +5228,7 @@ border-bottom:1px solid var(--do-color-border);
 margin:1em 0;
 }
 div.specref-search-results ul {
-padding-bottom:1em;
+margin-bottom:1em;
 }
 div.specref-search-results li {
 float:none;
@@ -7985,6 +8020,7 @@ nav.do[id$="-toc"] li.tocline > a.tocxref {
   align-items: center;
   flex-wrap: wrap;
   gap: 0.25em;
+  margin:1em 0;
 }
 .editor-form .editor-form-radio-row label {
   margin-inline-end: 1em;
@@ -7992,6 +8028,58 @@ nav.do[id$="-toc"] li.tocline > a.tocxref {
 #editor-form-citation input[type="submit"] {
   padding: 0.75em;
   margin-bottom: 0.5em;
+}
+.editor-form .editor-form-search-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: stretch;
+  gap: 0.25em;
+}
+#editor-form-citation .editor-form-search-row input[type="submit"] {
+  margin-bottom: 0;
+}
+.editor-form .editor-form-search-row .editor-form-icon-toggle {
+  height: auto;
+  align-self: stretch;
+  min-width: 2em;
+  margin: 0;
+}
+.editor-form .editor-form-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25em 1em;
+  margin-bottom: 0.5em;
+}
+.editor-form .editor-form-sources {
+  list-style: none;
+  margin: 0 0 0.5em 0;
+  padding: 0;
+}
+.editor-form .editor-form-sources li {
+  display: flex;
+  align-items: center;
+}
+.editor-form .editor-form-sources label {
+margin-left:0;
+}
+
+.editor-form .editor-form-sources[hidden] {
+  display: none;
+}
+/* Submits are inputs, which the button accent rule misses */
+.editor-form:not(.editor-slashmenu) input[type="submit"] {
+  background-color: var(--do-color-accent-solid);
+  color: var(--do-color-on-color);
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  font-weight: bold;
+  font-size:1em;
+}
+@media (min-width: 769px) {
+  #editor-form-citation {
+    min-width: 30em;
+  }
 }
 /* When results are shown, the advanced fields follow them */
 .editor-form fieldset > .editor-form-advanced {
@@ -8002,7 +8090,7 @@ nav.do[id$="-toc"] li.tocline > a.tocxref {
   flex-direction: column;
   flex-wrap: nowrap;
   overflow-x: visible;
-  gap: 0.5em;
+  margin-left:0.25em;
 }
 .editor-form fieldset > .editor-form-footer {
   order: 99;
@@ -8201,4 +8289,35 @@ aside.do.on:not([id="document-info"]) select {
   line-height: 1;
   display: inline-flex;
   align-items: center;
+}
+
+.specref-search-results .search-source {
+  border: 1px solid var(--do-color-border);
+  border-radius: 0.25em;
+  padding: 0.25em;
+  margin-inline-start: 0.5em;
+  white-space: nowrap;
+}
+
+
+
+/* Info buttons keep their standard look inside editor forms */
+.editor-form:not(.editor-slashmenu) button.info {
+  background-color: var(--do-color-bg);
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0.5em;
+  color: var(--do-color-fg);
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0.5em;
+  width: auto;
+}
+.editor-form:not(.editor-slashmenu) button.info svg {
+  fill: currentColor;
+}
+.editor-form:not(.editor-slashmenu) button.info:disabled svg {
+  fill: var(--do-color-fg-subtle);
 }

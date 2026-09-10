@@ -26,6 +26,7 @@ import { createRDFaHTMLRequirement, getCitationOptionsHTML, getLanguageOptionsHT
 import Config from "../../../config.js";
 import { Icon } from "../../../ui/icons.js";
 import { fragmentFromString } from "../../../utils/html.js";
+import { searchSourceStreams } from "../../../services.js";
 import { registerBlobAsset } from "../../utils/imageAssets.js";
 import { i18n } from "../../../i18n.js"
 import { htmlEncode, sanitizeInsertAdjacentHTML } from "../../../utils/sanitization.js";
@@ -199,16 +200,28 @@ export class AuthorToolbar extends ToolbarView {
       citation: (options) => `
         <fieldset>
           <legend data-i18n="editor.toolbar.citation.form.legend">${options.legend}</legend>
-          <label data-i18n="editor.toolbar.citation.form.specref-search.label" for="citation-specref-search">${i18n.t('editor.toolbar.citation.form.specref-search.label.textContent')} <a href="https://www.specref.org/" rel="noopener" target="_blank">specref.org</a></label> <input class="editor-form-input" data-i18n="editor.toolbar.citation.form.specref-search.input" id="citation-specref-search" name="citation-specref-search" placeholder="${i18n.t('editor.toolbar.citation.form.specref-search.input.placeholder')}" type="text" value="" />
+          <div class="info"></div>
+          <label data-i18n="editor.toolbar.citation.form.specref-search.label" for="citation-specref-search">${i18n.t('editor.toolbar.citation.form.specref-search.label.textContent')} ${Config.Button.Info.SearchSources}</label> <input class="editor-form-input" data-i18n="editor.toolbar.citation.form.specref-search.input" id="citation-specref-search" name="citation-specref-search" placeholder="${i18n.t('editor.toolbar.citation.form.specref-search.input.placeholder')}" type="text" value="" />
+          <span class="editor-form-search-row">
           <input data-i18n="editor.toolbar.form.search.button" id="citation-specref-search-submit" name="citation-specref-search-submit" type="submit" value="${i18n.t('editor.toolbar.form.search.button.value')}" />
+          <button class="editor-form-icon-toggle editor-form-sources-toggle" type="button" aria-expanded="false" aria-label="Choose data sources" title="Choose data sources">${Icon['.fas.fa-caret-down']}</button>
+          </span>
+          <ul class="editor-form-sources" hidden="">
+            <li><input checked="" id="citation-search-source-specref" name="citation-search-source" type="checkbox" value="specref" /> <label for="citation-search-source-specref">Specref</label></li>
+            <li><input checked="" id="citation-search-source-wikidata" name="citation-search-source" type="checkbox" value="wikidata" /> <label for="citation-search-source-wikidata">Wikidata</label></li>
+            <li><input checked="" id="citation-search-source-openlibrary" name="citation-search-source" type="checkbox" value="openlibrary" /> <label for="citation-search-source-openlibrary">Open Library</label></li>
+            <li><input checked="" id="citation-search-source-doi" name="citation-search-source" type="checkbox" value="doi" /> <label for="citation-search-source-doi">DOI</label></li>
+            <li><input checked="" id="citation-search-source-orcid" name="citation-search-source" type="checkbox" value="orcid" /> <label for="citation-search-source-orcid">ORCID</label></li>
+          </ul>
+          <div class="specref-search-results"></div>
           <label class="editor-form-visually-hidden" for="citation-url">URL</label>
           <input class="editor-form-input" data-i18n="editor.toolbar.form.url.input" dir="ltr" id="citation-url" name="citation-url" pattern="https?://.+" placeholder="${i18n.t('editor.toolbar.form.url.input.placeholder')}" type="url" value="" />
           <span class="editor-form-radio-row">
           <input id="ref-footnote" name="citation-ref-type" type="radio" value="ref-footnote" /> <label data-i18n="editor.toolbar.citation.form.ref-footnote.form.label" for="ref-footnote">${i18n.t('editor.toolbar.citation.form.ref-footnote.label.textContent')}</label>
           <input id="ref-reference" name="citation-ref-type" type="radio" value="ref-reference" /> <label data-i18n="editor.toolbar.citation.form.ref-reference.label" for="ref-reference">${i18n.t('editor.toolbar.citation.form.ref-reference.label.textContent')}</label>
           </span>
-          <label data-i18n="editor.toolbar.citation.form.citation-relation.label" for="citation-relation">${i18n.t('editor.toolbar.citation.form.citation-relation.label.textContent')}</label>
-          <select class="editor-form-select" id="citation-relation" name="citation-relation">${getCitationOptionsHTML({ 'selected': '' })}</select>
+          <label data-i18n="editor.toolbar.citation.form.citation-reason.label" for="citation-reason">${i18n.t('editor.toolbar.citation.form.citation-reason.label.textContent')}</label>
+          <select class="editor-form-select" id="citation-reason" name="citation-reason">${getCitationOptionsHTML({ 'selected': '' })}</select>
           ${advancedFieldsHTML(`
           <label data-i18n="editor.toolbar.note.form.label" for="citation-content">${i18n.t('editor.toolbar.note.form.label.textContent')}</label>
           <textarea class="editor-form-textarea" cols="20" data-i18n="editor.toolbar.${options.button}.form.textarea" dir="auto" id="citation-content" name="citation-content" rows="3" placeholder="${options.placeholder}"></textarea>
@@ -216,7 +229,6 @@ export class AuthorToolbar extends ToolbarView {
           <select class="editor-form-select" id="citation-language" name="citation-language">${getLanguageOptionsHTML()}</select>
           `)}
           ${formFooterHTML({ action: 'save' })}
-          <div class="specref-search-results"></div>
         </fieldset>
       `,
 
@@ -1225,81 +1237,63 @@ nodeToHTML(node, schema) {
     var specref = document.querySelector('#citation-specref-search-submit');
     // console.log(specref);
 
-    specref.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      // console.log(e);
-  
-      var keyword = citationSpecRefSearch.value.trim();
-      var url = 'https://api.specref.org/search-refs?q=' + encodeURIComponent(keyword);
-      var headers = {'Accept': 'application/json'};
-      var options = {};
+    // Wire once; populateFormCitation runs on every open
+    if (!specref.dataset.searchWired) {
+      specref.dataset.searchWired = 'true';
+      let searchGeneration = 0;
+      const sourceLabels = { specref: 'Specref', wikidata: 'Wikidata', openlibrary: 'Open Library', doi: 'DOI', orcid: 'ORCID' };
 
-      Config.Storage.get(url, headers, options)
-        .then(response => {
-          // console.log(response);
-          return response.text();
-        })
-        .then(data => {
-          data = JSON.parse(data);
-          // console.log(data);
-    
-          var searchResultsHTML = '';
-          var searchResultsItems = [];
-    
-          var href, title, publisher, date, status;
-    
-          //TODO: Clean input data
-  
-          Object.keys(data).forEach(key => {
-            // console.log(data[key])
-            if (typeof data[key] === 'object' && !Array.isArray(data[key]) &&
-                'href' in data[key] &&
-                !('aliasOf' in data[key]) && !('versionOf' in data[key]) &&
-    
-              //fugly WG21
-                (!('publisher' in data[key]) || ((data[key].publisher.toLowerCase() != 'wg21') || ((data[key].href.startsWith('https://wg21.link/n') || data[key].href.startsWith('https://wg21.link/p') || data[key].href.startsWith('https://wg21.link/std')) && !data[key].href.endsWith('.yaml') && !data[key].href.endsWith('/issue') && !data[key].href.endsWith('/github') && !data[key].href.endsWith('/paper'))))
-    
-                ) {
-    
-              href = data[key].href;
-              title = data[key].title || href;
-              publisher = data[key].publisher || '';
-              date = data[key].date || '';
-              status = data[key].status || '';
-    
-              if (publisher) {
-                publisher = '. ' + publisher;
-              }
-              if (date) {
-                date = '. ' + date;
-              }
-              if (status) {
-                status = '. ' + status;
-              }
-    
-              searchResultsItems.push('<li><input name="specref-item" id="ref-' + key + '" type="radio" value="' + key + '" /> <label for="ref-' + key + '"><a href="' + href + '" rel="noopener" target="_blank">' + title + '</a>' + publisher + date + status + '</label></li>');
-            }
-          });
-          searchResultsHTML = '<ul>' + searchResultsItems.join('') + '</ul>';
-    
-          if (searchResultsItems) {
-            specrefSearchResults = document.querySelector('.specref-search-results');
-            if(specrefSearchResults) {
-              specrefSearchResults.replaceChildren(fragmentFromString(searchResultsHTML));
-            }
-    
-            //XXX: Assigning 'change' action to ul because it gets removed when there is a new search result / replaced. Perhaps it'd be nicer (but more expensive?) to destroy/create .specref-search-results node?
-            specrefSearchResults.querySelector('ul').addEventListener('change', (e) => {
-              var checkedCheckbox = e.target.closest('input');
-              if (checkedCheckbox) {
-                // console.log(e.target);
-                document.querySelector('#citation-url').value = data[checkedCheckbox.value].href;
-              }
-            });
+      specref.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Discard responses from a superseded search
+        const generation = ++searchGeneration;
+        const keyword = document.querySelector('#citation-specref-search').value.trim();
+        const sources = [...document.querySelectorAll('#editor-form-citation input[name="citation-search-source"]:checked')].map(i => i.value);
+
+        const container = document.querySelector('.specref-search-results');
+        if (!container) return;
+
+        const results = [];
+        container.replaceChildren(fragmentFromString(`<span class="progress">${Icon['.fas.fa-circle-notch.fa-spin.fa-fw']}</span>`));
+        container.onchange = (e) => {
+          const checked = e.target.closest('input[type="radio"]');
+          if (checked) {
+            // Unique names make each radio tabbable; uncheck the rest here
+            container.querySelectorAll('input[type="radio"]').forEach(r => { if (r !== checked) r.checked = false; });
+            document.querySelector('#citation-url').value = results[checked.value].uri;
           }
-        });
-    });
+        };
+
+        const appendItems = (source, items) => {
+          if (generation !== searchGeneration || !items.length) return;
+
+          let list = container.querySelector('dl[data-source="' + source + '"] ul');
+          if (!list) {
+            const dl = fragmentFromString('<dl data-source="' + source + '"><dt>' + (sourceLabels[source] || source) + '</dt><dd><ul></ul></dd></dl>');
+            container.insertBefore(dl, container.querySelector('.progress'));
+            list = container.querySelector('dl[data-source="' + source + '"] ul');
+          }
+
+          items.forEach((result) => {
+            const index = results.push(result) - 1;
+            const description = result.description ? ' ' + htmlEncode(result.description) : '';
+            list.appendChild(fragmentFromString('<li><input name="search-sources-item-' + index + '" id="search-sources-item-' + index + '" type="radio" value="' + index + '" /> <label for="search-sources-item-' + index + '"><a href="' + htmlEncode(result.uri) + '" rel="noopener" target="_blank">' + htmlEncode(result.label) + '</a>' + description + '</label></li>'));
+          });
+        };
+
+        const streams = searchSourceStreams(keyword, { sources });
+        await Promise.allSettled(streams.map(stream => stream.promise.then(items => appendItems(stream.source, items))));
+
+        if (generation !== searchGeneration) return;
+        container.querySelector('.progress')?.remove();
+
+        if (!results.length) {
+          container.replaceChildren(fragmentFromString('<p class="search-results-empty">No results for \u201c' + htmlEncode(keyword) + '\u201d.</p>'));
+        }
+      });
+    }
 
     citationUrl.focus();
 
