@@ -1290,7 +1290,7 @@ nodeToHTML(node, schema) {
         container.querySelector('.progress')?.remove();
 
         if (!results.length) {
-          container.replaceChildren(fragmentFromString('<p class="search-results-empty">No results for \u201c' + htmlEncode(keyword) + '\u201d.</p>'));
+          container.replaceChildren(fragmentFromString('<p class="search-results-empty">No results for \u201c' + htmlEncode(keyword.replace(/^"(.*)"$/, '$1')) + '\u201d.</p>'));
         }
       });
     }

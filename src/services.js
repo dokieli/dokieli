@@ -232,7 +232,8 @@ async function resolveWikidataEntity(value, options = {}) {
 
 // Label search, so the identifier column offers real choices for ambiguous terms.
 export async function searchWikidataEntities(keyword, options = {}) {
-  const term = String(keyword ?? '').trim();
+  // No quote syntax here; quotes would only break the match
+  const term = String(keyword ?? '').trim().replace(/^"(.*)"$/, '$1');
   if (!term) return [];
 
   const language = (Config.User?.UI?.Language || 'en').split('-')[0];
@@ -261,7 +262,8 @@ const IDENTIFIER_RESOLVERS = {
 
 // https://github.com/tobie/specref#api
 export async function searchSpecrefEntries(keyword, options = {}) {
-  const term = String(keyword ?? '').trim();
+  // No quote syntax here; quotes would only break the match
+  const term = String(keyword ?? '').trim().replace(/^"(.*)"$/, '$1');
   if (!term) return [];
 
   const url = `https://api.specref.org/search-refs?q=${encodeURIComponent(term)}`;
@@ -290,8 +292,9 @@ export async function searchOpenLibraryEntries(keyword, options = {}) {
   const term = String(keyword ?? '').trim();
   if (!term) return [];
 
-  // Quoted phrase search; the plain q matches loosely, e.g. "formats" hits "formation"
-  const url = `https://openlibrary.org/search.json?q=${encodeURIComponent('"' + term.replace(/"/g, '') + '"')}&limit=${options.limit || 10}&fields=key,title,author_name,first_publish_year`;
+  // Quote the phrase unless the user already did; their plain q matches too loosely
+  const quotedTerm = /^".*"$/.test(term) ? term : '"' + term + '"';
+  const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(quotedTerm)}&limit=${options.limit || 10}&fields=key,title,author_name,first_publish_year`;
 
   try {
     const response = await getResource(url, { Accept: 'application/json' }, options);
