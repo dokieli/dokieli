@@ -4,29 +4,12 @@
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport" />
     <title>dokieli</title>
-    <style>
-      :root { color-scheme: light dark; }
-      body {
-        font-family: 'Ubuntu', "Helvetica Neue", Helvetica, Arial, sans-serif;
-        margin: 0;
-        padding: 2em 1em;
-        background: #fff;
-        color: #24292f;
-      }
-      main { max-width: 36em; margin: 0 auto; }
-      h1 { font-size: 1.5em; }
-      ul { padding-left: 1.25em; }
-      li { margin: 0.5em 0; }
-      a { color: #19a000; }
-      .updated { color: #57606a; font-size: 0.85em; margin-left: 0.5em; }
-      @media (prefers-color-scheme: dark) {
-        body { background: #1a1a1a; color: #ddd; }
-        .updated { color: #999; }
-      }
-    </style>
+    <link href="/media/css/basic.css" media="all" rel="stylesheet" title="Basic" />
+    <link href="/media/css/dokieli.css" media="all" rel="stylesheet" />
   </head>
-  <body>
+  <body class="do-site">
     <main>
+      <article>
       <h1>You are offline</h1>
       <p id="offline-status">Looking for a copy of this document on your device&hellip;</p>
       <div id="offline-copies" hidden>
@@ -34,6 +17,7 @@
         <ul id="offline-copies-list"></ul>
       </div>
       <p><a href="/">dokieli home</a></p>
+      </article>
     </main>
     <script>
       (async () => {
