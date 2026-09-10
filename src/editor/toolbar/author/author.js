@@ -534,6 +534,7 @@ TODO:
     // editor focusout in collab mode — must not be treated as "selection lost"
     // and close the form.
     if (this.dom.contains(document.activeElement)) return;
+    if (this.pointerDownInToolbar && this.dom.querySelector('.editor-form.editor-form-active')) return;
     const selection = window.getSelection();
     const isSelection = selection && !selection.isCollapsed;
     const isNodeSelection = view?.state?.selection instanceof NodeSelection;
@@ -591,10 +592,14 @@ TODO:
   }
 
   updateToolbarVisibility(e) {
+    // Firefox blurs the editor on pointerdown over popup chrome, so update() sees activeElement as body.
+    this.pointerDownInToolbar = this.dom.contains(e.target);
     // document.addEventListener('click', (e) => {
       // FIXME
       // console.log(this.editorView, this.mode)
-    if (this.dom.classList.contains('editor-form-active') && !e.target.closest('.do') && e.target.closest('input[type]')?.type !== 'file' &&  !this.editorView.dom.contains(e.target)) {
+    // An open popup counts even if the toolbar lost its own class, else it can never be dismissed.
+    const toolbarOpen = this.dom.classList.contains('editor-form-active') || this.dom.querySelector('.editor-form.editor-form-active');
+    if (toolbarOpen && !e.target.closest('.do') && e.target.closest('input[type]')?.type !== 'file' &&  !this.editorView.dom.contains(e.target)) {
       // Click outside editor and not on functionality-related items
         this.cleanupToolbar();
     }
