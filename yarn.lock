@@ -624,6 +624,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@nanopub/nanopub-js@portal:../kp/nanopub-js::locator=dokieli%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@nanopub/nanopub-js@portal:../kp/nanopub-js::locator=dokieli%40workspace%3A."
+  dependencies:
+    "@rdfjs/data-model": "npm:^2.1.1"
+    "@rdfjs/types": "npm:^2.0.1"
+    "@traqula/parser-sparql-1-1": "npm:^1.2.1"
+    n3: "npm:^2.0.0"
+    rdf-canonize: "npm:^5.0.0"
+    rdf-js: "npm:^4.0.2"
+  languageName: node
+  linkType: soft
+
 "@oxc-project/types@npm:=0.143.0":
   version: 0.143.0
   resolution: "@oxc-project/types@npm:0.143.0"
@@ -889,7 +902,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rdfjs/types@npm:^2.0.0, @rdfjs/types@npm:^2.0.1":
+"@rdfjs/types@npm:*, @rdfjs/types@npm:^2.0.0, @rdfjs/types@npm:^2.0.1":
   version: 2.0.1
   resolution: "@rdfjs/types@npm:2.0.1"
   dependencies:
@@ -1041,6 +1054,42 @@ __metadata:
   version: 1.1.0
   resolution: "@standard-schema/spec@npm:1.1.0"
   checksum: 10c0/d90f55acde4b2deb983529c87e8025fa693de1a5e8b49ecc6eb84d1fd96328add0e03d7d551442156c7432fd78165b2c26ff561b970a9a881f046abb78d6a526
+  languageName: node
+  linkType: hard
+
+"@traqula/chevrotain@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "@traqula/chevrotain@npm:1.1.0"
+  checksum: 10c0/42283984c1d306c16f122fc6ed3f9afc322e801a31f1cfbed4deffe740f8b0a563bcd894f2ce821f69f967e124c15a42049f5b0c6c3406517b7621870f584082
+  languageName: node
+  linkType: hard
+
+"@traqula/core@npm:^1.3.0":
+  version: 1.3.0
+  resolution: "@traqula/core@npm:1.3.0"
+  dependencies:
+    "@traqula/chevrotain": "npm:^1.1.0"
+  checksum: 10c0/6cb697b8e52d3d40959ef3607aed02956e2114e36eed83bd10e3ac19d1d2e49b3d8302782d73f67ba7ad107269c808fe05e814f389816ce4b97ebc9196676d8d
+  languageName: node
+  linkType: hard
+
+"@traqula/parser-sparql-1-1@npm:^1.2.1":
+  version: 1.3.0
+  resolution: "@traqula/parser-sparql-1-1@npm:1.3.0"
+  dependencies:
+    "@traqula/core": "npm:^1.3.0"
+    "@traqula/rules-sparql-1-1": "npm:^1.3.0"
+  checksum: 10c0/d3e1968f8acb4780916a1c301642a013a2a26a2d69097d6d7f8d4bba5d6f90b082ded4e2d6d9a5fdce2ef2775d9e938fdb2525a4e229d5ee1ab5016957628aae
+  languageName: node
+  linkType: hard
+
+"@traqula/rules-sparql-1-1@npm:^1.3.0":
+  version: 1.3.0
+  resolution: "@traqula/rules-sparql-1-1@npm:1.3.0"
+  dependencies:
+    "@traqula/chevrotain": "npm:^1.1.0"
+    "@traqula/core": "npm:^1.3.0"
+  checksum: 10c0/3a3c13c29697070cfd713e9e58d93a16e5eea7d6dad3f50ebcdf43833dbbf1b68682c2ad62f1008b45219428b8ce95a6639714126acf163f7d385d569e921e39
   languageName: node
   linkType: hard
 
@@ -2104,6 +2153,7 @@ __metadata:
     "@dokieli/notifications": "npm:^1.0.1"
     "@dokieli/web-access-control": "npm:^1.0.0"
     "@dokieli/web-annotation": "npm:^1.0.1"
+    "@nanopub/nanopub-js": "portal:../kp/nanopub-js"
     "@playwright/test": "npm:^1.44.1"
     "@uvdsl/solid-oidc-client-browser": "npm:^0.2.3"
     "@vitest/coverage-istanbul": "npm:^4.1.10"
@@ -4063,6 +4113,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"n3@npm:^2.0.0":
+  version: 2.7.12
+  resolution: "n3@npm:2.7.12"
+  dependencies:
+    buffer: "npm:^6.0.3"
+    readable-stream: "npm:^4.0.0"
+  checksum: 10c0/2990bcc8efe4d23131d3b46b6833bf5777f936da473da5f8c1fe26026fbababb5fbd52cf2e1e6cdbd98ab233764d4a7d1553fc1376395093c47869a8e9aed93f
+  languageName: node
+  linkType: hard
+
 "n3@npm:^2.2.0":
   version: 2.2.5
   resolution: "n3@npm:2.2.5"
@@ -4660,6 +4720,15 @@ __metadata:
     proto-fetch: "npm:^2.0.0"
     readable-stream: "npm:^4.3.0"
   checksum: 10c0/6fa07b3b1f7d90e2598895b4c6e08c9af9d7d9f32b28d758834be966da60d49a81972eae6e92c8c9b98899338f5d3fbb8fc7ecf3db1533fcf0e3e7b472ea2f13
+  languageName: node
+  linkType: hard
+
+"rdf-js@npm:^4.0.2":
+  version: 4.0.2
+  resolution: "rdf-js@npm:4.0.2"
+  dependencies:
+    "@rdfjs/types": "npm:*"
+  checksum: 10c0/63840293d51b2fb56ab690ca5a5f890e2fcd08ae4c60d6f8b5893633147f6c48d77f607b1cf4404a9b91b3269073aa26d0187d3f1712e3599b50dba659259055
   languageName: node
   linkType: hard
 
