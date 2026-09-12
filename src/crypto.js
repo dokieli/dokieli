@@ -70,13 +70,26 @@ export async function importPublicKeyJWK(jwk) {
   return crypto.subtle.importKey('jwk', jwk, algorithmFor(jwk), true, usages);
 }
 
-export async function importPrivateKeyJWK(jwk) {
+// Signing keys are extractable because nanopub-js takes the key as a base64 string
+export async function importPrivateKeyJWK(jwk, extractable = false) {
   const usages = jwk?.kty === 'RSA' ? ['sign'] : ['deriveBits'];
-  return crypto.subtle.importKey('jwk', jwk, algorithmFor(jwk), false, usages);
+  return crypto.subtle.importKey('jwk', jwk, algorithmFor(jwk), extractable, usages);
+}
+
+export async function exportPrivateKeyBase64(privateKey) {
+  return toBase64(await crypto.subtle.exportKey('pkcs8', privateKey));
+}
+
+export async function exportPublicKeyBase64(publicKey) {
+  return toBase64(await crypto.subtle.exportKey('spki', publicKey));
+}
+
+function toBase64(buffer) {
+  return btoa(String.fromCharCode(...new Uint8Array(buffer)));
 }
 
 function toPEM(buffer, label) {
-  const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+  const base64 = toBase64(buffer);
   return `-----BEGIN ${label}-----\n${base64.match(/.{1,64}/g).join('\n')}\n-----END ${label}-----\n`;
 }
 

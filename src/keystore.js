@@ -30,7 +30,9 @@ import {
   getJWEKids,
   privateKeyJWKToPEM,
   publicKeyJWKToPEM,
-  privateKeyPEMToJWK
+  privateKeyPEMToJWK,
+  exportPrivateKeyBase64,
+  exportPublicKeyBase64
 } from './crypto.js';
 import { getEncryptedKeystore, setEncryptedKeystore, updateDeviceStorageProfile } from './storage.js';
 import { getResource, getResourceHead, putResource, postResource, patchResourceWithAcceptPatch } from './fetcher.js';
@@ -300,7 +302,7 @@ export async function createKeystore(passphrase, purpose = KEY_AGREEMENT) {
   }
 
   const session = sessions[purpose];
-  session.privateKeys.set(kid, await importPrivateKeyJWK(privateKeyJWK));
+  session.privateKeys.set(kid, await importPrivateKeyJWK(privateKeyJWK, purpose === ASSERTION));
   session.publicKey = publicKey;
   session.publicKeyJWK = publicKeyJWK;
   session.kid = kid;
@@ -319,7 +321,7 @@ export async function unlockKeystore(passphrase) {
     try {
       const kid = doc.publicKeyJwk.kid;
       const privateKeyJWK = await unwrapPrivateKeyJWK(doc.secretKeyJwk, passphrase);
-      unlocked[purposeOf(doc)].set(kid, await importPrivateKeyJWK(privateKeyJWK));
+      unlocked[purposeOf(doc)].set(kid, await importPrivateKeyJWK(privateKeyJWK, purposeOf(doc) === ASSERTION));
       docByKid.set(kid, doc);
     } catch {}
   }
@@ -489,6 +491,22 @@ function noKeysError() {
 }
 
 // One passphrase covers every key on the device
+// nanopub-js takes the key as base64, so the session holds the signing key extractable
+export async function getSigningKeyMaterial() {
+  const session = sessions[ASSERTION];
+  const privateKey = session.privateKeys.get(session.kid);
+  if (!privateKey || !session.publicKey) {
+    const error = new Error('No signing key is unlocked.');
+    error.code = 'no-signing-key';
+    throw error;
+  }
+  return {
+    kid: session.kid,
+    privateKey: await exportPrivateKeyBase64(privateKey),
+    publicKey: await exportPublicKeyBase64(session.publicKey)
+  };
+}
+
 export async function verifyPassphrase(passphrase) {
   for (const doc of await loadAllKeyDocuments()) {
     try {
