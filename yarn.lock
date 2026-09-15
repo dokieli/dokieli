@@ -354,10 +354,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@dokieli/web-annotation@npm:^1.0.1":
-  version: 1.0.1
-  resolution: "@dokieli/web-annotation@npm:1.0.1"
-  checksum: 10c0/4c3f4686cc310b026c1afce0ca32494f0ec0cee50cc9c0e0a51c485f3939db10a5e424c1caa714d989ba986b075c91a71bcbb365b098736b5ad05febf194fdc8
+"@dokieli/web-annotation@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "@dokieli/web-annotation@npm:1.1.0"
+  dependencies:
+    jsonld: "npm:^9.0.0"
+  checksum: 10c0/b34d07c2be196c06f371ca8e09d6ade822a403d4c1db17cf7549cef8c6f455503201b3349ca801842b44c7462b1e9d8e83ccebd306769c82a22a9f5fb42d132e
   languageName: node
   linkType: hard
 
@@ -624,9 +626,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nanopub/nanopub-js@portal:../kp/nanopub-js::locator=dokieli%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@nanopub/nanopub-js@portal:../kp/nanopub-js::locator=dokieli%40workspace%3A."
+"@nanopub/nanopub-js@npm:^0.3.2":
+  version: 0.3.2
+  resolution: "@nanopub/nanopub-js@npm:0.3.2"
   dependencies:
     "@rdfjs/data-model": "npm:^2.1.1"
     "@rdfjs/types": "npm:^2.0.1"
@@ -634,8 +636,9 @@ __metadata:
     n3: "npm:^2.0.0"
     rdf-canonize: "npm:^5.0.0"
     rdf-js: "npm:^4.0.2"
+  checksum: 10c0/ed261e14ffb491fc353647bef690317da0d562b609003ae444481b374682b3e98c3681dc7f659a9bd50c546cfdb3c9276ff76dd36b6d5d5fb6dbc62c8f7064f6
   languageName: node
-  linkType: soft
+  linkType: hard
 
 "@oxc-project/types@npm:=0.143.0":
   version: 0.143.0
@@ -2152,8 +2155,8 @@ __metadata:
     "@axe-core/playwright": "npm:^4.9.1"
     "@dokieli/notifications": "npm:^1.0.1"
     "@dokieli/web-access-control": "npm:^1.0.0"
-    "@dokieli/web-annotation": "npm:^1.0.1"
-    "@nanopub/nanopub-js": "portal:../kp/nanopub-js"
+    "@dokieli/web-annotation": "npm:^1.1.0"
+    "@nanopub/nanopub-js": "npm:^0.3.2"
     "@playwright/test": "npm:^1.44.1"
     "@uvdsl/solid-oidc-client-browser": "npm:^0.2.3"
     "@vitest/coverage-istanbul": "npm:^4.1.10"

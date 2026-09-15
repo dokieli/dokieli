@@ -10,6 +10,7 @@
   "annotation-inbox.label.textContent": "Bandeja de entrada",
   "annotation-location-selection.store-at.span.textContent": "Almacenar en:",
   "annotation-location.annotation-service.label.textContent": "Servicio de anotaciones",
+  "annotation-location.nanopub-network.label.textContent": "Red de nanopub",
   "annotation-location.personal-storage.label.textContent": "Almacenamiento personal",
   "annotation.delete.button.aria-label": "Eliminar anotación",
   "annotation.delete.button.title": "Eliminar",

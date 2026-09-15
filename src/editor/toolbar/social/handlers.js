@@ -23,6 +23,7 @@ import { i18n } from "../../../i18n.js";
 import { getAbsoluteIRI, stripFragmentFromString } from "../../../uri.js"
 import Config from "../../../config.js"
 import { notifyInbox, postActivity, showActivities, registerAnnotationInTypeIndex, markAnnotationTarget } from "../../../activity.js"
+import { publishAnnotation } from "../../../nanopub-annotation.js";
 import { shareResource } from "../../../dialog.js";
 import { domSanitize } from "../../../utils/sanitization.js";
 import { formatHTMLString } from "../../../utils/normalization.js";
@@ -95,8 +96,9 @@ export function formHandlerAnnotate(e, action) {
   const annotationLocationPersonalStorage = formValues[`${action}-annotation-location-personal-storage`];
   const annotationLocationActivityOutbox = formValues[`${action}-annotation-location-activity-outbox`];
   const annotationLocationService = formValues[`${action}-annotation-location-annotation-service`];
+  const annotationLocationNanopubNetwork = formValues[`${action}-annotation-location-nanopub-network`];
 
-  updateUserUI({ annotationInboxLocation, annotationLocationAnnotationStore, annotationLocationPersonalStorage, annotationLocationActivityOutbox, annotationLocationService })
+  updateUserUI({ annotationInboxLocation, annotationLocationAnnotationStore, annotationLocationPersonalStorage, annotationLocationActivityOutbox, annotationLocationService, annotationLocationNanopubNetwork })
 
   processAction(action, formValues, selectionData);
 
@@ -111,6 +113,25 @@ function updateUserUI(fields) {
 }
 
 
+// Signing can prompt for the keystore, so this runs alongside the other destinations rather than blocking them
+async function publishAnnotationToNanopubNetwork(noteData, action) {
+  try {
+    const { uri, registryURI } = await publishAnnotation(noteData, { action });
+    const link = (url) => `<a href="${url}" rel="noopener" target="_blank">${url}</a>`;
+    // The canonical URI only resolves once the nanopub reaches the main network, so the test registry is named alongside it
+    const where = Config.Nanopub?.UseTestRegistry ? `${link(uri)} (${link(registryURI)})` : link(uri);
+    const message = { content: `Published to the nanopub network as ${where}`, type: 'success', timer: null };
+    addMessageToLog(message, Config.MessageLog);
+    showActionMessage(document.body, message);
+  }
+  catch (e) {
+    console.warn('dokieli: could not publish the annotation to the nanopub network', e);
+    const message = { content: 'Could not publish to the nanopub network: ' + e.message, type: 'error', timer: null };
+    addMessageToLog(message, Config.MessageLog);
+    showActionMessage(document.body, message);
+  }
+}
+
 export async function processAction(action, formValues, selectionData) {
   //TODO:
 
@@ -122,6 +143,11 @@ export async function processAction(action, formValues, selectionData) {
   }
 
   const { annotationDistribution, ...otherFormData } = data;
+
+  // The network is not a container, so it publishes from the annotation itself rather than through the distribution
+  if (data.formData['annotation-location-nanopub-network']) {
+    publishAnnotationToNanopubNetwork(createNoteData(otherFormData), action);
+  }
 
   let noteHTML, note;
 

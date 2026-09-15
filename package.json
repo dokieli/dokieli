@@ -42,8 +42,8 @@
   "dependencies": {
     "@dokieli/notifications": "^1.0.1",
     "@dokieli/web-access-control": "^1.0.0",
-    "@dokieli/web-annotation": "^1.0.1",
-    "@nanopub/nanopub-js": "^0.3.1",
+    "@dokieli/web-annotation": "^1.1.0",
+    "@nanopub/nanopub-js": "^0.3.2",
     "@uvdsl/solid-oidc-client-browser": "^0.2.3",
     "buffer": "^6.0.3",
     "d3-force": "^3.0.0",

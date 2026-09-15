@@ -31,6 +31,7 @@ import { cleanProseMirrorOutput, normalizeHTML, normalizeWhitespace } from './ut
 import { applyDocumentTransforms, registerDocumentTransform } from './utils/documentTransforms.js';
 import { formatHTML, fragmentFromString, getDoctype, getDocumentContentNode, selectArticleNode, getDocumentNodeFromString, stringFromFragment, createHTML, getOffset, htmlToMarkdown } from './utils/html.js';
 import { i18n } from './i18n.js';
+import { getRegistryURL } from './nanopub.js';
 import { rewriteBlobImagesToRelative, uploadBlobAssets, clearBlobAssets, hasUploadTarget } from './editor/utils/imageAssets.js';
 import { serializeAnnotationToHTML, serializeAnnotationToJSONLD } from '@dokieli/web-annotation';
 import { createNotification, serializeNotificationToJSONLD } from '@dokieli/notifications';
@@ -2919,6 +2920,8 @@ export function getAnnotationLocationHTML(action) {
     { suffix: 'annotation-store', uiKey: 'annotationLocationAnnotationStore', url: getRegisteredAnnotationContainer(action) },
     { suffix: 'personal-storage', uiKey: 'annotationLocationPersonalStorage', url: (Config.User.Storage && Config.User.Storage.length > 0) ? Config.User.Storage[0] : undefined },
     { suffix: 'activity-outbox', uiKey: 'annotationLocationActivityOutbox', url: (Config.User.Outbox && Config.User.Outbox.length > 0) ? Config.User.Outbox[0] : undefined },
+    // Not a container: the registry is shown so the user can see where it goes, and signing is settled at post time
+    { suffix: 'nanopub-network', uiKey: 'annotationLocationNanopubNetwork', url: getRegistryURL() },
   ];
 
   // A remembered choice pre-checks; otherwise fall back to the most relevant available location.

@@ -13,6 +13,7 @@
   "annotation-location.activity-outbox.label.textContent": "Activity outbox",
   "annotation-location.annotation-service.label.textContent": "Annotation service",
   "annotation-location.annotation-store.label.textContent": "Annotations store",
+  "annotation-location.nanopub-network.label.textContent": "Nanopub network",
   "annotation-location.personal-storage.label.textContent": "Personal storage",
   "annotation.delete.button.aria-label": "Delete annotation",
   "annotation.delete.button.title": "Delete",

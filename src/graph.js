@@ -32,6 +32,30 @@ const ns = Config?.ns;
 const localhostUUID = 'http://localhost/d79351f4-cdb8-4228-b24f-3e9ac74a840d';
 const PARSER_MEDIA_TYPES = ['application/ld+json', 'text/turtle', 'application/activity+json', 'text/html'];
 
+const jsonldContexts = new Map();
+
+//XXX: this should move to WA lib
+// Contexts are named with http IRIs for legacy reasons, which browsers block on https pages
+const jsonldDocumentLoader = {
+  async load(url) {
+    const target = url.replace(/^http:\/\//, 'https://');
+
+    if (!jsonldContexts.has(target)) {
+      jsonldContexts.set(target, fetch(target, { headers: { 'Accept': 'application/ld+json' } })
+        .then(response => {
+          if (!response.ok) { throw new Error(`Could not load context ${target}: ${response.status}`); }
+          return response.json();
+        })
+        .catch(error => {
+          jsonldContexts.delete(target);
+          throw error;
+        }));
+    }
+
+    return jsonldContexts.get(target);
+  }
+};
+
 //https://github.com/rdfjs-base/io
 // https://github.com/rdfjs-base/formats/
 
@@ -92,7 +116,7 @@ export function getGraphFromData (data, options = {}) {
   //TODO: Look into a wrapping function so that we don't have to pass baseURI twice; getRDFParser, parser.import
   const parser = getRDFParser(baseIRI, options.contentType);
   const nodeStream = Readable.from([data]);
-  const quadStream = parser.import(nodeStream, { baseIRI: baseIRI });
+  const quadStream = parser.import(nodeStream, { baseIRI: baseIRI, documentLoader: jsonldDocumentLoader });
   // const dataset = rdf.dataset().import(quadStream);
   // console.log(quadStream)
   // return rdf.grapoi({ dataset });
