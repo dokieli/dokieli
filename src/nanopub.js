@@ -27,6 +27,10 @@ function registries() {
   return Config.Nanopub?.UseTestRegistry ? [TEST_NANOPUB_REGISTRY_URL] : NANOPUB_REGISTRY_URLS;
 }
 
+export function getRegistryURL() {
+  return registries()[0];
+}
+
 function agentAccountsURL(registryURL, agentIRI) {
   const origin = new URL(registryURL).origin;
   return `${origin}/agentAccounts?id=${encodeURIComponent(agentIRI)}`;
@@ -43,13 +47,13 @@ export async function getPublicKeyHash(publicKeyBase64) {
   return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// Resolves once the user has unlocked or created a signing key, so publishing can carry on
-function promptForSigningKey() {
+// Resolves once the user has unlocked or created a signing key, so publishing carries on without them losing their place
+export function promptForSigningKey(retry) {
   return import('./dialog.js').then(async ({ showEncryptionUnlock, showSigningSetup }) => {
     const exists = await hasKeystore(ASSERTION);
     return new Promise((resolve, reject) => {
-      const retry = () => publishIntroduction(true).then(resolve, reject);
-      exists ? showEncryptionUnlock(retry) : showSigningSetup(retry);
+      const onSuccess = () => retry().then(resolve, reject);
+      exists ? showEncryptionUnlock(onSuccess) : showSigningSetup(onSuccess);
     });
   });
 }
@@ -68,7 +72,7 @@ export async function publishIntroduction(unlocked = false) {
   }
   catch (e) {
     if (e.code !== 'no-signing-key' || unlocked) throw e;
-    return promptForSigningKey();
+    return promptForSigningKey(() => publishIntroduction(true));
   }
 
   const { privateKey, publicKey } = material;

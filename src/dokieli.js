@@ -26,7 +26,7 @@ import { showDocumentMenu } from './dialog.js';
 import { initTheme } from './theme.js';
 import { updateUILanguage } from './actions.js';
 import { getButtonStates } from './ui/buttons.js';
-import { publishIntroduction, getKeyTrustStatus, getAgentIRI } from './nanopub.js';
+import { publishIntroduction, getKeyTrustStatus, getAgentIRI, getRegistryURL } from './nanopub.js';
 
 const DO = window.DO ?? {
   C: Config,
@@ -169,7 +169,8 @@ const DO = window.DO ?? {
   N: {
     publishIntroduction,
     getKeyTrustStatus,
-    getAgentIRI
+    getAgentIRI,
+    getRegistryURL
   }
 }; //DO
 
