@@ -51,7 +51,14 @@ const DO = window.DO ?? {
           const messageId = showActionMessage(document.body, messageObject);
 
           // Kept until init restores the editor state on the next load
+          const here = new URL(window.location.href);
+          const there = new URL(OIDC.authStartLocation);
           window.location.replace(OIDC.authStartLocation);
+
+          // The session library has already dropped the callback query, so a target that differs only in the hash would not reload, and the opened document lives in the hash
+          if (here.origin + here.pathname + here.search === there.origin + there.pathname + there.search) {
+            window.location.reload();
+          }
         }
         else {
           DO.U.initAuth();

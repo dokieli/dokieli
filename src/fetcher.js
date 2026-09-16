@@ -241,7 +241,7 @@ function getAcceptPutPreference (url) {
 function getResource (url, headers = {}, options = {}) {
   const _fetch = Config['Session']?.isActive ? authFetch : fetch;
 
-  url = url || currentLocation()
+  url = url || Config.DocumentURL || currentLocation()
 // console.log(url)
   if (url.startsWith('file:')){
     return;
@@ -361,7 +361,7 @@ function getResourceHead (url, headers = {}, options = {}) {
 function getResourceOptions (url, options = {}) {
   const _fetch = Config['Session']?.isActive ? authFetch : fetch;
 
-  url = url || currentLocation()
+  url = url || Config.DocumentURL || currentLocation()
 
   options.method = 'OPTIONS'
 

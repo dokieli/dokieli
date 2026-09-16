@@ -83,9 +83,14 @@ beforeEach(async () => {
   };
 });
 
+let bodyBefore;
+
+beforeEach(() => {
+  bodyBefore = document.body.innerHTML;
+});
+
 afterEach(() => {
-  document.getElementById('e2ee-test-article')?.remove();
-  document.getElementById('dokieli-e2ee')?.remove();
+  document.body.innerHTML = bodyBefore;
 });
 
 describe('E2EE document round trip', () => {
@@ -128,12 +133,13 @@ describe('E2EE document round trip', () => {
   test('decryptArticleInPlace restores the article content and title', async () => {
     await createKeystore(PASSPHRASE);
     const jwe = extractJWE(await encryptArticlePayload(ARTICLE_HTML));
-    const article = injectEncryptedArticle(jwe);
+    injectEncryptedArticle(jwe);
 
     await decryptArticleInPlace();
 
-    expect(article.hasAttribute('data-encrypted')).toBe(false);
-    expect(article.textContent).toContain('Top secret content.');
+    expect(document.getElementById('dokieli-e2ee')).toBeNull();
+    expect(document.querySelector('[data-encrypted]')).toBeNull();
+    expect(document.body.textContent).toContain('Top secret content.');
     expect(document.title).toBe('Secret Title');
     expect(Config.User.Keys.Encryption.Enabled).toBe(true);
     expect(Config.User.Keys.Encryption.Document).toBe(true);
@@ -159,10 +165,10 @@ describe('E2EE document round trip', () => {
     lockKeystore();
 
     await unlockKeystore(PASSPHRASE);
-    const article = injectEncryptedArticle(jwe);
+    injectEncryptedArticle(jwe);
 
     await decryptArticleInPlace();
 
-    expect(article.textContent).toContain('Top secret content.');
+    expect(document.body.textContent).toContain('Top secret content.');
   });
 });

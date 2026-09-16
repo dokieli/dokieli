@@ -2246,23 +2246,16 @@ export async function encryptArticlePayload(htmlString, documentURL) {
   if (!article) return htmlString;
 
   const titleNode = parsed.querySelector('head > title');
-  const scope = Config.User.Keys?.Encryption?.Scope === 'document' ? 'document' : 'article';
+  const scope = 'document';
 
-  let plaintext;
-  let hiddenHeadNodes = [];
-  if (scope === 'document') {
-    hiddenHeadNodes = [...parsed.head.children].filter(node =>
-      node !== titleNode && !node.matches('script, link[rel~="stylesheet" i], meta[charset]'));
-    plaintext = JSON.stringify({
-      scope,
-      title: titleNode?.textContent ?? null,
-      head: hiddenHeadNodes.map(node => node.outerHTML).join('\n'),
-      body: parsed.body.innerHTML
-    });
-  }
-  else {
-    plaintext = JSON.stringify({ title: titleNode?.textContent ?? null, body: article.innerHTML });
-  }
+  const hiddenHeadNodes = [...parsed.head.children].filter(node =>
+    node !== titleNode && !node.matches('script, link[rel~="stylesheet" i], meta[charset]'));
+  const plaintext = JSON.stringify({
+    scope,
+    title: titleNode?.textContent ?? null,
+    head: hiddenHeadNodes.map(node => node.outerHTML).join('\n'),
+    body: parsed.body.innerHTML
+  });
 
   const target = documentURL || Config.DocumentURL || currentLocation();
   await syncDocumentRecipientsFromACL(target);
@@ -2274,27 +2267,20 @@ export async function encryptArticlePayload(htmlString, documentURL) {
   script.type = 'application/jose';
   script.textContent = jwe;
 
-  if (scope === 'document') {
-    hiddenHeadNodes.forEach(node => node.remove());
-    const shell = parsed.createElement('article');
-    shell.setAttribute('data-encrypted', 'true');
-    shell.appendChild(script);
-    const main = parsed.createElement('main');
-    main.appendChild(shell);
-    parsed.body.replaceChildren(main);
-  }
-  else {
-    article.setAttribute('data-encrypted', 'true');
-    article.innerHTML = '';
-    article.appendChild(script);
-  }
+  hiddenHeadNodes.forEach(node => node.remove());
+  const shell = parsed.createElement('article');
+  shell.setAttribute('data-encrypted', 'true');
+  shell.appendChild(script);
+  const main = parsed.createElement('main');
+  main.appendChild(shell);
+  parsed.body.replaceChildren(main);
 
   if (titleNode) titleNode.textContent = i18n.t('encryption.encrypted-document-title.textContent');
 
   Config.User.Keys.Encryption.Document = true;
 
   const doctype = getDoctype();
-  return (doctype ? doctype + '\n' : '') + parsed.documentElement.outerHTML;
+  return (doctype ? doctype + '\n' : '') + formatHTML(parsed.documentElement, { ...Config.DOMProcessing, format: true });
 }
 
 export function isMarkdownTarget(url) {
@@ -2355,7 +2341,8 @@ export async function updateMutableResource(url, data, options) {
 
   if (Config.User.Keys?.Encryption?.Enabled && Config.User.Keys?.Encryption?.DocumentEncrypt) data = await encryptArticlePayload(data, url);
 
-  Config.Storage.save(url, null, data, options)
+  // The message is shown here; the rejection still reaches callers that need to react to it
+  return Config.Storage.save(url, null, data, options)
     .then(async (resolved) => {
       if (blobImageMapping.length) {
         await uploadBlobAssets(url, blobImageMapping);
@@ -2363,7 +2350,10 @@ export async function updateMutableResource(url, data, options) {
       }
       handleActionMessage(resolved);
     })
-    .catch((rejected) => handleActionMessage(null, rejected))
+    .catch((rejected) => {
+      handleActionMessage(null, rejected);
+      throw rejected;
+    })
     .finally(() => {
       getResourceInfo(data, { 'mode': 'update' });
     });

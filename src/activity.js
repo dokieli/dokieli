@@ -528,7 +528,7 @@ export async function registerAnnotationInTypeIndex(containerIRI, forClass) {
 }
 
 export function getNotifications(url) {
-  url = url || currentLocation();
+  url = url || Config.DocumentURL || currentLocation();
 
   Config.Inbox[url] = {};
   Config.Inbox[url]['Notifications'] = [];

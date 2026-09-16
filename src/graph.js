@@ -208,7 +208,7 @@ export function getSubjectInfo(subjectIRI, options = {}) {
 export function getMatchFromData (data, spo = {}, options = {}) {
   if (!data) { return Promise.resolve({}) }
 
-  spo['subject'] = spo.subject || currentLocation();
+  spo['subject'] = spo.subject || Config.DocumentURL || currentLocation();
   spo['predicate'] = spo.predicate || ns.rdfs.label.value;
 
   options['contentType'] = options.contentType || 'text/html';
@@ -906,7 +906,7 @@ export function getLinkRelation(property, url, data) {
       });
   }
   else if (data) {
-    var subjectURI = currentLocation();
+    var subjectURI = Config.DocumentURL || currentLocation();
     // var subjectURI = window.location.href.split(window.location.search || window.location.hash || /[?#]/)[0]
 
     var options = {
@@ -1930,7 +1930,7 @@ export function sortGraphTriples(g, options) {
 }
 
 export function getItemsList(url, options) {
-  url = url || currentLocation();
+  url = url || Config.DocumentURL || currentLocation();
   options = options || {};
   options['resourceItems'] = options.resourceItems || [];
   options['headers'] = options.headers || {};

@@ -56,7 +56,7 @@ function nodeLabel(d) {
 
 //Borrowed some of the d3 parts from https://bl.ocks.org/mbostock/4600693
 export function showVisualisationGraph(url, data, selector, options) {
-  url = url || currentLocation();
+  url = url || Config.DocumentURL || currentLocation();
   url = stripUrlParamsFromString(url);
   url = sanitizeIRI(url);
   selector = selector || 'body';
@@ -1063,7 +1063,7 @@ function convertGraphToVisualisationGraph(url, g, options){
 export function showGraph(resources, selector, options){
   if (!Config.GraphViewerAvailable) { return; }
 
-  let documentURL = currentLocation();
+  let documentURL = Config.DocumentURL || currentLocation();
 
   options = options || {};
   options['contentType'] = options.contentType || 'text/html';

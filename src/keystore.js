@@ -434,6 +434,11 @@ export async function syncDocumentRecipientsFromACL(documentURL) {
   const agents = new Set(agentsWithMode(ctx, 'Read'));
   agents.delete(Config.User.IRI);
 
+  // Revoked within the session, so the next version must not be encrypted to them
+  for (const agent of [...recipients.keys()]) {
+    if (!agents.has(agent)) recipients.delete(agent);
+  }
+
   for (const agent of agents) {
     if (recipients.has(agent)) continue;
     const found = await getAgentEncryptionKey(agent);

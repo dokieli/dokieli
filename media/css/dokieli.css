@@ -2090,8 +2090,13 @@ position:static;
 #share-resource-contacts li > .warning {
 margin-left:0.5em;
 }
-#resource-permissions button#resource-permissions-update.pending {
-background-color:var(--do-color-success-bg, #1a7f37);
+#resource-permissions .permissions li .progress a {
+color:var(--do-color-fg);
+}
+/* basic.css gives every link a hover background, which reads as a highlight on a list row */
+#resource-permissions .permissions li > a:hover,
+#share-resource-contacts li a:hover {
+background-color:transparent;
 }
 
 #share-resource-share-url button.copy-to-clipboard {

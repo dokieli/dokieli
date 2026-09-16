@@ -171,7 +171,7 @@ export function updateHTTPStorageDocument(url, data, options = {}) {
 
   var datetime = getDateTimeISO();
 
-  updateMutableResource(url);
+  updateMutableResource(url).catch(() => {});
 
   // if (options.autoSave) {
   // Config.AutoSave.Items[url]['http']['updated'] = datetime;

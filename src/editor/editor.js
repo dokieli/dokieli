@@ -398,7 +398,7 @@ export class Editor {
   } else {
     Config.Editor['collab'] = true;
     ydoc = new Y.Doc();
-    const roomName = encodeURIComponent(currentLocation());
+    const roomName = encodeURIComponent(Config.DocumentURL || currentLocation());
     localProvider = new IndexeddbPersistence(roomName, ydoc);
     // TODO: temp allowing websocket only on the demo doc
     if (YWEBSOCKET_URL && window.location.href === DEMO_URL) {
@@ -1139,7 +1139,7 @@ export function getYjsVersions() {
 // Read version snapshots directly from IndexedDB without needing the editor
 // to be active. Used to show version history before the user enters edit mode.
 export async function getYjsVersionsFromIDB({ limit }) {
-  const roomName = encodeURIComponent(currentLocation());
+  const roomName = encodeURIComponent(Config.DocumentURL || currentLocation());
   const tempDoc = new Y.Doc();
   const persistence = new IndexeddbPersistence(roomName, tempDoc);
 

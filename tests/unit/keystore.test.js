@@ -502,6 +502,19 @@ describe('keystore.js', () => {
       expect(getDocumentRecipients(DOC_A)).toEqual([BOB]);
     });
 
+    test('an agent who lost read access is dropped on the next sync', async () => {
+      Config.Session = { isActive: true };
+      await mockAgentProfile(BOB, BOB_KEY_IRI, bobKey);
+      mockReadAccess({ [DOC_A]: [WEBID, BOB] });
+      await syncDocumentRecipientsFromACL(DOC_A);
+      expect(getDocumentRecipients(DOC_A)).toEqual([BOB]);
+
+      mockReadAccess({ [DOC_A]: [WEBID] });
+      await syncDocumentRecipientsFromACL(DOC_A);
+
+      expect(getDocumentRecipients(DOC_A)).toEqual([]);
+    });
+
     test('lockKeystore clears the recipients of every document', () => {
       addDocumentRecipient(DOC_A, BOB, bobKey);
       addDocumentRecipient(DOC_B, CAROL, bobKey);

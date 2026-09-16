@@ -149,6 +149,7 @@ function initWebManifest() {
       link.rel = 'manifest';
       link.href = '/app.webmanifest';
       link.crossOrigin = 'use-credentials';
+      link.className = 'do';
       document.head.appendChild(link);
     })
     .catch(() => {});
@@ -718,18 +719,22 @@ export async function decryptArticleInPlace() {
   // Document scope: restore hidden head metadata and the original body, replacing the placeholder shell but leaving dokieli's runtime nodes alone
   if (payload.scope === 'document') {
     if (payload.head) {
-      document.head.insertAdjacentHTML('beforeend', payload.head);
+      const stored = document.createElement('template');
+      stored.innerHTML = payload.head;
+      const present = new Set([...document.head.children].map(n => n.outerHTML));
+      [...stored.content.children].forEach(node => {
+        if (node.matches('link[rel="manifest"]') || present.has(node.outerHTML)) return;
+        document.head.appendChild(node);
+      });
     }
     const shell = article.closest('main') || article;
     const tmpl = document.createElement('template');
     tmpl.innerHTML = body;
     shell.replaceWith(tmpl.content);
-    Config.User.Keys.Encryption.Scope = 'document';
   }
   else {
     article.removeAttribute('data-encrypted');
     article.setHTMLUnsafe(body);
-    Config.User.Keys.Encryption.Scope = 'article';
   }
   if (title) document.title = title;
 

@@ -24,7 +24,7 @@ function renderDocumentDo() {
     ? Config.Button.Menu.EditDisable
     : Config.Button.Menu.EditEnable;
 
-  const encryptToggle = Config.User?.Encryption?.DocumentEncrypt
+  const encryptToggle = Config.User?.Keys?.Encryption?.DocumentEncrypt
     ? Config.Button.Menu.EncryptDisable
     : Config.Button.Menu.EncryptEnable;
 
