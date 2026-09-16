@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dokieli-app-cache-v6';
+const CACHE_NAME = 'dokieli-app-cache-v7';
 
 const OFFLINE_SHELL = '/offline.html';
 
@@ -62,10 +62,7 @@ self.addEventListener('fetch', (event) => {
 
   const path = url.pathname;
 
-  if (STATIC_ASSETS.has(path)) {
-    event.respondWith(staleWhileRevalidate(req, path));
-  }
-  else if (HTML_PAGES.has(path)) {
+  if (STATIC_ASSETS.has(path) || HTML_PAGES.has(path)) {
     event.respondWith(networkFirst(req, path));
   }
   // Offline navigations fall back to the shell, which restores the device copy
@@ -77,24 +74,7 @@ self.addEventListener('fetch', (event) => {
   // Anything else: no interception, let the browser handle it normally.
 });
 
-// Serve from cache immediately; revalidate against the server regardless of HTTP freshness.
-async function staleWhileRevalidate(req, key) {
-  const cache = await caches.open(CACHE_NAME);
-  const cached = await cache.match(key);
-
-  const networked = fetch(req, { cache: 'no-cache' })
-    .then(response => {
-      if (response && response.ok) {
-        cache.put(key, response.clone());
-      }
-      return response;
-    })
-    .catch(() => null);
-
-  return cached || (await networked) || Response.error();
-}
-
-// Prefer the network; fall back to the cached copy when offline.
+// Prefer the network; fall back to the cached copy when it cannot be fetched or the server fails.
 async function networkFirst(req, key) {
   const cache = await caches.open(CACHE_NAME);
 
@@ -102,8 +82,9 @@ async function networkFirst(req, key) {
     const response = await fetch(req);
     if (response && response.ok) {
       cache.put(key, response.clone());
+      return response;
     }
-    return response;
+    return (await cache.match(key)) || response;
   }
   catch (err) {
     const cached = await cache.match(key);
