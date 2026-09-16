@@ -3721,6 +3721,9 @@ export function viewSource(e) {
         }
       });
 
+      // A collaborative room would otherwise win over the pasted source on the next sync
+      if (Config.Editor) Config.Editor.replaceSharedContent = true;
+
       if (wasAuthor) {
         Config.Editor.toggleEditor('author');
       }

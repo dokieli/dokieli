@@ -352,6 +352,10 @@ export class Editor {
 
   //Creating a ProseMirror editor view at a specified this.node
   createEditor(options) {
+    // Set by Source > Update: the pasted DOM supersedes whatever the room holds
+    const replaceShared = this.replaceSharedContent === true;
+    this.replaceSharedContent = false;
+
     // TODO: think about a review mode of initializing and destroying editor
     this.storeRestrictedNodes();
 
@@ -717,6 +721,21 @@ export class Editor {
       // an update before seeding; if it arrives (or a peer seeds first), back off.
       const decideSeed = () => {
         console.log(`[seed] decideSeed (after sync) len=${yXmlFragment.length} seeded=${meta.get('seeded')}`);
+
+        if (replaceShared) {
+          ydoc.transact(() => {
+            yXmlFragment.delete(0, yXmlFragment.length);
+            ydoc.getMap(VERSIONS_MAP).clear();
+            meta.clear();
+          });
+          ydoc.transact(() => {
+            Y.applyUpdate(ydoc, encodeSeed(originalDoc));
+            meta.set('seeded', true);
+          });
+          finish(true);
+          return;
+        }
+
         if (yXmlFragment.length > 0 || meta.get('seeded')) { finish(true); return; }
 
         let settled = false;

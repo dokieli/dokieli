@@ -129,6 +129,18 @@ describe("getDocument", () => {
       '<html lang="en"'
     );
   });
+
+  it("unwraps peer selection decorations but keeps their text", () => {
+    document.documentElement.innerHTML = `
+      <head></head>
+      <body><main><article><p>Hello <span class="yjs-selection">shared</span> world</p></article></main></body>
+    `;
+
+    const result = getDocument(document.documentElement);
+
+    expect(result).not.toContain("yjs-selection");
+    expect(result).toContain("Hello shared world");
+  });
 });
 
 describe("createFeedXML", () => {

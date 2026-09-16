@@ -323,6 +323,9 @@ export function cleanProseMirrorOutput(node) {
   // Remove the trailing breaks that ProseMirror adds for empty nodes
   element.querySelectorAll('.ProseMirror-trailingBreak').forEach(node => node.remove());
 
+  // Peer selection decorations wrap real text, so unwrap rather than remove
+  element.querySelectorAll('.yjs-selection').forEach(span => span.replaceWith(...span.childNodes));
+
   // Unwrap .editor-image-resize to the inner img (reverse to collapse nested wrappers).
   const resizeWrappers = Array.from(element.querySelectorAll('.editor-image-resize')).reverse();
   resizeWrappers.forEach(wrapper => {
