@@ -6380,11 +6380,12 @@ user-select: none;
 .shower .caption h1 { color: var(--do-color-fg); }
 .shower .caption a { color: inherit; }
 
-/* Slide canvas: 1024x640 reference geometry; scaled by .single/.full. */
+/* Slide canvas: 1024x640 reference geometry; scaled by .single/.full.
+   overflow:auto so legacy slides taller than the canvas stay reachable. */
 .shower .slide {
   position: relative;
   z-index: 1;
-  overflow: hidden;
+  overflow: auto;
   padding: 104px 112px 0 96px;
   width: 1024px;
   height: 640px;
@@ -6392,6 +6393,8 @@ user-select: none;
   line-height: 2;
   font-size: 24px;
 }
+/* The shout backdrop extends past the canvas; keep it clipped. */
+.shower .slide:has(.shout) { overflow: hidden; }
 .shower .slide h2 {
   margin-bottom: 32px;
   color: var(--do-color-fg);
