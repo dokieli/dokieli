@@ -114,12 +114,10 @@ function updateUserUI(fields) {
 }
 
 
-// Signing can prompt for the keystore, so this runs alongside the other destinations rather than blocking them
 async function publishAnnotationToNanopubNetwork(noteData, action) {
   try {
     const { uri, registryURI } = await publishAnnotation(noteData, { action });
     const link = (url) => `<a href="${url}" rel="noopener" target="_blank">${url}</a>`;
-    // The canonical URI only resolves once the nanopub reaches the main network, so the test registry is named alongside it
     const where = Config.Nanopub?.UseTestRegistry ? `${link(uri)} (${link(registryURI)})` : link(uri);
     const message = { content: `Published to the nanopub network as ${where}`, type: 'success', timer: null };
     addMessageToLog(message, Config.MessageLog);
@@ -145,7 +143,7 @@ export async function processAction(action, formValues, selectionData) {
 
   const { annotationDistribution, ...otherFormData } = data;
 
-  // The network is not a container, so it publishes from the annotation itself rather than through the distribution
+  // Not a container, so it is published outside the distribution loop
   if (data.formData['annotation-location-nanopub-network']) {
     publishAnnotationToNanopubNetwork(createNoteData(otherFormData), action);
   }
@@ -341,7 +339,7 @@ export function getFormActionData(action, formValues, selectionData) {
 
     //TODO: Apply to any cite-as that dereferences to the annotated page, not only nanopubs
     if (isNanopubIRI(data.preferredTargetIRI)) {
-      // The page is the nanopub's HTML representation, so the fragment and selectors apply after content negotiation
+      // The page is the nanopub's HTML representation, so selectors apply after content negotiation
       data.targetIRI = data.preferredTargetIRI;
       data.targetFragment = data.parentNodeWithId?.id;
       data.targetState = { type: 'HttpRequestState', value: 'Accept: text/html' };

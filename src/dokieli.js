@@ -26,7 +26,6 @@ import { showDocumentMenu } from './dialog.js';
 import { initTheme } from './theme.js';
 import { updateUILanguage } from './actions.js';
 import { getButtonStates } from './ui/buttons.js';
-import { publishIntroduction, getKeyTrustStatus, getAgentIRI, getRegistryURL } from './nanopub.js';
 
 const DO = window.DO ?? {
   C: Config,
@@ -163,15 +162,7 @@ const DO = window.DO ?? {
       wrapper.remove();
     }
 
-  }, //DO.U
-
-  //XXX: reachable from the console until the annotation flow provides an entry point
-  N: {
-    publishIntroduction,
-    getKeyTrustStatus,
-    getAgentIRI,
-    getRegistryURL
-  }
+  } //DO.U
 }; //DO
 
 if (document.readyState === "loading") {

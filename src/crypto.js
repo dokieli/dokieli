@@ -34,7 +34,7 @@ export async function generateEncryptionKeypair() {
   return { publicKey, privateKey, kid };
 }
 
-// RSA-2048 with SHA-256 is what the nanopub network verifies signatures with
+// RSA-2048/SHA-256 is what the nanopub network verifies
 export async function generateSigningKeypair() {
   const { publicKey, privateKey } = await crypto.subtle.generateKey(
     { name: 'RSASSA-PKCS1-v1_5', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' },
@@ -46,7 +46,7 @@ export async function generateSigningKeypair() {
   return { publicKey, privateKey, kid };
 }
 
-// use records what the key is for; the thumbprint covers only required members, so kid is unaffected
+// use is not a thumbprint member, so kid is unaffected
 export async function exportPublicKeyJWK(publicKey, kid) {
   const jwk = await crypto.subtle.exportKey('jwk', publicKey);
   const use = jwk.kty === 'RSA' ? 'sig' : 'enc';
@@ -58,7 +58,6 @@ export async function exportPrivateKeyJWK(privateKey, kid) {
   return kid ? { ...jwk, kid } : jwk;
 }
 
-// EC keys are for key agreement, RSA keys for nanopub signatures
 function algorithmFor(jwk) {
   return jwk?.kty === 'RSA'
     ? { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }
@@ -70,7 +69,7 @@ export async function importPublicKeyJWK(jwk) {
   return crypto.subtle.importKey('jwk', jwk, algorithmFor(jwk), true, usages);
 }
 
-// Signing keys are extractable because nanopub-js takes the key as a base64 string
+// Signing keys are extractable because nanopub-js takes the key as base64
 export async function importPrivateKeyJWK(jwk, extractable = false) {
   const usages = jwk?.kty === 'RSA' ? ['sign'] : ['deriveBits'];
   return crypto.subtle.importKey('jwk', jwk, algorithmFor(jwk), extractable, usages);
@@ -101,7 +100,7 @@ function fromPEM(pem) {
   return bytes.buffer;
 }
 
-// PKCS#8 does not say which algorithm to import as, so try key agreement first and fall back to signing
+// PKCS#8 does not name the algorithm, so try key agreement then signing
 async function importPKCS8(pem) {
   const der = fromPEM(pem);
   try {
@@ -111,7 +110,6 @@ async function importPKCS8(pem) {
   }
 }
 
-// The private JWK carries the public members too, so the public key needs no second file
 export async function privateKeyPEMToJWK(pem) {
   const jwk = await crypto.subtle.exportKey('jwk', await importPKCS8(pem));
   const publicKeyJWK = jwk.kty === 'RSA'
@@ -121,7 +119,7 @@ export async function privateKeyPEMToJWK(pem) {
   return { privateKeyJWK: { ...jwk, kid }, publicKeyJWK: { ...publicKeyJWK, kid } };
 }
 
-// Extractable, unlike importPrivateKeyJWK: this key is handed to the user
+// Extractable: this key is handed to the user
 export async function privateKeyJWKToPEM(privateKeyJWK) {
   const usages = privateKeyJWK?.kty === 'RSA' ? ['sign'] : ['deriveBits'];
   const key = await crypto.subtle.importKey('jwk', privateKeyJWK, algorithmFor(privateKeyJWK), true, usages);

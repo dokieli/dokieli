@@ -2910,7 +2910,6 @@ export function getAnnotationLocationHTML(action) {
     { suffix: 'annotation-store', uiKey: 'annotationLocationAnnotationStore', url: getRegisteredAnnotationContainer(action) },
     { suffix: 'personal-storage', uiKey: 'annotationLocationPersonalStorage', url: (Config.User.Storage && Config.User.Storage.length > 0) ? Config.User.Storage[0] : undefined },
     { suffix: 'activity-outbox', uiKey: 'annotationLocationActivityOutbox', url: (Config.User.Outbox && Config.User.Outbox.length > 0) ? Config.User.Outbox[0] : undefined },
-    // Not a container: the registry is shown so the user can see where it goes, and signing is settled at post time
     { suffix: 'nanopub-network', uiKey: 'annotationLocationNanopubNetwork', url: getRegistryURL() },
   ];
 
