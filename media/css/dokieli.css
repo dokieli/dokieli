@@ -1025,6 +1025,12 @@ margin:0 !important;
 float:none !important;
 }
 
+/* An emptied inline field keeps a clickable width, e.g. after deleting the editor name */
+.ProseMirror dd > p:first-child:has(> br.ProseMirror-trailingBreak:only-child) {
+display:inline-block !important;
+min-width:4em;
+}
+
 
 dl.info dt,
 dl.info dd {
