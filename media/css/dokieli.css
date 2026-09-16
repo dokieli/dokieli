@@ -5498,6 +5498,15 @@ max-width:none;
   white-space: nowrap;
 }
 
+/* Chrome snaps the caret out of an empty inline value back into the term, so until it has text it is a block on its own line */
+.ProseMirror dd > p:first-child:has(> br.ProseMirror-trailingBreak) {
+  display: block !important;
+}
+
+dd > p:first-child > .editor-placeholder {
+  position: static;
+}
+
 .editor-empty-node {
   position: relative; }
   .editor-empty-node:has(br:only-child):after,

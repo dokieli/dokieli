@@ -146,6 +146,11 @@ function handleEmptyEntryExitEnter(state, dispatch, entryDepth) {
   if (list.type.name !== 'dl' || list.childCount < 2) return false;
   if ($from.index(entryDepth - 1) !== list.childCount - 1) return false;
 
+  // A term keeps its only value; leaving here would strand the typed text outside the list
+  let values = 0;
+  list.forEach(child => { if (child.type.name === 'dd') values++; });
+  if (entry.type.name === 'dd' && values === 1) return true;
+
   if (dispatch) {
     const entryStart = $from.before(entryDepth);
     const listEnd = $from.after(entryDepth - 1);
@@ -198,19 +203,17 @@ function customEnterCommand(state, dispatch) {
   if (isListItem && listItemDepth !== null) {
     if (handleEmptyEntryExitEnter(state, dispatch, listItemDepth)) return true;
 
-    let liType = node.type;
-
-    switch (node.type) {
-      case "li":
-        liType = node.type;
-        break;
-      case "dd": 
-        liType = schema.nodes.dt;
-        break;
-      case "dt":
-        liType = schema.nodes.dd;
-        break;
+    // Enter in a term moves into its value, adding one if missing; in a value it adds another value (e.g. a second editor)
+    if (node.type.name === 'dt') {
+      const list = $from.node(listItemDepth - 1);
+      const nextEntry = list.maybeChild($from.index(listItemDepth - 1) + 1);
+      if (nextEntry?.type.name === 'dd') {
+        const $into = state.doc.resolve($from.after(listItemDepth) + 1);
+        dispatch(tr.setSelection(TextSelection.near($into, 1)).scrollIntoView());
+        return true;
+      }
     }
+    const liType = node.type.name === 'dt' ? schema.nodes.dd : node.type;
 
     const paragraphType = schema.nodes.p;
 
