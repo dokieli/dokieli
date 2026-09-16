@@ -4116,7 +4116,7 @@ export async function saveAsDocument(e) {
             <legend data-i18n="dialog.save-as-document.asset-handling.legend">${i18n.t('dialog.save-as-document.asset-handling.legend.textContent')}</legend>
             <ul class="save-as-cards">
               <li>
-                <input type="radio" id="asset-reference" name="base-url" value="base-url-absolute" />
+                <input type="radio" id="asset-reference" name="base-url" value="base-url-absolute" checked="checked" />
                 <label for="asset-reference">
                   ${iconGlobe}
                   <span class="save-as-card-text">
@@ -4127,7 +4127,7 @@ export async function saveAsDocument(e) {
                 </label>
               </li>
               <li>
-                <input type="radio" id="asset-bundle" name="base-url" value="base-url-relative" checked="checked" />
+                <input type="radio" id="asset-bundle" name="base-url" value="base-url-relative" />
                 <label for="asset-bundle">
                   ${iconDownload}
                   <span class="save-as-card-text">
