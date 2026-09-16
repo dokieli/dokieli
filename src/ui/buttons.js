@@ -58,7 +58,7 @@ export function initButtons() {
       Derivation: getButtonHTML({ key: "info.derivation.button", button: "info", buttonClass: "info", buttonType: "button", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-derivation-data` }),
       Dokielize: getButtonHTML({ key: "info.dokielize.button", button: "info", buttonClass: "info", buttonType: "button", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-dokielize` }),
       EmbedData: getButtonHTML({ key: "info.embed-data.button", button: "info", buttonClass: "info", buttonType: "button", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-embed-data` }),
-      Encrypt: getButtonHTML({ key: "info.encrypt.button", button: "info", buttonClass: "info", buttonType: "button", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-encrypt` }),
+      Encrypt: getButtonHTML({ key: "info.encrypt.button", button: "info", buttonClass: "info", buttonType: "button", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-document-encryption` }),
       Keys: getButtonHTML({ key: "info.keys.button", button: "info", buttonClass: "info", buttonType: "button", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-keys` }),
       Inbox: getButtonHTML({ key: "info.inbox.button", button: "info", buttonClass: "info", buttonType: "button", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-set-inbox` }),
       GraphView: getButtonHTML({ key: "info.graph.button", button: "info", buttonClass: "info", buttonType: "button", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-graph-view` }),
@@ -73,7 +73,7 @@ export function initButtons() {
       SaveAs: getButtonHTML({ key: "info.save-as.button", button: "info", buttonClass: "info", buttonType: "button", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-save-as` }),
       SearchSources: getButtonHTML({ key: "info.search-sources.button", button: "info", buttonClass: "info", buttonType: "button", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-data-sources` }),
       Share: getButtonHTML({ key: "info.share.button", button: "info", buttonClass: "info", buttonType: "button", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-share` }),
-      Sign: getButtonHTML({ key: "info.sign.button", button: "info", buttonClass: "info", buttonType: "button", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-sign` }),
+      Sign: getButtonHTML({ key: "info.sign.button", button: "info", buttonClass: "info", buttonType: "button", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-keys` }),
       SignIn: getButtonHTML({ key: "info.signin.button", button: "info", buttonClass: "info", buttonType: "button", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-sign-in` }),
       Source: getButtonHTML({ key: "info.source.button", button: "info", buttonClass: "info", buttonType: "button", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-source` }),
       WebId: `<button class="info" data-i18n="dialog.signin.about.button" rel="rel:help" resource="${docsBaseURL}#feature-webid" title="${i18n.t('dialog.signin.about.button.title')}" type="button">${Icon['.fas.fa-circle-info']}<span data-i18n="dialog.signin.about.button.span">${i18n.t('dialog.signin.about.button.span.textContent')}</span></button>`
