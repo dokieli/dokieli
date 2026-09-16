@@ -859,6 +859,8 @@ font-family:inherit;
 .cv-entry-add,
 .cv-skill-add,
 .dl-entry-add,
+.document-type-add,
+.document-type-remove,
 .subdivision-add-button {
 border:1px dashed var(--do-color-accent);
 border-radius:0.25em;
@@ -877,6 +879,8 @@ font-size:inherit;
 .cv-skill-add:focus-visible,
 .dl-entry-add:hover,
 .dl-entry-add:focus-visible,
+.document-type-add:hover,
+.document-type-add:focus-visible,
 .subdivision-add-button:hover:not([disabled]),
 .subdivision-add-button:focus-visible {
 border-style:solid;
@@ -892,6 +896,16 @@ display:inline-block;
 margin:1em 0;
 padding:0.25em;
 font-weight:bold;
+}
+
+.document-type-add {
+display:inline-block;
+margin:0.25em 0;
+padding:0.25em;
+font-weight:bold;
+}
+.document-type-remove {
+margin-left:0.4em;
 }
 
 .category-checkboxes {
@@ -941,7 +955,9 @@ margin-left:0.4em;
 .section-remove:hover,
 .section-remove:focus-visible,
 .subsection-remove:hover,
-.subsection-remove:focus-visible {
+.subsection-remove:focus-visible,
+.document-type-remove:hover,
+.document-type-remove:focus-visible {
 border-color:var(--do-color-error);
 background:var(--do-color-error-bg);
 color:var(--do-color-error);
@@ -4458,7 +4474,8 @@ color:var(--do-color-fg);
 margin-top:0;
 }
 
-.do select {
+.do select,
+select[data-select="document-type"] {
 padding: 0.75em;
 font-size: 1em;
 border: 2px solid var(--do-color-border);
@@ -7927,6 +7944,10 @@ margin-right:0;
 position:absolute;
 left:-2em;
 padding-right:1em;
+}
+
+nav.do[id$="-toc"] li.tocline .section-adds {
+margin-left:1em;
 }
 
 /* the drag handle only shows on hover, so the row stays plain text to click into */

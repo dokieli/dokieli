@@ -160,8 +160,38 @@ export function normalizeHTML(node, options) {
   });
 
   normalizeTableMarkup(node);
+  normalizeDocumentTypeMarkup(node);
 
   return node;
+}
+
+//Converts the Document Type selects back into rdf:type references, on save and on leaving author mode.
+export function normalizeDocumentTypeMarkup(node) {
+  node.querySelectorAll('#document-type select[data-select="document-type"]').forEach(select => {
+    const doc = select.ownerDocument;
+    const dd = select.closest('dd');
+    const chosen = [...select.querySelectorAll('option')]
+      .find(option => option.hasAttribute('selected') && option.getAttribute('value'));
+
+    if (!chosen) { (dd || select).remove(); return; }
+
+    const a = doc.createElement('a');
+    a.setAttribute('href', chosen.getAttribute('value'));
+    a.setAttribute('rel', 'rdf:type');
+    a.textContent = chosen.textContent.trim();
+    if (dd) dd.replaceChildren(a);
+    else select.replaceWith(a);
+  });
+
+  //Drops duplicate types, keeping the first of each.
+  node.querySelectorAll('#document-type').forEach(dl => {
+    const seen = new Set();
+    dl.querySelectorAll('dd').forEach(dd => {
+      const href = dd.querySelector('a[rel~="rdf:type"]')?.getAttribute('href');
+      if (href && seen.has(href)) dd.remove();
+      else if (href) seen.add(href);
+    });
+  });
 }
 
 //Converts a managed table's authoring state into plain markup, on save and on leaving author mode.

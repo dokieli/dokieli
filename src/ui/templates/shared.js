@@ -17,6 +17,8 @@ limitations under the License.
 
 import Config from '../../config.js';
 import { fragmentFromString } from '../../utils/html.js';
+import { getResourceTypeOptionsHTML } from '../../doc.js';
+import { registerEditorParseTransform } from '../../utils/documentTransforms.js';
 
 // Helpers shared by document templates; template-specific markup stays in each template's module.
 
@@ -74,6 +76,28 @@ export function sectionHTML({ id, level = 2, heading, content = '', className = 
 export function noteHTML({ id, level = 3, title, content = '' }) {
   return `<div class="note" id="${id}" inlist="" rel="schema:hasPart" resource="#${id}"><h${level} property="schema:name"><span>Note</span>: ${title}</h${level}><div datatype="rdf:HTML" property="schema:description">${content}</div></div>`;
 }
+
+// One Document Type select; data-select wires it into the editor's select
+// persistence (tableTools syncs the chosen option into ProseMirror state).
+export function documentTypeSelectHTML(typeIri = '', label = null) {
+  // A type outside the registry keeps its own option, so it survives the round trip.
+  const extra = typeIri && !Config.ResourceType[typeIri]
+    ? `<option selected="selected" value="${typeIri}">${label || typeIri}</option>`
+    : '';
+  return `<select data-select="document-type">${extra}${getResourceTypeOptionsHTML({ selected: typeIri })}</select>`;
+}
+
+// Author entry: each rdf:type entry in the Document Type dl becomes a select.
+// The exit conversion back to anchors lives in normalizeDocumentTypeMarkup.
+function transformDocumentTypeEntries(root) {
+  root?.querySelectorAll?.('#document-type dd').forEach((dd) => {
+    if (dd.querySelector('select[data-select="document-type"]')) return;
+    const a = dd.querySelector('a[rel~="rdf:type"]');
+    if (!a) return;
+    dd.replaceChildren(fragmentFromString(`<p>${documentTypeSelectHTML(a.getAttribute('href'), a.textContent.trim())}</p>`));
+  });
+}
+registerEditorParseTransform(transformDocumentTypeEntries);
 
 // "More details about this document" block. entries: [{ id, dt, dds: [innerHTML], className? }]
 export function documentDetailsHTML(entries, { id = null, summary = 'More details about this document' } = {}) {

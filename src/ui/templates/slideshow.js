@@ -17,10 +17,10 @@ limitations under the License.
 
 import { TextSelection } from 'prosemirror-state';
 import Config from '../../config.js';
-import { getDocumentContentNode } from '../../utils/html.js';
+import { getDocumentContentNode, fragmentFromString } from '../../utils/html.js';
 import { getActiveSlideIndex, setActiveSlideIndex, setSlideshowMode } from '../../editor/plugins/slideshowDecorations.js';
 import { i18n } from '../../i18n.js';
-import { prepareDocumentForTemplate, replaceDocumentBody } from './shared.js';
+import { prepareDocumentForTemplate, replaceDocumentBody, documentDetailsHTML } from './shared.js';
 
 export function setTemplateNewSlideshow(mode, options) {
   prepareDocumentForTemplate();
@@ -32,7 +32,14 @@ export function setTemplateNewSlideshow(mode, options) {
     documentMenu?.querySelector(sel)?.remove();
   });
 
-  replaceDocumentBody(`<main><article about="" dir="auto" typeof="schema:CreativeWork"><header class="caption"><h1 property="schema:name"></h1></header><section class="slide" id="cover" inlist="" rel="schema:hasPart" resource="#cover" typeof="bibo:Slide"><h2 aria-label="${i18n.t('editor.new-slideshow.h2.aria-label')}" property="schema:name"></h2><div datatype="rdf:HTML" property="schema:description"><p></p></div></section></article><div class="do progress"></div></main>`, { bodyClass: 'shower single' });
+  replaceDocumentBody(`<main><article about="" dir="auto"><header class="caption"><h1 property="schema:name"></h1></header><section class="slide" id="cover" inlist="" rel="schema:hasPart" resource="#cover" typeof="bibo:Slide"><h2 aria-label="${i18n.t('editor.new-slideshow.h2.aria-label')}" property="schema:name"></h2><div datatype="rdf:HTML" property="schema:description"><p></p></div></section></article><div class="do progress"></div></main>`, { bodyClass: 'shower single' });
+
+  const documentDetails = documentDetailsHTML([
+    { id: 'document-type', dt: 'Document Type', dds: [`<a href="http://purl.org/ontology/bibo/Slideshow" rel="rdf:type">Slideshow</a>`] },
+  ]);
+
+  const article = document.querySelector('main > article');
+  article.appendChild(fragmentFromString(documentDetails));
 }
 
 const MODES = { FULL: 'full', SINGLE: 'single' };

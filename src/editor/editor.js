@@ -39,7 +39,7 @@ import { AutocompleteView } from "./nodeviews/autocomplete.js";
 import Config from "./../config.js";
 import { addMessageToLog, showActionMessage, initCopyToClipboard, showRobustLinksDecoration } from "../doc.js";
 import { initTableSort } from "../tableSort.js";
-import { normalizeTableMarkup } from "../utils/normalization.js";
+import { normalizeTableMarkup, normalizeDocumentTypeMarkup } from "../utils/normalization.js";
 import { fragmentFromString, hasNonWhitespaceText, selectArticleNode } from "./../utils/html.js";
 import { updateDeviceStorageProfile } from "../storage.js";
 import { updateButtons } from "../ui/buttons.js";
@@ -58,6 +58,7 @@ import { setTemplateNewSpecification } from "../ui/templates/specification.js";
 import { prepareDocumentForTemplate, replaceDocumentBody } from "../ui/templates/shared.js";
 import { cvNavDecorationPlugin } from "./plugins/cvNavDecorations.js";
 import { specificationNavDecorationPlugin, specificationConceptSyncPlugin } from "./plugins/specificationNavDecorations.js";
+import { documentTypeToolsPlugin } from "./plugins/documentTypeTools.js";
 import { protectPlaceholdersPlugin } from "./plugins/protectPlaceholders.js";
 import { mentionsPlugin } from "./plugins/mentions.js";
 import { fragmentLinksPlugin } from "./plugins/fragmentLinks.js";
@@ -132,6 +133,7 @@ export class Editor {
             this.destroyEditor();
             // Reading mode carries the information, not the authoring state.
             normalizeTableMarkup(document);
+            normalizeDocumentTypeMarkup(document);
             showRobustLinksDecoration();
             initCopyToClipboard();
             initTableSort();
@@ -398,7 +400,7 @@ export class Editor {
     // not a collaborative session): skip Yjs/IndexedDB/remote-sync entirely.
     Config.Editor['collab'] = false;
     pmDoc = originalDoc;
-    editorPlugins = [history(), mentionsPlugin, fragmentLinksPlugin, keymapPlugin, placeholderPlugin, documentStructurePlugin, slideshowDecorationsPlugin, cvNavDecorationPlugin, specificationNavDecorationPlugin, specificationConceptSyncPlugin, autoIdPlugin, documentAnchorsPlugin, protectPlaceholdersPlugin, tableToolsPlugin(), editorToolbarPlugin];
+    editorPlugins = [history(), mentionsPlugin, fragmentLinksPlugin, keymapPlugin, placeholderPlugin, documentStructurePlugin, slideshowDecorationsPlugin, cvNavDecorationPlugin, specificationNavDecorationPlugin, specificationConceptSyncPlugin, documentTypeToolsPlugin, autoIdPlugin, documentAnchorsPlugin, protectPlaceholdersPlugin, tableToolsPlugin(), editorToolbarPlugin];
   } else {
     Config.Editor['collab'] = true;
     ydoc = new Y.Doc();
@@ -612,6 +614,7 @@ export class Editor {
       cvNavDecorationPlugin,
       specificationNavDecorationPlugin,
       specificationConceptSyncPlugin,
+      documentTypeToolsPlugin,
       autoIdPlugin,
       documentAnchorsPlugin,
       protectPlaceholdersPlugin,

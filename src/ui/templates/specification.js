@@ -249,7 +249,8 @@ const SPECIFICATION_TYPE_SELECTOR = [
 export function isSpecification(root) {
   if (hasSpecificationTypeInGraph()) return true;
   return root.matches?.('[typeof~="doap:Specification"], [typeof~="spec:Specification"], [typeof~="dcat:Standard"]') ||
-    !!root.querySelector?.(SPECIFICATION_TYPE_SELECTOR);
+    !!root.querySelector?.(SPECIFICATION_TYPE_SELECTOR) ||
+    !!root.querySelector?.('#document-type [rel~="rdf:type"]');
 }
 
 function sectionLabel(type) {
@@ -916,7 +917,7 @@ export function setTemplateNewSpecification(mode, options) {
     .map(specificationSectionHTML)
     .join('');
 
-  replaceDocumentBody(`<main><article about="" dir="auto" typeof="schema:Article doap:Specification"><h1 aria-label="${i18n.t('editor.new.h1.aria-label')}" property="schema:name"></h1>${specificationStatusHTML()}${documentDetailsBlockHTML()}${sections}</article></main><p id="back-to-top" role="navigation"><a href="#toc"><abbr title="Back to top">↑</abbr></a></p>`);
+  replaceDocumentBody(`<main><article about="" dir="auto"><h1 aria-label="${i18n.t('editor.new.h1.aria-label')}" property="schema:name"></h1>${specificationStatusHTML()}${documentDetailsBlockHTML()}${sections}</article></main><p id="back-to-top" role="navigation"><a href="#toc"><abbr title="Back to top">↑</abbr></a></p>`);
 
   initSpecification();
 }

@@ -822,7 +822,7 @@ registerDocumentTransform(pruneEmptyItems);
 export function setTemplateNewCV(mode, options) {
   // TODO: Remove aria-label when content is updated
   prepareDocumentForTemplate();
-  replaceDocumentBody(`<main><article about="" dir="auto" typeof="schema:CreativeWork"><h1 aria-label="${i18n.t('editor.new.h1.aria-label')}" property="schema:name"></h1></article></main>`);
+  replaceDocumentBody(`<main><article about="" dir="auto"><h1 aria-label="${i18n.t('editor.new.h1.aria-label')}" property="schema:name"></h1></article></main>`);
 
   //TODO: i18n
   let userDetails = {
