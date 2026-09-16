@@ -19,6 +19,7 @@ import { getSelectedParentElement, restoreSelection, getInboxOfClosestNodeWithSe
 import { generateAttributeId, getDateTimeISO } from "../../../util.js"
 import { getNodeLanguage, getFormValues, createHTML, selectArticleNode } from "../../../utils/html.js";
 import { getReferenceLabel, createActivityHTML, createNoteDataHTML, getRegisteredAnnotationContainer, getPreferredTargetIRI, showActionMessage, addMessageToLog } from "../../../doc.js";
+import { isNanopubIRI } from "../../../nanopub.js";
 import { i18n } from "../../../i18n.js";
 import { getAbsoluteIRI, stripFragmentFromString } from "../../../uri.js"
 import Config from "../../../config.js"
@@ -336,8 +337,18 @@ export function getFormActionData(action, formValues, selectionData) {
 
   if (data.preferredTargetIRI && data.preferredTargetIRI != data.resourceIRI) {
     data.resourceIRI = data.preferredTargetIRI;
-    data.targetIRI = (data.parentNodeWithId) ? data.preferredTargetIRI + '#' + data.parentNodeWithId.id : data.preferredTargetIRI;
     data.options.targetInPreferredIRI = true;
+
+    //TODO: Apply to any cite-as that dereferences to the annotated page, not only nanopubs
+    if (isNanopubIRI(data.preferredTargetIRI)) {
+      // The page is the nanopub's HTML representation, so the fragment and selectors apply after content negotiation
+      data.targetIRI = data.preferredTargetIRI;
+      data.targetFragment = data.parentNodeWithId?.id;
+      data.targetState = { type: 'HttpRequestState', value: 'Accept: text/html' };
+    }
+    else {
+      data.targetIRI = (data.parentNodeWithId) ? data.preferredTargetIRI + '#' + data.parentNodeWithId.id : data.preferredTargetIRI;
+    }
   }
 
   data.targetLanguage = getNodeLanguage(data.parentNodeWithId);

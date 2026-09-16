@@ -113,7 +113,7 @@ export function getInboxOfClosestNodeWithSelector(node, selector) {
 
 //TODO: This function returns noteData and also replaces the selection with an HTML reference to the note. Make it so that the reference related stuff is done elsewehere.
 export function createNoteData(annotation) {
-  const { action, id, datetime, selectionData, refId, refLabel, motivatedBy, targetIRI, resourceIRI, selectionLanguage, targetLanguage, formData, annotationInboxLocation, profile } = annotation;
+  const { action, id, datetime, selectionData, refId, refLabel, motivatedBy, targetIRI, resourceIRI, targetFragment, targetState, selectionLanguage, targetLanguage, formData, annotationInboxLocation, profile } = annotation;
   // console.log(annotation)
 
   const { tagging, content, language, license, ['ref-type']: refType, url,
@@ -181,29 +181,30 @@ export function createNoteData(annotation) {
   }
 
   // Legacy fallback: anchor with a FragmentSelector (the element id) refined by the
-  // TextQuoteSelector when the target IRI carries a fragment, else the bare quote.
-  const targetFragment = (targetIRI && targetIRI.includes('#'))
+  // TextQuoteSelector when there is a fragment, else the bare quote.
+  const fragment = targetFragment || ((targetIRI && targetIRI.includes('#'))
     ? targetIRI.substring(targetIRI.indexOf('#') + 1)
-    : null;
+    : null);
 
   const fallbackSelector = textQuoteSelector
-    ? (targetFragment
+    ? (fragment
       ? {
           type: 'FragmentSelector',
-          value: targetFragment,
+          value: fragment,
           conformsTo: 'https://tools.ietf.org/html/rfc3987',
           refinedBy: textQuoteSelector
         }
       : textQuoteSelector)
     : undefined;
 
+  // A specific resource named after its own source would say the document is a part of itself
   const annotationTarget = {
-    iri: targetIRI,
+    iri: targetIRI === resourceIRI ? '#' + generateAttributeId() : targetIRI,
     source: resourceIRI,
     language: targetLanguage,
     selector: targetSelector || fallbackSelector,
+    state: targetState,
     renderedVia: { iri: 'https://dokie.li/#i', name: 'dokieli' }
-    //TODO: state
   };
 
   switch (action) {

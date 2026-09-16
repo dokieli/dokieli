@@ -41,6 +41,11 @@ export function getAgentIRI() {
   return Config.User?.IRI || null;
 }
 
+// Trusty URI artifact code: RA followed by 43 base64url characters
+export function isNanopubIRI(iri) {
+  return typeof iri === 'string' && /\/RA[A-Za-z0-9_-]{43}$/.test(iri);
+}
+
 // Registries key accounts by the SHA-256 hex of the base64 public key
 export async function getPublicKeyHash(publicKeyBase64) {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(publicKeyBase64));
