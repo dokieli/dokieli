@@ -180,8 +180,7 @@ export function createNoteData(annotation) {
     }
   }
 
-  // Legacy fallback: anchor with a FragmentSelector (the element id) refined by the
-  // TextQuoteSelector when there is a fragment, else the bare quote.
+  // Fallback: FragmentSelector refined by the TextQuoteSelector when there is a fragment, else the bare quote
   const fragment = targetFragment || ((targetIRI && targetIRI.includes('#'))
     ? targetIRI.substring(targetIRI.indexOf('#') + 1)
     : null);
@@ -197,7 +196,7 @@ export function createNoteData(annotation) {
       : textQuoteSelector)
     : undefined;
 
-  // A specific resource named after its own source would say the document is a part of itself
+  // A specific resource must not be named after its own source
   const annotationTarget = {
     iri: targetIRI === resourceIRI ? '#' + generateAttributeId() : targetIRI,
     source: resourceIRI,

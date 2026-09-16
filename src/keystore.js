@@ -490,8 +490,6 @@ function noKeysError() {
   return error;
 }
 
-// One passphrase covers every key on the device
-// nanopub-js takes the key as base64, so the session holds the signing key extractable
 export async function getSigningKeyMaterial() {
   const session = sessions[ASSERTION];
   const privateKey = session.privateKeys.get(session.kid);

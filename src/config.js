@@ -36,9 +36,9 @@ export default {
     ACM: { InlineOpen: '[', InlineClose: ']' }
   },
   VerifyCitation: true,
-  //XXX: test registry while the nanopub flow is being built; set false to publish to the real network
+  // Set to true to publish to the test registry
   Nanopub: {
-    UseTestRegistry: true
+    UseTestRegistry: false
   },
   Stylesheets: [],
   User: {

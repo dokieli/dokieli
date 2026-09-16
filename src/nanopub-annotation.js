@@ -48,7 +48,7 @@ function iri(value) {
   return `<${value}>`;
 }
 
-// '' and '#' both resolve to the nanopub, conflating the publication with the annotation
+// '' and '#' would both resolve to the nanopub itself
 function toNanopubIds(node) {
   if (Array.isArray(node)) return node.map(toNanopubIds);
   if (!node || typeof node !== 'object') return node;
@@ -74,7 +74,6 @@ async function annotationQuads(noteData) {
   return [...pointer.dataset];
 }
 
-// Reuses the annotation's own source and selector, so the disputed fragment is the annotated one
 function stanceQuads(stance, noteData) {
   const bodyId = firstBodyId(noteData);
   const source = noteData.target?.source || noteData.target?.iri;
@@ -102,7 +101,7 @@ function provenanceQuads(agent) {
   return quads(`sub:assertion prov:wasAttributedTo ${iri(agent)} .`);
 }
 
-// The query service partitions its per-type repositories by npx:hasNanopubType
+// The query service indexes by npx:hasNanopubType
 function pubinfoQuads(agent, { created, license, stance }) {
   const types = ['oa:Annotation'];
   if (stance) types.push(stance);
@@ -118,7 +117,6 @@ function pubinfoQuads(agent, { created, license, stance }) {
   return quads(`<${DEFAULT_NANOPUB_URI.replace(/\/$/, '')}> ${lines.join(' ;\n  ')} .`);
 }
 
-/** Wraps an annotation as an unsigned nanopub: the Web Annotation goes in the assertion graph, authorship in provenance and pubinfo. */
 export async function annotationToNanopub(noteData, options = {}) {
   const agent = options.agent || noteData.creator?.iri || Config.User?.IRI;
   if (!agent) {
@@ -139,7 +137,6 @@ export async function annotationToNanopub(noteData, options = {}) {
   });
 }
 
-/** Signs and publishes an annotation to the nanopub network, introducing the key first when it has never been announced. */
 export async function publishAnnotation(noteData, options = {}, unlocked = false) {
   const agent = options.agent || getAgentIRI();
 
@@ -148,7 +145,7 @@ export async function publishAnnotation(noteData, options = {}, unlocked = false
     material = await getSigningKeyMaterial();
   }
   catch (e) {
-    // Unlocking resumes the post rather than losing it
+    // Prompt once, then let the error through
     if (e.code !== 'no-signing-key' || unlocked) throw e;
     return promptForSigningKey(() => publishAnnotation(noteData, options, true));
   }
@@ -164,6 +161,6 @@ export async function publishAnnotation(noteData, options = {}, unlocked = false
   await np.sign();
 
   const published = await np.publish(getRegistryURL());
-  // The returned URI is canonical and only resolves once the nanopub is on the main network
+  // The canonical URI resolves only once the nanopub reaches the main network
   return { ...published, registryURI: getRegistryURL() + published.uri.split('/').pop() };
 }

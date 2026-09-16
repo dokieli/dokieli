@@ -19,10 +19,8 @@ import { createIntroNanopub, NANOPUB_REGISTRY_URLS, TEST_NANOPUB_REGISTRY_URL } 
 import Config from './config.js';
 import { getSigningKeyMaterial, hasKeystore, ASSERTION } from './keystore.js';
 
-// The registry serves HTML to anything that does not ask for JSON
 const REGISTRY_HEADERS = { 'Accept': 'application/json' };
 
-// The test registry is a separate network, so publishing and lookups have to agree on which one
 function registries() {
   return Config.Nanopub?.UseTestRegistry ? [TEST_NANOPUB_REGISTRY_URL] : NANOPUB_REGISTRY_URLS;
 }
@@ -36,23 +34,22 @@ function agentAccountsURL(registryURL, agentIRI) {
   return `${origin}/agentAccounts?id=${encodeURIComponent(agentIRI)}`;
 }
 
-// The agent IRI is the WebID until an ORCID can be verified
 export function getAgentIRI() {
   return Config.User?.IRI || null;
 }
 
-// Trusty URI artifact code: RA followed by 43 base64url characters
+// Trusty URI artifact code
 export function isNanopubIRI(iri) {
   return typeof iri === 'string' && /\/RA[A-Za-z0-9_-]{43}$/.test(iri);
 }
 
-// Registries key accounts by the SHA-256 hex of the base64 public key
+// Registries key accounts by the SHA-256 of the base64 public key
 export async function getPublicKeyHash(publicKeyBase64) {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(publicKeyBase64));
   return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// Resolves once the user has unlocked or created a signing key, so publishing carries on without them losing their place
+// Retries the caller once a signing key is unlocked or created
 export function promptForSigningKey(retry) {
   return import('./dialog.js').then(async ({ showEncryptionUnlock, showSigningSetup }) => {
     const exists = await hasKeystore(ASSERTION);
@@ -91,7 +88,6 @@ export async function publishIntroduction(unlocked = false) {
   return { uri, publicKey };
 }
 
-// Accounts are per key, so the agent's other keys are reported alongside ours
 export async function getKeyTrustStatus(publicKeyBase64, agentIRI = getAgentIRI()) {
   if (!agentIRI) return null;
 

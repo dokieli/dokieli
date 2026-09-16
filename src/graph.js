@@ -34,8 +34,7 @@ const PARSER_MEDIA_TYPES = ['application/ld+json', 'text/turtle', 'application/a
 
 const jsonldContexts = new Map();
 
-//XXX: this should move to WA lib
-// Contexts are named with http IRIs for legacy reasons, which browsers block on https pages
+//XXX: this should move to WA lib. Legacy http context IRIs are blocked on https pages
 const jsonldDocumentLoader = {
   async load(url) {
     const target = url.replace(/^http:\/\//, 'https://');
