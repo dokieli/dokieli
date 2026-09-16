@@ -65,17 +65,8 @@ function toNanopubIds(node) {
   return out;
 }
 
-// Without an id'd parent the target falls back to the source, saying the document is a specific resource of itself
-function separateTargetFromSource(jsonld) {
-  const target = jsonld.target;
-  if (target && typeof target === 'object' && target.id && target.id === target.source) {
-    return { ...jsonld, target: { ...target, id: DEFAULT_NANOPUB_URI + 'target' } };
-  }
-  return jsonld;
-}
-
 async function annotationQuads(noteData) {
-  const jsonld = separateTargetFromSource(toNanopubIds(serializeAnnotationToJSONLD(noteData)));
+  const jsonld = toNanopubIds(serializeAnnotationToJSONLD(noteData));
   const pointer = await getGraphFromData(JSON.stringify(jsonld), {
     contentType: 'application/ld+json',
     subjectURI: DEFAULT_NANOPUB_URI
