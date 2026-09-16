@@ -18,7 +18,7 @@ limitations under the License.
 import { TextSelection } from 'prosemirror-state';
 import Config from '../../config.js';
 import { getDocumentContentNode } from '../../utils/html.js';
-import { setActiveSlideIndex, setSlideshowMode } from '../../editor/plugins/slideshowDecorations.js';
+import { getActiveSlideIndex, setActiveSlideIndex, setSlideshowMode } from '../../editor/plugins/slideshowDecorations.js';
 import { i18n } from '../../i18n.js';
 import { prepareDocumentForTemplate, replaceDocumentBody } from './shared.js';
 
@@ -124,11 +124,9 @@ export function layoutSingle() {
   if (!getEditorView()) {
     for (let i = 0; i < slides.length; i++) {
       const s = slides[i];
-      if (s.classList.contains('active')) {
-        s.style.top = '';
-      } else {
-        s.style.top = (THUMB_TOP_BASE + i * THUMB_STRIDE) + 'px';
-      }
+      const active = s.classList.contains('active');
+      s.style.top = active ? '' : (THUMB_TOP_BASE + i * THUMB_STRIDE) + 'px';
+      s.tabIndex = active ? 0 : -1;
     }
   }
   // Rail thumbs are position:absolute and don't grow the article. Without this
@@ -158,6 +156,7 @@ function updateActivePlaceholder(slides) {
   const activeSlide = slides[activeIdx];
   const clone = activeSlide.cloneNode(true);
   clone.removeAttribute('contenteditable');
+  clone.removeAttribute('tabindex');
   clone.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
   clone.setAttribute('draggable', 'true');
   placeholder.replaceChildren(clone);
@@ -171,7 +170,10 @@ function updateActivePlaceholder(slides) {
 
 export function clearSingleLayout() {
   if (!getEditorView()) {
-    for (const s of getSlides()) s.style.top = '';
+    for (const s of getSlides()) {
+      s.style.top = '';
+      s.removeAttribute('tabindex');
+    }
   }
   const article = document.querySelector('.shower > main > article');
   if (article) article.style.minHeight = '';
@@ -273,37 +275,39 @@ function onKeyup(e) {
   }
 }
 
+// Full mode: always. Single mode: only when a focused slide section (read mode) is the target.
 function onKeydown(e) {
   if (!document.body.classList.contains('shower')) return;
-  if (!isFull()) return;
+  const full = isFull();
+  const onSlide = e.target instanceof Element && e.target.classList.contains('slide');
+  if (!full && !onSlide) return;
 
+  let idx;
   switch (e.key) {
     case 'ArrowRight':
     case 'ArrowDown':
     case 'PageDown':
     case ' ':
-      e.preventDefault();
-      e.stopPropagation();
-      next();
-      return;
+      idx = activeIndex + 1;
+      break;
     case 'ArrowLeft':
     case 'ArrowUp':
     case 'PageUp':
-      e.preventDefault();
-      e.stopPropagation();
-      prev();
-      return;
+      idx = activeIndex - 1;
+      break;
     case 'Home':
-      e.preventDefault();
-      e.stopPropagation();
-      setActive(0);
-      return;
+      idx = 0;
+      break;
     case 'End':
-      e.preventDefault();
-      e.stopPropagation();
-      setActive(getSlides().length - 1);
+      idx = getSlides().length - 1;
+      break;
+    default:
       return;
   }
+  e.preventDefault();
+  e.stopPropagation();
+  setActive(idx);
+  if (!full) getSlides()[activeIndex]?.focus({ preventScroll: true });
 }
 
 // Rail click: clicking a non-active thumbnail makes it the active slide.
@@ -373,7 +377,18 @@ export function start(options = {}) {
   keyupHandler = onKeyup;
   hashHandler = syncFromHash;
   railClickHandler = onRailClick;
-  decorationsUpdateHandler = () => { if (!isFull()) layoutSingle(); };
+  // A caret move in author mode changes the plugin's active index; mirror it here.
+  decorationsUpdateHandler = () => {
+    if (isFull()) return;
+    const view = getEditorView();
+    const idx = view ? getActiveSlideIndex(view) : activeIndex;
+    if (idx !== activeIndex) {
+      activeIndex = idx;
+      updateProgress();
+      syncToHash(getSlides()[activeIndex]);
+    }
+    layoutSingle();
+  };
   // In author mode .active is a PM decoration, not a real attribute; switching to
   // reading mode destroys the editor and drops it, leaving the main view empty.
   // Re-apply the active slide for the new mode (read mode toggles the real class).

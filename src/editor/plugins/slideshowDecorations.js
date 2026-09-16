@@ -30,6 +30,20 @@ function isSlideSection(node) {
   return cls.split(/\s+/).includes("slide");
 }
 
+// Index of the top-level slide section containing pos, or -1.
+function slideIndexAt(doc, pos) {
+  let idx = 0;
+  let found = -1;
+  doc.descendants((node, nodePos) => {
+    if (found >= 0) return false;
+    if (!isSlideSection(node)) return true;
+    if (pos >= nodePos && pos <= nodePos + node.nodeSize) found = idx;
+    idx++;
+    return false;
+  });
+  return found;
+}
+
 function buildDecorations(doc, activeIndex, mode) {
   const decos = [];
   let idx = 0;
@@ -72,6 +86,11 @@ export const slideshowDecorationsPlugin = new Plugin({
       if (meta && typeof meta.mode === "string") {
         mode = meta.mode;
       }
+      // Single mode: the slide holding the caret is the active one.
+      if (!meta && mode === "single" && tr.selectionSet) {
+        const caretIndex = slideIndexAt(newState.doc, newState.selection.from);
+        if (caretIndex >= 0) activeIndex = caretIndex;
+      }
       if (tr.docChanged || activeIndex !== value.activeIndex || mode !== value.mode) {
         return { activeIndex, mode, decorations: buildDecorations(newState.doc, activeIndex, mode) };
       }
@@ -91,6 +110,11 @@ export const slideshowDecorationsPlugin = new Plugin({
     };
   },
 });
+
+export function getActiveSlideIndex(view) {
+  if (!view) return 0;
+  return slideshowDecorationsKey.getState(view.state)?.activeIndex ?? 0;
+}
 
 export function setActiveSlideIndex(view, activeIndex) {
   if (!view) return;
