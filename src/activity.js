@@ -1397,7 +1397,20 @@ export function markAnnotationTarget(noteIRI, selector, options = {}) {
   return applyMarkFromSelector(containerNode, selector, markOptions);
 }
 
-export async function showAnnotation(noteIRI, g, options) {
+const showAnnotationInFlight = new Map();
+
+// Re-entrancy guard: inbox/notification graphs can cycle back to the same note
+export function showAnnotation(noteIRI, g, options) {
+  if (showAnnotationInFlight.has(noteIRI)) {
+    return showAnnotationInFlight.get(noteIRI);
+  }
+  const p = showAnnotationUncached(noteIRI, g, options)
+    .finally(() => showAnnotationInFlight.delete(noteIRI));
+  showAnnotationInFlight.set(noteIRI, p);
+  return p;
+}
+
+async function showAnnotationUncached(noteIRI, g, options) {
   // Search within the content node so the notifications panel is excluded
   var containerNode = selectArticleNode(document);
   options = options || {};

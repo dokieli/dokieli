@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { sendNotifications, showActivities, showActivitiesSources } from 'src/activity.js';
+import { sendNotifications, showActivities, showActivitiesSources, showAnnotation } from 'src/activity.js';
 import { setupMockFetch, resetMockFetch } from '../utils/mockFetch';
 import Config from '../../src/config';
 import MockGrapoi from '../utils/mockGrapoi';
@@ -40,6 +40,17 @@ describe('activity read dedup', () => {
     const url = 'https://example.org/dedup/container-' + Math.random();
     const a = showActivitiesSources(url);
     const b = showActivitiesSources(url);
+    a.catch(() => {}); b.catch(() => {});
+    expect(a).toBe(b);
+  });
+
+  // Inbox/notification graphs can reference each other's annotations, so an
+  // unguarded showAnnotation recurses through the cycle until the stack blows.
+  test('showAnnotation returns the same in-flight promise for concurrent same-IRI calls', () => {
+    const noteIRI = 'https://example.org/dedup/annotation-' + Math.random();
+    const g = new MockGrapoi([]);
+    const a = showAnnotation(noteIRI, g);
+    const b = showAnnotation(noteIRI, g);
     a.catch(() => {}); b.catch(() => {});
     expect(a).toBe(b);
   });
