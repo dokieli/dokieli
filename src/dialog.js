@@ -393,9 +393,9 @@ export async function showAutoSave(node) {
 async function downloadKeyBackup(kid) {
   const docs = kid ? [await exportKeyDocument(kid)] : await exportKeyDocuments();
   const data = docs.length === 1 ? docs[0] : docs;
-  const suffix = docs.length === 1 ? docs[0].publicKeyJwk.kid.slice(0, 8) : 'all';
+  const filename = docs.length === 1 ? encodeURIComponent(docs[0].publicKeyJwk.kid) + '.json' : 'dokieli-keys-all.json';
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/ld+json' });
-  downloadBlobAsFile(blob, `dokieli-keys-${suffix}.json`);
+  downloadBlobAsFile(blob, filename);
   return docs.length;
 }
 
