@@ -2045,11 +2045,13 @@ export function replyToResource(e, iri) {
   }
 }
 
-function setupResourceBrowser(parent, id, action){
+export function setupResourceBrowser(parent, id, action, options){
   id = id || 'browser-location';
   id = domSanitize(id);
   action = action || 'write';
   action = domSanitize(action);
+  options = options || {};
+  const containersOnlyAttr = options.containersOnly ? ' data-containers-only=""' : '';
 
   const documentOptions = {
     ...Config.DOMProcessing,
@@ -2098,7 +2100,7 @@ function setupResourceBrowser(parent, id, action){
     : '';
 
   var urlLabel = (action === 'write' && Config.User?.GitForge) ? 'URL or repo URL' : 'URL';
-  sanitizeInsertAdjacentHTML(parent, 'beforeend', `<div id="${id}"><label for="${id}-input">${urlLabel}</label> <input dir="ltr" id="${id}-input" name="${id}-input" placeholder="https://example.org/path/to/" required="" type="url" value="${defaultDirUrl}" /><button data-i18n="browser.browse-location.button" id="${id}-update" ${defaultDirUrl ? '' : 'disabled="disabled"'} title="${i18n.t('browser.browse-location.button.textContent')}">${i18n.t('browser.browse-location.button.textContent')}</button>${createContainerButton}${filenameField}</div>${createContainerDiv}<div id="${id}-listing"></div>`);
+  sanitizeInsertAdjacentHTML(parent, 'beforeend', `<div id="${id}"${containersOnlyAttr}><label for="${id}-input">${urlLabel}</label> <input dir="ltr" id="${id}-input" name="${id}-input" placeholder="https://example.org/path/to/" required="" type="url" value="${defaultDirUrl}" /><button data-i18n="browser.browse-location.button" id="${id}-update" ${defaultDirUrl ? '' : 'disabled="disabled"'} title="${i18n.t('browser.browse-location.button.textContent')}">${i18n.t('browser.browse-location.button.textContent')}</button>${createContainerButton}${filenameField}</div>${createContainerDiv}<div id="${id}-listing"></div>`);
 
   // var inputBox = document.getElementById(id);
   var createContainer = document.getElementById(id + '-create-container');
@@ -2633,7 +2635,7 @@ function downloadBlobAsFile(blob, filename) {
   setTimeout(() => URL.revokeObjectURL(a.href), 0);
 }
 
-function attachBrowseStoragePopup(id, action) {
+export function attachBrowseStoragePopup(id, action) {
   var listingEl = document.getElementById(id + '-listing');
   var listingHome = listingEl?.parentNode;
   if (listingEl) {
@@ -3150,8 +3152,9 @@ async function generateGitForgeBrowserList(url, id, action) {
     }
   } catch {}
 
+  const containersOnly = containerNode.hasAttribute('data-containers-only');
   const dirs = items.filter(i => i.type === 'dir').sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
-  const files = items.filter(i => i.type === 'file').sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+  const files = containersOnly ? [] : items.filter(i => i.type === 'file').sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
 
   const renderItem = (it) => {
     const inputId = `gf-${generateAttributeId()}`;
@@ -3160,7 +3163,7 @@ async function generateGitForgeBrowserList(url, id, action) {
   const html = [...dirs.map(renderItem), ...files.map(renderItem)].join('\n');
   sanitizeInsertAdjacentHTML(list, 'beforeend', html);
 
-  if (items.length === 0) {
+  if (dirs.length === 0 && files.length === 0) {
     sanitizeInsertAdjacentHTML(list, 'afterend', '<p class="container-empty"><em>(empty)</em></p>');
   }
 
@@ -3214,6 +3217,7 @@ function generateBrowserList(g, url, id, action) {
       sanitizeInsertAdjacentHTML(list, 'afterbegin', upBtn);
     }
 
+    var containersOnly = document.getElementById(id)?.hasAttribute('data-containers-only');
     var current = g.node(rdf.namedNode(url));
     var contains = current.out(ns.ldp.contains).values.map(v => domSanitize(v));
     var containersLi = Array();
@@ -3227,7 +3231,7 @@ function generateBrowserList(g, url, id, action) {
         var slug = path[path.length-2];
         containersLi.push('<li class="container"><input type="radio" name="resources" value="' + c + '" id="' + slug + '"/><label for="' + slug + '">' + decodeURIComponent(slug) + '</label></li>');
       }
-      else {
+      else if (!containersOnly) {
         slug = path[path.length-1];
         resourcesLi.push('<li><input type="' + inputType + '" name="resources" value="' + c + '" id="' + slug + '"/><label for="' + slug + '">' + decodeURIComponent(slug) + '</label></li>');
       }
@@ -3243,7 +3247,7 @@ function generateBrowserList(g, url, id, action) {
     sanitizeInsertAdjacentHTML(list, 'beforeend', liHTML);
 
     var buttons = list.querySelectorAll('label');
-    if(!contains.length){
+    if(!containersLi.length && !resourcesLi.length){
       sanitizeInsertAdjacentHTML(list, 'afterend', '<p class="container-empty"><em>(empty)</em></p>');
     }
 
@@ -3948,7 +3952,7 @@ export async function saveAsDocument(e) {
 
         sanitizeInsertAdjacentHTML(e.target.closest('li, div, p') || e.target.parentNode, 'beforeend', '<fieldset id="' + locationInboxId + '-fieldset"></fieldset>');
         fieldset = saveAsDocument.querySelector('#' + locationInboxId + '-fieldset');
-        setupResourceBrowser(fieldset, locationInboxId, locationInboxAction);
+        setupResourceBrowser(fieldset, locationInboxId, locationInboxAction, { containersOnly: true });
         sanitizeInsertAdjacentHTML(fieldset, 'beforeend', `<p data-i18n="dialog.save-as-document.article-inbox.p">${i18n.t('dialog.save-as-document.article-inbox.p.textContent')} <samp id="${locationInboxId}-${locationInboxAction}"></samp></p>`);
         var lii = document.getElementById(locationInboxId + '-input');
         lii.focus();
@@ -3974,7 +3978,7 @@ export async function saveAsDocument(e) {
 
         sanitizeInsertAdjacentHTML(e.target.closest('li, div, p') || e.target.parentNode, 'beforeend', '<fieldset id="' + locationAnnotationServiceId + '-fieldset"></fieldset>');
         fieldset = saveAsDocument.querySelector('#' + locationAnnotationServiceId + '-fieldset');
-        setupResourceBrowser(fieldset, locationAnnotationServiceId, locationAnnotationServiceAction);
+        setupResourceBrowser(fieldset, locationAnnotationServiceId, locationAnnotationServiceAction, { containersOnly: true });
         sanitizeInsertAdjacentHTML(fieldset, 'beforeend', `<p data-i18n="dialog.save-as-document.article-annotation-service.p">${i18n.t('dialog.save-as-document.article-annotation-service.p.textContent')} <samp id="${locationAnnotationServiceId}-${locationAnnotationServiceAction}"></samp></p>`);
         var lasi = document.getElementById(locationAnnotationServiceId + '-input');
         lasi.focus();

@@ -23,7 +23,7 @@ import { isNanopubIRI } from "../../../nanopub.js";
 import { i18n } from "../../../i18n.js";
 import { getAbsoluteIRI, stripFragmentFromString } from "../../../uri.js"
 import Config from "../../../config.js"
-import { notifyInbox, postActivity, showActivities, registerAnnotationInTypeIndex, markAnnotationTarget } from "../../../activity.js"
+import { notifyInbox, postActivity, showActivities, chooseAnnotationStore, registerAnnotationInTypeIndex, markAnnotationTarget } from "../../../activity.js"
 import { publishAnnotation } from "../../../nanopub-annotation.js";
 import { shareResource } from "../../../dialog.js";
 import { domSanitize } from "../../../utils/sanitization.js";
@@ -159,6 +159,15 @@ export async function processAction(action, formValues, selectionData) {
           ...otherFormData,
           ...annotationData
         };
+
+        // Ask where to keep annotations before the first post so it lands in the chosen store
+        if (annotation.canonical) {
+          const containerIRI = await chooseAnnotationStore(annotation['containerIRI'], ns.oa.Annotation.value);
+          if (containerIRI !== annotation['containerIRI']) {
+            annotation['containerIRI'] = containerIRI;
+            annotation['noteURL'] = annotation['noteIRI'] = containerIRI + annotation.id;
+          }
+        }
 
         var noteData = createNoteData(annotation);
 

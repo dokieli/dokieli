@@ -257,6 +257,8 @@
   "dialog.annotation-store.cancel.button.title": "Keep as is",
   "dialog.annotation-store.close.button.aria-label": "Close Annotation store",
   "dialog.annotation-store.close.button.title": "Close",
+  "dialog.annotation-store.choose-location.p.textContent": "Alternatively, choose another location to set as your annotation store:",
+  "dialog.annotation-store.chosen-location.p.textContent": "Your annotation store will be set to:",
   "dialog.delete.cancel.button.textContent": "Cancel",
   "dialog.delete.cancel.button.title": "Cancel Delete",
   "dialog.delete.close.button.aria-label": "Close Delete",

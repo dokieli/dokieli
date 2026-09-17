@@ -254,6 +254,8 @@
   "dialog.annotation-store.cancel.button.title": "Dejar como está",
   "dialog.annotation-store.close.button.aria-label": "Cerrar Almacén de anotaciones",
   "dialog.annotation-store.close.button.title": "Cerrar",
+  "dialog.annotation-store.choose-location.p.textContent": "Alternativamente, elige otra ubicación para establecer como tu almacén de anotaciones:",
+  "dialog.annotation-store.chosen-location.p.textContent": "Tu almacén de anotaciones se establecerá en:",
   "dialog.delete.cancel.button.textContent": "Cancelar",
   "dialog.delete.cancel.button.title": "Cancelar Eliminar",
   "dialog.delete.close.button.aria-label": "Cerrar Eliminar",
