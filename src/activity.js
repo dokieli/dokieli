@@ -1399,14 +1399,17 @@ export function markAnnotationTarget(noteIRI, selector, options = {}) {
 
 const showAnnotationInFlight = new Map();
 
-// Re-entrancy guard: inbox/notification graphs can cycle back to the same note
+// Re-entrancy guard, registered before the call because the body recurses before its first await - mindblown.
 export function showAnnotation(noteIRI, g, options) {
   if (showAnnotationInFlight.has(noteIRI)) {
     return showAnnotationInFlight.get(noteIRI);
   }
-  const p = showAnnotationUncached(noteIRI, g, options)
-    .finally(() => showAnnotationInFlight.delete(noteIRI));
+  let resolve, reject;
+  const p = new Promise((res, rej) => { resolve = res; reject = rej; });
   showAnnotationInFlight.set(noteIRI, p);
+  showAnnotationUncached(noteIRI, g, options)
+    .finally(() => showAnnotationInFlight.delete(noteIRI))
+    .then(resolve, reject);
   return p;
 }
 

@@ -44,8 +44,6 @@ describe('activity read dedup', () => {
     expect(a).toBe(b);
   });
 
-  // Inbox/notification graphs can reference each other's annotations, so an
-  // unguarded showAnnotation recurses through the cycle until the stack blows.
   test('showAnnotation returns the same in-flight promise for concurrent same-IRI calls', () => {
     const noteIRI = 'https://example.org/dedup/annotation-' + Math.random();
     const g = new MockGrapoi([]);
@@ -53,6 +51,35 @@ describe('activity read dedup', () => {
     const b = showAnnotation(noteIRI, g);
     a.catch(() => {}); b.catch(() => {});
     expect(a).toBe(b);
+  });
+
+  test('showAnnotation survives an annotation whose inbox notification points back at it', async () => {
+    const base = 'https://example.org/cycle-' + Math.random().toString(32).slice(2);
+    const inboxIRI = base + '/inbox/';
+    const noteIRI = base + '/annotation';
+    const notificationIRI = inboxIRI + 'n1';
+    const ldpInbox = { value: 'http://www.w3.org/ns/ldp#inbox' };
+    const g = new MockGrapoi([
+      { subject: { value: noteIRI }, predicate: ldpInbox, object: { value: inboxIRI } }
+    ]);
+    Config.Inbox[inboxIRI] = { 'Notifications': [notificationIRI] };
+    Config.Notification[notificationIRI] = { 'Activities': [noteIRI] };
+    Config.Activity[noteIRI] = { 'Graph': g };
+
+    // Runaway recursion shows up as unbounded re-reads of the note from the graph
+    let nodeCalls = 0;
+    const origNode = g.node.bind(g);
+    g.node = subject => { nodeCalls++; return origNode(subject); };
+
+    try {
+      await showAnnotation(noteIRI, g).catch(() => {});
+      expect(nodeCalls).toBeLessThan(50);
+    }
+    finally {
+      delete Config.Inbox[inboxIRI];
+      delete Config.Notification[notificationIRI];
+      delete Config.Activity[noteIRI];
+    }
   });
 
   test('distinct URLs are not deduped against each other', () => {
