@@ -249,8 +249,7 @@ const SPECIFICATION_TYPE_SELECTOR = [
 export function isSpecification(root) {
   if (hasSpecificationTypeInGraph()) return true;
   return root.matches?.('[typeof~="doap:Specification"], [typeof~="spec:Specification"], [typeof~="dcat:Standard"]') ||
-    !!root.querySelector?.(SPECIFICATION_TYPE_SELECTOR) ||
-    !!root.querySelector?.('#document-type [rel~="rdf:type"]');
+    !!root.querySelector?.(SPECIFICATION_TYPE_SELECTOR);
 }
 
 function sectionLabel(type) {
