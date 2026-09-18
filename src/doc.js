@@ -40,6 +40,7 @@ import { getResource } from "./fetcher.js";
 import { encryptContent } from './crypto.js';
 import { isUnlocked, getSessionPublicKey, getDocumentRecipientKeys, syncDocumentRecipientsFromACL } from './keystore.js';
 import { selfLinkHost } from './ui/selfLinks.js';
+import { selfLinksEnabledForRoot } from './ui/templates/sections.js';
 
 const ns = Config.ns;
 
@@ -3863,6 +3864,8 @@ export function showFragment(selector) {
 
   for(var i = 0; i < ids.length; i++){
     ids[i].addEventListener('mouseenter', (e) => {
+      // A spec's self-links are already in the markup; no hover affordance on top.
+      if (selfLinksEnabledForRoot(selectArticleNode(document))) return;
       // A details keeps its self-link, and so the wrapper, inside its summary.
       var host = selfLinkHost(e.target);
       var fragment = host.querySelector(':scope > .do.fragment');
