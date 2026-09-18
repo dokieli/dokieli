@@ -88,7 +88,8 @@ export async function syncLocalRemoteResource(options = {}) {
       if (r?.published && !latestLocalDocumentItemObjectPublished) {
         latestLocalDocumentItemObjectPublished = r;
       }
-      if (!r?.published && !latestLocalDocumentItemObjectUnpublished) {
+      // Newest first: an unpublished snapshot behind a published one predates the last save
+      if (!r?.published && !latestLocalDocumentItemObjectUnpublished && !latestLocalDocumentItemObjectPublished) {
         latestLocalDocumentItemObjectUnpublished = r;
       }
       if (latestLocalDocumentItemObjectPublished && latestLocalDocumentItemObjectUnpublished) {
@@ -103,6 +104,7 @@ export async function syncLocalRemoteResource(options = {}) {
 
 // console.log(localContent)
   let localHash = await getHash(localContent);
+  const currentContent = localContent;
   const currentHash = localHash;
   let data;
 
@@ -235,6 +237,15 @@ export async function syncLocalRemoteResource(options = {}) {
   // console.log(`previousRemoteHash: ${previousRemoteHash}`);
 
   const remotePublishDate = getDateTimeISOFromDate(remoteLastModified) || getDateTimeISOFromDate(remoteDate) || getDateTimeISO();
+
+  // Saved elsewhere since the snapshot was taken
+  if (latestLocalDocumentItemObjectUnpublished && remoteLastModified && new Date(remoteLastModified) > new Date(latestLocalDocumentItemObjectUnpublished.updated)) {
+    console.log('Local unpublished snapshot is older than the remote. Ignoring it.');
+    latestLocalDocumentItemObjectUnpublished = undefined;
+    localContent = currentContent;
+    localHash = currentHash;
+    localContentType = 'text/html';
+  }
 
   const etagWasUsed = !!(headers['If-None-Match'] && remoteETag);
   const etagsMatch = etagWasUsed && headers['If-None-Match'] === remoteETag;
@@ -782,6 +793,13 @@ export async function autoSave(key, options) {
 
   const hasMatchingDigest = item?.digestSRI === hash;
 
+  // Same content as the latest snapshot: mark it rather than add one
+  if (hasMatchingDigest && options.published) {
+    const latest = (await getDeviceStorageItem(key))?.items?.[0];
+    if (latest) await updateDeviceStorageItem(latest, { published: options.published });
+    return;
+  }
+
   if (!hasMatchingDigest) {
     options['digestSRI'] = hash;
 
@@ -804,6 +822,12 @@ export async function autoSave(key, options) {
       console.error(getDateTimeISO() + ': Error saving document: ', error);
     }
   }
+}
+
+// A manual save makes the document on screen the baseline
+export async function markLocalSnapshotPublished(key) {
+  if (!key || key.startsWith('blob:')) return;
+  await autoSave(key, { method: 'IndexedDB', published: getDateTimeISO() });
 }
 
 export async function enableAutoSave(key, options = {}) {

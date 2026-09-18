@@ -35,7 +35,7 @@ import Config from './config.js';
 const ns = Config.ns;
 import { Icon } from './ui/icons.js';
 import { updateDeviceStorageProfile, getDeviceStorageItem  } from './storage.js';
-import { enableAutoSave, disableAutoSave, enableRemoteSync, disableRemoteSync, showResourceReviewChanges } from './sync.js';
+import { enableAutoSave, disableAutoSave, enableRemoteSync, disableRemoteSync, showResourceReviewChanges, autoSave, markLocalSnapshotPublished } from './sync.js';
 import { formatHTMLString } from './utils/normalization.js';
 import { showVisualisationGraph } from './viz.js';
 import { exportAsDocument, maybeAskPreferredLanguage, updateUILanguage } from './actions.js';
@@ -726,6 +726,7 @@ export function initDocumentDoEvents() {
       if (navigator.onLine && Config.DocumentAction !== 'new' && isHttpOrHttpsProtocol(documentURL) && accessModePossiblyAllowed(documentURL, 'write')) {
         try {
           await updateMutableResource(documentURL);
+          await markLocalSnapshotPublished(documentURL);
         }
         catch (e) {
           // The toggle was optimistic; the stored copy is still the other way
@@ -1167,7 +1168,7 @@ export function showResourcePermissions(listenerEvent, iri) {
 
           // Recipients come from the ACL at save time, so re-save to update the ciphertext
           if (Config.User.Keys?.Encryption?.Enabled && Config.User.Keys?.Encryption?.DocumentEncrypt) {
-            await updateMutableResource(documentURL).catch(error => { console.warn('dokieli: could not re-encrypt the document', error); });
+            await updateMutableResource(documentURL).then(() => markLocalSnapshotPublished(documentURL)).catch(error => { console.warn('dokieli: could not re-encrypt the document', error); });
           }
 
           // A previous round's marker would be found first and re-stamped, leaving the new spinner orphaned
@@ -3732,6 +3733,11 @@ export function viewSource(e) {
         Config.Editor.toggleEditor('author');
       }
 
+      // No input event for a pasted source
+      if (Config.DocumentURL && !Config.DocumentURL.startsWith('blob:')) {
+        autoSave(Config.DocumentURL, { method: 'IndexedDB' }).catch(() => {});
+      }
+
       sourceBox.remove();
       document.querySelector('#document-menu .resource-source').disabled = false;
     }
@@ -5204,7 +5210,7 @@ export function resourceSave(e, options) {
         createImmutableResource(url);
       }
       else if (e.target.closest('.resource-save')) {
-        updateMutableResource(url).catch(() => {});
+        updateMutableResource(url).then(() => markLocalSnapshotPublished(url)).catch(() => {});
       }
     }
   });

@@ -79,3 +79,24 @@ test.skip('enableAutoSave sets interval for localStorage and http methods', asyn
   disableAutoSave('key-1', { method: ['localStorage', 'http'] });
   vi.useRealTimers();
 });
+test('markLocalSnapshotPublished marks the latest snapshot when it already holds the saved content', async () => {
+  const { autoSave, markLocalSnapshotPublished } = await import('../../src/sync.js');
+  const { getHash } = await import('../../src/util.js');
+  const { getDocument } = await import('../../src/doc.js');
+
+  const hash = await getHash(getDocument(null, { ...Config.DOMProcessing, format: true, sanitize: true, normalize: true }));
+  Config.AutoSave.Items['https://example.org/doc'] = { IndexedDB: { digestSRI: hash } };
+
+  vi.spyOn(storage, 'getDeviceStorageItem').mockResolvedValue({ items: ['https://example.org/doc#latest', 'https://example.org/doc#older'] });
+  const updateItem = vi.spyOn(storage, 'updateDeviceStorageItem').mockResolvedValue(undefined);
+  const updateStorage = vi.spyOn(storage, 'updateStorage').mockResolvedValue(undefined);
+
+  await markLocalSnapshotPublished('https://example.org/doc');
+
+  expect(updateStorage).not.toHaveBeenCalled();
+  expect(updateItem).toHaveBeenCalledWith('https://example.org/doc#latest', { published: expect.any(String) });
+
+  updateItem.mockClear();
+  await autoSave('https://example.org/doc', { method: 'IndexedDB' });
+  expect(updateItem).not.toHaveBeenCalled();
+});
