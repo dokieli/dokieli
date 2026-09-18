@@ -50,7 +50,7 @@ import * as Y from 'yjs'
 import { WebsocketProvider } from 'y-websocket'
 import { IndexeddbPersistence } from 'y-indexeddb'
 import { ySyncPlugin, yCursorPlugin, yUndoPlugin, undo, redo, initProseMirrorDoc, prosemirrorToYDoc } from 'y-prosemirror'
-import { currentLocation } from "../uri.js";
+import { currentLocation, stripFragmentFromString } from "../uri.js";
 import { getRandomIndex, stringToColor } from "../util.js";
 import { setTemplateNewCV } from "../ui/templates/cv.js";
 import { setTemplateNewSlideshow } from "../ui/templates/slideshow.js";
@@ -407,7 +407,7 @@ export class Editor {
     const roomName = encodeURIComponent(Config.DocumentURL || currentLocation());
     localProvider = new IndexeddbPersistence(roomName, ydoc);
     // TODO: temp allowing websocket only on the demo doc
-    if (YWEBSOCKET_URL && window.location.href === DEMO_URL) {
+    if (YWEBSOCKET_URL && stripFragmentFromString(window.location.href) === stripFragmentFromString(DEMO_URL)) {
       try {
         provider = new WebsocketProvider(
           YWEBSOCKET_URL,
