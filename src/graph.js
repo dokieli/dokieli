@@ -1353,6 +1353,13 @@ export function getAgentTypeIndex(s) {
               var o = sanitizeIRIOrBNode(t.object);
               typeIndexes[typeIndexType][s][p] = o;
             }
+            // Registration label and subject surface in the annotation Notify list
+            else if (p == ns.rdfs.label.value || p == ns.dcterms.subject.value) {
+              var o = t.object.termType === 'Literal' ? t.object.value : sanitizeIRIOrBNode(t.object);
+              if (o) {
+                typeIndexes[typeIndexType][s][p] = o;
+              }
+            }
           }
         });
 

@@ -241,21 +241,36 @@ export function removeChildren(node) {
 }
 
 export function getFormValues(form) {
+  // Repeated names (e.g. checkbox groups) collect into an array
+  const addValue = (result, key, value) => {
+    const sanitized = typeof value === 'string' ? domSanitize(value.trim()) : value;
+    if (Object.prototype.hasOwnProperty.call(result, key)) {
+      if (!Array.isArray(result[key])) {
+        result[key] = [result[key]];
+      }
+      result[key].push(sanitized);
+    }
+    else {
+      result[key] = sanitized;
+    }
+  };
+
   // Firefox Xray wrapping can hide the FormData iterator; fall back to named elements
   try {
     const formData = new FormData(form);
-    const entries = [...formData.entries()];
-    return Object.fromEntries(
-      entries.map(([key, value]) => [key, typeof value === "string" ? domSanitize(value.trim()) : value])
-    );
+    const formValues = {};
+    for (const [key, value] of formData.entries()) {
+      addValue(formValues, key, value);
+    }
+    return formValues;
   } catch {
     const formValues = {};
     for (const el of form.elements) {
       if (!el.name) continue;
       if (el.type === 'checkbox' || el.type === 'radio') {
-        if (el.checked) formValues[el.name] = domSanitize(el.value.trim());
+        if (el.checked) addValue(formValues, el.name, el.value);
       } else {
-        formValues[el.name] = typeof el.value === 'string' ? domSanitize(el.value.trim()) : el.value;
+        addValue(formValues, el.name, el.value);
       }
     }
     return formValues;

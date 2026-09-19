@@ -215,13 +215,13 @@ export class ToolbarView {
     };
 
     [
-      ['.editor-form-access', 'Public', 'Private'],
-      ['.editor-form-encrypt', 'Encrypted', 'Not encrypted'],
-    ].forEach(([selector, onTitle, offTitle]) => {
+      ['.editor-form-access', 'annotation-access'],
+      ['.editor-form-encrypt', 'annotation-encrypt'],
+    ].forEach(([selector, keyBase]) => {
       const input = toolbarForm.querySelector(selector);
       const switchLabel = input && toolbarForm.querySelector(`label[for="${input.id}"]`);
       if (!input || !switchLabel) return;
-      const syncTitle = () => { switchLabel.title = input.checked ? onTitle : offTitle; };
+      const syncTitle = () => { switchLabel.title = i18n.t(`${keyBase}.toggle.${input.checked ? 'on' : 'off'}.title`); };
       input.addEventListener('change', syncTitle);
       syncTitle();
     });
@@ -1143,7 +1143,7 @@ export function annotateFormControls(options) {
       <label data-i18n="license.label" for="${options.button}-license">${i18n.t('license.label.textContent')}</label>
       <select class="editor-form-select" id="${options.button}-license" name="${options.button}-license">${getLicenseOptionsHTML()}</select>
       <span class="annotation-location-selection">${locationHTML}</span>
-      <span class="annotation-inbox">${getAnnotationInboxLocationHTML(options.button)}</span>
+      <span class="annotation-inbox-selection">${getAnnotationInboxLocationHTML(options.button)}</span>
       `)}
       ${formFooterHTML({ action: 'post', submitDisabled, controls: `
       <span class="annotation-access">
@@ -1168,10 +1168,29 @@ export function updateAnnotateSubmitState(fieldset) {
   submit.disabled = !Array.from(checkboxes).some(c => c.checked);
 }
 
+// Notify follows the access and encrypt toggles until the user sets it directly
+export function syncNotifyInboxDefault(fieldset, options = {}) {
+  const notifyInputs = fieldset?.querySelectorAll('.editor-form-notify-inbox');
+  if (!notifyInputs?.length) return;
+  const access = fieldset.querySelector('.editor-form-access');
+  const encrypt = fieldset.querySelector('.editor-form-encrypt');
+  notifyInputs.forEach(notify => {
+    if (options.reset) delete notify.dataset.userSet;
+    if (notify.dataset.userSet) return;
+    notify.checked = !!access?.checked && !encrypt?.checked;
+  });
+}
+
 if (typeof document !== 'undefined') {
   document.addEventListener('change', (e) => {
     const cb = e.target.closest && e.target.closest('.annotation-location-selection input[type="checkbox"]');
     if (cb) updateAnnotateSubmitState(cb.closest('fieldset'));
+
+    const notify = e.target.closest && e.target.closest('.editor-form-notify-inbox');
+    if (notify) notify.dataset.userSet = 'true';
+
+    const accessOrEncrypt = e.target.closest && e.target.closest('.editor-form-access, .editor-form-encrypt');
+    if (accessOrEncrypt) syncNotifyInboxDefault(accessOrEncrypt.closest('fieldset'));
   });
 }
 
@@ -1189,7 +1208,7 @@ export function updateAnnotationServiceForm(action) {
 };
 
 export function updateAnnotationInboxForm(action) {
-  var annotationInbox = document.querySelectorAll('.do.editor-toolbar .annotation-inbox');
+  var annotationInbox = document.querySelectorAll('.do.editor-toolbar .annotation-inbox-selection');
   for (var i = 0; i < annotationInbox.length; i++) {
     annotationInbox[i].replaceChildren(fragmentFromString(getAnnotationInboxLocationHTML(formAction(annotationInbox[i], action))));
   }

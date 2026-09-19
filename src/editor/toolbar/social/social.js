@@ -16,7 +16,7 @@ limitations under the License.
 */
 
 import { formHandlerAnnotate, shareButtonHandler } from "./handlers.js"
-import { ToolbarView, annotateFormControls, updateAnnotationInboxForm, updateAnnotationServiceForm  } from "../toolbar.js"
+import { ToolbarView, annotateFormControls, syncNotifyInboxDefault, updateAnnotationInboxForm, updateAnnotationServiceForm  } from "../toolbar.js"
 import Config from "../../../config.js";
 import { exportSelection, getSelectedParentElement, restoreSelection } from "../../utils/annotation.js";
 import { htmlEncode } from "../../../utils/sanitization.js";
@@ -257,6 +257,9 @@ export class SocialToolbar extends ToolbarView {
     if (encryptCheckbox) {
       encryptCheckbox.checked = isUnlocked();
     }
+
+    // Fresh popup: notify re-derives from the current access and encrypt state
+    syncNotifyInboxDefault(node?.querySelector('fieldset'), { reset: true });
   }
 
   //TODO function getTransactionHistory()

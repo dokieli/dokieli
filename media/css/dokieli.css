@@ -5339,26 +5339,26 @@ width:auto;
 font-size:1em;
 line-height:1;
 }
-.editor-form .annotation-inbox,
+.editor-form .annotation-inbox-selection,
 .editor-form .annotation-location-selection {
-margin: 0.25em 1em 0 1em;
+margin: 0.25em 1em 0 0;
 vertical-align: top;
-}
-.editor-form .annotation-inbox {
-margin-left:0;
 }
 .editor-form input:nth-of-type(2):before {
 margin-left: 68px;
 }
+.editor-form .annotation-inbox-details > summary,
 .editor-form .annotation-location-details > summary {
 cursor: pointer;
 font-weight: bold;
 }
+.editor-form .annotation-inbox-details ul,
 .editor-form .annotation-location-details ul {
 list-style: none;
 margin: 0.35em 0 0 0;
 padding: 0;
 }
+.editor-form .annotation-inbox-details li,
 .editor-form .annotation-location-details li {
 display: flex;
 align-items: baseline;
@@ -5366,18 +5366,22 @@ flex-wrap: wrap;
 gap: 0.4em;
 margin: 0.25em 0;
 }
+.editor-form .annotation-inbox-details li input,
 .editor-form .annotation-location-details li input {
 margin: 0;
 }
+.editor-form .annotation-inbox-details li input:before,
 .editor-form .annotation-location-details li input:before {
 margin-left: 0;
 }
+.editor-form .annotation-inbox-details li label,
 .editor-form .annotation-location-details li label {
 width: auto;
 font-size: 1em;
 line-height: 1;
 white-space: nowrap;
 }
+.editor-form .annotation-inbox-details code,
 .editor-form .annotation-location-details code {
 font-size: 0.9em;
 color: var(--do-color-fg);

@@ -15,9 +15,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { getSelectedParentElement, restoreSelection, getInboxOfClosestNodeWithSelector, createNoteData} from "../../utils/annotation.js";
+import { getSelectedParentElement, restoreSelection, createNoteData} from "../../utils/annotation.js";
 import { generateAttributeId, getDateTimeISO } from "../../../util.js"
-import { getNodeLanguage, getFormValues, createHTML, selectArticleNode } from "../../../utils/html.js";
+import { getNodeLanguage, getFormValues, createHTML } from "../../../utils/html.js";
 import { getReferenceLabel, createActivityHTML, createNoteDataHTML, getRegisteredAnnotationContainer, getPreferredTargetIRI, showActionMessage, addMessageToLog } from "../../../doc.js";
 import { isNanopubIRI } from "../../../nanopub.js";
 import { i18n } from "../../../i18n.js";
@@ -92,14 +92,13 @@ export function formHandlerAnnotate(e, action) {
     selectedContent: this.getSelectionAsHTML()
   };
 
-  const annotationInboxLocation = formValues[`${action}-annotation-inbox`];
   const annotationLocationAnnotationStore = formValues[`${action}-annotation-location-annotation-store`];
   const annotationLocationPersonalStorage = formValues[`${action}-annotation-location-personal-storage`];
   const annotationLocationActivityOutbox = formValues[`${action}-annotation-location-activity-outbox`];
   const annotationLocationService = formValues[`${action}-annotation-location-annotation-service`];
   const annotationLocationNanopubNetwork = formValues[`${action}-annotation-location-nanopub-network`];
 
-  updateUserUI({ annotationInboxLocation, annotationLocationAnnotationStore, annotationLocationPersonalStorage, annotationLocationActivityOutbox, annotationLocationService, annotationLocationNanopubNetwork })
+  updateUserUI({ annotationLocationAnnotationStore, annotationLocationPersonalStorage, annotationLocationActivityOutbox, annotationLocationService, annotationLocationNanopubNetwork })
 
   processAction(action, formValues, selectionData);
 
@@ -394,8 +393,8 @@ export function getAnnotationDistribution(action, data) {
   const { id, selectionData, formData } = data;
   let { containerIRI } = data;
   const { selectedParentElement } = selectionData;
-  //This annotationInbox is about when the selected text is part of an existing Annotation, it gets that Annotation's own inbox which is used towards announcing the annotation that's about to be created. (This is not related to whether an inbox should be assigned to an annotation that's about to be created.)
-  const annotationInbox =  getInboxOfClosestNodeWithSelector(selectedParentElement, '.do[typeof="oa:Annotation"]');
+  //Inboxes to notify about the annotation, chosen in the form; values are inbox URLs
+  const annotationInboxes = [].concat(formData['annotation-inbox'] || []);
   //These are whether the user wants to send a copy of their annotation to a personal storage and/or to an annotation service.
   const annotationLocationAnnotationStore = formData['annotation-location-annotation-store'];
   const annotationLocationPersonalStorage = formData['annotation-location-personal-storage'];
@@ -428,7 +427,7 @@ export function getAnnotationDistribution(action, data) {
       contextProfile = {
         // 'subjectURI': noteIRI,
       };
-      aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true, 'annotationInbox': annotationInbox };
+      aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true, 'annotationInboxes': annotationInboxes };
 
       annotationDistribution.push(aLS);
     }
@@ -450,7 +449,7 @@ export function getAnnotationDistribution(action, data) {
       // 'subjectURI': noteIRI,
       'profile': 'https://www.w3.org/ns/activitystreams'
     };
-    aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'annotationInbox': annotationInbox };
+    aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'annotationInboxes': annotationInboxes };
     // Outbox is canonical only when no registered or personal storage copy is selected.
     if (!activityTypeMatched && !annotationLocationPersonalStorage) {
       aLS['canonical'] = true;
@@ -475,7 +474,7 @@ export function getAnnotationDistribution(action, data) {
       // 'subjectURI': noteIRI,
     };
     // The registered (TypeIndex) location, when selected, is the canonical copy.
-    aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': !activityTypeMatched, 'annotationInbox': annotationInbox };
+    aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': !activityTypeMatched, 'annotationInboxes': annotationInboxes };
 
     if (!isDuplicateLocation(annotationDistribution, containerIRI)) {
       annotationDistribution.push(aLS);
@@ -499,15 +498,15 @@ export function getAnnotationDistribution(action, data) {
 
     if (!annotationLocationAnnotationStore && !annotationLocationPersonalStorage && !annotationLocationOutbox && annotationLocationService) {
       noteURL = noteIRI = containerIRI + id;
-      aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true,'annotationInbox': annotationInbox };
+      aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true,'annotationInboxes': annotationInboxes };
     }
     else if (annotationLocationAnnotationStore || annotationLocationPersonalStorage || annotationLocationOutbox) {
       noteURL = containerIRI + id;
-      aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'annotationInbox': annotationInbox };
+      aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'annotationInboxes': annotationInboxes };
     }
     else {
       noteURL = noteIRI = containerIRI + id;
-      aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true, 'annotationInbox': annotationInbox };
+      aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true, 'annotationInboxes': annotationInboxes };
     }
 
     aLS = Object.assign(aLS, contextProfile)
@@ -600,74 +599,39 @@ export function positionActivity(annotation, options) {
 
 
 
-// An inbox inserted this session may not be parsed or saved yet
-function getDocumentInboxFromDOM() {
-  const article = selectArticleNode(document) || document.body;
-  const node = Array.from(article.querySelectorAll('[rel~="ldp:inbox"], [rel~="as:inbox"]')).find(n => !n.closest('.do'));
-  const value = node?.getAttribute('href') || node?.getAttribute('resource');
-  if (!value) return;
-  try { return new URL(value, Config.DocumentURL).href; } catch { return; }
-}
-
+// Notifies each inbox the user selected in the form; no-op when none
 function sendNotification(annotation, options) {
-  const documentURL = Config.DocumentURL;
-
   if (!annotation['canonical']) {
     return Promise.resolve();
   }
 
-  var inboxPromise;
-  const domInbox = getDocumentInboxFromDOM();
+  const inboxes = annotation.annotationInboxes || [];
 
-  if (annotation.annotationInbox) {
-    inboxPromise = Promise.resolve([annotation.annotationInbox])
-  }
-  else if (domInbox) {
-    Config.Resource[documentURL].inbox = [domInbox];
-    inboxPromise = Promise.resolve([domInbox]);
-  }
-  else {
-    if (Config.Resource[documentURL].inbox?.length) {
-      inboxPromise = Promise.resolve(Config.Resource[documentURL].inbox)
-    }
-    else {
-      inboxPromise =
-        getLinkRelation(ns.ldp.inbox.value, documentURL)
-          .catch(() => {
-            return getLinkRelationFromRDF(ns.as.inbox.value, documentURL);
-          });
-    }
-  }
+  return Promise.allSettled(inboxes.map(inboxURL => {
+    var notificationData = createActivityData(annotation, { 'announce': true });
 
-  return inboxPromise
-    .catch(error => {
-      // console.log('Error fetching ldp:inbox and as:inbox endpoint:', error)
-      throw error
-    })
-    .then(inboxes => {
-      // TODO: resourceIRI for getLinkRelation should be the
-      // closest IRI (not necessarily the document).
-// console.log(inboxes)
-      if (inboxes.length) {
-        var notificationData = createActivityData(annotation, { 'announce': true });
+    notificationData['inbox'] = inboxURL;
 
-        notificationData['inbox'] = inboxes[0];
-
-        // notificationData['type'] = ['as:Announce'];
-// console.log(annotation)
-// console.log(notificationData)
-        return notifyInbox(notificationData)
-          .catch(error => {
-            console.log('Error notifying the inbox:', error)
-            var detail = [error?.status, error?.message].filter(Boolean).join(' ');
-            var message = {
-              'content': i18n.t('annotation.notify-inbox.failed.textContent', { inbox: inboxes[0], annotation: annotation.noteIRI, error: detail }),
-              'type': 'warning',
-              'timer': 15000
-            };
-            addMessageToLog(message, Config.MessageLog);
-            showActionMessage(document.body, message);
-          })
-      }
-    })
+    return notifyInbox(notificationData)
+      .then(() => {
+        var message = {
+          'content': i18n.t('annotation.notify-inbox.success.textContent', { inbox: inboxURL }),
+          'type': 'success',
+          'timer': 5000
+        };
+        addMessageToLog(message, Config.MessageLog);
+        showActionMessage(document.body, message);
+      })
+      .catch(error => {
+        console.log('Error notifying the inbox:', error)
+        var detail = [error?.status, error?.message].filter(Boolean).join(' ');
+        var message = {
+          'content': i18n.t('annotation.notify-inbox.failed.textContent', { inbox: inboxURL, annotation: annotation.noteIRI, error: detail }),
+          'type': 'warning',
+          'timer': 15000
+        };
+        addMessageToLog(message, Config.MessageLog);
+        showActionMessage(document.body, message);
+      })
+  }));
 }

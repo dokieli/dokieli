@@ -33,6 +33,7 @@ import { formatHTML, fragmentFromString, getDoctype, getDocumentContentNode, sel
 import { i18n } from './i18n.js';
 import { getRegistryURL } from './nanopub.js';
 import { rewriteBlobImagesToRelative, uploadBlobAssets, clearBlobAssets, hasUploadTarget } from './editor/utils/imageAssets.js';
+import { getSelectedParentElement, getInboxOfClosestNodeWithSelector } from './editor/utils/annotation.js';
 import { serializeAnnotationToHTML, serializeAnnotationToJSONLD } from '@dokieli/web-annotation';
 import { createNotification, serializeNotificationToJSONLD } from '@dokieli/notifications';
 import { renderFootnote, renderCitation } from './editor/utils/reference-render.js';
@@ -2840,17 +2841,67 @@ export function createTestSuiteHTML(url, options = {}) {
   return createDefinitionListHTML([{ 'href': url, 'rel': 'spec:testSuite' }], options);
 }
 
-export function getAnnotationInboxLocationHTML(action) {
-  var s = '', inputs = [], checked = '';
+// Show the linked container or inbox URL next to its label.
+export function targetHTML(url) {
+  return url ? ` <code><a href="${htmlEncode(url)}" rel="noopener" target="_blank">${htmlEncode(url)}</a></code>` : '';
+}
 
-  if (Config.User.TypeIndex && Config.User.TypeIndex[ns.as.Announce.value]) {
-    if (Config.User.UI && Config.User.UI['annotationInboxLocation'] && Config.User.UI.annotationInboxLocation['checked']) {
-      checked = ' checked="checked"';
-    }
-    s = `<input type="checkbox" id="${action}-annotation-inbox" name="${action}-annotation-inbox"${checked} /><label data-i18n="annotation-inbox.label" for="${action}-annotation-inbox">${i18n.t('annotation-inbox.label.textContent')}</label>`;
+// An inbox inserted this session may not be parsed or saved yet
+function getDocumentInboxFromDOM() {
+  const article = selectArticleNode(document) || document.body;
+  const node = Array.from(article.querySelectorAll('[rel~="ldp:inbox"], [rel~="as:inbox"]')).find(n => !n.closest('.do'));
+  const value = node?.getAttribute('href') || node?.getAttribute('resource');
+  if (!value) return;
+  try { return new URL(value, Config.DocumentURL).href; } catch { return; }
+}
+
+// Inboxes this post can notify; each checkbox value is an inbox URL
+export function getAnnotationInboxLocationHTML(action) {
+  if (action === 'bookmark') return '';
+
+  var inboxes = [];
+
+  var documentInbox = Config.Resource[Config.DocumentURL]?.inbox?.[0] || getDocumentInboxFromDOM();
+  if (documentInbox) {
+    // Checked state is derived from the access and encrypt toggles on popup open
+    inboxes.push({ suffix: 'document', url: documentInbox, label: i18n.t('annotation-inbox.document.label.textContent'), i18nKey: 'annotation-inbox.document.label', className: 'editor-form-notify-inbox' });
   }
 
-  return s;
+  var selection = window.getSelection();
+  if (selection && !selection.isCollapsed) {
+    var selectedParentNode = getSelectedParentElement(selection.getRangeAt(0));
+    var annotationInbox = getInboxOfClosestNodeWithSelector(selectedParentNode, '.do[typeof="oa:Annotation"]');
+    if (annotationInbox) {
+      inboxes.push({ suffix: 'annotation', url: annotationInbox, label: i18n.t('annotation-inbox.annotation.label.textContent'), i18nKey: 'annotation-inbox.annotation.label', className: 'editor-form-notify-inbox' });
+    }
+  }
+
+  // Topical inboxes: public TypeIndex registrations for as:Announce
+  var registrations = Config.User.TypeIndex?.[ns.solid.publicTypeIndex.value] || {};
+  Object.values(registrations).forEach((registration, index) => {
+    if (registration[ns.solid.forClass.value] !== ns.as.Announce.value) return;
+    var container = registration[ns.solid.instanceContainer.value];
+    if (!container) return;
+    var label = registration[ns.rdfs.label.value];
+    inboxes.push({ suffix: `typeindex-${index}`, url: container, label: label ? htmlEncode(label) : i18n.t('annotation-inbox.label.textContent'), subject: registration[ns.dcterms.subject.value] });
+  });
+
+  var seen = new Set();
+  var items = [];
+  inboxes.forEach(inbox => {
+    if (seen.has(inbox.url)) return;
+    seen.add(inbox.url);
+    var id = `${action}-annotation-inbox-${inbox.suffix}`;
+    var className = inbox.className ? ` class="${inbox.className}"` : '';
+    var checked = inbox.checked ? ' checked="checked"' : '';
+    var subject = inbox.subject ? ` data-subject="${htmlEncode(inbox.subject)}"` : '';
+    var i18nAttr = inbox.i18nKey ? ` data-i18n="${inbox.i18nKey}"` : '';
+    items.push(`<li><input${className}${checked} id="${id}" name="${action}-annotation-inbox" type="checkbox" value="${htmlEncode(inbox.url)}"${subject} /><label${i18nAttr} for="${id}">${inbox.label}</label>${targetHTML(inbox.url)}</li>`);
+  });
+
+  if (!items.length) return '';
+
+  return `<details class="annotation-inbox-details" open=""><summary data-i18n="annotation-inbox-selection.notify.span">${i18n.t('annotation-inbox-selection.notify.span.textContent')}</summary><ul>${items.join('')}</ul></details>`;
 }
 
 // TypeIndex-registered annotation container for the action's activity type; private first, else public, else undefined
@@ -2902,9 +2953,6 @@ export function getAnnotationLocationHTML(action) {
   }
 
   const ui = Config.User.UI || {};
-
-  // Show the container URL the annotation will POST to next to each label.
-  const targetHTML = (url) => url ? ` <code>${htmlEncode(url)}</code>` : '';
 
   const options = [
     { suffix: 'annotation-service', uiKey: 'annotationLocationService', url: (typeof Config.AnnotationService !== 'undefined') ? Config.AnnotationService : undefined },
