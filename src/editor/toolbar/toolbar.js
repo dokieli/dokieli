@@ -214,17 +214,7 @@ export class ToolbarView {
       fields.hidden = !open;
     };
 
-    [
-      ['.editor-form-access', 'annotation-access'],
-      ['.editor-form-encrypt', 'annotation-encrypt'],
-    ].forEach(([selector, keyBase]) => {
-      const input = toolbarForm.querySelector(selector);
-      const switchLabel = input && toolbarForm.querySelector(`label[for="${input.id}"]`);
-      if (!input || !switchLabel) return;
-      const syncTitle = () => { switchLabel.title = i18n.t(`${keyBase}.toggle.${input.checked ? 'on' : 'off'}.title`); };
-      input.addEventListener('change', syncTitle);
-      syncTitle();
-    });
+    setupIconToggleTitles(toolbarForm);
 
     disclosures.forEach((disclosure) => {
       disclosure.toggle.addEventListener('click', (e) => {
@@ -1168,6 +1158,21 @@ export function updateAnnotateSubmitState(fieldset) {
   submit.disabled = !Array.from(checkboxes).some(c => c.checked);
 }
 
+// Access and encrypt toggle titles announce state and the notify-default coupling
+export function setupIconToggleTitles(container) {
+  [
+    ['.editor-form-access', 'annotation-access'],
+    ['.editor-form-encrypt', 'annotation-encrypt'],
+  ].forEach(([selector, keyBase]) => {
+    const input = container.querySelector(selector);
+    const switchLabel = input && container.querySelector(`label[for="${input.id}"]`);
+    if (!input || !switchLabel) return;
+    const syncTitle = () => { switchLabel.title = i18n.t(`${keyBase}.toggle.${input.checked ? 'on' : 'off'}.title`); };
+    input.addEventListener('change', syncTitle);
+    syncTitle();
+  });
+}
+
 // Notify follows the access and encrypt toggles until the user sets it directly
 export function syncNotifyInboxDefault(fieldset, options = {}) {
   const notifyInputs = fieldset?.querySelectorAll('.editor-form-notify-inbox');
@@ -1190,7 +1195,7 @@ if (typeof document !== 'undefined') {
     if (notify) notify.dataset.userSet = 'true';
 
     const accessOrEncrypt = e.target.closest && e.target.closest('.editor-form-access, .editor-form-encrypt');
-    if (accessOrEncrypt) syncNotifyInboxDefault(accessOrEncrypt.closest('fieldset'));
+    if (accessOrEncrypt) syncNotifyInboxDefault(accessOrEncrypt.closest('fieldset, [data-notify-scope]'));
   });
 }
 

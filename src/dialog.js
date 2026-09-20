@@ -19,17 +19,19 @@ import rdf from 'rdf-ext';
 import LinkHeader from "http-link-header";
 import { i18n } from './i18n.js';
 import { getButtonHTML, updateButtons, setMenuButtonDisabled } from './ui/buttons.js';
-import { addMessageToLog, buildResourceView, copyRelativeResources, createFeedXML, createImmutableResource, createMutableResource, createNoteDataHTML, encryptArticlePayload, getAccessModeOptionsHTML, getBaseURLSelection, getDocument, getFeedFormatSelection, getLanguageOptionsHTML, getLicenseOptionsHTML, getResourceInfo, getSavePayload, isMarkdownTarget, rewriteBaseURL, setCopyToClipboard, setDocumentRelation, showActionMessage, showRobustLinksDecoration, showTimeMap, updateMutableResource, buildReferences, getDocumentConceptDefinitionsHTML, insertDocumentLevelHTML, insertTestCoverageToTable, diffRequirements, removeReferences, getStorageSelfDescription, getContactInformation, getPersistencePolicy, getODRLPolicies, updateResourceInfos, updateSupplementalInfo, initCurrentStylesheet, setDate, showFragment, initCopyToClipboard, setDocumentURL, getAgentHTML } from './doc.js';
+import { addMessageToLog, buildResourceView, copyRelativeResources, createFeedXML, createImmutableResource, createMutableResource, createNoteDataHTML, encryptArticlePayload, getAccessModeOptionsHTML, getBaseURLSelection, getDocument, getFeedFormatSelection, getLanguageOptionsHTML, getLicenseOptionsHTML, getResourceInfo, getSavePayload, isMarkdownTarget, rewriteBaseURL, setCopyToClipboard, setDocumentRelation, showActionMessage, showRobustLinksDecoration, showTimeMap, updateMutableResource, buildReferences, getDocumentConceptDefinitionsHTML, insertDocumentLevelHTML, insertTestCoverageToTable, diffRequirements, removeReferences, getStorageSelfDescription, getContactInformation, getPersistencePolicy, getODRLPolicies, updateResourceInfos, updateSupplementalInfo, initCurrentStylesheet, setDate, showFragment, initCopyToClipboard, setDocumentURL, getAgentHTML, getAnnotationInboxLocationHTML } from './doc.js';
 import { removeNodesWithIds, createHTML, getFormValues } from './utils/html.js';
 import { createAnnotation } from '@dokieli/web-annotation';
-import { accessModeAllowed, accessModePossiblyAllowed } from './access.js';
+import { accessModeAllowed, accessModePossiblyAllowed, isPublicRead } from './access.js';
+import { encryptContent } from './crypto.js';
+import { setupIconToggleTitles, syncNotifyInboxDefault } from './editor/toolbar/toolbar.js';
 import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeObject, htmlEncode, sanitizeIRIs } from './utils/sanitization.js';
 import { escapeRDFLiteral, generateAttributeId, getDefaultDocumentBasename } from './util.js';
 import { setAcceptRDFTypes } from './fetcher.js';
 import { forceTrailingSlash, generateDataURI, getBaseURL, isHttpOrHttpsProtocol, isFileProtocol, stripFragmentFromString, getFragmentFromString, getURLLastPath, currentLocation, getUrlParams } from './uri.js';
 import { getAgentInbox, getAgentName, getGraphAuthors, getGraphContributors, getGraphEditors, getGraphImage, getGraphLabelOrIRI, getGraphPerformers, getGraphTypes, getLinkRelation, getLinkRelationFromHead, getResourceGraph, getUserContacts, getUserLabelOrIRI, serializeData, getSubjectInfo, getRDFSerializer, getGraphCreators } from './graph.js';
 import { agentsWithMode, hasControl, planGrant, planOwnerControl, planRevoke, Public } from '@dokieli/web-access-control';
-import { applyACLPlan, cachedACLContext, expandAccessMode, getACLContext } from './wac.js';
+import { applyACLPlan, cachedACLContext, expandAccessMode, getACLContext, setPublicRead } from './wac.js';
 import { notifyInbox, sendNotifications, showContactsActivities, initializeNotifications, registerEncryptionUnlockHandler, processPendingEncryptedNotes, clearPendingEncryptedQueues } from './activity.js';
 import Config from './config.js';
 const ns = Config.ns;
@@ -50,7 +52,7 @@ import { generateGeoView } from './geo.js';
 import { csvStringToJson, jsonToHtmlTableString } from './csv.js';
 import { restoreYjsContent, addYjsVersion, getYjsVersions, getYjsVersionsFromIDB, getCurrentVersionKey, onYjsVersionsChanged } from "./editor/editor.js";
 import { rewriteBlobImagesToRelative, uploadBlobAssets, clearBlobAssets, hasUploadTarget, resolveAuthenticatedImages } from "./editor/utils/imageAssets.js";
-import { createKeystore, unlockKeystore, isUnlocked, getSessionKid, hasKeystore, publishPublicKeyToProfile, getAgentEncryptionKey, exportKeyDocument, exportKeyDocuments, exportKeyPair, importKeyDocuments, importPrivateKeyPEM, verifyPassphrase, hasAnyKeys, listKeys, KEY_AGREEMENT, ASSERTION } from './keystore.js';
+import { createKeystore, unlockKeystore, isUnlocked, getSessionKid, getSessionPublicKey, hasKeystore, publishPublicKeyToProfile, getAgentEncryptionKey, exportKeyDocument, exportKeyDocuments, exportKeyPair, importKeyDocuments, importPrivateKeyPEM, verifyPassphrase, hasAnyKeys, listKeys, KEY_AGREEMENT, ASSERTION } from './keystore.js';
 
 const versionItemCache = new Map();
 let editHistoryAside = null;
@@ -1627,19 +1629,12 @@ function removeProgressIndicator(node) {
 export function replyToResource(e, iri) {
   iri = iri || Config.DocumentURL || currentLocation()
 
-  const documentOptions = {
-    ...Config.DOMProcessing,
-    format: true,
-    sanitize: true,
-    normalize: true
-  };
-
   e.target.closest('button').disabled = true
 
   var buttonClose = getButtonHTML({ key: 'dialog.reply-to-resource.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
   document.body.appendChild(fragmentFromString(`
-    <aside aria-labelledby="reply-to-resource-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="reply-to-resource" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#reply-to-resource" xml:lang="${Config.User.UI.Language}">
+    <aside aria-labelledby="reply-to-resource-label" class="do on" data-notify-scope="" dir="${Config.User.UI.LanguageDir}" id="reply-to-resource" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#reply-to-resource" xml:lang="${Config.User.UI.Language}">
       <h2 data-i18n="dialog.reply-to-resource.h2" id="reply-to-resource-label" property="schema:name">${i18n.t('dialog.reply-to-resource.h2.textContent')} ${Config.Button.Info.Reply}</h2>
       ${buttonClose}
       <div class="info"></div>
@@ -1648,12 +1643,7 @@ export function replyToResource(e, iri) {
         <ul>
           <li>
             <p><label data-i18n="dialog.reply-to-resource-note.label" for="reply-to-resource-note">${i18n.t('dialog.reply-to-resource-note.label.textContent')}</label></p>
-            <p><textarea cols="40" data-i18n="dialog.reply-to-resource-note.textarea" dir="auto" id="reply-to-resource-note" rows="10" name="reply-to-resource-note" placeholder="${i18n.t('dialog.reply-to-resource-note.textarea.placeholder')}"></textarea></p>
-          </li>
-          <li>
-            <label data-i18n="language.label" for="reply-to-resource-language">${i18n.t('language.label.textContent')}</label> <select id="reply-to-resource-language" name="reply-to-resource-language">${getLanguageOptionsHTML()}</select></li>
-          <li>
-            <label data-i18n="license.label" for="reply-to-resource-license">${i18n.t('license.label.textContent')}</label> <select id="reply-to-resource-license" name="reply-to-resource-license">${getLicenseOptionsHTML()}</select>
+            <p><textarea cols="40" data-i18n="dialog.reply-to-resource-note.textarea" dir="auto" id="reply-to-resource-note" required="" rows="10" name="reply-to-resource-note" placeholder="${i18n.t('dialog.reply-to-resource-note.textarea.placeholder')}"></textarea></p>
           </li>
         </ul>
       </div>
@@ -1670,16 +1660,57 @@ export function replyToResource(e, iri) {
   var note;
   var noteIRI;
 
-  setupResourceBrowser(replyToResource, id, action)
+  // Secondary fields, including the save location, live behind the same more-options toggle as the annotation popups
+  sanitizeInsertAdjacentHTML(replyToResource, 'beforeend', `<div class="editor-form-advanced" hidden="">
+    <label data-i18n="language.label" for="reply-to-resource-language">${i18n.t('language.label.textContent')}</label> <select class="editor-form-select" id="reply-to-resource-language" name="reply-to-resource-language">${getLanguageOptionsHTML()}</select>
+    <label data-i18n="license.label" for="reply-to-resource-license">${i18n.t('license.label.textContent')}</label> <select class="editor-form-select" id="reply-to-resource-license" name="reply-to-resource-license">${getLicenseOptionsHTML()}</select>
+  </div>`)
+
+  var advancedFields = replyToResource.querySelector('.editor-form-advanced')
+
+  // The reply is a new resource; do not default to the source document's name
+  setupResourceBrowser(advancedFields, id, action, { defaultFilename: generateAttributeId() + '.html' })
   attachBrowseStoragePopup(id, action)
   sanitizeInsertAdjacentHTML(document.getElementById(id), 'afterbegin', `<p data-i18n="dialog.reply-to-resource.save-location-choose.p">${i18n.t('dialog.reply-to-resource.save-location-choose.p.textContent')}</p>`)
 
-  sanitizeInsertAdjacentHTML(replyToResource, 'beforeend', `<p data-i18n="dialog.reply-to-resource.save-location.p">${i18n.t('dialog.reply-to-resource.save-location.p.textContent')} <samp id="${id}-${action}"></samp></p>`)
+  sanitizeInsertAdjacentHTML(advancedFields, 'beforeend', `<p data-i18n="dialog.reply-to-resource.save-location.p">${i18n.t('dialog.reply-to-resource.save-location.p.textContent')} <samp id="${id}-${action}"></samp></p>`)
+  sanitizeInsertAdjacentHTML(advancedFields, 'beforeend', `<span class="annotation-inbox-selection">${getAnnotationInboxLocationHTML('reply-to-resource')}</span>`)
 
   var bli = document.getElementById(id + '-input')
-  bli.focus()
   bli.placeholder = 'https://example.org/path/to/article'
-  sanitizeInsertAdjacentHTML(replyToResource, 'beforeend', `<button class="reply" data-i18n="dialog.reply-to-resource.submit.button" title="${i18n.t('dialog.reply-to-resource.submit.button.title')}" type="submit">${i18n.t('dialog.reply-to-resource.submit.button.textContent')}</button>`)
+  replyToResource.querySelector('#reply-to-resource-note').focus()
+
+  sanitizeInsertAdjacentHTML(replyToResource, 'beforeend', `<div class="editor-form-footer reply-controls">
+    <span class="editor-form-footer-controls">
+      <button class="editor-form-icon-toggle editor-form-advanced-toggle" type="button" aria-expanded="false" aria-label="More options" title="More options">${Icon['.fas.fa-plus'] || '+'}<span class="editor-form-advanced-toggle-caret">${Icon['.fas.fa-caret-down']}</span></button>
+      <span class="annotation-access">
+        <input type="checkbox" class="editor-form-access" id="reply-to-resource-access-public" name="reply-to-resource-access-public" role="switch" value="true"${isPublicRead(Config.DocumentURL) ? ' checked="checked"' : ''} aria-label="${i18n.t('annotation-access.label.textContent')}" />
+        <label class="editor-form-icon-toggle editor-form-access-label" for="reply-to-resource-access-public">${Icon['.fas.fa-eye-slash']}${Icon['.fas.fa-globe']}</label>
+      </span>
+      <span class="annotation-encrypt">
+        <input type="checkbox" class="editor-form-encrypt" id="reply-to-resource-encrypt" name="reply-to-resource-encrypt" role="switch" value="true"${isUnlocked() ? ' checked="checked"' : ''} aria-label="${i18n.t('annotation-encrypt.label.textContent')}" />
+        <label class="editor-form-icon-toggle editor-form-encrypt-label" for="reply-to-resource-encrypt">${Icon['.fas.fa-lock-open']}${Icon['.fas.fa-lock']}</label>
+      </span>
+    </span>
+    <span class="editor-form-footer-actions">
+      <button class="reply" data-i18n="dialog.reply-to-resource.submit.button" title="${i18n.t('dialog.reply-to-resource.submit.button.title')}" type="submit">${i18n.t('dialog.reply-to-resource.submit.button.textContent')}</button>
+    </span>
+  </div>`)
+
+  // Same show/hide behaviour as the annotation popups' more-options toggle
+  var advancedToggle = replyToResource.querySelector('.editor-form-advanced-toggle')
+  advancedToggle.addEventListener('click', () => {
+    var open = advancedToggle.getAttribute('aria-expanded') !== 'true'
+    advancedToggle.setAttribute('aria-expanded', String(open))
+    advancedToggle.classList.toggle('editor-form-icon-toggle-active', open)
+    advancedFields.hidden = !open
+    if (open) {
+      advancedFields.querySelector('input, select, textarea')?.focus()
+    }
+  })
+
+  setupIconToggleTitles(replyToResource)
+  syncNotifyInboxDefault(replyToResource, { reset: true })
 
   replyToResource.addEventListener('click', e => {
     if (e.target.closest('button.close')) {
@@ -1714,9 +1745,17 @@ export function replyToResource(e, iri) {
     }
   })
 
-  function sendReply() {
+  async function sendReply() {
     var datetime = getDateTimeISO()
     var attributeId = generateAttributeId()
+
+    var encrypted = !!replyToResource.querySelector('.editor-form-encrypt')?.checked && isUnlocked()
+    var publicAccess = !!replyToResource.querySelector('.editor-form-access')?.checked && !encrypted
+    var notifyInboxes = Array.from(replyToResource.querySelectorAll('input[name="reply-to-resource-annotation-inbox"]:checked')).map(input => input.value)
+
+    if (encrypted) {
+      note = await encryptContent(note, [getSessionPublicKey()], getSessionKid())
+    }
 
     var motivatedBy = "oa:replying"
     // The reply action maps to the oa:replying motivation
@@ -1791,15 +1830,13 @@ export function replyToResource(e, iri) {
           .querySelector('.response-message')
           .setHTMLUnsafe(domSanitize(`<p class="success" data-i18n="dialog.reply-to-resource.success.saved-at.p"><span>${i18n.t('dialog.reply-to-resource.success.saved-at.p.textContent')}</span> <a href="${url}" rel="noopener" target="_blank">${url}</a></p>`));
 
-        return getLinkRelation(ns.ldp.inbox.value, null, getDocument(null, documentOptions));
-      })
-
-      .then(inboxes => {
-        if (!inboxes) {
-          throw new Error('Inbox is empty or missing')
+        // Public read is not inherited from the container on every server
+        if (publicAccess) {
+          setPublicRead(noteIRI, true)
+            .catch(e => console.log('Could not make reply public:', e));
         }
 
-        var inboxURL = inboxes[0]
+        if (!notifyInboxes.length) return;
 
         //TODO-i18n
         let notificationStatements = '    <dl about="' + noteIRI +
@@ -1811,38 +1848,38 @@ export function replyToResource(e, iri) {
           motivatedBy.split(':')[1] + '" property="oa:motivation">' +
           motivatedBy.split(':')[1] + '</a></dd>\n</dl>\n'
 
-        let notificationData = {
-          "type": ['as:Announce'],
-          "inbox": inboxURL,
-          "object": noteIRI,
-          "note": Object.assign({}, noteData, { "iri": noteIRI }),
-          "target": iri,
-          "license": noteData.license,
-          "statements": notificationStatements
-        }
+        // Notify each inbox the user selected
+        return Promise.allSettled(notifyInboxes.map(inboxURL => {
+          let notificationData = {
+            "type": ['as:Announce'],
+            "inbox": inboxURL,
+            "object": noteIRI,
+            "note": Object.assign({}, noteData, { "iri": noteIRI }),
+            "target": iri,
+            "license": noteData.license,
+            "statements": notificationStatements
+          }
 
-        return notifyInbox(notificationData)
-          .catch(error => {
-            console.error('Failed sending notification to ' + inboxURL + ' :', error)
+          var responseMessage = replyToResource.querySelector('.response-message');
 
-            throw new Error('Failed sending notification to author inbox')
-          })
-      })
+          return notifyInbox(notificationData)
+            .then(result => {
+              var notificationSent = i18n.t('dialog.reply-to-resource.success.notification-sent.p.textContent');
+              var linkUrl = domSanitize(result?.location || inboxURL);
+              responseMessage.setHTMLUnsafe(domSanitize(responseMessage.getHTML() + `<p class="success" data-i18n="dialog.reply-to-resource.success.notification-sent.p"><span>${notificationSent}</span> <a href="${linkUrl}" rel="noopener" target="_blank">${linkUrl}</a></p>`));
 
-      .then(result => {  // Success!
-        var notificationSent = i18n.t('dialog.reply-to-resource.success.notification-sent.p.textContent');
-        var notificationLink = '';
+              addMessageToLog({ 'content': i18n.t('annotation.notify-inbox.success.textContent', { inbox: inboxURL }), 'type': 'success' }, Config.MessageLog);
+            })
+            .catch(error => {
+              console.error('Failed sending notification to ' + inboxURL + ' :', error)
 
-        if (result && result.location) {
-          let locationUrl = domSanitize(result.location);
-          notificationLink = `<a href="${locationUrl}" rel="noopener" target="_blank">${locationUrl}</a>`;
-        }
-        // else {
-        //   notificationSent = notificationSent + ", but location unknown."
-        // }
+              var detail = [error?.status, error?.message].filter(Boolean).join(' ');
+              var failed = i18n.t('annotation.notify-inbox.failed.textContent', { inbox: inboxURL, annotation: noteIRI, error: detail });
+              responseMessage.setHTMLUnsafe(domSanitize(responseMessage.getHTML() + `<p class="error">${failed}</p>`));
 
-        var responseMessage = replyToResource.querySelector('.response-message');
-        responseMessage.setHTMLUnsafe(domSanitize(responseMessage.getHTML() + `<p class="success" data-i18n="dialog.reply-to-resource.success.notification-sent.p"><span>${notificationSent}</span> ${notificationLink}</p>`));
+              addMessageToLog({ 'content': failed, 'type': 'warning' }, Config.MessageLog);
+            })
+        }));
       })
 
       //TODO-i18n
@@ -1894,6 +1931,11 @@ export function setupResourceBrowser(parent, id, action, options){
       defaultFilename = getDefaultDocumentBasename(selectArticleNode(document)) + '.' + preferredExt;
     } else if (inMarkdownMode) {
       defaultFilename = defaultFilename.replace(/\.[^./]+$/, '') + '.md';
+    }
+
+    // New resources (e.g. replies) must not default to the source document's name
+    if (options.defaultFilename) {
+      defaultFilename = options.defaultFilename;
     }
   }
 

@@ -5084,7 +5084,7 @@ button[type="button"]:focus {
   display: none;
 }
 /* Two groups: icon controls tight on the left, actions on the right */
-.editor-form .editor-form-footer {
+.do .editor-form-footer {
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
@@ -5092,37 +5092,39 @@ button[type="button"]:focus {
   gap: 1.5em;
   margin-top: 0.25em;
 }
-.editor-form .editor-form-footer-controls,
-.editor-form .editor-form-footer-actions {
+.do .editor-form-footer-controls,
+.do .editor-form-footer-actions {
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
 }
-.editor-form .editor-form-footer-controls {
+.do .editor-form-footer-controls {
   gap: 0.25em;
 }
-.editor-form .editor-form-footer-actions {
+.do .editor-form-footer-actions {
   gap: 0.5em;
 }
-.editor-form .editor-form-footer .annotation-access,
-.editor-form .editor-form-footer .annotation-encrypt {
+.do .editor-form-footer .annotation-access,
+.do .editor-form-footer .annotation-encrypt {
   display: flex;
   align-items: center;
   margin: 0;
 }
 /* Neutralize the fieldset-wide align-self: end, which staggers short and tall buttons */
-.editor-form .editor-form-footer button {
+.do .editor-form-footer button {
   width: max-content;
   align-self: center;
   justify-self: auto;
   margin: 0;
 }
 /* Flat like a toolbar button, not a green action button; active is a pressed state */
-.editor-form button.editor-form-icon-toggle,
-.editor-form label.editor-form-icon-toggle {
+.do button.editor-form-icon-toggle,
+.do label.editor-form-icon-toggle {
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
   width: 2em;
   height: 2em;
   padding: 0;
@@ -5134,21 +5136,27 @@ button[type="button"]:focus {
   cursor: pointer;
   transition: background-color .2s ease-in;
 }
-.editor-form button.editor-form-icon-toggle svg,
-.editor-form label.editor-form-icon-toggle svg {
+.do button.editor-form-icon-toggle svg,
+.do label.editor-form-icon-toggle svg {
   width: 1em;
   height: 1em;
   fill: currentColor;
 }
-.editor-form button.editor-form-icon-toggle:hover,
-.editor-form label.editor-form-icon-toggle:hover {
+.do button.editor-form-icon-toggle:hover,
+.do label.editor-form-icon-toggle:hover {
   background-color: var(--do-color-bg-subtle);
   color: var(--do-color-link-hover);
 }
-.editor-form button.editor-form-icon-toggle.editor-form-icon-toggle-active {
+.do button.editor-form-icon-toggle.editor-form-icon-toggle-active {
   background-color: var(--do-color-bg-subtle);
   color: var(--do-color-link);
   box-shadow: inset 0 0 0 1px var(--do-color-border);
+}
+aside.do.on label.editor-form-icon-toggle,
+aside.do input + label.editor-form-icon-toggle {
+  display: flex;
+  min-width: 0;
+  margin-left: 0;
 }
 
 
@@ -7813,20 +7821,20 @@ input.passphrase-mismatch + button.toggle-passphrase svg {
   fill: var(--do-color-error);
 }
 
-.editor-form input.editor-form-encrypt {
+.do input.editor-form-encrypt {
   position: absolute;
   left: -9999px;
 }
-.editor-form .editor-form-encrypt-label .fas.fa-lock {
+.do .editor-form-encrypt-label .fas.fa-lock {
   display: none;
 }
-.editor-form input.editor-form-encrypt:checked + .editor-form-encrypt-label .fas.fa-lock {
+.do input.editor-form-encrypt:checked + .editor-form-encrypt-label .fas.fa-lock {
   display: block;
 }
-.editor-form input.editor-form-encrypt:checked + .editor-form-encrypt-label .fas.fa-lock-open {
+.do input.editor-form-encrypt:checked + .editor-form-encrypt-label .fas.fa-lock-open {
   display: none;
 }
-.editor-form input.editor-form-encrypt:focus-visible + .editor-form-encrypt-label {
+.do input.editor-form-encrypt:focus-visible + .editor-form-encrypt-label {
   outline: 2px solid var(--do-color-accent-hover);
   outline-offset: 2px;
 }
@@ -7840,20 +7848,20 @@ input.passphrase-mismatch + button.toggle-passphrase svg {
   margin: 0.25em 1em 0 0;
   vertical-align: top;
 }
-.editor-form input.editor-form-access {
+.do input.editor-form-access {
   position: absolute;
   left: -9999px;
 }
-.editor-form .editor-form-access-label .fas.fa-globe {
+.do .editor-form-access-label .fas.fa-globe {
   display: none;
 }
-.editor-form input.editor-form-access:checked + .editor-form-access-label .fas.fa-globe {
+.do input.editor-form-access:checked + .editor-form-access-label .fas.fa-globe {
   display: block;
 }
-.editor-form input.editor-form-access:checked + .editor-form-access-label .fas.fa-eye-slash {
+.do input.editor-form-access:checked + .editor-form-access-label .fas.fa-eye-slash {
   display: none;
 }
-.editor-form input.editor-form-access:focus-visible + .editor-form-access-label {
+.do input.editor-form-access:focus-visible + .editor-form-access-label {
   outline: 2px solid var(--do-color-accent-hover);
   outline-offset: 3px;
 }
@@ -8315,22 +8323,22 @@ aside.do.on:not([id="document-info"]) select {
 }
 
 /* Advanced toggle: bordered like Cancel, with a caret, unlike the toolbar's flat + */
-.editor-form button.editor-form-advanced-toggle {
+.do button.editor-form-advanced-toggle {
   width: auto;
   padding: 0 0.5em;
   gap: 0.25em;
   border: 1px solid rgba(0, 0, 0, 0.35);
 }
-.editor-form button.editor-form-advanced-toggle .editor-form-advanced-toggle-caret {
+.do button.editor-form-advanced-toggle .editor-form-advanced-toggle-caret {
   display: inline-flex;
   align-items: center;
 }
-.editor-form button.editor-form-advanced-toggle .editor-form-advanced-toggle-caret svg {
+.do button.editor-form-advanced-toggle .editor-form-advanced-toggle-caret svg {
   width: 0.625em;
   height: 0.625em;
   transition: transform .2s ease-in;
 }
-.editor-form button.editor-form-advanced-toggle.editor-form-icon-toggle-active .editor-form-advanced-toggle-caret svg {
+.do button.editor-form-advanced-toggle.editor-form-icon-toggle-active .editor-form-advanced-toggle-caret svg {
   transform: rotate(180deg);
 }
 
