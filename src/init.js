@@ -47,6 +47,7 @@ export async function init (url) {
   initServiceWorker();
   initWebManifest();
   initInstallPrompt();
+  initMessageLog();
   await initStorageBackend();
 
   var contentNode = getDocumentContentNode(document);
@@ -79,6 +80,20 @@ export async function init (url) {
     monitorNetworkStatus();
     initPrint();
   }
+}
+
+// Restore the local action record from previous sessions
+function initMessageLog() {
+  try {
+    const storedLog = JSON.parse(window.localStorage.getItem('dokieli.messageLog') || '[]');
+    if (Array.isArray(storedLog)) {
+      storedLog.slice(0, 200).forEach(m => {
+        if (m && typeof m.content === 'string') {
+          Config.MessageLog.push({ ...m, content: domSanitize(m.content) });
+        }
+      });
+    }
+  } catch {}
 }
 
 async function initStorageBackend() {

@@ -321,6 +321,8 @@
   "dialog.memento-document.close.button.aria-label": "Cerrar Memento",
   "dialog.memento-document.close.button.title": "Cerrar",
   "dialog.message-log.caption.textContent": "Mensajes",
+  "dialog.message-log.clear.button.textContent": "Borrar",
+  "dialog.message-log.clear.button.title": "Borrar el registro de mensajes",
   "dialog.message-log.close.button.aria-label": "Cerrar Registro de Mensajes",
   "dialog.message-log.close.button.title": "Cerrar",
   "dialog.message-log.datetime.th.textContent": "Fecha/Hora",

@@ -5895,11 +5895,36 @@ export function showMessageLog(e, options) {
       <h2 data-i18n="dialog.message-log.h2" id="message-log-label" property="schema:name">${i18n.t('dialog.message-log.h2.textContent')} ${Config.Button.Info.MessageLog}</h2>
       ${buttonClose}
       <div class="info"></div>
-      <div>${messageLog}</div>
+      ${messageLog}
+      ${Config.Button.Clipboard}<button class="clear" data-i18n="dialog.message-log.clear.button" title="${i18n.t('dialog.message-log.clear.button.title')}" type="button">${i18n.t('dialog.message-log.clear.button.textContent')}</button>
     </aside>
   `));
 
-  document.querySelector('#message-log button.close').addEventListener('click', (e) => {
+  var messageLogNode = document.getElementById('message-log');
+  var copyButton = messageLogNode.querySelector('button.copy-to-clipboard');
+  var clearButton = messageLogNode.querySelector('button.clear');
+  var logTable = messageLogNode.querySelector('table[role="log"]');
+
+  if (logTable && copyButton) {
+    setCopyToClipboard(logTable, copyButton);
+  }
+  else if (copyButton) {
+    copyButton.disabled = true;
+  }
+
+  if (!logTable) {
+    clearButton.disabled = true;
+  }
+
+  clearButton.addEventListener('click', () => {
+    Config.MessageLog.length = 0;
+    try { window.localStorage.removeItem('dokieli.messageLog') } catch {}
+    logTable.replaceWith(fragmentFromString(domSanitize(`<p data-i18n="dialog.message-log.no-messages.p">${i18n.t('dialog.message-log.no-messages.p.textContent')}</p>`)));
+    if (copyButton) copyButton.disabled = true;
+    clearButton.disabled = true;
+  });
+
+  messageLogNode.querySelector('button.close').addEventListener('click', (e) => {
     document.querySelector('button.message-log').removeAttribute('disabled');
   });
 }

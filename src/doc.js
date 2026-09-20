@@ -594,6 +594,11 @@ export function addMessageToLog(message, log, options = {}) {
   const m = Object.assign({}, message);
   m['dateTime'] = getDateTimeISO();
   log.unshift(m);
+
+  // Local-first action record; only the main log persists across sessions
+  if (log === Config.MessageLog) {
+    try { window.localStorage.setItem('dokieli.messageLog', JSON.stringify(log.slice(0, 200))) } catch {}
+  }
 }
 
 export function handleActionMessage(resolved, rejected) {
