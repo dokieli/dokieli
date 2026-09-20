@@ -40,7 +40,7 @@
           </dl>
           <dl id="document-modified">
             <dt>Modified</dt>
-            <dd><time content="2026-07-29T00:00:00Z" datatype="xsd:dateTime" datetime="2026-07-29T00:00:00Z" property="schema:dateModified">2026-07-29</time></dd>
+            <dd><time content="2026-09-20T00:00:00Z" datatype="xsd:dateTime" datetime="2026-09-20T00:00:00Z" property="schema:dateModified">2026-09-20</time></dd>
           </dl>
           <dl id="document-type">
             <dt>Document Type</dt>
@@ -140,6 +140,15 @@
             <div datatype="rdf:HTML" property="schema:description">
               <p>Dokieli is a client-side editor and browser extension for decentralised article publishing, annotations, and social interactions, built as an open-source project using open web standards. Dokieli's core design principles are <em>autonomy</em> and <em>universal access</em>.</p>
               <p>As an application running in the web browser, dokieli works independently of any specific server or service. All content produced by dokieli can be used by other standards-compliant applications. dokieli takes a privacy-conscious approach by allowing individuals to choose where they store their content and who can access it. Dokieli does not collect or share its users' data.</p>
+              <p>As a user agent, dokieli serves its user, guided by the duties of protection, honesty, and loyalty described in the W3C TAG's <cite><a href="https://www.w3.org/TR/web-user-agents/" rel="cito:citesAsAuthority">Web User Agents</a></cite>.</p>
+              <dl id="user-agent-duties">
+                <dt id="duty-protection">Protection</dt>
+                <dd>Dokieli runs in your browser, keeps no account of you, and phones nothing home. Your content lives where you choose, is readable by whom you allow, and can be encrypted so that not even your storage provider can read it.</dd>
+                <dt id="duty-honesty">Honesty</dt>
+                <dd>Dokieli shows you where things will go before anything is sent, such as which inboxes are notified of a reply, and it reports what actually happened afterwards in a message log you can inspect, copy, or clear.</dd>
+                <dt id="duty-loyalty">Loyalty</dt>
+                <dd>Dokieli works for you, not for a platform. It acts only when you ask or by defaults it states plainly, and it gains nothing from your attention, your data, or your habits.</dd>
+              </dl>
               <p>Made with fun.</p>
             </div>
           </section>
@@ -769,7 +778,7 @@
               <section id="application-privacy" inlist="" rel="schema:hasPart" resource="#application-privacy">
                 <h3 property="schema:name">Application Privacy</h3>
                 <div datatype="rdf:HTML" property="schema:description">
-                  <p>dokieli is a client side application, and can be hosted from any web server. It does not collect, transmit, or store any data about its users on remote servers, and it does not <span about="#privacy-policy" rel="odrl:prohibition" typeof="odrl:Prohibition"><span rel="odrl:action" resource="odrl:sell">sell</span> or <span rel="odrl:action" resource="odrl:distribute">distribute</span></span> data it processes. No analytics, telemetry, or tracking is built into the application. Content produced using dokieli is sent only to destinations the user chooses. Some actions also send notifications on the user's behalf; a notification identifies the user by their WebID when they are signed in.</p>
+                  <p>dokieli is a client side application, and can be hosted from any web server. It does not collect, transmit, or store any data about its users on remote servers, and it does not <span about="#privacy-policy" rel="odrl:prohibition" typeof="odrl:Prohibition"><span rel="odrl:action" resource="odrl:sell">sell</span> or <span rel="odrl:action" resource="odrl:distribute">distribute</span></span> data it processes. No analytics, telemetry, or tracking is built into the application. Content produced using dokieli is sent only to destinations the user chooses. Some actions also send notifications on the user's behalf; a notification identifies the user by their WebID when they are signed in. This policy reflects the <a href="#user-agent-duties" rel="rdfs:seeAlso">user agent duties</a> that guide dokieli.</p>
                 </div>
               </section>
               <section id="cookies" inlist="" rel="schema:hasPart" resource="#cookies">
