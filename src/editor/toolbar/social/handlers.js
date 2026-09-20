@@ -92,13 +92,14 @@ export function formHandlerAnnotate(e, action) {
     selectedContent: this.getSelectionAsHTML()
   };
 
+  const annotationNotifyInboxes = [].concat(formValues[`${action}-annotation-inbox`] || []);
   const annotationLocationAnnotationStore = formValues[`${action}-annotation-location-annotation-store`];
   const annotationLocationPersonalStorage = formValues[`${action}-annotation-location-personal-storage`];
   const annotationLocationActivityOutbox = formValues[`${action}-annotation-location-activity-outbox`];
   const annotationLocationService = formValues[`${action}-annotation-location-annotation-service`];
   const annotationLocationNanopubNetwork = formValues[`${action}-annotation-location-nanopub-network`];
 
-  updateUserUI({ annotationLocationAnnotationStore, annotationLocationPersonalStorage, annotationLocationActivityOutbox, annotationLocationService, annotationLocationNanopubNetwork })
+  updateUserUI({ annotationNotifyInboxes, annotationLocationAnnotationStore, annotationLocationPersonalStorage, annotationLocationActivityOutbox, annotationLocationService, annotationLocationNanopubNetwork })
 
   processAction(action, formValues, selectionData);
 
@@ -108,7 +109,7 @@ export function formHandlerAnnotate(e, action) {
 
 function updateUserUI(fields) {
   Object.entries(fields).forEach(([key, value]) => {
-    Config.User.UI[key] = { checked: Boolean(value) };
+    Config.User.UI[key] = { checked: Array.isArray(value) ? value : Boolean(value) };
   });
 }
 

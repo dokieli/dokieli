@@ -2883,7 +2883,9 @@ export function getAnnotationInboxLocationHTML(action) {
     var container = registration[ns.solid.instanceContainer.value];
     if (!container) return;
     var label = registration[ns.rdfs.label.value];
-    inboxes.push({ suffix: `typeindex-${index}`, url: container, label: label ? htmlEncode(label) : i18n.t('annotation-inbox.label.textContent'), subject: registration[ns.dcterms.subject.value] });
+    // A topical inbox the user notified before starts checked
+    var remembered = Config.User.UI?.annotationNotifyInboxes?.checked;
+    inboxes.push({ suffix: `typeindex-${index}`, url: container, label: label ? htmlEncode(label) : i18n.t('annotation-inbox.label.textContent'), subject: registration[ns.dcterms.subject.value], checked: Array.isArray(remembered) && remembered.includes(container) });
   });
 
   var seen = new Set();
