@@ -815,6 +815,25 @@
                 <h3 property="schema:name">Third-party services</h3>
                 <div datatype="rdf:HTML" property="schema:description">
                   <p>Some features make outbound requests to third-party services. This includes resources embedded or referenced in documents and annotations by their authors, which may trigger requests to external servers when that content is loaded. It also covers dedicated features. The archiving feature, for example, sends a snapshot request to the <a href="https://web.archive.org/">Internet Archive's Wayback Machine</a>, which involves the URL being archived and the user's IP address. When using such features the user is interacting directly with the relevant third party and that service's own policies apply. Protected resources are exempt from public archiving since the request to create an archive snapshot does not carry credentials.</p>
+                  <p>The web services that dokieli's features can contact are listed below. A request is made only when the user uses the corresponding feature, and the first time a feature would contact a service, dokieli asks for the user's consent. Decisions can be changed at any time under Settings in the dokieli menu. Services the user configures themselves, such as identity providers, storage, git forges, or a custom lookup endpoint, are contacted according to the user's own settings.</p>
+                  <dl id="web-services">
+                    <dt><a href="https://www.doi.org/">DOI</a></dt>
+                    <dd>Resolves digital object identifiers to metadata, for citations and table lookups.</dd>
+                    <dt><a href="https://web.archive.org/">Internet Archive</a></dt>
+                    <dd>Creates snapshots of resources for archiving and robust links.</dd>
+                    <dt><a href="https://linkedresearch.org/cloud">Linked Open Research Cloud</a></dt>
+                    <dd>An optional destination for sharing documents with the Linked Research community.</dd>
+                    <dt><a href="https://openlibrary.org/">Open Library</a></dt>
+                    <dd>Looks up book metadata, for example by ISBN, for citations and table lookups.</dd>
+                    <dt><a href="https://www.openstreetmap.org/">OpenStreetMap</a></dt>
+                    <dd>Names and describes geographic locations.</dd>
+                    <dt><a href="https://orcid.org/">ORCID</a></dt>
+                    <dd>Looks up researcher and contributor information, for citations and table lookups.</dd>
+                    <dt><a href="https://specref.org/">Specref</a></dt>
+                    <dd>Looks up bibliographic data about technical specifications, for citations and table lookups.</dd>
+                    <dt><a href="https://www.wikidata.org/">Wikidata</a></dt>
+                    <dd>Provides entity data for citations, table lookups, concepts, and suggestions.</dd>
+                  </dl>
                 </div>
               </section>
               <section id="privacy-contact" inlist="" rel="schema:hasPart" resource="#privacy-contact">

@@ -31,7 +31,7 @@ const DEV_ORIGIN = process.env.DEV_ORIGIN;
 //   return textContentStr;
 // }
 
-function getDocsBaseURL() {
+export function getDocsBaseURL() {
   if (Config.WebExtensionEnabled) return Config.WebExtension.runtime.getURL('docs.html');
   if (isLocalhost(window.location.href)) return new URL('docs.html', document.baseURI).href;
   let origin = window.location.origin === DEV_ORIGIN ? DEV_ORIGIN : 'https://dokie.li';

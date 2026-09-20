@@ -20,6 +20,7 @@ import uriTemplates from 'uri-templates';
 import Config from './config.js';
 import { getResource } from './fetcher.js';
 import { getResourceGraph } from './graph.js';
+import { requestOriginConsent } from './consent.js';
 
 // Lookup services bind an identifier column to a remote description of what it identifies; CSVW stops at the table, this is the extension.
 export const LookupServices = {
@@ -240,6 +241,8 @@ export async function searchWikidataEntities(keyword, options = {}) {
   const limit = options.limit || 10;
   const url = `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(term)}&language=${language}&uselang=${language}&type=item&limit=${limit}&format=json&origin=*`;
 
+  if (!(await requestOriginConsent(url, { reason: 'search' }))) return [];
+
   try {
     const response = await getResource(url, { Accept: 'application/json' }, options);
     const data = await response.json();
@@ -268,6 +271,8 @@ export async function searchSpecrefEntries(keyword, options = {}) {
 
   const url = `https://api.specref.org/search-refs?q=${encodeURIComponent(term)}`;
 
+  if (!(await requestOriginConsent(url, { reason: 'search' }))) return [];
+
   try {
     const response = await getResource(url, { Accept: 'application/json' }, options);
     const data = await response.json();
@@ -295,6 +300,8 @@ export async function searchOpenLibraryEntries(keyword, options = {}) {
   // Quote the phrase unless the user already did; their plain q matches too loosely
   const quotedTerm = /^".*"$/.test(term) ? term : '"' + term + '"';
   const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(quotedTerm)}&limit=${options.limit || 10}&fields=key,title,author_name,first_publish_year`;
+
+  if (!(await requestOriginConsent(url, { reason: 'search' }))) return [];
 
   try {
     const response = await getResource(url, { Accept: 'application/json' }, options);
@@ -586,6 +593,9 @@ function labelFor(graph, term, preferred) {
 export async function lookupIdentifier(tableSchema, columns, identifier, options = {}) {
   const lookup = tableSchema?.lookup;
   if (!lookup?.url || !identifier) return null;
+
+  // First contact with a service origin asks the user; resolvers fetch too, so gate before them
+  if (!(await requestOriginConsent(lookup.url, { reason: 'lookup' }))) return null;
 
   const service = getLookupService(lookup.service);
   const format = lookup.format || service?.format || 'json';

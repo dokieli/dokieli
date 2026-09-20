@@ -20,6 +20,7 @@ import leaflet from 'leaflet';
 import * as leafletGpx from 'leaflet-gpx';
 const L = { ...leaflet, ...leafletGpx };
 import { generateAttributeId, convertToISO8601Duration } from './util.js'
+import { requestOriginConsent } from './consent.js';
 import { getAgentHTML, createDateHTML, setCopyToClipboard } from './doc.js'
 import { fragmentFromString, selectArticleNode } from "./utils/html.js";
 import { i18n } from './i18n.js';
@@ -533,6 +534,8 @@ function roundValue(value, decimals) {
 
 async function lookupPlace(lat, lon) {
   const reverseURL = `https://nominatim.openstreetmap.org/reverse?format=geojson&zoom=10&lat=${lat}&lon=${lon}`;
+
+  if (!(await requestOriginConsent(reverseURL, { reason: 'geo' }))) { return null; }
 
   const headers = { 'Accept': 'application/json' };
   const options = {};

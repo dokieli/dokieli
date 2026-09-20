@@ -24,6 +24,7 @@ import { escapeRegExp, scoreMatch, uniqueArray, isUserAuthenticated } from './ut
 import { domSanitize, safeObjectAssign, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeIRIOrBNode, sanitizeIRIs, sanitizeObject } from './utils/sanitization.js'
 import { parseMarkdown } from "./utils/html.js";
 import { getResource, setAcceptRDFTypes } from './fetcher.js'
+import { requestOriginConsent } from './consent.js';
 import { multikeyToJWK } from './crypto.js'
 import { serializeAnnotationToJSONLD, parseAnnotation } from '@dokieli/web-annotation';
 import LinkHeader from "http-link-header";
@@ -2260,6 +2261,8 @@ SERVICE wikibase:label { bd:serviceParam wikibase:language "${wikidataSearchLang
   // console.log(wikidataSparqlQuery);
 
   wikidataQueryUrl = "https://query.wikidata.org/sparql?query=" + encodeURIComponent(wikidataSparqlQuery);
+
+  if (!(await requestOriginConsent(wikidataQueryUrl, { reason: 'search' }))) { return []; }
 
   let sparqlRequestOptions = {};
 

@@ -18,6 +18,9 @@ limitations under the License.
 import Config from '../config.js';
 import { i18n } from '../i18n.js';
 import { Icon } from './icons.js';
+import { setOriginConsent, KNOWN_SERVICES } from '../consent.js';
+import { htmlEncode } from '../utils/sanitization.js';
+import { fragmentFromString } from '../utils/html.js';
 
 export function renderDocumentDo() {
   const editToggle = Config.Editor?.mode === 'author'
@@ -184,6 +187,52 @@ export function renderAutoSave(options = {}) {
     </section>`;
 }
 
+// All known services plus any other origins the user decided on; checked only when allowed
+export function renderWebServicesConsent() {
+  const knownOrigins = KNOWN_SERVICES.flatMap(service => service.origins);
+  const otherOrigins = Object.keys(Config.OriginConsent || {}).filter(origin => !knownOrigins.includes(origin)).sort();
+
+  const rows = [
+    ...KNOWN_SERVICES.map(service => ({ name: service.name, origins: service.origins, purpose: i18n.t(`menu.web-services.service.${service.i18nKey}.textContent`) })),
+    ...otherOrigins.map(origin => ({ name: origin, origins: [origin], purpose: '' }))
+  ];
+
+  const items = rows.map((row, index) => {
+    const id = `web-services-consent-${index}`;
+    const checked = row.origins.every(origin => Config.OriginConsent?.[origin]?.decision === 'allow') ? ' checked=""' : '';
+    const purpose = row.purpose ? ` ${htmlEncode(row.purpose)}` : '';
+    return `<li><input${checked} class="origin-consent-toggle" data-origins="${htmlEncode(row.origins.join(' '))}" id="${id}" title="${i18n.t('menu.web-services.toggle.input.title')}" type="checkbox" /><label for="${id}"><a href="${htmlEncode(row.origins[0])}/" rel="noopener" target="_blank" title="${htmlEncode(row.origins.join(' '))}">${htmlEncode(row.name)}</a>${purpose}</label></li>`;
+  });
+
+  return `
+    <section aria-labelledby="web-services-consent-label" id="web-services-consent" rel="schema:hasPart" resource="#web-services-consent">
+      <h2 data-i18n="menu.web-services.h2" id="web-services-consent-label" property="schema:name">${i18n.t('menu.web-services.h2.textContent')}</h2>
+      <p data-i18n="menu.web-services.description">${i18n.t('menu.web-services.description.textContent')}</p>
+      <ul>${items.join('')}</ul>
+    </section>`;
+}
+
+export function updateWebServicesConsentSection() {
+  const section = document.getElementById('web-services-consent');
+  if (!section) return;
+  section.replaceWith(fragmentFromString(renderWebServicesConsent()));
+}
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('change', (e) => {
+    const toggle = e.target.closest && e.target.closest('input.origin-consent-toggle');
+    if (toggle) {
+      (toggle.dataset.origins || '').split(' ').filter(Boolean).forEach(origin => {
+        setOriginConsent(origin, toggle.checked ? 'allow' : 'deny');
+      });
+    }
+  });
+
+  document.addEventListener('dokieli:origin-consent-changed', () => {
+    updateWebServicesConsentSection();
+  });
+}
+
 export function renderMenuTabs(content = {}) {
   const { actions = '', tools = '', settings = '' } = content;
 
@@ -232,7 +281,7 @@ export function renderMenuInner() {
   const tabs = renderMenuTabs({
     actions: renderDocumentDo(),
     tools: renderDocumentTools() + renderDocumentViews() + renderDocumentTheme(),
-    settings: renderLanguageSelector() + renderAutoSave({ disabled: true })
+    settings: renderLanguageSelector() + renderAutoSave({ disabled: true }) + renderWebServicesConsent()
   });
 
   return `<section id="user-info"></section>${tabs}${renderAboutDokieli()}`;

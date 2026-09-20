@@ -4096,9 +4096,30 @@ display:block;
 padding:0.25em 1em 0 1em;
 font-size:0.9em;
 }
+#web-services-consent > p {
+padding:0 1em !important;
+margin:0 0 0.75em 0;
+font-size:0.9em !important;
+line-height:1.5 !important;
+color:var(--do-color-fg-secondary);
+}
+#web-services-consent ul {
+list-style:none;
+margin:0 0 0.75em 0;
+padding:0 1em;
+}
+#web-services-consent ul li {
+margin:0.25em 0;
+overflow-wrap:anywhere;
+}
+#web-services-consent ul li label {
+margin-left:0.25em;
+vertical-align:middle;
+}
 #document-menu #document-views-label,
 #document-menu #ui-language-label,
 #document-menu #document-keys-label,
+#document-menu #web-services-consent-label,
 #document-menu #document-theme-label {
 display: block !important;
 font-weight: bold;
@@ -4336,6 +4357,7 @@ padding: 0;
 #document-views h2,
 #document-theme h2,
 #ui-language h2,
+#web-services-consent h2,
 #document-keys h2,
 #document-menu #document-do details.menu-group > summary {
 padding: 0.5em 1em 0.5em 1em;

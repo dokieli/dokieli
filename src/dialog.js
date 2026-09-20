@@ -25,6 +25,7 @@ import { createAnnotation } from '@dokieli/web-annotation';
 import { accessModeAllowed, accessModePossiblyAllowed, isPublicRead } from './access.js';
 import { encryptContent } from './crypto.js';
 import { setupIconToggleTitles, syncNotifyInboxDefault } from './editor/toolbar/toolbar.js';
+import { requestOriginConsent } from './consent.js';
 import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeObject, htmlEncode, sanitizeIRIs } from './utils/sanitization.js';
 import { escapeRDFLiteral, generateAttributeId, getDefaultDocumentBasename } from './util.js';
 import { setAcceptRDFTypes } from './fetcher.js';
@@ -43,7 +44,7 @@ import { showVisualisationGraph } from './viz.js';
 import { exportAsDocument, maybeAskPreferredLanguage, updateUILanguage } from './actions.js';
 import { parseMarkdown, htmlToMarkdown, fragmentFromString, removeSelectorFromNode, selectArticleNode, getNodeWithoutClasses } from "./utils/html.js";
 import { showUserSigninSignout } from './auth.js';
-import { renderMenuTabs, initMenuTabsEvents, renderDocumentDo, renderDocumentTools, renderDocumentViews, renderDocumentTheme, renderLanguageSelector, renderAutoSave, renderAboutDokieli } from './ui/menu.js';
+import { renderMenuTabs, initMenuTabsEvents, renderDocumentDo, renderDocumentTools, renderDocumentViews, renderDocumentTheme, renderLanguageSelector, renderAutoSave, renderAboutDokieli, renderWebServicesConsent } from './ui/menu.js';
 import { initSlideshow } from './init.js';
 import { initCV } from './ui/templates/cv.js';
 import { initSpecification } from './ui/templates/specification.js';
@@ -198,6 +199,7 @@ export function showDocumentMenu(e) {
   showViews(tabTools);
   showLanguages(tabSettings);
   showAutoSave(tabSettings);
+  showWebServicesConsent(tabSettings);
   showKeysSettings(tabSettings);
   showInstallApp(tabSettings);
   showAboutDokieli(dInfo);
@@ -250,6 +252,12 @@ export function eventLeaveDocumentMenu(e) {
   if (!e.target.closest('.do.on')) {
     hideDocumentMenu(e);
   }
+}
+
+function showWebServicesConsent(node) {
+  if (document.getElementById('web-services-consent')) { return; }
+
+  sanitizeInsertAdjacentHTML(node, 'beforeend', renderWebServicesConsent());
 }
 
 function ensureMenuTabs(node) {
@@ -5446,9 +5454,11 @@ export function createRobustLink(uri, node, options){
     });
 }
 
-export function snapshotAtEndpoint(e, iri, endpoint, noteData, options = {}) {
+export async function snapshotAtEndpoint(e, iri, endpoint, noteData, options = {}) {
   iri = iri || Config.DocumentURL || currentLocation();
   endpoint = endpoint || 'https://pragma.archivelab.org/';
+
+  if (!(await requestOriginConsent(endpoint, { reason: 'archive' }))) { return; }
   var progress, svgFail, messageArchivedAt;
   options['showActionMessage'] = ('showActionMessage' in options) ? options.showActionMessage : true;
 

@@ -20,6 +20,7 @@ import Config from './config.js';
 const ns = Config.ns;
 import { highlightItems, updateSelectedStylesheets, initCurrentStylesheet, showActionMessage, addMessageToLog, initCopyToClipboard, showFragment, setDocRefType, showRobustLinksDecoration, focusNote, showAsTabs, setDocumentString, setDocumentURL, getDocument } from './doc.js';
 import { initButtons } from './ui/buttons.js'
+import { initOriginConsent } from './consent.js';
 import { setWebExtensionURL } from './util.js';
 import { getDeviceStorageItem, removeDeviceStorageItem } from './storage.js';
 const GIT_FORGE_HOSTS_KEY = 'DO.Config.GitForge.hosts';
@@ -48,6 +49,7 @@ export async function init (url) {
   initWebManifest();
   initInstallPrompt();
   initMessageLog();
+  await initOriginConsent();
   await initStorageBackend();
 
   var contentNode = getDocumentContentNode(document);
