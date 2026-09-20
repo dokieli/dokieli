@@ -799,6 +799,12 @@
                   <p>dokieli makes outbound requests to resources and services as directed by the user. Those requests originate directly from the user's browser, which discloses the user's IP address to the destination server. This is a standard characteristic of web browsing, not something specific to dokieli. It applies when fetching documents, annotations, profiles, or other linked data, as well as when sending notifications or signing in via a WebID provider. Users can configure a preferred proxy if they wish to limit IP disclosure to external servers.</p>
                 </div>
               </section>
+              <section id="policy-notifications" inlist="" rel="schema:hasPart" resource="#policy-notifications">
+                <h3 property="schema:name">Notifications</h3>
+                <div datatype="rdf:HTML" property="schema:description">
+                  <p>Some actions send <a href="#notification" rel="rdfs:seeAlso">notifications</a> to inboxes, as described by <cite><a href="https://www.w3.org/TR/ldn/" rel="cito:citeAsAuthority">Linked Data Notifications</a></cite>. dokieli shows which inboxes can be notified, such as a document's or a contact's, and the user chooses which are notified; by default only public, unencrypted content is announced. A notification identifies the item it is about, its license, the time, and, when the user is signed in, the user's WebID as the actor. Delivery outcomes are recorded in the message log, and recipient servers' own policies apply to what they retain.</p>
+                </div>
+              </section>
               <section id="privacy-local-storage" inlist="" rel="schema:hasPart" resource="#privacy-local-storage">
                 <h3 property="schema:name">Local storage</h3>
                 <div datatype="rdf:HTML" property="schema:description">
