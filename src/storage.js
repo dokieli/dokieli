@@ -253,6 +253,10 @@ export async function removeDeviceStorageAsSignOut() {
 
   removeDeviceStorageItem('DO.Config.User');
   removeDeviceStorageItem('DO.Config.OIDC');
+
+  // The message log is an activity trace; sign-out clears it like document items
+  Config.MessageLog.length = 0;
+  try { window.localStorage.removeItem('dokieli.messageLog') } catch {}
 }
 
 export function getDeviceStorageItem(key) {
