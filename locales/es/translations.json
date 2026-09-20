@@ -19,7 +19,7 @@
   "annotation-location.personal-storage.label.textContent": "Almacenamiento personal",
   "annotation.delete.button.aria-label": "Eliminar anotación",
   "annotation.delete.button.title": "Eliminar",
-  "annotation.notify-inbox.failed.textContent": "Tu anotación se guardó en <a href=\"{{- annotation}}\">{{- annotation}}</a>, pero no se pudo notificar la bandeja de entrada <a href=\"{{- inbox}}\">{{- inbox}}</a>. Error: {{- error}}",
+  "annotation.notify-inbox.failed.textContent": "Su anotación se guardó en <a href=\"{{- annotation}}\">{{- annotation}}</a>, pero no se pudo notificar la bandeja de entrada <a href=\"{{- inbox}}\">{{- inbox}}</a>. Error: {{- error}}",
   "annotation.notify-inbox.success.textContent": "Se envió una notificación a <a href=\"{{- inbox}}\">{{- inbox}}</a>.",
   "browser.browse-location.button.textContent": "Explorar",
   "browser.browse-location.button.title": "Explorar ubicación",
