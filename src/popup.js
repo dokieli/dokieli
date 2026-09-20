@@ -19,34 +19,12 @@ import i18next from 'i18next';
 import Config from './config.js';
 import { i18nextInit } from './i18n.js';
 import { initButtons } from './ui/buttons.js';
-import { renderMenuInner } from './ui/menu-builder.js';
+import { renderMenuInner, initMenuTabsEvents } from './ui/menu.js';
 import { domSanitize } from './utils/sanitization.js';
 
 const WebExtension = (typeof globalThis.browser !== 'undefined') ? globalThis.browser : globalThis.chrome;
 
 const SESSION_KEY = 'DO.Config.ExtensionSession';
-
-function initTabs() {
-  const tabs = document.getElementById('document-menu-tabs');
-  if (!tabs) return;
-
-  tabs.querySelector('nav').addEventListener('click', (e) => {
-    const a = e.target.closest('a');
-    if (!a) return;
-    e.preventDefault();
-
-    const li = a.parentNode;
-    if (li.classList.contains('selected')) return;
-
-    const prevLi = tabs.querySelector('nav li.selected');
-    if (prevLi) prevLi.classList.remove('selected');
-    li.classList.add('selected');
-
-    const prevSection = tabs.querySelector(':scope > section.selected');
-    if (prevSection) prevSection.classList.remove('selected');
-    tabs.querySelector(`:scope > section${a.hash}`)?.classList.add('selected');
-  });
-}
 
 async function getSession() {
   const stored = await WebExtension.storage.local.get(SESSION_KEY);
@@ -149,7 +127,11 @@ function initAuthHandlers() {
 
 function renderMenu() {
   const menu = document.getElementById('document-menu');
-  if (menu) menu.setHTMLUnsafe(domSanitize(renderMenuInner()));
+  if (!menu) return;
+  menu.setHTMLUnsafe(domSanitize(renderMenuInner()));
+
+  const tabs = document.getElementById('document-menu-tabs');
+  if (tabs) initMenuTabsEvents(tabs);
 }
 
 async function applyButtonStates() {
@@ -221,7 +203,6 @@ async function init() {
   initButtons();
   renderMenu();
 
-  initTabs();
   initAuthHandlers();
   initLanguageHandler();
   initMenuActions();

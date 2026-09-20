@@ -19,7 +19,7 @@ import Config from '../config.js';
 import { i18n } from '../i18n.js';
 import { Icon } from './icons.js';
 
-function renderDocumentDo() {
+export function renderDocumentDo() {
   const editToggle = Config.Editor?.mode === 'author'
     ? Config.Button.Menu.EditDisable
     : Config.Button.Menu.EditEnable;
@@ -38,7 +38,7 @@ function renderDocumentDo() {
       id: 'menu-group-document',
       summaryKey: 'menu.group.document',
       open: true,
-      buttons: [Config.Button.Menu.Save, Config.Button.Menu.SaveAs, encryptToggle, Config.Button.Menu.Version, Config.Button.Menu.Immutable, Config.Button.Menu.Memento, Config.Button.Menu.EditHistory]
+      buttons: [Config.Button.Menu.Save, Config.Button.Menu.SaveAs, encryptToggle, Config.Button.Menu.Permissions, Config.Button.Menu.Version, Config.Button.Menu.Immutable, Config.Button.Menu.Memento, Config.Button.Menu.EditHistory]
     },
     {
       id: 'menu-group-interactions',
@@ -79,7 +79,7 @@ function renderDocumentDo() {
     </section>`;
 }
 
-function renderDocumentTools() {
+export function renderDocumentTools() {
   const buttons = [
     Config.Button.Menu.DocumentInfo,
     Config.Button.Menu.EmbedData,
@@ -95,23 +95,36 @@ function renderDocumentTools() {
     </section>`;
 }
 
-function renderDocumentViews() {
+export function renderDocumentViews(options = {}) {
+  const stylesheets = options.stylesheets || [];
   const items = [];
+
   if (Config.GraphViewerAvailable) {
     items.push(`<li><button class="resource-visualise" data-i18n="menu.document-views.graph.button" title="${i18n.t('menu.document-views.graph.button.title')}">${i18n.t('menu.document-views.graph.button.textContent')}</button></li>`);
   }
+
   items.push(`<li><button class="resource-native-style" data-i18n="menu.document-views.native-style.button" title="${i18n.t('menu.document-views.native-style.button.title')}">${i18n.t('menu.document-views.native-style.button.textContent')}</button></li>`);
+
+  stylesheets.forEach(({ view, alternate }) => {
+    if (alternate) {
+      items.push(`<li><button data-i18n="menu.document-views.change-style.button" title="${i18n.t('menu.document-views.change-style.button.title', { view })}">${view}</button></li>`);
+    }
+    else {
+      items.push(`<li><button data-i18n="menu.document-views.current-style.button" disabled="disabled" title="${i18n.t('menu.document-views.current-style.button.title')}">${view}</button></li>`);
+    }
+  });
+
   items.push(`<li><button class="resource-edit-custom-style" data-i18n="menu.document-views.custom.button" title="${i18n.t('menu.document-views.custom.button.title')}">${i18n.t('menu.document-views.custom.button.textContent')}</button></li>`);
 
   return `
     <section aria-labelledby="document-views-label" id="document-views" rel="schema:hasPart" resource="#document-views">
-      <h2 id="document-views-label" property="schema:name" data-i18n="menu.document-views.h2">${i18n.t('menu.document-views.h2.textContent')}</h2>
+      <h2 data-i18n="menu.document-views.h2" id="document-views-label" property="schema:name">${i18n.t('menu.document-views.h2.textContent')}</h2>
       ${Icon['.fas.fa-paint-roller']}
       <ul>${items.join('')}</ul>
     </section>`;
 }
 
-function renderDocumentTheme() {
+export function renderDocumentTheme() {
   const current = Config.User?.UI?.Theme || 'auto';
   const option = (value) => {
     const checked = (value === current) ? ' checked=""' : '';
@@ -120,13 +133,13 @@ function renderDocumentTheme() {
 
   return `
     <section aria-labelledby="document-theme-label" id="document-theme" rel="schema:hasPart" resource="#document-theme">
-      <h2 id="document-theme-label" property="schema:name" data-i18n="menu.document-theme.h2">${i18n.t('menu.document-theme.h2.textContent')}</h2>
+      <h2 data-i18n="menu.document-theme.h2" id="document-theme-label" property="schema:name">${i18n.t('menu.document-theme.h2.textContent')}</h2>
       ${Icon['.fas.fa-circle-half-stroke']}
       <ul>${option('light')}${option('dark')}${option('auto')}</ul>
     </section>`;
 }
 
-function renderAboutDokieli() {
+export function renderAboutDokieli() {
   return `
     <section id="about-dokieli">
       <dl>
@@ -136,7 +149,7 @@ function renderAboutDokieli() {
     </section>`;
 }
 
-function renderLanguageSelector() {
+export function renderLanguageSelector() {
   const effectiveLanguage = Config.User?.UI?.Language || i18n.code();
   const options = [];
 
@@ -159,20 +172,21 @@ function renderLanguageSelector() {
     </section>`;
 }
 
-function renderAutoSave() {
+export function renderAutoSave(options = {}) {
+  const checked = options.checked ? ' checked=""' : '';
+  const disabled = options.disabled ? ' disabled="disabled"' : '';
+
   return `
     <section aria-labelledby="document-autosave-label" id="document-autosave" rel="schema:hasPart" resource="#document-autosave">
       <h2 data-i18n="menu.autosave.h2" id="document-autosave-label" property="schema:name">${i18n.t('menu.autosave.h2.textContent')}</h2>
-      <input data-i18n="menu.autosave.input" disabled="disabled" id="autosave-remote" title="${i18n.t('menu.autosave.input.title')}" type="checkbox" />
+      <input${checked} data-i18n="menu.autosave.input"${disabled} id="autosave-remote" title="${i18n.t('menu.autosave.input.title')}" type="checkbox" />
       <label data-i18n="menu.autosave.label" for="autosave-remote"><span data-i18n="menu.autosave.label.span">${i18n.t('menu.autosave.label.span.textContent')}</span></label>
     </section>`;
 }
 
-function renderSettings() {
-  return renderLanguageSelector() + renderAutoSave();
-}
+export function renderMenuTabs(content = {}) {
+  const { actions = '', tools = '', settings = '' } = content;
 
-function renderTabs() {
   return `
     <div class="tabs" id="document-menu-tabs">
       <nav aria-label="${i18n.t('menu.tabs.nav.aria-label')}">
@@ -182,12 +196,44 @@ function renderTabs() {
           <li><a data-i18n="menu.tabs.settings" href="#menu-settings">${i18n.t('menu.tabs.settings.textContent')}</a></li>
         </ul>
       </nav>
-      <section class="selected" id="menu-actions">${renderDocumentDo()}</section>
-      <section id="menu-tools">${renderDocumentTools()}${renderDocumentViews()}${renderDocumentTheme()}</section>
-      <section id="menu-settings">${renderSettings()}</section>
+      <section class="selected" id="menu-actions">${actions}</section>
+      <section id="menu-tools">${tools}</section>
+      <section id="menu-settings">${settings}</section>
     </div>`;
 }
 
+export function initMenuTabsEvents(tabs) {
+  tabs.querySelector('nav').addEventListener('click', (e) => {
+    const a = e.target.closest('a');
+    if (!a) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const li = a.parentNode;
+    if (li.classList.contains('selected')) return;
+
+    const prevLi = tabs.querySelector('nav li.selected');
+    if (prevLi) {
+      prevLi.classList.remove('selected');
+      if (!prevLi.classList.length) prevLi.removeAttribute('class');
+    }
+    li.classList.add('selected');
+    const prevSection = tabs.querySelector(':scope > section.selected');
+    if (prevSection) {
+      prevSection.classList.remove('selected');
+      if (!prevSection.classList.length) prevSection.removeAttribute('class');
+    }
+    tabs.querySelector(`:scope > section${a.hash}`)?.classList.add('selected');
+  });
+}
+
 export function renderMenuInner() {
-  return `<section id="user-info"></section>${renderTabs()}${renderAboutDokieli()}`;
+  const tabs = renderMenuTabs({
+    actions: renderDocumentDo(),
+    tools: renderDocumentTools() + renderDocumentViews() + renderDocumentTheme(),
+    settings: renderLanguageSelector() + renderAutoSave({ disabled: true })
+  });
+
+  return `<section id="user-info"></section>${tabs}${renderAboutDokieli()}`;
 }
