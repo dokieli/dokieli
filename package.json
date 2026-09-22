@@ -10,6 +10,7 @@
     "test:unit": "TZ=UTC vitest run --coverage",
     "test:e2e": "playwright test",
     "watch": "webpack --progress --color --watch",
+    "dev": "NANOPUB_TEST_REGISTRY=true webpack --progress --color --watch",
     "minify": "webpack --progress --color --env minimize",
     "postinstall": "patch-package",
     "lint": "eslint .",

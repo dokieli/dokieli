@@ -90,6 +90,7 @@ module.exports = (env) => {
         "process.env.DEV_ORIGIN": JSON.stringify(process.env.DEV_ORIGIN),
         "process.env.YWEBSOCKET_URL": JSON.stringify(process.env.YWEBSOCKET_URL),
         "process.env.DEMO_URL": JSON.stringify(process.env.DEMO_URL),
+        "process.env.NANOPUB_TEST_REGISTRY": JSON.stringify(process.env.NANOPUB_TEST_REGISTRY),
       })
     ],
   };

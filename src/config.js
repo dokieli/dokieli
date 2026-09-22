@@ -36,9 +36,9 @@ export default {
     ACM: { InlineOpen: '[', InlineClose: ']' }
   },
   VerifyCitation: true,
-  // Set to true to publish to the test registry
+  // NANOPUB_TEST_REGISTRY=true in .env publishes to the test registry
   Nanopub: {
-    UseTestRegistry: false
+    UseTestRegistry: process.env.NANOPUB_TEST_REGISTRY === 'true'
   },
   Stylesheets: [],
   User: {
