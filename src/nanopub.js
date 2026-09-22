@@ -29,6 +29,20 @@ export function getRegistryURL() {
   return registries()[0];
 }
 
+export async function publishToRegistry(np) {
+  let error;
+  for (const registry of registries()) {
+    try {
+      return { ...await np.publish(registry), registry };
+    }
+    catch (e) {
+      console.warn('dokieli: could not publish to ' + registry, e);
+      error = e;
+    }
+  }
+  throw error;
+}
+
 function agentAccountsURL(registryURL, agentIRI) {
   const origin = new URL(registryURL).origin;
   return `${origin}/agentAccounts?id=${encodeURIComponent(agentIRI)}`;
@@ -82,7 +96,7 @@ export async function publishIntroduction(unlocked = false) {
 
   const intro = await createIntroNanopub({ agent, privateKey, publicKey, name });
   await intro.sign();
-  const { uri } = await intro.publish(registries()[0]);
+  const { uri } = await publishToRegistry(intro);
 
   Config.User.Keys.Signing.IntroductionURI = uri;
   return { uri, publicKey };

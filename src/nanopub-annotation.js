@@ -18,7 +18,7 @@ limitations under the License.
 import { Nanopub, parse, DEFAULT_NANOPUB_URI } from '@nanopub/nanopub-js';
 import { serializeAnnotationToJSONLD } from '@dokieli/web-annotation';
 import { getGraphFromData } from './graph.js';
-import { getRegistryURL, getAgentIRI, publishIntroduction, getKeyTrustStatus, promptForSigningKey } from './nanopub.js';
+import { publishToRegistry, getAgentIRI, publishIntroduction, getKeyTrustStatus, promptForSigningKey } from './nanopub.js';
 import { getSigningKeyMaterial } from './keystore.js';
 import Config from './config.js';
 
@@ -160,7 +160,7 @@ export async function publishAnnotation(noteData, options = {}, unlocked = false
   const np = await annotationToNanopub(noteData, { ...options, agent, privateKey });
   await np.sign();
 
-  const published = await np.publish(getRegistryURL());
+  const published = await publishToRegistry(np);
   // The canonical URI resolves only once the nanopub reaches the main network
-  return { ...published, registryURI: getRegistryURL() + published.uri.split('/').pop() };
+  return { ...published, registryURI: published.registry + published.uri.split('/').pop() };
 }
