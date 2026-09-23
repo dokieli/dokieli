@@ -416,27 +416,33 @@ function typeRegistrationTriples(subject, forClass, containerIRI) {
 
 // Resolves the container to register, or undefined when dismissed
 function showAnnotationStoreDialog(containerIRI, mode) {
-  const id = 'annotation-store-dialog';
+  return showLocationDialog('annotation-store', containerIRI, mode);
+}
+
+function showLocationDialog(kind, containerIRI, mode) {
+  const id = `${kind}-dialog`;
+  const prefix = `dialog.${kind}`;
   document.getElementById(id)?.remove();
 
   const canChoose = mode !== 'publish';
   const submitKey = canChoose ? 'add' : 'publish';
   const locationId = `${id}-location`;
   const locationAction = 'read';
-  const buttonClose = getButtonHTML({ key: 'dialog.annotation-store.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
-  const chooseLocation = canChoose ? `<p data-i18n="dialog.annotation-store.choose-location.p">${i18n.t('dialog.annotation-store.choose-location.p.textContent')}</p><fieldset id="${locationId}-fieldset"></fieldset>` : '';
+  const buttonClose = getButtonHTML({ key: `${prefix}.close.button`, button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
+  const chooseLocationText = mode === 'setup' ? '' : `<p data-i18n="${prefix}.choose-location.p">${i18n.t(`${prefix}.choose-location.p.textContent`)}</p>`;
+  const chooseLocation = canChoose ? `${chooseLocationText}<fieldset id="${locationId}-fieldset"></fieldset>` : '';
 
   document.body.appendChild(fragmentFromString(`
     <aside aria-labelledby="${id}-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="${id}" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#${id}" xml:lang="${Config.User.UI.Language}">
-      <h2 data-i18n="dialog.annotation-store.h2" id="${id}-label" property="schema:name">${i18n.t('dialog.annotation-store.h2.textContent')}</h2>
+      <h2 data-i18n="${prefix}.h2" id="${id}-label" property="schema:name">${i18n.t(`${prefix}.h2.textContent`)}</h2>
       ${buttonClose}
       <div class="info"></div>
       <div>
-        <p data-i18n="dialog.annotation-store.${mode}.p">${i18n.t(`dialog.annotation-store.${mode}.p.textContent`, { url: containerIRI })}</p>
+        <p data-i18n="${prefix}.${mode}.p">${i18n.t(`${prefix}.${mode}.p.textContent`, { url: containerIRI })}</p>
         ${chooseLocation}
       </div>
-      <button class="cancel" data-i18n="dialog.annotation-store.cancel.button" title="${i18n.t('dialog.annotation-store.cancel.button.title')}" type="button">${i18n.t('dialog.annotation-store.cancel.button.textContent')}</button>
-      <button class="submit" data-i18n="dialog.annotation-store.${submitKey}.button" title="${i18n.t(`dialog.annotation-store.${submitKey}.button.title`)}" type="button">${i18n.t(`dialog.annotation-store.${submitKey}.button.textContent`)}</button>
+      <button class="cancel" data-i18n="${prefix}.cancel.button" title="${i18n.t(`${prefix}.cancel.button.title`)}" type="button">${i18n.t(`${prefix}.cancel.button.textContent`)}</button>
+      <button class="submit" data-i18n="${prefix}.${submitKey}.button" title="${i18n.t(`${prefix}.${submitKey}.button.title`)}" type="button">${i18n.t(`${prefix}.${submitKey}.button.textContent`)}</button>
     </aside>
   `));
 
@@ -445,7 +451,7 @@ function showAnnotationStoreDialog(containerIRI, mode) {
   if (canChoose) {
     const fieldset = dialog.querySelector(`#${locationId}-fieldset`);
     setupResourceBrowser(fieldset, locationId, locationAction, { containersOnly: true });
-    sanitizeInsertAdjacentHTML(fieldset, 'beforeend', `<p data-i18n="dialog.annotation-store.chosen-location.p">${i18n.t('dialog.annotation-store.chosen-location.p.textContent')} <samp id="${locationId}-${locationAction}">${containerIRI}</samp></p>`);
+    sanitizeInsertAdjacentHTML(fieldset, 'beforeend', `<p data-i18n="${prefix}.chosen-location.p">${i18n.t(`${prefix}.chosen-location.p.textContent`)} <samp id="${locationId}-${locationAction}">${containerIRI}</samp></p>`);
     const input = document.getElementById(`${locationId}-input`);
     input.value = containerIRI;
     input.placeholder = 'https://example.org/path/to/annotations/';
@@ -527,6 +533,24 @@ async function addTypeRegistration(containerIRI, forClass) {
     [ns.solid.instanceContainer.value]: containerIRI
   };
   updateDeviceStorageProfile(Config.User);
+}
+
+export async function registerAnnotationStore() {
+  const storage = Config.User.Storage?.[0];
+  const chosen = await showAnnotationStoreDialog(storage ? forceTrailingSlash(storage) : '', 'setup');
+  if (!chosen) return;
+  await addTypeRegistration(chosen, ns.oa.Annotation.value);
+  return chosen;
+}
+
+export async function linkOutbox() {
+  const storage = Config.User.Storage?.[0];
+  const chosen = await showLocationDialog('outbox', storage ? forceTrailingSlash(storage) : '', 'setup');
+  if (!chosen) return;
+  await Config.Storage.patchWithConneg(stripFragmentFromString(Config.User.IRI), { insert: `<${Config.User.IRI}> <${ns.as.outbox.value}> <${chosen}> .\n` });
+  Config.User.Outbox = [chosen];
+  updateDeviceStorageProfile(Config.User);
+  return chosen;
 }
 
 // Asked once per session before the first post when no store is registered, so the annotation lands in the chosen container. Resolves the container to post to; the registration itself happens after the post.

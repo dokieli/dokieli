@@ -23,7 +23,8 @@ import { isNanopubIRI } from "../../../nanopub.js";
 import { i18n } from "../../../i18n.js";
 import { getAbsoluteIRI, stripFragmentFromString } from "../../../uri.js"
 import Config from "../../../config.js"
-import { notifyInbox, postActivity, showActivities, chooseAnnotationStore, registerAnnotationInTypeIndex, markAnnotationTarget } from "../../../activity.js"
+import { notifyInbox, postActivity, showActivities, chooseAnnotationStore, registerAnnotationInTypeIndex, markAnnotationTarget, registerAnnotationStore, linkOutbox } from "../../../activity.js"
+import { updateAnnotationServiceForm } from "../toolbar.js";
 import { publishAnnotation } from "../../../nanopub-annotation.js";
 import { shareResource } from "../../../dialog.js";
 import { domSanitize } from "../../../utils/sanitization.js";
@@ -114,14 +115,15 @@ function updateUserUI(fields) {
 }
 
 
-async function publishAnnotationToNanopubNetwork(noteData, action) {
+async function publishAnnotationToNanopubNetwork(data, action) {
   try {
-    const { uri, registryURI } = await publishAnnotation(noteData, { action });
+    const { uri, registryURI } = await publishAnnotation(createNoteData(data), { action });
     const link = (url) => `<a href="${url}" rel="noopener" target="_blank">${url}</a>`;
     const where = Config.Nanopub?.UseTestRegistry ? `${link(uri)} (${link(registryURI)})` : link(uri);
     const message = { content: `Published to the nanopub network as ${where}`, type: 'success', timer: null };
     addMessageToLog(message, Config.MessageLog);
     showActionMessage(document.body, message);
+    await announceNanopub(uri, data);
   }
   catch (e) {
     console.warn('dokieli: could not publish the annotation to the nanopub network', e);
@@ -129,6 +131,38 @@ async function publishAnnotationToNanopubNetwork(noteData, action) {
     addMessageToLog(message, Config.MessageLog);
     showActionMessage(document.body, message);
   }
+}
+
+async function announceNanopub(uri, data) {
+  const activity = {
+    type: ['as:Create'],
+    object: uri,
+    objectTypes: ['http://www.nanopub.org/nschema#Nanopublication'],
+    inReplyTo: data.targetIRI,
+    license: data.formData.license
+  };
+
+  const outbox = Config.User.Outbox?.[0];
+  if (data.formData['annotation-location-activity-outbox'] && outbox) {
+    const html = formatHTMLString(createHTML('', createActivityHTML(activity)));
+    await postActivity(outbox, generateAttributeId(), html, { contentType: 'text/html', profile: 'https://www.w3.org/ns/activitystreams' })
+      .catch(e => console.warn('dokieli: could not add the nanopub to the outbox', e));
+  }
+
+  const inboxes = [].concat(data.formData['annotation-inbox'] || []);
+  await Promise.allSettled(inboxes.map(inbox => notifyInbox({ ...activity, type: ['as:Announce'], inbox })));
+}
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('click', async (e) => {
+    const button = e.target.closest?.('.annotation-location-setup button');
+    if (!button) return;
+    e.preventDefault();
+
+    const action = button.closest('form')?.id?.replace(/^editor-form-/, '');
+    const chosen = button.dataset.location === 'activity-outbox' ? await linkOutbox() : await registerAnnotationStore();
+    if (chosen) updateAnnotationServiceForm(action);
+  });
 }
 
 export async function processAction(action, formValues, selectionData) {
@@ -145,7 +179,7 @@ export async function processAction(action, formValues, selectionData) {
 
   // Not a container, so it is published outside the distribution loop
   if (data.formData['annotation-location-nanopub-network']) {
-    publishAnnotationToNanopubNetwork(createNoteData(otherFormData), action);
+    publishAnnotationToNanopubNetwork(otherFormData, action);
   }
 
   let noteHTML, note;

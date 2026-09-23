@@ -2966,7 +2966,7 @@ export function getAnnotationLocationHTML(action) {
     { suffix: 'annotation-store', uiKey: 'annotationLocationAnnotationStore', url: getRegisteredAnnotationContainer(action) },
     { suffix: 'personal-storage', uiKey: 'annotationLocationPersonalStorage', url: (Config.User.Storage && Config.User.Storage.length > 0) ? Config.User.Storage[0] : undefined },
     { suffix: 'activity-outbox', uiKey: 'annotationLocationActivityOutbox', url: (Config.User.Outbox && Config.User.Outbox.length > 0) ? Config.User.Outbox[0] : undefined },
-    { suffix: 'nanopub-network', uiKey: 'annotationLocationNanopubNetwork', url: getRegistryURL() },
+    { suffix: 'nanopub-network', uiKey: 'annotationLocationNanopubNetwork', url: Config.Nanopub?.UseTestRegistry ? getRegistryURL() : 'https://nanopub.net/' },
   ];
 
   // A remembered choice pre-checks; otherwise fall back to the most relevant available location.
@@ -2989,7 +2989,17 @@ export function getAnnotationLocationHTML(action) {
     annotationInputs = `<ul>${inputs.join('')}</ul>`;
   }
 
-  return `<details class="annotation-location-details" open=""><summary data-i18n="annotation-location-selection.store-at.span">${i18n.t('annotation-location-selection.store-at.span.textContent')}</summary>${annotationInputs}</details>`;
+  const setups = [];
+  if (Config.User.IRI && Config.User.Storage?.length) {
+    ['annotation-store', 'activity-outbox'].forEach(suffix => {
+      if (!options.find(o => o.suffix === suffix).url) setups.push(suffix);
+    });
+  }
+  const setupHTML = setups.length
+    ? `<details class="annotation-location-more"><summary data-i18n="annotation-location-more.summary">${i18n.t('annotation-location-more.summary.textContent')}</summary><ul class="annotation-location-setup">${setups.map(suffix => `<li><button class="setup-annotation-location" data-i18n="annotation-location-setup.${suffix}.button" data-location="${suffix}" type="button">${i18n.t(`annotation-location-setup.${suffix}.button.textContent`)}</button></li>`).join('')}</ul></details>`
+    : '';
+
+  return `<details class="annotation-location-details" open=""><summary data-i18n="annotation-location-selection.store-at.span">${i18n.t('annotation-location-selection.store-at.span.textContent')}</summary>${annotationInputs}${setupHTML}</details>`;
 }
 
 export function getPublicationStatusOptionsHTML(options) {

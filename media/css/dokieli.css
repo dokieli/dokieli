@@ -5412,6 +5412,21 @@ line-height: 1;
 white-space: nowrap;
 }
 .editor-form .annotation-inbox-details code,
+.editor-form .annotation-location-more > summary {
+cursor: pointer;
+}
+.editor-form:not(.editor-slashmenu) .annotation-location-setup button {
+background:none;
+background-color:transparent;
+border:none;
+box-shadow:none;
+padding:0;
+margin:0;
+color:var(--do-color-link);
+text-decoration:underline;
+font-weight:normal;
+width:auto;
+}
 .editor-form .annotation-location-details code {
 font-size: 0.9em;
 color: var(--do-color-fg);
