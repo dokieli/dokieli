@@ -945,8 +945,8 @@ export class ToolbarView {
   formClickHandler(e, button) {
     var buttonNode = e.target.closest('button');
 
-    // Info and help-back buttons are handled by the document-level delegate; let them bubble
-    if (buttonNode?.classList.contains('info') || buttonNode?.classList.contains('do-info-back')) return;
+    // Info, help-back and location setup buttons are handled by document-level delegates; let them bubble
+    if (buttonNode?.classList.contains('info') || buttonNode?.classList.contains('do-info-back') || buttonNode?.classList.contains('setup-annotation-location')) return;
 
     if (buttonNode) {
       var buttonClasses = buttonNode.classList;
