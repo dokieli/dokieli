@@ -20,6 +20,7 @@ import { serializeAnnotationToJSONLD } from '@dokieli/web-annotation';
 import { getGraphFromData } from './graph.js';
 import { publishToRegistry, getAgentIRI, publishIntroduction, getKeyTrustStatus, promptForSigningKey } from './nanopub.js';
 import { getSigningKeyMaterial } from './keystore.js';
+import { fragmentFromString } from './utils/html.js';
 import Config from './config.js';
 
 const PREFIXES = `@prefix oa: <http://www.w3.org/ns/oa#> .
@@ -29,6 +30,7 @@ const PREFIXES = `@prefix oa: <http://www.w3.org/ns/oa#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix schema: <https://schema.org/> .
 @prefix npx: <http://purl.org/nanopub/x/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix sub: <${DEFAULT_NANOPUB_URI}> .
 `;
@@ -101,17 +103,29 @@ function provenanceQuads(agent) {
   return quads(`sub:assertion prov:wasAttributedTo ${iri(agent)} .`);
 }
 
+const LABEL_LENGTH = 100;
+
+function labelOf(noteData) {
+  const body = Array.isArray(noteData.body) ? noteData.body[0] : noteData.body;
+  const text = fragmentFromString(body?.value || '').textContent.replace(/\s+/g, ' ').trim();
+  if (!text) return null;
+  return text.length > LABEL_LENGTH ? text.slice(0, LABEL_LENGTH - 1).trimEnd() + '…' : text;
+}
+
 // The query service indexes by npx:hasNanopubType
-function pubinfoQuads(agent, { created, license, stance }) {
+function pubinfoQuads(agent, noteData, { created, license, stance }) {
   const types = ['oa:Annotation'];
   if (stance) types.push(stance);
+  const label = labelOf(noteData);
 
   const lines = [
     `dct:creator ${iri(agent)}`,
     `dct:created "${created}"^^xsd:dateTime`,
     `npx:hasNanopubType ${types.join(', ')}`,
+    `npx:introduces sub:annotation`,
     `oa:renderedVia ${iri(DOKIELI_IRI)}`
   ];
+  if (label) lines.push(`rdfs:label ${JSON.stringify(label)}`);
   if (license) lines.push(`dct:license ${iri(license)}`);
 
   return quads(`<${DEFAULT_NANOPUB_URI.replace(/\/$/, '')}> ${lines.join(' ;\n  ')} .`);
@@ -132,7 +146,7 @@ export async function annotationToNanopub(noteData, options = {}) {
   return new Nanopub({
     assertion: [...await annotationQuads(noteData), ...stanceQuads(stance, noteData)],
     provenance: provenanceQuads(agent),
-    pubinfo: pubinfoQuads(agent, { created, license, stance }),
+    pubinfo: pubinfoQuads(agent, noteData, { created, license, stance }),
     options: { privateKey: options.privateKey, orcid: agent, name: Config.User?.Name }
   });
 }
