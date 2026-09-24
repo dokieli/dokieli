@@ -390,7 +390,9 @@ export function createActivityHTML(o) {
 
   var asinReplyTo = ('inReplyTo' in o) ? '<dl><dt>In reply to</dt><dd><a about="' + o.object + '" href="' + o.inReplyTo + '" property="as:inReplyTo">' + o.inReplyTo + '</a></dd></dl>' : ''
 
-  var asobject = ('object' in o) ? '<dt>Object</dt><dd><a href="' + o.object + '" property="as:object">' + o.object + '</a>' + asObjectTypes + asObjectLicense + asinReplyTo + '</dd>' : ''
+  var asObjectURL = ('url' in o) ? '<dl><dt>URL</dt><dd><a about="' + o.object + '" href="' + o.url + '" property="as:url">' + o.url + '</a></dd></dl>' : ''
+
+  var asobject = ('object' in o) ? '<dt>Object</dt><dd><a href="' + o.object + '" property="as:object">' + o.object + '</a>' + asObjectTypes + asObjectLicense + asinReplyTo + asObjectURL + '</dd>' : ''
 
   var ascontext = ('context' in o && o.context.length > 0) ? '<dt>Context</dt><dd><a href="' + o.context + '" property="as:context">' + o.context + '</a></dd>' : ''
 
@@ -480,6 +482,10 @@ export function createActivityObjectHTML(o) {
     rows += '<dt>In reply to</dt><dd><a href="' + o.inReplyTo + '" property="as:inReplyTo">' + o.inReplyTo + '</a></dd>';
   }
 
+  if ('url' in o) {
+    rows += '<dt>URL</dt><dd><a href="' + o.url + '" property="as:url">' + o.url + '</a></dd>';
+  }
+
   var objectProperties = rows ? '<dl about="' + o.object + '">' + rows + '</dl>' : '';
 
   return '<a href="' + o.object + '" property="as:object">' + o.object + '</a>' + objectProperties;
@@ -492,7 +498,9 @@ export function createActivityJSONLD(o) {
   if (Config.User.IRI) { params.actor = Config.User.IRI; }
 
   if (o.note) {
-    params.object = { jsonld: serializeAnnotationToJSONLD(o.note) };
+    const jsonld = serializeAnnotationToJSONLD(o.note);
+    if (o.url) jsonld.url = o.url;
+    params.object = { jsonld };
   } else if (o.object) {
     params.object = o.object;
   }
