@@ -15,10 +15,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { Nanopub, parse, DEFAULT_NANOPUB_URI } from '@nanopub/nanopub-js';
+import { Nanopub, parse, checkSigningKey, DEFAULT_NANOPUB_URI } from '@nanopub/nanopub-js';
 import { serializeAnnotationToJSONLD } from '@dokieli/web-annotation';
 import { getGraphFromData } from './graph.js';
-import { publishToRegistry, getAgentIRI, publishIntroduction, getKeyTrustStatus, promptForSigningKey } from './nanopub.js';
+import { publishToRegistry, getAgentIRI, publishIntroduction, promptForSigningKey } from './nanopub.js';
 import { getSigningKeyMaterial } from './keystore.js';
 import { fragmentFromString } from './utils/html.js';
 import Config from './config.js';
@@ -166,15 +166,18 @@ export async function publishAnnotation(noteData, options = {}, unlocked = false
 
   const { privateKey, publicKey } = material;
 
+  // The query service only indexes the main network, so test registry intros cannot be checked
+  const keyCheck = Config.Nanopub?.UseTestRegistry ? 'off' : 'warn';
+
   if (!Config.User.Keys.Signing.IntroductionURI) {
-    const status = await getKeyTrustStatus(publicKey, agent);
-    if (!status?.found) await publishIntroduction(true);
+    const { status } = keyCheck === 'off' ? {} : await checkSigningKey(agent, publicKey);
+    if (status !== 'declared') await publishIntroduction(true);
   }
 
   const np = await annotationToNanopub(noteData, { ...options, agent, privateKey });
-  await np.sign();
+  await np.sign({ keyCheck });
 
-  const published = await publishToRegistry(np);
+  const published = await publishToRegistry(np, { keyCheck });
   // The canonical URI resolves only once the nanopub reaches the main network
   return { ...published, registryURI: published.registry + published.uri.split('/').pop() };
 }

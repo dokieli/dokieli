@@ -19,8 +19,6 @@ import { createIntroNanopub, NANOPUB_REGISTRY_URLS, TEST_NANOPUB_REGISTRY_URL } 
 import Config from './config.js';
 import { getSigningKeyMaterial, hasKeystore, ASSERTION } from './keystore.js';
 
-const REGISTRY_HEADERS = { 'Accept': 'application/json' };
-
 function registries() {
   return Config.Nanopub?.UseTestRegistry ? [TEST_NANOPUB_REGISTRY_URL] : NANOPUB_REGISTRY_URLS;
 }
@@ -29,11 +27,11 @@ export function getRegistryURL() {
   return registries()[0];
 }
 
-export async function publishToRegistry(np) {
+export async function publishToRegistry(np, options = {}) {
   let error;
   for (const registry of registries()) {
     try {
-      return { ...await np.publish(registry), registry };
+      return { ...await np.publish(registry, options), registry };
     }
     catch (e) {
       console.warn('dokieli: could not publish to ' + registry, e);
@@ -43,11 +41,6 @@ export async function publishToRegistry(np) {
   throw error;
 }
 
-function agentAccountsURL(registryURL, agentIRI) {
-  const origin = new URL(registryURL).origin;
-  return `${origin}/agentAccounts?id=${encodeURIComponent(agentIRI)}`;
-}
-
 export function getAgentIRI() {
   return Config.User?.IRI || null;
 }
@@ -55,12 +48,6 @@ export function getAgentIRI() {
 // Trusty URI artifact code
 export function isNanopubIRI(iri) {
   return typeof iri === 'string' && /\/RA[A-Za-z0-9_-]{43}$/.test(iri);
-}
-
-// Registries key accounts by the SHA-256 of the base64 public key
-export async function getPublicKeyHash(publicKeyBase64) {
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(publicKeyBase64));
-  return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 // Retries the caller once a signing key is unlocked or created
@@ -102,30 +89,3 @@ export async function publishIntroduction(unlocked = false) {
   return { uri, publicKey };
 }
 
-export async function getKeyTrustStatus(publicKeyBase64, agentIRI = getAgentIRI()) {
-  if (!agentIRI) return null;
-
-  const hash = await getPublicKeyHash(publicKeyBase64);
-
-  for (const registry of registries()) {
-    try {
-      const response = await fetch(agentAccountsURL(registry, agentIRI), { headers: REGISTRY_HEADERS });
-      if (!response.ok) continue;
-      const accounts = await response.json();
-      const account = accounts.find(a => a.pubkey === hash);
-      return {
-        registry,
-        found: !!account,
-        status: account?.status || null,
-        introNanopub: account?.introNanopub || null,
-        quota: account?.quota ?? null,
-        otherKeys: accounts.filter(a => a.pubkey !== hash).length
-      };
-    }
-    catch (e) {
-      console.warn('dokieli: could not read agent accounts from ' + registry, e);
-    }
-  }
-
-  return null;
-}
