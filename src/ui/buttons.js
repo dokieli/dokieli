@@ -738,7 +738,7 @@ const buttonState = {
   '#document-autosave #autosave-remote': ({ info, online, localhost, documentAction, blob }) => {
     if (blob) return false;
     
-    if (documentAction == 'new' || documentAction == 'open')  return false;
+    if (documentAction == 'new') return false;
 
     if (!online && !localhost) return false;
 

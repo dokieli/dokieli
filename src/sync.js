@@ -852,10 +852,6 @@ export async function enableAutoSave(key, options = {}) {
   // an unpublished item would cause the next syncLocalRemoteResource call
   // to PUT an empty body to the server. The first real save happens on the
   // next user edit via handleInputPaste.
-  await updateDeviceStorageItem(key, { autoSave: true });
-
-  const autosaveCheckbox = document.getElementById('autosave-remote');
-  if (autosaveCheckbox) autosaveCheckbox.checked = true;
 
   const handleInputPaste = (e) => {
     //I love that this function is called sync but it is async
@@ -972,11 +968,6 @@ export async function disableAutoSave(key, options = {}) {
       }
 
       removeAutoSaveHandler(key, method);
-
-      await updateDeviceStorageItem(key, { autoSave: false });
-
-      const autosaveCheckbox = document.getElementById('autosave-remote');
-      if (autosaveCheckbox) autosaveCheckbox.checked = false;
     }
   }
 }
