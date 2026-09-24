@@ -18,7 +18,7 @@ limitations under the License.
 import { getSelectedParentElement, restoreSelection, createNoteData} from "../../utils/annotation.js";
 import { generateAttributeId, getDateTimeISO } from "../../../util.js"
 import { getNodeLanguage, getFormValues, createHTML } from "../../../utils/html.js";
-import { getReferenceLabel, createActivityHTML, createNoteDataHTML, getRegisteredAnnotationContainer, getPreferredTargetIRI, showActionMessage, addMessageToLog } from "../../../doc.js";
+import { getReferenceLabel, createActivityHTML, createActivityJSONLD, createNoteDataHTML, getRegisteredAnnotationContainer, getPreferredTargetIRI, showActionMessage, addMessageToLog } from "../../../doc.js";
 import { isNanopubIRI } from "../../../nanopub.js";
 import { i18n } from "../../../i18n.js";
 import { getAbsoluteIRI, stripFragmentFromString } from "../../../uri.js"
@@ -123,7 +123,7 @@ async function publishAnnotationToNanopubNetwork(data, action) {
     const message = { content: `Published to the nanopub network as ${where}`, type: 'success', timer: null };
     addMessageToLog(message, Config.MessageLog);
     showActionMessage(document.body, message);
-    await announceNanopub(uri, data);
+    return uri;
   }
   catch (e) {
     console.warn('dokieli: could not publish the annotation to the nanopub network', e);
@@ -133,24 +133,17 @@ async function publishAnnotationToNanopubNetwork(data, action) {
   }
 }
 
-async function announceNanopub(uri, data) {
+// Only when the nanopub is the annotation's sole copy; otherwise the annotation's own activity links it
+function announceNanopub(uri, data) {
   const activity = {
-    type: ['as:Create'],
+    type: ['as:Announce'],
     object: uri,
     objectTypes: ['http://www.nanopub.org/nschema#Nanopublication'],
     inReplyTo: data.targetIRI,
     license: data.formData.license
   };
-
-  const outbox = Config.User.Outbox?.[0];
-  if (data.formData['annotation-location-activity-outbox'] && outbox) {
-    const html = formatHTMLString(createHTML('', createActivityHTML(activity)));
-    await postActivity(outbox, generateAttributeId(), html, { contentType: 'text/html', profile: 'https://www.w3.org/ns/activitystreams' })
-      .catch(e => console.warn('dokieli: could not add the nanopub to the outbox', e));
-  }
-
   const inboxes = [].concat(data.formData['annotation-inbox'] || []);
-  await Promise.allSettled(inboxes.map(inbox => notifyInbox({ ...activity, type: ['as:Announce'], inbox })));
+  return Promise.allSettled(inboxes.map(inbox => notifyInbox({ ...activity, inbox })));
 }
 
 if (typeof document !== 'undefined') {
@@ -177,9 +170,11 @@ export async function processAction(action, formValues, selectionData) {
 
   const { annotationDistribution, ...otherFormData } = data;
 
-  // Not a container, so it is published outside the distribution loop
+  // Published first so the stored annotation's activity can link it
+  let nanopubURI;
   if (data.formData['annotation-location-nanopub-network']) {
-    publishAnnotationToNanopubNetwork(otherFormData, action);
+    nanopubURI = await publishAnnotationToNanopubNetwork(otherFormData, action);
+    if (nanopubURI) otherFormData.nanopubURI = nanopubURI;
   }
 
   let noteHTML, note;
@@ -195,7 +190,7 @@ export async function processAction(action, formValues, selectionData) {
         };
 
         // Ask where to keep annotations before the first post so it lands in the chosen store
-        if (annotation.canonical) {
+        if (annotation.canonical && !annotation.activityOutbox) {
           const containerIRI = await chooseAnnotationStore(annotation['containerIRI'], ns.oa.Annotation.value);
           if (containerIRI !== annotation['containerIRI']) {
             annotation['containerIRI'] = containerIRI;
@@ -235,10 +230,12 @@ export async function processAction(action, formValues, selectionData) {
           }
         }
 
+        let activityJSONLD;
         if ('profile' in annotation && annotation.profile == 'https://www.w3.org/ns/activitystreams') {
           var notificationData = createActivityData(annotation, { 'relativeObject': true });
           notificationData['statements'] = createNoteDataHTML(noteData);
           note = createActivityHTML(notificationData);
+          activityJSONLD = createActivityJSONLD({ ...notificationData, note: noteData });
         }
         else {
           note = createNoteDataHTML(noteData);
@@ -251,7 +248,7 @@ export async function processAction(action, formValues, selectionData) {
         // console.log(annotation)
 
         // noteData lets postActivity serialize JSON-LD directly when the server prefers it
-        postActivity(annotation['containerIRI'], annotation.id, noteHTML, { ...annotation, annotationObject: noteData })
+        postActivity(annotation['containerIRI'], annotation.id, noteHTML, { ...annotation, annotationObject: noteData, activityJSONLD })
           .catch(error => {
             // console.log('Error serializing annotation:', error)
             // console.log(error)
@@ -272,7 +269,7 @@ export async function processAction(action, formValues, selectionData) {
                 .catch(e => console.log('Could not make annotation public:', e));
             }
 
-            if (annotation.canonical) {
+            if (annotation.canonical && !annotation.activityOutbox) {
               registerAnnotationInTypeIndex(annotation['containerIRI'], ns.oa.Annotation.value);
 
               // Mark from the in-memory selector; the re-fetch path is rate-limited. Idempotent.
@@ -293,6 +290,10 @@ export async function processAction(action, formValues, selectionData) {
           .catch(e => {  // catch-all
             // already logged; continue with the next annotation
           });
+      }
+
+      if (!annotationDistribution.length && nanopubURI) {
+        announceNanopub(nanopubURI, otherFormData);
       }
       break;
 
@@ -484,9 +485,9 @@ export function getAnnotationDistribution(action, data) {
       // 'subjectURI': noteIRI,
       'profile': 'https://www.w3.org/ns/activitystreams'
     };
-    aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'annotationInboxes': annotationInboxes };
-    // Outbox is canonical only when no registered or personal storage copy is selected.
-    if (!activityTypeMatched && !annotationLocationPersonalStorage) {
+    aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'activityOutbox': true, 'annotationInboxes': annotationInboxes };
+    // Canonical unless a registered store copy is selected
+    if (!activityTypeMatched) {
       aLS['canonical'] = true;
     }
 
@@ -508,8 +509,9 @@ export function getAnnotationDistribution(action, data) {
     contextProfile = {
       // 'subjectURI': noteIRI,
     };
-    // The registered (TypeIndex) location, when selected, is the canonical copy.
-    aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': !activityTypeMatched, 'annotationInboxes': annotationInboxes };
+    // Canonical only when neither a registered store nor the outbox is selected
+    const outboxSelected = !!(annotationLocationOutbox && Config.User.Outbox);
+    aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': !activityTypeMatched && !outboxSelected, 'annotationInboxes': annotationInboxes };
 
     if (!isDuplicateLocation(annotationDistribution, containerIRI)) {
       annotationDistribution.push(aLS);
@@ -572,6 +574,10 @@ export function createActivityData(annotation, options = {}) {
     "license": formData.license,
     "statements": notificationStatements
   };
+
+  if (annotation.nanopubURI) {
+    notificationData['url'] = annotation.nanopubURI + '/annotation';
+  }
 // console.log(_this.action)
 
   if (options.announce) {
