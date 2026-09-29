@@ -4538,6 +4538,7 @@ function initSlideshowControlsHover(controls, indicator) {
 
   document.addEventListener('mouseover', (e) => {
     if (!document.body.classList.contains('shower')) return;
+    if (document.body.classList.contains('full')) return;
     if (e.target.closest('#slideshow-controls')) {
       clearTimeout(controlsHideTimer);
       return;
@@ -4562,6 +4563,9 @@ function initSlideshowControlsHover(controls, indicator) {
         Slideshow.goTo(idx);
         Slideshow.enterFullMode();
       }
+      clearTimeout(controlsHideTimer);
+      controls.hidden = true;
+      hoveredSlide = null;
       return;
     }
     if (e.target.closest('.add-slide-trigger')) {

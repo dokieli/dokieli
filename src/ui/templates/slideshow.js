@@ -59,6 +59,11 @@ let hashHandler = null;
 let railClickHandler = null;
 let decorationsUpdateHandler = null;
 let modeChangeHandler = null;
+let resizeHandler = null;
+
+// Reference slide canvas; full mode scales it to fit the viewport.
+const SLIDE_WIDTH = 1024;
+const SLIDE_HEIGHT = 640;
 
 function getSlides() {
   // Exclude the cloned active-slide thumbnail living inside #rail-active-placeholder.
@@ -253,12 +258,30 @@ export function prev() {
   setActive(activeIndex - 1);
 }
 
+// Kept in a .do <style> (stripped on save) so the scale never ends up in the document.
+function updateFullScale() {
+  let style = document.getElementById('do-slideshow-scale');
+  if (!isFull()) {
+    style?.remove();
+    return;
+  }
+  if (!style) {
+    style = document.createElement('style');
+    style.id = 'do-slideshow-scale';
+    style.className = 'do';
+    document.head.appendChild(style);
+  }
+  const scale = Math.min(window.innerWidth / SLIDE_WIDTH, window.innerHeight / SLIDE_HEIGHT);
+  style.textContent = `:root { --do-slideshow-scale: ${scale}; }`;
+}
+
 export function enterFullMode() {
   document.body.classList.remove(MODES.SINGLE);
   document.body.classList.add(MODES.FULL);
   clearSingleLayout();
   const view = getEditorView();
   if (view) setSlideshowMode(view, MODES.FULL);
+  updateFullScale();
   setActive(activeIndex);
 }
 
@@ -267,6 +290,7 @@ export function exitFullMode() {
   document.body.classList.add(MODES.SINGLE);
   const view = getEditorView();
   if (view) setSlideshowMode(view, MODES.SINGLE);
+  updateFullScale();
   layoutSingle();
   clearSlideFromHash();
 }
@@ -399,6 +423,7 @@ export function start(options = {}) {
   // In author mode .active is a PM decoration, not a real attribute; switching to
   // reading mode destroys the editor and drops it, leaving the main view empty.
   // Re-apply the active slide for the new mode (read mode toggles the real class).
+  resizeHandler = updateFullScale;
   modeChangeHandler = () => {
     if (!document.body.classList.contains('shower')) return;
     setActive(activeIndex, { syncHash: false });
@@ -409,6 +434,7 @@ export function start(options = {}) {
   document.addEventListener('click', railClickHandler, true);
   window.addEventListener('dokieli:slideshow-decorations-updated', decorationsUpdateHandler);
   window.addEventListener('dokieli:editor-mode-changed', modeChangeHandler);
+  window.addEventListener('resize', resizeHandler);
 }
 
 export function stop() {
@@ -420,7 +446,9 @@ export function stop() {
   if (railClickHandler) document.removeEventListener('click', railClickHandler, true);
   if (decorationsUpdateHandler) window.removeEventListener('dokieli:slideshow-decorations-updated', decorationsUpdateHandler);
   if (modeChangeHandler) window.removeEventListener('dokieli:editor-mode-changed', modeChangeHandler);
-  keydownHandler = keyupHandler = hashHandler = railClickHandler = decorationsUpdateHandler = modeChangeHandler = null;
+  if (resizeHandler) window.removeEventListener('resize', resizeHandler);
+  document.getElementById('do-slideshow-scale')?.remove();
+  keydownHandler = keyupHandler = hashHandler = railClickHandler = decorationsUpdateHandler = modeChangeHandler = resizeHandler = null;
 }
 
 export function isStarted() {

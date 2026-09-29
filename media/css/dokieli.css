@@ -6627,8 +6627,17 @@ user-select: none;
   }
 }
 
-/* Full view: one slide centered in the viewport. */
+/* Full view: body is the letterbox; main is the 1024x640 canvas, centered and
+   scaled to fit the viewport (--do-slideshow-scale is set by slideshow.js). */
 .shower.full {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  background: var(--do-color-inverse-bg-strong);
+}
+.shower.full > main {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -6636,7 +6645,7 @@ user-select: none;
   margin: -320px 0 0 -512px;
   width: 1024px;
   height: 640px;
-  background: var(--do-color-inverse-bg-strong);
+  transform: scale(var(--do-slideshow-scale, 1));
 }
 .shower.full .slide {
   position: absolute;
@@ -6658,9 +6667,8 @@ user-select: none;
 .shower.full .slide.active .shout::after { background-position: 0 0; }
 .shower.full .progress { display: block; }
 /* Slides are position:absolute so they don't contribute height; force the
-   containing main/article to fill the .shower.full box so the progress bar
-   (anchored at bottom:0 of its containing block, main) lands at the bottom. */
-.shower.full > main,
+   article to fill the main canvas so the progress bar (anchored at bottom:0
+   of its containing block, main) lands at the bottom. */
 .shower.full > main > article { height: 100%; }
 
 /* Single view: vertical thumbnail rail on the left, active slide in main flow. */
@@ -7059,6 +7067,8 @@ flex-direction: column;
 gap: 4px;
 }
 #slideshow-controls[hidden] { display: none; }
+/* Editing controls; never shown while presenting. */
+.shower.full #slideshow-controls { display: none; }
 
 #rail-active-placeholder {
 position: absolute;
