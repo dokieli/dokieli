@@ -15,6 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import { NANOPUB_QUERY_URLS } from '@nanopub/nanopub-js';
 import Config from './config.js';
 import { getDeviceStorageItem, setDeviceStorageItem } from './storage.js';
 import { fragmentFromString } from './utils/html.js';
@@ -30,6 +31,7 @@ const STORAGE_KEY = 'DO.Config.OriginConsent';
 export const KNOWN_SERVICES = [
   { name: 'DOI', i18nKey: 'doi', origins: ['https://doi.org'] },
   { name: 'Internet Archive', i18nKey: 'internet-archive', origins: ['https://web.archive.org'] },
+  { name: 'Nanopub network', i18nKey: 'nanopub-network', origins: NANOPUB_QUERY_URLS.map(url => new URL(url).origin) },
   { name: 'Open Library', i18nKey: 'openlibrary', origins: ['https://openlibrary.org'] },
   { name: 'OpenStreetMap', i18nKey: 'openstreetmap', origins: ['https://nominatim.openstreetmap.org'] },
   { name: 'ORCID', i18nKey: 'orcid', origins: ['https://pub.orcid.org'] },

@@ -557,7 +557,8 @@ export function createNoteDataHTML(n, serializerOptions = {}) {
     }
   }
 
-  if (mode === 'read' && n.creator && n.creator.iri === Config.User.IRI) {
+  // TODO: implement retraction (nanopubs cannot be deleted, only retracted)
+  if (mode === 'read' && n.creator && n.creator.iri === Config.User.IRI && !n.nanopub) {
     const buttonDelete = '<button aria-label="Delete item" class="delete do" title="Delete item" type="button">' + Icon['.fas.fa-trash-alt'] + '</button>';
     note = note.replace('>', '>' + buttonDelete);
   }
