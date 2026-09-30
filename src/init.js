@@ -29,6 +29,7 @@ import { syncLocalRemoteResource, monitorNetworkStatus, showResourceReviewChange
 import { domSanitize, sanitizeInsertAdjacentHTML, sanitizeIRI, sanitizeObject } from './utils/sanitization.js';
 import { afterSetUserInfo, setUserInfo, processLoginInvocation } from './auth.js';
 import { showNotificationSources, showActivitiesSources, processAgentActivities, registerEncryptionUnlockHandler } from './activity.js';
+import { initNanopubAnnotations } from './nanopub-query.js';
 import { generateDataURI, getProxyableIRI, getUrlParams, stripFragmentFromString, stripUrlSearchHash } from './uri.js';
 import { SolidStorage, GitForgeStorage, HttpStorage, initStorage } from './storage/backend.js';
 import { initEditor } from './editor/initEditor.js';
@@ -276,6 +277,8 @@ export function initShowNotificationSources() {
   (Config.Resource[documentURL].annotationService || []).forEach(service => {
     showActivitiesSources(service, { activityType: 'instanceContainer' });
   });
+
+  initNanopubAnnotations(documentURL);
 
   var showUserActivities = () => {
     if (Config.User.IRI) {

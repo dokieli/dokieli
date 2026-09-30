@@ -181,8 +181,10 @@ export async function addNoteToNotifications(noteData) {
   var datetime = noteData.datetime ? noteData.datetime : '1900-01-01T00:00:00.000Z';
 
   // Mark items so the UI can distinguish visibility: authoritative when discovery passed it (public/private TypeIndex), else derived from the item's container; undefined (no class) when unknown.
-  var visibility = noteData.visibility || getItemVisibility(noteDataIRI);
-  var liClass = visibility ? ' class="' + visibility + '-item"' : '';
+  // Nanopubs are always public
+  var visibility = noteData.visibility || (noteData.nanopub ? 'public' : getItemVisibility(noteDataIRI));
+  var liClasses = [visibility && visibility + '-item', noteData.nanopub && 'nanopub-item'].filter(Boolean);
+  var liClass = liClasses.length ? ' class="' + liClasses.join(' ') + '"' : '';
   var li = domSanitize('<li' + liClass + ' data-datetime="' + datetime + '"><blockquote cite="' + noteDataIRI + '">'+ note + '</blockquote></li>');
 // console.log(li);
   var aside = document.getElementById('document-notifications');
@@ -1762,6 +1764,9 @@ async function showAnnotationUncached(noteIRI, g, options) {
       if (datetime){
         noteData["datetime"] = datetime;
       }
+      if (options.nanopub) {
+        noteData["nanopub"] = options.nanopub;
+      }
 
       await addNoteToNotifications(noteData);
 
@@ -1819,6 +1824,9 @@ async function showAnnotationUncached(noteIRI, g, options) {
       }
       if (datetime){
         noteData["datetime"] = datetime;
+      }
+      if (options.nanopub) {
+        noteData["nanopub"] = options.nanopub;
       }
       // console.log(noteData)
       await addNoteToNotifications(noteData);

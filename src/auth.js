@@ -952,6 +952,7 @@ export function afterSetUserInfo() {
 
   for (let i = 0; i < user.length; i++) {
     var article = user[i].closest('article')
+    if (article.closest('li.nanopub-item')) continue;
     sanitizeInsertAdjacentHTML(article, 'afterbegin', '<button class="delete" type="button">' + Icon[".fas.fa-trash-alt"] + '</button>')
   }
 
