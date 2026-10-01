@@ -16,8 +16,6 @@ limitations under the License.
 */
 
 :root {
-  color-scheme: light dark;
-
   /* Neutrals */
   --do-color-bg: #fff;
   --do-color-bg-subtle: #eee;
@@ -114,10 +112,15 @@ limitations under the License.
   }
 }
 
-/* Manual theme: make color-scheme track the choice so native controls,
-   scrollbars and default link colours match (auto stays `light dark`). */
-:root[data-theme="light"] { color-scheme: light; }
-:root[data-theme="dark"] { color-scheme: dark; }
+:root:has(> head > link[rel="stylesheet"][href$="basic.css"]),
+.do,
+.editor-toolbar,
+.editor-dropdown-panel { color-scheme: light dark; }
+
+:root[data-theme="light"]:has(> head > link[rel="stylesheet"][href$="basic.css"]),
+:root[data-theme="light"] :is(.do, .editor-toolbar, .editor-dropdown-panel) { color-scheme: light; }
+:root[data-theme="dark"]:has(> head > link[rel="stylesheet"][href$="basic.css"]),
+:root[data-theme="dark"] :is(.do, .editor-toolbar, .editor-dropdown-panel) { color-scheme: dark; }
 
 /* Manual dark (Display Modes → Dark) */
 :root[data-theme="dark"] {
@@ -398,8 +401,7 @@ width: 25%;
 }
 
 @media screen {
-/* Base page surface */
-html {
+:root:has(> head > link[rel="stylesheet"][href$="basic.css"]) {
   background-color: var(--do-color-bg);
   color: var(--do-color-fg);
 }
