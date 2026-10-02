@@ -16,7 +16,7 @@ limitations under the License.
 */
 
 import rdf from 'rdf-ext';
-import { createActivityObjectHTML, createActivityJSONLD, showCitations, getReferenceLabel, createNoteDataHTML, handleDeleteNote, getItemVisibility, getPreferredTargetIRI, showActionMessage, addMessageToLog } from './doc.js';
+import { createActivityObjectHTML, createActivityJSONLD, showCitations, getReferenceLabel, createNoteDataHTML, handleDeleteNote, getItemVisibility, getPreferredTargetIRI } from './doc.js';
 import { applyMarksFromTextQuote, applyMarkFromSelector } from '@dokieli/web-annotation';
 import { Icon } from './ui/icons.js'
 import { getButtonHTML } from './ui/buttons.js'
@@ -692,19 +692,23 @@ function nextBatchSize(size) {
 }
 
 function offerActivities(url, state) {
-  let text, label;
+  let label, title = '';
   if (state.items) {
-    text = i18n.t('activities.collection-limit.textContent', { url, total: state.items.length, checked: state.offset });
     label = i18n.t('activities.collection-limit.more.button.textContent', { count: Math.min(state.batch, state.items.length - state.offset) });
+    title = ` title="${fragmentFromString(i18n.t('activities.collection-limit.textContent', { url, total: state.items.length, checked: state.offset })).textContent}"`;
   }
   else {
-    text = i18n.t('activities.collection-pending.textContent', { url });
     label = i18n.t('activities.collection-pending.button.textContent', { count: state.batch });
   }
-  const button = `<button class="load-more-activities" data-url="${url}" type="button">${label}</button>`;
-  const message = { 'content': text + ' ' + button, 'type': 'info', 'timer': null };
-  addMessageToLog(message, Config.MessageLog);
-  state.messageId = showActionMessage(document.body, message);
+
+  const aside = document.getElementById('document-notifications') || initializeNotifications({ includeButtonMore: true });
+  const info = aside.querySelector('div.info');
+  if (!info.querySelector('section.load-more-activities')) {
+    sanitizeInsertAdjacentHTML(info, 'beforeend', `<section aria-labelledby="load-more-activities-label" class="load-more-activities"><h3 id="load-more-activities-label">${i18n.t('activities.collection-pending.textContent')}</h3><ul></ul></section>`);
+  }
+  const list = info.querySelector('section.load-more-activities ul');
+  list.querySelector(`button.load-more-activities[data-url="${CSS.escape(url)}"]`)?.parentNode.remove();
+  sanitizeInsertAdjacentHTML(list, 'beforeend', `<li><button class="load-more-activities" data-url="${url}"${title} type="button">${Icon['.fas.fa-inbox']}<span><span>${label}</span><span>${url.replace(/^https?:\/\//, '')}</span></span></button></li>`);
 }
 
 document.addEventListener('click', (e) => {
@@ -713,9 +717,9 @@ document.addEventListener('click', (e) => {
   const url = button.dataset.url;
   const state = collectionScans.get(url);
   if (!state || (state.items && state.offset >= state.items.length)) return;
-  document.getElementById(state.messageId)?.remove();
-  const aside = document.getElementById('document-action-message');
-  if (aside && !aside.querySelector('ul[role="log"] > li')) aside.remove();
+  const group = button.closest('section.load-more-activities');
+  button.parentNode.remove();
+  if (!group.querySelector('li')) group.remove();
   showActivitiesSources(url, { ...state.options, more: true });
 });
 

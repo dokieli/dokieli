@@ -1,7 +1,7 @@
 {
   "activities.collection-limit.textContent": "<a href=\"{{- url}}\">{{- url}}</a> tiene {{total}} elementos, demasiados para cargarlos de una vez. Se revisaron los {{checked}} más recientes en busca de anotaciones.",
   "activities.collection-limit.more.button.textContent": "Revisar los siguientes {{count}}",
-  "activities.collection-pending.textContent": "<a href=\"{{- url}}\">{{- url}}</a> puede contener anotaciones de este documento. No se cargan automáticamente. Usa el botón aquí o en el panel de mensajes para buscarlas.",
+  "activities.collection-pending.textContent": "Los siguientes pueden contener anotaciones de este documento. No se cargan automáticamente.",
   "activities.collection-pending.button.textContent": "Revisar los {{count}} más recientes",
   "annotation-access.label.textContent": "Visibilidad",
   "annotation-access.toggle.off.title": "Privado. De forma predeterminada, no se notifica a las bandejas de entrada.",

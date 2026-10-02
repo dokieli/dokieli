@@ -2844,6 +2844,66 @@ background-color: var(--do-color-bg);
 margin: 0;
 }
 
+#document-notifications section.load-more-activities {
+margin: 0 0 0.5em 0;
+font-size: 0.875em;
+}
+#document-notifications section.load-more-activities h3 {
+margin: 0 0 0.5em 0;
+color: var(--do-color-fg-secondary);
+font-family: inherit;
+font-size: 1em;
+font-weight: normal;
+line-height: 1.4;
+}
+#document-notifications section.load-more-activities ul {
+list-style: none;
+margin: 0;
+padding: 0;
+}
+#document-notifications section.load-more-activities li + li {
+margin-top: 0.5em;
+}
+#document-notifications button.load-more-activities {
+display: flex;
+align-items: center;
+gap: 0.75em;
+width: 100%;
+margin: 0;
+padding: 0.25em 0.5em;
+border: none;
+border-left: 2px solid var(--do-color-warning-solid);
+border-radius: 0;
+box-shadow: none;
+background: none;
+color: var(--do-color-fg);
+font-size: 1em;
+font-weight: normal;
+line-height: 1.4;
+text-align: left;
+cursor: pointer;
+}
+#document-notifications button.load-more-activities:hover {
+background: var(--do-color-accent-bg);
+}
+#document-notifications button.load-more-activities > svg {
+flex-shrink: 0;
+fill: var(--do-color-fg-secondary);
+}
+#document-notifications button.load-more-activities > span {
+display: flex;
+flex-direction: column;
+min-width: 0;
+}
+#document-notifications button.load-more-activities > span > span {
+overflow: hidden;
+text-overflow: ellipsis;
+white-space: nowrap;
+}
+#document-notifications button.load-more-activities > span > span:last-child {
+color: var(--do-color-fg-secondary);
+}
+
 #document-notifications {
 position: fixed;
 top: 0;
