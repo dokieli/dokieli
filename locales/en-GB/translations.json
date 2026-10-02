@@ -1,7 +1,7 @@
 {
   "activities.collection-limit.textContent": "<a href=\"{{- url}}\">{{- url}}</a> has {{total}} items, too many to load at once. The {{checked}} most recent were checked for annotations.",
   "activities.collection-limit.more.button.textContent": "Look through the next {{count}}",
-  "activities.collection-pending.textContent": "<a href=\"{{- url}}\">{{- url}}</a> may hold annotations of this document. They are not loaded automatically. Use the button here or in the messages panel to look for them.",
+  "activities.collection-pending.textContent": "The following may hold annotations of this document. They are not loaded automatically.",
   "activities.collection-pending.button.textContent": "Check the {{count}} most recent",
   "annotation-access.label.textContent": "Visibility",
   "annotation-access.toggle.off.title": "Private. Notifying inboxes is off by default.",
