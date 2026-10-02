@@ -19,16 +19,24 @@ import { vi } from 'vitest';
 import rdf from 'rdf-ext';
 
 vi.mock('src/activity.js', () => ({ showAnnotation: vi.fn(() => Promise.resolve()) }));
+vi.mock('src/consent.js', async (importOriginal) => ({
+  ...await importOriginal(),
+  requestOriginConsent: vi.fn(() => Promise.resolve(true))
+}));
 
 import Config from 'src/config.js';
 import { showAnnotation } from 'src/activity.js';
+import { requestOriginConsent, clearOriginConsent } from 'src/consent.js';
+import { NANOPUB_QUERY_URLS } from '@nanopub/nanopub-js';
 import {
   buildDocumentNanopubsQuery,
   buildAssertionTriplesQuery,
   termFromBinding,
   groupNanopubs,
   findDocumentNanopubs,
-  showNanopubAnnotations
+  showNanopubAnnotations,
+  queryNanopubAnnotations,
+  initNanopubAnnotations
 } from 'src/nanopub-query.js';
 
 const NP = 'https://w3id.org/np/RABVZkX_FbsyPbIyBG4E3YU3EG0i1KAsG1HsM-lmXpn30';
@@ -180,5 +188,61 @@ describe('showNanopubAnnotations', () => {
   test('does not throw when the network is unreachable', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
     await expect(showNanopubAnnotations(DOC)).resolves.toEqual([]);
+  });
+});
+
+describe('nanopub query consent', () => {
+  const origin = new URL(NANOPUB_QUERY_URLS[0]).origin;
+
+  beforeEach(() => {
+    Config.DocumentURL = DOC;
+    Config.Activity = {};
+    Config.Resource = { [DOC]: {} };
+    Config.OriginConsent = {};
+    requestOriginConsent.mockClear();
+    requestOriginConsent.mockImplementation(() => Promise.resolve(true));
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  test('sends nothing on load without a decision', () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    initNanopubAnnotations(DOC);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(requestOriginConsent).not.toHaveBeenCalled();
+  });
+
+  test('queries on load when already allowed', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(sparqlResponse([]));
+    vi.stubGlobal('fetch', fetchMock);
+    Config.OriginConsent = { [origin]: { decision: 'allow' } };
+
+    initNanopubAnnotations(DOC);
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+  });
+
+  test('asking to query requests consent, then queries', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(sparqlResponse([]));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await queryNanopubAnnotations(DOC);
+    expect(requestOriginConsent).toHaveBeenCalledWith(NANOPUB_QUERY_URLS[0], { reason: 'nanopub-query' });
+    expect(fetchMock).toHaveBeenCalled();
+  });
+
+  test('asking to query sends nothing when consent is declined', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    requestOriginConsent.mockImplementation(() => Promise.resolve(false));
+
+    expect(await queryNanopubAnnotations(DOC)).toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  test('sign-out clearing forgets the decision', () => {
+    Config.OriginConsent = { [origin]: { decision: 'allow' } };
+    clearOriginConsent();
+    expect(Config.OriginConsent).toEqual({});
   });
 });

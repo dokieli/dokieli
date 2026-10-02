@@ -65,6 +65,7 @@ export function initButtons() {
       GenerateFeeds: getButtonHTML({ key: "info.feed.button", button: "info", buttonClass: "info", buttonType: "button", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-generate-feed` }),
       MessageLog: getButtonHTML({ key: "info.messages.button", button: "info", buttonClass: "info", buttonType: "button", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-message-log` }),
       NewDocument: getButtonHTML({ key: "info.new-document.button", button: "info", buttonClass: "info", buttonType: "button", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-new` }),
+      OriginConsent: getButtonHTML({ key: "info.origin-consent.button", button: "info", buttonClass: "info", buttonType: "button", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#privacy-third-party-services` }),
       Notifications: getButtonHTML({ key: "info.notifications.button", button: "info", buttonClass: "info", buttonType: "button", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-notifications` }),
       Open: getButtonHTML({ key: "info.open.button", button: "info", buttonClass: "info", buttonType: "button", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-open` }),
       Reply: getButtonHTML({ key: "info.reply.button", button: "info", buttonClass: "info", buttonType: "button", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-reply` }),

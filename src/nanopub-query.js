@@ -20,7 +20,7 @@ import { NANOPUB_QUERY_URLS, QUERY_TIMEOUT_MS } from '@nanopub/nanopub-js';
 import Config from './config.js';
 import { getOriginDecision, requestOriginConsent } from './consent.js';
 import { showAnnotation } from './activity.js';
-import { getPreferredTargetIRI, showActionMessage, addMessageToLog } from './doc.js';
+import { getPreferredTargetIRI } from './doc.js';
 import { i18n } from './i18n.js';
 
 const ns = Config?.ns;
@@ -218,26 +218,14 @@ function queryOrigin() {
   return NANOPUB_QUERY_URLS[0];
 }
 
-function offerNanopubAnnotations(documentURL) {
-  const button = `<button class="load-nanopub-annotations" type="button">${i18n.t('activities.nanopub-pending.button.textContent')}</button>`;
-  const message = { content: i18n.t('activities.nanopub-pending.textContent') + ' ' + button, type: 'info', timer: null };
-  addMessageToLog(message, Config.MessageLog);
-  const messageId = showActionMessage(document.body, message);
-
-  document.addEventListener('click', async function onClick(e) {
-    if (!e.target.closest?.('button.load-nanopub-annotations')) return;
-    document.removeEventListener('click', onClick);
-    document.getElementById(messageId)?.remove();
-    const aside = document.getElementById('document-action-message');
-    if (aside && !aside.querySelector('ul[role="log"] > li')) aside.remove();
-
-    if (await requestOriginConsent(queryOrigin(), { reason: 'nanopub-query' })) {
-      showNanopubAnnotations(documentURL);
-    }
-  });
+export async function queryNanopubAnnotations(documentURL) {
+  documentURL = documentURL || Config.DocumentURL;
+  if (!isQueryableIRI(documentURL)) return [];
+  if (!(await requestOriginConsent(queryOrigin(), { reason: 'nanopub-query' }))) return [];
+  return showNanopubAnnotations(documentURL);
 }
 
-// Runs only with prior consent since the document URL is sent; otherwise offers to
+// Runs on load only with prior consent since the document URL is sent
 export function initNanopubAnnotations(documentURL) {
   documentURL = documentURL || Config.DocumentURL;
   if (!isQueryableIRI(documentURL)) return;
@@ -247,13 +235,7 @@ export function initNanopubAnnotations(documentURL) {
     console.log('dokieli: nanopub annotations on the test registry are not queryable');
   }
 
-  switch (getOriginDecision(queryOrigin())) {
-    case 'allow':
-      showNanopubAnnotations(documentURL);
-      break;
-    case 'deny':
-      break;
-    default:
-      offerNanopubAnnotations(documentURL);
+  if (getOriginDecision(queryOrigin()) === 'allow') {
+    showNanopubAnnotations(documentURL);
   }
 }

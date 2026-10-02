@@ -38,6 +38,7 @@ import { setPublicRead } from './wac.js';
 import { isJWE } from './crypto.js';
 import { isUnlocked, decryptWithSession } from './keystore.js';
 import { setupResourceBrowser, attachBrowseStoragePopup } from './dialog.js';
+import { queryNanopubAnnotations } from './nanopub-query.js';
 
 var deleteListenerAttached = false;
 let pendingEncryptedAnnotations = [];
@@ -152,7 +153,10 @@ export function initializeButtonMore(node) {
   node = document.getElementById('document-notifications');
 
   var buttonMore = node.querySelector('div.info button.more');
+  // TODO: Notifications redesign: split interactions into categories (social graph, nanopub network, etc.) and display them in tabs
   buttonMore.addEventListener('click', () => {
+    queryNanopubAnnotations();
+
     if (!Config.User.IRI) {
       showUserIdentityInput();
     }
