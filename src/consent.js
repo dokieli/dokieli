@@ -17,7 +17,7 @@ limitations under the License.
 
 import { NANOPUB_QUERY_URLS } from '@nanopub/nanopub-js';
 import Config from './config.js';
-import { getDeviceStorageItem, setDeviceStorageItem } from './storage.js';
+import { getDeviceStorageItem, setDeviceStorageItem, removeDeviceStorageItem } from './storage.js';
 import { fragmentFromString } from './utils/html.js';
 import { htmlEncode } from './utils/sanitization.js';
 import { getButtonHTML } from './ui/buttons.js';
@@ -100,6 +100,12 @@ export function setOriginConsent(origin, decision) {
   document.dispatchEvent(new CustomEvent('dokieli:origin-consent-changed', { detail: { origin, decision } }));
 }
 
+export function clearOriginConsent() {
+  Config.OriginConsent = {};
+  removeDeviceStorageItem(STORAGE_KEY);
+  document.dispatchEvent(new CustomEvent('dokieli:origin-consent-changed', { detail: {} }));
+}
+
 // Resolves true when the origin may be contacted; prompts on first contact
 export function requestOriginConsent(url, options = {}) {
   const decision = getOriginDecision(url);
@@ -131,7 +137,7 @@ function showOriginConsentPrompt(origin, options = {}) {
 
     document.body.appendChild(fragmentFromString(`
       <aside aria-labelledby="origin-consent-prompt-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="origin-consent-prompt" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}">
-        <h2 data-i18n="dialog.origin-consent.h2" id="origin-consent-prompt-label">${i18n.t('dialog.origin-consent.h2.textContent')}</h2>
+        <h2 data-i18n="dialog.origin-consent.h2" id="origin-consent-prompt-label">${i18n.t('dialog.origin-consent.h2.textContent')} ${Config.Button.Info.OriginConsent}</h2>
         ${buttonClose}
         <div class="info"></div>
         <p>${i18n.t('dialog.origin-consent.request.p.textContent')} <a href="${htmlEncode(origin)}/" rel="noopener" target="_blank">${htmlEncode(origin)}</a>${reasonText} ${i18n.t('dialog.origin-consent.change-later.p.textContent')}</p>

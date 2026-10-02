@@ -22,6 +22,7 @@ import { getAgentHTML, showActionMessage, getResourceSupplementalInfo, handleDel
 import { Icon } from './ui/icons.js';
 import { setPreferredPolicyInfo, getAgentTypeIndex, getAgentSupplementalInfo, getAgentSeeAlsoPrimaryTopicOf, getAgentPreferencesInfo, getSubjectInfo } from './graph.js';
 import { removeDeviceStorageAsSignOut, updateDeviceStorageProfile, updateBrowserStorageOIDC, setDeviceStorageItem } from './storage.js';
+import { clearOriginConsent } from './consent.js';
 import { hasKeystore, isUnlocked, lockKeystore } from './keystore.js';
 import { updateButtons, getButtonHTML } from './ui/buttons.js';
 import { SessionCore } from '@uvdsl/solid-oidc-client-browser/core';
@@ -155,6 +156,7 @@ export async function signOut() {
   await signOutHttp();
 
   removeDeviceStorageAsSignOut();
+  clearOriginConsent();
   // The passphrase-protected keystore cache in IndexedDB is kept for offline unlock
   lockKeystore();
 
