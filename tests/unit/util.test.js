@@ -57,6 +57,15 @@ describe("util", () => {
       const result = generateUUID();
       expect(result).toHaveLength(36);
     });
+
+    it("returns the same well-formed UUID for the same input", () => {
+      const pattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+      ["a", "q1#1", "some longer seed#2", "x".repeat(100)].forEach((input) => {
+        expect(generateUUID(input)).toMatch(pattern);
+        expect(generateUUID(input)).toBe(generateUUID(input));
+      });
+      expect(generateUUID("q1#1")).not.toBe(generateUUID("q1#2"));
+    });
   });
 
   describe("generateAttributeId", () => {

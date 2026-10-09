@@ -130,7 +130,7 @@ export function generateUUID(inputString) {
     let uuid = hex.substring(0, 8) + '-' +
                hex.substring(8, 12) + '-' +
                '4' + hex.substring(13, 16) + '-' + // Set version to 4
-               ((parseInt(hex[16], 16) & 0x3f) | 0x80).toString(16) + // Set variant to 10xxxxxx
+               ((parseInt(hex[16], 16) & 0x3) | 0x8).toString(16) + // Set variant to 10xx (one hex digit)
                hex.substring(17, 20) + '-' +
                hex.substring(20, 32);
 
