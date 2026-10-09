@@ -50,7 +50,7 @@ import { initCV } from './ui/templates/cv.js';
 import { initSpecification } from './ui/templates/specification.js';
 import { initQuestionnaire } from './ui/templates/questionnaire.js';
 import * as Slideshow from './ui/templates/slideshow.js';
-import { generateGeoView } from './geo.js';
+import { lazyImport } from './utils/lazy.js';
 import { csvStringToJson, jsonToHtmlTableString } from './csv.js';
 import { restoreYjsContent, addYjsVersion, getYjsVersions, getYjsVersionsFromIDB, getCurrentVersionKey, onYjsVersionsChanged } from "./editor/editor.js";
 import { rewriteBlobImagesToRelative, uploadBlobAssets, clearBlobAssets, hasUploadTarget, resolveAuthenticatedImages } from "./editor/utils/imageAssets.js";
@@ -7388,6 +7388,7 @@ export async function spawnDokieli(documentNode, data, contentTypes, iris, optio
 
       case 'application/gpx+xml':
         // console.log(data)
+        const { generateGeoView } = await lazyImport(() => import(/* webpackChunkName: "geo" */ './geo.js'));
         tmpl = await generateGeoView(files[0].content)
         // FIXME: Tested with generateGeoView returning a Promise but somehow
           .then(i => {
