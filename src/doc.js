@@ -27,6 +27,7 @@ import { getResourceGraph, sortGraphTriples, getGraphContributors, getGraphAutho
 import { Icon } from './ui/icons.js';
 import { buttonIcons, getButtonHTML, updateButtons } from './ui/buttons.js'
 import { domSanitizeHTMLBody, domSanitize, sanitizeInsertAdjacentHTML, htmlEncode, sanitizeIRI } from './utils/sanitization.js';
+import { saveMessageLog } from './storage.js';
 import { cleanProseMirrorOutput, normalizeHTML, normalizeWhitespace } from './utils/normalization.js';
 import { applyDocumentTransforms, registerDocumentTransform } from './utils/documentTransforms.js';
 import { formatHTML, fragmentFromString, getDoctype, getDocumentContentNode, selectArticleNode, getDocumentNodeFromString, stringFromFragment, createHTML, getOffset, htmlToMarkdown } from './utils/html.js';
@@ -604,10 +605,8 @@ export function addMessageToLog(message, log, options = {}) {
   m['dateTime'] = getDateTimeISO();
   log.unshift(m);
 
-  // Local-first action record; only the main log persists across sessions
-  if (log === Config.MessageLog) {
-    try { window.localStorage.setItem('dokieli.messageLog', JSON.stringify(log.slice(0, 200))) } catch {}
-  }
+  // Only the main log persists across sessions
+  if (log === Config.MessageLog) saveMessageLog();
 }
 
 export function handleActionMessage(resolved, rejected) {

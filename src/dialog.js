@@ -37,7 +37,7 @@ import { notifyInbox, sendNotifications, showContactsActivities, initializeNotif
 import Config from './config.js';
 const ns = Config.ns;
 import { Icon } from './ui/icons.js';
-import { updateDeviceStorageProfile, getDeviceStorageItem  } from './storage.js';
+import { updateDeviceStorageProfile, getDeviceStorageItem, clearMessageLog } from './storage.js';
 import { enableAutoSave, disableAutoSave, enableRemoteSync, disableRemoteSync, showResourceReviewChanges, autoSave, markLocalSnapshotPublished } from './sync.js';
 import { formatHTMLString } from './utils/normalization.js';
 import { showVisualisationGraph } from './viz.js';
@@ -5950,8 +5950,7 @@ export function showMessageLog(e, options) {
   }
 
   clearButton.addEventListener('click', () => {
-    Config.MessageLog.length = 0;
-    try { window.localStorage.removeItem('dokieli.messageLog') } catch {}
+    clearMessageLog();
     logTable.replaceWith(fragmentFromString(domSanitize(`<p data-i18n="dialog.message-log.no-messages.p">${i18n.t('dialog.message-log.no-messages.p.textContent')}</p>`)));
     if (copyButton) copyButton.disabled = true;
     clearButton.disabled = true;

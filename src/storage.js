@@ -48,6 +48,7 @@ async function del(key) {
 import Config from './config.js';
 import { getDateTimeISO, generateAttributeId } from './util.js';
 import { getDocument, updateMutableResource } from './doc.js';
+import { domSanitize } from './utils/sanitization.js';
 
 export async function updateDeviceStorageDocumentWithItem(key, data, options = {}) {
   if (!key) { return Promise.resolve(); }
@@ -255,8 +256,47 @@ export async function removeDeviceStorageAsSignOut() {
   removeDeviceStorageItem('DO.Config.OIDC');
 
   // The message log is an activity trace; sign-out clears it like document items
+  await clearMessageLog();
+}
+
+const MESSAGE_LOG_KEY = 'DO.MessageLog';
+const MESSAGE_LOG_LIMIT = 200;
+let messageLogLoaded = Promise.resolve();
+
+// Restores the log from earlier sessions; messages added meanwhile stay first
+export function loadMessageLog() {
+  messageLogLoaded = (async () => {
+    let stored = await getDeviceStorageItem(MESSAGE_LOG_KEY).catch(() => null);
+    // Moves a log kept in localStorage by earlier versions
+    try {
+      const legacy = window.localStorage.getItem('dokieli.messageLog');
+      if (legacy !== null && !Array.isArray(stored)) {
+        stored = JSON.parse(legacy);
+        await setDeviceStorageItem(MESSAGE_LOG_KEY, stored);
+      }
+      window.localStorage.removeItem('dokieli.messageLog');
+    } catch {}
+    if (!Array.isArray(stored)) return;
+    stored.slice(0, MESSAGE_LOG_LIMIT).forEach(m => {
+      if (m && typeof m.content === 'string') {
+        Config.MessageLog.push({ ...m, content: domSanitize(m.content) });
+      }
+    });
+  })();
+  return messageLogLoaded;
+}
+
+export async function saveMessageLog() {
+  await messageLogLoaded;
+  const log = JSON.parse(JSON.stringify(Config.MessageLog.slice(0, MESSAGE_LOG_LIMIT)));
+  return setDeviceStorageItem(MESSAGE_LOG_KEY, log).catch(() => {});
+}
+
+export async function clearMessageLog() {
+  await messageLogLoaded;
   Config.MessageLog.length = 0;
-  try { window.localStorage.removeItem('dokieli.messageLog') } catch {}
+  try { window.localStorage.removeItem('dokieli.messageLog'); } catch {}
+  return removeDeviceStorageItem(MESSAGE_LOG_KEY);
 }
 
 export function getDeviceStorageItem(key) {

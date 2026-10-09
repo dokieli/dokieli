@@ -22,7 +22,7 @@ import { highlightItems, updateSelectedStylesheets, initCurrentStylesheet, showA
 import { initButtons } from './ui/buttons.js'
 import { initOriginConsent } from './consent.js';
 import { setWebExtensionURL } from './util.js';
-import { getDeviceStorageItem, removeDeviceStorageItem } from './storage.js';
+import { getDeviceStorageItem, removeDeviceStorageItem, loadMessageLog } from './storage.js';
 const GIT_FORGE_HOSTS_KEY = 'DO.Config.GitForge.hosts';
 const HTTP_ORIGINS_KEY = 'DO.Config.Http.origins';
 import { syncLocalRemoteResource, monitorNetworkStatus, showResourceReviewChanges, enableLocalBackup, disableLocalBackup } from './sync.js';
@@ -50,7 +50,7 @@ export async function init (url) {
   initServiceWorker();
   initWebManifest();
   initInstallPrompt();
-  initMessageLog();
+  loadMessageLog();
   await initOriginConsent();
   await initStorageBackend();
 
@@ -84,20 +84,6 @@ export async function init (url) {
     monitorNetworkStatus();
     initPrint();
   }
-}
-
-// Restore the local action record from previous sessions
-function initMessageLog() {
-  try {
-    const storedLog = JSON.parse(window.localStorage.getItem('dokieli.messageLog') || '[]');
-    if (Array.isArray(storedLog)) {
-      storedLog.slice(0, 200).forEach(m => {
-        if (m && typeof m.content === 'string') {
-          Config.MessageLog.push({ ...m, content: domSanitize(m.content) });
-        }
-      });
-    }
-  } catch {}
 }
 
 async function initStorageBackend() {
