@@ -18,6 +18,11 @@ limitations under the License.
 import { NANOPUB_REGISTRY_URLS, TEST_NANOPUB_REGISTRY_URL } from '@nanopub/nanopub-js/constants';
 import Config from './config.js';
 import { getSigningKeyMaterial, hasKeystore, ASSERTION } from './keystore.js';
+import { lazyImport } from './utils/lazy.js';
+
+export function loadNanopubLibrary() {
+  return lazyImport(() => import(/* webpackChunkName: "nanopub" */ '@nanopub/nanopub-js'));
+}
 
 function registries() {
   return Config.Nanopub?.UseTestRegistry ? [TEST_NANOPUB_REGISTRY_URL] : NANOPUB_REGISTRY_URLS;
@@ -81,7 +86,7 @@ export async function publishIntroduction(unlocked = false) {
   const { privateKey, publicKey } = material;
   const name = Config.User?.Name;
 
-  const { createIntroNanopub } = await import('@nanopub/nanopub-js');
+  const { createIntroNanopub } = await loadNanopubLibrary();
   const intro = await createIntroNanopub({ agent, privateKey, publicKey, name });
   await intro.sign();
   const { uri } = await publishToRegistry(intro);

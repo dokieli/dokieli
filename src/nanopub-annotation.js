@@ -18,7 +18,7 @@ limitations under the License.
 import { DEFAULT_NANOPUB_URI } from '@nanopub/nanopub-js/constants';
 import { serializeAnnotationToJSONLD } from '@dokieli/web-annotation';
 import { getGraphFromData } from './graph.js';
-import { publishToRegistry, getAgentIRI, publishIntroduction, promptForSigningKey } from './nanopub.js';
+import { publishToRegistry, getAgentIRI, publishIntroduction, promptForSigningKey, loadNanopubLibrary } from './nanopub.js';
 import { getSigningKeyMaterial } from './keystore.js';
 import { fragmentFromString } from './utils/html.js';
 import Config from './config.js';
@@ -43,7 +43,7 @@ export const ACTION_TO_STANCE = {
 const DOKIELI_IRI = 'https://dokie.li/#i';
 
 async function quads(turtle) {
-  const { parse } = await import('@nanopub/nanopub-js');
+  const { parse } = await loadNanopubLibrary();
   return parse(PREFIXES + turtle, 'turtle');
 }
 
@@ -144,7 +144,7 @@ export async function annotationToNanopub(noteData, options = {}) {
   const created = noteData.datetime || new Date().toISOString();
   const license = options.license || noteData.license;
 
-  const { Nanopub } = await import('@nanopub/nanopub-js');
+  const { Nanopub } = await loadNanopubLibrary();
   return new Nanopub({
     assertion: [...await annotationQuads(noteData), ...await stanceQuads(stance, noteData)],
     provenance: await provenanceQuads(agent),
@@ -172,7 +172,7 @@ export async function publishAnnotation(noteData, options = {}, unlocked = false
   const keyCheck = Config.Nanopub?.UseTestRegistry ? 'off' : 'warn';
 
   if (!Config.User.Keys.Signing.IntroductionURI) {
-    const { checkSigningKey } = await import('@nanopub/nanopub-js');
+    const { checkSigningKey } = await loadNanopubLibrary();
     const { status } = keyCheck === 'off' ? {} : await checkSigningKey(agent, publicKey);
     if (status !== 'declared') await publishIntroduction(true);
   }

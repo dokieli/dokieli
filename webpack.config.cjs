@@ -8,7 +8,7 @@ dotenv.config();
 module.exports = (env) => {
   const minimize = !!(env && env.minimize);
 
-  return {
+  const base = {
     resolve: {
       alias: {
         'src': path.resolve(__dirname, 'src'),
@@ -33,26 +33,6 @@ module.exports = (env) => {
       extensions: [".ts", ".js", ".mjs"],
     },
     mode: "production",
-    entry: {
-      dokieli: "./src/dokieli.js",
-      popup: "./src/popup.js",
-      "extension-background": "./extension-background.js",
-    },
-    output: {
-      path: path.join(__dirname, "/scripts/"),
-      filename: "[name].js",
-      publicPath: "",
-      library: undefined,
-      libraryExport: 'default',
-    },
-    module: {
-      rules: [
-        {
-          test: /\.js$/,
-          exclude: ["/src/__tests__/", "/node_modules/", "/__testUtils__/"],
-        },
-      ],
-    },
     externals: {
       "text-encoding": "TextEncoder",
       "whatwg-url": "window",
@@ -94,4 +74,51 @@ module.exports = (env) => {
       })
     ],
   };
+
+  const rules = [
+    {
+      test: /\.js$/,
+      exclude: ["/src/__tests__/", "/node_modules/", "/__testUtils__/"],
+    },
+  ];
+
+  // Built per entry so a script never downloads chunks for code it already has; chunks are found next to the script
+  const web = (name, entry) => ({
+    ...base,
+    name,
+    entry: { [name]: entry },
+    output: {
+      path: path.join(__dirname, "/scripts/"),
+      filename: "[name].js",
+      chunkFilename: "chunks/[name].[contenthash:8].js",
+      publicPath: "auto",
+      uniqueName: name,
+      library: undefined,
+      libraryExport: 'default',
+    },
+    module: { rules },
+  });
+
+  // Extension and single-file use: everything in one file, because a script injected by the extension cannot load more files
+  const bundle = {
+    ...base,
+    name: "bundle",
+    entry: {
+      "dokieli.bundle": "./src/dokieli.js",
+      "extension-background": "./extension-background.js",
+    },
+    output: {
+      path: path.join(__dirname, "/scripts/"),
+      filename: "[name].js",
+      publicPath: "",
+      library: undefined,
+      libraryExport: 'default',
+    },
+    module: {
+      rules,
+      parser: { javascript: { dynamicImportMode: "eager" } },
+    },
+  };
+
+  return [web("dokieli", "./src/dokieli.js"), web("popup", "./src/popup.js"), bundle];
 };

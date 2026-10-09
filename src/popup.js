@@ -81,7 +81,7 @@ async function activateOnActiveTab() {
     });
     await WebExtension.scripting.executeScript({
       target: { tabId: tab.id },
-      files: ['scripts/dokieli.js'],
+      files: ['scripts/dokieli.bundle.js'],
     });
     await WebExtension.tabs.sendMessage(tab.id, { action: 'dokieli.activate' });
   } catch (e) {
@@ -101,7 +101,7 @@ async function openSigninDialog() {
 
     await WebExtension.scripting.executeScript({
       target: { tabId: tab.id },
-      files: ['scripts/dokieli.js'],
+      files: ['scripts/dokieli.bundle.js'],
     });
 
     await WebExtension.tabs.sendMessage(tab.id, { action: 'dokieli.showSignin' });
