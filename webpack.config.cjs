@@ -90,7 +90,9 @@ module.exports = (env) => {
     output: {
       path: path.join(__dirname, "/scripts/"),
       filename: "[name].js",
-      chunkFilename: "chunks/[name].[contenthash:8].js",
+      chunkFilename: `chunks/${name}.[name].[contenthash:8].js`,
+      // Removes this build's old chunks; other builds share scripts/
+      clean: { keep: (asset) => !asset.startsWith(`chunks/${name}.`) },
       publicPath: "auto",
       uniqueName: name,
       library: undefined,
