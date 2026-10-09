@@ -193,14 +193,14 @@ export function renderWebServicesConsent() {
   const otherOrigins = Object.keys(Config.OriginConsent || {}).filter(origin => !knownOrigins.includes(origin)).sort();
 
   const rows = [
-    ...KNOWN_SERVICES.map(service => ({ name: service.name, origins: service.origins, purpose: i18n.t(`menu.web-services.service.${service.i18nKey}.textContent`) })),
-    ...otherOrigins.map(origin => ({ name: origin, origins: [origin], purpose: '' }))
+    ...KNOWN_SERVICES.map(service => ({ name: service.name, origins: service.origins, i18nKey: `menu.web-services.service.${service.i18nKey}` })),
+    ...otherOrigins.map(origin => ({ name: origin, origins: [origin] }))
   ];
 
   const items = rows.map((row, index) => {
     const id = `web-services-consent-${index}`;
     const checked = row.origins.every(origin => Config.OriginConsent?.[origin]?.decision === 'allow') ? ' checked=""' : '';
-    const purpose = row.purpose ? ` ${htmlEncode(row.purpose)}` : '';
+    const purpose = row.i18nKey ? ` <span data-i18n="${row.i18nKey}">${htmlEncode(i18n.t(`${row.i18nKey}.textContent`))}</span>` : '';
     return `<li><input${checked} class="origin-consent-toggle" data-origins="${htmlEncode(row.origins.join(' '))}" id="${id}" title="${i18n.t('menu.web-services.toggle.input.title')}" type="checkbox" /><label for="${id}"><a href="${htmlEncode(row.origins[0])}/" rel="noopener" target="_blank" title="${htmlEncode(row.origins.join(' '))}">${htmlEncode(row.name)}</a>${purpose}</label></li>`;
   });
 
