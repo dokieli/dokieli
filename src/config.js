@@ -104,7 +104,7 @@ export default {
 
   DOMProcessing: {
     'rdfaAttributes': ['about', 'content', 'datatype', 'href', 'lang', 'inlist', 'prefix', 'property', 'rel', 'resource', 'rev', 'src', 'typeof', 'vocab', 'xml:lang'],
-    'inlineElements': ['span', 'progress', 'del', 'ins', 'data', 'datalist', 'mark', 'cite', 'q', 'sup', 'sub', 'a', 'time', 'em', 'strong', 'b', 'i', 'u', 's', 'strike', 'dfn', 'abbr', 'var', 'samp', 'kbd', 'bdi', 'math', 'mrow', 'mi', 'mo', 'mfrac', 'embed', 'img', 'wbr', 'code', 'meta', 'link', 'button', 'svg', 'title', 'metadata', 'defs', 'marker', 'g', 'line', 'circle', 'path', 'tspan', 'text'],
+    'inlineElements': ['span', 'progress', 'del', 'ins', 'data', 'datalist', 'mark', 'cite', 'q', 'sup', 'sub', 'a', 'time', 'em', 'strong', 'b', 'i', 'u', 's', 'strike', 'dfn', 'abbr', 'var', 'samp', 'kbd', 'bdi', 'math', 'mrow', 'mi', 'mo', 'mfrac', 'embed', 'img', 'wbr', 'code', 'meta', 'link', 'button', 'input', 'label', 'select', 'textarea', 'svg', 'title', 'metadata', 'defs', 'marker', 'g', 'line', 'circle', 'path', 'tspan', 'text'],
     //`span` is last so it nests innermost, keeping `a > span` in that order on the way out.
     'proseMirrorMarks': ['del', 'ins', 'mark', 'cite', 'q', 'sup', 'sub', 'a', 'em', 'strong', 'dfn', 'abbr', 'span'],
     'voidElements': ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source', 'track', 'wbr'],
@@ -316,6 +316,7 @@ export default {
     "http://schema.org/Course": 'Course',
     "http://schema.org/Guide": 'Guide',
     "http://schema.org/NewsArticle": 'News Article',
+    "http://schema.org/Question": 'Questionnaire',
     "http://schema.org/Recipe": 'Recipe',
     "http://schema.org/Review": 'Review',
     "http://schema.org/ScholarlyArticle": 'Scholarly Article',
@@ -660,6 +661,7 @@ export default {
     risk: rdf.namespace('https://w3id.org/dpv/risk#'),
     rsa: rdf.namespace('http://www.w3.org/ns/auth/rsa#'),
     sec: rdf.namespace('https://w3id.org/security#'),
+    sh: rdf.namespace('http://www.w3.org/ns/shacl#'),
     schema: rdf.namespace('http://schema.org/'),
     sio: rdf.namespace('http://semanticscience.org/resource/'),
     sioc: rdf.namespace('http://rdfs.org/sioc/ns#'),

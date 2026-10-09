@@ -425,7 +425,7 @@ function showAnnotationStoreDialog(containerIRI, mode) {
   return showLocationDialog('annotation-store', containerIRI, mode);
 }
 
-function showLocationDialog(kind, containerIRI, mode) {
+export function showLocationDialog(kind, containerIRI, mode) {
   const id = `${kind}-dialog`;
   const prefix = `dialog.${kind}`;
   document.getElementById(id)?.remove();
@@ -553,7 +553,14 @@ export async function linkOutbox() {
   const storage = Config.User.Storage?.[0];
   const chosen = await showLocationDialog('outbox', storage ? forceTrailingSlash(storage) : '', 'setup');
   if (!chosen) return;
-  await Config.Storage.patchWithConneg(stripFragmentFromString(Config.User.IRI), { insert: `<${Config.User.IRI}> <${ns.as.outbox.value}> <${chosen}> .\n` });
+  try {
+    await Config.Storage.patchWithConneg(stripFragmentFromString(Config.User.IRI), { insert: `<${Config.User.IRI}> <${ns.as.outbox.value}> <${chosen}> .\n` });
+  }
+  catch (error) {
+    // Linking failed, but the caller can still use the chosen container.
+    if (error && typeof error === 'object') error.container = chosen;
+    throw error;
+  }
   Config.User.Outbox = [chosen];
   updateDeviceStorageProfile(Config.User);
   return chosen;

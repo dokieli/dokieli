@@ -352,6 +352,12 @@ export const buttonIcons = {
   toc: {
     icon: Icon [".fas.fa-list-check"]
   },
+  question: {
+    icon: Icon[".fas.fa-list-check"]
+  },
+  'questionnaire-inbox': {
+    icon: Icon[".far.fa-paper-plane"]
+  },
   source: {
     icon: Icon[".fas.fa-code"]
   },

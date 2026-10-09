@@ -863,7 +863,11 @@ font-family:inherit;
 .dl-entry-add,
 .document-type-add,
 .document-type-remove,
-.subdivision-add-button {
+.subdivision-add-button,
+.questionnaire-tool,
+.questionnaire-option-add,
+.questionnaire-add-button,
+.questionnaire-inbox-set {
 border:1px dashed var(--do-color-accent);
 border-radius:0.25em;
 background:none;
@@ -883,6 +887,14 @@ font-size:inherit;
 .dl-entry-add:focus-visible,
 .document-type-add:hover,
 .document-type-add:focus-visible,
+.questionnaire-tool:hover,
+.questionnaire-tool:focus-visible,
+.questionnaire-option-add:hover,
+.questionnaire-option-add:focus-visible,
+.questionnaire-add-button:hover:not([disabled]),
+.questionnaire-add-button:focus-visible,
+.questionnaire-inbox-set:hover,
+.questionnaire-inbox-set:focus-visible,
 .subdivision-add-button:hover:not([disabled]),
 .subdivision-add-button:focus-visible {
 border-style:solid;
@@ -943,6 +955,115 @@ font-weight:bold;
 .subdivision-add-button[disabled] {
 opacity:0.5;
 cursor:not-allowed;
+}
+
+/* Questionnaire authoring controls */
+.questionnaire-question-tools,
+.questionnaire-explanation-tools,
+.questionnaire-add,
+.questionnaire-inbox-tools {
+display:flex;
+flex-wrap:wrap;
+align-items:center;
+gap:0.5em;
+margin:0 0 0.5em 0;
+font-size:0.9em;
+}
+.questionnaire-question-tools .questionnaire-question-remove {
+margin-left:auto;
+}
+.questionnaire-explanation-tools,
+.questionnaire-add {
+margin:0.5em 0;
+}
+.questionnaire-tool,
+.questionnaire-inbox-set,
+.questionnaire-add-button,
+.questionnaire-option-add {
+padding:0.1em 0.5em;
+}
+.questionnaire-option-add,
+.questionnaire-add-button {
+font-weight:bold;
+}
+.questionnaire-add-button[disabled] {
+opacity:0.5;
+cursor:not-allowed;
+}
+.questionnaire-tool-toggle,
+.questionnaire-inbox-tools label {
+width:auto;
+font-weight:normal;
+cursor:pointer;
+}
+.questionnaire-inbox-tools input[type="url"] {
+flex:1 1 16em;
+}
+.questionnaire-option-remove {
+margin-left:0.25em;
+}
+
+/* Submit looks muted until ready but stays clickable to show what is missing. */
+.do.questionnaire-actions button {
+align-items:center;
+border:1px solid transparent;
+border-radius:.25rem;
+box-shadow:rgba(0, 0, 0, 0.06) 0 0.4em 0.6em;
+cursor:pointer;
+display:inline-flex;
+font-size:1em;
+font-weight:bold;
+line-height:1;
+margin:1em 0;
+padding:1em 1.25em;
+transition:background-color 0.3s, opacity 0.3s;
+}
+.do.questionnaire-actions button + button {
+margin-left:1em;
+}
+.do.questionnaire-actions .questionnaire-submit {
+background-color:var(--do-color-bg-muted);
+color:var(--do-color-fg-muted);
+}
+.do.questionnaire-actions .questionnaire-submit.questionnaire-ready {
+background-color:var(--do-color-accent-solid);
+color:var(--do-color-on-color);
+}
+.do.questionnaire-actions .questionnaire-submit.questionnaire-ready:hover {
+background-color:var(--do-color-accent-hover);
+}
+.do.questionnaire-actions .questionnaire-clear {
+background-color:var(--do-color-bg);
+border-color:var(--do-color-fg-muted);
+color:var(--do-color-fg);
+}
+.do.questionnaire-actions .questionnaire-clear:hover {
+background-color:var(--do-color-bg-muted);
+}
+.do.questionnaire-actions .questionnaire-destination,
+.do.questionnaire-actions .questionnaire-copy {
+margin:0.5em 0;
+}
+.do.questionnaire-actions label {
+width:auto;
+font-weight:normal;
+cursor:pointer;
+}
+.do.questionnaire-actions .questionnaire-copy-location:not([hidden]) {
+display:block;
+}
+.do.questionnaire-actions button.questionnaire-copy-change {
+margin:0 0 0 0.5em;
+padding:0.25em 0.5em;
+font-weight:normal;
+background-color:var(--do-color-bg);
+border-color:var(--do-color-fg-muted);
+color:var(--do-color-fg);
+box-shadow:none;
+}
+.do.questionnaire-actions button:focus-visible {
+outline:2px solid var(--do-color-accent);
+outline-offset:2px;
 }
 
 #specification-status.do label {
@@ -1079,7 +1200,7 @@ margin-bottom:1em;
 #document-menu.do,
 aside.do {
 position:fixed;
-z-index:2147483646;
+z-index:2147483647;
 max-height:90%;
 background-color:var(--do-color-bg);
 margin:0;
@@ -4627,7 +4748,7 @@ cursor:-webkit-grab;
 .do button {
 line-height:1;
 padding:0.25em;
-z-index:2147483647;
+z-index:2147483646;
 }
 
 aside.do button + button {
@@ -5472,13 +5593,15 @@ cursor: pointer;
 font-weight: bold;
 }
 .editor-form .annotation-inbox-details ul,
-.editor-form .annotation-location-details ul {
+.editor-form .annotation-location-details ul,
+#questionnaire-copy-dialog .questionnaire-copy-locations ul {
 list-style: none;
 margin: 0.35em 0 0 0;
 padding: 0;
 }
 .editor-form .annotation-inbox-details li,
-.editor-form .annotation-location-details li {
+.editor-form .annotation-location-details li,
+#questionnaire-copy-dialog .questionnaire-copy-locations li {
 display: flex;
 align-items: baseline;
 flex-wrap: wrap;
@@ -5486,25 +5609,38 @@ gap: 0.4em;
 margin: 0.25em 0;
 }
 .editor-form .annotation-inbox-details li input,
-.editor-form .annotation-location-details li input {
+.editor-form .annotation-location-details li input,
+#questionnaire-copy-dialog .questionnaire-copy-locations li input {
 margin: 0;
 }
 .editor-form .annotation-inbox-details li input:before,
-.editor-form .annotation-location-details li input:before {
+.editor-form .annotation-location-details li input:before,
+#questionnaire-copy-dialog .questionnaire-copy-locations li input:before {
 margin-left: 0;
 }
 .editor-form .annotation-inbox-details li label,
-.editor-form .annotation-location-details li label {
+.editor-form .annotation-location-details li label,
+#questionnaire-copy-dialog .questionnaire-copy-locations li label {
 width: auto;
 font-size: 1em;
 line-height: 1;
 white-space: nowrap;
 }
 .editor-form .annotation-inbox-details code,
+#questionnaire-copy-dialog .questionnaire-copy-locations li label {
+font-weight:normal !important;
+}
+#questionnaire-copy-dialog .questionnaire-copy-locations ul.questionnaire-copy-setup {
+margin-top:0.75em;
+}
+#questionnaire-copy-dialog .questionnaire-copy-locations li {
+margin:0.5em 0 !important;
+}
 .editor-form .annotation-location-more > summary {
 cursor: pointer;
 }
-.editor-form:not(.editor-slashmenu) .annotation-location-setup button {
+.editor-form:not(.editor-slashmenu) .annotation-location-setup button,
+#questionnaire-copy-dialog .questionnaire-copy-setup button {
 background:none;
 background-color:transparent;
 border:none;
@@ -5516,7 +5652,8 @@ text-decoration:underline;
 font-weight:normal;
 width:auto;
 }
-.editor-form .annotation-location-details code {
+.editor-form .annotation-location-details code,
+#questionnaire-copy-dialog .questionnaire-copy-locations code {
 font-size: 0.9em;
 color: var(--do-color-fg);
 background-color:initial;
@@ -5659,6 +5796,10 @@ max-width:none;
 }
 
 dd > p:first-child > .editor-placeholder {
+  position: static;
+}
+/* An option's placeholder follows its input instead of covering it. */
+.editor-placeholder.questionnaire-option-placeholder {
   position: static;
 }
 

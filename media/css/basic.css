@@ -1906,3 +1906,112 @@ display: block;
     justify-content: center;
   }
 }
+
+/* Questionnaire: dashed borders while editing, solid when reading. */
+section.questionnaire dl[typeof~="as:Question"] {
+  border: 1px solid var(--do-color-fg-secondary);
+  border-radius: 0.5em;
+  margin: 1em 0;
+  padding: 1em;
+}
+.ProseMirror section.questionnaire dl[typeof~="as:Question"] {
+  border-style: dashed;
+}
+section.questionnaire .questionnaire-question-text {
+  font-weight: bold;
+  margin: 0 0 0.25em 0;
+}
+section.questionnaire dl[typeof~="as:Question"] > dd {
+  margin: 0;
+}
+section.questionnaire .questionnaire-hint {
+  color: var(--do-color-fg-secondary);
+  font-size: 0.9em;
+  margin: 0 0 0.5em 0;
+}
+section.questionnaire :is([rel~="as:oneOf"], [rel~="as:anyOf"]) {
+  list-style: none;
+  padding-left: 0;
+}
+section.questionnaire :is([rel~="as:oneOf"], [rel~="as:anyOf"]) > li {
+  align-items: center;
+  display: flex;
+  gap: 0.5em;
+  margin: 0.35em 0;
+}
+section.questionnaire :is([rel~="as:oneOf"], [rel~="as:anyOf"]) > li > p {
+  margin: 0;
+  min-width: 6em;
+}
+/* Option markers for items without an input. */
+section.questionnaire :is([rel~="as:oneOf"], [rel~="as:anyOf"]) > li:not(:has(input))::before {
+  background-color: var(--do-color-bg);
+  border: 1px solid var(--do-color-fg-muted);
+  box-sizing: border-box;
+  content: "";
+  flex: none;
+  height: 1em;
+  width: 1em;
+}
+section.questionnaire [rel~="as:oneOf"] > li::before {
+  border-radius: 50%;
+}
+section.questionnaire [rel~="as:anyOf"] > li::before {
+  border-radius: 0.15em;
+}
+section.questionnaire :is([rel~="as:oneOf"], [rel~="as:anyOf"]) > li .questionnaire-control {
+  height: 1em;
+  margin: 0 0.5em 0 0;
+  vertical-align: middle;
+  width: 1em;
+}
+section.questionnaire :is([rel~="as:oneOf"], [rel~="as:anyOf"]) > li:has(.questionnaire-control) {
+  cursor: pointer;
+}
+section.questionnaire .questionnaire-explanation {
+  margin-top: 0.75em;
+}
+section.questionnaire .questionnaire-explanation p {
+  margin: 0 0 0.25em 0;
+}
+/* Read mode: a select replaces the options list. */
+section.questionnaire [rel~="as:oneOf"]:has(+ select.questionnaire-control) {
+  display: none;
+}
+section.questionnaire :is(textarea, input[type="text"]).questionnaire-control {
+  box-sizing: border-box;
+  width: 100%;
+}
+/* Time slots: pickers while editing, times when reading. */
+section.questionnaire .questionnaire-time-slots > li :is(.questionnaire-slot-start, .questionnaire-slot-end) {
+  font-size: 0.9em;
+  margin: 0 0.25em;
+}
+section.questionnaire .questionnaire-time-slots > li time {
+  white-space: nowrap;
+}
+
+/* Controls don't take input while editing. */
+.ProseMirror section.questionnaire .questionnaire-control {
+  pointer-events: none;
+}
+section.questionnaire .questionnaire-required {
+  color: var(--do-color-error);
+  font-size: 0.8em;
+  font-weight: normal;
+}
+section.questionnaire .questionnaire-error {
+  color: var(--do-color-error);
+  margin: 0.5em 0 0 0;
+}
+section.questionnaire .questionnaire-actions {
+  margin: 1em 0;
+}
+section.questionnaire .questionnaire-status {
+  color: var(--do-color-fg-secondary);
+  font-size: 0.9em;
+  margin-left: 0.5em;
+}
+section.questionnaire dl[typeof~="as:Question"]:has(> dd > .questionnaire-error) {
+  border-color: var(--do-color-error);
+}

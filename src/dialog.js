@@ -48,6 +48,7 @@ import { renderMenuTabs, initMenuTabsEvents, renderDocumentDo, renderDocumentToo
 import { initSlideshow } from './init.js';
 import { initCV } from './ui/templates/cv.js';
 import { initSpecification } from './ui/templates/specification.js';
+import { initQuestionnaire } from './ui/templates/questionnaire.js';
 import * as Slideshow from './ui/templates/slideshow.js';
 import { generateGeoView } from './geo.js';
 import { csvStringToJson, jsonToHtmlTableString } from './csv.js';
@@ -3429,6 +3430,7 @@ export function showNewDocument(e) {
             <li><input type="radio" id="${id}-slideshow" name="${id}" value="${id}-slideshow" /> <label for="${id}-slideshow">${Icon['.fas.fa-slideshow']} <span class="${id}-slideshow"><strong data-i18n="${id}-slideshow.strong">${i18n.t(`${id}-slideshow.strong.textContent`)}</strong> <span data-i18n="${id}-slideshow.span">${i18n.t(`${id}-slideshow.span.textContent`)}</span></span></label></li>
             <li><input type="radio" id="${id}-cv" name="${id}" value="${id}-cv" /> <label for="${id}-cv">${Icon['.fas.fa-book-skull']} <span class="${id}-cv"><strong data-i18n="${id}-cv.strong">${i18n.t(`${id}-cv.strong.textContent`)}</strong> <span data-i18n="${id}-cv.span">${i18n.t(`${id}-cv.span.textContent`)}</span></span></label></li>
             <li><input type="radio" id="${id}-specification" name="${id}" value="${id}-specification" /> <label for="${id}-specification">${Icon['.fas.fa-scroll']} <span class="${id}-specification"><strong data-i18n="${id}-specification.strong">${i18n.t(`${id}-specification.strong.textContent`)}</strong> <span data-i18n="${id}-specification.span">${i18n.t(`${id}-specification.span.textContent`)}</span></span></label></li>
+            <li><input type="radio" id="${id}-questionnaire" name="${id}" value="${id}-questionnaire" /> <label for="${id}-questionnaire">${Icon['.fas.fa-list-check']} <span class="${id}-questionnaire"><strong data-i18n="${id}-questionnaire.strong">${i18n.t(`${id}-questionnaire.strong.textContent`)}</strong> <span data-i18n="${id}-questionnaire.span">${i18n.t(`${id}-questionnaire.span.textContent`)}</span></span></label></li>
           </ul>
           <button class="create ${id}" type="submit" data-i18n="dialog.${id}.create-template.button" title="${i18n.t(`dialog.${id}.create-template.button.title`)}">${i18n.t(`dialog.${id}.create-template.button.textContent`)}</button>
         </fieldset>
@@ -3471,6 +3473,9 @@ export function showNewDocument(e) {
         break;
       case 'new-document-specification':
         createNewSpecification();
+        break;
+      case 'new-document-questionnaire':
+        createNewQuestionnaire();
         break;
     }
   });
@@ -4430,6 +4435,20 @@ export function createNewSpecification(e) {
   updateButtons();
 
   initSpecification();
+}
+
+export function createNewQuestionnaire(e) {
+  hideDocumentMenu();
+
+  Config.Editor.toggleEditor('author', { template: 'new-questionnaire' });
+
+  Config.DocumentAction = 'new';
+
+  disableAutoSave(Config.DocumentURL, {'method': 'IndexedDB'});
+
+  updateButtons();
+
+  initQuestionnaire();
 }
 
 export function createNewDocument(e) {

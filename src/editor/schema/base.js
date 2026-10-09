@@ -591,8 +591,9 @@ let customNodes = {
     parseDOM: [{ tag: "marker", getAttrs(node){ return getAttributes(node); }}],
     toDOM: toDOMWith("http://www.w3.org/2000/svg marker")
   },
+  // A questionnaire's questions are dl blocks inside its form.
   form: {
-    content: "inline*",
+    content: "block*",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "form", getAttrs(node){ return getAttributes(node); }}],

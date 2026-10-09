@@ -27,6 +27,7 @@ import { getLookupService } from "../../services.js";
 import { csvStringToJson } from "../../csv.js";
 import { fromCSVWTableSchema, getPrefixesUsed, ensureDocumentPrefixes } from "../../table.js";
 import { defaultThreatCaption } from "../../threatModel.js";
+import { questionHTML, questionFromFormValues, insertQuestion, setQuestionnaireInbox } from "../../ui/templates/questionnaire.js";
 
 export function formHandlerLanguage(e) {
   e.preventDefault();
@@ -137,6 +138,31 @@ export function formHandlerTestSuite(e) {
 
   this.replaceSelectionWithFragment(fragmentFromString(htmlString));
   this.hideMenu()
+}
+
+export function formHandlerQuestion(e) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  // Raw values, since questionHTML encodes them.
+  const question = questionFromFormValues(Object.fromEntries(new FormData(e.target)));
+  if (!question.text) return;
+
+  insertQuestion(this.editorView, questionHTML(question), { openedWithSlash: this.openedWithSlash });
+  this.hideMenu();
+  this.editorView.focus();
+}
+
+export function formHandlerQuestionnaireInbox(e) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const inbox = String(new FormData(e.target).get('questionnaire-inbox') || '').trim();
+  if (!inbox) return;
+
+  setQuestionnaireInbox(this.editorView, inbox, { openedWithSlash: this.openedWithSlash });
+  this.hideMenu();
+  this.editorView.focus();
 }
 
 // Pick the metadata entry for the imported CSV, falling back to the only table described.

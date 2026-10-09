@@ -18,7 +18,7 @@ limitations under the License.
 import { getLanguageOptionsHTML, getLicenseOptionsHTML, getPublicationStatusOptionsHTML, getResourceTypeOptionsHTML } from "../../doc.js";
 import { getButtonHTML } from "../../ui/buttons.js";
 import { Icon } from "../../ui/icons.js";
-import { formHandlerLanguage, formHandlerLicense, formHandlerInbox, formHandlerInReplyTo, formHandlerPublicationStatus, formHandlerResourceType, formHandlerTestSuite, formHandlerImg, formHandlerTable } from "./handlers.js";
+import { formHandlerLanguage, formHandlerLicense, formHandlerInbox, formHandlerInReplyTo, formHandlerPublicationStatus, formHandlerResourceType, formHandlerTestSuite, formHandlerImg, formHandlerTable, formHandlerQuestion, formHandlerQuestionnaireInbox } from "./handlers.js";
 import { listLookupServices } from "../../services.js";
 import { TextSelection } from "prosemirror-state";
 import { DOMParser } from "prosemirror-model";
@@ -28,6 +28,7 @@ import { defaultImageTargetPath } from "../utils/imageAssets.js";
 import { selectArticleNode } from "../../utils/html.js";
 import { toggleTOCForRoot } from "../../ui/templates/sections.js";
 import { documentAnchorsPluginKey } from "../plugins/documentAnchors.js";
+import { questionFormHTML, questionnaireInboxFormHTML, wireQuestionForm } from "../../ui/templates/questionnaire.js";
 
 export class SlashMenu {
   constructor(editorView) {
@@ -38,7 +39,7 @@ export class SlashMenu {
     this.menuContainer.style.display = "none";
     this.menuContainer.style.position = "absolute";
 
-    this.slashMenuButtons = ['img', 'table', 'toc', 'language', 'license', 'inbox', 'in-reply-to', 'publication-status', 'resource-type', 'test-suite'].map(button => ({
+    this.slashMenuButtons = ['img', 'table', 'toc', 'language', 'license', 'inbox', 'in-reply-to', 'publication-status', 'resource-type', 'test-suite', 'question', 'questionnaire-inbox'].map(button => ({
       button,
       dom: () => fragmentFromString(getButtonHTML({ button } )).firstChild,
     }));
@@ -54,6 +55,8 @@ export class SlashMenu {
     this.formHandlerPublicationStatus = formHandlerPublicationStatus.bind(this);
     this.formHandlerResourceType = formHandlerResourceType.bind(this);
     this.formHandlerTestSuite = formHandlerTestSuite.bind(this);
+    this.formHandlerQuestion = formHandlerQuestion.bind(this);
+    this.formHandlerQuestionnaireInbox = formHandlerQuestionnaireInbox.bind(this);
 
     //TODO: Create formValidationHandlers to handle `input` and `invalid` event handlers. Move oninput/oninvalid out of form's inline HTML
     this.formEventListeners = {
@@ -66,6 +69,8 @@ export class SlashMenu {
       'publication-status': [ { event: 'submit', callback: this.formHandlerPublicationStatus }, { event: 'click', callback: (e) => this.formClickHandler(e, 'publication-status') } ],
       'resource-type': [ { event: 'submit', callback: this.formHandlerResourceType }, { event: 'click', callback: (e) => this.formClickHandler(e, 'resource-type') } ],
       'test-suite': [ { event: 'submit', callback: this.formHandlerTestSuite }, { event: 'click', callback: (e) => this.formClickHandler(e, 'test-suite') } ],
+      question: [ { event: 'submit', callback: this.formHandlerQuestion }, { event: 'click', callback: (e) => this.formClickHandler(e, 'question') } ],
+      'questionnaire-inbox': [ { event: 'submit', callback: this.formHandlerQuestionnaireInbox }, { event: 'click', callback: (e) => this.formClickHandler(e, 'questionnaire-inbox') } ],
     }
 
     document.getElementById('document-slashmenu')?.remove();
@@ -252,7 +257,9 @@ export class SlashMenu {
       'in-reply-to': this.createInReplyToWidgetHTML(),
       'publication-status': this.createPublicationStatusWidgetHTML(),
       'resource-type': this.createResourceTypeWidgetHTML(),
-      'test-suite': this.createTestSuiteWidgetHTML()
+      'test-suite': this.createTestSuiteWidgetHTML(),
+      question: questionFormHTML(),
+      'questionnaire-inbox': questionnaireInboxFormHTML()
     }
 
     const popup = fragmentFromString(`<form class="editor-form editor-form-active">${popupContent[button]}</form>`);
@@ -497,6 +504,10 @@ export class SlashMenu {
       });
 
       syncStart();
+    }
+
+    if (button === 'question') {
+      wireQuestionForm(popupForm);
     }
 
     if (button === 'img') {

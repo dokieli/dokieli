@@ -37,8 +37,9 @@ import { showGraph, showVisualisationGraph } from './viz.js';
 import * as Slideshow from './ui/templates/slideshow.js';
 import { initCV } from './ui/templates/cv.js';
 import { initSpecification } from './ui/templates/specification.js';
+import { initQuestionnaire } from './ui/templates/questionnaire.js';
 import './ui/anchors.js';
-import { openResource, initDocumentMenu, spawnDokieli, showDocumentMenu, initSlideshowInteraction, initDocumentDoEvents, showNewDocument, createNewDocument, createNewSlideshow, createNewCV, createNewSpecification } from './dialog.js';
+import { openResource, initDocumentMenu, spawnDokieli, showDocumentMenu, initSlideshowInteraction, initDocumentDoEvents, showNewDocument, createNewDocument, createNewSlideshow, createNewCV, createNewSpecification, createNewQuestionnaire } from './dialog.js';
 import { Icon } from './ui/icons.js';
 import { eventButtonClose, eventButtonSignIn, eventButtonSignOut, eventButtonNotificationsToggle, eventButtonInfo, emitDocEvent } from './events.js';
 import { hasNonWhitespaceText, getDocumentContentNode, selectArticleNode } from "./utils/html.js";
@@ -247,6 +248,7 @@ async function initDocumentActions() {
   initSlideshow();
   initCV();
   initSpecification();
+  initQuestionnaire();
   initCurrentStylesheet();
   registerEncryptionUnlockHandler(async () => {
     if (!document.getElementById('encryption-unlock') && await hasKeystore()) {
@@ -564,7 +566,8 @@ export async function initDocumentMode(mode) {
       'article': createNewDocument,
       'slideshow': createNewSlideshow,
       'cv': createNewCV,
-      'specification': createNewSpecification
+      'specification': createNewSpecification,
+      'questionnaire': createNewQuestionnaire
     };
 
     if (templates[paramTemplate] && !paramOpen.length) {

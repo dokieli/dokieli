@@ -35,6 +35,7 @@ import { ImageResizeView } from "./nodeviews/imageResize.js";
 import { DetailsView } from "./nodeviews/details.js";
 import { InputView } from "./nodeviews/input.js";
 import { SelectView } from "./nodeviews/select.js";
+import { TextareaView } from "./nodeviews/textarea.js";
 import { AutocompleteView } from "./nodeviews/autocomplete.js";
 import Config from "./../config.js";
 import { addMessageToLog, showActionMessage, initCopyToClipboard, showRobustLinksDecoration } from "../doc.js";
@@ -55,6 +56,8 @@ import { getRandomIndex, stringToColor } from "../util.js";
 import { setTemplateNewCV } from "../ui/templates/cv.js";
 import { setTemplateNewSlideshow } from "../ui/templates/slideshow.js";
 import { setTemplateNewSpecification } from "../ui/templates/specification.js";
+import { setTemplateNewQuestionnaire } from "../ui/templates/questionnaire.js";
+import { questionnaireToolsPlugin } from "./plugins/questionnaireTools.js";
 import { prepareDocumentForTemplate, replaceDocumentBody } from "../ui/templates/shared.js";
 import { cvNavDecorationPlugin } from "./plugins/cvNavDecorations.js";
 import { specificationNavDecorationPlugin, specificationConceptSyncPlugin } from "./plugins/specificationNavDecorations.js";
@@ -196,7 +199,7 @@ export class Editor {
 
     let node;
 
-    if (options?.template === 'new' || options?.template === 'new-slideshow' || options?.template === 'new-cv' || options?.template === 'new-specification') {
+    if (options?.template === 'new' || options?.template === 'new-slideshow' || options?.template === 'new-cv' || options?.template === 'new-specification' || options?.template === 'new-questionnaire') {
       Config.Editor['new'] = true;
       this.setTemplate(mode, options);
     }
@@ -236,6 +239,9 @@ export class Editor {
         break;
       case 'new-specification':
         setTemplateNewSpecification(mode, options);
+        break;
+      case 'new-questionnaire':
+        setTemplateNewQuestionnaire(mode, options);
         break;
     }
   }
@@ -400,7 +406,7 @@ export class Editor {
     // not a collaborative session): skip Yjs/IndexedDB/remote-sync entirely.
     Config.Editor['collab'] = false;
     pmDoc = originalDoc;
-    editorPlugins = [history(), mentionsPlugin, fragmentLinksPlugin, keymapPlugin, placeholderPlugin, documentStructurePlugin, slideshowDecorationsPlugin, cvNavDecorationPlugin, specificationNavDecorationPlugin, specificationConceptSyncPlugin, documentTypeToolsPlugin, autoIdPlugin, documentAnchorsPlugin, protectPlaceholdersPlugin, tableToolsPlugin(), editorToolbarPlugin];
+    editorPlugins = [history(), mentionsPlugin, fragmentLinksPlugin, keymapPlugin, placeholderPlugin, documentStructurePlugin, slideshowDecorationsPlugin, cvNavDecorationPlugin, specificationNavDecorationPlugin, specificationConceptSyncPlugin, documentTypeToolsPlugin, questionnaireToolsPlugin, autoIdPlugin, documentAnchorsPlugin, protectPlaceholdersPlugin, tableToolsPlugin(), editorToolbarPlugin];
   } else {
     Config.Editor['collab'] = true;
     ydoc = new Y.Doc();
@@ -615,6 +621,7 @@ export class Editor {
       specificationNavDecorationPlugin,
       specificationConceptSyncPlugin,
       documentTypeToolsPlugin,
+      questionnaireToolsPlugin,
       autoIdPlugin,
       documentAnchorsPlugin,
       protectPlaceholdersPlugin,
@@ -642,6 +649,7 @@ export class Editor {
       details(node) { return new DetailsView(node); },
       input(node, view, getPos) { return new InputView(node, view, getPos); },
       select(node, view, getPos) { return new SelectView(node, view, getPos); },
+      textarea(node) { return new TextareaView(node); },
       autocomplete(node, view, getPos) { return new AutocompleteView(node, view, getPos); }
     },
   });
