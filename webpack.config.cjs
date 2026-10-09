@@ -97,6 +97,7 @@ module.exports = (env) => {
       libraryExport: 'default',
     },
     module: { rules },
+    plugins: [...base.plugins, new webpack.DefinePlugin({ "process.env.SINGLE_FILE": JSON.stringify(false) })],
   });
 
   // Extension and single-file use: everything in one file, because a script injected by the extension cannot load more files
@@ -118,6 +119,7 @@ module.exports = (env) => {
       rules,
       parser: { javascript: { dynamicImportMode: "eager" } },
     },
+    plugins: [...base.plugins, new webpack.DefinePlugin({ "process.env.SINGLE_FILE": JSON.stringify(true) })],
   };
 
   return [web("dokieli", "./src/dokieli.js"), web("popup", "./src/popup.js"), bundle];

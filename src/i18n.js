@@ -18,30 +18,36 @@ limitations under the License.
 import i18next from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { domSanitize } from './utils/sanitization.js';
+import { lazyImport } from './utils/lazy.js';
 import Config from './config.js';
+import enGB from '../locales/en-GB/translations.json';
 
 let resources = {};
+let languages;
+let backend;
 
 // webpack (needed until we migrate to vite)
+// en-GB is the fallback and ships with dokieli; other languages load when first needed
 if (typeof __webpack_require__ !== 'undefined') {
-  const context = import.meta.webpackContext(
-    '../locales',
-    {
-      recursive: true,
-      regExp: /translations\.json$/,
+  const context = process.env.SINGLE_FILE
+    ? import.meta.webpackContext('../locales', { recursive: true, regExp: /^\.\/(?!en-GB\/)[^/]+\/translations\.json$/, mode: 'eager' })
+    : import.meta.webpackContext('../locales', { recursive: true, regExp: /^\.\/(?!en-GB\/)[^/]+\/translations\.json$/, mode: 'lazy', chunkName: 'locale-[request]' });
+
+  // "./es/translations.json"
+  const files = Object.fromEntries(context.keys().map(key => [key.split('/')[1], key]));
+
+  resources['en-GB'] = { translation: enGB };
+  languages = ['en-GB', ...Object.keys(files)];
+
+  backend = {
+    type: 'backend',
+    read(language, namespace, callback) {
+      if (!files[language]) return callback(null, {});
+
+      lazyImport(() => context(files[language]))
+        .then(module => callback(null, module.default || module), error => callback(error, false));
     }
-  );
-
-  for (const key of context.keys()) {
-    // "./en/translations.json"
-    const parts = key.split('/');
-    const lng = parts[1];
-    if (!lng) continue;
-
-    resources[lng] = {
-      translation: context(key),
-    };
-  }
+  };
 }
 
 // vite (for tests only now, will only use this in future when we migrate from webpack)
@@ -62,10 +68,12 @@ else {
       translation: modules[path],
     };
   }
+
+  languages = Object.keys(resources);
 }
 
-Config.Translations = Object.keys(resources);
-Config['Translations'] = Object.keys(resources);
+Config.Translations = languages;
+Config['Translations'] = languages;
 
 Config['DocsTranslations'] = ['en', 'es'];
 
@@ -84,13 +92,18 @@ const options = {
   // debug: true,
   fallbackLng,
   resources,
+  partialBundledLanguages: !!backend,
 }
 
 export function i18nextInit() {
+  if (backend) {
+    i18next.use(backend);
+  }
+
   return i18next
-    // .use(resourcesToBackend((language, namespace) => import(`../locales/${language}/${namespace}.json`)))
     .use(LanguageDetector)
-    .init(options)
+    // i18n.tDoc uses the document language, which can differ from the interface language
+    .init({ ...options, preload: [document.documentElement.lang].filter(Boolean) })
 }
 
 const i18n = {
