@@ -1727,7 +1727,8 @@ display: block;
 }
 
 
-:has([rel="rdf:type"][href="http://w3id.org/roh#CurriculumVitae"]) {
+/* Document Type entries are selects in author mode. */
+:has([rel="rdf:type"][href="http://w3id.org/roh#CurriculumVitae"], select[data-select="document-type"][data-value="http://w3id.org/roh#CurriculumVitae"], select[data-select="document-type"]:not([data-value]) option[selected][value="http://w3id.org/roh#CurriculumVitae"]) {
   section {
     ul {
       list-style-type:none;

@@ -24,7 +24,7 @@ import { generateAttributeId } from '../../util.js';
 import { getCountryOptionsHTML, showLocationSuggestions, showSkillSuggestions, setupAutocomplete } from '../../doc.js';
 import { getWikidataResults, getEscoResults } from '../../graph.js';
 import { expandTerm, getPrefixes, collectTerms } from '../../utils/rdfa.js';
-import { isAuthorMode, pmEditor, prepareDocumentForTemplate, replaceDocumentBody, documentDetailsHTML } from './shared.js';
+import { isAuthorMode, pmEditor, prepareDocumentForTemplate, replaceDocumentBody, documentDetailsHTML, hasDocumentType } from './shared.js';
 import { registerSectionsTemplate, buildSectionsNav, refreshSectionsNav, addSection as addTemplateSection, removeSection as removeTemplateSection, injectSectionsTOC, stripSectionsTOC } from './sections.js';
 import { headingLabel } from '../toc.js';
 
@@ -217,7 +217,7 @@ function migrateSectionMarkers(root) {
 registerEditorParseTransform(migrateSectionMarkers);
 
 function isCV(root) {
-  return !!root.querySelector('[rel~="rdf:type"][href*="CurriculumVitae"], [rel~="rdf:type"][resource*="CurriculumVitae"]');
+  return hasDocumentType(root, /CurriculumVitae/);
 }
 
 // The CV's section-management config, running through the generic machinery in sections.js.

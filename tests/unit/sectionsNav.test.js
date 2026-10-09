@@ -1,3 +1,20 @@
+/*!
+Copyright 2012-2026 Sarven Capadisli <https://csarven.ca/>
+Copyright 2023-2026 Virginia Balseiro <https://virginiabalseiro.com/>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 import { describe, it, expect } from 'vitest';
 import { EditorState, TextSelection } from 'prosemirror-state';
 import { DOMParser as PMDOMParser } from 'prosemirror-model';
@@ -88,5 +105,40 @@ describe('template nav gains drag + add-section affordances', () => {
     } finally {
       Config.Editor = prevMode;
     }
+  });
+});
+
+describe('isDocOfType', () => {
+  const docFor = (html) => {
+    const container = document.createElement('div');
+    container.innerHTML = html;
+    return PMDOMParser.fromSchema(schema).parse(container);
+  };
+
+  it('finds the type in an rdf:type link', async () => {
+    const { isDocOfType } = await import('../../src/editor/plugins/sectionsNavDecorations.js');
+    expect(isDocOfType(docFor('<dl id="document-type"><dd><a href="http://w3id.org/roh#CurriculumVitae" rel="rdf:type">CV</a></dd></dl>'), /CurriculumVitae/)).toBe(true);
+  });
+
+  it('finds the type in an author-mode Document Type select', async () => {
+    const { isDocOfType } = await import('../../src/editor/plugins/sectionsNavDecorations.js');
+    const select = (attrs, options) => `<dl id="document-type"><dd><p><select data-select="document-type"${attrs}>${options}</select></p></dd></dl>`;
+    const cv = '<option selected="selected" value="http://w3id.org/roh#CurriculumVitae">CV</option><option value="http://schema.org/Article">Article</option>';
+    expect(isDocOfType(docFor(select('', cv)), /CurriculumVitae/)).toBe(true);
+    expect(isDocOfType(docFor(select(' data-value="http://schema.org/Article"', cv)), /CurriculumVitae/)).toBe(false);
+    expect(isDocOfType(docFor(select('', '<option value="http://w3id.org/roh#CurriculumVitae">CV</option>')), /CurriculumVitae/)).toBe(false);
+  });
+});
+
+describe('hasDocumentType', () => {
+  const root = (html) => { const el = document.createElement('div'); el.innerHTML = html; return el; };
+
+  it('reads rdf:type links and author-mode Document Type selects', async () => {
+    const { hasDocumentType } = await import('../../src/ui/templates/shared.js');
+    expect(hasDocumentType(root('<a href="http://w3id.org/roh#CurriculumVitae" rel="rdf:type">CV</a>'), /CurriculumVitae/)).toBe(true);
+    const options = '<option value="http://schema.org/Article">Article</option><option selected="selected" value="http://w3id.org/roh#CurriculumVitae">CV</option>';
+    expect(hasDocumentType(root(`<select data-select="document-type">${options}</select>`), /CurriculumVitae/)).toBe(true);
+    expect(hasDocumentType(root(`<select data-select="document-type" data-value="http://schema.org/Article">${options}</select>`), /CurriculumVitae/)).toBe(false);
+    expect(hasDocumentType(root('<p>Nothing typed</p>'), /CurriculumVitae/)).toBe(false);
   });
 });

@@ -44,14 +44,29 @@ export function navPos(doc, isContent = isContentDiv) {
 }
 
 // Carries a matching rdf:type link somewhere in the doc; checks node attrs and marks (links are marks).
+// In author mode the Document Type is a select: its data-value, else its selected option.
+function documentTypeSelectValue(node) {
+  const attrs = node.attrs?.originalAttributes || {};
+  if (node.type.name !== "select" || attrs["data-select"] !== "document-type") return null;
+  if (attrs["data-value"] != null) return attrs["data-value"];
+  let value = null;
+  node.forEach((option) => {
+    const optionAttrs = option.attrs?.originalAttributes || {};
+    if (value === null && "selected" in optionAttrs) value = optionAttrs.value || "";
+  });
+  return value;
+}
+
 export function isDocOfType(doc, valuePattern) {
   const matches = (a) => !!a && /\brdf:type\b/.test(a.rel || "") &&
     valuePattern.test(`${a.href || ""} ${a.resource || ""}`);
   let found = false;
   doc.descendants((node) => {
     if (found) return false;
+    const selected = documentTypeSelectValue(node);
     if (matches(node.attrs?.originalAttributes) ||
-        node.marks.some((m) => matches(m.attrs?.originalAttributes))) {
+        node.marks.some((m) => matches(m.attrs?.originalAttributes)) ||
+        (selected && valuePattern.test(selected))) {
       found = true;
     }
     return !found;

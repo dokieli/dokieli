@@ -87,6 +87,16 @@ export function documentTypeSelectHTML(typeIri = '', label = null) {
   return `<select data-select="document-type">${extra}${getResourceTypeOptionsHTML({ selected: typeIri })}</select>`;
 }
 
+// Matches an rdf:type link or, in author mode, a Document Type select.
+export function hasDocumentType(root, pattern) {
+  const links = Array.from(root.querySelectorAll('[rel~="rdf:type"]'));
+  if (links.some(el => pattern.test(`${el.getAttribute('href') || ''} ${el.getAttribute('resource') || ''}`))) return true;
+  return Array.from(root.querySelectorAll('select[data-select="document-type"]')).some(select => {
+    const value = select.getAttribute('data-value') ?? (select.value || select.querySelector('option[selected]')?.getAttribute('value'));
+    return pattern.test(value || '');
+  });
+}
+
 // Author entry: each rdf:type entry in the Document Type dl becomes a select.
 // The exit conversion back to anchors lives in normalizeDocumentTypeMarkup.
 function transformDocumentTypeEntries(root) {

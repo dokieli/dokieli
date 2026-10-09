@@ -830,6 +830,8 @@
   "menu.signing.setup-button.title": "Crear o desbloquear tus claves de firma y publicar tu clave pública en tu perfil",
   "menu.signing.ready.textContent": "Las claves de firma están configuradas y tu clave pública está publicada en tu perfil.",
   "menu.signing.ready-signin.textContent": "Las claves de firma están configuradas. Inicia sesión para publicar tu clave pública en tu perfil.",
+  "resource-type.curriculum-vitae.option.textContent": "Currículum vítae",
+  "resource-type.curriculum-vitae.option.title": "Un currículum vítae, un resumen de la trayectoria profesional.",
   "signing-setup.heading.textContent": "Configurar claves de firma",
   "signing-setup.passphrase-new.textContent": "Elige una contraseña para proteger tus claves en este navegador. La introduces una vez por sesión y no hay recuperación si la olvidas.",
   "signing-setup.passphrase-existing.textContent": "Introduce la contraseña que ya protege tus claves en este navegador, para que ambas claves se desbloqueen juntas.",
