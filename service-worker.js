@@ -65,6 +65,10 @@ self.addEventListener('fetch', (event) => {
   if (STATIC_ASSETS.has(path) || HTML_PAGES.has(path)) {
     event.respondWith(networkFirst(req, path));
   }
+  // Chunk names include a content hash, so a cached copy never goes stale
+  else if (path.startsWith('/scripts/chunks/')) {
+    event.respondWith(cacheFirst(req, path));
+  }
   // Offline navigations fall back to the shell, which restores the device copy
   else if (req.mode === 'navigate') {
     event.respondWith(
@@ -73,6 +77,16 @@ self.addEventListener('fetch', (event) => {
   }
   // Anything else: no interception, let the browser handle it normally.
 });
+
+async function cacheFirst(req, key) {
+  const cache = await caches.open(CACHE_NAME);
+  const cached = await cache.match(key);
+  if (cached) return cached;
+
+  const response = await fetch(req);
+  if (response.ok) cache.put(key, response.clone());
+  return response;
+}
 
 // Prefer the network; fall back to the cached copy when it cannot be fetched or the server fails.
 async function networkFirst(req, key) {
