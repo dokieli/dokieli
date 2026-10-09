@@ -966,3 +966,19 @@ describe("getResourceInfoODRLPolicies with MockGrapoi", () => {
     expect(info[policyIRI].prohibition).toBeUndefined();
   });
 });
+
+describe('getResourceTypeOptionsHTML', () => {
+  it('lists the resource types in alphabetical order of their labels, the questionnaire included', async () => {
+    const { getResourceTypeOptionsHTML } = await import('../../src/doc.js');
+    const select = document.createElement('select');
+    select.innerHTML = getResourceTypeOptionsHTML({ selected: '' });
+    const options = Array.from(select.options).filter(o => o.value);
+    const labels = options.map(o => o.textContent);
+    expect(labels).toEqual([...labels].sort((a, b) => a.localeCompare(b)));
+
+    const questionnaire = options.find(o => o.value === 'http://schema.org/Question');
+    expect(questionnaire.textContent).toBe('Questionnaire');
+    expect(questionnaire.dataset.i18n).toBe('resource-type.questionnaire.option');
+    expect(questionnaire.title).toBe('A questionnaire: a set of questions for people to answer, with the answers sent to an inbox.');
+  });
+});

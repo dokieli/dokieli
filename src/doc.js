@@ -3048,11 +3048,17 @@ export function getResourceTypeOptionsHTML(options) {
     selectedType = 'http://schema.org/Article';
   }
 
-  Object.keys(Config.ResourceType).forEach(iri => {
-    var selected = (iri == selectedType) ? ' selected="selected"' : '';
-    const key = Config.ResourceType[iri].toLowerCase().replace(/\s+/g, '-');
-    s.push(`<option data-i18n="${`resource-type.${key}.option`}"${selected} title="${i18n.t(`resource-type.${key}.option.title`)}" value="${iri}">${i18n.t(`resource-type.${key}.option.textContent`)}</option>`);
-  });
+  // Sorted by label in the UI language.
+  Object.keys(Config.ResourceType)
+    .map(iri => {
+      const key = Config.ResourceType[iri].toLowerCase().replace(/\s+/g, '-');
+      return { iri, key, label: i18n.t(`resource-type.${key}.option.textContent`) };
+    })
+    .sort((a, b) => a.label.localeCompare(b.label, Config.User?.UI?.Language || undefined))
+    .forEach(({ iri, key, label }) => {
+      var selected = (iri == selectedType) ? ' selected="selected"' : '';
+      s.push(`<option data-i18n="${`resource-type.${key}.option`}"${selected} title="${i18n.t(`resource-type.${key}.option.title`)}" value="${iri}">${label}</option>`);
+    });
 
   return s.join('');
 }
