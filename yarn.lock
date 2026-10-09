@@ -626,17 +626,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nanopub/nanopub-js@npm:^0.4.0":
-  version: 0.4.0
-  resolution: "@nanopub/nanopub-js@npm:0.4.0"
+"@nanopub/nanopub-js@npm:^0.5.0":
+  version: 0.5.0
+  resolution: "@nanopub/nanopub-js@npm:0.5.0"
   dependencies:
-    "@rdfjs/data-model": "npm:^2.1.1"
     "@rdfjs/types": "npm:^2.0.1"
     "@traqula/parser-sparql-1-1": "npm:^1.2.1"
     n3: "npm:^2.0.0"
-    rdf-canonize: "npm:^5.0.0"
-    rdf-js: "npm:^4.0.2"
-  checksum: 10c0/267694cc7144c4f154e358facbe6a77aa49f9fdc2199ca5528a8fc3108bda16f97fd0ba86918f5bea2195bb1d3ca8c4d29a3ba9d323a96ebfe664e561cfb2184
+  checksum: 10c0/4a68c167caf3b264dd1fec51778f9b4968e4051d326892f1a5e9c90b07c86dcf14bd23ac1af8f6938c016e5be18d9ec10917f18306c97c3babc903ed1ac0db32
   languageName: node
   linkType: hard
 
@@ -905,7 +902,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rdfjs/types@npm:*, @rdfjs/types@npm:^2.0.0, @rdfjs/types@npm:^2.0.1":
+"@rdfjs/types@npm:^2.0.0, @rdfjs/types@npm:^2.0.1":
   version: 2.0.1
   resolution: "@rdfjs/types@npm:2.0.1"
   dependencies:
@@ -2156,7 +2153,7 @@ __metadata:
     "@dokieli/notifications": "npm:^1.0.1"
     "@dokieli/web-access-control": "npm:^1.0.0"
     "@dokieli/web-annotation": "npm:^1.1.0"
-    "@nanopub/nanopub-js": "npm:^0.4.0"
+    "@nanopub/nanopub-js": "npm:^0.5.0"
     "@playwright/test": "npm:^1.44.1"
     "@uvdsl/solid-oidc-client-browser": "npm:^0.2.3"
     "@vitest/coverage-istanbul": "npm:^4.1.10"
@@ -4116,23 +4113,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"n3@npm:^2.0.0":
+"n3@npm:^2.0.0, n3@npm:^2.2.0":
   version: 2.7.12
   resolution: "n3@npm:2.7.12"
   dependencies:
     buffer: "npm:^6.0.3"
     readable-stream: "npm:^4.0.0"
   checksum: 10c0/2990bcc8efe4d23131d3b46b6833bf5777f936da473da5f8c1fe26026fbababb5fbd52cf2e1e6cdbd98ab233764d4a7d1553fc1376395093c47869a8e9aed93f
-  languageName: node
-  linkType: hard
-
-"n3@npm:^2.2.0":
-  version: 2.2.5
-  resolution: "n3@npm:2.2.5"
-  dependencies:
-    buffer: "npm:^6.0.3"
-    readable-stream: "npm:^4.0.0"
-  checksum: 10c0/3495ac7f14187d366ecad6b53311ee80486ec68ec51c039221a394afebd31d3445e58a003e3d1383be9b49afb9e1af0d49f5321606cdd705ae58078a9cd6c4f4
   languageName: node
   linkType: hard
 
@@ -4723,15 +4710,6 @@ __metadata:
     proto-fetch: "npm:^2.0.0"
     readable-stream: "npm:^4.3.0"
   checksum: 10c0/6fa07b3b1f7d90e2598895b4c6e08c9af9d7d9f32b28d758834be966da60d49a81972eae6e92c8c9b98899338f5d3fbb8fc7ecf3db1533fcf0e3e7b472ea2f13
-  languageName: node
-  linkType: hard
-
-"rdf-js@npm:^4.0.2":
-  version: 4.0.2
-  resolution: "rdf-js@npm:4.0.2"
-  dependencies:
-    "@rdfjs/types": "npm:*"
-  checksum: 10c0/63840293d51b2fb56ab690ca5a5f890e2fcd08ae4c60d6f8b5893633147f6c48d77f607b1cf4404a9b91b3269073aa26d0187d3f1712e3599b50dba659259055
   languageName: node
   linkType: hard
 
