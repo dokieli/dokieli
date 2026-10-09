@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { Nanopub, parse, checkSigningKey, DEFAULT_NANOPUB_URI } from '@nanopub/nanopub-js';
+import { DEFAULT_NANOPUB_URI } from '@nanopub/nanopub-js/constants';
 import { serializeAnnotationToJSONLD } from '@dokieli/web-annotation';
 import { getGraphFromData } from './graph.js';
 import { publishToRegistry, getAgentIRI, publishIntroduction, promptForSigningKey } from './nanopub.js';
@@ -42,7 +42,8 @@ export const ACTION_TO_STANCE = {
 
 const DOKIELI_IRI = 'https://dokie.li/#i';
 
-function quads(turtle) {
+async function quads(turtle) {
+  const { parse } = await import('@nanopub/nanopub-js');
   return parse(PREFIXES + turtle, 'turtle');
 }
 
@@ -143,10 +144,11 @@ export async function annotationToNanopub(noteData, options = {}) {
   const created = noteData.datetime || new Date().toISOString();
   const license = options.license || noteData.license;
 
+  const { Nanopub } = await import('@nanopub/nanopub-js');
   return new Nanopub({
-    assertion: [...await annotationQuads(noteData), ...stanceQuads(stance, noteData)],
-    provenance: provenanceQuads(agent),
-    pubinfo: pubinfoQuads(agent, noteData, { created, license, stance }),
+    assertion: [...await annotationQuads(noteData), ...await stanceQuads(stance, noteData)],
+    provenance: await provenanceQuads(agent),
+    pubinfo: await pubinfoQuads(agent, noteData, { created, license, stance }),
     options: { privateKey: options.privateKey, orcid: agent, name: Config.User?.Name }
   });
 }
@@ -170,6 +172,7 @@ export async function publishAnnotation(noteData, options = {}, unlocked = false
   const keyCheck = Config.Nanopub?.UseTestRegistry ? 'off' : 'warn';
 
   if (!Config.User.Keys.Signing.IntroductionURI) {
+    const { checkSigningKey } = await import('@nanopub/nanopub-js');
     const { status } = keyCheck === 'off' ? {} : await checkSigningKey(agent, publicKey);
     if (status !== 'declared') await publishIntroduction(true);
   }

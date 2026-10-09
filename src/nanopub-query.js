@@ -16,7 +16,7 @@ limitations under the License.
 */
 
 import rdf from 'rdf-ext';
-import { NANOPUB_QUERY_URLS, QUERY_TIMEOUT_MS } from '@nanopub/nanopub-js';
+import { NANOPUB_QUERY_URLS, QUERY_TIMEOUT_MS } from '@nanopub/nanopub-js/constants';
 import Config from './config.js';
 import { getOriginDecision, requestOriginConsent } from './consent.js';
 import { showAnnotation } from './activity.js';

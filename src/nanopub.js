@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { createIntroNanopub, NANOPUB_REGISTRY_URLS, TEST_NANOPUB_REGISTRY_URL } from '@nanopub/nanopub-js';
+import { NANOPUB_REGISTRY_URLS, TEST_NANOPUB_REGISTRY_URL } from '@nanopub/nanopub-js/constants';
 import Config from './config.js';
 import { getSigningKeyMaterial, hasKeystore, ASSERTION } from './keystore.js';
 
@@ -81,6 +81,7 @@ export async function publishIntroduction(unlocked = false) {
   const { privateKey, publicKey } = material;
   const name = Config.User?.Name;
 
+  const { createIntroNanopub } = await import('@nanopub/nanopub-js');
   const intro = await createIntroNanopub({ agent, privateKey, publicKey, name });
   await intro.sign();
   const { uri } = await publishToRegistry(intro);

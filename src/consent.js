@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { NANOPUB_QUERY_URLS } from '@nanopub/nanopub-js';
+import { NANOPUB_QUERY_URLS } from '@nanopub/nanopub-js/constants';
 import Config from './config.js';
 import { getDeviceStorageItem, setDeviceStorageItem, removeDeviceStorageItem } from './storage.js';
 import { fragmentFromString } from './utils/html.js';
