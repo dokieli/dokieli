@@ -4,6 +4,8 @@
   "activities.collection-pending.textContent": "Los siguientes pueden contener anotaciones de este documento. No se cargan automáticamente.",
   "activities.collection-pending.button.textContent": "Revisar los {{count}} más recientes",
   "annotation-access.label.textContent": "Visibilidad",
+  "annotation-access.nanopub-only.title": "Las anotaciones en la red de nanopubs son públicas.",
+  "annotation-access.nanopub-public.textContent": "Esta anotación es privada, pero también la publicas en la red de nanopubs, que es pública: allí cualquiera podrá leerla.",
   "annotation-access.toggle.off.title": "Privado. De forma predeterminada, no se notifica a las bandejas de entrada.",
   "annotation-access.toggle.on.title": "Público. De forma predeterminada, se notifica a las bandejas de entrada.",
   "annotation-encrypt.label.textContent": "Cifrado",

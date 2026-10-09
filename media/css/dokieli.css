@@ -2845,6 +2845,32 @@ background-color: var(--do-color-bg);
 margin: 0;
 }
 
+/* Warning in annotation popups when private is chosen with the nanopub network. */
+.editor-form-nanopub-warning {
+display:flex;
+align-items:flex-start;
+gap:0.5em;
+margin:0.5em 0;
+padding:0.25em 0.5em;
+border-left:2px solid var(--do-color-warning-solid);
+color:var(--do-color-fg);
+font-size:0.875em;
+line-height:1.4;
+}
+.editor-form-nanopub-warning svg {
+flex-shrink:0;
+margin-top:0.2em;
+fill:var(--do-color-fg-secondary);
+}
+/* Above the footer (order 99), below the storage options. */
+.editor-form fieldset > .editor-form-nanopub-warning {
+order:98;
+}
+.editor-form-access[aria-disabled="true"] + .editor-form-access-label {
+opacity:0.5;
+cursor:not-allowed;
+}
+
 #document-notifications section.load-more-activities {
 margin: 0 0 0.5em 0;
 font-size: 0.875em;

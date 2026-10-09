@@ -4,6 +4,8 @@
   "activities.collection-pending.textContent": "The following may hold annotations of this document. They are not loaded automatically.",
   "activities.collection-pending.button.textContent": "Check the {{count}} most recent",
   "annotation-access.label.textContent": "Visibility",
+  "annotation-access.nanopub-only.title": "Annotations on the nanopub network are public.",
+  "annotation-access.nanopub-public.textContent": "This annotation is private, but you are also posting it to the nanopub network, which is public: everyone will be able to read it there.",
   "annotation-access.toggle.off.title": "Private. Notifying inboxes is off by default.",
   "annotation-access.toggle.on.title": "Public. Notifying inboxes is on by default.",
   "annotation-encrypt.label.textContent": "Encryption",

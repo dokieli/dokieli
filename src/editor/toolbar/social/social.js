@@ -16,7 +16,7 @@ limitations under the License.
 */
 
 import { formHandlerAnnotate, shareButtonHandler } from "./handlers.js"
-import { ToolbarView, annotateFormControls, syncNotifyInboxDefault, updateAnnotationInboxForm, updateAnnotationServiceForm  } from "../toolbar.js"
+import { ToolbarView, annotateFormControls, syncNotifyInboxDefault, updateAnnotationInboxForm, updateAnnotationServiceForm, updateNanopubAccess } from "../toolbar.js"
 import Config from "../../../config.js";
 import { exportSelection, getSelectedParentElement, restoreSelection } from "../../utils/annotation.js";
 import { htmlEncode } from "../../../utils/sanitization.js";
@@ -260,6 +260,7 @@ export class SocialToolbar extends ToolbarView {
 
     // Fresh popup: notify re-derives from the current access and encrypt state
     syncNotifyInboxDefault(node?.querySelector('fieldset'), { reset: true });
+    updateNanopubAccess(node?.querySelector('fieldset'));
   }
 
   //TODO function getTransactionHistory()

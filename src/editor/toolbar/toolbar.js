@@ -1158,6 +1158,50 @@ export function updateAnnotateSubmitState(fieldset) {
   submit.disabled = !Array.from(checkboxes).some(c => c.checked);
 }
 
+// Nanopub is public: as the only storage it locks the toggle to public; with private it shows a warning.
+export function updateNanopubAccess(fieldset) {
+  const access = fieldset?.querySelector('.editor-form-access');
+  if (!access) return;
+  const locations = Array.from(fieldset.querySelectorAll('.annotation-location-selection input[type="checkbox"]'));
+  const nanopub = locations.find(c => c.name.endsWith('-annotation-location-nanopub-network'));
+  const others = locations.filter(c => c !== nanopub && c.checked);
+  const onlyNanopub = !!nanopub?.checked && !others.length;
+  const label = fieldset.querySelector(`label[for="${access.id}"]`);
+  const locked = access.getAttribute('aria-disabled') === 'true';
+
+  if (onlyNanopub) {
+    if (!locked) {
+      access.dataset.wasChecked = String(access.checked);
+      access.setAttribute('aria-disabled', 'true');
+    }
+    // A form reset makes it private; keep it public.
+    if (!access.checked) {
+      access.checked = true;
+      access.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    if (label) label.title = i18n.t('annotation-access.nanopub-only.title');
+  }
+  else if (!onlyNanopub && locked) {
+    access.removeAttribute('aria-disabled');
+    const wasChecked = access.dataset.wasChecked === 'true';
+    delete access.dataset.wasChecked;
+    // The change event updates the toggle title and the notify default.
+    if (access.checked !== wasChecked) access.checked = wasChecked;
+    access.dispatchEvent(new Event('change', { bubbles: true }));
+    return;
+  }
+
+  const warn = !!nanopub?.checked && others.length > 0 && !access.checked;
+  const existing = fieldset.querySelector('.editor-form-nanopub-warning');
+  if (warn && !existing) {
+    fieldset.querySelector('.editor-form-footer')?.insertAdjacentHTML('beforebegin',
+      `<p class="editor-form-nanopub-warning" role="status">${Icon['.fas.fa-triangle-exclamation']}<span>${i18n.t('annotation-access.nanopub-public.textContent')}</span></p>`);
+  }
+  else if (!warn && existing) {
+    existing.remove();
+  }
+}
+
 // Access and encrypt toggle titles announce state and the notify-default coupling
 export function setupIconToggleTitles(container) {
   [
@@ -1196,7 +1240,16 @@ if (typeof document !== 'undefined') {
 
     const accessOrEncrypt = e.target.closest && e.target.closest('.editor-form-access, .editor-form-encrypt');
     if (accessOrEncrypt) syncNotifyInboxDefault(accessOrEncrypt.closest('fieldset, [data-notify-scope]'));
+
+    if (cb || e.target.closest?.('.editor-form-access')) updateNanopubAccess(e.target.closest('fieldset'));
   });
+
+  // A locked access toggle doesn't switch to private.
+  document.addEventListener('click', (e) => {
+    const label = e.target.closest?.('.editor-form-access-label');
+    const access = e.target.closest?.('.editor-form-access') || (label && document.getElementById(label.htmlFor));
+    if (access?.getAttribute('aria-disabled') === 'true') e.preventDefault();
+  }, true);
 }
 
 // Each popup uses its own action so input ids stay unique
@@ -1209,6 +1262,7 @@ export function updateAnnotationServiceForm(action) {
   for (var i = 0; i < annotationServices.length; i++) {
     annotationServices[i].replaceChildren(fragmentFromString(getAnnotationLocationHTML(formAction(annotationServices[i], action))));
     updateAnnotateSubmitState(annotationServices[i].closest('fieldset'));
+    updateNanopubAccess(annotationServices[i].closest('fieldset'));
   }
 };
 
