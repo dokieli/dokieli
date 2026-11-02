@@ -270,7 +270,9 @@ export function serializeDataToPreferredContentType(data, options) {
         return Promise.resolve(JSON.stringify(options.activityJSONLD));
       }
       if (options.annotationObject) {
-        return Promise.resolve(JSON.stringify(serializeAnnotationToJSONLD(options.annotationObject)));
+        const jsonld = serializeAnnotationToJSONLD(options.annotationObject);
+        if (options.annotationObject.types) jsonld.type = ['Annotation', ...options.annotationObject.types];
+        return Promise.resolve(JSON.stringify(jsonld));
       }
       return serializeData(data, options['contentType'], 'application/ld+json', options);
   }

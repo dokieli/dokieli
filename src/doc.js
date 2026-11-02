@@ -500,6 +500,7 @@ export function createActivityJSONLD(o) {
 
   if (o.note) {
     const jsonld = serializeAnnotationToJSONLD(o.note);
+    if (o.note.types) jsonld.type = ['Annotation', ...o.note.types];
     if (o.url) jsonld.url = o.url;
     params.object = { jsonld };
   } else if (o.object) {
@@ -551,6 +552,9 @@ export function createNoteDataHTML(n, serializerOptions = {}) {
     note = renderCitation(n, options);
   } else {
     note = serializeAnnotationToHTML(n, options);
+    if (n.types?.length) {
+      note = note.replace('typeof="oa:Annotation"', `typeof="oa:Annotation ${n.types.join(' ')}"`);
+    }
     // Anonymous placeholder avatar; display-only, never in the graph
     if (n.creator && !resolveAnnotationAvatar(n.creator, mode)) {
       const placeholder = '<img alt="" height="48" src="' + Config.IconBase64['.fas.fa-user-secret'] + '" width="48" /> ';
@@ -1172,12 +1176,25 @@ export function getDocumentStatusHTML(rootNode, options) {
 }
 
 
+export function updateAnnotationResponses(li) {
+  var list = li.querySelector(':scope > ul.annotation-responses');
+  var items = Array.from(list.children);
+  list.hidden = !items.length;
+
+  li.querySelectorAll(':scope > ul.annotation-response-actions button[data-action]').forEach(button => {
+    var count = items.filter(item => item.dataset.response === button.dataset.action).length;
+    button.nextElementSibling.textContent = count || '';
+  });
+}
+
+
 export function handleDeleteNote(button) {
   button.setAttribute("disabled", "disabled");
   var article = button.closest('article');
   var refId = 'r-' + article.id;
   var li = article.closest('li:has(blockquote[cite])');
   var cite = li.querySelector('blockquote[cite]').getAttribute('cite');
+  var responses = li.parentNode.closest('ul.annotation-responses')?.parentNode;
 
   var url = new URL(cite);
   url = url.href.replace(url.hash, '');
@@ -1186,6 +1203,7 @@ export function handleDeleteNote(button) {
     Config.Storage.delete(url)
       .then(() => {
         li.parentNode.removeChild(li);
+        if (responses) updateAnnotationResponses(responses);
         if (Config.EditorEnabled && Config.Editor.editorView) {
           const view = Config.Editor.editorView;
           const { state: { doc, tr, schema }, dispatch } = view;

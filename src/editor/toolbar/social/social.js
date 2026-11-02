@@ -16,7 +16,8 @@ limitations under the License.
 */
 
 import { formHandlerAnnotate, shareButtonHandler, ohYeahButtonHandler } from "./handlers.js"
-import { ToolbarView, annotateFormControls, syncNotifyInboxDefault, updateAnnotationInboxForm, updateAnnotationServiceForm, updateAnnotationStoreAccess, updateNanopubAccess } from "../toolbar.js"
+import { ToolbarView, annotateFormControls, prefixFormIds, syncNotifyInboxDefault, updateAnnotationInboxForm, updateAnnotationServiceForm, updateAnnotationStoreAccess, updateNanopubAccess } from "../toolbar.js"
+import { fragmentFromString } from "../../../utils/html.js";
 import Config from "../../../config.js";
 import { exportSelection, getSelectedParentElement, restoreSelection } from "../../utils/annotation.js";
 import { htmlEncode } from "../../../utils/sanitization.js";
@@ -109,6 +110,53 @@ export class SocialToolbar extends ToolbarView {
     if (selection.rangeCount > 0) {
       selection.removeAllRanges();
     }
+  }
+
+  toggleAnnotationResponseForm(action, annotationIRI, button) {
+    const actions = button.closest('.annotation-response-actions');
+    const open = actions.parentNode.querySelector(':scope > .annotation-response-form');
+    document.querySelectorAll('.annotation-response-form').forEach(form => this.closeAnnotationResponseForm(form, { focus: false }));
+    if (open?.dataset.action === action) {
+      button.focus();
+      return;
+    }
+
+    if (this.signInRequired(action)) {
+      this.checkAnnotationServiceUpdateForm(action);
+    }
+
+    const form = document.createElement('form');
+    form.classList.add('editor-form', 'annotation-response-form');
+    form.dataset.action = action;
+    form.dataset.idPrefix = 'response-';
+    form.appendChild(fragmentFromString(annotateFormControls({ button: action, legend: this.formLegends[action], placeholder: this.formPlaceholders[action] })));
+    prefixFormIds(form);
+    actions.after(form);
+
+    form.addEventListener('submit', (e) => this.formHandlerAnnotate(e, action, annotationIRI));
+    form.addEventListener('click', (e) => {
+      if (e.target.closest('button.editor-form-cancel')) this.closeAnnotationResponseForm(form);
+    });
+    form.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        this.closeAnnotationResponseForm(form);
+      }
+    });
+    this.setupFormDisclosures(form);
+
+    this.populateFormAnnotate(action, form);
+    button.classList.add('editor-button-active');
+    button.setAttribute('aria-expanded', 'true');
+    form.querySelector('textarea')?.focus();
+  }
+
+  closeAnnotationResponseForm(form, { focus = true } = {}) {
+    const button = form.parentNode?.querySelector(`:scope > .annotation-response-actions button[data-action="${form.dataset.action}"]`);
+    form.remove();
+    button?.classList.remove('editor-button-active');
+    button?.setAttribute('aria-expanded', 'false');
+    if (focus) button?.focus();
   }
 
   getSelectionAsHTML(selection) {

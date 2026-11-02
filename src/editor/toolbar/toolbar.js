@@ -201,6 +201,10 @@ export class ToolbarView {
       });
     }
 
+    this.setupFormDisclosures(toolbarForm);
+  }
+
+  setupFormDisclosures(toolbarForm) {
     const disclosures = FORM_DISCLOSURES
       .map(([toggleSelector, fieldsSelector]) => ({
         toggle: toolbarForm.querySelector(toggleSelector),
@@ -1415,14 +1419,31 @@ if (typeof document !== 'undefined') {
 }
 
 // Each popup uses its own action so input ids stay unique
-function formAction(node, fallback) {
-  return node.closest('form')?.id?.replace(/^editor-form-/, '') || fallback;
+export function formAction(node, fallback) {
+  const form = node.closest('form');
+  return form?.dataset.action || form?.id?.replace(/^editor-form-/, '') || fallback;
+}
+
+export function prefixFormIds(node) {
+  const prefix = node.closest('form')?.dataset.idPrefix;
+  if (!prefix) return;
+  node.querySelectorAll('[id]').forEach(el => { el.id = prefix + el.id; });
+  node.querySelectorAll('label[for]').forEach(label => { label.htmlFor = prefix + label.htmlFor; });
+}
+
+function removeNanopubLocation(selection) {
+  if (!selection.closest('.annotation-response-form')) return;
+  selection.querySelector('input[name$="-annotation-location-nanopub-network"]')?.closest('li').remove();
+  const more = selection.querySelector('.annotation-location-more');
+  if (more) more.hidden = !more.querySelector('li:not([hidden])');
 }
 
 export function updateAnnotationServiceForm(action) {
-  var annotationServices = document.querySelectorAll('.do.editor-toolbar .annotation-location-selection');
+  var annotationServices = document.querySelectorAll('.do.editor-toolbar .annotation-location-selection, .annotation-response-form .annotation-location-selection');
   for (var i = 0; i < annotationServices.length; i++) {
     annotationServices[i].replaceChildren(fragmentFromString(getAnnotationLocationHTML(formAction(annotationServices[i], action))));
+    prefixFormIds(annotationServices[i]);
+    removeNanopubLocation(annotationServices[i]);
     updateAnnotationStoreAccess(annotationServices[i].closest('fieldset'));
     updateAnnotateSubmitState(annotationServices[i].closest('fieldset'));
     updateNanopubAccess(annotationServices[i].closest('fieldset'));
@@ -1430,9 +1451,10 @@ export function updateAnnotationServiceForm(action) {
 };
 
 export function updateAnnotationInboxForm(action) {
-  var annotationInbox = document.querySelectorAll('.do.editor-toolbar .annotation-inbox-selection');
+  var annotationInbox = document.querySelectorAll('.do.editor-toolbar .annotation-inbox-selection, .annotation-response-form .annotation-inbox-selection');
   for (var i = 0; i < annotationInbox.length; i++) {
     annotationInbox[i].replaceChildren(fragmentFromString(getAnnotationInboxLocationHTML(formAction(annotationInbox[i], action))));
+    prefixFormIds(annotationInbox[i]);
   }
 };
 

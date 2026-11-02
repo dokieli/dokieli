@@ -197,7 +197,7 @@ export function createNoteData(annotation) {
     : undefined;
 
   // A specific resource must not be named after its own source
-  const annotationTarget = {
+  const annotationTarget = annotation.targetAnnotation ? { iri: targetIRI } : {
     iri: targetIRI === resourceIRI ? '#' + generateAttributeId() : targetIRI,
     source: resourceIRI,
     language: targetLanguage,
@@ -232,6 +232,13 @@ export function createNoteData(annotation) {
         creator: annotationUser
       });
       noteData.mode = mode;
+
+      if (action === 'approve') {
+        noteData.types = [Config.ns.as.Like.value];
+      }
+      else if (action === 'disapprove') {
+        noteData.types = [Config.ns.as.Dislike.value];
+      }
 
       break;
 

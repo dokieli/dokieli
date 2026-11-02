@@ -3836,6 +3836,55 @@ right:1em;
 font-size:1em;
 }
 
+#document-notifications .annotation-response-actions {
+display:flex;
+gap:1em;
+list-style:none;
+margin:0.5em 0 0;
+padding:0;
+}
+#document-notifications .annotation-response-actions li {
+display:flex;
+align-items:center;
+gap:0.25em;
+color:var(--do-color-fg-secondary);
+}
+#document-notifications .annotation-response-actions button {
+background-color:initial;
+border:none;
+color:inherit;
+font-size:1em;
+}
+#document-notifications .annotation-response-actions button:hover,
+#document-notifications .annotation-response-actions button.editor-button-active {
+color:var(--do-color-link-hover);
+}
+#document-notifications .annotation-response-form {
+display:block;
+margin-top:0.5em;
+}
+aside.do.on .annotation-response-form details li:not([hidden]) {
+display:flex !important;
+}
+aside.do.on .annotation-response-form details li:after {
+content:none;
+}
+#document-notifications ul.annotation-responses {
+list-style:none;
+margin:0.5em 0 0 1em;
+padding:0;
+}
+#document-notifications .annotation-response-actions > li,
+#document-notifications ul.annotation-responses > li {
+margin-left:0;
+}
+#document-notifications ul.annotation-responses > li + li {
+margin-top:1em;
+}
+#document-notifications ul.annotation-responses p {
+margin:0;
+}
+
 
 #document-edit-history ul.versions > li,
 #document-notifications ul.activities > li {

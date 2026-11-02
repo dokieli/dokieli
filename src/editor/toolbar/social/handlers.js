@@ -24,7 +24,7 @@ import { i18n } from "../../../i18n.js";
 import { getAbsoluteIRI, stripFragmentFromString } from "../../../uri.js"
 import Config from "../../../config.js"
 import { notifyInbox, postActivity, showActivities, addToAnnotationIndex, markAnnotationTarget, registerAnnotationStore, linkOutbox } from "../../../activity.js"
-import { requireAnnotationLocation, updateAnnotationServiceForm, updateAnnotationStoreAccess } from "../toolbar.js";
+import { formAction, requireAnnotationLocation, updateAnnotationServiceForm, updateAnnotationStoreAccess } from "../toolbar.js";
 import { publishAnnotation } from "../../../nanopub-annotation.js";
 import { shareResource } from "../../../dialog.js";
 import { domSanitize } from "../../../utils/sanitization.js";
@@ -86,31 +86,38 @@ export async function ohYeahButtonHandler(e) {
   this.cleanupToolbar();
 }
 
-export function formHandlerAnnotate(e, action) {
+export function formHandlerAnnotate(e, action, targetAnnotation) {
   e.preventDefault();
   e.stopPropagation();
 
   if (!requireAnnotationLocation(e.target)) return;
 
-  restoreSelection(this.selection);
-  const selection = window.getSelection();
-
-  const range = selection.getRangeAt(0);
-  const selectedParentElement = getSelectedParentElement(range);
-
   const formValues = getFormValues(e.target);
 
-  //TODO: Mark the selection after successful comment. Move out.
-  //TODO: Use node.textBetween to determine prefix, exact, suffix + parentnode with closest id
-  //Mark the selected content in the document
-  const selector = this.getTextQuoteSelector();
+  let selectionData;
 
-  const selectionData = {
-    selection,
-    selector,
-    selectedParentElement,
-    selectedContent: this.getSelectionAsHTML()
-  };
+  if (targetAnnotation) {
+    selectionData = { targetAnnotation };
+  }
+  else {
+    restoreSelection(this.selection);
+    const selection = window.getSelection();
+
+    const range = selection.getRangeAt(0);
+    const selectedParentElement = getSelectedParentElement(range);
+
+    //TODO: Mark the selection after successful comment. Move out.
+    //TODO: Use node.textBetween to determine prefix, exact, suffix + parentnode with closest id
+    //Mark the selected content in the document
+    const selector = this.getTextQuoteSelector();
+
+    selectionData = {
+      selection,
+      selector,
+      selectedParentElement,
+      selectedContent: this.getSelectionAsHTML()
+    };
+  }
 
   const annotationNotifyInboxes = [].concat(formValues[`${action}-annotation-inbox`] || []);
   const annotationLocationAnnotationStore = [].concat(formValues[`${action}-annotation-location-annotation-store`] || []);
@@ -122,7 +129,12 @@ export function formHandlerAnnotate(e, action) {
 
   processAction(action, formValues, selectionData);
 
-  this.cleanupToolbar();
+  if (targetAnnotation) {
+    this.closeAnnotationResponseForm(e.target);
+  }
+  else {
+    this.cleanupToolbar();
+  }
 }
 
 
@@ -171,7 +183,7 @@ if (typeof document !== 'undefined') {
     e.preventDefault();
 
     const form = button.closest('form');
-    const action = form?.id?.replace(/^editor-form-/, '');
+    const action = form && formAction(form);
     const access = form?.querySelector('.editor-form-access');
     const encrypt = form?.querySelector('.editor-form-encrypt');
     const visibility = access?.checked && !encrypt?.checked ? 'public' : 'private';
@@ -305,7 +317,7 @@ export async function processAction(action, formValues, selectionData) {
             }
 
             if (annotation.canonical) {
-              addToAnnotationIndex(visibility, [{ iri: annotation['noteIRI'], target: annotation.targetIRI }], annotation['containerIRI'])
+              addToAnnotationIndex(visibility, [{ iri: annotation['noteIRI'], target: annotation.targetIRI, context: annotation.targetAnnotation && annotation.resourceIRI }], annotation['containerIRI'])
                 .catch(e => console.log('Could not add the annotation to the index:', e));
             }
 
@@ -410,6 +422,19 @@ export function getFormActionData(action, formValues, selectionData) {
   data.refLabel = getReferenceLabel(data.motivatedBy);
 
   data.refId = 'r-' + data.id;
+
+  if (selectionData.targetAnnotation) {
+    data.targetAnnotation = data.targetIRI = selectionData.targetAnnotation;
+    data.options.targetAnnotation = selectionData.targetAnnotation;
+
+    const encrypted = data.formData['encrypt'] === 'true' && isUnlocked();
+    data.visibility = data.formData['access-public'] === 'true' && !encrypted ? 'public' : 'private';
+
+    data.annotationDistribution = getAnnotationDistribution(action, data);
+
+    return data;
+  }
+
   data.targetIRI = (data.parentNodeWithId) ? data.resourceIRI + '#' + data.parentNodeWithId.id : data.resourceIRI;
 
   //Preferred target: cite-as, then latest-version (see https://github.com/dokieli/dokieli/issues/420)
@@ -592,6 +617,10 @@ export function createActivityData(annotation, options = {}) {
     notificationData['url'] = annotation.nanopubURI + '/annotation';
   }
 // console.log(_this.action)
+
+  if (annotation.targetAnnotation) {
+    notificationData['context'] = annotation.resourceIRI;
+  }
 
   if (options.announce) {
     notificationData['type'] = ['as:Announce'];

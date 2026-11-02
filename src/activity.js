@@ -16,7 +16,7 @@ limitations under the License.
 */
 
 import rdf from 'rdf-ext';
-import { createActivityObjectHTML, createActivityJSONLD, showCitations, getReferenceLabel, createNoteDataHTML, handleDeleteNote, getItemVisibility, getPreferredTargetIRI } from './doc.js';
+import { createActivityObjectHTML, createActivityJSONLD, showCitations, getReferenceLabel, createNoteDataHTML, handleDeleteNote, getItemVisibility, getPreferredTargetIRI, updateAnnotationResponses } from './doc.js';
 import { applyMarksFromTextQuote, applyMarkFromSelector } from '@dokieli/web-annotation';
 import { Icon } from './ui/icons.js'
 import { getButtonHTML } from './ui/buttons.js'
@@ -25,7 +25,7 @@ import { serializeDataToPreferredContentType, getGraphLanguage, getGraphLicense,
 import { activityTypeToken, createNotification, discoverInbox, getAcceptPost, getInboxContents, postNotification, serializeNotificationToHTML } from '@dokieli/notifications';
 import { storageFetch } from './storage/backend.js';
 import Config from './config.js';
-import { domSanitize, sanitizeInsertAdjacentHTML } from './utils/sanitization.js';
+import { domSanitize, sanitizeInsertAdjacentHTML, htmlEncode } from './utils/sanitization.js';
 import { formatHTMLString } from './utils/normalization.js';
 import { generateAttributeId, uniqueArray, findPreviousDateTime } from './util.js';
 import { fragmentFromString, getDocumentContentNode, selectArticleNode } from "./utils/html.js";
@@ -219,7 +219,8 @@ export async function addNoteToNotifications(noteData) {
   var visibility = noteData.visibility || (noteData.nanopub ? 'public' : getItemVisibility(noteDataIRI));
   var liClasses = [visibility && visibility + '-item', noteData.nanopub && 'nanopub-item'].filter(Boolean);
   var liClass = liClasses.length ? ' class="' + liClasses.join(' ') + '"' : '';
-  var li = domSanitize('<li' + liClass + ' data-datetime="' + datetime + '"><blockquote cite="' + noteDataIRI + '">'+ note + '</blockquote></li>');
+  var responses = (noteData.type === 'comment' && noteDataIRI) ? getAnnotationResponsesHTML() : '';
+  var li = domSanitize('<li' + liClass + ' data-datetime="' + datetime + '"><blockquote cite="' + noteDataIRI + '">'+ note + '</blockquote>' + responses + '</li>');
 // console.log(li);
   var aside = document.getElementById('document-notifications');
 
@@ -245,6 +246,85 @@ export async function addNoteToNotifications(noteData) {
   else {
     sanitizeInsertAdjacentHTML(notifications, 'beforeend', li);
   }
+
+  if (responses) {
+    var pending = pendingAnnotationResponses.get(noteDataIRI) || [];
+    pendingAnnotationResponses.delete(noteDataIRI);
+    pending.forEach(addAnnotationResponse);
+  }
+}
+
+const pendingAnnotationResponses = new Map();
+
+const ANNOTATION_RESPONSE_ACTIONS = ['approve', 'disapprove', 'comment'];
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('click', (e) => {
+    var button = e.target.closest?.('#document-notifications button.annotation-response');
+    if (!button) return;
+    var toolbar = Config.Editor?.socialToolbarView;
+    var cite = button.closest('ul.annotation-response-actions').parentNode.querySelector(':scope > blockquote[cite]')?.getAttribute('cite');
+    if (!toolbar || !cite) return;
+    toolbar.toggleAnnotationResponseForm(button.dataset.action, cite, button);
+  });
+}
+
+function getAnnotationResponsesHTML() {
+  var buttons = ANNOTATION_RESPONSE_ACTIONS.map(action =>
+    `<li>${getButtonHTML({ key: `annotation-responses.${action}.button`, button: action, buttonClass: 'annotation-response', buttonType: 'button' }).replace('<button', `<button aria-expanded="false" data-action="${action}"`)}<span class="annotation-response-count"></span></li>`).join('');
+
+  return `<ul class="annotation-response-actions">${buttons}</ul><ul class="annotation-responses" hidden=""></ul>`;
+}
+
+function getAnnotationListItem(iri) {
+  var blockquote = Array.from(document.querySelectorAll('#document-notifications > div > ul > li > blockquote[cite]')).find(node => node.getAttribute('cite') === iri);
+  return blockquote?.parentNode.querySelector(':scope > ul.annotation-responses') ? blockquote.parentNode : null;
+}
+
+function getAnnotationResponseItemHTML(responseData) {
+  var hasContent = (responseData.body || []).some(b => b.value && b.purpose !== 'tagging' && b.purpose !== ns.oa.tagging.value && b.value.trim()) || responseData.bodyValue?.trim();
+  var datetime = responseData.datetime || '1900-01-01T00:00:00.000Z';
+  var attributes = ' data-datetime="' + datetime + '" data-response="' + responseData.type + '"';
+
+  if (hasContent) {
+    var motivationLabels = (responseData.type === 'comment') ? {} : { 'oa:assessing': { label: i18n.t(`annotation-responses.${responseData.type}.heading.textContent`) } };
+    return '<li' + attributes + '><blockquote cite="' + responseData.iri + '">' + createNoteDataHTML(responseData, { motivationLabels }) + '</blockquote></li>';
+  }
+
+  var creator = responseData.creator || {};
+  var name = htmlEncode(creator.name || creator.iri || i18n.t('annotation-responses.anonymous.textContent'));
+  var creatorHTML = creator.iri ? '<a href="' + creator.iri + '">' + name + '</a>' : name;
+  var timeHTML = responseData.datetime ? ' <a href="' + responseData.iri + '"><time datetime="' + responseData.datetime + '">' + responseData.datetime.slice(0, 19).replace('T', ' ') + '</time></a>' : '';
+
+  return '<li id="' + responseData.id + '"' + attributes + '><p>' + i18n.t(`annotation-responses.${responseData.type}.p.innerHTML`, { name: creatorHTML, interpolation: { escapeValue: false } }) + timeHTML + '</p></li>';
+}
+
+export function addAnnotationResponse(responseData) {
+  if (document.getElementById(responseData.id)) return;
+
+  var parentIRI = responseData.target.iri;
+  var parentLi = getAnnotationListItem(parentIRI);
+
+  if (!parentLi) {
+    var pending = pendingAnnotationResponses.get(parentIRI) || [];
+    if (!pending.some(r => r.id === responseData.id)) pending.push(responseData);
+    pendingAnnotationResponses.set(parentIRI, pending);
+    return;
+  }
+
+  var list = parentLi.querySelector(':scope > ul.annotation-responses');
+  var item = domSanitize(getAnnotationResponseItemHTML(responseData));
+  var datetime = responseData.datetime || '1900-01-01T00:00:00.000Z';
+  var next = Array.from(list.children).find(li => li.dataset.datetime > datetime);
+
+  if (next) {
+    sanitizeInsertAdjacentHTML(next, 'beforebegin', item);
+  }
+  else {
+    sanitizeInsertAdjacentHTML(list, 'beforeend', item);
+  }
+
+  updateAnnotationResponses(parentLi);
 }
 
 
@@ -644,7 +724,10 @@ function isSafeIRI(iri) {
 }
 
 function annotationIndexTriples(items) {
-  return items.map(({ iri, target }) => `<${iri}> a <${ns.oa.Annotation.value}> ;\n  <${ns.oa.hasTarget.value}> <${target}> .\n`).join('');
+  return items.map(({ iri, target, context }) => {
+    const contextTriple = isSafeIRI(context) ? ` ;\n  <${ns.as.context.value}> <${context}>` : '';
+    return `<${iri}> a <${ns.oa.Annotation.value}> ;\n  <${ns.oa.hasTarget.value}> <${target}>${contextTriple} .\n`;
+  }).join('');
 }
 
 async function writeAnnotationIndex(kind, items, store) {
@@ -728,9 +811,12 @@ function getAnnotationIndexEntries(g) {
   const annotations = new Set(quads
     .filter(q => q.predicate.value === ns.rdf.type.value && q.object.value === ns.oa.Annotation.value)
     .map(q => q.subject.value));
+  const contexts = new Map(quads
+    .filter(q => q.predicate.value === ns.as.context.value)
+    .map(q => [q.subject.value, q.object.value]));
   return quads
     .filter(q => q.predicate.value === ns.oa.hasTarget.value && annotations.has(q.subject.value))
-    .map(q => ({ iri: q.subject.value, target: q.object.value }));
+    .map(q => ({ iri: q.subject.value, target: q.object.value, context: contexts.get(q.subject.value) }));
 }
 
 function isAboutDocument(target) {
@@ -759,7 +845,11 @@ async function showAnnotationSources(agent, visibility, { instances, containers 
     const entries = getAnnotationIndexEntries(g);
     entries.forEach(entry => indexed.add(stripFragmentFromString(entry.iri)));
     const relevant = uniqueArray(entries.filter(entry => isAboutDocument(entry.target)).map(entry => stripFragmentFromString(entry.iri)));
-    await Promise.allSettled(relevant.map(iri => showActivities(iri, options)));
+    const responses = entries.filter(entry => !isAboutDocument(entry.target) && isAboutDocument(entry.context));
+    await Promise.allSettled([
+      ...relevant.map(iri => showActivities(iri, options)),
+      ...responses.map(entry => showActivities(stripFragmentFromString(entry.iri), { ...options, targetAnnotation: entry.target }))
+    ]);
   }));
 
   if (!instances.length) {
@@ -1083,8 +1173,8 @@ function showActivitiesUncached(url, options = {}) {
           var rights = getGraphRights(s);
 
           //XXX: May need to be handled in a similar way to to as:Anounce/Create?
-          if (resourceTypes.includes(ns.as.Like.value) ||
-              resourceTypes.includes(ns.as.Dislike.value)){
+          if ((resourceTypes.includes(ns.as.Like.value) ||
+              resourceTypes.includes(ns.as.Dislike.value)) && !resourceTypes.includes(ns.oa.Annotation.value)){
             var object = s.out(ns.as.object).values;
             if (object.length && getPathURL(object.values[0]) == currentPathURL) {
               var context = s.out(ns.as.context).values;
@@ -1198,8 +1288,11 @@ function showActivitiesUncached(url, options = {}) {
               else if (Config.Resource[documentURL].graph.out(ns.owl.sameAs).values.length && Config.Resource[documentURL].graph.out(ns.owl.sameAs).values[0] == targetPathURL) {
                 o['targetInSameAs'] = true;
               }
+              else if (s.out(ns.as.context).values[0] && getPathURL(s.out(ns.as.context).values[0]) == currentPathURL) {
+                o['targetAnnotation'] = inReplyTo || target;
+              }
 
-              if (o['targetInOriginalResource'] || o['targetInPreferredIRI'] || o['targetInSameAs']) {
+              if (o['targetInOriginalResource'] || o['targetInPreferredIRI'] || o['targetInSameAs'] || o['targetAnnotation']) {
                 subjectsReferences.push(object);
 
                 if (options.notification) {
@@ -1288,6 +1381,9 @@ function showActivitiesUncached(url, options = {}) {
               try { targetPathURL = getPathURL(urlToCheck); } catch(e) {}
               if (targetPathURL === currentPathURL) {
                 return showAnnotation(i, s);
+              }
+              if (options.targetAnnotation && options.targetAnnotation === hasTargetValue) {
+                return showAnnotation(i, s, { targetAnnotation: hasTargetValue, visibility: options.visibility });
               }
             }
           }
@@ -1835,6 +1931,38 @@ async function showAnnotationUncached(noteIRI, g, options) {
     var source = targetPtr.out(ns.oa.hasSource).values[0];
     // oa:hasTarget may be a blank node with oa:hasSource pointing to the document
     var targetOrSource = source || hasTarget;
+
+    if (options.targetAnnotation) {
+      if (hasTarget !== options.targetAnnotation) return;
+
+      var responseData = {
+        "type": resourceTypes.includes(ns.as.Like.value) ? 'approve' : resourceTypes.includes(ns.as.Dislike.value) ? 'disapprove' : 'comment',
+        "mode": "read",
+        "motivatedBy": note.out(ns.oa.motivatedBy).values[0],
+        "id": id,
+        "refId": refId,
+        "iri": noteIRI,
+        "creator": {},
+        "target": {
+          "iri": hasTarget
+        }
+      };
+      if (bodyValue) responseData["bodyValue"] = bodyValue;
+      if (bodyObjects) responseData["body"] = bodyObjects;
+      if (annotatedByIRI) responseData.creator["iri"] = annotatedByIRI;
+      if (annotatedByName) responseData.creator["name"] = annotatedByName;
+      if (annotatedByImage) responseData.creator["image"] = annotatedByImage;
+      if (annotatedByURL) responseData.creator["url"] = annotatedByURL;
+      if (noteLanguage) responseData["language"] = noteLanguage;
+      if (noteLicense) responseData["license"] = noteLicense;
+      if (noteRights) responseData["rights"] = noteRights;
+      if (datetime) responseData["datetime"] = datetime;
+      if (options.visibility) responseData["visibility"] = options.visibility;
+
+      addAnnotationResponse(responseData);
+      return noteIRI;
+    }
+
     if (targetOrSource && !(targetOrSource.startsWith(documentURL) || 'targetInPreferredIRI' in options || 'targetInSameAs' in options)){
       return;
     }
