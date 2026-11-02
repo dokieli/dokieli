@@ -3854,7 +3854,7 @@ font-size:1em;
 display:flex;
 gap:1em;
 list-style:none;
-margin:0.5em 0 0;
+margin:0.5em 0 1.25em;
 padding:0;
 }
 #document-notifications .annotation-response-actions li {
@@ -3872,6 +3872,7 @@ font-size:1em;
 #document-notifications .annotation-response-actions button:hover,
 #document-notifications .annotation-response-actions button.editor-button-active {
 color:var(--do-color-link-hover);
+cursor:pointer;
 }
 #document-notifications .annotation-response-form {
 display:block;
