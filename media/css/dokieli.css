@@ -2215,6 +2215,20 @@ overflow:auto;
 #share-resource.do.on #share-resource-contacts label {
 vertical-align:middle;
 }
+#share-resource-add-contact {
+display:flex;
+flex-wrap:wrap;
+align-items:center;
+gap:0.5em;
+margin-bottom:1em;
+}
+#share-resource-add-contact label,
+#share-resource-add-contact .share-resource-add-contact-status {
+flex-basis:100%;
+}
+#share-resource-add-contact input {
+flex:1;
+}
 
 #share-resource > div h3 {
 margin-top:1em;

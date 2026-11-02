@@ -1376,6 +1376,12 @@ export function shareResource(listenerEvent, iri) {
           </li>
         </ul>
 
+        ${Config.User.IRI ? `<p id="share-resource-add-contact">
+          <label data-i18n="dialog.share-resource-add-contact.label" for="share-resource-add-contact-input">${i18n.t('dialog.share-resource-add-contact.label.textContent')}</label>
+          <input data-i18n="dialog.share-resource-add-contact.input" dir="ltr" id="share-resource-add-contact-input" name="share-resource-add-contact-input" placeholder="${i18n.t('dialog.share-resource-add-contact.input.placeholder')}" type="url" value="" />
+          <button class="add-contact" data-i18n="dialog.share-resource-add-contact.button" type="button">${i18n.t('dialog.share-resource-add-contact.button.textContent')}</button>
+        </p>` : ''}
+
         <label data-i18n="dialog.share-resource-note.label" for="share-resource-note">${i18n.t('dialog.share-resource-note.label.textContent')}</label>
         <textarea data-i18n="dialog.share-resource-note.textarea" dir="auto" id="share-resource-note" rows="3" cols="40" name="share-resource-note" placeholder="${i18n.t('dialog.share-resource-note.textarea.placeholder')}"></textarea>
 
@@ -1401,9 +1407,17 @@ export function shareResource(listenerEvent, iri) {
   var li = document.getElementById('share-resource-address-book');
   if (li && Config.User.IRI) {
     sanitizeInsertAdjacentHTML(li, 'beforeend', Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]);
-    selectContacts(li, Config.User.IRI);
+    selectContacts(li, Config.User.IRI).then(() => {
+      var contacts = document.getElementById('share-resource-contacts');
+      if (contacts && !contacts.children.length) {
+        sanitizeInsertAdjacentHTML(contacts, 'beforebegin', `<p class="share-resource-no-contacts" data-i18n="dialog.share-resource-contacts.none.p">${i18n.t('dialog.share-resource-contacts.none.p.textContent')}</p>`);
+      }
+    });
+    initAddContact(li);
   }
-
+  else if (li) {
+    sanitizeInsertAdjacentHTML(li, 'beforeend', `<p data-i18n="dialog.share-resource-contacts.signed-out.p">${i18n.t('dialog.share-resource-contacts.signed-out.p.textContent')}</p>`);
+  }
 
   var shareResource = document.getElementById('share-resource');
 
@@ -1503,9 +1517,10 @@ export function selectContacts(node, url) {
         addShareResourceContactInput(shareResourceNode, Config.User.Contacts[iri]);
       }
     });
+    return Promise.resolve();
   }
   else {
-    updateContactsInfo(url, shareResourceNode);
+    return updateContactsInfo(url, shareResourceNode);
   }
 }
 
@@ -1513,30 +1528,106 @@ export function updateContactsInfo(url, node, options) {
   options = options || {};
 
   return getUserContacts(url)
-    .then(contacts => {
-      if (contacts.length) {
-        contacts.forEach(url => {
-          getSubjectInfo(url)
-            .then(subject => {
-              Config.User['Contacts'] = Config.User['Contacts'] || {};
-              Config.User.Contacts[url] = subject;
+    .then(contacts => Promise.allSettled(contacts.map(url =>
+      getSubjectInfo(url)
+        .then(subject => {
+          Config.User['Contacts'] = Config.User['Contacts'] || {};
+          Config.User.Contacts[url] = subject;
 
-              addShareResourceContactInput(node, subject);
-
-              //TODO: This should be called only once after processing all contacts. Refactor the loop to eventually use Promise.allSettled perhaps.
-              updateDeviceStorageProfile(Config.User);
-            })
-        });
-
-        // return Promise.all(promises)
+          addShareResourceContactInput(node, subject);
+        })
+    )).then(results => {
+      if (results.length) {
+        updateDeviceStorageProfile(Config.User);
       }
-      //TODO: This feature used to exist where user was able to enter WebIDs in a textarea (one per line? comma-separated).
-      // else {
-      //   node.setHTMLUnsafe(domSanitize('No contacts with ' + Icon[".fas.fa-inbox"] + ' inbox found in your profile, but you can enter contacts individually:'));
-      // }
+    }))
+    .catch(error => { console.warn('dokieli: could not read contacts', error); });
+}
 
-      return Promise.resolve();
-    });
+function initAddContact(addressBook) {
+  var input = document.getElementById('share-resource-add-contact-input');
+  var button = document.querySelector('#share-resource-add-contact button.add-contact');
+  if (!input || !button) return;
+
+  var addContact = function () {
+    var iri = sanitizeIRI(input.value.trim());
+    var status = document.querySelector('#share-resource-add-contact .share-resource-add-contact-status');
+    status?.remove();
+    if (!iri || !isHttpOrHttpsProtocol(iri)) return;
+
+    var existing = document.getElementById('share-resource-contact-' + encodeURIComponent(iri));
+    if (existing) {
+      existing.checked = true;
+      input.value = '';
+      return;
+    }
+
+    button.disabled = true;
+
+    var showStatus = function (key, options) {
+      sanitizeInsertAdjacentHTML(button, 'afterend', `<span class="share-resource-add-contact-status" role="status">${i18n.t(`dialog.share-resource-add-contact.${key}.textContent`, options)}</span>`);
+    };
+
+    getSubjectInfo(iri)
+      .catch(() => ({}))
+      .then(async subject => {
+        if (!subject?.IRI) {
+          button.disabled = false;
+          showStatus('no-profile');
+          return;
+        }
+
+        var contactIRI = subject.IRI;
+
+        if (!(Config.User.Knows || []).includes(contactIRI)) {
+          try {
+            await Config.Storage.patchWithConneg(stripFragmentFromString(Config.User.IRI), { insert: `<${Config.User.IRI}> <${ns.foaf.knows.value}> <${contactIRI}> .\n` });
+            Config.User.Knows = (Config.User.Knows || []).concat(contactIRI);
+            updateDeviceStorageProfile(Config.User);
+          }
+          catch (error) {
+            showStatus('save-failed', { error: [error?.status, error?.message].filter(Boolean).join(' ') });
+          }
+        }
+
+        button.disabled = false;
+
+        if (!subject.Inbox?.length) {
+          showStatus('no-inbox');
+          return;
+        }
+
+        input.value = '';
+
+        var listed = document.getElementById('share-resource-contact-' + encodeURIComponent(contactIRI));
+        if (listed) {
+          listed.checked = true;
+          return;
+        }
+
+        Config.User.Contacts = Config.User.Contacts || {};
+        Config.User.Contacts[contactIRI] = Config.User.Contacts[contactIRI] || subject;
+
+        var contacts = document.getElementById('share-resource-contacts');
+        if (!contacts) {
+          addressBook.replaceChildren(fragmentFromString('<ul id="share-resource-contacts"></ul>'));
+          contacts = document.getElementById('share-resource-contacts');
+        }
+        addressBook.querySelector('.share-resource-no-contacts')?.remove();
+        addShareResourceContactInput(contacts, { ...subject, IRI: contactIRI });
+
+        var added = document.getElementById('share-resource-contact-' + encodeURIComponent(contactIRI));
+        if (added) added.checked = true;
+      });
+  };
+
+  button.addEventListener('click', addContact);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addContact();
+    }
+  });
 }
 
 export function addShareResourceContactInput(node, agent) {
