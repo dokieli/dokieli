@@ -3101,7 +3101,8 @@ function initBrowse(baseUrl, input, browseButton, createButton, id, action){
 
   const gitforge = Config.Storage?.backend?.('gitforge');
   if (gitforge?.canList?.(baseUrl)) {
-    generateGitForgeBrowserList(baseUrl, id, action)
+    // The input was set above; the caller or the user may have changed it while the listing loads
+    generateGitForgeBrowserList(baseUrl, id, action, { keepInput: true })
       .catch((e) => {
         const node = document.getElementById(id);
         if (node) {
@@ -3123,7 +3124,7 @@ function initBrowse(baseUrl, input, browseButton, createButton, id, action){
           setBrowserListLoading(id, false);
           return;
         }
-        return generateBrowserList(g, baseUrl, id, action)
+        return generateBrowserList(g, baseUrl, id, action, { keepInput: true })
           .then(() => showStorageDescription(g, id, baseUrl));
       })
       .catch(() => setBrowserListLoading(id, false))
@@ -3168,13 +3169,15 @@ function setBrowserListLoading(id, isLoading) {
   }
 }
 
-async function generateGitForgeBrowserList(url, id, action) {
+async function generateGitForgeBrowserList(url, id, action, options = {}) {
   const gitforge = Config.Storage?.backend?.('gitforge');
   if (!gitforge) return;
 
-  const inputEl = document.getElementById(id + '-input');
-  inputEl.value = url;
-  inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+  if (!options.keepInput) {
+    const inputEl = document.getElementById(id + '-input');
+    inputEl.value = url;
+    inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+  }
 
   const containerNode = document.getElementById(id);
   containerNode.querySelectorAll('.response-message').forEach(n => n.parentNode.removeChild(n));
@@ -3249,13 +3252,15 @@ async function generateGitForgeBrowserList(url, id, action) {
   });
 }
 
-function generateBrowserList(g, url, id, action) {
+function generateBrowserList(g, url, id, action, options = {}) {
   //TODO: This should be part of refactoring.
   var inputType = (id == 'location-generate-feed') ? 'checkbox' : 'radio';
 
-  var inputEl = document.getElementById(id + '-input');
-  inputEl.value = url;
-  inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+  if (!options.keepInput) {
+    var inputEl = document.getElementById(id + '-input');
+    inputEl.value = url;
+    inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+  }
 
   return new Promise((resolve, reject) => {
     var msgs = document.getElementById(id).querySelectorAll('.response-message');
