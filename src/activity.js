@@ -953,8 +953,39 @@ let otherSourcesURL = null;
 
 function showUserActivities() {
   if (Config.User.IRI && otherSourcesURL === Config.DocumentURL) {
-    Promise.allSettled(processAgentActivities(Config.User));
+    Promise.allSettled([...processAgentActivities(Config.User), showUserInboxActivities()]);
   }
+}
+
+const checkedUserInboxItems = new Set();
+
+// Replies to the user's annotations arrive in their inbox
+async function showUserInboxActivities() {
+  const inbox = Config.User.Inbox?.[0];
+  if (!inbox) return;
+
+  let items;
+  try {
+    items = await withReadRetry(() => getItemsList(inbox));
+  }
+  catch (e) {
+    return;
+  }
+
+  const unchecked = items.filter(iri => !checkedUserInboxItems.has(iri));
+  unchecked.forEach(iri => checkedUserInboxItems.add(iri));
+
+  const batch = unchecked.slice(0, Config.CollectionItemsLimit);
+  const previous = collectionScans.get(inbox);
+  const rest = unchecked.slice(batch.length).concat(previous?.items ? previous.items.slice(previous.offset) : []);
+
+  if (rest.length) {
+    const state = { items: rest, offset: 0, batch: Config.CollectionItemsLimit, options: { notification: true } };
+    collectionScans.set(inbox, state);
+    offerActivities(inbox, state);
+  }
+
+  await Promise.allSettled(batch.map(iri => showActivities(iri, { notification: true })));
 }
 
 export function showOtherNotificationSources() {
@@ -1556,7 +1587,7 @@ export function showContactsActivities(onComplete, options = {}) {
   }
 
   var promises = [];
-  promises.push(...processAgentActivities(Config.User, options));
+  promises.push(...processAgentActivities(Config.User, options), showUserInboxActivities());
 
   showProgress();
 
