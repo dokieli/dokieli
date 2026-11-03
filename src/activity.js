@@ -191,7 +191,7 @@ export function initializeButtonMore(node) {
       showUserIdentityInput();
     }
     else {
-      showContactsActivities();
+      showContactsActivities(null, { refresh: true });
     }
   });
 }
@@ -881,14 +881,14 @@ function isAboutDocument(target) {
 }
 
 // Loads the annotations an index lists for this document, then offers the ones in the stores that the index does not list
-async function showAnnotationSources(agent, visibility, { instances, containers }) {
+async function showAnnotationSources(agent, visibility, { instances, containers }, { refresh } = {}) {
   const options = { agent: agent.IRI, visibility };
   // Only the user's own index can be written to
   const indexKind = agent.IRI === Config.User.IRI ? visibility : undefined;
   const indexed = new Set();
 
   await Promise.allSettled(instances.map(async indexIRI => {
-    const { graph: g } = await gatedGetResourceOnlyRDF(indexIRI);
+    const { graph: g } = await gatedGetResourceOnlyRDF(indexIRI, { noCache: refresh });
     if (!g) return;
     const entries = getAnnotationIndexEntries(g);
     entries.forEach(entry => indexed.add(stripFragmentFromString(entry.iri)));
@@ -1131,12 +1131,12 @@ async function withReadRetry(fn, attempts = 3) {
   }
 }
 
-function gatedGetResourceOnlyRDF(url) {
+function gatedGetResourceOnlyRDF(url, options) {
   return new Promise(resolve => {
     activityReadsQueue.push(resolve);
     activityReadsDrain();
   }).then(() =>
-    withReadRetry(() => getResourceOnlyRDF(url)).finally(() => {
+    withReadRetry(() => getResourceOnlyRDF(url, options)).finally(() => {
       activityReadsActive--;
       activityReadsDrain();
     })
@@ -1526,8 +1526,14 @@ function showActivitiesUncached(url, options = {}) {
   );
 }
 
-export function showContactsActivities(onComplete) {
+const fetchedContacts = new Set();
+
+export function showContactsActivities(onComplete, options = {}) {
   var aside = document.querySelector('#document-notifications');
+
+  if (options.refresh) {
+    fetchedContacts.clear();
+  }
 
   var showProgress = function() {
     var info = aside.querySelector('div.info');
@@ -1550,7 +1556,7 @@ export function showContactsActivities(onComplete) {
   }
 
   var promises = [];
-  promises.push(...processAgentActivities(Config.User));
+  promises.push(...processAgentActivities(Config.User, options));
 
   showProgress();
 
@@ -1568,19 +1574,18 @@ export function showContactsActivities(onComplete) {
     await Promise.all(workers);
   };
 
-  var hasTypeIndex = (agent) => agent?.TypeIndex && Object.values(agent.TypeIndex).some(v => v && Object.keys(v).length);
-
-  // Cached contacts lose their Graph, so only reuse ones with a persisted TypeIndex
+  // A stored TypeIndex may predate the contact's annotation index
   var processContacts = (contacts) =>
     runContactsBounded(contacts, async (url) => {
       Config.User['Contacts'] = Config.User['Contacts'] || {};
       var subject = Config.User.Contacts[url];
-      if (!hasTypeIndex(subject)) {
-        subject = await getSubjectInfo(url, { 'fetchIndexes': true });
+      if (!fetchedContacts.has(url) || !subject?.Graph) {
+        subject = await getSubjectInfo(url, { noCache: options.refresh });
         if (!subject.Graph) return;
         Config.User.Contacts[url] = subject;
+        fetchedContacts.add(url);
       }
-      await Promise.allSettled(processAgentActivities(subject));
+      await Promise.allSettled(processAgentActivities(subject, options));
     });
 
   function getContactsAndActivities() {
@@ -1609,14 +1614,14 @@ export function showContactsActivities(onComplete) {
     });
 }
 
-export function processAgentActivities(agent) {
+export function processAgentActivities(agent, options = {}) {
   if (Object.values(agent.TypeIndex || {}).some(v => v && Object.keys(v).length)) {
-    return processAgentTypeIndex(agent);
+    return processAgentTypeIndex(agent, options);
   }
   else if (agent.Graph && (agent.PublicTypeIndex?.length || agent.PrivateTypeIndex?.length) && !agent.typeIndexAttempted) {
     // Guard prevents infinite recursion when an unreadable TypeIndex returns 0 entries.
     agent.typeIndexAttempted = true;
-    return [getAgentTypeIndex(agent.Graph)
+    return [getAgentTypeIndex(agent.Graph, { noCache: options.refresh })
       .then(typeIndexes => {
         var keys = Object.keys(typeIndexes);
         if (keys.length === 0) return;
@@ -1624,7 +1629,7 @@ export function processAgentActivities(agent) {
         keys.forEach(typeIndexType => {
           agent.TypeIndex[typeIndexType] = typeIndexes[typeIndexType];
         });
-        return Promise.all(processAgentActivities(agent));
+        return Promise.all(processAgentActivities(agent, options));
       })
       .catch(() => {})];
   }
@@ -1637,7 +1642,7 @@ export function processAgentActivities(agent) {
   // }
 }
 
-export function processAgentTypeIndex(agent) {
+export function processAgentTypeIndex(agent, options = {}) {
   var promises = [];
   var documentTypes = Config.ActivitiesObjectTypes.concat(Object.keys(Config.ResourceType));
 
@@ -1678,7 +1683,7 @@ export function processAgentTypeIndex(agent) {
     });
 
     if (annotationSources.instances.length || annotationSources.containers.length) {
-      promises.push(showAnnotationSources(agent, visibility, annotationSources));
+      promises.push(showAnnotationSources(agent, visibility, annotationSources, options));
     }
   });
 

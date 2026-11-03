@@ -906,9 +906,9 @@ export function getResourceGraph(iri, headers, options = {}) {
 
   return result;
 }
-export function getResourceOnlyRDF(url) {
+export function getResourceOnlyRDF(url, options = {}) {
   // One GET; a HEAD first doubled requests and tripped rate limiters
-  return getResourceGraph(url, { 'Accept': setAcceptRDFTypes() })
+  return getResourceGraph(url, { 'Accept': setAcceptRDFTypes() }, { ...options })
     .catch(rejected => {
       // Pass through if already in shape; else wrap fetch failures the same way
       if (rejected && 'graph' in rejected && 'error' in rejected) {
@@ -1313,12 +1313,12 @@ export function getUserContacts(iri) {
   return fyn(iri).then(i => { return Config.User.Knows || []; });
 }
 
-export function getAgentTypeIndex(s) {
+export function getAgentTypeIndex(s, options = {}) {
   //XXX: TypeRegistration forClasses of interest but for now lets store what we find without filtering.
   // const TypeRegistrationClasses = [ns.oa.Annotation, ns.as.Announce];
 
   var fetchTypeRegistration = function(iri, typeIndexType) {
-    return getResourceGraph(iri)
+    return getResourceGraph(iri, undefined, { noCache: options.noCache })
       .then(({ graph: g }) => {
         //XXX: https://github.com/solid/type-indexes/issues/29 for potential property to discover TypeRegistrations.
 
