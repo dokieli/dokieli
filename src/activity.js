@@ -33,7 +33,7 @@ import { getTextContentExcludingSups } from './editor/utils/annotation.js';
 import { i18n } from './i18n.js';
 import { showUserIdentityInput } from './auth.js';
 import { updateDeviceStorageProfile } from './storage.js';
-import { setPublicRead, setContainerACL } from './wac.js';
+import { setPublicRead, setContainerACL, ensureSettingsDocument } from './wac.js';
 import { isJWE } from './crypto.js';
 import { isUnlocked, decryptWithSession } from './keystore.js';
 import { setupResourceBrowser, attachBrowseStoragePopup } from './dialog.js';
@@ -653,58 +653,77 @@ export function showLocationDialog(kind, containerIRI, mode, options = {}) {
   });
 }
 
-// Creates a settings document unless one is already there
-async function createSettingsDocument(url, data) {
-  try {
-    await Config.Storage.put(url, data, 'text/turtle', null, { headers: { 'If-None-Match': '*' } });
-    return true;
-  }
-  catch (e) {
-    if (e?.status === 412) return false;
-    throw e;
-  }
+// A linked document that has gone missing is created again where it was; failing that, the link is used as is
+function ensureLinkedSettingsDocument(url, data, isPublic) {
+  return ensureSettingsDocument(url, data, isPublic).catch(e => {
+    console.log('Could not restore ' + url, e);
+    return false;
+  });
 }
 
+// The preferences file is linked from the profile; returns where it is and whether it was created now
 async function ensurePreferencesFile() {
-  if (Config.User.PreferencesFile?.[0]) return Config.User.PreferencesFile[0];
+  const linked = Config.User.PreferencesFile?.[0];
   const root = Config.User.Storage?.[0];
-  if (!root) return;
+  const url = linked || (root && forceTrailingSlash(root) + 'settings/prefs.ttl');
+  if (!url) return {};
 
-  const url = forceTrailingSlash(root) + 'settings/prefs.ttl';
-  if (await createSettingsDocument(url, `<> a <${ns.ws.ConfigurationFile.value}> .\n`)) {
-    await setPublicRead(url, false).catch(e => console.log('Could not set preferences access:', e));
+  const data = `<> a <${ns.ws.ConfigurationFile.value}> .\n`;
+  const created = linked ? await ensureLinkedSettingsDocument(url, data, false) : await ensureSettingsDocument(url, data, false);
+
+  if (!linked) {
+    await Config.Storage.patchWithConneg(stripFragmentFromString(Config.User.IRI), { insert: `<${Config.User.IRI}> <${ns.ws.preferencesFile.value}> <${url}> .\n` });
+    Config.User.PreferencesFile = [url];
   }
-  await Config.Storage.patchWithConneg(stripFragmentFromString(Config.User.IRI), { insert: `<${Config.User.IRI}> <${ns.ws.preferencesFile.value}> <${url}> .\n` });
-
-  Config.User.PreferencesFile = [url];
-  return url;
+  return { url, created };
 }
 
 // Storage may have no type indexes yet; the public one is linked from the profile, the private one from the preferences document
 async function ensureTypeIndex(kind) {
   const key = kind === 'public' ? 'PublicTypeIndex' : 'PrivateTypeIndex';
-  if (Config.User[key]?.[0]) return Config.User[key][0];
+  const linked = Config.User[key]?.[0];
   const root = Config.User.Storage?.[0];
-  if (!root) return;
+  if (!linked && !root) return;
 
-  const linkFrom = kind === 'public' ? Config.User.IRI : await ensurePreferencesFile();
-  if (!linkFrom) return;
-
-  const url = forceTrailingSlash(root) + `settings/${kind}TypeIndex.ttl`;
-  const listed = kind === 'public' ? ns.solid.ListedDocument.value : ns.solid.UnlistedDocument.value;
-  if (await createSettingsDocument(url, `<> a <${ns.solid.TypeIndex.value}>, <${listed}> .\n`)) {
-    await setPublicRead(url, kind === 'public').catch(e => console.log('Could not set type index access:', e));
+  let linkFrom = Config.User.IRI;
+  let link = !linked;
+  if (kind === 'private') {
+    const preferences = await ensurePreferencesFile();
+    if (!preferences.url) return;
+    linkFrom = preferences.url;
+    // A recreated preferences file no longer links the private type index
+    link = link || preferences.created;
   }
 
-  await Config.Storage.patchWithConneg(stripFragmentFromString(linkFrom), { insert: `<${Config.User.IRI}> <${typeIndexKey(kind)}> <${url}> .\n` });
+  const url = linked || forceTrailingSlash(root) + `settings/${kind}TypeIndex.ttl`;
+  const listed = kind === 'public' ? ns.solid.ListedDocument.value : ns.solid.UnlistedDocument.value;
+  const data = `<> a <${ns.solid.TypeIndex.value}>, <${listed}> .\n`;
+  let recreated = false;
+  if (linked) {
+    recreated = await ensureLinkedSettingsDocument(url, data, kind === 'public');
+  }
+  else {
+    await ensureSettingsDocument(url, data, kind === 'public');
+  }
 
-  Config.User[key] = [url];
-  updateDeviceStorageProfile(Config.User);
-  return url;
+  if (link) {
+    await Config.Storage.patchWithConneg(stripFragmentFromString(linkFrom), { insert: `<${Config.User.IRI}> <${typeIndexKey(kind)}> <${url}> .\n` });
+  }
+
+  // The registrations kept on this device went with the missing type index
+  if (recreated && Config.User.TypeIndex) {
+    Config.User.TypeIndex[typeIndexKey(kind)] = {};
+  }
+
+  if (!linked || recreated) {
+    Config.User[key] = [url];
+    updateDeviceStorageProfile(Config.User);
+  }
+  return { url, recreated };
 }
 
 async function addTypeRegistration(kind, predicate, object) {
-  const typeIndexIRI = await ensureTypeIndex(kind);
+  const typeIndexIRI = (await ensureTypeIndex(kind))?.url;
   if (!typeIndexIRI) return;
   const registrationId = generateAttributeId();
   await Config.Storage.patchWithConneg(typeIndexIRI, { insert: typeRegistrationTriples(`#${registrationId}`, ns.oa.Annotation.value, predicate, object) });
@@ -740,6 +759,8 @@ export async function registerAnnotationStore(visibility) {
     await setContainerACL(url, Config.User.IRI, storeVisibility === 'public');
   }
 
+  // Restores a missing type index first, so registrations kept on this device are not trusted
+  await ensureTypeIndex(storeVisibility);
   if (getAnnotationRegistrations(Config.User.TypeIndex, storeVisibility, ns.solid.instanceContainer.value).includes(url)) return chosen;
   await addTypeRegistration(storeVisibility, ns.solid.instanceContainer.value, url);
   return chosen;
@@ -776,6 +797,14 @@ function annotationIndexTriples(items) {
 const publicIndexesChecked = new Set();
 
 async function writeAnnotationIndex(kind, items, store) {
+  // A type index that had gone missing comes back empty; the store the annotation was saved in is registered again
+  if (Config.User[kind === 'public' ? 'PublicTypeIndex' : 'PrivateTypeIndex']?.[0]) {
+    const { recreated } = await ensureTypeIndex(kind) || {};
+    if (recreated && store) {
+      await addTypeRegistration(kind, ns.solid.instanceContainer.value, store);
+    }
+  }
+
   let indexIRI = getAnnotationRegistration(Config.User.TypeIndex, kind, ns.solid.instance.value);
   const create = !indexIRI;
 

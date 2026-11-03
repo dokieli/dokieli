@@ -85,6 +85,28 @@ export async function setPublicRead(resourceURL, enabled) {
   return applyACLPlan(plan);
 }
 
+const ensuredSettingsDocuments = new Set();
+
+// Creates a settings document (preferences file, type index) unless it is there, public or private; checked once per session
+export async function ensureSettingsDocument(url, data, isPublic) {
+  if (ensuredSettingsDocuments.has(url)) return false;
+
+  let created = false;
+  try {
+    await Config.Storage.put(url, data, 'text/turtle', null, { headers: { 'If-None-Match': '*' } });
+    created = true;
+  }
+  catch (e) {
+    if (e?.status !== 412) throw e;
+  }
+  ensuredSettingsDocuments.add(url);
+
+  if (created) {
+    await setPublicRead(url, isPublic).catch(e => console.log('Could not set access for ' + url, e));
+  }
+  return created;
+}
+
 // The owner gets full access to the container and everything in it, and everyone can read them when public
 export async function setContainerACL(containerURL, owner, isPublic) {
   const [aclURL] = await getLinkRelationFromHead('acl', containerURL);

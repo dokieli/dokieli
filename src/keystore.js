@@ -38,7 +38,7 @@ import { getEncryptedKeystore, setEncryptedKeystore, updateDeviceStorageProfile 
 import { getResource, getResourceHead, putResource, postResource, patchResourceWithAcceptPatch } from './fetcher.js';
 import { getResourceGraph, getLinkRelationFromHead } from './graph.js';
 import { agentsWithMode, buildACLContext, planContainerACL, planGrant } from '@dokieli/web-access-control';
-import { applyACLPlan, cachedACLContext, getACLContext } from './wac.js';
+import { applyACLPlan, cachedACLContext, getACLContext, ensureSettingsDocument } from './wac.js';
 import { forceTrailingSlash, stripFragmentFromString } from './uri.js';
 import { escapeRDFLiteral, generateUUID } from './util.js';
 
@@ -232,6 +232,14 @@ async function registerKeyContainer(containerURL) {
   const usePrivate = priv?.length && Config.Session?.isActive;
   const typeIndexIRI = usePrivate ? priv[0] : pub?.[0];
   if (!typeIndexIRI) return null;
+  const typeIndexType = usePrivate ? Config.ns.solid.privateTypeIndex.value : Config.ns.solid.publicTypeIndex.value;
+
+  // A type index that has gone missing is created again, without the registrations kept on this device
+  const listed = usePrivate ? Config.ns.solid.UnlistedDocument.value : Config.ns.solid.ListedDocument.value;
+  const recreated = await ensureSettingsDocument(typeIndexIRI, `<> a <${Config.ns.solid.TypeIndex.value}>, <${listed}> .\n`, !usePrivate).catch(() => false);
+  if (recreated && Config.User.TypeIndex) {
+    Config.User.TypeIndex[typeIndexType] = {};
+  }
   if (findKeyContainer()) return null;
 
   const forClass = Config.ns.sec.JsonWebKey.value;
@@ -242,7 +250,6 @@ async function registerKeyContainer(containerURL) {
 
   await patchResourceWithAcceptPatch(typeIndexIRI, [{ insert }]);
 
-  const typeIndexType = usePrivate ? Config.ns.solid.privateTypeIndex.value : Config.ns.solid.publicTypeIndex.value;
   Config.User.TypeIndex = Config.User.TypeIndex || {};
   Config.User.TypeIndex[typeIndexType] = Config.User.TypeIndex[typeIndexType] || {};
   Config.User.TypeIndex[typeIndexType][`${typeIndexIRI}#${registrationId}`] = {
