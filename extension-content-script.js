@@ -101,6 +101,16 @@ WebExtension.runtime.onMessage.addListener(function (request, sender, sendRespon
       try { DO.U.updateUILanguage(request.lang); } catch (e) { console.log(e); }
       sendResponse({ ok: true });
     }
+    else if (request.action === 'dokieli.saveUserName') {
+      if (!isDokieliReady() || !request.name) {
+        sendResponse({ ok: false });
+        return;
+      }
+      DO.U.saveUserName(request.name)
+        .then(name => sendResponse({ ok: !!name, name }))
+        .catch(e => { console.log(e); sendResponse({ ok: false }); });
+      return true;
+    }
     else if (request.action === 'dokieli.activate') {
       if (typeof DO === 'undefined' || !DO.U) {
         sendResponse({ error: 'dokieli not loaded' });

@@ -20,8 +20,8 @@ import Config from './config.js';
 import { getResourceGraph } from './graph.js';
 import { i18n } from './i18n.js';
 import { escapeRDFLiteral } from './util.js';
-import { fragmentFromString, removeChildren } from './utils/html.js';
-import { getButtonHTML } from './ui/buttons.js';
+import { removeChildren } from './utils/html.js';
+import { showUserNameForm } from './ui/menu.js';
 import { domSanitize } from './utils/sanitization.js';
 import { updateDeviceStorageProfile } from './storage.js';
 import { patchResourceWithAcceptPatch } from './fetcher.js';
@@ -95,51 +95,15 @@ export async function saveUserNameWithMessage(name) {
 // Replaces the user's name in the menu with an input, saving it to the profile on confirm
 export function showUserNameInput(editButton) {
   const userInfo = editButton.closest('#user-info');
-  const nameLink = userInfo?.querySelector('a[rel="schema:url"]');
 
-  if (!nameLink || userInfo.querySelector('form.edit-user-name')) return;
-
-  const form = fragmentFromString(`<form class="edit-user-name"><input aria-label="${i18n.t('menu.edit-name.input.aria-label')}" name="user-name" placeholder="${i18n.t('menu.edit-name.input.aria-label')}" required="" type="text" />${getButtonHTML({ key: 'menu.edit-name.save.button', button: 'submit', buttonClass: 'save-user-name', buttonType: 'submit' })}${getButtonHTML({ key: 'menu.edit-name.cancel.button', button: 'cancel', buttonClass: 'cancel-user-name', buttonType: 'button' })}</form>`).firstChild;
-  const input = form.querySelector('input');
-  input.value = Config.User.Name || '';
-
-  const close = () => {
-    form.remove();
-    nameLink.hidden = false;
-    editButton.hidden = false;
-    editButton.focus();
-  };
-
-  form.querySelector('button.cancel-user-name').addEventListener('click', close);
-  input.addEventListener('keydown', e => {
-    if (e.key === 'Escape') close();
-  });
-
-  form.addEventListener('submit', async e => {
-    e.preventDefault();
-    const name = input.value.trim();
-
-    if (!name || name === Config.User.Name) {
-      close();
-      return;
-    }
-
-    form.querySelectorAll('input, button').forEach(node => { node.disabled = true; });
-
-    if (await saveUserNameWithMessage(name)) {
+  showUserNameForm(editButton, {
+    name: Config.User.Name || '',
+    save: async name => {
+      if (!await saveUserNameWithMessage(name)) return false;
       removeChildren(userInfo);
       await showUserSigninSignout(userInfo);
       userInfo.querySelector('button.edit-user-name')?.focus();
-    }
-    else {
-      form.querySelectorAll('input, button').forEach(node => { node.disabled = false; });
-      input.focus();
+      return true;
     }
   });
-
-  nameLink.hidden = true;
-  editButton.hidden = true;
-  nameLink.after(form);
-  input.focus();
-  input.select();
 }

@@ -19,7 +19,7 @@ import i18next from 'i18next';
 import Config from './config.js';
 import { i18nextInit } from './i18n.js';
 import { initButtons } from './ui/buttons.js';
-import { renderMenuInner, initMenuTabsEvents } from './ui/menu.js';
+import { renderMenuInner, initMenuTabsEvents, showUserNameForm } from './ui/menu.js';
 import { initTheme } from './theme.js';
 import { domSanitize } from './utils/sanitization.js';
 
@@ -30,6 +30,12 @@ const SESSION_KEY = 'DO.Config.ExtensionSession';
 async function getSession() {
   const stored = await WebExtension.storage.local.get(SESSION_KEY);
   return stored?.[SESSION_KEY] || null;
+}
+
+async function setSessionName(name) {
+  const session = await getSession();
+  if (!session) return;
+  await WebExtension.storage.local.set({ [SESSION_KEY]: { ...session, name } });
 }
 
 async function clearSession() {
@@ -43,7 +49,7 @@ function renderAgent(session) {
   const avatar = session.image
     ? `<img alt="" height="${avatarSize}" rel="schema:image" src="${session.image}" width="${avatarSize}" /> `
     : '';
-  return `<span about="${iri}" typeof="schema:Person">${avatar}<a rel="schema:url" href="${iri}"><span about="${iri}" property="schema:name">${name}</span></a></span>`;
+  return `<span about="${iri}" typeof="schema:Person">${avatar}<a rel="schema:url" href="${iri}"><span about="${iri}" property="schema:name">${name}</span></a> ${Config.Button.Menu.EditName}</span>`;
 }
 
 async function renderUserInfo() {
@@ -116,8 +122,35 @@ async function openSigninDialog() {
   }
 }
 
+async function editUserName(editButton) {
+  const session = await getSession();
+
+  showUserNameForm(editButton, {
+    name: session?.name || '',
+    save: async name => {
+      try {
+        const tab = await getActiveTab();
+        const response = tab?.id && await WebExtension.tabs.sendMessage(tab.id, { action: 'dokieli.saveUserName', name });
+        if (!response?.ok) return false;
+        await setSessionName(response.name);
+        await renderUserInfo();
+        document.querySelector('#user-info button.edit-user-name')?.focus();
+        return true;
+      } catch (e) {
+        console.warn(e);
+        return false;
+      }
+    }
+  });
+}
+
 function initAuthHandlers() {
   document.addEventListener('click', async (e) => {
+    const editButton = e.target.closest('button.edit-user-name');
+    if (editButton) {
+      editUserName(editButton);
+      return;
+    }
     if (e.target.closest('button.signin-user')) {
       openSigninDialog();
       return;

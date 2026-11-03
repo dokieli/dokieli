@@ -21,6 +21,7 @@ import { Icon } from './icons.js';
 import { setOriginConsent, KNOWN_SERVICES } from '../consent.js';
 import { htmlEncode } from '../utils/sanitization.js';
 import { fragmentFromString } from '../utils/html.js';
+import { getButtonHTML } from './buttons.js';
 
 export function renderDocumentDo() {
   const editToggle = Config.Editor?.mode === 'author'
@@ -250,6 +251,52 @@ export function renderMenuTabs(content = {}) {
       <section id="menu-tools">${tools}</section>
       <section id="menu-settings">${settings}</section>
     </div>`;
+}
+
+export function showUserNameForm(editButton, { name = '', save }) {
+  const userInfo = editButton.closest('#user-info');
+  const nameLink = userInfo?.querySelector('a[rel="schema:url"]');
+
+  if (!nameLink || userInfo.querySelector('form.edit-user-name')) return;
+
+  const form = fragmentFromString(`<form class="edit-user-name"><input aria-label="${i18n.t('menu.edit-name.input.aria-label')}" name="user-name" placeholder="${i18n.t('menu.edit-name.input.aria-label')}" required="" type="text" />${getButtonHTML({ key: 'menu.edit-name.save.button', button: 'submit', buttonClass: 'save-user-name', buttonType: 'submit' })}${getButtonHTML({ key: 'menu.edit-name.cancel.button', button: 'cancel', buttonClass: 'cancel-user-name', buttonType: 'button' })}</form>`).firstChild;
+  const input = form.querySelector('input');
+  input.value = name;
+
+  const close = () => {
+    form.remove();
+    nameLink.hidden = false;
+    editButton.hidden = false;
+    editButton.focus();
+  };
+
+  form.querySelector('button.cancel-user-name').addEventListener('click', close);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Escape') close();
+  });
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const value = input.value.trim();
+
+    if (!value || value === name) {
+      close();
+      return;
+    }
+
+    form.querySelectorAll('input, button').forEach(node => { node.disabled = true; });
+
+    if (!await save(value)) {
+      form.querySelectorAll('input, button').forEach(node => { node.disabled = false; });
+      input.focus();
+    }
+  });
+
+  nameLink.hidden = true;
+  editButton.hidden = true;
+  nameLink.after(form);
+  input.focus();
+  input.select();
 }
 
 export function initMenuTabsEvents(tabs) {

@@ -26,6 +26,7 @@ import { showDocumentMenu } from './dialog.js';
 import { initTheme } from './theme.js';
 import { updateUILanguage } from './actions.js';
 import { getButtonStates } from './ui/buttons.js';
+import { saveUserNameWithMessage } from './profile.js';
 
 const DO = window.DO ?? {
   C: Config,
@@ -143,6 +144,13 @@ const DO = window.DO ?? {
 
     getButtonStates: function() {
       return getButtonStates();
+    },
+
+    saveUserName: async function(name) {
+      if (!Config.AuthReady) {
+        await new Promise(resolve => document.addEventListener('dokieli:auth-ready', resolve, { once: true }));
+      }
+      return (await saveUserNameWithMessage(name)) ? Config.User.Name : null;
     },
 
     menuClick: function(className) {
