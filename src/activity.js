@@ -583,7 +583,9 @@ export function getAnnotationRegistration(typeIndex, kind, predicate) {
 }
 
 // Resolves { url, visibility } for the store to create, or undefined when dismissed
-function showAnnotationStoreDialog(containerIRI, visibility) {
+// Suggests a container under the storage root so the root itself isn't used by default
+function showAnnotationStoreDialog(storageIRI, visibility) {
+  const containerIRI = storageIRI ? storageIRI + i18n.t('dialog.annotation-store.suggested-container.textContent') + '/' : '';
   return showLocationDialog('annotation-store', containerIRI, 'setup', { visibility });
 }
 
