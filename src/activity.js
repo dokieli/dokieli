@@ -1781,6 +1781,46 @@ function textQuoteFromSelector(selector) {
 }
 
 // Marks the passage at creation time without waiting on the re-fetch path; idempotent
+const referenceSelector = 'span.ref[typeof~="http://purl.org/dc/dcmitype/Text"] > mark + sup[class^="ref-"]';
+let referenceLayoutFrame = null;
+let referenceLayoutObserved = null;
+
+function layoutAnnotationReferences() {
+  referenceLayoutFrame = null;
+  var containerNode = selectArticleNode(document);
+  if (!containerNode) return;
+
+  var sups = Array.from(containerNode.querySelectorAll(referenceSelector));
+  sups.forEach(sup => sup.style.removeProperty('translate'));
+
+  var placed = [];
+  sups.map(sup => ({ sup, rect: sup.getBoundingClientRect() }))
+    .filter(({ rect }) => rect.width)
+    .sort((a, b) => a.rect.top - b.rect.top || a.rect.left - b.rect.left)
+    .forEach(({ sup, rect }) => {
+      var left = rect.left;
+      var overlapping;
+      while ((overlapping = placed.find(p => rect.top < p.bottom && rect.bottom > p.top && left < p.right && left + rect.width > p.left))) {
+        left = overlapping.right + 2;
+      }
+      if (left !== rect.left) {
+        sup.style.translate = `${left - rect.left}px 0`;
+      }
+      placed.push({ top: rect.top, bottom: rect.bottom, left, right: left + rect.width });
+    });
+}
+
+export function scheduleAnnotationReferencesLayout() {
+  var containerNode = selectArticleNode(document);
+  if (containerNode && referenceLayoutObserved !== containerNode && typeof ResizeObserver !== 'undefined') {
+    referenceLayoutObserved = containerNode;
+    new ResizeObserver(() => scheduleAnnotationReferencesLayout()).observe(containerNode);
+  }
+  if (referenceLayoutFrame === null) {
+    referenceLayoutFrame = requestAnimationFrame(layoutAnnotationReferences);
+  }
+}
+
 export function markAnnotationTarget(noteIRI, selector, options = {}) {
   if (!noteIRI || !selector) { return null; }
 
@@ -1799,12 +1839,13 @@ export function markAnnotationTarget(noteIRI, selector, options = {}) {
 
   // RangeSelector marks the resolved range; TextQuoteSelector marks every match
   var isTextQuote = selector.type === 'TextQuoteSelector' || (!selector.type && selector.exact);
-  if (isTextQuote) {
-    if (!selector.exact) { return null; }
-    return applyMarksFromTextQuote(containerNode, { exact: selector.exact, prefix: selector.prefix, suffix: selector.suffix }, markOptions);
-  }
+  if (isTextQuote && !selector.exact) { return null; }
 
-  return applyMarkFromSelector(containerNode, selector, markOptions);
+  var mark = isTextQuote
+    ? applyMarksFromTextQuote(containerNode, { exact: selector.exact, prefix: selector.prefix, suffix: selector.suffix }, markOptions)
+    : applyMarkFromSelector(containerNode, selector, markOptions);
+  scheduleAnnotationReferencesLayout();
+  return mark;
 }
 
 const showAnnotationInFlight = new Map();
@@ -2124,6 +2165,8 @@ async function showAnnotationUncached(noteIRI, g, options) {
         : (textQuote
           ? applyMarksFromTextQuote(containerNode, selector, markOptions)
           : (parsedSelector ? applyMarkFromSelector(containerNode, parsedSelector, markOptions) : null));
+
+      scheduleAnnotationReferencesLayout();
 
       var parentNodeWithId = selectedParentNode?.closest('[id]');
       targetIRI = (parentNodeWithId) ? documentURL + '#' + parentNodeWithId.id : documentURL;
