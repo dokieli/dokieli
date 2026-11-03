@@ -3017,6 +3017,8 @@ margin-top:1.5em;
 margin-bottom:0.5em;
 }
 #document-edit-history button.toggle {
+display: flex;
+align-items: center;
 justify-content: center;
 position: absolute;
 top: 1em;
@@ -3249,6 +3251,8 @@ margin-bottom:0.5em;
 }
 #document-notifications button.toggle,
 #document-ohyeah button.toggle {
+display: flex;
+align-items: center;
 justify-content: center;
 position: absolute;
 top: 1em;
@@ -3261,6 +3265,12 @@ border:1px solid rgba(0, 0, 0, 0.35);
 background-color: var(--do-color-bg);
 transition: box-shadow 0.3s;
 font-size:1.2em;
+}
+
+#document-edit-history button.toggle svg,
+#document-notifications button.toggle svg,
+#document-ohyeah button.toggle svg {
+margin: 0;
 }
 
 #document-notifications button.toggle:hover,
@@ -3970,6 +3980,7 @@ position:relative;
 #document-notifications article .language,
 #document-notifications article .rights,
 #document-notifications article .license,
+#document-notifications article dl:has(> dd > a[rel="dcterms:license"], > dd > a[rel="dcterms:rights"]),
 #document-notifications article .canonical,
 #document-edit-history .versions dt,
 aside.note h2,
@@ -3982,6 +3993,7 @@ aside.note .language,
 aside.note .renderedvia,
 aside.note .rights,
 aside.note .license,
+aside.note dl:has(> dd > a[rel="dcterms:license"], > dd > a[rel="dcterms:rights"]),
 aside.note .canonical,
 aside.note .format {
 display:none;
