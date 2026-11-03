@@ -32,7 +32,25 @@ import {
   setSelectionByOffset,
   createAnnotation,
   markSegmentHTML,
+  getTextQuoteSelector,
+  getFragmentSelector,
+  refine,
 } from '@dokieli/web-annotation';
+
+export const annotationIgnoreSelector = 'sup';
+
+// Selectors must not depend on existing marks
+export function getAnnotationContainer(node) {
+  let el = node?.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+  while (el?.closest('span.ref')) el = el.closest('span.ref').parentElement;
+  return el;
+}
+
+function rangeTouchesMarks(range, container) {
+  return !!range.startContainer.parentElement?.closest('span.ref')
+    || !!range.endContainer.parentElement?.closest('span.ref')
+    || Array.from(container.querySelectorAll('span.ref')).some(span => range.intersectsNode(span));
+}
 
 // 1. new annotation
 // replace the selection with fragment 
@@ -168,13 +186,25 @@ export function createNoteData(annotation) {
   let targetSelector;
   if (selectionData && selectionData.selection) {
     try {
-      const { selectors = [] } = selectionToSelectors(selectionData.selection, {
-        container: selectionData.selectedParentElement,
-        contextLength: Config.ContextLength
-      }) || {};
-      targetSelector = selectors.find(s => s.type === 'RangeSelector')
-        || selectors.find(s => s.type === 'FragmentSelector')
-        || selectors.find(s => s.type === 'TextQuoteSelector');
+      const range = selectionData.selection.rangeCount && selectionData.selection.getRangeAt(0);
+      const container = getAnnotationContainer(selectionData.selectedParentElement);
+      const options = { contextLength: Config.ContextLength, ignoreSelector: annotationIgnoreSelector };
+
+      // Existing marks split text nodes and carry their own ids
+      if (range && container && rangeTouchesMarks(range, container)) {
+        const fragmentElement = container.closest('[id]');
+        const textQuote = getTextQuoteSelector(range, fragmentElement || container, options);
+        targetSelector = fragmentElement ? refine(getFragmentSelector(fragmentElement, { climb: false }), [textQuote]) : textQuote;
+      }
+      else {
+        const { selectors = [] } = selectionToSelectors(selectionData.selection, {
+          container: selectionData.selectedParentElement,
+          ...options
+        }) || {};
+        targetSelector = selectors.find(s => s.type === 'RangeSelector')
+          || selectors.find(s => s.type === 'FragmentSelector')
+          || selectors.find(s => s.type === 'TextQuoteSelector');
+      }
     } catch (e) {
       // fall back to the manual TextQuoteSelector below
     }

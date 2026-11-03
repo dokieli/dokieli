@@ -1054,7 +1054,7 @@ export class ToolbarView {
 
     var docRefType = '<sup class="ref-highlighting"><a rel="oa:hasTarget" href="#' + refId + '">' + refLabel + '</a></sup>';
 
-    var markOptions = { 'annotationUrl': '#' + refId, 'id': refId, 'className': 'ref do', 'reference': docRefType, 'excludeMatchesIn': '#document-notifications' };
+    var markOptions = { 'annotationUrl': '#' + refId, 'id': refId, 'className': 'ref do', 'reference': docRefType, 'excludeMatchesIn': '#document-notifications', 'ignoreSelector': 'sup' };
 
     if (isTextQuote) {
       applyMarksFromTextQuote(containerNode, selector, markOptions);

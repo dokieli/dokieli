@@ -19,7 +19,8 @@ import { formHandlerAnnotate, shareButtonHandler, ohYeahButtonHandler } from "./
 import { ToolbarView, annotateFormControls, prefixFormIds, syncNotifyInboxDefault, updateAnnotationInboxForm, updateAnnotationServiceForm, updateAnnotationStoreAccess, updateNanopubAccess } from "../toolbar.js"
 import { fragmentFromString } from "../../../utils/html.js";
 import Config from "../../../config.js";
-import { exportSelection, getSelectedParentElement, restoreSelection } from "../../utils/annotation.js";
+import { annotationIgnoreSelector, getAnnotationContainer, getSelectedParentElement, restoreSelection } from "../../utils/annotation.js";
+import { getTextQuoteSelector as getTextQuoteSelectorFromRange } from "@dokieli/web-annotation";
 import { htmlEncode } from "../../../utils/sanitization.js";
 import { i18n } from "../../../i18n.js";
 import { buttonIcons } from "../../../ui/buttons.js";
@@ -185,37 +186,16 @@ export class SocialToolbar extends ToolbarView {
 
   getTextQuoteSelector() {
     restoreSelection(this.selection);
-  
-    const selection = window.getSelection();
-    const range = selection.getRangeAt(0);
-  
-    var selectedParentElement = getSelectedParentElement(range);
-  // console.log('getSelectedParentElement:', selectedParentElement);
-  
-    const selectionHTML = this.getSelectionAsHTML(selection); //.replace(Config.Editor.regexEmptyHTMLTags, '');
-  
-    var exact = selectionHTML;
-    // var selectionState = MediumEditor.selection.exportSelection(selectedParentElement, document);
-    const selectionState = exportSelection(selectedParentElement, selection);
-    var start = selectionState.start;
-    var end = selectionState.end;
-    var prefixStart = Math.max(0, start - Config.ContextLength);
-  // console.log('pS ' + prefixStart);
-    var prefix = selectedParentElement.textContent.substr(prefixStart, start - prefixStart);
-  // console.log('-' + prefix + '-');
-    prefix = htmlEncode(prefix);
-  
-    var suffixEnd = Math.min(selectedParentElement.textContent.length, end + Config.ContextLength);
-  // console.log('sE ' + suffixEnd);
-    var suffix = selectedParentElement.textContent.substr(end, suffixEnd - end);
-  // console.log('-' + suffix + '-');
-    suffix = htmlEncode(suffix);
-  
+
+    const range = window.getSelection().getRangeAt(0);
+    const container = getAnnotationContainer(getSelectedParentElement(range));
+    const { exact, prefix, suffix } = getTextQuoteSelectorFromRange(range, container, { contextLength: Config.ContextLength, ignoreSelector: annotationIgnoreSelector });
+
     return {
       type: 'TextQuoteSelector',
-      exact,
-      prefix,
-      suffix
+      exact: htmlEncode(exact),
+      prefix: htmlEncode(prefix),
+      suffix: htmlEncode(suffix)
     }
   }
 
