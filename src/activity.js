@@ -269,11 +269,33 @@ if (typeof document !== 'undefined') {
   });
 }
 
+if (typeof document !== 'undefined') {
+  document.addEventListener('click', (e) => {
+    // Clicking a card shows its mark, except on controls or after selecting text
+    var li = e.target.closest?.('#document-notifications > div > ul > li');
+    if (!li || e.target.closest('a, button, input, select, textarea, label, summary, form, [contenteditable]')) return;
+    if (!window.getSelection().isCollapsed) return;
+    var cite = li.querySelector(':scope > blockquote[cite]')?.getAttribute('cite');
+    var mark = cite && getAnnotationMark(cite);
+    if (!mark) return;
+    mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+}
+
 function getAnnotationResponsesHTML() {
   var buttons = ANNOTATION_RESPONSE_ACTIONS.map(action =>
     `<li>${getButtonHTML({ key: `annotation-responses.${action}.button`, button: action, buttonClass: 'annotation-response', buttonType: 'button' }).replace('<button', `<button aria-expanded="false" data-action="${action}"`)}<span class="annotation-response-count"></span></li>`).join('');
 
   return `<ul class="annotation-response-actions">${buttons}</ul><ul class="annotation-responses" hidden=""></ul>`;
+}
+
+function getAnnotationMark(noteIRI) {
+  var containerNode = selectArticleNode(document);
+  var reference = Array.from(containerNode?.querySelectorAll('sup.ref-annotation a[resource]') || []).find(a => a.getAttribute('resource') === noteIRI && !a.closest('#document-notifications'));
+  var mark = reference?.closest('[rel="dcterms:hasPart"]')?.querySelector(':scope > mark[id]');
+  if (!mark) return;
+  var first = document.getElementById(mark.id.replace(/-\d+$/, ''));
+  return first?.matches('mark') ? first : mark;
 }
 
 function getAnnotationListItem(iri) {
