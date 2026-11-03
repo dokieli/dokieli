@@ -562,6 +562,13 @@ export function createNoteDataHTML(n, serializerOptions = {}) {
     }
   }
 
+  // Creator and date links open in a new tab
+  if (mode === 'read') {
+    note = note
+      .replace(/(<a href="[^"]*")( rel="foaf:homepage")?>(<span about="[^"]*" property="foaf:name")/, (m, a, homepage, span) => `${a} rel="${homepage ? 'foaf:homepage noopener' : 'noopener'}" target="_blank">${span}`)
+      .replace(/(<a href="[^"]*")><time /, '$1 rel="noopener" target="_blank"><time ');
+  }
+
   // TODO: implement retraction (nanopubs cannot be deleted, only retracted)
   if (mode === 'read' && n.creator && n.creator.iri === Config.User.IRI && !n.nanopub) {
     const buttonDelete = '<button aria-label="Delete item" class="delete do" title="Delete item" type="button">' + Icon['.fas.fa-trash-alt'] + '</button>';
