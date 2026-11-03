@@ -163,13 +163,26 @@ function initAuthHandlers() {
   });
 }
 
+function setLanguage(lang) {
+  return new Promise(resolve => i18next.changeLanguage(lang, () => {
+    if (Config.Languages[lang]) {
+      Config.User.UI.Language = lang;
+      Config.User.UI.LanguageDir = Config.Languages[lang].dir;
+    }
+    resolve();
+  }));
+}
+
 function renderMenu() {
   const menu = document.getElementById('document-menu');
   if (!menu) return;
+  const selectedTab = menu.querySelector('#document-menu-tabs nav li.selected a')?.hash;
   menu.setHTMLUnsafe(domSanitize(renderMenuInner()));
 
   const tabs = document.getElementById('document-menu-tabs');
-  if (tabs) initMenuTabsEvents(tabs);
+  if (!tabs) return;
+  initMenuTabsEvents(tabs);
+  if (selectedTab) tabs.querySelector(`nav a[href="${selectedTab}"]`)?.click();
 }
 
 async function applyButtonStates() {
@@ -194,7 +207,7 @@ function initLanguageHandler() {
 
     await WebExtension.storage.local.set({ 'DO.Config.UI.Language': lang });
 
-    await new Promise(resolve => i18next.changeLanguage(lang, () => resolve()));
+    await setLanguage(lang);
     initButtons();
     renderMenu();
     renderUserInfo();
@@ -235,7 +248,7 @@ async function init() {
   const stored = await WebExtension.storage.local.get('DO.Config.UI.Language');
   const persistedLang = stored?.['DO.Config.UI.Language'];
   if (persistedLang) {
-    await new Promise(resolve => i18next.changeLanguage(persistedLang, () => resolve()));
+    await setLanguage(persistedLang);
   }
 
   // Before the menu renders, so it shows the stored theme

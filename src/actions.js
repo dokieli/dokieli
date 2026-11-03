@@ -395,7 +395,12 @@ export async function updateUILanguage(lang, user) {
 
     //XXX: We persist this so that lang selection is available on the same device / profile. Makes it convenient.
     //But it is kind of a duplicate of i18nextLng in localStorage which is managed by i18next library.
-    await setDeviceStorageItem('DO.Config.UI.Language', lang);
+    if (Config.WebExtensionEnabled) {
+      await Config.WebExtension.storage.local.set({ 'DO.Config.UI.Language': lang });
+    }
+    else {
+      await setDeviceStorageItem('DO.Config.UI.Language', lang);
+    }
 
     // re-run initButtons to update the buttons that are stored
     initButtons();
