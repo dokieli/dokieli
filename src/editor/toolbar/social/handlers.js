@@ -23,7 +23,7 @@ import { isNanopubIRI } from "../../../nanopub.js";
 import { i18n } from "../../../i18n.js";
 import { getAbsoluteIRI, stripFragmentFromString } from "../../../uri.js"
 import Config from "../../../config.js"
-import { notifyInbox, postActivity, showActivities, addToAnnotationIndex, markAnnotationTarget, registerAnnotationStore, linkOutbox } from "../../../activity.js"
+import { notifyInbox, postActivity, showActivities, addToAnnotationIndex, markAnnotationTarget, registerAnnotationStore, linkOutbox, getAnnotationAuthorInbox } from "../../../activity.js"
 import { formAction, requireAnnotationLocation, updateAnnotationServiceForm, updateAnnotationStoreAccess } from "../toolbar.js";
 import { publishAnnotation } from "../../../nanopub-annotation.js";
 import { shareResource } from "../../../dialog.js";
@@ -333,7 +333,7 @@ export async function processAction(action, formValues, selectionData) {
 
           .then(() => {
             if (action != 'bookmark') {
-              return sendNotification(annotation, data.options);
+              return sendNotification(annotation, data.options, { notifyAuthor: publicAccess });
             }
           })
 
@@ -683,12 +683,17 @@ export function positionActivity(annotation, options) {
 
 
 // Notifies each inbox the user selected in the form; no-op when none
-function sendNotification(annotation, options) {
+async function sendNotification(annotation, options, { notifyAuthor } = {}) {
   if (!annotation['canonical']) {
-    return Promise.resolve();
+    return;
   }
 
-  const inboxes = annotation.annotationInboxes || [];
+  const inboxes = [...(annotation.annotationInboxes || [])];
+
+  if (notifyAuthor && annotation.targetAnnotation) {
+    const authorInbox = await getAnnotationAuthorInbox(annotation.targetAnnotation);
+    if (authorInbox && !inboxes.includes(authorInbox)) inboxes.push(authorInbox);
+  }
 
   return Promise.allSettled(inboxes.map(inboxURL => {
     var notificationData = createActivityData(annotation, { 'announce': true });

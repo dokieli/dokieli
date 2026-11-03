@@ -298,6 +298,25 @@ function getAnnotationMark(noteIRI) {
   return first?.matches('mark') ? first : mark;
 }
 
+export async function getAnnotationAuthorInbox(annotationIRI) {
+  var article = getAnnotationListItem(annotationIRI)?.querySelector(':scope > blockquote > article');
+  var creator = article?.querySelector(':scope > dl span[rel="dcterms:creator"] > span[about]')?.getAttribute('about');
+  if (!creator || !/^https?:/.test(creator) || creator === Config.User.IRI) return;
+
+  var declared = article.querySelector(':scope > dl a[rel="ldp:inbox"]')?.getAttribute('href');
+  if (declared) return declared;
+
+  var contact = Config.User.Contacts?.[creator];
+  if (contact?.Inbox?.length) return contact.Inbox[0];
+
+  try {
+    return (await getSubjectInfo(creator)).Inbox?.[0];
+  }
+  catch (e) {
+    return;
+  }
+}
+
 function getAnnotationListItem(iri) {
   var blockquote = Array.from(document.querySelectorAll('#document-notifications > div > ul > li > blockquote[cite]')).find(node => node.getAttribute('cite') === iri);
   return blockquote?.parentNode.querySelector(':scope > ul.annotation-responses') ? blockquote.parentNode : null;
