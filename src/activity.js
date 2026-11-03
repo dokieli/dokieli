@@ -730,6 +730,8 @@ function annotationIndexTriples(items) {
   }).join('');
 }
 
+const publicIndexesChecked = new Set();
+
 async function writeAnnotationIndex(kind, items, store) {
   let indexIRI = getAnnotationRegistration(Config.User.TypeIndex, kind, ns.solid.instance.value);
   const create = !indexIRI;
@@ -746,8 +748,13 @@ async function writeAnnotationIndex(kind, items, store) {
     }
   }
 
-  // Access comes from the store
   await Config.Storage.patchWithConneg(indexIRI, { insert: annotationIndexTriples(items) });
+
+  // Public read is not inherited from the store when it already existed or on every server; checked once per session so older indexes get fixed too
+  if (kind === 'public' && !publicIndexesChecked.has(indexIRI)) {
+    publicIndexesChecked.add(indexIRI);
+    await setPublicRead(indexIRI, true).catch(e => console.log('Could not make the annotation index public:', e));
+  }
 
   if (create) {
     await addTypeRegistration(kind, ns.solid.instance.value, indexIRI);
