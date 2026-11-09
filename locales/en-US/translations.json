@@ -1159,6 +1159,7 @@
   "menu.version.button.title": "Version this article",
   "message.preferred-language.error.textContent": "Could not save preferred language to your profile.",
   "message.preferred-language.success.textContent": "Preferred language saved to your profile.",
+  "message.resource-opened.innerHTML": "Opened <a href=\"{{url}}\" rel=\"noopener\" target=\"_blank\">{{url}}</a>.",
   "message.user-name.error.textContent": "Could not save your name to your profile.",
   "message.user-name.success.textContent": "Name saved to your profile.",
   "new-document-article.span.textContent": "Write your article, blog post, story, report.",

@@ -3602,7 +3602,7 @@ export async function openResource(iri, options) {
     if (rm) {
       rm.parentNode.removeChild(rm)
     }
-    var message = `Opened <a href="${iri}" rel="noopener" target="_blank">${iri}</a>.`;
+    var message = i18n.t('message.resource-opened.innerHTML', { url: iri });
     message = {
       'content': message,
       'type': 'success',

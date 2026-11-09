@@ -1143,6 +1143,7 @@
   "menu.version.button.title": "Versionar este artículo",
   "message.preferred-language.error.textContent": "No se pudo guardar el idioma preferido en tu perfil.",
   "message.preferred-language.success.textContent": "Idioma preferido guardado en tu perfil.",
+  "message.resource-opened.innerHTML": "Abierto <a href=\"{{url}}\" rel=\"noopener\" target=\"_blank\">{{url}}</a>.",
   "message.user-name.error.textContent": "No se pudo guardar tu nombre en tu perfil.",
   "message.user-name.success.textContent": "Nombre guardado en tu perfil.",
   "new-document-article.span.textContent": "Escribe tu artículo, blog, historia, informe.",
