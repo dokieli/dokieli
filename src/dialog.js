@@ -216,7 +216,7 @@ export function showDocumentMenu(e) {
   updateResourceInfos(Config.DocumentURL, null, null, { ...options, skipRDFParse: hasResourceInfo });
 }
 
-export function hideDocumentMenu(e) {
+export function hideDocumentMenu(e, options = {}) {
   // document.removeEventListener('click', eventLeaveDocumentMenu);
 
   var dMenu = document.querySelector('#document-menu.do');
@@ -240,7 +240,7 @@ export function hideDocumentMenu(e) {
 
   // Re-enable menu buttons whose dialogs are torn down below
   dMenu.querySelectorAll('button[disabled]').forEach(b => { b.disabled = false; });
-  removeNodesWithIds(Config.DocumentDoItems);
+  removeNodesWithIds(Config.DocumentDoItems.filter(id => !options.keep?.includes(id)));
 }
 
 export function eventEscapeDocumentMenu(e) {
@@ -4499,7 +4499,7 @@ export async function saveAsDocument(e) {
         url = sanitizeIRI(url);
 
         sanitizeInsertAdjacentHTML(saveAsDocument, 'beforeend',
-          `<div class="response-message"><p class="success" data-i18n="dialog.save-as-document.success.saved-at.p"><span>${i18n.t('dialog.save-as-document.success.saved-at.p.textContent')}</span> <a href="${url}">${url}</a></p></div>`
+          `<div class="response-message"><p class="success" data-i18n="dialog.save-as-document.success.saved-at.p"><span>${i18n.t('dialog.save-as-document.success.saved-at.p.textContent')}</span> <a href="${url}" rel="noopener" target="_blank">${url}</a></p></div>`
         )
 
         const wasNewDocument = Config.DocumentAction === 'new';
@@ -4508,8 +4508,12 @@ export async function saveAsDocument(e) {
         setTimeout(() => {
           if (wasNewDocument) {
             Config.Editor['new'] = false;
-            hideDocumentMenu();
-            openResource(url);
+            // Keeps the saved location on screen until dismissed; opening the saved document replaces the page, so the dialog is put back
+            hideDocumentMenu(null, { keep: ['save-as-document'] });
+            openResource(url).then(() => {
+              if (!saveAsDocument.isConnected) document.body.appendChild(saveAsDocument);
+              saveAsDocument.querySelector('.response-message')?.scrollIntoView({ block: 'nearest' });
+            });
           }
           else {
             window.open(url, '_blank');
