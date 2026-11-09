@@ -135,7 +135,7 @@ export async function setPreferredLanguagesInfo(g) {
     preferredLanguages = g;
   }
   else if (g && typeof g === 'object') {
-    preferredLanguages = getAgentPreferredLanguages(g) || [];
+    preferredLanguages = getAgentPreferredLanguages(g) || navigator.languages;
   }
 
   let matchedLang;
