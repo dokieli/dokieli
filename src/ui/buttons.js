@@ -76,6 +76,7 @@ export function initButtons() {
       GraphView: getButtonHTML({ key: "info.graph.button", button: "info", buttonClass: "info", buttonType: "button", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-graph-view` }),
       OhYeah: getButtonHTML({ key: "info.ohyeah.button", button: "info", buttonClass: "info", buttonType: "button", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-oh-yeah` }),
       OhYeahClaimCheck: getButtonHTML({ key: "info.ohyeah-claim-check.button", button: "info", buttonClass: "info", buttonType: "button", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-oh-yeah-claim-check` }),
+      OhYeahFallacyCheck: getButtonHTML({ key: "info.ohyeah-fallacy-check.button", button: "info", buttonClass: "info", buttonType: "button", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-oh-yeah-fallacy-check` }),
       OhYeahNames: getButtonHTML({ key: "info.ohyeah-names.button", button: "info", buttonClass: "info", buttonType: "button", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-oh-yeah-names` }),
       OhYeahRules: getButtonHTML({ key: "info.ohyeah-rules.button", button: "info", buttonClass: "info", buttonType: "button", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-oh-yeah-explanation-rules` }),
       OhYeahService: getButtonHTML({ key: "info.ohyeah-service.button", button: "info", buttonClass: "info", buttonType: "button", buttonRel: "rel:help", buttonResource: `${docsBaseURL}#feature-oh-yeah-own-service` }),

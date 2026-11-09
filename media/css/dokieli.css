@@ -3419,7 +3419,8 @@ margin:0 0 0.5em 0;
 color:var(--do-color-fg-secondary);
 }
 #document-ohyeah .ohyeah-actions button,
-#document-ohyeah button.claim-check {
+#document-ohyeah button.claim-check,
+#document-ohyeah button.fallacy-check {
 display:inline-flex;
 align-items:center;
 gap:0.5em;
@@ -3436,14 +3437,17 @@ cursor:pointer;
 #document-ohyeah .ohyeah-actions button:not([disabled]):hover,
 #document-ohyeah .ohyeah-actions button:not([disabled]):focus,
 #document-ohyeah button.claim-check:not([disabled]):hover,
-#document-ohyeah button.claim-check:not([disabled]):focus {
+#document-ohyeah button.claim-check:not([disabled]):focus,
+#document-ohyeah button.fallacy-check:not([disabled]):hover,
+#document-ohyeah button.fallacy-check:not([disabled]):focus {
 color:var(--do-color-accent-strong);
 background-color:var(--do-color-accent-bg);
 fill:var(--do-color-accent-strong);
 transition:background-color 0.2s, color 0.2s, fill 0.2s;
 }
 #document-ohyeah .ohyeah-actions button[disabled],
-#document-ohyeah button.claim-check[disabled] {
+#document-ohyeah button.claim-check[disabled],
+#document-ohyeah button.fallacy-check[disabled] {
 opacity:0.6;
 cursor:default;
 }
@@ -3575,11 +3579,6 @@ font-size:0.875em;
 color:var(--do-color-fg-secondary);
 }
 #document-ohyeah .ohyeah-card-text {
-margin:0.5em 0;
-padding:0;
-border:none;
-font-size:1.05em;
-line-height:1.5;
 overflow-wrap:anywhere;
 }
 #document-ohyeah .ohyeah-card-text > :first-child {
@@ -3688,7 +3687,8 @@ color:var(--do-color-fg-secondary);
 margin:0;
 overflow-wrap:anywhere;
 }
-#document-ohyeah .claims li[data-start] {
+#document-ohyeah .claims li[data-start],
+#document-ohyeah .fallacies li[data-start] {
 cursor:pointer;
 }
 #document-ohyeah .ohyeah-claim-label {
@@ -3701,6 +3701,14 @@ display:inline-block;
 width:1em;
 margin-right:0.4em;
 border-bottom:2px solid var(--do-color-warning-solid);
+vertical-align:middle;
+}
+#document-ohyeah .ohyeah-card.fallacy .ohyeah-claim-label:before {
+content:"";
+display:inline-block;
+width:1em;
+margin-right:0.4em;
+border-bottom:2px dotted var(--do-color-error-solid);
 vertical-align:middle;
 }
 #document-ohyeah .ohyeah-code {
@@ -3780,6 +3788,10 @@ color:#000;
 }
 ::highlight(claims-cfs-highlights) {
 text-decoration:underline wavy var(--do-color-warning-solid);
+text-decoration-thickness:2px;
+}
+::highlight(fallacies-highlights) {
+text-decoration:underline double var(--do-color-error-solid);
 text-decoration-thickness:2px;
 }
 #document-ohyeah .entity-legend {
