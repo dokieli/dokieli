@@ -33,6 +33,7 @@ import { showVisualisationGraph } from './viz.js';
 import { getDocument } from './doc.js';
 import { RDAP_BOOTSTRAP_URL, lookupDomain } from './rdap.js';
 import { replyToResource, hideDocumentMenu } from './dialog.js';
+import { extensionFetch } from './auth.js';
 import { fitSidePanelToTabs, initializeNotificationsResize, openSidePanel } from './activity.js';
 import { getDeviceStorageItem, setDeviceStorageItem, removeDeviceStorageItem } from './storage.js';
 import { selectionToTextQuote, setSelectionFromTextQuote } from './editor/utils/annotation.js';
@@ -44,6 +45,8 @@ const LOOKUP_GROUPS = ['people', 'organizations', 'places', 'names'];
 const HIGHLIGHT_PRIORITY = { acronyms: 0, names: 1, places: 2, organizations: 3, people: 4 };
 // Labels from the ClaimBuster dataset
 const CLAIM_LABELS = ['CFS', 'UFS', 'NFS'];
+// Labels from the LOGIC dataset
+const FALLACY_LABELS = ['ad_hominem', 'ad_populum', 'appeal_to_emotion', 'circular_reasoning', 'equivocation', 'fallacy_of_credibility', 'fallacy_of_extension', 'fallacy_of_logic', 'fallacy_of_relevance', 'false_causality', 'false_dilemma', 'faulty_generalization', 'intentional'];
 const WIKIDATA_RESULTS_PER_NAME = 5;
 const NANOPUB_RESULTS_PER_NAME = 10;
 const MAX_LOOKUP_NAMES = 20;
@@ -58,12 +61,17 @@ const WIDTH_PROPERTY = '--dokieli-ohyeah-width';
 
 const MODEL_URL = 'https://huggingface.co/Nithiwat/mdeberta-v3-base_claimbuster';
 const SENTENCE_MODEL_URL = 'https://huggingface.co/spacy/en_core_web_sm';
+const FALLACY_MODEL_URL = 'https://huggingface.co/MidhunKanadan/roberta-large-fallacy-classification';
 
 let state = {};
 let ownServiceURL = null;
 
 function getServiceURL(path) {
   return new URL(path, getActiveServiceURL()).href;
+}
+
+function serviceFetch(url, init) {
+  return Config.WebExtensionEnabled ? extensionFetch(url, init, { anonymous: true }) : fetch(url, init);
 }
 
 function getActiveServiceURL() {
@@ -194,12 +202,23 @@ function applyHighlights() {
   if (state.claimRanges?.length) {
     CSS.highlights.set('claims-cfs-highlights', new Highlight(...state.claimRanges));
   }
+  else {
+    CSS.highlights.delete('claims-cfs-highlights');
+  }
+
+  if (state.fallacyRanges?.length) {
+    CSS.highlights.set('fallacies-highlights', new Highlight(...state.fallacyRanges));
+  }
+  else {
+    CSS.highlights.delete('fallacies-highlights');
+  }
 }
 
 function removeHighlights() {
   if (!canHighlight()) return;
   ENTITY_GROUPS.forEach(group => CSS.highlights.delete(`${group}-selection-highlights`));
   CSS.highlights.delete('claims-cfs-highlights');
+  CSS.highlights.delete('fallacies-highlights');
 }
 
 // Highlights get no pointer events, so the pointer is tested against each range's boxes
@@ -415,6 +434,21 @@ function getClaimContextHTML() {
   return `<p data-i18n="${key}">${i18n.t(`${key}.innerHTML`)}</p>`;
 }
 
+function getFallacyServiceHTML() {
+  const url = getActiveServiceURL();
+  const key = ownServiceURL ? 'panel.ohyeah.fallacycheck.optional-own.p' : 'panel.ohyeah.fallacycheck.optional.p';
+  return `<p class="ohyeah-fallacy-service-text" data-i18n="${key}" data-i18n-url="${encodeAttribute(url)}">${i18n.t(`${key}.innerHTML`, { url })}</p>`;
+}
+
+function getFallacyContextHTML() {
+  return `<p data-i18n="panel.ohyeah.fallacycheck.context.p" data-i18n-model="${encodeAttribute(FALLACY_MODEL_URL)}">${i18n.t('panel.ohyeah.fallacycheck.context.p.innerHTML', { model: FALLACY_MODEL_URL })}</p>`;
+}
+
+function getFallacyLanguageHTML() {
+  if (state.language === 'en') return '';
+  return `<p class="ohyeah-warning" data-i18n="panel.ohyeah.fallacycheck.language-other.p">${i18n.t('panel.ohyeah.fallacycheck.language-other.p.textContent')}</p>`;
+}
+
 function getClaimLanguageHTML() {
   const { language } = state;
   if (language === 'en') return '';
@@ -448,8 +482,9 @@ function getPanelHTML() {
   const canRequestAssessment = state.scope === 'document' || !!Config.Editor?.socialToolbarView;
   const buttonRequestAssessment = canRequestAssessment ? getButtonHTML({ key: 'panel.ohyeah.request-assessment.button', button: 'request-assessment', buttonClass: 'request-assessment' }) : '';
   const buttonClaimCheck = getButtonHTML({ key: 'panel.ohyeah.claimcheck.run.button', button: 'ohyeah', buttonClass: 'claim-check' });
+  const buttonFallacyCheck = getButtonHTML({ key: 'panel.ohyeah.fallacycheck.run.button', button: 'ohyeah', buttonClass: 'fallacy-check' });
   const scopeKey = state.scope === 'document' ? 'panel.ohyeah.scope.document.p' : 'panel.ohyeah.scope.selection.p';
-  const tabs = ['claimcheck', 'wikidata', 'nanopub', 'whois'];
+  const tabs = ['claimcheck', 'fallacycheck', 'wikidata', 'nanopub', 'whois'];
 
   return `
     <aside aria-labelledby="document-ohyeah-label" class="do on" contenteditable="false" dir="${dir}" id="document-ohyeah" lang="${lang}" rel="schema:hasPart" resource="#document-ohyeah" xml:lang="${lang}">
@@ -482,6 +517,16 @@ function getPanelHTML() {
               ${getPilotHTML(state.language)}
             </div>
             <p>${buttonClaimCheck}</p>
+            <div class="results"></div>
+          </section>
+          <section id="fallacycheck-results" rel="schema:hasPart" resource="#fallacycheck-results">
+            <h3 property="schema:name"><span data-i18n="panel.ohyeah.fallacycheck.h3">${i18n.t('panel.ohyeah.fallacycheck.h3.textContent')}</span> ${Config.Button.Info.OhYeahFallacyCheck}</h3>
+            <div class="ohyeah-notice">
+              ${getFallacyServiceHTML()}
+              ${getFallacyContextHTML()}
+              ${getFallacyLanguageHTML()}
+            </div>
+            <p>${buttonFallacyCheck}</p>
             <div class="results"></div>
           </section>
           <section id="wikidata-results" rel="schema:hasPart" resource="#wikidata-results">
@@ -538,10 +583,13 @@ async function setOwnService(aside, value) {
   ownServiceURL = value;
 
   aside.querySelector('.ohyeah-service-text').replaceWith(fragmentFromString(domSanitize(getClaimCheckServiceHTML())));
+  aside.querySelector('.ohyeah-fallacy-service-text').replaceWith(fragmentFromString(domSanitize(getFallacyServiceHTML())));
   aside.querySelector('.ohyeah-service-reset').disabled = !value;
   aside.querySelector('#ohyeah-service-url').value = value || '';
   aside.querySelector('#claimcheck-results .results').replaceChildren();
+  aside.querySelector('#fallacycheck-results .results').replaceChildren();
   state.claimRanges = [];
+  state.fallacyRanges = [];
   applyHighlights();
 }
 
@@ -600,7 +648,13 @@ function initPanelEvents(aside) {
       return;
     }
 
-    const claim = e.target.closest('#claimcheck-results li[data-start]');
+    const fallacyCheck = e.target.closest('button.fallacy-check');
+    if (fallacyCheck) {
+      showFallacyCheckResults(aside.querySelector('#fallacycheck-results'), fallacyCheck);
+      return;
+    }
+
+    const claim = e.target.closest('#claimcheck-results li[data-start], #fallacycheck-results li[data-start]');
     if (claim && !e.target.closest('a')) {
       showClaimInText(Number(claim.dataset.start), Number(claim.dataset.end));
     }
@@ -637,7 +691,7 @@ async function findEntities(text, language) {
   const url = getServiceURL('ner');
   if (text.length <= MAX_TEXT_LENGTH && await requestOriginConsent(url, { reason: 'names' })) {
     try {
-      const res = await fetch(url, {
+      const res = await serviceFetch(url, {
         method: 'POST',
         referrerPolicy: 'no-referrer',
         headers: { 'Content-Type': 'application/json' },
@@ -673,7 +727,7 @@ async function openPanel(range, scope, textQuote) {
   await loadOwnService();
 
   teardown();
-  state = { scope, text, segments, textQuote, entities: null, language, claimRanges: [], marks: [], loadedTabs: new Map() };
+  state = { scope, text, segments, textQuote, entities: null, language, claimRanges: [], fallacyRanges: [], marks: [], loadedTabs: new Map() };
 
   document.getElementById('document-ohyeah')?.remove();
   document.body.appendChild(fragmentFromString(getPanelHTML()));
@@ -881,7 +935,7 @@ async function showClaimCheckResults(section, button) {
 
   let response;
   try {
-    const res = await fetch(url, {
+    const res = await serviceFetch(url, {
       method: 'POST',
       referrerPolicy: 'no-referrer',
       headers: { 'Content-Type': 'application/json' },
@@ -925,6 +979,124 @@ async function showClaimCheckResults(section, button) {
       ${getSourceHTML(`<a href="${encodeAttribute(url)}" rel="prov:used" target="_blank">${htmlEncode(url)}</a>${modelLink ? ` (${modelLink})` : ''}`)}
       ${getMessageHTML('panel.ohyeah.claimcheck.summary.p', { count: checkWorthy.length, total: sentences.length })}
       <ul class="ohyeah-cards claims">${listed.map(item => getClaimHTML(item, numberFormat)).join('')}</ul>
+    </div>`);
+}
+
+function getFallacyLabel(code) {
+  return FALLACY_LABELS.includes(code)
+    ? i18n.t(`panel.ohyeah.fallacycheck.label.${code}.textContent`)
+    : code.replace(/_/g, ' ');
+}
+
+function getFallacyHTML(item, numberFormat) {
+  const annotationId = generateAttributeId();
+  const code = String(item.label || '').toLowerCase().replace(/[\s-]+/g, '_');
+  const confidence = Number(item.confidence);
+  const position = Number.isFinite(item.start) ? ` data-end="${item.end}" data-start="${item.start}"` : '';
+
+  const definitionKey = `panel.ohyeah.fallacycheck.definition.${code}.textContent`;
+  const definition = i18n.t(definitionKey);
+  const definitionHTML = definition !== definitionKey ? `
+    <details class="ohyeah-why">
+      <summary data-i18n="panel.ohyeah.fallacycheck.definition.summary">${i18n.t('panel.ohyeah.fallacycheck.definition.summary.textContent')}</summary>
+      <ul about="#${annotationId}-rating"><li data-i18n="panel.ohyeah.fallacycheck.definition.${code}" property="schema:ratingExplanation">${htmlEncode(definition)}</li></ul>
+    </details>` : '';
+
+  return `
+    <li class="ohyeah-card fallacy fallacy-${htmlEncode(code)}"${position} rel="prov:generated" resource="#${annotationId}" typeof="oa:Annotation">
+      <span rel="oa:motivatedBy" resource="oa:classifying"></span>
+      <span rel="oa:hasTarget" resource="#${annotationId}-target">
+        <span rel="oa:hasSource" resource="${encodeAttribute(Config.DocumentURL)}"></span>
+        <span rel="oa:hasSelector" resource="#${annotationId}-selector" typeof="oa:TextQuoteSelector">
+          <span content="${encodeAttribute(item.sentence)}" property="oa:exact"></span>
+        </span>
+      </span>
+      <div rel="oa:hasBody" resource="#${annotationId}-review">
+        <div about="#${annotationId}-review" typeof="schema:Review">
+          <p class="ohyeah-card-meta" rel="schema:reviewRating" resource="#${annotationId}-rating" typeof="schema:Rating">
+            <span class="ohyeah-claim-label"><span property="schema:name">${htmlEncode(getFallacyLabel(code))}</span></span>
+            <span data-i18n="panel.ohyeah.claimcheck.confidence" title="${i18n.t('panel.ohyeah.claimcheck.confidence.title')}">${i18n.t('panel.ohyeah.claimcheck.confidence.textContent')} <data datatype="xsd:decimal" property="schema:ratingValue" value="${Number.isFinite(confidence) ? confidence : ''}">${Number.isFinite(confidence) ? numberFormat.format(confidence) : ''}</data></span>
+          </p>
+          <blockquote class="ohyeah-card-text"><p>${htmlEncode(item.sentence)}</p></blockquote>
+          ${definitionHTML}
+        </div>
+      </div>
+    </li>`;
+}
+
+function locateFallacies(sentences) {
+  let cursor = 0;
+  sentences.forEach(item => {
+    const index = state.text.indexOf(item.sentence, cursor);
+    if (index === -1) return;
+    item.start = index;
+    item.end = index + item.sentence.length;
+    cursor = item.end;
+  });
+
+  state.fallacyRanges = sentences
+    .filter(item => Number.isFinite(item.start))
+    .flatMap(item => getRangesForOffsets(state.segments, item.start, item.end));
+  applyHighlights();
+}
+
+async function showFallacyCheckResults(section, button) {
+  if (state.text.length > MAX_TEXT_LENGTH) {
+    setSectionContent(section, getMessageHTML('panel.ohyeah.claimcheck.too-long.p', {}, 'error'));
+    return;
+  }
+
+  const url = getServiceURL('fallacy');
+
+  if (!(await requestOriginConsent(url, { reason: 'fallacy-check', ask: true }))) {
+    setSectionContent(section, getMessageHTML('panel.ohyeah.fallacycheck.declined.p'));
+    return;
+  }
+
+  button.disabled = true;
+  setSectionContent(section, getProgressHTML(state.scope === 'document' ? 'panel.ohyeah.fallacycheck.progress-document' : 'panel.ohyeah.fallacycheck.progress'));
+
+  let response;
+  try {
+    const res = await serviceFetch(url, {
+      method: 'POST',
+      referrerPolicy: 'no-referrer',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: state.text, language: state.language })
+    });
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    response = await res.json();
+  }
+  catch (e) {
+    console.warn('dokieli: fallacy check failed', e);
+    setSectionContent(section, getMessageHTML('panel.ohyeah.fallacycheck.error.p', { url: getActiveServiceURL() }, 'error', true));
+    button.disabled = false;
+    return;
+  }
+
+  button.disabled = false;
+
+  const sentences = Array.isArray(response?.sentences) ? response.sentences : [];
+  if (!sentences.length) {
+    state.fallacyRanges = [];
+    applyHighlights();
+    setSectionContent(section, getMessageHTML('panel.ohyeah.fallacycheck.none.p'));
+    return;
+  }
+
+  locateFallacies(sentences);
+
+  const numberFormat = new Intl.NumberFormat(Config.User.UI.Language, { style: 'percent', maximumFractionDigits: 0 });
+  const activityId = generateAttributeId();
+  const model = response.model || {};
+  const modelLink = model.url ? `<a href="${encodeAttribute(model.url)}" rel="prov:wasAssociatedWith" target="_blank">${htmlEncode(model.id || model.url)}</a>` : '';
+  const total = Number.isFinite(Number(response.total)) ? Number(response.total) : sentences.length;
+
+  setSectionContent(section, `
+    <div id="${activityId}" rel="prov:activity" resource="#${activityId}" typeof="prov:Activity">
+      ${getSourceHTML(`<a href="${encodeAttribute(url)}" rel="prov:used" target="_blank">${htmlEncode(url)}</a>${modelLink ? ` (${modelLink})` : ''}`)}
+      ${getMessageHTML('panel.ohyeah.fallacycheck.summary.p', { count: sentences.length, total })}
+      <ul class="ohyeah-cards fallacies">${sentences.map(item => getFallacyHTML(item, numberFormat)).join('')}</ul>
     </div>`);
 }
 
