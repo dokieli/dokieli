@@ -4115,7 +4115,7 @@ export async function saveAsDocument(e) {
   }
   else {
     video.forEach(i => {
-      if (i.querySelector('track') && i.hasAttribute('kind')) {
+      if (i.querySelector('track[kind]')) {
         videoPassed.push(i);
       }
       else {
@@ -4138,7 +4138,7 @@ export async function saveAsDocument(e) {
   }
   else {
     audio.forEach(i => {
-      if (i.querySelector('track') && i.hasAttribute('kind')) {
+      if (i.querySelector('track[kind]')) {
         audioPassed.push(i);
       }
       else {
@@ -4148,7 +4148,7 @@ export async function saveAsDocument(e) {
   }
   var audioAccessibilityReport = [];
   if (audioFailed.length) {
-    audioAccessibilityReport.push(`<li> data-i18n="dialog.accessibility-report.audio-failed.li">${i18n.t('dialog.accessibility-report.audio-failed.li.innerHTML')}</li>`);
+    audioAccessibilityReport.push(`<li data-i18n="dialog.accessibility-report.audio-failed.li">${i18n.t('dialog.accessibility-report.audio-failed.li.innerHTML')}</li>`);
   }
 
   var aRWarning = `<p data-i18n="dialog.accessibility-report.warning.p">${i18n.t('dialog.accessibility-report.warning.p.textContent')}</p>`;
