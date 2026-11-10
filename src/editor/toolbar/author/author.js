@@ -189,7 +189,7 @@ export class AuthorToolbar extends ToolbarView {
           <label class="editor-form-visually-hidden" for="img-src">URL</label> <input class="editor-form-input" dir="ltr" id="img-src" name="img-src" placeholder="${i18n.t('editor.toolbar.form.url.input.placeholder')}" type="text" value="" />
           ${advancedFieldsHTML(`
           <label data-i18n="editor.toolbar.img.form.img-alt.label" for="img-alt">${i18n.t('editor.toolbar.img.form.img-alt.label.textContent')}</label> <input class="editor-form-input" data-i18n="editor.toolbar.img.form.img-alt.input" dir="auto" id="img-alt" name="img-alt" placeholder="${i18n.t('editor.toolbar.img.form.img-alt.input.placeholder')}" type="text" value="" />
-          <label data-i18n="editor.toolbar.img.form.img-figcaption" for="img-figcaption">${i18n.t('editor.toolbar.img.form.img-figcaption.label.textContent')}</label> <input class="editor-form-input" data-i18n="editor.toolbar.img.form.img-figcaption.input" id="img-figcaption" name="img-figcaption" placeholder="${i18n.t('editor.toolbar.img.form.img-alt.label.textContent')}" type="text" value="" />
+          <label data-i18n="editor.toolbar.img.form.img-figcaption.label" for="img-figcaption">${i18n.t('editor.toolbar.img.form.img-figcaption.label.textContent')}</label> <input class="editor-form-input" data-i18n="editor.toolbar.img.form.img-figcaption.input" id="img-figcaption" name="img-figcaption" placeholder="${i18n.t('editor.toolbar.img.form.img-figcaption.input.placeholder')}" type="text" value="" />
           `)}
           ${formFooterHTML({ action: 'save' })}
         </fieldset>
