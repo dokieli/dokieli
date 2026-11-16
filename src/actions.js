@@ -61,45 +61,40 @@ export function showGeneralMessages() {
 
 export function showResourceAudienceAgentOccupations() {
   if (Config.User.Occupations?.length) {
-    var matches = [];
+    var audiences = Config.Resource[Config.DocumentURL]?.audience;
+    if (!audiences?.length) return;
 
-    Config.Resource[Config.DocumentURL].audience.forEach(audience => {
-      if (Config.User.Occupations.includes(audience)) {
-        matches.push(
-          getResourceGraph(audience)
-            .then(({ graph: g }) => {
-              Config.Resource[audience] = { graph: g };
-              return g ? g.node(rdf.namedNode(audience)) : g;
-            })
-            // .catch((error) => {
-            //   console.log(error)
-            // })
-            );
-      }
-    })
+    var matches = audiences.filter(audience => Config.User.Occupations.includes(audience));
 
-    //FIXME: Showing the audience essentially only works if we can fetch the audience concept resource
-    Promise.allSettled(matches)
+    var concepts = matches.map(audience =>
+      getResourceGraph(audience)
+        .then(({ graph: g }) => {
+          Config.Resource[audience] = { graph: g };
+          return g ? g.node(rdf.namedNode(audience)) : g;
+        })
+    );
+
+    Promise.allSettled(concepts)
       .then(results => {
         var ul = [];
 
-        results.forEach(result => {
-          var g = result.value;
+        results.forEach((result, i) => {
+          var iri = matches[i];
+          var label = iri;
+          var g = result.status === 'fulfilled' ? result.value : undefined;
 
           if (g) {
-            var iri = g.term.value;
-
             //TODO: Update getGraphConceptLabel to have an optional parameter that takes language tag, e.g., 'en'.
             var skosLabels = getGraphConceptLabel(g);
 
-            var label = iri;
             if (skosLabels.length) {
               label = skosLabels[0];
               Config.Resource[iri]['labels'] = skosLabels;
             }
-            // console.log(label)
-            ul.push(`<li><a href="${iri}" rel="noopener" target="_blank">${label}</a></li>`);
           }
+
+          //Falls back to the concept IRI when its resource can't be fetched
+          ul.push(`<li><a href="${iri}" rel="noopener" target="_blank">${label}</a></li>`);
         });
 
         if (ul.length > 0) {
