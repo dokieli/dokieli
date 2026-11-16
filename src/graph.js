@@ -1151,7 +1151,7 @@ export function getAgentSupplementalInfo(iri) {
         if (publications.length > 0) {
           Config.User.Publications = (Config.User.Publications)
             ? uniqueArray(Config.User.Publications.concat(publications))
-            : occupations;
+            : publications;
         }
 
         if (made.length > 0) {
