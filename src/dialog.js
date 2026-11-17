@@ -6124,7 +6124,7 @@ export function showMessageLog(e, options) {
   var messageLog;
 
   if (Config.MessageLog && Config.MessageLog.length) {
-    messageLog = `<table role="log"><caption data-i18n="dialog.message-log.caption">${i18n.t('dialog.message-log.caption.textContent')}</caption><thead><tr><th data-i18n="dialog.message-log.datetime.th">${i18n.t('dialog.message-log.datetime.th.textContent')}</th><th data-i18n="dialog.message-log.message.th">${i18n.t('dialog.message-log.message.th.textContent')}</th><th data-i18n="dialog.message-log.type.th">${i18n.t('dialog.message-log.type.th.textContent')}</th></tr></thead><tbody>`;
+    messageLog = `<table><caption data-i18n="dialog.message-log.caption">${i18n.t('dialog.message-log.caption.textContent')}</caption><thead><tr><th data-i18n="dialog.message-log.datetime.th">${i18n.t('dialog.message-log.datetime.th.textContent')}</th><th data-i18n="dialog.message-log.message.th">${i18n.t('dialog.message-log.message.th.textContent')}</th><th data-i18n="dialog.message-log.type.th">${i18n.t('dialog.message-log.type.th.textContent')}</th></tr></thead><tbody>`;
     Object.keys(Config.MessageLog).forEach(i => {
       messageLog += `<tr><td><time>${Config.MessageLog[i].dateTime}</time></td><td>${Config.MessageLog[i].content}</td><td data-i18n="dialog.message-log.${Config.MessageLog[i].type}.td">${i18n.t(`dialog.message-log.${Config.MessageLog[i].type}.td.textContent`)}</td></tr>`;
     });
@@ -6148,7 +6148,7 @@ export function showMessageLog(e, options) {
   var messageLogNode = document.getElementById('message-log');
   var copyButton = messageLogNode.querySelector('button.copy-to-clipboard');
   var clearButton = messageLogNode.querySelector('button.clear');
-  var logTable = messageLogNode.querySelector('table[role="log"]');
+  var logTable = messageLogNode.querySelector('table');
 
   if (logTable && copyButton) {
     setCopyToClipboard(logTable, copyButton);

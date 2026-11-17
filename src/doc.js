@@ -649,15 +649,15 @@ export function showActionMessage(node, message, options = {}) {
     var buttonClose = getButtonHTML({ key: 'dialog.document-action-message.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
     node.appendChild(fragmentFromString(`
-      <aside aria-labelledby="document-action-message-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="document-action-message" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#document-action-message" role="status" tabindex="0" xml:lang="${Config.User.UI.Language}">
+      <aside aria-labelledby="document-action-message-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="document-action-message" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#document-action-message" tabindex="0" xml:lang="${Config.User.UI.Language}">
         <h2 data-i18n="dialog.document-action-message.messages.h2" id="document-action-message-label" property="schema:name">${i18n.t('dialog.document-action-message.messages.h2.textContent')}</h2>
         ${buttonClose}
-        <ul role="log"></ul>
+        <ul aria-live="polite"></ul>
       </aside>
     `));
     aside = node.querySelector('#document-action-message');
   }
-  sanitizeInsertAdjacentHTML(aside.querySelector('ul[role="log"]'), 'afterbegin', messageItem);
+  sanitizeInsertAdjacentHTML(aside.querySelector('ul[aria-live]'), 'afterbegin', messageItem);
 
   let timerId = null;
 
