@@ -3579,6 +3579,7 @@ font-size:0.875em;
 color:var(--do-color-fg-secondary);
 }
 #document-ohyeah .ohyeah-card-text {
+font-style:italic;
 overflow-wrap:anywhere;
 }
 #document-ohyeah .ohyeah-card-text > :first-child {
@@ -3605,7 +3606,7 @@ font-size:0.875em;
 }
 #document-ohyeah .ohyeah-card details {
 margin-top:0.5em;
-font-size:0.875em;
+font-size:0.9em;
 }
 #document-ohyeah .ohyeah-group + .ohyeah-group {
 margin-top:1.5em;
