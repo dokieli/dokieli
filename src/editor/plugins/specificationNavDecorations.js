@@ -21,6 +21,7 @@ import { DOMParser, Fragment } from "prosemirror-model";
 import { createSectionsNavPlugin, isDocOfType, pmHeadingText, dlEntryAddDecorations, dlPairDeleteDecorations, deleteWidget, widgetButton } from "./sectionsNavDecorations.js";
 import { slugify } from "./autoId.js";
 import { fragmentFromString } from "../../utils/html.js";
+import { Icon } from "../../ui/icons.js";
 import { threatModelDefinitionHTML, THREAT_MODEL_REFERENCES } from "../../threatModel.js";
 import { subjectFromCaption } from "../../table.js";
 import { i18n } from "../../i18n.js";
@@ -229,6 +230,7 @@ function interoperabilityDecorations(doc) {
     wrapper.appendChild(widgetButton({
       className: 'do dl-entry-add',
       label: i18n.t('specification.button.add-interoperability.textContent'),
+      icon: Icon['.fas.fa-plus'],
       onClick: (e) => {
         e.preventDefault();
         if (!a.value || !b.value || a.value === b.value) return;
@@ -379,13 +381,14 @@ function subdivisionAddWidget(view) {
   const button = widgetButton({
     className: 'subdivision-add-button',
     label: addLabel(''),
+    icon: Icon['.fas.fa-plus'],
     onClick: (e) => { e.preventDefault(); if (select.value) addSubdivisionEntry(view, select.value); },
   });
   button.disabled = true;
 
   select.addEventListener('mousedown', (e) => e.stopPropagation());
   select.addEventListener('change', () => {
-    button.textContent = addLabel(select.value);
+    button.querySelector('span').textContent = addLabel(select.value);
     button.disabled = !select.value;
   });
 

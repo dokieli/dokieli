@@ -148,7 +148,10 @@ function skillButtonDecorations(doc) {
       const b = document.createElement("button");
       b.type = "button";
       b.className = "do cv-skill-add";
-      b.textContent = i18n.t("cv.button.add-skill.textContent");
+      b.appendChild(fragmentFromString(Icon['.fas.fa-plus']));
+      const span = document.createElement("span");
+      span.textContent = i18n.t("cv.button.add-skill.textContent");
+      b.appendChild(span);
       b.setAttribute("contenteditable", "false");
       b.addEventListener("mousedown", (e) => e.preventDefault());
       b.addEventListener("click", (e) => {
@@ -187,7 +190,10 @@ function entryButtonDecorations(doc) {
       b.className = "do cv-entry-add";
       b.dataset.type = type;
       b.dataset.sectionId = attrs.id || "";
-      b.textContent = i18n.t("cv.button.add-entry.textContent", { label: entryLabel(type) });
+      b.appendChild(fragmentFromString(Icon['.fas.fa-plus']));
+      const span = document.createElement("span");
+      span.textContent = i18n.t("cv.button.add-entry.textContent", { label: entryLabel(type) });
+      b.appendChild(span);
       b.setAttribute("contenteditable", "false");
       return b;
     }, { side: 1, ignoreSelection: true, stopEvent: () => true }));

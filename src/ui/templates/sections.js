@@ -16,6 +16,7 @@ limitations under the License.
 */
 
 import { fragmentFromString, selectArticleNode } from '../../utils/html.js';
+import { Icon } from '../icons.js';
 import { isAuthorMode, pmEditor } from './shared.js';
 import { DEFAULT_TOC_SCHEME, getTOCScheme, numberTree, sectionHeadingElement, sectionTOCLabel, sectionTree, setTOCEnabled, setTOCScheme, tocEnabledAttribute, tocHTML } from '../toc.js';
 import Config from '../../config.js';
@@ -224,7 +225,7 @@ export function buildSectionsNav(config, root, presentEntries = null, doc = null
     adds.className = 'do section-adds';
     missing.forEach((type) => {
       const li = document.createElement('li');
-      li.appendChild(buttonHTML(config, 'section-add', type, `+ ${config.sectionLabel(type)}`));
+      li.appendChild(buttonHTML(config, 'section-add', type, config.sectionLabel(type), null, null, Icon['.fas.fa-plus']));
       adds.appendChild(li);
     });
     nav.appendChild(adds);
@@ -269,7 +270,7 @@ function navList(config, root, nodes, entries, author, top) {
       // The name is editable, the number is not.
       makeNavLabelEditable(config, root, name, section.index, type);
       if (type) {
-        li.appendChild(buttonHTML(config, 'section-remove', type, '−', config.removeLabel(type)));
+        li.appendChild(buttonHTML(config, 'section-remove', type, '', config.removeLabel(type), null, Icon['.fas.fa-minus']));
       }
     }
 
@@ -286,7 +287,7 @@ function navList(config, root, nodes, entries, author, top) {
         adds.className = 'do section-adds';
         missingSubs.forEach((subType) => {
           const item = document.createElement('li');
-          item.appendChild(buttonHTML(config, 'subsection-add', subType, `+ ${subConfig.sectionLabel(subType)}`, null, type));
+          item.appendChild(buttonHTML(config, 'subsection-add', subType, subConfig.sectionLabel(subType), null, type, Icon['.fas.fa-plus']));
           adds.appendChild(item);
         });
         li.appendChild(adds);
@@ -299,14 +300,24 @@ function navList(config, root, nodes, entries, author, top) {
   return ol;
 }
 
-function buttonHTML(config, action, type, text, ariaLabel = null, parentType = null) {
+function buttonHTML(config, action, type, text, ariaLabel = null, parentType = null, icon = null) {
   const button = document.createElement('button');
   button.type = 'button';
   button.className = `do ${action}`;
   button.dataset.template = config.templateId;
   button.dataset.type = type;
   if (parentType) button.dataset.parent = parentType;
-  button.textContent = text;
+  if (icon) {
+    button.appendChild(fragmentFromString(icon));
+    if (text) {
+      const span = document.createElement('span');
+      span.textContent = text;
+      button.appendChild(span);
+    }
+  }
+  else {
+    button.textContent = text;
+  }
   if (ariaLabel) {
     button.title = ariaLabel;
     button.setAttribute('aria-label', ariaLabel);

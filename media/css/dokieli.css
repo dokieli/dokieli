@@ -905,6 +905,20 @@ background-color:var(--do-color-accent-bg);
 color:var(--do-color-link-hover);
 outline:none;
 }
+.section-add svg,
+.subsection-add svg,
+.cv-entry-add svg,
+.cv-skill-add svg,
+.dl-entry-add svg,
+.document-type-add svg,
+.subdivision-add-button svg,
+.questionnaire-option-add svg,
+.questionnaire-add-button svg,
+.questionnaire-inbox-set svg {
+  margin-right:0.25em;
+  margin-bottom:0.1em;
+}
+
 .cv-entry-add,
 .cv-skill-add,
 .dl-entry-add {
@@ -969,7 +983,6 @@ flex-wrap:wrap;
 align-items:center;
 gap:0.5em;
 margin:0 0 0.5em 0;
-font-size:0.9em;
 }
 .questionnaire-question-tools .questionnaire-question-remove {
 margin-left:auto;
@@ -982,7 +995,7 @@ margin:0.5em 0;
 .questionnaire-inbox-set,
 .questionnaire-add-button,
 .questionnaire-option-add {
-padding:0.1em 0.5em;
+padding:0.25em 0.5em;
 }
 .questionnaire-option-add,
 .questionnaire-add-button {

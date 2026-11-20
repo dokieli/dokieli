@@ -269,8 +269,9 @@ function questionTools(pos, question) {
     wrap.appendChild(widgetButton({ className: "questionnaire-tool", label: "↑", title: t("move-up"), onClick: (e) => { e.preventDefault(); move(-1); } }));
     wrap.appendChild(widgetButton({ className: "questionnaire-tool", label: "↓", title: t("move-down"), onClick: (e) => { e.preventDefault(); move(1); } }));
     wrap.appendChild(widgetButton({
-      className: "questionnaire-tool questionnaire-question-remove",
-      label: "−",
+      className: "do questionnaire-tool questionnaire-question-remove",
+      label: "",
+      icon: Icon['.fas.fa-minus'],
       title: t("remove-question"),
       onClick: (e) => {
         e.preventDefault();
@@ -341,6 +342,7 @@ function addOptionButton(pos, questionId, type, kind) {
   return Decoration.widget(pos, (view, getPos) => widgetButton({
     className: "do questionnaire-option-add",
     label: t(slots ? "add-time-slot" : "add-option"),
+    icon: Icon['.fas.fa-plus'],
     onClick: (e) => {
       e.preventDefault();
       const list = nodeAround(view.state, getPos() - 1, isOptionsList);
@@ -375,8 +377,9 @@ function addQuestionWidget(pos) {
     const wrap = toolbar("questionnaire-add");
     let chosen = "";
     const button = widgetButton({
-      className: "questionnaire-add-button",
+      className: "do questionnaire-add-button",
       label: t("add-question"),
+      icon: Icon['.fas.fa-plus'],
       onClick: (e) => {
         e.preventDefault();
         if (!chosen) return;

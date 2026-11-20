@@ -19,6 +19,7 @@ import { Plugin, PluginKey } from "prosemirror-state";
 import { Decoration, DecorationSet } from "prosemirror-view";
 import { DOMParser } from "prosemirror-model";
 import { fragmentFromString } from "../../utils/html.js";
+import { Icon } from "../../ui/icons.js";
 import { widgetButton } from "./sectionsNavDecorations.js";
 import { documentTypeSelectHTML } from "../../ui/templates/shared.js";
 
@@ -43,7 +44,8 @@ function removeEntryWidget(pos) {
   return Decoration.widget(pos, (view, getPos) =>
     widgetButton({
       className: 'do document-type-remove',
-      label: '−',
+      label: '',
+      icon: Icon['.fas.fa-minus'],
       title: 'Remove type',
       onClick: (e) => {
         e.preventDefault();
@@ -64,7 +66,8 @@ function addEntryWidget(pos) {
   return Decoration.widget(pos, (view, getPos) =>
     widgetButton({
       className: 'do document-type-add',
-      label: '+ Add type',
+      label: 'Add type',
+      icon: Icon['.fas.fa-plus'],
       onClick: (e) => {
         e.preventDefault();
         const p = typeof getPos === 'function' ? getPos() : null;

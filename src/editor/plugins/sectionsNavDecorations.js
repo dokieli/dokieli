@@ -84,11 +84,21 @@ export function pmHeadingText(section) {
 }
 
 // An author-mode widget button, kept out of the editor's selection/input.
-export function widgetButton({ className, label, title = null, onClick }) {
+export function widgetButton({ className, label, icon = null, title = null, onClick }) {
   const b = document.createElement("button");
   b.type = "button";
   b.className = className;
-  b.textContent = label;
+  if (icon) {
+    b.appendChild(fragmentFromString(icon));
+    if (label) {
+      const span = document.createElement("span");
+      span.textContent = label;
+      b.appendChild(span);
+    }
+  }
+  else {
+    b.textContent = label;
+  }
   if (title) { b.title = title; b.setAttribute("aria-label", title); }
   b.setAttribute("contenteditable", "false");
   b.addEventListener("mousedown", (e) => e.preventDefault());
@@ -115,6 +125,7 @@ export function dlEntryAddDecorations(doc, { matchSection, label, entryHTML, cla
       widgetButton({
         className,
         label,
+        icon: Icon['.fas.fa-plus'],
         onClick: (e) => {
           e.preventDefault();
           const p = typeof getPos === "function" ? getPos() : null;
