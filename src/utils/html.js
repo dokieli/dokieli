@@ -23,6 +23,7 @@ import { gfm as turndownGfm } from 'turndown-plugin-gfm';
 import { escapeRegExp } from '../util.js'
 import { domSanitize, htmlEncode } from '../utils/sanitization.js';
 import Config from '../config.js'
+import { i18n } from '../i18n.js';
 import { normalizeForDiff } from './normalization.js';
 
 export function tokenizeHTML(root) {
@@ -521,7 +522,7 @@ export function createHTML(title, main, options) {
   var mainHTML = ('sanitized' in options) ? main : domSanitize(main);
 
   if (!title) {
-    title = fragmentFromString(mainHTML).querySelector('h1')?.textContent.trim() || 'Untitled';
+    title = fragmentFromString(mainHTML).querySelector('h1')?.textContent.trim() || i18n.t('document.untitled.title.textContent');
   }
   title = domSanitize(title);
 

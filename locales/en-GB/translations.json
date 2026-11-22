@@ -640,6 +640,7 @@
   "editor.new-slideshow.h2.aria-label": "Add a slide title",
   "editor.new-slideshow.h2.data-placeholder": "Slide title",
   "editor.new-slideshow.p.data-placeholder": "Slide content",
+  "document.untitled.title.textContent": "Untitled",
   "editor.new.h1.aria-label": "Add a title",
   "editor.new.h1.data-placeholder": "Title",
   "editor.new.h2.data-placeholder": "Section title",

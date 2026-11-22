@@ -16,6 +16,7 @@ limitations under the License.
 */
 
 import Config from '../../config.js';
+import { i18n } from '../../i18n.js';
 import { fragmentFromString } from '../../utils/html.js';
 import { getResourceTypeOptionsHTML } from '../../doc.js';
 import { registerEditorParseTransform } from '../../utils/documentTransforms.js';
@@ -31,20 +32,21 @@ export function pmEditor() {
   return Config.Editor?.authorToolbarView?.editorView ? Config.Editor : null;
 }
 
-// Reset <html>/<head> for a new template document: UI language and an 'Untitled' title.
+// Reset <html>/<head> for a new template document: UI language and an untitled title.
 export function prepareDocumentForTemplate() {
   document.documentElement.setAttribute('lang', `${Config.User.UI.Language}`);
   document.documentElement.setAttribute('xml:lang', `${Config.User.UI.Language}`);
   document.documentElement.setAttribute('dir', `${Config.User.UI.LanguageDir}`);
 
+  const untitled = i18n.t('document.untitled.title.textContent');
   const titleElement = document.querySelector('head title');
 
   if (titleElement) {
-    titleElement.textContent = 'Untitled';
+    titleElement.textContent = untitled;
   }
   else {
     const newTitle = document.createElement('title');
-    newTitle.textContent = 'Untitled';
+    newTitle.textContent = untitled;
     document.head.appendChild(newTitle);
   }
 }

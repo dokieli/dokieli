@@ -652,6 +652,7 @@
   "editor.new-slideshow.h2.aria-label": "Agregue un título de diapositiva",
   "editor.new-slideshow.h2.data-placeholder": "Título de la diapositiva",
   "editor.new-slideshow.p.data-placeholder": "Contenido de la diapositiva",
+  "document.untitled.title.textContent": "Sin título",
   "editor.new.h1.aria-label": "Agregue un título",
   "editor.new.h1.data-placeholder": "Título",
   "editor.new.h2.data-placeholder": "Título de la sección",

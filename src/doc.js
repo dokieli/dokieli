@@ -76,7 +76,7 @@ export function updateDocumentTitle(nodeDocument) {
 
   const heading = nodeDocument.querySelector('h1')?.textContent.trim();
   let title = head.querySelector('title');
-  const text = heading || title?.textContent.trim() || 'Untitled';
+  const text = heading || title?.textContent.trim() || i18n.t('document.untitled.title.textContent');
 
   if (!title) {
     title = nodeDocument.createElement('title');

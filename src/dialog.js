@@ -7854,7 +7854,7 @@ export async function spawnDokieli(documentNode, data, contentTypes, iris, optio
     }
 
     // Only the body is replaced otherwise, so the title would stay the one of the page before
-    document.title = tmpl.head?.querySelector('title')?.textContent.trim() || tmplBody.querySelector('h1')?.textContent.trim() || 'Untitled';
+    document.title = tmpl.head?.querySelector('title')?.textContent.trim() || tmplBody.querySelector('h1')?.textContent.trim() || i18n.t('document.untitled.title.textContent');
 
     let openPreview = document.querySelectorAll('.open-preview');
 
