@@ -604,7 +604,7 @@ export async function initDocumentMode(mode) {
     }
     else if (!hasContent && !Config.EditorEnabled) {
       showNewDocument();
-      Config.Editor.toggleEditor('author');
+      Config.Editor.toggleEditor('author', { template: 'new' });
       Config.DocumentAction = 'new';
     }
   // }
