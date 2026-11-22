@@ -120,6 +120,9 @@ export function getDocument(cn, options = {}) {
 
   nodeDocument.documentElement.setHTMLUnsafe(stringFromFragment(fragment));
 
+  // Panel-namespaced i18n hooks are runtime UI labels, not document content
+  nodeDocument.querySelectorAll('[data-i18n^="panel."]').forEach(n => n.removeAttribute('data-i18n'));
+
   if (options.sanitize) {
     nodeDocument = domSanitizeHTMLBody(nodeDocument, options);
   }

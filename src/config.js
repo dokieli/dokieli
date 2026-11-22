@@ -260,6 +260,7 @@ export default {
     'document-derived-on',
     'document-editors',
     'document-authors',
+    'document-feedback',
     'document-language',
     'document-license',
     'document-rights',

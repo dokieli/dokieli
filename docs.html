@@ -84,8 +84,8 @@
                 <li data-id="roadmap">
                   <p><a href="#roadmap">Roadmap</a></p>
                   <ol>
-                    <li data-id="project-credibility-assessment"><a href="#project-credibility-assessment">Credibility assessment</a></li>
-                    <li data-id="project-knowledge-organisation"><a href="#project-knowledge-organisation">Knowledge organisation</a></li>
+                    <li data-id="credibility-assessment"><a href="#credibility-assessment">Credibility assessment</a></li>
+                    <li data-id="knowledge-organisation"><a href="#knowledge-organisation">Knowledge organisation</a></li>
                   </ol>
                 </li>
                 <li data-id="documents"><a href="#documents">Documents</a></li>
@@ -99,17 +99,17 @@
                     <li data-id="components"><a href="#components">Components</a></li>
                   </ol>
                 </li>
-                <li data-id="accessibility-usability-inclusion">
-                  <p><a href="#accessibility-usability-inclusion">Accessibility, Usability, and Inclusion</a></p>
+                <li data-id="accessibility-usability-and-inclusion">
+                  <p><a href="#accessibility-usability-and-inclusion">Accessibility, Usability, and Inclusion</a></p>
                   <ol>
                     <li data-id="accessibility-statement">
                       <p><a href="#accessibility-statement">Accessibility Statement</a></p>
                       <ol>
-                        <li data-id="accessibility-measures-to-support-accessibility"><a href="#accessibility-measures-to-support-accessibility">Measures to support accessibility</a></li>
+                        <li data-id="measures-to-support-accessibility"><a href="#measures-to-support-accessibility">Measures to support accessibility</a></li>
                         <li data-id="accessibility-conformance-status"><a href="#accessibility-conformance-status">Conformance status</a></li>
-                        <li data-id="accessibility-feedback"><a href="#accessibility-feedback">Feedback</a></li>
-                        <li data-id="accessibility-technical-specifications"><a href="#accessibility-technical-specifications">Technical specifications</a></li>
-                        <li data-id="accessibility-assessment-approach"><a href="#accessibility-assessment-approach">Assessment approach</a></li>
+                        <li data-id="accessibility-feedback"><a href="#accessibility-feedback">Accessibility feedback</a></li>
+                        <li data-id="accessibility-technical-specifications"><a href="#accessibility-technical-specifications">Accessibility technical specifications</a></li>
+                        <li data-id="assessment-approach"><a href="#assessment-approach">Assessment approach</a></li>
                       </ol>
                     </li>
                     <li data-id="authoring-accessibility">
@@ -121,7 +121,21 @@
                     </li>
                   </ol>
                 </li>
-                <li data-id="privacy-policy"><a href="#privacy-policy">Privacy policy</a></li>
+                <li data-id="privacy-policy">
+                  <p><a href="#privacy-policy">Privacy Policy</a></p>
+                  <ol>
+                    <li data-id="application-privacy"><a href="#application-privacy">Application privacy</a></li>
+                    <li data-id="cookies"><a href="#cookies">Cookies</a></li>
+                    <li data-id="dokieli-website-policy"><a href="#dokieli-website-policy">dokie.li website policy</a></li>
+                    <li data-id="dokieli-services-policy"><a href="#dokieli-services-policy">dokie.li services policy</a></li>
+                    <li data-id="outbound-requests"><a href="#outbound-requests">Outbound requests</a></li>
+                    <li data-id="notifications-policy"><a href="#notifications-policy">Notifications policy</a></li>
+                    <li data-id="local-storage-policy"><a href="#local-storage-policy">Local storage policy</a></li>
+                    <li data-id="service-worker"><a href="#service-worker">Service worker</a></li>
+                    <li data-id="third-party-services"><a href="#third-party-services">Third-party services</a></li>
+                    <li data-id="privacy-contact"><a href="#privacy-contact">Privacy contact</a></li>
+                  </ol>
+                </li>
               </ol>
             </div>
           </nav>
@@ -209,7 +223,7 @@
             <h2 property="schema:name">Roadmap</h2>
             <div datatype="rdf:HTML" property="schema:description">
               <p>Here are the features and improvements in dokieli's roadmap. Everything here is subject to change.</p>
-              <section id="project-credibility-assessment" inlist="" rel="schema:hasPart" resource="#project-credibility-assessment">
+              <section id="credibility-assessment" inlist="" rel="schema:hasPart" resource="#credibility-assessment">
                 <h3 property="schema:name">Credibility assessment</h3>
                 <div datatype="rdf:HTML" property="schema:description">
                   <dl>
@@ -222,7 +236,7 @@
                   </dl>
                 </div>
               </section>
-              <section id="project-knowledge-organisation" inlist="" rel="schema:hasPart" resource="#project-knowledge-organisation">
+              <section id="knowledge-organisation" inlist="" rel="schema:hasPart" resource="#knowledge-organisation">
                 <h3 property="schema:name">Knowledge organisation</h3>
                 <div datatype="rdf:HTML" property="schema:description">
                   <dl>
@@ -231,7 +245,7 @@
                     <dt>Planned for</dt>
                     <dd><time>2026-Q4</time>–<time>2027-Q2</time></dd>
                     <dt>Funded by</dt>
-                    <dd><a href="https://nlnet.nl/project/Dokieli-KnowledgeOrganisation/">NLnet </a> <a href="https://nlnet.nl/thema/NGI0CommonsFund.html">NGI0 Commons Fund</a>. <a href="https://github.com/orgs/dokieli/projects/9">Project board</a>.</dd>
+                    <dd><a href="https://nlnet.nl/project/Dokieli-KnowledgeOrganisation/">NLnet</a> <a href="https://nlnet.nl/thema/NGI0CommonsFund.html">NGI0 Commons Fund</a>. <a href="https://github.com/orgs/dokieli/projects/9">Project board</a>.</dd>
                   </dl>
                 </div>
               </section>
@@ -363,7 +377,7 @@
                         <dt about="#feature-key-storage-local" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-key-storage-local">Keys on the device</dfn></dt>
                         <dd about="#feature-key-storage-local" property="skos:definition">A copy of each key, also locked by the passphrase, is kept in the browser on the device, so keys stay usable without a personal storage and without a network. Clearing the web browser's data removes it. Where there is no personal storage, this copy and any file the user has <a href="#feature-key-export" rel="rdfs:seeAlso">downloaded</a> are the only ones.</dd>
                         <dt about="#feature-keystore-unlock" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-keystore-unlock">Unlocking keys</dfn></dt>
-                        <dd about="#feature-keystore-unlock" property="skos:definition">Keys are unlocked once per session by entering the  <a href="#feature-passphrase" rel="rdfs:seeAlso">passphrase</a>, and stay unlocked until they are locked again, the web browser tab is closed, or the user <a href="#feature-sign-in" rel="rdfs:seeAlso">signs out</a>.</dd>
+                        <dd about="#feature-keystore-unlock" property="skos:definition">Keys are unlocked once per session by entering the <a href="#feature-passphrase" rel="rdfs:seeAlso">passphrase</a>, and stay unlocked until they are locked again, the web browser tab is closed, or the user <a href="#feature-sign-in" rel="rdfs:seeAlso">signs out</a>.</dd>
                         <dt about="#feature-public-key-publication" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-public-key-publication">Publishing a public key</dfn></dt>
                         <dd about="#feature-public-key-publication" property="skos:definition">The public half of each key is published in the user's <a href="#feature-webid" rel="rdfs:seeAlso">WebID</a> profile: the encryption key so that others can encrypt documents for them, the signing key so that others can verify their signatures.</dd>
                         <dt about="#feature-recipient-key-discovery" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-recipient-key-discovery">Finding a contact's key</dfn></dt>
@@ -414,7 +428,7 @@
                         <dd property="skos:definition">An article, such as a blog post, story, or report.</dd>
                         <dt about="#feature-slideshow" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-slideshow"></i><dfn id="feature-slideshow">Slideshow</dfn></dt>
                         <dd property="skos:definition">A presentation of a series of slides.</dd>
-                        <dt about="#feature-cv" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-book-skull"></i><dfn  id="feature-cv">Curriculum Vitae</dfn></dt>
+                        <dt about="#feature-cv" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-book-skull"></i><dfn id="feature-cv">Curriculum Vitae</dfn></dt>
                         <dd property="skos:definition">An academic and professional history and achievements.</dd>
                       </dl>
                     </dd>
@@ -426,7 +440,7 @@
                         <dd about="#html-documents" property="skos:definition">When opening an (X)HTML document, only the content is imported. CSS, JavaScript, and other additional elements are excluded for security reasons. After importing, dokieli can be used as usual with all of its <a href="#features">features</a>.</dd>
                         <dt about="#geo-stats" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-map"></i><dfn id="geo-stats">Geo and Stats</dfn></dt>
                         <dd about="#geo-stats">
-                          <p property="skos:definition">The user can view a <a href="#privacy-third-party-services" rel="rdfs:seeAlso">map</a> (<a href="https://www.openstreetmap.org/">OpenStreetMap</a>) that includes a track, along with detailed <abbr title="Global Positioning System">GPS</abbr> and extension data in a table. This data includes time period, latitude, longitude, altitude, heart rate, cadence, speed, air temperature, water temperature, and depth. The table also provides a summary of the publication date, publisher, actor, total distance, total time, average pace, average heart rate, elevation gain, and elevation loss. Additionally, the nearest city to the track is identified and linked on <a href="https://www.wikidata.org/">Wikidata</a>.</p>
+                          <p property="skos:definition">The user can view a <a href="#third-party-services" rel="rdfs:seeAlso">map</a> (<a href="https://www.openstreetmap.org/">OpenStreetMap</a>) that includes a track, along with detailed <abbr title="Global Positioning System">GPS</abbr> and extension data in a table. This data includes time period, latitude, longitude, altitude, heart rate, cadence, speed, air temperature, water temperature, and depth. The table also provides a summary of the publication date, publisher, actor, total distance, total time, average pace, average heart rate, elevation gain, and elevation loss. Additionally, the nearest city to the track is identified and linked on <a href="https://www.wikidata.org/">Wikidata</a>.</p>
                           <figure id="figure-dokieli-geo-stats" rel="schema:video" resource="#figure-dokieli-geo-stats">
                             <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-geo-stats.jpg" preload="none" resource="#figure-dokieli-geo-stats" typeof="schema:VideoObject" width="800">
                               <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-geo-stats.webm" type="video/webm" />
@@ -476,7 +490,7 @@
                     <dd about="#feature-memento" property="skos:definition">The user can access the memento (version history) of a document.</dd>
                     <dt about="#feature-robustify-links" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-link"></i><dfn id="feature-robustify-links">Robustify Links</dfn></dt>
                     <dd about="#feature-robustify-links">
-                      <p property="skos:definition">To help mitigate content drift and link rot, links can be enhanced with additional context such as a <a href="#privacy-third-party-services" rel="rdfs:seeAlso">snapshot URI</a> from the <a href="https://archive.org/">Internet Archive</a>, a timestamp of when the link was created, and other relevant metadata.</p>
+                      <p property="skos:definition">To help mitigate content drift and link rot, links can be enhanced with additional context such as a <a href="#third-party-services" rel="rdfs:seeAlso">snapshot URI</a> from the <a href="https://archive.org/">Internet Archive</a>, a timestamp of when the link was created, and other relevant metadata.</p>
                       <figure id="figure-dokieli-robustify-links" rel="schema:video" resource="#figure-dokieli-robustify-links">
                         <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-robustify-links.jpg" preload="none" resource="#figure-dokieli-robustify-links" typeof="schema:VideoObject" width="800">
                           <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-robustify-links.webm" type="video/webm" />
@@ -485,17 +499,17 @@
                       </figure>
                     </dd>
                     <dt about="#feature-archive" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-archive"></i><dfn id="feature-archive">Archive</dfn></dt>
-                    <dd about="#feature-archive" property="skos:definition">Sends an archival request of the current article to the <a href="#privacy-third-party-services" rel="rdfs:seeAlso">Internet Archive</a> <a href="https://web.archive.org/">Wayback Machine</a>.</dd>
+                    <dd about="#feature-archive" property="skos:definition">Sends an archival request of the current article to the <a href="#third-party-services" rel="rdfs:seeAlso">Internet Archive</a> <a href="https://web.archive.org/">Wayback Machine</a>.</dd>
                     <dt about="#feature-oh-yeah" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-scale"></i><dfn id="feature-oh-yeah">Oh yeah?</dfn></dt>
                     <dd about="#feature-oh-yeah">
-                      <p property="skos:definition">Helps the reader assess the credibility of a selected passage or of the whole document. It finds names of people, organisations, and places, looks them up on <cite><a href="https://www.wikidata.org/" rel="cito:citesAsAuthority">Wikidata</a></cite> and the <cite><a href="https://nanopub.net/" rel="cito:citesAsAuthority">Nanopub</a></cite> network, looks up who registered the document's domain, and can check which sentences are factual claims worth checking. It opens from the toolbar for a selection, or from Tools in the <a href="#menu" rel="rdfs:seeAlso">menu</a> for the whole document. Each web service is contacted only with the reader's consent; see <a href="#privacy-third-party-services" rel="rdfs:seeAlso">third-party services</a>.</p>
+                      <p property="skos:definition">Helps the reader assess the credibility of a selected passage or of the whole document. It finds names of people, organisations, and places, looks them up on <cite><a href="https://www.wikidata.org/" rel="cito:citesAsAuthority">Wikidata</a></cite> and the <cite><a href="https://nanopub.net/" rel="cito:citesAsAuthority">Nanopub</a></cite> network, looks up who registered the document's domain, and can check which sentences are factual claims worth checking. It opens from the toolbar for a selection, or from Tools in the <a href="#menu" rel="rdfs:seeAlso">menu</a> for the whole document. Each web service is contacted only with the reader's consent; see <a href="#third-party-services" rel="rdfs:seeAlso">third-party services</a>.</p>
                       <dl rel="dcterms:subject">
                         <dt about="#feature-oh-yeah-names" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-oh-yeah-names">Name finding</dfn></dt>
                         <dd about="#feature-oh-yeah-names" property="skos:definition">Names of people, organisations, places, and other things are found by the Oh yeah? text analysis service with open-weight machine learning models: spaCy's <a href="https://huggingface.co/spacy/en_core_web_trf">English</a> and <a href="https://huggingface.co/spacy/es_core_news_sm">Spanish</a> models. The text is sent to the service only with the reader's consent. If the reader does not allow it, or the service cannot be reached, names are found in the browser instead with <cite><a href="https://compromise.cool/" rel="cito:citesAsAuthority">compromise</a></cite> for English and <cite><a href="https://github.com/nlp-compromise/es-compromise" rel="cito:citesAsAuthority">es-compromise</a></cite> for Spanish, which use word lists and grammar rules and are much less accurate. Either way, names can be missed or given the wrong kind, and text in other languages gets no names. Found names are highlighted in the text by kind: people, organisations, places, other names, and acronyms. Pointing at a highlighted name shows what it was marked as and how, and selecting it shows its Wikidata matches.</dd>
                         <dt about="#feature-oh-yeah-claim-check" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-oh-yeah-claim-check">Claim check</dfn></dt>
-                        <dd about="#feature-oh-yeah-claim-check" property="skos:definition">Labels each sentence as a check-worthy factual claim, an unimportant factual claim, or not a factual claim, with the model's confidence. It does not say whether a sentence is true. dokieli's service uses <cite><a href="https://huggingface.co/Nithiwat/mdeberta-v3-base_claimbuster" rel="cito:citesAsAuthority">ClaimBuster mDeBERTa</a></cite>, a machine learning classifier trained on the <cite><a href="https://doi.org/10.5281/zenodo.3836810" rel="cito:citesAsAuthority">ClaimBuster</a></cite> set of labelled sentences from US presidential debates (1960 to 2016). It is not generative AI or a large language model. It was trained on English text only, so it will not work reliably on other languages. Each sentence is checked on its own, without the rest of the document, so a claim may be explained or backed up elsewhere in the document in a way the check cannot see. Checking a selection lists every sentence; checking the whole document lists only the check-worthy sentences and underlines them in the text. The explanations shown with each result come from simple rules in the service, not from the model. Nothing is sent until the reader selects “Check claims”. The text sent is used only to answer the request: dokieli's service does not store it, does not use it to train any model, and does not link it to the reader. See also dokieli's <a href="#privacy-dokieli-services" rel="rdfs:seeAlso">privacy policy for services</a>.</dd>
+                        <dd about="#feature-oh-yeah-claim-check" property="skos:definition">Labels each sentence as a check-worthy factual claim, an unimportant factual claim, or not a factual claim, with the model's confidence. It does not say whether a sentence is true. dokieli's service uses <cite><a href="https://huggingface.co/Nithiwat/mdeberta-v3-base_claimbuster" rel="cito:citesAsAuthority">ClaimBuster mDeBERTa</a></cite>, a machine learning classifier trained on the <cite><a href="https://doi.org/10.5281/zenodo.3836810" rel="cito:citesAsAuthority">ClaimBuster</a></cite> set of labelled sentences from US presidential debates (1960 to 2016). It is not generative AI or a large language model. It was trained on English text only, so it will not work reliably on other languages. Each sentence is checked on its own, without the rest of the document, so a claim may be explained or backed up elsewhere in the document in a way the check cannot see. Checking a selection lists every sentence; checking the whole document lists only the check-worthy sentences and underlines them in the text. The explanations shown with each result come from simple rules in the service, not from the model. Nothing is sent until the reader selects “Check claims”. The text sent is used only to answer the request: dokieli's service does not store it, does not use it to train any model, and does not link it to the reader. See also dokieli's <a href="#dokieli-services-policy" rel="rdfs:seeAlso">privacy policy for services</a>.</dd>
                         <dt about="#feature-oh-yeah-fallacy-check" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-oh-yeah-fallacy-check">Fallacy check</dfn></dt>
-                        <dd about="#feature-oh-yeah-fallacy-check" property="skos:definition">Marks sentences whose wording resembles a logical fallacy, such as ad hominem, false cause, or false dilemma, with the model's confidence. A match means the wording looks like a known fallacy pattern. It does not mean the argument is wrong, and sound arguments can be worded in similar ways. dokieli's service uses <cite><a href="https://huggingface.co/MidhunKanadan/roberta-large-fallacy-classification" rel="cito:citesAsAuthority">roberta-large-fallacy-classification</a></cite>, a machine learning classifier trained on the <cite><a href="https://github.com/causalNLP/logical-fallacy" rel="cito:citesAsAuthority">LOGIC</a></cite> set of labelled fallacy examples (<cite><a href="https://doi.org/10.48550/arXiv.2202.13758" rel="cito:citesAsAuthority">Logical Fallacy Detection</a></cite>). It is not generative AI or a large language model. It was trained on English text only, so it will not work reliably on other languages. Each sentence is checked on its own, so the check cannot follow an argument across sentences. Only sentences above the service's confidence threshold are listed, and they are underlined in the text. Nothing is sent until the reader selects “Check for fallacies”. The text sent is used only to answer the request: dokieli's service does not store it, does not use it to train any model, and does not link it to the reader. See also dokieli's <a href="#privacy-dokieli-services" rel="rdfs:seeAlso">privacy policy for services</a>.</dd>
+                        <dd about="#feature-oh-yeah-fallacy-check" property="skos:definition">Marks sentences whose wording resembles a logical fallacy, such as ad hominem, false cause, or false dilemma, with the model's confidence. A match means the wording looks like a known fallacy pattern. It does not mean the argument is wrong, and sound arguments can be worded in similar ways. dokieli's service uses <cite><a href="https://huggingface.co/MidhunKanadan/roberta-large-fallacy-classification" rel="cito:citesAsAuthority">roberta-large-fallacy-classification</a></cite>, a machine learning classifier trained on the <cite><a href="https://github.com/causalNLP/logical-fallacy" rel="cito:citesAsAuthority">LOGIC</a></cite> set of labelled fallacy examples (<cite><a href="https://doi.org/10.48550/arXiv.2202.13758" rel="cito:citesAsAuthority">Logical Fallacy Detection</a></cite>). It is not generative AI or a large language model. It was trained on English text only, so it will not work reliably on other languages. Each sentence is checked on its own, so the check cannot follow an argument across sentences. Only sentences above the service's confidence threshold are listed, and they are underlined in the text. Nothing is sent until the reader selects “Check for fallacies”. The text sent is used only to answer the request: dokieli's service does not store it, does not use it to train any model, and does not link it to the reader. See also dokieli's <a href="#dokieli-services-policy" rel="rdfs:seeAlso">privacy policy for services</a>.</dd>
                         <dt about="#feature-oh-yeah-explanation-rules" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-oh-yeah-explanation-rules">Explanation rules</dfn></dt>
                         <dd about="#feature-oh-yeah-explanation-rules" property="skos:definition">The “Why” shown with each claim check result comes from simple rules in the claim check service, separate from the model that chooses the label. The kinds of explanation come from the ClaimBuster dataset paper (<cite><a href="https://doi.org/10.48550/arXiv.2004.14425" rel="cito:citesAsAuthority">A Benchmark Dataset of Check-worthy Factual Claims</a></cite>): its Table 1 and annotation guideline, which were used to guide the people who labelled the dataset. A check-worthy claim may present data with a quantity, make a claim about a past incident, or mix opinion with a checkable fact. An unimportant factual claim contains facts the public would not want checked. A non-factual sentence may be a question, a promise or future plan, an opinion, or a rhetorical expression. Which words trigger each explanation is the service's own choice, for example “I think” or “should” for opinions and “will” or “going to” for plans, with lists for English and Spanish. The explanations describe the sentence; they are not the model's reasons for its label.</dd>
                         <dt about="#feature-oh-yeah-own-service" property="skos:prefLabel" typeof="skos:Concept"><dfn id="feature-oh-yeah-own-service">Own claim check service</dfn></dt>
@@ -529,9 +543,7 @@
                       <p property="skos:definition">The Edit feature offers authoring tools for formatting, linking, and structuring articles. Edits are local unless <a href="#feature-autosaving">autosave</a> is enabled or changes are committed using <a href="#feature-save" rel="rdfs:seeAlso">Save</a>, <a href="#feature-save-as" rel="rdfs:seeAlso">Save As</a>, <a href="#feature-version" rel="rdfs:seeAlso">Version</a>, or <a href="#feature-immutable" rel="rdfs:seeAlso">Immutable</a>. Standard formatting options include headings, italics, bold, ordered and unordered lists, inline code, preformatted text, hyperlinks, inline quotes, images, and tables. Additional capabilities include:</p>
                       <dl rel="dcterms:subject">
                         <dt about="#feature-collaborative-editing" property="skos:prefLabel"><i class="fas fa-user-rays"></i><dfn id="feature-collaborative-editing">Collaborative editing</dfn></dt>
-                        <dd about="#feature-collaborative-editing">
-                          <p>The collaborative editing feature enables real-time multi-user document editing. When available on a supporting server, multiple people can edit the same document simultaneously, with each participant's cursor and presence visible to others. Try it at <a href="https://dokie.li/demo" rel="rdfs:seeAlso">https://dokie.li/demo</a>.</p>
-                        </dd>
+                        <dd about="#feature-collaborative-editing">The collaborative editing feature enables real-time multi-user document editing. When available on a supporting server, multiple people can edit the same document simultaneously, with each participant's cursor and presence visible to others. Try it at <a href="https://dokie.li/demo" rel="rdfs:seeAlso">https://dokie.li/demo</a>.</dd>
                         <dt about="#feature-interactive-embeddable-objects" property="skos:prefLabel"><i class="fas fa-chart-line"></i><dfn id="feature-interactive-embeddable-objects">Interactive and embeddable objects</dfn></dt>
                         <dd about="#feature-interactive-embeddable-objects">
                           <p property="skos:definition">Charts and other visual elements, such as sparklines, can be embedded based on statistical data.</p>
@@ -545,7 +557,7 @@
                         <dt about="#feature-semantic-annotation" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-rocket"></i><dfn id="feature-semantic-annotation">Semantic annotation</dfn></dt>
                         <dd about="#feature-semantic-annotation" property="skos:definition">Content can be semantically marked to enhance machine-readability (RDFa), while remaining human-readable.</dd>
                         <dt about="#feature-data-sources" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-book-atlas"></i><dfn id="feature-data-sources">Data sources</dfn></dt>
-                        <dd about="#feature-data-sources" datatype="rdf:HTML" property="skos:definition">Searches, e.g., for <a href="#feature-footnotes-citations" rel="rdfs:seeAlso">citations</a> or table lookups, query the <a href="#privacy-third-party-services" rel="rdfs:seeAlso">web services</a> <a href="https://www.specref.org/" rel="noopener" target="_blank">Specref</a>, <a href="https://www.wikidata.org/" rel="noopener" target="_blank">Wikidata</a>, and <a href="https://openlibrary.org/" rel="noopener" target="_blank">Open Library</a>. Identifiers resolve directly to a link: ISBN, <a href="https://www.doi.org/" rel="noopener" target="_blank">DOI</a>, <a href="https://orcid.org/" rel="noopener" target="_blank">ORCID</a>, or Wikidata entity.</dd>
+                        <dd about="#feature-data-sources" datatype="rdf:HTML" property="skos:definition">Searches, e.g., for <a href="#feature-footnotes-citations" rel="rdfs:seeAlso">citations</a> or table lookups, query the <a href="#third-party-services" rel="rdfs:seeAlso">web services</a> <a href="https://www.specref.org/" rel="noopener" target="_blank">Specref</a>, <a href="https://www.wikidata.org/" rel="noopener" target="_blank">Wikidata</a>, and <a href="https://openlibrary.org/" rel="noopener" target="_blank">Open Library</a>. Identifiers resolve directly to a link: ISBN, <a href="https://www.doi.org/" rel="noopener" target="_blank">DOI</a>, <a href="https://orcid.org/" rel="noopener" target="_blank">ORCID</a>, or Wikidata entity.</dd>
                         <dt about="#feature-footnotes-citations" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-hashtag"></i><dfn id="feature-footnotes-citations">Footnotes and citations</dfn></dt>
                         <dd about="#feature-footnotes-citations">
                           <p property="skos:definition">Footnotes and citations can be added to selected text, providing contextual, robust references. Cited entities can be notified for back-referencing. References may include ISBNs or URLs. For contextual citations, for example, a citing entity (an argument) may reference a cited entity (observation results) as factual evidence. Bibliographic searches for technical specifications are also supported for citation purposes.</p>
@@ -639,13 +651,13 @@
               </section>
             </div>
           </section>
-          <section id="accessibility-usability-inclusion" inlist="" rel="schema:hasPart" resource="#accessibility-usability-inclusion">
+          <section id="accessibility-usability-and-inclusion" inlist="" rel="schema:hasPart" resource="#accessibility-usability-and-inclusion">
             <h2 property="schema:name">Accessibility, Usability, and Inclusion</h2>
             <div datatype="rdf:HTML" property="schema:description">
               <section id="accessibility-statement" inlist="" rel="schema:hasPart" resource="#accessibility-statement">
                 <h3 property="schema:name">Accessibility Statement</h3>
                 <div datatype="rdf:HTML" property="schema:description">
-                  <section id="accessibility-measures-to-support-accessibility" inlist="" rel="schema:hasPart" resource="#accessibility-measures-to-support-accessibility">
+                  <section id="measures-to-support-accessibility" inlist="" rel="schema:hasPart" resource="#measures-to-support-accessibility">
                     <h4 property="schema:name">Measures to support accessibility</h4>
                     <div datatype="rdf:HTML" property="schema:description">
                       <p>dokieli takes the following measures to ensure accessibility of dokieli:</p>
@@ -663,13 +675,13 @@
                     </div>
                   </section>
                   <section id="accessibility-feedback" inlist="" rel="schema:hasPart" resource="#accessibility-feedback">
-                    <h4 property="schema:name">Feedback</h4>
+                    <h4 property="schema:name">Accessibility feedback</h4>
                     <div datatype="rdf:HTML" property="schema:description">
                       <p>We welcome your feedback on the accessibility of dokieli. Please let us know if you encounter accessibility barriers on <a href="https://github.com/dokieli/dokieli/issues">dokieli issues</a>.</p>
                     </div>
                   </section>
                   <section id="accessibility-technical-specifications" inlist="" rel="schema:hasPart" resource="#accessibility-technical-specifications">
-                    <h4 property="schema:name">Technical specifications</h4>
+                    <h4 property="schema:name">Accessibility technical specifications</h4>
                     <div datatype="rdf:HTML" property="schema:description">
                       <p>Accessibility of dokieli relies on the following technologies to work with the particular combination of web browser and any assistive technologies or plugins installed on your computer:</p>
                       <ul>
@@ -678,7 +690,7 @@
                       <p>These technologies are relied upon for conformance with the accessibility standards used.</p>
                     </div>
                   </section>
-                  <section id="accessibility-assessment-approach" inlist="" rel="schema:hasPart" resource="#accessibility-assessment-approach">
+                  <section id="assessment-approach" inlist="" rel="schema:hasPart" resource="#assessment-approach">
                     <h4 property="schema:name">Assessment approach</h4>
                     <div datatype="rdf:HTML" property="schema:description">
                       <p>dokieli assessed the accessibility of dokieli by the following approaches:</p>
@@ -768,9 +780,9 @@
             <h2 property="schema:name">Privacy Policy</h2>
             <div datatype="rdf:HTML" property="schema:description">
               <section id="application-privacy" inlist="" rel="schema:hasPart" resource="#application-privacy">
-                <h3 property="schema:name">Application Privacy</h3>
+                <h3 property="schema:name">Application privacy</h3>
                 <div datatype="rdf:HTML" property="schema:description">
-                  <p>dokieli is a client side application, and can be hosted from any web server. It does not collect, transmit, or store any data about its users on remote servers, and it does not <span about="#privacy-policy" rel="odrl:prohibition" typeof="odrl:Prohibition"><span rel="odrl:action" resource="odrl:sell">sell</span> or <span rel="odrl:action" resource="odrl:distribute">distribute</span></span> data it processes. No analytics, telemetry, or tracking is built into the application. Content produced using dokieli is sent only to destinations the user chooses. Some actions also send <a href="#policy-notifications" rel="rdfs:seeAlso">notifications</a> on the user's behalf; a notification identifies the user by their WebID when they are signed in. This policy reflects the <a href="#user-agent-duties" rel="rdfs:seeAlso">user agent duties</a> that guide dokieli.</p>
+                  <p>dokieli is a client side application, and can be hosted from any web server. It does not collect, transmit, or store any data about its users on remote servers, and it does not <span about="#privacy-policy" rel="odrl:prohibition" typeof="odrl:Prohibition"><span rel="odrl:action" resource="odrl:sell">sell</span> or <span rel="odrl:action" resource="odrl:distribute">distribute</span></span> data it processes. No analytics, telemetry, or tracking is built into the application. Content produced using dokieli is sent only to destinations the user chooses. Some actions also send <a href="#notifications-policy" rel="rdfs:seeAlso">notifications</a> on the user's behalf; a notification identifies the user by their WebID when they are signed in. This policy reflects the <a href="#user-agent-duties" rel="rdfs:seeAlso">user agent duties</a> that guide dokieli.</p>
                 </div>
               </section>
               <section id="cookies" inlist="" rel="schema:hasPart" resource="#cookies">
@@ -779,44 +791,44 @@
                   <p>dokieli does not use cookies.</p>
                 </div>
               </section>
-              <section id="policy-dokieli-website" inlist="" rel="schema:hasPart" resource="#policy-dokieli-website">
+              <section id="dokieli-website-policy" inlist="" rel="schema:hasPart" resource="#dokieli-website-policy">
                 <h3 property="schema:name">dokie.li website policy</h3>
                 <div datatype="rdf:HTML" property="schema:description">
-                  <p>The <a href="http://dokie.li/">dokie.li</a> website is a simple static server. When the application's assets (HTML, CSS, JavaScript) are served from dokie.li, the server receives and logs standard HTTP requests, as is the case with any web server. Those logs are not processed for analytics, profiling, or any other purpose beyond routine server operation. When dokieli is deployed elsewhere, the dokie.li server is not involved in serving the application. In-app help (the info buttons), however, fetches documentation from https://dokie.li/docs by default, or from another origin if the deployer configures one. These are ordinary cross-origin browser requests and disclose nothing beyond what the browser already sends, including the origin of the deploying site to the docs origin. The dokie.li website and <a href="#privacy-dokieli-services" rel="rdfs:seeAlso">services</a> run on servers in Switzerland, hosted by <cite><a href="https://infomaniak.com/" rel="cito:discusses">Infomaniak</a></cite>, where Swiss data protection law applies; the European Union recognises Switzerland as providing adequate protection of personal data.</p>
+                  <p>The <a href="http://dokie.li/">dokie.li</a> website is a simple static server. When the application's assets (HTML, CSS, JavaScript) are served from dokie.li, the server receives and logs standard HTTP requests, as is the case with any web server. Those logs are not processed for analytics, profiling, or any other purpose beyond routine server operation. When dokieli is deployed elsewhere, the dokie.li server is not involved in serving the application. In-app help (the info buttons), however, fetches documentation from https://dokie.li/docs by default, or from another origin if the deployer configures one. These are ordinary cross-origin browser requests and disclose nothing beyond what the browser already sends, including the origin of the deploying site to the docs origin. The dokie.li website and <a href="#dokieli-services-policy" rel="rdfs:seeAlso">services</a> run on servers in Switzerland, hosted by <cite><a href="https://infomaniak.com/" rel="cito:discusses">Infomaniak</a></cite>, where Swiss data protection law applies; the European Union recognises Switzerland as providing adequate protection of personal data.</p>
                 </div>
               </section>
-              <section id="privacy-dokieli-services" inlist="" rel="schema:hasPart" resource="#privacy-dokieli-services">
+              <section id="dokieli-services-policy" inlist="" rel="schema:hasPart" resource="#dokieli-services-policy">
                 <h3 property="schema:name">dokie.li services policy</h3>
                 <div datatype="rdf:HTML" property="schema:description">
                   <p>Some features use web services that the dokieli project runs under dokie.li, such as the <a href="#feature-oh-yeah" rel="rdfs:seeAlso">Oh yeah?</a> text analysis service at <a href="https://ohyeah.dokie.li/">ohyeah.dokie.li</a>. Like the other <a href="#web-services" rel="rdfs:seeAlso">web services</a>, they are contacted only with the user's consent and only when a feature is used. A request carries only what the feature needs, such as the text being analysed and its language, or a domain name; it does not carry the user's WebID, credentials, cookies, or the address of the document being read.</p>
-                  <p>The content of a request is used only to answer it: it is not stored or used to train or improve any model, and access codes, such as those for pilot models, are checked but not stored. As with the <a href="#policy-dokieli-website" rel="rdfs:seeAlso">dokie.li website</a>, the server keeps standard HTTP request logs, with the IP address, time, and address requested, but not the content of requests. To prevent overuse, it also briefly keeps a count of recent requests from each IP address, in memory only. When a service needs a third party to answer, such as a domain registry for a WHOIS lookup, the service makes that request itself, so the user's IP address is not disclosed to the third party. The models are downloaded when the service is set up, so no request content is sent to where they are published. Users who prefer that their text does not leave their device can <a href="#feature-oh-yeah-own-service" rel="rdfs:seeAlso">run the service themselves</a>.</p>
+                  <p>The content of a request is used only to answer it: it is not stored or used to train or improve any model, and access codes, such as those for pilot models, are checked but not stored. As with the <a href="#dokieli-website-policy" rel="rdfs:seeAlso">dokie.li website</a>, the server keeps standard HTTP request logs, with the IP address, time, and address requested, but not the content of requests. To prevent overuse, it also briefly keeps a count of recent requests from each IP address, in memory only. When a service needs a third party to answer, such as a domain registry for a WHOIS lookup, the service makes that request itself, so the user's IP address is not disclosed to the third party. The models are downloaded when the service is set up, so no request content is sent to where they are published. Users who prefer that their text does not leave their device can <a href="#feature-oh-yeah-own-service" rel="rdfs:seeAlso">run the service themselves</a>.</p>
                 </div>
               </section>
-              <section id="policy-outbound-requests" inlist="" rel="schema:hasPart" resource="#policy-outbound-requests">
+              <section id="outbound-requests" inlist="" rel="schema:hasPart" resource="#outbound-requests">
                 <h3 property="schema:name">Outbound requests</h3>
                 <div datatype="rdf:HTML" property="schema:description">
                   <p>dokieli makes outbound requests to resources and services as directed by the user. Those requests originate directly from the user's browser, which discloses the user's IP address to the destination server. This is a standard characteristic of web browsing, not something specific to dokieli. It applies when fetching documents, annotations, profiles, or other linked data, as well as when sending notifications or signing in via a WebID provider. Documents and profiles can point to related resources on other servers, such as their annotations, inbox, or version history; when dokieli follows those links as part of an action, the request goes to the server the link names. Users can configure a preferred proxy if they wish to limit IP disclosure to external servers.</p>
                 </div>
               </section>
-              <section id="policy-notifications" inlist="" rel="schema:hasPart" resource="#policy-notifications">
-                <h3 property="schema:name">Notifications</h3>
+              <section id="notifications-policy" inlist="" rel="schema:hasPart" resource="#notifications-policy">
+                <h3 property="schema:name">Notifications policy</h3>
                 <div datatype="rdf:HTML" property="schema:description">
                   <p>Some actions send <a href="#notification" rel="rdfs:seeAlso">notifications</a> to inboxes, as described by <cite><a href="https://www.w3.org/TR/ldn/" rel="cito:citeAsAuthority">Linked Data Notifications</a></cite>. dokieli shows which inboxes can be notified, such as a document's or a contact's, and the user chooses which are notified; by default only public, unencrypted content is announced. A notification identifies the item it is about, its license, the time, and, when the user is signed in, the user's WebID as the actor. Delivery outcomes are recorded in the message log, and recipient servers' own policies apply to what they retain.</p>
                 </div>
               </section>
-              <section id="privacy-local-storage" inlist="" rel="schema:hasPart" resource="#privacy-local-storage">
-                <h3 property="schema:name">Local storage</h3>
+              <section id="local-storage-policy" inlist="" rel="schema:hasPart" resource="#local-storage-policy">
+                <h3 property="schema:name">Local storage policy</h3>
                 <div datatype="rdf:HTML" property="schema:description">
                   <p>dokieli uses the browser's <a href="https://html.spec.whatwg.org/multipage/webstorage.html#webstorage">local storage</a> for autosave and offline access. When signed in, a refresh token is also stored to keep the session active without requiring repeated sign-ins. A log of dokieli's messages and delivery outcomes is also kept in browser storage so that it remains available across sessions; signing out clears it, and it can be cleared at any time from the Messages panel. The user's consent decisions about <a href="#web-services">web services</a> are kept on the device as well. Like the language preference, they are settings rather than activity records: they are not linked to an account and are not cleared by signing out, and they can be changed under Settings in the dokieli menu or removed by clearing the browser's site data. On a shared device, content and credentials held in local storage may be visible to others using the same browser profile. Signing out <span about="#privacy-policy" rel="odrl:obligation" typeof="odrl:Duty"><span rel="odrl:action" resource="odrl:delete">clears</span></span> authentication credentials and session data, including any stored tokens, from local storage. In private or guest browsing mode, local storage is cleared automatically when the session ends. Users on shared devices should sign out when finished, or use private browsing mode, to ensure any remaining content is also removed. A UI language preference may be retained in browser storage between sessions as a convenience. It contains no identifying information and is not linked to any account or profile.</p>
                 </div>
               </section>
-              <section id="privacy-service-worker" inlist="" rel="schema:hasPart" resource="#service-worker">
+              <section id="service-worker" inlist="" rel="schema:hasPart" resource="#service-worker">
                 <h3 property="schema:name">Service worker</h3>
                 <div datatype="rdf:HTML" property="schema:description">
                   <p>dokieli uses a <a href="https://www.w3.org/TR/service-workers/">service worker</a> to cache the application's own assets for offline use. The service worker does not store any user data, content, or identifying information, and does not perform any tracking.</p>
                 </div>
               </section>
-              <section id="privacy-third-party-services" inlist="" rel="schema:hasPart" resource="#privacy-third-party-services">
+              <section id="third-party-services" inlist="" rel="schema:hasPart" resource="#third-party-services">
                 <h3 property="schema:name">Third-party services</h3>
                 <div datatype="rdf:HTML" property="schema:description">
                   <p>Some features make outbound requests to third-party services. This includes resources embedded or referenced in documents and annotations by their authors, which may trigger requests to external servers when that content is loaded. It also covers dedicated features. The archiving feature, for example, sends a snapshot request to the <a href="https://web.archive.org/">Internet Archive's Wayback Machine</a>, which involves the URL being archived and the user's IP address. When using such features the user is interacting directly with the relevant third party and that service's own policies apply. Protected resources are exempt from public archiving since the request to create an archive snapshot does not carry credentials.</p>
@@ -831,7 +843,7 @@
                     <dt><a href="https://nanopub.net/">Nanopub network</a></dt>
                     <dd>Finds annotations of the current document published as nanopublications. Only the document's address is sent. <a href="#feature-oh-yeah">Oh yeah?</a> also finds nanopublications that mention names found in the text; only those names are sent.</dd>
                     <dt><a href="#feature-oh-yeah">Oh yeah? text analysis service</a></dt>
-                    <dd>Used by <a href="#feature-oh-yeah">Oh yeah?</a>. Finds names in the text, labels which sentences are factual claims worth checking, and looks up the registration of the document's domain. Name finding and the claim check send the text being analysed; the claim check runs only when the reader asks for it. WHOIS is used only for registries without RDAP, and sends only the domain name. Without consent, names are found in the browser instead, less accurately. Readers can use a service they run themselves for name finding and the claim check. See also the <a href="#privacy-dokieli-services" rel="rdfs:seeAlso">dokie.li services policy</a>.</dd>
+                    <dd>Used by <a href="#feature-oh-yeah">Oh yeah?</a>. Finds names in the text, labels which sentences are factual claims worth checking, and looks up the registration of the document's domain. Name finding and the claim check send the text being analysed; the claim check runs only when the reader asks for it. WHOIS is used only for registries without RDAP, and sends only the domain name. Without consent, names are found in the browser instead, less accurately. Readers can use a service they run themselves for name finding and the claim check. See also the <a href="#dokieli-services-policy" rel="rdfs:seeAlso">dokie.li services policy</a>.</dd>
                     <dt><a href="https://openlibrary.org/">Open Library</a></dt>
                     <dd>Looks up book metadata, for example by ISBN, for citations and table lookups.</dd>
                     <dt><a href="https://www.openstreetmap.org/">OpenStreetMap</a></dt>
