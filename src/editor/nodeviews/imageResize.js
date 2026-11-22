@@ -15,6 +15,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import { allowedEmptyAttributes } from "../schema/base.js";
+
+// Skips empty attributes except allowed ones, e.g., alt="" marking a decorative image.
+function setImgAttributes(img, attrs) {
+  for (const [key, value] of Object.entries(attrs)) {
+    if (value != null && (value !== "" || allowedEmptyAttributes.includes(key))) {
+      img.setAttribute(key, value);
+    }
+  }
+}
+
 export class ImageResizeView {
   constructor(node, view, getPos) {
     this.node = node;
@@ -26,11 +37,7 @@ export class ImageResizeView {
 
     const attrs = node.attrs.originalAttributes || {};
     this.img = document.createElement("img");
-    for (const [key, value] of Object.entries(attrs)) {
-      if (value != null && value !== "") {
-        this.img.setAttribute(key, value);
-      }
-    }
+    setImgAttributes(this.img, attrs);
     this.dom.appendChild(this.img);
 
     this.handle = document.createElement("span");
@@ -98,11 +105,7 @@ export class ImageResizeView {
     for (const attr of [...this.img.attributes]) {
       this.img.removeAttribute(attr.name);
     }
-    for (const [key, value] of Object.entries(attrs)) {
-      if (value != null && value !== "") {
-        this.img.setAttribute(key, value);
-      }
-    }
+    setImgAttributes(this.img, attrs);
     return true;
   }
 
