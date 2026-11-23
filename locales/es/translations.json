@@ -1322,6 +1322,8 @@
   "menu.ohyeah.button.title": "Verificar afirmaciones y buscar nombres en este documento",
   "menu.web-services.service.ohyeah-service.textContent": "para buscar nombres, comprobar qué frases son afirmaciones factuales y consultar el registro de dominios.",
   "menu.web-services.service.rdap.textContent": "para consultar quién registró un dominio y cuándo, directamente en su registro.",
+  "panel.ohyeah.check.partial.p.textContent": "El análisis se detuvo antes de terminar. Los resultados cubren solo una parte del texto.",
+  "panel.ohyeah.check.progress-parts.textContent": "Analizando frases. {{percent}} del texto analizado",
   "panel.ohyeah.claimcheck.confidence.textContent": "Confianza del modelo",
   "panel.ohyeah.claimcheck.confidence.title": "Lo seguro que está el modelo de esta etiqueta. No indica si la frase es verdadera.",
   "panel.ohyeah.claimcheck.context-document.p.innerHTML": "<strong>Cada frase se analiza por separado.</strong> Una frase marcada como digna de verificar puede estar ya explicada o respaldada en otra parte del documento, por ejemplo en una sección posterior con citas. Solo se muestran las frases dignas de verificar. Para ver cómo se clasificó cada frase de un pasaje, selecciónalo y usa ¿Ah, sí? desde la barra de herramientas.",

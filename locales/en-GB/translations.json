@@ -1412,6 +1412,8 @@
   "menu.ohyeah.button.title": "Check claims and look up names in this document",
   "menu.web-services.service.ohyeah-service.textContent": "to find names, check which sentences are factual claims, and look up domain registration.",
   "menu.web-services.service.rdap.textContent": "to look up who registered a domain and when, directly from its registry.",
+  "panel.ohyeah.check.partial.p.textContent": "The check stopped early. The results cover only part of the text.",
+  "panel.ohyeah.check.progress-parts.textContent": "Checking sentences. {{percent}} of the text checked",
   "panel.ohyeah.claimcheck.confidence.textContent": "Model confidence",
   "panel.ohyeah.claimcheck.confidence.title": "How sure the model is about this label. It says nothing about whether the sentence is true.",
   "panel.ohyeah.claimcheck.context-document.p.innerHTML": "<strong>Each sentence is checked on its own.</strong> A sentence marked as worth checking may already be explained or backed up elsewhere in the document, for example in a later section with citations. Only sentences worth checking are listed. To see how every sentence in a passage was labelled, select it and use Oh yeah? from the toolbar.",

@@ -53,6 +53,15 @@ const MAX_LOOKUP_NAMES = 20;
 // Matches the service's default limit
 const MAX_TEXT_LENGTH = 200000;
 
+// Claim and fallacy checks send the text in parts, so results arrive early and often
+// The first part is small and goes alone, sized for a fast first response
+const FIRST_PART_LENGTH = 500;
+const MIN_PART_LENGTH = 500;
+const MAX_PART_LENGTH = 32000;
+// Later parts are sized from the measured speed to come back in about this time
+const TARGET_PART_TIME = 3000;
+const PART_CONCURRENCY = 2;
+
 const SKIP_SELECTOR = '.do, script, style, noscript, template, [hidden], [aria-hidden="true"]';
 const BLOCK_SELECTOR = 'p, li, dt, dd, h1, h2, h3, h4, h5, h6, td, th, caption, figcaption, blockquote, pre, div, section, article, aside, header, footer, nav';
 
@@ -341,6 +350,7 @@ function removePointerListeners() {
 }
 
 function teardown() {
+  state.aborts?.forEach(controller => controller.abort());
   state.observer?.disconnect();
   removePointerListeners();
   document.getElementById('ohyeah-entity-tooltip')?.remove();
@@ -378,6 +388,10 @@ function getMessageHTML(key, options = {}, className = '', html = false) {
 
 function getProgressHTML(key) {
   return `<p class="progress"><span data-i18n="${key}">${i18n.t(`${key}.textContent`)}</span> ${Icon['.fas.fa-circle-notch.fa-spin.fa-fw']}</p>`;
+}
+
+function getPartProgressHTML(percent) {
+  return `<p class="progress"><span data-i18n="panel.ohyeah.check.progress-parts" data-i18n-percent="${encodeAttribute(percent)}">${i18n.t('panel.ohyeah.check.progress-parts.textContent', { percent })}</span> ${Icon['.fas.fa-circle-notch.fa-spin.fa-fw']}</p>`;
 }
 
 function getSourceHTML(link) {
@@ -899,8 +913,8 @@ function getClaimHTML(item, numberFormat) {
     </li>`;
 }
 
-function locateClaims(sentences) {
-  let cursor = 0;
+// Offsets of the service's sentences in the whole text, starting the search at the part's offset
+function locateSentences(sentences, cursor) {
   sentences.forEach(item => {
     const index = state.text.indexOf(item.sentence, cursor);
     if (index === -1) return;
@@ -908,19 +922,183 @@ function locateClaims(sentences) {
     item.end = index + item.sentence.length;
     cursor = item.end;
   });
-
-  state.claimRanges = sentences
-    .filter(item => String(item.label).toUpperCase() === 'CFS' && Number.isFinite(item.start))
-    .flatMap(item => getRangesForOffsets(state.segments, item.start, item.end));
-  applyHighlights();
 }
 
-async function showClaimCheckResults(section, button) {
-  if (state.text.length > MAX_TEXT_LENGTH) {
-    setSectionContent(section, getMessageHTML('panel.ohyeah.claimcheck.too-long.p', {}, 'error'));
+// Ends a part at a block break, a sentence end, or a space near the target length
+function findPartEnd(text, start, targetLength) {
+  const ideal = start + targetLength;
+  if (ideal >= text.length) return text.length;
+
+  const windowStart = start + Math.ceil(targetLength / 2);
+  const window = text.slice(windowStart, ideal);
+
+  const block = window.lastIndexOf('\n\n');
+  if (block !== -1) return windowStart + block + 2;
+
+  const sentence = /[.!?…]['")\]]*\s/g;
+  let sentenceEnd = -1;
+  let match;
+  while ((match = sentence.exec(window))) sentenceEnd = match.index + match[0].length;
+  if (sentenceEnd !== -1) return windowStart + sentenceEnd;
+
+  const space = window.search(/\s\S*$/);
+  if (space !== -1) return windowStart + space + 1;
+
+  return ideal;
+}
+
+function newCheckAbortController() {
+  const controller = new AbortController();
+  state.aborts ||= [];
+  state.aborts.push(controller);
+  return controller;
+}
+
+// Sends the text to the service in parts. The first part goes alone, so nothing queues in
+// front of it. Later parts keep a couple of requests in flight, and results are delivered
+// in document order
+async function runCheckInParts({ url, getBody, getFatalErrorKey, onResult, signal }) {
+  const text = state.text;
+  const started = performance.now();
+  let completed = 0;
+  let nextStart = 0;
+  let nextIndex = 0;
+  let deliverIndex = 0;
+  let error = null;
+  const arrived = new Map();
+
+  const targetLength = () => {
+    if (!completed) return FIRST_PART_LENGTH;
+    const rate = completed / (performance.now() - started);
+    return Math.min(MAX_PART_LENGTH, Math.max(MIN_PART_LENGTH, Math.round(rate * TARGET_PART_TIME)));
+  };
+
+  const takePart = () => {
+    if (error || signal.aborted || nextStart >= text.length) return null;
+    const end = findPartEnd(text, nextStart, targetLength());
+    const part = { index: nextIndex++, start: nextStart, text: text.slice(nextStart, end) };
+    nextStart = end;
+    return part;
+  };
+
+  const fetchPart = async (part, retry = true) => {
+    try {
+      const res = await serviceFetch(url, {
+        method: 'POST',
+        referrerPolicy: 'no-referrer',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(getBody(part.text)),
+        signal
+      });
+      const fatalKey = getFatalErrorKey?.(res);
+      if (fatalKey) {
+        const fatal = new Error(fatalKey);
+        fatal.errorKey = fatalKey;
+        fatal.fatal = true;
+        throw fatal;
+      }
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      return await res.json();
+    }
+    catch (e) {
+      if (e.fatal || signal.aborted || !retry) throw e;
+      return fetchPart(part, false);
+    }
+  };
+
+  const deliver = (part, response) => {
+    arrived.set(part.index, { part, response });
+    while (arrived.has(deliverIndex)) {
+      const next = arrived.get(deliverIndex);
+      arrived.delete(deliverIndex);
+      deliverIndex++;
+      if (!signal.aborted) onResult(next.part, next.response, completed / text.length);
+    }
+  };
+
+  const runOne = async (part) => {
+    try {
+      const response = await fetchPart(part);
+      completed += part.text.length;
+      deliver(part, response);
+      return true;
+    }
+    catch (e) {
+      if (!error) error = e;
+      return false;
+    }
+  };
+
+  const worker = async () => {
+    let part;
+    while ((part = takePart())) {
+      if (!(await runOne(part))) return;
+    }
+  };
+
+  const first = takePart();
+  if (first && await runOne(first)) {
+    await Promise.all(Array.from({ length: PART_CONCURRENCY }, worker));
+  }
+
+  return { error };
+}
+
+function getPartResultsList(section) {
+  return section.querySelector('.results ul.ohyeah-cards');
+}
+
+// The results skeleton goes up with the first part: source, running summary, progress, list
+function ensurePartResults(section, { url, model, listClass, percent }) {
+  if (getPartResultsList(section)) return;
+
+  const activityId = generateAttributeId();
+  const modelLink = model?.url ? `<a href="${encodeAttribute(model.url)}" rel="prov:wasAssociatedWith" target="_blank">${htmlEncode(model.id || model.url)}</a>` : '';
+
+  setSectionContent(section, `
+    <div id="${activityId}" rel="prov:activity" resource="#${activityId}" typeof="prov:Activity">
+      ${getSourceHTML(`<a href="${encodeAttribute(url)}" rel="prov:used" target="_blank">${htmlEncode(url)}</a>${modelLink ? ` (${modelLink})` : ''}`)}
+      <p class="ohyeah-parts-summary"></p>
+      ${getPartProgressHTML(percent)}
+      <ul class="ohyeah-cards ${listClass}"></ul>
+    </div>`);
+}
+
+function appendPartCards(section, cards) {
+  if (!cards) return;
+  const fragment = fragmentFromString(domSanitize(`<ul>${cards}</ul>`));
+  getPartResultsList(section).append(...fragment.firstElementChild.children);
+}
+
+function updatePartSummary(section, key, options) {
+  section.querySelector('.results .ohyeah-parts-summary')
+    ?.replaceWith(fragmentFromString(domSanitize(getMessageHTML(key, options, 'ohyeah-parts-summary'))));
+}
+
+function updatePartProgress(section, percent) {
+  section.querySelector('.results p.progress')
+    ?.replaceWith(fragmentFromString(domSanitize(getPartProgressHTML(percent))));
+}
+
+function removePartProgress(section) {
+  section.querySelector('.results p.progress')?.remove();
+}
+
+function showPartError(section, error, errorKey) {
+  const html = error.errorKey
+    ? getMessageHTML(error.errorKey, {}, 'error')
+    : getMessageHTML(errorKey, { url: getActiveServiceURL() }, 'error', true);
+
+  if (!getPartResultsList(section)) {
+    setSectionContent(section, html);
     return;
   }
 
+  const partial = getMessageHTML('panel.ohyeah.check.partial.p', {}, 'error');
+  section.querySelector('.results > div')?.insertAdjacentHTML('beforeend', domSanitize(partial + html));
+}
+
+async function showClaimCheckResults(section, button) {
   const url = getServiceURL('factcheck');
 
   if (!(await requestOriginConsent(url, { reason: 'claim-check', ask: true }))) {
@@ -931,55 +1109,59 @@ async function showClaimCheckResults(section, button) {
   button.disabled = true;
   setSectionContent(section, getProgressHTML(state.scope === 'document' ? 'panel.ohyeah.claimcheck.progress-document' : 'panel.ohyeah.claimcheck.progress'));
 
-  const body = { text: state.text, language: state.language, ...getPilotRequestFields(state.language) };
+  const text = state.text;
+  const numberFormat = new Intl.NumberFormat(Config.User.UI.Language, { style: 'percent', maximumFractionDigits: 0 });
+  const pilotFields = getPilotRequestFields(state.language);
+  const controller = newCheckAbortController();
+  const stale = () => state.text !== text || !section.isConnected;
 
-  let response;
-  try {
-    const res = await serviceFetch(url, {
-      method: 'POST',
-      referrerPolicy: 'no-referrer',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-    const pilotError = getPilotErrorKey(body, res.status);
-    if (pilotError) {
-      setSectionContent(section, getMessageHTML(pilotError, {}, 'error'));
-      button.disabled = false;
-      return;
+  state.claimRanges = [];
+  applyHighlights();
+
+  let checkWorthy = 0;
+  let total = 0;
+
+  const { error } = await runCheckInParts({
+    url,
+    signal: controller.signal,
+    getBody: partText => ({ text: partText, language: state.language, ...pilotFields }),
+    getFatalErrorKey: res => getPilotErrorKey(pilotFields, res.status),
+    onResult: (part, response, fraction) => {
+      if (stale()) return controller.abort();
+
+      const sentences = Array.isArray(response?.sentences) ? response.sentences : [];
+      locateSentences(sentences, part.start);
+      state.claimRanges.push(...sentences
+        .filter(item => String(item.label).toUpperCase() === 'CFS' && Number.isFinite(item.start))
+        .flatMap(item => getRangesForOffsets(state.segments, item.start, item.end)));
+      applyHighlights();
+
+      const partCheckWorthy = sentences.filter(item => String(item.label).toUpperCase() === 'CFS');
+      checkWorthy += partCheckWorthy.length;
+      total += sentences.length;
+
+      const percent = numberFormat.format(fraction);
+      ensurePartResults(section, { url, model: response?.model, listClass: 'claims', percent });
+      appendPartCards(section, (state.scope === 'document' ? partCheckWorthy : sentences).map(item => getClaimHTML(item, numberFormat)).join(''));
+      updatePartSummary(section, 'panel.ohyeah.claimcheck.summary.p', { count: checkWorthy, total });
+      updatePartProgress(section, percent);
     }
-    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-    response = await res.json();
-  }
-  catch (e) {
-    console.warn('dokieli: claim check failed', e);
-    setSectionContent(section, getMessageHTML('panel.ohyeah.claimcheck.error.p', { url: getActiveServiceURL() }, 'error', true));
-    button.disabled = false;
-    return;
-  }
+  });
 
   button.disabled = false;
+  if (stale() || controller.signal.aborted) return;
 
-  const sentences = Array.isArray(response?.sentences) ? response.sentences : [];
-  if (!sentences.length) {
-    setSectionContent(section, getMessageHTML('panel.ohyeah.claimcheck.none.p'));
+  removePartProgress(section);
+
+  if (error) {
+    console.warn('dokieli: claim check failed', error);
+    showPartError(section, error, 'panel.ohyeah.claimcheck.error.p');
     return;
   }
 
-  locateClaims(sentences);
-
-  const numberFormat = new Intl.NumberFormat(Config.User.UI.Language, { style: 'percent', maximumFractionDigits: 0 });
-  const activityId = generateAttributeId();
-  const model = response.model || {};
-  const modelLink = model.url ? `<a href="${encodeAttribute(model.url)}" rel="prov:wasAssociatedWith" target="_blank">${htmlEncode(model.id || model.url)}</a>` : '';
-  const checkWorthy = sentences.filter(item => String(item.label).toUpperCase() === 'CFS');
-  const listed = state.scope === 'document' ? checkWorthy : sentences;
-
-  setSectionContent(section, `
-    <div id="${activityId}" rel="prov:activity" resource="#${activityId}" typeof="prov:Activity">
-      ${getSourceHTML(`<a href="${encodeAttribute(url)}" rel="prov:used" target="_blank">${htmlEncode(url)}</a>${modelLink ? ` (${modelLink})` : ''}`)}
-      ${getMessageHTML('panel.ohyeah.claimcheck.summary.p', { count: checkWorthy.length, total: sentences.length })}
-      <ul class="ohyeah-cards claims">${listed.map(item => getClaimHTML(item, numberFormat)).join('')}</ul>
-    </div>`);
+  if (!total) {
+    setSectionContent(section, getMessageHTML('panel.ohyeah.claimcheck.none.p'));
+  }
 }
 
 function getFallacyLabel(code) {
@@ -1024,28 +1206,7 @@ function getFallacyHTML(item, numberFormat) {
     </li>`;
 }
 
-function locateFallacies(sentences) {
-  let cursor = 0;
-  sentences.forEach(item => {
-    const index = state.text.indexOf(item.sentence, cursor);
-    if (index === -1) return;
-    item.start = index;
-    item.end = index + item.sentence.length;
-    cursor = item.end;
-  });
-
-  state.fallacyRanges = sentences
-    .filter(item => Number.isFinite(item.start))
-    .flatMap(item => getRangesForOffsets(state.segments, item.start, item.end));
-  applyHighlights();
-}
-
 async function showFallacyCheckResults(section, button) {
-  if (state.text.length > MAX_TEXT_LENGTH) {
-    setSectionContent(section, getMessageHTML('panel.ohyeah.claimcheck.too-long.p', {}, 'error'));
-    return;
-  }
-
   const url = getServiceURL('fallacy');
 
   if (!(await requestOriginConsent(url, { reason: 'fallacy-check', ask: true }))) {
@@ -1056,48 +1217,56 @@ async function showFallacyCheckResults(section, button) {
   button.disabled = true;
   setSectionContent(section, getProgressHTML(state.scope === 'document' ? 'panel.ohyeah.fallacycheck.progress-document' : 'panel.ohyeah.fallacycheck.progress'));
 
-  let response;
-  try {
-    const res = await serviceFetch(url, {
-      method: 'POST',
-      referrerPolicy: 'no-referrer',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: state.text, language: state.language })
-    });
-    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-    response = await res.json();
-  }
-  catch (e) {
-    console.warn('dokieli: fallacy check failed', e);
-    setSectionContent(section, getMessageHTML('panel.ohyeah.fallacycheck.error.p', { url: getActiveServiceURL() }, 'error', true));
-    button.disabled = false;
-    return;
-  }
+  const text = state.text;
+  const numberFormat = new Intl.NumberFormat(Config.User.UI.Language, { style: 'percent', maximumFractionDigits: 0 });
+  const controller = newCheckAbortController();
+  const stale = () => state.text !== text || !section.isConnected;
+
+  state.fallacyRanges = [];
+  applyHighlights();
+
+  let flagged = 0;
+  let total = 0;
+
+  const { error } = await runCheckInParts({
+    url,
+    signal: controller.signal,
+    getBody: partText => ({ text: partText, language: state.language }),
+    onResult: (part, response, fraction) => {
+      if (stale()) return controller.abort();
+
+      const sentences = Array.isArray(response?.sentences) ? response.sentences : [];
+      locateSentences(sentences, part.start);
+      state.fallacyRanges.push(...sentences
+        .filter(item => Number.isFinite(item.start))
+        .flatMap(item => getRangesForOffsets(state.segments, item.start, item.end)));
+      applyHighlights();
+
+      flagged += sentences.length;
+      total += Number.isFinite(Number(response?.total)) ? Number(response.total) : sentences.length;
+
+      const percent = numberFormat.format(fraction);
+      ensurePartResults(section, { url, model: response?.model, listClass: 'fallacies', percent });
+      appendPartCards(section, sentences.map(item => getFallacyHTML(item, numberFormat)).join(''));
+      updatePartSummary(section, 'panel.ohyeah.fallacycheck.summary.p', { count: flagged, total });
+      updatePartProgress(section, percent);
+    }
+  });
 
   button.disabled = false;
+  if (stale() || controller.signal.aborted) return;
 
-  const sentences = Array.isArray(response?.sentences) ? response.sentences : [];
-  if (!sentences.length) {
-    state.fallacyRanges = [];
-    applyHighlights();
-    setSectionContent(section, getMessageHTML('panel.ohyeah.fallacycheck.none.p'));
+  removePartProgress(section);
+
+  if (error) {
+    console.warn('dokieli: fallacy check failed', error);
+    showPartError(section, error, 'panel.ohyeah.fallacycheck.error.p');
     return;
   }
 
-  locateFallacies(sentences);
-
-  const numberFormat = new Intl.NumberFormat(Config.User.UI.Language, { style: 'percent', maximumFractionDigits: 0 });
-  const activityId = generateAttributeId();
-  const model = response.model || {};
-  const modelLink = model.url ? `<a href="${encodeAttribute(model.url)}" rel="prov:wasAssociatedWith" target="_blank">${htmlEncode(model.id || model.url)}</a>` : '';
-  const total = Number.isFinite(Number(response.total)) ? Number(response.total) : sentences.length;
-
-  setSectionContent(section, `
-    <div id="${activityId}" rel="prov:activity" resource="#${activityId}" typeof="prov:Activity">
-      ${getSourceHTML(`<a href="${encodeAttribute(url)}" rel="prov:used" target="_blank">${htmlEncode(url)}</a>${modelLink ? ` (${modelLink})` : ''}`)}
-      ${getMessageHTML('panel.ohyeah.fallacycheck.summary.p', { count: sentences.length, total })}
-      <ul class="ohyeah-cards fallacies">${sentences.map(item => getFallacyHTML(item, numberFormat)).join('')}</ul>
-    </div>`);
+  if (!flagged) {
+    setSectionContent(section, getMessageHTML('panel.ohyeah.fallacycheck.none.p'));
+  }
 }
 
 function getMoreNamesHTML(lookup) {
