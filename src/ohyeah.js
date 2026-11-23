@@ -208,15 +208,17 @@ function applyHighlights() {
     CSS.highlights.set(name, highlight);
   });
 
-  if (state.claimRanges?.length) {
-    CSS.highlights.set('claims-cfs-highlights', new Highlight(...state.claimRanges));
+  const claimRanges = (state.claimTargets || []).flatMap(target => target.ranges);
+  if (claimRanges.length) {
+    CSS.highlights.set('claims-cfs-highlights', new Highlight(...claimRanges));
   }
   else {
     CSS.highlights.delete('claims-cfs-highlights');
   }
 
-  if (state.fallacyRanges?.length) {
-    CSS.highlights.set('fallacies-highlights', new Highlight(...state.fallacyRanges));
+  const fallacyRanges = (state.fallacyTargets || []).flatMap(target => target.ranges);
+  if (fallacyRanges.length) {
+    CSS.highlights.set('fallacies-highlights', new Highlight(...fallacyRanges));
   }
   else {
     CSS.highlights.delete('fallacies-highlights');
@@ -231,11 +233,30 @@ function removeHighlights() {
 }
 
 // Highlights get no pointer events, so the pointer is tested against each range's boxes
+function rangesContainPoint(ranges, x, y) {
+  return ranges.some(range =>
+    [...range.getClientRects()].some(r => x >= r.left && x <= r.right && y >= r.top && y <= r.bottom));
+}
+
 function getMarkAtPoint(x, y) {
   const marks = [...(state.marks || [])].sort((a, b) => HIGHLIGHT_PRIORITY[b.group] - HIGHLIGHT_PRIORITY[a.group]);
 
-  return marks.find(mark => mark.ranges.some(range =>
-    [...range.getClientRects()].some(r => x >= r.left && x <= r.right && y >= r.top && y <= r.bottom)));
+  return marks.find(mark => rangesContainPoint(mark.ranges, x, y));
+}
+
+// The claim or fallacy sentence under the pointer, with the card section it belongs to
+function getCheckTargetAtPoint(x, y) {
+  const lists = [
+    { sectionId: 'claimcheck-results', targets: state.claimTargets },
+    { sectionId: 'fallacycheck-results', targets: state.fallacyTargets }
+  ];
+
+  for (const { sectionId, targets } of lists) {
+    const target = (targets || []).find(item => rangesContainPoint(item.ranges, x, y));
+    if (target) return { sectionId, target };
+  }
+
+  return null;
 }
 
 function getTooltip() {
@@ -310,35 +331,55 @@ function onPointerMove(e) {
   const { clientX, clientY, target } = e;
   pointerFrame = requestAnimationFrame(() => {
     pointerFrame = null;
-    const mark = target.closest?.('.do') ? null : getMarkAtPoint(clientX, clientY);
-    if (!mark) {
-      hideTooltip();
+    const inPanel = target.closest?.('.do');
+    const mark = inPanel ? null : getMarkAtPoint(clientX, clientY);
+    if (mark) {
+      document.documentElement.classList.add('ohyeah-mark-hover');
+      showTooltip(mark, clientX, clientY);
       return;
     }
-    document.documentElement.classList.add('ohyeah-mark-hover');
-    showTooltip(mark, clientX, clientY);
+
+    hideTooltip();
+    if (!inPanel && getCheckTargetAtPoint(clientX, clientY)) {
+      document.documentElement.classList.add('ohyeah-check-hover');
+    }
+    else {
+      document.documentElement.classList.remove('ohyeah-check-hover');
+    }
   });
 }
 
 function onPointerClick(e) {
   if (e.target.closest?.('.do')) return;
-  const mark = getMarkAtPoint(e.clientX, e.clientY);
-  if (!mark || !LOOKUP_GROUPS.includes(mark.group)) return;
+  // A click at the end of a drag selection keeps the toolbar flow untouched
+  if (!document.getSelection()?.isCollapsed) return;
 
   const aside = document.getElementById('document-ohyeah');
   if (!aside) return;
 
-  const showCard = () => {
-    const card = [...aside.querySelectorAll('#wikidata-results [data-name]')].find(node => node.dataset.name === mark.text.toLowerCase());
-    (card || aside.querySelector('#wikidata-results')).scrollIntoView({ block: 'nearest' });
-  };
-  const loading = selectTab(aside, 'wikidata-results');
-  showCard();
-  loading?.then(showCard);
+  const mark = getMarkAtPoint(e.clientX, e.clientY);
+  if (mark) {
+    if (!LOOKUP_GROUPS.includes(mark.group)) return;
+    const showCard = () => {
+      const card = [...aside.querySelectorAll('#wikidata-results [data-name]')].find(node => node.dataset.name === mark.text.toLowerCase());
+      (card || aside.querySelector('#wikidata-results')).scrollIntoView({ block: 'nearest' });
+    };
+    const loading = selectTab(aside, 'wikidata-results');
+    showCard();
+    loading?.then(showCard);
+    return;
+  }
+
+  const found = getCheckTargetAtPoint(e.clientX, e.clientY);
+  if (!found) return;
+
+  selectTab(aside, found.sectionId);
+  aside.querySelector(`#${found.sectionId} li[data-start="${found.target.start}"][data-end="${found.target.end}"]`)
+    ?.scrollIntoView({ block: 'nearest' });
 }
 
 function addPointerListeners() {
-  if (!state.marks?.length) return;
+  if (!state.marks?.length && !state.claimTargets?.length && !state.fallacyTargets?.length) return;
   document.addEventListener('mousemove', onPointerMove);
   document.addEventListener('click', onPointerClick);
 }
@@ -346,6 +387,7 @@ function addPointerListeners() {
 function removePointerListeners() {
   document.removeEventListener('mousemove', onPointerMove);
   document.removeEventListener('click', onPointerClick);
+  document.documentElement.classList.remove('ohyeah-check-hover');
   hideTooltip();
 }
 
@@ -602,8 +644,8 @@ async function setOwnService(aside, value) {
   aside.querySelector('#ohyeah-service-url').value = value || '';
   aside.querySelector('#claimcheck-results .results').replaceChildren();
   aside.querySelector('#fallacycheck-results .results').replaceChildren();
-  state.claimRanges = [];
-  state.fallacyRanges = [];
+  state.claimTargets = [];
+  state.fallacyTargets = [];
   applyHighlights();
 }
 
@@ -640,7 +682,7 @@ function initPanelEvents(aside) {
   initPilotForm(aside, () => {
     aside.querySelector('.ohyeah-claim-language').replaceWith(fragmentFromString(domSanitize(getClaimLanguageHTML())));
     aside.querySelector('#claimcheck-results .results').replaceChildren();
-    state.claimRanges = [];
+    state.claimTargets = [];
     applyHighlights();
   });
 
@@ -741,7 +783,7 @@ async function openPanel(range, scope, textQuote) {
   await loadOwnService();
 
   teardown();
-  state = { scope, text, segments, textQuote, entities: null, language, claimRanges: [], fallacyRanges: [], marks: [], loadedTabs: new Map() };
+  state = { scope, text, segments, textQuote, entities: null, language, claimTargets: [], fallacyTargets: [], marks: [], loadedTabs: new Map() };
 
   document.getElementById('document-ohyeah')?.remove();
   document.body.appendChild(fragmentFromString(getPanelHTML()));
@@ -1115,7 +1157,7 @@ async function showClaimCheckResults(section, button) {
   const controller = newCheckAbortController();
   const stale = () => state.text !== text || !section.isConnected;
 
-  state.claimRanges = [];
+  state.claimTargets = [];
   applyHighlights();
 
   let checkWorthy = 0;
@@ -1131,10 +1173,11 @@ async function showClaimCheckResults(section, button) {
 
       const sentences = Array.isArray(response?.sentences) ? response.sentences : [];
       locateSentences(sentences, part.start);
-      state.claimRanges.push(...sentences
+      state.claimTargets.push(...sentences
         .filter(item => String(item.label).toUpperCase() === 'CFS' && Number.isFinite(item.start))
-        .flatMap(item => getRangesForOffsets(state.segments, item.start, item.end)));
+        .map(item => ({ start: item.start, end: item.end, ranges: getRangesForOffsets(state.segments, item.start, item.end) })));
       applyHighlights();
+      addPointerListeners();
 
       const partCheckWorthy = sentences.filter(item => String(item.label).toUpperCase() === 'CFS');
       checkWorthy += partCheckWorthy.length;
@@ -1222,7 +1265,7 @@ async function showFallacyCheckResults(section, button) {
   const controller = newCheckAbortController();
   const stale = () => state.text !== text || !section.isConnected;
 
-  state.fallacyRanges = [];
+  state.fallacyTargets = [];
   applyHighlights();
 
   let flagged = 0;
@@ -1237,10 +1280,11 @@ async function showFallacyCheckResults(section, button) {
 
       const sentences = Array.isArray(response?.sentences) ? response.sentences : [];
       locateSentences(sentences, part.start);
-      state.fallacyRanges.push(...sentences
+      state.fallacyTargets.push(...sentences
         .filter(item => Number.isFinite(item.start))
-        .flatMap(item => getRangesForOffsets(state.segments, item.start, item.end)));
+        .map(item => ({ start: item.start, end: item.end, ranges: getRangesForOffsets(state.segments, item.start, item.end) })));
       applyHighlights();
+      addPointerListeners();
 
       flagged += sentences.length;
       total += Number.isFinite(Number(response?.total)) ? Number(response.total) : sentences.length;

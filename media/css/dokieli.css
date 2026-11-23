@@ -3604,7 +3604,7 @@ margin-bottom:0;
 #document-ohyeah .ohyeah-card-context,
 #document-ohyeah .ohyeah-card-evidence {
 margin:0.5em 0;
-font-size:0.875em;
+font-size:0.9em;
 color:var(--do-color-fg-secondary);
 overflow-wrap:anywhere;
 }
@@ -3615,11 +3615,10 @@ border-radius:1em;
 }
 #document-ohyeah .ohyeah-card-footer {
 margin-top:0.5em;
-font-size:0.875em;
+font-size:0.9em;
 }
 #document-ohyeah .ohyeah-card details {
 margin-top:0.5em;
-font-size:0.9em;
 }
 #document-ohyeah .ohyeah-group + .ohyeah-group {
 margin-top:1.5em;
@@ -3634,7 +3633,7 @@ font-weight:bold;
 margin:0.5em 0 0 0;
 padding:0;
 list-style-type:none;
-font-size:0.875em;
+font-size:0.9em;
 overflow-wrap:anywhere;
 }
 #document-ohyeah .ohyeah-nanopub-details dt {
@@ -3732,6 +3731,9 @@ color:var(--do-color-fg-secondary);
 
 html.ohyeah-mark-hover body {
 cursor:help;
+}
+html.ohyeah-check-hover body {
+cursor:pointer;
 }
 #ohyeah-entity-tooltip {
 position:fixed;
