@@ -18,7 +18,7 @@ limitations under the License.
 import rdf from 'rdf-ext';
 import Config from './config.js';
 const ns = Config.ns;
-import { highlightItems, updateSelectedStylesheets, initCurrentStylesheet, showActionMessage, addMessageToLog, initCopyToClipboard, showFragment, setDocRefType, showRobustLinksDecoration, focusNote, showAsTabs, setDocumentString, setDocumentURL, getDocument } from './doc.js';
+import { highlightItems, updateSelectedStylesheets, initCurrentStylesheet, showActionMessage, addMessageToLog, initCopyToClipboard, showFragment, setDocRefType, showRobustLinksDecoration, focusNote, showAsTabs, setDocumentString, setDocumentURL, getDocument, getDocumentInbox } from './doc.js';
 import { initButtons } from './ui/buttons.js'
 import { initOriginConsent } from './consent.js';
 import { setWebExtensionURL } from './util.js';
@@ -32,6 +32,7 @@ import { showNotificationSources, showActivitiesSources, registerEncryptionUnloc
 import { generateDataURI, getProxyableIRI, getUrlParams, isHttpOrHttpsProtocol, stripFragmentFromString, stripUrlSearchHash } from './uri.js';
 import { SolidStorage, GitForgeStorage, HttpStorage, initStorage } from './storage/backend.js';
 import { initEditor } from './editor/initEditor.js';
+import { discoverCollabService } from './collab.js';
 import { showGraph, showVisualisationGraph } from './viz.js';
 import * as Slideshow from './ui/templates/slideshow.js';
 import { initCV } from './ui/templates/cv.js';
@@ -63,6 +64,7 @@ export async function init (url) {
     emitDocEvent('loading');
     
     setDocumentURL(url);
+    const collabDiscovery = discoverCollabService(Config.DocumentURL);
     setWebExtensionURL();
     setDocumentString();
     setDocumentModeParams();
@@ -77,6 +79,8 @@ export async function init (url) {
     await restoreEditorAfterSignIn();
 
     await initDocumentActions();
+    // Give shared editing discovery a moment in case the document opens in author mode
+    await Promise.race([collabDiscovery, new Promise(resolve => setTimeout(resolve, 1500))]);
     await initDocumentMode();
     await initEncryptedDocument();
 
@@ -265,8 +269,9 @@ export function initShowNotificationSources() {
   // Pages that are not synced, like the ones standing in for a document, have no resource info
   if (!Config.Resource[documentURL]) return;
 
-  if (Config.Resource[documentURL].inbox?.length && !Config.Inbox[Config.Resource[documentURL].inbox[0]]) {
-    showNotificationSources(Config.Resource[documentURL].inbox[0]);
+  const documentInbox = getDocumentInbox(documentURL);
+  if (documentInbox && !Config.Inbox[documentInbox]) {
+    showNotificationSources(documentInbox);
   }
 
   (Config.Resource[documentURL].annotationService || []).forEach(service => {

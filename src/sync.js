@@ -17,7 +17,7 @@ limitations under the License.
 
 import { diffArrays } from "diff";
 import { accessModePossiblyAllowed } from "./access.js";
-import { addMessageToLog, getDocument, getResourceInfo, processSupplementalInfoLinkHeaders, showActionMessage, updateResourceInfos, updateSupplementalInfo } from "./doc.js";
+import { addMessageToLog, getDocument, getResourceInfo, processSupplementalInfoLinkHeaders, showActionMessage, updateResourceInfos, updateSupplementalInfo, withPreservedMetadata } from "./doc.js";
 import { getDeviceStorageItem, updateDeviceStorageItem, updateStorage, removeDeviceStorageDocumentFromCollection } from "./storage.js";
 import { getDateTimeISO, getDateTimeISOFromDate, getHash } from "./util.js";
 import { fragmentFromString, getDocumentNodeFromString, parseMarkdown } from "./utils/html.js";
@@ -28,6 +28,20 @@ import { i18n } from "./i18n.js";
 import { sanitizeInsertAdjacentHTML } from "./utils/sanitization.js";
 import { getDocumentStorageURL } from "./uri.js";
 import { restoreYjsContent, addYjsVersion, getYjsVersions } from "./editor/editor.js";
+import { mayEditNow } from "./collab.js";
+
+// False only when the user cannot write the document, checked after sign-in since the cached WAC-Allow may predate it
+async function mayKeepUnsavedEdits(documentURL) {
+  if (accessModePossiblyAllowed(documentURL, 'write')) return true;
+  await Promise.race([Config.AuthReady, new Promise(resolve => setTimeout(resolve, 5000))]);
+  if (Config.AuthReady !== true) return true;
+  try {
+    return await mayEditNow(documentURL);
+  }
+  catch {
+    return true;
+  }
+}
 
 let autoSaveRemoteNoticeShown = false;
 
@@ -102,7 +116,11 @@ export async function syncLocalRemoteResource(options = {}) {
     }
   }
 
-  if (options.discardUnsaved && unsavedItems.length) {
+  // Unsaved edits that can never be saved are discarded
+  const discardUnsaved = options.discardUnsaved
+    || (unsavedItems.length > 0 && !(await mayKeepUnsavedEdits(Config.DocumentURL)));
+
+  if (discardUnsaved && unsavedItems.length) {
     for (const item of unsavedItems) {
       await removeDeviceStorageDocumentFromCollection(Config.DocumentURL, item);
     }
@@ -506,13 +524,14 @@ export async function pushLocalContentToRemote(localItem, headers) {
   const storageURL = getDocumentStorageURL(Config.DocumentURL);
   if (!storageURL) return;
 
-  const response = await Config.Storage.put(storageURL, content, mediaType, null, { headers });
+  const response = await Config.Storage.put(storageURL, content, mediaType, null, { headers: withPreservedMetadata(storageURL, headers) });
 
   console.log(`Remote updated (${response.status}).`);
 
   updateDeviceStorageItem(id, { published: getDateTimeISO() });
 
   updateResourceInfos(Config.DocumentURL, content, response, { preserveHeaders: ['wac-allow'] });
+  import('./documentInbox.js').then(({ syncInboxMetadata }) => syncInboxMetadata(Config.DocumentURL, content));
 
   window.dispatchEvent(new CustomEvent('dokieli:collab-save'));
 }

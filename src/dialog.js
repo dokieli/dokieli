@@ -17,6 +17,9 @@ limitations under the License.
 
 import rdf from 'rdf-ext';
 import LinkHeader from "http-link-header";
+import { editNotAllowed, showEditNotAllowed } from './ui/editAccess.js';
+import { requestAccess as sendAccessRequest } from './accessRequest.js';
+import { addMissingInboxNotice, addSaveAsInboxNotice } from './ui/inboxNotice.js';
 import { i18n } from './i18n.js';
 import { getButtonHTML, updateButtons, setMenuButtonDisabled } from './ui/buttons.js';
 import { addMessageToLog, buildResourceView, copyRelativeResources, createFeedXML, createImmutableResource, createMutableResource, createNoteDataHTML, encryptArticlePayload, getAccessModeOptionsHTML, getBaseURLSelection, getDocument, getFeedFormatSelection, getLanguageOptionsHTML, getLicenseOptionsHTML, getResourceInfo, getSavePayload, isMarkdownTarget, rewriteBaseURL, setCopyToClipboard, setDocumentRelation, showActionMessage, showRobustLinksDecoration, showTimeMap, updateMutableResource, buildReferences, getDocumentConceptDefinitionsHTML, insertDocumentLevelHTML, insertTestCoverageToTable, diffRequirements, removeReferences, getStorageSelfDescription, getContactInformation, getPersistencePolicy, getODRLPolicies, updateResourceInfos, updateSupplementalInfo, initCurrentStylesheet, setDate, showFragment, initCopyToClipboard, setDocumentURL, getAgentHTML, getAnnotationInboxLocationHTML, updateSelectedStylesheets } from './doc.js';
@@ -569,11 +572,17 @@ export function initDocumentDoEvents() {
     else {
       b = e.target.closest('button.editor-enable');
       if (b && b.isConnected) {
-        b.outerHTML = Config.Button.Menu.EditDisable;
-        hideDocumentMenu();
-        Config.Editor.toggleEditor('author');
+        if (editNotAllowed()) {
+          hideDocumentMenu();
+          showEditNotAllowed();
+        }
+        else {
+          b.outerHTML = Config.Button.Menu.EditDisable;
+          hideDocumentMenu();
+          Config.Editor.toggleEditor('author');
 
-        enableAutoSave(Config.DocumentURL, {'method': 'IndexedDB'});
+          enableAutoSave(Config.DocumentURL, {'method': 'IndexedDB'});
+        }
       }
     }
 
@@ -861,6 +870,8 @@ export function showResourcePermissions(listenerEvent, iri) {
       button.disabled = false;
     }
   });
+
+  addMissingInboxNotice(document.querySelector('#resource-permissions > .info'), documentURL);
 
   var hasAccessModeControl = accessModeAllowed(documentURL, 'control');
   if (hasAccessModeControl) {
@@ -1391,6 +1402,7 @@ export function shareResource(listenerEvent, iri) {
   `;
 
   document.body.appendChild(fragmentFromString(shareResourceHTML));
+  addMissingInboxNotice(document.querySelector('#share-resource > .info'), documentURL);
 
   var clipboardInput = document.querySelector('#share-resource-clipboard');
   var clipboardButton = document.querySelector('#share-resource-clipboard + button.copy-to-clipboard');
@@ -4051,6 +4063,8 @@ export async function saveAsDocument(e) {
   var locationAnnotationServiceId = 'location-annotation-service';
   var locationAnnotationServiceAction = 'read';
 
+  addSaveAsInboxNotice(saveAsDocument, Config.DocumentURL, saveAsDocument.querySelector('#' + locationInboxId + '-set'));
+
   saveAsDocument.addEventListener('click', (e) => {
     if (e.target.closest('input#' + locationAnnotationServiceId + '-set')) {
       if (e.target.getAttribute('checked')) {
@@ -4574,36 +4588,18 @@ export async function saveAsDocument(e) {
 
         if (Config.User.IRI && requestAccess) {
           document.querySelector('#save-as-document .response-message .request-access').addEventListener('click', (e) => {
-            var objectId = '#' + generateAttributeId();
-
             inboxURL = e.target.dataset.inbox;
             var accessTo = e.target.dataset.target;
-            var agent = Config.User.IRI;
 
             e.target.disabled = true;
             var responseMessage = e.target.parentNode;
-            sanitizeInsertAdjacentHTML(responseMessage, 'beforeend', 
+            sanitizeInsertAdjacentHTML(responseMessage, 'beforeend',
               `<span class="progress" data-to="${inboxURL}">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]}</span>`
             );
 
-            var notificationStatements = `<dl about="` + objectId + `" prefix="acl: http://www.w3.org/ns/auth/acl#">
-<dt>Object type</dt><dd><a about="` + objectId + `" href="` + ns.acl.Authorization.value + `" typeof="acl:Authorization">Authorization</a></dd>
-<dt>Agents</dt><dd><a href="` + agent + `" property="acl:agent">` + agent + `</a></dd>
-<dt>Access to</dt><dd><a href="` + accessTo + `" property="acl:accessTo">` + accessTo + `</a></dd>
-<dt>Modes</dt><dd><a href="` + ns.acl.Read.value + `" property="acl:mode">Read</a></dd><dd><a href="` + ns.acl.Write.value + `" property="acl:mode">Write</a></dd>
-</dl>
-`;
-
-            var notificationData = {
-              "type": ['as:Request'],
-              "inbox": inboxURL,
-              "object": objectId,
-              "statements": notificationStatements
-            };
-
             responseMessage = document.querySelector('#save-as-document .response-message');
 
-            return notifyInbox(notificationData)
+            return sendAccessRequest(inboxURL, accessTo)
               .catch(error => {
                 console.log('Error notifying the inbox:', error)
 

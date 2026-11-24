@@ -4734,8 +4734,8 @@ padding: 0.75em 1em;
 border-radius: 0.25em;
 }
 
-#document-menu section button:not([disabled]):hover,
-#document-menu section button:not([disabled]):focus,
+#document-menu section button:not([disabled]):not([aria-disabled="true"]):hover,
+#document-menu section button:not([disabled]):not([aria-disabled="true"]):focus,
 #document-menu #document-theme li label:hover {
 cursor:pointer !important;
 color: var(--do-color-accent-strong) !important;
@@ -7184,7 +7184,17 @@ button.editor-dropdown-item svg {
   cursor: pointer;
   transition: background-color .2s ease-in, opacity .2s ease-in;
 }
-.editor-toolbar .editor-form-actions li.editor-mode-toggle .editor-mode-toggle-btn:hover {
+/* Without write access: looks disabled, but stays clickable to say why */
+.do button[aria-disabled="true"],
+.editor-toolbar .editor-form-actions li.editor-mode-toggle .editor-mode-toggle-btn[aria-disabled="true"] {
+  color: var(--do-color-fg-subtle);
+  fill: var(--do-color-fg-subtle);
+  cursor: not-allowed;
+}
+.do button[aria-disabled="true"] svg {
+  fill: var(--do-color-fg-subtle);
+}
+.editor-toolbar .editor-form-actions li.editor-mode-toggle .editor-mode-toggle-btn:not([aria-disabled="true"]):hover {
   /* opacity: 1; */
   background-color: var(--do-color-bg-subtle);
   color: var(--do-color-link-hover);
@@ -9533,4 +9543,29 @@ aside.do.on:not([id="document-info"]) select {
 }
 .editor-form:not(.editor-slashmenu) button.info:disabled svg {
   fill: var(--do-color-fg-subtle);
+}
+
+/* The document has no inbox: shown to the people who look after it */
+.do .inbox-missing {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25em 0.5em;
+  margin: 0.5em 0 1em;
+  padding: 0.75em 1em;
+  border-left: 4px solid var(--do-color-warning, #c77700);
+  background-color: var(--do-color-bg-subtle);
+}
+.do .inbox-missing svg {
+  fill: var(--do-color-warning, #c77700);
+}
+.do .inbox-missing[hidden] {
+  display: none;
+}
+
+.do .inbox-missing.inbox-allowed {
+  border-left-color: var(--do-color-accent);
+}
+.do .inbox-missing.inbox-allowed svg {
+  fill: var(--do-color-accent);
 }
