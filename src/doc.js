@@ -18,6 +18,7 @@ limitations under the License.
 import rdf from "rdf-ext";
 import * as Slideshow from './ui/templates/slideshow.js';
 import { diffChars } from 'diff';
+import { discoverCollabService } from './collab.js';
 import LinkHeader from "http-link-header";
 import Config from './config.js'
 import { getDateTimeISO, generateAttributeId, uniqueArray, getRandomIndex, getHash, isValidISBN, getDateTimeISOFromMDY, debounce, sortToLower } from './util.js'
@@ -50,6 +51,7 @@ export function setDocumentURL(url) {
   url = url || currentLocation();
 
   Config.DocumentURL = stripFragmentFromString(url);
+  discoverCollabService(Config.DocumentURL);
 
   if (url.startsWith('blob:')) {
     var message = `A snapshot of the original document was loaded in a sandboxed environment and can only work in reduced functionality. It is recommended to open this document in a new window or tab.`;
@@ -674,7 +676,7 @@ export function showActionMessage(node, message, options = {}) {
             li.parentNode.removeChild(li);
           }
 
-          const remaining = aside?.querySelector('h2 + ul > li');
+          const remaining = aside?.querySelector('ul[aria-live] > li');
           if (!remaining && aside) {
             node.removeChild(aside);
           }
@@ -2401,6 +2403,8 @@ export async function updateMutableResource(url, data, options) {
 
   if (Config.User.Keys?.Encryption?.Enabled && Config.User.Keys?.Encryption?.DocumentEncrypt) data = await encryptArticlePayload(data, url);
 
+  options.headers = withPreservedMetadata(url, options.headers);
+
   // The message is shown here; the rejection still reaches callers that need to react to it
   return Config.Storage.save(url, null, data, options)
     .then(async (resolved) => {
@@ -2409,6 +2413,7 @@ export async function updateMutableResource(url, data, options) {
         clearBlobAssets();
       }
       handleActionMessage(resolved);
+      import('./documentInbox.js').then(({ syncInboxMetadata }) => syncInboxMetadata(url, data));
     })
     .catch((rejected) => {
       handleActionMessage(null, rejected);
@@ -2904,6 +2909,31 @@ export function targetHTML(url) {
 }
 
 // An inbox inserted this session may not be parsed or saved yet
+/**
+ * Adds `Link: <describedby>; rel="preserve"` to PUT headers, so CSS keeps the resource's metadata.
+ */
+export function withPreservedMetadata(url, headers = {}) {
+  const ref = Config.Resource?.[url]?.headers?.linkHeaders?.refs?.find(ref => ref.rel === 'describedby');
+  if (!ref?.uri) return headers;
+  let meta;
+  try { meta = new URL(ref.uri, url).href; } catch { return headers; }
+  const link = `<${meta}>; rel="preserve"`;
+  return { ...headers, 'Link': headers.Link ? `${headers.Link}, ${link}` : link };
+}
+
+// The inbox of a document from its data, its ldp:inbox Link header or its markup
+export function getDocumentInbox(documentURL = Config.DocumentURL) {
+  const resource = Config.Resource?.[documentURL];
+  if (resource?.inbox?.length) return resource.inbox[0];
+
+  const ref = resource?.headers?.linkHeaders?.refs?.find(ref => ref.rel === Config.ns.ldp.inbox.value);
+  if (ref?.uri) {
+    try { return new URL(ref.uri, documentURL).href; } catch {}
+  }
+
+  return documentURL === Config.DocumentURL ? getDocumentInboxFromDOM() : undefined;
+}
+
 function getDocumentInboxFromDOM() {
   const article = selectArticleNode(document) || document.body;
   const node = Array.from(article.querySelectorAll('[rel~="ldp:inbox"], [rel~="as:inbox"]')).find(n => !n.closest('.do'));
@@ -2918,7 +2948,7 @@ export function getAnnotationInboxLocationHTML(action) {
 
   var inboxes = [];
 
-  var documentInbox = Config.Resource[Config.DocumentURL]?.inbox?.[0] || getDocumentInboxFromDOM();
+  var documentInbox = getDocumentInbox();
   if (documentInbox) {
     // Checked state is derived from the access and encrypt toggles on popup open
     inboxes.push({ suffix: 'document', url: documentInbox, label: i18n.t('annotation-inbox.document.label.textContent'), i18nKey: 'annotation-inbox.document.label', className: 'editor-form-notify-inbox' });

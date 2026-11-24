@@ -16,6 +16,7 @@ limitations under the License.
 */
 
 import { schema } from "../schema/base.js"
+import { editNotAllowed, markEditButton, showEditNotAllowed } from '../../ui/editAccess.js';
 import { NodeSelection } from "prosemirror-state"
 import { Icon } from "../../ui/icons.js"
 import { getButtonHTML, getExperimentalBadgeHTML, updateButtons } from "../../ui/buttons.js"
@@ -643,6 +644,7 @@ export class ToolbarView {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'editor-mode-toggle-btn';
+    btn.dataset.targetMode = targetMode;
     if (key) btn.dataset.i18n = key;
     btn.setAttribute('title', label);
     btn.setAttribute('aria-label', label);
@@ -658,8 +660,13 @@ export class ToolbarView {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
+      if (targetMode === 'author' && editNotAllowed()) {
+        showEditNotAllowed();
+        return;
+      }
       this.switchMode(targetMode);
     });
+    if (targetMode === 'author') markEditButton(btn);
 
     li.appendChild(btn);
     this.ul.appendChild(li);

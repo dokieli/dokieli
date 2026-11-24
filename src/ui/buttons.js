@@ -16,6 +16,9 @@ limitations under the License.
 */
 
 import { accessModeAllowed, accessModePossiblyAllowed } from "../access.js";
+import { updateEditButtons } from './editAccess.js';
+import { warnIfNoInbox } from './inboxNotice.js';
+import { watchAccessRequests } from './accessRequests.js';
 import { Icon} from "./icons.js";
 import Config from "../config.js";
 import { isLocalhost } from "../uri.js";
@@ -861,4 +864,8 @@ export function updateButtons(selectors) {
     // console.log("Button state for", selector, "should be", buttonEnabled ? "enabled" : "disabled");
     node.disabled = !buttonEnabled;
   });
+
+  updateEditButtons();
+  warnIfNoInbox();
+  watchAccessRequests();
 }

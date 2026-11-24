@@ -52,6 +52,8 @@ import { WebsocketProvider } from 'y-websocket'
 import { IndexeddbPersistence } from 'y-indexeddb'
 import { ySyncPlugin, yCursorPlugin, yUndoPlugin, undo, redo, initProseMirrorDoc, prosemirrorToYDoc } from 'y-prosemirror'
 import { currentLocation, stripFragmentFromString } from "../uri.js";
+import { getKnownCollabService, mayEditNow, useNewCollabTicket } from "../collab.js";
+import { editNotAllowed, showEditNotAllowed } from "../ui/editAccess.js";
 import { getRandomIndex, stringToColor } from "../util.js";
 import { setTemplateNewCV } from "../ui/templates/cv.js";
 import { setTemplateNewSlideshow } from "../ui/templates/slideshow.js";
@@ -70,6 +72,7 @@ import { tableToolsPlugin } from "./plugins/tableTools.js";
 const ns = Config.ns;
 
 let provider;
+let collabService;
 let localProvider;
 let ydoc;
 let yXmlFragment;
@@ -234,6 +237,12 @@ export class Editor {
   }
 
   toggleEditor(mode, options) {
+    const isTemplate = typeof options?.template === 'string' && options.template.startsWith('new');
+    if (mode === 'author' && !isTemplate && editNotAllowed()) {
+      showEditNotAllowed();
+      return;
+    }
+
     Config.Editor['new'] = false;
 
     let node;
@@ -455,9 +464,11 @@ export class Editor {
   } else {
     Config.Editor['collab'] = true;
     ydoc = new Y.Doc();
-    const roomName = encodeURIComponent(Config.DocumentURL || currentLocation());
+    const documentURL = Config.DocumentURL || currentLocation();
+    const roomName = encodeURIComponent(documentURL);
     localProvider = new IndexeddbPersistence(roomName, ydoc);
-    // TODO: temp allowing websocket only on the demo doc
+    collabService = null;
+    provider = null;
     if (YWEBSOCKET_URL && stripFragmentFromString(window.location.href) === stripFragmentFromString(DEMO_URL)) {
       try {
         provider = new WebsocketProvider(
@@ -470,8 +481,30 @@ export class Editor {
         console.warn('WebsocketProvider failed to initialise, running local-only:', e);
         provider = null;
       }
-    } else {
-      provider = null;
+    }
+    // Storage offering shared editing; joinRoom decides whether to connect
+    else if (getKnownCollabService(documentURL)) {
+      collabService = getKnownCollabService(documentURL);
+      try {
+        provider = new WebsocketProvider(
+          collabService.replace(/^http/, 'ws'),
+          roomName,
+          ydoc,
+          { connect: false, disableBc: true }
+        );
+        // Tickets expire, so get a new one for each reconnection
+        const roomProvider = provider;
+        const ticketService = collabService;
+        roomProvider.on('connection-close', () => {
+          if (roomProvider.shouldConnect) {
+            useNewCollabTicket(roomProvider, ticketService, documentURL);
+          }
+        });
+      } catch (e) {
+        console.warn('WebsocketProvider failed to initialise, running local-only:', e);
+        provider = null;
+        collabService = null;
+      }
     }
 
     yXmlFragment = ydoc.getXmlFragment('prosemirror');
@@ -762,7 +795,19 @@ export class Editor {
       });
     };
 
-    localProvider.whenSynced.then(() => {
+    localProvider.whenSynced.then(async () => {
+      // Only join with write access; the server drops changes from everyone else
+      if (collabService) {
+        const roomProvider = provider;
+        const joined = await joinRoom();
+        if (roomProvider !== provider || !ydoc || ydoc.isDestroyed) return;
+        if (!joined) {
+          provider.destroy();
+          provider = null;
+          collabService = null;
+        }
+      }
+
       let done = false;
       const finish = (collabReady) => {
         if (done) return;
@@ -784,7 +829,7 @@ export class Editor {
         return;
       }
 
-      provider.connect();
+      if (!collabService) provider.connect();
 
       // Decide whether to seed only after the initial server sync. Even then, an
       // empty room may still receive the persisted document as a trailing update
@@ -903,6 +948,7 @@ export class Editor {
       provider.destroy();
       provider = null;
     }
+    collabService = null;
     if (ydoc && !ydoc.isDestroyed) {
       ydoc.destroy();
       ydoc = null;
@@ -1147,8 +1193,44 @@ export function updateCollabUserIdentity() {
   // Reconnect so the websocket server session reflects the new identity.
   if (provider.wsconnected) {
     provider.disconnect();
-    provider.connect();
+    joinRoom();
   }
+}
+
+/**
+ * Appends HTML to the document through the editor. Returns false when there is no editor.
+ */
+export function appendHTMLToEditor(html) {
+  const view = Config.Editor?.editorView;
+  if (!view) return false;
+  const container = document.createElement('div');
+  container.setHTMLUnsafe(domSanitize(html));
+  const slice = DOMParser.fromSchema(schema).parseSlice(container);
+  view.dispatch(view.state.tr.insert(view.state.doc.content.size, slice.content));
+  return true;
+}
+
+// Connects to the room with a new ticket if the user may edit. Resolves to whether it connected.
+async function joinRoom() {
+  const current = provider;
+  if (!current) return false;
+  if (!collabService) {
+    current.connect();
+    return true;
+  }
+  const documentURL = Config.DocumentURL || currentLocation();
+  try {
+    if (!(await mayEditNow(documentURL))) return false;
+  }
+  catch (error) {
+    console.warn('Could not check access to the document, editing local-only:', error);
+    return false;
+  }
+  if (current !== provider) return false;
+  const ok = await useNewCollabTicket(current, collabService, documentURL);
+  if (!ok || current !== provider) return false;
+  current.connect();
+  return true;
 }
 
 // Replace the live Yjs document content with an arbitrary HTML string.
