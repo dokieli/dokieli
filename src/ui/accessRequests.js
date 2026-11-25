@@ -152,9 +152,11 @@ async function showRequest(request, documentURL) {
 
   addMessageToLog({ content: i18n.t(`${key}.textContent`, { name }), type: 'info' }, Config.MessageLog);
   const id = showActionMessage(document.body, {
-    content: `<span class="access-request"><span>${text}</span>
+    content: `<p>${text}</p>
+      <p class="access-request">
       <button class="access-request-allow" data-i18n="access-request.allow.button" type="button">${i18n.t('access-request.allow.button.textContent')}</button>
-      <button class="access-request-decline" data-i18n="access-request.decline.button" type="button">${i18n.t('access-request.decline.button.textContent')}</button></span>`,
+      <button class="access-request-decline" data-i18n="access-request.decline.button" type="button">${i18n.t('access-request.decline.button.textContent')}</button>
+      </p>`,
     type: 'info',
     timer: null,
   });

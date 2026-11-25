@@ -32,7 +32,7 @@ import { showNotificationSources, showActivitiesSources, registerEncryptionUnloc
 import { generateDataURI, getProxyableIRI, getUrlParams, isHttpOrHttpsProtocol, stripFragmentFromString, stripUrlSearchHash } from './uri.js';
 import { SolidStorage, GitForgeStorage, HttpStorage, initStorage } from './storage/backend.js';
 import { initEditor } from './editor/initEditor.js';
-import { discoverCollabService } from './collab.js';
+import { discoverCollabService, rediscoverCollabService } from './collab.js';
 import { showGraph, showVisualisationGraph } from './viz.js';
 import * as Slideshow from './ui/templates/slideshow.js';
 import { initCV } from './ui/templates/cv.js';
@@ -65,6 +65,12 @@ export async function init (url) {
     
     setDocumentURL(url);
     const collabDiscovery = discoverCollabService(Config.DocumentURL);
+    // The storage description may only be readable once authenticated
+    document.addEventListener('dokieli:auth-ready', () => {
+      if (Config.User.IRI) {
+        rediscoverCollabService(Config.DocumentURL);
+      }
+    });
     setWebExtensionURL();
     setDocumentString();
     setDocumentModeParams();
@@ -285,6 +291,7 @@ async function restoreEditorAfterSignIn() {
   if (!OIDC?.editor || OIDC.authStartLocation !== window.location.href) return;
 
   if (OIDC.editor.mode === 'author' && Config.Editor?.mode !== 'author') {
+    await Promise.race([rediscoverCollabService(Config.DocumentURL), new Promise(resolve => setTimeout(resolve, 1500))]);
     Config.Editor.toggleEditor('author');
   }
   Config.Editor['new'] = !!OIDC.editor.isNew;

@@ -25,10 +25,21 @@ import { domSanitize, sanitizeInsertAdjacentHTML } from '../utils/sanitization.j
 import { Icon } from './icons.js';
 
 const warned = new Set();
+const checking = new Set();
 
 export async function documentHasInbox(documentURL) {
   const { findDocumentInbox } = await import('../accessRequest.js');
-  return Boolean(await findDocumentInbox(documentURL));
+  const inbox = await findDocumentInbox(documentURL);
+  if (!inbox) return false;
+
+  // A deleted inbox must not keep suppressing the notice
+  try {
+    await Config.Storage.head(inbox);
+    return true;
+  }
+  catch (error) {
+    return ![404, 410].includes(error?.status);
+  }
 }
 
 export function looksAfterDocument(documentURL) {
@@ -36,7 +47,7 @@ export function looksAfterDocument(documentURL) {
 }
 
 function noticeHTML(key, extra = '') {
-  return `<p class="inbox-missing">${Icon[".fas.fa-triangle-exclamation"]} <span data-i18n="${key}">${i18n.t(`${key}.textContent`)}</span>${extra}</p>`;
+  return `<p class="inbox-missing">${Icon[".fas.fa-circle-info"]} <span data-i18n="${key}">${i18n.t(`${key}.textContent`)}</span>${extra}</p>`;
 }
 
 function canCreateInbox(documentURL) {
@@ -125,22 +136,30 @@ export async function addSaveAsInboxNotice(dialog, documentURL, setInboxInput) {
 
 export async function warnIfNoInbox() {
   const documentURL = stripFragmentFromString(Config.DocumentURL || '');
-  if (!documentURL || warned.has(documentURL)) return;
+  if (!documentURL || warned.has(documentURL) || checking.has(documentURL)) return;
   if (Config.DocumentAction === 'new' || !isHttpOrHttpsProtocol(documentURL)) return;
   if (!looksAfterDocument(documentURL)) return;
-  warned.add(documentURL);
 
-  if (await documentHasInbox(documentURL)) return;
-  if (stripFragmentFromString(Config.DocumentURL || '') !== documentURL) return;
+  checking.add(documentURL);
+  try {
+    // Finding an inbox does not consume warned, so a later deletion still shows the notice
+    if (await documentHasInbox(documentURL)) return;
+    if (stripFragmentFromString(Config.DocumentURL || '') !== documentURL) return;
+    if (warned.has(documentURL)) return;
+    warned.add(documentURL);
 
-  const { addMessageToLog, showActionMessage } = await import('../doc.js');
-  const text = i18n.t('document-inbox.missing.span.textContent');
-  addMessageToLog({ content: text, type: 'error' }, Config.MessageLog);
-  const id = showActionMessage(document.body, {
-    content: `<span class="inbox-missing-message"><span data-i18n="document-inbox.missing.span">${text}</span>${allowHTML(documentURL)}</span>`,
-    type: 'error',
-    timer: null,
-  });
-  const item = document.getElementById(id);
-  if (item) handleCreateInbox(item, documentURL);
+    const { addMessageToLog, showActionMessage } = await import('../doc.js');
+    const text = i18n.t('document-inbox.missing.span.textContent');
+    addMessageToLog({ content: text, type: 'info' }, Config.MessageLog);
+    const id = showActionMessage(document.body, {
+      content: `<span class="inbox-missing-message"><span data-i18n="document-inbox.missing.span">${text}</span>${allowHTML(documentURL)}</span>`,
+      type: 'info',
+      timer: null,
+    });
+    const item = document.getElementById(id);
+    if (item) handleCreateInbox(item, documentURL);
+  }
+  finally {
+    checking.delete(documentURL);
+  }
 }

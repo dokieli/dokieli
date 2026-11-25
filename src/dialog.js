@@ -6170,6 +6170,48 @@ export function showMessageLog(e, options) {
 }
 
 //TODO: Minor refactoring to delete any URL, e.g., annotation (already implemented)
+// The local copies would otherwise bring the deleted document back on reload.
+async function cleanupAfterDelete(url, inbox) {
+  try {
+    const { removeDeviceStorageDocumentItems } = await import('./storage.js');
+    await removeDeviceStorageDocumentItems(url);
+  }
+  catch (error) {
+    console.log('Could not remove the document from device storage:', error);
+  }
+  try {
+    const { clearLocalDocument } = await import('./editor/editor.js');
+    await clearLocalDocument(url);
+  }
+  catch (error) {
+    console.log('Could not remove the local copy of the document:', error);
+  }
+  delete Config.Resource[url];
+
+  if (!inbox) return;
+  let messageObject;
+  try {
+    const { deleteDocumentInbox } = await import('./documentInbox.js');
+    await deleteDocumentInbox(inbox);
+    messageObject = {
+      'content': `<span data-i18n="dialog.delete.success.inbox.p">${i18n.t('dialog.delete.success.inbox.p.textContent', { inbox })}</span>`,
+      'type': 'success',
+      'timer': 3000
+    };
+  }
+  catch (error) {
+    console.log('Could not delete the inbox:', error);
+    messageObject = {
+      'content': `<span data-i18n="dialog.delete.error.inbox.p">${i18n.t('dialog.delete.error.inbox.p.textContent', { inbox })}</span>`,
+      'type': 'error',
+      'timer': null,
+      'code': error?.status
+    };
+  }
+  addMessageToLog(messageObject, Config.MessageLog);
+  showActionMessage(document.body, messageObject);
+}
+
 export function resourceDelete(e, url, options) {
   if (!url) { return; }
 
@@ -6190,6 +6232,22 @@ export function resourceDelete(e, url, options) {
     </aside>
   `));
 
+  (async () => {
+    try {
+      const { findDocumentInbox } = await import('./accessRequest.js');
+      const inbox = await findDocumentInbox(url);
+      if (!inbox) return;
+      const { mayControlInbox } = await import('./documentInbox.js');
+      if (!(await mayControlInbox(inbox))) return;
+      const dialog = document.querySelector('#delete-document');
+      const buttonCancel = dialog?.querySelector('button.cancel');
+      if (!buttonCancel) return;
+      sanitizeInsertAdjacentHTML(buttonCancel, 'beforebegin',
+        `<p><label><input class="delete-inbox" type="checkbox" value="${inbox}" /> <span data-i18n="dialog.delete.inbox.label">${i18n.t('dialog.delete.inbox.label.textContent')}</span> <code>${inbox}</code></label></p>`);
+    }
+    catch {}
+  })();
+
   document.querySelector('#delete-document').addEventListener('click', (e) => {
     if (e.target.closest('button.info')) { return; }
 
@@ -6206,9 +6264,11 @@ export function resourceDelete(e, url, options) {
       document.querySelector('#document-menu .resource-delete').disabled = false;
     }
     else if (buttonDelete) {
+      const inboxToDelete = document.querySelector('#delete-document input.delete-inbox:checked')?.value;
       Config.Storage.delete(url)
         .then(response => {
           Config.Editor.toggleEditor('author', { template: 'new' });
+          cleanupAfterDelete(url, inboxToDelete);
 
           var message = `<span data-i18n="dialog.delete.success.default.p">${i18n.t('dialog.delete.success.default.p.textContent', {url}) }</span>`;
           var actionMessage = '';

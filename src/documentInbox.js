@@ -17,7 +17,7 @@ limitations under the License.
 
 // Document inboxes: a container next to the document that anyone can append to and its controllers can read.
 
-import { agentsWithMode } from '@dokieli/web-access-control';
+import { agentsWithMode, allows, parseWacAllow } from '@dokieli/web-access-control';
 import Config from './config.js';
 import { getLinkRelationFromHead } from './graph.js';
 import { getACLContext } from './wac.js';
@@ -56,19 +56,18 @@ export async function createDocumentInbox(documentURL) {
 
 // In author mode through the editor, so it goes through the shared document; otherwise into the DOM and saved
 async function addInboxToDocument(documentURL, inbox) {
-  const { createInboxHTML, updateMutableResource } = await import('./doc.js');
-  const html = createInboxHTML(inbox);
+  const { createInboxHTML, insertDocumentLevelHTML, updateMutableResource } = await import('./doc.js');
+  const html = createInboxHTML(inbox, { id: 'document-inbox' });
 
   if (Config.EditorEnabled) {
-    const { appendHTMLToEditor } = await import('./editor/editor.js');
-    if (appendHTMLToEditor(html)) return;
+    const { insertDocumentLevelHTMLToEditor } = await import('./editor/editor.js');
+    if (insertDocumentLevelHTMLToEditor(html, 'document-inbox')) return;
   }
 
   const { selectArticleNode } = await import('./utils/html.js');
   const article = selectArticleNode(document) || document.body;
   if (inboxDeclaredIn(article, documentURL)) return;
-  const { sanitizeInsertAdjacentHTML } = await import('./utils/sanitization.js');
-  sanitizeInsertAdjacentHTML(article, 'beforeend', html);
+  insertDocumentLevelHTML(document, html, { id: 'document-inbox' });
   await updateMutableResource(documentURL);
   const { markLocalSnapshotPublished } = await import('./sync.js');
   await markLocalSnapshotPublished(documentURL).catch(() => {});
@@ -124,6 +123,36 @@ export async function syncInboxMetadata(documentURL, html) {
   catch (error) {
     console.log('Could not update the inbox in the metadata of the document:', error);
   }
+}
+
+// No WAC-Allow counts as true; the delete attempt then decides.
+export async function mayControlInbox(inbox) {
+  try {
+    const response = await Config.Storage.head(inbox);
+    const value = response.headers.get('WAC-Allow');
+    if (!value) return true;
+    return allows(parseWacAllow(value), 'Control');
+  }
+  catch {
+    return false;
+  }
+}
+
+export async function deleteDocumentInbox(inbox) {
+  try {
+    await Config.Storage.delete(inbox);
+    return;
+  }
+  catch {}
+
+  const { default: rdf } = await import('rdf-ext');
+  const { getResourceGraph } = await import('./graph.js');
+  const { graph } = await getResourceGraph(inbox, { 'Accept': 'text/turtle', 'Cache-Control': 'no-cache' }, { noCache: true });
+  const items = graph.node(rdf.namedNode(inbox)).out(ns.ldp.contains).values;
+  for (const item of items) {
+    await Config.Storage.delete(item);
+  }
+  await Config.Storage.delete(inbox);
 }
 
 async function documentControllers(documentURL) {

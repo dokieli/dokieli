@@ -1210,6 +1210,51 @@ export function appendHTMLToEditor(html) {
   return true;
 }
 
+export async function clearLocalDocument(documentURL) {
+  const roomName = encodeURIComponent(stripFragmentFromString(documentURL));
+  if (localProvider?.name === roomName) {
+    const provider = localProvider;
+    localProvider = null;
+    await provider.clearData().catch(() => {});
+  }
+  else {
+    indexedDB.deleteDatabase(roomName);
+  }
+}
+
+export function insertDocumentLevelHTMLToEditor(html, id) {
+  const view = Config.Editor?.editorView;
+  if (!view) return false;
+  const container = document.createElement('div');
+  container.setHTMLUnsafe(domSanitize(html));
+  const slice = DOMParser.fromSchema(schema).parseSlice(container);
+
+  const positionAfter = (node) => {
+    const $pos = view.state.doc.resolve(view.posAtDOM(node, 0));
+    return $pos.after($pos.depth);
+  };
+
+  let pos = null;
+  try {
+    for (let i = Config.DocumentItems.indexOf(id); i >= 0; i--) {
+      const node = view.dom.querySelector('#' + Config.DocumentItems[i]);
+      if (node) {
+        pos = positionAfter(node);
+        break;
+      }
+    }
+    if (pos === null) {
+      const h1 = view.dom.querySelector('h1');
+      pos = h1 ? positionAfter(h1) : 0;
+    }
+  }
+  catch {
+    pos = view.state.doc.content.size;
+  }
+  view.dispatch(view.state.tr.insert(pos, slice.content));
+  return true;
+}
+
 // Connects to the room with a new ticket if the user may edit. Resolves to whether it connected.
 async function joinRoom() {
   const current = provider;
