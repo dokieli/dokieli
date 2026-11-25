@@ -9553,11 +9553,11 @@ aside.do.on:not([id="document-info"]) select {
   gap: 0.25em 0.5em;
   margin: 0.5em 0 1em;
   padding: 0.75em 1em;
-  border-left: 4px solid var(--do-color-warning, #c77700);
+  border-left: 4px solid var(--do-color-info);
   background-color: var(--do-color-bg-subtle);
 }
 .do .inbox-missing svg {
-  fill: var(--do-color-warning, #c77700);
+  fill: var(--do-color-info);
 }
 .do .inbox-missing[hidden] {
   display: none;

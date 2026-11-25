@@ -61,6 +61,14 @@ export function getKnownCollabService(documentURL) {
   return services.get(stripFragmentFromString(documentURL)) || null;
 }
 
+export async function rediscoverCollabService(documentURL) {
+  const url = stripFragmentFromString(documentURL);
+  const known = await (discoveries.get(url) || Promise.resolve(null)).catch(() => null);
+  if (known) return known;
+  discoveries.delete(url);
+  return discoverCollabService(url);
+}
+
 // The storage description link is public, so try an uncached, unauthenticated HEAD first
 async function findStorageDescription(documentURL) {
   try {

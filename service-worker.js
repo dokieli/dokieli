@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dokieli-app-cache-v7';
+const CACHE_NAME = 'dokieli-app-cache-v8';
 
 const OFFLINE_SHELL = '/offline.html';
 
