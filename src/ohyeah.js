@@ -47,6 +47,21 @@ const HIGHLIGHT_PRIORITY = { acronyms: 0, names: 1, places: 2, organizations: 3,
 const CLAIM_LABELS = ['CFS', 'UFS', 'NFS'];
 // Labels from the LOGIC dataset
 const FALLACY_LABELS = ['ad_hominem', 'ad_populum', 'appeal_to_emotion', 'circular_reasoning', 'equivocation', 'fallacy_of_credibility', 'fallacy_of_extension', 'fallacy_of_logic', 'fallacy_of_relevance', 'false_causality', 'false_dilemma', 'faulty_generalization', 'intentional'];
+// Nearest Wikipedia article per label; `intentional` has no match (Wikipedia's "intentional fallacy" is a literary criticism concept)
+const FALLACY_WIKIPEDIA_URLS = {
+  ad_hominem: 'https://en.wikipedia.org/wiki/Ad_hominem',
+  ad_populum: 'https://en.wikipedia.org/wiki/Argumentum_ad_populum',
+  appeal_to_emotion: 'https://en.wikipedia.org/wiki/Appeal_to_emotion',
+  circular_reasoning: 'https://en.wikipedia.org/wiki/Circular_reasoning',
+  equivocation: 'https://en.wikipedia.org/wiki/Equivocation',
+  fallacy_of_credibility: 'https://en.wikipedia.org/wiki/Argument_from_authority',
+  fallacy_of_extension: 'https://en.wikipedia.org/wiki/Straw_man',
+  fallacy_of_logic: 'https://en.wikipedia.org/wiki/Formal_fallacy',
+  fallacy_of_relevance: 'https://en.wikipedia.org/wiki/Red_herring',
+  false_causality: 'https://en.wikipedia.org/wiki/Questionable_cause',
+  false_dilemma: 'https://en.wikipedia.org/wiki/False_dilemma',
+  faulty_generalization: 'https://en.wikipedia.org/wiki/Faulty_generalization'
+};
 const WIKIDATA_RESULTS_PER_NAME = 5;
 const NANOPUB_RESULTS_PER_NAME = 10;
 const MAX_LOOKUP_NAMES = 20;
@@ -1213,6 +1228,12 @@ function getFallacyLabel(code) {
     : code.replace(/_/g, ' ');
 }
 
+function getFallacyLabelHTML(code) {
+  const label = `<span property="schema:name">${htmlEncode(getFallacyLabel(code))}</span>`;
+  const url = FALLACY_WIKIPEDIA_URLS[code];
+  return url ? `<a href="${encodeAttribute(url)}" rel="noopener" target="_blank">${label}</a>` : label;
+}
+
 function getFallacyHTML(item, numberFormat) {
   const annotationId = generateAttributeId();
   const code = String(item.label || '').toLowerCase().replace(/[\s-]+/g, '_');
@@ -1239,7 +1260,7 @@ function getFallacyHTML(item, numberFormat) {
       <div rel="oa:hasBody" resource="#${annotationId}-review">
         <div about="#${annotationId}-review" typeof="schema:Review">
           <p class="ohyeah-card-meta" rel="schema:reviewRating" resource="#${annotationId}-rating" typeof="schema:Rating">
-            <span class="ohyeah-claim-label"><span property="schema:name">${htmlEncode(getFallacyLabel(code))}</span></span>
+            <span class="ohyeah-claim-label">${getFallacyLabelHTML(code)}</span>
             <span data-i18n="panel.ohyeah.claimcheck.confidence" title="${i18n.t('panel.ohyeah.claimcheck.confidence.title')}">${i18n.t('panel.ohyeah.claimcheck.confidence.textContent')} <data datatype="xsd:decimal" property="schema:ratingValue" value="${Number.isFinite(confidence) ? confidence : ''}">${Number.isFinite(confidence) ? numberFormat.format(confidence) : ''}</data></span>
           </p>
           <blockquote class="ohyeah-card-text"><p>${htmlEncode(item.sentence)}</p></blockquote>
